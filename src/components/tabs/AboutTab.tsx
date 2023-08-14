@@ -1,6 +1,6 @@
 import { Text } from '@primer/react';
 
-const DatalayerTab = (props: {version: string}): JSX.Element => {
+const AboutTab = (props: {version: string}): JSX.Element => {
   const { version } = props;
   return (
     <>
@@ -9,4 +9,4 @@ const DatalayerTab = (props: {version: string}): JSX.Element => {
   );
 }
 
-export default DatalayerTab;
+export default AboutTab;

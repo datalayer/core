@@ -13,7 +13,7 @@ c.ServerApp.log_level = 'INFO'
 #################
 
 c.ServerApp.ip = '0.0.0.0'
-c.ServerApp.port = 8686
+c.ServerApp.port = 8888
 c.ServerApp.port_retries = 0
 
 #################
@@ -32,7 +32,7 @@ c.ServerApp.terminals_enabled = True
 # Authentication
 #################
 
-c.ServerApp.token = '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6'
+c.IdentityProvider.token = '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6'
 
 #################
 # Security
@@ -57,7 +57,7 @@ c.ServerApp.tornado_settings = {
     'Secure': True
   }
 }
-c.ServerApp.cookie_options = {
+c.IdentityProvider.cookie_options = {
   "SameSite": "None",
   "Secure": True,
 }
@@ -84,8 +84,8 @@ c.ServerApp.preferred_dir = content_dir
 # URLs
 #################
 
-c.ServerApp.base_url = '/api/jupyter'
-c.ServerApp.default_url = '/api/jupyter/lab'
+c.ServerApp.base_url = '/'
+c.ServerApp.default_url = '/lab'
 
 #################
 # Kernel
@@ -94,7 +94,7 @@ c.ServerApp.default_url = '/api/jupyter/lab'
 # See
 # https://github.com/jupyterlab/jupyterlab/pull/11841
 # https://github.com/jupyter-server/jupyter_server/pull/657
-c.ServerApp.kernel_ws_protocol = None # None or ''
+c.ZMQChannelsWebsocketConnection.kernel_ws_protocol = None # None or ''
 
 #################
 # JupyterLab

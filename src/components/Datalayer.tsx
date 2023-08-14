@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
-import { DatalayerGreenIcon } from '@datalayer/icons-react';
+import { DatalayerGreenIcon, NetworkIcon } from '@datalayer/icons-react';
 import { UnderlineNav } from '@primer/react/drafts';
-import DatalayerTab from './tabs/DatalayerTab';
+import AboutTab from './tabs/AboutTab';
+import PluginsTab from './tabs/PluginsTab';
 import { requestAPI } from '../handler';
 
 const Datalayer = (): JSX.Element => {
@@ -29,10 +30,14 @@ const Datalayer = (): JSX.Element => {
                 <UnderlineNav.Item aria-current="page" icon={() => <DatalayerGreenIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
                   Datalayer
                 </UnderlineNav.Item>
+                <UnderlineNav.Item icon={NetworkIcon} onSelect={e => {e.preventDefault(); setTab(2);}}>
+                  Plugins
+                </UnderlineNav.Item>
               </UnderlineNav>
             </Box>
             <Box m={3}>
-              {(tab === 1) && <DatalayerTab version={version} />}
+              {(tab === 1) && <AboutTab version={version} />}
+              {(tab === 2) && <PluginsTab />}
             </Box>
           </Box>
         </BaseStyles>
