@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
-import { DatalayerGreenIcon, NetworkIcon } from '@datalayer/icons-react';
 import { UnderlineNav } from '@primer/react/drafts';
+import { DatalayerGreenIcon, JupyterBaseIcon } from '@datalayer/icons-react';
 import AboutTab from './tabs/AboutTab';
-import PluginsTab from './tabs/PluginsTab';
+import JupyterLabTab from './tabs/JupyterLabTab';
 import { requestAPI } from '../handler';
 
-const Datalayer = (): JSX.Element => {
+export type JupyterFrontEndProps = {
+  app?: JupyterFrontEnd;
+}
+
+const Datalayer = (props: JupyterFrontEndProps) => {
+  const { app } = props;
   const [tab, setTab] = useState(1);
   const [version, setVersion] = useState('');
   useEffect(() => {
@@ -24,20 +30,20 @@ const Datalayer = (): JSX.Element => {
     <>
       <ThemeProvider>
         <BaseStyles>
-          <Box style={{maxWidth: 700}}>
+          <Box>
             <Box>
               <UnderlineNav>
-                <UnderlineNav.Item aria-current="page" icon={() => <DatalayerGreenIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
-                  Datalayer
+                <UnderlineNav.Item aria-current="page" icon={() => <JupyterBaseIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
+                  JupyterLab
                 </UnderlineNav.Item>
-                <UnderlineNav.Item icon={NetworkIcon} onSelect={e => {e.preventDefault(); setTab(2);}}>
-                  Plugins
+                <UnderlineNav.Item icon={() => <DatalayerGreenIcon colored/>} onSelect={e => {e.preventDefault(); setTab(2);}}>
+                  About
                 </UnderlineNav.Item>
               </UnderlineNav>
             </Box>
             <Box m={3}>
-              {(tab === 1) && <AboutTab version={version} />}
-              {(tab === 2) && <PluginsTab />}
+              {tab === 1 && app && <JupyterLabTab app={app} />}
+              {tab === 2 && <AboutTab version={version} />}
             </Box>
           </Box>
         </BaseStyles>

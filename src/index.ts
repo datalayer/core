@@ -2,11 +2,9 @@ import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application'
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { MainAreaWidget, ICommandPalette } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
-import { LabIcon } from '@jupyterlab/ui-components';
+import icon from '@datalayer/icons-react/data1/DatalayerGreenIconLabIcon';
 import { requestAPI } from './handler';
-import { CounterWidget } from './widget';
-
-import datalayerSvg from '../style/svg/datalayer.svg';
+import { DatalayerWidget } from './widget';
 
 import '../style/index.css';
 
@@ -33,19 +31,15 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ) => {
     const { commands } = app;
     const command = CommandIDs.create;
-    const datalayerIcon = new LabIcon({
-      name: 'datalayer:icon',
-      svgstr: datalayerSvg
-    });
     commands.addCommand(command, {
       caption: 'Show Datalayer',
       label: 'Datalayer',
-      icon: (args: any) => datalayerIcon,
+      icon,
       execute: () => {
-        const content = new CounterWidget();
-        const widget = new MainAreaWidget<CounterWidget>({ content });
+        const content = new DatalayerWidget(app);
+        const widget = new MainAreaWidget<DatalayerWidget>({ content });
         widget.title.label = 'Datalayer';
-        widget.title.icon = datalayerIcon;
+        widget.title.icon = icon;
         app.shell.add(widget, 'main');
       }
     });

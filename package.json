@@ -1,7 +1,7 @@
 {
   "name": "@datalayer/core",
   "version": "0.0.4",
-  "description": "Datalayer.",
+  "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
     "jupyter",
@@ -69,6 +69,8 @@
     "@jupyterlab/coreutils": "6.0.3",
     "@jupyterlab/services": "7.0.3",
     "@jupyterlab/settingregistry": "4.0.3",
+    "echarts": "5.4.2",
+    "echarts-for-react": "3.0.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "styled-components": "5.3.10"
