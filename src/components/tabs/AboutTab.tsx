@@ -11,17 +11,25 @@ const AboutTab = (props: Props): JSX.Element => {
   const [pirate, setPirate] = useState(false);
   return (
     <>
-      <Pagehead as="h3">Datalayer <Label>{version}</Label></Pagehead>
+      <Pagehead as="h3">Datalayer<Label sx={{marginLeft: 1}}>{version}</Label></Pagehead>
       <Box>
-        {pirate ?
-          <PirateSkull2Icon size={500} onClick={e => setPirate(false)}/>
-        :
+        <Text>Ξ Datalayer core: The Datalayer package provides core features to other Datalayer packages. It contains base application classes and configuration inherited by other projects.</Text>
+      </Box>
+      <Box mt={3}>
+        {!pirate ?
           <img src="https://assets.datalayer.tech/releases/0.2.0-omalley.png" onClick={e => setPirate(true)}/>
+            :
+          <PirateSkull2Icon size={500} onClick={e => setPirate(false)}/>
         }
       </Box>
       <Box>
         <Link href="https://datalayer.tech/docs/releases/0.2.0-omalley" target="_blank">
           <Text as="h4">O'Malley release</Text>
+        </Link>
+      </Box>
+      <Box>
+        <Link href="https://github.com/datalayer/datalayer" target="_blank">
+          <Text as="h4">Source code</Text>
         </Link>
       </Box>
     </>

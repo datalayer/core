@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  NetworkIcon, LegoBlueIcon, OutputIcon, ShuffleIcon,
+  NetworkIcon, LegoSquareBlueIcon, OutputIcon, ShuffleIcon,
   LevelSliderIcon, FileIcon, HardDriveIcon, JupyterServerIcon
 } from '@datalayer/icons-react';
 import { Box, NavList } from '@primer/react';
@@ -21,7 +21,11 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
     <>
       <Box sx={{display: 'flex'}}>
         <Box>
-          <NavList>
+          <NavList sx={{
+              '> *': {
+                paddingTop: '0px'
+              }
+            }}>
             <NavList.Item aria-current={nav === 1 ? 'page' : undefined} onClick={e => setNav(1)}>
               <NavList.LeadingVisual>
                 <NetworkIcon />
@@ -48,7 +52,7 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
             </NavList.Item>
             <NavList.Item aria-current={nav === 5 ? 'page' : undefined} onClick={e => setNav(5)}>
               <NavList.LeadingVisual>
-                <LegoBlueIcon colored/>
+                <LegoSquareBlueIcon colored/>
               </NavList.LeadingVisual>
               Widgets
             </NavList.Item>

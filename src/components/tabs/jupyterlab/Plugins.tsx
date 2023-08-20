@@ -5,7 +5,7 @@ import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from
 import { CanvasRenderer } from 'echarts/renderers';
 import ReactEChartsCore from 'echarts-for-react/lib/core';
 import { JupyterFrontEndProps } from './../../Datalayer';
-import { PluginsModel } from './PluginsModel';
+import { PluginsNetwork } from './PluginsNetwork';
 
 echarts.use(
   [
@@ -23,7 +23,7 @@ const Plugins = (props: JupyterFrontEndProps) => {
   const [option, setOption] = useState<any>(undefined);
   useEffect(() => {
     const plugins = (app as any)['_plugins'];
-    const pluginsModel = new PluginsModel({ plugins });
+    const pluginsModel = new PluginsNetwork({ plugins });
     const option = {
       showLoading: true,
       tooltip: {},

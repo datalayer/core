@@ -1,4 +1,4 @@
-export class PluginsModel {
+export class PluginsNetwork {
 
   constructor(options: Model.IOptions) {
     this._plugins = options.plugins;
