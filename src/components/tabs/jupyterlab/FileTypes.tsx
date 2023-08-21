@@ -9,17 +9,17 @@ class JupyterLabFileType implements DocumentRegistry.IFileType {
   constructor(fileType: any) {
     this._fileType = fileType;
   }
-  get id() { return this._fileType.name}
-  get name() { return this._fileType.name}
-  get displayName() { return this._fileType.displayName}
-  get fileFormat() { return this._fileType.fileFormat}
-  get icon() { return this._fileType.icon}
-  get extensions() { return this._fileType.extensions}
-  get contentType(): any {return this.contentType()}
-  get mimeTypes(): any {return this.mimeTypes()}
-  get pattern():any  {return this.pattern()}
-  get iconClass(): any {return this.iconClass()}
-  get iconLabel():any {return this.iconLabel()}
+  get id() { return this._fileType.name }
+  get name() { return this._fileType.name }
+  get displayName() { return this._fileType.displayName }
+  get fileFormat() { return this._fileType.fileFormat }
+  get icon() { return this._fileType.icon }
+  get extensions() { return this._fileType.extensions }
+  get contentType() {return this._fileType.contentType() }
+  get mimeTypes() { return this._fileType.mimeTypes() }
+  get pattern()  { return this._fileType.pattern() }
+  get iconClass() { return this._fileType.iconClass() }
+  get iconLabel() { return this._fileType.iconLabel() }
 }
 
 const FileTypes = (props: JupyterFrontEndProps) => {
@@ -36,10 +36,10 @@ const FileTypes = (props: JupyterFrontEndProps) => {
     <>
       { fileTypes &&
         <Table.Container>
-          <Table.Title as="h2" id="repositories">
+          <Table.Title as="h2" id="file-types">
             File types
           </Table.Title>
-          <Table.Subtitle as="p" id="repositories-subtitle">
+          <Table.Subtitle as="p" id="file-types-subtitle">
             List of registered file types.
           </Table.Subtitle>
           <DataTable
@@ -69,7 +69,7 @@ const FileTypes = (props: JupyterFrontEndProps) => {
                 header: 'Display Name',
                 field: 'displayName',
                 renderCell: row => {
-                  return <Text>{String(row.displayName)}</Text>;
+                  return <Text>{String(row.displayName)}</Text>
                 }
               },
               {
@@ -87,7 +87,7 @@ const FileTypes = (props: JupyterFrontEndProps) => {
                 header: 'File Format',
                 field: 'fileFormat',
                 renderCell: row => {
-                  return <Label variant="primary">{String(row.fileFormat)}</Label>;
+                  return <Label variant="primary">{String(row.fileFormat)}</Label>
                 }
               },
             ]

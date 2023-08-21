@@ -10,12 +10,12 @@ class JupyterLabModelFactory implements DocumentRegistry.IModelFactory<any> {
   constructor(modelFactory: DocumentRegistry.IModelFactory<any>) {
     this._modelFactory = modelFactory;
   }
-  get id() { return this._modelFactory.name}
-  get name() { return this._modelFactory.name}
-  get contentType() {return this._modelFactory.contentType}
-  get collaborative() {return this._modelFactory.collaborative}
-  get isDisposed() {return this._modelFactory.isDisposed};
-  get fileFormat() {return this._modelFactory.fileFormat};
+  get id() { return this._modelFactory.name }
+  get name() { return this._modelFactory.name }
+  get contentType() { return this._modelFactory.contentType }
+  get collaborative() { return this._modelFactory.collaborative }
+  get isDisposed() { return this._modelFactory.isDisposed }
+  get fileFormat() { return this._modelFactory.fileFormat }
   createNew(options?: DocumentRegistry.IModelOptions<ISharedDocument> | undefined) {
     throw new Error('Method not implemented.');
   }
@@ -33,18 +33,18 @@ const Models = (props: JupyterFrontEndProps) => {
   useEffect(() => {
     if (app) {
       const modelFactories = Array.from(app?.docRegistry.modelFactories());
-      const jupyterlabFileTypes = modelFactories.map(modelFactory => new JupyterLabModelFactory(modelFactory));
-      setModelFactories(jupyterlabFileTypes);    
+      const jupyterlabModelFactories = modelFactories.map(modelFactory => new JupyterLabModelFactory(modelFactory));
+      setModelFactories(jupyterlabModelFactories);    
     }
   }, [app]);
   return (
     <>
       { modelFactories &&
         <Table.Container>
-          <Table.Title as="h2" id="repositories">
+          <Table.Title as="h2" id="model-factories">
             Model Factories
           </Table.Title>
-          <Table.Subtitle as="p" id="repositories-subtitle">
+          <Table.Subtitle as="p" id="model-factories-subtitle">
             List of registered model factories.
           </Table.Subtitle>
           <DataTable
@@ -71,7 +71,7 @@ const Models = (props: JupyterFrontEndProps) => {
                 header: 'File Format',
                 field: 'fileFormat',
                 renderCell: row => {
-                  return <Label variant="primary">{String(row.fileFormat)}</Label>;
+                  return <Label variant="primary">{String(row.fileFormat)}</Label>
                 }
               },
             ]
