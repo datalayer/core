@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  NetworkIcon, LegoSquareBlueIcon, OutputIcon, ShuffleIcon,
+  NetworkIcon, LegoSquareBlueIcon, LegoIcon, OutputIcon, ShuffleIcon,
   LevelSliderIcon, FileIcon, HardDriveIcon, JupyterServerIcon
 } from '@datalayer/icons-react';
 import { Box, NavList } from '@primer/react';
@@ -10,13 +10,14 @@ import FileTypes from './jupyterlab/FileTypes';
 import Drives from './jupyterlab/Drives';
 import Models from './jupyterlab/Models';
 import Widgets from './jupyterlab/Widgets';
+import WidgetExtensions from './jupyterlab/WidgetExtensions';
 import Settings from './jupyterlab/Settings';
 import IPyWidgets from './jupyterlab/IPyWidgets';
 import Server from './jupyterlab/Server';
 
 const JupyterLabTab = (props: JupyterFrontEndProps) => {
   const { app } = props;
-  const [nav, setNav] = useState(2);
+  const [nav, setNav] = useState(1);
   return (
     <>
       <Box sx={{display: 'flex'}}>
@@ -58,17 +59,23 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
             </NavList.Item>
             <NavList.Item aria-current={nav === 6 ? 'page' : undefined} onClick={e => setNav(6)}>
               <NavList.LeadingVisual>
+                <LegoIcon colored/>
+              </NavList.LeadingVisual>
+              Widget Extensions
+            </NavList.Item>
+            <NavList.Item aria-current={nav === 7 ? 'page' : undefined} onClick={e => setNav(7)}>
+              <NavList.LeadingVisual>
                 <OutputIcon colored/>
               </NavList.LeadingVisual>
               IPyWidgets
             </NavList.Item>
-            <NavList.Item aria-current={nav === 7 ? 'page' : undefined} onClick={e => setNav(7)}>
+            <NavList.Item aria-current={nav === 8 ? 'page' : undefined} onClick={e => setNav(8)}>
               <NavList.LeadingVisual>
                 <LevelSliderIcon colored/>
               </NavList.LeadingVisual>
               Settings
             </NavList.Item>
-            <NavList.Item aria-current={nav === 8 ? 'page' : undefined} onClick={e => setNav(8)}>
+            <NavList.Item aria-current={nav === 9 ? 'page' : undefined} onClick={e => setNav(9)}>
               <NavList.LeadingVisual>
                 <JupyterServerIcon colored/>
               </NavList.LeadingVisual>
@@ -82,9 +89,10 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
           {(nav === 3) && <Models app={app} />}
           {(nav === 4) && <Drives app={app} />}
           {(nav === 5) && <Widgets app={app} />}
-          {(nav === 6) && <IPyWidgets app={app} />}
-          {(nav === 7) && <Settings app={app} />}
-          {(nav === 8) && <Server app={app} />}
+          {(nav === 6) && <WidgetExtensions app={app} />}
+          {(nav === 7) && <IPyWidgets app={app} />}
+          {(nav === 8) && <Settings app={app} />}
+          {(nav === 9) && <Server app={app} />}
         </Box>
       </Box>
     </>
