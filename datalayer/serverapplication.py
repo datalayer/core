@@ -35,7 +35,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     def initialize_handlers(self):
         handlers = [
             ("datalayer", IndexHandler),
-            (url_path_join("datalayer", "get_config"), ConfigHandler),
+            (url_path_join("datalayer", "config"), ConfigHandler),
         ]
         self.handlers.extend(handlers)
 

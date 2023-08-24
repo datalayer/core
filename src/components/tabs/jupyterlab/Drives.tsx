@@ -53,11 +53,10 @@ const Drives = (props: JupyterFrontEndProps) => {
                 field: 'sharedModelFactory',
                 renderCell: row => <Label>{String(row.sharedModelFactory?.collaborative)}</Label>
               },
-            ]
-          }
-        />
-      </Table.Container>
-    }
+            ]}
+          />
+        </Table.Container>
+      }
     </>
   )
 }
