@@ -2,6 +2,10 @@
     overflow-y: visible;
 }
 
-.jp-Launcher-section:has([data-category='Datalayer']) {
+.jp-Launcher-content {
+    display: grid;
+}
+
+.jp-Launcher-section:nth-child(5) {
     order: -1;
 }
