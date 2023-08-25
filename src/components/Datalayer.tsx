@@ -22,7 +22,7 @@ const Datalayer = (props: JupyterFrontEndProps) => {
     })
     .catch(reason => {
       console.error(
-        `The Jupyter Server datalayer extension appears to be missing.\n${reason}`
+        `Error while accessing the Jupyter Server datalayer extension..\n${reason}`
       );
     });
   });
