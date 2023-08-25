@@ -22,7 +22,7 @@ const Datalayer = (props: JupyterFrontEndProps) => {
     })
     .catch(reason => {
       console.error(
-        `Error while accessing the Jupyter Server datalayer extension..\n${reason}`
+        `Error while accessing the Jupyter Server datalayer extension.\n${reason}`
       );
     });
   });
