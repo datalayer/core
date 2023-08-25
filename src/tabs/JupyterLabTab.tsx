@@ -4,7 +4,7 @@ import {
   LevelSliderIcon, FileIcon, HardDriveIcon, JupyterServerIcon
 } from '@datalayer/icons-react';
 import { Box, NavList } from '@primer/react';
-import { JupyterFrontEndProps } from './../Datalayer';
+import { JupyterFrontEndProps } from '../Datalayer';
 import Plugins from './jupyterlab/Plugins';
 import FileTypes from './jupyterlab/FileTypes';
 import Drives from './jupyterlab/Drives';

@@ -5,7 +5,7 @@ import { UnderlineNav } from '@primer/react/drafts';
 import { DatalayerGreenIcon, JupyterBaseIcon } from '@datalayer/icons-react';
 import AboutTab from './tabs/AboutTab';
 import JupyterLabTab from './tabs/JupyterLabTab';
-import { requestAPI } from '../handler';
+import { requestAPI } from './handler';
 
 export type JupyterFrontEndProps = {
   app?: JupyterFrontEnd;
