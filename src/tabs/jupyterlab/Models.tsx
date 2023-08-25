@@ -3,9 +3,8 @@ import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { Label, Text } from '@primer/react';
 import { Table, DataTable } from '@primer/react/drafts';
 import { JupyterFrontEndProps } from '../../Datalayer';
-import { ISharedDocument } from '@jupyter/ydoc';
 
-class JupyterLabModelFactory implements DocumentRegistry.IModelFactory<any> {
+class JupyterLabModelFactory implements Partial<DocumentRegistry.IModelFactory<any>> {
   private _modelFactory: DocumentRegistry.IModelFactory<any> ;
   constructor(modelFactory: DocumentRegistry.IModelFactory<any>) {
     this._modelFactory = modelFactory;
@@ -16,15 +15,6 @@ class JupyterLabModelFactory implements DocumentRegistry.IModelFactory<any> {
   get collaborative() { return this._modelFactory.collaborative }
   get isDisposed() { return this._modelFactory.isDisposed }
   get fileFormat() { return this._modelFactory.fileFormat }
-  createNew(options?: DocumentRegistry.IModelOptions<ISharedDocument> | undefined) {
-    throw new Error('Method not implemented.');
-  }
-  preferredLanguage(path: string): string {
-    throw new Error('Method not implemented.');
-  }
-  dispose(): void {
-    throw new Error('Method not implemented.');
-  }
 }
 
 const Models = (props: JupyterFrontEndProps) => {
@@ -48,8 +38,8 @@ const Models = (props: JupyterFrontEndProps) => {
             List of registered model factories.
           </Table.Subtitle>
           <DataTable
-            aria-labelledby="file-types"
-            aria-describedby="file-types-subtitle" 
+            aria-labelledby="model-factories"
+            aria-describedby="model-factories-subtitle" 
             data={modelFactories}
             columns={[
               {

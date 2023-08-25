@@ -2,21 +2,23 @@ import { useState, useEffect } from 'react';
 import { Box, Text, Label } from '@primer/react';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
-class ExtensionWithId {
+type WidgetExtension = any;
+
+class WidgetExtensionWithId {
   private _widgetName: string;
-  private _extension: any;
-  constructor(widgetName: string, extension: any) {
+  private _extension: WidgetExtension;
+  constructor(widgetName: string, extension: WidgetExtension) {
     this._widgetName = widgetName;
     this._extension = extension;
   }
   get id() { return this.widgetName }
   get widgetName() { return this._widgetName }
-  get extension(): any { return this._extension }
+  get extension() { return this._extension }
 }
 
-type JupyterLabWidgetExtensions = Map<string, ExtensionWithId[]>;
+type JupyterLabWidgetExtensions = Map<string, WidgetExtensionWithId[]>;
 
-type Props = { widgetName: string, extensions: ExtensionWithId[] };
+type Props = { widgetName: string, extensions: WidgetExtensionWithId[] };
 
 const WidgetExtensionTable = (props: Props) => {
   const { widgetName, extensions } = props;
@@ -45,10 +47,10 @@ const WidgetExtensions = (props: JupyterFrontEndProps) => {
   useEffect(() => {
     if (app) {
       const widgetExtensions = (app!.docRegistry as any)._extenders;
-      const w = new Map<string, Array<ExtensionWithId>>();
+      const w = new Map<string, Array<WidgetExtensionWithId>>();
       Object.keys(widgetExtensions).forEach(widgetName => {
         const extensions = widgetExtensions[widgetName];
-        const e = extensions!.map((e: any) => new ExtensionWithId(widgetName, e));
+        const e = extensions!.map((e: any) => new WidgetExtensionWithId(widgetName, e));
         w.set(widgetName, e);
       });
       setWidgetExtensions(w);
