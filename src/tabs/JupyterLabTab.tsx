@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  NetworkIcon, LegoSquareBlueIcon, LegoIcon, OutputIcon, ShuffleIcon,
+  NetworkIcon, LegoSquareBlueIcon, SparklesIcon, OutputIcon, ShuffleIcon,
   LevelSliderIcon, FileIcon, HardDriveIcon, JupyterServerIcon
 } from '@datalayer/icons-react';
 import { Box, NavList } from '@primer/react';
@@ -59,7 +59,7 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
             </NavList.Item>
             <NavList.Item aria-current={nav === 6 ? 'page' : undefined} onClick={e => setNav(6)}>
               <NavList.LeadingVisual>
-                <LegoIcon colored/>
+                <SparklesIcon colored/>
               </NavList.LeadingVisual>
               Widget Extensions
             </NavList.Item>

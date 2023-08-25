@@ -25,9 +25,6 @@ const WidgetExtensionTable = (props: Props) => {
       <Box>
         <Text><Label>{widgetName}</Label></Text>
       </Box>
-      <Box>
-        <Text>List of registered widgets extensions for the {widgetName} widget.</Text>
-      </Box>
       { extensions.map(extension => {
           return (
             <>
