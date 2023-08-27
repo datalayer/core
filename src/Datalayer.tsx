@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { ThemeProvider, BaseStyles, Box } from '@primer/react';
-import { UnderlineNav } from '@primer/react';
+import { ThemeProvider, BaseStyles, Box, UnderlineNav } from '@primer/react';
 import { DatalayerGreenIcon, JupyterBaseIcon } from '@datalayer/icons-react';
 import AboutTab from './tabs/AboutTab';
 import JupyterLabTab from './tabs/JupyterLabTab';
@@ -32,11 +31,11 @@ const Datalayer = (props: JupyterFrontEndProps) => {
         <BaseStyles>
           <Box>
             <Box>
-              <UnderlineNav>
-                <UnderlineNav.Item aria-current="page" icon={() => <JupyterBaseIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
+              <UnderlineNav aria-label="datalayer">
+                <UnderlineNav.Item aria-label="jupyterlab" aria-current="page" icon={() => <JupyterBaseIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
                   JupyterLab
                 </UnderlineNav.Item>
-                <UnderlineNav.Item icon={() => <DatalayerGreenIcon colored/>} onSelect={e => {e.preventDefault(); setTab(2);}}>
+                <UnderlineNav.Item aria-label="about" icon={() => <DatalayerGreenIcon colored/>} onSelect={e => {e.preventDefault(); setTab(2);}}>
                   About
                 </UnderlineNav.Item>
               </UnderlineNav>
