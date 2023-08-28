@@ -52,7 +52,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         rank: 1
       });
     }
-    console.log('JupyterLab extension @datalayer/core is activated!');
+    console.log('JupyterLab plugin @datalayer/core is activated!');
     if (settingRegistry) {
       settingRegistry
         .load(plugin.id)
