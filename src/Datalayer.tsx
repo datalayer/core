@@ -32,7 +32,7 @@ const Datalayer = (props: JupyterFrontEndProps) => {
           <Box>
             <Box>
               <UnderlineNav aria-label="datalayer">
-                <UnderlineNav.Item aria-label="jupyterlab" aria-current={tab === 1 ? "page" : undefined}  icon={() => <JupyterBaseIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
+                <UnderlineNav.Item aria-label="jupyterlab" aria-current={tab === 1 ? "page" : undefined} icon={() => <JupyterBaseIcon colored/>} onSelect={e => {e.preventDefault(); setTab(1);}}>
                   JupyterLab
                 </UnderlineNav.Item>
                 <UnderlineNav.Item aria-label="about" aria-current={tab === 2 ? "page" : undefined} icon={() => <DatalayerGreenIcon colored/>} onSelect={e => {e.preventDefault(); setTab(2);}}>
