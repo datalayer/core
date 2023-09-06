@@ -11,9 +11,9 @@ const AboutTab = (props: Props): JSX.Element => {
   const [pirate, setPirate] = useState(false);
   return (
     <>
-      <Pagehead as="h3">Datalayer<Label sx={{marginLeft: 1}}>{version}</Label></Pagehead>
+      <Pagehead>Ξ Datalayer Core<Label sx={{marginLeft: 1}}>{version}</Label></Pagehead>
       <Box>
-        <Text>Ξ Datalayer core: The Datalayer package provides core features to other Datalayer packages. It contains base application classes and configuration inherited by other projects.</Text>
+        <Text>Datalayer Core provides features to other Datalayer packages. It also contains base application classes and configuration inherited by other projects.</Text>
       </Box>
       <Box mt={3}>
         {!pirate ?
