@@ -33,12 +33,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
     const command = CommandIDs.create;
     commands.addCommand(command, {
       caption: 'Show Datalayer',
-      label: 'Datalayer Core',
+      label: 'Datalayer',
       icon,
       execute: () => {
         const content = new DatalayerWidget(app);
         const widget = new MainAreaWidget<DatalayerWidget>({ content });
-        widget.title.label = 'Datalayer Core';
+        widget.title.label = 'Datalayer';
         widget.title.icon = icon;
         app.shell.add(widget, 'main');
       }
