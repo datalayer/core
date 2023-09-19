@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { ThemeProvider, BaseStyles, Box, UnderlineNav } from '@primer/react';
+import { ThemeProvider, BaseStyles, Box, } from '@primer/react';
+import { UnderlineNav } from '@primer/react/drafts';
 import { DatalayerGreenIcon, JupyterBaseIcon } from '@datalayer/icons-react';
 import AboutTab from './tabs/AboutTab';
 import JupyterLabTab from './tabs/JupyterLabTab';

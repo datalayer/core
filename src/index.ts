@@ -49,7 +49,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       launcher.add({
         command,
         category,
-        rank: 0
+        rank: 1.1
       });
     }
     console.log('JupyterLab plugin @datalayer/core is activated!');
