@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Text } from '@primer/react';
 import * as echarts from 'echarts/core';
 import { GraphChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from 'echarts/components';
@@ -66,8 +67,9 @@ const Plugins = (props: JupyterFrontEndProps) => {
     };
     setOption(option);
   }, [app]);
-  return (
-    option ? 
+  return <>
+    <Text as="h4" sx={{margin: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: 1}}>Plugins</Text>
+    {option ?
       <ReactEChartsCore
         echarts={echarts}
         option={option}
@@ -77,7 +79,8 @@ const Plugins = (props: JupyterFrontEndProps) => {
       />
       :
       <></>
-  );
+    }
+  </>;
 }
 
 export default Plugins;
