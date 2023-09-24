@@ -35,7 +35,7 @@ module.exports = {
   },
   output: {
     publicPath: "http://localhost:3063/",
-    filename: '[name].[contenthash].datalayer.js',
+    filename: '[name].datalayer.js',
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],
