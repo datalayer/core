@@ -23,10 +23,10 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
       <Box sx={{display: 'flex'}}>
         <Box>
           <NavList sx={{
-              '> *': {
-                paddingTop: '0px'
-              }
-            }}>
+            '> *': {
+              paddingTop: '0px'
+            }
+          }}>
             <NavList.Item aria-current={nav === 1 ? 'page' : undefined} onClick={e => setNav(1)}>
               <NavList.LeadingVisual>
                 <NetworkIcon />
