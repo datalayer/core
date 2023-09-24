@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { LabelGroup, Label, Text, Box } from '@primer/react';
+import { Table, DataTable, PageHeader } from '@primer/react/drafts';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
-import { Table, DataTable } from '@primer/react/drafts';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
-class JupyterLabFileType implements DocumentRegistry.IFileType {
+class FileType implements DocumentRegistry.IFileType {
   private _fileType;
   constructor(fileType: any) {
     this._fileType = fileType;
@@ -24,16 +24,21 @@ class JupyterLabFileType implements DocumentRegistry.IFileType {
 
 const FileTypes = (props: JupyterFrontEndProps) => {
   const { app } = props;
-  const [fileTypes, setFileTypes] = useState<JupyterLabFileType[]>();
+  const [fileTypes, setFileTypes] = useState<FileType[]>();
   useEffect(() => {
     if (app) {
       const fileTypes = Array.from(app.docRegistry.fileTypes());
-      const jupyterlabFileTypes = fileTypes.map(fileType => new JupyterLabFileType(fileType));
+      const jupyterlabFileTypes = fileTypes.map(fileType => new FileType(fileType));
       setFileTypes(jupyterlabFileTypes);    
     }
   }, [app]);
   return (
     <>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>File Types</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
       { fileTypes &&
         <Table.Container>
           <Table.Title as="h2" id="file-types">

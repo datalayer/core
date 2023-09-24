@@ -56,15 +56,17 @@
     "start:webpack": "webpack serve",
     "start:jupyter-server": "cd ./dev/sh && ./start-jupyter-server.sh",
     "jupyterlab": "run-p -c 'jupyterlab:*'",
-    "jupyterlab:start": "jupyter lab --watch --config=./dev/config/jupyter_server_config.py",
-    "jupyterlab:watch": "run-p -c watch:src watch:labextension",
+    "jupyterlab:server": "jupyter server --config=./dev/config/jupyter_server_config.py",
+    "jupyterlab:webpack": "webpack serve",
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
     "watch:labextension": "jupyter labextension watch .",
     "kill": "./dev/sh/kill-jupyter-server.sh || true"
   },
   "dependencies": {
+    "@datalayer/jupyter-react": "0.7.7",
     "@datalayer/primer-addons": "0.1.4",
+    "@jupyter/collaboration-extension": "1.2.0",
     "@jupyterlab/application": "4.0.3",
     "@jupyterlab/coreutils": "6.0.3",
     "@jupyterlab/services": "7.0.3",
@@ -135,7 +137,7 @@
         }
       }
     },
-    "extension": true,
+    "extension": "./lib/jupyterlab/index.js",
     "outputDir": "datalayer/labextension",
     "schemaDir": "schema"
   },

@@ -1,25 +1,26 @@
-import { Box, SubNav, Text } from '@primer/react';
+import { PageHeader, UnderlineNav } from '@primer/react/drafts';
+import { PlusIcon, SettingsIcon } from '@datalayer/icons-react';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
 const Server = (props: JupyterFrontEndProps) => {
   return (
-    <Box>
-      <Box>
-        <SubNav aria-label="Jupyter Server">
-          <SubNav.Links>
-            <SubNav.Link selected>
+    <>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Server</PageHeader.Title>
+        </PageHeader.TitleArea>
+        <PageHeader.Navigation>
+          <UnderlineNav aria-label="Server">
+            <UnderlineNav.Item icon={PlusIcon} counter="12" aria-current="page">
               Extensions
-            </SubNav.Link>
-            <SubNav.Link>
+            </UnderlineNav.Item>
+            <UnderlineNav.Item counter={3} icon={SettingsIcon}>
               Settings
-            </SubNav.Link>
-          </SubNav.Links>
-        </SubNav>
-      </Box>
-      <Box>
-        <Text>Server</Text>
-      </Box>
-    </Box>
+            </UnderlineNav.Item>
+          </UnderlineNav>
+        </PageHeader.Navigation>
+      </PageHeader>
+    </>
   )
 }
 

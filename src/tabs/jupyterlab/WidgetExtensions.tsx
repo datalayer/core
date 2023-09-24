@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Box, Text, Label } from '@primer/react';
+import { Box, Heading, Label } from '@primer/react';
+import { PageHeader } from '@primer/react/drafts';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
 type WidgetExtension = any;
@@ -18,20 +19,23 @@ class WidgetExtensionWithId {
 
 type JupyterLabWidgetExtensions = Map<string, WidgetExtensionWithId[]>;
 
-type Props = { widgetName: string, extensions: WidgetExtensionWithId[] };
+type Props = {
+  widgetName: string,
+  extensions: WidgetExtensionWithId[],
+};
 
 const WidgetExtensionTable = (props: Props) => {
   const { widgetName, extensions } = props;
   return (
     <>
       <Box>
-        <Text><Label>{widgetName}</Label></Text>
+        <Heading sx={{fontSize: 2, mb: 2}}>{widgetName}</Heading>
       </Box>
       { extensions.map(extension => {
           return (
             <>
               <Box>
-                {extension.extension.constructor.name}
+                <Label>{extension.extension.constructor.name}</Label>
               </Box>
             </>
           )
@@ -42,7 +46,7 @@ const WidgetExtensionTable = (props: Props) => {
 } 
 
 const WidgetExtensions = (props: JupyterFrontEndProps) => {
-  const { app } = props;  
+  const { app } = props;
   const [widgetExtensions, setWidgetExtensions] = useState<JupyterLabWidgetExtensions>();
   useEffect(() => {
     if (app) {
@@ -58,6 +62,11 @@ const WidgetExtensions = (props: JupyterFrontEndProps) => {
   }, [app]);
   return (
     <>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Widget Extensions</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
       { widgetExtensions &&
         Array.from(widgetExtensions.entries()).map(entry => {
           const [widgetName, extensions] = entry;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
-  NetworkIcon, LegoSquareBlueIcon, SparklesIcon, OutputIcon, ShuffleIcon,
-  LevelSliderIcon, FileIcon, HardDriveIcon, JupyterServerIcon
+  NetworkIcon, WidgetsIcon, PlusIcon, IpyWidgetsIcon, ShuffleIcon,
+  SettingsIcon, FileIcon, HardDriveIcon, JupyterServerIcon
 } from '@datalayer/icons-react';
 import { Box, NavList } from '@primer/react';
 import { JupyterFrontEndProps } from '../Datalayer';
@@ -41,7 +41,7 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
             </NavList.Item>
             <NavList.Item aria-current={nav === 3 ? 'page' : undefined} onClick={e => setNav(3)}>
               <NavList.LeadingVisual>
-                <ShuffleIcon colored/>
+                <ShuffleIcon/>
               </NavList.LeadingVisual>
               Models
             </NavList.Item>
@@ -53,31 +53,31 @@ const JupyterLabTab = (props: JupyterFrontEndProps) => {
             </NavList.Item>
             <NavList.Item aria-current={nav === 5 ? 'page' : undefined} onClick={e => setNav(5)}>
               <NavList.LeadingVisual>
-                <LegoSquareBlueIcon colored/>
+                <WidgetsIcon/>
               </NavList.LeadingVisual>
               Widgets
             </NavList.Item>
             <NavList.Item aria-current={nav === 6 ? 'page' : undefined} onClick={e => setNav(6)}>
               <NavList.LeadingVisual>
-                <SparklesIcon colored/>
+                <PlusIcon/>
               </NavList.LeadingVisual>
               Widget Extensions
             </NavList.Item>
             <NavList.Item aria-current={nav === 7 ? 'page' : undefined} onClick={e => setNav(7)}>
               <NavList.LeadingVisual>
-                <OutputIcon colored/>
+                <IpyWidgetsIcon/>
               </NavList.LeadingVisual>
               IPyWidgets
             </NavList.Item>
             <NavList.Item aria-current={nav === 8 ? 'page' : undefined} onClick={e => setNav(8)}>
               <NavList.LeadingVisual>
-                <LevelSliderIcon colored/>
+                <SettingsIcon/>
               </NavList.LeadingVisual>
               Settings
             </NavList.Item>
             <NavList.Item aria-current={nav === 9 ? 'page' : undefined} onClick={e => setNav(9)}>
               <NavList.LeadingVisual>
-                <JupyterServerIcon colored/>
+                <JupyterServerIcon/>
               </NavList.LeadingVisual>
               Server
             </NavList.Item>

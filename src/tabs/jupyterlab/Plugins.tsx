@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Text } from '@primer/react';
+import { PageHeader } from '@primer/react/drafts';
 import * as echarts from 'echarts/core';
 import { GraphChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from 'echarts/components';
@@ -67,20 +67,24 @@ const Plugins = (props: JupyterFrontEndProps) => {
     };
     setOption(option);
   }, [app]);
-  return <>
-    <Text as="h4" sx={{margin: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: 1}}>Plugins</Text>
-    {option ?
-      <ReactEChartsCore
-        echarts={echarts}
-        option={option}
-        style={{ height: 'calc(100vh - 160px)' }}
-        notMerge={true}
-        lazyUpdate={true}
-      />
-      :
-      <></>
-    }
-  </>;
+  return (
+    <>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Plugins</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
+      {option &&
+        <ReactEChartsCore
+          echarts={echarts}
+          option={option}
+          style={{ height: 'calc(100vh - 200px)' }}
+          notMerge={true}
+          lazyUpdate={true}
+        />
+      }
+    </>
+  );
 }
 
 export default Plugins;

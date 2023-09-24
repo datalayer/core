@@ -1,10 +1,15 @@
-import { Box, Text } from '@primer/react';
+import { Box } from '@primer/react';
+import { PageHeader } from '@primer/react/drafts';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
 const Settings = (props: JupyterFrontEndProps) => {
   return (
     <Box>
-      <Text>Settings</Text>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Settings</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
     </Box>
   )
 }

@@ -6,7 +6,7 @@ import icon from '@datalayer/icons-react/data1/DatalayerGreenIconLabIcon';
 import { requestAPI } from './handler';
 import { DatalayerWidget } from './widget';
 
-import '../style/index.css';
+import '../../style/index.css';
 
 /**
  * The command IDs used by the plugin.
@@ -15,14 +15,28 @@ namespace CommandIDs {
   export const create = 'datalayer:create-datalayer-widget';
 }
 
+export const PLUGIN_ID = '@datalayer/core:plugin';
+
+let tracker: WidgetTracker<MainAreaWidget<DatalayerWidget>>;
+
 /**
  * Initialization data for the @datalayer/core extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: '@datalayer/core:plugin',
+  id: PLUGIN_ID,
   autoStart: true,
   requires: [ICommandPalette],
   optional: [ISettingRegistry, ILauncher, ILayoutRestorer],
+  deactivate: (
+    app: JupyterFrontEnd,
+    palette: ICommandPalette,
+    settingRegistry?: ISettingRegistry,
+    launcher?: ILauncher,
+    restorer?: ILayoutRestorer,
+  ) => {
+    tracker.forEach(widget => widget.dispose());
+    console.log(`${PLUGIN_ID} is deactivated`);
+  },
   activate: (
     app: JupyterFrontEnd,
     palette: ICommandPalette,
@@ -32,9 +46,11 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ) => {
     const { commands } = app;
     const command = CommandIDs.create;
-    const tracker = new WidgetTracker<MainAreaWidget<DatalayerWidget>>({
-      namespace: 'datalayer',
-    });
+    if (!tracker) {
+      tracker = new WidgetTracker<MainAreaWidget<DatalayerWidget>>({
+        namespace: 'datalayer',
+      });
+    }
     if (restorer) {
       void restorer.restore(tracker, {
         command,
@@ -63,20 +79,19 @@ const plugin: JupyterFrontEndPlugin<void> = {
         rank: 1.1,
       });
     }
-    console.log('JupyterLab plugin @datalayer/core is activated!');
     if (settingRegistry) {
       settingRegistry
         .load(plugin.id)
         .then(settings => {
-          console.log('@datalayer/core settings loaded:', settings.composite);
+          console.log(`${PLUGIN_ID} settings loaded:`, settings.composite);
         })
         .catch(reason => {
-          console.error('Failed to load settings for @datalayer/core.', reason);
+          console.error(`Failed to load settings for ${PLUGIN_ID}`, reason);
         });
     }
     requestAPI<any>('config')
       .then(data => {
-        console.log(data);
+        console.log('Received config', data);
       })
       .catch(reason => {
         console.error(
@@ -84,6 +99,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         );
       }
     );
+    console.log(`JupyterLab plugin ${PLUGIN_ID} is activated.`);
   }
 };
 

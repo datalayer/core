@@ -9,8 +9,6 @@ function shim(regExp) {
   return new webpack.NormalModuleReplacementPlugin(regExp, shimJS);
 }
 
-const JUPYTER_HOST = 'http://localhost:8686';
-
 const IS_PRODUCTION = process.argv.indexOf('--mode=production') > -1;
 const mode = IS_PRODUCTION ? "production" : "development";
 // inline-source-map
@@ -18,7 +16,7 @@ const devtool = IS_PRODUCTION ? false : "inline-cheap-source-map";
 const minimize = IS_PRODUCTION ? true : false;
 
 module.exports = {
-  entry: "./src/App",
+  entry: "./src/DatalayerDev",
   mode: mode,
   devServer: {
     port: 3063,
@@ -37,7 +35,7 @@ module.exports = {
   },
   output: {
     publicPath: "http://localhost:3063/",
-    filename: '[name].datalayer.js',
+    filename: '[name].[contenthash].datalayer.js',
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx"],

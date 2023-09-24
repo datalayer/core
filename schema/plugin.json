@@ -1,8 +1,8 @@
 {
-  "jupyter.lab.shortcuts": [],
   "title": "@datalayer/core",
   "description": "@datalayer/core settings.",
   "type": "object",
   "properties": {},
-  "additionalProperties": false
+  "additionalProperties": false,
+  "jupyter.lab.shortcuts": []
 }

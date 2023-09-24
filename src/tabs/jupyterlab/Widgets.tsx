@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { Text, LabelGroup, Label } from '@primer/react';
-import { Table, DataTable } from '@primer/react/drafts';
+import { Table, DataTable, PageHeader } from '@primer/react/drafts';
+import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
 class JupyterLabWidgetFactory implements Partial<DocumentRegistry.IWidgetFactory<any, any>> {
@@ -20,7 +20,7 @@ class JupyterLabWidgetFactory implements Partial<DocumentRegistry.IWidgetFactory
 
 const Widgets = (props: JupyterFrontEndProps) => {
   const { app } = props;
-  const [modelFactories, setWidgetFactories] = useState<JupyterLabWidgetFactory[]>();
+  const [widgetFactories, setWidgetFactories] = useState<JupyterLabWidgetFactory[]>();
   useEffect(() => {
     if (app) {
       const widgetFactories = Array.from(app?.docRegistry.widgetFactories());
@@ -30,7 +30,12 @@ const Widgets = (props: JupyterFrontEndProps) => {
   }, [app]);
   return (
     <>
-      { modelFactories &&
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Widgets</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
+      { widgetFactories &&
         <Table.Container>
           <Table.Title as="h2" id="widget-factories">
             Widget Factories
@@ -41,7 +46,7 @@ const Widgets = (props: JupyterFrontEndProps) => {
           <DataTable
             aria-labelledby="file-types"
             aria-describedby="file-types-subtitle" 
-            data={modelFactories}
+            data={widgetFactories}
             columns={[
               {
                 header: 'Name',

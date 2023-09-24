@@ -1,6 +1,6 @@
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ReactWidget } from '@jupyterlab/apputils';
-import Datalayer from './Datalayer';
+import Datalayer from '../Datalayer';
 
 export class DatalayerWidget extends ReactWidget {
   private _app: JupyterFrontEnd;

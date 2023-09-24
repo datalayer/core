@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { Label, Text } from '@primer/react';
-import { Table, DataTable } from '@primer/react/drafts';
+import { Table, DataTable, PageHeader } from '@primer/react/drafts';
+import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
-class JupyterLabModelFactory implements Partial<DocumentRegistry.IModelFactory<any>> {
+class ModelFactory implements Partial<DocumentRegistry.IModelFactory<any>> {
   private _modelFactory: DocumentRegistry.IModelFactory<any> ;
   constructor(modelFactory: DocumentRegistry.IModelFactory<any>) {
     this._modelFactory = modelFactory;
@@ -19,16 +19,21 @@ class JupyterLabModelFactory implements Partial<DocumentRegistry.IModelFactory<a
 
 const Models = (props: JupyterFrontEndProps) => {
   const { app } = props;
-  const [modelFactories, setModelFactories] = useState<JupyterLabModelFactory[]>();
+  const [modelFactories, setModelFactories] = useState<ModelFactory[]>();
   useEffect(() => {
     if (app) {
       const modelFactories = Array.from(app?.docRegistry.modelFactories());
-      const jupyterlabModelFactories = modelFactories.map(modelFactory => new JupyterLabModelFactory(modelFactory));
+      const jupyterlabModelFactories = modelFactories.map(modelFactory => new ModelFactory(modelFactory));
       setModelFactories(jupyterlabModelFactories);    
     }
   }, [app]);
   return (
     <>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Models</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
       { modelFactories &&
         <Table.Container>
           <Table.Title as="h2" id="model-factories">

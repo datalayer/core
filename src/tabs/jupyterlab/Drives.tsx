@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Contents } from '@jupyterlab/services';
 import { Label, Text } from '@primer/react';
-import { Table, DataTable } from '@primer/react/drafts';
+import { Table, DataTable, PageHeader } from '@primer/react/drafts';
+import { Contents } from '@jupyterlab/services';
 import { JupyterFrontEndProps } from '../../Datalayer';
 
-type JupyterLabDrive = Partial<Contents.IDrive> & {
+type Drive = Partial<Contents.IDrive> & {
   id: number,
 }
 
 const Drives = (props: JupyterFrontEndProps) => {
   const { app } = props;
-  const [_, setDefaultDrive] = useState<JupyterLabDrive>();
-  const [drives, setDrives] = useState<JupyterLabDrive[]>();
+  const [_, setDefaultDrive] = useState<Drive>();
+  const [drives, setDrives] = useState<Drive[]>();
   useEffect(() => {
     if (app) {
       const defaultDrive: Contents.IDrive = (app.serviceManager.contents as any)["_defaultDrive"];
@@ -30,6 +30,11 @@ const Drives = (props: JupyterFrontEndProps) => {
   }, [app]);
   return (
     <>
+      <PageHeader>
+        <PageHeader.TitleArea>
+          <PageHeader.Title>Drives</PageHeader.Title>
+        </PageHeader.TitleArea>
+      </PageHeader>
       { drives &&
         <Table.Container>
           <Table.Title as="h2" id="repositories">

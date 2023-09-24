@@ -1,3 +1,18 @@
+type Node = {
+  "id": string;
+  "name": string;
+  "category": string;
+}
+
+type Category = {
+  "name": string;
+}
+
+type Edge = {
+  "source": string;
+  "target": string;
+}
+
 export class PluginsNetwork {
 
   constructor(options: Model.IOptions) {
@@ -96,7 +111,7 @@ export class PluginsNetwork {
   }
 
   get nodes(): Array<any> {
-    return Array.from(this._nodes.values());
+    return Array.from(this._nodes.values()).sort((a, b) => a.id.localeCompare(b.id));
   }
 
   get edges(): Array<any> {
@@ -104,13 +119,13 @@ export class PluginsNetwork {
   }
 
   get categories(): Array<any> {
-    return Array.from(this._categories.values());
+    return Array.from(this._categories.values()).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   private _plugins: any;
-  private _nodes = new Map<string, any>();
-  private _edges = new Array<any>();
-  private _categories = new Map<string, any>();
+  private _nodes = new Map<string, Node>();
+  private _edges = new Array<Edge>();
+  private _categories = new Map<string, Category>();
   private _filter = '';
   private _requires = true;
   private _optional = true;
