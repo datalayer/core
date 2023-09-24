@@ -7,5 +7,6 @@ function kill_port() {
     lsof -i TCP:$1 | grep LISTEN | awk '{print $2}' | xargs kill -9
 }
 
+kill_port 3063
 kill_port 8686
 kill_port 8888

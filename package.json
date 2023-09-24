@@ -61,7 +61,7 @@
     "watch": "run-p watch:src watch:labextension",
     "watch:src": "tsc -w",
     "watch:labextension": "jupyter labextension watch .",
-    "kill": "./dev/sh/kill-jupyter-server.sh || true"
+    "kill": "./dev/sh/kill.sh || true"
   },
   "dependencies": {
     "@datalayer/jupyter-react": "0.7.7",
