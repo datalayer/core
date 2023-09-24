@@ -15,15 +15,13 @@ const ThemeGlobalStyle = createGlobalStyle<any>`
   }
 `
 
-const DatalayerDev = () => {
+const DatalayerJupyterLabHeadless = () => {
   const [jupyterLab, setJupyterLab] = useState<JupyterLab>();
   const onReady = (jupyterLab: JupyterLab) => {
-    /*
-    jupyterLab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
-      console.log('Deeactivated downstream plugins', deactivatedDownstreamPlugins);
-    });
-    jupyterLab.deregisterPlugin(datalayerExtension.PLUGIN_ID, true);
-    */
+    // jupyterLab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
+    //   console.log('Deeactivated downstream plugins', deactivatedDownstreamPlugins);
+    // });
+    // jupyterLab.deregisterPlugin(datalayerExtension.PLUGIN_ID, true);
     setJupyterLab(jupyterLab);
   }
   return (
@@ -36,9 +34,7 @@ const DatalayerDev = () => {
         ]}
         extensionPromises={extensionPromises}
         mimeExtensionPromises={mimeExtensionPromises}
-        position="absolute"
         hostId="jupyterlab-app-id"
-        height="100vh"
         headless={true}
         onReady={onReady}
       />
@@ -53,6 +49,6 @@ const root = createRoot(div);
 root.render(
   <Jupyter startDefaultKernel={false} disableCssLoading={true}>
     <ThemeGlobalStyle />
-    <DatalayerDev/>
+    <DatalayerJupyterLabHeadless/>
   </Jupyter>
 );

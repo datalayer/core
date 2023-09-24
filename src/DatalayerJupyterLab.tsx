@@ -13,8 +13,8 @@ const DatalayerJupyterLab = () => (
     ]}
     extensionPromises={extensionPromises}
     mimeExtensionPromises={mimeExtensionPromises}
+    hostId="datalayer-jupyterlab-id"
     position="absolute"
-    hostId="jupyterlab-app-id"
     height="100vh"
   />
 )
