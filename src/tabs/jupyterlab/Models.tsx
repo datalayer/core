@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Label, Text } from '@primer/react';
 import { Table, DataTable, PageHeader } from '@primer/react/drafts';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
 class ModelFactory implements Partial<DocumentRegistry.IModelFactory<any>> {
   private _modelFactory: DocumentRegistry.IModelFactory<any> ;
@@ -17,7 +17,7 @@ class ModelFactory implements Partial<DocumentRegistry.IModelFactory<any>> {
   get fileFormat() { return this._modelFactory.fileFormat }
 }
 
-const Models = (props: JupyterFrontEndProps) => {
+const Models = (props: DatalayerProps) => {
   const { app } = props;
   const [modelFactories, setModelFactories] = useState<ModelFactory[]>();
   useEffect(() => {

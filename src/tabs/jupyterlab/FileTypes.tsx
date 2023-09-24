@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { LabelGroup, Label, Text, Box } from '@primer/react';
 import { Table, DataTable, PageHeader } from '@primer/react/drafts';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
 class FileType implements DocumentRegistry.IFileType {
   private _fileType;
@@ -22,7 +22,7 @@ class FileType implements DocumentRegistry.IFileType {
   get iconLabel() { return this._fileType.iconLabel() }
 }
 
-const FileTypes = (props: JupyterFrontEndProps) => {
+const FileTypes = (props: DatalayerProps) => {
   const { app } = props;
   const [fileTypes, setFileTypes] = useState<FileType[]>();
   useEffect(() => {

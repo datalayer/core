@@ -1,8 +1,8 @@
 import { PageHeader, UnderlineNav } from '@primer/react/drafts';
 import { PlusIcon, SettingsIcon } from '@datalayer/icons-react';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
-const Server = (props: JupyterFrontEndProps) => {
+const Server = (props: DatalayerProps) => {
   return (
     <>
       <PageHeader>

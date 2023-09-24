@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Text, LabelGroup, Label } from '@primer/react';
 import { Table, DataTable, PageHeader } from '@primer/react/drafts';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
 class JupyterLabWidgetFactory implements Partial<DocumentRegistry.IWidgetFactory<any, any>> {
   private _widgetFactory: DocumentRegistry.IWidgetFactory<any, any> ;
@@ -18,7 +18,7 @@ class JupyterLabWidgetFactory implements Partial<DocumentRegistry.IWidgetFactory
   get widgetCreated() { return this._widgetFactory.widgetCreated }
 }
 
-const Widgets = (props: JupyterFrontEndProps) => {
+const Widgets = (props: DatalayerProps) => {
   const { app } = props;
   const [widgetFactories, setWidgetFactories] = useState<JupyterLabWidgetFactory[]>();
   useEffect(() => {

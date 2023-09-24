@@ -4,7 +4,7 @@ import {
   SettingsIcon, FileIcon, HardDriveIcon, JupyterServerIcon
 } from '@datalayer/icons-react';
 import { Box, NavList } from '@primer/react';
-import { JupyterFrontEndProps } from '../Datalayer';
+import { DatalayerProps } from '../Datalayer';
 import Plugins from './jupyterlab/Plugins';
 import FileTypes from './jupyterlab/FileTypes';
 import Drives from './jupyterlab/Drives';
@@ -15,7 +15,7 @@ import Settings from './jupyterlab/Settings';
 import IPyWidgets from './jupyterlab/IPyWidgets';
 import Server from './jupyterlab/Server';
 
-const JupyterLabTab = (props: JupyterFrontEndProps) => {
+const JupyterLabTab = (props: DatalayerProps) => {
   const { app } = props;
   const [nav, setNav] = useState(1);
   return (

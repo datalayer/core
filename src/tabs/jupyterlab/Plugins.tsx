@@ -5,7 +5,7 @@ import { GraphChart } from 'echarts/charts';
 import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import ReactEChartsCore from 'echarts-for-react/lib/core';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 import { PluginsNetwork } from './PluginsNetwork';
 
 echarts.use(
@@ -19,7 +19,7 @@ echarts.use(
   ]
 );
 
-const Plugins = (props: JupyterFrontEndProps) => {
+const Plugins = (props: DatalayerProps) => {
   const { app } = props;
   const [option, setOption] = useState<any>(undefined);
   useEffect(() => {

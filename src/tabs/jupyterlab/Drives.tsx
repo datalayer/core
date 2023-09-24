@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Label, Text } from '@primer/react';
 import { Table, DataTable, PageHeader } from '@primer/react/drafts';
 import { Contents } from '@jupyterlab/services';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
 type Drive = Partial<Contents.IDrive> & {
   id: number,
 }
 
-const Drives = (props: JupyterFrontEndProps) => {
+const Drives = (props: DatalayerProps) => {
   const { app } = props;
   const [_, setDefaultDrive] = useState<Drive>();
   const [drives, setDrives] = useState<Drive[]>();

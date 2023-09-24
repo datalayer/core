@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Box, Heading, Label } from '@primer/react';
 import { PageHeader } from '@primer/react/drafts';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
 type WidgetExtension = any;
 
@@ -45,7 +45,7 @@ const WidgetExtensionTable = (props: Props) => {
   )
 } 
 
-const WidgetExtensions = (props: JupyterFrontEndProps) => {
+const WidgetExtensions = (props: DatalayerProps) => {
   const { app } = props;
   const [widgetExtensions, setWidgetExtensions] = useState<JupyterLabWidgetExtensions>();
   useEffect(() => {

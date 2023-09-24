@@ -1,9 +1,9 @@
 import { createRoot } from 'react-dom/client';
-import { Jupyter, JupyterLabApp, JupyterLabPluginsCore } from '@datalayer/jupyter-react';
+import { Jupyter, JupyterLabApp, JupyterLabCorePlugins } from '@datalayer/jupyter-react';
 import * as collaborationExtension from '@jupyter/collaboration-extension';
 import * as datalayerExtension from './jupyterlab';
 
-const { extensionsPromises, mimeExtensionsPromises } = JupyterLabPluginsCore;
+const { extensionPromises, mimeExtensionPromises } = JupyterLabCorePlugins;
 
 const DatalayerJupyterLab = () => (
   <JupyterLabApp
@@ -11,8 +11,8 @@ const DatalayerJupyterLab = () => (
       datalayerExtension,
       collaborationExtension,
     ]}
-    extensionPromises={extensionsPromises}
-    mimeExtensionsPromises={mimeExtensionsPromises}
+    extensionPromises={extensionPromises}
+    mimeExtensionPromises={mimeExtensionPromises}
     position="absolute"
     hostId="jupyterlab-app-id"
     height="100vh"

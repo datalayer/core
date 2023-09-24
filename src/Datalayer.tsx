@@ -7,11 +7,11 @@ import AboutTab from './tabs/AboutTab';
 import JupyterLabTab from './tabs/JupyterLabTab';
 import { requestAPI } from './jupyterlab/handler';
 
-export type JupyterFrontEndProps = {
+export type DatalayerProps = {
   app?: JupyterFrontEnd;
 }
 
-const Datalayer = (props: JupyterFrontEndProps) => {
+const Datalayer = (props: DatalayerProps) => {
   const { app } = props;
   const [tab, setTab] = useState(1);
   const [version, setVersion] = useState('');

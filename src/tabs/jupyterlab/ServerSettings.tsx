@@ -1,7 +1,7 @@
 import { Box, Text } from '@primer/react';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
-const ServerSettings = (props: JupyterFrontEndProps) => {
+const ServerSettings = (props: DatalayerProps) => {
   return (
     <Box>
       <Text>Server Settings</Text>

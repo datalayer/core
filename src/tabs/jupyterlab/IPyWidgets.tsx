@@ -1,8 +1,8 @@
 import { Box } from '@primer/react';
 import { PageHeader } from '@primer/react/drafts';
-import { JupyterFrontEndProps } from '../../Datalayer';
+import { DatalayerProps } from '../../Datalayer';
 
-const IPyWidgets = (props: JupyterFrontEndProps) => {
+const IPyWidgets = (props: DatalayerProps) => {
   return (
     <Box>
       <PageHeader>
