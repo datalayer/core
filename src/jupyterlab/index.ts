@@ -45,12 +45,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
     restorer?: ILayoutRestorer,
   ) => {
     const { commands } = app;
-    const command = CommandIDs.create;
     if (!tracker) {
       tracker = new WidgetTracker<MainAreaWidget<DatalayerWidget>>({
         namespace: 'datalayer',
       });
     }
+    const command = CommandIDs.create;
     if (restorer) {
       void restorer.restore(tracker, {
         command,
