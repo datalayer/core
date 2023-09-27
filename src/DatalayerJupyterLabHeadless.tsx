@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createGlobalStyle } from 'styled-components';
-import { Jupyter, JupyterLabApp, JupyterLabAppAdapter, JupyterLabAppCorePlugins } from '@datalayer/jupyter-react';
+import { Jupyter, JupyterLabApp, JupyterLabAppAdapter } from '@datalayer/jupyter-react';
 import { JupyterLab } from '@jupyterlab/application';
 import * as collaborationExtension from '@jupyter/collaboration-extension';
 import * as datalayerExtension from './jupyterlab/index';
 import Datalayer from './Datalayer';
-
-const { extensionPromises, mimeExtensionPromises } = JupyterLabAppCorePlugins;
 
 const ThemeGlobalStyle = createGlobalStyle<any>`
   body {
@@ -32,9 +30,6 @@ const DatalayerJupyterLabHeadless = () => {
           datalayerExtension,
           collaborationExtension,
         ]}
-        extensionPromises={extensionPromises}
-        mimeExtensionPromises={mimeExtensionPromises}
-        hostId="jupyterlab-app-id"
         headless={true}
         onReady={onReady}
       />
