@@ -14,6 +14,8 @@ const mode = IS_PRODUCTION ? "production" : "development";
 const devtool = IS_PRODUCTION ? false : "inline-cheap-source-map";
 const minimize = IS_PRODUCTION ? true : false;
 
+const publicPath = "/static/datalayer/";
+
 module.exports = {
   entry: "./src/DatalayerJupyterLabHeadless",
   mode: mode,
@@ -33,7 +35,7 @@ module.exports = {
 //    usedExports: true,
   },
   output: {
-    publicPath: "http://localhost:3063/",
+    publicPath,
     filename: '[name].datalayer.js',
   },
   resolve: {

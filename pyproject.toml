@@ -38,10 +38,11 @@ test = [
 ]
 
 [project.scripts]
-datalayer = "datalayer.command:main"
 d = "datalayer.command:main"
+datalayer = "datalayer.command:main"
 datalayer-config = "datalayer.config:main"
 datalayer-migrate = "datalayer.migrate:main"
+datalayer-server = "datalayer.serverapplication:main"
 datalayer-troubleshoot = "datalayer.troubleshoot:main"
 
 [tool.hatch.version]

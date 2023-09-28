@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createGlobalStyle } from 'styled-components';
-import { Jupyter, JupyterLabApp, JupyterLabAppAdapter } from '@datalayer/jupyter-react';
 import { JupyterLab } from '@jupyterlab/application';
+import { Jupyter, JupyterLabApp, JupyterLabAppAdapter } from '@datalayer/jupyter-react';
+import Datalayer from './Datalayer';
+
+import * as lightThemeExtension from '@jupyterlab/theme-light-extension';
 import * as collaborationExtension from '@jupyter/collaboration-extension';
 import * as datalayerExtension from './jupyterlab/index';
-import Datalayer from './Datalayer';
 
 const ThemeGlobalStyle = createGlobalStyle<any>`
   body {
@@ -15,20 +17,23 @@ const ThemeGlobalStyle = createGlobalStyle<any>`
 
 const DatalayerJupyterLabHeadless = () => {
   const [jupyterlab, setJupyterLab] = useState<JupyterLab>();
-  const onReady = (jupyterlabAdapter: JupyterLabAppAdapter) => {
-    // jupyterlab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
-    //   console.log('Deeactivated downstream plugins', deactivatedDownstreamPlugins);
-    // });
-    // jupyterlab.deregisterPlugin(datalayerExtension.PLUGIN_ID, true);
-    setJupyterLab(jupyterlabAdapter.jupyterlab);
+  const onReady = (jupyterlabAppAdapter: JupyterLabAppAdapter) => {
+    setJupyterLab(jupyterlabAppAdapter.jupyterlab);
+    /*
+    jupyterlab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
+      console.log('Deactivated downstream plugins', deactivatedDownstreamPlugins);
+    });
+    jupyterlab.deregisterPlugin(datalayerExtension.PLUGIN_ID, true);
+    */
   }
   return (
     <>
       {jupyterlab && <Datalayer app={jupyterlab}/>}
       <JupyterLabApp
         extensions={[
-          datalayerExtension,
+          lightThemeExtension,
           collaborationExtension,
+          datalayerExtension,
         ]}
         headless={true}
         onReady={onReady}

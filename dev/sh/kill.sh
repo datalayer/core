@@ -8,5 +8,4 @@ function kill_port() {
 }
 
 kill_port 3063
-kill_port 8686
 kill_port 8888

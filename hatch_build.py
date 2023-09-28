@@ -1,3 +1,4 @@
+import glob
 import os
 
 from subprocess import check_call
@@ -16,13 +17,14 @@ def build_javascript():
         cwd=here,
     )
     check_call(
-        ['yarn', 'build:webpack'],
+        ['yarn', 'build:webpack', '--mode=production'],
         cwd=here,
     )
-    shutil.copyfile(
-        './dist/main.datalayer.js',
-        './datalayer/static/main.datalayer.js'
-    )
+    for file in glob.glob(r'./dist/*.js'):
+        shutil.copy(
+            file,
+            './datalayer/static/'
+        )
 
 
 class JupyterBuildHook(BuildHookInterface):
