@@ -13,16 +13,16 @@ const IS_PRODUCTION = process.argv.indexOf('--mode=production') > -1;
 const mode = IS_PRODUCTION ? "production" : "development";
 const devtool = IS_PRODUCTION ? false : "inline-cheap-source-map";
 const minimize = IS_PRODUCTION ? true : false;
-
-const publicPath = "/static/datalayer/";
+const publicPath = IS_PRODUCTION ? "/static/datalayer/" : "http://localhost:3063/";
 
 module.exports = {
-  entry: "./src/DatalayerJupyterLabHeadless",
+  entry: "./src/DatalayerApp",
   mode: mode,
   devServer: {
     port: 3063,
     client: { overlay: false },
     historyApiFallback: true,
+    hot: !IS_PRODUCTION,
   },
   watchOptions: {
     aggregateTimeout: 300,

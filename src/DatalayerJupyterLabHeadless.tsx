@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import { createGlobalStyle } from 'styled-components';
 import { JupyterLab } from '@jupyterlab/application';
 import { Jupyter, JupyterLabApp, JupyterLabAppAdapter } from '@datalayer/jupyter-react';
@@ -15,7 +14,7 @@ const ThemeGlobalStyle = createGlobalStyle<any>`
   }
 `
 
-const DatalayerJupyterLabHeadless = () => {
+const JupyterLabHeadless = () => {
   const [jupyterlab, setJupyterLab] = useState<JupyterLab>();
   const onReady = (jupyterlabAppAdapter: JupyterLabAppAdapter) => {
     setJupyterLab(jupyterlabAppAdapter.jupyterlab);
@@ -42,13 +41,11 @@ const DatalayerJupyterLabHeadless = () => {
   )
 }
 
-const div = document.createElement('div');
-document.body.appendChild(div);
-const root = createRoot(div);
-
-root.render(
+export const DatalayerJupyterLabHeadless = () => (
   <Jupyter startDefaultKernel={false} disableCssLoading={true}>
     <ThemeGlobalStyle />
-    <DatalayerJupyterLabHeadless/>
+    <JupyterLabHeadless/>
   </Jupyter>
-);
+)
+
+export default DatalayerJupyterLabHeadless;

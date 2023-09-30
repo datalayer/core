@@ -1,25 +1,25 @@
-import { createRoot } from 'react-dom/client';
 import { Jupyter, JupyterLabApp } from '@datalayer/jupyter-react';
+
+import * as lightThemeExtension from '@jupyterlab/theme-light-extension';
 import * as collaborationExtension from '@jupyter/collaboration-extension';
 import * as datalayerExtension from './jupyterlab';
 
-const DatalayerJupyterLab = () => (
+const JupyterLabComponent = () => (
   <JupyterLabApp
     extensions={[
-      datalayerExtension,
+      lightThemeExtension,
       collaborationExtension,
+      datalayerExtension,
     ]}
     position="absolute"
     height="100vh"
   />
 )
 
-const div = document.createElement('div');
-document.body.appendChild(div);
-const root = createRoot(div);
-
-root.render(
+export const DatalayerJupyterLab = () => (
   <Jupyter startDefaultKernel={false} disableCssLoading={true}>
-    <DatalayerJupyterLab/>
+    <JupyterLabComponent/>
   </Jupyter>
-);
+)
+
+export default DatalayerJupyterLab;
