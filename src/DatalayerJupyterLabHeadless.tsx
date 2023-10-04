@@ -15,9 +15,9 @@ const ThemeGlobalStyle = createGlobalStyle<any>`
 `
 
 const JupyterLabHeadless = () => {
-  const [jupyterlab, setJupyterLab] = useState<JupyterLab>();
+  const [jupyterlab, setJupyterlab] = useState<JupyterLab>();
   const onReady = (jupyterlabAppAdapter: JupyterLabAppAdapter) => {
-    setJupyterLab(jupyterlabAppAdapter.jupyterlab);
+    setJupyterlab(jupyterlabAppAdapter.jupyterlab);
     /*
     jupyterlab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
       console.log('Deactivated downstream plugins', deactivatedDownstreamPlugins);

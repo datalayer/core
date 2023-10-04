@@ -97,7 +97,7 @@ c.ServerApp.default_url = '/lab'
 c.ZMQChannelsWebsocketConnection.kernel_ws_protocol = None # None or ''
 
 #################
-# JupyterLab
+# Collaboration
 #################
 
-c.LabApp.collaborative = False
+c.YDocExtension.disable_rtc = False
