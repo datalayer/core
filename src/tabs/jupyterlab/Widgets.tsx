@@ -19,15 +19,15 @@ class JupyterLabWidgetFactory implements Partial<DocumentRegistry.IWidgetFactory
 }
 
 const Widgets = (props: DatalayerProps) => {
-  const { app } = props;
+  const { jupyterFrontend } = props;
   const [widgetFactories, setWidgetFactories] = useState<JupyterLabWidgetFactory[]>();
   useEffect(() => {
-    if (app) {
-      const widgetFactories = Array.from(app?.docRegistry.widgetFactories());
+    if (jupyterFrontend) {
+      const widgetFactories = Array.from(jupyterFrontend.docRegistry.widgetFactories());
       const jupyterlabFileTypes = widgetFactories.map(widgetFactory => new JupyterLabWidgetFactory(widgetFactory));
       setWidgetFactories(jupyterlabFileTypes);    
     }
-  }, [app]);
+  }, [jupyterFrontend]);
   return (
     <>
       <PageHeader>

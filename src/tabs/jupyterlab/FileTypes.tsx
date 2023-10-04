@@ -23,15 +23,15 @@ class FileType implements DocumentRegistry.IFileType {
 }
 
 const FileTypes = (props: DatalayerProps) => {
-  const { app } = props;
+  const { jupyterFrontend } = props;
   const [fileTypes, setFileTypes] = useState<FileType[]>();
   useEffect(() => {
-    if (app) {
-      const fileTypes = Array.from(app.docRegistry.fileTypes());
+    if (jupyterFrontend) {
+      const fileTypes = Array.from(jupyterFrontend.docRegistry.fileTypes());
       const jupyterlabFileTypes = fileTypes.map(fileType => new FileType(fileType));
       setFileTypes(jupyterlabFileTypes);    
     }
-  }, [app]);
+  }, [jupyterFrontend]);
   return (
     <>
       <PageHeader>

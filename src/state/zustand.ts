@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 
 export type ZustandState = {
-  tabIndex: number;
-  setTabIndex: (tabIndex: number) => void,
+  tab: number;
+  setTab: (tab: number) => void,
 }
 
-export const useZustandStore = create<ZustandState>((set) => ({
-  tabIndex: 0,
-  setTabIndex: (tabIndex: number) => set((state: ZustandState) => ({ tabIndex})),
+export const useStore = create<ZustandState>((set) => ({
+  tab: 0.0,
+  setTab: (tab: number) => set((state: ZustandState) => ({ tab })),
 }));
 
-export default useZustandStore;
+export default useStore;

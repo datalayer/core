@@ -11,6 +11,6 @@ export class DatalayerWidget extends ReactWidget {
   }
 
   render(): JSX.Element {
-    return <Datalayer app={this._app} />;
+    return <Datalayer jupyterFrontend={this._app} />;
   }
 }

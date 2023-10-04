@@ -9,17 +9,17 @@ type Drive = Partial<Contents.IDrive> & {
 }
 
 const Drives = (props: DatalayerProps) => {
-  const { app } = props;
+  const { jupyterFrontend } = props;
   const [_, setDefaultDrive] = useState<Drive>();
   const [drives, setDrives] = useState<Drive[]>();
   useEffect(() => {
-    if (app) {
-      const defaultDrive: Contents.IDrive = (app.serviceManager.contents as any)["_defaultDrive"];
+    if (jupyterFrontend) {
+      const defaultDrive: Contents.IDrive = (jupyterFrontend.serviceManager.contents as any)["_defaultDrive"];
       setDefaultDrive({
         id: -1,
         ...defaultDrive,
       });
-      const drives = Array.from(((app.serviceManager.contents as any)["_additionalDrives"] as Map<string, Contents.IDrive>).values());
+      const drives = Array.from(((jupyterFrontend.serviceManager.contents as any)["_additionalDrives"] as Map<string, Contents.IDrive>).values());
       setDrives(drives.map((drive, id) => {
         return {
           id,
@@ -27,7 +27,7 @@ const Drives = (props: DatalayerProps) => {
         }
       }));
     }
-  }, [app]);
+  }, [jupyterFrontend]);
   return (
     <>
       <PageHeader>

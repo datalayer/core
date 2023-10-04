@@ -46,11 +46,11 @@ const WidgetExtensionTable = (props: Props) => {
 } 
 
 const WidgetExtensions = (props: DatalayerProps) => {
-  const { app } = props;
+  const { jupyterFrontend } = props;
   const [widgetExtensions, setWidgetExtensions] = useState<JupyterLabWidgetExtensions>();
   useEffect(() => {
-    if (app) {
-      const widgetExtensions = (app!.docRegistry as any)._extenders;
+    if (jupyterFrontend) {
+      const widgetExtensions = (jupyterFrontend.docRegistry as any)._extenders;
       const w = new Map<string, Array<WidgetExtensionWithId>>();
       Object.keys(widgetExtensions).forEach(widgetName => {
         const extensions = widgetExtensions[widgetName];
@@ -59,7 +59,7 @@ const WidgetExtensions = (props: DatalayerProps) => {
       });
       setWidgetExtensions(w);
     }
-  }, [app]);
+  }, [jupyterFrontend]);
   return (
     <>
       <PageHeader>

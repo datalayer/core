@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   NetworkIcon, WidgetsIcon, PlusIcon, IpyWidgetsIcon, ShuffleIcon,
   SettingsIcon, FileIcon, HardDriveIcon, JupyterServerIcon
@@ -14,10 +13,11 @@ import WidgetExtensions from './jupyterlab/WidgetExtensions';
 import Settings from './jupyterlab/Settings';
 import IPyWidgets from './jupyterlab/IPyWidgets';
 import Server from './jupyterlab/Server';
+import useStore from './../state/zustand';
 
 const JupyterLabTab = (props: DatalayerProps) => {
-  const { app } = props;
-  const [nav, setNav] = useState(1);
+  const { jupyterFrontend } = props;
+  const { tab, setTab } = useStore();
   return (
     <>
       <Box sx={{display: 'flex'}}>
@@ -27,55 +27,55 @@ const JupyterLabTab = (props: DatalayerProps) => {
               paddingTop: '0px'
             }
           }}>
-            <NavList.Item aria-current={nav === 1 ? 'page' : undefined} onClick={e => setNav(1)}>
+            <NavList.Item aria-current={tab === 0.0 ? 'page' : undefined} onClick={e => setTab(0.0)}>
               <NavList.LeadingVisual>
                 <NetworkIcon />
               </NavList.LeadingVisual>
               Plugins
             </NavList.Item>
-            <NavList.Item aria-current={nav === 2 ? 'page' : undefined} onClick={e => setNav(2)}>
+            <NavList.Item aria-current={tab === 0.1 ? 'page' : undefined} onClick={e => setTab(0.1)}>
               <NavList.LeadingVisual>
                 <FileIcon />
               </NavList.LeadingVisual>
               File Types
             </NavList.Item>
-            <NavList.Item aria-current={nav === 3 ? 'page' : undefined} onClick={e => setNav(3)}>
+            <NavList.Item aria-current={tab === 0.2 ? 'page' : undefined} onClick={e => setTab(0.2)}>
               <NavList.LeadingVisual>
                 <ShuffleIcon/>
               </NavList.LeadingVisual>
               Models
             </NavList.Item>
-            <NavList.Item aria-current={nav === 4 ? 'page' : undefined} onClick={e => setNav(4)}>
+            <NavList.Item aria-current={tab === 0.3 ? 'page' : undefined} onClick={e => setTab(0.3)}>
               <NavList.LeadingVisual>
                 <HardDriveIcon colored/>
               </NavList.LeadingVisual>
               Drives
             </NavList.Item>
-            <NavList.Item aria-current={nav === 5 ? 'page' : undefined} onClick={e => setNav(5)}>
+            <NavList.Item aria-current={tab === 0.4 ? 'page' : undefined} onClick={e => setTab(0.4)}>
               <NavList.LeadingVisual>
                 <WidgetsIcon/>
               </NavList.LeadingVisual>
               Widgets
             </NavList.Item>
-            <NavList.Item aria-current={nav === 6 ? 'page' : undefined} onClick={e => setNav(6)}>
+            <NavList.Item aria-current={tab === 0.5 ? 'page' : undefined} onClick={e => setTab(0.5)}>
               <NavList.LeadingVisual>
                 <PlusIcon/>
               </NavList.LeadingVisual>
               Widget Extensions
             </NavList.Item>
-            <NavList.Item aria-current={nav === 7 ? 'page' : undefined} onClick={e => setNav(7)}>
+            <NavList.Item aria-current={tab === 0.6 ? 'page' : undefined} onClick={e => setTab(0.6)}>
               <NavList.LeadingVisual>
                 <IpyWidgetsIcon/>
               </NavList.LeadingVisual>
               IPyWidgets
             </NavList.Item>
-            <NavList.Item aria-current={nav === 8 ? 'page' : undefined} onClick={e => setNav(8)}>
+            <NavList.Item aria-current={tab === 0.7 ? 'page' : undefined} onClick={e => setTab(0.7)}>
               <NavList.LeadingVisual>
                 <SettingsIcon/>
               </NavList.LeadingVisual>
               Settings
             </NavList.Item>
-            <NavList.Item aria-current={nav === 9 ? 'page' : undefined} onClick={e => setNav(9)}>
+            <NavList.Item aria-current={tab === 0.8 ? 'page' : undefined} onClick={e => setTab(0.8)}>
               <NavList.LeadingVisual>
                 <JupyterServerIcon/>
               </NavList.LeadingVisual>
@@ -84,15 +84,15 @@ const JupyterLabTab = (props: DatalayerProps) => {
           </NavList>
         </Box>
         <Box ml={3} sx={{ width: '100%'}}>
-          {(nav === 1) && <Plugins app={app} />}
-          {(nav === 2) && <FileTypes app={app} />}
-          {(nav === 3) && <Models app={app} />}
-          {(nav === 4) && <Drives app={app} />}
-          {(nav === 5) && <Widgets app={app} />}
-          {(nav === 6) && <WidgetExtensions app={app} />}
-          {(nav === 7) && <IPyWidgets app={app} />}
-          {(nav === 8) && <Settings app={app} />}
-          {(nav === 9) && <Server app={app} />}
+          {(tab === 0.0) && <Plugins jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.1) && <FileTypes jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.2) && <Models jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.3) && <Drives jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.4) && <Widgets jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.5) && <WidgetExtensions jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.6) && <IPyWidgets jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.7) && <Settings jupyterFrontend={jupyterFrontend} />}
+          {(tab === 0.8) && <Server jupyterFrontend={jupyterFrontend} />}
         </Box>
       </Box>
     </>

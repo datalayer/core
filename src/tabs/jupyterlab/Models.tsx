@@ -18,15 +18,15 @@ class ModelFactory implements Partial<DocumentRegistry.IModelFactory<any>> {
 }
 
 const Models = (props: DatalayerProps) => {
-  const { app } = props;
+  const { jupyterFrontend } = props;
   const [modelFactories, setModelFactories] = useState<ModelFactory[]>();
   useEffect(() => {
-    if (app) {
-      const modelFactories = Array.from(app?.docRegistry.modelFactories());
+    if (jupyterFrontend) {
+      const modelFactories = Array.from(jupyterFrontend.docRegistry.modelFactories());
       const jupyterlabModelFactories = modelFactories.map(modelFactory => new ModelFactory(modelFactory));
       setModelFactories(jupyterlabModelFactories);    
     }
-  }, [app]);
+  }, [jupyterFrontend]);
   return (
     <>
       <PageHeader>

@@ -20,10 +20,10 @@ echarts.use(
 );
 
 const Plugins = (props: DatalayerProps) => {
-  const { app } = props;
+  const { jupyterFrontend } = props;
   const [option, setOption] = useState<any>(undefined);
   useEffect(() => {
-    const plugins = (app as any)['_plugins'];
+    const plugins = (jupyterFrontend as any)['_plugins'];
     const pluginsModel = new PluginsNetwork({ plugins });
     const option = {
       showLoading: true,
@@ -66,7 +66,7 @@ const Plugins = (props: DatalayerProps) => {
       ]
     };
     setOption(option);
-  }, [app]);
+  }, [jupyterFrontend]);
   return (
     <>
       <PageHeader>

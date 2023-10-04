@@ -1,4 +1,4 @@
-///<reference types="webpack-env" />
+/// <reference types="webpack-env" />
 
 import { createRoot } from 'react-dom/client';
 import DatalayerJupyterLabHeadless from './DatalayerJupyterLabHeadless';

@@ -27,7 +27,7 @@ const JupyterLabHeadless = () => {
   }
   return (
     <>
-      {jupyterlab && <Datalayer app={jupyterlab}/>}
+      {jupyterlab && <Datalayer jupyterFrontend={jupyterlab}/>}
       <JupyterLabApp
         extensions={[
           lightThemeExtension,
@@ -42,7 +42,7 @@ const JupyterLabHeadless = () => {
 }
 
 export const DatalayerJupyterLabHeadless = () => (
-  <Jupyter startDefaultKernel={false} disableCssLoading={true}>
+  <Jupyter startDefaultKernel={false} disableCssLoading={true} collaborative={true}>
     <ThemeGlobalStyle />
     <JupyterLabHeadless/>
   </Jupyter>
