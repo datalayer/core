@@ -2,7 +2,7 @@ import { JupyterFrontEnd, JupyterFrontEndPlugin, ILayoutRestorer } from '@jupyte
 import { MainAreaWidget, ICommandPalette, WidgetTracker } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ILauncher } from '@jupyterlab/launcher';
-import icon from '@datalayer/icons-react/data1/DatalayerGreenIconLabIcon';
+import icon from '@datalayer/icons-react/data1/DatalayerGreenPaddingIconLabIcon';
 import { requestAPI } from './handler';
 import { DatalayerWidget } from './widget';
 
