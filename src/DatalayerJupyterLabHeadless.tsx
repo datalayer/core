@@ -15,19 +15,19 @@ const ThemeGlobalStyle = createGlobalStyle<any>`
 `
 
 const JupyterLabHeadless = () => {
-  const [jupyterlab, setJupyterlab] = useState<JupyterLab>();
-  const onReady = (jupyterlabAppAdapter: JupyterLabAppAdapter) => {
-    setJupyterlab(jupyterlabAppAdapter.jupyterlab);
+  const [jupyterLab, setJupyterLab] = useState<JupyterLab>();
+  const onJupyterLab = (jupyterLabAppAdapter: JupyterLabAppAdapter) => {
+    setJupyterLab(jupyterLabAppAdapter.jupyterLab);
     /*
-    jupyterlab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
+    jupyterLab.deactivatePlugin(datalayerExtension.PLUGIN_ID).then((deactivatedDownstreamPlugins) => {
       console.log('Deactivated downstream plugins', deactivatedDownstreamPlugins);
     });
-    jupyterlab.deregisterPlugin(datalayerExtension.PLUGIN_ID, true);
+    jupyterLab.deregisterPlugin(datalayerExtension.PLUGIN_ID, true);
     */
   }
   return (
     <>
-      {jupyterlab && <Datalayer jupyterFrontend={jupyterlab}/>}
+      {jupyterLab && <Datalayer jupyterFrontend={jupyterLab}/>}
       <JupyterLabApp
         extensions={[
           lightThemeExtension,
@@ -35,7 +35,7 @@ const JupyterLabHeadless = () => {
           datalayerExtension,
         ]}
         headless={true}
-        onReady={onReady}
+        onJupyterLab={onJupyterLab}
       />
     </>
   )
