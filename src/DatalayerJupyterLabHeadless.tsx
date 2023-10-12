@@ -12,7 +12,7 @@ const ThemeGlobalStyle = createGlobalStyle<any>`
   body {
     background-color: white !important;
   }
-`
+`;
 
 const JupyterLabHeadless = () => {
   const [jupyterLab, setJupyterLab] = useState<JupyterLab>();
