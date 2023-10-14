@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/jupyter-react": "0.7.11",
+    "@datalayer/jupyter-react": "0.7.13",
     "@jupyter/collaboration-extension": "1.2.0",
     "@jupyterlab/application": "4.0.3",
     "@jupyterlab/coreutils": "6.0.3",
@@ -109,6 +109,8 @@
     "prettier": "2.1.1",
     "raw-loader": "4.0.2",
     "rimraf": "3.0.2",
+    "stream": "0.0.2",
+    "stream-browserify": "2.0.2",
     "style-loader": "2.0.0",
     "stylelint": "14.3.0",
     "stylelint-config-prettier": "9.0.4",
