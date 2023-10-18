@@ -6,7 +6,11 @@
 
 > Datalayer core.
 
-The Datalayer package provides core features to other Datalayer packages. It contains base application classes and configuration inherited by other projects.
+Datalayer is the base foundation package used by many other Datalayer packages. It contains base application classes and configuration inherited by other projects.
+
+It is also the meta package to get the other Datalayer packages installed.
+
+It also ships a JupyterLab extension to inspect the JupyterLab's internal strutures like plugin graph, file types, models and widgets.
 
 ## Develop
 
