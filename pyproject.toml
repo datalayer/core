@@ -36,6 +36,25 @@ test = [
     "pytest_jupyter",
     "pytest-tornasync",
 ]
+run = [
+    "jupyter_docker",
+    "jupyter_containers",
+    "jupyter_devcontainers",
+    "jupyter_kubernetes",
+    "jupyter_ssh",
+    "jupyter_iam",
+    "jupyter_content",
+    "jupyter_environments",
+    "jupyterpool",
+    "jupyter_kernels",
+    "jupyter_functions",
+    "jupyter_rtc",
+    "jupyter_repl",
+    "jupyter_exec",
+    "jupyter_run",
+    "jupyter_apps",
+    "jupyter_dashboard",
+]
 
 [project.scripts]
 d = "datalayer.command:main"
