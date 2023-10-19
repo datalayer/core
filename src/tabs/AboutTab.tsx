@@ -15,7 +15,7 @@ const AboutTab = (props: Props): JSX.Element => {
       <Box>
         <Text>Datalayer provides features to other Datalayer packages. It also contains base application classes and configuration inherited by other projects.</Text>
       </Box>
-      <Box mt={3}>
+      <Box mt={3} style={{height: 350}}>
         {!egg ?
           <img src="https://assets.datalayer.tech/releases/datalayer-0.2.0-omalley.png" onClick={e => setEgg(true)}/>
             :

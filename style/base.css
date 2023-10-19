@@ -1,5 +1,9 @@
+body {
+  overflow-y: visible;
+}
+
 .dla-Container {
-    overflow-y: visible;
+  overflow-y: visible;
 }
 
 .jp-Launcher-content {
