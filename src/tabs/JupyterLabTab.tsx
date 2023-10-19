@@ -13,7 +13,7 @@ import WidgetExtensions from './jupyterlab/WidgetExtensions';
 import Settings from './jupyterlab/Settings';
 import IPyWidgets from './jupyterlab/IPyWidgets';
 import Server from './jupyterlab/Server';
-import useStore from '../state';
+import useStore from '../state/zustand';
 
 const JupyterLabTab = (props: DatalayerProps) => {
   const { jupyterFrontend } = props;

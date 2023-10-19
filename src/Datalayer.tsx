@@ -6,7 +6,7 @@ import { DatalayerGreenPaddingIcon, JupyterLabIcon } from '@datalayer/icons-reac
 import AboutTab from './tabs/AboutTab';
 import JupyterLabTab from './tabs/JupyterLabTab';
 import { requestAPI } from './jupyterlab/handler';
-import useStore from './state';
+import useStore from './state/zustand';
 
 export type DatalayerProps = {
   jupyterFrontend?: JupyterFrontEnd;
