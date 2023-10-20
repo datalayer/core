@@ -37,29 +37,14 @@ test = [
     "pytest-tornasync",
 ]
 run = [
-    "jupyter_docker",
-    "jupyter_containers",
-    "jupyter_devcontainers",
-    "jupyter_kubernetes",
-    "jupyter_ssh",
-    "jupyter_iam",
-    "jupyter_content",
-    "jupyter_environments",
-    "jupyterpool",
-    "jupyter_kernels",
-    "jupyter_functions",
-    "jupyter_rtc",
-    "jupyter_repl",
-    "jupyter_exec",
-    "jupyter_run",
-    "jupyter_apps",
-    "jupyter_dashboard",
+    "datalayer_run",
 ]
 
 [project.scripts]
 d = "datalayer.command:main"
 datalayer = "datalayer.command:main"
 datalayer-config = "datalayer.config:main"
+datalayer-lab = "datalayer.lab:main"
 datalayer-migrate = "datalayer.migrate:main"
 datalayer-server = "datalayer.serverapplication:main"
 datalayer-troubleshoot = "datalayer.troubleshoot:main"
