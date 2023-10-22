@@ -72,18 +72,23 @@ const plugin: JupyterFrontEndPlugin<void> = {
     });
     const category = 'Datalayer';
     palette.addItem({ command, category });
-    if (launcher) {
-      launcher.add({
-        command,
-        category,
-        rank: 1.1,
-      });
-    }
+    const settingsUpdated = (settings: ISettingRegistry.ISettings) => {
+      const showInLauncher = settings.get('showInLauncher').composite as boolean;
+      if (launcher && showInLauncher) {
+        launcher.add({
+          command,
+          category,
+          rank: 1.1,
+        });
+      }
+    };
     if (settingRegistry) {
       settingRegistry
         .load(plugin.id)
         .then(settings => {
           console.log(`${PLUGIN_ID} settings loaded:`, settings.composite);
+          settingsUpdated(settings);
+          settings.changed.connect(settingsUpdated);
         })
         .catch(reason => {
           console.error(`Failed to load settings for ${PLUGIN_ID}`, reason);

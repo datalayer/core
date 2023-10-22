@@ -1,8 +1,15 @@
 {
-  "title": "@datalayer/core",
-  "description": "@datalayer/core settings.",
+  "title": "Datalayer Core",
+  "description": "Datalayer Core settings.",
   "type": "object",
-  "properties": {},
+  "properties": {
+    "showInLauncher": {
+      "title": "Show Datalayer Core in the launcher",
+      "description": "Show Datalayer Core in the launcher",
+      "default": false,
+      "type": "boolean"
+    }
+  },
   "additionalProperties": false,
   "jupyter.lab.shortcuts": []
 }
