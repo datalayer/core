@@ -6,7 +6,7 @@
     "showInLauncher": {
       "title": "Show Datalayer Core in the launcher",
       "description": "Show Datalayer Core in the launcher",
-      "default": false,
+      "default": true,
       "type": "boolean"
     }
   },
