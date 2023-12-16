@@ -10,7 +10,7 @@ Datalayer is the base foundation package used by many other Datalayer packages. 
 
 It is also the meta package to get the other Datalayer packages installed.
 
-It also ships a JupyterLab extension to inspect the JupyterLab's internal strutures like plugin graph, file types, models and widgets.
+It ships a JupyterLab extension to inspect the JupyterLab's internal strutures like plugin graph, file types, models and widgets.
 
 ## Develop
 
