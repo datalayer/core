@@ -67,7 +67,7 @@ class DatalayerApp(Application):
     """Base class for Datalayer applications"""
 
     name = "datalayer"  # override in subclasses
-    description = "A Datalayer Application"
+    description = "A Datalayer IOlication"
 
     aliases = base_aliases
     flags = base_flags
@@ -280,7 +280,7 @@ class DatalayerApp(Application):
 
     @classmethod
     def launch_instance(cls, argv=None, **kwargs):
-        """Launch an instance of a Datalayer Application"""
+        """Launch an instance of a Datalayer IOlication"""
         try:
             return super().launch_instance(argv=argv, **kwargs)
         except NoStart:
