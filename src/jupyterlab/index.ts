@@ -58,8 +58,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
       });
     }
     commands.addCommand(command, {
-      caption: 'Show Datalayer',
-      label: 'Datalayer',
+      caption: 'Show Datalayer Core',
+      label: 'Datalayer Core',
       icon,
       execute: () => {
         const content = new DatalayerWidget(app);
