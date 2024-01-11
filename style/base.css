@@ -13,3 +13,8 @@ body {
 .jp-Launcher-section:nth-child(5) {
     order: -1;
 }
+
+.jp-InputArea {
+  /* Temporary fix further for JupyterLab 4.0.10 */
+  display: flex !important;
+}
