@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Label, Text } from '@primer/react';
+import { Label, Text, Box } from '@primer/react';
 import { Table, DataTable, PageHeader } from '@primer/react/drafts';
 import { Contents } from '@jupyterlab/services';
 import { DatalayerProps } from '../../Datalayer';
@@ -10,7 +10,7 @@ type Drive = Partial<Contents.IDrive> & {
 
 const Drives = (props: DatalayerProps) => {
   const { jupyterFrontend } = props;
-  const [_, setDefaultDrive] = useState<Drive>();
+  const [ defaultDrive, setDefaultDrive] = useState<Drive>();
   const [drives, setDrives] = useState<Drive[]>();
   useEffect(() => {
     if (jupyterFrontend) {
@@ -24,6 +24,7 @@ const Drives = (props: DatalayerProps) => {
         return {
           id,
           ...drive,
+          name: drive.name,
         }
       }));
     }
@@ -35,10 +36,15 @@ const Drives = (props: DatalayerProps) => {
           <PageHeader.Title>Drives</PageHeader.Title>
         </PageHeader.TitleArea>
       </PageHeader>
+      <Box>
+        <h3>Default Drive</h3>
+        <Text>{defaultDrive?.name}</Text>
+        <Label style={{marginLeft: 3}}>{defaultDrive?.sharedModelFactory?.collaborative ? 'collaborative' : 'non collaborative'}</Label>
+      </Box>
       { drives &&
         <Table.Container>
           <Table.Title as="h2" id="repositories">
-            Drives
+            Additional Drives
           </Table.Title>
           <Table.Subtitle as="p" id="repositories-subtitle">
             List of registered drives
@@ -55,9 +61,9 @@ const Drives = (props: DatalayerProps) => {
                 renderCell: row => <Text>{row.name}</Text>
               },
               {
-                header: 'sharedModelFactory',
+                header: 'Shared Model Factory',
                 field: 'sharedModelFactory',
-                renderCell: row => <Label>{String(row.sharedModelFactory?.collaborative)}</Label>
+                renderCell: row => <Label>{row.sharedModelFactory?.collaborative ? 'collaborative' : 'non collaborative'}</Label>
               },
             ]}
           />
