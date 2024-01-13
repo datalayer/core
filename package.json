@@ -232,6 +232,7 @@
     "extension": "./lib/jupyterlab/index.js",
     "outputDir": "datalayer/labextension",
     "schemaDir": "schema",
+    "webpackConfig": "./webpack.lab-config.js",
     "sharedPackages": {
       "@jupyter/docprovider": {
         "bundled": true,
