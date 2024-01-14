@@ -135,7 +135,7 @@ module.exports = {
           filename: 'schema/[name][ext][query]',
         },
       }
-     ]
+    ]
   },
   plugins: [
     !IS_PRODUCTION ?
