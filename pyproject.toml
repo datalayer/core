@@ -24,6 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
+    "jupyter_kernels",
     "jupyter_server>=2,<3",
     "rich",
 ]
@@ -38,9 +39,9 @@ test = [
     "pytest_jupyter",
     "pytest-tornasync",
 ]
-run = [
-    "datalayer_run",
-]
+# run = [
+#     "datalayer_run",
+# ]
 
 [project.scripts]
 d = "datalayer.command:main"
