@@ -1,4 +1,5 @@
-import { PageHeader, UnderlineNav } from '@primer/react/drafts';
+import { UnderlineNav } from '@primer/react';
+import { PageHeader } from '@primer/react/drafts';
 import { PlusIcon, SettingsIcon } from '@datalayer/icons-react';
 import { DatalayerProps } from '../../Datalayer';
 

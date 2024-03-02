@@ -15,15 +15,13 @@ namespace CommandIDs {
   export const create = 'datalayer:create-datalayer-widget';
 }
 
-export const PLUGIN_ID = '@datalayer/core:plugin';
-
 let tracker: WidgetTracker<MainAreaWidget<DatalayerWidget>>;
 
 /**
  * Initialization data for the @datalayer/core extension.
  */
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: PLUGIN_ID,
+  id: '@datalayer/core:plugin',
   autoStart: true,
   requires: [ICommandPalette],
   optional: [ISettingRegistry, ILauncher, ILayoutRestorer],
@@ -35,7 +33,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     restorer?: ILayoutRestorer,
   ) => {
     tracker.forEach(widget => widget.dispose());
-    console.log(`${PLUGIN_ID} is deactivated`);
+    console.log(`${plugin.id} is deactivated`);
   },
   activate: (
     app: JupyterFrontEnd,
@@ -86,12 +84,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
       settingRegistry
         .load(plugin.id)
         .then(settings => {
-          console.log(`${PLUGIN_ID} settings loaded:`, settings.composite);
+          console.log(`${plugin.id} settings loaded:`, settings.composite);
           settingsUpdated(settings);
           settings.changed.connect(settingsUpdated);
         })
         .catch(reason => {
-          console.error(`Failed to load settings for ${PLUGIN_ID}`, reason);
+          console.error(`Failed to load settings for ${plugin.id}`, reason);
         });
     }
     requestAPI<any>('config')
@@ -104,7 +102,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         );
       }
     );
-    console.log(`JupyterLab plugin ${PLUGIN_ID} is activated.`);
+    console.log(`JupyterLab plugin ${plugin.id} is activated.`);
   }
 };
 
