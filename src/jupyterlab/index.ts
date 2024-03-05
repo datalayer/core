@@ -1,3 +1,5 @@
+import { Token } from '@lumino/coreutils';
+import { ISignal, Signal } from '@lumino/signaling';
 import { JupyterFrontEnd, JupyterFrontEndPlugin, ILayoutRestorer } from '@jupyterlab/application';
 import { MainAreaWidget, ICommandPalette, WidgetTracker } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
@@ -8,8 +10,39 @@ import { DatalayerWidget } from './widget';
 
 import '../../style/index.css';
 
+export type IDatalayerConfig = {
+  category: string,
+  kubernetesHostname: string,
+};
+
+export class DatalayerConfiguration {
+  private _configuration?: IDatalayerConfig;
+  private _configurationChanged: Signal<DatalayerConfiguration, IDatalayerConfig | undefined>;
+  constructor() {
+    this._configurationChanged = new Signal<DatalayerConfiguration, IDatalayerConfig | undefined>(this);
+  }
+  set configuration(configuration: IDatalayerConfig | undefined) {
+    this._configuration = configuration;
+    this._configurationChanged.emit(configuration)
+  }
+  get configuration() {
+    return this._configuration;
+  }
+  get configurationChanged(): ISignal<DatalayerConfiguration, IDatalayerConfig | undefined> {
+    return this._configurationChanged;
+  }
+}
+
+export type IDatalayer = {
+  configuration: DatalayerConfiguration,
+};
+
+export const IDatalayer = new Token<IDatalayer>(
+  '@datalayer/core:plugin'
+);
+
 /**
- * The command IDs used by the plugin.
+ * The command IDs used by the plugin.k
  */
 namespace CommandIDs {
   export const create = 'datalayer:create-datalayer-widget';
@@ -20,11 +53,12 @@ let tracker: WidgetTracker<MainAreaWidget<DatalayerWidget>>;
 /**
  * Initialization data for the @datalayer/core extension.
  */
-const plugin: JupyterFrontEndPlugin<void> = {
+const plugin: JupyterFrontEndPlugin<IDatalayer> = {
   id: '@datalayer/core:plugin',
   autoStart: true,
   requires: [ICommandPalette],
   optional: [ISettingRegistry, ILauncher, ILayoutRestorer],
+  provides: IDatalayer,
   deactivate: (
     app: JupyterFrontEnd,
     palette: ICommandPalette,
@@ -41,7 +75,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     settingRegistry?: ISettingRegistry,
     launcher?: ILauncher,
     restorer?: ILayoutRestorer,
-  ) => {
+  ): IDatalayer => {
     const { commands } = app;
     const command = CommandIDs.create;
     if (!tracker) {
@@ -92,9 +126,17 @@ const plugin: JupyterFrontEndPlugin<void> = {
           console.error(`Failed to load settings for ${plugin.id}`, reason);
         });
     }
+    const datalayer: IDatalayer =  {
+      configuration: new DatalayerConfiguration(),    
+    }
     requestAPI<any>('config')
       .then(data => {
         console.log('Received config', data);
+        const configuration = {
+          category: data.settings.launcher_category,
+          kubernetesHostname: data.settings.kubernetes_hostname,
+        }
+        datalayer.configuration.configuration = configuration;
       })
       .catch(reason => {
         console.error(
@@ -103,6 +145,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       }
     );
     console.log(`JupyterLab plugin ${plugin.id} is activated.`);
+    return datalayer;
   }
 };
 
