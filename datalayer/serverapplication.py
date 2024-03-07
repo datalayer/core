@@ -34,15 +34,15 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         config=True,
         help=("Category to use for the applicaton launcher."), 
         )
-    kubernetes_hostname = Unicode("io.datalayer.run",
+    api_server_url = Unicode("https://io.datalayer.run",
         config=True,
-        help="""Kubernetes hostname to connect."""
+        help="""Hostname to connect to the Datalayer APIs."""
         )
 
     def initialize_settings(self):
         settings = dict(
             launcher_category=self.launcher_category,
-            kubernetes_hostname=self.kubernetes_hostname,
+            api_server_url=self.api_server_url,
         )
         self.settings.update(**settings)
 

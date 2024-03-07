@@ -11,8 +11,8 @@ import { DatalayerWidget } from './widget';
 import '../../style/index.css';
 
 export type IDatalayerConfig = {
-  category: string,
-  kubernetesHostname: string,
+  launcherCategory: string,
+  apiServerUrl: string,
 };
 
 export class DatalayerConfiguration {
@@ -76,67 +76,67 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
     launcher?: ILauncher,
     restorer?: ILayoutRestorer,
   ): IDatalayer => {
-    const { commands } = app;
-    const command = CommandIDs.create;
-    if (!tracker) {
-      tracker = new WidgetTracker<MainAreaWidget<DatalayerWidget>>({
-        namespace: 'datalayer',
-      });
-    }
-    if (restorer) {
-      void restorer.restore(tracker, {
-        command,
-        name: () => 'datalayer',
-      });
-    }
-    commands.addCommand(command, {
-      caption: 'Show Datalayer Core',
-      label: 'Datalayer Core',
-      icon,
-      execute: () => {
-        const content = new DatalayerWidget(app);
-        const widget = new MainAreaWidget<DatalayerWidget>({ content });
-        widget.title.label = 'Datalayer';
-        widget.title.icon = icon;
-        app.shell.add(widget, 'main');
-        tracker.add(widget);
-      }
-    });
-    const category = 'Datalayer';
-    palette.addItem({ command, category });
-    const settingsUpdated = (settings: ISettingRegistry.ISettings) => {
-      const showInLauncher = settings.get('showInLauncher').composite as boolean;
-      if (launcher && showInLauncher) {
-        launcher.add({
-          command,
-          category,
-          rank: 1.1,
-        });
-      }
-    };
-    if (settingRegistry) {
-      settingRegistry
-        .load(plugin.id)
-        .then(settings => {
-          console.log(`${plugin.id} settings loaded:`, settings.composite);
-          settingsUpdated(settings);
-          settings.changed.connect(settingsUpdated);
-        })
-        .catch(reason => {
-          console.error(`Failed to load settings for ${plugin.id}`, reason);
-        });
-    }
     const datalayer: IDatalayer =  {
       configuration: new DatalayerConfiguration(),    
     }
     requestAPI<any>('config')
       .then(data => {
-        console.log('Received config', data);
+        console.log('Received Datalayer configuration', data);
         const configuration = {
-          category: data.settings.launcher_category,
-          kubernetesHostname: data.settings.kubernetes_hostname,
+          launcherCategory: data.settings.launcher_category,
+          apiServerUrl: data.settings.api_server_url,
         }
         datalayer.configuration.configuration = configuration;
+        const { commands } = app;
+        const command = CommandIDs.create;
+        if (!tracker) {
+          tracker = new WidgetTracker<MainAreaWidget<DatalayerWidget>>({
+            namespace: 'datalayer',
+          });
+        }
+        if (restorer) {
+          void restorer.restore(tracker, {
+            command,
+            name: () => 'datalayer',
+          });
+        }
+        commands.addCommand(command, {
+          caption: 'Show Datalayer Core',
+          label: 'Datalayer Core',
+          icon,
+          execute: () => {
+            const content = new DatalayerWidget(app);
+            const widget = new MainAreaWidget<DatalayerWidget>({ content });
+            widget.title.label = 'Datalayer';
+            widget.title.icon = icon;
+            app.shell.add(widget, 'main');
+            tracker.add(widget);
+          }
+        });
+        const category = configuration.launcherCategory;
+        palette.addItem({ command, category });
+        const settingsUpdated = (settings: ISettingRegistry.ISettings) => {
+          const showInLauncher = settings.get('showInLauncher').composite as boolean;
+          if (launcher && showInLauncher) {
+            launcher.add({
+              command,
+              category,
+              rank: 1.1,
+            });
+          }
+        };
+        if (settingRegistry) {
+          settingRegistry
+            .load(plugin.id)
+            .then(settings => {
+              console.log(`${plugin.id} settings loaded:`, settings.composite);
+              settingsUpdated(settings);
+              settings.changed.connect(settingsUpdated);
+            })
+            .catch(reason => {
+              console.error(`Failed to load settings for ${plugin.id}`, reason);
+            });
+        }
       })
       .catch(reason => {
         console.error(
