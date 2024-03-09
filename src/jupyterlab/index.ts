@@ -11,8 +11,9 @@ import { DatalayerWidget } from './widget';
 import '../../style/index.css';
 
 export type IDatalayerConfig = {
-  launcherCategory: string,
   apiServerUrl: string,
+  launcherCategory: string,
+  whiteLabel: boolean,
 };
 
 export class DatalayerConfiguration {
@@ -83,8 +84,9 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
       .then(data => {
         console.log('Received Datalayer configuration', data);
         const configuration = {
-          launcherCategory: data.settings.launcher_category,
           apiServerUrl: data.settings.api_server_url,
+          launcherCategory: data.settings.launcher_category,
+          whiteLabel: data.settings.white_label,
         }
         datalayer.configuration.configuration = configuration;
         const { commands } = app;

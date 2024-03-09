@@ -30,19 +30,24 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [DEFAULT_STATIC_FILES_PATH]
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    launcher_category = Unicode("Datalayer",
-        config=True,
-        help=("Category to use for the applicaton launcher."), 
-        )
     api_server_url = Unicode("https://io.datalayer.run",
         config=True,
         help="""Hostname to connect to the Datalayer APIs."""
         )
+    launcher_category = Unicode("Datalayer",
+        config=True,
+        help=("Category to use for the applicaton launcher."), 
+        )
+    white_label = Bool(False,
+        config=True,
+        help="""Display white label content."""
+        )
 
     def initialize_settings(self):
         settings = dict(
-            launcher_category=self.launcher_category,
             api_server_url=self.api_server_url,
+            launcher_category=self.launcher_category,
+            white_label=self.white_label,
         )
         self.settings.update(**settings)
 
