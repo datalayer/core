@@ -18,6 +18,8 @@ import { DatalayerWidget } from './widget';
 import { datalayerStore } from '../state';
 import { IDatalayerConfig } from './tokens';
 
+export * from './tokens';
+
 export class DatalayerConfiguration {
   private _configuration?: IDatalayerConfig;
   private _configurationChanged: Signal<
@@ -103,6 +105,12 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
           whiteLabel: data.settings.white_label
         };
         datalayer.configuration.configuration = configuration;
+
+        // Don't add user interface elements in white label
+        if (configuration.whiteLabel) {
+          return;
+        }
+
         const { commands } = app;
         const command = CommandIDs.create;
         if (!tracker) {
