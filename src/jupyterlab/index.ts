@@ -1,5 +1,3 @@
-import { Token } from '@lumino/coreutils';
-import { ISignal, Signal } from '@lumino/signaling';
 import {
   JupyterFrontEnd,
   JupyterFrontEndPlugin,
@@ -12,46 +10,14 @@ import {
 } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ILauncher } from '@jupyterlab/launcher';
+import { PromiseDelegate } from '@lumino/coreutils';
 import icon from '@datalayer/icons-react/data1/DatalayerGreenPaddingIconJupyterLab';
 import { requestAPI } from './handler';
 import { DatalayerWidget } from './widget';
 import { datalayerStore } from '../state';
-import { IDatalayerConfig } from './tokens';
+import { IDatalayerConfig, IDatalayer, DatalayerConfiguration } from './tokens';
 
 export * from './tokens';
-
-export class DatalayerConfiguration {
-  private _configuration?: IDatalayerConfig;
-  private _configurationChanged: Signal<
-    DatalayerConfiguration,
-    IDatalayerConfig | undefined
-  >;
-  constructor() {
-    this._configurationChanged = new Signal<
-      DatalayerConfiguration,
-      IDatalayerConfig | undefined
-    >(this);
-  }
-  set configuration(configuration: IDatalayerConfig | undefined) {
-    this._configuration = configuration;
-    this._configurationChanged.emit(configuration);
-  }
-  get configuration() {
-    return this._configuration;
-  }
-  get configurationChanged(): ISignal<
-    DatalayerConfiguration,
-    IDatalayerConfig | undefined
-  > {
-    return this._configurationChanged;
-  }
-}
-
-export type IDatalayer = {
-  configuration: DatalayerConfiguration;
-};
-
-export const IDatalayer = new Token<IDatalayer>('@datalayer/core:plugin');
 
 /**
  * The command IDs used by the plugin.k
@@ -88,9 +54,11 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
     launcher?: ILauncher,
     restorer?: ILayoutRestorer
   ): IDatalayer => {
-    const datalayer: IDatalayer = {
-      configuration: new DatalayerConfiguration()
-    };
+    const ready = new PromiseDelegate<void>();
+    const datalayer: IDatalayer = Object.freeze({
+      configuration: new DatalayerConfiguration(),
+      ready: ready.promise
+    });
     storeConfiguration(datalayer.configuration.configuration);
     datalayer.configuration.configurationChanged.connect((_, config) => {
       storeConfiguration(config);
@@ -105,6 +73,7 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
           whiteLabel: data.settings.white_label
         };
         datalayer.configuration.configuration = configuration;
+        ready.resolve();
 
         // Don't add user interface elements in white label
         if (configuration.whiteLabel) {
@@ -164,6 +133,7 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
         }
       })
       .catch(reason => {
+        ready.reject(reason);
         console.error(
           `Error while accessing the jupyter server extension.\n${reason}`
         );
