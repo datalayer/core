@@ -36,7 +36,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
     launcher_category = Unicode("Datalayer",
         config=True,
-        help=("Category to use for the applicaton launcher."), 
+        help=("Category to use for the application launcher."), 
         )
     white_label = Bool(False,
         config=True,
