@@ -1,46 +1,23 @@
-import { Token } from '@lumino/coreutils';
-import { ISignal, Signal } from '@lumino/signaling';
-import { JupyterFrontEnd, JupyterFrontEndPlugin, ILayoutRestorer } from '@jupyterlab/application';
-import { MainAreaWidget, ICommandPalette, WidgetTracker } from '@jupyterlab/apputils';
+import {
+  JupyterFrontEnd,
+  JupyterFrontEndPlugin,
+  ILayoutRestorer
+} from '@jupyterlab/application';
+import {
+  MainAreaWidget,
+  ICommandPalette,
+  WidgetTracker
+} from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ILauncher } from '@jupyterlab/launcher';
+import { PromiseDelegate } from '@lumino/coreutils';
 import icon from '@datalayer/icons-react/data1/DatalayerGreenPaddingIconJupyterLab';
 import { requestAPI } from './handler';
 import { DatalayerWidget } from './widget';
+import { datalayerStore } from '../state';
+import { IDatalayerConfig, IDatalayer, DatalayerConfiguration } from './tokens';
 
-import '../../style/index.css';
-
-export type IDatalayerConfig = {
-  apiServerUrl: string,
-  launcherCategory: string,
-  whiteLabel: boolean,
-};
-
-export class DatalayerConfiguration {
-  private _configuration?: IDatalayerConfig;
-  private _configurationChanged: Signal<DatalayerConfiguration, IDatalayerConfig | undefined>;
-  constructor() {
-    this._configurationChanged = new Signal<DatalayerConfiguration, IDatalayerConfig | undefined>(this);
-  }
-  set configuration(configuration: IDatalayerConfig | undefined) {
-    this._configuration = configuration;
-    this._configurationChanged.emit(configuration)
-  }
-  get configuration() {
-    return this._configuration;
-  }
-  get configurationChanged(): ISignal<DatalayerConfiguration, IDatalayerConfig | undefined> {
-    return this._configurationChanged;
-  }
-}
-
-export type IDatalayer = {
-  configuration: DatalayerConfiguration,
-};
-
-export const IDatalayer = new Token<IDatalayer>(
-  '@datalayer/core:plugin'
-);
+export * from './tokens';
 
 /**
  * The command IDs used by the plugin.k
@@ -65,7 +42,7 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
     palette: ICommandPalette,
     settingRegistry?: ISettingRegistry,
     launcher?: ILauncher,
-    restorer?: ILayoutRestorer,
+    restorer?: ILayoutRestorer
   ) => {
     tracker.forEach(widget => widget.dispose());
     console.log(`${plugin.id} is deactivated`);
@@ -75,31 +52,45 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
     palette: ICommandPalette,
     settingRegistry?: ISettingRegistry,
     launcher?: ILauncher,
-    restorer?: ILayoutRestorer,
+    restorer?: ILayoutRestorer
   ): IDatalayer => {
-    const datalayer: IDatalayer =  {
-      configuration: new DatalayerConfiguration(),    
-    }
+    const ready = new PromiseDelegate<void>();
+    const datalayer: IDatalayer = Object.freeze({
+      configuration: new DatalayerConfiguration(),
+      ready: ready.promise
+    });
+    storeConfiguration(datalayer.configuration.configuration);
+    datalayer.configuration.configurationChanged.connect((_, config) => {
+      storeConfiguration(config);
+    });
+
     requestAPI<any>('config')
       .then(data => {
         console.log('Received Datalayer configuration', data);
         const configuration = {
           apiServerUrl: data.settings.api_server_url,
           launcherCategory: data.settings.launcher_category,
-          whiteLabel: data.settings.white_label,
-        }
+          whiteLabel: data.settings.white_label
+        };
         datalayer.configuration.configuration = configuration;
+        ready.resolve();
+
+        // Don't add user interface elements in white label
+        if (configuration.whiteLabel) {
+          return;
+        }
+
         const { commands } = app;
         const command = CommandIDs.create;
         if (!tracker) {
           tracker = new WidgetTracker<MainAreaWidget<DatalayerWidget>>({
-            namespace: 'datalayer',
+            namespace: 'datalayer'
           });
         }
         if (restorer) {
           void restorer.restore(tracker, {
             command,
-            name: () => 'datalayer',
+            name: () => 'datalayer'
           });
         }
         commands.addCommand(command, {
@@ -118,12 +109,13 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
         const category = configuration.launcherCategory;
         palette.addItem({ command, category });
         const settingsUpdated = (settings: ISettingRegistry.ISettings) => {
-          const showInLauncher = settings.get('showInLauncher').composite as boolean;
+          const showInLauncher = settings.get('showInLauncher')
+            .composite as boolean;
           if (launcher && showInLauncher) {
             launcher.add({
               command,
               category,
-              rank: 1.1,
+              rank: 1.1
             });
           }
         };
@@ -141,13 +133,18 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
         }
       })
       .catch(reason => {
+        ready.reject(reason);
         console.error(
           `Error while accessing the jupyter server extension.\n${reason}`
         );
-      }
-    );
+      });
     console.log(`JupyterLab plugin ${plugin.id} is activated.`);
     return datalayer;
+
+    function storeConfiguration(configuration?: IDatalayerConfig) {
+      const { setConfiguration } = datalayerStore.getState();
+      setConfiguration(configuration);
+    }
   }
 };
 
