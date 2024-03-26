@@ -67,6 +67,7 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
     requestAPI<any>('config')
       .then(data => {
         console.log('Received Datalayer configuration', data);
+        datalayerStore.getState().setVersion(data.version);
         const configuration = {
           apiServerUrl: data.settings.api_server_url,
           launcherCategory: data.settings.launcher_category,
