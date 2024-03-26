@@ -65,7 +65,9 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
+    "@datalayer/icons-react": "0.2.4",
     "@datalayer/jupyter-react": "0.9.5",
+    "@datalayer/primer-addons": "0.2.3",
     "@jupyter/collaboration-extension": "1.2.0",
     "echarts": "5.4.2",
     "echarts-for-react": "3.0.2",
