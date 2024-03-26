@@ -15,6 +15,11 @@ export type DatalayerState = {
    * Set the global datalayer configuration
    */
   setConfiguration: (configuration?: IDatalayerConfig) => void;
+  /**
+   * Package version
+   */
+  version: string;
+  setVersion: (version: string) => void;
 };
 
 export const datalayerStore = createStore<DatalayerState>((set, get) => ({
@@ -24,6 +29,12 @@ export const datalayerStore = createStore<DatalayerState>((set, get) => ({
   configuration: undefined,
   setConfiguration: (configuration?: IDatalayerConfig) => {
     set(state => ({ configuration }));
+  },
+  version: '',
+  setVersion: version => {
+    if (version && !get().version) {
+      set(state => ({ version }));
+    }
   }
 }));
 
