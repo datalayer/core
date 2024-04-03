@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/icons-react": "0.2.5",
+    "@datalayer/icons-react": "0.3.0",
     "@datalayer/jupyter-react": "0.9.5",
     "@datalayer/primer-addons": "0.2.3",
     "@jupyter/collaboration-extension": "^1.2.0",
