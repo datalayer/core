@@ -1,10 +1,11 @@
 """The Datalayer Server application."""
 
+import json
 import os
+import typing as t
 
-from traitlets import (
-    Unicode, Bool,
-)
+from traitlets import default, Bool, CInt, Instance, Unicode
+from traitlets.config import Configurable
 
 from jupyter_server.utils import url_path_join
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
@@ -30,23 +31,57 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [DEFAULT_STATIC_FILES_PATH]
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    api_server_url = Unicode("https://io.datalayer.run",
+    api_server_url = Unicode(
+        "https://io.datalayer.run",
         config=True,
-        help="""Hostname to connect to the Datalayer APIs."""
+        help="""Hostname to connect to the Datalayer APIs.""",
+    )
+
+    white_label = Bool(False, config=True, help="""Display white label content.""")
+
+    class Launcher(Configurable):
+        """Datalayer launcher configuration"""
+
+        category = Unicode(
+            "Datalayer",
+            config=True,
+            help=("Application launcher card category."),
         )
-    launcher_category = Unicode("Datalayer",
-        config=True,
-        help=("Category to use for the application launcher."), 
+
+        name = Unicode(
+            "Jupyter kernels",
+            config=True,
+            help=("Application launcher card name."),
         )
-    white_label = Bool(False,
-        config=True,
-        help="""Display white label content."""
+
+        icon_svg_url = Unicode(
+            None,
+            allow_none=True,
+            config=True,
+            help=("Application launcher card icon."),
         )
+
+        rank = CInt(
+            0,
+            config=True,
+            help=("Application launcher card rank."),
+        )
+
+    launcher = Instance(Launcher)
+
+    @default("launcher")
+    def _default_launcher(self):
+        return DatalayerExtensionApp.Launcher(parent=self, config=self.config)
 
     def initialize_settings(self):
         settings = dict(
             api_server_url=self.api_server_url,
-            launcher_category=self.launcher_category,
+            launcher={
+                "category": self.launcher.category,
+                "name": self.launcher.name,
+                "icon": self.launcher.icon_svg_url,
+                "rank": self.launcher.rank,
+            },
             white_label=self.white_label,
         )
         self.settings.update(**settings)
