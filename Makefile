@@ -58,7 +58,7 @@ kill:
 warning:
 	echo "\x1b[34m\x1b[43mEnsure you have run \x1b[1;37m\x1b[41m conda deactivate \x1b[22m\x1b[34m\x1b[43m before invoking this.\x1b[0m"
 
-publish: # publish the npm packages
+publish-npm: # publish the npm packages
 	yarn build && \
 		npm publish --access public
 	echo https://www.npmjs.com/package/@datalayer/core?activeTab=versions
