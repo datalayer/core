@@ -68,7 +68,7 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
       .then(data => {
         console.log('Received Datalayer configuration', data);
         datalayerStore.getState().setVersion(data.version);
-        const configuration = {
+        const configuration: IDatalayerConfig = {
           apiServerUrl: data.settings.api_server_url,
           launcher: data.settings.launcher,
           whiteLabel: data.settings.white_label
@@ -107,7 +107,7 @@ const plugin: JupyterFrontEndPlugin<IDatalayer> = {
             tracker.add(widget);
           }
         });
-        const category = configuration.launcher.category;
+        const category = configuration.launcher?.category ?? 'Datalayer';
         palette.addItem({ command, category });
         const settingsUpdated = (settings: ISettingRegistry.ISettings) => {
           const showInLauncher = settings.get('showInLauncher')

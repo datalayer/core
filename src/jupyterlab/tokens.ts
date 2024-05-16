@@ -9,7 +9,7 @@ export type IDatalayerConfig = {
   /**
    * Launcher card customization
    */
-  launcher: {
+  launcher?: {
     /**
      * Card category
      */
@@ -56,7 +56,7 @@ export class DatalayerConfiguration {
     this._configuration = configuration;
     this._configurationChanged.emit(configuration);
   }
-  get configuration() {
+  get configuration(): IDatalayerConfig | undefined {
     return this._configuration;
   }
   get configurationChanged(): ISignal<
