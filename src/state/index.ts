@@ -22,11 +22,23 @@ export type DatalayerState = {
   setVersion: (version: string) => void;
 };
 
+let initialConfiguration: IDatalayerConfig | undefined = undefined;
+
+// Try loading initial state from datalayer-config-data element
+try {
+  const rawConfig = document.getElementById('datalayer-config-data');
+  if (rawConfig?.innerText) {
+    initialConfiguration = JSON.parse(rawConfig?.innerText);
+  }
+} catch (error) {
+  console.debug('No configuration found in the webpage.', error);
+}
+
 export const datalayerStore = createStore<DatalayerState>((set, get) => ({
   tab: 0.0,
   getIntTab: () => Math.floor(get().tab),
   setTab: (tab: number) => set((state: DatalayerState) => ({ tab })),
-  configuration: undefined,
+  configuration: initialConfiguration,
   setConfiguration: (configuration?: IDatalayerConfig) => {
     set(state => ({ configuration }));
   },
