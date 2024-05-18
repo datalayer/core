@@ -36,7 +36,6 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
     def get(self):
         """Returns the configuration of the server extension."""
         settings = self.settings["datalayer_config"]
-        self.log.critical(str(settings))
         res = json.dumps(
             {
                 "extension": "datalayer",
