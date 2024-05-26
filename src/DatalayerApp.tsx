@@ -1,7 +1,7 @@
 /// <reference types="webpack-env" />
 
 import { createRoot } from 'react-dom/client';
-import DatalayerJupyterLabHeadless from './DatalayerJupyterLabHeadless';
+import { DatalayerJupyterLabHeadless } from '@datalayer/run';
 
 import "./../style/index.css";
 
