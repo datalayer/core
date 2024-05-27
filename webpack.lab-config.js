@@ -7,6 +7,14 @@
 module.exports = {
   module: {
     rules: [
+      {
+        test: /\.jsx$/,
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-react'],
+          cacheDirectory: true
+        }
+      },
       // Rule to deal with the service-worker.ts file
       // It will include the transpiled file as a text file named `[name][ext]`
       // That file is available from the static folder of this extension. That

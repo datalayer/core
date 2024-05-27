@@ -32,7 +32,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
     api_server_url = Unicode(
-        "https://io.datalayer.run",
+        "https://oss.datalayer.run",
         config=True,
         help="""Hostname to connect to the Datalayer APIs.""",
     )
