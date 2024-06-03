@@ -1,7 +1,7 @@
 /// <reference types="webpack-env" />
 
 import { createRoot } from 'react-dom/client';
-import { DatalayerJupyterLabHeadless } from '@datalayer/run';
+import { CoreExample } from '@datalayer/run';
 
 import "./../style/index.css";
 
@@ -10,10 +10,10 @@ document.body.appendChild(div);
 const root = createRoot(div);
 
 if (module.hot) {
-  module.hot.accept('./DatalayerJupyterLabHeadless', () => {
-    const DatalayerJupyterLabHeadless = require('./DatalayerJupyterLabHeadless').default;
-    root.render(<DatalayerJupyterLabHeadless/>);
+  module.hot.accept('./CoreExample', () => {
+    const CoreExample = require('./CoreExample').default;
+    root.render(<CoreExample/>);
   })
 }
 
-root.render(<DatalayerJupyterLabHeadless/>);
+root.render(<CoreExample/>);
