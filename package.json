@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/run": "^0.0.6"
+    "@datalayer/run": "^0.0.10"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",
@@ -109,6 +109,7 @@
     "svg-url-loader": "^7.1.1",
     "ts-jest": "^29.0.5",
     "typescript": "~5.0.3",
+    "url-loader": "4.0.0",
     "webpack": "^5.74.0",
     "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.10.0",
@@ -178,6 +179,7 @@
     "@lumino/signaling": "2.1.1",
     "@lumino/virtualdom": "2.0.1",
     "@lumino/widgets": "2.3.1",
+    "@primer/react": "36.20.0",
     "@rjsf/core": "5.3.0",
     "@rjsf/utils": "5.3.0",
     "@rjsf/validator-ajv6": "5.3.0",
