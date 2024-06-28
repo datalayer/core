@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/run": "^0.0.10"
+    "@datalayer/run": "^0.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",
@@ -231,7 +231,27 @@
     "schemaDir": "schema",
     "webpackConfig": "./webpack.lab-config.js",
     "sharedPackages": {
+      "@datalayer/icons-react": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@datalayer/jupyter-react": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@datalayer/run": {
+        "bundled": true,
+        "singleton": true
+      },
       "@jupyter/docprovider": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@primer/react": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@primer/react-brand": {
         "bundled": true,
         "singleton": true
       }
