@@ -41,7 +41,7 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
                 "extension": "datalayer",
                 "version": __version__,
                 "settings": dict(
-                    api_server_url=settings.api_server_url,
+                    run_url=settings.run_url,
                     launcher={
                         "category": settings.launcher.category,
                         "name": settings.launcher.name,

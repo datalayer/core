@@ -31,10 +31,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [DEFAULT_STATIC_FILES_PATH]
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    api_server_url = Unicode(
+    run_url = Unicode(
         "https://oss.datalayer.run",
         config=True,
-        help="""Hostname to connect to the Datalayer APIs.""",
+        help="""IRM to connect to the Datalayer RUN APIs.""",
     )
 
     white_label = Bool(False, config=True, help="""Display white label content.""")
@@ -75,7 +75,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_settings(self):
         settings = dict(
-            api_server_url=self.api_server_url,
+            run_url=self.run_url,
             launcher={
                 "category": self.launcher.category,
                 "name": self.launcher.name,
