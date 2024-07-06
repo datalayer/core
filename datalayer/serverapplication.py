@@ -34,7 +34,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     run_url = Unicode(
         "https://oss.datalayer.run",
         config=True,
-        help="""IRM to connect to the Datalayer RUN APIs.""",
+        help="""URL to connect to the Datalayer RUN APIs.""",
     )
 
     white_label = Bool(False, config=True, help="""Display white label content.""")
