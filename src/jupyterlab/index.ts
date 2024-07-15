@@ -1,3 +1,3 @@
-import { datalayerCorePlugin } from '@datalayer/run';
+import { activatorPlugin, datalayerCorePlugin } from '@datalayer/run';
 
-export default datalayerCorePlugin;
+export default [activatorPlugin, datalayerCorePlugin];
