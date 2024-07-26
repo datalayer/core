@@ -2,7 +2,11 @@ from typing import Any, Dict, List
 
 from ._version import __version__
 from .serverapplication import DatalayerExtensionApp
-from .lab import DatalayerLabApp
+
+try:
+    from .lab import DatalayerLabApp
+except ModuleNotFoundError as e:
+    print("No jupyterlab available here...")
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
