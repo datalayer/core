@@ -10,7 +10,7 @@ CONDA_REMOVE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda remove 
 
 ENV_NAME=datalayer
 
-VERSION=1.0.9
+VERSION=1.1.1
 
 .DEFAULT_GOAL := default
 
