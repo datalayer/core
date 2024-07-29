@@ -10,6 +10,8 @@ CONDA_REMOVE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda remove 
 
 ENV_NAME=datalayer
 
+VERSION=1.1.1
+
 .DEFAULT_GOAL := default
 
 .SILENT: init
@@ -58,7 +60,36 @@ kill:
 warning:
 	echo "\x1b[34m\x1b[43mEnsure you have run \x1b[1;37m\x1b[41m conda deactivate \x1b[22m\x1b[34m\x1b[43m before invoking this.\x1b[0m"
 
-publish-npm: # publish the npm packages
+typedoc: ## generate typedoc
+	rm -fr typedoc && \
+	yarn typedoc --tsconfig ./tsconfig.json && \
+	open typedoc/index.html
+
+publish-typedoc: typedoc ## deploy typedoc
+	aws s3 rm \
+		s3://datalayer-typedoc/datalayer/core/${VERSION}/ \
+		--recursive \
+		--profile datalayer
+	aws s3 cp \
+		typedoc \
+		s3://datalayer-typedoc/datalayer/core/${VERSION}/ \
+		--recursive \
+		--profile datalayer
+	aws cloudfront create-invalidation \
+		--distribution-id XXX \
+		--paths /datalayer/jupyter-kernels/${VERSION}/ \
+		--profile datalayer
+	echo open ✨  https://typedoc.datalayer.tech/datalayer/core/${VERSION}
+
+publish-npm: # publish the npm package
 	yarn build && \
 		npm publish --access public
 	echo https://www.npmjs.com/package/@datalayer/core?activeTab=versions
+
+publish-pypi: # publish the pypi package
+	git clean -fdx && \
+		python -m build
+	@exec echo
+	@exec echo twine upload ./dist/*-py3-none-any.whl
+	@exec echo
+	@exec echo https://pypi.org/project/datalayer/#history

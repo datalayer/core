@@ -1,6 +1,5 @@
 """The Datalayer Server application."""
 
-import json
 import os
 import typing as t
 

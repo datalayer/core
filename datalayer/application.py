@@ -1,11 +1,11 @@
+# Copyright (c) Datalayer Development Team.
+# Distributed under the terms of the Modified BSD License.
+
 """
 A base Application class for Datalayer applications.
 
 All Datalayer applications should inherit from this.
 """
-
-# Copyright (c) Datalayer Development Team.
-# Distributed under the terms of the Modified BSD License.
 
 import logging
 import os
