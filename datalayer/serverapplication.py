@@ -30,9 +30,13 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [DEFAULT_STATIC_FILES_PATH]
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
+    # run_url can be set set and None or ' '(empty string)
+    # in that case, the consumer of those settings are free
+    # to consider run_url as null.
     run_url = Unicode(
         "https://oss.datalayer.run",
         config=True,
+        allow_none=True,
         help="""URL to connect to the Datalayer RUN APIs.""",
     )
 
