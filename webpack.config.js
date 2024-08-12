@@ -1,163 +1,201 @@
-const path = require("path");
-const webpack = require("webpack");
+/*
+ * Copyright (c) 2023-2024 Datalayer, Inc.
+ *
+ * Datalayer License
+ */
 
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const path = require('path');
+const webpack = require('webpack');
+const miniSVGDataURI = require('mini-svg-data-uri');
 
-const shimJS = path.resolve(__dirname, "src", "emptyshim.js");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
+  .BundleAnalyzerPlugin;
+/*
+const shimJS = path.resolve(__dirname, 'src', 'emptyshim.js');
 function shim(regExp) {
   return new webpack.NormalModuleReplacementPlugin(regExp, shimJS);
 }
-
+*/
 const IS_PRODUCTION = process.argv.indexOf('--mode=production') > -1;
-const mode = IS_PRODUCTION ? "production" : "development";
-const devtool = IS_PRODUCTION ? false : "inline-cheap-source-map";
+const mode = IS_PRODUCTION ? 'production' : 'development';
+const devtool = IS_PRODUCTION ? false : 'inline-cheap-source-map';
 const minimize = IS_PRODUCTION ? true : false;
-const publicPath = IS_PRODUCTION ? "/static/datalayer/" : "http://localhost:3063/";
+const publicPath = IS_PRODUCTION
+  ? '/static/datalayer/'
+  : 'http://localhost:3063/';
 
-module.exports = {
-  entry: "./src/DatalayerApp",
+const commonOptions = {
   mode: mode,
   devServer: {
     port: 3063,
+    open: [
+      'http://localhost:3063/login/cli'
+    ],
+    https: false,
+    server: 'http',
     client: { overlay: false },
-    historyApiFallback: true,
-    hot: !IS_PRODUCTION,
+    historyApiFallback: true
   },
   watchOptions: {
     aggregateTimeout: 300,
     poll: 2000, // Seems to stabilise HMR file change detection
-    ignored: "/node_modules/"
+    ignored: '/node_modules/'
   },
   devtool,
   optimization: {
-    minimize,
-//    usedExports: true,
-  },
-  output: {
-    publicPath,
-    filename: '[name].datalayer.js',
+    minimize
+    //    usedExports: true,
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".jsx"],
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
     alias: {
-      path: "path-browserify",
-      stream: "stream-browserify",
-    },
+      path: 'path-browserify',
+      stream: 'stream-browserify'
+    }
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        loader: "babel-loader",
+        loader: 'babel-loader',
         options: {
-          plugins: [
-            "@babel/plugin-proposal-class-properties",
-          ],
+          plugins: ['@babel/plugin-proposal-class-properties'],
           presets: [
-            ["@babel/preset-react", {
-                runtime: 'automatic',
-              },
+            [
+              '@babel/preset-react',
+              {
+                runtime: 'automatic'
+              }
             ],
-            "@babel/preset-typescript",
+            '@babel/preset-typescript'
           ],
           cacheDirectory: true
         },
-        exclude: /node_modules/,
+        exclude: /node_modules/
       },
       {
         test: /\.m?js$/,
         resolve: {
-          fullySpecified: false,
-        },
+          fullySpecified: false
+        }
       },
       {
         test: /\.jsx?$/,
-        loader: "babel-loader",
+        loader: 'babel-loader',
         options: {
-          presets: ["@babel/preset-react"],
+          presets: ['@babel/preset-react'],
           cacheDirectory: true
         }
       },
       {
         test: /\.css?$/i,
-        use: ['style-loader', 'css-loader'],
+        use: ['style-loader', 'css-loader']
       },
       {
         // In .css files, svg is loaded as a data URI.
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
         issuer: /\.css$/,
-        use: {
-          loader: 'svg-url-loader',
-          options: { encoding: 'none', limit: 10000 }
+        type: 'asset',
+        generator: {
+          dataUrl: content => miniSVGDataURI(content.toString())
         }
       },
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
         issuer: /\.tsx$/,
-        use: [
-          '@svgr/webpack'
-        ],
+        use: ['@svgr/webpack']
       },
       {
         // In .ts and .tsx files (both of which compile to .js), svg files
         // must be loaded as a raw string instead of data URIs.
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
         issuer: /\.js$/,
-        use: {
-          loader: 'raw-loader'
-        }
+        type: 'asset/source'
       },
       {
         test: /\.(png|jpg|jpeg|gif|ttf|woff|woff2|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        use: [{ loader: 'url-loader', options: { limit: 10000 } }],
+        type: 'asset/resource'
       },
       // Ship the JupyterLite service worker.
       {
         resourceQuery: /text/,
         type: 'asset/resource',
         generator: {
-          filename: '[name][ext]',
-        },
+          filename: '[name][ext]'
+        }
       },
       // Rule for pyodide kernel
       {
         test: /pypi\/.*/,
         type: 'asset/resource',
         generator: {
-          filename: 'pypi/[name][ext][query]',
-        },
+          filename: 'pypi/[name][ext][query]'
+        }
       },
       {
         test: /pyodide-kernel-extension\/schema\/.*/,
         type: 'asset/resource',
         generator: {
-          filename: 'schema/[name][ext][query]',
-        },
+          filename: 'schema/[name][ext][query]'
+        }
       }
     ]
   },
-  plugins: [
-    !IS_PRODUCTION ?
-      new webpack.ProvidePlugin({
-        process: 'process/browser'
+};
+
+module.exports = [
+  {
+    ...commonOptions,
+    entry: './src/LoginCLIApp',
+    output: {
+      publicPath,
+      //    filename: '[name].[contenthash].datalayer.js',
+      filename: '[name].datalayer.js'
+    },
+    plugins: [
+      !IS_PRODUCTION
+        ? new webpack.ProvidePlugin({
+          process: 'process/browser'
+        })
+        : new webpack.ProvidePlugin({
+          process: 'process/browser'
+        }),
+      new BundleAnalyzerPlugin({
+        analyzerMode: IS_PRODUCTION ? 'static' : 'disabled', // server, static, json, disabled.
+        openAnalyzer: false,
+        generateStatsFile: false
+      }),
+      /*
+      shim(/@fortawesome/),
+      shim(/moment/),
+      shim(/react-jvectormap/),
+      shim(/react-slick/),
+      shim(/react-tagsinput/),
+      */
+      new HtmlWebpackPlugin({
+        template: './public/index.html'
       })
-    :
+    ]
+  },
+  /*
+  {
+    ...commonOptions,
+    entry: './src/LoginCLIApp',
+    output: {
+      path: path.resolve(__dirname, 'datalayer', 'login', 'static'),
+      filename: 'login-cli.js',
+    },
+    plugins: [
       new webpack.ProvidePlugin({
         process: 'process/browser'
       }),
       new BundleAnalyzerPlugin({
-          analyzerMode: IS_PRODUCTION ? "static" : "disabled", // server, static, json, disabled.
-          openAnalyzer: false,
-          generateStatsFile: false,
-        }),
-    shim(/@fortawesome/),
-    shim(/moment/),
-    shim(/react-jvectormap/),
-    shim(/react-slick/),
-    shim(/react-tagsinput/),
-    new HtmlWebpackPlugin({
-      template: "./public/index.html",
-    }),
-  ],
-};
+        analyzerMode: IS_PRODUCTION ? 'static' : 'disabled', // server, static, json, disabled.
+        openAnalyzer: false,
+        generateStatsFile: false,
+      }),
+    ]
+  }
+  */
+]

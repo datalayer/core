@@ -1,1 +1,3 @@
 @import url('~@datalayer/run/style/core/index.css');
+@import url('~@datalayer/run/style/iam/index.css');
+@import url('~@datalayer/run/style/kernels/index.css');

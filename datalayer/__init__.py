@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
-from ._version import __version__
-from .serverapplication import DatalayerExtensionApp
+from datalayer._version import __version__
+from datalayer.serverapplication import DatalayerExtensionApp
 
 try:
     from .lab import DatalayerLabApp

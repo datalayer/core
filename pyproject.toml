@@ -43,7 +43,7 @@ kernels = [
 ]
 
 [project.scripts]
-d = "datalayer.command:main"
+dla = "datalayer.command:main"
 datalayer = "datalayer.command:main"
 datalayer-config = "datalayer.config:main"
 datalayer-lab = "datalayer.lab:main"
