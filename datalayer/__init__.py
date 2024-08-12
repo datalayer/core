@@ -6,7 +6,8 @@ from .serverapplication import DatalayerExtensionApp
 try:
     from .lab import DatalayerLabApp
 except ModuleNotFoundError as e:
-    print("No jupyterlab available here...")
+#    print("No jupyterlab available here...")
+    pass
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
