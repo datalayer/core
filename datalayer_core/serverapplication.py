@@ -26,7 +26,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./templat
 class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     """The Datalayer Core Server extension."""
 
-    name = "datalayer_core"
+    name = "datalayer"
 
     extension_url = "/datalayer"
 
@@ -106,9 +106,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_handlers(self):
         handlers = [
-            ("datalayer_core", IndexHandler),
-            (url_path_join("datalayer_core", "config"), ConfigHandler),
-            (url_path_join("datalayer_core", "login"), LoginHandler),
+            ("datalayer", IndexHandler),
+            (url_path_join("datalayer", "config"), ConfigHandler),
+            (url_path_join("datalayer", "login"), LoginHandler),
         ]
         self.handlers.extend(handlers)
 
