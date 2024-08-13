@@ -24,7 +24,7 @@ DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./templat
 
 
 class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
-    """The Datalayer Core Server extension."""
+    """The Datalayer Server extension."""
 
     name = "datalayer"
 
