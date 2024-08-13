@@ -24,6 +24,8 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
+    "jupyter_iam>=1.2.0",
+    "jupyter_kernels>=1.2.7",
     "jupyter_server>=2,<3",
     "rich",
 ]
@@ -38,13 +40,14 @@ test = [
     "pytest_jupyter",
     "pytest-tornasync",
 ]
-kernels = [
-    "jupyter_kernels",
+run = [
 ]
 
 [project.scripts]
-dla = "datalayer.command:main"
-datalayer = "datalayer.command:main"
+# dla = "datalayer.command:main"
+# datalayer = "datalayer.command:main"
+dla = "datalayer.cli.datalayer:main"
+datalayer = "datalayer.cli.datalayer:main"
 datalayer-config = "datalayer.config:main"
 datalayer-lab = "datalayer.lab:main"
 datalayer-migrate = "datalayer.migrate:main"
@@ -66,8 +69,17 @@ artifacts = [
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["datalayer/labextension"]
+artifacts = [
+    "datalayer/static",
+    "datalayer/labextension",
+]
 exclude = [".github", "binder", ".yarn"]
+
+[tool.hatch.build.targets.wheel]
+artifacts = [
+    "datalayer/static",
+    "datalayer/kernels/about/about.md",
+]
 
 [tool.hatch.build.targets.wheel.shared-data]
 "datalayer/labextension" = "share/jupyter/labextensions/@datalayer/core"

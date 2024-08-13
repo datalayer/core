@@ -9,8 +9,13 @@ from traitlets.config import Configurable
 from jupyter_server.utils import url_path_join
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
 
-from ._version import __version__
-from .handlers import IndexHandler, ConfigHandler
+from datalayer.handlers.index.handler import IndexHandler
+from datalayer.handlers.config.handler import ConfigHandler
+from datalayer.handlers.login.handler import LoginHandler
+
+from datalayer.authn.state import get_server_port
+
+from datalayer._version import __version__
 
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
@@ -77,6 +82,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         return DatalayerExtensionApp.Launcher(parent=self, config=self.config)
 
     def initialize_settings(self):
+        self.serverapp.answer_yes = True
+        port = get_server_port()
+        if port is not None:
+            self.serverapp.port = port
         settings = dict(
             run_url=self.run_url,
             launcher={
@@ -90,12 +99,16 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.settings.update(**settings)
 
     def initialize_templates(self):
-        self.serverapp.jinja_template_vars.update({"datalayer_version": __version__})
+        self.serverapp.jinja_template_vars.update({
+            "datalayer_version": __version__,
+            "run_url": self.run_url,
+        })
 
     def initialize_handlers(self):
         handlers = [
             ("datalayer", IndexHandler),
             (url_path_join("datalayer", "config"), ConfigHandler),
+            (url_path_join("datalayer", "login"), LoginHandler),
         ]
         self.handlers.extend(handlers)
 
