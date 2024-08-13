@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/run": "^0.1.14"
+    "@datalayer/run": "^0.1.15"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",

@@ -75,7 +75,6 @@ exclude = [".github", "binder", ".yarn"]
 [tool.hatch.build.targets.wheel]
 artifacts = [
     "datalayer_core/static",
-    "datalayer_core/labextension",
     "datalayer_core/about/about.md",
 ]
 
