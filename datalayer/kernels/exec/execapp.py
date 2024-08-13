@@ -158,12 +158,12 @@ class KernelExecApp(DatalayerCLIBaseApp):
         try:
             # JupyterApp.start dispatches on NoStart
             super(KernelExecApp, self).start()
-            if len(self.extra_args) != 2:  # FIXME why is exec an args?
+            if len(self.extra_args) != 3:  # FIXME why is exec an args?
                 self.log.warning("A file to execute must be provided.")
                 self.print_help()
                 self.exit(1)
 
-            filename = self.extra_args[1]
+            filename = self.extra_args[2]
             fname = Path(filename).expanduser().resolve()
 
             # Make sure we can open the file
