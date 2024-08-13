@@ -3,11 +3,11 @@
 
 import warnings
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 from ...kernels.utils import display_me
 
 
-class KernelWhoamiApp(DatalayerCLIBase):
+class KernelWhoamiApp(DatalayerCLIBaseApp):
     """An application to list the kernels."""
 
     description = """

@@ -72,13 +72,15 @@ fields = ["description", "authors", "urls"]
 artifacts = [
     "datalayer/static",
     "datalayer/labextension",
+    "datalayer/about/about.md",
 ]
 exclude = [".github", "binder", ".yarn"]
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
     "datalayer/static",
-    "datalayer/kernels/about/about.md",
+    "datalayer/labextension",
+    "datalayer/about/about.md",
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]

@@ -3,10 +3,10 @@
 
 import warnings
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 
-class DatalayerLoginApp(DatalayerCLIBase):
+class DatalayerLoginApp(DatalayerCLIBaseApp):
     """An application to log into a remote kernel provider."""
 
     description = """

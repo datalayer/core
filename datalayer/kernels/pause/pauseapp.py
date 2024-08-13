@@ -3,10 +3,10 @@
 
 from datalayer.application import NoStart
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 
-class KernelPauseApp(DatalayerCLIBase):
+class KernelPauseApp(DatalayerCLIBaseApp):
     """Kernel Pause application."""
 
     description = """

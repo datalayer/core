@@ -10,7 +10,7 @@ from traitlets.config import catch_config_error, boolean_flag
 
 from ..._version import __version__
 from datalayer.cli.base import (
-    DatalayerCLIBase,
+    DatalayerCLIBaseApp,
     datalayer_aliases,
     datalayer_flags,
 )
@@ -71,7 +71,7 @@ aliases.update(
 # -----------------------------------------------------------------------------
 
 
-class KernelConsoleApp(DatalayerCLIBase):
+class KernelConsoleApp(DatalayerCLIBaseApp):
     """Start a terminal frontend to a remote kernel."""
 
     name = "jupyter-kernels-console"
@@ -138,7 +138,7 @@ class KernelConsoleApp(DatalayerCLIBase):
         """Do actions after construct, but before starting the app."""
         if getattr(self, "_dispatching", False):
             return
-        DatalayerCLIBase.initialize(self)
+        DatalayerCLIBaseApp.initialize(self)
 
         self.kernel_manager = None
         self.kernel_client = None

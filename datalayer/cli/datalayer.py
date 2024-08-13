@@ -5,20 +5,13 @@ from pathlib import Path
 
 from datalayer.authn.apps.loginapp import DatalayerLoginApp
 from datalayer.authn.apps.logoutapp import DatalayerLogoutApp
-
-from datalayer.kernels.about.aboutapp import KernelAboutApp
-from datalayer.kernels.console.consoleapp import KernelConsoleApp
-from datalayer.kernels.create.createapp import KernelCreateApp
-from datalayer.kernels.exec.execapp import KernelExecApp
-from datalayer.kernels.list.listapp import KernelListApp
-from datalayer.kernels.pause.pauseapp import KernelPauseApp
-from datalayer.kernels.envs.envssapp import KernelEnvironmentsApp
-from datalayer.kernels.start.startapp import KernelStartApp
-from datalayer.kernels.stop.stopapp import KernelStopApp
-from datalayer.kernels.terminate.terminateapp import KernelTerminateApp
 from datalayer.authn.apps.whoamiapp import KernelWhoamiApp
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.about.aboutapp import DatalayerAboutApp
+
+from datalayer.kernels.kernelsapp import JupyterKernelsApp
+
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 from datalayer._version import __version__
 
@@ -26,7 +19,7 @@ from datalayer._version import __version__
 HERE = Path(__file__).parent
 
 
-class DatalayerCLI(DatalayerCLIBase):
+class DatalayerCLI(DatalayerCLIBaseApp):
     description = """
       The Datalayer CLI application.
     """
@@ -35,18 +28,10 @@ class DatalayerCLI(DatalayerCLIBase):
 
 
     subcommands = {
-        "about": (KernelAboutApp, KernelAboutApp.description.splitlines()[0]),
-        "console": (KernelConsoleApp, KernelConsoleApp.description.splitlines()[0]),
-        "create": (KernelCreateApp, KernelCreateApp.description.splitlines()[0]),
-        "exec": (KernelExecApp, KernelExecApp.description.splitlines()[0]),
-        "list": (KernelListApp, KernelListApp.description.splitlines()[0]),
+        "about": (DatalayerAboutApp, DatalayerAboutApp.description.splitlines()[0]),
+        "kernels": (JupyterKernelsApp, JupyterKernelsApp.description.splitlines()[0]),
         "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),
         "logout": (DatalayerLogoutApp, DatalayerLogoutApp.description.splitlines()[0]),
-        "pause": (KernelPauseApp, KernelPauseApp.description.splitlines()[0]),
-        "envs": (KernelEnvironmentsApp, KernelEnvironmentsApp.description.splitlines()[0]),
-        "start": (KernelStartApp, KernelStartApp.description.splitlines()[0]),
-        "stop": (KernelStopApp, KernelStopApp.description.splitlines()[0]),
-        "terminate": (KernelTerminateApp, KernelTerminateApp.description.splitlines()[0]),
         "whoami": (KernelWhoamiApp, KernelWhoamiApp.description.splitlines()[0]),
     }
 

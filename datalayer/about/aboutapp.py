@@ -7,13 +7,13 @@ from datalayer.application import NoStart
 from rich.console import Console
 from rich.markdown import Markdown
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 
 HERE = Path(__file__).parent
 
 
-class KernelAboutApp(DatalayerCLIBase):
+class DatalayerAboutApp(DatalayerCLIBaseApp):
     """Kernel About application."""
 
     description = """

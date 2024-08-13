@@ -6,7 +6,7 @@ import sys
 from rich import print_json
 from traitlets import Dict, Float, Unicode
 
-from datalayer.cli.base import DatalayerCLIBase, datalayer_aliases
+from datalayer.cli.base import DatalayerCLIBaseApp, datalayer_aliases
 from ..utils import display_kernels
 
 
@@ -15,7 +15,7 @@ create_alias["given-name"] = "KernelCreateApp.kernel_given_name"
 create_alias["credits-limit"] = "KernelCreateApp.credits_limit"
 
 
-class KernelCreateApp(DatalayerCLIBase):
+class KernelCreateApp(DatalayerCLIBaseApp):
     """An application to create a kernel."""
 
     description = """

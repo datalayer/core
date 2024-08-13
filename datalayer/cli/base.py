@@ -43,7 +43,7 @@ datalayer_flags.update(
 )
 
 
-class DatalayerCLIBase(DatalayerApp):
+class DatalayerCLIBaseApp(DatalayerApp):
     name = "datalayer"
 
     version = __version__
@@ -101,10 +101,10 @@ class DatalayerCLIBase(DatalayerApp):
         if not getattr(self, "_dispatching", False):
             super().initialize(argv)
 
-        if DatalayerCLIBase._is_initialized:
+        if DatalayerCLIBaseApp._is_initialized:
             return
 
-        DatalayerCLIBase._is_initialized = True
+        DatalayerCLIBaseApp._is_initialized = True
 
         # Log the user.
         if self._requires_auth:

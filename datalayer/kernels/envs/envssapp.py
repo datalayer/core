@@ -7,7 +7,7 @@ import warnings
 from rich.console import Console
 from rich.table import Table
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 
 def new_kernel_table():
@@ -33,7 +33,7 @@ def add_kernel_to_table(table, environment):
     )
 
 
-class KernelEnvironmentsApp(DatalayerCLIBase):
+class KernelEnvironmentsApp(DatalayerCLIBaseApp):
     """A Kernel application."""
 
     description = """

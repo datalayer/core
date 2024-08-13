@@ -3,10 +3,10 @@
 
 from datalayer.application import NoStart
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 
-class KernelStopApp(DatalayerCLIBase):
+class KernelStopApp(DatalayerCLIBaseApp):
     """Kernel Stop application."""
 
     description = """

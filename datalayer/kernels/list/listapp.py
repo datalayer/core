@@ -3,11 +3,11 @@
 
 import warnings
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 from ..utils import display_kernels
 
 
-class KernelListApp(DatalayerCLIBase):
+class KernelListApp(DatalayerCLIBaseApp):
     """An application to list the kernels."""
 
     description = """

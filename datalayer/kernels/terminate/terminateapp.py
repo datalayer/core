@@ -3,10 +3,10 @@
 
 import warnings
 
-from datalayer.cli.base import DatalayerCLIBase
+from datalayer.cli.base import DatalayerCLIBaseApp
 
 
-class KernelTerminateApp(DatalayerCLIBase):
+class KernelTerminateApp(DatalayerCLIBaseApp):
     """Kernel Terminate application."""
 
     description = """
