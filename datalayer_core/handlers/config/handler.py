@@ -19,10 +19,10 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
     @tornado.web.authenticated
     def get(self):
         """Returns the configuration of the server extension."""
-        settings = self.settings["datalayer_core"]
+        settings = self.settings["datalayer"]
         res = json.dumps(
             {
-                "extension": "datalayer_core",
+                "extension": "datalayer",
                 "version": __version__,
                 "settings": dict(
                     run_url=settings.run_url,
