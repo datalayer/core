@@ -9,7 +9,7 @@ node_modules/
 *.tsbuildinfo
 datalayer_core/labextension
 # Version file is handled by hatchling
-datalayer/_version.py
+datalayer_core/_version.py
 
 datalayer_core/static/*.js
 datalayer_core/static/*.css
