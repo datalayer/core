@@ -7,12 +7,12 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-datalayer/labextension
+datalayer_core/labextension
 # Version file is handled by hatchling
 datalayer/_version.py
 
-datalayer/static/*.js
-datalayer/static/*.css
+datalayer_core/static/*.js
+datalayer_core/static/*.css
 
 coverage
 
@@ -126,3 +126,17 @@ dmypy.json
 .DS_Store
 
 *ystore.db
+
+
+# Include
+!**/.*ignore
+!**/.*rc
+!**/.*rc.js
+!**/.*rc.json
+!**/.*rc.yml
+!**/.*rc.yaml
+!**/.*config
+!*.*rc.json
+!**/.env
+!.github
+!.devcontainer

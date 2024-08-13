@@ -3,7 +3,7 @@ requires = ["hatchling==1.21.1", "jupyterlab==4.0.9", "hatch-nodejs-version"]
 build-backend = "hatchling.build"
 
 [project]
-name = "datalayer"
+name = "datalayer_core"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
@@ -38,26 +38,25 @@ test = [
     "pytest_jupyter",
     "pytest-tornasync",
 ]
-kernels = [
-    "jupyter_kernels",
-]
 
 [project.scripts]
-d = "datalayer.command:main"
-datalayer = "datalayer.command:main"
-datalayer-config = "datalayer.config:main"
-datalayer-lab = "datalayer.lab:main"
-datalayer-migrate = "datalayer.migrate:main"
-datalayer-server = "datalayer.serverapplication:main"
-datalayer-troubleshoot = "datalayer.troubleshoot:main"
+# dla = "datalayer_core.command:main"
+# datalayer = "datalayer_core.command:main"
+dla = "datalayer_core.cli.datalayer:main"
+datalayer = "datalayer_core.cli.datalayer:main"
+datalayer-config = "datalayer_core.config:main"
+datalayer-lab = "datalayer_core.lab:main"
+datalayer-migrate = "datalayer_core.migrate:main"
+datalayer-server = "datalayer_core.serverapplication:main"
+datalayer-troubleshoot = "datalayer_core.troubleshoot:main"
 
 [tool.hatch.version]
 source = "nodejs"
 
 [tool.hatch.build]
 artifacts = [
-  "datalayer/static",
-  "datalayer/templates"
+  "datalayer_core/static",
+  "datalayer_core/templates"
 ]
 
 [tool.hatch.build.hooks.custom]
@@ -66,26 +65,37 @@ artifacts = [
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build.targets.sdist]
-artifacts = ["datalayer/labextension"]
+artifacts = [
+    "datalayer_core/static",
+    "datalayer_core/labextension",
+    "datalayer_core/about/about.md",
+]
 exclude = [".github", "binder", ".yarn"]
 
+[tool.hatch.build.targets.wheel]
+artifacts = [
+    "datalayer_core/static",
+    "datalayer_core/labextension",
+    "datalayer_core/about/about.md",
+]
+
 [tool.hatch.build.targets.wheel.shared-data]
-"datalayer/labextension" = "share/jupyter/labextensions/@datalayer/core"
+"datalayer_core/labextension" = "share/jupyter/labextensions/@datalayer/core"
 "install.json" = "share/jupyter/labextensions/@datalayer/core/install.json"
 "jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 "jupyter-config/nb-config" = "etc/jupyter/jupyter_notebook_config.d"
 
 [tool.hatch.build.hooks.version]
-path = "datalayer/_version.py"
+path = "datalayer_core/_version.py"
 
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "datalayer/labextension/static/style.js",
-    "datalayer/labextension/package.json",
+    "datalayer_core/labextension/static/style.js",
+    "datalayer_core/labextension/package.json",
 ]
-skip-if-exists = ["datalayer/labextension/static/style.js"]
+skip-if-exists = ["datalayer_core/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -95,7 +105,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "datalayer/labextension"
+build_dir = "datalayer_core/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"

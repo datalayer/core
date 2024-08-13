@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "1.1.2",
+  "version": "1.0.0",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -38,7 +38,7 @@
     "build:webpack": "webpack-cli build",
     "clean": "jlpm clean:lib",
     "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
-    "clean:labextension": "rimraf datalayer/labextension",
+    "clean:labextension": "rimraf datalayer_core/labextension",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:lintcache": "rimraf .eslintcache .stylelintcache",
     "eslint": "jlpm eslint:check --fix",
@@ -222,12 +222,12 @@
           "pip"
         ],
         "base": {
-          "name": "datalayer"
+          "name": "datalayer_core"
         }
       }
     },
     "extension": "./lib/jupyterlab/index.js",
-    "outputDir": "datalayer/labextension",
+    "outputDir": "datalayer_core/labextension",
     "schemaDir": "schema",
     "webpackConfig": "./webpack.lab-config.js",
     "sharedPackages": {
