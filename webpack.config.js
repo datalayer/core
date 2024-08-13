@@ -22,7 +22,7 @@ const mode = IS_PRODUCTION ? 'production' : 'development';
 const devtool = IS_PRODUCTION ? false : 'inline-cheap-source-map';
 const minimize = IS_PRODUCTION ? true : false;
 const publicPath = IS_PRODUCTION
-  ? '/static/datalayer/'
+  ? '/static/datalayer_core/'
   : 'http://localhost:3063/';
 
 const commonOptions = {
@@ -151,7 +151,7 @@ module.exports = [
     output: {
       publicPath,
       //    filename: '[name].[contenthash].datalayer.js',
-      filename: '[name].datalayer.js'
+      filename: '[name].datalayer-core.js'
     },
     plugins: [
       !IS_PRODUCTION
@@ -183,7 +183,7 @@ module.exports = [
     ...commonOptions,
     entry: './src/LoginCLIApp',
     output: {
-      path: path.resolve(__dirname, 'datalayer', 'login', 'static'),
+      path: path.resolve(__dirname, 'datalayer_core', 'login', 'static'),
       filename: 'login-cli.js',
     },
     plugins: [

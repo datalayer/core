@@ -23,7 +23,7 @@ def build_javascript():
     for file in glob.glob(r'./dist/*.js'):
         shutil.copy(
             file,
-            './datalayer/static/'
+            './datalayer_core/static/'
         )
 
 

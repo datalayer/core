@@ -2,11 +2,9 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# Ξ Datalayer
+# Ξ Datalayer Core
 
-> Datalayer core.
-
-Datalayer is the base foundation package used by many other Datalayer packages. It contains base application classes and configuration inherited by other projects.
+Datalayer Core is the base foundation package used by many other Datalayer packages. It contains base application classes and configuration inherited by other projects.
 
 It is also the meta package to get the other Datalayer packages installed.
 
