@@ -5,8 +5,7 @@ header:
     copyright-year: 2023-2024
     content: |
       Copyright (c) [year] [owner]
-
-      Datalayer License
+      Distributed under the terms of the Modified BSD License.
 
   paths-ignore:
     - '**/*.apt'
