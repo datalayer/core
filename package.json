@@ -65,9 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/run": "^0.1.15",
-    "@jupyterlite/pyodide-kernel-extension": "^0.4.0",
-    "@jupyterlite/server-extension": "^0.4.0"
+    "@datalayer/run": "^0.1.15"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",
@@ -246,6 +244,18 @@
         "singleton": true
       },
       "@jupyter/docprovider": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/contents": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/kernel": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/server": {
         "bundled": true,
         "singleton": true
       },
