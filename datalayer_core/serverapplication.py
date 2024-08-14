@@ -12,6 +12,7 @@ from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinja
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.login.handler import LoginHandler
+from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 
 from datalayer_core.authn.state import get_server_port
 
@@ -109,6 +110,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             ("datalayer", IndexHandler),
             (url_path_join("datalayer", "config"), ConfigHandler),
             (url_path_join("datalayer", "login"), LoginHandler),
+            (url_path_join("datalayer", "service-worker", r"([^/]+\.js)"), ServiceWorkerHandler),
         ]
         self.handlers.extend(handlers)
 

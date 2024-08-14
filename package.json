@@ -160,8 +160,8 @@
     "@jupyterlab/theme-light-extension": "4.1.0",
     "@jupyterlab/translation": "4.1.0",
     "@jupyterlab/ui-components": "4.1.0",
-    "@jupyterlite/server": "0.2.2",
-    "@jupyterlite/server-extension": "0.2.2",
+    "@jupyterlite/server": "^0.4.0",
+    "@jupyterlite/server-extension": "^0.4.0",
     "@jupyter/ydoc": "1.1.1",
     "@lumino/algorithm": "2.0.1",
     "@lumino/application": "2.2.0",
@@ -244,6 +244,18 @@
         "singleton": true
       },
       "@jupyter/docprovider": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/contents": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/kernel": {
+        "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/server": {
         "bundled": true,
         "singleton": true
       },
