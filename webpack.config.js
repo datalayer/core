@@ -114,8 +114,14 @@ const commonOptions = {
         type: 'asset/source'
       },
       {
-        test: /\.(png|jpg|jpeg|gif|ttf|woff|woff2|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        type: 'asset/resource'
+        test: /\.(png|jpg|jpeg|gif|ttf|woff|woff2|eot|mp4)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        use: [{ loader: 'url-loader', options: { limit: 10000 } }],
+      },
+      // Special webpack rule for the JupyterLab theme style sheets.
+      {
+        test: /style\/theme\.css$/i,
+        loader: 'css-loader',
+        options: { exportType: 'string' },
       },
       // Ship the JupyterLite service worker.
       {
@@ -178,24 +184,4 @@ module.exports = [
       })
     ]
   },
-  /*
-  {
-    ...commonOptions,
-    entry: './src/LoginCLIApp',
-    output: {
-      path: path.resolve(__dirname, 'datalayer_core', 'login', 'static'),
-      filename: 'login-cli.js',
-    },
-    plugins: [
-      new webpack.ProvidePlugin({
-        process: 'process/browser'
-      }),
-      new BundleAnalyzerPlugin({
-        analyzerMode: IS_PRODUCTION ? 'static' : 'disabled', // server, static, json, disabled.
-        openAnalyzer: false,
-        generateStatsFile: false,
-      }),
-    ]
-  }
-  */
 ]

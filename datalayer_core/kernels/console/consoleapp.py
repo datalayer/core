@@ -78,7 +78,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
     version = __version__
 
     description = """
-        The Jupyter kernels terminal-based Console.
+        The Jupyter Kernels terminal-based Console.
 
         This launches a Console application inside a terminal.
     """

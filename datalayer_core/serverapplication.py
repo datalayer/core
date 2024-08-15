@@ -58,7 +58,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         name = Unicode(
-            "Jupyter kernels",
+            "Jupyter Kernels",
             config=True,
             help=("Application launcher card name."),
         )

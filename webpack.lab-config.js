@@ -27,6 +27,16 @@ module.exports = {
           filename: 'lite-[name][ext]',
         },
       },
+      {
+        test: /\.(mp4)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        use: [{ loader: 'url-loader', options: { limit: 10000 } }],
+      },
+      // Special webpack rule for the JupyterLab theme style sheets.
+      {
+        test: /style\/theme\.css$/i,
+        loader: 'css-loader',
+        options: { exportType: 'string' },
+      },
       // Rules for pyodide kernel assets
       {
         test: /pypi\/.*/,
