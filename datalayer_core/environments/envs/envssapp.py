@@ -33,7 +33,7 @@ def add_kernel_to_table(table, environment):
     )
 
 
-class KernelEnvironmentsApp(DatalayerCLIBaseApp):
+class KernelEnvironmentsListApp(DatalayerCLIBaseApp):
     """A Kernel application."""
 
     description = """
