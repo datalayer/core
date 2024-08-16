@@ -25,7 +25,7 @@ class KernelTerminateApp(DatalayerCLIBaseApp):
         kernel_id = self.extra_args[0]
 
         self._fetch(
-            "{}/api/jupyter/v1/kernel/{}".format(self.kernels_url, kernel_id),
+            "{}/api/jupyter/v1/kernel/{}".format(self.run_url, kernel_id),
             method="DELETE",
         )
         self.log.info(f"Kernel '{kernel_id}' deleted.")

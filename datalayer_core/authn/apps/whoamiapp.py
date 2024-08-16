@@ -24,7 +24,7 @@ class KernelWhoamiApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         response = self._fetch(
-            "{}/api/iam/v1/whoami".format(self.kernels_url),
+            "{}/api/iam/v1/whoami".format(self.run_url),
         )
         raw = response.json()
         display_me(raw.get("profile", {}))

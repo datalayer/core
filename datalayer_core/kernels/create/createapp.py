@@ -53,7 +53,7 @@ class KernelCreateApp(DatalayerCLIBaseApp):
 
         if self.credits_limit is None:
             response = self._fetch(
-                "{}/api/iam/v1/usage/credits".format(self.kernels_url), method="GET"
+                "{}/api/iam/v1/usage/credits".format(self.run_url), method="GET"
             )
             raw = response.json()
             credits = raw["credits"]
@@ -78,7 +78,7 @@ class KernelCreateApp(DatalayerCLIBaseApp):
 
         response = self._fetch(
             "{}/api/jupyter/v1/environment/{}".format(
-                self.kernels_url, environment_name
+                self.run_url, environment_name
             ),
             method="POST",
             json=body,

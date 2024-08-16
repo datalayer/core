@@ -49,7 +49,7 @@ class KernelEnvironmentsListApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         response = self._fetch(
-            "{}/api/jupyter/v1/environments".format(self.kernels_url),
+            "{}/api/jupyter/v1/environments".format(self.run_url),
         )
         content = response.json()
         table = new_kernel_table()

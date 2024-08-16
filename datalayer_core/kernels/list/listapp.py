@@ -24,7 +24,7 @@ class KernelListApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         response = self._fetch(
-            "{}/api/jupyter/v1/kernels".format(self.kernels_url),
+            "{}/api/jupyter/v1/kernels".format(self.run_url),
         )
         raw = response.json()
         display_kernels(raw.get("kernels", []))

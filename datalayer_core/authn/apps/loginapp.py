@@ -23,5 +23,5 @@ class DatalayerLoginApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         if self.token and self.user_handle:
-            self.log.info(f"🎉 Successfully authenticated as {self.user_handle} on {self.kernels_url}")
+            self.log.info(f"🎉 Successfully authenticated as {self.user_handle} on {self.run_url}")
             print()

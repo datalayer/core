@@ -160,7 +160,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
     def init_kernel_manager(self) -> None:
         # Create a KernelManager.
         self.kernel_manager = self.kernel_manager_class(
-            kernels_url=self.kernels_url,
+            run_url=self.run_url,
             token=self.token,
             username=self.user_handle,
             parent=self,
