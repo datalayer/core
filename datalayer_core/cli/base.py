@@ -28,15 +28,15 @@ REQUEST_TIMEOUT = 5
 
 
 datalayer_aliases = dict(base_aliases)
-datalayer_aliases["kernels-url"] = "DatalayerCLIBase.run_url"
-datalayer_aliases["token"] = "DatalayerCLIBase.token"
-datalayer_aliases["external-token"] = "DatalayerCLIBase.external_token"
+datalayer_aliases["run-url"] = "DatalayerCLIBaseApp.run_url"
+datalayer_aliases["token"] = "DatalayerCLIBaseApp.token"
+datalayer_aliases["external-token"] = "DatalayerCLIBaseApp.external_token"
 
 datalayer_flags = dict(base_flags)
 datalayer_flags.update(
     {
         "no-browser": (
-            {"DatalayerCLIBase": {"no_browser": True}},
+            {"DatalayerCLIBaseApp": {"no_browser": True}},
             "Will prompt for user and password on the CLI.",
         )
     }
