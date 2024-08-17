@@ -47,7 +47,7 @@ class KernelsCreateApp(DatalayerCLIBaseApp):
             self.print_help()
             self.exit(1)
         environment_name = self.extra_args[0]
-        body = {"kernel_type": "default"}
+        body = {"kernel_type": "notebook"}
         if self.kernel_given_name:
             body["kernel_given_name"] = self.kernel_given_name
 
