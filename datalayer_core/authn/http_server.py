@@ -34,7 +34,9 @@ from datalayer_core._version import __version__
 HERE = Path(__file__).parent
 
 
-USE_JUPYTER_SERVER: bool = False
+# Do not set it to True, the Jupyter Server
+# handlers are not yet implemented.
+USE_JUPYTER_SERVER_FOR_LOGIN: bool = False
 
 
 logger = logging.getLogger(__name__)
@@ -94,7 +96,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         parts = urllib.parse.urlsplit(self.path)
         if parts[2].strip("/").endswith("oauth/callback"):
             self._save_token(parts[3])
-        elif parts[2] in {"/", "/login/cli"}:
+        elif parts[2] in {"/", "/datalayer/login/cli"}:
             content = LANDING_PAGE.format(
                 config=json.dumps(
                     {
@@ -173,12 +175,12 @@ def get_token(
     server_address = ("", port or find_http_port())
     port = server_address[1]
 
-    if USE_JUPYTER_SERVER == True:
+    if USE_JUPYTER_SERVER_FOR_LOGIN == True:
         set_server_port(port)
         logger.info(f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n")
         sys.argv = [
             "",
-            "--JupyterKernelsExtensionApp.run_url", run_url,
+            "--DatalayerExtensionApp.run_url", run_url,
             "--ServerApp.disable_check_xsrf", "True",
         ]
         launch_new_instance()

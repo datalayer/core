@@ -8,7 +8,7 @@ from traitlets import CBool, Dict, Type, Unicode
 from traitlets.config import catch_config_error, boolean_flag
 
 
-from ..._version import __version__
+from datalayer_core._version import __version__
 from datalayer_core.cli.base import (
     DatalayerCLIBaseApp,
     datalayer_aliases,
@@ -62,7 +62,7 @@ aliases = dict(datalayer_aliases)
 
 aliases.update(
     {
-        "kernel": "KernelConsoleApp.kernel_name",
+        "kernel": "KernelsConsoleApp.kernel_name",
     }
 )
 
@@ -71,7 +71,7 @@ aliases.update(
 # -----------------------------------------------------------------------------
 
 
-class KernelConsoleApp(DatalayerCLIBaseApp):
+class KernelsConsoleApp(DatalayerCLIBaseApp):
     """Start a terminal frontend to a remote kernel."""
 
     name = "jupyter-kernels-console"
@@ -175,7 +175,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
 
     def start(self):
         # JupyterApp.start dispatches on NoStart
-        super(KernelConsoleApp, self).start()
+        super(KernelsConsoleApp, self).start()
         try:
             if self.shell is None:
                 return
@@ -185,7 +185,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
             self.kernel_client.stop_channels()
 
 
-main = launch_new_instance = KernelConsoleApp.launch_instance
+main = launch_new_instance = KernelsConsoleApp.launch_instance
 
 
 if __name__ == "__main__":

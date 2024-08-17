@@ -9,7 +9,7 @@ from traitlets import (
     Instance,
 )
 
-from ..._version import __version__
+from datalayer_core._version import __version__
 
 
 class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):

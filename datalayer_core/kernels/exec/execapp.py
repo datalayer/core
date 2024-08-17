@@ -11,7 +11,7 @@ from traitlets import CBool, CFloat, Dict, Type, Unicode
 from traitlets.config import catch_config_error, boolean_flag
 
 
-from ..._version import __version__
+from datalayer_core._version import __version__
 from datalayer_core.cli.base import (
     DatalayerCLIBaseApp,
     datalayer_aliases,
@@ -57,8 +57,8 @@ aliases = dict(datalayer_aliases)
 
 aliases.update(
     {
-        "kernel": "KernelExecApp.kernel_name",
-        "timeout": "KernelExecApp.timeout",
+        "kernel": "KernelsExecApp.kernel_name",
+        "timeout": "KernelsExecApp.timeout",
     }
 )
 
@@ -67,7 +67,7 @@ aliases.update(
 # -----------------------------------------------------------------------------
 
 
-class KernelExecApp(DatalayerCLIBaseApp):
+class KernelsExecApp(DatalayerCLIBaseApp):
     """Execute a file on a IPython remote kernel."""
 
     version = __version__
@@ -157,7 +157,7 @@ class KernelExecApp(DatalayerCLIBaseApp):
     def start(self):
         try:
             # JupyterApp.start dispatches on NoStart
-            super(KernelExecApp, self).start()
+            super(KernelsExecApp, self).start()
             if len(self.extra_args) != 3:  # FIXME why is exec an args?
                 self.log.warning("A file to execute must be provided.")
                 self.print_help()
@@ -219,7 +219,7 @@ def _get_cells(filepath: Path) -> t.Iterator[tuple[str | None, str]]:
         yield None, filepath.read_text(encoding="utf-8")
 
 
-main = launch_new_instance = KernelExecApp.launch_instance
+main = launch_new_instance = KernelsExecApp.launch_instance
 
 
 if __name__ == "__main__":

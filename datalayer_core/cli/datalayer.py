@@ -6,6 +6,7 @@ from pathlib import Path
 from datalayer_core.authn.apps.loginapp import DatalayerLoginApp
 from datalayer_core.authn.apps.logoutapp import DatalayerLogoutApp
 from datalayer_core.authn.apps.whoamiapp import KernelWhoamiApp
+from datalayer_core.benchmarks.benchmarksapp import BenchmarkskApp
 from datalayer_core.about.aboutapp import DatalayerAboutApp
 from datalayer_core.environments.environmentsapp import JupyterEnvironmentsApp
 from datalayer_core.kernels.kernelsapp import JupyterKernelsApp
@@ -27,6 +28,7 @@ class DatalayerCLI(DatalayerCLIBaseApp):
 
     subcommands = {
         "about": (DatalayerAboutApp, DatalayerAboutApp.description.splitlines()[0]),
+        "benchmarks": (BenchmarkskApp, BenchmarkskApp.description.splitlines()[0]),
         "envs": (JupyterEnvironmentsApp, JupyterEnvironmentsApp.description.splitlines()[0]),
         "kernels": (JupyterKernelsApp, JupyterKernelsApp.description.splitlines()[0]),
         "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),

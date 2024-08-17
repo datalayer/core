@@ -1,19 +1,51 @@
-/// <reference types="webpack-env" />
+/*
+ * Copyright (c) 2023-2024 Datalayer, Inc.
+ *
+ * Datalayer License
+ */
 
+/**
+ * Main entry point for Datalayer.
+ */
+import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CoreExample } from '@datalayer/run';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { LoginFormCLI, CoreExample } from '@datalayer/run';
 
-import "./../style/index.css";
+import '../style/index.css';
+
+export const DatalayerApp = (): JSX.Element => {
+  const [view, setView] = useState<'login' | 'benchmarks'>();
+  useEffect(() => {
+    if (window.location.pathname === '/datalayer/login/cli') {
+      setView('login');
+    }
+    if (window.location.pathname === '/datalayer/benchmarks') {
+      setView('benchmarks');
+    }
+  }, [])
+  return (
+    <>
+      { view === 'login' && <MemoryRouter initialEntries={[
+          "/datalayer/login/cli",
+        ]}>
+          <LoginFormCLI baseRoute='datalayer/login' />
+        </MemoryRouter>
+      }
+      { view === 'benchmarks' && <MemoryRouter initialEntries={[
+          "/datalayer/benchmarks",
+        ]}>
+          <Routes>
+            <Route path="/datalayer/benchmarks" element={<CoreExample/>}/>
+          </Routes>
+        </MemoryRouter>
+      }
+    </>
+  );
+}
 
 const div = document.createElement('div');
 document.body.appendChild(div);
 const root = createRoot(div);
-/*
-if (module.hot) {
-  module.hot.accept('./CoreExample', () => {
-    const CoreExample = require('./CoreExample').default;
-    root.render(<CoreExample/>);
-  })
-}
-*/
-root.render(<CoreExample/>);
+
+root.render(<DatalayerApp/>);

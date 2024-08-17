@@ -30,7 +30,7 @@ const commonOptions = {
   devServer: {
     port: 3063,
     open: [
-      'http://localhost:3063/login/cli'
+      'http://localhost:3063/datalayer/login/cli'
     ],
     https: false,
     server: 'http',
@@ -153,7 +153,7 @@ const commonOptions = {
 module.exports = [
   {
     ...commonOptions,
-    entry: './src/LoginCLIApp',
+    entry: './src/DatalayerApp',
     output: {
       publicPath,
       //    filename: '[name].[contenthash].datalayer.js',

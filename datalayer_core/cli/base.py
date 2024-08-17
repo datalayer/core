@@ -15,10 +15,10 @@ import requests
 
 from rich.console import Console
 
-from datalayer_core.application import DatalayerApp, base_aliases, base_flags
 from traitlets import Bool, Unicode
 
-from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER
+from datalayer_core.application import DatalayerApp, base_aliases, base_flags
+from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER_FOR_LOGIN
 from datalayer_core.utils.utils import fetch, find_http_port
 
 from datalayer_core._version import __version__
@@ -250,8 +250,9 @@ class DatalayerCLIBaseApp(DatalayerApp):
             else:
                 # Ask credentials via Browser.
                 port = find_http_port()
-                if USE_JUPYTER_SERVER == False:
+                if USE_JUPYTER_SERVER_FOR_LOGIN == False:
                     self.__launch_browser(port)
+                # Do we need to clear the instanch while using raw http server?
                 self.clear_instance()
                 ans = get_token(self.run_url, port, self.log)
 
@@ -331,7 +332,7 @@ class DatalayerCLIBaseApp(DatalayerApp):
     def __launch_browser(self, port: int) -> None:
         """Launch the browser."""
 
-        address = f"http://localhost:{port}/login/cli"
+        address = f"http://localhost:{port}/datalayer/login/cli"
 
         # Deferred import for environments that do not have
         # the webbrowser module.
