@@ -13,7 +13,7 @@ from requests.exceptions import HTTPError
 from traitlets import DottedObjectName, Type
 from traitlets.config import LoggingConfigurable
 
-from datalayer_core.kernels.utils import timestamp_to_local_date
+from datalayer_core.kernels.utils import _timestamp_to_local_date
 from datalayer_core.utils.utils import fetch
 
 
@@ -153,7 +153,7 @@ class KernelManager(LoggingConfigurable):
         msg = f"KernelManager using existing jupyter kernel {kernel_name}"
         expired_at = kernel.get("expired_at")
         if expired_at is not None:
-            msg += f" expiring at {timestamp_to_local_date(expired_at)}"
+            msg += f" expiring at {_timestamp_to_local_date(expired_at)}"
         self.log.info(msg)
 
     def shutdown_kernel(self, now=False, restart=False):

@@ -4,10 +4,10 @@
 import warnings
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-from ...kernels.utils import display_me
+from datalayer_core.authn.apps.utils import display_me
 
 
-class KernelWhoamiApp(DatalayerCLIBaseApp):
+class WhoamiApp(DatalayerCLIBaseApp):
     """An application to list the kernels."""
 
     description = """

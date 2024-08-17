@@ -7,7 +7,7 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core._version import __version__
 
 
-class JupyterEnvironmentsApp(DatalayerCLIBaseApp):
+class EnvironmentsApp(DatalayerCLIBaseApp):
     description = """
       The Jupyter Kernels CLI application.
     """
@@ -22,7 +22,7 @@ class JupyterEnvironmentsApp(DatalayerCLIBaseApp):
     def start(self):
         try:
             super().start()
-            self.log.error(f"One of `{'` `'.join(JupyterEnvironmentsApp.subcommands.keys())}` must be specified.")
+            self.log.error(f"One of `{'` `'.join(EnvironmentsApp.subcommands.keys())}` must be specified.")
             self.exit(1)
         except NoStart:
             pass

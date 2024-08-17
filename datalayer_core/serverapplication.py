@@ -50,6 +50,8 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     benchmarks = Bool(False, config=True, help="""Show the benchmark page.""")
 
+    webapp = Bool(False, config=True, help="""Show the webapp page.""")
+
     class Launcher(Configurable):
         """Datalayer launcher configuration"""
 
@@ -88,6 +90,8 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.serverapp.answer_yes = True
         if self.benchmarks:
             self.serverapp.default_url = "/datalayer/benchmarks"
+        if self.webapp:
+            self.serverapp.default_url = "/"
         port = get_server_port()
         if port is not None:
             self.serverapp.port = port
@@ -111,6 +115,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_handlers(self):
         handlers = [
+            ("/", IndexHandler),
             (self.name, IndexHandler),
             (url_path_join(self.name, "benchmarks"), IndexHandler),
             (url_path_join(self.name, "config"), ConfigHandler),

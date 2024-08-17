@@ -7,11 +7,11 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.serverapplication import launch_new_instance
 
 
-class BenchmarksApp(DatalayerCLIBaseApp):
-    """An application to run benchmarks."""
+class DatalayerWebApp(DatalayerCLIBaseApp):
+    """An application to run the webapp."""
 
     description = """
-      An application to run benchmarks.
+      An application to run the webapp.
     """
 
     def start(self):
@@ -24,7 +24,7 @@ class BenchmarksApp(DatalayerCLIBaseApp):
         sys.argv = [
             '',
             '--ServerApp.disable_check_xsrf=True',
-            '--DatalayerExtensionApp.benchmarks=True',
+            '--DatalayerExtensionApp.webapp=True',
             f'--DatalayerExtensionApp.run_url={self.run_url}',
         ]
         launch_new_instance()

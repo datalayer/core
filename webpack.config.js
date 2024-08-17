@@ -22,7 +22,7 @@ const mode = IS_PRODUCTION ? 'production' : 'development';
 const devtool = IS_PRODUCTION ? false : 'inline-cheap-source-map';
 const minimize = IS_PRODUCTION ? true : false;
 const publicPath = IS_PRODUCTION
-  ? '/static/datalayer_core/'
+  ? '/static/datalayer/'
   : 'http://localhost:3063/';
 
 const commonOptions = {
