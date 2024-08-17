@@ -10,8 +10,8 @@ from rich.table import Table
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-def new_kernel_table():
-    table = Table(title="Jupyter Environments")
+def new_env_table():
+    table = Table(title="Environments")
     table.add_column("ID", style="magenta", no_wrap=True)
     table.add_column("Cost per seconds", justify="right", style="red", no_wrap=True)
     table.add_column("Name", style="green", no_wrap=True)
@@ -21,7 +21,7 @@ def new_kernel_table():
     return table
 
 
-def add_kernel_to_table(table, environment):
+def add_env_to_table(table, environment):
     desc = environment["description"]
     table.add_row(
         environment["name"],
@@ -33,7 +33,7 @@ def add_kernel_to_table(table, environment):
     )
 
 
-class KernelEnvironmentsListApp(DatalayerCLIBaseApp):
+class EnvironmentsListApp(DatalayerCLIBaseApp):
     """A Kernel application."""
 
     description = """
@@ -52,8 +52,8 @@ class KernelEnvironmentsListApp(DatalayerCLIBaseApp):
             "{}/api/jupyter/v1/environments".format(self.run_url),
         )
         content = response.json()
-        table = new_kernel_table()
+        table = new_env_table()
         for environment in content.get("environments", []):
-            add_kernel_to_table(table, environment)
+            add_env_to_table(table, environment)
         console = Console()
         console.print(table)

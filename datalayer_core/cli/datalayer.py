@@ -3,6 +3,8 @@
 
 from pathlib import Path
 
+from datalayer_core.application import NoStart
+
 from datalayer_core.authn.apps.loginapp import DatalayerLoginApp
 from datalayer_core.authn.apps.logoutapp import DatalayerLogoutApp
 from datalayer_core.authn.apps.whoamiapp import KernelWhoamiApp
@@ -25,7 +27,6 @@ class DatalayerCLI(DatalayerCLIBaseApp):
 
     _requires_auth = False
 
-
     subcommands = {
         "about": (DatalayerAboutApp, DatalayerAboutApp.description.splitlines()[0]),
         "benchmarks": (BenchmarkskApp, BenchmarkskApp.description.splitlines()[0]),
@@ -37,6 +38,14 @@ class DatalayerCLI(DatalayerCLIBaseApp):
         "whoami": (KernelWhoamiApp, KernelWhoamiApp.description.splitlines()[0]),
     }
 
+    def start(self):
+        try:
+            super().start()
+            self.log.error(f"One of `{'` `'.join(DatalayerCLI.subcommands.keys())}` must be specified.")
+            self.exit(1)
+        except NoStart:
+            pass
+        self.exit(0)
 
 # -----------------------------------------------------------------------------
 # Main entry point
