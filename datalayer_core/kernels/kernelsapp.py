@@ -38,7 +38,7 @@ class JupyterKernelsApp(DatalayerCLIBaseApp):
     def start(self):
         try:
             super().start()
-            self.log.error(f"One of `{'` `'.join(JupyterKernelsApp.subcommands.keys())}` must be specified.")
+            self.log.info(f"One of `{'` `'.join(JupyterKernelsApp.subcommands.keys())}` must be specified.")
             self.exit(1)
         except NoStart:
             pass
