@@ -15,18 +15,19 @@ import { RunIndex, LoginFormCLI, CoreExample } from '@datalayer/run';
 import '../style/index.css';
 
 export const DatalayerApp = (): JSX.Element => {
+  const pathname = window.location.pathname;
   const [view, setView] = useState<'benchmarks' | 'login' | 'webapps'>();
   useEffect(() => {
-    if (window.location.pathname === '/') {
+    if (pathname === '/') {
       setView('webapps');
     }
-    else if (window.location.pathname === '/datalayer/login/cli') {
+    else if (pathname === '/datalayer/login/cli') {
       setView('login');
     }
-    else if (window.location.pathname === '/datalayer/benchmarks') {
+    else if (pathname === '/datalayer/benchmarks') {
       setView('benchmarks');
     }
-  }, [])
+  }, [pathname])
   return (
     <>
       { view === 'webapps' && <RunIndex /> }
