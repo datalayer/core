@@ -114,14 +114,8 @@ const commonOptions = {
         type: 'asset/source'
       },
       {
-        test: /\.(png|jpg|jpeg|gif|ttf|woff|woff2|eot|mp4)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        use: [{ loader: 'url-loader', options: { limit: 10000 } }],
-      },
-      // Special webpack rule for the JupyterLab theme style sheets.
-      {
-        test: /style\/theme\.css$/i,
-        loader: 'css-loader',
-        options: { exportType: 'string' },
+        test: /\.(png|jpg|jpeg|gif|ttf|woff|woff2|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        type: 'asset/resource'
       },
       // Ship the JupyterLite service worker.
       {
