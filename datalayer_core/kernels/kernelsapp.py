@@ -11,6 +11,7 @@ from datalayer_core.kernels.pause.pauseapp import KernelsPauseApp
 from datalayer_core.kernels.start.startapp import KernelsStartApp
 from datalayer_core.kernels.stop.stopapp import KernelsStopApp
 from datalayer_core.kernels.terminate.terminateapp import KernelsTerminateApp
+from datalayer_core.kernels.web.webapp import KernelsWebApp
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
@@ -33,6 +34,7 @@ class JupyterKernelsApp(DatalayerCLIBaseApp):
         "start": (KernelsStartApp, KernelsStartApp.description.splitlines()[0]),
         "stop": (KernelsStopApp, KernelsStopApp.description.splitlines()[0]),
         "terminate": (KernelsTerminateApp, KernelsTerminateApp.description.splitlines()[0]),
+        "web": (KernelsWebApp, KernelsWebApp.description.splitlines()[0]),
     }
 
     def start(self):

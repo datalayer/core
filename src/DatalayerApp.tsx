@@ -10,18 +10,24 @@
 import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { RunIndex, LoginFormCLI, BenchmarksExample } from '@datalayer/run';
+import { RunIndex, LoginFormCLI, BenchmarksExample, KernelsExample } from '@datalayer/run';
 
 import '../style/index.css';
 
-type ViewType = 'benchmarks' | 'full' | 'login';
+type ViewType = 'benchmarks' | 'kernels' | 'web' | 'login' | 'root';
 
 export const DatalayerApp = (): JSX.Element => {
   const pathname = window.location.pathname;
   const [view, setView] = useState<ViewType>();
   useEffect(() => {
     if (pathname === '/') {
-      setView('full');
+      setView('root');
+    }
+    if (pathname === '/datalayer/web') {
+      setView('web');
+    }
+    if (pathname === '/datalayer/kernels') {
+      setView('kernels');
     }
     else if (pathname === '/datalayer/benchmarks') {
       setView('benchmarks');
@@ -32,11 +38,17 @@ export const DatalayerApp = (): JSX.Element => {
   }, [pathname])
   return (
     <>
-      { view === 'full' && (
-        <RunIndex /> 
+      { view === 'root' && (
+        window.location.href = "/lab"
+      )}
+      { view === 'web' && (
+        <RunIndex />
+      )}
+      { view === 'kernels' && (
+        <KernelsExample memoryRouter={true} baseRoute="datalayer" />
       )}
       { view === 'benchmarks' && (
-        <BenchmarksExample memoryRouter={true} baseRoute="datalayer/benchmarks" />
+        <BenchmarksExample memoryRouter={true} baseRoute="datalayer" />
       )}
       { view === 'login' && (
         <MemoryRouter initialEntries={["/datalayer/login/cli"]}>

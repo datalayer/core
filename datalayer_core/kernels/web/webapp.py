@@ -7,11 +7,11 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.serverapplication import launch_new_instance
 
 
-class DatalayerWebApp(DatalayerCLIBaseApp):
-    """An application to run the webapp."""
+class KernelsWebApp(DatalayerCLIBaseApp):
+    """An application to show the kernels webapp."""
 
     description = """
-      An application to run the webapp.
+      An application to show the kernels webapp.
     """
 
     _requires_auth = False
@@ -26,7 +26,7 @@ class DatalayerWebApp(DatalayerCLIBaseApp):
         sys.argv = [
             '',
             '--ServerApp.disable_check_xsrf=True',
-            '--DatalayerExtensionApp.webapp=True',
+            '--DatalayerExtensionApp.kernels=True',
             f'--DatalayerExtensionApp.run_url={self.run_url}',
         ]
         launch_new_instance()

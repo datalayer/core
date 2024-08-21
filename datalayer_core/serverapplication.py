@@ -48,8 +48,8 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     white_label = Bool(False, config=True, help="""Display white label content.""")
 
-    benchmarks = Bool(False, config=True, help="""Show the benchmark page.""")
-
+    benchmarks = Bool(False, config=True, help="""Show the benchmarks page.""")
+    kernels = Bool(False, config=True, help="""Show the kernels page.""")
     webapp = Bool(False, config=True, help="""Show the webapp page.""")
 
     class Launcher(Configurable):
@@ -90,8 +90,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.serverapp.answer_yes = True
         if self.benchmarks:
             self.serverapp.default_url = "/datalayer/benchmarks"
+        if self.kernels:
+            self.serverapp.default_url = "/datalayer/kernels"
         if self.webapp:
-            self.serverapp.default_url = "/"
+            self.serverapp.default_url = "/datalayer/web"
         port = get_server_port()
         if port is not None:
             self.serverapp.port = port
@@ -117,8 +119,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         handlers = [
             ("/", IndexHandler),
             (self.name, IndexHandler),
-            (url_path_join(self.name, "benchmarks"), IndexHandler),
             (url_path_join(self.name, "config"), ConfigHandler),
+            (url_path_join(self.name, "benchmarks"), IndexHandler),
+            (url_path_join(self.name, "kernels"), IndexHandler),
             (url_path_join(self.name, "login"), LoginHandler),
             (url_path_join(self.name, "service-worker", r"([^/]+\.js)"), ServiceWorkerHandler),
         ]
