@@ -28,3 +28,8 @@ class KernelsListApp(DatalayerCLIBaseApp):
         )
         raw = response.json()
         display_kernels(raw.get("kernels", []))
+        print("""
+Create a kernel with e.g.
+              
+datalayer kernels create --given-name my-kernel --credits-limit 3 python-simple-env
+""")

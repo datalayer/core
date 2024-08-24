@@ -57,3 +57,8 @@ class EnvironmentsListApp(DatalayerCLIBaseApp):
             add_env_to_table(table, environment)
         console = Console()
         console.print(table)
+        print("""
+Create a kernel with e.g.
+              
+datalayer kernels create --given-name my-kernel --credits-limit 3 python-simple-env
+""")
