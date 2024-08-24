@@ -22,6 +22,7 @@ export const DatalayerApp = (): JSX.Element => {
   useEffect(() => {
     if (pathname === '/') {
       setView('root');
+      window.location.href = "/lab";
     }
     if (pathname === '/datalayer/web') {
       setView('web');
@@ -39,7 +40,7 @@ export const DatalayerApp = (): JSX.Element => {
   return (
     <>
       { view === 'root' && (
-        window.location.href = "/lab"
+        <></>
       )}
       { view === 'web' && (
         <RunIndex />
