@@ -22,7 +22,7 @@ const mode = IS_PRODUCTION ? 'production' : 'development';
 const devtool = IS_PRODUCTION ? false : 'inline-cheap-source-map';
 const minimize = IS_PRODUCTION ? true : false;
 const publicPath = IS_PRODUCTION
-  ? '/static/datalayer/'
+  ? '/static/datalayer_core/'
   : 'http://localhost:3063/';
 
 const commonOptions = {
@@ -150,7 +150,7 @@ module.exports = [
     entry: './src/DatalayerApp',
     output: {
       publicPath,
-      //    filename: '[name].[contenthash].datalayer.js',
+      //    filename: '[name].[contenthash].datalayer-core.js',
       filename: '[name].datalayer-core.js'
     },
     plugins: [

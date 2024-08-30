@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -226,7 +226,7 @@
         }
       }
     },
-    "extension": "./lib/jupyterlab/index.js",
+    "extension": "lib/jupyterlab/index.js",
     "outputDir": "datalayer_core/labextension",
     "schemaDir": "schema",
     "webpackConfig": "./webpack.lab-config.js",
