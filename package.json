@@ -234,11 +234,11 @@
     "webpackConfig": "./webpack.lab-config.js",
     "sharedPackages": {
       "react": {
-        "bundled": true,
+        "bundled": false,
         "singleton": true
       },
       "react-dom": {
-        "bundled": true,
+        "bundled": false,
         "singleton": true
       },
       "@datalayer/icons-react": {
@@ -266,7 +266,7 @@
         "singleton": true
       },
       "@jupyterlite/pyodide-kernel": {
-        "bundled": true,
+        "bundled": false,
         "singleton": true
       },
       "@jupyterlite/server": {
