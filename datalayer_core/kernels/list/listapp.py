@@ -4,10 +4,10 @@
 import warnings
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-from ..utils import display_kernels
+from datalayer_core.kernels.utils import display_kernels
 
 
-class KernelListApp(DatalayerCLIBaseApp):
+class KernelsListApp(DatalayerCLIBaseApp):
     """An application to list the kernels."""
 
     description = """
@@ -24,7 +24,12 @@ class KernelListApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         response = self._fetch(
-            "{}/api/jupyter/v1/kernels".format(self.kernels_url),
+            "{}/api/jupyter/v1/kernels".format(self.run_url),
         )
         raw = response.json()
         display_kernels(raw.get("kernels", []))
+        print("""
+Create a kernel with e.g.
+              
+datalayer kernels create --given-name my-kernel --credits-limit 3 python-simple-env
+""")

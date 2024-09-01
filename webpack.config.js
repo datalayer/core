@@ -4,13 +4,12 @@
  * Datalayer License
  */
 
-const path = require('path');
+// const path = require('path');
 const webpack = require('webpack');
 const miniSVGDataURI = require('mini-svg-data-uri');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer')
-  .BundleAnalyzerPlugin;
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 /*
 const shimJS = path.resolve(__dirname, 'src', 'emptyshim.js');
 function shim(regExp) {
@@ -22,7 +21,7 @@ const mode = IS_PRODUCTION ? 'production' : 'development';
 const devtool = IS_PRODUCTION ? false : 'inline-cheap-source-map';
 const minimize = IS_PRODUCTION ? true : false;
 const publicPath = IS_PRODUCTION
-  ? '/static/datalayer_core/'
+  ? '/static/datalayer/' // This has to remain /static/datalayer.
   : 'http://localhost:3063/';
 
 const commonOptions = {
@@ -30,7 +29,7 @@ const commonOptions = {
   devServer: {
     port: 3063,
     open: [
-      'http://localhost:3063/login/cli'
+      'http://localhost:3063/datalayer/login/cli'
     ],
     https: false,
     server: 'http',
@@ -139,7 +138,7 @@ const commonOptions = {
         generator: {
           filename: 'schema/[name][ext][query]'
         }
-      }
+      },
     ]
   },
 };
@@ -147,10 +146,10 @@ const commonOptions = {
 module.exports = [
   {
     ...commonOptions,
-    entry: './src/LoginCLIApp',
+    entry: './src/DatalayerApp',
     output: {
       publicPath,
-      //    filename: '[name].[contenthash].datalayer.js',
+      //    filename: '[name].[contenthash].datalayer-core.js',
       filename: '[name].datalayer-core.js'
     },
     plugins: [
@@ -167,35 +166,11 @@ module.exports = [
         generateStatsFile: false
       }),
       /*
-      shim(/@fortawesome/),
-      shim(/moment/),
-      shim(/react-jvectormap/),
-      shim(/react-slick/),
-      shim(/react-tagsinput/),
+      shim(/@jupyterlite\/pyodide-kernel/),
       */
       new HtmlWebpackPlugin({
         template: './public/index.html'
       })
     ]
   },
-  /*
-  {
-    ...commonOptions,
-    entry: './src/LoginCLIApp',
-    output: {
-      path: path.resolve(__dirname, 'datalayer_core', 'login', 'static'),
-      filename: 'login-cli.js',
-    },
-    plugins: [
-      new webpack.ProvidePlugin({
-        process: 'process/browser'
-      }),
-      new BundleAnalyzerPlugin({
-        analyzerMode: IS_PRODUCTION ? 'static' : 'disabled', // server, static, json, disabled.
-        openAnalyzer: false,
-        generateStatsFile: false,
-      }),
-    ]
-  }
-  */
 ]

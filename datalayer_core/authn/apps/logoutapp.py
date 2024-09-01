@@ -27,7 +27,7 @@ class DatalayerLogoutApp(DatalayerCLIBaseApp):
         """
         FIXME
         self._fetch(
-            "{}/api/iam/v1/logout".format(self.kernels_url),
+            "{}/api/iam/v1/logout".format(self.run_url),
         )
         """
 

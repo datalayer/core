@@ -6,7 +6,7 @@ from datalayer_core.application import NoStart
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-class KernelPauseApp(DatalayerCLIBaseApp):
+class KernelsPauseApp(DatalayerCLIBaseApp):
     """Kernel Pause application."""
 
     description = """

@@ -8,7 +8,7 @@ from traitlets import CBool, Dict, Type, Unicode
 from traitlets.config import catch_config_error, boolean_flag
 
 
-from ..._version import __version__
+from datalayer_core._version import __version__
 from datalayer_core.cli.base import (
     DatalayerCLIBaseApp,
     datalayer_aliases,
@@ -62,7 +62,7 @@ aliases = dict(datalayer_aliases)
 
 aliases.update(
     {
-        "kernel": "KernelConsoleApp.kernel_name",
+        "kernel": "KernelsConsoleApp.kernel_name",
     }
 )
 
@@ -71,14 +71,14 @@ aliases.update(
 # -----------------------------------------------------------------------------
 
 
-class KernelConsoleApp(DatalayerCLIBaseApp):
+class KernelsConsoleApp(DatalayerCLIBaseApp):
     """Start a terminal frontend to a remote kernel."""
 
     name = "jupyter-kernels-console"
     version = __version__
 
     description = """
-        The Jupyter kernels terminal-based Console.
+        The Jupyter Kernels terminal-based Console.
 
         This launches a Console application inside a terminal.
     """
@@ -160,7 +160,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
     def init_kernel_manager(self) -> None:
         # Create a KernelManager.
         self.kernel_manager = self.kernel_manager_class(
-            kernels_url=self.kernels_url,
+            run_url=self.run_url,
             token=self.token,
             username=self.user_handle,
             parent=self,
@@ -175,7 +175,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
 
     def start(self):
         # JupyterApp.start dispatches on NoStart
-        super(KernelConsoleApp, self).start()
+        super(KernelsConsoleApp, self).start()
         try:
             if self.shell is None:
                 return
@@ -185,7 +185,7 @@ class KernelConsoleApp(DatalayerCLIBaseApp):
             self.kernel_client.stop_channels()
 
 
-main = launch_new_instance = KernelConsoleApp.launch_instance
+main = launch_new_instance = KernelsConsoleApp.launch_instance
 
 
 if __name__ == "__main__":

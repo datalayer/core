@@ -13,7 +13,7 @@ from requests.exceptions import HTTPError
 from traitlets import DottedObjectName, Type
 from traitlets.config import LoggingConfigurable
 
-from datalayer_core.kernels.utils import timestamp_to_local_date
+from datalayer_core.kernels.utils import _timestamp_to_local_date
 from datalayer_core.utils.utils import fetch
 
 
@@ -23,10 +23,10 @@ HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 class KernelManager(LoggingConfigurable):
     """Manages a single kernel remotely."""
 
-    def __init__(self, kernels_url: str, token: str, username: str, **kwargs):
+    def __init__(self, run_url: str, token: str, username: str, **kwargs):
         """Initialize the gateway kernel manager."""
         super().__init__(**kwargs)
-        self.kernels_url = kernels_url
+        self.run_url = run_url
         self.token = token
         self.username = username
         self.kernel_url: str = ""
@@ -116,7 +116,7 @@ class KernelManager(LoggingConfigurable):
         kernel = None
         if kernel_name:
             response = fetch(
-                "{}/api/jupyter/v1/kernel/{}".format(self.kernels_url, kernel_name),
+                "{}/api/jupyter/v1/kernel/{}".format(self.run_url, kernel_name),
                 token=self.token,
             )
             kernel = response.json().get("kernel")
@@ -125,7 +125,7 @@ class KernelManager(LoggingConfigurable):
                 "No kernel name provided. Picking the first available remote kernel…"
             )
             response = fetch(
-                "{}/api/jupyter/v1/kernels".format(self.kernels_url),
+                "{}/api/jupyter/v1/kernels".format(self.run_url),
                 token=self.token,
             )
             kernels = response.json().get("kernels", [])
@@ -153,7 +153,7 @@ class KernelManager(LoggingConfigurable):
         msg = f"KernelManager using existing jupyter kernel {kernel_name}"
         expired_at = kernel.get("expired_at")
         if expired_at is not None:
-            msg += f" expiring at {timestamp_to_local_date(expired_at)}"
+            msg += f" expiring at {_timestamp_to_local_date(expired_at)}"
         self.log.info(msg)
 
     def shutdown_kernel(self, now=False, restart=False):

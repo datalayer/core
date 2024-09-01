@@ -34,7 +34,9 @@ from datalayer_core._version import __version__
 HERE = Path(__file__).parent
 
 
-USE_JUPYTER_SERVER: bool = False
+# Do not set it to True, the Jupyter Server
+# handlers are not yet implemented.
+USE_JUPYTER_SERVER_FOR_LOGIN: bool = False
 
 
 logger = logging.getLogger(__name__)
@@ -94,12 +96,12 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         parts = urllib.parse.urlsplit(self.path)
         if parts[2].strip("/").endswith("oauth/callback"):
             self._save_token(parts[3])
-        elif parts[2] in {"/", "/login/cli"}:
+        elif parts[2] in {"/", "/datalayer/login/cli"}:
             content = LANDING_PAGE.format(
                 config=json.dumps(
                     {
-                        "runUrl": self.server.kernels_url,
-                        "iamRunUrl": self.server.kernels_url,
+                        "runUrl": self.server.run_url,
+                        "iamRunUrl": self.server.run_url,
                         "whiteLabel": False
                     }
                 )
@@ -145,10 +147,10 @@ class DualStackServer(HTTPServer):
         self,
         server_address: tuple[str | bytes | bytearray, int],
         RequestHandlerClass: t.Callable[[t.Any, t.Any, t.Self], BaseRequestHandler],
-        kernels_url: str,
+        run_url: str,
         bind_and_activate: bool = True,
     ) -> None:
-        self.kernels_url = kernels_url
+        self.run_url = run_url
         self.user_handle = None
         self.token = None
         super().__init__(server_address, RequestHandlerClass, bind_and_activate)
@@ -166,19 +168,19 @@ class DualStackServer(HTTPServer):
 
 
 def get_token(
-    kernels_url: str, port: int | None = None, logger: logging.Logger = logger
+    run_url: str, port: int | None = None, logger: logging.Logger = logger
 ) -> tuple[str, str] | None:
     """Get the user handle and token."""
 
     server_address = ("", port or find_http_port())
     port = server_address[1]
 
-    if USE_JUPYTER_SERVER == True:
+    if USE_JUPYTER_SERVER_FOR_LOGIN == True:
         set_server_port(port)
         logger.info(f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n")
         sys.argv = [
             "",
-            "--JupyterKernelsExtensionApp.run_url", kernels_url,
+            "--DatalayerExtensionApp.run_url", run_url,
             "--ServerApp.disable_check_xsrf", "True",
         ]
         launch_new_instance()
@@ -186,7 +188,7 @@ def get_token(
 #        return None if httpd.token is None else (httpd.user_handle, httpd.token)
         return None
     else:
-        httpd = DualStackServer(server_address, LoginRequestHandler, kernels_url)
+        httpd = DualStackServer(server_address, LoginRequestHandler, run_url)
         logger.info(f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n")
         try:
             httpd.serve_forever()

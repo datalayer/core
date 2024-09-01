@@ -15,10 +15,10 @@ import requests
 
 from rich.console import Console
 
-from datalayer_core.application import DatalayerApp, base_aliases, base_flags
 from traitlets import Bool, Unicode
 
-from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER
+from datalayer_core.application import DatalayerApp, base_aliases, base_flags
+from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER_FOR_LOGIN
 from datalayer_core.utils.utils import fetch, find_http_port
 
 from datalayer_core._version import __version__
@@ -28,15 +28,15 @@ REQUEST_TIMEOUT = 5
 
 
 datalayer_aliases = dict(base_aliases)
-datalayer_aliases["kernels-url"] = "DatalayerCLIBase.kernels_url"
-datalayer_aliases["token"] = "DatalayerCLIBase.token"
-datalayer_aliases["external-token"] = "DatalayerCLIBase.external_token"
+datalayer_aliases["run-url"] = "DatalayerCLIBaseApp.run_url"
+datalayer_aliases["token"] = "DatalayerCLIBaseApp.token"
+datalayer_aliases["external-token"] = "DatalayerCLIBaseApp.external_token"
 
 datalayer_flags = dict(base_flags)
 datalayer_flags.update(
     {
         "no-browser": (
-            {"DatalayerCLIBase": {"no_browser": True}},
+            {"DatalayerCLIBaseApp": {"no_browser": True}},
             "Will prompt for user and password on the CLI.",
         )
     }
@@ -54,14 +54,14 @@ class DatalayerCLIBaseApp(DatalayerApp):
 
     user_handle = None
 
-    kernels_url = Unicode(
+    run_url = Unicode(
         None,
         allow_none=False,
         config=True,
         help="Datalayer RUN URL."
     )
-    def _kernels_url_default(self):
-        return os.environ.get("DATALAYER_KERNELS_URL", "https://oss.datalayer.run")
+    def _run_url_default(self):
+        return os.environ.get("DATALAYER_RUN_URL", "https://oss.datalayer.run")
 
     token = Unicode(
         None,
@@ -114,11 +114,11 @@ class DatalayerCLIBaseApp(DatalayerApp):
             "Datalayer - Version %s - Connected as %s on %s",
             self.version,
             self.user_handle,
-            self.kernels_url,
+            self.run_url,
         )
         console = Console()
         console.print()
-        console.print(f"Datalayer - Version [bold cyan]{self.version}[/bold cyan] - Connected as [bold yellow]{self.user_handle}[/bold yellow] on [i]{self.kernels_url}[/i]")
+        console.print(f"Datalayer - Version [bold cyan]{self.version}[/bold cyan] - Connected as [bold yellow]{self.user_handle}[/bold yellow] on [i]{self.run_url}[/i]")
         console.print()
 
 
@@ -149,7 +149,7 @@ class DatalayerCLIBaseApp(DatalayerApp):
             token = self.token if self.token is not None else self.external_token
             try:
                 response = self._fetch(
-                    f"{self.kernels_url}/api/iam/v1/login",
+                    f"{self.run_url}/api/iam/v1/login",
                     method="POST",
                     json={"token": token},
                     timeout=REQUEST_TIMEOUT,
@@ -158,23 +158,23 @@ class DatalayerCLIBaseApp(DatalayerApp):
                 self.log.debug(f"Login response {content}")
                 ans = content["user"]["handle_s"], content["token"]
             except BaseException as e:
-                msg = f"Failed to authenticate with the Token on {self.kernels_url}"
+                msg = f"Failed to authenticate with the Token on {self.run_url}"
                 self.log.debug(msg, exc_info=e)
             if ans is None:
-                self.log.critical("Failed to authenticate to %s", self.kernels_url)
+                self.log.critical("Failed to authenticate to %s", self.run_url)
                 sys.exit(1)
             else:
                 username, token = ans
                 self.log.debug(
                     "Authenticated as [%s] on [%s]",
                     username,
-                    self.kernels_url,
+                    self.run_url,
                 )
                 self.user_handle = username
                 self.token = token
                 try:
                     import keyring
-                    keyring.set_password(self.kernels_url, "access_token", self.token)
+                    keyring.set_password(self.run_url, "access_token", self.token)
                     self.log.debug("Store token with keyring %s", token)
                 except ImportError as e:
                     self.log.debug("Unable to import keyring.", exc_info=e)
@@ -184,12 +184,12 @@ class DatalayerCLIBaseApp(DatalayerApp):
             # Look for cached value.
             try:
                 import keyring
-                stored_token = keyring.get_password(self.kernels_url, "access_token")
+                stored_token = keyring.get_password(self.run_url, "access_token")
                 if stored_token:
                     content = {}
                     try:
                         response = fetch(
-                            f"{self.kernels_url}/api/iam/v1/whoami",
+                            f"{self.run_url}/api/iam/v1/whoami",
                             headers={
                                 "Accept": "application/json",
                                 "Content-Type": "application/json",
@@ -204,7 +204,7 @@ class DatalayerCLIBaseApp(DatalayerApp):
                     except requests.exceptions.HTTPError as error:
                         if error.response.status_code == 401:
                             # Invalidate the stored token.
-                            self.log.debug(f"Delete invalid cached token for {self.kernels_url}")
+                            self.log.debug(f"Delete invalid cached token for {self.run_url}")
                             self._log_out()
                         else:
                             self.log.warning(
@@ -234,7 +234,7 @@ class DatalayerCLIBaseApp(DatalayerApp):
                 credentials.pop("credentials_type")
                 try:
                     response = self._fetch(
-                        f"{self.kernels_url}/api/iam/v1/login",
+                        f"{self.run_url}/api/iam/v1/login",
                         method="POST",
                         json=credentials,
                         timeout=REQUEST_TIMEOUT,
@@ -243,33 +243,34 @@ class DatalayerCLIBaseApp(DatalayerApp):
                     ans = content["user"]["handle_s"], content["token"]
                 except BaseException as e:
                     if "username" in credentials:
-                        msg = f"Failed to authenticate as {credentials['username']} on {self.kernels_url}"
+                        msg = f"Failed to authenticate as {credentials['username']} on {self.run_url}"
                     else:
-                        msg = f"Failed to authenticate with the Token on {self.kernels_url}"
+                        msg = f"Failed to authenticate with the Token on {self.run_url}"
                     self.log.debug(msg, exc_info=e)
             else:
                 # Ask credentials via Browser.
                 port = find_http_port()
-                if USE_JUPYTER_SERVER == False:
+                if USE_JUPYTER_SERVER_FOR_LOGIN == False:
                     self.__launch_browser(port)
+                # Do we need to clear the instanch while using raw http server?
                 self.clear_instance()
-                ans = get_token(self.kernels_url, port, self.log)
+                ans = get_token(self.run_url, port, self.log)
 
             if ans is None:
-                self.log.critical("Failed to authenticate to %s", self.kernels_url)
+                self.log.critical("Failed to authenticate to %s", self.run_url)
                 sys.exit(1)
             else:
                 username, token = ans
                 self.log.info(
                     "Authenticated as %s on %s",
                     username,
-                    self.kernels_url,
+                    self.run_url,
                 )
                 self.user_handle = username
                 self.token = token
                 try:
                     import keyring
-                    keyring.set_password(self.kernels_url, "access_token", self.token)
+                    keyring.set_password(self.run_url, "access_token", self.token)
                     self.log.debug("Store token with keyring %s", token)
                 except ImportError as e:
                     self.log.debug("Unable to import keyring.", exc_info=e)
@@ -321,17 +322,17 @@ class DatalayerCLIBaseApp(DatalayerApp):
         self.user_handle = None
         try:
             import keyring
-            if keyring.get_credential(self.kernels_url, "access_token") is not None:
-                keyring.delete_password(self.kernels_url, "access_token")
+            if keyring.get_credential(self.run_url, "access_token") is not None:
+                keyring.delete_password(self.run_url, "access_token")
         except ImportError as e:
             self.log.debug("Unable to import keyring.", exc_info=e)
-        self.log.info(f"👋 Successfully logged out from {self.kernels_url}")
+        self.log.info(f"👋 Successfully logged out from {self.run_url}")
         print()
 
     def __launch_browser(self, port: int) -> None:
         """Launch the browser."""
 
-        address = f"http://localhost:{port}/login/cli"
+        address = f"http://localhost:{port}/datalayer/login/cli"
 
         # Deferred import for environments that do not have
         # the webbrowser module.

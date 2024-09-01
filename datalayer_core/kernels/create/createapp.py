@@ -7,15 +7,15 @@ from rich import print_json
 from traitlets import Dict, Float, Unicode
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp, datalayer_aliases
-from ..utils import display_kernels
+from datalayer_core.kernels.utils import display_kernels
 
 
 create_alias = dict(datalayer_aliases)
-create_alias["given-name"] = "KernelCreateApp.kernel_given_name"
-create_alias["credits-limit"] = "KernelCreateApp.credits_limit"
+create_alias["given-name"] = "KernelsCreateApp.kernel_given_name"
+create_alias["credits-limit"] = "KernelsCreateApp.credits_limit"
 
 
-class KernelCreateApp(DatalayerCLIBaseApp):
+class KernelsCreateApp(DatalayerCLIBaseApp):
     """An application to create a kernel."""
 
     description = """
@@ -47,13 +47,13 @@ class KernelCreateApp(DatalayerCLIBaseApp):
             self.print_help()
             self.exit(1)
         environment_name = self.extra_args[0]
-        body = {"kernel_type": "default"}
+        body = {"kernel_type": "notebook"}
         if self.kernel_given_name:
             body["kernel_given_name"] = self.kernel_given_name
 
         if self.credits_limit is None:
             response = self._fetch(
-                "{}/api/iam/v1/usage/credits".format(self.kernels_url), method="GET"
+                "{}/api/iam/v1/usage/credits".format(self.run_url), method="GET"
             )
             raw = response.json()
             credits = raw["credits"]
@@ -78,7 +78,7 @@ class KernelCreateApp(DatalayerCLIBaseApp):
 
         response = self._fetch(
             "{}/api/jupyter/v1/environment/{}".format(
-                self.kernels_url, environment_name
+                self.run_url, environment_name
             ),
             method="POST",
             json=body,

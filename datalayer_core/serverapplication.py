@@ -36,8 +36,8 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     static_paths = [DEFAULT_STATIC_FILES_PATH]
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    # run_url can be set set and None or ' '(empty string)
-    # in that case, the consumer of those settings are free
+    # 'run_url' can be set set and None or ' ' (empty string).
+    # In that case, the consumer of those settings are free
     # to consider run_url as null.
     run_url = Unicode(
         "https://oss.datalayer.run",
@@ -47,6 +47,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     )
 
     white_label = Bool(False, config=True, help="""Display white label content.""")
+
+    benchmarks = Bool(False, config=True, help="""Show the benchmarks page.""")
+    kernels = Bool(False, config=True, help="""Show the kernels page.""")
+    webapp = Bool(False, config=True, help="""Show the webapp page.""")
 
     class Launcher(Configurable):
         """Datalayer launcher configuration"""
@@ -58,7 +62,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         name = Unicode(
-            "Jupyter kernels",
+            "Jupyter Kernels",
             config=True,
             help=("Application launcher card name."),
         )
@@ -84,6 +88,12 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_settings(self):
         self.serverapp.answer_yes = True
+        if self.benchmarks:
+            self.serverapp.default_url = "/datalayer/benchmarks"
+        if self.kernels:
+            self.serverapp.default_url = "/datalayer/kernels"
+        if self.webapp:
+            self.serverapp.default_url = "/datalayer/web"
         port = get_server_port()
         if port is not None:
             self.serverapp.port = port
@@ -107,10 +117,13 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_handlers(self):
         handlers = [
-            ("datalayer", IndexHandler),
-            (url_path_join("datalayer", "config"), ConfigHandler),
-            (url_path_join("datalayer", "login"), LoginHandler),
-            (url_path_join("datalayer", "service-worker", r"([^/]+\.js)"), ServiceWorkerHandler),
+            ("/", IndexHandler),
+            (self.name, IndexHandler),
+            (url_path_join(self.name, "config"), ConfigHandler),
+            (url_path_join(self.name, "benchmarks"), IndexHandler),
+            (url_path_join(self.name, "kernels"), IndexHandler),
+            (url_path_join(self.name, "login"), LoginHandler),
+            (url_path_join(self.name, "service-worker", r"([^/]+\.js)"), ServiceWorkerHandler),
         ]
         self.handlers.extend(handlers)
 

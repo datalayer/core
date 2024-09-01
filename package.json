@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/run": "^0.1.15"
+    "@datalayer/run": "^0.2.4"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",
@@ -195,10 +195,6 @@
     "htmlparser2": "8.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-redux": "8.1.2",
-    "redux": "4.1.0",
-    "redux-observable": "1.2.0",
-    "rxjs": "6.6.0",
     "styled-components": "5.3.10",
     "typescript": "5.0.3",
     "webpack": "5.74.0",
@@ -216,6 +212,12 @@
     "access": "public"
   },
   "jupyterlab": {
+    "disabledExtensions": [
+      "@jupyterlab/apputils-extension:sessionDialogs",
+      "@jupyterlab/docmanager-extension:manager",
+      "@jupyterlab/running-extension:plugin",
+      "@jupyterlab/running-extension:sidebar"
+    ],
     "discovery": {
       "server": {
         "managers": [
@@ -226,11 +228,19 @@
         }
       }
     },
-    "extension": "./lib/jupyterlab/index.js",
+    "extension": "lib/jupyterlab/index.js",
     "outputDir": "datalayer_core/labextension",
     "schemaDir": "schema",
     "webpackConfig": "./webpack.lab-config.js",
     "sharedPackages": {
+      "react": {
+        "bundled": false,
+        "singleton": true
+      },
+      "react-dom": {
+        "bundled": false,
+        "singleton": true
+      },
       "@datalayer/icons-react": {
         "bundled": true,
         "singleton": true
@@ -253,6 +263,10 @@
       },
       "@jupyterlite/kernel": {
         "bundled": true,
+        "singleton": true
+      },
+      "@jupyterlite/pyodide-kernel": {
+        "bundled": false,
         "singleton": true
       },
       "@jupyterlite/server": {
