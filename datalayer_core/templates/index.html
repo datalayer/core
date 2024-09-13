@@ -6,10 +6,11 @@
     <script id="datalayer-config-data" type="application/json">
       {
         "version": "{{ datalayer_version }}",
-        "runUrl": "{{ run_url }}",
         "iamRunUrl": "{{ run_url }}",
-        "jupyterServerUrl": "",
+        "jupyterRunUrl": {{ run_url }}",
+        "jupyterServerUrl": "http://localhost:8888{{ base_url }}",
         "jupyterServerToken": "{{ token }}"
+        "jupyterServerless": "true",
       }
     </script>
     <script id="jupyter-config-data" type="application/json">
