@@ -1,1 +1,1 @@
-import '@datalayer/run/style/core/index.css';
+import '@datalayer/ui/style/core/index.css';

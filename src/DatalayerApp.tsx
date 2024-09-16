@@ -10,11 +10,16 @@
 import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { RunIndex, LoginFormCLI, BenchmarksExample, KernelsExample } from '@datalayer/run';
+import { RunIndex, LoginFormCLI, BenchmarksExample, KernelsExample } from '@datalayer/ui';
 
 import '../style/index.css';
 
-type ViewType = 'benchmarks' | 'kernels' | 'web' | 'login' | 'root';
+type ViewType = 
+    'benchmarks'
+  | 'kernels'
+  | 'web'
+  | 'login'
+  | 'root';
 
 export const DatalayerApp = (): JSX.Element => {
   const pathname = window.location.pathname;
