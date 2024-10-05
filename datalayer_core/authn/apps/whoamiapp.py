@@ -27,4 +27,7 @@ class WhoamiApp(DatalayerCLIBaseApp):
             "{}/api/iam/v1/whoami".format(self.run_url),
         )
         raw = response.json()
-        display_me(raw.get("profile", {}))
+        infos =  {
+            "run_url": self.run_url,
+        }
+        display_me(raw.get("profile", {}), infos)
