@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "1.0.12",
+  "version": "1.0.17",
   "description": "Ξ Datalayer Core.",
   "keywords": [
     "datalayer",
@@ -65,7 +65,7 @@
     "watch:src": "tsc -w"
   },
   "dependencies": {
-    "@datalayer/ui": "^0.2.8"
+    "@datalayer/ui": "^0.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.21.0",

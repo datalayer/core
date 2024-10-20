@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-DATALAYER_RUN_URL = "https://oss.datalayer.run"
+DATALAYER_RUN_URL = "https://prod1.datalayer.run"
 
 
 if __name__ == "__main__":

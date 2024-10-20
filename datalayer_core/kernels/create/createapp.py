@@ -66,7 +66,7 @@ class KernelsCreateApp(DatalayerCLIBaseApp):
             available -= sum(map(lambda r: r["credits"], reservations))
             self.credits_limit = max(0., available * 0.5)
             self.log.warning(
-                "The kernel will be allowed to consumed half of your remaining credits; i.e. {:.2f}.".format(
+                "The kernel will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
                     self.credits_limit
                 )
             )

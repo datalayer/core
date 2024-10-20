@@ -30,6 +30,7 @@ class JupyterKernelsApp(DatalayerCLIBaseApp):
         "create": (KernelsCreateApp, KernelsCreateApp.description.splitlines()[0]),
         "exec": (KernelsExecApp, KernelsExecApp.description.splitlines()[0]),
         "list": (KernelsListApp, KernelsListApp.description.splitlines()[0]),
+        "ls": (KernelsListApp, KernelsListApp.description.splitlines()[0]),
         "pause": (KernelsPauseApp, KernelsPauseApp.description.splitlines()[0]),
         "start": (KernelsStartApp, KernelsStartApp.description.splitlines()[0]),
         "stop": (KernelsStopApp, KernelsStopApp.description.splitlines()[0]),

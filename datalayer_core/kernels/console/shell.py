@@ -23,7 +23,7 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
     @default("banner")
     def _default_banner(self):
         # FIXME
-        return "JupyterKernels console {version}\n\n{kernel_banner}"
+        return "Datalayer - Jupyter Kernel console {version}\n\n{kernel_banner}"
 
     async def handle_external_iopub(self, loop=None):
         while self.keep_running:

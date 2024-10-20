@@ -61,7 +61,7 @@ class DatalayerCLIBaseApp(DatalayerApp):
         help="Datalayer RUN URL."
     )
     def _run_url_default(self):
-        return os.environ.get("DATALAYER_RUN_URL", "https://oss.datalayer.run")
+        return os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
 
     token = Unicode(
         None,
