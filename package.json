@@ -267,7 +267,7 @@
         "singleton": true
       },
       "@jupyterlite/pyodide-kernel": {
-        "bundled": false,
+        "bundled": true,
         "singleton": true
       },
       "@jupyterlite/server": {
