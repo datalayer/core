@@ -116,7 +116,7 @@ class KernelManager(LoggingConfigurable):
         kernel = None
         if kernel_name:
             response = fetch(
-                "{}/api/jupyter/v1/kernel/{}".format(self.run_url, kernel_name),
+                "{}/api/jupyter/v1/kernels/{}".format(self.run_url, kernel_name),
                 token=self.token,
             )
             kernel = response.json().get("kernel")

@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { RunIndex, LoginFormCLI, BenchmarksExample, KernelsExample } from '@datalayer/ui';
+import { IOIndex, LoginFormCLI, BenchmarksExample, KernelsExample } from '@datalayer/ui';
 
 import '../style/index.css';
 
@@ -48,7 +48,7 @@ export const DatalayerApp = (): JSX.Element => {
         <></>
       )}
       { view === 'web' && (
-        <RunIndex />
+        <IOIndex />
       )}
       { view === 'kernels' && (
         <KernelsExample memoryRouter={true} baseRoute="datalayer" />

@@ -17,6 +17,7 @@ class EnvironmentsApp(DatalayerCLIBaseApp):
 
     subcommands = {
         "list": (EnvironmentsListApp, EnvironmentsListApp.description.splitlines()[0]),
+        "ls": (EnvironmentsListApp, EnvironmentsListApp.description.splitlines()[0]),
     }
 
     def start(self):

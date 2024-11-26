@@ -53,12 +53,15 @@ class EnvironmentsListApp(DatalayerCLIBaseApp):
         )
         content = response.json()
         table = new_env_table()
-        for environment in content.get("environments", []):
+        environments = content.get("environments", [])
+        for environment in environments:
             add_env_to_table(table, environment)
         console = Console()
         console.print(table)
-        print("""
+        if (len(environments) > 0):
+            print(f"""
 Create a kernel with e.g.
-              
-datalayer kernels create --given-name my-kernel --credits-limit 3 python-simple-env
-""")
+    """)
+        for environment in environments:
+            print(f"datalayer kernels create --given-name my-kernel --credits-limit 3 {environment['name']}")
+        print()

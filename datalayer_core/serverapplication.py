@@ -40,7 +40,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     # In that case, the consumer of those settings are free
     # to consider run_url as null.
     run_url = Unicode(
-        "https://oss.datalayer.run",
+        "https://prod1.datalayer.run",
         config=True,
         allow_none=True,
         help="""URL to connect to the Datalayer RUN APIs.""",

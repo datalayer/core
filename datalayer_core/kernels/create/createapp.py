@@ -66,7 +66,7 @@ class KernelsCreateApp(DatalayerCLIBaseApp):
             available -= sum(map(lambda r: r["credits"], reservations))
             self.credits_limit = max(0., available * 0.5)
             self.log.warning(
-                "The kernel will be allowed to consumed half of your remaining credits; i.e. {:.2f}.".format(
+                "The kernel will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
                     self.credits_limit
                 )
             )
@@ -75,11 +75,10 @@ class KernelsCreateApp(DatalayerCLIBaseApp):
             self.log.warning("Credits reservation is not positive. Exiting…")
             self.exit(1)
         body["credits_limit"] = self.credits_limit
+        body["environment_name"] = environment_name
 
         response = self._fetch(
-            "{}/api/jupyter/v1/environment/{}".format(
-                self.run_url, environment_name
-            ),
+            "{}/api/jupyter/v1/kernels".format(self.run_url),
             method="POST",
             json=body,
         )
