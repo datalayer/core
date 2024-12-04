@@ -1,0 +1,26 @@
+package:
+  name: datalayer-core
+  version: "{{ DATALAYER_CORE_VERSION }}"
+
+source:
+  path: ../
+
+channels:
+  - datalayer
+
+build:
+  noarch: python
+  script: "{{ PYTHON }} -m pip install . -vv"
+
+requirements:
+  build:
+    - python
+    - hatch-jupyter-builder>=0.5
+    - hatch-nodejs-version
+    - hatchling
+  run:
+    - python
+
+test:
+  imports:
+    - datalayer_core
