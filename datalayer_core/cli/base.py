@@ -15,7 +15,8 @@ import requests
 
 from rich.console import Console
 
-from traitlets import Bool, Unicode
+from traitlets import Bool, Unicode, default
+from traitlets.config import LoggingConfigurable
 
 from datalayer_core.application import DatalayerApp, base_aliases, base_flags
 from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER_FOR_LOGIN
@@ -43,93 +44,36 @@ datalayer_flags.update(
 )
 
 
-class DatalayerCLIBaseApp(DatalayerApp):
-    name = "datalayer_core"
-
-    version = __version__
-
-    aliases = datalayer_aliases
-
-    flags = datalayer_flags
-
+class DatalayerAuthMixin(LoggingConfigurable):
     user_handle = None
 
-    run_url = Unicode(
-        None,
-        allow_none=False,
-        config=True,
-        help="Datalayer RUN URL."
-    )
+    run_url = Unicode("", allow_none=False, config=True, help="Datalayer RUN URL.")
+
+    @default("run_url")
     def _run_url_default(self):
         return os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
 
-    token = Unicode(
-        None,
-        allow_none=True,
-        config=True,
-        help="User access token."
-    )
+    token = Unicode(None, allow_none=True, config=True, help="User access token.")
+
+    @default("token")
     def _token_default(self):
         return os.environ.get("DATALAYER_TOKEN", None)
 
-    external_token = Unicode(
-        None,
-        allow_none=True,
-        config=True,
-        help="External token."
-    )
+    external_token = Unicode(None, allow_none=True, config=True, help="External token.")
+
+    @default("external_token")
     def _external_token_default(self):
         return os.environ.get("DATALAYER_EXTERNAL_TOKEN", None)
 
     no_browser = Bool(
-        False,
-        config=True,
-        help="If true, prompt for login on the CLI only."
+        False, config=True, help="If true, prompt for login on the CLI only."
     )
-
-    _is_initialized = False
-
-    _requires_auth = True
-
-
-    def initialize(self, argv=None):
-        super().initialize(argv)
-
-        if self.token is None:
-            self.user_handle = None
-
-        if not getattr(self, "_dispatching", False):
-            super().initialize(argv)
-
-        if DatalayerCLIBaseApp._is_initialized:
-            return
-
-        DatalayerCLIBaseApp._is_initialized = True
-
-        # Log the user.
-        if self._requires_auth:
-            self._log_in()
-
-        self.log.debug(
-            "Datalayer - Version %s - Connected as %s on %s",
-            self.version,
-            self.user_handle,
-            self.run_url,
-        )
-        console = Console()
-        console.print()
-        console.print(f"Datalayer - Version [bold cyan]{self.version}[/bold cyan] - Connected as [bold yellow]{self.user_handle}[/bold yellow] on [i]{self.run_url}[/i]")
-        console.print()
-
 
     def _fetch(self, request: str, **kwargs: t.Any) -> requests.Response:
         """Fetch a network resource as a context manager."""
         try:
             return fetch(
-                request,
-                token=self.token,
-                external_token=self.external_token,
-                **kwargs
+                request, token=self.token, external_token=self.external_token, **kwargs
             )
         except requests.exceptions.Timeout as e:
             raise e
@@ -139,7 +83,6 @@ class DatalayerCLIBaseApp(DatalayerApp):
             raise RuntimeError(
                 f"Failed to request the URL {request if isinstance(request, str) else request.url!s}"
             ) from e
-
 
     def _log_in(self) -> None:
         """Login the application with the Identity Provider."""
@@ -174,16 +117,17 @@ class DatalayerCLIBaseApp(DatalayerApp):
                 self.token = token
                 try:
                     import keyring
+
                     keyring.set_password(self.run_url, "access_token", self.token)
                     self.log.debug("Store token with keyring %s", token)
                 except ImportError as e:
                     self.log.debug("Unable to import keyring.", exc_info=e)
-            
 
         if self.token is None:
             # Look for cached value.
             try:
                 import keyring
+
                 stored_token = keyring.get_password(self.run_url, "access_token")
                 if stored_token:
                     content = {}
@@ -200,11 +144,15 @@ class DatalayerCLIBaseApp(DatalayerApp):
                         )
                         content = response.json()
                     except requests.exceptions.Timeout as error:
-                        self.log.warning("Request to get the user profile timed out.", exc_info=error)
+                        self.log.warning(
+                            "Request to get the user profile timed out.", exc_info=error
+                        )
                     except requests.exceptions.HTTPError as error:
                         if error.response.status_code == 401:
                             # Invalidate the stored token.
-                            self.log.debug(f"Delete invalid cached token for {self.run_url}")
+                            self.log.debug(
+                                f"Delete invalid cached token for {self.run_url}"
+                            )
                             self._log_out()
                         else:
                             self.log.warning(
@@ -252,8 +200,9 @@ class DatalayerCLIBaseApp(DatalayerApp):
                 port = find_http_port()
                 if USE_JUPYTER_SERVER_FOR_LOGIN == False:
                     self.__launch_browser(port)
-                # Do we need to clear the instanch while using raw http server?
-                self.clear_instance()
+                # Do we need to clear the instance while using raw http server?
+                if hasattr(self, "clear_instance"):
+                    self.clear_instance()
                 ans = get_token(self.run_url, port, self.log)
 
             if ans is None:
@@ -270,11 +219,11 @@ class DatalayerCLIBaseApp(DatalayerApp):
                 self.token = token
                 try:
                     import keyring
+
                     keyring.set_password(self.run_url, "access_token", self.token)
                     self.log.debug("Store token with keyring %s", token)
                 except ImportError as e:
                     self.log.debug("Unable to import keyring.", exc_info=e)
-
 
     def _ask_credentials(self) -> dict:
         questions = [
@@ -315,13 +264,13 @@ class DatalayerCLIBaseApp(DatalayerApp):
         ]
         return questionary.prompt(questions)
 
-
     def _log_out(self) -> None:
         """Log out from the Identity Provider."""
         self.token = None
         self.user_handle = None
         try:
             import keyring
+
             if keyring.get_credential(self.run_url, "access_token") is not None:
                 keyring.delete_password(self.run_url, "access_token")
         except ImportError as e:
@@ -354,3 +303,48 @@ class DatalayerCLIBaseApp(DatalayerApp):
             browser.open(address)
 
         threading.Thread(target=target).start()
+
+
+class DatalayerCLIBaseApp(DatalayerApp, DatalayerAuthMixin):
+    name = "datalayer_core"
+
+    version = __version__
+
+    aliases = datalayer_aliases
+
+    flags = datalayer_flags
+
+    _is_initialized = False
+
+    _requires_auth = True
+
+    def initialize(self, argv=None):
+        super().initialize(argv)
+
+        if self.token is None:
+            self.user_handle = None
+
+        if not getattr(self, "_dispatching", False):
+            super().initialize(argv)
+
+        if DatalayerCLIBaseApp._is_initialized:
+            return
+
+        DatalayerCLIBaseApp._is_initialized = True
+
+        # Log the user.
+        if self._requires_auth:
+            self._log_in()
+
+        self.log.debug(
+            "Datalayer - Version %s - Connected as %s on %s",
+            self.version,
+            self.user_handle,
+            self.run_url,
+        )
+        console = Console()
+        console.print()
+        console.print(
+            f"Datalayer - Version [bold cyan]{self.version}[/bold cyan] - Connected as [bold yellow]{self.user_handle}[/bold yellow] on [i]{self.run_url}[/i]"
+        )
+        console.print()
