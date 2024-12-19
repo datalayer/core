@@ -127,6 +127,7 @@ dmypy.json
 
 *ystore.db
 
+.yarn
 
 # Include
 !**/.*ignore
