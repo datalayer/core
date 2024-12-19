@@ -24,8 +24,14 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
+    "jupyter-kernel-client",
+    "jupyter-console",
     "jupyter_server>=2,<3",
+    "keyring",
+    "questionary",
+    "requests",
     "rich",
+    "traitlets",
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
