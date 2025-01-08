@@ -10,7 +10,10 @@
 import { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
-import { IOIndex, LoginCLI, BenchmarksExample, KernelsExample } from '@datalayer/ui';
+import { IOIndex } from '@datalayer/ui/lib/IOIndex';
+import { LoginCLI } from '@datalayer/ui/lib/views/iam/LoginCLI';
+import { BenchmarksExample } from '@datalayer/ui/lib/examples/apps/BenchmarksExample';
+import { KernelsExample } from '@datalayer/ui/lib/examples/apps/KernelsExample';
 
 import '../style/index.css';
 
