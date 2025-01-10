@@ -14,6 +14,8 @@ datalayer_core/_version.py
 datalayer_core/static/*.js
 datalayer_core/static/*.css
 
+conda-recipe/out/*
+
 coverage
 
 # Integration tests
