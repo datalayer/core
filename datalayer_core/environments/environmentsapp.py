@@ -9,7 +9,7 @@ from datalayer_core._version import __version__
 
 class EnvironmentsApp(DatalayerCLIBaseApp):
     description = """
-      The Jupyter Kernels CLI application.
+      The Datalayer CLI application.
     """
 
     _requires_auth = False

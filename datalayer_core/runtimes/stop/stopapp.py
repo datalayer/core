@@ -6,17 +6,17 @@ from datalayer_core.application import NoStart
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-class KernelsStopApp(DatalayerCLIBaseApp):
-    """Kernel Stop application."""
+class RuntimesStopApp(DatalayerCLIBaseApp):
+    """Runtime Stop application."""
 
     description = """
-      An application to stop a Kernel.
+      An application to stop a Runtime.
     """
 
     def start(self):
         try:
             super().start()
-            self.log.info(f"Kernel Stop - not implemented.")
+            self.log.info(f"Runtime Stop - not implemented.")
         except NoStart:
             pass
         self.exit(0)

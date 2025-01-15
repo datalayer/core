@@ -7,43 +7,43 @@ from rich import print_json
 from traitlets import Dict, Float, Unicode
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp, datalayer_aliases
-from datalayer_core.kernels.utils import display_kernels
+from datalayer_core.runtimes.utils import display_kernels
 
 
 create_alias = dict(datalayer_aliases)
-create_alias["given-name"] = "KernelsCreateApp.kernel_given_name"
-create_alias["credits-limit"] = "KernelsCreateApp.credits_limit"
+create_alias["given-name"] = "RuntimesCreateApp.kernel_given_name"
+create_alias["credits-limit"] = "RuntimesCreateApp.credits_limit"
 
 
-class KernelsCreateApp(DatalayerCLIBaseApp):
-    """An application to create a kernel."""
+class RuntimesCreateApp(DatalayerCLIBaseApp):
+    """An application to create a Runtime."""
 
     description = """
-      An application to create the kernel.
+      An application to create a Runtime.
 
-      jupyter kernels create ENV_ID [--given-name CUSTOM_NAME]
+      jupyter runtimes create ENV_ID [--given-name CUSTOM_NAME]
     """
 
     aliases = Dict(create_alias)
 
     kernel_given_name = Unicode(
-        "Remote Kernel",
+        "Remote Runtime",
         allow_none=True,
         config=True,
-        help="Kernel custom name.",
+        help="Runtime custom name.",
     )
 
     credits_limit = Float(
         None,
         allow_none=True,
         config=True,
-        help="Maximal amount of credits that can be consumed by the kernels",
+        help="Maximal amount of credits that can be consumed by the Runtime.",
     )
 
     def start(self):
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
-            self.log.warning("Too many arguments were provided for kernel create.")
+            self.log.warning("Too many arguments were provided for Runtime create.")
             self.print_help()
             self.exit(1)
         environment_name = self.extra_args[0]
@@ -66,7 +66,7 @@ class KernelsCreateApp(DatalayerCLIBaseApp):
             available -= sum(map(lambda r: r["credits"], reservations))
             self.credits_limit = max(0., available * 0.5)
             self.log.warning(
-                "The kernel will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
+                "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
                     self.credits_limit
                 )
             )

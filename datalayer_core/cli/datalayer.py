@@ -13,8 +13,8 @@ from datalayer_core.authn.apps.logoutapp import DatalayerLogoutApp
 from datalayer_core.authn.apps.whoamiapp import WhoamiApp
 from datalayer_core.benchmarks.benchmarksapp import BenchmarksApp
 from datalayer_core.environments.environmentsapp import EnvironmentsApp
-from datalayer_core.kernels.console.consoleapp import KernelsConsoleApp
-from datalayer_core.kernels.kernelsapp import JupyterKernelsApp
+from datalayer_core.runtimes.console.consoleapp import RuntimesConsoleApp
+from datalayer_core.runtimes.runtimesapp import JupyterRuntimesApp
 from datalayer_core.web.webapp import DatalayerWebApp
 
 from datalayer_core._version import __version__
@@ -33,9 +33,9 @@ class DatalayerCLI(DatalayerCLIBaseApp):
     subcommands = {
         "about": (DatalayerAboutApp, DatalayerAboutApp.description.splitlines()[0]),
         "benchmarks": (BenchmarksApp, BenchmarksApp.description.splitlines()[0]),
-        "console": (KernelsConsoleApp, KernelsConsoleApp.description.splitlines()[0]),
+        "console": (RuntimesConsoleApp, RuntimesConsoleApp.description.splitlines()[0]),
         "envs": (EnvironmentsApp, EnvironmentsApp.description.splitlines()[0]),
-        "kernels": (JupyterKernelsApp, JupyterKernelsApp.description.splitlines()[0]),
+        "runtimes": (JupyterRuntimesApp, JupyterRuntimesApp.description.splitlines()[0]),
         "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),
         "logout": (DatalayerLogoutApp, DatalayerLogoutApp.description.splitlines()[0]),
         "web": (DatalayerWebApp, DatalayerWebApp.description.splitlines()[0]),

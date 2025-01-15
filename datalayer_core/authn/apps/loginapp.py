@@ -7,12 +7,12 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class DatalayerLoginApp(DatalayerCLIBaseApp):
-    """An application to log into a remote kernel provider."""
+    """An application to log into a Runtime provider."""
 
     description = """
-      An application to log into a remote kernel provider.
+      An application to log into a Runtime provider.
 
-      jupyter kernels login
+      datalayer login
     """
 
     def start(self):

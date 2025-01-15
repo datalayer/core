@@ -37,7 +37,7 @@ class EnvironmentsListApp(DatalayerCLIBaseApp):
     """A Kernel application."""
 
     description = """
-      The Jupyter Kernels application for Kernels.
+      The Datalayer application for Environment.
 
       jupyter kernels environments
     """
@@ -60,8 +60,8 @@ class EnvironmentsListApp(DatalayerCLIBaseApp):
         console.print(table)
         if (len(environments) > 0):
             print(f"""
-Create a kernel with e.g.
+Create a Runtime with e.g.
     """)
         for environment in environments:
-            print(f"datalayer kernels create --given-name my-kernel --credits-limit 3 {environment['name']}")
+            print(f"datalayer runtimes create --given-name my-runtime --credits-limit 3 {environment['name']}")
         print()

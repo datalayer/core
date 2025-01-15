@@ -6,19 +6,19 @@ import warnings
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-class KernelsTerminateApp(DatalayerCLIBaseApp):
-    """Kernel Terminate application."""
+class RuntimesTerminateApp(DatalayerCLIBaseApp):
+    """Runtime Terminate application."""
 
     description = """
-      An application to terminate a Kernel.
+      An application to terminate a Runtime.
 
-      jupyter kernels terminate SERVER_NAME
+      jupyter kernels terminate RUNTIME_ID
     """
 
     def start(self):
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
-            warnings.warn("Too many arguments were provided for kernel list.")
+            warnings.warn("Too many arguments were provided for Runtime terminate.")
             self.print_help()
             self.exit(1)
 
@@ -28,4 +28,4 @@ class KernelsTerminateApp(DatalayerCLIBaseApp):
             "{}/api/jupyter/v1/kernels/{}".format(self.run_url, kernel_id),
             method="DELETE",
         )
-        self.log.info(f"Kernel '{kernel_id}' deleted.")
+        self.log.info(f"Runtime '{kernel_id}' deleted.")

@@ -7,7 +7,7 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.serverapplication import launch_new_instance
 
 
-class KernelsWebApp(DatalayerCLIBaseApp):
+class RuntimesWebApp(DatalayerCLIBaseApp):
     """An application to show the kernels webapp."""
 
     description = """

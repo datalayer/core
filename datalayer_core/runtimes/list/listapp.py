@@ -4,16 +4,16 @@
 import warnings
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-from datalayer_core.kernels.utils import display_kernels
+from datalayer_core.runtimes.utils import display_kernels
 
 
-class KernelsListApp(DatalayerCLIBaseApp):
-    """An application to list the kernels."""
+class RuntimesListApp(DatalayerCLIBaseApp):
+    """An application to list the Runtimes."""
 
     description = """
-      An application to list the kernels.
+      An application to list the runtimes.
 
-      jupyter kernels list
+      datalayer runtimes list
     """
 
     def start(self):

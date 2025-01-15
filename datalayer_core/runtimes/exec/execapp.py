@@ -17,7 +17,7 @@ from datalayer_core.cli.base import (
     datalayer_aliases,
     datalayer_flags,
 )
-from ..manager import KernelManager
+from ..manager import RuntimeManager
 
 
 # -----------------------------------------------------------------------------
@@ -25,8 +25,8 @@ from ..manager import KernelManager
 # -----------------------------------------------------------------------------
 
 _examples = """
-jupyter kernels exec <FILENAME> # Execute a text file on a remote kernel
-jupyter kernels exec <NOTEBOOK> # Execute a notebook file on a remote kernel
+jupyter runtimes exec <FILENAME> # Execute a text file on a Runtime
+jupyter runtimes exec <NOTEBOOK> # Execute a notebook file on a Runtime
 """
 
 # -----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ flags = dict(datalayer_flags)
 flags.update(
     {
         "verbose": (
-            {"KernelExecApp": {"silent": False}},
+            {"RuntimeExecApp": {"silent": False}},
             "Show all cell outputs.",
         )
     }
@@ -46,7 +46,7 @@ flags.update(
 flags.update(
     boolean_flag(
         "raise",
-        "KernelExecApp.raise_exceptions",
+        "RuntimeExecApp.raise_exceptions",
         "Stop executing a notebook if an exception occurs.",
         "Run all notebook cells.",
     )
@@ -57,8 +57,8 @@ aliases = dict(datalayer_aliases)
 
 aliases.update(
     {
-        "kernel": "KernelsExecApp.kernel_name",
-        "timeout": "KernelsExecApp.timeout",
+        "runtime": "RuntimesExecApp.runtime_name",
+        "timeout": "RuntimesExecApp.timeout",
     }
 )
 
@@ -67,15 +67,15 @@ aliases.update(
 # -----------------------------------------------------------------------------
 
 
-class KernelsExecApp(DatalayerCLIBaseApp):
-    """Execute a file on a IPython remote kernel."""
+class RuntimesExecApp(DatalayerCLIBaseApp):
+    """Execute a file on a IPython Runtime."""
 
     version = __version__
 
     description = """
-        Execute a file or a notebook on a remote kernel
+        Execute a file or a notebook on a Runtime
 
-        jupyter kernels exec <FILE>
+        jupyter runtimes exec <FILE>
     """
     examples = _examples
 
@@ -83,13 +83,13 @@ class KernelsExecApp(DatalayerCLIBaseApp):
     aliases = Dict(aliases)
 
     kernel_manager_class = Type(
-        default_value=KernelManager,
+        default_value=RuntimeManager,
         config=True,
         help="The kernel manager class to use.",
     )
 
-    kernel_name = Unicode(
-        "", config=True, help="""The name of the kernel to connect to."""
+    runtime_name = Unicode(
+        "", config=True, help="""The name of the Runtime to connect to."""
     )
 
     raise_exceptions = CBool(
@@ -139,7 +139,7 @@ class KernelsExecApp(DatalayerCLIBaseApp):
             signal.signal(signal.SIGINT, self.handle_sigint)
 
     def init_kernel_manager(self) -> None:
-        # Create a KernelManager.
+        # Create a RuntimeManager.
         self.kernel_manager = self.kernel_manager_class(
             run_url=self.run_url,
             token=self.token,
@@ -149,15 +149,15 @@ class KernelsExecApp(DatalayerCLIBaseApp):
 
     def init_kernel_client(self) -> None:
         """Initialize the kernel client."""
-        self.kernel_manager.start_kernel(kernel_name=self.kernel_name)
-        self.kernel_client = self.kernel_manager.client()
+        self.kernel_manager.start_kernel(name=self.runtime_name)
+        self.kernel_client = self.kernel_manager.client
 
         self.kernel_client.start_channels()
 
     def start(self):
         try:
             # JupyterApp.start dispatches on NoStart
-            super(KernelsExecApp, self).start()
+            super(RuntimesExecApp, self).start()
             if len(self.extra_args) != 3:  # FIXME why is exec an args?
                 self.log.warning("A file to execute must be provided.")
                 self.print_help()
@@ -176,7 +176,7 @@ class KernelsExecApp(DatalayerCLIBaseApp):
 
             try:
                 self._executing = True
-                self.log.debug("Starting executing the file on the remote kernel...")
+                self.log.debug("Starting executing the file on the Runtime...")
                 for id, cell in _get_cells(fname):
                     reply = self.kernel_client.execute_interactive(
                         cell, silent=self.silent, timeout=self.timeout
@@ -219,7 +219,7 @@ def _get_cells(filepath: Path) -> t.Iterator[tuple[str | None, str]]:
         yield None, filepath.read_text(encoding="utf-8")
 
 
-main = launch_new_instance = KernelsExecApp.launch_instance
+main = launch_new_instance = RuntimesExecApp.launch_instance
 
 
 if __name__ == "__main__":
