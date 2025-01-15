@@ -150,9 +150,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
     def init_kernel_client(self) -> None:
         """Initialize the kernel client."""
         self.kernel_manager.start_kernel(name=self.runtime_name)
-        print("------------------ ", self.kernel_manager)
-        print("------------------ ", self.kernel_manager.client)
-        self.kernel_client = self.kernel_manager.client()
+        self.kernel_client = self.kernel_manager.client
 
         self.kernel_client.start_channels()
 
