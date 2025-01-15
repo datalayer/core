@@ -14,7 +14,7 @@ from traitlets.config import catch_config_error
 
 from ..._version import __version__
 from ...cli.base import DatalayerAuthMixin
-from ..manager import KernelManager
+from ..manager import RuntimeManager
 
 
 datalayer_aliases = dict(base_aliases)
@@ -33,7 +33,7 @@ datalayer_flags.update(
 )
 
 
-class KernelsConsoleApp(DatalayerAuthMixin, KonsoleApp):
+class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
     """Console for Datalayer remote kernels."""
 
     name = "datalayer-console"
@@ -45,7 +45,7 @@ class KernelsConsoleApp(DatalayerAuthMixin, KonsoleApp):
 
     @default("kernel_manager_class")
     def _kernel_manager_class_default(self) -> type:
-        return KernelManager
+        return RuntimeManager
 
     @default("kernel_name")
     def _kernel_name_default(self) -> str:
@@ -79,7 +79,7 @@ class KernelsConsoleApp(DatalayerAuthMixin, KonsoleApp):
 
     def init_kernel_manager(self) -> None:
         """Initialize the kernel manager."""
-        # Create a KernelManager and start a kernel.
+        # Create a RuntimeManager and start a kernel.
         self.kernel_client = self.kernel_manager_class(
             parent=self,
             run_url=self.run_url,
@@ -102,7 +102,7 @@ class KernelsConsoleApp(DatalayerAuthMixin, KonsoleApp):
         self.shell.own_kernel = False
 
 
-main = launch_new_instance = KernelsConsoleApp.launch_instance
+main = launch_new_instance = RuntimesConsoleApp.launch_instance
 
 
 if __name__ == "__main__":

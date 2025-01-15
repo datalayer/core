@@ -8,18 +8,18 @@ from datalayer_core.authn.apps.utils import display_me
 
 
 class WhoamiApp(DatalayerCLIBaseApp):
-    """An application to list the kernels."""
+    """An application to list the Runtimes."""
 
     description = """
-      An application to list the kernels.
+      An application to list the Runtimes.
 
-      jupyter kernels list
+      datalayer runtimes list
     """
 
     def start(self):
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
-            warnings.warn("Too many arguments were provided for kernel list.")
+            warnings.warn("Too many arguments were provided for runtimes list.")
             self.print_help()
             self.exit(1)
 

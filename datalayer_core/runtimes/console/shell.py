@@ -14,16 +14,16 @@ from datalayer_core._version import __version__
 
 class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
     manager = Instance(
-        "datalayer_core.kernels.manager.KernelManager", allow_none=True
+        "datalayer_core.runtimes.manager.RuntimeManager", allow_none=True
     )
     client = Instance(
-        "datalayer_core.kernels.client.KernelClient", allow_none=True
+        "datalayer_core.runtimes.client.RuntimeClient", allow_none=True
     )
 
     @default("banner")
     def _default_banner(self):
         # FIXME
-        return "Datalayer - Jupyter Kernel console {version}\n\n{kernel_banner}"
+        return "Datalayer - Jupyter Runtime console {version}\n\n{kernel_banner}"
 
     async def handle_external_iopub(self, loop=None):
         while self.keep_running:
