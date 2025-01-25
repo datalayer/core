@@ -7,7 +7,7 @@ from rich import print_json
 from traitlets import Dict, Float, Unicode
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp, datalayer_aliases
-from datalayer_core.runtimes.utils import display_kernels
+from datalayer_core.runtimes.utils import display_kernels, get_default_credits_limit
 
 
 create_alias = dict(datalayer_aliases)
@@ -55,16 +55,9 @@ class RuntimesCreateApp(DatalayerCLIBaseApp):
             response = self._fetch(
                 "{}/api/iam/v1/usage/credits".format(self.run_url), method="GET"
             )
-            raw = response.json()
-            credits = raw["credits"]
-            reservations = raw["reservations"]
-            available = (
-                credits["credits"]
-                if credits.get("quota") is None
-                else credits["quota"] - credits["credits"]
-            )
-            available -= sum(map(lambda r: r["credits"], reservations))
-            self.credits_limit = max(0., available * 0.5)
+            
+            raw_credits = response.json()
+            self.credits_limit = get_default_credits_limit(raw_credits["reservations"], raw_credits["credits"])
             self.log.warning(
                 "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
                     self.credits_limit

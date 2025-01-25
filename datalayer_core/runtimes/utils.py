@@ -39,3 +39,14 @@ def display_kernels(kernels: list) -> None:
         _add_kernel_to_table(table, kernel)
     console = Console()
     console.print(table)
+
+
+def get_default_credits_limit(reservations: list[dict], credits: dict) -> float:
+    """Get the default credits limit based on the available credits and reservations."""
+    available = (
+        credits["credits"]
+        if credits.get("quota") is None
+        else credits["quota"] - credits["credits"]
+    )
+    available -= sum(r["credits"] for r in reservations)
+    return max(0.0, available * 0.5)
