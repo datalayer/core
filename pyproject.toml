@@ -82,10 +82,5 @@ artifacts = [
 [tool.hatch.build.hooks.version]
 path = "datalayer_core/_version.py"
 
-[tool.hatch.build.hooks.jupyter-builder]
-dependencies = ["hatch-jupyter-builder>=0.5"]
-ensured-targets = []
-skip-if-exists = []
-
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"
