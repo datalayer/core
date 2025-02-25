@@ -12,7 +12,7 @@ from jupyter_kernel_client.konsoleapp import (
 from traitlets import default
 from traitlets.config import catch_config_error
 
-from ..._version import __version__
+from ...__version__ import __version__
 from ...cli.base import DatalayerAuthMixin
 from ..manager import RuntimeManager
 

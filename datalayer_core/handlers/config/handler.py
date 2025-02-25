@@ -9,7 +9,7 @@ from jupyter_server.extension.handler import (
     ExtensionHandlerMixin,
 )
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 

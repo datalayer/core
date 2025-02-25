@@ -16,7 +16,7 @@ from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 
 from datalayer_core.authn.state import get_server_port
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")

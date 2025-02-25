@@ -17,7 +17,7 @@ from datalayer_core.runtimes.console.consoleapp import RuntimesConsoleApp
 from datalayer_core.runtimes.runtimesapp import JupyterRuntimesApp
 from datalayer_core.web.webapp import DatalayerWebApp
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 HERE = Path(__file__).parent

@@ -4,7 +4,7 @@
 from datalayer_core.application import NoStart
 from datalayer_core.environments.list.listapp import EnvironmentsListApp
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 class EnvironmentsApp(DatalayerCLIBaseApp):

@@ -28,7 +28,7 @@ from datalayer_core.authn.pages import (
 
 from datalayer_core.utils.utils import find_http_port
 from datalayer_core.serverapplication import launch_new_instance
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 HERE = Path(__file__).parent
@@ -197,4 +197,3 @@ def get_token(
         httpd.server_close()
         logger.debug("Authentication finished.")
         return None if httpd.token is None else (httpd.user_handle, httpd.token)
-

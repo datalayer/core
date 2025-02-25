@@ -22,7 +22,7 @@ from datalayer_core.application import DatalayerApp, base_aliases, base_flags
 from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER_FOR_LOGIN
 from datalayer_core.utils.utils import fetch, find_http_port
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 REQUEST_TIMEOUT = 5
@@ -197,7 +197,8 @@ class DatalayerAuthMixin(LoggingConfigurable):
                     self.log.debug(msg, exc_info=e)
             else:
                 # Ask credentials via Browser.
-                port = find_http_port()
+#                port = find_http_port()
+                port = 1444
                 if USE_JUPYTER_SERVER_FOR_LOGIN == False:
                     self.__launch_browser(port)
                 # Do we need to clear the instance while using raw http server?
