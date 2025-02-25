@@ -197,6 +197,7 @@ class DatalayerAuthMixin(LoggingConfigurable):
                     self.log.debug(msg, exc_info=e)
             else:
                 # Ask credentials via Browser.
+                # TODO Find a random port which works well with the services CORS rules.
 #                port = find_http_port()
                 port = 1444
                 if USE_JUPYTER_SERVER_FOR_LOGIN == False:
