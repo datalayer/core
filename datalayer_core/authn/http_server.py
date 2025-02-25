@@ -162,8 +162,10 @@ class DualStackServer(HTTPServer):
         return super().server_bind()
 
     def finish_request(self, request, client_address):
+        import datalayer_ui
+        DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
         self.RequestHandlerClass(
-            request, client_address, self, directory=str(HERE / '..' / "static")
+            request, client_address, self, directory=str(DATALAYER_UI_PATH / "static")
         )
 
 
