@@ -12,11 +12,10 @@ from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinja
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.login.handler import LoginHandler
-from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 
 from datalayer_core.authn.state import get_server_port
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
@@ -123,7 +122,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             (url_path_join(self.name, "benchmarks"), IndexHandler),
             (url_path_join(self.name, "kernels"), IndexHandler),
             (url_path_join(self.name, "login"), LoginHandler),
-            (url_path_join(self.name, "service-worker", r"([^/]+\.js)"), ServiceWorkerHandler),
         ]
         self.handlers.extend(handlers)
 

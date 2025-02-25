@@ -28,7 +28,7 @@ from datalayer_core.authn.pages import (
 
 from datalayer_core.utils.utils import find_http_port
 from datalayer_core.serverapplication import launch_new_instance
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 HERE = Path(__file__).parent
@@ -150,6 +150,13 @@ class DualStackServer(HTTPServer):
         run_url: str,
         bind_and_activate: bool = True,
     ) -> None:
+        try:
+            import datalayer_ui
+        except:
+            print("Sorry, I can not show the login page...")
+            print("Check the datalayer_ui python package is available in your environment")
+            import sys
+            sys.exit(-1)
         self.run_url = run_url
         self.user_handle = None
         self.token = None
@@ -162,8 +169,10 @@ class DualStackServer(HTTPServer):
         return super().server_bind()
 
     def finish_request(self, request, client_address):
+        import datalayer_ui
+        DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
         self.RequestHandlerClass(
-            request, client_address, self, directory=str(HERE / '..' / "static")
+            request, client_address, self, directory=str(DATALAYER_UI_PATH / "static")
         )
 
 
@@ -197,4 +206,3 @@ def get_token(
         httpd.server_close()
         logger.debug("Authentication finished.")
         return None if httpd.token is None else (httpd.user_handle, httpd.token)
-

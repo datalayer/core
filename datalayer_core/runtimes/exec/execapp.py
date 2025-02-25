@@ -11,7 +11,7 @@ from traitlets import CBool, CFloat, Dict, Type, Unicode
 from traitlets.config import catch_config_error, boolean_flag
 
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 from datalayer_core.cli.base import (
     DatalayerCLIBaseApp,
     datalayer_aliases,

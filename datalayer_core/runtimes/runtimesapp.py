@@ -15,7 +15,7 @@ from datalayer_core.runtimes.web.webapp import RuntimesWebApp
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
-from datalayer_core._version import __version__
+from datalayer_core.__version__ import __version__
 
 
 class JupyterRuntimesApp(DatalayerCLIBaseApp):

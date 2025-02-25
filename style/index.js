@@ -1,1 +1,0 @@
-import '@datalayer/ui/style/core/index.css';
