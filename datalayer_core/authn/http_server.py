@@ -150,6 +150,13 @@ class DualStackServer(HTTPServer):
         run_url: str,
         bind_and_activate: bool = True,
     ) -> None:
+        try:
+            import datalayer_ui
+        except:
+            print("Sorry, I can not show the login page...")
+            print("Check the datalayer_ui python package is available in your environment")
+            import sys
+            sys.exit(-1)
         self.run_url = run_url
         self.user_handle = None
         self.token = None
