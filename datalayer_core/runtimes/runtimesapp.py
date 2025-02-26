@@ -20,7 +20,7 @@ from datalayer_core.__version__ import __version__
 
 class JupyterRuntimesApp(DatalayerCLIBaseApp):
     description = """
-      The Jupyter Runtimes CLI application.
+      The Runtimes CLI application.
     """
 
     _requires_auth = False

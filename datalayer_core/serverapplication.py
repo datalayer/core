@@ -44,9 +44,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         allow_none=True,
         help="""URL to connect to the Datalayer RUN APIs.""",
     )
-
     white_label = Bool(False, config=True, help="""Display white label content.""")
-
     benchmarks = Bool(False, config=True, help="""Show the benchmarks page.""")
     kernels = Bool(False, config=True, help="""Show the kernels page.""")
     webapp = Bool(False, config=True, help="""Show the webapp page.""")
@@ -61,7 +59,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         name = Unicode(
-            "Jupyter Runtimes",
+            "Runtimes",
             config=True,
             help=("Application launcher card name."),
         )
