@@ -62,8 +62,6 @@ datalayer-troubleshoot = "datalayer_core.troubleshoot:main"
 [tool.hatch.version]
 path = "datalayer_core/__version__.py"
 
-[tool.hatch.build.hooks.custom]
-
 [tool.hatch.build.targets.sdist]
 artifacts = [
     "datalayer_core/about/about.md",

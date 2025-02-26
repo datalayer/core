@@ -36,15 +36,6 @@ Then to upload the package to PyPI, do:
 twine upload dist/*
 ```
 
-### NPM package
-
-To publish the frontend part of the extension as a NPM package, do:
-
-```bash
-npm login
-npm publish --access public
-```
-
 ## Automated releases with the Jupyter Releaser
 
 The extension repository should already be compatible with the Jupyter Releaser.
