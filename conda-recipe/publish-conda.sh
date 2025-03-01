@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 
 export DATALAYER_CORE_VERSION=1.0.23
 
