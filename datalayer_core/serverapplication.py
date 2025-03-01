@@ -116,10 +116,28 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             help=("Support URL."),
         )
 
+        pricing_url = Unicode(
+            "https://datalayer.io/pricing",
+            config=True,
+            help=("Pricing URL."),
+        )
+
+        terms_url = Unicode(
+            "https://datalayer.io/terms",
+            config=True,
+            help=("Terms URL."),
+        )
+
+        privacy_url = Unicode(
+            "https://datalayer.io/privacy",
+            config=True,
+            help=("Privacy URL."),
+        )
+
     brand = Instance(Brand)
 
     @default("brand")
-    def _default_launcher(self):
+    def _default_brand(self):
         return DatalayerExtensionApp.Brand(parent=self, config=self.config)
 
 
@@ -147,6 +165,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 "about": self.brand.about,
                 "docs_url": self.brand.docs_url,
                 "support_url": self.brand.support_url,
+                "pricing_url": self.brand.pricing_url,
+                "terms_url": self.brand.terms_url,
+                "privacy_url": self.brand.privacy_url,
             },
             white_label=self.white_label,
         )
