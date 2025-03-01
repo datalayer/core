@@ -105,7 +105,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         docs_url = Unicode(
-            "https://datalayer.io/docs",
+            "https://docs.datalayer.io",
             config=True,
             help=("Documentation URL."),
         )
