@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 """
 display environment information that is frequently
 used to troubleshoot installations of Datalayer or IPython
