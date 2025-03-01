@@ -33,21 +33,26 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     load_other_extensions = True
 
     static_paths = [DEFAULT_STATIC_FILES_PATH]
+ 
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
     # 'run_url' can be set set and None or ' ' (empty string).
-    # In that case, the consumer of those settings are free
-    # to consider run_url as null.
+    # In that case, the consumer of those settings are free to consider run_url as null.
     run_url = Unicode(
         "https://prod1.datalayer.run",
         config=True,
         allow_none=True,
         help="""URL to connect to the Datalayer RUN APIs.""",
     )
+
     white_label = Bool(False, config=True, help="""Display white label content.""")
+
     benchmarks = Bool(False, config=True, help="""Show the benchmarks page.""")
+
     kernels = Bool(False, config=True, help="""Show the kernels page.""")
+
     webapp = Bool(False, config=True, help="""Show the webapp page.""")
+
 
     class Launcher(Configurable):
         """Datalayer launcher configuration"""
@@ -83,6 +88,41 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     def _default_launcher(self):
         return DatalayerExtensionApp.Launcher(parent=self, config=self.config)
 
+
+    class Brand(Configurable):
+        """Datalayer launcher configuration"""
+
+        name = Unicode(
+            "Datalayer",
+            config=True,
+            help=("Brand name."),
+        )
+
+        about = Unicode(
+            "Accelerated and Trusted Jupyter",
+            config=True,
+            help=("About brand."),
+        )
+
+        docs_url = Unicode(
+            "https://datalayer.io/docs",
+            config=True,
+            help=("Documentation URL."),
+        )
+
+        support_url = Unicode(
+            "https://datalayer.io/support",
+            config=True,
+            help=("Support URL."),
+        )
+
+    brand = Instance(Brand)
+
+    @default("brand")
+    def _default_launcher(self):
+        return DatalayerExtensionApp.Brand(parent=self, config=self.config)
+
+
     def initialize_settings(self):
         self.serverapp.answer_yes = True
         if self.benchmarks:
@@ -102,15 +142,23 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 "icon": self.launcher.icon_svg_url,
                 "rank": self.launcher.rank,
             },
+            brand={
+                "name": self.brand.name,
+                "about": self.brand.about,
+                "docs_url": self.brand.docs_url,
+                "support_url": self.brand.support_url,
+            },
             white_label=self.white_label,
         )
         self.settings.update(**settings)
+
 
     def initialize_templates(self):
         self.serverapp.jinja_template_vars.update({
             "datalayer_version": __version__,
             "run_url": self.run_url,
         })
+
 
     def initialize_handlers(self):
         handlers = [
@@ -127,5 +175,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 # -----------------------------------------------------------------------------
 # Main entry point
 # -----------------------------------------------------------------------------
+
 
 main = launch_new_instance = DatalayerExtensionApp.launch_instance
