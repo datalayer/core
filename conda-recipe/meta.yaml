@@ -1,3 +1,6 @@
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 package:
   name: datalayer-core
   version: "{{ DATALAYER_CORE_VERSION }}"
@@ -15,11 +18,11 @@ build:
 requirements:
   build:
     - python
-    - hatch-jupyter-builder>=0.5
-    - hatch-nodejs-version
     - hatchling
   run:
     - python
+    - traitlets
+    - jupyter_server
 
 test:
   imports:

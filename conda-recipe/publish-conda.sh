@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-export DATALAYER_CORE_VERSION=1.0.23
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
+export DATALAYER_CORE_VERSION=1.0.24
 
 CONDA_CHANNEL_NAME=datalayer
+
 ORGANIZATION=datalayer
 
 # Make sure the script stops on any error (errors are otherwise hard to spot)
@@ -16,5 +20,6 @@ echo $PKG_PATH generated
 
 # Upload the package to a conda channel.
 # anaconda upload $PKG_PATH -c $CONDA_CHANNEL_NAME
+
 # Upload the package to a conda organization.
 anaconda upload --user $ORGANIZATION $PKG_PATH
