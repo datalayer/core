@@ -1,3 +1,6 @@
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 # Copyright (c) Datalayer Development Team.
 # Distributed under the terms of the Modified BSD License.
 
@@ -23,7 +26,7 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
     @default("banner")
     def _default_banner(self):
         # FIXME
-        return "Datalayer - Jupyter Runtime console {version}\n\n{kernel_banner}"
+        return "Datalayer - Runtime console {version}\n\n{kernel_banner}"
 
     async def handle_external_iopub(self, loop=None):
         while self.keep_running:

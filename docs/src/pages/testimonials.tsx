@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2024 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import React from 'react';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';

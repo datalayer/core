@@ -1,6 +1,8 @@
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 # PYTHON_ARGCOMPLETE_OK
 
-import os
 import tomllib
 from pathlib import Path
 
@@ -8,7 +10,10 @@ from .application import DatalayerApp
 
 
 class DatalayerConfig(DatalayerApp):
-    """A Datalayer Config App."""
+    """A Datalayer Config App.
+    
+    Run `datalayer --generate-config` to create the default config.
+    """
 
     name = "datalayer-config"
 

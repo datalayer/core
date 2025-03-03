@@ -1,3 +1,6 @@
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 # Copyright (c) Datalayer, Inc. https://datalayer.io
 # Distributed under the terms of the MIT License.
 
@@ -61,3 +64,10 @@ publish-pypi: # publish the pypi package
 	@exec echo twine upload ./dist/*-py3-none-any.whl
 	@exec echo
 	@exec echo https://pypi.org/project/datalayer-core/#history
+
+publish-conda: # publish the conda package
+	@exec echo
+	cd ./conda-recipe; ./publish-conda.sh
+	@exec echo
+	@exec echo https://anaconda.org/datalayer/datalayer-core
+	@exec echo conda install datalayer::datalayer-core

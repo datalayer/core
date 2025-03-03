@@ -1,3 +1,6 @@
+# Copyright (c) 2023-2024 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 # Copyright (c) Datalayer Development Team.
 # Distributed under the terms of the Modified BSD License.
 
@@ -13,7 +16,7 @@ def _timestamp_to_local_date(timestamp: str) -> str:
     )
 
 
-def _new_kernel_table(title="Jupyter Runtime"):
+def _new_kernel_table(title="Runtimes"):
     table = Table(title=title)
     table.add_column("Runtime ID", style="magenta", no_wrap=True)
     table.add_column("Runtime Name", style="cyan", no_wrap=True)
@@ -34,7 +37,7 @@ def _add_kernel_to_table(table, kernel):
 
 def display_kernels(kernels: list) -> None:
     """Display a list of kernels in the console."""
-    table = _new_kernel_table(title="Jupyter Runtimes")
+    table = _new_kernel_table(title="Runtimes")
     for kernel in kernels:
         _add_kernel_to_table(table, kernel)
     console = Console()
