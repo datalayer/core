@@ -1,4 +1,4 @@
-# Copyright (c) 2023-2024 Datalayer, Inc.
+# Copyright (c) 2023-2025 Datalayer, Inc.
 #
 # Datalayer License
 
