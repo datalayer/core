@@ -15,7 +15,6 @@ from jupyter_server.extension.handler import (
 from datalayer_core.__version__ import __version__
 
 
-
 class ConfigHandler(ExtensionHandlerMixin, APIHandler):
     """The handler for configuration."""
 
@@ -23,29 +22,31 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
     def get(self):
         """Returns the configuration of the server extension."""
         settings = self.settings["datalayer"]
+        configuration = dict(
+            run_url=settings.run_url,
+            launcher={
+                "category": settings.launcher.category,
+                "name": settings.launcher.name,
+                "icon": settings.launcher.icon_svg_url,
+                "rank": settings.launcher.rank,
+            },
+            brand={
+                "name": settings.brand.name,
+                "about": settings.brand.about,
+                "docs_url": settings.brand.docs_url,
+                "support_url": settings.brand.support_url,
+                "pricing_url": settings.brand.pricing_url,
+                "terms_url": settings.brand.terms_url,
+                "privacy_url": settings.brand.privacy_url,
+            },
+            white_label=settings.white_label,
+        )
         res = json.dumps(
             {
                 "extension": "datalayer",
                 "version": __version__,
-                "settings": dict(
-                    run_url=settings.run_url,
-                    launcher={
-                        "category": settings.launcher.category,
-                        "name": settings.launcher.name,
-                        "icon": settings.launcher.icon_svg_url,
-                        "rank": settings.launcher.rank,
-                    },
-                    brand={
-                        "name": settings.brand.name,
-                        "about": settings.brand.about,
-                        "docs_url": settings.brand.docs_url,
-                        "support_url": settings.brand.support_url,
-                        "pricing_url": settings.brand.pricing_url,
-                        "terms_url": settings.brand.terms_url,
-                        "privacy_url": settings.brand.privacy_url,
-                    },
-                    white_label=settings.white_label,
-                ),
+                "settings": configuration, # TODO this is for backwards compatibility, remove at some point...
+                "configuration": configuration, # TODO this is for backwards compatibility, remove at some point...
             }
         )
         self.finish(res)
