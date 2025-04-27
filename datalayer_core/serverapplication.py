@@ -109,7 +109,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         logo_square_url = Unicode(
-            "https://raw.githubusercontent.com/datalayer/icons/refs/heads/main/svg/data1/datalayer-green.svg",
+            "https://assets.datalayer.tech/datalayer-square.png",
             config=True,
             help=("Logo square URL."),
         )
