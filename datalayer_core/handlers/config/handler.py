@@ -32,7 +32,10 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
             },
             brand={
                 "name": settings.brand.name,
+                "logo_url": settings.brand.logo_url,
+                "logo_square_url": settings.brand.logo_square_url,
                 "about": settings.brand.about,
+                "copyright": settings.brand.copyright,
                 "docs_url": settings.brand.docs_url,
                 "support_url": settings.brand.support_url,
                 "pricing_url": settings.brand.pricing_url,

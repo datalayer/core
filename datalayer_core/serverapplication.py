@@ -102,10 +102,28 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             help=("Brand name."),
         )
 
+        logo_url = Unicode(
+            "https://assets.datalayer.tech/datalayer-25.svg",
+            config=True,
+            help=("Logo URL."),
+        )
+
+        logo_square_url = Unicode(
+            "https://raw.githubusercontent.com/datalayer/icons/refs/heads/main/svg/data1/datalayer-green.svg",
+            config=True,
+            help=("Logo square URL."),
+        )
+
         about = Unicode(
             "Accelerated and Trusted Jupyter",
             config=True,
             help=("About brand."),
+        )
+
+        copyright = Unicode(
+            "© 2025 Datalayer, Inc.",
+            config=True,
+            help=("Copyright."),
         )
 
         docs_url = Unicode(
