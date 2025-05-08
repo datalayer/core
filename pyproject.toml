@@ -28,7 +28,7 @@ dependencies = [
     "jupyter-kernel-client",
     "jupyter-console",
     "jupyter_server>=2,<3",
-    "keyring",
+    "keyring==23.0.1", # TODO Fix https://github.com/datalayer/core/issues/36
     "questionary",
     "requests",
     "rich",
