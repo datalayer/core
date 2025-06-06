@@ -35,6 +35,7 @@ class DatalayerCLI(DatalayerCLIBaseApp):
         "benchmarks": (BenchmarksApp, BenchmarksApp.description.splitlines()[0]),
         "console": (RuntimesConsoleApp, RuntimesConsoleApp.description.splitlines()[0]),
         "envs": (EnvironmentsApp, EnvironmentsApp.description.splitlines()[0]),
+        "run": (JupyterRuntimesApp, JupyterRuntimesApp.description.splitlines()[0]),
         "runtimes": (JupyterRuntimesApp, JupyterRuntimesApp.description.splitlines()[0]),
         "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),
         "logout": (DatalayerLogoutApp, DatalayerLogoutApp.description.splitlines()[0]),
