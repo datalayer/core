@@ -3,9 +3,7 @@ sidebar_label: application
 title: application
 ---
 
-A base Application class for Datalayer applications.
-
-All Datalayer applications should inherit from this.
+A base Application class for Datalayer applications.\n\nAll Datalayer applications should inherit from this.
 
 ## NoStart Objects
 
@@ -13,7 +11,7 @@ All Datalayer applications should inherit from this.
 class NoStart(Exception)
 ```
 
-Exception to raise when an application shouldn&#x27;t start
+Exception to raise when an application shouldn't start
 
 ## DatalayerApp Objects
 
@@ -49,11 +47,7 @@ Migrate config/data from IPython 3
 def load_config_file(suppress_errors=True)
 ```
 
-Load the config file.
-
-By default, errors in loading config are handled, and a warning
-printed on screen. For testing, the suppress_errors option is set
-to False, so errors will make tests fail.
+Load the config file.\n\nBy default, errors in loading config are handled, and a warning\nprinted on screen. For testing, the suppress_errors option is set\nto False, so errors will make tests fail.
 
 #### initialize
 

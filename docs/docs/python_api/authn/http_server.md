@@ -9,9 +9,7 @@ title: authn.http_server
 class LoginRequestHandler(SimpleHTTPRequestHandler)
 ```
 
-Custom simple http request handler to serve static files
-from a directory and handle receiving the authentication token
-for CLI usage.
+Custom simple http request handler to serve static files\nfrom a directory and handle receiving the authentication token\nfor CLI usage.
 
 #### get\_token
 

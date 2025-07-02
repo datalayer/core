@@ -27,17 +27,5 @@ def start_kernel(name: str = "",
                  timeout: float = REQUEST_TIMEOUT)
 ```
 
-Starts a kernel on Datalayer cloud.
-
-Parameters
-----------
-    name : str
-        Runtime name
-    path : str
-        [optional] API path from root to the cwd of the kernel
-    timeout : float
-        Request timeout
-Returns
--------
-    The kernel model
+Starts a kernel on Datalayer cloud.\n\nParameters\n----------\n    name : str\n        Runtime name\n    path : str\n        [optional] API path from root to the cwd of the kernel\n    timeout : float\n        Request timeout\nReturns\n-------\n    The kernel model
 

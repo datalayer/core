@@ -3,9 +3,7 @@ sidebar_label: command
 title: command
 ---
 
-The root `datalayer` command.
-
-This does nothing other than dispatch to subcommands or output path info.
+The root `datalayer` command.\n\nThis does nothing other than dispatch to subcommands or output path info.
 
 ## DatalayerParser Objects
 
@@ -22,9 +20,7 @@ A Datalayer argument parser.
 def epilog()
 ```
 
-Add subcommands to epilog on request
-
-Avoids searching PATH for subcommands unless help output is requested.
+Add subcommands to epilog on request\n\nAvoids searching PATH for subcommands unless help output is requested.
 
 #### epilog
 
@@ -57,12 +53,7 @@ Create a datalayer parser object.
 def list_subcommands() -> List[str]
 ```
 
-List all datalayer subcommands
-
-searches PATH for `datalayer-name`
-
-Returns a list of datalayer&#x27;s subcommand names, without the `datalayer-` prefix.
-Nested children (e.g. datalayer-sub-subsub) are not included.
+"List all datalayer subcommands\n\nsearches PATH for `datalayer-name`\n\nReturns a list of datalayer's subcommand names, without the `datalayer-` prefix.\nNested children (e.g. datalayer-sub-subsub are not included.&quot;)
 
 #### main
 

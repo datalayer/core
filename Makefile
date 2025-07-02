@@ -72,12 +72,13 @@ publish-conda: # publish the conda package
 	@exec echo https://anaconda.org/datalayer/datalayer-core
 	@exec echo conda install datalayer::datalayer-core
 
-docs-dev:
+docs-serve: ## serve the docs
 	cd docs && npm run start
 
 pydoc:
 	rm -fr docs/docs/python_api
 	pydoc-markdown
+	python datalayer_core/pydoc/unwrap_docstrings.py docs/docs/python_api
 	echo -e "label: Python API\nposition: 4" > docs/docs/python_api/_category_.yml
 
 typedoc:

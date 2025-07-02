@@ -4,8 +4,10 @@ loaders:
 processors:
   - type: filter
     skip_empty_modules: false
+    undocumented_only: false
   - type: smart
   - type: crossref
+  - type: datalayer_core.pydoc.ReplaceProcessor
 renderer:
   type: docusaurus
   docs_base_path: docs/docs

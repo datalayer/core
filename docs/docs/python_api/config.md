@@ -9,9 +9,7 @@ title: config
 class DatalayerConfig(DatalayerApp)
 ```
 
-A Datalayer Config App.
-
-Run `datalayer --generate-config` to create the default config.
+A Datalayer Config App.\n\nRun `datalayer --generate-config` to create the default config.
 
 #### start
 

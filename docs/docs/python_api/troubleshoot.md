@@ -3,8 +3,7 @@ sidebar_label: troubleshoot
 title: troubleshoot
 ---
 
-display environment information that is frequently
-used to troubleshoot installations of Datalayer or IPython
+display environment information that is frequently\nused to troubleshoot installations of Datalayer or IPython
 
 #### subs
 
