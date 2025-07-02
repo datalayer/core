@@ -115,7 +115,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         about = Unicode(
-            "Accelerated and Trusted Jupyter",
+            "AI Platform for Data Analysis",
             config=True,
             help=("About brand."),
         )
