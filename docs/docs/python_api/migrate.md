@@ -54,7 +54,7 @@ def migrate_file(src, dst, substitutions=None)
 
 Migrate a single file from src to dst
 
-substitutions is an optional dict of {regex: replacement} for performing replacements on the file.
+substitutions is an optional dict of \{regex: replacement\} for performing replacements on the file.
 
 #### migrate\_one
 

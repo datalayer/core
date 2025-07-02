@@ -28,9 +28,9 @@ module.exports = {
       items: [
         {
           type: 'doc',
-          docId: 'index',
+          docId: 'python_api/application',
           position: 'left',
-          label: 'Datalayer Core',
+          label: 'Python API',
         },
         {
           href: 'https://www.linkedin.com/company/datalayer',
@@ -66,7 +66,7 @@ module.exports = {
           items: [
             {
               label: 'Datalayer Core',
-              to: '/docs',
+              to: '/',
             },
           ],
         },
@@ -113,10 +113,11 @@ module.exports = {
       '@docusaurus/preset-classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           editUrl:
-            'https://github.com/datalayer/clouder/edit/main/',
+            'https://github.com/datalayer/core/edit/main/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

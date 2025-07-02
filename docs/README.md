@@ -4,7 +4,7 @@
 
 # Datalayer Core Docs
 
-> Source code for the [Datalayer Core Documentation](https://clouder.sh), built with [Docusaurus](https://docusaurus.io).
+> Source code for the [Datalayer Core Documentation](https://core.datalayer.tech), built with [Docusaurus](https://docusaurus.io).
 
 ```bash
 # Install the dependencies.
