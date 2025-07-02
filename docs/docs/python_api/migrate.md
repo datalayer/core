@@ -20,7 +20,7 @@ Migrations:
 
     - notebook_secret, notebook_cookie_secret, nbsignatures.db -&gt; DATALAYER_DATA_DIR
 
-  - ipython_{notebook,nbconvert,qtconsole}_config.py -&gt; .datalayer/datalayer_{name}_config.py
+  - ipython_notebook,nbconvert,qtconsole_config.py -&gt; .datalayer/datalayer_name_config.py
 
 #### get\_ipython\_dir
 
@@ -54,7 +54,7 @@ def migrate_file(src, dst, substitutions=None)
 
 Migrate a single file from src to dst
 
-substitutions is an optional dict of \{regex: replacement\} for performing replacements on the file.
+substitutions is an optional dict of regex: replacement for performing replacements on the file.
 
 #### migrate\_one
 
@@ -74,7 +74,7 @@ def migrate_static_custom(src, dst)
 
 Migrate non-empty custom.js,css from src to dst
 
-src, dst are &#x27;custom&#x27; directories containing custom.{js,css}
+src, dst are &#x27;custom&#x27; directories containing custom.js,css
 
 #### migrate\_config
 
