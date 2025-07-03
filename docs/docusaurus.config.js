@@ -38,6 +38,18 @@ module.exports = {
       items: [
         {
           type: 'doc',
+          docId: 'python/index',
+          position: 'left',
+          label: 'Python SDK',
+        },
+        {
+          type: 'doc',
+          docId: 'typescript/index',
+          position: 'left',
+          label: 'TypeScript SDK',
+        },
+        {
+          type: 'doc',
           docId: 'python_api/application',
           position: 'left',
           label: 'Python API',

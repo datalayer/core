@@ -1,18 +1,13 @@
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /* stylelint-disable docusaurus/copyright-header */
 
-.product {
+.implementations {
   display: flex;
   align-items: center;
   padding: 2rem 0;
   width: 100%;
 }
 
-.productSvg {
+.featureSvg {
   height: 200px;
   width: 200px;
 }

@@ -3,12 +3,46 @@
   "private": false,
   "version": "0.0.1",
   "type": "module",
+  "author": {
+    "name": "Datalayer",
+    "email": "info@datalayer.io"
+  },
+  "keywords": [
+    "datalayer",
+    "ai",
+    "data",
+    "jupyter",
+    "react",
+    "run",
+    "storybook"
+  ],
+  "files": [
+    "lib/**/*.{css,d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
+    "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}",
+    "schema/*.json"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "style": "style/index.css",
+  "homepage": "https://github.com/datalayer/core",
+  "bugs": {
+    "url": "https://github.com/datalayer/core/issues"
+  },
+  "sideEffects": [
+    "style/*.css",
+    "style/index.js"
+  ],
+  "styleModule": "style/index.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "vite",
+    "clean": "rimraf lib tsconfig.tsbuildinfo",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api"
@@ -38,6 +72,7 @@
     "eslint-plugin-storybook": "^9.0.15",
     "globals": "^16.2.0",
     "playwright": "^1.53.2",
+    "rimraf": "^6.0.1",
     "storybook": "^9.0.15",
     "typedoc-plugin-markdown": "^4.0.0",
     "typescript": "^5.8.3",
