@@ -17,9 +17,7 @@ VERSION=1.1.1
 
 .DEFAULT_GOAL := default
 
-.SILENT: init
-
-.PHONY: port-forward storybook
+.PHONY: docs
 
 help: ## display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
@@ -72,7 +70,9 @@ publish-conda: # publish the conda package
 	@exec echo https://anaconda.org/datalayer/datalayer-core
 	@exec echo conda install datalayer::datalayer-core
 
-docs-serve: ## serve the docs
+docs: ## build and serve the docs
+	make pydoc
+	make typedoc
 	cd docs && npm run start
 
 pydoc:
@@ -83,3 +83,4 @@ pydoc:
 
 typedoc:
 	npm run typedoc
+	echo -e "label: TypeScript API\nposition: 5" > docs/docs/typescript_api/_category_.yml
