@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api; echo 'label: TypeScript API\nposition: 5' > docs/docs/typescript_api/_category_.yml"
   },
   "dependencies": {
     "react": "^19.1.0",
@@ -36,7 +37,8 @@
     "globals": "^16.2.0",
     "playwright": "^1.53.2",
     "storybook": "^9.0.15",
-    "typescript": "~5.8.3",
+    "typedoc-plugin-markdown": "^4.0.0",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0",
     "vitest": "^3.2.4"

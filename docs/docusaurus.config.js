@@ -43,6 +43,12 @@ module.exports = {
           label: 'Python API',
         },
         {
+          type: 'doc',
+          docId: 'typescript_api/globals',
+          position: 'left',
+          label: 'TypeScript API',
+        },
+        {
           href: 'https://discord.gg/YQFwvmSSuR',
           position: 'right',
           className: 'header-discord-link',
