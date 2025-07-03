@@ -1,6 +1,10 @@
+# Copyright (c) 2023-2025 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 import re
 import os
 import html
+
 
 def unwrap_docstring_content(text):
     # Match Docstring(content=...) without quotes, just HTML entities like &#x27;
@@ -18,6 +22,7 @@ def unwrap_docstring_content(text):
 
     return pattern.sub(replacer, text)
 
+
 def process_file(filepath):
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
@@ -29,11 +34,13 @@ def process_file(filepath):
             f.write(new_content)
         print(f"Processed {filepath}")
 
+
 def process_directory(root_dir):
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
             if filename.endswith(".md"):
                 process_file(os.path.join(dirpath, filename))
+
 
 if __name__ == "__main__":
     import sys

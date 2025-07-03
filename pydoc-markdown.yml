@@ -1,6 +1,6 @@
 loaders:
   - type: python
-    search_path: [datalayer_core]
+    search_path: [ datalayer_core ]
 processors:
   - type: filter
     skip_empty_modules: false
