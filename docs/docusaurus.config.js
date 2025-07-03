@@ -6,14 +6,14 @@
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
   title: 'Ξ Datalayer core',
-  tagline: 'Foundation package used by many other Datalayer packages',
+  tagline: 'Core package used by many other Datalayer packages',
   url: 'https://core.datalayer.tech',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'datalayer', // Usually your GitHub org/user name.
-  projectName: 'datalayer', // Usually your repo name.
+  organizationName: 'datalayer',
+  projectName: 'datalayer',
   markdown: {
     mermaid: true,
   },
@@ -67,7 +67,7 @@ module.exports = {
           'aria-label': 'Bluesky',
         },
         {
-          href: 'https:/x.com/DatalayerIO',
+          href: 'https://x.com/DatalayerIO',
           position: 'right',
           className: 'header-x-link',
           'aria-label': 'X',
@@ -91,7 +91,7 @@ module.exports = {
           'aria-label': 'YouTube',
         },
         {
-          href: 'https://datalayer.io',
+          href: 'https://datalayer.ai',
           position: 'right',
           className: 'header-datalayer-io-link',
           'aria-label': 'Datalayer',
