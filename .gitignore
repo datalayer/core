@@ -1,3 +1,9 @@
+datalayer_core/labextension
+
+docs/docs/python_api
+docs/docs/typescript_api
+
+#
 yarn.lock
 *.bundle.*
 lib/
@@ -8,9 +14,6 @@ node_modules/
 .ipynb_checkpoints
 *.tsbuildinfo
 *-lock.json
-
-
-datalayer_core/labextension
 
 # Logs
 logs
@@ -39,7 +42,6 @@ dist-ssr
 
 *storybook.log
 storybook-static
-
 
 # Version file is handled by hatchling
 datalayer_core/_version.py
