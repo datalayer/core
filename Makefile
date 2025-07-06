@@ -59,7 +59,5 @@ typedoc:
 	npm run typedoc
 	echo -e "label: TypeScript API\nposition: 5" > docs/docs/typescript_api/_category_.yml
 
-docs: ## build and serve the docs
-	make pydoc
-	make typedoc
+docs: pydoc typedoc ## build the api docs and serve the docs
 	cd docs && npm run start

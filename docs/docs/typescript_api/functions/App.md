@@ -8,7 +8,7 @@
 
 > **App**(): `Element`
 
-Defined in: [App.tsx:6](https://github.com/datalayer/core/blob/3264b9b6b0352bc697428dd4962f3468522efd65/src/App.tsx#L6)
+Defined in: [App.tsx:6](https://github.com/datalayer/core/blob/9ee3ff986a1d03c6ccac416bca5e4f4dbdeb71a8/src/App.tsx#L6)
 
 ## Returns
 
