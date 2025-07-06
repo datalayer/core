@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import React from 'react';
 import clsx from 'clsx';
 import styles from './HomepageRow2.module.css';

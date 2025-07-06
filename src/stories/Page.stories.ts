@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { expect, userEvent, within } from 'storybook/test';
