@@ -5,40 +5,38 @@
 
 import React from 'react';
 import clsx from 'clsx';
-import styles from './HomepageFeatures.module.css';
+import styles from './HomepageRow3.module.css';
 
-const FeatureList = [
-/*
+const items = [
   {
-    title: 'Easy to Use',
-    Svg: require('../../static/img/feature_1.svg').default,
+    title: 'Flexible Deployment',
+    Svg: require('../../static/img/rocket.svg').default,
     description: (
       <>
-        Datalayer was designed from the ground up to be easily installed and
-        used to get your data analysis up and running quickly.
+        Deploy on-premises, in your own cloud, or fully whitelabelled — Datalayer adapts to your infrastructure and branding needs.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('../../static/img/feature_2.svg').default,
+    title: 'Open source',
+    Svg: require('../../static/img/open-source.svg').default,
     description: (
       <>
-        Datalayer lets you focus on your work, and we&apos;ll do the chores.
+        Extend or customize your platform to your needs. Sponsoring and support options are available if you need them.
       </>
     ),
   },
   {
-    title: 'Powered by Open Source',
-    Svg: require('../../static/img/feature_3.svg').default,
+    title: 'Supported',
+    Svg: require('../../static/img/thumbs-up.svg').default,
     description: (
       <>
-        Extend or customize your platform to your needs.
+        Stay cool, we offer a range of <a href="/professional-services">professional services</a>.
       </>
     ),
   },
-*/
 ];
+
 
 function Feature({Svg, title, description}) {
   return (
@@ -54,12 +52,12 @@ function Feature({Svg, title, description}) {
   );
 }
 
-export default function HomepageFeatures() {
+export default function HomepageRow3() {
   return (
-    <section className={styles.features}>
+    <section className={styles.implementations}>
       <div className="container">
         <div className="row">
-          {FeatureList.map((props, idx) => (
+          {items.map((props, idx) => (
             <Feature key={idx} {...props} />
           ))}
         </div>

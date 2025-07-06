@@ -6,47 +6,20 @@
 
 SHELL=/bin/bash
 
-CONDA=source $$(conda info --base)/etc/profile.d/conda.sh
-CONDA_ACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate
-CONDA_DEACTIVATE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda deactivate
-CONDA_REMOVE=source $$(conda info --base)/etc/profile.d/conda.sh ; conda remove -y --all -n
-
-ENV_NAME=datalayer
-
-VERSION=1.1.1
-
 .DEFAULT_GOAL := default
 
-.SILENT: init
-
-.PHONY: port-forward storybook
+.PHONY: docs
 
 help: ## display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 default: help ## default target is help
 
-clean: ui-clean services-clean ## clean
+clean: ## clean
+	npm run clean
 
-install: ui-install services-install ## install
-
-build: ui-build services-build ## build
-
-env-dev: ## env-dev
-	($(CONDA_ACTIVATE) ${ENV_NAME}; \
-		./../bin/dla env-dev all )
-
-env-rm: warning ## env-rm
-	($(CONDA); \
-		conda deactivate && \
-		conda remove -y --name ${ENV_NAME} --all || true )
-
-env-status: ## env-status
-	($(CONDA_ACTIVATE) ${ENV_NAME}; \
-		./../bin/dla env-status )
-
-init: ## init
-	eval $(DOCKER_ENV)
+build: ## build
+	npm run build
 
 start:
 	./dev/sh/start-jupyter-server.sh
@@ -56,6 +29,10 @@ kill:
 
 warning:
 	echo "\x1b[34m\x1b[43mEnsure you have run \x1b[1;37m\x1b[41m conda deactivate \x1b[22m\x1b[34m\x1b[43m before invoking this.\x1b[0m"
+
+publish-npm: clean build ## publish-npm
+	npm publish
+	echo open https://www.npmjs.com/package/@datalayer/core
 
 publish-pypi: # publish the pypi package
 	git clean -fdx && \
@@ -71,3 +48,16 @@ publish-conda: # publish the conda package
 	@exec echo
 	@exec echo https://anaconda.org/datalayer/datalayer-core
 	@exec echo conda install datalayer::datalayer-core
+
+pydoc:
+	rm -fr docs/docs/python_api
+	pydoc-markdown
+	python datalayer_core/pydoc/unwrap_docstrings.py docs/docs/python_api
+	echo -e "label: Python API\nposition: 4" > docs/docs/python_api/_category_.yml
+
+typedoc:
+	npm run typedoc
+	echo -e "label: TypeScript API\nposition: 5" > docs/docs/typescript_api/_category_.yml
+
+docs: pydoc typedoc ## build the api docs and serve the docs
+	cd docs && npm run start

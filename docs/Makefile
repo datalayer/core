@@ -50,7 +50,7 @@ build: ## build
 	($(CONDA_ACTIVATE) ${ENV_NAME}; \
 	  npm run build )
 
-publish: build ## publish
+deploy: build ## deploy
 	($(CONDA_ACTIVATE) ${ENV_NAME}; \
 	  aws s3 rm \
 		s3://datalayer-core/ \

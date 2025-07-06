@@ -52,6 +52,9 @@ test = [
     "pytest_jupyter",
     "pytest-tornasync",
 ]
+docs = [
+    "pydoc-markdown"
+]
 
 [project.scripts]
 d = "datalayer_core.cli.datalayer:main"

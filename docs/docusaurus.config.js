@@ -6,14 +6,24 @@
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
   title: 'Ξ Datalayer core',
-  tagline: 'Foundation package used by many other Datalayer packages',
+  tagline: 'Core package used by many other Datalayer packages',
   url: 'https://core.datalayer.tech',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'datalayer', // Usually your GitHub org/user name.
-  projectName: 'datalayer', // Usually your repo name.
+  organizationName: 'datalayer',
+  projectName: 'datalayer',
+  markdown: {
+    mermaid: true,
+  },
+  plugins: [
+    '@docusaurus/theme-live-codeblock',
+    'docusaurus-lunr-search',
+  ],
+  themes: [
+    '@docusaurus/theme-mermaid',
+  ],
   themeConfig: {
     colorMode: {
       defaultMode: 'light',
@@ -28,21 +38,33 @@ module.exports = {
       items: [
         {
           type: 'doc',
-          docId: 'index',
+          docId: 'python/index',
           position: 'left',
-          label: 'Datalayer Core',
+          label: 'Python SDK',
         },
         {
-          href: 'https://www.linkedin.com/company/datalayer',
-          position: 'right',
-          className: 'header-linkedin-link',
-          'aria-label': 'LinkedIn',
+          type: 'doc',
+          docId: 'typescript/index',
+          position: 'left',
+          label: 'TypeScript SDK',
         },
         {
-          href: 'https://bsky.app/profile/datalayer.io',
+          type: 'doc',
+          docId: 'python_api/application',
+          position: 'left',
+          label: 'Python API',
+        },
+        {
+          type: 'doc',
+          docId: 'typescript_api/globals',
+          position: 'left',
+          label: 'TypeScript API',
+        },
+        {
+          href: 'https://discord.gg/YQFwvmSSuR',
           position: 'right',
-          className: 'header-bluesky-link',
-          'aria-label': 'Bluesky',
+          className: 'header-discord-link',
+          'aria-label': 'Discord',
         },
         {
           href: 'https://github.com/datalayer',
@@ -51,10 +73,40 @@ module.exports = {
           'aria-label': 'GitHub',
         },
         {
-          href: 'https://datalayer.io',
+          href: 'https://bsky.app/profile/datalayer.io',
+          position: 'right',
+          className: 'header-bluesky-link',
+          'aria-label': 'Bluesky',
+        },
+        {
+          href: 'https://x.com/DatalayerIO',
+          position: 'right',
+          className: 'header-x-link',
+          'aria-label': 'X',
+        },
+        {
+          href: 'https://www.linkedin.com/company/datalayer',
+          position: 'right',
+          className: 'header-linkedin-link',
+          'aria-label': 'LinkedIn',
+        },
+        {
+          href: 'https://tiktok.com/@datalayerio',
+          position: 'right',
+          className: 'header-tiktok-link',
+          'aria-label': 'TikTok',
+        },
+        {
+          href: 'https://www.youtube.com/@datalayer',
+          position: 'right',
+          className: 'header-youtube-link',
+          'aria-label': 'YouTube',
+        },
+        {
+          href: 'https://datalayer.ai',
           position: 'right',
           className: 'header-datalayer-io-link',
-          'aria-label': 'Datalayer IO',
+          'aria-label': 'Datalayer',
         },
       ],
     },
@@ -66,7 +118,7 @@ module.exports = {
           items: [
             {
               label: 'Datalayer Core',
-              to: '/docs',
+              to: '/',
             },
           ],
         },
@@ -91,12 +143,16 @@ module.exports = {
           title: 'More',
           items: [
             {
-              label: 'Datalayer IO',
-              href: 'https://datalayer.io',
+              label: 'Datalayer AI',
+              href: 'https://datalayer.ai',
             },
             {
-              label: 'Datalayer Tech',
-              href: 'https://datalayer.tech',
+              label: 'Datalayer App',
+              href: 'https://datalayer.app',
+            },
+            {
+              label: 'Datalayer Docs',
+              href: 'https://docs.datalayer.app',
             },
             {
               label: 'Datalayer Blog',
@@ -113,10 +169,10 @@ module.exports = {
       '@docusaurus/preset-classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/datalayer/clouder/edit/main/',
+          docItemComponent: '@theme/CustomDocItem',  
+          editUrl: 'https://github.com/datalayer/core/edit/main/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),

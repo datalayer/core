@@ -5,65 +5,22 @@
 
 ---
 sidebar_position: 1
+title: Datalayer Core
+slug: /
 ---
+
+import HomepageRow1 from '@site/src/components/HomepageRow1';
+import HomepageRow2 from '@site/src/components/HomepageRow2';
+import HomepageRow3 from '@site/src/components/HomepageRow3';
+import DocCardList from '@theme/DocCardList';
+import { useDocsSidebar } from '@docusaurus/plugin-content-docs/client';
 
 # Datalayer Core
 
-## JupyterLab Extensions
+Datalayer Core is a solution to scale AI without losing the user's local productivity.
 
-Use these snippets to activate the Datalayer plugins.
+<DocCardList items={useDocsSidebar().items.filter(i => (i.label !== 'Datalayer Core'))} />
 
-```ts
-import { JupyterFrontEnd, JupyterFrontEndPlugin } from '@jupyterlab/application';
-import { doActivateDatalayerExtension } from ".";
-
-const plugin: JupyterFrontEndPlugin<void> = {
-  id: '@datalayer/jupyter-kernels:activator',
-  description: 'Jupyter Kernels Activator.',
-  autoStart: true,
-  requires: [],
-  activate: (app: JupyterFrontEnd) => {},
-    activateDatalayerExtension(app);
-}
-
-export default plugin; 
-```
-
-```ts
-import { CommandRegistry } from "@lumino/commands";
-import { JupyterFrontEnd } from "@jupyterlab/application";
-A
-const ACTIVATE_DATALAYER_EXTENSION_COMMAND = "@datalayer/jupyter-kernels:datalayer:activate";
-
-export function activateDatalayerExtension(app: JupyterFrontEnd) {
-  try {
-    function doActivateDatalayerExtension(
-      commands: CommandRegistry,
-      changes: CommandRegistry.ICommandChangedArgs,
-    ) {
-      if (
-        changes.type === "added" &&
-        changes.id === ACTIVATE_DATALAYER_EXTENSION_COMMAND
-      ) {
-        commands
-          .execute(ACTIVATE_DATALAYER_EXTENSION_COMMAND)
-          .catch((reason: any) => {
-            console.warn("Error while activating the GPU extension", reason);
-          });
-      }
-
-      commands.commandChanged.disconnect(doActivateDatalayerExtension);
-    }
-    if (app.commands.hasCommand(ACTIVATE_DATALAYER_EXTENSION_COMMAND)) {
-      doActivateDatalayerExtension(app.commands, {
-        id: ACTIVATE_DATALAYER_EXTENSION_COMMAND,
-        type: "added",
-      });
-    } else {
-      app.commands.commandChanged.connect(doActivateDatalayerExtension);
-    }
-  } catch (e) {
-    console.warn("Error while activating the Datalayer extension", e);
-  }
-}
-```
+<HomepageRow1 />
+<HomepageRow2 />
+<HomepageRow3 />

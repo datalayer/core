@@ -1,0 +1,16 @@
+loaders:
+  - type: python
+    search_path: [ datalayer_core ]
+processors:
+  - type: filter
+    skip_empty_modules: false
+    undocumented_only: false
+  - type: smart
+  - type: crossref
+  - type: datalayer_core.pydoc.ReplaceProcessor
+renderer:
+  type: docusaurus
+  docs_base_path: docs/docs
+  relative_output_path: python_api
+  relative_sidebar_path: sidebar.json
+  sidebar_top_level_label: null
