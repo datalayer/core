@@ -33,7 +33,18 @@ def add_env_to_table(table, environment):
     )
 
 
-class EnvironmentsListApp(DatalayerCLIBaseApp):
+class EnvironmentsListMixin:
+
+    def _list_environments(self):
+        """List available environments."""
+        response = self._fetch(
+            "{}/api/jupyter/v1/environments".format(self.run_url),
+        )
+        content = response.json()
+        return content.get("environments", [])
+
+
+class EnvironmentsListApp(DatalayerCLIBaseApp, EnvironmentsListMixin):
     """A Kernel application."""
 
     description = """
@@ -48,12 +59,8 @@ class EnvironmentsListApp(DatalayerCLIBaseApp):
             self.print_help()
             self.exit(1)
 
-        response = self._fetch(
-            "{}/api/jupyter/v1/environments".format(self.run_url),
-        )
-        content = response.json()
+        environments = self._list_environments()
         table = new_env_table()
-        environments = content.get("environments", [])
         for environment in environments:
             add_env_to_table(table, environment)
         console = Console()

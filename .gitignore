@@ -178,3 +178,4 @@ dmypy.json
 !**/.env
 !.github
 !.devcontainer
+.env

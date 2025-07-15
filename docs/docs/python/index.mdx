@@ -9,7 +9,57 @@ title: Python SDK
 
 import DocCardList from '@theme/DocCardList';
 
-# Python SDK
+A simple, intuitive SDK for AI engineers to work with the Datalayer platform. This SDK provides a unified interface for authentication, runtime creation, and code execution in Datalayer environments.
 
-Python SDK.
+## Features
 
+- **Simple Authentication**: Easy token-based authentication with environment variable support
+- **Runtime Management**: Create and manage compute runtimes (CPU/GPU) for code execution
+- **Notebook Integration**: Collaborative notebook editing and cell execution
+- **Async Support**: Full async/await support for non-blocking operations
+- **Context Managers**: Clean resource management with Python context managers
+
+## Installation
+
+```bash
+pip install datalayer_core
+```
+
+## Quick Start
+
+### 1. Authentication
+
+Set your Datalayer token as an environment variable:
+
+```bash
+export DATALAYER_TOKEN="your-token-here"
+```
+
+Or pass it directly to the SDK:
+
+```python
+from datalayer import DatalayerSDK
+
+client = DatalayerClient(token="your-token-here")
+
+# Verify authentication
+if client.authenticate():
+    print("Successfully authenticated!")
+```
+
+### 2. Execute Code in a Runtime
+
+```python
+from datalayer_sdk import DatalayerClient
+
+client = DatalayerClient()
+
+# Create and use a runtime
+code = '''import os
+from platform import node
+print(f"Hey {os.environ.get('USER', 'John Smith')} from {node()}.")'''
+
+with client.create_runtime() as runtime:
+    result = runtime.execute(code)
+    print(result)
+```

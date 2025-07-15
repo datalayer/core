@@ -5,6 +5,8 @@ from typing import Any, Dict, List
 
 from datalayer_core.__version__ import __version__
 from datalayer_core.serverapplication import DatalayerExtensionApp
+from datalayer_core.sdk import DatalayerClient
+
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
     return [{

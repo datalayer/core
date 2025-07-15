@@ -25,8 +25,8 @@ def _new_kernel_table(title="Runtimes"):
 def _add_kernel_to_table(table, kernel):
     expired_at = kernel.get("expired_at")
     table.add_row(
-        kernel["jupyter_pod_name"],
-        kernel["kernel_given_name"],
+        kernel["pod_name"],
+        kernel["given_name"],
         kernel["environment_name"],
         "Never" if expired_at is None else _timestamp_to_local_date(expired_at),
     )
