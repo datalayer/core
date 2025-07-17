@@ -68,7 +68,7 @@ class RuntimeManager(KernelHttpManager):
         kernel = None
         if kernel_name:
             response = fetch(
-                "{}/api/runtimes/v1/kernels/{}".format(self.run_url, kernel_name),
+                "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, kernel_name),
                 token=self.run_token,
             )
             kernel = response.json().get("kernel")
@@ -77,7 +77,7 @@ class RuntimeManager(KernelHttpManager):
                 "No Runtime name provided. Picking the first available Runtime…"
             )
             response = fetch(
-                "{}/api/runtimes/v1/kernels".format(self.run_url),
+                "{}/api/runtimes/v1/runtimes".format(self.run_url),
                 token=self.run_token,
             )
             kernels = response.json().get("kernels", [])
@@ -114,7 +114,7 @@ class RuntimeManager(KernelHttpManager):
                     "environment_name": first_environment_name,
                 }
                 response = fetch(
-                    f"{self.run_url}/api/runtimes/v1/kernels",
+                    f"{self.run_url}/api/runtimes/v1/runtimes",
                     method="POST",
                     token=self.run_token,
                     json=body,
@@ -126,7 +126,7 @@ class RuntimeManager(KernelHttpManager):
                     print_json(data=response.json())
 
                 response = fetch(
-                    f"{self.run_url}/api/runtimes/v1/kernels",
+                    f"{self.run_url}/api/runtimes/v1/runtimes",
                     token=self.run_token,
                 )
                 kernels = response.json().get("kernels", [])

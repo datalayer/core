@@ -12,7 +12,7 @@ class RuntimesListMixin:
     def _list_runtimes(self):
         """List all available runtimes."""
         response = self._fetch(
-            "{}/api/runtimes/v1/kernels".format(self.run_url),
+            "{}/api/runtimes/v1/runtimes".format(self.run_url),
         )
         return response.json()
 
