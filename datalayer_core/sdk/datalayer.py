@@ -6,7 +6,7 @@ Datalayer AI SDK - A simple SDK for AI engineers to work with Datalayer.
 Provides authentication, runtime creation, and code execution capabilities.
 """
 import os
-from typing import Optional
+from typing import Any, Optional
 
 from datalayer_core.cli.base import DatalayerAuthMixin
 from datalayer_core.environments import EnvironmentsMixin
@@ -136,21 +136,21 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
         self.kernel_given_name = name
         self.timeout = timeout
         self.token = token
-        self._runtime = None
+        self._runtime: dict[str, str] = {}
         self._kernel_client = None
         self._kernel_id = None
-        self.credits_limit = None
+        self.credits_limit: float = 0.0
 
-    def __enter__(self):
+    def __enter__(self) -> "Runtime":
         """Context manager entry."""
         self.start()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit."""
         self.stop()
 
-    def start(self):
+    def start(self) -> None:
         """Start the runtime."""
         if self._runtime is None and self._kernel_client is None:
             self._runtime = self._create_runtime(self.environment_name)
@@ -162,7 +162,7 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
             self._kernel_client.start()
             self._pod_name = runtime.get('pod_name')
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the runtime."""
         if self._kernel_client:
             self._kernel_client.stop()
@@ -170,7 +170,7 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
             self._kernel_id = None
             self._terminate_runtime(self._pod_name)
 
-    def execute(self, code: str):
+    def execute(self, code: str) -> dict[str, str]:
         """
         Execute code in the runtime.
 
@@ -183,6 +183,8 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
         -------
             dict: The result of the code execution.
         """
+        result: dict[str, str] = {}
         if self._kernel_client is not None:
             reply = self._kernel_client.execute(code)
-            return reply.get("outputs", {})
+            result = reply.get("outputs", {})
+        return result

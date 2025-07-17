@@ -16,7 +16,7 @@ create_alias["credits-limit"] = "RuntimesCreateApp.credits_limit"
 
 class RuntimesCreateMixin:
     
-    def _create_runtime(self, environment_name: str):
+    def _create_runtime(self, environment_name: str) -> dict:
         """Create a Runtime with the given environment name."""
         body = {"type": "notebook"}
         if self.kernel_given_name:
