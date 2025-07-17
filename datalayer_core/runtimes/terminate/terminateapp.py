@@ -11,7 +11,7 @@ class RuntimesTerminateMixin:
     def _terminate_runtime(self, pod_name: str):
         """Terminate a Runtime with the given kernel ID."""
         response = self._fetch(
-            "{}/api/jupyter/v1/kernels/{}".format(self.run_url, pod_name),
+            "{}/api/runtimes/v1/kernels/{}".format(self.run_url, pod_name),
             method="DELETE",
         )
         return response.status_code == 204
