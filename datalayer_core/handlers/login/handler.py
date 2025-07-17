@@ -9,14 +9,12 @@ import json
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.extension.handler import ExtensionHandlerMixin
 
-from datalayer_core.__version__ import __version__
-
 
 # pylint: disable=W0223
 class LoginHandler(ExtensionHandlerMixin, APIHandler):
     """The login handler."""
 
-#    @tornado.web.authenticated
+    #    @tornado.web.authenticated
     def post(self):
         """Login."""
         data = json.loads(self.request.body)

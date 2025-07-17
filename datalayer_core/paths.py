@@ -10,7 +10,6 @@
 # Copyright (c) IPython Development Team.
 # Distributed under the terms of the Modified BSD License.
 
-
 import errno
 import os
 import site
@@ -86,7 +85,7 @@ def _do_i_own(path: str) -> bool:
     except Exception:  # noqa
         pass
 
-    if hasattr(os, 'geteuid'):
+    if hasattr(os, "geteuid"):
         try:
             st = p.stat()
             return st.st_uid == os.geteuid()
@@ -220,7 +219,9 @@ else:
         if programdata:
             SYSTEM_DATALAYER_PATH = [pjoin(programdata, "datalayer_core")]
         else:  # PROGRAMDATA is not defined by default on XP.
-            SYSTEM_DATALAYER_PATH = [os.path.join(sys.prefix, "share", "datalayer_core")]
+            SYSTEM_DATALAYER_PATH = [
+                os.path.join(sys.prefix, "share", "datalayer_core")
+            ]
     else:
         SYSTEM_DATALAYER_PATH = [
             "/usr/local/share/datalayer",
@@ -256,7 +257,9 @@ def datalayer_path(*subdirs: str) -> List[str]:
 
     # highest priority is explicit environment variable
     if os.environ.get("DATALAYER_PATH"):
-        paths.extend(p.rstrip(os.sep) for p in os.environ["DATALAYER_PATH"].split(os.pathsep))
+        paths.extend(
+            p.rstrip(os.sep) for p in os.environ["DATALAYER_PATH"].split(os.pathsep)
+        )
 
     # Next is environment or user, depending on the DATALAYER_PREFER_ENV_PATH flag
     user = [datalayer_data_dir()]
@@ -264,7 +267,9 @@ def datalayer_path(*subdirs: str) -> List[str]:
         # Check if site.getuserbase() exists to be compatible with virtualenv,
         # which often does not have this method.
         userbase: Optional[str]
-        userbase = site.getuserbase() if hasattr(site, "getuserbase") else site.USER_BASE
+        userbase = (
+            site.getuserbase() if hasattr(site, "getuserbase") else site.USER_BASE
+        )
 
         if userbase:
             userdir = os.path.join(userbase, "share", "datalayer_core")
@@ -326,7 +331,10 @@ def datalayer_config_path() -> List[str]:
 
     # highest priority is explicit environment variable
     if os.environ.get("DATALAYER_CONFIG_PATH"):
-        paths.extend(p.rstrip(os.sep) for p in os.environ["DATALAYER_CONFIG_PATH"].split(os.pathsep))
+        paths.extend(
+            p.rstrip(os.sep)
+            for p in os.environ["DATALAYER_CONFIG_PATH"].split(os.pathsep)
+        )
 
     # Next is environment or user, depending on the DATALAYER_PREFER_ENV_PATH flag
     user = [datalayer_config_dir()]
@@ -334,7 +342,9 @@ def datalayer_config_path() -> List[str]:
         userbase: Optional[str]
         # Check if site.getuserbase() exists to be compatible with virtualenv,
         # which often does not have this method.
-        userbase = site.getuserbase() if hasattr(site, "getuserbase") else site.USER_BASE
+        userbase = (
+            site.getuserbase() if hasattr(site, "getuserbase") else site.USER_BASE
+        )
 
         if userbase:
             userdir = os.path.join(userbase, "etc", "datalayer_core")
@@ -594,7 +604,11 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     FILE_WRITE_ATTRIBUTES = 256
     FILE_ALL_ACCESS = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF
     FILE_GENERIC_READ = (
-        STANDARD_RIGHTS_READ | FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE
+        STANDARD_RIGHTS_READ
+        | FILE_READ_DATA
+        | FILE_READ_ATTRIBUTES
+        | FILE_READ_EA
+        | SYNCHRONIZE
     )
     FILE_GENERIC_WRITE = (
         STANDARD_RIGHTS_WRITE
@@ -725,12 +739,16 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         pSid = (ctypes.c_char * 1)()
         cbSid = wintypes.DWORD()
         try:
-            advapi32.CreateWellKnownSid(WellKnownSidType, None, pSid, ctypes.byref(cbSid))
+            advapi32.CreateWellKnownSid(
+                WellKnownSidType, None, pSid, ctypes.byref(cbSid)
+            )
         except OSError as e:
             if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
                 raise
             pSid = (ctypes.c_char * cbSid.value)()
-            advapi32.CreateWellKnownSid(WellKnownSidType, None, pSid, ctypes.byref(cbSid))
+            advapi32.CreateWellKnownSid(
+                WellKnownSidType, None, pSid, ctypes.byref(cbSid)
+            )
         return pSid[:]
 
     def GetUserNameEx(NameFormat):
@@ -769,7 +787,9 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 raise
         Sid = ctypes.create_unicode_buffer("", cbSid.value)
         pSid = ctypes.cast(ctypes.pointer(Sid), wintypes.LPVOID)
-        lpReferencedDomainName = ctypes.create_unicode_buffer("", cchReferencedDomainName.value + 1)
+        lpReferencedDomainName = ctypes.create_unicode_buffer(
+            "", cchReferencedDomainName.value + 1
+        )
         success = advapi32.LookupAccountNameW(
             lpSystemName,
             lpAccountName,
@@ -818,9 +838,13 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         # set the security of a file or directory object
         advapi32.SetFileSecurityW(lpFileName, RequestedInformation, pSecurityDescriptor)
 
-    def SetSecurityDescriptorDacl(pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted):
+    def SetSecurityDescriptorDacl(
+        pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted
+    ):
         # set information in a discretionary access control list (DACL)
-        advapi32.SetSecurityDescriptorDacl(pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted)
+        advapi32.SetSecurityDescriptorDacl(
+            pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted
+        )
 
     def MakeAbsoluteSD(pSelfRelativeSecurityDescriptor):
         # return a security descriptor in absolute format
@@ -852,7 +876,9 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         except OSError as e:
             if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
                 raise
-        pAbsoluteSecurityDescriptor = (wintypes.BYTE * lpdwAbsoluteSecurityDescriptorSize.value)()
+        pAbsoluteSecurityDescriptor = (
+            wintypes.BYTE * lpdwAbsoluteSecurityDescriptorSize.value
+        )()
         pDaclData = (wintypes.BYTE * lpdwDaclSize.value)()
         pDacl = ctypes.cast(pDaclData, PACL).contents
         pSaclData = (wintypes.BYTE * lpdwSaclSize.value)()
@@ -945,7 +971,9 @@ def get_file_mode(fname: str) -> int:
     )  # Use 4 octal digits since S_IMODE does the same
 
 
-allow_insecure_writes = os.getenv("DATALAYER_ALLOW_INSECURE_WRITES", "false").lower() in ("true", "1")
+allow_insecure_writes = os.getenv(
+    "DATALAYER_ALLOW_INSECURE_WRITES", "false"
+).lower() in ("true", "1")
 
 
 @contextmanager

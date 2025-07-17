@@ -24,9 +24,9 @@ class RuntimesWebApp(DatalayerCLIBaseApp):
             self.exit(1)
         self.clear_instance()
         sys.argv = [
-            '',
-            '--ServerApp.disable_check_xsrf=True',
-            '--DatalayerExtensionApp.kernels=True',
-            f'--DatalayerExtensionApp.run_url={self.run_url}',
+            "",
+            "--ServerApp.disable_check_xsrf=True",
+            "--DatalayerExtensionApp.kernels=True",
+            f"--DatalayerExtensionApp.run_url={self.run_url}",
         ]
         launch_new_instance()

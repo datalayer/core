@@ -70,17 +70,17 @@ def main() -> None:  # noqa
         print(f"\t{directory}")
 
     print("\nsys.executable:")
-    print(f'\t{environment_data["sys_exe"]}')
+    print(f"\t{environment_data['sys_exe']}")
 
     print("\nsys.version:")
     if "\n" in environment_data["sys_version"]:
         for data in environment_data["sys_version"].split("\n"):
             print(f"\t{data}")
     else:
-        print(f'\t{environment_data["sys_version"]}')
+        print(f"\t{environment_data['sys_version']}")
 
     print("\nplatform.platform():")
-    print(f'\t{environment_data["platform"]}')
+    print(f"\t{environment_data['platform']}")
 
     if environment_data["which"]:
         print("\nwhich -a datalayer:")

@@ -8,8 +8,10 @@ from pydoc_markdown.interfaces import Processor
 @dataclass
 class Docstring:
     content: str
+
     def __repr__(self):
         return self.content
+
     def __str__(self):
         return self.content
 

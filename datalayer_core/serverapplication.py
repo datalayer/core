@@ -4,7 +4,6 @@
 """The Datalayer Core Server application."""
 
 import os
-import typing as t
 
 from traitlets import default, Bool, CInt, Instance, Unicode
 from traitlets.config import Configurable
@@ -37,7 +36,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     load_other_extensions = True
 
     static_paths = [DEFAULT_STATIC_FILES_PATH]
- 
+
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
     # 'run_url' can be set set and None or ' ' (empty string).
@@ -56,7 +55,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     kernels = Bool(False, config=True, help="""Show the kernels page.""")
 
     webapp = Bool(False, config=True, help="""Show the webapp page.""")
-
 
     class Launcher(Configurable):
         """Datalayer launcher configuration"""
@@ -91,7 +89,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     @default("launcher")
     def _default_launcher(self):
         return DatalayerExtensionApp.Launcher(parent=self, config=self.config)
-
 
     class Brand(Configurable):
         """Datalayer launcher configuration"""
@@ -162,7 +159,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     def _default_brand(self):
         return DatalayerExtensionApp.Brand(parent=self, config=self.config)
 
-
     def initialize_settings(self):
         self.serverapp.answer_yes = True
         if self.benchmarks:
@@ -195,13 +191,13 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
         self.settings.update(**settings)
 
-
     def initialize_templates(self):
-        self.serverapp.jinja_template_vars.update({
-            "datalayer_version": __version__,
-            "run_url": self.run_url,
-        })
-
+        self.serverapp.jinja_template_vars.update(
+            {
+                "datalayer_version": __version__,
+                "run_url": self.run_url,
+            }
+        )
 
     def initialize_handlers(self):
         handlers = [
@@ -211,7 +207,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             (url_path_join(self.name, "benchmarks"), IndexHandler),
             (url_path_join(self.name, "kernels"), IndexHandler),
             (url_path_join(self.name, "login"), LoginHandler),
-            (url_path_join(self.name, "service-worker", r"([^/]+\.js)"), ServiceWorkerHandler),
+            (
+                url_path_join(self.name, "service-worker", r"([^/]+\.js)"),
+                ServiceWorkerHandler,
+            ),
         ]
         self.handlers.extend(handlers)
 

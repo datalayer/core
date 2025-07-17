@@ -198,7 +198,7 @@ class DatalayerAuthMixin(LoggingConfigurable):
             else:
                 # Ask credentials via Browser.
                 port = find_http_port()
-                if USE_JUPYTER_SERVER_FOR_LOGIN == False:
+                if not USE_JUPYTER_SERVER_FOR_LOGIN:
                     self.__launch_browser(port)
                 # Do we need to clear the instance while using raw http server?
                 if hasattr(self, "clear_instance"):

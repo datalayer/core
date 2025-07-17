@@ -15,8 +15,6 @@ from datalayer_core.runtimes.web.webapp import RuntimesWebApp
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
-from datalayer_core.__version__ import __version__
-
 
 class JupyterRuntimesApp(DatalayerCLIBaseApp):
     description = """
@@ -34,14 +32,19 @@ class JupyterRuntimesApp(DatalayerCLIBaseApp):
         "pause": (RuntimesPauseApp, RuntimesPauseApp.description.splitlines()[0]),
         "start": (RuntimesStartApp, RuntimesStartApp.description.splitlines()[0]),
         "stop": (RuntimesStopApp, RuntimesStopApp.description.splitlines()[0]),
-        "terminate": (RuntimesTerminateApp, RuntimesTerminateApp.description.splitlines()[0]),
+        "terminate": (
+            RuntimesTerminateApp,
+            RuntimesTerminateApp.description.splitlines()[0],
+        ),
         "web": (RuntimesWebApp, RuntimesWebApp.description.splitlines()[0]),
     }
 
     def start(self):
         try:
             super().start()
-            self.log.info(f"One of `{'` `'.join(JupyterRuntimesApp.subcommands.keys())}` must be specified.")
+            self.log.info(
+                f"One of `{'` `'.join(JupyterRuntimesApp.subcommands.keys())}` must be specified."
+            )
             self.exit(1)
         except NoStart:
             pass

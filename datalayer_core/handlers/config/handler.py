@@ -7,7 +7,7 @@ import json
 
 import tornado
 
-from jupyter_server.base.handlers import APIHandler, JupyterHandler
+from jupyter_server.base.handlers import APIHandler
 from jupyter_server.extension.handler import (
     ExtensionHandlerMixin,
 )
@@ -48,8 +48,8 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
             {
                 "extension": "datalayer",
                 "version": __version__,
-                "settings": configuration, # TODO this is for backwards compatibility, remove at some point...
-                "configuration": configuration, # TODO this is for backwards compatibility, remove at some point...
+                "settings": configuration,  # TODO this is for backwards compatibility, remove at some point...
+                "configuration": configuration,  # TODO this is for backwards compatibility, remove at some point...
             }
         )
         self.finish(res)

@@ -4,6 +4,7 @@
 from rich.console import Console
 from rich.table import Table
 
+
 def display_me(me: dict, infos: dict) -> None:
     """Display a my profile."""
     table = Table(title="Profile")
@@ -17,7 +18,7 @@ def display_me(me: dict, infos: dict) -> None:
         me["handle_s"],
         me["first_name_t"],
         me["last_name_t"],
-        infos.get("run_url")
+        infos.get("run_url"),
     )
     console = Console()
     console.print(table)

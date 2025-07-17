@@ -17,7 +17,6 @@ class DatalayerLogoutApp(DatalayerCLIBaseApp):
 
     _requires_auth = False
 
-
     def start(self):
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover

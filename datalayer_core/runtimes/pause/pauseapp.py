@@ -16,7 +16,7 @@ class RuntimesPauseApp(DatalayerCLIBaseApp):
     def start(self):
         try:
             super().start()
-            self.log.info(f"Runtime Pause - not implemented.")
+            self.log.info("Runtime Pause - not implemented.")
         except NoStart:
             pass
         self.exit(0)

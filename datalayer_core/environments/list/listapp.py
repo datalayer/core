@@ -65,10 +65,12 @@ class EnvironmentsListApp(DatalayerCLIBaseApp, EnvironmentsListMixin):
             add_env_to_table(table, environment)
         console = Console()
         console.print(table)
-        if (len(environments) > 0):
-            print(f"""
+        if len(environments) > 0:
+            print("""
 Create a Runtime with e.g.
     """)
         for environment in environments:
-            print(f"datalayer runtimes create --given-name my-runtime --credits-limit 3 {environment['name']}")
+            print(
+                f"datalayer runtimes create --given-name my-runtime --credits-limit 3 {environment['name']}"
+            )
         print()

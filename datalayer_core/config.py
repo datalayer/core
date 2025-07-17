@@ -11,7 +11,7 @@ from .application import DatalayerApp
 
 class DatalayerConfig(DatalayerApp):
     """A Datalayer Config App.
-    
+
     Run `datalayer --generate-config` to create the default config.
     """
 

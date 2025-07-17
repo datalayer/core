@@ -50,7 +50,10 @@ _datalayer_flags: dict = {
         {"Application": {"log_level": logging.DEBUG}},
         "set log level to logging.DEBUG (maximize logging output)",
     ),
-    "generate-config": ({"DatalayerApp": {"generate_config": True}}, "generate default config file"),
+    "generate-config": (
+        {"DatalayerApp": {"generate_config": True}},
+        "generate default config file",
+    ),
     "y": (
         {"DatalayerApp": {"answer_yes": True}},
         "Answer yes to any questions instead of prompting.",
@@ -170,7 +173,7 @@ class DatalayerApp(Application):
         """Migrate config/data from IPython 3"""
         try:  # let's see if we can open the marker file
             # for reading and updating (writing)
-            f_marker = open(os.path.join(self.config_dir, "migrated"), 'r+')  # noqa
+            f_marker = open(os.path.join(self.config_dir, "migrated"), "r+")  # noqa
         except PermissionError:  # not readable and/or writable
             return  # so let's give up migration in such an environment
         except FileNotFoundError:  # cannot find the marker file
@@ -224,7 +227,9 @@ class DatalayerApp(Application):
             # self.raise_config_file_errors
             if (not suppress_errors) or self.raise_config_file_errors:
                 raise
-            self.log.warning("Error loading config file: %s", config_file_name, exc_info=True)
+            self.log.warning(
+                "Error loading config file: %s", config_file_name, exc_info=True
+            )
 
     # subcommand-related
     def _find_subcommand(self, name):
