@@ -1,7 +1,6 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-import warnings
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.runtimes.utils import display_kernels
@@ -28,7 +27,7 @@ class RuntimesListApp(DatalayerCLIBaseApp, RuntimesListMixin):
     def start(self):
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
-            warnings.warn("Too many arguments were provided for kernel list.")
+            self.log.warning("Too many arguments were provided for kernel list.")
             self.print_help()
             self.exit(1)
 

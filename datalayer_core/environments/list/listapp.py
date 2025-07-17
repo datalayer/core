@@ -34,6 +34,8 @@ def add_env_to_table(table, environment):
 
 
 class EnvironmentsListMixin:
+    """Mixin class that provides environment listing functionality."""
+
     def _list_environments(self):
         """List available environments."""
         response = self._fetch(
