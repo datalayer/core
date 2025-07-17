@@ -47,6 +47,8 @@ def test_cli(args, expected_output):
         (["runtimes", "ls", "--token", DATALAYER_TEST_TOKEN], "Runtimes"),
         (["secrets", "list", "--token", DATALAYER_TEST_TOKEN], "Secrets"),
         (["secrets", "ls", "--token", DATALAYER_TEST_TOKEN], "Secrets"),
+        (["snapshots", "list", "--token", DATALAYER_TEST_TOKEN], "Snapshots"),
+        (["snapshots", "ls", "--token", DATALAYER_TEST_TOKEN], "Snapshots"),
         (["who", "--token", DATALAYER_TEST_TOKEN], "Profile"),
         (["whoami", "--token", DATALAYER_TEST_TOKEN], "Profile"),
         (["logout"], "\nDatalayer - Version"),

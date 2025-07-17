@@ -1,22 +1,19 @@
-<!--
-  ~ Copyright (c) 2023-2025 Datalayer, Inc.
-  ~ Distributed under the terms of the Modified BSD License.
--->
-
 ---
 title: Python SDK
 ---
 
 import DocCardList from '@theme/DocCardList';
 
-A simple, intuitive SDK for AI engineers to work with the Datalayer platform. This SDK provides a unified interface for authentication, runtime creation, and code execution in Datalayer environments.
+A simple, intuitive SDK for AI engineers to work with the [Datalayer platform](https://datalayer.app/).
+
+This SDK provides a unified interface for authentication, runtime creation, and
+code execution in Datalayer Runtimes.
 
 ## Features
 
 - **Simple Authentication**: Easy token-based authentication with environment variable support
 - **Runtime Management**: Create and manage compute runtimes (CPU/GPU) for code execution
-- **Notebook Integration**: Collaborative notebook editing and cell execution
-- **Async Support**: Full async/await support for non-blocking operations
+- **Runtime Snapshot Management**: Create and manage compute snapshots of your runtimes
 - **Context Managers**: Clean resource management with Python context managers
 
 ## Installation
@@ -38,28 +35,67 @@ export DATALAYER_TOKEN="your-token-here"
 Or pass it directly to the SDK:
 
 ```python
-from datalayer import DatalayerSDK
+from datalayer import DatalayerClient
 
 client = DatalayerClient(token="your-token-here")
-
-# Verify authentication
 if client.authenticate():
     print("Successfully authenticated!")
 ```
 
 ### 2. Execute Code in a Runtime
 
+You can use a context manager to create a Runtime and ensure it is correctly terminated
+after code execution.
+
 ```python
-from datalayer_sdk import DatalayerClient
+from datalayer_core import DatalayerClient
 
 client = DatalayerClient()
-
-# Create and use a runtime
-code = '''import os
-from platform import node
-print(f"Hey {os.environ.get('USER', 'John Smith')} from {node()}.")'''
-
 with client.create_runtime() as runtime:
-    result = runtime.execute(code)
-    print(result)
+    response = runtime.execute("Hello world!")
+    print(response.stdout)
 ```
+
+### 3. Save a Runtime Snapshot
+
+TODO
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+with client.create_runtime() as runtime:
+    response = runtime.execute("a = 123")
+    print(response.stdout)
+    snapshot = runtime.create_snapshot(stop=False)
+    print(snapshot)
+```
+
+### 4. Set Secrets
+
+TODO
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+created_secret = client.create_secret(
+    name="MY_SECRET",
+    description="This is a test secret",
+    value="super_secret_value!",
+)
+print(created_secret)
+
+# Use your secret!
+with client.create_runtime() as runtime:
+    response = runtime.execute("import os;print(len(os.environ["MY_SECRET"]))")
+    print(response.stdout)
+```
+
+## Contributing
+
+This SDK is designed to be simple and extensible. Feel free to submit [issues](https://github.com/datalayer/core/issues) and enhancement requests!
+
+## License
+
+This SDK is open source software licensed under the [BSD 3-Clause License](https://github.com/datalayer/core/blob/main/LICENSE).

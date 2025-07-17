@@ -67,3 +67,52 @@ def test_secrets_delete_non_existent():
     # Delete the secret
     response = client.delete_secret(uuid.uuid4())
     assert response.get("success") is False
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_runtime_create_execute_and_list():
+    """
+    Test the creation and deletion of runtime.
+    """
+    # Create a secret
+    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    runtime_name = f"test_runtime-{uuid.uuid4()}"
+    with client.create_runtime(name=runtime_name) as runtime:
+        assert runtime.name == runtime_name
+        assert runtime.uid is not None
+
+        # Execute a command
+        response = runtime.execute("print('test')")
+        assert response.stdout.strip() == "test"
+
+        assert client.list_runtimes() == 1
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_runtime_snapshot_creation():
+    """
+    Test the creation and deletion of runtime.
+    """
+    # Create a secret
+    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    runtime_name = f"test_runtime-{uuid.uuid4()}"
+    smnapshot_name = f"test_snapshot-{uuid.uuid4()}"
+    with client.create_runtime(name=runtime_name) as runtime:
+        snapshot = runtime.create_snapshot(name=smnapshot_name, stop=False)
+        assert snapshot.name == smnapshot_name
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_environments_list():
+    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    envs = client.list_environments()
+    assert len(envs) == 2

@@ -1,0 +1,16 @@
+---
+title: Environments
+---
+
+import DocCardList from '@theme/DocCardList';
+
+## List available Environments
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+envs = client.list_environment()
+for env in envs:
+    print(env)
+```

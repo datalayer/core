@@ -1,0 +1,109 @@
+---
+title: Runtimes
+---
+
+import DocCardList from '@theme/DocCardList';
+
+## Create a new Runtime
+
+You can create a new Runtime using a context manager. This will ensure the Runtime
+is started and stopped after usage.
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+with client.create_runtime() as runtime:
+    runtime.execute("Hello world!")
+```
+
+You can also select the Environment for the Runtime, as well as the name and 
+time limit in minutes for it.
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+with client.create_runtime(
+    name="my-runtime",
+    env_name='ai-env',
+    time=10) as runtime:
+    runtime.execute("Hello world!")
+```
+
+## List available Runtimes
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+runtimes = client.list_runtimes():
+for runtime in runtimes:
+    print(runtime)
+```
+
+## Terminate a Runtime
+
+The following snippet will list all available Runtimes and terminate them.
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+runtimes = client.list_runtimes():
+for runtime in runtimes:
+    print(client.terminate_runtime(runtime))
+```
+
+You can also call the terminate method on the Runtime objects as well.
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+runtimes = client.list_runtimes():
+for runtime in runtimes:
+    print(runtime.terminate())
+```
+
+## Create a Runtime Snapshot
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+with client.create_runtime(name="my-runtime", env_name='ai-env', time=10) as runtime:
+    runtime.execute("Hello world!")
+    snapshot = client.create_snapshot(runtime, stop=False)
+```
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+with client.create_runtime(name="my-runtime", env_name='ai-env', time=10) as runtime:
+    runtime.execute("Hello world!")
+    snapshot = runtime.create_snapshot(stop=False)
+```
+
+## List available snapshots
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+snapshots = client.list_snapshots():
+for snapshot in snapshots:
+    print(snapshot)
+```
+
+## Delete a Snapshot
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+snapshots = client.list_snapshots():
+for snapshot in snapshots:
+    print(client.delete_snapshot(snapshot))
+```

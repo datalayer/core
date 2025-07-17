@@ -17,6 +17,7 @@ header:
     - "**/*.json"
     - "**/*.mamba"
     - "**/*.md"
+    - "**/*.mdx"
     - "**/*.mod"
     - "**/*.nblink"
     - "**/*.rego"
