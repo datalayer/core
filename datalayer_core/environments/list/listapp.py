@@ -38,7 +38,7 @@ class EnvironmentsListMixin:
     def _list_environments(self):
         """List available environments."""
         response = self._fetch(
-            "{}/api/jupyter/v1/environments".format(self.run_url),
+            "{}/api/runtimes/v1/environments".format(self.run_url),
         )
         content = response.json()
         return content.get("environments", [])

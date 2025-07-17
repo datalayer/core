@@ -43,7 +43,7 @@ class RuntimesCreateMixin:
         body["environment_name"] = environment_name
 
         response = self._fetch(
-            "{}/api/jupyter/v1/kernels".format(self.run_url),
+            "{}/api/runtimes/v1/kernels".format(self.run_url),
             method="POST",
             json=body,
         )
