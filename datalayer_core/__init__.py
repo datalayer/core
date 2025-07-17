@@ -9,7 +9,17 @@ from datalayer_core.sdk import DatalayerClient
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
-    return [{
-        "module": "datalayer_core",
-        "app": DatalayerExtensionApp,
-    }]
+    return [
+        {
+            "module": "datalayer_core",
+            "app": DatalayerExtensionApp,
+        }
+    ]
+
+
+__all__ = [
+    "__version__",
+    "_jupyter_server_extension_points",
+    "DatalayerClient",
+    "DatalayerExtensionApp",
+]

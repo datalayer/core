@@ -23,7 +23,6 @@ class DatalayerAboutApp(DatalayerCLIBaseApp):
 
     _requires_auth = False
 
-
     def start(self):
         try:
             super().start()

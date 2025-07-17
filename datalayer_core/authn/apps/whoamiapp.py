@@ -15,14 +15,13 @@ class WhoamiApp(DatalayerCLIBaseApp):
 
       datalayer whoami
     """
-    
+
     def get_profile(self):
         response = self._fetch(
             "{}/api/iam/v1/whoami".format(self.run_url),
         )
         return response.json()
 
-        
     def start(self):
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
@@ -31,7 +30,7 @@ class WhoamiApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         response = self.get_profile()
-        infos =  {
+        infos = {
             "run_url": self.run_url,
         }
         display_me(response.get("profile", {}), infos)

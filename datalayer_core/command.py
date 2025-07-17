@@ -59,7 +59,9 @@ def datalayer_parser() -> DatalayerParser:
     group = parser.add_mutually_exclusive_group(required=False)
     # don't use argparse's version action because it prints to stderr on py2
     group.add_argument(
-        "--version", action="store_true", help="show the versions of core datalayer packages and exit"
+        "--version",
+        action="store_true",
+        help="show the versions of core datalayer packages and exit",
     )
     subcommand_action = group.add_argument(
         "subcommand", type=str, nargs="?", help="the subcommand to launch"
@@ -67,16 +69,26 @@ def datalayer_parser() -> DatalayerParser:
     # For argcomplete, supply all known subcommands
     subcommand_action.completer = lambda *args, **kwargs: list_subcommands()  # type: ignore[attr-defined]
 
-    group.add_argument("--config-dir", action="store_true", help="show Datalayer config dir")
-    group.add_argument("--data-dir", action="store_true", help="show Datalayer data dir")
-    group.add_argument("--runtime-dir", action="store_true", help="show Datalayer runtime dir")
+    group.add_argument(
+        "--config-dir", action="store_true", help="show Datalayer config dir"
+    )
+    group.add_argument(
+        "--data-dir", action="store_true", help="show Datalayer data dir"
+    )
+    group.add_argument(
+        "--runtime-dir", action="store_true", help="show Datalayer runtime dir"
+    )
     group.add_argument(
         "--paths",
         action="store_true",
         help="show all Datalayer paths. Add --json for machine-readable format.",
     )
-    parser.add_argument("--json", action="store_true", help="output paths as machine-readable json")
-    parser.add_argument("--debug", action="store_true", help="output debug information about paths")
+    parser.add_argument(
+        "--json", action="store_true", help="output paths as machine-readable json"
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="output debug information about paths"
+    )
 
     return parser
 
@@ -185,7 +197,9 @@ def _path_with_self():
 
     for script in scripts:
         bindir = os.path.dirname(script)
-        if os.path.isdir(bindir) and os.access(script, os.X_OK):  # only if it's a script
+        if os.path.isdir(bindir) and os.access(
+            script, os.X_OK
+        ):  # only if it's a script
             # ensure executable's dir is on PATH
             # avoids missing subcommands when datalayer is run via absolute path
             path_list.insert(0, bindir)

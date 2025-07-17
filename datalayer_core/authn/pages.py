@@ -55,7 +55,7 @@ OAUTH_ERROR_PAGE = """<!DOCTYPE html>
     const btn = document.getElementById("return-btn")
     btn.addEventListener("click", () => {{
       // Redirect to default page
-      window.location.replace('{base_url}');           
+      window.location.replace('{base_url}');
     }})
   </script>
 </body>

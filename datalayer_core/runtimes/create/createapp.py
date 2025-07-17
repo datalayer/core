@@ -15,7 +15,6 @@ create_alias["credits-limit"] = "RuntimesCreateApp.credits_limit"
 
 
 class RuntimesCreateMixin:
-    
     def _create_runtime(self, environment_name: str) -> dict:
         """Create a Runtime with the given environment name."""
         body = {"type": "notebook"}
@@ -26,9 +25,11 @@ class RuntimesCreateMixin:
             response = self._fetch(
                 "{}/api/iam/v1/usage/credits".format(self.run_url), method="GET"
             )
-            
+
             raw_credits = response.json()
-            self.credits_limit = get_default_credits_limit(raw_credits["reservations"], raw_credits["credits"])
+            self.credits_limit = get_default_credits_limit(
+                raw_credits["reservations"], raw_credits["credits"]
+            )
             self.log.warning(
                 "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
                     self.credits_limit

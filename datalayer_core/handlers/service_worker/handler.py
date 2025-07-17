@@ -20,14 +20,17 @@ class ServiceWorkerHandler(web.StaticFileHandler, JupyterHandler):
         # Must match the folder containing the service worker asset as specified
         # in the webpack.lab-config.js
         import datalayer_ui
+
         DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
-        extensionStatic = Path(DATALAYER_UI_PATH).parent / "datalayer_ui" / "labextension" / "static"
+        extensionStatic = (
+            Path(DATALAYER_UI_PATH).parent / "datalayer_ui" / "labextension" / "static"
+        )
         super().initialize(path=str(extensionStatic))
 
     def validate_absolute_path(self, root: str, absolute_path: str) -> Optional[str]:
         """Only allow to serve the service worker"""
         # Must match the filename name set in webpack.lab-config.js
-        if Path(absolute_path).name != 'lite-service-worker.js':
+        if Path(absolute_path).name != "lite-service-worker.js":
             raise web.HTTPError(404)
         return super().validate_absolute_path(root, absolute_path)
 

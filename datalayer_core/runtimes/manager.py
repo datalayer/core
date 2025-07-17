@@ -81,7 +81,7 @@ class RuntimeManager(KernelHttpManager):
                 token=self.run_token,
             )
             kernels = response.json().get("kernels", [])
-            
+
             # If no runtime is running, let the user decide to start one from the first environment
             if not kernels:
                 response_environments = fetch(
@@ -98,11 +98,16 @@ class RuntimeManager(KernelHttpManager):
                     token=self.run_token,
                 )
                 raw_credits = response_credits.json()
-                credits_limit = get_default_credits_limit(raw_credits["reservations"], raw_credits["credits"])
+                credits_limit = get_default_credits_limit(
+                    raw_credits["reservations"], raw_credits["credits"]
+                )
 
-                user_input = input(
-                    f"No Runtime running.\nDo you want to launch a runtime from the environment {first_environment_name} with {credits_limit:.2f} reserved credits? (yes/no) [default: yes]: "
-                ) or "yes"
+                user_input = (
+                    input(
+                        f"No Runtime running.\nDo you want to launch a runtime from the environment {first_environment_name} with {credits_limit:.2f} reserved credits? (yes/no) [default: yes]: "
+                    )
+                    or "yes"
+                )
                 if user_input.lower() != "yes":
                     raise RuntimeError(
                         "No Runtime running. Please start one Runtime using `datalayer runtimes create <ENV_ID>`."
@@ -130,7 +135,7 @@ class RuntimeManager(KernelHttpManager):
                     token=self.run_token,
                 )
                 kernels = response.json().get("kernels", [])
-                    
+
             kernel = kernels[0]
             kernel_name = kernel.get("jupyter_pod_name", "")
 

@@ -16,7 +16,7 @@ class RuntimesStopApp(DatalayerCLIBaseApp):
     def start(self):
         try:
             super().start()
-            self.log.info(f"Runtime Stop - not implemented.")
+            self.log.info("Runtime Stop - not implemented.")
         except NoStart:
             pass
         self.exit(0)

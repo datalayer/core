@@ -1,4 +1,4 @@
-name: Check typing
+name: Check code style
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-
+    
 jobs:
   check-code-style:
     runs-on: ubuntu-latest
@@ -36,7 +36,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install mypy
-      - name: Run mypy
+          uv pip install .
+          uv pip install pre-commit
+
+      - name: Run pre-commit
         run: |
-          mypy -m datalayer_core.sdk
+          pre-commit run --all-files    

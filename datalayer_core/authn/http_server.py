@@ -19,12 +19,8 @@ from pathlib import Path
 from socketserver import BaseRequestHandler
 
 from datalayer_core.authn.state import set_server_port
-from datalayer_core.authn.keys import (
-    DATALAYER_IAM_TOKEN_KEY, DATALAYER_IAM_USER_KEY
-)
-from datalayer_core.authn.pages import (
-    LANDING_PAGE, AUTH_SUCCESS_PAGE, OAUTH_ERROR_PAGE
-)
+from datalayer_core.authn.keys import DATALAYER_IAM_TOKEN_KEY, DATALAYER_IAM_USER_KEY
+from datalayer_core.authn.pages import LANDING_PAGE, AUTH_SUCCESS_PAGE, OAUTH_ERROR_PAGE
 
 from datalayer_core.utils.utils import find_http_port
 from datalayer_core.serverapplication import launch_new_instance
@@ -84,13 +80,12 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
             token_key=DATALAYER_IAM_TOKEN_KEY,
             token=token,
             base_url="/",
-        ).encode('UTF-8', 'replace')
+        ).encode("UTF-8", "replace")
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-type", "text/html")
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
-
 
     def do_GET(self):
         parts = urllib.parse.urlsplit(self.path)
@@ -102,10 +97,10 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
                     {
                         "runUrl": self.server.run_url,
                         "iamRunUrl": self.server.run_url,
-                        "whiteLabel": False
+                        "whiteLabel": False,
                     }
                 )
-            ).encode('UTF-8', 'replace')
+            ).encode("UTF-8", "replace")
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-type", "text/html")
             self.send_header("Content-Length", str(len(content)))
@@ -113,7 +108,6 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
             self.wfile.write(content)
         else:
             super().do_GET()
-
 
     def do_POST(self):
         content_length = int(self.headers["Content-Length"])
@@ -128,7 +122,6 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
         signal.raise_signal(signal.SIGINT)
-
 
     def log_message(self, format, *args):
         message = format % args
@@ -151,11 +144,14 @@ class DualStackServer(HTTPServer):
         bind_and_activate: bool = True,
     ) -> None:
         try:
-            import datalayer_ui
-        except:
+            import datalayer_ui  # noqa: F401
+        except Exception:
             print("Sorry, I can not show the login page...")
-            print("Check the datalayer_ui python package is available in your environment")
+            print(
+                "Check the datalayer_ui python package is available in your environment"
+            )
             import sys
+
             sys.exit(-1)
         self.run_url = run_url
         self.user_handle = None
@@ -170,6 +166,7 @@ class DualStackServer(HTTPServer):
 
     def finish_request(self, request, client_address):
         import datalayer_ui
+
         DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
         self.RequestHandlerClass(
             request, client_address, self, directory=str(DATALAYER_UI_PATH / "static")
@@ -184,21 +181,27 @@ def get_token(
     server_address = ("", port or find_http_port())
     port = server_address[1]
 
-    if USE_JUPYTER_SERVER_FOR_LOGIN == True:
+    if USE_JUPYTER_SERVER_FOR_LOGIN:
         set_server_port(port)
-        logger.info(f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n")
+        logger.info(
+            f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n"
+        )
         sys.argv = [
             "",
-            "--DatalayerExtensionApp.run_url", run_url,
-            "--ServerApp.disable_check_xsrf", "True",
+            "--DatalayerExtensionApp.run_url",
+            run_url,
+            "--ServerApp.disable_check_xsrf",
+            "True",
         ]
         launch_new_instance()
         logger.debug("Authentication finished.")
-#        return None if httpd.token is None else (httpd.user_handle, httpd.token)
+        #        return None if httpd.token is None else (httpd.user_handle, httpd.token)
         return None
     else:
         httpd = DualStackServer(server_address, LoginRequestHandler, run_url)
-        logger.info(f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n")
+        logger.info(
+            f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n"
+        )
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

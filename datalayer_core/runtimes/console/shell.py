@@ -16,9 +16,7 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
     manager = Instance(
         "datalayer_core.runtimes.manager.RuntimeManager", allow_none=True
     )
-    client = Instance(
-        "datalayer_core.runtimes.client.RuntimeClient", allow_none=True
-    )
+    client = Instance("datalayer_core.runtimes.client.RuntimeClient", allow_none=True)
 
     @default("banner")
     def _default_banner(self):

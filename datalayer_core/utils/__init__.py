@@ -64,7 +64,9 @@ def _external_stacklevel(internal: List[str]) -> int:
     normalized_internal = [str(Path(s)) for s in internal]
 
     # climb the stack frames while we see internal frames
-    while frame and any(s in str(Path(frame.f_code.co_filename)) for s in normalized_internal):
+    while frame and any(
+        s in str(Path(frame.f_code.co_filename)) for s in normalized_internal
+    ):
         level += 1
         frame = frame.f_back
 
@@ -119,7 +121,9 @@ class _TaskRunner:
             name = f"{threading.current_thread().name} - runner"
             if self.__io_loop is None:
                 self.__io_loop = asyncio.new_event_loop()
-                self.__runner_thread = threading.Thread(target=self._runner, daemon=True, name=name)
+                self.__runner_thread = threading.Thread(
+                    target=self._runner, daemon=True, name=name
+                )
                 self.__runner_thread.start()
         fut = asyncio.run_coroutine_threadsafe(coro, self.__io_loop)
         return fut.result(None)

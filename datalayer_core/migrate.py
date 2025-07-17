@@ -194,7 +194,9 @@ def migrate_config(name, env):
     """
     log = get_logger()
     src_base = pjoin("{profile}", "ipython_{name}_config").format(name=name, **env)
-    dst_base = pjoin("{datalayer_config}", "datalayer_{name}_config").format(name=name, **env)
+    dst_base = pjoin("{datalayer_config}", "datalayer_{name}_config").format(
+        name=name, **env
+    )
     loaders = {
         ".py": PyFileConfigLoader,
         ".json": JSONFileConfigLoader,
@@ -241,7 +243,9 @@ def migrate():
 
     # write a marker to avoid re-running migration checks
     ensure_dir_exists(env["datalayer_config"])
-    with open(os.path.join(env["datalayer_config"], "migrated"), "w", encoding="utf-8") as f:
+    with open(
+        os.path.join(env["datalayer_config"], "migrated"), "w", encoding="utf-8"
+    ) as f:
         f.write(datetime.now(tz=timezone.utc).isoformat())
 
     return migrated

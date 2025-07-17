@@ -17,8 +17,6 @@ from datalayer_core.runtimes.console.consoleapp import RuntimesConsoleApp
 from datalayer_core.runtimes.runtimesapp import JupyterRuntimesApp
 from datalayer_core.web.webapp import DatalayerWebApp
 
-from datalayer_core.__version__ import __version__
-
 
 HERE = Path(__file__).parent
 
@@ -36,7 +34,10 @@ class DatalayerCLI(DatalayerCLIBaseApp):
         "console": (RuntimesConsoleApp, RuntimesConsoleApp.description.splitlines()[0]),
         "envs": (EnvironmentsApp, EnvironmentsApp.description.splitlines()[0]),
         "run": (JupyterRuntimesApp, JupyterRuntimesApp.description.splitlines()[0]),
-        "runtimes": (JupyterRuntimesApp, JupyterRuntimesApp.description.splitlines()[0]),
+        "runtimes": (
+            JupyterRuntimesApp,
+            JupyterRuntimesApp.description.splitlines()[0],
+        ),
         "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),
         "logout": (DatalayerLogoutApp, DatalayerLogoutApp.description.splitlines()[0]),
         "web": (DatalayerWebApp, DatalayerWebApp.description.splitlines()[0]),
@@ -47,11 +48,14 @@ class DatalayerCLI(DatalayerCLIBaseApp):
     def start(self):
         try:
             super().start()
-            self.log.info(f"One of `{'` `'.join(DatalayerCLI.subcommands.keys())}` must be specified.")
+            self.log.info(
+                f"One of `{'` `'.join(DatalayerCLI.subcommands.keys())}` must be specified."
+            )
             self.exit(1)
         except NoStart:
             pass
         self.exit(0)
+
 
 # -----------------------------------------------------------------------------
 # Main entry point
