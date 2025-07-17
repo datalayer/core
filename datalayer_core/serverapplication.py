@@ -159,7 +159,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     def _default_brand(self):
         return DatalayerExtensionApp.Brand(parent=self, config=self.config)
 
-    def initialize_settings(self):
+    def initialize_settings(self) -> None:
         self.serverapp.answer_yes = True
         if self.benchmarks:
             self.serverapp.default_url = "/datalayer/benchmarks"
@@ -191,7 +191,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
         self.settings.update(**settings)
 
-    def initialize_templates(self):
+    def initialize_templates(self) -> None:
         self.serverapp.jinja_template_vars.update(
             {
                 "datalayer_version": __version__,
@@ -199,7 +199,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             }
         )
 
-    def initialize_handlers(self):
+    def initialize_handlers(self) -> None:
         handlers = [
             ("/", IndexHandler),
             (self.name, IndexHandler),

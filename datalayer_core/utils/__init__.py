@@ -14,7 +14,7 @@ from types import FrameType
 from typing import Awaitable, Callable, List, Optional, TypeVar, Union, cast
 
 
-def ensure_dir_exists(path, mode=0o777):
+def ensure_dir_exists(path: str, mode: int=0o777) -> None:
     """Ensure that a directory exists
 
     If it doesn't exist, try to create it, protecting against a race condition
@@ -97,17 +97,17 @@ T = TypeVar("T")
 class _TaskRunner:
     """A task runner that runs an asyncio event loop on a background thread."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__io_loop: Optional[asyncio.AbstractEventLoop] = None
         self.__runner_thread: Optional[threading.Thread] = None
         self.__lock = threading.Lock()
         atexit.register(self._close)
 
-    def _close(self):
+    def _close(self) -> None:
         if self.__io_loop:
             self.__io_loop.stop()
 
-    def _runner(self):
+    def _runner(self) -> None:
         loop = self.__io_loop
         assert loop is not None  # noqa
         try:

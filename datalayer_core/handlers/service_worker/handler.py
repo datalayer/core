@@ -15,7 +15,7 @@ from jupyter_server.base.handlers import JupyterHandler
 class ServiceWorkerHandler(web.StaticFileHandler, JupyterHandler):
     """Serve the service worker script."""
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Initialize the API spec handler."""
         # Must match the folder containing the service worker asset as specified
         # in the webpack.lab-config.js
@@ -34,7 +34,7 @@ class ServiceWorkerHandler(web.StaticFileHandler, JupyterHandler):
             raise web.HTTPError(404)
         return super().validate_absolute_path(root, absolute_path)
 
-    def get_content_type(self):
+    def get_content_type(self) -> str:
         """Get the content type."""
         return "text/javascript"
 

@@ -31,7 +31,7 @@ from .utils import ensure_dir_exists
 
 # aliases and flags
 
-base_aliases: dict = {}
+base_aliases: dict[str, str] = {}
 if isinstance(Application.aliases, dict):
     # traitlets 5
     base_aliases.update(Application.aliases)
@@ -41,11 +41,11 @@ _datalayer_aliases = {
 }
 base_aliases.update(_datalayer_aliases)
 
-base_flags: dict = {}
+base_flags: dict[str, t.Any] = {}
 if isinstance(Application.flags, dict):
     # traitlets 5
     base_flags.update(Application.flags)
-_datalayer_flags: dict = {
+_datalayer_flags: dict[str, t.Any] = {
     "debug": (
         {"Application": {"log_level": logging.DEBUG}},
         "set log level to logging.DEBUG (maximize logging output)",
@@ -169,7 +169,7 @@ class DatalayerApp(Application):
         with open(config_file, mode="w", encoding="utf-8") as f:
             f.write(config_text)
 
-    def migrate_config(self):
+    def migrate_config(self) -> None:
         """Migrate config/data from IPython 3"""
         try:  # let's see if we can open the marker file
             # for reading and updating (writing)
@@ -237,7 +237,7 @@ class DatalayerApp(Application):
         return which(name)
 
     @property
-    def _dispatching(self):
+    def _dispatching(self) -> bool:
         """Return whether we are dispatching to another command
 
         or running ourselves.
@@ -269,7 +269,7 @@ class DatalayerApp(Application):
         if allow_insecure_writes:
             issue_insecure_write_warning()
 
-    def start(self):
+    def start(self) -> None:
         """Start the whole thing"""
         if self.subcommand:
             os.execv(self.subcommand, [self.subcommand] + self.argv[1:])  # noqa

@@ -3,12 +3,16 @@
 
 import warnings
 
-from datalayer_core.cli.base import DatalayerCLIBaseApp
+from datalayer_core.cli.base import DatalayerCLIBaseApp, DatalayerAuthMixin
 from datalayer_core.runtimes.utils import display_kernels
 
 
-class RuntimesListMixin:
-    def _list_runtimes(self):
+class RuntimesListMixin(DatalayerAuthMixin):
+    """
+    Mixin for listing Datalayer runtimes.
+    """
+
+    def _list_runtimes(self) -> dict[str, str]:
         """List all available runtimes."""
         response = self._fetch(
             "{}/api/runtimes/v1/runtimes".format(self.run_url),
@@ -25,7 +29,7 @@ class RuntimesListApp(DatalayerCLIBaseApp, RuntimesListMixin):
       datalayer runtimes list
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
             warnings.warn("Too many arguments were provided for kernel list.")

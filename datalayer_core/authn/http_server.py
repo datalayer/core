@@ -87,7 +87,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         parts = urllib.parse.urlsplit(self.path)
         if parts[2].strip("/").endswith("oauth/callback"):
             self._save_token(parts[3])
@@ -109,7 +109,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         else:
             super().do_GET()
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         response = post_data.decode("utf-8")

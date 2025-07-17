@@ -32,7 +32,7 @@ def _add_kernel_to_table(table, kernel):
     )
 
 
-def display_kernels(kernels: list) -> None:
+def display_kernels(kernels: list[str]) -> None:
     """Display a list of kernels in the console."""
     table = _new_kernel_table(title="Runtimes")
     for kernel in kernels:

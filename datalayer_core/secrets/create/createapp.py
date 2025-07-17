@@ -2,10 +2,11 @@
 # Distributed under the terms of the Modified BSD License.
 
 from enum import Enum
+from typing import Any
 
 from traitlets import Unicode
 
-from datalayer_core.cli.base import DatalayerCLIBaseApp
+from datalayer_core.cli.base import DatalayerCLIBaseApp, DatalayerAuthMixin
 from datalayer_core.secrets.utils import btoa, display_secrets
 
 
@@ -18,7 +19,7 @@ class SecretType(str, Enum):
     TOKEN = "token"
 
 
-class SecretsCreateMixin:
+class SecretsCreateMixin(DatalayerAuthMixin):
     """Mixin for creating secrets in Datalayer."""
 
     def _create_secret(
@@ -27,7 +28,7 @@ class SecretsCreateMixin:
         description: str,
         value: str,
         secret_type: str = SecretType.GENERIC,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Create a Secret with the given parameters.
 
@@ -81,7 +82,7 @@ class SecretsCreateApp(DatalayerCLIBaseApp, SecretsCreateMixin):
         help="Secret variant.",
     )
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) < 3:  # pragma: no cover
             self.log.warning("Too few arguments were provided for Secrets create.")
@@ -94,7 +95,7 @@ class SecretsCreateApp(DatalayerCLIBaseApp, SecretsCreateMixin):
             self.exit(1)
 
         raw = self._create_secret(*self.extra_args)
-        secret = raw.get("secret")
+        secret = raw.get("secret", {})
         if raw.get("success"):
             display_secrets([secret])
         else:

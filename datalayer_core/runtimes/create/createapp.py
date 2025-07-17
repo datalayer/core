@@ -5,8 +5,13 @@ import sys
 
 from rich import print_json
 from traitlets import Dict, Float, Unicode
+from typing import Any
 
-from datalayer_core.cli.base import DatalayerCLIBaseApp, datalayer_aliases
+from datalayer_core.cli.base import (
+    DatalayerCLIBaseApp,
+    datalayer_aliases,
+    DatalayerAuthMixin,
+)
 from datalayer_core.runtimes.utils import display_kernels, get_default_credits_limit
 
 create_alias = dict(datalayer_aliases)
@@ -14,7 +19,14 @@ create_alias["given-name"] = "RuntimesCreateApp.kernel_given_name"
 create_alias["credits-limit"] = "RuntimesCreateApp.credits_limit"
 
 
-class RuntimesCreateMixin:
+class RuntimesCreateMixin(DatalayerAuthMixin):
+    """
+    Mixin to create a Runtime with a given environment name.
+    """
+
+    kernel_given_name: Any
+    credits_limit: Any
+
     def _create_runtime(self, environment_name: str) -> dict[str, str]:
         """Create a Runtime with the given environment name."""
         body = {"type": "notebook"}
@@ -76,7 +88,7 @@ class RuntimesCreateApp(DatalayerCLIBaseApp, RuntimesCreateMixin):
         help="Maximal amount of credits that can be consumed by the Runtime.",
     )
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
             self.log.warning("Too many arguments were provided for Runtime create.")
