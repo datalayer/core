@@ -15,7 +15,7 @@ class DatalayerLoginApp(DatalayerCLIBaseApp):
       datalayer login
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
             warnings.warn("Too many arguments were provided for login.")

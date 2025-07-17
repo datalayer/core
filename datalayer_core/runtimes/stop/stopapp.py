@@ -13,7 +13,7 @@ class RuntimesStopApp(DatalayerCLIBaseApp):
       An application to stop a Runtime.
     """
 
-    def start(self):
+    def start(self) -> None:
         try:
             super().start()
             self.log.info("Runtime Stop - not implemented.")

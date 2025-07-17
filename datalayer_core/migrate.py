@@ -31,6 +31,7 @@ import os
 import re
 import shutil
 from datetime import datetime, timezone
+from typing import Any, Optional
 
 from traitlets.config.loader import JSONFileConfigLoader, PyFileConfigLoader
 from traitlets.log import get_logger
@@ -68,7 +69,7 @@ config_substitutions = {
 }
 
 
-def get_ipython_dir():
+def get_ipython_dir() -> str:
     """Return the IPython directory location.
 
     Not imported from IPython because the IPython implementation
@@ -82,7 +83,7 @@ def get_ipython_dir():
     return os.environ.get("IPYTHONDIR", os.path.expanduser("~/.ipython"))
 
 
-def migrate_dir(src, dst):
+def migrate_dir(src: str, dst: str) -> bool:
     """Migrate a directory from src to dst"""
     log = get_logger()
     if not os.listdir(src):
@@ -101,7 +102,9 @@ def migrate_dir(src, dst):
     return True
 
 
-def migrate_file(src, dst, substitutions=None):
+def migrate_file(
+    src: str, dst: str, substitutions: Optional[dict[Any, Any]] = None
+) -> bool:
     """Migrate a single file from src to dst
 
     substitutions is an optional dict of {regex: replacement} for performing replacements on the file.
@@ -124,7 +127,7 @@ def migrate_file(src, dst, substitutions=None):
     return True
 
 
-def migrate_one(src, dst):
+def migrate_one(src: str, dst: str) -> bool:
     """Migrate one item
 
     dispatches to migrate_dir/_file
@@ -139,7 +142,7 @@ def migrate_one(src, dst):
         return False
 
 
-def migrate_static_custom(src, dst):
+def migrate_static_custom(src: str, dst: str) -> bool:
     """Migrate non-empty custom.js,css from src to dst
 
     src, dst are 'custom' directories containing custom.{js,css}
@@ -187,7 +190,7 @@ def migrate_static_custom(src, dst):
     return migrated
 
 
-def migrate_config(name, env):
+def migrate_config(name: str, env: dict[str, Any]) -> list[str]:
     """Migrate a config file.
 
     Includes substitutions for updated configurable names.
@@ -216,7 +219,7 @@ def migrate_config(name, env):
     return migrated
 
 
-def migrate():
+def migrate() -> bool:
     """Migrate IPython configuration to Datalayer"""
     env = {
         "datalayer_data": datalayer_data_dir(),
@@ -271,7 +274,7 @@ class DatalayerMigrate(DatalayerApp):
     If the destinations already exist, nothing will be done.
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the application."""
         if not migrate():
             self.log.info("Found nothing to migrate.")

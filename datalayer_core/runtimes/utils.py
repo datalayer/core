@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datetime import datetime, timezone
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -13,7 +14,7 @@ def _timestamp_to_local_date(timestamp: str) -> str:
     )
 
 
-def _new_kernel_table(title="Runtimes"):
+def _new_kernel_table(title: str = "Runtimes") -> Table:
     table = Table(title=title)
     table.add_column("Runtime ID", style="magenta", no_wrap=True)
     table.add_column("Runtime Name", style="cyan", no_wrap=True)
@@ -22,7 +23,7 @@ def _new_kernel_table(title="Runtimes"):
     return table
 
 
-def _add_kernel_to_table(table, kernel):
+def _add_kernel_to_table(table: Table, kernel: dict[str, Any]) -> None:
     expired_at = kernel.get("expired_at")
     table.add_row(
         kernel["pod_name"],
@@ -32,7 +33,7 @@ def _add_kernel_to_table(table, kernel):
     )
 
 
-def display_kernels(kernels: list) -> None:
+def display_kernels(kernels: list[dict[str, Any]]) -> None:
     """Display a list of kernels in the console."""
     table = _new_kernel_table(title="Runtimes")
     for kernel in kernels:
@@ -41,7 +42,9 @@ def display_kernels(kernels: list) -> None:
     console.print(table)
 
 
-def get_default_credits_limit(reservations: list[dict], credits: dict) -> float:
+def get_default_credits_limit(
+    reservations: list[dict[str, Any]], credits: dict[str, Any]
+) -> float:
     """Get the default credits limit based on the available credits and reservations."""
     available = (
         credits["credits"]

@@ -23,7 +23,7 @@ class DatalayerAboutApp(DatalayerCLIBaseApp):
 
     _requires_auth = False
 
-    def start(self):
+    def start(self) -> None:
         try:
             super().start()
             console = Console()

@@ -71,11 +71,12 @@ class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
         self.init_kernel_manager()
         self.init_kernel_client()
 
-        if self.kernel_client.client.channels_running:
-            # create the shell
-            self.init_shell()
-            # and draw the banner
-            self.init_banner()
+        if self.kernel_client is not None:
+            if self.kernel_client.client.channels_running:
+                # create the shell
+                self.init_shell()
+                # and draw the banner
+                self.init_banner()
 
     def init_kernel_manager(self) -> None:
         """Initialize the kernel manager."""
@@ -87,19 +88,21 @@ class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
             username=self.user_handle or "",
         )
 
-        if not self.existing:
-            self.kernel_client.start_kernel(
-                name=self.kernel_name, path=self.kernel_path
-            )
-        elif self.kernel_client.kernel is None:
-            msg = f"Unable to connect to kernel with ID {self.existing}."
-            raise RuntimeError(msg)
+        if self.kernel_client is not None:
+            if not self.existing:
+                self.kernel_client.start_kernel(
+                    name=self.kernel_name, path=self.kernel_path
+                )
+            elif self.kernel_client.kernel is None:
+                msg = f"Unable to connect to kernel with ID {self.existing}."
+                raise RuntimeError(msg)
 
-    def init_shell(self):
+    def init_shell(self) -> None:
         super().init_shell()
         # Force `own_kernel` to False to prevent shutting down the kernel
         # on exit
-        self.shell.own_kernel = False
+        if self.shell is not None:
+            self.shell.own_kernel = False
 
 
 main = launch_new_instance = RuntimesConsoleApp.launch_instance

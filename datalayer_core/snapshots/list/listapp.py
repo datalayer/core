@@ -3,6 +3,8 @@
 
 import sys
 
+from typing import Any
+
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.snapshots.utils import display_snapshots
 
@@ -12,11 +14,11 @@ class SnapshotsListMixin:
     Mixin class to provide functionality for listing snapshots.
     """
 
-    def _list_snapshots(self):
+    def _list_snapshots(self) -> dict[str, Any]:
         """List all available snapshots."""
         try:
-            response = self._fetch(
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),
+            response = self._fetch(  # type: ignore
+                "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:
@@ -33,7 +35,7 @@ class SnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
       datalayer snapshots list
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
             self.log.warn("Too many arguments were provided for snapshots list.")
@@ -42,7 +44,7 @@ class SnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
 
         raw = self._list_snapshots()
         if raw.get("success"):
-            display_snapshots(raw.get("snapshots"))
+            display_snapshots(raw["snapshots"])
         else:
-            self.log.warning(raw.get("message"))
+            self.log.warning(raw["message"])
             sys.exit(1)

@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.table import Table
 
 
-def _new_secrets_table(title="Secrets"):
+def _new_secrets_table(title: str = "Secrets") -> Table:
     table = Table(title=title)
     table.add_column("ID", style="cyan", no_wrap=True)
     table.add_column("Name", style="cyan", no_wrap=True)
@@ -16,7 +16,7 @@ def _new_secrets_table(title="Secrets"):
     return table
 
 
-def _add_secret_to_table(table, secret):
+def _add_secret_to_table(table: Table, secret: dict[str, str]) -> None:
     table.add_row(
         secret["uid"],
         secret["name_s"],
@@ -25,7 +25,7 @@ def _add_secret_to_table(table, secret):
     )
 
 
-def display_secrets(secrets: list) -> None:
+def display_secrets(secrets: list[dict[str, str]]) -> None:
     """Display a list of secrets in the console."""
     table = _new_secrets_table(title="Secrets")
     for secret in secrets:

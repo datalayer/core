@@ -15,7 +15,7 @@ class LoginHandler(ExtensionHandlerMixin, APIHandler):
     """The login handler."""
 
     #    @tornado.web.authenticated
-    def post(self):
+    def post(self) -> None:
         """Login."""
         data = json.loads(self.request.body)
         print(data)

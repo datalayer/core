@@ -21,7 +21,7 @@ class DatalayerConfig(DatalayerApp):
     Show the configuration
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the application."""
         with open(Path.home() / ".datalayer/datalayer_core.conf", "rb") as toml:
             config = tomllib.load(toml)

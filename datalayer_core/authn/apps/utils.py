@@ -5,7 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 
-def display_me(me: dict, infos: dict) -> None:
+def display_me(me: dict[str, str], infos: dict[str, str]) -> None:
     """Display a my profile."""
     table = Table(title="Profile")
     table.add_column("ID", style="magenta", no_wrap=True)

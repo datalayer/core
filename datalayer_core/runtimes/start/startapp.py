@@ -13,7 +13,7 @@ class RuntimesStartApp(DatalayerCLIBaseApp):
       An application to start a Runtime.
     """
 
-    def start(self):
+    def start(self) -> None:
         try:
             super().start()
             self.log.info("Runtime Start - not implemented.")

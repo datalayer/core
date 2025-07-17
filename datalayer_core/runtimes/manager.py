@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+from typing import Any
 
 from rich import print_json
 
@@ -20,7 +21,9 @@ HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 class RuntimeManager(KernelHttpManager):
     """Manages a single Runtime."""
 
-    def __init__(self, run_url: str, token: str, username: str, **kwargs):
+    def __init__(
+        self, run_url: str, token: str, username: str, **kwargs: dict[str, Any]
+    ):
         """Initialize the gateway Runtime manager."""
         _ = kwargs.pop("kernel_id", None)  # kernel_id not supported
         super().__init__(server_url="", token="", username=username, **kwargs)
@@ -44,7 +47,7 @@ class RuntimeManager(KernelHttpManager):
     # --------------------------------------------------------------------------
     def start_kernel(
         self, name: str = "", path: str | None = None, timeout: float = REQUEST_TIMEOUT
-    ):
+    ) -> dict[str, Any] | None:
         """Starts a kernel on Datalayer cloud.
 
         Parameters

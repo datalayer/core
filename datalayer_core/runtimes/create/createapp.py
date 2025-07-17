@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import sys
-from typing import Optional
+from typing import Optional, Any
 
 from rich import print_json
 from traitlets import Dict, Float, Unicode
@@ -21,7 +21,7 @@ class RuntimesCreateMixin:
         environment_name: str,
         given_name: Optional[str] = None,
         credits_limit: Optional[float] = None,
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         """Create a Runtime with the given environment name."""
         body = {
             "type": "notebook",
@@ -32,8 +32,9 @@ class RuntimesCreateMixin:
             body["given_name"] = given_name
 
         if credits_limit is None:
-            response = self._fetch(
-                "{}/api/iam/v1/usage/credits".format(self.run_url), method="GET"
+            response = self._fetch(  # type: ignore
+                "{}/api/iam/v1/usage/credits".format(self.run_url),  # type: ignore
+                method="GET",
             )
 
             raw_credits = response.json()
@@ -51,12 +52,15 @@ class RuntimesCreateMixin:
             return {}
 
         body["credits_limit"] = credits_limit  # type: ignore
-        response = self._fetch(
-            "{}/api/runtimes/v1/runtimes".format(self.run_url),
-            method="POST",
-            json=body,
-        )
-        return response.json()
+        try:
+            response = self._fetch(  # type: ignore
+                "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore
+                method="POST",
+                json=body,
+            )
+            return response.json()
+        except RuntimeError as e:
+            return {"success": False, "message": str(e)}
 
 
 class RuntimesCreateApp(DatalayerCLIBaseApp, RuntimesCreateMixin):
@@ -84,7 +88,7 @@ class RuntimesCreateApp(DatalayerCLIBaseApp, RuntimesCreateMixin):
         help="Maximal amount of credits that can be consumed by the Runtime.",
     )
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
             self.log.warning("Too many arguments were provided for Runtime create.")
@@ -100,7 +104,7 @@ class RuntimesCreateApp(DatalayerCLIBaseApp, RuntimesCreateMixin):
         if raw is None:
             self.exit(1)
 
-        kernel = raw.get("kernel")
+        kernel = raw["kernel"]
         if kernel:
             display_kernels([kernel])
         else:

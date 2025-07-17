@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import asyncio
+from typing import Any, Optional
 from jupyter_console.ptshell import ZMQTerminalInteractiveShell
 from jupyter_console.utils import ensure_async
 from traitlets import (
@@ -19,11 +20,11 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
     client = Instance("datalayer_core.runtimes.client.RuntimeClient", allow_none=True)
 
     @default("banner")
-    def _default_banner(self):
+    def _default_banner(self) -> str:
         # FIXME
         return "Datalayer - Runtime console {version}\n\n{kernel_banner}"
 
-    async def handle_external_iopub(self, loop=None):
+    async def handle_external_iopub(self, loop: Optional[Any] = None) -> None:
         while self.keep_running:
             # we need to check for keep_running from time to time
             poll_result = await ensure_async(self.client.iopub_channel.msg_ready)
@@ -31,7 +32,7 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
                 self.handle_iopub()
             await asyncio.sleep(0.5)
 
-    def show_banner(self):
+    def show_banner(self) -> None:
         print(
             self.banner.format(
                 version=__version__, kernel_banner=self.kernel_info.get("banner", "")

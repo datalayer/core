@@ -25,7 +25,7 @@ class SnapshotsApp(DatalayerCLIBaseApp):
         "ls": (SnapshotsListApp, SnapshotsListApp.description.splitlines()[0]),
     }
 
-    def start(self):
+    def start(self) -> None:
         try:
             super().start()
             self.log.info(
