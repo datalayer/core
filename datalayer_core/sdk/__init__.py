@@ -2,3 +2,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datalayer_core.sdk.datalayer import DatalayerClient
+
+
+__all__ = [
+    "DatalayerClient",
+]

@@ -9,7 +9,6 @@ from datalayer_core.runtimes.list.listapp import RuntimesListMixin
 from datalayer_core.runtimes.terminate.terminateapp import RuntimesTerminateMixin
 
 
-
 class RuntimesMixin(
     RuntimesCreateMixin,
     RuntimesListMixin,

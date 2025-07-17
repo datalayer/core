@@ -6,8 +6,7 @@ import warnings
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-class RuntimesTerminateMixin:        
-
+class RuntimesTerminateMixin:
     def _terminate_runtime(self, pod_name: str):
         """Terminate a Runtime with the given kernel ID."""
         response = self._fetch(

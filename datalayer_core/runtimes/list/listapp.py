@@ -8,7 +8,6 @@ from datalayer_core.runtimes.utils import display_kernels
 
 
 class RuntimesListMixin:
-
     def _list_runtimes(self):
         """List all available runtimes."""
         response = self._fetch(

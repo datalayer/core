@@ -5,6 +5,7 @@
 Datalayer AI SDK - A simple SDK for AI engineers to work with Datalayer.
 Provides authentication, runtime creation, and code execution capabilities.
 """
+
 import os
 from typing import Any, Optional
 
@@ -42,7 +43,9 @@ class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin):
         token:
             Authentication token (can also be set via DATALAYER_TOKEN env var).
         """
-        self.run_url = run_url.rstrip("/") or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
+        self.run_url = run_url.rstrip("/") or os.environ.get(
+            "DATALAYER_RUN_URL", DEFAULT_RUN_URL
+        )
         self.token = token or os.environ.get("DATALAYER_TOKEN", None)
         self.user_handle = None
         self._kernel_client = None
@@ -97,7 +100,11 @@ class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin):
             name = f"runtime-{environment}-{os.getpid()}"
 
         runtime = Runtime(
-            name, environment=environment, timeout=timeout, run_url=self.run_url, token=self.token 
+            name,
+            environment=environment,
+            timeout=timeout,
+            run_url=self.run_url,
+            token=self.token,
         )
         return runtime
 
@@ -155,12 +162,12 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
         if self._runtime is None and self._kernel_client is None:
             self._runtime = self._create_runtime(self.environment_name)
             runtime = self._runtime.get("runtime")
-            url = runtime.get('ingress')
-            token = runtime.get('token')
+            url = runtime.get("ingress")
+            token = runtime.get("token")
             self._kernel_client = KernelClient(server_url=url, token=token)
-            self._kernel_client_info = runtime.get('kernel')
+            self._kernel_client_info = runtime.get("kernel")
             self._kernel_client.start()
-            self._pod_name = runtime.get('pod_name')
+            self._pod_name = runtime.get("pod_name")
 
     def stop(self) -> None:
         """Stop the runtime."""
