@@ -5,6 +5,10 @@ from subprocess import run
 import os
 
 import pytest
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 DATALAYER_TEST_TOKEN = os.environ["DATALAYER_TEST_TOKEN"]
