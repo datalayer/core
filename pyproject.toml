@@ -26,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "jupyter-kernel-client",
+    "jupyter-nbmodel-client",
     "jupyter-console",
     "jupyter_server>=2.10,<3",
     "keyring==23.0.1", # TODO Fix https://github.com/datalayer/core/issues/36
@@ -51,6 +52,7 @@ test = [
     "pytest-cov",
     "pytest_jupyter",
     "pytest-tornasync",
+    "python-dotenv",
 ]
 docs = [
     "pydoc-markdown"
@@ -88,3 +90,10 @@ path = "datalayer_core/_version.py"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"
+
+[tool.mypy]
+follow_imports = "skip"
+ignore_missing_imports = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+warn_unused_ignores = true

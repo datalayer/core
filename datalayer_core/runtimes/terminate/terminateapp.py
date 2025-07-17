@@ -6,7 +6,18 @@ import warnings
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-class RuntimesTerminateApp(DatalayerCLIBaseApp):
+class RuntimesTerminateMixin:        
+
+    def _terminate_runtime(self, pod_name: str):
+        """Terminate a Runtime with the given kernel ID."""
+        response = self._fetch(
+            "{}/api/jupyter/v1/kernels/{}".format(self.run_url, pod_name),
+            method="DELETE",
+        )
+        return response.status_code == 204
+
+
+class RuntimesTerminateApp(DatalayerCLIBaseApp, RuntimesTerminateMixin):
     """Runtime Terminate application."""
 
     description = """
@@ -23,9 +34,5 @@ class RuntimesTerminateApp(DatalayerCLIBaseApp):
             self.exit(1)
 
         kernel_id = self.extra_args[0]
-
-        self._fetch(
-            "{}/api/jupyter/v1/kernels/{}".format(self.run_url, kernel_id),
-            method="DELETE",
-        )
+        self._terminate_runtime(kernel_id)
         self.log.info(f"Runtime '{kernel_id}' deleted.")

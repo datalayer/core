@@ -7,7 +7,17 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.runtimes.utils import display_kernels
 
 
-class RuntimesListApp(DatalayerCLIBaseApp):
+class RuntimesListMixin:
+
+    def _list_runtimes(self):
+        """List all available runtimes."""
+        response = self._fetch(
+            "{}/api/jupyter/v1/kernels".format(self.run_url),
+        )
+        return response.json()
+
+
+class RuntimesListApp(DatalayerCLIBaseApp, RuntimesListMixin):
     """An application to list the Runtimes."""
 
     description = """
@@ -23,8 +33,4 @@ class RuntimesListApp(DatalayerCLIBaseApp):
             self.print_help()
             self.exit(1)
 
-        response = self._fetch(
-            "{}/api/jupyter/v1/kernels".format(self.run_url),
-        )
-        raw = response.json()
-        display_kernels(raw.get("kernels", []))
+        display_kernels(self._list_runtimes().get("runtimes", []))
