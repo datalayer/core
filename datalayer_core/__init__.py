@@ -19,7 +19,5 @@ def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
 
 __all__ = [
     "__version__",
-    "_jupyter_server_extension_points",
     "DatalayerClient",
-    "DatalayerExtensionApp",
 ]

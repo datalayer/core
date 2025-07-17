@@ -7,11 +7,12 @@ Provides authentication, runtime creation, and code execution capabilities.
 """
 
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from datalayer_core.cli.base import DatalayerAuthMixin
 from datalayer_core.environments import EnvironmentsMixin
 from datalayer_core.runtimes import RuntimesMixin
+from datalayer_core.secrets import SecretsMixin, SecretType
 from jupyter_kernel_client import KernelClient
 
 
@@ -20,7 +21,7 @@ DEFAULT_RUN_URL = "https://prod1.datalayer.run"
 DEFAULT_TIMEOUT = 10  # Minutes
 
 
-class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin):
+class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin, SecretsMixin):
     """
     SDK for Datalayer AI platform.
 
@@ -108,6 +109,81 @@ class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin):
         )
         return runtime
 
+    def list_secrets(self) -> list["Secret"]:
+        """
+        List all secrets available in the Datalayer environment.
+
+        Returns
+        -------
+            List[Secret]: A list of Secret objects.
+        """
+        raw = self._list_secrets()
+        secrets = raw.get("secrets", [])
+        res = []
+        for secret in secrets:
+            uid = secret.pop("uid")
+            name = secret.pop("name_s")
+            description = secret.pop("description_t")
+            variant = secret.pop("variant_s")
+            res.append(
+                Secret(
+                    uid=uid,
+                    name=name,
+                    description=description,
+                    variant=variant,
+                    **secret,
+                )
+            )
+        return res
+
+    def create_secret(
+        self,
+        name: str,
+        description: str,
+        value: str,
+        secret_type: str = SecretType.GENERIC,
+    ) -> "Secret":
+        """
+        Create a new secret.
+
+        Parameters
+        ----------
+        name: str
+            Name of the secret.
+        description: str
+            Description of the secret.
+        value: str
+            Value of the secret.
+        secret_type: str
+            Type of the secret (e.g., "generic", "password", "key", "token").
+
+        Returns
+        -------
+            Secret: The created secret object.
+        """
+        response = self._create_secret(
+            name=name, description=description, value=value, secret_type=secret_type
+        )
+        secret_data = response.get("secret", {})
+        return Secret(
+            uid=secret_data.get("uid"),
+            name=secret_data.get("name_s"),
+            description=secret_data.get("description_t"),
+            secret_type=secret_data.get("variant_s"),
+        )
+
+    def delete_secret(self, secret: Union[str, "Secret"]) -> dict[str, str]:
+        """
+        Delete a secret by its unique identifier.
+
+        Parameters
+        ----------
+        secret: Union[str, Secret]
+            Unique identifier of the secret or a Secret object.
+        """
+        uid = secret.uid if isinstance(secret, Secret) else secret
+        return self._delete_secret(uid)
+
 
 class Runtime(DatalayerAuthMixin, RuntimesMixin):
     """
@@ -144,9 +220,10 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
         self.timeout = timeout
         self.token = token
         self._runtime: dict[str, str] = {}
-        self._kernel_client = None
-        self._kernel_id = None
-        self.credits_limit: float = 0.0
+        self._kernel_client: Optional[KernelClient] = None
+        self._kernel_id: Optional[str] = None
+        self._pod_name: Optional[str] = None
+        self.credits_limit: Optional[float] = None
 
     def __enter__(self) -> "Runtime":
         """Context manager entry."""
@@ -159,14 +236,14 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
 
     def start(self) -> None:
         """Start the runtime."""
-        if self._runtime is None and self._kernel_client is None:
+        if self._kernel_client is None:
             self._runtime = self._create_runtime(self.environment_name)
-            runtime = self._runtime.get("runtime")
+            runtime: dict[str, str] = self._runtime.get("runtime")  # type: ignore
             url = runtime.get("ingress")
             token = runtime.get("token")
             self._kernel_client = KernelClient(server_url=url, token=token)
-            self._kernel_client_info = runtime.get("kernel")
             self._kernel_client.start()
+            self._kernel_client_info = runtime.get("kernel")
             self._pod_name = runtime.get("pod_name")
 
     def stop(self) -> None:
@@ -175,7 +252,8 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
             self._kernel_client.stop()
             self._kernel_client = None
             self._kernel_id = None
-            self._terminate_runtime(self._pod_name)
+            if self._pod_name:
+                self._terminate_runtime(self._pod_name)
 
     def execute(self, code: str) -> dict[str, str]:
         """
@@ -195,3 +273,39 @@ class Runtime(DatalayerAuthMixin, RuntimesMixin):
             reply = self._kernel_client.execute(code)
             result = reply.get("outputs", {})
         return result
+
+
+class Secret:
+    """
+    Represents a secret in Datalayer.
+
+    Parameters
+    ----------
+    uid: str
+        Unique identifier for the secret.
+    name: str
+        Name of the secret.
+    description: str
+        Description of the secret.
+    secret_type: str
+        Type of the secret (e.g., "generic", "password", "key", "token").
+    value: str
+        Value of the secret.
+    """
+
+    def __init__(
+        self,
+        uid: str,
+        name: str,
+        description: str,
+        secret_type: str = SecretType.GENERIC,
+        **kwargs: dict[str, str],
+    ) -> None:
+        self.uid = uid
+        self.name = name
+        self.description = description
+        self.secret_type = secret_type
+        self.kwargs = kwargs
+
+    def __repr__(self) -> str:
+        return f"Secret(uid='{self.uid}', name='{self.name}', description='{self.description}')"
