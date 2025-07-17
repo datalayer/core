@@ -1,6 +1,5 @@
 {
   "name": "@datalayer/core",
-  "private": false,
   "version": "0.0.1",
   "type": "module",
   "author": {
@@ -24,6 +23,10 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "style": "style/index.css",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/datalayer/core.git"
+  },
   "homepage": "https://github.com/datalayer/core",
   "bugs": {
     "url": "https://github.com/datalayer/core/issues"
