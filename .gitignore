@@ -179,5 +179,5 @@ dmypy.json
 !.github
 !.devcontainer
 
-# Environment variables
+# Ignore environment files
 .env
