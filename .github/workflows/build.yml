@@ -23,8 +23,8 @@ jobs:
     - name: Lint the extension
       run: |
         set -eux
+        jlpm run lint
         jlpm
-        jlpm run lint:check
     
     - name: Test the extension
       run: |
@@ -71,7 +71,7 @@ jobs:
       with:
         python-version: '3.9'
         architecture: 'x64'
-    - uses: actions/download-artifact@v4.3.0
+    - uses: actions/download-artifact@v4
       with:
         name: extension-artifacts
     - name: Install and Test
