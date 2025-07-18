@@ -16,7 +16,7 @@ class BenchmarksWebApp(DatalayerCLIBaseApp):
 
     _requires_auth = False
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
             self.log.warning("Too many arguments were provided for kernel create.")

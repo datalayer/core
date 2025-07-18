@@ -68,7 +68,7 @@ config_substitutions = {
 }
 
 
-def get_ipython_dir():
+def get_ipython_dir() -> str:
     """Return the IPython directory location.
 
     Not imported from IPython because the IPython implementation
@@ -82,7 +82,7 @@ def get_ipython_dir():
     return os.environ.get("IPYTHONDIR", os.path.expanduser("~/.ipython"))
 
 
-def migrate_dir(src, dst):
+def migrate_dir(src: str, dst: str) -> bool:
     """Migrate a directory from src to dst"""
     log = get_logger()
     if not os.listdir(src):
@@ -187,7 +187,7 @@ def migrate_static_custom(src, dst):
     return migrated
 
 
-def migrate_config(name, env):
+def migrate_config(name, env) -> list[str]:
     """Migrate a config file.
 
     Includes substitutions for updated configurable names.
@@ -216,7 +216,7 @@ def migrate_config(name, env):
     return migrated
 
 
-def migrate():
+def migrate() -> bool:
     """Migrate IPython configuration to Datalayer"""
     env = {
         "datalayer_data": datalayer_data_dir(),
@@ -271,7 +271,7 @@ class DatalayerMigrate(DatalayerApp):
     If the destinations already exist, nothing will be done.
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the application."""
         if not migrate():
             self.log.info("Found nothing to migrate.")

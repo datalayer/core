@@ -29,7 +29,7 @@ class DatalayerParser(argparse.ArgumentParser):
     """A Datalayer argument parser."""
 
     @property
-    def epilog(self):
+    def epilog(self) -> str:
         """Add subcommands to epilog on request
 
         Avoids searching PATH for subcommands unless help output is requested.
@@ -41,10 +41,10 @@ class DatalayerParser(argparse.ArgumentParser):
         """Ignore epilog set in Parser.__init__"""
         pass
 
-    def argcomplete(self):
+    def argcomplete(self) -> None:
         """Trigger auto-completion, if enabled"""
         try:
-            import argcomplete  # type: ignore[import]
+            import argcomplete
 
             argcomplete.autocomplete(self)
         except ImportError:
@@ -123,7 +123,7 @@ def list_subcommands() -> List[str]:
     return sorted(subcommands)
 
 
-def _execvp(cmd, argv):
+def _execvp(cmd: str, argv: List[str]) -> None:
     """execvp, except on Windows where it uses Popen
 
     Python provides execvp on Windows, but its behavior is problematic (Python bug#9148).
@@ -146,7 +146,7 @@ def _execvp(cmd, argv):
         os.execvp(cmd, argv)  # noqa
 
 
-def _datalayer_abspath(subcommand):
+def _datalayer_abspath(subcommand: str) -> str:
     """This method get the abspath of a specified datalayer-subcommand with no
     changes on ENV.
     """
@@ -166,7 +166,7 @@ def _datalayer_abspath(subcommand):
     return abs_path
 
 
-def _path_with_self():
+def _path_with_self() -> List[str]:
     """Put `datalayer`'s dir at the front of PATH
 
     Ensures that /path/to/datalayer subcommand

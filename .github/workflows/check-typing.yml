@@ -39,4 +39,4 @@ jobs:
           uv pip install mypy
       - name: Run mypy
         run: |
-          mypy -m datalayer_core.sdk
+          mypy datalayer_core

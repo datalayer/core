@@ -111,7 +111,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
 
     _executing: bool = False
 
-    def handle_sigint(self, *args):
+    def handle_sigint(self, *args: t.Any) -> None:
         if self._executing:
             if self.kernel_manager:
                 self.kernel_manager.interrupt_kernel()
@@ -156,7 +156,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
 
         self.kernel_client.start_channels()
 
-    def start(self):
+    def start(self) -> None:
         try:
             # JupyterApp.start dispatches on NoStart
             super(RuntimesExecApp, self).start()

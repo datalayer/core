@@ -16,13 +16,13 @@ class WhoamiApp(DatalayerCLIBaseApp):
       datalayer whoami
     """
 
-    def get_profile(self):
+    def get_profile(self) -> dict[str, str]:
         response = self._fetch(
             "{}/api/iam/v1/whoami".format(self.run_url),
         )
         return response.json()
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
             warnings.warn("Too many arguments were provided for runtimes list.")

@@ -19,7 +19,7 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
     client = Instance("datalayer_core.runtimes.client.RuntimeClient", allow_none=True)
 
     @default("banner")
-    def _default_banner(self):
+    def _default_banner(self) -> str:
         # FIXME
         return "Datalayer - Runtime console {version}\n\n{kernel_banner}"
 
@@ -31,7 +31,7 @@ class WSTerminalInteractiveShell(ZMQTerminalInteractiveShell):
                 self.handle_iopub()
             await asyncio.sleep(0.5)
 
-    def show_banner(self):
+    def show_banner(self) -> None:
         print(
             self.banner.format(
                 version=__version__, kernel_banner=self.kernel_info.get("banner", "")

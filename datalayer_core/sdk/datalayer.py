@@ -9,7 +9,6 @@ Provides authentication, runtime creation, and code execution capabilities.
 import os
 from typing import Any, Optional, Union
 
-from datalayer_core.cli.base import DatalayerAuthMixin
 from datalayer_core.environments import EnvironmentsMixin
 from datalayer_core.runtimes import RuntimesMixin
 from datalayer_core.secrets import SecretsMixin, SecretType
@@ -21,7 +20,7 @@ DEFAULT_RUN_URL = "https://prod1.datalayer.run"
 DEFAULT_TIMEOUT = 10  # Minutes
 
 
-class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin, SecretsMixin):
+class DatalayerClient(EnvironmentsMixin, SecretsMixin):
     """
     SDK for Datalayer AI platform.
 
@@ -185,7 +184,7 @@ class DatalayerClient(DatalayerAuthMixin, EnvironmentsMixin, SecretsMixin):
         return self._delete_secret(uid)
 
 
-class Runtime(DatalayerAuthMixin, RuntimesMixin):
+class Runtime(RuntimesMixin):
     """
     Represents a Datalayer runtime (kernel) for code execution.
     """
