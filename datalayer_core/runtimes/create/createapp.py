@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import sys
+from typing import Optional
 
 from rich import print_json
 from traitlets import Dict, Float, Unicode
@@ -15,34 +16,41 @@ create_alias["credits-limit"] = "RuntimesCreateApp.credits_limit"
 
 
 class RuntimesCreateMixin:
-    def _create_runtime(self, environment_name: str) -> dict[str, str]:
+    def _create_runtime(
+        self,
+        environment_name: str,
+        given_name: Optional[str] = None,
+        credits_limit: Optional[float] = None,
+    ) -> dict[str, str]:
         """Create a Runtime with the given environment name."""
-        body = {"type": "notebook"}
-        if self.kernel_given_name:
-            body["given_name"] = self.kernel_given_name
+        body = {
+            "type": "notebook",
+            "environment_name": environment_name,
+        }
 
-        if self.credits_limit is None:
+        if given_name:
+            body["given_name"] = given_name
+
+        if credits_limit is None:
             response = self._fetch(
                 "{}/api/iam/v1/usage/credits".format(self.run_url), method="GET"
             )
 
             raw_credits = response.json()
-            self.credits_limit = get_default_credits_limit(
+            credits_limit = get_default_credits_limit(
                 raw_credits["reservations"], raw_credits["credits"]
             )
-            self.log.warning(
-                "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
-                    self.credits_limit
-                )
-            )
+            # self.log.warning(
+            #     "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
+            #         self.credits_limit
+            #     )
+            # )
 
-        if self.credits_limit < sys.float_info.epsilon:
-            self.log.warning("Credits reservation is not positive. Exiting…")
+        if credits_limit < sys.float_info.epsilon:
+            # self.log.warning("Credits reservation is not positive. Exiting…")
             return {}
 
-        body["credits_limit"] = self.credits_limit
-        body["environment_name"] = environment_name
-
+        body["credits_limit"] = credits_limit  # type: ignore
         response = self._fetch(
             "{}/api/runtimes/v1/runtimes".format(self.run_url),
             method="POST",
@@ -84,7 +92,11 @@ class RuntimesCreateApp(DatalayerCLIBaseApp, RuntimesCreateMixin):
             self.exit(1)
 
         environment_name = self.extra_args[0]
-        raw = self._create_runtime(environment_name)
+        raw = self._create_runtime(
+            environment_name,
+            given_name=self.kernel_given_name,
+            credits_limit=self.credits_limit,
+        )
         if raw is None:
             self.exit(1)
 

@@ -9,32 +9,38 @@ from datalayer_core import DatalayerClient
 load_dotenv()
 
 client = DatalayerClient()
-if client.authenticate():
-    print("creating runtime:")
-    with client.create_runtime() as runtime:
-        code = """import os
-from platform import node
-print(f"Hey {os.environ.get('USER', 'John Smith')} from {node()}.")
-"""
-        result = runtime.execute(code)
-        print(result)
+print(client.list_runtimes())
+# with client.create_runtime() as runtime:
+#     response = runtime.execute("import os;print(len(os.environ['MY_SECRET']))")
+#     print(response.stdout)
+#     response = runtime.execute(
+#         'from platform import node;print(f"Hello world! from {node()}.")'
+#     )
+#     print(response.stdout)
+#     snapshot = runtime.create_snapshot(stop=False)
+#     print(snapshot)
 
-    created_secret = client.create_secret(
-        name="my_secret_2",
-        description="This is a test secret",
-        value="super_secret_value",
-    )
-    print("created:", created_secret)
-    secrets = client.list_secrets()
 
-    print("list:")
-    for secret in secrets:
-        print(secret)
+# created_secret = client.create_secret(
+#     name="my_secret_2",
+#     description="This is a test secret",
+#     value="super_secret_value",
+# )
+# print("created:", created_secret)
+# secrets = client.list_secrets()
 
-    print("delete:")
-    client.delete_secret(created_secret)
+# print("list:")
+# for secret in secrets:
+#     print(secret)
 
-    print("list:")
-    secrets = client.list_secrets()
-    for secret in secrets:
-        print(secret)
+# print("delete:")
+# client.delete_secret(created_secret)
+
+# print("list:")
+# secrets = client.list_secrets()
+# for secret in secrets:
+#     print(secret)
+
+# snapshots = client.list_snapshots()
+# for s in snapshots:
+#     print(s.name)
