@@ -14,16 +14,16 @@ def _timestamp_to_local_date(timestamp: str) -> str:
     )
 
 
-def _new_kernel_table(title: str = "Runtimes") -> Table:
+def _new_runtime_table(title: str = "Runtimes") -> Table:
     table = Table(title=title)
-    table.add_column("Runtime ID", style="magenta", no_wrap=True)
-    table.add_column("Runtime Name", style="cyan", no_wrap=True)
-    table.add_column("Environment", style="green", no_wrap=True)
-    table.add_column("Expired At", style="red", no_wrap=True)
+    table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("Name", style="cyan", no_wrap=True)
+    table.add_column("Environment", style="cyan", no_wrap=True)
+    table.add_column("Expired At", style="cyan", no_wrap=True)
     return table
 
 
-def _add_kernel_to_table(table: Table, kernel: dict[str, Any]) -> None:
+def _add_runtime_to_table(table: Table, kernel: dict[str, Any]) -> None:
     expired_at = kernel.get("expired_at")
     table.add_row(
         kernel["pod_name"],
@@ -33,11 +33,11 @@ def _add_kernel_to_table(table: Table, kernel: dict[str, Any]) -> None:
     )
 
 
-def display_kernels(kernels: list[dict[str, Any]]) -> None:
-    """Display a list of kernels in the console."""
-    table = _new_kernel_table(title="Runtimes")
-    for kernel in kernels:
-        _add_kernel_to_table(table, kernel)
+def display_runtimes(runtimes: list[dict[str, Any]]) -> None:
+    """Display a list of Runtimes in the console."""
+    table = _new_runtime_table(title="Runtimes")
+    for runtime in runtimes:
+        _add_runtime_to_table(table, runtime)
     console = Console()
     console.print(table)
 

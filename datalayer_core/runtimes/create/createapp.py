@@ -4,11 +4,10 @@
 import sys
 from typing import Any, Optional
 
-from rich import print_json
 from traitlets import Dict, Float, Unicode
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp, datalayer_aliases
-from datalayer_core.runtimes.utils import display_kernels, get_default_credits_limit
+from datalayer_core.runtimes.utils import display_runtimes, get_default_credits_limit
 
 create_alias = dict(datalayer_aliases)
 create_alias["given-name"] = "RuntimesCreateApp.kernel_given_name"
@@ -16,6 +15,8 @@ create_alias["credits-limit"] = "RuntimesCreateApp.credits_limit"
 
 
 class RuntimesCreateMixin:
+    """Mixin for creating a Datalayer Runtime."""
+
     def _create_runtime(
         self,
         environment_name: str,
@@ -31,28 +32,28 @@ class RuntimesCreateMixin:
         if given_name:
             body["given_name"] = given_name
 
-        if credits_limit is None:
-            response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/usage/credits".format(self.run_url),  # type: ignore
-                method="GET",
-            )
-
-            raw_credits = response.json()
-            credits_limit = get_default_credits_limit(
-                raw_credits["reservations"], raw_credits["credits"]
-            )
-            # self.log.warning(
-            #     "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
-            #         self.credits_limit
-            #     )
-            # )
-
-        if credits_limit < sys.float_info.epsilon:
-            # self.log.warning("Credits reservation is not positive. Exiting…")
-            return {}
-
-        body["credits_limit"] = credits_limit  # type: ignore
         try:
+            if credits_limit is None:
+                response = self._fetch(  # type: ignore
+                    "{}/api/iam/v1/usage/credits".format(self.run_url),  # type: ignore
+                    method="GET",
+                )
+
+                raw_credits = response.json()
+                credits_limit = get_default_credits_limit(
+                    raw_credits["reservations"], raw_credits["credits"]
+                )
+                # self.log.warning(
+                #     "The Runtime will be allowed to consumed half of your remaining credits: {:.2f} credit.".format(
+                #         self.credits_limit
+                #     )
+                # )
+
+            if credits_limit < sys.float_info.epsilon:
+                # self.log.warning("Credits reservation is not positive. Exiting…")
+                return {}
+
+            body["credits_limit"] = credits_limit  # type: ignore
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore
                 method="POST",
@@ -96,16 +97,15 @@ class RuntimesCreateApp(DatalayerCLIBaseApp, RuntimesCreateMixin):
             self.exit(1)
 
         environment_name = self.extra_args[0]
-        raw = self._create_runtime(
+        response = self._create_runtime(
             environment_name,
             given_name=self.kernel_given_name,
             credits_limit=self.credits_limit,
         )
-        if raw is None:
-            self.exit(1)
 
-        kernel = raw["kernel"]
-        if kernel:
-            display_kernels([kernel])
+        if response["success"]:
+            runtime = response["runtime"]
+            display_runtimes([runtime])
         else:
-            print_json(data=raw)
+            self.log.warning("Runtime could not be created!")
+            self.exit(1)

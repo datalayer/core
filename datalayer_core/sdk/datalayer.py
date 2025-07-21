@@ -55,6 +55,370 @@ def _list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshot"]:
     return snapshot_objects
 
 
+class DatalayerClientAuthMixin:
+    """
+    Mixin class for Datalayer client authentication.
+
+    Provides methods to authenticate and fetch resources from the Datalayer server.
+    """
+
+    _token: Optional[str] = None
+    _external_token: Optional[str] = None
+    _run_url: str = DEFAULT_RUN_URL
+
+    def _fetch(self, request: str, **kwargs: Any) -> requests.Response:
+        """Fetch a network resource."""
+        try:
+            return fetch(
+                request,
+                token=self._token,
+                external_token=self._external_token,
+                **kwargs,
+            )
+        except requests.exceptions.Timeout as e:
+            raise e
+        except requests.exceptions.HTTPError as e:
+            # raw = e.response.json()
+            # self.log.debug(raw)
+            raise RuntimeError(
+                f"Failed to request the URL {request if isinstance(request, str) else request.url!s}"
+            ) from e
+
+    def _log_in(self) -> dict[str, Any]:
+        body = {
+            "token": self._token,
+        }
+        try:
+            response = self._fetch(
+                "{}/api/iam/v1/login".format(self._run_url),
+                method="POST",
+                json=body,
+            )
+            return response.json()
+        except RuntimeError as e:
+            return {"success": False, "message": str(e)}
+
+
+class DatalayerClient(
+    DatalayerClientAuthMixin,
+    RuntimesMixin,
+    EnvironmentsMixin,
+    SecretsMixin,
+    SnapshotsMixin,
+):
+    """
+    SDK for Datalayer AI platform.
+
+    Provides a unified interface for authentication, runtime creation,
+    and code execution in Datalayer environments.
+    """
+
+    def __init__(
+        self,
+        run_url: str = DEFAULT_RUN_URL,
+        token: Optional[str] = None,
+    ):
+        """
+        Initialize the Datalayer SDK.
+
+        Parameters
+        ----------
+        run_url:
+            Datalayer server URL. Defaults to "https://prod1.datalayer.run".
+        token:
+            Authentication token (can also be set via DATALAYER_TOKEN env var).
+        """
+        # TODO: Check user and password login
+        self._run_url = run_url.rstrip("/") or os.environ.get(
+            "DATALAYER_RUN_URL", DEFAULT_RUN_URL
+        )
+        self._token = token or os.environ.get("DATALAYER_TOKEN", None)
+        self._user_handle = None
+        self._kernel_client = None
+        self._notebook_client = None
+
+        if not self._token:
+            raise ValueError(
+                "Token is required. Set it via parameter or `DATALAYER_TOKEN` environment variable"
+            )
+
+    @property
+    def run_url(self) -> str:
+        return self._run_url
+
+    def authenticate(self) -> bool:
+        """
+        Validate authentication credentials.
+
+        Returns:
+            bool: True if authentication is successful
+        """
+        response = self._log_in()
+        # print(response)
+        return response["success"]
+
+    @lru_cache
+    def list_environments(self) -> list["Environment"]:
+        """
+        List all available environments.
+
+        Returns
+        -------
+            list: A list of available environments.
+        """
+        self._available_environments = self._list_environments()["environments"]
+        self._available_environments_names = []
+        env_objs = []
+        for env in self._available_environments:
+            self._available_environments_names.append(env.get("name"))
+            env_objs.append(
+                Environment(
+                    name=env.pop("name"),
+                    title=env.pop("title"),
+                    burning_rate=env.pop("burning_rate", 0.0),
+                    language=env.pop("language"),
+                    owner=env.pop("owner"),
+                    visibility=env.pop("visibility"),
+                    metadata=env,
+                )
+            )
+        return env_objs
+
+    def create_runtime(
+        self,
+        name: Optional[str] = None,
+        environment: str = DEFAULT_ENVIRONMENT,
+        timeout: float = DEFAULT_TIMEOUT,
+    ) -> "Runtime":
+        """
+        Create a new runtime (kernel) for code execution.
+
+        Parameters
+        ----------
+        name:
+            Name of the kernel to create (default: python3)
+        envionment:
+            Type of resources needed (cpu, gpu, etc.)
+        timeout:
+            Request timeout in minutes. Defaults to 10 minutes.
+
+        Returns
+        -------
+            Runtime: A runtime object for code execution
+        """
+        self.list_environments()
+        if environment not in self._available_environments_names:
+            raise ValueError(
+                f"Environment '{environment}' not found. Available environments: {self._available_environments_names}"
+            )
+        if name is None:
+            name = f"runtime-{environment}-{uuid.uuid4()}"
+
+        runtime = Runtime(
+            name,
+            environment=environment,
+            timeout=timeout,
+            run_url=self.run_url,
+            token=self._token,
+        )
+        return runtime
+
+    def list_runtimes(self) -> list["Runtime"]:
+        """Terminate a running Runtime.
+
+        Parameters
+        ----------
+        runtime: Runtime or str
+
+        'environment_title':'AI Environment',
+        'type': 'notebook',
+        """
+        runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
+        runtime_objects = []
+        for runtime in runtimes:
+            runtime_objects.append(
+                Runtime(
+                    name=runtime["given_name"],
+                    environment=runtime["environment_name"],
+                    pod_name=runtime["pod_name"],
+                    token=self._token,
+                    ingress=runtime["ingress"],
+                    reservation_id=runtime["reservation_id"],
+                    uid=runtime["uid"],
+                    burning_rate=runtime["burning_rate"],
+                    kernel_token=runtime["token"],
+                    run_url=self._run_url,
+                    started_at=runtime["started_at"],
+                    expired_at=runtime["expired_at"],
+                )
+            )
+        return runtime_objects
+
+    def terminate_runtime(self, runtime: Union["Runtime", str]) -> bool:
+        """Terminate a running Runtime.
+
+        Parameters
+        ----------
+        runtime: Runtime or str
+
+        """
+        pod_name = runtime.pod_name if isinstance(runtime, Runtime) else runtime
+        if pod_name is not None:
+            return self._terminate_runtime(pod_name)["success"]
+        else:
+            return False
+
+    def list_secrets(self) -> list["Secret"]:
+        """
+        List all secrets available in the Datalayer environment.
+
+        Returns
+        -------
+            List[Secret]: A list of Secret objects.
+        """
+        raw = self._list_secrets()
+        secrets = raw.get("secrets", [])
+        res = []
+        for secret in secrets:
+            uid = secret.pop("uid")
+            name = secret.pop("name_s")
+            description = secret.pop("description_t")
+            variant = secret.pop("variant_s")
+            res.append(
+                Secret(
+                    uid=uid,
+                    name=name,
+                    description=description,
+                    variant=variant,
+                    **secret,
+                )
+            )
+        return res
+
+    def create_secret(
+        self,
+        name: str,
+        description: str,
+        value: str,
+        secret_type: str = SecretType.GENERIC,
+    ) -> "Secret":
+        """
+        Create a new secret.
+
+        Parameters
+        ----------
+        name: str
+            Name of the secret.
+        description: str
+            Description of the secret.
+        value: str
+            Value of the secret.
+        secret_type: str
+            Type of the secret (e.g., "generic", "password", "key", "token").
+
+        Returns
+        -------
+            Secret: The created secret object.
+        """
+        response = self._create_secret(
+            name=name, description=description, value=value, secret_type=secret_type
+        )
+        secret_data = response.get("secret", {})
+        return Secret(
+            uid=secret_data.get("uid"),
+            name=secret_data.get("name_s"),
+            description=secret_data.get("description_t"),
+            secret_type=secret_data.get("variant_s"),
+        )
+
+    def delete_secret(self, secret: Union[str, "Secret"]) -> dict[str, str]:
+        """
+        Delete a secret by its unique identifier.
+
+        Parameters
+        ----------
+        secret: Union[str, Secret]
+            Unique identifier of the secret or a Secret object.
+        """
+        uid = secret.uid if isinstance(secret, Secret) else secret
+        return self._delete_secret(uid)
+
+    def create_snapshot(
+        self,
+        runtime: Optional["Runtime"] = None,
+        pod_name: Optional[str] = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        stop: bool = True,
+    ) -> "RuntimeSnapshot":
+        """
+        Create a snapshot of the current runtime state.
+
+        Parameters
+        ----------
+        runtime: Optional[Runtime]
+            The runtime object to create a snapshot from.
+        pod_name: Optional[str]
+            The pod name of the runtime.
+        name: str, optional
+            Name for the new snapshot.
+        description: str, optional
+            Description for the new snapshot.
+        """
+        if pod_name is None and runtime is None:
+            raise ValueError(
+                "Either 'runtime' or 'pod_name' must be provided to create a snapshot."
+            )
+        elif runtime is not None:
+            pod_name = runtime.pod_name
+
+        name, description = _create_snapshot(name=name, description=description)
+        response = self._create_snapshot(
+            pod_name=pod_name,  # type: ignore
+            name=name,
+            description=description,
+            stop=stop,
+        )
+        snapshots_objects = self.list_snapshots()
+        for snapshot in snapshots_objects:
+            if snapshot.name == name:
+                break
+        return RuntimeSnapshot(
+            uid=snapshot.uid,
+            name=name,
+            description=description,
+            environment=snapshot.enviroment,
+            metadata=response,
+        )
+
+    def list_snapshots(self) -> list["RuntimeSnapshot"]:
+        """
+        List all snapshots.
+
+        Returns
+        -------
+        list: A list of snapshots associated.
+        """
+        response = self._list_snapshots()
+        snapshot_objects = _list_snapshots(response)
+        return snapshot_objects
+
+    def delete_snapshot(
+        self, snapshot: Union[str, "RuntimeSnapshot"]
+    ) -> dict[str, str]:
+        """
+        Delete a specific snapshot.
+
+        Returns
+        -------
+        dict: The result of the deletion operation.
+        """
+        snapshot_uid = (
+            snapshot.uid if isinstance(snapshot, RuntimeSnapshot) else snapshot
+        )
+        return self._delete_snapshot(snapshot_uid)
+
+
 class Environment:
     """Represents a Datalayer environment.
 
@@ -213,360 +577,6 @@ class Environment:
         return f"Environment(name='{self.name}', title='{self.title}')"
 
 
-class DatalayerClientAuthMixin:
-    """
-    Mixin class for Datalayer client authentication.
-
-    Provides methods to authenticate and fetch resources from the Datalayer server.
-    """
-
-    _token: Optional[str] = None
-    _external_token: Optional[str] = None
-    _run_url: str = DEFAULT_RUN_URL
-
-    def _fetch(self, request: str, **kwargs: Any) -> requests.Response:
-        """Fetch a network resource."""
-        try:
-            return fetch(
-                request,
-                token=self._token,
-                external_token=self._external_token,
-                **kwargs,
-            )
-        except requests.exceptions.Timeout as e:
-            raise e
-        except requests.exceptions.HTTPError as e:
-            # raw = e.response.json()
-            # self.log.debug(raw)
-            raise RuntimeError(
-                f"Failed to request the URL {request if isinstance(request, str) else request.url!s}"
-            ) from e
-
-    def _log_in(self) -> dict[str, Any]:
-        body = {
-            "token": self._token,
-        }
-        try:
-            response = self._fetch(
-                "{}/api/iam/v1/login".format(self._run_url),
-                method="POST",
-                json=body,
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"success": False, "message": str(e)}
-
-
-class DatalayerClient(
-    DatalayerClientAuthMixin,
-    RuntimesMixin,
-    EnvironmentsMixin,
-    SecretsMixin,
-    SnapshotsMixin,
-):
-    """
-    SDK for Datalayer AI platform.
-
-    Provides a unified interface for authentication, runtime creation,
-    and code execution in Datalayer environments.
-    """
-
-    def __init__(
-        self,
-        run_url: str = DEFAULT_RUN_URL,
-        token: Optional[str] = None,
-    ):
-        """
-        Initialize the Datalayer SDK.
-
-        Parameters
-        ----------
-        run_url:
-            Datalayer server URL. Defaults to "https://prod1.datalayer.run".
-        token:
-            Authentication token (can also be set via DATALAYER_TOKEN env var).
-        """
-        # TODO: Check user and password login
-        self._run_url = run_url.rstrip("/") or os.environ.get(
-            "DATALAYER_RUN_URL", DEFAULT_RUN_URL
-        )
-        self._token = token or os.environ.get("DATALAYER_TOKEN", None)
-        self._user_handle = None
-        self._kernel_client = None
-        self._notebook_client = None
-
-        if not self._token:
-            raise ValueError(
-                "Token is required. Set it via parameter or `DATALAYER_TOKEN` environment variable"
-            )
-
-    @property
-    def run_url(self) -> str:
-        return self._run_url
-
-    def authenticate(self) -> bool:
-        """
-        Validate authentication credentials.
-
-        Returns:
-            bool: True if authentication is successful
-        """
-        response = self._log_in()
-        # print(response)
-        return response["success"]
-
-    @lru_cache
-    def list_environments(self) -> list["Environment"]:
-        """
-        List all available environments.
-
-        Returns
-        -------
-            list: A list of available environments.
-        """
-        self._available_environments = self._list_environments()
-        self._available_environments_names = []
-        env_objs = []
-        for env in self._available_environments:
-            self._available_environments_names.append(env.get("name"))
-            env_objs.append(
-                Environment(
-                    name=env.pop("name"),
-                    title=env.pop("title"),
-                    burning_rate=env.pop("burning_rate", 0.0),
-                    language=env.pop("language"),
-                    owner=env.pop("owner"),
-                    visibility=env.pop("visibility"),
-                    metadata=env,
-                )
-            )
-        return env_objs
-
-    def create_runtime(
-        self,
-        name: Optional[str] = None,
-        environment: str = DEFAULT_ENVIRONMENT,
-        timeout: float = DEFAULT_TIMEOUT,
-    ) -> "Runtime":
-        """
-        Create a new runtime (kernel) for code execution.
-
-        Parameters
-        ----------
-        name:
-            Name of the kernel to create (default: python3)
-        envionment:
-            Type of resources needed (cpu, gpu, etc.)
-        timeout:
-            Request timeout in minutes. Defaults to 10 minutes.
-
-        Returns
-        -------
-            Runtime: A runtime object for code execution
-        """
-        self.list_environments()
-        if environment not in self._available_environments_names:
-            raise ValueError(
-                f"Environment '{environment}' not found. Available environments: {self._available_environments_names}"
-            )
-        if name is None:
-            name = f"runtime-{environment}-{uuid.uuid4()}"
-
-        runtime = Runtime(
-            name,
-            environment=environment,
-            timeout=timeout,
-            run_url=self.run_url,
-            token=self._token,
-        )
-        return runtime
-
-    def list_runtimes(self) -> list["Runtime"]:
-        """Terminate a running Runtime.
-
-        Parameters
-        ----------
-        runtime: Runtime or str
-
-        'environment_title':'AI Environment',
-        'type': 'notebook',
-        """
-        runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
-        runtime_objects = []
-        for runtime in runtimes:
-            runtime_objects.append(
-                Runtime(
-                    name=runtime["given_name"],
-                    environment=runtime["environment_name"],
-                    pod_name=runtime["pod_name"],
-                    token=self._token,
-                    ingress=runtime["ingress"],
-                    reservation_id=runtime["reservation_id"],
-                    uid=runtime["uid"],
-                    burning_rate=runtime["burning_rate"],
-                    kernel_token=runtime["token"],
-                    run_url=self._run_url,
-                    started_at=runtime["started_at"],
-                    expired_at=runtime["expired_at"],
-                )
-            )
-        return runtime_objects
-
-    def terminate_runtime(self, runtime: Union["Runtime", str]) -> bool:
-        """Terminate a running Runtime.
-
-        Parameters
-        ----------
-        runtime: Runtime or str
-
-        """
-        pod_name = runtime.pod_name if isinstance(runtime, Runtime) else runtime
-        if pod_name is not None:
-            return self._terminate_runtime(pod_name)
-        else:
-            return False
-
-    def list_secrets(self) -> list["Secret"]:
-        """
-        List all secrets available in the Datalayer environment.
-
-        Returns
-        -------
-            List[Secret]: A list of Secret objects.
-        """
-        raw = self._list_secrets()
-        secrets = raw.get("secrets", [])
-        res = []
-        for secret in secrets:
-            uid = secret.pop("uid")
-            name = secret.pop("name_s")
-            description = secret.pop("description_t")
-            variant = secret.pop("variant_s")
-            res.append(
-                Secret(
-                    uid=uid,
-                    name=name,
-                    description=description,
-                    variant=variant,
-                    **secret,
-                )
-            )
-        return res
-
-    def create_secret(
-        self,
-        name: str,
-        description: str,
-        value: str,
-        secret_type: str = SecretType.GENERIC,
-    ) -> "Secret":
-        """
-        Create a new secret.
-
-        Parameters
-        ----------
-        name: str
-            Name of the secret.
-        description: str
-            Description of the secret.
-        value: str
-            Value of the secret.
-        secret_type: str
-            Type of the secret (e.g., "generic", "password", "key", "token").
-
-        Returns
-        -------
-            Secret: The created secret object.
-        """
-        response = self._create_secret(
-            name=name, description=description, value=value, secret_type=secret_type
-        )
-        secret_data = response.get("secret", {})
-        return Secret(
-            uid=secret_data.get("uid"),
-            name=secret_data.get("name_s"),
-            description=secret_data.get("description_t"),
-            secret_type=secret_data.get("variant_s"),
-        )
-
-    def delete_secret(self, secret: Union[str, "Secret"]) -> dict[str, str]:
-        """
-        Delete a secret by its unique identifier.
-
-        Parameters
-        ----------
-        secret: Union[str, Secret]
-            Unique identifier of the secret or a Secret object.
-        """
-        uid = secret.uid if isinstance(secret, Secret) else secret
-        return self._delete_secret(uid)
-
-    def create_snapshot(
-        self,
-        pod_name: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        stop: bool = True,
-    ) -> "RuntimeSnapshot":
-        """
-        Create a snapshot of the current runtime state.
-
-        Parameters
-        ----------
-        pod_name: str, optional
-            Name of the pod to create a snapshot from.
-        name: str, optional
-            Name for the new snapshot.
-        description: str, optional
-            Description for the new snapshot.
-        """
-        name, description = _create_snapshot(name=name, description=description)
-        response = self._create_snapshot(
-            pod_name=pod_name,
-            name=name,
-            description=description,
-            stop=stop,
-        )
-        snapshots_objects = self.list_snapshots()
-        for snapshot in snapshots_objects:
-            if snapshot.name == name:
-                break
-        return RuntimeSnapshot(
-            uid=snapshot.uid,
-            name=name,
-            description=description,
-            environment=snapshot.enviroment,
-            metadata=response,
-        )
-
-    def list_snapshots(self) -> list["RuntimeSnapshot"]:
-        """
-        List all snapshots.
-
-        Returns
-        -------
-        list: A list of snapshots associated.
-        """
-        response = self._list_snapshots()
-        snapshot_objects = _list_snapshots(response)
-        return snapshot_objects
-
-    def delete_snapshot(
-        self, snapshot: Union[str, "RuntimeSnapshot"]
-    ) -> dict[str, str]:
-        """
-        Delete a specific snapshot.
-
-        Returns
-        -------
-        dict: The result of the deletion operation.
-        """
-        snapshot_uid = (
-            snapshot.uid if isinstance(snapshot, RuntimeSnapshot) else snapshot
-        )
-        return self._delete_snapshot(snapshot_uid)
-
-
 class Response:
     """Represents the response from code execution in a runtime."""
 
@@ -617,7 +627,7 @@ class Response:
         return self._stderr
 
 
-class Runtime(RuntimesMixin, SnapshotsMixin):
+class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
     """
     Represents a Datalayer runtime (kernel) for code execution.
     """
@@ -722,7 +732,7 @@ class Runtime(RuntimesMixin, SnapshotsMixin):
             self._kernel_client = None
             self._kernel_id = None
             if self._pod_name:
-                return self._terminate_runtime(self._pod_name)
+                return self._terminate_runtime(self._pod_name)["success"]
         return False
 
     @property
@@ -848,8 +858,6 @@ class Secret:
         Description of the secret.
     secret_type: str
         Type of the secret (e.g., "generic", "password", "key", "token").
-    value: str
-        Value of the secret.
     """
 
     def __init__(

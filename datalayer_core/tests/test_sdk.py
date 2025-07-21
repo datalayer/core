@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import os
+import time
 import uuid
 
 import pytest
@@ -88,24 +89,39 @@ def test_runtime_create_execute_and_list():
         response = runtime.execute("print('test')")
         assert response.stdout.strip() == "test"
 
-        assert client.list_runtimes() == 1
+        assert len(client.list_runtimes()) == 1
 
 
 @pytest.mark.skipif(
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_runtime_snapshot_creation():
+def test_runtime_snapshot_create_and_delete():
     """
     Test the creation and deletion of runtime.
     """
-    # Create a secret
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     runtime_name = f"test_runtime-{uuid.uuid4()}"
-    smnapshot_name = f"test_snapshot-{uuid.uuid4()}"
+    snapshot_name = f"test_snapshot-{uuid.uuid4()}"
+    snapshot_name_2 = f"test_snapshot-{uuid.uuid4()}"
+    snapshot_name_3 = f"test_snapshot-{uuid.uuid4()}"
     with client.create_runtime(name=runtime_name) as runtime:
-        snapshot = runtime.create_snapshot(name=smnapshot_name, stop=False)
-        assert snapshot.name == smnapshot_name
+        snapshot = runtime.create_snapshot(name=snapshot_name, stop=False)
+        assert snapshot.name == snapshot_name
+        snapshot_2 = client.create_snapshot(
+            runtime=runtime, name=snapshot_name_2, stop=False
+        )
+        assert snapshot_2.name == snapshot_name_2
+        snapshot_3 = client.create_snapshot(
+            pod_name=runtime.pod_name, name=snapshot_name_3, stop=False
+        )
+        assert snapshot_3.name == snapshot_name_3
+
+        time.sleep(5)
+
+        assert client.delete_snapshot(snapshot)["success"]
+        assert client.delete_snapshot(snapshot_2)["success"]
+        assert client.delete_snapshot(snapshot_3)["success"]
 
 
 @pytest.mark.skipif(
@@ -116,3 +132,13 @@ def test_environments_list():
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     envs = client.list_environments()
     assert len(envs) == 2
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_authenticate():
+    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    print(client._log_in())
+    assert client.authenticate()

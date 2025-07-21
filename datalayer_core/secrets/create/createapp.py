@@ -94,9 +94,9 @@ class SecretsCreateApp(DatalayerCLIBaseApp, SecretsCreateMixin):
             self.print_help()
             self.exit(1)
 
-        raw = self._create_secret(*self.extra_args)
-        secret = raw.get("secret", {})
-        if raw.get("success"):
+        response = self._create_secret(*self.extra_args)
+        if response["success"]:
+            secret = response["secret"]
             display_secrets([secret])
         else:
             self.log.warning("The secret could not be deleted!")

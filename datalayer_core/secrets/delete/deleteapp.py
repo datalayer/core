@@ -55,8 +55,8 @@ class SecretsDeleteApp(DatalayerCLIBaseApp, SecretsDeleteMixin):
             self.exit(1)
 
         secret_uid = self.extra_args[0]
-        raw = self._delete_secret(secret_uid)
-        if raw.get("success"):
+        response = self._delete_secret(secret_uid)
+        if response["success"]:
             self.log.info(f"Secret '{secret_uid}' deleted.")
         else:
             self.log.warning("The secret could not be deleted!")
