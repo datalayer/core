@@ -6,7 +6,11 @@ import typing as t
 from jupyter_core.application import JupyterApp
 from jupyter_kernel_client.konsoleapp import (
     KonsoleApp,
+)
+from jupyter_kernel_client.konsoleapp import (
     aliases as base_aliases,
+)
+from jupyter_kernel_client.konsoleapp import (
     flags as base_flags,
 )
 from traitlets import default
@@ -15,7 +19,6 @@ from traitlets.config import catch_config_error
 from ...__version__ import __version__
 from ...cli.base import DatalayerAuthMixin
 from ..manager import RuntimeManager
-
 
 datalayer_aliases = dict(base_aliases)
 datalayer_aliases["run-url"] = "DatalayerAuthMixin.run_url"

@@ -6,14 +6,16 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from rich import print_json
-
 from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
+from rich import print_json
 
-from datalayer_core.runtimes.utils import _timestamp_to_local_date
+from datalayer_core.runtimes.utils import (
+    _timestamp_to_local_date,
+    display_kernels,
+    get_default_credits_limit,
+)
 from datalayer_core.utils.utils import fetch
-from datalayer_core.runtimes.utils import display_kernels, get_default_credits_limit
 
 HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 

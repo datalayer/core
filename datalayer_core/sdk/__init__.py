@@ -3,7 +3,6 @@
 
 from datalayer_core.sdk.datalayer import DatalayerClient
 
-
 __all__ = [
     "DatalayerClient",
 ]

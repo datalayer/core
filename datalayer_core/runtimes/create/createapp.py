@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 import sys
-from typing import Optional, Any
+from typing import Any, Optional
 
 from rich import print_json
 from traitlets import Dict, Float, Unicode

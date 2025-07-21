@@ -3,8 +3,8 @@
 
 from typing import Any
 
-from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.authn.apps.utils import display_me
+from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class WhoamiApp(DatalayerCLIBaseApp):

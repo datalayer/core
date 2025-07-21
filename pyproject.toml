@@ -100,3 +100,6 @@ disallow_untyped_defs = true
 disallow_any_generics = true
 warn_unused_ignores = true
 exclude = ['datalayer_core/tests/', 'pydoc/', 'datalayer_core/paths.py', 'datalayer_core/authn/http_server.py']
+
+[tool.ruff.lint]
+extend-select = ["I"]

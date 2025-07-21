@@ -2,7 +2,6 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datalayer_core.application import NoStart
-
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 

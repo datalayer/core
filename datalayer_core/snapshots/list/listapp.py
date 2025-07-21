@@ -2,7 +2,6 @@
 # Distributed under the terms of the Modified BSD License.
 
 import sys
-
 from typing import Any
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp

@@ -20,12 +20,12 @@ from traitlets.config.loader import ConfigFileNotFound
 
 from .paths import (
     allow_insecure_writes,
-    issue_insecure_write_warning,
     datalayer_config_dir,
     datalayer_config_path,
     datalayer_data_dir,
     datalayer_path,
     datalayer_runtime_dir,
+    issue_insecure_write_warning,
 )
 from .utils import ensure_dir_exists
 

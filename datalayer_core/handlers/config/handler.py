@@ -5,12 +5,11 @@
 
 import json
 
-from tornado.web import authenticated
-
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.extension.handler import (
     ExtensionHandlerMixin,
 )
+from tornado.web import authenticated
 
 from datalayer_core.__version__ import __version__
 

@@ -3,11 +3,12 @@
 
 import asyncio
 from typing import Any, Optional
+
 from jupyter_console.ptshell import ZMQTerminalInteractiveShell
 from jupyter_console.utils import ensure_async
 from traitlets import (
-    default,
     Instance,
+    default,
 )
 
 from datalayer_core.__version__ import __version__

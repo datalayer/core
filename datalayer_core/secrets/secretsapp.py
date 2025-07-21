@@ -2,13 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datalayer_core.application import NoStart
-
+from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.secrets.create.createapp import SecretsCreateApp
 from datalayer_core.secrets.delete.deleteapp import SecretsDeleteApp
 from datalayer_core.secrets.list.listapp import SecretsListApp
-
-
-from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class SecretsApp(DatalayerCLIBaseApp):

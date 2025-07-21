@@ -7,9 +7,9 @@
 
 from pathlib import Path
 from typing import Optional
-from tornado.web import StaticFileHandler, HTTPError
 
 from jupyter_server.base.handlers import JupyterHandler
+from tornado.web import HTTPError, StaticFileHandler
 
 
 class ServiceWorkerHandler(StaticFileHandler, JupyterHandler):

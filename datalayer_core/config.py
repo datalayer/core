@@ -3,8 +3,9 @@
 
 # PYTHON_ARGCOMPLETE_OK
 
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 from .application import DatalayerApp
 

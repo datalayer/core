@@ -2,8 +2,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 from __future__ import annotations
-from typing import Optional
 
+from typing import Optional
 
 SERVER_PORT: int | None = None
 

@@ -3,10 +3,10 @@
 
 from __future__ import annotations
 
+import socket
 import typing as t
 
 import requests
-import socket
 
 
 def fetch(

@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from typing import Any
+
 from rich import print_json
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
