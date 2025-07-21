@@ -83,10 +83,10 @@ class RuntimeManager(KernelHttpManager):
                 "{}/api/runtimes/v1/runtimes".format(self.run_url),
                 token=self.run_token,
             )
-            kernels = response.json().get("kernels", [])
+            runtimes = response.json().get("runtimes", [])
 
             # If no runtime is running, let the user decide to start one from the first environment
-            if not kernels:
+            if not runtimes:
                 response_environments = fetch(
                     f"{self.run_url}/api/runtimes/v1/environments",
                     token=self.run_token,
@@ -137,9 +137,9 @@ class RuntimeManager(KernelHttpManager):
                     f"{self.run_url}/api/runtimes/v1/runtimes",
                     token=self.run_token,
                 )
-                kernels = response.json().get("kernels", [])
+                runtimes = response.json().get("kernels", [])
 
-            kernel = kernels[0]
+            kernel = runtimes[0]
             kernel_name = kernel.get("jupyter_pod_name", "")
 
         if kernel is None:
@@ -150,8 +150,8 @@ class RuntimeManager(KernelHttpManager):
 
         # Trick to set the kernel_url without the ability to set self.__kernel
         response = fetch(f"{self.server_url}/api/kernels", token=self.token)
-        kernels = response.json()
-        self._kernel_id = kernels[0]["id"]
+        runtimes = response.json()
+        self._kernel_id = runtimes[0]["id"]
 
         kernel_model = self.refresh_model()
         msg = f"RuntimeManager using existing jupyter kernel {kernel_name}"
