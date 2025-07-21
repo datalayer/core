@@ -28,26 +28,41 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          version: "latest"
-          python-version: 3.12
-          activate-environment: true
+          installer-url: https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-Linux-x86_64.sh
+          auto-update-conda: true
+          activate-environment: datalayer
 
       - name: Install dependencies
+        shell: bash -el {0}
         run: |
+          conda install boto3 python make nodejs 
+          pip install .[docs]
+          pip list
           npm install
-          uv pip install .
-          uv pip install .[test]
-          uv pip install .[docs]
 
       - name: Generate API docs
+        shell: bash -el {0}
         run: |
           make typedoc
           make pydoc
 
       - name: Generate docs
+        shell: bash -el {0}
         run: |
           cd docs
           npm install
           make build
+
+      - name: Publish docs
+        if: (github.ref == 'refs/heads/main' && github.event_name == 'push')
+        shell: bash -el {0}
+        env:
+          AWS_PROFILE: ${ secrets.AWS_PROFILE }
+          AWS_ACCESS_KEY_ID: ${ secrets.AWS_ACCESS_KEY_ID }
+          AWS_DEFAULT_REGION: ${ secrets.AWS_DEFAULT_REGION }
+          AWS_SECRET_ACCESS_KEY: ${ secrets.AWS_SECRET_ACCESS_KEY }
+        run: |
+          cd docs
+          make deploy

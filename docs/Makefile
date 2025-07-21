@@ -54,15 +54,11 @@ deploy: build ## deploy
 	($(CONDA_ACTIVATE) ${ENV_NAME}; \
 	  aws s3 rm \
 		s3://datalayer-core/ \
-		--recursive \
-		--profile datalayer && \
+		--recursive && \
 	  aws s3 cp \
 		./build \
 		s3://datalayer-core/ \
-		--recursive \
-		--profile datalayer && \
+		--recursive && \
 	  aws cloudfront create-invalidation \
 		--distribution-id E8559WINZGBIN \
-		--paths "/*" \
-		--profile datalayer && \
-	echo open ✨  https://core.datalayer.tech )
+		--paths "/*" )
