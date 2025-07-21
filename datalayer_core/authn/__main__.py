@@ -5,8 +5,8 @@ from __future__ import annotations
 
 import logging
 from typing import Optional
-from datalayer_core.authn.http_server import get_token
 
+from datalayer_core.authn.http_server import get_token
 
 logging.basicConfig(level=logging.INFO)
 

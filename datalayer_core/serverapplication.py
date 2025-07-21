@@ -5,21 +5,17 @@
 
 import os
 
-from traitlets import default, Bool, CInt, Instance, Unicode
+from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
+from jupyter_server.utils import url_path_join
+from traitlets import Bool, CInt, Instance, Unicode, default
 from traitlets.config import Configurable
 
-from jupyter_server.utils import url_path_join
-from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
-
-from datalayer_core.handlers.index.handler import IndexHandler
+from datalayer_core.__version__ import __version__
+from datalayer_core.authn.state import get_server_port
 from datalayer_core.handlers.config.handler import ConfigHandler
+from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
-
-from datalayer_core.authn.state import get_server_port
-
-from datalayer_core.__version__ import __version__
-
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
 

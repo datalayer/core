@@ -5,8 +5,8 @@
 
 from jupyter_server.base.handlers import JupyterHandler
 from jupyter_server.extension.handler import (
-    ExtensionHandlerMixin,
     ExtensionHandlerJinjaMixin,
+    ExtensionHandlerMixin,
 )
 
 

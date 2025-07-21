@@ -3,8 +3,8 @@
 
 
 from datalayer_core.snapshots.create.createapp import SnapshotsCreateMixin
-from datalayer_core.snapshots.list.listapp import SnapshotsListMixin
 from datalayer_core.snapshots.delete.deleteapp import SnapshotsDeleteMixin
+from datalayer_core.snapshots.list.listapp import SnapshotsListMixin
 
 
 class SnapshotsMixin(SnapshotsCreateMixin, SnapshotsDeleteMixin, SnapshotsListMixin):

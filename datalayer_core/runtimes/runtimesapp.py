@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datalayer_core.application import NoStart
-
+from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.runtimes.console.consoleapp import RuntimesConsoleApp
 from datalayer_core.runtimes.create.createapp import RuntimesCreateApp
 from datalayer_core.runtimes.exec.execapp import RuntimesExecApp
@@ -12,8 +12,6 @@ from datalayer_core.runtimes.start.startapp import RuntimesStartApp
 from datalayer_core.runtimes.stop.stopapp import RuntimesStopApp
 from datalayer_core.runtimes.terminate.terminateapp import RuntimesTerminateApp
 from datalayer_core.runtimes.web.webapp import RuntimesWebApp
-
-from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class JupyterRuntimesApp(DatalayerCLIBaseApp):

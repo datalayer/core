@@ -12,16 +12,16 @@ import warnings
 from pathlib import Path
 from types import FrameType
 from typing import (
+    Any,
     Awaitable,
     Callable,
+    Coroutine,
     List,
     Optional,
+    Tuple,
     TypeVar,
     Union,
     cast,
-    Any,
-    Tuple,
-    Coroutine,
 )
 
 

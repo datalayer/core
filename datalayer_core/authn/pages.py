@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-
 LANDING_PAGE = """<!DOCTYPE html>
 <html>
   <head>

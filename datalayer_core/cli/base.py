@@ -4,26 +4,22 @@
 import json
 import os
 import sys
-import time
 import threading
+import time
 import typing as t
 
 import questionary
 
 # We use `requests` instead of tornado to avoid trouble with the async event loop
 import requests
-
 from rich.console import Console
-
 from traitlets import Bool, Unicode, default
 from traitlets.config import LoggingConfigurable
 
-from datalayer_core.application import DatalayerApp, base_aliases, base_flags
-from datalayer_core.authn.http_server import get_token, USE_JUPYTER_SERVER_FOR_LOGIN
-from datalayer_core.utils.utils import fetch, find_http_port
-
 from datalayer_core.__version__ import __version__
-
+from datalayer_core.application import DatalayerApp, base_aliases, base_flags
+from datalayer_core.authn.http_server import USE_JUPYTER_SERVER_FOR_LOGIN, get_token
+from datalayer_core.utils.utils import fetch, find_http_port
 
 REQUEST_TIMEOUT = 5
 

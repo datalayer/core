@@ -3,12 +3,11 @@
 
 from pathlib import Path
 
-from datalayer_core.application import NoStart
 from rich.console import Console
 from rich.markdown import Markdown
 
+from datalayer_core.application import NoStart
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-
 
 HERE = Path(__file__).parent
 

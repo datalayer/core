@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from dataclasses import dataclass
+
 from pydoc_markdown.interfaces import Processor
 
 

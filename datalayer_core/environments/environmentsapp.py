@@ -2,8 +2,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datalayer_core.application import NoStart
-from datalayer_core.environments.list.listapp import EnvironmentsListApp
 from datalayer_core.cli.base import DatalayerCLIBaseApp
+from datalayer_core.environments.list.listapp import EnvironmentsListApp
 
 
 class EnvironmentsApp(DatalayerCLIBaseApp):

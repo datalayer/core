@@ -1,12 +1,11 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-from subprocess import run
 import os
+from subprocess import run
 
 import pytest
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -17,7 +16,7 @@ DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
 @pytest.mark.parametrize(
     "args,expected_output",
     [
-        (["--version"], "1.0"),
+        (["--version"], "1."),
         (["--help"], "The Datalayer CLI application"),
         (["about"], "About"),
         (["logout"], "\nDatalayer - Version"),

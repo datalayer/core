@@ -2,13 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 from datalayer_core.application import NoStart
-
+from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.snapshots.create.createapp import SnapshotsCreateApp
 from datalayer_core.snapshots.delete.deleteapp import SnapshotsDeleteApp
 from datalayer_core.snapshots.list.listapp import SnapshotsListApp
-
-
-from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class SnapshotsApp(DatalayerCLIBaseApp):
