@@ -15,9 +15,10 @@ class SnapshotsDeleteMixin:
     def _delete_snapshot(self, snapshot_uid: str) -> dict[str, Any]:
         """Delete snapshots of the current runtime."""
         try:
-            response = self._fetch(
+            response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtime-snapshots/{}".format(
-                    self.run_url, snapshot_uid
+                    self.run_url,  # type: ignore
+                    snapshot_uid,
                 ),
                 method="DELETE",
             )
@@ -39,7 +40,7 @@ class SnapshotsDeleteApp(DatalayerCLIBaseApp, SnapshotsDeleteMixin):
       datalayer snapshots delete SNAPSHOT_UID
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
             self.log.warn("Too many arguments were provided for snapshots delete.")
@@ -56,5 +57,5 @@ class SnapshotsDeleteApp(DatalayerCLIBaseApp, SnapshotsDeleteMixin):
         if raw.get("success"):
             self.log.info(f"Snapshot {snapshot_uid} deleted successfully.")
         else:
-            self.log.warning(raw.get("message"))
+            self.log.warning(raw["message"])
             sys.exit(1)

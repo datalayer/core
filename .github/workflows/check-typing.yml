@@ -37,6 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install mypy
+          uv pip install types-requests
       - name: Run mypy
         run: |
-          mypy -m datalayer_core.sdk
+          mypy datalayer_core

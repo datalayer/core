@@ -50,19 +50,19 @@ class DatalayerAuthMixin(LoggingConfigurable):
     run_url = Unicode("", allow_none=False, config=True, help="Datalayer RUN URL.")
 
     @default("run_url")
-    def _run_url_default(self):
+    def _run_url_default(self) -> str:
         return os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
 
     token = Unicode(None, allow_none=True, config=True, help="User access token.")
 
     @default("token")
-    def _token_default(self):
+    def _token_default(self) -> t.Optional[str]:
         return os.environ.get("DATALAYER_TOKEN", None)
 
     external_token = Unicode(None, allow_none=True, config=True, help="External token.")
 
     @default("external_token")
-    def _external_token_default(self):
+    def _external_token_default(self) -> t.Optional[str]:
         return os.environ.get("DATALAYER_EXTERNAL_TOKEN", None)
 
     no_browser = Bool(
@@ -225,7 +225,7 @@ class DatalayerAuthMixin(LoggingConfigurable):
                 except ImportError as e:
                     self.log.debug("Unable to import keyring.", exc_info=e)
 
-    def _ask_credentials(self) -> dict:
+    def _ask_credentials(self) -> dict[str, str]:
         questions = [
             {
                 "type": "select",
@@ -297,7 +297,7 @@ class DatalayerAuthMixin(LoggingConfigurable):
             self.log.critical("Open %s to authenticate to the remote server.", address)
             return
 
-        def target():
+        def target() -> None:
             assert browser is not None
             time.sleep(1)  # Allow for the server to start
             browser.open(address)
@@ -318,7 +318,7 @@ class DatalayerCLIBaseApp(DatalayerApp, DatalayerAuthMixin):
 
     _requires_auth = True
 
-    def initialize(self, argv=None):
+    def initialize(self, argv: t.Optional[list[t.Any]] = None) -> None:
         super().initialize(argv)
 
         if self.token is None:

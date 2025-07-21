@@ -21,8 +21,8 @@ class SnapshotsCreateMixin:
             "stop": stop,
         }
         try:
-            response = self._fetch(
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),
+            response = self._fetch(  # type: ignore
+                "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -41,7 +41,7 @@ class SnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):
       jupyter snapshots create POD_NAME NAME DESCRIPTION [STOP]
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 4:  # pragma: no cover
             self.log.warning("Too many arguments were provided for snapshots create.")
@@ -58,7 +58,7 @@ class SnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):
         if raw is None:
             self.exit(1)
 
-        kernel = raw.get("kernel")
+        kernel = raw["kernel"]
         if kernel:
             display_snapshots([kernel])
         else:

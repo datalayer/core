@@ -1,13 +1,14 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+from typing import Any
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class SecretsDeleteMixin:
     """Mixin for deleting secrets in Datalayer."""
 
-    def _delete_secret(self, secret_uid) -> dict:
+    def _delete_secret(self, secret_uid: str) -> dict[str, Any]:
         """ "
         Delete a secret by its unique identifier.
 
@@ -21,8 +22,8 @@ class SecretsDeleteMixin:
             dict: A dictionary containing the result of the deletion operation.
         """
         try:
-            response = self._fetch(
-                "{}/api/iam/v1/secrets/{}".format(self.run_url, secret_uid),
+            response = self._fetch(  # type: ignore
+                "{}/api/iam/v1/secrets/{}".format(self.run_url, secret_uid),  # type: ignore
                 method="DELETE",
             )
             return response.json()
@@ -40,7 +41,7 @@ class SecretsDeleteApp(DatalayerCLIBaseApp, SecretsDeleteMixin):
         datalayer secrets delete UID
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
             self.log.warning("Too many arguments were provided for Secrets list.")

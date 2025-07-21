@@ -3,7 +3,7 @@
 
 """Index handler."""
 
-import tornado
+from tornado.web import authenticated
 
 from datalayer_core.handlers.base import BaseTemplateHandler
 
@@ -12,7 +12,7 @@ from datalayer_core.handlers.base import BaseTemplateHandler
 class IndexHandler(BaseTemplateHandler):
     """The handler for the index."""
 
-    @tornado.web.authenticated
-    def get(self):
+    @authenticated
+    def get(self) -> None:
         """The index page."""
         self.write(self.render_template("index.html"))

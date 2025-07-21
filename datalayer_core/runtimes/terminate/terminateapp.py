@@ -7,13 +7,20 @@ from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
 class RuntimesTerminateMixin:
-    def _terminate_runtime(self, pod_name: str):
+    """
+    Mixin for terminating Datalayer runtimes.
+    """
+
+    def _terminate_runtime(self, pod_name: str) -> bool:
         """Terminate a Runtime with the given kernel ID."""
-        response = self._fetch(
-            "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, pod_name),
-            method="DELETE",
-        )
-        return response.status_code == 204
+        try:
+            response = self._fetch(  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, pod_name),  # type: ignore
+                method="DELETE",
+            )
+            return response.status_code == 204
+        except RuntimeError:
+            return False
 
 
 class RuntimesTerminateApp(DatalayerCLIBaseApp, RuntimesTerminateMixin):
@@ -25,7 +32,7 @@ class RuntimesTerminateApp(DatalayerCLIBaseApp, RuntimesTerminateMixin):
       jupyter kernels terminate RUNTIME_ID
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 1:  # pragma: no cover
             warnings.warn("Too many arguments were provided for Runtime terminate.")

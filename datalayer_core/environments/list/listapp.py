@@ -3,6 +3,7 @@
 
 import json
 import warnings
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -10,7 +11,7 @@ from rich.table import Table
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-def new_env_table():
+def new_env_table() -> Table:
     table = Table(title="Environments")
     table.add_column("ID", style="magenta", no_wrap=True)
     table.add_column("Cost per seconds", justify="right", style="red", no_wrap=True)
@@ -21,7 +22,7 @@ def new_env_table():
     return table
 
 
-def add_env_to_table(table, environment):
+def add_env_to_table(table: Table, environment: dict[str, Any]) -> None:
     desc = environment["description"]
     table.add_row(
         environment["name"],
@@ -36,10 +37,10 @@ def add_env_to_table(table, environment):
 class EnvironmentsListMixin:
     """Mixin class that provides environment listing functionality."""
 
-    def _list_environments(self):
+    def _list_environments(self) -> list[dict[str, Any]]:
         """List available environments."""
-        response = self._fetch(
-            "{}/api/runtimes/v1/environments".format(self.run_url),
+        response = self._fetch(  # type: ignore
+            "{}/api/runtimes/v1/environments".format(self.run_url),  # type: ignore
         )
         content = response.json()
         return content.get("environments", [])
@@ -54,7 +55,7 @@ class EnvironmentsListApp(DatalayerCLIBaseApp, EnvironmentsListMixin):
       jupyter kernels environments
     """
 
-    def start(self):
+    def start(self) -> None:
         if len(self.extra_args) > 0:  # pragma: no cover
             warnings.warn("Too many arguments were provided for kernel create.")
             self.print_help()

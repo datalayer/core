@@ -19,7 +19,7 @@ import tempfile
 import warnings
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import platformdirs
 
@@ -447,7 +447,7 @@ def is_file_hidden_posix(abs_path: str, stat_res: Optional[Any] = None) -> bool:
             raise
 
     # check that dirs can be listed
-    if stat.S_ISDIR(stat_res.st_mode):  # type:ignore[misc]  # noqa
+    if stat.S_ISDIR(stat_res.st_mode):
         # use x-access, not actual listing, in case of slow/large listings
         if not os.access(abs_path, os.X_OK | os.R_OK):
             return True
@@ -634,7 +634,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
 
     def _nonzero_success(result, func, args):
         if not result:
-            raise ctypes.WinError(ctypes.get_last_error())  # type:ignore[attr-defined]
+            raise ctypes.WinError(ctypes.get_last_error())
         return args
 
     secur32.GetUserNameExW.errcheck = _nonzero_success
@@ -743,7 +743,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 WellKnownSidType, None, pSid, ctypes.byref(cbSid)
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
+            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
                 raise
             pSid = (ctypes.c_char * cbSid.value)()
             advapi32.CreateWellKnownSid(
@@ -758,7 +758,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         try:
             secur32.GetUserNameExW(NameFormat, None, nSize)
         except OSError as e:
-            if e.winerror != ERROR_MORE_DATA:  # type:ignore[attr-defined]
+            if e.winerror != ERROR_MORE_DATA:
                 raise
         if not nSize.contents.value:
             return None
@@ -783,7 +783,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(peUse),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
+            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
                 raise
         Sid = ctypes.create_unicode_buffer("", cbSid.value)
         pSid = ctypes.cast(ctypes.pointer(Sid), wintypes.LPVOID)
@@ -800,7 +800,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
             ctypes.byref(peUse),
         )
         if not success:
-            raise ctypes.WinError()  # type:ignore[attr-defined]
+            raise ctypes.WinError()
         return pSid, lpReferencedDomainName.value, peUse.value
 
     def AddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid):
@@ -820,7 +820,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(nLength),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
+            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
                 raise
         if not nLength.value:
             return None
@@ -834,7 +834,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         )
         return pSecurityDescriptor
 
-    def SetFileSecurity(lpFileName, RequestedInformation, pSecurityDescriptor):
+    def SetFileSecurity(lpFileName, RequestedInformation, pSecurityDescriptor) -> None:
         # set the security of a file or directory object
         advapi32.SetFileSecurityW(lpFileName, RequestedInformation, pSecurityDescriptor)
 
@@ -874,7 +874,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(lpdwPrimaryGroupSize),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
+            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
                 raise
         pAbsoluteSecurityDescriptor = (
             wintypes.BYTE * lpdwAbsoluteSecurityDescriptorSize.value
@@ -914,7 +914,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(lpdwBufferLength),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:  # type:ignore[attr-defined]
+            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
                 raise
         pSelfRelativeSecurityDescriptor = (wintypes.BYTE * lpdwBufferLength.value)()
         advapi32.MakeSelfRelativeSD(
@@ -1035,7 +1035,7 @@ def secure_write(fname: str, binary: bool = False) -> Iterator[Any]:
 def issue_insecure_write_warning() -> None:
     """Issue an insecure write warning."""
 
-    def format_warning(msg, *args, **kwargs):
+    def format_warning(msg: str, *args: Tuple[Any], **kwargs: Dict[str, Any]) -> str:
         return str(msg) + "\n"
 
     warnings.formatwarning = format_warning  # type:ignore[assignment]

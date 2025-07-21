@@ -39,10 +39,10 @@ def _create_snapshot(
     return name, description
 
 
-def _list_snapshots(response) -> List["RuntimeSnapshot"]:
+def _list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshot"]:
     snapshot_objects = []
-    if response.get("success"):
-        snapshots = response.get("snapshots")
+    if response["success"]:
+        snapshots = response["snapshots"]
         for snapshot in snapshots:
             snapshot_objects.append(
                 RuntimeSnapshot(
@@ -317,7 +317,7 @@ class DatalayerClient(
         return response["success"]
 
     @lru_cache
-    def list_environments(self):
+    def list_environments(self) -> list["Environment"]:
         """
         List all available environments.
 
@@ -392,7 +392,7 @@ class DatalayerClient(
         'environment_title':'AI Environment',
         'type': 'notebook',
         """
-        runtimes = self._list_runtimes()["runtimes"]
+        runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
         runtime_objects = []
         for runtime in runtimes:
             runtime_objects.append(
@@ -592,7 +592,7 @@ class Response:
         self._stdout = "\n".join(stdout)
         self._stderr = "\n".join(stderr)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Response({self._stdout}, {self._stderr})"
 
     @property
@@ -618,7 +618,7 @@ class Response:
         return self._stderr
 
 
-class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
+class Runtime(RuntimesMixin, SnapshotsMixin):
     """
     Represents a Datalayer runtime (kernel) for code execution.
     """
@@ -676,7 +676,7 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         #     self._kernel_client = KernelClient(server_url=ingress, token=kernel_token)
         #     self._kernel_client.start()
 
-    def __del__(self):
+    def __del__(self) -> None:
         # self.stop()
         pass
 
@@ -689,7 +689,7 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         """Context manager exit."""
         self._stop()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Runtime(uid='{self.uid}', name='{self.name}')"
 
     def _start(self) -> None:
@@ -802,6 +802,9 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         -------
         RuntimeSnapshot: A new snapshot object.
         """
+        if self._pod_name is None:
+            raise RuntimeError("Runtime not started!")
+
         name, description = _create_snapshot(name=name, description=description)
         response = self._create_snapshot(
             pod_name=self._pod_name,
@@ -813,7 +816,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             self._kernel_client = None
             self._kernel_id = None
             try:
-                self._terminate_runtime(self._pod_name)
+                if self._pod_name:
+                    self._terminate_runtime(self._pod_name)
             except Exception:
                 pass
 
@@ -870,7 +874,14 @@ class Secret:
 class RuntimeSnapshot:
     """Represents a snapshot of a Datalayer runtime state."""
 
-    def __init__(self, uid, name, description, environment, metadata):
+    def __init__(
+        self,
+        uid: str,
+        name: str,
+        description: str,
+        environment: str,
+        metadata: dict[str, Any],
+    ):
         """
         Initialize a runtime snapshot.
 

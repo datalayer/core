@@ -7,15 +7,15 @@
 
 from pathlib import Path
 from typing import Optional
-from tornado import web
+from tornado.web import StaticFileHandler, HTTPError
 
 from jupyter_server.base.handlers import JupyterHandler
 
 
-class ServiceWorkerHandler(web.StaticFileHandler, JupyterHandler):
+class ServiceWorkerHandler(StaticFileHandler, JupyterHandler):
     """Serve the service worker script."""
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Initialize the API spec handler."""
         # Must match the folder containing the service worker asset as specified
         # in the webpack.lab-config.js
@@ -31,10 +31,10 @@ class ServiceWorkerHandler(web.StaticFileHandler, JupyterHandler):
         """Only allow to serve the service worker"""
         # Must match the filename name set in webpack.lab-config.js
         if Path(absolute_path).name != "lite-service-worker.js":
-            raise web.HTTPError(404)
+            raise HTTPError(404)
         return super().validate_absolute_path(root, absolute_path)
 
-    def get_content_type(self):
+    def get_content_type(self) -> str:
         """Get the content type."""
         return "text/javascript"
 

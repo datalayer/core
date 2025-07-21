@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-
+from typing import Optional
 from datalayer_core.authn.http_server import get_token
 
 
@@ -24,10 +24,10 @@ if __name__ == "__main__":
     else:
         ans = get_token(DATALAYER_RUN_URL)
 
+    handle: Optional[str] = None
+    token: Optional[str] = None
+
     if ans is not None:
         handle, token = ans
-    else:
-        handle = None
-        token = None
 
     logger.info(f"Logged as {handle} with token: {token}")

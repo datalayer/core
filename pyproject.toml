@@ -47,12 +47,14 @@ Changelog = "https://github.com/datalayer/core/blob/main/CHANGELOG.md"
 [project.optional-dependencies]
 test = [
     "coverage",
+    "mypy",
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
     "pytest_jupyter",
     "pytest-tornasync",
     "python-dotenv",
+    "types-requests",
 ]
 docs = [
     "pydoc-markdown"
@@ -97,3 +99,4 @@ ignore_missing_imports = true
 disallow_untyped_defs = true
 disallow_any_generics = true
 warn_unused_ignores = true
+exclude = ['datalayer_core/tests/', 'pydoc/', 'datalayer_core/paths.py', 'datalayer_core/authn/http_server.py']

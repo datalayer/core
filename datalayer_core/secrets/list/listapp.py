@@ -1,12 +1,14 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+from typing import Any
+
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.secrets.utils import display_secrets
 
 
 class SecretsListMixin:
-    def _list_secrets(self) -> dict:
+    def _list_secrets(self) -> dict[str, Any]:
         """ "
         List all secrets in the Datalayer environment.
 
@@ -15,8 +17,8 @@ class SecretsListMixin:
             dict: A dictionary containing the list of secrets and their details.
         """
         try:
-            response = self._fetch(
-                "{}/api/iam/v1/secrets".format(self.run_url),
+            response = self._fetch(  # type: ignore
+                "{}/api/iam/v1/secrets".format(self.run_url),  # type: ignore
                 method="GET",
             )
             return response.json()
@@ -35,7 +37,7 @@ class SecretsListApp(DatalayerCLIBaseApp, SecretsListMixin):
         datalayer secrets ls
     """
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
             self.log.warning("Too many arguments were provided for Secrets list.")

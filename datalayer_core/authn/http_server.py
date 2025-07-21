@@ -46,7 +46,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
     server_version = "LoginHTTP/" + __version__
 
-    def _save_token(self, query: str):
+    def _save_token(self, query: str) -> None:
         arguments = urllib.parse.parse_qs(query)
         error = arguments.get("error", [""])[0]
         if error:
@@ -87,7 +87,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         parts = urllib.parse.urlsplit(self.path)
         if parts[2].strip("/").endswith("oauth/callback"):
             self._save_token(parts[3])
@@ -95,8 +95,8 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
             content = LANDING_PAGE.format(
                 config=json.dumps(
                     {
-                        "runUrl": self.server.run_url,
-                        "iamRunUrl": self.server.run_url,
+                        "runUrl": self.server.run_url,  # type: ignore
+                        "iamRunUrl": self.server.run_url,  # type: ignore
                         "whiteLabel": False,
                     }
                 )
@@ -109,13 +109,13 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         else:
             super().do_GET()
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         response = post_data.decode("utf-8")
         content = json.loads(response)
-        self.server.token = content["token"]
-        self.server.user_handle = content["user_handle"]
+        self.server.token = content["token"]  # type: ignore
+        self.server.user_handle = content["user_handle"]  # type: ignore
 
         self.send_response(HTTPStatus.CREATED)
         self.send_header("Content-Length", "0")
@@ -123,14 +123,14 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
         signal.raise_signal(signal.SIGINT)
 
-    def log_message(self, format, *args):
+    def log_message(self, format: str, *args: t.Tuple[t.Any]) -> None:
         message = format % args
         logger.debug(
             "%s - - [%s] %s\n"
             % (
                 self.address_string(),
                 self.log_date_time_string(),
-                message.translate(self._control_char_table),
+                message.translate(self._control_char_table),  # type: ignore
             )
         )
 
@@ -158,18 +158,21 @@ class DualStackServer(HTTPServer):
         self.token = None
         super().__init__(server_address, RequestHandlerClass, bind_and_activate)
 
-    def server_bind(self):
+    def server_bind(self) -> None:
         # Suppress exception when protocol is IPv4.
         with contextlib.suppress(Exception):
             self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         return super().server_bind()
 
-    def finish_request(self, request, client_address):
+    def finish_request(self, request: t.Any, client_address: str) -> None:
         import datalayer_ui
 
         DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
         self.RequestHandlerClass(
-            request, client_address, self, directory=str(DATALAYER_UI_PATH / "static")
+            request,
+            client_address,
+            self,
+            directory=str(DATALAYER_UI_PATH / "static"),  # type: ignore
         )
 
 

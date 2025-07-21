@@ -111,7 +111,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
 
     _executing: bool = False
 
-    def handle_sigint(self, *args):
+    def handle_sigint(self, *args: t.Any) -> None:
         if self._executing:
             if self.kernel_manager:
                 self.kernel_manager.interrupt_kernel()
@@ -125,7 +125,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
             raise KeyboardInterrupt
 
     @catch_config_error
-    def initialize(self, argv=None):
+    def initialize(self, argv: t.Optional[list[dict[str, t.Any]]] = None) -> None:
         """Do actions after construct, but before starting the app."""
         if getattr(self, "_dispatching", False):
             return
@@ -137,8 +137,9 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
         self.init_kernel_manager()
         self.init_kernel_client()
 
-        if self.kernel_client.channels_running:
-            signal.signal(signal.SIGINT, self.handle_sigint)
+        if self.kernel_client:
+            if self.kernel_client.channels_running:
+                signal.signal(signal.SIGINT, self.handle_sigint)
 
     def init_kernel_manager(self) -> None:
         # Create a RuntimeManager.
@@ -151,12 +152,12 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
 
     def init_kernel_client(self) -> None:
         """Initialize the kernel client."""
-        self.kernel_manager.start_kernel(name=self.runtime_name)
-        self.kernel_client = self.kernel_manager.client
+        if self.kernel_manager:
+            self.kernel_manager.start_kernel(name=self.runtime_name)
+            self.kernel_client = self.kernel_manager.client
+            self.kernel_client.start_channels()
 
-        self.kernel_client.start_channels()
-
-    def start(self):
+    def start(self) -> None:
         try:
             # JupyterApp.start dispatches on NoStart
             super(RuntimesExecApp, self).start()
@@ -180,20 +181,23 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
                 self._executing = True
                 self.log.debug("Starting executing the file on the Runtime...")
                 for id, cell in _get_cells(fname):
-                    reply = self.kernel_client.execute_interactive(
-                        cell, silent=self.silent, timeout=self.timeout
-                    )
-                    if self.raise_exceptions and reply["content"]["status"] != "ok":
-                        content = reply["content"]
-                        if content["status"] == "error":
-                            if id is not None:
-                                self.log.error("Exception when running cell %s.", id)
-                            sys.stderr.write("\n".join(content["traceback"]))
-                            sys.exit(1)
-                        else:
-                            raise RuntimeError(
-                                "Unknown failure: %s", json.dumps(content)
-                            )
+                    if self.kernel_client:
+                        reply = self.kernel_client.execute_interactive(
+                            cell, silent=self.silent, timeout=self.timeout
+                        )
+                        if self.raise_exceptions and reply["content"]["status"] != "ok":
+                            content = reply["content"]
+                            if content["status"] == "error":
+                                if id is not None:
+                                    self.log.error(
+                                        "Exception when running cell %s.", id
+                                    )
+                                sys.stderr.write("\n".join(content["traceback"]))
+                                sys.exit(1)
+                            else:
+                                raise RuntimeError(
+                                    "Unknown failure: %s", json.dumps(content)
+                                )
             except BaseException as e:
                 if self.raise_exceptions:
                     raise
@@ -203,7 +207,8 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
             finally:
                 self._executing = False
         finally:
-            self.kernel_client.stop_channels()
+            if self.kernel_client:
+                self.kernel_client.stop_channels()
 
 
 def _get_cells(filepath: Path) -> t.Iterator[tuple[str | None, str]]:

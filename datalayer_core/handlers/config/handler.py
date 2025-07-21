@@ -5,7 +5,7 @@
 
 import json
 
-import tornado
+from tornado.web import authenticated
 
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.extension.handler import (
@@ -18,8 +18,8 @@ from datalayer_core.__version__ import __version__
 class ConfigHandler(ExtensionHandlerMixin, APIHandler):
     """The handler for configuration."""
 
-    @tornado.web.authenticated
-    def get(self):
+    @authenticated
+    def get(self) -> None:
         """Returns the configuration of the server extension."""
         settings = self.settings["datalayer"]
         configuration = dict(

@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-import warnings
+from typing import Any
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.authn.apps.utils import display_me
@@ -16,16 +16,19 @@ class WhoamiApp(DatalayerCLIBaseApp):
       datalayer whoami
     """
 
-    def get_profile(self):
-        response = self._fetch(
-            "{}/api/iam/v1/whoami".format(self.run_url),
-        )
-        return response.json()
+    def get_profile(self) -> dict[str, Any]:
+        try:
+            response = self._fetch(
+                "{}/api/iam/v1/whoami".format(self.run_url),
+            )
+            return response.json()
+        except RuntimeError as e:
+            return {"success": False, "message": str(e)}
 
-    def start(self):
+    def start(self) -> None:
         """Start the app."""
         if len(self.extra_args) > 0:  # pragma: no cover
-            warnings.warn("Too many arguments were provided for runtimes list.")
+            self.log.warn("Too many arguments were provided for runtimes list.")
             self.print_help()
             self.exit(1)
 
@@ -33,4 +36,4 @@ class WhoamiApp(DatalayerCLIBaseApp):
         infos = {
             "run_url": self.run_url,
         }
-        display_me(response.get("profile", {}), infos)
+        display_me(response["profile"], infos)
