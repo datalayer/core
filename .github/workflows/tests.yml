@@ -41,10 +41,11 @@ jobs:
           uv pip install .[test]
           uv pip install secretstorage dbus-python keyring
 
-      - uses: t1m0thyj/unlock-keyring@v1
+      - name: Unlock keyring
+        uses: t1m0thyj/unlock-keyring@v1
+
       - name: Run basic tests
         env:
           DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
         run: |
-          pytest datalayer_core/tests/test_cli.py
-          pytest datalayer_core/tests/test_sdk.py
+          pytest datalayer_core/tests/ --cov=datalayer_core --cov-report term-missing

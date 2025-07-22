@@ -1,10 +1,11 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+import sys
 from typing import Any
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-from datalayer_core.runtimes.utils import display_kernels
+from datalayer_core.runtimes.utils import display_runtimes
 
 
 class RuntimesListMixin:
@@ -39,4 +40,9 @@ class RuntimesListApp(DatalayerCLIBaseApp, RuntimesListMixin):
             self.print_help()
             self.exit(1)
 
-        display_kernels(self._list_runtimes().get("runtimes", []))
+        response = self._list_runtimes()
+        if response["success"]:
+            display_runtimes(response["runtimes"])
+        else:
+            self.log.warning("The runtimes could not be listed!")
+            sys.exit(1)

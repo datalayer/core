@@ -55,12 +55,19 @@ class SnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):
             self.exit(1)
 
         pod_name = self.extra_args[0]
-        raw = self._create_runtime(pod_name)
-        if raw is None:
-            self.exit(1)
+        name = self.extra_args[1]
+        description = self.extra_args[2]
+        stop = True
+        if len(self.extra_args) == 4:
+            stop = bool(self.extra_args[3].capitalize())
 
-        kernel = raw["kernel"]
-        if kernel:
-            display_snapshots([kernel])
+        response = self._create_snapshot(
+            pod_name=pod_name, name=name, description=description, stop=stop
+        )
+        if response["success"]:
+            snapshot = response["snapshot"]
+            display_snapshots([snapshot])
+            self.exit(0)
         else:
-            print_json(data=raw)
+            print_json(data=response)
+            self.exit(1)

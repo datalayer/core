@@ -53,9 +53,10 @@ class SnapshotsDeleteApp(DatalayerCLIBaseApp, SnapshotsDeleteMixin):
             self.exit(1)
 
         snapshot_uid = self.extra_args[0]
-        raw = self._delete_snapshot(snapshot_uid)
-        if raw.get("success"):
+        response = self._delete_snapshot(snapshot_uid)
+        if response["success"]:
             self.log.info(f"Snapshot {snapshot_uid} deleted successfully.")
+            sys.exit(0)
         else:
-            self.log.warning(raw["message"])
+            self.log.warning(response["message"])
             sys.exit(1)

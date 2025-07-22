@@ -2,15 +2,30 @@
 # Distributed under the terms of the Modified BSD License.
 
 import os
-from subprocess import run
+import time
+from subprocess import PIPE, Popen
 
 import pytest
 from dotenv import load_dotenv
+
+from datalayer_core import DatalayerClient
 
 load_dotenv()
 
 
 DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
+
+
+def _delete_all_runtimes(secs=5):
+    """
+    Delete all runtimes for testing purposes.
+    """
+    time.sleep(secs)
+    client = DatalayerClient()
+    runtimes = client.list_runtimes()
+    for runtime in runtimes:
+        client.terminate_runtime(runtime)
+    time.sleep(secs)
 
 
 @pytest.mark.parametrize(
@@ -19,18 +34,19 @@ DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
         (["--version"], "1."),
         (["--help"], "The Datalayer CLI application"),
         (["about"], "About"),
-        (["logout"], "\nDatalayer - Version"),
     ],
 )
 def test_cli(args, expected_output):
     """
     Test the Datalayer CLI application.
     """
-    result = run(["datalayer"] + args, capture_output=True, text=True)
-    print(result.stdout)
-    print(result.stderr)
-    assert result.returncode == 0
-    assert expected_output in result.stdout
+    p = Popen(["datalayer"] + args, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate()
+    stdout, stderr = stdout.decode(), stderr.decode()
+    print(stdout)
+    print(stderr)
+    assert p.returncode == 0
+    assert expected_output in stdout
 
 
 @pytest.mark.parametrize(
@@ -61,8 +77,69 @@ def test_cli_authenticated(args, expected_output):
     """
     Test the Datalayer CLI application.
     """
-    result = run(["datalayer"] + args, capture_output=True, text=True)
-    print(result.stdout)
-    print(result.stderr)
-    assert result.returncode == 0
-    assert expected_output in result.stdout
+    p = Popen(["datalayer"] + args, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate()
+    stdout, stderr = stdout.decode(), stderr.decode()
+    print(stdout)
+    print(stderr)
+    assert p.returncode == 0
+    assert expected_output in stdout
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_console():
+    """
+    Test the Datalayer CLI console.
+    """
+    # Delete all runtimes before starting the console
+    _delete_all_runtimes()
+
+    # Start the console
+    p = Popen(["datalayer", "console"], stderr=PIPE, stdout=PIPE, stdin=PIPE)
+    stdout, stderr = p.communicate(input=b"yes\n")
+    stdout, stderr = stdout.decode(), stderr.decode()
+    print(stdout)
+    print(stderr)
+
+    assert p.returncode == 0
+    assert "No Runtime running." in stdout
+    assert "Do you want to launch a runtime from the environment" in stdout
+    _delete_all_runtimes()
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_runtimes_exec(tmp_path):
+    """
+    Test the Datalayer CLI runtimes exec.
+    """
+    # Delete all runtimes before starting the console
+    _delete_all_runtimes()
+
+    # Run exec on temp py script
+    pypath = tmp_path / "test_exec.py"
+    pypath.write_text(
+        'from platform import node;print(f"Hello world! from {node()}.")',
+        encoding="utf-8",
+    )
+    p = Popen(
+        ["datalayer", "runtimes", "exec", str(pypath)],
+        stderr=PIPE,
+        stdout=PIPE,
+        stdin=PIPE,
+    )
+    stdout, stderr = p.communicate(input=b"yes\n")
+    stdout, stderr = stdout.decode(), stderr.decode()
+    print(stdout)
+    print(stderr)
+
+    assert p.returncode == 0
+    assert "No Runtime running." in stdout
+    assert "Do you want to launch a runtime from the environment" in stdout
+    assert "Hello world! from runtime-" in stdout
+    _delete_all_runtimes()

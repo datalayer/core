@@ -41,9 +41,10 @@ class SnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
             self.print_help()
             self.exit(1)
 
-        raw = self._list_snapshots()
-        if raw.get("success"):
-            display_snapshots(raw["snapshots"])
+        response = self._list_snapshots()
+        if response["success"]:
+            display_snapshots(response["snapshots"])
+            sys.exit(0)
         else:
-            self.log.warning(raw["message"])
+            self.log.warning(response["message"])
             sys.exit(1)

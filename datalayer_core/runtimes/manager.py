@@ -12,7 +12,7 @@ from rich import print_json
 
 from datalayer_core.runtimes.utils import (
     _timestamp_to_local_date,
-    display_kernels,
+    display_runtimes,
     get_default_credits_limit,
 )
 from datalayer_core.utils.utils import fetch
@@ -69,14 +69,14 @@ class RuntimeManager(KernelHttpManager):
                 "A kernel is already started. Shutdown it before starting a new one."
             )
 
-        kernel_name = name
-        kernel = None
-        if kernel_name:
+        runtime_name = name
+        runtime = None
+        if runtime_name:
             response = fetch(
-                "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, kernel_name),
+                "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, runtime_name),
                 token=self.run_token,
             )
-            kernel = response.json().get("kernel")
+            runtime = response.json().get("runtime")
         else:
             self.log.debug(
                 "No Runtime name provided. Picking the first available Runtime…"
@@ -119,7 +119,7 @@ class RuntimeManager(KernelHttpManager):
                     )
 
                 body = {
-                    "kernel_type": "notebook",
+                    "type": "notebook",
                     "credits_limit": credits_limit,
                     "environment_name": first_environment_name,
                 }
@@ -129,9 +129,10 @@ class RuntimeManager(KernelHttpManager):
                     token=self.run_token,
                     json=body,
                 )
-                kernel = response.json().get("kernel")
-                if kernel:
-                    display_kernels([kernel])
+
+                runtime = response.json().get("runtime")
+                if runtime:
+                    display_runtimes([runtime])
                 else:
                     print_json(data=response.json())
 
@@ -139,16 +140,16 @@ class RuntimeManager(KernelHttpManager):
                     f"{self.run_url}/api/runtimes/v1/runtimes",
                     token=self.run_token,
                 )
-                runtimes = response.json().get("kernels", [])
+                runtimes = response.json().get("runtimes", [])
 
-            kernel = runtimes[0]
-            kernel_name = kernel.get("jupyter_pod_name", "")
+            runtime = runtimes[0]
+            runtime_name = runtime.get("pod_name", "")
 
-        if kernel is None:
+        if runtime is None:
             raise RuntimeError("Unable to find a Runtime.")
 
-        self.server_url = kernel["ingress"]
-        self.token = kernel.get("token", "")
+        self.server_url = runtime["ingress"]
+        self.token = runtime.get("token", "")
 
         # Trick to set the kernel_url without the ability to set self.__kernel
         response = fetch(f"{self.server_url}/api/kernels", token=self.token)
@@ -156,8 +157,8 @@ class RuntimeManager(KernelHttpManager):
         self._kernel_id = runtimes[0]["id"]
 
         kernel_model = self.refresh_model()
-        msg = f"RuntimeManager using existing jupyter kernel {kernel_name}"
-        expired_at = kernel.get("expired_at")
+        msg = f"RuntimeManager using existing jupyter kernel {runtime_name}"
+        expired_at = runtime.get("expired_at")
         if expired_at is not None:
             msg += f" expiring at {_timestamp_to_local_date(expired_at)}"
         self.log.info(msg)

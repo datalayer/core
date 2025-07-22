@@ -13,12 +13,12 @@ from jupyter_kernel_client.konsoleapp import (
 from jupyter_kernel_client.konsoleapp import (
     flags as base_flags,
 )
-from traitlets import default
+from traitlets import Dict, Unicode, default
 from traitlets.config import catch_config_error
 
-from ...__version__ import __version__
-from ...cli.base import DatalayerAuthMixin
-from ..manager import RuntimeManager
+from datalayer_core.__version__ import __version__
+from datalayer_core.cli.base import DatalayerAuthMixin
+from datalayer_core.runtimes.manager import RuntimeManager
 
 datalayer_aliases = dict(base_aliases)
 datalayer_aliases["run-url"] = "DatalayerAuthMixin.run_url"
@@ -35,6 +35,13 @@ datalayer_flags.update(
     }
 )
 
+aliases = dict(datalayer_aliases)
+aliases.update(
+    {
+        "runtime": "RuntimesConsoleApp.runtime_name",
+    }
+)
+
 
 class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
     """Console for Datalayer remote kernels."""
@@ -42,9 +49,13 @@ class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
     name = "datalayer-console"
     version = __version__
 
-    aliases = datalayer_aliases
+    aliases = Dict(aliases)
 
     flags = datalayer_flags
+
+    runtime_name = Unicode(
+        "", config=True, help="""The name of the Runtime to connect to."""
+    )
 
     @default("kernel_manager_class")
     def _kernel_manager_class_default(self) -> type:
