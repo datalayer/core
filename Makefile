@@ -53,6 +53,7 @@ pydoc:
 	rm -fr docs/docs/python_api
 	pydoc-markdown
 	python datalayer_core/pydoc/unwrap_docstrings.py docs/docs/python_api
+	python datalayer_core/pydoc/np2md.py
 	echo -e "label: Python API\nposition: 4" > docs/docs/python_api/_category_.yml
 
 typedoc:
