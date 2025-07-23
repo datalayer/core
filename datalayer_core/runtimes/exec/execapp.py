@@ -18,8 +18,7 @@ from datalayer_core.cli.base import (
     datalayer_aliases,
     datalayer_flags,
 )
-
-from ..manager import RuntimeManager
+from datalayer_core.runtimes.manager import RuntimeManager
 
 # -----------------------------------------------------------------------------
 # Globals

@@ -6,9 +6,12 @@ Datalayer AI SDK - A simple SDK for AI engineers to work with Datalayer.
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
+import json
 import os
+import sys
 import uuid
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
 import requests
@@ -16,6 +19,7 @@ from jupyter_kernel_client import KernelClient
 
 from datalayer_core.environments import EnvironmentsMixin
 from datalayer_core.runtimes import RuntimesMixin
+from datalayer_core.runtimes.exec.execapp import _get_cells
 from datalayer_core.secrets import SecretsMixin, SecretType
 from datalayer_core.snapshots import SnapshotsMixin
 from datalayer_core.utils.utils import fetch
@@ -189,6 +193,7 @@ class DatalayerClient(
         name: Optional[str] = None,
         environment: str = DEFAULT_ENVIRONMENT,
         timeout: float = DEFAULT_TIMEOUT,
+        snapshot_name: Optional[str] = None,
     ) -> "Runtime":
         """
         Create a new runtime (kernel) for code execution.
@@ -201,7 +206,8 @@ class DatalayerClient(
             Type of resources needed (cpu, gpu, etc.)
         timeout:
             Request timeout in minutes. Defaults to 10 minutes.
-
+        snapshot_name: Optional[str]
+            Name of the snapshot to create from. If provided, the runtime will be created from this snapshot.
         Returns
         -------
             Runtime: A runtime object for code execution
@@ -214,13 +220,33 @@ class DatalayerClient(
         if name is None:
             name = f"runtime-{environment}-{uuid.uuid4()}"
 
-        runtime = Runtime(
-            name,
-            environment=environment,
-            timeout=timeout,
-            run_url=self.run_url,
-            token=self._token,
-        )
+        if snapshot_name is not None:
+            snapshots = self.list_snapshots()
+            for snapshot in snapshots:
+                if snapshot.name == snapshot_name:
+                    response = self._create_runtime(
+                        given_name=snapshot.name,
+                        environment_name=environment,
+                        from_snapshot_uid=snapshot.uid,
+                    )
+                    runtime_data = response["runtime"]
+                    runtime = Runtime(
+                        name=runtime_data["given_name"],
+                        environment=runtime_data["environment_name"],
+                        run_url=self.run_url,
+                        token=self._token,
+                        ingress=runtime_data["ingress"],
+                        kernel_token=runtime_data["token"],
+                        pod_name=runtime_data["pod_name"],
+                    )
+        else:
+            runtime = Runtime(
+                name,
+                environment=environment,
+                timeout=timeout,
+                run_url=self.run_url,
+                token=self._token,
+            )
         return runtime
 
     def list_runtimes(self) -> list["Runtime"]:
@@ -681,6 +707,7 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         self._started_at = started_at
         self._expired_at = expired_at
 
+        self._executing = False
         # if kernel_token is not None and ingress is not None:
         #     self._kernel_client = KernelClient(server_url=ingress, token=kernel_token)
         #     self._kernel_client.start()
@@ -735,6 +762,16 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
                 return self._terminate_runtime(self._pod_name)["success"]
         return False
 
+    def _check_file(self, path: Union[str, Path]) -> bool:
+        """Check if a file exists and can be openned."""
+        fname = Path(path).expanduser().resolve()
+        try:
+            with fname.open("rb"):
+                pass
+            return Path(path).exists()
+        except Exception:
+            return False
+
     @property
     def run_url(self) -> str:
         return self._run_url
@@ -751,7 +788,71 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
     def pod_name(self) -> Optional[str]:
         return self._pod_name
 
-    def execute(self, code: str) -> Response:
+    def get_variable(self, name: str) -> Any:
+        """Set a variable in the runtime."""
+        if self._kernel_client:
+            response = self._kernel_client.get_variable(name)
+            data = response[0]
+            import numpy as np
+
+            if isinstance(data, dict) and "text/plain" in data:
+                return eval(data["text/plain"])
+            else:
+                return data
+        return None
+
+    def set_variable(self, name: str, value: Any) -> Response:
+        """Set a variable in the runtime."""
+        return self.set_variables({name: value})
+
+    def set_variables(self, variables: dict[str, Any]) -> Response:
+        """Set variables in the runtime."""
+        if self._kernel_client:
+            variables_code = []
+            if variables is not None:
+                for key, value in variables.items():
+                    variables_code.append(f"{key} = {repr(value)}")
+
+            if variables_code:
+                self._kernel_client.execute("\n".join(variables_code))
+
+            return Response([])
+        return Response([])
+
+    def execute_file(
+        self, path: Union[str, Path], variables: Optional[dict[str, Any]] = None
+    ) -> Response:
+        """
+        Execute a Python file in the runtime.
+
+        Parameters
+        ----------
+        path: str
+            Path to the Python file to execute.
+        variables: Optional[dict[str, Any]]
+            Optional variables to set before executing the code.
+
+        Returns
+        -------
+            Response: The result of the code execution.
+        """
+        fname = Path(path).expanduser().resolve()
+        if self._check_file(fname):
+            if variables:
+                self.set_variables(variables)
+
+            for _id, cell in _get_cells(fname):
+                if self._kernel_client:
+                    reply = self._kernel_client.execute_interactive(
+                        cell,
+                        silent=False,
+                    )
+                    return Response(reply.get("outputs", []))
+        return Response([])
+
+    def execute_code(
+        self, code: str, variables: Optional[dict[str, Any]] = None
+    ) -> Response:
         """
         Execute code in the runtime.
 
@@ -759,6 +860,41 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         ----------
         code: str
             The Python code to execute.
+        variables: Optional[dict[str, Any]]
+            Optional variables to set before executing the code.
+
+        Returns
+        -------
+            Response: The result of the code execution.
+        """
+        if not self._check_file(code):
+            result: list[dict[str, str]] = []
+            if self._kernel_client is not None:
+                if variables:
+                    self.set_variables(variables)
+                reply = self._kernel_client.execute(code)
+                result = reply.get("outputs", {})
+            else:
+                raise RuntimeError(
+                    "Kernel client is not started. Call `start()` first."
+                )
+
+            return Response(result)
+
+        return Response([])
+
+    def execute(
+        self, code_or_path: Union[str, Path], variables: Optional[dict[str, Any]] = None
+    ) -> Response:
+        """
+        Execute code in the runtime.
+
+        Parameters
+        ----------
+        code_or_path: Union[str, Path]
+            The Python code or path to the file to execute.
+        variables: Optional[dict[str, Any]]
+            Optional variables to set before executing the code.
 
         Returns
         -------
@@ -779,15 +915,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             }
         }
         """
-        result: list[dict[str, str]] = []
-        if self._kernel_client is not None:
-            reply = self._kernel_client.execute(code)
-            # print(reply)
-            result = reply.get("outputs", {})
+        if self._check_file(code_or_path):
+            return self.execute_file(str(code_or_path), variables)
         else:
-            raise RuntimeError("Kernel client is not started. Call `start()` first.")
-
-        return Response(result)
+            return self.execute_code(str(code_or_path), variables)
 
     def terminate(self) -> bool:
         """Terminate the Runtime."""
