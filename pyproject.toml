@@ -59,6 +59,10 @@ test = [
 docs = [
     "pydoc-markdown"
 ]
+examples = [
+    "fastapi",
+    "scikit-learn",
+]
 
 [project.scripts]
 d = "datalayer_core.cli.datalayer:main"
