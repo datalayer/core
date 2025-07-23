@@ -1,4 +1,4 @@
-name: Run Basic Tests
+name: Run Tests
 
 on:
   push:
@@ -39,7 +39,7 @@ jobs:
         run: |
           uv pip install .
           uv pip install .[test]
-          uv pip install secretstorage dbus-python keyring
+          uv pip install dbus-python keyring secretstorage
 
       - name: Unlock keyring
         uses: t1m0thyj/unlock-keyring@v1
@@ -47,5 +47,6 @@ jobs:
       - name: Run basic tests
         env:
           DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+          DATALAYER_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
         run: |
           pytest datalayer_core/tests/ --cov=datalayer_core --cov-report term-missing
