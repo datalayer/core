@@ -57,7 +57,8 @@ test = [
     "types-requests",
 ]
 docs = [
-    "pydoc-markdown"
+    "pydoc-markdown",
+    "npdoc_to_md"
 ]
 
 [project.scripts]

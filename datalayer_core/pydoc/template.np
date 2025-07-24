@@ -1,0 +1,16 @@
+---
+sidebar_label: sdk
+title: sdk.datalayer
+---
+
+# DatalayerClient
+
+{{"obj":"datalayer_core.sdk.datalayer.DatalayerClient", "alias":"DatalayerClient", "examples_md_lang":"python", "remove_doctest_skip":true, "remove_doctest_blanklines":true, "md_section_level":3}}
+
+## Methods
+
+{{"obj":"datalayer_core.sdk.datalayer.DatalayerClient.authenticate", "alias":"authenticate", "examples_md_lang":"python", "remove_doctest_skip":true, "remove_doctest_blanklines":true, "md_section_level":4 }}
+
+{{"obj":"datalayer_core.sdk.datalayer.DatalayerClient.create_runtime", "alias":"create_runtime", "examples_md_lang":"python", "remove_doctest_skip":true, "remove_doctest_blanklines":true, "md_section_level":4 }}
+
+{{"obj":"datalayer_core.sdk.datalayer.DatalayerClient.create_snapshot", "alias":"create_snapshot", "examples_md_lang":"python", "remove_doctest_skip":true, "remove_doctest_blanklines":true, "md_section_level":4 }}

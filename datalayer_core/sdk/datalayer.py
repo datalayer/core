@@ -111,6 +111,18 @@ class DatalayerClient(
 
     Provides a unified interface for authentication, runtime creation,
     and code execution in Datalayer environments.
+
+    Examples
+    --------
+    >>> from datalayer_core import DatalayerClient
+    >>> client = DatalayerClient()
+    >>> with client.create_runtime() as runtime
+    ...     runtime.execute("print('Hello, Datalayer!')")
+    'Hello, Datalayer!'
+
+    See Also
+    --------
+    datalayer_core.cli: A somewhat long description of the function.
     """
 
     def __init__(
@@ -123,9 +135,9 @@ class DatalayerClient(
 
         Parameters
         ----------
-        run_url:
+        run_url: str
             Datalayer server URL. Defaults to "https://prod1.datalayer.run".
-        token:
+        token: Optional[str]
             Authentication token (can also be set via DATALAYER_TOKEN env var).
         """
         # TODO: Check user and password login
@@ -150,8 +162,10 @@ class DatalayerClient(
         """
         Validate authentication credentials.
 
-        Returns:
-            bool: True if authentication is successful
+        Returns
+        -------
+            bool:
+                True if authentication is successful
         """
         response = self._log_in()
         # print(response)
@@ -204,7 +218,8 @@ class DatalayerClient(
 
         Returns
         -------
-            Runtime: A runtime object for code execution
+            Runtime
+                A runtime object for code execution
         """
         self.list_environments()
         if environment not in self._available_environments_names:
