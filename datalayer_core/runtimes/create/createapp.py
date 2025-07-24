@@ -19,9 +19,10 @@ class RuntimesCreateMixin:
 
     def _create_runtime(
         self,
-        environment_name: str,
+        environment_name: str = "python-env",
         given_name: Optional[str] = None,
         credits_limit: Optional[float] = None,
+        from_snapshot_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         """Create a Runtime with the given environment name."""
         body = {
@@ -54,6 +55,10 @@ class RuntimesCreateMixin:
                 return {}
 
             body["credits_limit"] = credits_limit  # type: ignore
+
+            if from_snapshot_uid:
+                body["from"] = from_snapshot_uid
+
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore
                 method="POST",
