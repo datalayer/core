@@ -1,16 +1,43 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
+import inspect
 
 from dotenv import load_dotenv
 
 from datalayer_core import DatalayerClient
+from datalayer_core.sdk.decorators import datalayer
 
 # Using .env file with DATALAYER_RUN_URL and DATALAYER_TOKEN defined
 load_dotenv()
 
-client = DatalayerClient()
-print(client.list_runtimes())
+
+# @datalayer
+# @datalayer()
+# @datalayer(runtime_name="example-runtime")
+@datalayer(snapshot_name="snapshot-iris-model")
+# @datalayer(runtime_name="example-runtime", output="result")
+# @datalayer(runtime_name="example-runtime", inputs=["a", "b", "c"])
+def sum(x: float, y: float, z: int = 1) -> float:
+    return x + y
+
+
+print([sum(1, 4.5, z=2)])
+
+# sig = inspect.signature(example)
+# print("\nParameters:")
+# for name, param in sig.parameters.items():
+#     print(f"  Name: {name}")
+#     print(f"  Kind: {param.kind}")
+#     print(f"  Default Value: {param.default}")
+#     print(f"  Annotation: {param.annotation}")
+#     print("---")
+
+# print(client.list_runtimes())
 # with client.create_runtime() as runtime:
+#     runtime.execute('x = 1')
+#     runtime.execute('y = 4.5')
+#     runtime.execute('def example(x: float, y: float) -> float:\n    return x + y\n')
+#     runtime.execute('print(example(x, y))')
 #     response = runtime.execute("import os;print(len(os.environ['MY_SECRET']))")
 #     print(response.stdout)
 #     response = runtime.execute(
