@@ -220,6 +220,8 @@ class DatalayerClient(
         if name is None:
             name = f"runtime-{environment}-{uuid.uuid4()}"
 
+        # print(f"Runtime {name}")
+
         if snapshot_name is not None:
             snapshots = self.list_snapshots()
             for snapshot in snapshots:
@@ -738,7 +740,9 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
 
         if self._kernel_client is None:
             self._runtime = self._create_runtime(self._environment_name)
-            runtime: dict[str, str] = self._runtime.get("runtime")  # type: ignore
+            # print(self._runtime)
+            runtime: dict[str, str] = self._runtime["runtime"]  # type: ignore
+            # print("runtime", runtime)
             self._ingress = runtime["ingress"]
             self._kernel_token = runtime["token"]
             self._pod_name = runtime["pod_name"]
@@ -820,7 +824,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         return Response([])
 
     def execute_file(
-        self, path: Union[str, Path], variables: Optional[dict[str, Any]] = None
+        self,
+        path: Union[str, Path],
+        variables: Optional[dict[str, Any]] = None,
+        output: Optional[str] = None,
     ) -> Response:
         """
         Execute a Python file in the runtime.
@@ -831,6 +838,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             Path to the Python file to execute.
         variables: Optional[dict[str, Any]]
             Optional variables to set before executing the code.
+        output: Optional[str]
+            Optional output variable to return as result.
 
         Returns
         -------
@@ -841,18 +850,26 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             if variables:
                 self.set_variables(variables)
 
-            for _id, cell in _get_cells(fname):
-                if self._kernel_client:
+            if self._kernel_client:
+                outputs = []
+                for _id, cell in _get_cells(fname):
                     reply = self._kernel_client.execute_interactive(
                         cell,
                         silent=False,
                     )
-                    return Response(reply.get("outputs", []))
+                    outputs.append(reply.get("outputs", []))
+                if output is not None:
+                    return self.get_variable(output)
+
+                return Response(outputs)
         return Response([])
 
     def execute_code(
-        self, code: str, variables: Optional[dict[str, Any]] = None
-    ) -> Response:
+        self,
+        code: str,
+        variables: Optional[dict[str, Any]] = None,
+        output: Optional[str] = None,
+    ) -> Union[Response, Any]:
         """
         Execute code in the runtime.
 
@@ -862,6 +879,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             The Python code to execute.
         variables: Optional[dict[str, Any]]
             Optional variables to set before executing the code.
+        output: Optional[str]
+            Optional output variable to return as result.
 
         Returns
         -------
@@ -874,6 +893,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
                     self.set_variables(variables)
                 reply = self._kernel_client.execute(code)
                 result = reply.get("outputs", {})
+                if output is not None:
+                    return self.get_variable(output)
             else:
                 raise RuntimeError(
                     "Kernel client is not started. Call `start()` first."
@@ -884,8 +905,11 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         return Response([])
 
     def execute(
-        self, code_or_path: Union[str, Path], variables: Optional[dict[str, Any]] = None
-    ) -> Response:
+        self,
+        code_or_path: Union[str, Path],
+        variables: Optional[dict[str, Any]] = None,
+        output: Optional[str] = None,
+    ) -> Union[Response, Any]:
         """
         Execute code in the runtime.
 
@@ -895,10 +919,13 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             The Python code or path to the file to execute.
         variables: Optional[dict[str, Any]]
             Optional variables to set before executing the code.
+        output: Optional[str]
+            Optional output variable to return as result.
 
         Returns
         -------
-            dict: The result of the code execution.
+            dict:
+                The result of the code execution.
 
 
         {
@@ -916,9 +943,13 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         }
         """
         if self._check_file(code_or_path):
-            return self.execute_file(str(code_or_path), variables)
+            return self.execute_file(
+                str(code_or_path), variables=variables, output=output
+            )
         else:
-            return self.execute_code(str(code_or_path), variables)
+            return self.execute_code(
+                str(code_or_path), variables=variables, output=output
+            )
 
     def terminate(self) -> bool:
         """Terminate the Runtime."""
