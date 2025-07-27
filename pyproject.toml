@@ -34,6 +34,9 @@ dependencies = [
     "requests",
     "rich",
     "traitlets",
+    # Testing streamlit
+    "scikit-learn",
+    "pydantic",
 ]
 dynamic = ["version"]
 
@@ -63,6 +66,7 @@ examples = [
     "fastapi",
     "pydantic",
     "scikit-learn",
+    "streamlit",
     "uvicorn",
 ]
 
@@ -109,3 +113,6 @@ exclude = ['datalayer_core/tests/', 'pydoc/', 'datalayer_core/paths.py', 'datala
 
 [tool.ruff.lint]
 extend-select = ["I"]
+
+[tool.poetry]
+version = "0.1.0"

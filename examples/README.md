@@ -9,12 +9,21 @@ This directory contains practical examples demonstrating how to use the Datalaye
 
 ## 🚀 Web Frameworks & APIs
 
-### [FastAPI + Scikit-learn](./fastapi-sklearn/README.md)
+### 🚀 [FastAPI + Scikit-learn](./fastapi-sklearn/README.md)
 
-A complete example showing how to serve machine learning models using FastAPI with Datalayer SDK integration.
+A REST API server that serves machine learning models using FastAPI and Datalayer SDK.
 
-- Features: Model serving, snapshot loading, REST API, automatic documentation
-- Technologies: FastAPI, Scikit-learn, Uvicorn, Pydantic
+- **Use Case**: Production ML model deployment with REST API
+- **Technologies**: FastAPI, Scikit-learn, Uvicorn
+- **Features**: Model serving, snapshot loading, automatic API documentation
+
+### 📊 [Streamlit + Scikit-learn](./streamlit-sklearn/README.md)
+
+An interactive web application for machine learning model inference using Streamlit.
+
+- **Use Case**: Interactive ML model demonstration and testing
+- **Technologies**: Streamlit, Scikit-learn
+- **Features**: Web UI, model training, snapshot management, real-time predictions
 
 ## License
 
