@@ -63,11 +63,11 @@ base_flags.update(_datalayer_flags)
 
 
 class NoStart(Exception):  # noqa
-    """Exception to raise when an application shouldn't start"""
+    """Exception to raise when an application shouldn't start."""
 
 
 class DatalayerApp(Application):
-    """Base class for Datalayer applications"""
+    """Base class for Datalayer applications."""
 
     name = "datalayer_core"  # override in subclasses
     description = "A Datalayer Application"
@@ -76,20 +76,52 @@ class DatalayerApp(Application):
     flags = base_flags
 
     def _log_level_default(self) -> int:
+        """
+        Get the default log level.
+
+        Returns
+        -------
+        int
+            Default log level.
+        """
         return logging.INFO
 
     datalayer_path: t.Union[t.List[str], List] = List(Unicode())
 
     def _datalayer_path_default(self) -> List[str]:
+        """
+        Get the default datalayer path.
+
+        Returns
+        -------
+        List[str]
+            Default datalayer path.
+        """
         return datalayer_path()
 
     config_dir: t.Union[str, Unicode] = Unicode()
 
     def _config_dir_default(self) -> str:
+        """
+        Get the default config directory.
+
+        Returns
+        -------
+        str
+            Default config directory path.
+        """
         return datalayer_config_dir()
 
     @property
     def config_file_paths(self) -> List[str]:
+        """
+        Get the configuration file paths.
+
+        Returns
+        -------
+        List[str]
+            List of configuration file paths.
+        """
         path = datalayer_config_path()
         if self.config_dir not in path:
             # Insert config dir as first item.
@@ -99,6 +131,14 @@ class DatalayerApp(Application):
     data_dir: t.Union[str, Unicode] = Unicode()
 
     def _data_dir_default(self) -> str:
+        """
+        Get the default data directory.
+
+        Returns
+        -------
+        str
+            Default data directory path.
+        """
         d = datalayer_data_dir()
         ensure_dir_exists(d, mode=0o700)
         return d
@@ -106,12 +146,28 @@ class DatalayerApp(Application):
     runtime_dir: t.Union[str, Unicode] = Unicode()
 
     def _runtime_dir_default(self) -> str:
+        """
+        Get the default runtime directory.
+
+        Returns
+        -------
+        str
+            Default runtime directory path.
+        """
         rd = datalayer_runtime_dir()
         ensure_dir_exists(rd, mode=0o700)
         return rd
 
     @observe("runtime_dir")
     def _runtime_dir_changed(self, change: dict[str, t.Any]) -> None:
+        """
+        Handle runtime directory changes.
+
+        Parameters
+        ----------
+        change : dict[str, Any]
+            The change notification dictionary.
+        """
         ensure_dir_exists(change["new"], mode=0o700)
 
     generate_config: t.Union[bool, Bool] = Bool(
@@ -123,6 +179,14 @@ class DatalayerApp(Application):
     )
 
     def _config_file_name_default(self) -> str:
+        """
+        Get the default config file name.
+
+        Returns
+        -------
+        str
+            Default config file name.
+        """
         if not self.name:
             return ""
         return self.name.replace("-", "_") + "_config"
@@ -137,7 +201,7 @@ class DatalayerApp(Application):
     )
 
     def write_default_config(self) -> None:
-        """Write our default config to a .py config file"""
+        """Write our default config to a .py config file."""
         if self.config_file:
             config_file = self.config_file
         else:
@@ -170,7 +234,7 @@ class DatalayerApp(Application):
             f.write(config_text)
 
     def migrate_config(self) -> None:
-        """Migrate config/data from IPython 3"""
+        """Migrate config/data from IPython 3."""
         try:  # let's see if we can open the marker file
             # for reading and updating (writing)
             f_marker = open(os.path.join(self.config_dir, "migrated"), "r+")  # noqa
@@ -192,11 +256,17 @@ class DatalayerApp(Application):
         migrate()
 
     def load_config_file(self, suppress_errors: bool = True) -> None:
-        """Load the config file.
+        """
+        Load the config file.
 
         By default, errors in loading config are handled, and a warning
         printed on screen. For testing, the suppress_errors option is set
         to False, so errors will make tests fail.
+
+        Parameters
+        ----------
+        suppress_errors : bool, default True
+            Whether to suppress configuration loading errors.
         """
         self.log.debug("Searching %s for config files", self.config_file_paths)
         base_config = "datalayer_config"
@@ -233,14 +303,31 @@ class DatalayerApp(Application):
 
     # subcommand-related
     def _find_subcommand(self, name: str) -> t.Optional[str]:
+        """
+        Find a subcommand by name.
+
+        Parameters
+        ----------
+        name : str
+            The subcommand name to find.
+
+        Returns
+        -------
+        Optional[str]
+            Path to the subcommand executable or None if not found.
+        """
         name = f"{self.name}-{name}"
         return which(name)
 
     @property
     def _dispatching(self) -> bool:
-        """Return whether we are dispatching to another command
+        """
+        Return whether we are dispatching to another command or running ourselves.
 
-        or running ourselves.
+        Returns
+        -------
+        bool
+            True if dispatching to another command, False otherwise.
         """
         return bool(self.generate_config or self.subapp or self.subcommand)
 
@@ -248,7 +335,14 @@ class DatalayerApp(Application):
 
     @catch_config_error
     def initialize(self, argv: t.Optional[list[str]] = None) -> None:
-        """Initialize the application."""
+        """
+        Initialize the application.
+
+        Parameters
+        ----------
+        argv : Optional[list[str]], default None
+            Command line arguments.
+        """
         # don't hook up crash handler before parsing command-line
         if argv is None:
             argv = sys.argv[1:]
@@ -270,7 +364,7 @@ class DatalayerApp(Application):
             issue_insecure_write_warning()
 
     def start(self) -> None:
-        """Start the whole thing"""
+        """Start the whole thing."""
         if self.subcommand:
             os.execv(self.subcommand, [self.subcommand] + self.argv[1:])  # noqa
             raise NoStart()
@@ -287,7 +381,21 @@ class DatalayerApp(Application):
     def launch_instance(
         cls, argv: t.Optional[t.Tuple[t.Any]] = None, **kwargs: t.Dict[str, t.Any]
     ) -> None:
-        """Launch an instance of a Datalayer Application"""
+        """
+        Launch an instance of a Datalayer Application.
+
+        Parameters
+        ----------
+        argv : Optional[Tuple[Any]], default None
+            Command line arguments.
+        **kwargs : Dict[str, Any]
+            Additional keyword arguments.
+
+        Returns
+        -------
+        None
+            This method does not return a value.
+        """
         try:
             return super().launch_instance(argv=argv, **kwargs)
         except NoStart:

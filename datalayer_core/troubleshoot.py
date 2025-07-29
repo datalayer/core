@@ -3,8 +3,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-display environment information that is frequently
-used to troubleshoot installations of Datalayer or IPython
+Display environment information for troubleshooting Datalayer or IPython installations.
 """
 
 import os
@@ -16,7 +15,17 @@ from typing import Any, Dict, List, Optional, Union
 
 def subs(cmd: Union[List[str], str]) -> Optional[str]:
     """
-    get data from commands that we need to run outside of python
+    Get data from commands that we need to run outside of python.
+
+    Parameters
+    ----------
+    cmd : Union[List[str], str]
+        The command to execute.
+
+    Returns
+    -------
+    Optional[str]
+        The command output as a string, or None if execution fails.
     """
     try:
         stdout = subprocess.check_output(cmd)  # noqa
@@ -27,7 +36,12 @@ def subs(cmd: Union[List[str], str]) -> Optional[str]:
 
 def get_data() -> Dict[str, Any]:
     """
-    returns a dict of various user environment data
+    Return a dict of various user environment data.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary containing environment information.
     """
     env: Dict[str, Any] = {}
     env["path"] = os.environ.get("PATH")
@@ -50,7 +64,7 @@ def get_data() -> Dict[str, Any]:
 
 def main() -> None:  # noqa
     """
-    print out useful info
+    Print out useful info.
     """
     # pylint: disable=superfluous-parens
     # args = get_args()

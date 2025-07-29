@@ -53,7 +53,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     webapp = Bool(False, config=True, help="""Show the webapp page.""")
 
     class Launcher(Configurable):
-        """Datalayer launcher configuration"""
+        """Datalayer launcher configuration."""
 
         category = Unicode(
             "Datalayer",
@@ -84,10 +84,18 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     @default("launcher")
     def _default_launcher(self) -> "DatalayerExtensionApp.Launcher":
+        """
+        Get default launcher configuration.
+
+        Returns
+        -------
+        DatalayerExtensionApp.Launcher
+            The default launcher configuration instance.
+        """
         return DatalayerExtensionApp.Launcher(parent=self, config=self.config)
 
     class Brand(Configurable):
-        """Datalayer launcher configuration"""
+        """Datalayer brand configuration."""
 
         name = Unicode(
             "Datalayer",
@@ -153,9 +161,18 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     @default("brand")
     def _default_brand(self) -> "DatalayerExtensionApp.Brand":
+        """
+        Get default brand configuration.
+
+        Returns
+        -------
+        DatalayerExtensionApp.Brand
+            The default brand configuration instance.
+        """
         return DatalayerExtensionApp.Brand(parent=self, config=self.config)
 
     def initialize_settings(self) -> None:
+        """Initialize server settings based on configuration."""
         self.serverapp.answer_yes = True
         if self.benchmarks:
             self.serverapp.default_url = "/datalayer/benchmarks"
@@ -188,6 +205,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.settings.update(**settings)
 
     def initialize_templates(self) -> None:
+        """Initialize Jinja templates with Datalayer variables."""
         self.serverapp.jinja_template_vars.update(
             {
                 "datalayer_version": __version__,
@@ -196,6 +214,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
     def initialize_handlers(self) -> None:
+        """Initialize HTTP request handlers."""
         handlers = [
             ("/", IndexHandler),
             (self.name, IndexHandler),

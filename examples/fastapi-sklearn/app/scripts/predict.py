@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Prediction script for FastAPI sklearn example."""
+
 import numpy as np
 
 data = Iris(

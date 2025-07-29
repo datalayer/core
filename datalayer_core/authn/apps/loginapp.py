@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Login application for Datalayer Core authentication."""
+
 import warnings
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp

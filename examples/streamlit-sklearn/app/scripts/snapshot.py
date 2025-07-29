@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Script to create a snapshot of the trained sklearn model."""
+
 from pathlib import Path
 
 from dotenv import load_dotenv

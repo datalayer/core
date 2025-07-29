@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Kernel manager for Datalayer runtimes."""
+
 from __future__ import annotations
 
 import re
@@ -21,12 +23,38 @@ HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 
 
 class RuntimeManager(KernelHttpManager):
-    """Manages a single Runtime."""
+    """
+    Manages a single Runtime.
+
+    Parameters
+    ----------
+    run_url : str
+        The runtime URL.
+    token : str
+        Authentication token.
+    username : str
+        Username for the runtime.
+    **kwargs : dict[str, Any]
+        Additional keyword arguments.
+    """
 
     def __init__(
         self, run_url: str, token: str, username: str, **kwargs: dict[str, Any]
     ):
-        """Initialize the gateway Runtime manager."""
+        """
+        Initialize the gateway Runtime manager.
+
+        Parameters
+        ----------
+        run_url : str
+            The runtime URL.
+        token : str
+            Authentication token.
+        username : str
+            Username for the runtime.
+        **kwargs : dict[str, Any]
+            Additional keyword arguments.
+        """
         _ = kwargs.pop("kernel_id", None)  # kernel_id not supported
         super().__init__(server_url="", token="", username=username, **kwargs)
         self._kernel_id = ""
@@ -36,6 +64,14 @@ class RuntimeManager(KernelHttpManager):
 
     @property
     def kernel_url(self) -> str | None:
+        """
+        Get the kernel URL.
+
+        Returns
+        -------
+        str or None
+            The kernel URL if available, None otherwise.
+        """
         if self.kernel:
             kernel_id = self.kernel["id"]
             return url_path_join(self.server_url, "api/kernels", kernel_id)
@@ -50,19 +86,22 @@ class RuntimeManager(KernelHttpManager):
     def start_kernel(
         self, name: str = "", path: str | None = None, timeout: float = REQUEST_TIMEOUT
     ) -> dict[str, Any] | None:
-        """Starts a kernel on Datalayer cloud.
+        """
+        Start a kernel on Datalayer cloud.
 
         Parameters
         ----------
-            name : str
-                Runtime name
-            path : str
-                [optional] API path from root to the cwd of the kernel
-            timeout : float
-                Request timeout
+        name : str
+            Runtime name.
+        path : str
+            [optional] API path from root to the cwd of the kernel.
+        timeout : float
+            Request timeout.
+
         Returns
         -------
-            The kernel model
+        dict[str, Any] | None
+            The kernel model.
         """
         if self.has_kernel:
             raise RuntimeError(

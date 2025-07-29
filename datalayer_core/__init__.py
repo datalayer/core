@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Datalayer Core - Python SDK and CLI for the Datalayer AI Platform."""
+
 from typing import Any, Dict, List
 
 from datalayer_core.__version__ import __version__
@@ -9,6 +11,14 @@ from datalayer_core.serverapplication import DatalayerExtensionApp
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
+    """
+    Get Jupyter server extension points for Datalayer.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        List of extension point configurations for Jupyter server.
+    """
     return [
         {
             "module": "datalayer_core",

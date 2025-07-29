@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Runtime listing application for the Datalayer Core CLI."""
+
 import sys
 from typing import Any
 
@@ -9,12 +11,17 @@ from datalayer_core.runtimes.utils import display_runtimes
 
 
 class RuntimesListMixin:
-    """
-    Mixin for listing Datalayer runtimes.
-    """
+    """Mixin for listing Datalayer runtimes."""
 
     def _list_runtimes(self) -> dict[str, Any]:
-        """List all available runtimes."""
+        """
+        List all available runtimes.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the response.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore

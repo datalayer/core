@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Main CLI application for Datalayer Core."""
+
 from pathlib import Path
 
 from datalayer_core.about.aboutapp import DatalayerAboutApp
@@ -21,6 +23,8 @@ HERE = Path(__file__).parent
 
 
 class DatalayerCLI(DatalayerCLIBaseApp):
+    """The main Datalayer CLI application."""
+
     description = """
       The Datalayer CLI application.
     """
@@ -47,6 +51,7 @@ class DatalayerCLI(DatalayerCLIBaseApp):
     }
 
     def start(self) -> None:
+        """Start the CLI application."""
         try:
             super().start()
             self.log.info(

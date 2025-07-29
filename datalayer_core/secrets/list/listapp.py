@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Secrets list application for Datalayer Core."""
+
 from typing import Any
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
@@ -8,13 +10,16 @@ from datalayer_core.secrets.utils import display_secrets
 
 
 class SecretsListMixin:
+    """Mixin class for listing secrets."""
+
     def _list_secrets(self) -> dict[str, Any]:
-        """ "
+        """
         List all secrets in the Datalayer environment.
 
         Returns
         -------
-            dict: A dictionary containing the list of secrets and their details.
+        dict[str, Any]
+            Dictionary containing secrets information.
         """
         try:
             response = self._fetch(  # type: ignore

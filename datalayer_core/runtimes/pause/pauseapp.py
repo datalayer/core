@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Runtime pause application for Datalayer Core."""
+
 import sys
 from typing import Any
 
@@ -12,7 +14,19 @@ class RuntimesPauseMixin:
     """Mixin for pausing a Datalayer Runtime."""
 
     def _pause_runtime(self, runtime_id: str) -> dict[str, Any]:
-        """Pause a Runtime with the given ID."""
+        """
+        Pause a Runtime with the given ID.
+
+        Parameters
+        ----------
+        runtime_id : str
+            The unique identifier of the runtime to pause.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary containing response data from the pause operation.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes/{}/pause".format(
@@ -34,6 +48,9 @@ class RuntimesPauseApp(DatalayerCLIBaseApp, RuntimesPauseMixin):
     """
 
     def start(self) -> None:
+        """
+        Start the runtime pause application.
+        """
         try:
             super().start()
             self.log.info("Runtime Pause - not implemented.")

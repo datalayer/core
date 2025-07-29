@@ -1,6 +1,10 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""
+Script to train a logistic regression model on the Iris dataset.
+"""
+
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
 

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Environment listing functionality."""
+
 from typing import Any
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
@@ -11,7 +13,14 @@ class EnvironmentsListMixin:
     """Mixin class that provides environment listing functionality."""
 
     def _list_environments(self) -> dict[str, Any]:
-        """List available environments."""
+        """
+        List available environments.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary containing environment information.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/environments".format(self.run_url),  # type: ignore
@@ -22,7 +31,7 @@ class EnvironmentsListMixin:
 
 
 class EnvironmentsListApp(DatalayerCLIBaseApp, EnvironmentsListMixin):
-    """A Kernel application."""
+    """A Datalayer environments listing application."""
 
     description = """
       The Datalayer application for Environment.
@@ -31,6 +40,7 @@ class EnvironmentsListApp(DatalayerCLIBaseApp, EnvironmentsListMixin):
     """
 
     def start(self) -> None:
+        """Start the environments listing application."""
         if len(self.extra_args) > 0:  # pragma: no cover
             self.log.warn("Too many arguments were provided for kernel create.")
             self.print_help()

@@ -36,12 +36,27 @@ UF_HIDDEN = getattr(stat, "UF_HIDDEN", 32768)
 
 
 def envset(name: str, default: Optional[bool] = False) -> Optional[bool]:
-    """Return the boolean value of a given environment variable.
+    """
+    Return the boolean value of a given environment variable.
 
     An environment variable is considered set if it is assigned to a value
-    other than 'no', 'n', 'false', 'off', '0', or '0.0' (case insensitive)
+    other than 'no', 'n', 'false', 'off', '0', or '0.0' (case insensitive).
 
     If the environment variable is not defined, the default value is returned.
+
+    Parameters
+    ----------
+    name : str
+        The name of the environment variable to check.
+    default : bool, optional
+        The default value to return if the environment variable is not defined.
+        Default is False.
+
+    Returns
+    -------
+    bool or None
+        The boolean value of the environment variable, or the default value
+        if not defined.
     """
     if name not in os.environ:
         return default
@@ -50,16 +65,29 @@ def envset(name: str, default: Optional[bool] = False) -> Optional[bool]:
 
 
 def use_platform_dirs() -> bool:
-    """Determine if platformdirs should be used for system-specific paths.
+    """
+    Determine if platformdirs should be used for system-specific paths.
 
     We plan for this to default to False in datalayer version 5 and to True
     in datalayer version 6.
+
+    Returns
+    -------
+    bool
+        True if platformdirs should be used, False otherwise.
     """
     return envset("DATALAYER_PLATFORM_DIRS", False)  # type:ignore[return-value]
 
 
 def get_home_dir() -> str:
-    """Get the real path of the home directory"""
+    """
+    Get the real path of the home directory.
+
+    Returns
+    -------
+    str
+        The resolved path to the user's home directory.
+    """
     homedir = os.path.expanduser("~")
     # Next line will make things work even when /home/ is a symlink to
     # /usr/home as it is on FreeBSD, for example
@@ -71,7 +99,19 @@ _dtemps: Dict[str, str] = {}
 
 
 def _do_i_own(path: str) -> bool:
-    """Return whether the current user owns the given path"""
+    """
+    Return whether the current user owns the given path.
+
+    Parameters
+    ----------
+    path : str
+        The path to check ownership for.
+
+    Returns
+    -------
+    bool
+        True if the current user owns the path, False otherwise.
+    """
     p = Path(path).resolve()
 
     # walk up to first existing parent
@@ -98,7 +138,14 @@ def _do_i_own(path: str) -> bool:
 
 
 def prefer_environment_over_user() -> bool:
-    """Determine if environment-level paths should take precedence over user-level paths."""
+    """
+    Determine if environment-level paths should take precedence over user-level paths.
+
+    Returns
+    -------
+    bool
+        True if environment-level paths should take precedence, False otherwise.
+    """
     # If DATALAYER_PREFER_ENV_PATH is defined, that signals user intent, so return its value
     if "DATALAYER_PREFER_ENV_PATH" in os.environ:
         return envset("DATALAYER_PREFER_ENV_PATH")  # type:ignore[return-value]
@@ -120,10 +167,21 @@ def prefer_environment_over_user() -> bool:
 
 
 def _mkdtemp_once(name: str) -> str:
-    """Make or reuse a temporary directory.
+    """
+    Make or reuse a temporary directory.
 
     If this is called with the same name in the same process, it will return
     the same directory.
+
+    Parameters
+    ----------
+    name : str
+        The name prefix for the temporary directory.
+
+    Returns
+    -------
+    str
+        The path to the temporary directory.
     """
     try:
         return _dtemps[name]
@@ -133,10 +191,16 @@ def _mkdtemp_once(name: str) -> str:
 
 
 def datalayer_config_dir() -> str:
-    """Get the Datalayer config directory for this platform and user.
+    """
+    Get the Datalayer config directory for this platform and user.
 
     Returns DATALAYER_CONFIG_DIR if defined, otherwise the appropriate
     directory for the platform.
+
+    Returns
+    -------
+    str
+        The path to the Datalayer config directory.
     """
 
     env = os.environ
@@ -154,11 +218,17 @@ def datalayer_config_dir() -> str:
 
 
 def datalayer_data_dir() -> str:
-    """Get the config directory for Datalayer data files for this platform and user.
+    """
+    Get the config directory for Datalayer data files for this platform and user.
 
     These are non-transient, non-configuration files.
 
     Returns DATALAYER_DATA_DIR if defined, else a platform-appropriate path.
+
+    Returns
+    -------
+    str
+        The path to the Datalayer data directory.
     """
     env = os.environ
 
@@ -187,12 +257,18 @@ def datalayer_data_dir() -> str:
 
 
 def datalayer_runtime_dir() -> str:
-    """Return the runtime dir for transient datalayer files.
+    """
+    Return the runtime dir for transient datalayer files.
 
     Returns DATALAYER_RUNTIME_DIR if defined.
 
     The default is now (data_dir)/runtime on all platforms;
     we no longer use XDG_RUNTIME_DIR after various problems.
+
+    Returns
+    -------
+    str
+        The path to the Datalayer runtime directory.
     """
     env = os.environ
 
@@ -232,7 +308,8 @@ ENV_DATALAYER_PATH: List[str] = [os.path.join(sys.prefix, "share", "datalayer_co
 
 
 def datalayer_path(*subdirs: str) -> List[str]:
-    """Return a list of directories to search for data files
+    """
+    Return a list of directories to search for data files.
 
     DATALAYER_PATH environment variable has highest priority.
 
@@ -242,11 +319,20 @@ def datalayer_path(*subdirs: str) -> List[str]:
     If the Python site.ENABLE_USER_SITE variable is True, we also add the
     appropriate Python user site subdirectory to the user-level directories.
 
-
     If ``*subdirs`` are given, that subdirectory will be added to each element.
 
-    Examples:
+    Parameters
+    ----------
+    *subdirs : str
+        Optional subdirectories to append to each path element.
 
+    Returns
+    -------
+    List[str]
+        A list of directories to search for data files.
+
+    Examples
+    --------
     >>> datalayer_path()
     ['~/.local/datalayer', '/usr/local/share/datalayer']
     >>> datalayer_path('kernels')
@@ -314,7 +400,8 @@ ENV_CONFIG_PATH: List[str] = [os.path.join(sys.prefix, "etc", "datalayer_core")]
 
 
 def datalayer_config_path() -> List[str]:
-    """Return the search path for Datalayer config files as a list.
+    """
+    Return the search path for Datalayer config files as a list.
 
     If the DATALAYER_PREFER_ENV_PATH environment variable is set, the
     environment-level directories will have priority over user-level
@@ -322,6 +409,11 @@ def datalayer_config_path() -> List[str]:
 
     If the Python site.ENABLE_USER_SITE variable is True, we also add the
     appropriate Python user site subdirectory to the user-level directories.
+
+    Returns
+    -------
+    List[str]
+        A list of directories to search for config files.
     """
     if os.environ.get("DATALAYER_NO_CONFIG"):
         # datalayer_config_dir makes a blank config when DATALAYER_NO_CONFIG is set.
@@ -366,8 +458,18 @@ def datalayer_config_path() -> List[str]:
 
 
 def exists(path: str) -> bool:
-    """Replacement for `os.path.exists` which works for host mapped volumes
-    on Windows containers
+    """
+    Replacement for `os.path.exists` which works for host mapped volumes on Windows containers.
+
+    Parameters
+    ----------
+    path : str
+        The path to check for existence.
+
+    Returns
+    -------
+    bool
+        True if the path exists, False otherwise.
     """
     try:
         os.lstat(path)
@@ -377,7 +479,8 @@ def exists(path: str) -> bool:
 
 
 def is_file_hidden_win(abs_path: str, stat_res: Optional[Any] = None) -> bool:
-    """Is a file hidden?
+    """
+    Check if a file is hidden on Windows.
 
     This only checks the file itself; it should be called in combination with
     checking the directory containing the file.
@@ -386,11 +489,16 @@ def is_file_hidden_win(abs_path: str, stat_res: Optional[Any] = None) -> bool:
 
     Parameters
     ----------
-    abs_path : unicode
+    abs_path : str
         The absolute path to check.
     stat_res : os.stat_result, optional
         The result of calling stat() on abs_path. If not passed, this function
         will call stat() internally.
+
+    Returns
+    -------
+    bool
+        True if the file is hidden, False otherwise.
     """
     if os.path.basename(abs_path).startswith("."):
         return True
@@ -420,7 +528,8 @@ def is_file_hidden_win(abs_path: str, stat_res: Optional[Any] = None) -> bool:
 
 
 def is_file_hidden_posix(abs_path: str, stat_res: Optional[Any] = None) -> bool:
-    """Is a file hidden?
+    """
+    Check if a file is hidden on POSIX systems.
 
     This only checks the file itself; it should be called in combination with
     checking the directory containing the file.
@@ -429,11 +538,16 @@ def is_file_hidden_posix(abs_path: str, stat_res: Optional[Any] = None) -> bool:
 
     Parameters
     ----------
-    abs_path : unicode
+    abs_path : str
         The absolute path to check.
     stat_res : os.stat_result, optional
         The result of calling stat() on abs_path. If not passed, this function
         will call stat() internally.
+
+    Returns
+    -------
+    bool
+        True if the file is hidden, False otherwise.
     """
     if os.path.basename(abs_path).startswith("."):
         return True
@@ -466,7 +580,8 @@ else:
 
 
 def is_hidden(abs_path: str, abs_root: str = "") -> bool:
-    """Is a file hidden or contained in a hidden directory?
+    """
+    Check if a file is hidden or contained in a hidden directory.
 
     This will start with the rightmost path element and work backwards to the
     given root to see if a path is hidden or in a hidden directory. Hidden is
@@ -479,11 +594,16 @@ def is_hidden(abs_path: str, abs_root: str = "") -> bool:
 
     Parameters
     ----------
-    abs_path : unicode
+    abs_path : str
         The absolute path to check for hidden directories.
-    abs_root : unicode
+    abs_root : str, optional
         The absolute path of the root directory in which hidden directories
-        should be checked for.
+        should be checked for. Default is empty string.
+
+    Returns
+    -------
+    bool
+        True if the file is hidden or in a hidden directory, False otherwise.
     """
     abs_path = os.path.normpath(abs_path)
     abs_root = os.path.normpath(abs_root)
@@ -520,7 +640,9 @@ def is_hidden(abs_path: str, abs_root: str = "") -> bool:
 
 
 def win32_restrict_file_to_user(fname: str) -> None:
-    """Secure a windows file to read-only access for the user.
+    """
+    Secure a windows file to read-only access for the user.
+
     Follows guidance from win32 library creator:
     http://timgolden.me.uk/python/win32_how_do_i/add-security-to-a-file.html
 
@@ -529,9 +651,13 @@ def win32_restrict_file_to_user(fname: str) -> None:
 
     Parameters
     ----------
+    fname : str
+        The path to the file to secure.
 
-    fname : unicode
-        The path to the file to secure
+    Returns
+    -------
+    None
+        This function does not return a value.
     """
     try:
         import win32api
@@ -563,7 +689,8 @@ def win32_restrict_file_to_user(fname: str) -> None:
 
 
 def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
-    """Secure a windows file to read-only access for the user.
+    """
+    Secure a windows file to read-only access for the user using ctypes.
 
     Follows guidance from win32 library creator:
     http://timgolden.me.uk/python/win32_how_do_i/add-security-to-a-file.html
@@ -573,9 +700,13 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
 
     Parameters
     ----------
+    fname : str
+        The path to the file to secure.
 
-    fname : unicode
-        The path to the file to secure
+    Returns
+    -------
+    None
+        This function does not return a value.
     """
     import ctypes
     from ctypes import wintypes
@@ -620,6 +751,8 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     )
 
     class ACL(ctypes.Structure):
+        """Windows Access Control List structure."""
+
         _fields_ = [
             ("AclRevision", wintypes.BYTE),
             ("Sbz1", wintypes.BYTE),
@@ -633,6 +766,23 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     PSECURITY_DESCRIPTOR = ctypes.POINTER(wintypes.BYTE)
 
     def _nonzero_success(result: Any, func: Any, args: Any) -> Any:
+        """
+        Check Windows API call result and raise error if failed.
+
+        Parameters
+        ----------
+        result : bool
+            The result of the Windows API call.
+        func : callable
+            The function that was called.
+        args : tuple
+            The arguments passed to the function.
+
+        Returns
+        -------
+        tuple
+            The original arguments if the result is successful.
+        """
         if not result:
             raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]
         return args
@@ -735,7 +885,19 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     )
 
     def CreateWellKnownSid(WellKnownSidType: int) -> Any:
-        # return a SID for predefined aliases
+        """
+        Return a SID for predefined aliases.
+
+        Parameters
+        ----------
+        WellKnownSidType : int
+            The type of well-known SID to create.
+
+        Returns
+        -------
+        ctypes.Array
+            A SID for the specified predefined alias.
+        """
         pSid = (ctypes.c_char * 1)()
         cbSid = wintypes.DWORD()
         try:
@@ -752,8 +914,19 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         return pSid[:]
 
     def GetUserNameEx(NameFormat: int) -> Optional[str]:
-        # return the user or other security principal associated with
-        # the calling thread
+        """
+        Return the user or other security principal associated with the calling thread.
+
+        Parameters
+        ----------
+        NameFormat : int
+            The format of the name to retrieve.
+
+        Returns
+        -------
+        str or None
+            The user name in the specified format, or None if not available.
+        """
         nSize = ctypes.pointer(ctypes.c_ulong(0))
         try:
             secur32.GetUserNameExW(NameFormat, None, nSize)
@@ -769,8 +942,21 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     def LookupAccountName(
         lpSystemName: Any, lpAccountName: Any
     ) -> Tuple[Any, Any, Any]:
-        # return a security identifier (SID) for an account on a system
-        # and the name of the domain on which the account was found
+        """
+        Return a security identifier (SID) for an account on a system and the domain name.
+
+        Parameters
+        ----------
+        lpSystemName : str or None
+            The name of the system on which to look up the account.
+        lpAccountName : str
+            The name of the account to look up.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the SID, domain name, and account type.
+        """
         cbSid = wintypes.DWORD(0)
         cchReferencedDomainName = wintypes.DWORD(0)
         peUse = wintypes.DWORD(0)
@@ -808,12 +994,38 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     def AddAccessAllowedAce(
         pAcl: Any, dwAceRevision: Any, AccessMask: Any, pSid: Any
     ) -> None:
-        # add an access-allowed access control entry (ACE)
-        # to an access control list (ACL)
+        """
+        Add an access-allowed access control entry (ACE) to an access control list (ACL).
+
+        Parameters
+        ----------
+        pAcl : ctypes.POINTER
+            Pointer to the ACL to modify.
+        dwAceRevision : int
+            Revision level of the ACE being added.
+        AccessMask : int
+            Access mask specifying the rights being granted.
+        pSid : ctypes.c_void_p
+            Pointer to the SID that will be granted access.
+        """
         advapi32.AddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid)
 
     def GetFileSecurity(lpFileName: Any, RequestedInformation: Any) -> Any:
-        # return information about the security of a file or directory
+        """
+        Return information about the security of a file or directory.
+
+        Parameters
+        ----------
+        lpFileName : str
+            Path to the file or directory.
+        RequestedInformation : int
+            Information being requested about the file's security.
+
+        Returns
+        -------
+        ctypes.Array
+            The security descriptor for the file or directory.
+        """
         nLength = wintypes.DWORD(0)
         try:
             advapi32.GetFileSecurityW(
@@ -841,19 +1053,55 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     def SetFileSecurity(
         lpFileName: Any, RequestedInformation: Any, pSecurityDescriptor: Any
     ) -> None:
-        # set the security of a file or directory object
+        """
+        Set the security of a file or directory object.
+
+        Parameters
+        ----------
+        lpFileName : str
+            Path to the file or directory.
+        RequestedInformation : int
+            Information being set about the file's security.
+        pSecurityDescriptor : ctypes.POINTER
+            Pointer to the security descriptor to set.
+        """
         advapi32.SetFileSecurityW(lpFileName, RequestedInformation, pSecurityDescriptor)
 
     def SetSecurityDescriptorDacl(
         pSecurityDescriptor: Any, bDaclPresent: Any, pDacl: Any, bDaclDefaulted: Any
     ) -> None:
-        # set information in a discretionary access control list (DACL)
+        """
+        Set information in a discretionary access control list (DACL).
+
+        Parameters
+        ----------
+        pSecurityDescriptor : ctypes.POINTER
+            Pointer to the security descriptor.
+        bDaclPresent : bool
+            Whether the DACL is present in the security descriptor.
+        pDacl : ctypes.POINTER
+            Pointer to the DACL.
+        bDaclDefaulted : bool
+            Whether the DACL was set by default.
+        """
         advapi32.SetSecurityDescriptorDacl(
             pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted
         )
 
     def MakeAbsoluteSD(pSelfRelativeSecurityDescriptor: Any) -> Any:
-        # return a security descriptor in absolute format
+        """
+        Return a security descriptor in absolute format.
+
+        Parameters
+        ----------
+        pSelfRelativeSecurityDescriptor : ctypes.POINTER
+            Pointer to the self-relative security descriptor.
+
+        Returns
+        -------
+        ctypes.POINTER
+            A security descriptor in absolute format.
+        """
         # by using a security descriptor in self-relative format as a template
         pAbsoluteSecurityDescriptor = None
         lpdwAbsoluteSecurityDescriptorSize = wintypes.DWORD(0)
@@ -909,8 +1157,19 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         return pAbsoluteSecurityDescriptor
 
     def MakeSelfRelativeSD(pAbsoluteSecurityDescriptor: Any) -> Any:
-        # return a security descriptor in self-relative format
-        # by using a security descriptor in absolute format as a template
+        """
+        Return a security descriptor in self-relative format from absolute format.
+
+        Parameters
+        ----------
+        pAbsoluteSecurityDescriptor : ctypes.POINTER
+            Pointer to the absolute security descriptor.
+
+        Returns
+        -------
+        ctypes.POINTER
+            A security descriptor in self-relative format.
+        """
         pSelfRelativeSecurityDescriptor = None
         lpdwBufferLength = wintypes.DWORD(0)
         try:
@@ -931,7 +1190,14 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         return pSelfRelativeSecurityDescriptor
 
     def NewAcl() -> Any:
-        # return a new, initialized ACL (access control list) structure
+        """
+        Return a new, initialized ACL (access control list) structure.
+
+        Returns
+        -------
+        ACL
+            A new, initialized ACL structure.
+        """
         nAclLength = 32767  # TODO: calculate this: ctypes.sizeof(ACL) + ?
         acl_data = ctypes.create_string_buffer(nAclLength)
         pAcl = ctypes.cast(acl_data, PACL).contents
@@ -959,14 +1225,18 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
 
 
 def get_file_mode(fname: str) -> int:
-    """Retrieves the file mode corresponding to fname in a filesystem-tolerant manner.
+    """
+    Retrieve the file mode corresponding to fname in a filesystem-tolerant manner.
 
     Parameters
     ----------
+    fname : str
+        The path to the file to get mode from.
 
-    fname : unicode
-        The path to the file to get mode from
-
+    Returns
+    -------
+    int
+        The file mode with some bits masked for filesystem tolerance.
     """
     # Some filesystems (e.g., CIFS) auto-enable the execute bit on files.  As a result, we
     # should tolerate the execute bit on the file's owner when validating permissions - thus
@@ -984,18 +1254,22 @@ allow_insecure_writes = os.getenv(
 
 @contextmanager
 def secure_write(fname: str, binary: bool = False) -> Iterator[Any]:
-    """Opens a file in the most restricted pattern available for
-    writing content. This limits the file mode to `0o0600` and yields
-    the resulting opened filed handle.
+    """
+    Open a file in the most restricted pattern available for writing content.
+
+    This limits the file mode to `0o0600` and yields the resulting opened file handle.
 
     Parameters
     ----------
+    fname : str
+        The path to the file to write.
+    binary : bool, optional
+        Indicates that the file is binary. Default is False.
 
-    fname : unicode
-        The path to the file to write
-
-    binary: boolean
-        Indicates that the file is binary
+    Yields
+    ------
+    Any
+        The opened file handle.
     """
     mode = "wb" if binary else "w"
     encoding = None if binary else "utf-8"
@@ -1039,9 +1313,28 @@ def secure_write(fname: str, binary: bool = False) -> Iterator[Any]:
 
 
 def issue_insecure_write_warning() -> None:
-    """Issue an insecure write warning."""
+    """
+    Issue an insecure write warning.
+    """
 
     def format_warning(msg: str, *args: Tuple[Any], **kwargs: Dict[str, Any]) -> str:
+        """
+        Format warning message with newline.
+
+        Parameters
+        ----------
+        msg : str
+            The warning message to format.
+        *args : Tuple[Any]
+            Additional positional arguments (unused).
+        **kwargs : Dict[str, Any]
+            Additional keyword arguments (unused).
+
+        Returns
+        -------
+        str
+            The formatted warning message with a newline.
+        """
         return str(msg) + "\n"
 
     warnings.formatwarning = format_warning  # type:ignore[assignment]

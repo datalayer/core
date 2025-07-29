@@ -2,9 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 # PYTHON_ARGCOMPLETE_OK
-"""Migrating IPython < 4.0 to Datalayer
+"""
+Migrating IPython < 4.0 to Datalayer.
 
-This *copies* configuration and resources to their new locations in Datalayer
+This *copies* configuration and resources to their new locations in Datalayer.
 
 Migrations:
 
@@ -20,8 +21,6 @@ Migrations:
     - notebook_secret, notebook_cookie_secret, nbsignatures.db -> DATALAYER_DATA_DIR
 
   - ipython_{notebook,nbconvert,qtconsole}_config.py -> .datalayer/datalayer_{name}_config.py
-
-
 """
 
 # Copyright (c) Datalayer Development Team.
@@ -70,7 +69,8 @@ config_substitutions = {
 
 
 def get_ipython_dir() -> str:
-    """Return the IPython directory location.
+    """
+    Return the IPython directory location.
 
     Not imported from IPython because the IPython implementation
     ensures that a writable directory exists,
@@ -79,12 +79,31 @@ def get_ipython_dir() -> str:
 
     We only need to support the IPython < 4 behavior for migration,
     so importing for forward-compatibility and edge cases is not important.
+
+    Returns
+    -------
+    str
+        The path to the IPython directory.
     """
     return os.environ.get("IPYTHONDIR", os.path.expanduser("~/.ipython"))
 
 
 def migrate_dir(src: str, dst: str) -> bool:
-    """Migrate a directory from src to dst"""
+    """
+    Migrate a directory from src to dst.
+
+    Parameters
+    ----------
+    src : str
+        The source directory.
+    dst : str
+        The destination directory.
+
+    Returns
+    -------
+    bool
+        `True` if the migration was successful, `False` otherwise.
+    """
     log = get_logger()
     if not os.listdir(src):
         log.debug("No files in %s", src)
@@ -105,9 +124,24 @@ def migrate_dir(src: str, dst: str) -> bool:
 def migrate_file(
     src: str, dst: str, substitutions: Optional[dict[Any, Any]] = None
 ) -> bool:
-    """Migrate a single file from src to dst
+    """
+    Migrate a single file from src to dst.
 
     substitutions is an optional dict of {regex: replacement} for performing replacements on the file.
+
+    Parameters
+    ----------
+    src : str
+        The source file.
+    dst : str
+        The destination file.
+    substitutions : Optional[dict[Any, Any]]
+        A dictionary of regex patterns and their replacements.
+
+    Returns
+    -------
+    bool
+        `True` if the migration was successful, `False` otherwise.
     """
     log = get_logger()
     if os.path.exists(dst):
@@ -128,9 +162,22 @@ def migrate_file(
 
 
 def migrate_one(src: str, dst: str) -> bool:
-    """Migrate one item
+    """
+    Migrate one item.
 
     dispatches to migrate_dir/_file
+
+    Parameters
+    ----------
+    src : str
+        The source path.
+    dst : str
+        The destination path.
+
+    Returns
+    -------
+    bool
+        `True` if the migration was successful, `False` otherwise.
     """
     log = get_logger()
     if os.path.isfile(src):
@@ -143,9 +190,22 @@ def migrate_one(src: str, dst: str) -> bool:
 
 
 def migrate_static_custom(src: str, dst: str) -> bool:
-    """Migrate non-empty custom.js,css from src to dst
+    """
+    Migrate non-empty custom.js,css from src to dst.
 
     src, dst are 'custom' directories containing custom.{js,css}
+
+    Parameters
+    ----------
+    src : str
+        The source directory.
+    dst : str
+        The destination directory.
+
+    Returns
+    -------
+    bool
+        True if any files were migrated, False otherwise.
     """
     log = get_logger()
     migrated = False
@@ -191,9 +251,22 @@ def migrate_static_custom(src: str, dst: str) -> bool:
 
 
 def migrate_config(name: str, env: dict[str, Any]) -> list[str]:
-    """Migrate a config file.
+    """
+    Migrate a config file.
 
     Includes substitutions for updated configurable names.
+
+    Parameters
+    ----------
+    name : str
+        The name of the config file (without extension).
+    env : dict[str, Any]
+        The environment variables to use for path expansion.
+
+    Returns
+    -------
+    list[str]
+        A list of migrated config file paths.
     """
     log = get_logger()
     src_base = pjoin("{profile}", "ipython_{name}_config").format(name=name, **env)
@@ -220,7 +293,14 @@ def migrate_config(name: str, env: dict[str, Any]) -> list[str]:
 
 
 def migrate() -> bool:
-    """Migrate IPython configuration to Datalayer"""
+    """
+    Migrate IPython configuration to Datalayer.
+
+    Returns
+    -------
+    bool
+        `True` if any files were migrated, `False` otherwise.
+    """
     env = {
         "datalayer_data": datalayer_data_dir(),
         "datalayer_config": datalayer_config_dir(),

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Web application for benchmarks in Datalayer Core."""
+
 import sys
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp

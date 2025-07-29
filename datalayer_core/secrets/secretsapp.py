@@ -1,6 +1,10 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""
+Secrets CLI application.
+"""
+
 from datalayer_core.application import NoStart
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.secrets.create.createapp import SecretsCreateApp
@@ -9,6 +13,8 @@ from datalayer_core.secrets.list.listapp import SecretsListApp
 
 
 class SecretsApp(DatalayerCLIBaseApp):
+    """Secrets CLI application."""
+
     description = """
       The Runtimes CLI application.
     """
@@ -23,6 +29,7 @@ class SecretsApp(DatalayerCLIBaseApp):
     }
 
     def start(self) -> None:
+        """Start the app."""
         try:
             super().start()
             self.log.info(

@@ -24,3 +24,9 @@ repos:
       # Run the formatter
       - id: ruff-format
         types_or: [python, pyi]
+
+  # See https://numpydoc.readthedocs.io/en/latest/validation.html
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.9.0
+    hooks:
+      - id: numpydoc-validation

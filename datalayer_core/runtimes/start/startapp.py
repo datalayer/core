@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Runtime starting application for the Datalayer Core CLI."""
+
 import sys
 from typing import Any
 
@@ -12,7 +14,19 @@ class RuntimeStartMixin:
     """Mixin for starting a Datalayer Runtime."""
 
     def _start_runtime(self, runtime_id: str) -> dict[str, Any]:
-        """Start a Runtime with the given ID."""
+        """
+        Start a Runtime with the given ID.
+
+        Parameters
+        ----------
+        runtime_id : str
+            The ID of the runtime to start.
+
+        Returns
+        -------
+        dict[str, Any]
+            A dictionary containing the response from the runtime start operation.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes/{}/start".format(
@@ -34,6 +48,7 @@ class RuntimesStartApp(DatalayerCLIBaseApp, RuntimeStartMixin):
     """
 
     def start(self) -> None:
+        """Start the runtime start application."""
         try:
             super().start()
             self.log.info("Runtime Start - not implemented.")

@@ -1,6 +1,10 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""
+Secrets creation for Datalayer.
+"""
+
 from enum import Enum
 from typing import Any
 
@@ -34,18 +38,19 @@ class SecretsCreateMixin:
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the secret.
-        description: str
+        description : str
             Description of the secret.
-        value: str
+        value : str
             Value of the secret.
-        secret_type: str
+        secret_type : str
             Type of the secret (e.g., "generic", "password", "key", "token").
 
         Returns
         -------
-            dict: A dictionary containing the created secret and its details.
+        dict
+            A dictionary containing the created secret and its details.
         """
         body = {
             "name": name,

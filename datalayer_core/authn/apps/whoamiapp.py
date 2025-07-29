@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Who Am I application for Datalayer Core authentication."""
+
 from typing import Any
 
 from datalayer_core.authn.apps.utils import display_me
@@ -17,6 +19,14 @@ class WhoamiApp(DatalayerCLIBaseApp):
     """
 
     def get_profile(self) -> dict[str, Any]:
+        """
+        Get user profile information.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary containing user profile information.
+        """
         try:
             response = self._fetch(
                 "{}/api/iam/v1/whoami".format(self.run_url),
