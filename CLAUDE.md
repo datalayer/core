@@ -154,8 +154,82 @@ The codebase has achieved 100% mypy type checking compliance:
 
 All Python files now include proper type annotations and pass strict mypy checking without exclusions.
 
-### Documentation Standards
+### Documentation Standards (Updated January 2025)
 
 - **NumPy-style docstrings**: All public APIs follow NumPy documentation standards
 - **Pre-commit validation**: numpydoc-validation hook ensures docstring quality
 - **Comprehensive coverage**: Functions, classes, methods, and parameters documented
+- **Full compliance achieved**: All numpydoc validation errors resolved across core SDK files
+- **Key improvements**:
+  - Fixed parameter documentation spacing (added spaces before colons)
+  - Added missing parameter descriptions with proper punctuation
+  - Corrected infinitive verb usage in function summaries
+  - Added module docstrings to all Python files
+
+## Examples Directory
+
+### PyTorch GPU Workloads Example (January 2025)
+
+**Location**: `examples/pytorch-workloads/`
+
+A comprehensive GPU acceleration demonstration showcasing PyTorch performance benefits:
+
+**Key Features**:
+
+- **Dual benchmark system**: Matrix multiplication + convolution operations
+- **Performance comparison**: CPU vs GPU execution with timing and GFLOPS metrics
+- **Realistic workloads**: 10,000x10,000 matrix operations and CNN-style convolutions (48 batch size, 180 channels, 640x640 images)
+- **Reproducible results**: Deterministic operations with proper CUDA synchronization
+- **Comprehensive documentation**: Complete README with benchmark explanations
+
+**Files**:
+
+- `main.py` - Benchmark execution script using Datalayer SDK
+- `benchmark.py` - Core benchmark functions with proper NumPy docstrings
+- `requirements.txt` - PyTorch dependency
+- `README.md` - Complete documentation with usage examples
+
+**Performance Results**:
+
+- Matrix multiplication: ~20x GPU speedup
+- Convolution operations: ~80x GPU speedup
+- Average combined speedup: ~50x faster on GPU
+
+**Integration**:
+
+- Updated main examples README with new "High-Performance Computing" section
+- Follows established example patterns (FastAPI, Streamlit integrations)
+- Proper error handling and timeout configuration for heavy workloads
+
+### Datalayer Decorator Example (January 2025)
+
+**Location**: `examples/decorator/`
+
+A comprehensive demonstration of the `@datalayer` decorator for seamless remote function execution:
+
+**Key Features**:
+
+- **Function Decoration**: Transform regular Python functions into distributed computations
+- **Remote Execution**: Execute functions on cloud-based Datalayer runtimes with different environments
+- **Variable Management**: Input/output mapping between local and remote execution contexts
+- **Snapshot Integration**: Use pre-configured runtime snapshots for consistent environments
+- **Multiple Examples**: Four distinct use cases covering different decorator patterns
+
+**Files**:
+
+- `main.py` - Four comprehensive decorator examples with proper NumPy docstrings
+- `README.md` - Complete documentation with usage patterns and parameter reference
+
+**Example Patterns**:
+
+1. **Simple Computation**: Basic function decoration with `@datalayer(runtime_name="my-runtime", environment="ai-env")`
+2. **Data Processing**: Input/output variable mapping with `inputs=["data"], output="processed_result"`
+3. **Machine Learning**: Model training with debug mode and scikit-learn integration
+4. **Data Analysis**: Snapshot-based execution with `snapshot_name="data-analysis-env"`
+
+**Integration**:
+
+- Added new "SDK Fundamentals" section to main examples README
+- Positioned before Web Frameworks to highlight core SDK capabilities
+- Complete NumPy-style docstrings for all functions (passes numpydoc validation)
+- Type hints and comprehensive error handling

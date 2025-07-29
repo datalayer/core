@@ -5,7 +5,18 @@
 # Datalayer SDK Examples
 
 This directory contains practical examples demonstrating how to use the Datalayer SDK and core functionality in various scenarios and frameworks.
-📋 Available Examples
+
+## 📋 Available Examples
+
+## 🎯 SDK Fundamentals
+
+### 🎭 [Datalayer Decorator](./decorator/README.md)
+
+Comprehensive examples demonstrating the `@datalayer` decorator for seamless remote function execution.
+
+- **Use Case**: Transform regular functions into distributed computations
+- **Technologies**: Datalayer SDK decorators, remote runtime execution
+- **Features**: Function decoration, input/output mapping, snapshot integration, multiple environments
 
 ## 🚀 Web Frameworks & APIs
 
@@ -24,6 +35,16 @@ An interactive web application for machine learning model inference using Stream
 - **Use Case**: Interactive ML model demonstration and testing
 - **Technologies**: Streamlit, Scikit-learn
 - **Features**: Web UI, model training, snapshot management, real-time predictions
+
+## 🔥 High-Performance Computing
+
+### ⚡ [PyTorch GPU Workloads](./pytorch-workloads/README.md)
+
+GPU-accelerated PyTorch benchmarks demonstrating significant performance improvements over CPU execution across multiple computation types.
+
+- **Use Case**: Heavy computational workloads and GPU acceleration
+- **Technologies**: PyTorch, CUDA, GPU computing
+- **Features**: Dual benchmarks (matrix multiplication + convolutions), CPU vs GPU performance comparison.
 
 ## License
 

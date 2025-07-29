@@ -18,6 +18,7 @@
 
 <p align="center">
   <a href="https://pypi.org/project/datalayer-core/"><img src="https://img.shields.io/pypi/v/datalayer-core.svg" alt="PyPI version"></img></a>
+  <a href="https://pypi.org/project/datalayer-core/"><img src="https://img.shields.io/pypi/pyversions/datalayer-core.svg" alt="Python versions"></img></a>
   <a href="https://github.com/datalayer/core/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg" alt="License"></img></a>
   <a href="https://docs.datalayer.app/"><img src="https://img.shields.io/badge/docs-datalayer.app-blue" alt="Documentation"></img></a>
   <a href="https://github.com/datalayer/core/actions/workflows/tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/tests.yml/badge.svg" alt="Units Tests"></img></a>

@@ -9,7 +9,9 @@ import functools
 import inspect
 from typing import Any, Callable, Optional, Union
 
-from datalayer_core.sdk.datalayer import DatalayerClient
+from typing_extensions import TypeAlias
+
+from datalayer_core.sdk.datalayer import DEFAULT_ENVIRONMENT, DatalayerClient
 
 # TODO:
 # - inputs are different from args and kwargs (rename)
@@ -17,11 +19,18 @@ from datalayer_core.sdk.datalayer import DatalayerClient
 # - incorrect number of args
 
 
+Seconds: TypeAlias = float
+CallableOrOptionalString: TypeAlias = Union[Callable[..., Any], Optional[str]]
+
+
 def datalayer(
-    runtime_name: Union[Callable[..., Any], Optional[str]] = None,
+    runtime_name: CallableOrOptionalString = None,
+    environment: str = DEFAULT_ENVIRONMENT,
     inputs: Optional[list[str]] = None,
     output: Optional[str] = None,
     snapshot_name: Optional[str] = None,
+    debug: bool = True,
+    timeout: Seconds = 10.0,
 ) -> Any:
     """
     Decorator to execute a function in a Datalayer runtime.
@@ -30,12 +39,18 @@ def datalayer(
     ----------
     runtime_name : str, optional
         The name of the runtime to use. If not provided, a default runtime will be used.
+    environment : str, optional
+        The name of the environment to use. If not provided, a default environment will be used.
     inputs : list[str], optional
         A list of input variable names for the function.
     output : str, optional
         The name of the output variable for the function.
     snapshot_name : str, optional
         The name of the runtime snapshot to use.
+    debug : bool
+        Whether to enable debug mode. If `True`, the output and error streams will be printed.
+    timeout : Seconds
+        Timeout for the execution.
 
     Returns
     -------
@@ -152,13 +167,21 @@ def datalayer(
 
             client = DatalayerClient()
             with client.create_runtime(
-                name=runtime_name_decorated, snapshot_name=snapshot_name_decorated
+                name=runtime_name_decorated,
+                snapshot_name=snapshot_name_decorated,
+                environment=environment,
             ) as runtime:
-                runtime.execute(function_source)
+                runtime.execute(
+                    function_source,
+                    debug=debug,
+                    timeout=timeout,
+                )
                 return runtime.execute(
                     function_call,
                     variables=variables,
                     output=output_decorated or output,
+                    debug=debug,
+                    timeout=timeout,
                 )
 
         return wrapper
