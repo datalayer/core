@@ -49,8 +49,8 @@ def _process_args_kwargs_mapping(
 def _process_inputs(
     func: Callable[..., Any],
     inputs_decorated: Optional[list[str]],
-    variables: dict[str, Any],
 ) -> tuple[dict[str, Any], list[str]]:
+    variables = {}
     sig = inspect.signature(func)
     if inputs_decorated is None:
         inputs = []
@@ -117,7 +117,6 @@ def datalayer(
     ... def example(x: float, y: float) -> float:
     ...     return x + y
     """
-    variables = {}
     inputs_decorated = inputs
     output_decorated = output
     snapshot_name_decorated = snapshot_name
@@ -147,7 +146,7 @@ def datalayer(
             output = f"DATALAYER_RUNTIME_OUTPUT_{func.__name__}".upper()
 
         variables, inputs = _process_inputs(
-            func=func, inputs_decorated=inputs_decorated, variables=variables
+            func=func, inputs_decorated=inputs_decorated,
         )
 
         @functools.wraps(func)
