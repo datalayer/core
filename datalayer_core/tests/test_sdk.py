@@ -20,7 +20,7 @@ DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_secrets_creation_list_delete():
+def test_secrets_creation_list_delete() -> None:
     """
     Test the creation and deletion of secrets.
     """
@@ -59,14 +59,14 @@ def test_secrets_creation_list_delete():
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_secrets_delete_non_existent():
+def test_secrets_delete_non_existent() -> None:
     """
     Test the creation and deletion of secrets.
     """
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
 
     # Delete the secret
-    response = client.delete_secret(uuid.uuid4())
+    response = client.delete_secret(str(uuid.uuid4()))
     assert response.get("success") is False
 
 
@@ -74,7 +74,7 @@ def test_secrets_delete_non_existent():
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_runtime_create_execute_and_list():
+def test_runtime_create_execute_and_list() -> None:
     """
     Test the creation and deletion of runtime.
     """
@@ -96,7 +96,7 @@ def test_runtime_create_execute_and_list():
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_runtime_snapshot_create_and_delete():
+def test_runtime_snapshot_create_and_delete() -> None:
     """
     Test the creation and deletion of runtime.
     """
@@ -128,7 +128,7 @@ def test_runtime_snapshot_create_and_delete():
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_environments_list():
+def test_environments_list() -> None:
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     envs = client.list_environments()
     assert len(envs) == 2
@@ -138,7 +138,7 @@ def test_environments_list():
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_authenticate():
+def test_authenticate() -> None:
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     print(client._log_in())
     assert client.authenticate()
