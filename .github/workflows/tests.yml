@@ -14,6 +14,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12']
     steps:
@@ -50,3 +51,5 @@ jobs:
           DATALAYER_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
         run: |
           pytest datalayer_core/tests/ --cov=datalayer_core --cov-report term-missing
+
+
