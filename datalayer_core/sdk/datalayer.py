@@ -1021,15 +1021,13 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         """
         fname = Path(path).expanduser().resolve()
         if self._check_file(fname):
-            if variables:
-                self.set_variables(variables)
-
             if self._kernel_client:
                 outputs = []
                 for _id, cell in _get_cells(fname):
                     reply = self._kernel_client.execute_interactive(
                         cell,
                         silent=False,
+                        variables=variables,
                     )
                     outputs.append(reply.get("outputs", []))
                 if output is not None:
@@ -1064,9 +1062,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         if not self._check_file(code):
             result: list[dict[str, str]] = []
             if self._kernel_client is not None:
-                if variables:
-                    self.set_variables(variables)
-                reply = self._kernel_client.execute(code)
+                reply = self._kernel_client.execute(
+                    code,
+                    variables=variables,
+                )
                 result = reply.get("outputs", {})
                 if output is not None:
                     return self.get_variable(output)
