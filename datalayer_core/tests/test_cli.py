@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Tests for CLI functionality."""
+
 import os
 import time
 from subprocess import PIPE, Popen
@@ -20,6 +22,11 @@ DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
 def _delete_all_runtimes(secs: int = 5) -> None:
     """
     Delete all runtimes for testing purposes.
+
+    Parameters
+    ----------
+    secs : int
+        The number of seconds to wait before and after deleting runtimes.
     """
     time.sleep(secs)
     client = DatalayerClient()

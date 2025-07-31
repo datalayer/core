@@ -2,7 +2,8 @@
 # Distributed under the terms of the Modified BSD License.
 
 # PYTHON_ARGCOMPLETE_OK
-"""The root `datalayer` command.
+"""
+The root `datalayer` command.
 
 This does nothing other than dispatch to subcommands or output path info.
 """
@@ -30,19 +31,32 @@ class DatalayerParser(argparse.ArgumentParser):
 
     @property
     def epilog(self) -> str:
-        """Add subcommands to epilog on request
+        """
+        Add subcommands to epilog on request.
 
         Avoids searching PATH for subcommands unless help output is requested.
+
+        Returns
+        -------
+        str
+            The epilog string with available subcommands.
         """
         return "Available subcommands: %s" % " ".join(list_subcommands())
 
     @epilog.setter
     def epilog(self, x: Any) -> None:
-        """Ignore epilog set in Parser.__init__"""
+        """
+        Ignore epilog set in Parser.__init__.
+
+        Parameters
+        ----------
+        x : Any
+            The epilog value to ignore.
+        """
         pass
 
     def argcomplete(self) -> None:
-        """Trigger auto-completion, if enabled"""
+        """Trigger auto-completion, if enabled."""
         try:
             import argcomplete
 
@@ -52,7 +66,14 @@ class DatalayerParser(argparse.ArgumentParser):
 
 
 def datalayer_parser() -> DatalayerParser:
-    """Create a datalayer parser object."""
+    """
+    Create a datalayer parser object.
+
+    Returns
+    -------
+    DatalayerParser
+        The configured argument parser.
+    """
     parser = DatalayerParser(
         description="Datalayer: A Cloud-native and React.js Jupyter",
     )
@@ -94,12 +115,16 @@ def datalayer_parser() -> DatalayerParser:
 
 
 def list_subcommands() -> List[str]:
-    """List all datalayer subcommands
+    """
+    List all datalayer subcommands.
 
-    searches PATH for `datalayer-name`
+    Searches PATH for `datalayer-name`.
 
-    Returns a list of datalayer's subcommand names, without the `datalayer-` prefix.
-    Nested children (e.g. datalayer-sub-subsub) are not included.
+    Returns
+    -------
+    List[str]
+        A list of datalayer's subcommand names, without the `datalayer-` prefix.
+        Nested children (e.g. datalayer-sub-subsub) are not included.
     """
     subcommand_tuples = set()
     # construct a set of `('foo', 'bar') from `datalayer-foo-bar`
@@ -124,9 +149,17 @@ def list_subcommands() -> List[str]:
 
 
 def _execvp(cmd: str, argv: List[str]) -> None:
-    """execvp, except on Windows where it uses Popen
+    """
+    Execute a program, except on Windows where it uses Popen.
 
     Python provides execvp on Windows, but its behavior is problematic (Python bug#9148).
+
+    Parameters
+    ----------
+    cmd : str
+        The command to execute.
+    argv : List[str]
+        The argument vector for the command.
     """
     if sys.platform.startswith("win"):
         # PATH is ignored when shell=False,
@@ -147,8 +180,21 @@ def _execvp(cmd: str, argv: List[str]) -> None:
 
 
 def _datalayer_abspath(subcommand: str) -> str:
-    """This method get the abspath of a specified datalayer-subcommand with no
+    """
+    Get the absolute path of a specified datalayer-subcommand.
+
+    This method gets the abspath of a specified datalayer-subcommand with no
     changes on ENV.
+
+    Parameters
+    ----------
+    subcommand : str
+        The subcommand name to find.
+
+    Returns
+    -------
+    str
+        The absolute path to the subcommand.
     """
     # get env PATH with self
     search_path = os.pathsep.join(_path_with_self())
@@ -167,11 +213,17 @@ def _datalayer_abspath(subcommand: str) -> str:
 
 
 def _path_with_self() -> List[str]:
-    """Put `datalayer`'s dir at the front of PATH
+    """
+    Put `datalayer`'s dir at the front of PATH.
 
     Ensures that /path/to/datalayer subcommand
     will do /path/to/datalayer-subcommand
-    even if /other/datalayer-subcommand is ahead of it on PATH
+    even if /other/datalayer-subcommand is ahead of it on PATH.
+
+    Returns
+    -------
+    List[str]
+        The modified PATH list with datalayer's directory first.
     """
     path_list = (os.environ.get("PATH") or os.defpath).split(os.pathsep)
 
@@ -207,11 +259,22 @@ def _path_with_self() -> List[str]:
 
 
 def _evaluate_argcomplete(parser: DatalayerParser) -> List[str]:
-    """If argcomplete is enabled, trigger autocomplete or return current words
+    """
+    Evaluate argcomplete if enabled, trigger autocomplete or return current words.
 
     If the first word looks like a subcommand, return the current command
     that is attempting to be completed so that the subcommand can evaluate it;
     otherwise auto-complete using the main parser.
+
+    Parameters
+    ----------
+    parser : DatalayerParser
+        The argument parser to use for completion.
+
+    Returns
+    -------
+    List[str]
+        The current command words being completed.
     """
     try:
         # traitlets >= 5.8 provides some argcomplete support,

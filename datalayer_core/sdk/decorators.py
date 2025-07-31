@@ -1,6 +1,10 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""
+Decorators to execute functions in a Datalayer runtimes.
+"""
+
 import functools
 import inspect
 from typing import Any, Callable, Optional, Union
@@ -29,9 +33,9 @@ def datalayer(
     inputs : list[str], optional
         A list of input variable names for the function.
     output : str, optional
-        The name of the output variable for the function
+        The name of the output variable for the function.
     snapshot_name : str, optional
-        The name of the runtime snapshot to use
+        The name of the runtime snapshot to use.
 
     Returns
     -------
@@ -62,6 +66,21 @@ def datalayer(
         runtime_name_decorated = runtime_name
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        """
+        Decorator function to wrap the original function.
+
+        This function prepares the inputs and executes the function in the specified runtime.
+
+        Parameters
+        ----------
+        func : Callable[..., Any]
+            The function to be decorated.
+
+        Returns
+        -------
+        Callable[..., Any]
+            The wrapped function.
+        """
         if output_decorated is None:
             output = f"DATALAYER_RUNTIME_OUTPUT_{func.__name__}".upper()
 
@@ -84,6 +103,23 @@ def datalayer(
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """
+            Wrapper function to execute the decorated function in a Datalayer runtime.
+
+            This function prepares the inputs and executes the function in the specified runtime.
+
+            Parameters
+            ----------
+            *args : Any
+                Positional arguments for the function.
+            **kwargs : Any
+                Keyword arguments for the function.
+
+            Returns
+            -------
+            Any
+                The result of the function execution.
+            """
             sig = inspect.signature(func)
             mapping = {}
             for idx, (name, _param) in enumerate(sig.parameters.items()):

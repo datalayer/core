@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Configuration management for Datalayer Core."""
+
 # PYTHON_ARGCOMPLETE_OK
 
 from pathlib import Path
@@ -11,7 +13,8 @@ from .application import DatalayerApp
 
 
 class DatalayerConfig(DatalayerApp):
-    """A Datalayer Config App.
+    """
+    A Datalayer Config App.
 
     Run `datalayer --generate-config` to create the default config.
     """

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Console application for connecting to Datalayer runtimes."""
+
 import typing as t
 
 from jupyter_core.application import JupyterApp
@@ -59,16 +61,39 @@ class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
 
     @default("kernel_manager_class")
     def _kernel_manager_class_default(self) -> type:
+        """
+        Get the default kernel manager class.
+
+        Returns
+        -------
+        type
+            The RuntimeManager class.
+        """
         return RuntimeManager
 
     @default("kernel_name")
     def _kernel_name_default(self) -> str:
+        """
+        Get the default kernel name.
+
+        Returns
+        -------
+        str
+            Empty string (no default kernel name).
+        """
         # Don't set a default kernel name
         return ""
 
     @catch_config_error
     def initialize(self, argv: t.Any = None) -> None:
-        """Do actions after construct, but before starting the app."""
+        """
+        Do actions after construct, but before starting the app.
+
+        Parameters
+        ----------
+        argv : t.Any, optional
+            Command line arguments.
+        """
         super(JupyterApp, self).initialize(argv)
 
         if self.token is None:
@@ -112,6 +137,11 @@ class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
                 raise RuntimeError(msg)
 
     def init_shell(self) -> None:
+        """
+        Initialize the shell.
+
+        Forces own_kernel to False to prevent shutting down the kernel on exit.
+        """
         super().init_shell()
         # Force `own_kernel` to False to prevent shutting down the kernel
         # on exit

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Main application for runtime management commands."""
+
 from datalayer_core.application import NoStart
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.runtimes.console.consoleapp import RuntimesConsoleApp
@@ -15,6 +17,13 @@ from datalayer_core.runtimes.web.webapp import RuntimesWebApp
 
 
 class JupyterRuntimesApp(DatalayerCLIBaseApp):
+    """
+    Main application for runtime management with subcommands.
+
+    This application provides subcommands for managing Datalayer runtimes
+    including create, start, stop, pause, terminate, exec, list, console, and web.
+    """
+
     description = """
       The Runtimes CLI application.
     """
@@ -38,6 +47,11 @@ class JupyterRuntimesApp(DatalayerCLIBaseApp):
     }
 
     def start(self) -> None:
+        """
+        Start the runtimes application.
+
+        Shows available subcommands if no subcommand is specified.
+        """
         try:
             super().start()
             self.log.info(

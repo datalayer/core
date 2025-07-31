@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Snapshot deletion application for Datalayer Core."""
+
 import sys
 from typing import Any
 
@@ -13,7 +15,19 @@ class SnapshotsDeleteMixin:
     """
 
     def _delete_snapshot(self, snapshot_uid: str) -> dict[str, Any]:
-        """Delete snapshots of the current runtime."""
+        """
+        Delete snapshots of the current runtime.
+
+        Parameters
+        ----------
+        snapshot_uid : str
+            The unique identifier of the snapshot to delete.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary containing success status and message.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtime-snapshots/{}".format(

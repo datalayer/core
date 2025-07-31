@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""About application for Datalayer Core."""
+
 from pathlib import Path
 
 from rich.console import Console
@@ -23,6 +25,7 @@ class DatalayerAboutApp(DatalayerCLIBaseApp):
     _requires_auth = False
 
     def start(self) -> None:
+        """Start the about application and display information."""
         try:
             super().start()
             console = Console()

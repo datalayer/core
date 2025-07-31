@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Tests for Datalayer server extension functionality."""
+
 from subprocess import PIPE, Popen
 
 from datalayer_core import __version__

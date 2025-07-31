@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Base CLI classes and utilities for Datalayer Core."""
+
 import json
 import os
 import sys
@@ -41,24 +43,50 @@ datalayer_flags.update(
 
 
 class DatalayerAuthMixin(LoggingConfigurable):
+    """Authentication mixin for Datalayer CLI applications."""
+
     user_handle = None
 
     run_url = Unicode("", allow_none=False, config=True, help="Datalayer RUN URL.")
 
     @default("run_url")
     def _run_url_default(self) -> str:
+        """
+        Get default run URL from environment.
+
+        Returns
+        -------
+        str
+            The default run URL from DATALAYER_RUN_URL environment variable.
+        """
         return os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
 
     token = Unicode(None, allow_none=True, config=True, help="User access token.")
 
     @default("token")
     def _token_default(self) -> t.Optional[str]:
+        """
+        Get default token from environment.
+
+        Returns
+        -------
+        Optional[str]
+            The default token from DATALAYER_TOKEN environment variable.
+        """
         return os.environ.get("DATALAYER_TOKEN", None)
 
     external_token = Unicode(None, allow_none=True, config=True, help="External token.")
 
     @default("external_token")
     def _external_token_default(self) -> t.Optional[str]:
+        """
+        Get default external token from environment.
+
+        Returns
+        -------
+        Optional[str]
+            The default external token from DATALAYER_EXTERNAL_TOKEN environment variable.
+        """
         return os.environ.get("DATALAYER_EXTERNAL_TOKEN", None)
 
     no_browser = Bool(
@@ -66,7 +94,21 @@ class DatalayerAuthMixin(LoggingConfigurable):
     )
 
     def _fetch(self, request: str, **kwargs: t.Any) -> requests.Response:
-        """Fetch a network resource as a context manager."""
+        """
+        Fetch a network resource as a context manager.
+
+        Parameters
+        ----------
+        request : str
+            URL or request object to fetch.
+        **kwargs : t.Any
+            Additional keyword arguments passed to fetch function.
+
+        Returns
+        -------
+        requests.Response
+            HTTP response object.
+        """
         try:
             return fetch(
                 request, token=self.token, external_token=self.external_token, **kwargs
@@ -222,6 +264,14 @@ class DatalayerAuthMixin(LoggingConfigurable):
                     self.log.debug("Unable to import keyring.", exc_info=e)
 
     def _ask_credentials(self) -> dict[str, str]:
+        """
+        Ask user for login credentials.
+
+        Returns
+        -------
+        dict[str, str]
+            Dictionary containing user credentials.
+        """
         questions = [
             {
                 "type": "select",
@@ -275,7 +325,14 @@ class DatalayerAuthMixin(LoggingConfigurable):
         print()
 
     def __launch_browser(self, port: int) -> None:
-        """Launch the browser."""
+        """
+        Launch the browser.
+
+        Parameters
+        ----------
+        port : int
+            The port number for the local server.
+        """
 
         address = f"http://localhost:{port}/datalayer/login/cli"
 
@@ -294,6 +351,7 @@ class DatalayerAuthMixin(LoggingConfigurable):
             return
 
         def target() -> None:
+            """Launch browser in separate thread."""
             assert browser is not None
             time.sleep(1)  # Allow for the server to start
             browser.open(address)
@@ -302,6 +360,8 @@ class DatalayerAuthMixin(LoggingConfigurable):
 
 
 class DatalayerCLIBaseApp(DatalayerApp, DatalayerAuthMixin):
+    """Base application class for Datalayer CLI commands."""
+
     name = "datalayer_core"
 
     version = __version__
@@ -315,6 +375,14 @@ class DatalayerCLIBaseApp(DatalayerApp, DatalayerAuthMixin):
     _requires_auth = True
 
     def initialize(self, argv: t.Optional[list[t.Any]] = None) -> None:
+        """
+        Initialize the CLI application.
+
+        Parameters
+        ----------
+        argv : Optional[list[Any]]
+            Command line arguments to parse.
+        """
         super().initialize(argv)
 
         if self.token is None:

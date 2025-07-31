@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Snapshots CLI application for managing snapshots."""
+
 from datalayer_core.application import NoStart
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 from datalayer_core.snapshots.create.createapp import SnapshotsCreateApp
@@ -9,6 +11,8 @@ from datalayer_core.snapshots.list.listapp import SnapshotsListApp
 
 
 class SnapshotsApp(DatalayerCLIBaseApp):
+    """CLI application for managing snapshots with subcommands."""
+
     description = """
       The Runtimes CLI application.
     """
@@ -23,6 +27,7 @@ class SnapshotsApp(DatalayerCLIBaseApp):
     }
 
     def start(self) -> None:
+        """Start the snapshots application and handle subcommand selection."""
         try:
             super().start()
             self.log.info(

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Runtime termination functionality."""
+
 import sys
 from typing import Any
 
@@ -13,7 +15,19 @@ class RuntimesTerminateMixin:
     """
 
     def _terminate_runtime(self, pod_name: str) -> dict[str, Any]:
-        """Terminate a Runtime with the given kernel ID."""
+        """
+        Terminate a Runtime with the given kernel ID.
+
+        Parameters
+        ----------
+        pod_name : str
+            The pod name of the runtime to terminate.
+
+        Returns
+        -------
+        dict[str, Any]
+            Response containing termination status.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, pod_name),  # type: ignore

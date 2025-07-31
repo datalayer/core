@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Benchmarks application for Datalayer Core."""
+
 from datalayer_core.application import NoStart
 from datalayer_core.benchmarks.web.webapp import BenchmarksWebApp
 from datalayer_core.cli.base import DatalayerCLIBaseApp
@@ -20,6 +22,7 @@ class BenchmarksApp(DatalayerCLIBaseApp):
     }
 
     def start(self) -> None:
+        """Start the benchmarks application."""
         try:
             super().start()
             self.log.info(

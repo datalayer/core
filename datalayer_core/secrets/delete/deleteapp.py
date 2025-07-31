@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Application for deleting secrets in Datalayer."""
+
 from typing import Any
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
@@ -10,17 +12,18 @@ class SecretsDeleteMixin:
     """Mixin for deleting secrets in Datalayer."""
 
     def _delete_secret(self, secret_uid: str) -> dict[str, Any]:
-        """ "
+        """
         Delete a secret by its unique identifier.
 
         Parameters
         ----------
-        secret_uid: str
+        secret_uid : str
             Unique identifier of the secret to delete.
 
         Returns
         -------
-            dict: A dictionary containing the result of the deletion operation.
+        dict[str, Any]
+            A dictionary containing the result of the deletion operation.
         """
         try:
             response = self._fetch(  # type: ignore

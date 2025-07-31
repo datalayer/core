@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Snapshots list application for Datalayer Core."""
+
 import sys
 from typing import Any
 
@@ -14,7 +16,14 @@ class SnapshotsListMixin:
     """
 
     def _list_snapshots(self) -> dict[str, Any]:
-        """List all available snapshots."""
+        """
+        List all available snapshots.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary containing snapshot information or error details.
+        """
         try:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),  # type: ignore

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Utility functions for Datalayer core."""
+
 from __future__ import annotations
 
 import socket
@@ -15,7 +17,25 @@ def fetch(
     external_token: str | None = None,
     **kwargs: t.Any,
 ) -> requests.Response:
-    """Fetch a network resource as a context manager."""
+    """
+    Fetch a network resource as a context manager.
+
+    Parameters
+    ----------
+    request : str
+        The URL to fetch.
+    token : str or None, default None
+        Bearer token for authentication.
+    external_token : str or None, default None
+        External token for authentication.
+    **kwargs : Any
+        Additional keyword arguments passed to requests.
+
+    Returns
+    -------
+    requests.Response
+        The HTTP response object.
+    """
     method = kwargs.pop("method", "GET")
     f = getattr(requests, method.lower())
     headers = kwargs.pop("headers", {})
@@ -37,7 +57,14 @@ def fetch(
 
 
 def find_http_port() -> int:
-    """Find an available http port."""
+    """
+    Find an available http port.
+
+    Returns
+    -------
+    int
+        An available port number.
+    """
     # Xref https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number
     sock = socket.socket()
     sock.bind(("", 0))

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Service worker handler for Datalayer Core."""
+
 # Copyright (c) 2023-2025 Datalayer, Inc.
 #
 # Datalayer License
@@ -28,18 +30,46 @@ class ServiceWorkerHandler(StaticFileHandler, JupyterHandler):
         super().initialize(path=str(extensionStatic))
 
     def validate_absolute_path(self, root: str, absolute_path: str) -> Optional[str]:
-        """Only allow to serve the service worker"""
+        """
+        Only allow to serve the service worker.
+
+        Parameters
+        ----------
+        root : str
+            The root directory path.
+        absolute_path : str
+            The absolute path to validate.
+
+        Returns
+        -------
+        Optional[str]
+            The validated absolute path or None.
+        """
         # Must match the filename name set in webpack.lab-config.js
         if Path(absolute_path).name != "lite-service-worker.js":
             raise HTTPError(404)
         return super().validate_absolute_path(root, absolute_path)
 
     def get_content_type(self) -> str:
-        """Get the content type."""
+        """
+        Get the content type.
+
+        Returns
+        -------
+        str
+            The content type for JavaScript files.
+        """
         return "text/javascript"
 
     def set_extra_headers(self, path: str) -> None:
-        """Add extra headers to the response"""
+        """
+        Add extra headers to the response.
+
+        Parameters
+        ----------
+        path : str
+            The file path being served.
+        """
         # Allow a service worker to get a broader scope than
         # its path.
         # See https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register#examples

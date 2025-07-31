@@ -115,3 +115,21 @@ extend-select = ["I"]
 
 [tool.poetry]
 version = "0.1.0"
+
+[tool.numpydoc_validation]
+checks = [
+    "all",   # report on all checks, except the below
+    "EX01",
+    "SA01",
+    "ES01",
+]
+
+exclude = [  # don't report on objects that match any of these regex
+    '\.undocumented_method$',
+    '\.__repr__$',
+    '\.test_.*$',
+]
+
+exclude_files = [ # don't process filepaths that match these regex
+    '^test_.*.py$',
+]

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Authentication pages for Datalayer Core."""
+
 from __future__ import annotations
 
 LANDING_PAGE = """<!DOCTYPE html>

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Streamlit application for Iris species prediction using sklearn."""
+
 from pathlib import Path
 
 import streamlit as st
@@ -37,6 +39,19 @@ st.markdown("""
 
 
 def predict_species(data: Iris):  # type: ignore
+    """
+    Predict Iris species based on flower measurements.
+
+    Parameters
+    ----------
+    data : Iris
+        Iris flower measurements (sepal_length, sepal_width, petal_length, petal_width).
+
+    Returns
+    -------
+    str
+        The predicted species name.
+    """
     client = DatalayerClient()
     with client.create_runtime(snapshot_name=SNAPSHOT_NAME) as runtime:
         runtime.execute(HERE / "models.py")

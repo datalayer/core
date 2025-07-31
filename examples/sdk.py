@@ -1,5 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
+
+"""Example usage of Datalayer SDK decorators."""
+
 import inspect
 
 from dotenv import load_dotenv
@@ -18,6 +21,23 @@ load_dotenv()
 # @datalayer(runtime_name="example-runtime", output="result")
 # @datalayer(runtime_name="example-runtime", inputs=["a", "b", "c"])
 def sum(x: float, y: float, z: int = 1) -> float:
+    """
+    Sum two floats and return the result.
+
+    Parameters
+    ----------
+    x : float
+        First number to sum.
+    y : float
+        Second number to sum.
+    z : int
+        Third number to sum (default is 1).
+
+    Returns
+    -------
+    float
+        The sum of x and y.
+    """
     return x + y
 
 

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""HTTP server for authentication in Datalayer Core."""
+
 from __future__ import annotations
 
 import contextlib
@@ -36,14 +38,24 @@ logger = logging.getLogger(__name__)
 
 
 class LoginRequestHandler(SimpleHTTPRequestHandler):
-    """Custom simple http request handler to serve static files
-    from a directory and handle receiving the authentication token
-    for CLI usage.
+    """
+    Handle HTTP requests for authentication flow.
+
+    This handler serves static files from a directory and handles
+    receiving the authentication token for CLI usage.
     """
 
     server_version = "LoginHTTP/" + __version__
 
     def _save_token(self, query: str) -> None:
+        """
+        Save authentication token from OAuth callback.
+
+        Parameters
+        ----------
+        query : str
+            The query string from the OAuth callback URL.
+        """
         arguments = urllib.parse.parse_qs(query)
         error = arguments.get("error", [""])[0]
         if error:
@@ -85,6 +97,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         self.wfile.write(content)
 
     def do_GET(self) -> None:
+        """Handle GET requests for authentication flow."""
         parts = urllib.parse.urlsplit(self.path)
         if parts[2].strip("/").endswith("oauth/callback"):
             self._save_token(parts[3])
@@ -107,6 +120,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self) -> None:
+        """Handle POST requests with authentication data."""
         content_length = int(self.headers["Content-Length"])
         post_data = self.rfile.read(content_length)
         response = post_data.decode("utf-8")
@@ -121,6 +135,16 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         signal.raise_signal(signal.SIGINT)
 
     def log_message(self, format: str, *args: t.Tuple[t.Any]) -> None:
+        """
+        Log HTTP server messages.
+
+        Parameters
+        ----------
+        format : str
+            Format string for the log message.
+        *args : tuple[Any]
+            Arguments for the format string.
+        """
         message = format % args
         logger.debug(
             "%s - - [%s] %s\n"
@@ -133,6 +157,21 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
 
 class DualStackServer(HTTPServer):
+    """
+    HTTP server supporting both IPv4 and IPv6.
+
+    Parameters
+    ----------
+    server_address : tuple[str | bytes | bytearray, int]
+        The server address and port.
+    RequestHandlerClass : Callable
+        The request handler class.
+    run_url : str
+        The runtime URL.
+    bind_and_activate : bool, default True
+        Whether to bind and activate the server.
+    """
+
     def __init__(
         self,
         server_address: tuple[str | bytes | bytearray, int],
@@ -140,6 +179,20 @@ class DualStackServer(HTTPServer):
         run_url: str,
         bind_and_activate: bool = True,
     ) -> None:
+        """
+        Initialize the dual stack HTTP server.
+
+        Parameters
+        ----------
+        server_address : tuple[str | bytes | bytearray, int]
+            The server address and port.
+        RequestHandlerClass : Callable
+            The request handler class.
+        run_url : str
+            The runtime URL.
+        bind_and_activate : bool, default True
+            Whether to bind and activate the server.
+        """
         try:
             import datalayer_ui  # noqa: F401
         except Exception:
@@ -156,12 +209,30 @@ class DualStackServer(HTTPServer):
         super().__init__(server_address, RequestHandlerClass, bind_and_activate)
 
     def server_bind(self) -> None:
+        """
+        Bind the server socket, supporting both IPv4 and IPv6.
+
+        Returns
+        -------
+        None
+            This method does not return a value.
+        """
         # Suppress exception when protocol is IPv4.
         with contextlib.suppress(Exception):
             self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         return super().server_bind()
 
     def finish_request(self, request: t.Any, client_address: str) -> None:
+        """
+        Complete an incoming request.
+
+        Parameters
+        ----------
+        request : Any
+            The request object.
+        client_address : str
+            The client address.
+        """
         import datalayer_ui
 
         DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
@@ -176,7 +247,23 @@ class DualStackServer(HTTPServer):
 def get_token(
     run_url: str, port: int | None = None, logger: logging.Logger = logger
 ) -> tuple[str, str] | None:
-    """Get the user handle and token."""
+    """
+    Get the user handle and token.
+
+    Parameters
+    ----------
+    run_url : str
+        The runtime URL.
+    port : int or None, default None
+        The port to use for the authentication server.
+    logger : logging.Logger, default logger
+        The logger instance to use.
+
+    Returns
+    -------
+    tuple[str, str] or None
+        A tuple containing the user handle and token, or None if authentication fails.
+    """
 
     server_address = ("", port or find_http_port())
     port = server_address[1]

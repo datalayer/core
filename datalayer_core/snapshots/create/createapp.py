@@ -1,6 +1,10 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""
+An application to create a Snapshot.
+"""
+
 from typing import Any
 
 from rich import print_json
@@ -15,6 +19,25 @@ class SnapshotsCreateMixin:
     def _create_snapshot(
         self, pod_name: str, name: str, description: str, stop: bool = True
     ) -> dict[str, Any]:
+        """
+        Create a snapshot from a runtime.
+
+        Parameters
+        ----------
+        pod_name : str
+            The pod name of the runtime to snapshot.
+        name : str
+            Name for the snapshot.
+        description : str
+            Description for the snapshot.
+        stop : bool
+            Whether to stop the runtime after creating snapshot.
+
+        Returns
+        -------
+        dict[str, Any]
+            Response containing snapshot creation details.
+        """
         body = {
             "pod_name": pod_name,
             "name": name,

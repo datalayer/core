@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Tests for the Datalayer SDK functionality."""
+
 import os
 import time
 import uuid

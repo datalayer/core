@@ -3,6 +3,7 @@
 
 """
 Datalayer AI SDK - A simple SDK for AI engineers to work with Datalayer.
+
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
@@ -32,6 +33,21 @@ DEFAULT_TIMEOUT = 10  # Minutes
 def _create_snapshot(
     name: Optional[str], description: Optional[str]
 ) -> Tuple[str, str]:
+    """
+    Create snapshot name and description with defaults.
+
+    Parameters
+    ----------
+    name : Optional[str]
+        Name for the snapshot, or None for auto-generated name.
+    description : Optional[str]
+        Description for the snapshot, or None for auto-generated description.
+
+    Returns
+    -------
+    Tuple[str, str]
+        Tuple of (name, description) strings.
+    """
     uid = uuid.uuid4()
     if name is None:
         name = f"snapshot-{uid}"
@@ -43,6 +59,19 @@ def _create_snapshot(
 
 
 def _list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshot"]:
+    """
+    Parse API response and create RuntimeSnapshot objects.
+
+    Parameters
+    ----------
+    response : dict[str, Any]
+        API response dictionary containing snapshots data.
+
+    Returns
+    -------
+    List[RuntimeSnapshot]
+        List of RuntimeSnapshot objects parsed from the response.
+    """
     snapshot_objects = []
     if response["success"]:
         snapshots = response["snapshots"]
@@ -71,7 +100,26 @@ class DatalayerClientAuthMixin:
     _run_url: str = DEFAULT_RUN_URL
 
     def _fetch(self, request: str, **kwargs: Any) -> requests.Response:
-        """Fetch a network resource."""
+        """
+        Fetch a network resource.
+
+        Parameters
+        ----------
+        request : str
+            URL or request object to fetch.
+        **kwargs : Any
+            Additional keyword arguments passed to fetch function.
+
+        Returns
+        -------
+        requests.Response
+            HTTP response object.
+
+        Raises
+        ------
+        RuntimeError
+            If the request fails.
+        """
         try:
             return fetch(
                 request,
@@ -89,6 +137,14 @@ class DatalayerClientAuthMixin:
             ) from e
 
     def _log_in(self) -> dict[str, Any]:
+        """
+        Authenticate with the Datalayer server.
+
+        Returns
+        -------
+        dict[str, Any]
+            Authentication response containing success status and user info.
+        """
         body = {
             "token": self._token,
         }
@@ -115,6 +171,13 @@ class DatalayerClient(
 
     Provides a unified interface for authentication, runtime creation,
     and code execution in Datalayer environments.
+
+    Parameters
+    ----------
+    run_url : str
+        Datalayer server URL. Defaults to "https://prod1.datalayer.run".
+    token : Optional[str]
+        Authentication token (can also be set via DATALAYER_TOKEN env var).
     """
 
     def __init__(
@@ -127,9 +190,9 @@ class DatalayerClient(
 
         Parameters
         ----------
-        run_url:
+        run_url : str
             Datalayer server URL. Defaults to "https://prod1.datalayer.run".
-        token:
+        token : Optional[str]
             Authentication token (can also be set via DATALAYER_TOKEN env var).
         """
         # TODO: Check user and password login
@@ -148,14 +211,24 @@ class DatalayerClient(
 
     @property
     def run_url(self) -> str:
+        """
+        Get the Datalayer server URL.
+
+        Returns
+        -------
+        str
+            The configured Datalayer server URL.
+        """
         return self._run_url
 
     def authenticate(self) -> bool:
         """
         Validate authentication credentials.
 
-        Returns:
-            bool: True if authentication is successful
+        Returns
+        -------
+        bool
+            True if authentication is successful.
         """
         response = self._log_in()
         # print(response)
@@ -168,7 +241,8 @@ class DatalayerClient(
 
         Returns
         -------
-            list: A list of available environments.
+        list[Environment]
+            A list of available environments.
         """
         self._available_environments = self._list_environments()["environments"]
         self._available_environments_names = []
@@ -200,17 +274,19 @@ class DatalayerClient(
 
         Parameters
         ----------
-        name:
-            Name of the kernel to create (default: python3)
-        envionment:
-            Type of resources needed (cpu, gpu, etc.)
-        timeout:
+        name : Optional[str]
+            Name of the kernel to create (default: python3).
+        environment : str
+            Type of resources needed (cpu, gpu, etc.).
+        timeout : float
             Request timeout in minutes. Defaults to 10 minutes.
-        snapshot_name: Optional[str]
+        snapshot_name : Optional[str]
             Name of the snapshot to create from. If provided, the runtime will be created from this snapshot.
+
         Returns
         -------
-            Runtime: A runtime object for code execution
+        Runtime
+            A runtime object for code execution.
         """
         self.list_environments()
         if environment not in self._available_environments_names:
@@ -252,14 +328,13 @@ class DatalayerClient(
         return runtime
 
     def list_runtimes(self) -> list["Runtime"]:
-        """Terminate a running Runtime.
+        """
+        List all running runtimes.
 
-        Parameters
-        ----------
-        runtime: Runtime or str
-
-        'environment_title':'AI Environment',
-        'type': 'notebook',
+        Returns
+        -------
+        list[Runtime]
+            List of Runtime objects representing active runtimes.
         """
         runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
         runtime_objects = []
@@ -283,12 +358,18 @@ class DatalayerClient(
         return runtime_objects
 
     def terminate_runtime(self, runtime: Union["Runtime", str]) -> bool:
-        """Terminate a running Runtime.
+        """
+        Terminate a running Runtime.
 
         Parameters
         ----------
-        runtime: Runtime or str
+        runtime : Union[Runtime, str]
+            Runtime object or pod name string to terminate.
 
+        Returns
+        -------
+        bool
+            True if termination was successful, False otherwise.
         """
         pod_name = runtime.pod_name if isinstance(runtime, Runtime) else runtime
         if pod_name is not None:
@@ -302,7 +383,8 @@ class DatalayerClient(
 
         Returns
         -------
-            List[Secret]: A list of Secret objects.
+        list[Secret]
+            A list of Secret objects.
         """
         raw = self._list_secrets()
         secrets = raw.get("secrets", [])
@@ -335,18 +417,19 @@ class DatalayerClient(
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the secret.
-        description: str
+        description : str
             Description of the secret.
-        value: str
+        value : str
             Value of the secret.
-        secret_type: str
+        secret_type : str
             Type of the secret (e.g., "generic", "password", "key", "token").
 
         Returns
         -------
-            Secret: The created secret object.
+        Secret
+            The created secret object.
         """
         response = self._create_secret(
             name=name, description=description, value=value, secret_type=secret_type
@@ -365,8 +448,13 @@ class DatalayerClient(
 
         Parameters
         ----------
-        secret: Union[str, Secret]
+        secret : Union[str, Secret]
             Unique identifier of the secret or a Secret object.
+
+        Returns
+        -------
+        dict[str, str]
+            Response dictionary with deletion status.
         """
         uid = secret.uid if isinstance(secret, Secret) else secret
         return self._delete_secret(uid)
@@ -384,14 +472,21 @@ class DatalayerClient(
 
         Parameters
         ----------
-        runtime: Optional[Runtime]
+        runtime : Optional[Runtime]
             The runtime object to create a snapshot from.
-        pod_name: Optional[str]
+        pod_name : Optional[str]
             The pod name of the runtime.
-        name: str, optional
+        name : Optional[str]
             Name for the new snapshot.
-        description: str, optional
+        description : Optional[str]
             Description for the new snapshot.
+        stop : bool
+            Whether to stop the runtime after creating snapshot.
+
+        Returns
+        -------
+        RuntimeSnapshot
+            The created snapshot object.
         """
         if pod_name is None and runtime is None:
             raise ValueError(
@@ -425,7 +520,8 @@ class DatalayerClient(
 
         Returns
         -------
-        list: A list of snapshots associated.
+        list[RuntimeSnapshot]
+            A list of snapshots associated with the user.
         """
         response = self._list_snapshots()
         snapshot_objects = _list_snapshots(response)
@@ -437,9 +533,15 @@ class DatalayerClient(
         """
         Delete a specific snapshot.
 
+        Parameters
+        ----------
+        snapshot : Union[str, RuntimeSnapshot]
+            Snapshot object or UID string to delete.
+
         Returns
         -------
-        dict: The result of the deletion operation.
+        dict[str, str]
+            The result of the deletion operation.
         """
         snapshot_uid = (
             snapshot.uid if isinstance(snapshot, RuntimeSnapshot) else snapshot
@@ -448,127 +550,28 @@ class DatalayerClient(
 
 
 class Environment:
-    """Represents a Datalayer environment.
+    """
+    Represents a Datalayer environment.
 
-    [
-    {
-        "contents": [
-        {
-            "mount": "/home/jovyan/ai-models",
-            "name": "nfs-ai-models-content"
-        },
-        {
-            "mount": "/home/jovyan/data/datalayer-curated",
-            "name": "s3-datalayer-datasets",
-            "permissions": "ro"
-        },
-        {
-            "mount": "/home/jovyan/data/aws-opendata/satellite-sentinels",
-            "name": "s3-satellite-sentinels-images-content",
-            "permissions": "ro"
-        },
-        {
-            "mount": "/home/jovyan/data/aws-opendata/genome-browser",
-            "name": "s3-genome-browser-content",
-            "permissions": "ro"
-        }
-        ],
-        "description": "<br/>\n<img src=\"https://raw.githubusercontent.com/datalayer/icons/e671c333d5b456d582aea009373c5af994695931/svg/data2/sparkles.svg\" width=\"60\"/>\n<p><b>An environment for LLM inference, AI fine-tuning & training.</b></p>\n<p>GPU detail: 1 NVIDIA A100 80GB</p>\n<p><i>Packages: llama-cpp, pytorch, torchvision, fastai, langchain, huggingface-hub, transformers...</i></p>\n<br/>\n",
-        "dockerImage": "qnnxrq3e.c1.bhs5.container-registry.ovh.net/datalayer/jupyter-ai-cuda:0.1.0",
-        "example": "https://raw.githubusercontent.com/datalayer/examples/5a65d7403de2c34f2052526360eeda84aaceabc6/fastai-classifier/fastai-image-classification.ipynb",
-        "kernel": {
-        "givenNameTemplate": "AI Runtime"
-        },
-        "language": "python",
-        "owner": "datalayer",
-        "resourcesRanges": {
-        "default": {
-            "limits": {
-            "cpu": "10",
-            "ephemeral-storage": "20Gi",
-            "memory": "80Gi",
-            "nvidia.com/gpu": "1"
-            },
-            "requests": {
-            "cpu": "10",
-            "ephemeral-storage": "20Gi",
-            "memory": "80Gi",
-            "nvidia.com/gpu": "1"
-            }
-        }
-        },
-        "snippets": [
-        {
-            "code": "from transformers import AutoTokenizer, AutoModelForCausalLM\nimport torch\nprompt = \"\"\"\nWhat color is the sky?\n\"\"\"\ntokenizer = AutoTokenizer.from_pretrained(\"mistralai/Mixtral-8x22B-Instruct-v0.1\")\nmodel = AutoModelForCausalLM.from_pretrained(\n    \"mistralai/Mixtral-8x22B-Instruct-v0.1\",\n    device_map=\"auto\",\n    torch_dtype=torch.bfloat16,\n)\nchat = [\n    {\"role\": \"user\", \"content\": prompt},\n]\nprompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)\ninputs = tokenizer.encode(prompt, add_special_tokens=False, return_tensors=\"pt\")\noutputs = model.generate(input_ids=inputs.to(model.device), max_new_tokens=2000)\nprompt_length = inputs.shape[1]\nresponse = tokenizer.decode(outputs[0][prompt_length:])\nprint(response)\n#\nfrom llama_cpp import Llama\n# Set gpu_layers to the number of layers to offload to GPU. Set to 0 if no acceleration is available on your system.\nllm = Llama(\n  model_path=\"./Mixtral-8x7B-Instruct-v0.1.Q4_K_M.gguf\",  # Download the model file first\n  n_ctx=2048,             # The max sequence length to use - note that longer sequence lengths require much more resources\n  n_threads=8,            # The number of CPU threads to use, tailor to your system and the resulting performance\n  n_gpu_layers=15,         # The number of layers to offload to GPU, if you have acceleration available - try with 35\n  verbose = True,\n)\n# Simple inference...\nprompt = \"who are you?\"\noutput = llm(\n  \"[INST] {prompt} [/INST]\", # Prompt\n  max_tokens=512,  # Generate up to 512 tokens\n  stop=[\"</s>\"],   # Example stop token - not necessarily correct for this specific model! Please check before using.\n  echo=True        # Whether to echo the prompt\n)\nprint(output)\n# Chat Completion example...\nllm = Llama(model_path=\"./Mixtral-8x7B-Instruct-v0.1.Q4_K_M.gguf\", chat_format=\"llama-2\")  # Set chat_format according to the model you are using.\nllm.create_chat_completion(\n    messages = [\n        {\"role\": \"system\", \"content\": \"You are a story writing assistant.\"},\n        {\n            \"role\": \"user\",\n            \"content\": \"Write a story about llamas.\"\n        }\n    ]\n)\n",
-            "title": "ai-prompting"
-        }
-        ],
-        "title": "AI Environment",
-        "visibility": "public",
-        "name": "ai-env",
-        "burning_rate": 0.01,
-        "resources": {
-        "cpu": "10",
-        "ephemeral-storage": "20Gi",
-        "memory": "80Gi",
-        "nvidia.com/gpu": "1"
-        }
-    },
-    {
-        "contents": [
-        {
-            "mount": "/home/jovyan/ai-models",
-            "name": "nfs-ai-models-content"
-        },
-        {
-            "mount": "/home/jovyan/data/datalayer-curated",
-            "name": "s3-datalayer-datasets",
-            "permissions": "ro"
-        },
-        {
-            "mount": "/home/jovyan/data/aws-opendata/satellite-sentinels",
-            "name": "s3-satellite-sentinels-images-content",
-            "permissions": "ro"
-        },
-        {
-            "mount": "/home/jovyan/data/aws-opendata/genome-browser",
-            "name": "s3-genome-browser-content",
-            "permissions": "ro"
-        }
-        ],
-        "description": "<img src=\"https://images.datalayer.io/icons/python-100.png\" width=\"60\"/>\n<p><b>A Python environment for heavy data processing, parallel analysis</b></p>\n<p><i>Packages: numpy, pandas, matplotlib, seaborn, scikit-learn, dask, ...</i></p>\n<br/>\n",
-        "dockerImage": "qnnxrq3e.c1.bhs5.container-registry.ovh.net/datalayer/jupyter-python:0.1.0",
-        "example": "https://raw.githubusercontent.com/datalayer/examples/5a65d7403de2c34f2052526360eeda84aaceabc6/opencv-face-detection/youtube-face-detection.ipynb",
-        "kernel": {
-        "givenNameTemplate": "Python CPU Runtime"
-        },
-        "language": "python",
-        "owner": "datalayer",
-        "resourcesRanges": {
-            "default": {
-                "limits": {
-                    "cpu": "4",
-                    "ephemeral-storage": "20Gi",
-                    "memory": "20Gi"
-                },
-                "requests": {
-                    "cpu": "2",
-                    "ephemeral-storage": "20Gi",
-                    "memory": "10Gi"
-                    }
-                }
-            },
-        "title": "Python CPU Environment",
-        "visibility": "public",
-        "name": "python-cpu-env",
-        "burning_rate": 0.008,
-        "resources": {
-            "cpu": "2",
-            "ephemeral-storage": "20Gi",
-            "memory": "10Gi"
-        }
-    }
-    ]
+    Provides information about available computing environments
+    including resources, packages, and configuration details.
+
+    Parameters
+    ----------
+    name : str
+        Name of the environment.
+    title : str
+        Title of the environment.
+    burning_rate : float
+        The cost of running the environment per hour.
+    language : str
+        Programming language for the environment.
+    owner : str
+        Owner of the environment.
+    visibility : str
+        Environment visibility (public/private).
+    metadata : Optional[dict[str, Any]]
+        Additional metadata for the environment.
     """
 
     def __init__(
@@ -586,12 +589,20 @@ class Environment:
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the environment.
-        title: str
+        title : str
             Title of the environment.
-        burning_rate: float
+        burning_rate : float
             The cost of running the environment per hour.
+        language : str
+            Programming language for the environment.
+        owner : str
+            Owner of the environment.
+        visibility : str
+            Environment visibility (public/private).
+        metadata : dict[str, Any], optional
+            Additional metadata for the environment.
         """
         self.name = name
         self.title = title
@@ -606,7 +617,14 @@ class Environment:
 
 
 class Response:
-    """Represents the response from code execution in a runtime."""
+    """
+    Represents the response from code execution in a runtime.
+
+    Parameters
+    ----------
+    execute_response : list[dict[str, Any]]
+        The response from the code execution.
+    """
 
     def __init__(self, execute_response: list[dict[str, Any]]):
         """
@@ -614,7 +632,7 @@ class Response:
 
         Parameters
         ----------
-        execute_response: dict[str, Any]
+        execute_response : list[dict[str, Any]]
             The response from the code execution.
         """
         stdout = []
@@ -639,18 +657,20 @@ class Response:
 
         Returns
         -------
-        str: The standard output as a string.
+        str
+            The standard output as a string.
         """
         return self._stdout
 
     @property
     def stderr(self) -> str:
         """
-        Get the standard output of the code execution.
+        Get the standard error of the code execution.
 
         Returns
         -------
-        str: The standard output as a string.
+        str
+            The standard error as a string.
         """
         return self._stderr
 
@@ -658,6 +678,35 @@ class Response:
 class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
     """
     Represents a Datalayer runtime (kernel) for code execution.
+
+    Parameters
+    ----------
+    name : str
+        Name of the runtime (kernel).
+    environment : str
+        Environment type (e.g., "python-cpu-env").
+    timeout : float
+        Request timeout in minutes.
+    run_url : str
+        Datalayer server URL.
+    token : Optional[str]
+        Authentication token (can also be set via DATALAYER_TOKEN env var).
+    pod_name : Optional[str]
+        Pod name for existing runtime.
+    ingress : Optional[str]
+        Ingress URL for the runtime.
+    reservation_id : Optional[str]
+        Reservation ID for the runtime.
+    uid : Optional[str]
+        Unique identifier for the runtime.
+    burning_rate : Optional[str]
+        Cost rate for the runtime.
+    kernel_token : Optional[str]
+        Kernel authentication token.
+    started_at : Optional[str]
+        Runtime start timestamp.
+    expired_at : Optional[str]
+        Runtime expiration timestamp.
     """
 
     def __init__(
@@ -681,16 +730,32 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
 
         Parameters
         ----------
-        name: str
+        name : str
             Name of the runtime (kernel).
-        environment: str
+        environment : str
             Environment type (e.g., "python-cpu-env").
-        timeout: float
+        timeout : float
             Request timeout in minutes.
-        run_url: str
+        run_url : str
             Datalayer server URL.
-        token: Optional[str]
+        token : Optional[str]
             Authentication token (can also be set via DATALAYER_TOKEN env var).
+        pod_name : Optional[str]
+            Pod name for existing runtime.
+        ingress : Optional[str]
+            Ingress URL for the runtime.
+        reservation_id : Optional[str]
+            Reservation ID for the runtime.
+        uid : Optional[str]
+            Unique identifier for the runtime.
+        burning_rate : Optional[str]
+            Cost rate for the runtime.
+        kernel_token : Optional[str]
+            Kernel authentication token.
+        started_at : Optional[str]
+            Runtime start timestamp.
+        expired_at : Optional[str]
+            Runtime expiration timestamp.
         """
         self._environment_name = environment
         self._pod_name = pod_name
@@ -715,16 +780,35 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         #     self._kernel_client.start()
 
     def __del__(self) -> None:
+        """Clean up resources when the runtime object is deleted."""
         # self.stop()
         pass
 
     def __enter__(self) -> "Runtime":
-        """Context manager entry."""
+        """
+        Context manager entry.
+
+        Returns
+        -------
+        Runtime
+            The runtime instance.
+        """
         self._start()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Context manager exit."""
+        """
+        Context manager exit.
+
+        Parameters
+        ----------
+        exc_type : Any
+            Exception type.
+        exc_val : Any
+            Exception value.
+        exc_tb : Any
+            Exception traceback.
+        """
         self._stop()
 
     def __repr__(self) -> str:
@@ -757,7 +841,14 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             self._kernel_client.start()
 
     def _stop(self) -> bool:
-        """Stop the runtime."""
+        """
+        Stop the runtime.
+
+        Returns
+        -------
+        bool
+            True if runtime was successfully stopped, False otherwise.
+        """
         if self._kernel_client:
             self._kernel_client.stop()
             self._kernel_client = None
@@ -767,7 +858,19 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         return False
 
     def _check_file(self, path: Union[str, Path]) -> bool:
-        """Check if a file exists and can be openned."""
+        """
+        Check if a file exists and can be opened.
+
+        Parameters
+        ----------
+        path : Union[str, Path]
+            Path to the file to check.
+
+        Returns
+        -------
+        bool
+            True if file exists and can be opened, False otherwise.
+        """
         fname = Path(path).expanduser().resolve()
         try:
             with fname.open("rb"):
@@ -778,22 +881,66 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
 
     @property
     def run_url(self) -> str:
+        """
+        Get the runtime server URL.
+
+        Returns
+        -------
+        str
+            The Datalayer server URL for this runtime.
+        """
         return self._run_url
 
     @property
     def name(self) -> str:
+        """
+        Get the runtime name.
+
+        Returns
+        -------
+        str
+            The name of this runtime.
+        """
         return self._name
 
     @property
     def uid(self) -> Optional[str]:
+        """
+        Get the runtime unique identifier.
+
+        Returns
+        -------
+        Optional[str]
+            The unique identifier of this runtime, or None if not set.
+        """
         return self._uid
 
     @property
     def pod_name(self) -> Optional[str]:
+        """
+        Get the runtime pod name.
+
+        Returns
+        -------
+        Optional[str]
+            The pod name of this runtime, or None if not set.
+        """
         return self._pod_name
 
     def get_variable(self, name: str) -> Any:
-        """Set a variable in the runtime."""
+        """
+        Get a variable from the runtime.
+
+        Parameters
+        ----------
+        name : str
+            Name of the variable to retrieve.
+
+        Returns
+        -------
+        Any
+            Value of the variable, or None if not found or runtime not started.
+        """
         if self._kernel_client:
             response = self._kernel_client.get_variable(name)
             data = response[0]
@@ -806,11 +953,37 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         return None
 
     def set_variable(self, name: str, value: Any) -> Response:
-        """Set a variable in the runtime."""
+        """
+        Set a variable in the runtime.
+
+        Parameters
+        ----------
+        name : str
+            Name of the variable to set.
+        value : Any
+            Value to assign to the variable.
+
+        Returns
+        -------
+        Response
+            Response object containing execution results.
+        """
         return self.set_variables({name: value})
 
     def set_variables(self, variables: dict[str, Any]) -> Response:
-        """Set variables in the runtime."""
+        """
+        Set variables in the runtime.
+
+        Parameters
+        ----------
+        variables : dict[str, Any]
+            Dictionary of variable names and values to set.
+
+        Returns
+        -------
+        Response
+            Response object containing execution results.
+        """
         if self._kernel_client:
             variables_code = []
             if variables is not None:
@@ -834,16 +1007,17 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
 
         Parameters
         ----------
-        path: str
+        path : Union[str, Path]
             Path to the Python file to execute.
-        variables: Optional[dict[str, Any]]
+        variables : Optional[dict[str, Any]]
             Optional variables to set before executing the code.
-        output: Optional[str]
+        output : Optional[str]
             Optional output variable to return as result.
 
         Returns
         -------
-            Response: The result of the code execution.
+        Response
+            The result of the code execution.
         """
         fname = Path(path).expanduser().resolve()
         if self._check_file(fname):
@@ -875,16 +1049,17 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
 
         Parameters
         ----------
-        code: str
+        code : str
             The Python code to execute.
-        variables: Optional[dict[str, Any]]
+        variables : Optional[dict[str, Any]]
             Optional variables to set before executing the code.
-        output: Optional[str]
+        output : Optional[str]
             Optional output variable to return as result.
 
         Returns
         -------
-            Response: The result of the code execution.
+        Union[Response, Any]
+            The result of the code execution.
         """
         if not self._check_file(code):
             result: list[dict[str, str]] = []
@@ -915,32 +1090,17 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
 
         Parameters
         ----------
-        code_or_path: Union[str, Path]
+        code_or_path : Union[str, Path]
             The Python code or path to the file to execute.
-        variables: Optional[dict[str, Any]]
+        variables : Optional[dict[str, Any]]
             Optional variables to set before executing the code.
-        output: Optional[str]
+        output : Optional[str]
             Optional output variable to return as result.
 
         Returns
         -------
-            dict:
-                The result of the code execution.
-
-
-        {
-            'execution_count': 1,
-            'outputs': [
-                {
-                    'output_type': 'error',
-                    'ename': 'SyntaxError',
-                    'evalue': 'incomplete input (843041379.py, line 1)',
-                    'traceback': ['\x1b[0;36m  Cell \x1b[0;32mIn[1], line 1\x1b[0;36m\x1b[0m\n\x1b[0;31m    print("Hello, Datalayer!"\x1b[0m\n\x1b[0m                             ^\x1b[0m\n\x1b[0;31mSyntaxError\x1b[0m\x1b[0;31m:\x1b[0m incomplete input\n']
-                }
-            ],
-            'status': 'error'
-            }
-        }
+        Union[Response, Any]
+            The result of the code execution.
         """
         if self._check_file(code_or_path):
             return self.execute_file(
@@ -952,7 +1112,14 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             )
 
     def terminate(self) -> bool:
-        """Terminate the Runtime."""
+        """
+        Terminate the Runtime.
+
+        Returns
+        -------
+        bool
+            True if termination was successful, False otherwise.
+        """
         return self._stop()
 
     def create_snapshot(
@@ -963,15 +1130,20 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
     ) -> "RuntimeSnapshot":
         """
         Create a new snapshot from the current state.
+
         Parameters
         ----------
-        name: str
+        name : Optional[str]
             Name for the new snapshot.
-        description: str
+        description : Optional[str]
             Description for the new snapshot.
+        stop : bool
+            Whether to stop the runtime after creating the snapshot.
+
         Returns
         -------
-        RuntimeSnapshot: A new snapshot object.
+        RuntimeSnapshot
+            A new snapshot object.
         """
         if self._pod_name is None:
             raise RuntimeError("Runtime not started!")
@@ -1012,14 +1184,16 @@ class Secret:
 
     Parameters
     ----------
-    uid: str
+    uid : str
         Unique identifier for the secret.
-    name: str
+    name : str
         Name of the secret.
-    description: str
+    description : str
         Description of the secret.
-    secret_type: str
+    secret_type : str
         Type of the secret (e.g., "generic", "password", "key", "token").
+    **kwargs : dict[str, str]
+        Additional keyword arguments.
     """
 
     def __init__(
@@ -1030,6 +1204,22 @@ class Secret:
         secret_type: str = SecretType.GENERIC,
         **kwargs: dict[str, str],
     ) -> None:
+        """
+        Initialize a secret object.
+
+        Parameters
+        ----------
+        uid : str
+            Unique identifier for the secret.
+        name : str
+            Name of the secret.
+        description : str
+            Description of the secret.
+        secret_type : str
+            Type of the secret (e.g., "generic", "password", "key", "token").
+        **kwargs : dict[str, str]
+            Additional keyword arguments.
+        """
         self.uid = uid
         self.name = name
         self.description = description
@@ -1041,7 +1231,22 @@ class Secret:
 
 
 class RuntimeSnapshot:
-    """Represents a snapshot of a Datalayer runtime state."""
+    """
+    Represents a snapshot of a Datalayer runtime state.
+
+    Parameters
+    ----------
+    uid : str
+        Unique identifier for the snapshot.
+    name : str
+        Name of the snapshot.
+    description : str
+        Description of the snapshot.
+    environment : str
+        Environment associated with the snapshot.
+    metadata : dict[str, Any]
+        Metadata related to the snapshot.
+    """
 
     def __init__(
         self,
@@ -1056,15 +1261,15 @@ class RuntimeSnapshot:
 
         Parameters
         ----------
-        uid: str
+        uid : str
             Unique identifier for the snapshot.
-        name: str
+        name : str
             Name of the snapshot.
-        description: str
+        description : str
             Description of the snapshot.
-        environment: str
+        environment : str
             Environment associated with the snapshot.
-        metadata: dict
+        metadata : dict[str, Any]
             Metadata related to the snapshot.
         """
         self._uid = uid
@@ -1086,7 +1291,8 @@ class RuntimeSnapshot:
 
         Returns
         -------
-        str: The environment associated with the snapshot.
+        str
+            The environment associated with the snapshot.
         """
         return self._environment
 
@@ -1097,7 +1303,8 @@ class RuntimeSnapshot:
 
         Returns
         -------
-        str: The unique identifier of the snapshot.
+        str
+            The unique identifier of the snapshot.
         """
         return self._uid
 
@@ -1108,6 +1315,7 @@ class RuntimeSnapshot:
 
         Returns
         -------
-        dict: The metadata associated with the snapshot.
+        dict[str, str]
+            The metadata associated with the snapshot.
         """
         return self._metadata

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""FastAPI application for Iris species prediction using sklearn."""
+
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -20,11 +22,32 @@ app = FastAPI()
 
 @app.get("/")
 def home():  # type: ignore
+    """
+    Home endpoint providing a welcome message.
+
+    Returns
+    -------
+    dict
+        Welcome message for the API.
+    """
     return {"message": "Welcome to the Iris Prediction API!"}
 
 
 @app.post("/predict")
 def predict_species(data: Iris):  # type: ignore
+    """
+    Predict Iris species based on flower measurements.
+
+    Parameters
+    ----------
+    data : Iris
+        Iris flower measurements (sepal_length, sepal_width, petal_length, petal_width).
+
+    Returns
+    -------
+    dict
+        Dictionary containing the predicted species name.
+    """
     client = DatalayerClient()
     with client.create_runtime(snapshot_name=SNAPSHOT_NAME) as runtime:
         runtime.execute(HERE / "models.py")

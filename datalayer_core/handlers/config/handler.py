@@ -19,7 +19,7 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
 
     @authenticated
     def get(self) -> None:
-        """Returns the configuration of the server extension."""
+        """Return the configuration of the server extension."""
         settings = self.settings["datalayer"]
         configuration = dict(
             run_url=settings.run_url,

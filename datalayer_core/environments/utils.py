@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Utilities for displaying and managing environment information."""
+
 import json
 from typing import Any
 
@@ -9,7 +11,14 @@ from rich.table import Table
 
 
 def display_environments(environments: list[dict[str, Any]]) -> None:
-    """Display a list of environments in the console."""
+    """
+    Display a list of environments in the console.
+
+    Parameters
+    ----------
+    environments : list[dict[str, Any]]
+        List of environment dictionaries to display.
+    """
     table = _new_env_table()
     for environment in environments:
         _add_env_to_table(table, environment)
@@ -18,6 +27,14 @@ def display_environments(environments: list[dict[str, Any]]) -> None:
 
 
 def _new_env_table() -> Table:
+    """
+    Create a new table for displaying environments.
+
+    Returns
+    -------
+    Table
+        A configured Rich Table object for environments.
+    """
     table = Table(title="Environments")
     table.add_column("ID", style="magenta", no_wrap=True)
     table.add_column("Cost per seconds", justify="right", style="red", no_wrap=True)
@@ -29,6 +46,16 @@ def _new_env_table() -> Table:
 
 
 def _add_env_to_table(table: Table, environment: dict[str, Any]) -> None:
+    """
+    Add an environment row to the display table.
+
+    Parameters
+    ----------
+    table : Table
+        Rich Table object to add the row to.
+    environment : dict[str, Any]
+        Environment data dictionary to add as a row.
+    """
     desc = environment["description"]
     table.add_row(
         environment["name"],

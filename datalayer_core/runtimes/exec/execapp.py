@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Execution application for running code in Datalayer runtimes."""
+
 from __future__ import annotations
 
 import json
@@ -110,6 +112,14 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
     _executing: bool = False
 
     def handle_sigint(self, *args: t.Any) -> None:
+        """
+        Handle SIGINT signal during kernel execution.
+
+        Parameters
+        ----------
+        *args : t.Any
+            Signal handler arguments.
+        """
         if self._executing:
             if self.kernel_manager:
                 self.kernel_manager.interrupt_kernel()
@@ -124,7 +134,14 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
 
     @catch_config_error
     def initialize(self, argv: t.Optional[list[dict[str, t.Any]]] = None) -> None:
-        """Do actions after construct, but before starting the app."""
+        """
+        Do actions after construct, but before starting the app.
+
+        Parameters
+        ----------
+        argv : Optional[list[dict[str, Any]]]
+            Command line arguments to parse.
+        """
         if getattr(self, "_dispatching", False):
             return
         DatalayerCLIBaseApp.initialize(self)
@@ -140,6 +157,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
                 signal.signal(signal.SIGINT, self.handle_sigint)
 
     def init_kernel_manager(self) -> None:
+        """Initialize the kernel manager."""
         # Create a RuntimeManager.
         self.kernel_manager = self.kernel_manager_class(
             run_url=self.run_url,
@@ -156,6 +174,7 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
             self.kernel_client.start_channels()
 
     def start(self) -> None:
+        """Start the execution application."""
         try:
             # JupyterApp.start dispatches on NoStart
             super(RuntimesExecApp, self).start()
@@ -210,7 +229,19 @@ class RuntimesExecApp(DatalayerCLIBaseApp):
 
 
 def _get_cells(filepath: Path) -> t.Iterator[tuple[str | None, str]]:
-    """generator for sequence of code blocks to run"""
+    """
+    Extract cells from a Python file or Jupyter notebook.
+
+    Parameters
+    ----------
+    filepath : Path
+        Path to the file to extract cells from.
+
+    Yields
+    ------
+    Iterator[tuple[str | None, str]]
+        Iterator yielding (cell_id, cell_source) tuples.
+    """
     if filepath.suffix == ".ipynb":
         from nbformat import read
 

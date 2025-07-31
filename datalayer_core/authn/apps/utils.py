@@ -1,12 +1,23 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Utility functions for authentication applications."""
+
 from rich.console import Console
 from rich.table import Table
 
 
 def display_me(me: dict[str, str], infos: dict[str, str]) -> None:
-    """Display a my profile."""
+    """
+    Display a my profile.
+
+    Parameters
+    ----------
+    me : dict[str, str]
+        The user's profile information.
+    infos : dict[str, str]
+        Additional information about the user.
+    """
     table = Table(title="Profile")
     table.add_column("ID", style="magenta", no_wrap=True)
     table.add_column("Handle", style="cyan", no_wrap=True)

@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Runtime creation application."""
+
 import sys
 from typing import Any, Optional
 
@@ -24,7 +26,25 @@ class RuntimesCreateMixin:
         credits_limit: Optional[float] = None,
         from_snapshot_uid: Optional[str] = None,
     ) -> dict[str, Any]:
-        """Create a Runtime with the given environment name."""
+        """
+        Create a Runtime with the given environment name.
+
+        Parameters
+        ----------
+        environment_name : str
+            Name of the environment to use.
+        given_name : Optional[str]
+            Custom name for the runtime.
+        credits_limit : Optional[float]
+            Credit limit for the runtime.
+        from_snapshot_uid : Optional[str]
+            UID of snapshot to create runtime from.
+
+        Returns
+        -------
+        dict[str, Any]
+            Response containing runtime creation details.
+        """
         body = {
             "type": "notebook",
             "environment_name": environment_name,

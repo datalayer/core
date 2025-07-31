@@ -1,6 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Tests for SDK decorators functionality."""
+
 import os
 import time
 
@@ -16,6 +18,23 @@ DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
 
 
 def sum_test(x: float, y: float, z: float = 1) -> float:
+    """
+    Sum three numbers.
+
+    Parameters
+    ----------
+    x : float
+        The first number.
+    y : float
+        The second number.
+    z : float, optional
+        The third number (default is 1).
+
+    Returns
+    -------
+    float
+        The sum of the three numbers.
+    """
     return x + y + z
 
 
