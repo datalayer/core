@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 from dataclasses import dataclass
+from typing import Any, List
 
 from pydoc_markdown.interfaces import Processor
 
@@ -10,20 +11,20 @@ from pydoc_markdown.interfaces import Processor
 class Docstring:
     content: str
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.content
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.content
 
 
 @dataclass
 class ReplaceProcessor(Processor):
-    def process(self, modules, config):
+    def process(self, modules: List[Any], config: Any) -> None:
         for module in modules:
             self._process_node(module)
 
-    def _process_node(self, node):
+    def _process_node(self, node: Any) -> None:
         # Replace in docstring if it exists
         if getattr(node, "docstring", None):
             # Convert docstring to string (handles Docstring or str)

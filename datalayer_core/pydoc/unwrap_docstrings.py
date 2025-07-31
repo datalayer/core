@@ -1,17 +1,18 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-import re
-import os
 import html
+import os
+import re
+from typing import Match
 
 
-def unwrap_docstring_content(text):
+def unwrap_docstring_content(text: str) -> str:
     # Match Docstring(content=...) without quotes, just HTML entities like &#x27;
     # This regex captures content= followed by anything until the closing ')'
     pattern = re.compile(r'Docstring\(content=(.*?)\)')
 
-    def replacer(m):
+    def replacer(m: Match[str]) -> str:
         inner = m.group(1)
         # Unescape HTML entities
         unescaped = html.unescape(inner)
@@ -23,7 +24,7 @@ def unwrap_docstring_content(text):
     return pattern.sub(replacer, text)
 
 
-def process_file(filepath):
+def process_file(filepath: str) -> None:
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
 
@@ -35,7 +36,7 @@ def process_file(filepath):
         print(f"Processed {filepath}")
 
 
-def process_directory(root_dir):
+def process_directory(root_dir: str) -> None:
     for dirpath, _, filenames in os.walk(root_dir):
         for filename in filenames:
             if filename.endswith(".md"):

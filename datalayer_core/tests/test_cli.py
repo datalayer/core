@@ -4,6 +4,7 @@
 import os
 import time
 from subprocess import PIPE, Popen
+from typing import Any, List
 
 import pytest
 from dotenv import load_dotenv
@@ -16,7 +17,7 @@ load_dotenv()
 DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
 
 
-def _delete_all_runtimes(secs=5):
+def _delete_all_runtimes(secs: int = 5) -> None:
     """
     Delete all runtimes for testing purposes.
     """
@@ -36,13 +37,13 @@ def _delete_all_runtimes(secs=5):
         (["about"], "About"),
     ],
 )
-def test_cli(args, expected_output):
+def test_cli(args: List[str], expected_output: str) -> None:
     """
     Test the Datalayer CLI application.
     """
     p = Popen(["datalayer"] + args, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = p.communicate()
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout_bytes, stderr_bytes = p.communicate()
+    stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
     print(stdout)
     print(stderr)
     assert p.returncode == 0
@@ -73,13 +74,13 @@ def test_cli(args, expected_output):
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_cli_authenticated(args, expected_output):
+def test_cli_authenticated(args: List[str], expected_output: str) -> None:
     """
     Test the Datalayer CLI application.
     """
     p = Popen(["datalayer"] + args, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = p.communicate()
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout_bytes, stderr_bytes = p.communicate()
+    stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
     print(stdout)
     print(stderr)
     assert p.returncode == 0
@@ -90,7 +91,7 @@ def test_cli_authenticated(args, expected_output):
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_console():
+def test_console() -> None:
     """
     Test the Datalayer CLI console.
     """
@@ -99,8 +100,8 @@ def test_console():
 
     # Start the console
     p = Popen(["datalayer", "console"], stderr=PIPE, stdout=PIPE, stdin=PIPE)
-    stdout, stderr = p.communicate(input=b"yes\n")
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout_bytes, stderr_bytes = p.communicate(input=b"yes\n")
+    stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
     print(stdout)
     print(stderr)
 
@@ -114,7 +115,7 @@ def test_console():
     not bool(DATALAYER_TEST_TOKEN),
     reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
 )
-def test_runtimes_exec(tmp_path):
+def test_runtimes_exec(tmp_path: Any) -> None:
     """
     Test the Datalayer CLI runtimes exec.
     """
@@ -133,8 +134,8 @@ def test_runtimes_exec(tmp_path):
         stdout=PIPE,
         stdin=PIPE,
     )
-    stdout, stderr = p.communicate(input=b"yes\n")
-    stdout, stderr = stdout.decode(), stderr.decode()
+    stdout_bytes, stderr_bytes = p.communicate(input=b"yes\n")
+    stdout, stderr = stdout_bytes.decode(), stderr_bytes.decode()
     print(stdout)
     print(stderr)
 

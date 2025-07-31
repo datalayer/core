@@ -632,9 +632,9 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
     PACL = ctypes.POINTER(ACL)
     PSECURITY_DESCRIPTOR = ctypes.POINTER(wintypes.BYTE)
 
-    def _nonzero_success(result, func, args):
+    def _nonzero_success(result: Any, func: Any, args: Any) -> Any:
         if not result:
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise ctypes.WinError(ctypes.get_last_error())  # type: ignore[attr-defined]
         return args
 
     secur32.GetUserNameExW.errcheck = _nonzero_success
@@ -734,7 +734,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         wintypes.DWORD,  # DWORD dwAclRevision
     )
 
-    def CreateWellKnownSid(WellKnownSidType):
+    def CreateWellKnownSid(WellKnownSidType: int) -> Any:
         # return a SID for predefined aliases
         pSid = (ctypes.c_char * 1)()
         cbSid = wintypes.DWORD()
@@ -743,7 +743,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 WellKnownSidType, None, pSid, ctypes.byref(cbSid)
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
+            if getattr(e, "winerror", None) != ERROR_INSUFFICIENT_BUFFER:
                 raise
             pSid = (ctypes.c_char * cbSid.value)()
             advapi32.CreateWellKnownSid(
@@ -751,14 +751,14 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
             )
         return pSid[:]
 
-    def GetUserNameEx(NameFormat):
+    def GetUserNameEx(NameFormat: int) -> Optional[str]:
         # return the user or other security principal associated with
         # the calling thread
         nSize = ctypes.pointer(ctypes.c_ulong(0))
         try:
             secur32.GetUserNameExW(NameFormat, None, nSize)
         except OSError as e:
-            if e.winerror != ERROR_MORE_DATA:
+            if getattr(e, "winerror", None) != ERROR_MORE_DATA:
                 raise
         if not nSize.contents.value:
             return None
@@ -766,7 +766,9 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         secur32.GetUserNameExW(NameFormat, lpNameBuffer, nSize)
         return lpNameBuffer.value
 
-    def LookupAccountName(lpSystemName, lpAccountName):
+    def LookupAccountName(
+        lpSystemName: Any, lpAccountName: Any
+    ) -> Tuple[Any, Any, Any]:
         # return a security identifier (SID) for an account on a system
         # and the name of the domain on which the account was found
         cbSid = wintypes.DWORD(0)
@@ -783,7 +785,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(peUse),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
+            if getattr(e, "winerror", None) != ERROR_INSUFFICIENT_BUFFER:
                 raise
         Sid = ctypes.create_unicode_buffer("", cbSid.value)
         pSid = ctypes.cast(ctypes.pointer(Sid), wintypes.LPVOID)
@@ -800,15 +802,17 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
             ctypes.byref(peUse),
         )
         if not success:
-            raise ctypes.WinError()
+            raise ctypes.WinError()  # type: ignore[attr-defined]
         return pSid, lpReferencedDomainName.value, peUse.value
 
-    def AddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid):
+    def AddAccessAllowedAce(
+        pAcl: Any, dwAceRevision: Any, AccessMask: Any, pSid: Any
+    ) -> None:
         # add an access-allowed access control entry (ACE)
         # to an access control list (ACL)
         advapi32.AddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid)
 
-    def GetFileSecurity(lpFileName, RequestedInformation):
+    def GetFileSecurity(lpFileName: Any, RequestedInformation: Any) -> Any:
         # return information about the security of a file or directory
         nLength = wintypes.DWORD(0)
         try:
@@ -820,7 +824,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(nLength),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
+            if getattr(e, "winerror", None) != ERROR_INSUFFICIENT_BUFFER:
                 raise
         if not nLength.value:
             return None
@@ -834,19 +838,21 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         )
         return pSecurityDescriptor
 
-    def SetFileSecurity(lpFileName, RequestedInformation, pSecurityDescriptor) -> None:
+    def SetFileSecurity(
+        lpFileName: Any, RequestedInformation: Any, pSecurityDescriptor: Any
+    ) -> None:
         # set the security of a file or directory object
         advapi32.SetFileSecurityW(lpFileName, RequestedInformation, pSecurityDescriptor)
 
     def SetSecurityDescriptorDacl(
-        pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted
-    ):
+        pSecurityDescriptor: Any, bDaclPresent: Any, pDacl: Any, bDaclDefaulted: Any
+    ) -> None:
         # set information in a discretionary access control list (DACL)
         advapi32.SetSecurityDescriptorDacl(
             pSecurityDescriptor, bDaclPresent, pDacl, bDaclDefaulted
         )
 
-    def MakeAbsoluteSD(pSelfRelativeSecurityDescriptor):
+    def MakeAbsoluteSD(pSelfRelativeSecurityDescriptor: Any) -> Any:
         # return a security descriptor in absolute format
         # by using a security descriptor in self-relative format as a template
         pAbsoluteSecurityDescriptor = None
@@ -874,7 +880,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(lpdwPrimaryGroupSize),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
+            if getattr(e, "winerror", None) != ERROR_INSUFFICIENT_BUFFER:
                 raise
         pAbsoluteSecurityDescriptor = (
             wintypes.BYTE * lpdwAbsoluteSecurityDescriptorSize.value
@@ -902,7 +908,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         )
         return pAbsoluteSecurityDescriptor
 
-    def MakeSelfRelativeSD(pAbsoluteSecurityDescriptor):
+    def MakeSelfRelativeSD(pAbsoluteSecurityDescriptor: Any) -> Any:
         # return a security descriptor in self-relative format
         # by using a security descriptor in absolute format as a template
         pSelfRelativeSecurityDescriptor = None
@@ -914,7 +920,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
                 ctypes.byref(lpdwBufferLength),
             )
         except OSError as e:
-            if e.winerror != ERROR_INSUFFICIENT_BUFFER:
+            if getattr(e, "winerror", None) != ERROR_INSUFFICIENT_BUFFER:
                 raise
         pSelfRelativeSecurityDescriptor = (wintypes.BYTE * lpdwBufferLength.value)()
         advapi32.MakeSelfRelativeSD(
@@ -924,7 +930,7 @@ def _win32_restrict_file_to_user_ctypes(fname: str) -> None:  # noqa
         )
         return pSelfRelativeSecurityDescriptor
 
-    def NewAcl():
+    def NewAcl() -> Any:
         # return a new, initialized ACL (access control list) structure
         nAclLength = 32767  # TODO: calculate this: ctypes.sizeof(ACL) + ?
         acl_data = ctypes.create_string_buffer(nAclLength)

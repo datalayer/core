@@ -168,8 +168,8 @@ class DualStackServer(HTTPServer):
         self.RequestHandlerClass(
             request,
             client_address,
-            self,
-            directory=str(DATALAYER_UI_PATH / "static"),  # type: ignore
+            self,  # type: ignore[arg-type]
+            directory=str(DATALAYER_UI_PATH / "static"),  # type: ignore[call-arg]
         )
 
 
