@@ -80,6 +80,7 @@ def test_runtime_create_execute_and_list() -> None:
     """
     Test the creation and deletion of runtime.
     """
+    time.sleep(10)
     # Create a secret
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     runtime_name = f"test_runtime-{uuid.uuid4()}"
@@ -92,6 +93,7 @@ def test_runtime_create_execute_and_list() -> None:
         assert response.stdout.strip() == "test"
 
         assert len(client.list_runtimes()) == 1
+    time.sleep(10)
 
 
 @pytest.mark.skipif(
@@ -102,6 +104,7 @@ def test_runtime_snapshot_create_and_delete() -> None:
     """
     Test the creation and deletion of runtime.
     """
+    time.sleep(10)
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     runtime_name = f"test_runtime-{uuid.uuid4()}"
     snapshot_name = f"test_snapshot-{uuid.uuid4()}"
@@ -124,7 +127,7 @@ def test_runtime_snapshot_create_and_delete() -> None:
         assert client.delete_snapshot(snapshot)["success"]
         assert client.delete_snapshot(snapshot_2)["success"]
         assert client.delete_snapshot(snapshot_3)["success"]
-
+    time.sleep(10)
 
 @pytest.mark.skipif(
     not bool(DATALAYER_TEST_TOKEN),
