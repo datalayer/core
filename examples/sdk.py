@@ -14,34 +14,38 @@ from datalayer_core.sdk.decorators import datalayer
 load_dotenv()
 
 
+client = DatalayerClient()
+client.authenticate()
+print(client.get_profile())
+
 # @datalayer
 # @datalayer()
 # @datalayer(runtime_name="example-runtime")
-@datalayer(snapshot_name="snapshot-iris-model")
+# @datalayer(snapshot_name="snapshot-iris-model")
 # @datalayer(runtime_name="example-runtime", output="result")
 # @datalayer(runtime_name="example-runtime", inputs=["a", "b", "c"])
-def sum(x: float, y: float, z: int = 1) -> float:
-    """
-    Sum two floats and return the result.
+# def sum(x: float, y: float, z: int = 1) -> float:
+#     """
+#     Sum two floats and return the result.
 
-    Parameters
-    ----------
-    x : float
-        First number to sum.
-    y : float
-        Second number to sum.
-    z : int
-        Third number to sum (default is 1).
+#     Parameters
+#     ----------
+#     x : float
+#         First number to sum.
+#     y : float
+#         Second number to sum.
+#     z : int
+#         Third number to sum (default is 1).
 
-    Returns
-    -------
-    float
-        The sum of x and y.
-    """
-    return x + y
+#     Returns
+#     -------
+#     float
+#         The sum of x and y.
+#     """
+#     return x + y
 
 
-print([sum(1, 4.5, z=2)])
+# print([sum(1, 4.5, z=2)])
 
 # sig = inspect.signature(example)
 # print("\nParameters:")

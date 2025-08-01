@@ -148,3 +148,27 @@ def test_authenticate() -> None:
     client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
     print(client._log_in())
     assert client.authenticate()
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_profile() -> None:
+    """
+    Test the profile
+    """
+    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    assert client.get_profile()
+
+
+@pytest.mark.skipif(
+    not bool(DATALAYER_TEST_TOKEN),
+    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+)
+def test_tokens_list() -> None:
+    """
+    Test the listing of tokens
+    """
+    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    assert client.list_tokens()

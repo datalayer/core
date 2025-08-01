@@ -3,6 +3,6 @@
 
 """Datalayer SDK module."""
 
-from datalayer_core.sdk.datalayer import DatalayerClient
+from datalayer_core.sdk.client import DatalayerClient
 
 __all__ = ["DatalayerClient"]

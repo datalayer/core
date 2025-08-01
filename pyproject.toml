@@ -63,7 +63,9 @@ test = [
     "typing-extensions",
 ]
 docs = [
-    "pydoc-markdown"
+    "click<=8.2.1",  # 8.2.2 is broken https://github.com/pallets/click/issues/3024
+    "npdoc_to_md",
+    "pydoc-markdown",
 ]
 examples = [
     "fastapi",
@@ -137,6 +139,25 @@ exclude = [  # don't report on objects that match any of these regex
 exclude_files = [ # don't process filepaths that match these regex
     '^test_.*.py$',
 ]
+
+[tool.pydoc-markdown]
+loaders = [
+    { type = "python", search_path = ["datalayer_core"] }
+]
+
+processors = [
+    { type = "filter", skip_empty_modules = false },
+    { type = "smart" },
+    { type = "crossref" },
+    { type = "datalayer_core.pydoc.ReplaceProcessor" }
+]
+
+[tool.pydoc-markdown.renderer]
+type = "datalayer_core.pydoc.MyDocusaurusRenderer"
+docs_base_path = "docs/docs"
+relative_output_path = "python_api"
+relative_sidebar_path = "sidebar.json"
+sidebar_top_level_label = ""
 
 [tool.bandit]
 exclude_dirs = ["tests"]

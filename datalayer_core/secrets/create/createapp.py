@@ -11,7 +11,8 @@ from typing import Any
 from traitlets import Unicode
 
 from datalayer_core.cli.base import DatalayerCLIBaseApp
-from datalayer_core.secrets.utils import btoa, display_secrets
+from datalayer_core.secrets.utils import display_secrets
+from datalayer_core.utils import btoa
 
 
 class SecretType(str, Enum):

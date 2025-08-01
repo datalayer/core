@@ -3,8 +3,6 @@
 
 """Utility functions for secret management and display."""
 
-import base64
-
 from rich.console import Console
 from rich.table import Table
 
@@ -64,20 +62,3 @@ def display_secrets(secrets: list[dict[str, str]]) -> None:
         _add_secret_to_table(table, secret)
     console = Console()
     console.print(table)
-
-
-def btoa(value: str) -> str:
-    """
-    Encode a string to base64.
-
-    Parameters
-    ----------
-    value : str
-        The string to encode.
-
-    Returns
-    -------
-    str
-        Base64 encoded ascii string.
-    """
-    return base64.b64encode(value.encode("utf-8")).decode("ascii")
