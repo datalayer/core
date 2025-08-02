@@ -42,6 +42,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:lib": "tsc -b",
+    "build:lib:watch": "tsc -b -w",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "vite",
@@ -51,8 +53,17 @@
     "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api"
   },
   "dependencies": {
+    "@jupyterlab/services": "^4.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
+  },
+  "peerDependencies": {
+    "@datalayer/icons-react": "^1.0.0",
+    "@primer/octicons-react": "^19.15.1",
+    "@primer/primitives": "^10.5.0",
+    "@primer/react": "^37.19.0",
+    "@datalayer/primer-addons": "^1.0.3",
+    "@datalayer/primer-rjsf": "^1.0.1"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.1",
