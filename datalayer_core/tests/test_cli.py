@@ -72,6 +72,8 @@ def test_cli(args: List[str], expected_output: str) -> None:
         (["secrets", "ls", "--token", DATALAYER_TEST_TOKEN], "Secrets"),
         (["snapshots", "list", "--token", DATALAYER_TEST_TOKEN], "Snapshots"),
         (["snapshots", "ls", "--token", DATALAYER_TEST_TOKEN], "Snapshots"),
+        (["tokens", "list", "--token", DATALAYER_TEST_TOKEN], "Tokens"),
+        (["tokens", "ls", "--token", DATALAYER_TEST_TOKEN], "Tokens"),
         (["who", "--token", DATALAYER_TEST_TOKEN], "Profile"),
         (["whoami", "--token", DATALAYER_TEST_TOKEN], "Profile"),
         (["logout"], "\nDatalayer - Version"),

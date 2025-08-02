@@ -11,7 +11,7 @@ from typing import Any, Callable, Optional, Union
 
 from typing_extensions import TypeAlias
 
-from datalayer_core.sdk.datalayer import DEFAULT_ENVIRONMENT, DatalayerClient
+from datalayer_core.sdk.client import DEFAULT_ENVIRONMENT, DatalayerClient
 
 # TODO:
 # - inputs are different from args and kwargs (rename)

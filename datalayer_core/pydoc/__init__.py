@@ -4,7 +4,9 @@
 """Python documentation processing utilities for the Datalayer Core application."""
 
 from .replace_processor import ReplaceProcessor
+from .replace_renderer import MyDocusaurusRenderer
 
 __all__ = [
     "ReplaceProcessor",
+    "MyDocusaurusRenderer",
 ]

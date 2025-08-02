@@ -6,28 +6,8 @@
 from dataclasses import dataclass
 from typing import Any, List
 
+from docspec import Docstring
 from pydoc_markdown.interfaces import Processor
-
-
-@dataclass
-class Docstring:
-    """Docstring representation for processing."""
-
-    content: str
-
-    def __repr__(self) -> str:
-        return self.content
-
-    def __str__(self) -> str:
-        """
-        Return string content of the docstring.
-
-        Returns
-        -------
-        str
-            The docstring content as a string.
-        """
-        return self.content
 
 
 @dataclass
@@ -64,7 +44,7 @@ class ReplaceProcessor(Processor):
             # Replace braces with HTML entities
             replaced_text = docstring_text.replace("{", "&#123;").replace("}", "&#125;")
             # Assign the replaced string back as plain string
-            node.docstring = Docstring(replaced_text)
+            node.docstring = Docstring(node.docstring.location, replaced_text)
 
         # Recursively process children members if any
         for member in getattr(node, "members", []):

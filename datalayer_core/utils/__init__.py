@@ -5,6 +5,7 @@
 
 import asyncio
 import atexit
+import base64
 import errno
 import inspect
 import os
@@ -285,3 +286,20 @@ async def ensure_async(obj: Union[Awaitable[T], T]) -> T:
         return result
     # obj doesn't need to be awaited
     return cast(T, obj)
+
+
+def btoa(value: str) -> str:
+    """
+    Encode a string to base64.
+
+    Parameters
+    ----------
+    value : str
+        The string to encode.
+
+    Returns
+    -------
+    str
+        Base64 encoded ascii string.
+    """
+    return base64.b64encode(value.encode("utf-8")).decode("ascii")

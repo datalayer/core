@@ -9,16 +9,10 @@ from datalayer_core.authn.apps.utils import display_me
 from datalayer_core.cli.base import DatalayerCLIBaseApp
 
 
-class WhoamiApp(DatalayerCLIBaseApp):
-    """An application to get the current authenticated user profile."""
+class WhoamiAppMixin:
+    """Mixin for Who Am I application."""
 
-    description = """
-      An application to get the current authenticated user profile.
-
-      datalayer whoami
-    """
-
-    def get_profile(self) -> dict[str, Any]:
+    def _get_profile(self) -> dict[str, Any]:
         """
         Get user profile information.
 
@@ -28,12 +22,22 @@ class WhoamiApp(DatalayerCLIBaseApp):
             Dictionary containing user profile information.
         """
         try:
-            response = self._fetch(
-                "{}/api/iam/v1/whoami".format(self.run_url),
+            response = self._fetch(  # type: ignore
+                "{}/api/iam/v1/whoami".format(self.run_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:
             return {"success": False, "message": str(e)}
+
+
+class WhoamiApp(DatalayerCLIBaseApp, WhoamiAppMixin):
+    """An application to get the current authenticated user profile."""
+
+    description = """
+      An application to get the current authenticated user profile.
+
+      datalayer whoami
+    """
 
     def start(self) -> None:
         """Start the app."""
@@ -42,7 +46,7 @@ class WhoamiApp(DatalayerCLIBaseApp):
             self.print_help()
             self.exit(1)
 
-        response = self.get_profile()
+        response = self._get_profile()
         infos = {
             "run_url": self.run_url,
         }
