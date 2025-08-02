@@ -35,6 +35,7 @@ jobs:
         run: |
           conda install boto3 python make nodejs 
           pip install .[docs]
+          pip install alabaster babel
           pip list
           npm install
 
