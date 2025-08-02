@@ -947,7 +947,13 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             import numpy as np
 
             if isinstance(data, dict) and "text/plain" in data:
-                return eval(data["text/plain"])
+                import ast
+
+                try:
+                    return ast.literal_eval(data["text/plain"])
+                except (ValueError, SyntaxError):
+                    # If literal_eval fails, return the string representation
+                    return data["text/plain"]
             else:
                 return data
         return None

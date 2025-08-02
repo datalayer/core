@@ -133,3 +133,16 @@ exclude = [  # don't report on objects that match any of these regex
 exclude_files = [ # don't process filepaths that match these regex
     '^test_.*.py$',
 ]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = [
+    "B101",  # Assert statements are acceptable in this codebase
+    "B105",  # Hardcoded password strings - these are configuration keys, not actual passwords
+    "B106",  # Hardcoded password funcarg - false positive for empty default values
+    "B110",  # Try/except pass is acceptable for error handling
+    "B404",  # Subprocess import is needed for legitimate process management
+    "B603",  # Subprocess calls are controlled and necessary for CLI operations
+    "B606",  # Process execution without shell is safer and intentional
+    "B607",  # Partial path execution is acceptable for known binaries
+]
