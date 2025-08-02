@@ -19,6 +19,17 @@ const dirname =
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+  },
+  resolve: {
+    alias: {
+      crypto: 'crypto-browserify',
+    },
+  },
+  optimizeDeps: {
+    include: ['crypto-browserify'],
+  },
   test: {
     projects: [
       {

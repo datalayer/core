@@ -13,5 +13,23 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
+  viteFinal: async (config) => {
+    config.define = {
+      ...config.define,
+      global: 'globalThis',
+    };
+    config.resolve = {
+      ...config.resolve,
+      alias: {
+        ...config.resolve?.alias,
+        crypto: 'crypto-browserify',
+      },
+    };
+    config.optimizeDeps = {
+      ...config.optimizeDeps,
+      include: [...(config.optimizeDeps?.include || []), 'crypto-browserify'],
+    };
+    return config;
+  },
 };
 export default config;
