@@ -55,7 +55,8 @@
   "dependencies": {
     "@jupyterlab/services": "^4.0.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "zustand": "^4.4.1"
   },
   "peerDependencies": {
     "@datalayer/icons-react": "^1.0.0",
