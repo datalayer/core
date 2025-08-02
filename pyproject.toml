@@ -23,6 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "jupyter-kernel-client",
@@ -58,6 +60,7 @@ test = [
     "pytest-tornasync",
     "python-dotenv",
     "types-requests",
+    "typing-extensions",
 ]
 docs = [
     "pydoc-markdown"
@@ -67,6 +70,7 @@ examples = [
     "pydantic",
     "scikit-learn",
     "streamlit",
+    "torch",
     "uvicorn",
 ]
 

@@ -26,7 +26,7 @@ This example showcases:
 
 ## Prerequisites
 
-- Python 3.8+
+- Python 3.9+
 - Datalayer SDK
 - Scikit-learn
 - Streamlit

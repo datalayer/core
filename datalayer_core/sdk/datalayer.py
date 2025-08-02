@@ -7,9 +7,7 @@ Datalayer AI SDK - A simple SDK for AI engineers to work with Datalayer.
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
-import json
 import os
-import sys
 import uuid
 from functools import lru_cache
 from pathlib import Path
@@ -17,6 +15,7 @@ from typing import Any, List, Optional, Tuple, Union
 
 import requests
 from jupyter_kernel_client import KernelClient
+from typing_extensions import TypeAlias
 
 from datalayer_core.environments import EnvironmentsMixin
 from datalayer_core.runtimes import RuntimesMixin
@@ -25,9 +24,12 @@ from datalayer_core.secrets import SecretsMixin, SecretType
 from datalayer_core.snapshots import SnapshotsMixin
 from datalayer_core.utils.utils import fetch
 
+Seconds: TypeAlias = float
+Minutes: TypeAlias = float
+CreditsPerSecond: TypeAlias = float
 DEFAULT_ENVIRONMENT = "python-cpu-env"
 DEFAULT_RUN_URL = "https://prod1.datalayer.run"
-DEFAULT_TIMEOUT = 10  # Minutes
+DEFAULT_TIME_RESERVATION: Minutes = 10.0
 
 
 def _create_snapshot(
@@ -266,7 +268,7 @@ class DatalayerClient(
         self,
         name: Optional[str] = None,
         environment: str = DEFAULT_ENVIRONMENT,
-        timeout: float = DEFAULT_TIMEOUT,
+        time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         snapshot_name: Optional[str] = None,
     ) -> "Runtime":
         """
@@ -274,13 +276,13 @@ class DatalayerClient(
 
         Parameters
         ----------
-        name : Optional[str]
-            Name of the kernel to create (default: python3).
-        environment : str
-            Type of resources needed (cpu, gpu, etc.).
-        timeout : float
-            Request timeout in minutes. Defaults to 10 minutes.
-        snapshot_name : Optional[str]
+        name : str, optional
+            Name of the runtime to create.
+        environment : str, optional
+            Environment type (e.g., "python-cpu-env"). Type of resources needed (cpu, gpu, etc.).
+        time_reservation : Minutes, optional
+            Time reservation in minutes for the runtime. Defaults to 10 minutes.
+        snapshot_name : Optional[str], optional
             Name of the snapshot to create from. If provided, the runtime will be created from this snapshot.
 
         Returns
@@ -288,11 +290,24 @@ class DatalayerClient(
         Runtime
             A runtime object for code execution.
         """
-        self.list_environments()
+        envs = self.list_environments()
         if environment not in self._available_environments_names:
             raise ValueError(
                 f"Environment '{environment}' not found. Available environments: {self._available_environments_names}"
             )
+
+        burning_rate = None
+        credits_limit = None
+        for env in envs:
+            if env.name == environment:
+                burning_rate = env.burning_rate
+                credits_limit = env.burning_rate * 60.0 * time_reservation
+                break
+        if burning_rate is None or credits_limit is None:
+            raise ValueError(
+                f"Environment '{environment}' not found in environments list. Available: {[env.name for env in envs]}"
+            )
+
         if name is None:
             name = f"runtime-{environment}-{uuid.uuid4()}"
 
@@ -306,6 +321,7 @@ class DatalayerClient(
                         given_name=snapshot.name,
                         environment_name=environment,
                         from_snapshot_uid=snapshot.uid,
+                        credits_limit=credits_limit,
                     )
                     runtime_data = response["runtime"]
                     runtime = Runtime(
@@ -321,9 +337,10 @@ class DatalayerClient(
             runtime = Runtime(
                 name,
                 environment=environment,
-                timeout=timeout,
+                time_reservation=time_reservation,
                 run_url=self.run_url,
                 token=self._token,
+                burning_rate=burning_rate,
             )
         return runtime
 
@@ -578,7 +595,7 @@ class Environment:
         self,
         name: str,
         title: str,
-        burning_rate: float,
+        burning_rate: CreditsPerSecond,
         language: str,
         owner: str,
         visibility: str,
@@ -638,9 +655,9 @@ class Response:
         stdout = []
         stderr = []
         for item in execute_response:
-            if item.get("output_type") == "stream":
+            if item and item.get("output_type") == "stream":
                 stdout.append(item["text"])
-            elif item.get("output_type") == "error":
+            elif item and item.get("output_type") == "error":
                 stderr.append(item["ename"])
                 stderr.append(item["evalue"])
 
@@ -685,8 +702,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         Name of the runtime (kernel).
     environment : str
         Environment type (e.g., "python-cpu-env").
-    timeout : float
-        Request timeout in minutes.
+    time_reservation : Minutes
+        Time reservation in minutes for the runtime.
     run_url : str
         Datalayer server URL.
     token : Optional[str]
@@ -713,14 +730,14 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         self,
         name: str,
         environment: str = DEFAULT_ENVIRONMENT,
-        timeout: float = DEFAULT_TIMEOUT,
+        time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         run_url: str = DEFAULT_RUN_URL,
         token: Optional[str] = None,
         pod_name: Optional[str] = None,
         ingress: Optional[str] = None,
         reservation_id: Optional[str] = None,
         uid: Optional[str] = None,
-        burning_rate: Optional[str] = None,
+        burning_rate: Optional[CreditsPerSecond] = None,
         kernel_token: Optional[str] = None,
         started_at: Optional[str] = None,
         expired_at: Optional[str] = None,
@@ -733,36 +750,36 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         name : str
             Name of the runtime (kernel).
         environment : str
-            Environment type (e.g., "python-cpu-env").
-        timeout : float
-            Request timeout in minutes.
+            Environment type (e.g., "python-cpu-env"). Type of resources needed (cpu, gpu, etc.).
+        time_reservation : Minutes
+            Time reservation in minutes for the runtime. Defaults to 10 minutes.
         run_url : str
             Datalayer server URL.
         token : Optional[str]
             Authentication token (can also be set via DATALAYER_TOKEN env var).
         pod_name : Optional[str]
-            Pod name for existing runtime.
+            Name of the pod running the runtime.
         ingress : Optional[str]
             Ingress URL for the runtime.
         reservation_id : Optional[str]
             Reservation ID for the runtime.
         uid : Optional[str]
-            Unique identifier for the runtime.
-        burning_rate : Optional[str]
-            Cost rate for the runtime.
+            ID for the runtime.
+        burning_rate : Optional[float]
+            Burning rate for the runtime.
         kernel_token : Optional[str]
-            Kernel authentication token.
+            Token for the kernel client.
         started_at : Optional[str]
-            Runtime start timestamp.
+            Start time for the runtime.
         expired_at : Optional[str]
-            Runtime expiration timestamp.
+            Expiration time for the runtime.
         """
         self._environment_name = environment
         self._pod_name = pod_name
         self._run_url = run_url
         self._name = name
         self._ingress = ingress
-        self._timeout = timeout
+        self._time_reservation = time_reservation
         self._token = token
         self._reservation_id = reservation_id
         self._kernel_token = kernel_token
@@ -773,6 +790,9 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         self._burning_rate = burning_rate
         self._started_at = started_at
         self._expired_at = expired_at
+        self._credits_limit = (
+            burning_rate * 60.0 * time_reservation if burning_rate else None
+        )
 
         self._executing = False
         # if kernel_token is not None and ingress is not None:
@@ -832,7 +852,7 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             self._pod_name = runtime["pod_name"]
             self._uid = runtime["uid"]
             self._reservation_id = runtime["reservation_id"]
-            self._burning_rate = runtime["burning_rate"]
+            self._burning_rate = float(runtime["burning_rate"])
             self._started_at = runtime["started_at"]
             self._expired_at = runtime["expired_at"]
             self._kernel_client = KernelClient(
@@ -1001,6 +1021,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         path: Union[str, Path],
         variables: Optional[dict[str, Any]] = None,
         output: Optional[str] = None,
+        debug: bool = False,
+        timeout: Seconds = 10.0,
     ) -> Response:
         """
         Execute a Python file in the runtime.
@@ -1013,6 +1035,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             Optional variables to set before executing the code.
         output : Optional[str]
             Optional output variable to return as result.
+        debug : bool
+            Whether to enable debug mode. If `True`, the output and error streams will be printed.
+        timeout : Seconds
+            Timeout for the execution.
 
         Returns
         -------
@@ -1030,12 +1056,19 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
                     reply = self._kernel_client.execute_interactive(
                         cell,
                         silent=False,
+                        timeout=timeout,
                     )
+                    # print(reply)
                     outputs.append(reply.get("outputs", []))
+                response = Response(outputs)
+                if debug:
+                    print(response.stdout)
+                    print(response.stderr)
+
                 if output is not None:
                     return self.get_variable(output)
 
-                return Response(outputs)
+                return response
         return Response([])
 
     def execute_code(
@@ -1043,6 +1076,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         code: str,
         variables: Optional[dict[str, Any]] = None,
         output: Optional[str] = None,
+        debug: bool = False,
+        timeout: Seconds = 10.0,
     ) -> Union[Response, Any]:
         """
         Execute code in the runtime.
@@ -1055,6 +1090,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             Optional variables to set before executing the code.
         output : Optional[str]
             Optional output variable to return as result.
+        debug : bool
+            Whether to enable debug mode. If `True`, the output and error streams will be printed.
+        timeout : Seconds
+            Timeout for the execution.
 
         Returns
         -------
@@ -1062,12 +1101,16 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             The result of the code execution.
         """
         if not self._check_file(code):
-            result: list[dict[str, str]] = []
             if self._kernel_client is not None:
                 if variables:
                     self.set_variables(variables)
-                reply = self._kernel_client.execute(code)
-                result = reply.get("outputs", {})
+                reply = self._kernel_client.execute(code, timeout=timeout)
+
+                response = Response(reply.get("outputs", {}))
+                if debug:
+                    print(response.stdout)
+                    print(response.stderr)
+
                 if output is not None:
                     return self.get_variable(output)
             else:
@@ -1075,7 +1118,7 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
                     "Kernel client is not started. Call `start()` first."
                 )
 
-            return Response(result)
+            return response
 
         return Response([])
 
@@ -1084,6 +1127,8 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         code_or_path: Union[str, Path],
         variables: Optional[dict[str, Any]] = None,
         output: Optional[str] = None,
+        debug: bool = False,
+        timeout: Seconds = 10.0,
     ) -> Union[Response, Any]:
         """
         Execute code in the runtime.
@@ -1096,6 +1141,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             Optional variables to set before executing the code.
         output : Optional[str]
             Optional output variable to return as result.
+        debug : bool
+            Whether to enable debug mode. If `True`, the output and error streams will be printed.
+        timeout : Seconds
+            Timeout for the execution.
 
         Returns
         -------
@@ -1104,11 +1153,19 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         """
         if self._check_file(code_or_path):
             return self.execute_file(
-                str(code_or_path), variables=variables, output=output
+                str(code_or_path),
+                variables=variables,
+                output=output,
+                debug=debug,
+                timeout=timeout,
             )
         else:
             return self.execute_code(
-                str(code_or_path), variables=variables, output=output
+                str(code_or_path),
+                variables=variables,
+                output=output,
+                debug=debug,
+                timeout=timeout,
             )
 
     def terminate(self) -> bool:
