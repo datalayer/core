@@ -14,6 +14,7 @@ node_modules/
 .ipynb_checkpoints
 *.tsbuildinfo
 *-lock.json
+.pnp.*
 
 # Logs
 logs
