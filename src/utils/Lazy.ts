@@ -1,0 +1,35 @@
+/*
+ * Copyright (c) 2021-2024 Datalayer, Inc.
+ *
+ * Datalayer License
+ */
+
+// Taken from https://github.com/ianschmitz/react-lazy-with-preload with Datalayer License.
+import { ComponentType, createElement, forwardRef, lazy as reactLazy } from "react";
+
+export type PreloadableComponent<T extends ComponentType<any>> = T & {
+  preload: () => Promise<void>;
+};
+
+export function lazyWithPreload<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>): PreloadableComponent<T> {
+  const LazyComponent = reactLazy(factory);
+  let factoryPromise: Promise<void> | undefined;
+  let LoadedComponent: T | undefined;
+  const Component = forwardRef(function LazyWithPreload(props, ref) {
+    return createElement(
+      LoadedComponent ?? LazyComponent,
+      Object.assign(ref ? { ref } : {}, props) as any
+    );
+  }) as any as PreloadableComponent<T>;
+  Component.preload = () => {
+    if (!factoryPromise) {
+      factoryPromise = factory().then((module) => {
+        LoadedComponent = module.default;
+      });
+    }
+    return factoryPromise;
+  };
+  return Component;
+}
+
+export default lazyWithPreload;

@@ -12,25 +12,20 @@ describe('@datalayer/core - index', () => {
     expect(typeof coreIndex.App).toBe('function');
   });
 
-  it('should export qfds from hooks', () => {
-    expect(coreIndex.qfds).toBeDefined();
-    expect(coreIndex.qfds).toBe('lkj');
+  it('should export BackdropContext from hooks', () => {
+    expect(coreIndex.BackdropContext).toBeDefined();
+    expect(coreIndex.BackdropContext).toBe('lkj');
   });
 
   it('should export utils functions', () => {
-    expect(coreIndex.formatString).toBeDefined();
-    expect(coreIndex.addNumbers).toBeDefined();
-    expect(coreIndex.isDefined).toBeDefined();
-    expect(coreIndex.delay).toBeDefined();
+    expect(coreIndex.convertToLargestUnit).toBeDefined();
+    expect(coreIndex.asArray).toBeDefined();
   });
 
   it('should have all expected exports', () => {
     const exports = Object.keys(coreIndex);
     expect(exports).toContain('App');
-    expect(exports).toContain('qfds');
-    expect(exports).toContain('formatString');
-    expect(exports).toContain('addNumbers');
-    expect(exports).toContain('isDefined');
-    expect(exports).toContain('delay');
+    expect(exports).toContain('convertToLargestUnit');
+    expect(exports).toContain('asArray');
   });
 });

@@ -43,7 +43,6 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:lib": "tsc -b",
-    "build:lib:watch": "tsc -b -w",
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "vite",
@@ -55,7 +54,8 @@
     "test:storybook": "vitest run --project=storybook",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api"
+    "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api",
+    "watch:lib": "tsc -b -w"
   },
   "dependencies": {
     "@jupyterlab/services": "^7.0.0",

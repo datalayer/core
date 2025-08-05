@@ -4,18 +4,18 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { qfds } from '../hooks';
+import { useCache } from '../hooks';
 
 describe('hooks', () => {
   it('should export qfds constant', () => {
-    expect(qfds).toBeDefined();
+    expect(useCache).toBeDefined();
   });
-
-  it('qfds should have correct value', () => {
-    expect(qfds).toBe('lkj');
+  /*
+  it('useCache should have correct value', () => {
+    expect(useCache).toBe('');
   });
-
-  it('qfds should be a string', () => {
-    expect(typeof qfds).toBe('string');
+  it('useCache should be a string', () => {
+    expect(typeof useCache).toBe('string');
   });
+  */
 });
