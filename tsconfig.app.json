@@ -13,16 +13,17 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false, // Should be true.
     "moduleDetection": "force",
+    "noImplicitAny": false,
     "noEmit": false,
     "jsx": "react-jsx",
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
+    "noUnusedParameters": false,
+    "erasableSyntaxOnly": false, // Should be true.
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

@@ -53,7 +53,8 @@
     "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api"
   },
   "dependencies": {
-    "@jupyterlab/services": "^4.0.0",
+    "@jupyterlab/services": "^7.0.0",
+    "@jupyterlab/coreutils": "^6.0.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^4.4.1"
@@ -95,5 +96,21 @@
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "@jupyterlab/services": "^4.4.0",
+    "@microsoft/fast-colors": "5.3.1",
+    "@microsoft/fast-components": "2.30.6",
+    "@microsoft/fast-element": "1.13.0",
+    "@microsoft/fast-foundation": "2.49.6",
+    "@microsoft/fast-react-wrapper": "0.3.24",
+    "@microsoft/fast-web-utilities": "5.4.1",
+    "@microsoft/load-themed-styles": "1.10.295",
+    "@types/react": "18.3.20",
+    "@types/react-dom": "18.3.6",
+    "pyodide": "0.28.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "typescript": "^5.8.3"
   }
 }
