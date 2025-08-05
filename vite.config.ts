@@ -19,8 +19,41 @@ const dirname =
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+  },
+  resolve: {
+    alias: {
+      crypto: 'crypto-browserify',
+    },
+  },
+  optimizeDeps: {
+    include: ['crypto-browserify'],
+  },
   test: {
+    coverage: {
+      include: ["src/**/*"],
+      exclude: [
+        "src/**/*.{test,spec}.{js,ts,tsx}",
+        "src/test-setup.ts",
+        "src/stories/**",
+        "src/main.tsx",
+        "src/vite-env.d.ts"
+      ],
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage"
+    },
     projects: [
+      // Unit tests
+      {
+        test: {
+          name: "unit",
+          include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
+          environment: "jsdom",
+          setupFiles: ["src/test-setup.ts"],
+        }
+      },
+      // Storybook tests
       {
         extends: true,
         plugins: [
