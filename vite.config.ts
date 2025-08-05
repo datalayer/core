@@ -31,6 +31,18 @@ export default defineConfig({
     include: ['crypto-browserify'],
   },
   test: {
+    coverage: {
+      include: ["src/**/*"],
+      exclude: [
+        "src/**/*.{test,spec}.{js,ts,tsx}",
+        "src/test-setup.ts",
+        "src/stories/**",
+        "src/main.tsx",
+        "src/vite-env.d.ts"
+      ],
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage"
+    },
     projects: [
       // Unit tests
       {
@@ -39,19 +51,7 @@ export default defineConfig({
           include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
           environment: "jsdom",
           setupFiles: ["src/test-setup.ts"],
-          coverage: {
-            include: ["src/**/*"],
-            exclude: [
-              "src/**/*.{test,spec}.{js,ts,tsx}",
-              "src/test-setup.ts",
-              "src/stories/**",
-              "src/main.tsx",
-              "src/vite-env.d.ts"
-            ],
-            reporter: ["text", "html", "lcov"],
-            reportsDirectory: "./coverage"
-          }
-        },
+        }
       },
       // Storybook tests
       {
