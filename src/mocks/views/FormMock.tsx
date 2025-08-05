@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useState } from 'react';
 import { Box, FormControl, TextInputWithTokens, Autocomplete, Select, Textarea, Heading } from '@primer/react';
 

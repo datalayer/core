@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export const ECHART_MOCK_1 = {
   grid: { top: 8, right: 8, bottom: 24, left: 36 },
   xAxis: {

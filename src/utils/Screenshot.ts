@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import html2canvas from 'html2canvas';
 
 export const takeHTMLNodeScreenshot = async (node: HTMLDivElement): Promise<string> => {

@@ -4,12 +4,6 @@
  */
 
 /*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
-/*
  * Welcome to @reach/auto-id!
 
  * Let's see if we can make sense of why this hook exists and its

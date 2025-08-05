@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { PropsWithChildren } from "react";
 import { Link, Tooltip, Button } from "@primer/react";
 import { ScreenFullIcon } from "@primer/octicons-react";

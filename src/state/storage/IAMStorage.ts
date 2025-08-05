@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import jwt_decode from 'jwt-decode';
 import { getCookie } from '../../utils';
 import { IUser, ANONYMOUS_USER, ANONYMOUS_USER_TOKEN } from '../../models';

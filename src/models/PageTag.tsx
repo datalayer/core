@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { CardIconColors } from '@primer/react-brand';
 import { Icon, CopilotIcon, ZapIcon } from '@primer/octicons-react';
 

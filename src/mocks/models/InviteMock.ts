@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { uniqueNamesGenerator, names, colors, adjectives, animals } from "unique-names-generator";
 import { IInvite } from "../../models/Invite";
 import { newUlid } from "../../utils";

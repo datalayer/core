@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { MutableRefObject, useCallback, useEffect, useState } from 'react';
 import { Notification } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';

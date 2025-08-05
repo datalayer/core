@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 const LOOKUP_VALUE_SYMBOL = [
   { value: 1, symbol: "" },
   { value: 1e3, symbol: "K" },

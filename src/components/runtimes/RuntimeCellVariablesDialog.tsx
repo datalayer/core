@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Dialog } from '@primer/react/experimental';
 import { ISessionContext } from '@jupyterlab/apputils';

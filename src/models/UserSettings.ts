@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export const AI_AGENTS_URL_KEY = "aiagents_url_s";
 export const CAN_INVITE_URL_KEY = "can_invite_b";
 

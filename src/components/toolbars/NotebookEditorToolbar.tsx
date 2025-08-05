@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { NotebookCommandIds } from '@datalayer/jupyter-react';
 import { Session, type KernelMessage } from '@jupyterlab/services';
 import { CommandRegistry } from '@lumino/commands';

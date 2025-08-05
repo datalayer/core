@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 // https://stackoverflow.com/questions/49328382/browser-detection-in-reactjs
 // https://codepedia.info/detect-browser-in-javascript
 

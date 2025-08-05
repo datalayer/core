@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export function jsonToCSVString(json) {
   const headers = Object.keys(json[0]);
   let csvString = '';
