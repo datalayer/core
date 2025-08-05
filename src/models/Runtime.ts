@@ -82,10 +82,10 @@ export interface IRuntimeDesc {
  *
  * TODO refactor with type { RuntimeLocation }
  */
-export type IRuntimeType = 
-  | 'notebook'
-  | 'cell'
-  ;
+export type IRuntimeType =
+| 'notebook'
+| 'cell'
+;
 
 /**
  * Runtime optional capabilities.
