@@ -9,6 +9,7 @@ export * from "./useBackdrop";
 export * from "./useBackdropJupyterLab";
 export * from "./useCache";
 export * from "./useContainsFocus";
+export * from "./useDatalayer";
 // export * from "./useCellOutputshot"; // Do not export html2canvas
 export * from "./useError";
 export * from "./useExternalScript";
@@ -24,7 +25,6 @@ export * from "./useNavigate";
 export * from "./useNotebookAIAgent";
 export * from "./useOnClickOutside";
 export * from "./useRef";
-export * from "./useRun";
 export * from "./useRuntimes";
 export * from "./useScreenshot";
 export * from "./useToast";

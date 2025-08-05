@@ -13,7 +13,7 @@ import { CloudUploadIcon } from '@datalayer/icons-react';
 import { ExternalTokenSilentLogin } from '../../components/iam';
 import type { ISnippet } from '../../models';
 import { useCoreStore, useIAMStore } from '../../state';
-import { IRuntimeDesc } from '../../api';
+import { IRuntimeDesc } from '../../models';
 import { isRuntimeRemote, RuntimeSnippetsFacade } from '../../api';
 import { SnippetDialog } from './../snippets/SnippetDialog';
 import { KernelLauncherDialog } from './RuntimeLauncherDialog';

@@ -13,7 +13,7 @@ import { CloudIcon, EyeIcon, UnfoldIcon } from '@primer/octicons-react';
 import { BrowserIcon, PlusIcon } from '@datalayer/icons-react';
 import { ArtifactIcon } from '../../components/icons';
 import { KernelLauncherDialog } from '../../components/runtimes';
-import { IRuntimeModel, type IRuntimeDesc, type RuntimeLocation } from '../../api';
+import { IRuntimeModel, type IRuntimeDesc, type IRuntimeLocation } from '../../models';
 import { useRuntimesStore } from '../../state';
 
 export interface IRuntimeAssignOptions {
@@ -46,19 +46,19 @@ interface IRuntimeSimplePickerProps {
 }
 
 /**
- * Cause to open the new Kernel dialog.
+ * Cause to open the new runtime dialog.
  */
-enum KernelDialogCause {
+enum RuntimeDialogCause {
   /**
    * Don't open.
    */
   None = 0,
   /**
-   * Launch a new Remote Kernel.
+   * Launch a new Remote Runtime.
    */
   New = 1,
   /**
-   * Transfer the state from the current Kernel to a new Remote Kernel.
+   * Transfer the state from the current Runtime to a new Remote Runtime.
    */
   Transfer = 2
 }
@@ -67,11 +67,11 @@ enum KernelDialogCause {
  * Runtime simple picker component.
  */
 export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Element {
-  const { assignRuntime: assignKernel, sessionConnection } = props;
-  const { runtimeModels: remoteKernels, multiServiceManager, jupyterLabAdapter } = useRuntimesStore();
-  const [kernelLocation, setKernelLocation] = useState<RuntimeLocation>();
+  const { assignRuntime, sessionConnection } = props;
+  const { runtimeModels, multiServiceManager, jupyterLabAdapter } = useRuntimesStore();
+  const [runtimeLocation, setRuntimeLocation] = useState<IRuntimeLocation>();
   const [luminoServices, setLuminoServices] = useState<{ [k: string]: any }>({});
-  const [dialogCause, setDialogCause] = useState<KernelDialogCause>(KernelDialogCause.None);
+  const [dialogCause, setDialogCause] = useState<RuntimeDialogCause>(RuntimeDialogCause.None);
   const [status, setStatus] = useState('');
   useEffect(() => {
     if (sessionConnection) {
@@ -95,16 +95,16 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
     }
   }, [multiServiceManager?.remote?.runtimesManager]);
   const handleLaunchRemoteKernel = useCallback(() => {
-    setDialogCause(KernelDialogCause.New);
+    setDialogCause(RuntimeDialogCause.New);
   }, []);
   const handleCloseDialog = useCallback(
     (runtimeDesc?: IRuntimeDesc) => {
       if (runtimeDesc) {
         switch (dialogCause) {
-          case KernelDialogCause.New:
+          case RuntimeDialogCause.New:
             refreshRemoteKernels().then(() => {
-              setKernelLocation('remote');
-              assignKernel({
+              setRuntimeLocation('remote');
+              assignRuntime({
                 runtimeDesc,
                 runtimeModel: multiServiceManager?.remote?.runtimesManager
                   .get()
@@ -112,13 +112,13 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
               });
             });
             break;
-          case KernelDialogCause.Transfer:
-            setKernelLocation('remote');
-            assignKernel({ runtimeDesc, transferState: true });
+          case RuntimeDialogCause.Transfer:
+            setRuntimeLocation('remote');
+            assignRuntime({ runtimeDesc, transferState: true });
             break;
         }
       }
-      setDialogCause(KernelDialogCause.None);
+      setDialogCause(RuntimeDialogCause.None);
     },
     [refreshRemoteKernels, multiServiceManager?.remote, dialogCause]
   );
@@ -142,7 +142,7 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
       <ActionMenu>
         <ActionMenu.Button
           leadingVisual={() => {
-            switch (kernelLocation) {
+            switch (runtimeLocation) {
               case 'browser':
                 return <BrowserIcon />;
               case 'remote':
@@ -174,10 +174,10 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
           <ActionList selectionVariant="single" showDividers>
             <ActionList.Group>
               <ActionList.Item
-                selected={kernelLocation === undefined && sessionConnection === undefined}
+                selected={runtimeLocation === undefined && sessionConnection === undefined}
                 onSelect={() => {
-                  setKernelLocation(undefined);
-                  assignKernel({ runtimeDesc: undefined });
+                  setRuntimeLocation(undefined);
+                  assignRuntime({ runtimeDesc: undefined });
                 }}
               >
                 <ActionList.LeadingVisual>
@@ -189,10 +189,10 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                 </ActionList.Description>
               </ActionList.Item>
               <ActionList.Item
-                selected={kernelLocation === 'browser'}
+                selected={runtimeLocation === 'browser'}
                 onSelect={() => {
-                  setKernelLocation('browser');
-                  assignKernel({
+                  setRuntimeLocation('browser');
+                  assignRuntime({
                     runtimeDesc: {
                       name: 'pyodide',
                       location: 'browser',
@@ -210,16 +210,16 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                 </ActionList.Description>
               </ActionList.Item>
             </ActionList.Group>
-            {remoteKernels.length > 0 && (
+            {runtimeModels.length > 0 && (
               <ActionList.Group>
                 <ActionList.GroupHeading>Cloud Runtimes</ActionList.GroupHeading>
-                {remoteKernels.map(kernelModel => {
+                {runtimeModels.map(kernelModel => {
                   return (
                     <ActionList.Item
                       selected={sessionConnection?.kernel?.id === kernelModel.id}
                       onSelect={() => {
-                        setKernelLocation('remote');
-                        assignKernel({
+                        setRuntimeLocation('remote');
+                        assignRuntime({
                           runtimeDesc: {
                             name: kernelModel.environment_name,
                             language: '',
@@ -258,10 +258,10 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                 Launch a new Runtime…
               </ActionList.Item>
               <ActionList.Item
-                disabled={kernelLocation !== 'browser'}
+                disabled={runtimeLocation !== 'browser'}
                 selected={false}
                 onSelect={() => {
-                  setDialogCause(KernelDialogCause.Transfer);
+                  setDialogCause(RuntimeDialogCause.Transfer);
                 }}
                 title="Transfer the state of the current Runtime to a new Remote Runtime."
               >
@@ -277,7 +277,7 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
       {multiServiceManager?.remote && dialogCause > 0 && (
         <KernelLauncherDialog
           dialogTitle={
-            dialogCause === KernelDialogCause.Transfer
+            dialogCause === RuntimeDialogCause.Transfer
               ? 'Switch to a new Cloud Runtime'
               : undefined
           }
@@ -286,9 +286,9 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
           markdownParser={luminoServices[IMarkdownParser.name]}
           sanitizer={luminoServices[ISanitizer.name]}
           startKernel={
-            dialogCause === KernelDialogCause.Transfer
+            dialogCause === RuntimeDialogCause.Transfer
               ? 'defer'
-              : dialogCause === KernelDialogCause.New
+              : dialogCause === RuntimeDialogCause.New
           }
         />
       )}

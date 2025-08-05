@@ -8,10 +8,10 @@ import { createStore } from 'zustand/vanilla';
 import type { JupyterLabAppAdapter } from '@datalayer/jupyter-react';
 import { JSONExt } from '@lumino/coreutils';
 import { Poll } from '@lumino/polling';
-import type { IMultiServiceManager, IRuntimeModel } from '../../api';
+import type { IMultiServiceManager } from '../../api';
 import { getRuntimes } from '../../api';
 import type { IRuntimesConfiguration } from '../../config';
-import type { IRuntimePod, IRuntimeSnapshot } from '../../models';
+import type { IRuntimePod, IRuntimeSnapshot, IRuntimeModel } from '../../models';
 import { coreStore } from './CoreState';
 import { iamStore } from './IAMState';
 

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useCache } from './useCache';
 import { coreStore, useIAMStore, useLayoutStore, useOrganizationStore, useSpaceStore } from '../state';
 import { asUser, IUser, ANONYMOUS_USER, ANONYMOUS_USER_TOKEN, IIAMResponseType } from '../models';
-import { requestRunAPI, type RunResponseError } from '../api';
+import { requestDatalayerAPI, type RunResponseError } from '../api';
 
 export type IAMStateProps = {
   user?: IUser;
@@ -33,7 +33,7 @@ export const useIAM = (
     homeRoute?: string
   ): Promise<void> => {
     try {
-      const resp = await requestRunAPI<IIAMResponseType>({
+      const resp = await requestDatalayerAPI<IIAMResponseType>({
         url: `${iamStore.iamRunUrl}/api/iam/v1/login`,
         method: 'POST',
         body: { token },

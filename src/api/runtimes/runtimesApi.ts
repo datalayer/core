@@ -4,7 +4,7 @@
  */
 
 /**
- * Datalayer Jupyter API interface.
+ * Runtimes APIs.
  */
 import { URLExt } from '@jupyterlab/coreutils';
 import { ISessionContext } from '@jupyterlab/apputils';
@@ -13,18 +13,20 @@ import { PromiseDelegate } from '@lumino/coreutils';
 import { IDisposable } from '@lumino/disposable';
 import { ISignal } from '@lumino/signaling';
 import { Upload } from 'tus-js-client';
-import { requestRunAPI, type RunResponseError } from '..';
-import type { IRuntimeSnapshot, IAPIRuntimeSnapshot, IRuntimeCapabilities} from '../../models';
-import { asRuntimeSnapshot, IDatalayerEnvironment, IRuntimePod, IRuntimeType } from '../../models';
-import type { IRuntimeModel, RuntimeLocation } from './models';
+import { requestDatalayerAPI, type RunResponseError } from '..';
+import type { IRuntimeSnapshot, IAPIRuntimeSnapshot, IRuntimeCapabilities } from '../../models';
+import type { IRuntimeModel, IDatalayerEnvironment, IRuntimePod, IRuntimeType, IRuntimeLocation } from '../../models';
+import { asRuntimeSnapshot } from '../../models';
 import { iamStore, runtimesStore } from '../../state';
 import { sleep } from '../../utils';
 
 /**
- * 
+ * Abstract interface for the Datalayer session context.
+ * It extends the JupyterLab session context
+ * to include the runtime location.
  */
 export interface IDatalayerSessionContext extends ISessionContext {
-  get location(): RuntimeLocation;
+  get location(): IRuntimeLocation;
 }
 
 /**
@@ -330,7 +332,7 @@ export interface IMultiServiceManager extends ServiceManager.IManager {
  * Get available environments.
  */
 export async function getEnvironments(): Promise<IDatalayerEnvironment[]> {
-  const data = await requestRunAPI<{
+  const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
     environments?: IDatalayerEnvironment[];
@@ -365,7 +367,7 @@ export async function createRuntime(options: IRuntimeOptions): Promise<IRuntimeP
   if (options.snapshot) {
     body['from'] = options.snapshot;
   }
-  const data = await requestRunAPI<{
+  const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
     runtime?: IRuntimePod;
@@ -393,7 +395,7 @@ export async function createRuntime(options: IRuntimeOptions): Promise<IRuntimeP
  * List Runtimes
  */
 export async function getRuntimes(): Promise<IRuntimePod[]> {
-  const data = await requestRunAPI<{
+  const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
     runtimes?: IRuntimePod[];
@@ -423,7 +425,7 @@ export async function deleteRuntime(options: {
   reason?: string;
 }): Promise<void> {
   const externalToken = iamStore.getState().externalToken;
-  await requestRunAPI({
+  await requestDatalayerAPI({
     url:
       URLExt.join(runtimesStore.getState().runtimesRunUrl, `api/runtimes/v1/runtimes/${options.id}`) +
       URLExt.objectToQueryString(options.reason ? { reason: options.reason } : {}),
@@ -460,7 +462,7 @@ export async function snapshotRuntime(options: {
    */
   stop?: boolean;
 }): Promise<IRuntimeSnapshot> {
-  const data = await requestRunAPI<{
+  const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
     snapshot?: IAPIRuntimeSnapshot;
@@ -488,7 +490,7 @@ export async function snapshotRuntime(options: {
  * Get Kernel Snapshots.
  */
 export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
-  const data = await requestRunAPI<{
+  const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
     snapshots?: IAPIRuntimeSnapshot[];
@@ -519,7 +521,7 @@ export async function loadRuntimeSnapshot(options: {
    */
   from: string;
 }): Promise<void> {
-  const data = await requestRunAPI<{
+  const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
   }>({
@@ -578,7 +580,7 @@ export function exportRuntimeSnapshot(id: string): void {
  * Delete runtime snapshot.
  */
 export async function deleteRuntimeSnapshot(id: string): Promise<void> {
-  await requestRunAPI<{
+  await requestDatalayerAPI<{
     success: boolean;
     message: string;
     snapshots?: IAPIRuntimeSnapshot[];
@@ -597,7 +599,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
     while (true) {
       await sleep(sleepTimeout);
       sleepTimeout *= 2;
-      const response = await requestRunAPI<{
+      const response = await requestDatalayerAPI<{
         success: boolean;
         message: string;
         snapshots?: IAPIRuntimeSnapshot[];
@@ -632,7 +634,7 @@ export async function updateRuntimeSnapshot(
   metadata: { name?: string, description?: string }
 ): Promise<void> {
   if (metadata.name || metadata.description) {
-    await requestRunAPI<{
+    await requestDatalayerAPI<{
       success: boolean;
       message: string;
       snapshot?: IAPIRuntimeSnapshot;

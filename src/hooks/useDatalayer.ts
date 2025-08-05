@@ -6,12 +6,12 @@
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from './useNavigate';
 import { useToast } from './useToast';
-import { useRunMock } from './../mocks';
-import { useIAMStore, useCoreStore } from '../state';
-import { requestRunAPI } from '../api';
-import type { IRequestRunAPIOptions, RunResponseError } from '../api';
+// import { useRuMnock } from './../mocks';
+import { useIAMStore, } from '../state';
+import { requestDatalayerAPI } from '../api';
+import type { IRequestDatalayerAPIOptions, RunResponseError } from '../api';
 
-export type IRunRequestProps = {
+export type IDatalayerRequestProps = {
   /**
    * React router login route
    *
@@ -26,27 +26,30 @@ export type IRunRequestProps = {
   notifyOnError?: boolean;
 };
 
-export interface RunRequest extends IRunRequestProps, IRequestRunAPIOptions {}
+export interface DatalayerRequest extends IDatalayerRequestProps, IRequestDatalayerAPIOptions {}
 
-export function useRun(props: IRunRequestProps = {}) {
+export function useDatalayer(props: IDatalayerRequestProps = {}) {
   const { loginRoute = '/login', notifyOnError = true } = props;
   const location = useLocation();
+  /*
+  // TODO Fix the conditional hook call.
   const coreStore = useCoreStore();
   // Don't remove === true for the test, otherwise it will always be true???
   if (coreStore.configuration.useMock === true) {
-    return useRunMock();
+    return useDatalayerMock();
   }
+  */
   const { enqueueToast } = useToast();
   const iamStore = useIAMStore();
   const navigate = useNavigate();
-  const requestRun = async <T = any>(request: RunRequest): Promise<T> => {
+  const requestDatalayer = async <T = any>(request: DatalayerRequest): Promise<T> => {
     const {
       loginRoute: loginRoute_ = loginRoute,
       notifyOnError: notifyOnError_ = notifyOnError,
       ...apiRequest
     } = request;
     const token = apiRequest.token ?? iamStore.token;
-    return requestRunAPI<T>({
+    return requestDatalayerAPI<T>({
       ...apiRequest,
       token,
     })
@@ -99,9 +102,7 @@ export function useRun(props: IRunRequestProps = {}) {
       throw error;
     });
   }
-  return {
-    requestRun
-  }
+  return { requestDatalayer }
 }
 
-export default useRun;
+export default useDatalayer;

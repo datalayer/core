@@ -5,7 +5,7 @@
 
 import { URLExt } from '@jupyterlab/coreutils';
 import { useCoreStore } from '../state';
-import { useRun } from './useRun';
+import { useDatalayer } from './useDatalayer';
 
 export type RequestOptions = {
   signal?: AbortSignal;
@@ -20,9 +20,9 @@ export type RoomType =
 
 export const useAIAgents = (baseUrlOverride = 'api/ai-agents/v1') => {
   const { configuration } = useCoreStore();
-  const { requestRun } = useRun({ notifyOnError: false });
+  const { requestDatalayer } = useDatalayer({ notifyOnError: false });
   const createAIAgent = (documentId: string, documentType: RoomType, ingress?: string, token?: string, kernelId?: string, { signal, baseUrl = baseUrlOverride }: RequestOptions = {}) => {
-    return requestRun({
+    return requestDatalayer({
       url: URLExt.join(configuration.aiagentsRunUrl, baseUrl, 'agents'),
       method: 'POST',
       body: {
@@ -38,28 +38,28 @@ export const useAIAgents = (baseUrlOverride = 'api/ai-agents/v1') => {
     });
   }
   const getAIAgents = ({ signal, baseUrl = baseUrlOverride }: RequestOptions = {}) => {
-    return requestRun({
+    return requestDatalayer({
       url: URLExt.join(configuration.aiagentsRunUrl, baseUrl, 'agents'),
       method: 'GET',
       signal,
     });
   }
   const deleteAIAgent = (documentId: string, { signal, baseUrl = baseUrlOverride }: RequestOptions = {}) => {
-    return requestRun({
+    return requestDatalayer({
       url: URLExt.join(configuration.aiagentsRunUrl, baseUrl, 'agents', documentId),
       method: 'DELETE',
       signal,
     });
   }
   const getAIAgent = (documentId: string, { signal, baseUrl = baseUrlOverride }: RequestOptions = {}) => {
-    return requestRun({
+    return requestDatalayer({
       url: URLExt.join(configuration.aiagentsRunUrl, baseUrl, 'agents', documentId),
       method: 'GET',
       signal,
     });
   }
   const patchAIAgent = (documentId: string, ingress?: string, token?: string, kernelId?: string, { signal, baseUrl = baseUrlOverride }: RequestOptions = {}) => {
-    return requestRun({
+    return requestDatalayer({
       url: URLExt.join(configuration.aiagentsRunUrl, baseUrl, 'agents', documentId),
       method: 'PATCH',
       body: {

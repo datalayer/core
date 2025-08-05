@@ -11,8 +11,8 @@ import { sleep } from '../utils';
  */
 export class RunResponseError extends Error {
   /**
-   * Create a RunResponseError from a response, handling the traceback and message
-   * as appropriate.
+   * Create a RunResponseError from a response,
+   * handling the traceback and message as appropriate.
    *
    * @param response The response object.
    *
@@ -104,7 +104,7 @@ export class NetworkError extends TypeError {
   }
 }
 
-export interface IRequestRunAPIOptions {
+export interface IRequestDatalayerAPIOptions {
   /**
    * URL to request
    */
@@ -131,14 +131,14 @@ export interface IRequestRunAPIOptions {
   signal?: AbortSignal;
 }
 
-export async function requestRunAPI<T = any>({
+export async function requestDatalayerAPI<T = any>({
   url,
   method,
   body,
   token,
   signal,
   headers = {}
-}: IRequestRunAPIOptions): Promise<T> {
+}: IRequestDatalayerAPIOptions): Promise<T> {
   const headers_ = new Headers(headers);
   if (!headers_.has('Accept')) {
     headers_.set('Accept', 'application/json');
@@ -156,7 +156,7 @@ export async function requestRunAPI<T = any>({
       method: method ?? 'GET',
       headers: headers_,
       body: body ? JSON.stringify(body) : undefined,
-      //      credentials: token ? 'include' : 'omit',
+      // credentials: token ? 'include' : 'omit',
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',

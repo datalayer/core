@@ -9,7 +9,7 @@ import { createStore } from 'zustand/vanilla';
 import { ANONYMOUS_USER_TOKEN, ANONYMOUS_USER, IUser, asUser, IIAMProviderName, IAMProvidersSpecs, IIAMResponseType } from '../../models';
 import type { ICredits, ICreditsReservation, IRESTBaseResponse } from '../../models';
 import { getStoredToken, getStoredUser, loadRefreshTokenFromCookie, storeToken, storeUser } from '../storage';
-import { requestRunAPI, type RunResponseError } from '../../api';
+import { requestDatalayerAPI, type RunResponseError } from '../../api';
 import { getCookie, setCookie, deleteCookie } from '../../utils';
 import { coreStore } from './CoreState';
 
@@ -105,7 +105,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
     login: async (token: string) => {
       const { refreshUserByToken, iamRunUrl, logout } = get();
       try {
-        const resp = await requestRunAPI<IIAMResponseType>({
+        const resp = await requestDatalayerAPI<IIAMResponseType>({
           url: `${iamRunUrl}/api/iam/v1/login`,
           method: 'POST',
           body: { token },
@@ -179,7 +179,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
       const { externalToken, token, iamRunUrl, logout } = get();
       if (token) {
         try {
-          const creditsRaw = await requestRunAPI<IRESTBaseResponse & { credits: ICredits } & { reservations: ICreditsReservation[]; }>({
+          const creditsRaw = await requestDatalayerAPI<IRESTBaseResponse & { credits: ICredits } & { reservations: ICreditsReservation[]; }>({
             url: `${iamRunUrl}/api/iam/v1/usage/credits`,
             token,
             headers: externalToken
@@ -235,7 +235,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
     refreshUserByToken: async (token: string) => {
       const { iamRunUrl, logout } = get();
       try {
-        const data = await requestRunAPI({
+        const data = await requestDatalayerAPI({
           url: `${iamRunUrl}/api/iam/v1/whoami`,
           token,
         });
@@ -312,7 +312,7 @@ iamStore
     // If the stored token is invalid and an external token exists, try authenticating with it.
     if (!token && externalToken) {
       console.debug('Can not login with token - Trying with the external token.');
-      requestRunAPI<{ token?: string }>({
+      requestDatalayerAPI<{ token?: string }>({
         url: `${iamRunUrl}/api/iam/v1/login`,
         method: 'POST',
         body: { token: externalToken }

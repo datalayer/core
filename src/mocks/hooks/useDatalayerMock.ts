@@ -5,7 +5,7 @@
 
 import { useLocation } from 'react-router-dom';
 import { IAMStateProps } from "./../../hooks";
-import { RunRequest } from "./../../hooks";
+import { DatalayerRequest } from "./../../hooks";
 import { useNavigate } from './../../hooks';
 import { useToast } from './../../hooks';
 import { useIAMStore } from '../../state';
@@ -14,19 +14,19 @@ import {
   systemAdminLogin,
 } from './rests';
 
-const getMockResponse = (request: RunRequest) => {
+const getMockResponse = (request: DatalayerRequest) => {
   const { url, method, body } = request;
   if (url.match('/api/iam/v1/login$') && method === "POST") {
     return systemAdminLogin(body!.handle);
   }
 }
 
-export const useRunMock = (props: IAMStateProps = { user: undefined, token: undefined }) => {
+export const useDatalayerMock = (props: IAMStateProps = { user: undefined, token: undefined }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const iamStore = useIAMStore();
   const { enqueueToast } = useToast();
-  const requestRun = async <T = any>(request: RunRequest): Promise<T> => {
+  const requestRun = async <T = any>(request: DatalayerRequest): Promise<T> => {
     const { loginRoute = '/login' } = props;
     const response = getMockResponse(request);
     console.log('Mock request and response', request, response);
@@ -81,4 +81,4 @@ export const useRunMock = (props: IAMStateProps = { user: undefined, token: unde
   }
 }
 
-export default useRunMock;
+export default useDatalayerMock;

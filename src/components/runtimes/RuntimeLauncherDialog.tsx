@@ -10,18 +10,17 @@ import { Button, FormControl, Select, Spinner, Text, TextInput, ToggleSwitch, To
 import { Dialog } from '@primer/react/experimental';
 import { AlertIcon } from '@primer/octicons-react';
 import { Box } from "@datalayer/primer-addons";
-import type { IRemoteServicesManager, RunResponseError } from '../../api';
+import { USAGE_ROUTE } from '../../routes';
 import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
-import { type IRuntimeSnapshot } from '../../models';
-import type { IRuntimeDesc } from '../../api';
+import type { IRemoteServicesManager, RunResponseError } from '../../api';
+import type { IRuntimeSnapshot, IRuntimeDesc } from '../../models';
 import { iamStore, useCoreStore, useIAMStore, useRuntimesStore } from '../../state';
 import { createNotebook, sleep } from '../../utils';
 import { Markdown } from '../display';
 import { Timer } from '../progress';
 import { FlashClosable } from '../flashes';
 import { RuntimeReservationControl, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES } from './RuntimeReservationControl';
-import { USAGE_ROUTE } from '../../routes';
 
 /**
  * Initial time in milliseconds before retrying in case no kernels are available

@@ -11,16 +11,16 @@ import { ITranslator } from '@jupyterlab/translation';
 import { JSONExt } from '@lumino/coreutils';
 import { CommandRegistry } from '@lumino/commands';
 import { KernelExecutor } from '@datalayer/jupyter-react';
-import type { IRuntimeOptions, IMultiServiceManager } from '../../api';
-import { RuntimeSnippetsFacade, IRuntimeDesc } from '../../api';
-import { IDatalayerSessionContext } from '../../api';
+import type { IRuntimeOptions, IMultiServiceManager, IDatalayerSessionContext } from '../../api';
+import { DatalayerThemeProvider } from '../../theme';
+import { RuntimeSnippetsFacade } from '../../api';
+import { IRuntimeDesc } from '../../models';
 import { ExternalTokenSilentLogin } from '../../components/iam';
 import { useCoreStore, useIAMStore } from '../../state';
 import { RuntimeReservationControl, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES } from './RuntimeReservationControl';
 import { RuntimeVariables } from './RuntimeVariables';
 import { RuntimePickerBase } from './RuntimePickerBase';
 import { RuntimeTransfer } from './RuntimeTransfer';
-import { DatalayerThemeProvider } from '../../theme';
 
 /**
  * {@link RuntimePickerNotebook} properties
