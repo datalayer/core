@@ -3,7 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './runtimesApi';
+export * from './actions';
+export * from './apis';
 export * from './settings';
 export * from './snapshots';
 export * from './utils';

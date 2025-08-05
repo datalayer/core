@@ -7,329 +7,16 @@
  * Runtimes APIs.
  */
 import { URLExt } from '@jupyterlab/coreutils';
-import { ISessionContext } from '@jupyterlab/apputils';
-import { ServiceManager, Kernel, ServerConnection } from '@jupyterlab/services';
 import { PromiseDelegate } from '@lumino/coreutils';
-import { IDisposable } from '@lumino/disposable';
-import { ISignal } from '@lumino/signaling';
 import { Upload } from 'tus-js-client';
-import { requestDatalayerAPI, type RunResponseError } from '..';
-import type { IRuntimeSnapshot, IAPIRuntimeSnapshot, IRuntimeCapabilities } from '../../models';
-import type { IRuntimeModel, IDatalayerEnvironment, IRuntimePod, IRuntimeType, IRuntimeLocation } from '../../models';
+import { IRuntimeOptions, requestDatalayerAPI, type RunResponseError } from '..';
 import { asRuntimeSnapshot } from '../../models';
+import type { IRuntimeSnapshot, IAPIRuntimeSnapshot, IDatalayerEnvironment, IRuntimePod } from '../../models';
 import { iamStore, runtimesStore } from '../../state';
 import { sleep } from '../../utils';
 
 /**
- * Abstract interface for the Datalayer session context.
- * It extends the JupyterLab session context
- * to include the runtime location.
- */
-export interface IDatalayerSessionContext extends ISessionContext {
-  get location(): IRuntimeLocation;
-}
-
-/**
- * Runtime creation options
- */
-export interface IRuntimeOptions {
-  /**
-   * Environment name
-   */
-  environmentName: string;
-  /**
-   * Credits limit to be consumed by the kernel
-   */
-  creditsLimit: number;
-  /**
-   * Runtime type
-   */
-  type?: IRuntimeType;
-  /**
-   * Runtime given name
-   */
-  givenName?: string;
-  /**
-   * Kernel capabilities
-   */
-  capabilities?: IRuntimeCapabilities[];
-  /**
-   * Kernel snapshot to restore
-   */
-  snapshot?: string;
-}
-
-/**
- * Interface for the Environments Manager
- */
-export interface IEnvironmentsManager extends IDisposable {
-  /**
-   * Signal emitted when the environments changes.
-   */
-  readonly changed: ISignal<IEnvironmentsManager, readonly IDatalayerEnvironment[]>;
-
-  /**
-   * A signal emitted when there is a connection failure.
-   */
-  readonly connectionFailure: ISignal<IEnvironmentsManager, Error>;
-
-  /**
-   * Test whether the manager is ready.
-   */
-  readonly isReady: boolean;
-
-  /**
-   * A promise that fulfills when the manager is ready.
-   */
-  readonly ready: Promise<void>;
-
-  /**
-   * Get the list of environments.
-   */
-  get(): readonly IDatalayerEnvironment[];
-
-  /**
-   * Refresh the environment list.
-   */
-  refresh(): Promise<void>;
-
-  /**
-   * Refresh the environments.
-   */
-  refreshEnvironments(): Promise<void>;
-}
-
-/**
- * Interface for the Remote Runtimes Manager
- */
-export interface IRemoteRuntimesManager extends IDisposable {
-  /**
-   * A signal emitted when there is a connection failure.
-   */
-  readonly connectionFailure: ISignal<IRemoteRuntimesManager, Error>;
-
-  /**
-   * Test whether the manager is ready.
-   */
-  readonly isReady: boolean;
-
-  /**
-   * A promise that fulfills when the manager is ready.
-   */
-  readonly ready: Promise<void>;
-
-  /**
-   * Remote kernels changed
-   */
-  readonly changed: ISignal<IRemoteRuntimesManager, readonly IRuntimeModel[]>;
-
-  /**
-   * The server settings.
-   */
-  readonly serverSettings: ServerConnection.ISettings;
-
-  /**
-   * Get the list of remote kernels.
-   */
-  get(): readonly IRuntimeModel[];
-
-  /**
-   * Get the service manager for a remote server
-   *
-   * @param serverName Remote kernel server name
-   * @returns Service manager for the remote server
-   */
-  getServices(serverName: string): any | undefined;
-
-  /**
-   * Refresh the environment list
-   */
-  refresh(): Promise<void>;
-
-  /**
-   * Launch a Kernel.
-   *
-   * @param createOptions - The kernel creation options
-   *
-   * @param connectOptions - The kernel connection options
-   *
-   * @returns A promise that resolves with the kernel connection.
-   */
-  startNew(
-    createOptions: IRuntimeOptions,
-    connectOptions?: Omit<
-      Kernel.IKernelConnection.IOptions,
-      'model' | 'serverSettings'
-    >
-  ): Promise<Kernel.IKernelConnection>;
-
-  /**
-   * Find a kernel by id.
-   *
-   * @param id - The id of the target kernel.
-   *
-   * @returns A promise that resolves with the kernel's model, or undefined if not found.
-   */
-  findById(id: string): Promise<IRuntimeModel | undefined>;
-
-  /**
-   * Connect to an existing kernel.
-   *
-   * @param options - The connection options.
-   *
-   * @returns A promise that resolves with the new kernel instance.
-   */
-  connectTo(options: Kernel.IKernelConnection.IOptions): Kernel.IKernelConnection;
-
-  /**
-   * Shut down a kernel by id.
-   *
-   * @param id - The id of the target kernel.
-   *
-   * @returns A promise that resolves when the operation is complete.
-   */
-  shutdown(id: string): Promise<void>;
-
-  /**
-   * Shut down all kernels.
-   *
-   * @returns A promise that resolves when all of the kernels are shut down.
-   */
-  shutdownAll(): Promise<void>;
-
-  /**
-   * @deprecated Use {@link refresh} instead.
-   */
-  refreshKernels(): Promise<void>;
-
-  /**
-   * Snapshot a remote kernel
-   *
-   * The remote kernel may be given by its `id` or `podName`.
-   * A custom description for the snapshot can be provided.
-   *
-   * @returns The snapshot description
-   */
-  snapshot(options: {
-    /**
-     * The kernel id to snapshot
-     */
-    id?: string;
-    /**
-     * The kernel pod name to snapshot
-     */
-    podName?: string;
-    /**
-     * The snapshot name
-     */
-    name?: string;
-    /**
-     * The snapshot description
-     */
-    description?: string;
-    /**
-     * Whether to stop the kernel after the snapshot completion or not.
-     */
-    stop?: boolean;
-  }): Promise<IRuntimeSnapshot | undefined>;
-
-  /**
-   * Load a snapshot within a remote kernel
-   *
-   * The remote kernel may be given by its `id` or `podName`.
-   */
-  loadSnapshot(options: {
-    /**
-     * The kernel id
-     */
-    id?: string;
-    /**
-     * The kernel pod name
-     */
-    podName?: string;
-    /**
-     * The snapshot UID
-     */
-    snapshot: string;
-  }): Promise<void>;
-}
-
-/**
- * Interface for the Remote Services Manager
- */
-export interface IRemoteServicesManager extends IDisposable {
-  /**
-   * The environments manager.
-   */
-  readonly environments: IEnvironmentsManager;
-
-  /**
-   * The remote runtimes manager.
-   */
-  readonly runtimesManager: IRemoteRuntimesManager;
-  
-  /**
-   * The server settings.
-   */
-  readonly serverSettings: ServerConnection.ISettings;
-
-  /**
-   * A signal emitted when there is a connection failure with the kernel.
-   */
-  readonly connectionFailure: ISignal<IRemoteServicesManager, Error>;
-
-  /**
-   * Test whether the service manager is disposed.
-   */
-  readonly isDisposed: boolean;
-
-  /**
-   * Whether the remote manager is ready or not.
-   */
-  readonly isReady: boolean;
-
-  /**
-   * Wait for the remote manager to be ready.
-   */
-  readonly ready: Promise<void>;
-}
-
-/**
- * Interface for the Service Manager that manages multiple Jupyter service managers.
- */
-export interface IMultiServiceManager extends ServiceManager.IManager {
-  /**
-   * Service manager for browser kernels.
-   *
-   * The kernels managed by this service manager
-   * are fully executed in a service worker with
-   * browser.
-   */
-  browser: ServiceManager.IManager | undefined;
-
-  /**
-   * Signal emitted when the browser services changes.
-   */
-  readonly browserChanged: ISignal<ServiceManager.IManager, ServiceManager.IManager | undefined>;
-
-  /**
-   * Classical Service manager on the Local Jupyter server.
-   */
-  readonly local: ServiceManager.IManager;
-
-  /**
-   * Service manager on a Remote Jupyter server.
-   */
-  remote: IRemoteServicesManager | undefined;
-
-  /**
-   * Signal emitted when the remote services changes.
-   */
-  readonly remoteChanged: ISignal<ServiceManager.IManager, IRemoteServicesManager | undefined>;
-}
-
-/**
- * Get available environments.
+ * Get available Environments.
  */
 export async function getEnvironments(): Promise<IDatalayerEnvironment[]> {
   const data = await requestDatalayerAPI<{
@@ -351,7 +38,7 @@ export async function getEnvironments(): Promise<IDatalayerEnvironment[]> {
 }
 
 /**
- * Create a Kernel.
+ * Create a Runtime.
  */
 export async function createRuntime(options: IRuntimeOptions): Promise<IRuntimePod> {
   const { externalToken, token } = iamStore.getState();
@@ -392,7 +79,7 @@ export async function createRuntime(options: IRuntimeOptions): Promise<IRuntimeP
 }
 
 /**
- * List Runtimes
+ * Get the Runtimes.
  */
 export async function getRuntimes(): Promise<IRuntimePod[]> {
   const data = await requestDatalayerAPI<{
@@ -412,11 +99,11 @@ export async function getRuntimes(): Promise<IRuntimePod[]> {
 }
 
 /**
- * Remove a Kernel
+ * Delete a Runtime
  */
 export async function deleteRuntime(options: {
   /**
-   * Kernel ID
+   * Runtime ID
    */
   id: string;
   /**
@@ -442,11 +129,11 @@ export async function deleteRuntime(options: {
 }
 
 /**
- * Snapshot a Kernel.
+ * Snapshot a Runtime.
  */
 export async function snapshotRuntime(options: {
   /**
-   * Kernel ID.
+   * Runtime ID.
    */
   id: string;
   /**
@@ -487,7 +174,7 @@ export async function snapshotRuntime(options: {
 }
 
 /**
- * Get Kernel Snapshots.
+ * Get Runtime Snapshots.
  */
 export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
   const data = await requestDatalayerAPI<{
@@ -509,11 +196,11 @@ export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
 }
 
 /**
- * Load a kernel snapshot within a kernel.
+ * Load a Runtime Snapshot within a kernel.
  */
 export async function loadRuntimeSnapshot(options: {
   /**
-   * Kernel ID
+   * Runtime ID
    */
   id: string;
   /**
@@ -543,7 +230,7 @@ export async function loadRuntimeSnapshot(options: {
 }
 
 /**
- * Returns the runtime snapshot download URL.
+ * Returns the Runtime Snapshot download URL.
  *
  * @param id Snapshot UID to download
  * @returns The download URL
@@ -562,7 +249,7 @@ export function createRuntimeSnapshotDownloadURL(id: string): string {
 }
 
 /**
- * Export runtime snapshot.
+ * Export a Runtime Snapshot.
  *
  * @param id Runtime snapshot UID to download
  */
@@ -577,7 +264,7 @@ export function exportRuntimeSnapshot(id: string): void {
 }
 
 /**
- * Delete runtime snapshot.
+ * Delete a Runtime Snapshot.
  */
 export async function deleteRuntimeSnapshot(id: string): Promise<void> {
   await requestDatalayerAPI<{
@@ -585,15 +272,12 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
     message: string;
     snapshots?: IAPIRuntimeSnapshot[];
   }>({
-    url: URLExt.join(
-      runtimesStore.getState().runtimesRunUrl,
-      `api/runtimes/v1/runtime-snapshots/${id}`
-    ),
+    url: URLExt.join(runtimesStore.getState().runtimesRunUrl, `api/runtimes/v1/runtime-snapshots/${id}`),
     method: 'DELETE',
     token: iamStore.getState().token
   });
 
-  // Poll runtime snapshot state upto its deletion
+  // Poll Runtime Snapshot state up-to its deletion
   try {
     let sleepTimeout = 1000;
     while (true) {
@@ -627,7 +311,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
 }
 
 /**
- * Update runtime snapshot metadata.
+ * Update Runtime Snapshot metadata.
  */
 export async function updateRuntimeSnapshot(
   id: string,
@@ -651,7 +335,7 @@ export async function updateRuntimeSnapshot(
 }
 
 /**
- * Upload a runtime snapshot.
+ * Upload a Runtime Snapshot.
  *
  * Note: The promise will be rejected if the runtime state is empty.
  */
@@ -661,7 +345,7 @@ export async function uploadRuntimeSnapshot(options: {
   onProgress?: (bytesUploaded: number, bytesTotal: number) => void;
 }): Promise<void> {
   if (options.file.size === 0) {
-    return Promise.reject('Empty runtime snapshot');
+    return Promise.reject('Empty Runtime Snapshot.');
   }
   const tracker = new PromiseDelegate<void>();
   // Create a new tus upload.
