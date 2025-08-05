@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 const easeInOutQuad = (t, b, c, d) => {
   t /= d / 2;
   if (t < 1) return (c / 2) * t * t + b;

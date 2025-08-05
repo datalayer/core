@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { Box, LabelGroup, ActionMenu, ActionList, IconButton, Label, RelativeTime } from '@primer/react';
 import { Table, DataTable } from '@primer/react/experimental';
 import { KebabHorizontalIcon, DownloadIcon } from '@primer/octicons-react';

@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { KernelExecutor } from '@datalayer/jupyter-react';
 import { Kernel } from '@jupyterlab/services';
 import { createRuntimeSnapshotDownloadURL, uploadRuntimeSnapshot } from '.';

@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Rldi5kYXRhbGF5ZXIuaW8iLCJpYXQiOjE3MTc1MDE1MjYsImV4cCI6MTcxNzU4NzkyNiwic3ViIjp7InVpZCI6IjRkODk2ZjI0LWM1MzEtNDljMS1iMjcyLTRlNTM2NjJjZDNkZSIsImhhbmRsZSI6ImVyaWMiLCJlbWFpbCI6ImVyaWNAZGF0YWxheWVyLmlvIiwiZmlyc3RfbmFtZSI6IkVyaWMiLCJsYXN0X25hbWUiOiJDaGFybGVzIiwicm9sZXMiOlsic3lzdGVtX2FkbWluIiwidXNlciJdfSwianRpIjoiZTAxYjIzMTYtYWJlMi00OTkyLWJjMmUtY2UyODIzZGJiOTdmIiwicm9sZXMiOlsic3lzdGVtX2FkbWluIiwidXNlciJdfQ.-cnEfJAUhet_nBLmxzx96zuv3PMEsGWLNCN6HV8PEso";
 
 export const systemAdminLogin = (handle = 'hello') => {

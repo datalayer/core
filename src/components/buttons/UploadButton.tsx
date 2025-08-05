@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useCallback, useMemo, useRef } from 'react';
 import { Button, IconButton } from '@primer/react';
 import { UploadIcon } from '@primer/octicons-react';

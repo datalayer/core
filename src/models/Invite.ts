@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { IUser } from "./User";
 import { IContact } from "./Contact";
 import { asDisplayName, namesAsInitials } from "../utils";

@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { JSXElementConstructor, PropsWithChildren, createElement, useState } from 'react';
 import { Dialog } from '@jupyterlab/apputils';
 import { ReactWidget } from '@jupyterlab/ui-components';

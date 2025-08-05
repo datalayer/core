@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useCallback, useMemo, useState } from 'react';
 import { CodeCellModel } from '@jupyterlab/cells';
 import type { IMarkdownParser, IRenderMime } from '@jupyterlab/rendermime';

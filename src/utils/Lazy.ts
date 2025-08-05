@@ -3,13 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
-// Taken from https://github.com/ianschmitz/react-lazy-with-preload with Datalayer License.
 import { ComponentType, createElement, forwardRef, lazy as reactLazy } from "react";
 
 export type PreloadableComponent<T extends ComponentType<any>> = T & {

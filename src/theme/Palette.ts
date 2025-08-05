@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 const JUPYTERLAB_COLLABORATORS_COLORS = {
   '--jp-collaborator-color1': '#ffad8e',
   '--jp-collaborator-color2': '#dac83d',

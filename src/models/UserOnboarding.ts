@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export const WELCOME_RUNTIME_TOUR_NAME = "welcome-runtime";
 
 export const BOOTSTRAP_USER_ONBOARDING: IUserOnboarding = {

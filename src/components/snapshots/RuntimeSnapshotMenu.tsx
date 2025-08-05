@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
 import { CameraIcon } from '@datalayer/icons-react';
 import { Kernel } from '@jupyterlab/services';

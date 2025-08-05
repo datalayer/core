@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useEffect, useState, type CSSProperties } from 'react';
 import { BaseStyles, ThemeProvider as PrimerThemeProvider, ThemeProviderProps } from '@primer/react';
 import { IThemeManager } from '@jupyterlab/apputils';

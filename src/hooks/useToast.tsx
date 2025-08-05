@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import React from 'react';
 import { type Id, toast } from 'react-toastify';
 import { Notification } from '@jupyterlab/apputils';

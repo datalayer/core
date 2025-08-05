@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useCallback } from 'react';
 import { Button, Text } from '@primer/react';
 import { useCoreStore, useIAMStore } from '../../state';

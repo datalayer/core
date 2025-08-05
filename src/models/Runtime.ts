@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export const BACKWARDS_COMPATIBLE_KERNEL_TYPES_MAP = {
   // Backwards compatible mapping.
   'default': 'notebook' as IRuntimeType,

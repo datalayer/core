@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { Box, Link, Text, LabelGroup, Label, ActionMenu, ActionList } from "@primer/react";
 import { ArrowRightIcon, CloudIcon, StarIcon, DotFillIcon, RepoForkedIcon, LinkIcon } from "@primer/octicons-react";
 import { ReactJsIcon } from "@datalayer/icons-react";

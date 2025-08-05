@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { Avatar, Link } from '@primer/react';
 import { Box } from "@datalayer/primer-addons";
 import { IUser } from '../../models';

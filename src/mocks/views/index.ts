@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export * from './ActionMenuMock';
 export * from './ChartMock';
 export * from './ChartMockOptions';

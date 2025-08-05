@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 export const DEFAULT_AVATAR_URL = 'https://avatars.githubusercontent.com/u/70511875?s=200&v=4';
 
 export const DEFAULT_AVATAR_URL_ENCODED = encodeURIComponent(DEFAULT_AVATAR_URL);

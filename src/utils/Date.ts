@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 //- Taken from https://stackoverflow.com/questions/6108819/javascript-timestamp-to-relative-time
 // in miliseconds
 const units = {
