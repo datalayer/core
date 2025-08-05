@@ -37,6 +37,7 @@ This package serves as the base foundation used by many other Datalayer packages
 - **📸 Snapshot Management**: Create and manage compute snapshots of your runtimes for reproducible environments
 - **🔒 Secrets Management**: Securely handle sensitive data and credentials in your workflows
 - **🐍 Python SDK**: Programmatic access to Datalayer platform with context managers and clean resource management
+- **🐍 TypeScript SDK**: Programmatic access to Datalayer platform with context managers and clean resource management
 - **💻 Command Line Interface**: CLI tools for managing runtimes, snapshots, and platform resources
 - **🔧 Base Classes**: Core application classes and configuration inherited by other Datalayer projects
 
@@ -56,7 +57,7 @@ cd core
 pip install -e .[test]
 ```
 
-## Quick Start
+## Quick Start with Python
 
 ### 1. Authentication
 
