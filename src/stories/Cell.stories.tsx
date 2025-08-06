@@ -8,7 +8,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Jupyter, Cell } from '@datalayer/jupyter-react';
 
 const meta: Meta<typeof Cell> = {
-  title: 'Components/Cell',
+  title: 'Datalayer/JupyterCell',
   component: Cell,
   argTypes: {
     lite: {
