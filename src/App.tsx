@@ -4,16 +4,40 @@
  */
 
 import { useState } from 'react'
+import { useJupyter, JupyterReactTheme, Notebook2 } from '@datalayer/jupyter-react';
+import { INotebookContent } from '@jupyterlab/nbformat';
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 
 import './App.css'
+
+import nbformat from './examples/NotebookExample1.ipynb.json';
+
+const Notebook2Example = () => {
+  const { serviceManager } = useJupyter();
+  return (
+    serviceManager ?
+      <JupyterReactTheme>
+        <Notebook2
+          nbformat={nbformat as INotebookContent}
+          id="notebook-nbformat-id"
+          startDefaultKernel
+          serviceManager={serviceManager}
+          height="calc(100vh - 2.6rem)" // (Height - Toolbar Height).
+        />
+      </JupyterReactTheme>
+    :
+      <></>
+  )
+};
+
 
 export function App() {
   const [count, setCount] = useState(0)
 
   return (
     <>
+      <Notebook2Example/>
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -38,4 +62,4 @@ export function App() {
   )
 }
 
-export default App
+export default App;
