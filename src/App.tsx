@@ -31,13 +31,13 @@ const Notebook2Example = () => {
   )
 };
 
-
 export function App() {
   const [count, setCount] = useState(0)
-
   return (
     <>
-      <Notebook2Example/>
+      <div style={{ minWidth: '1000px' }}>
+        <Notebook2Example/>
+      </div>
       <div>
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
