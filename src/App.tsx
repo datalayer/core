@@ -1,65 +1,59 @@
 /*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
+ * Copyright (c) 2021-2023 Datalayer, Inc.
+ *
+ * MIT License
  */
 
-import { useState } from 'react'
-import { useJupyter, JupyterReactTheme, Notebook2 } from '@datalayer/jupyter-react';
-import { INotebookContent } from '@jupyterlab/nbformat';
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import { useJupyter, JupyterReactTheme } from '@datalayer/jupyter-react';
+import { CellExample } from "./examples/CellExample";
+import { NotebookExample } from "./examples/NotebookExample";
 
-import './App.css'
+import "./App.css";
 
-import nbformat from './examples/NotebookExample1.ipynb.json';
-
-const Notebook2Example = () => {
-  const { serviceManager } = useJupyter();
+function App() {
+  const { defaultKernel, serviceManager } = useJupyter({
+    jupyterServerUrl: "https://oss.datalayer.run/api/jupyter-server",
+    jupyterServerToken: "60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6",
+    startDefaultKernel: true,
+  });
+  const [count, setCount] = useState(0);
   return (
-    serviceManager ?
-      <JupyterReactTheme>
-        <Notebook2
-          nbformat={nbformat as INotebookContent}
-          id="notebook-nbformat-id"
-          startDefaultKernel
-          serviceManager={serviceManager}
-          height="calc(100vh - 2.6rem)" // (Height - Toolbar Height).
-        />
-      </JupyterReactTheme>
-    :
-      <></>
-  )
-};
-
-export function App() {
-  const [count, setCount] = useState(0)
-  return (
-    <>
-      <div style={{ minWidth: '1000px' }}>
-        <Notebook2Example/>
-      </div>
+    <div className="App">
+      <>
+        <JupyterReactTheme>
+          { defaultKernel && <CellExample kernel={defaultKernel}/> }
+          { defaultKernel && serviceManager && <NotebookExample kernel={defaultKernel} serviceManager={serviceManager}/> }
+        </JupyterReactTheme>
+      </>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
+        <a href="https://reactjs.org" target="_blank">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
+        <a href="https://vitejs.dev" target="_blank">
+          <img src="/vite.svg" className="logo" alt="Vite logo" />
+        </a>
       </div>
-      <h1>Vite + React</h1>
+      <h1>React + Vite</h1>
+      <h2>On CodeSandbox!</h2>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
         <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
+          Edit <code>src/App.tsx</code> and save to test HMR.
+        </p>
+        <p>
+          Tip: you can use the inspector button next to address bar to click on
+          components in the preview and open the code in the editor!
         </p>
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
-    </>
-  )
+    </div>
+  );
 }
 
 export default App;
