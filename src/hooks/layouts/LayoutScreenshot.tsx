@@ -10,6 +10,8 @@ import { useScreenshot, useToast } from '..';
 import { lazyWithPreload, WithSuspense } from "../../utils";
 import { useLayoutStore, ScreenshotDisplay } from '../../state';
 
+import './LayoutScreenshot.css';
+
 const ScreenCapture = WithSuspense(lazyWithPreload(() => import("../../components/screenshot/ScreenCapture")));
 
 type IContentScreenshotProps = {
@@ -60,5 +62,5 @@ export const LayoutScreenshot = () => {
   }, [screenshot]);
   return <></>
 }
-
+ 
 export default LayoutScreenshot;
