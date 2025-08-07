@@ -5,9 +5,9 @@
 
 import { useState, useEffect } from "react";
 import { Box } from "@datalayer/primer-addons";
-// import { ArtifactIcon } from "../../components/icons";
 import { ConsumptionBar } from "../../components/progress";
-import type { IRemoteServicesManager, IRuntimeModel } from "../../api";
+import type { IRemoteServicesManager } from "../../api";
+import type { IRuntimeModel } from "../../models";
 
 type ICreditsIndicatorProps = {
   /**

@@ -7,7 +7,7 @@ import { URLExt } from '@jupyterlab/coreutils';
 import { ServerConnection } from '@jupyterlab/services';
 
 /**
- * Call the Runtimes extension
+ * Call the jupyter_kernels extension
  *
  * @param endPoint API REST end point for the extension
  * @param init Initial values for the request

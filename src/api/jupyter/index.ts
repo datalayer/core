@@ -3,4 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './useDatalayerMock';
+export * from './exec';
+export * from './kernelsHandler';

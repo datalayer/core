@@ -3,6 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { Kernel } from '@jupyterlab/services';
+
 export const BACKWARDS_COMPATIBLE_KERNEL_TYPES_MAP = {
   // Backwards compatible mapping.
   'default': 'notebook' as IRuntimeType,
@@ -12,14 +14,78 @@ export const BACKWARDS_COMPATIBLE_KERNEL_TYPES_MAP = {
 }
 
 /**
+ * Error thrown when a runtime has been created
+ * but it can ont be reached.
+ */
+export class RuntimeUnreachable extends Error {
+  name = 'RuntimeUnreachable';
+}
+
+/**
+ * Runtime location.
+ */
+export type IRuntimeLocation =
+| 'browser'
+| 'local'
+| string
+;
+
+/**
+ * Runtime model.
+ */
+export interface IRuntimeModel extends IRuntimePod, Kernel.IModel {}
+
+/**
+ * Runtime description.
+ */
+export interface IRuntimeDesc {
+  /**
+   * Runtime ID.
+   */
+  id?: string;
+  /**
+   * Runtime Kernel ID.
+   */
+  kernelId?: string;
+  /**
+   * Runtime name.
+   */
+  name: string;
+  /**
+   * Runtime language.
+   */
+  language: string;
+  /**
+   * Runtime location.
+   */
+  location: IRuntimeLocation;
+  /**
+   * Runtime display name.
+   */
+  displayName?: string;
+  /**
+   * Runtime parameters.
+   */
+  params?: Record<string, any>;
+  /**
+   * Runtime credits burning rate.
+   */
+  burningRate?: number;
+  /**
+   * Runtime Pod name (if applicable).
+   */
+  podName?: string;
+}
+
+/**
  * Runtime type.
  *
  * TODO refactor with type { RuntimeLocation }
  */
-export type IRuntimeType = 
-  | 'notebook'
-  | 'cell'
-  ;
+export type IRuntimeType =
+| 'notebook'
+| 'cell'
+;
 
 /**
  * Runtime optional capabilities.
@@ -27,7 +93,7 @@ export type IRuntimeType =
 export type IRuntimeCapabilities = 'user_storage';
 
 /**
- * User Kernel Jupyter server metadata
+ * Runtime pod.
  */
 export interface IRuntimePod {
   /**

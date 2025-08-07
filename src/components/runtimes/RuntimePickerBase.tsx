@@ -14,9 +14,8 @@ import { Box } from "@datalayer/primer-addons";
 import { CpuIcon} from '@primer/octicons-react'
 import { BrowserIcon, LaptopSimpleIcon } from '@datalayer/icons-react';
 import { CreditsIndicator } from '../../components/progress';
-import { IRuntimeDesc } from '../../api';
-import { IMultiServiceManager } from '../../api';
-import { isRuntimeRemote } from '../../api';
+import { IRuntimeDesc } from '../../models';
+import { isRuntimeRemote, IMultiServiceManager } from '../../api';
 import { getGroupedRuntimeDescs, IDatalayerRuntimeDesc } from './RuntimeUtils';
 
 /**

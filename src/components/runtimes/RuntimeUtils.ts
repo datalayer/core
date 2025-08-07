@@ -7,7 +7,7 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { SessionContext } from '@jupyterlab/apputils';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { IMultiServiceManager } from '../../api';
-import { RuntimeLocation, IRuntimeDesc } from '../../api';
+import { IRuntimeLocation, IRuntimeDesc } from '../../models';
 
 const ASSIGN_NEW_RUNTIME_LABEL = 'Assign a new Runtime';
 
@@ -49,7 +49,7 @@ export function getGroupedRuntimeDescs(
         name: spec!.name,
         language: spec!.language,
         displayName: session.name || PathExt.basename(session.path),
-        location: 'local' as RuntimeLocation,
+        location: 'local' as IRuntimeLocation,
       };
     })
     .concat(
@@ -63,7 +63,7 @@ export function getGroupedRuntimeDescs(
             name: spec!.name,
             language: spec!.language,
             displayName: session.name || PathExt.basename(session.path),
-            location: 'browser' as RuntimeLocation,
+            location: 'browser' as IRuntimeLocation,
           } satisfies IDatalayerRuntimeDesc;
         })
     )
@@ -79,7 +79,7 @@ export function getGroupedRuntimeDescs(
         name: spec!.name,
         language: spec!.language,
         displayName: spec!.display_name,
-        location: 'local' as RuntimeLocation,
+        location: 'local' as IRuntimeLocation,
       };
     })
     .concat(
@@ -92,7 +92,7 @@ export function getGroupedRuntimeDescs(
             name: environment!.name,
             language: environment!.language,
             displayName: runtime.given_name ?? environment!.title,
-            location: 'remote' as RuntimeLocation,
+            location: 'remote' as IRuntimeLocation,
             podName: runtime.pod_name,
             gpu: environment.resources?.['nvidia.com/gpu'],
           } satisfies IDatalayerRuntimeDesc;
@@ -108,7 +108,7 @@ export function getGroupedRuntimeDescs(
             name: spec!.name,
             language: spec!.language,
             displayName: spec!.display_name,
-            location: 'browser' as RuntimeLocation
+            location: 'browser' as IRuntimeLocation
           } satisfies IDatalayerRuntimeDesc;
         })
     )
@@ -129,7 +129,7 @@ export function getGroupedRuntimeDescs(
       language: spec!.language,
       displayName: spec!.display_name,
       gpu: spec!.resources?.['nvidia.com/gpu'],
-      location: 'local' as RuntimeLocation,
+      location: 'local' as IRuntimeLocation,
     }) as IDatalayerRuntimeDesc)
     .filter(filterKernels);
   environments.push(
@@ -139,7 +139,7 @@ export function getGroupedRuntimeDescs(
         name: spec!.name,
         language: spec!.language,
         displayName: spec!.title,
-        location: 'remote' as RuntimeLocation,
+        location: 'remote' as IRuntimeLocation,
         gpu: spec!.resources?.['nvidia.com/gpu'],
         burningRate: spec!.burning_rate
       }) satisfies IDatalayerRuntimeDesc)
@@ -152,7 +152,7 @@ export function getGroupedRuntimeDescs(
         name: spec!.name,
         language: spec!.language,
         displayName: spec!.display_name,
-        location: 'browser' as RuntimeLocation
+        location: 'browser' as IRuntimeLocation
       }) satisfies IDatalayerRuntimeDesc
     ).filter(filterKernels));
   if (environments.length) {

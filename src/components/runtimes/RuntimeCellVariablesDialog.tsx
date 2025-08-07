@@ -69,7 +69,7 @@ export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogPro
     return () => {
       model.metadataChanged.disconnect(updateState);
     };
-  }, [model]);
+  }, [model, inputs, output]);
   const setVariables = useCallback(() => {
     const datalayerMeta = model.getMetadata('datalayer') ?? {};
     if (inputs.length) {
@@ -84,7 +84,7 @@ export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogPro
     }
     model.setMetadata('datalayer', { ...datalayerMeta });
     onClose();
-  }, [inputs, output]);
+  }, [model, inputs, output, onClose]);
   const getInputCandidates = useCallback(async () => {
     if (!sessionContext) {
       return [];
@@ -95,11 +95,11 @@ export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogPro
     const outputs = await new KernelExecutor({connection}).execute(snippets.listVariables());
     const content = outputs.get(0).data['text/plain'] as string;
     if (content) {
-      const kernelVariables = JSON.parse(
+      const runtimeVariables = JSON.parse(
         // We need to remove the quotes prior to parsing
         content.slice(1, content.length - 1)
       );
-      return Object.keys(kernelVariables ?? {});
+      return Object.keys(runtimeVariables ?? {});
     }
     return [];
   }, [preference, sessionContext]);

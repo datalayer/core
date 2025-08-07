@@ -5,7 +5,7 @@
 
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import { requestRunAPI, type RunResponseError } from '../../api';
+import { requestDatalayerAPI, type RunResponseError } from '../../api';
 import { ISurvey, asSurvey, IGetSurveysResponseType, ICreateSurveyResponseType } from '../../models';
 import { coreStore } from './CoreState';
 import { iamStore } from './IAMState';
@@ -33,7 +33,7 @@ export const surveysStore = createStore<SuccessState>((set, get) => ({
     const { token } = iamStore.getState();
     const { growthRunUrl } = get();
     try {
-      const resp = await requestRunAPI<IGetSurveysResponseType>({
+      const resp = await requestDatalayerAPI<IGetSurveysResponseType>({
         url: `${growthRunUrl}/api/growth/v1/surveys`,
         method: 'GET',
         token,
@@ -61,7 +61,7 @@ export const surveysStore = createStore<SuccessState>((set, get) => ({
     const { growthRunUrl } = get();
     const { token } = iamStore.getState();
     try {
-      const resp = await requestRunAPI<ICreateSurveyResponseType>({
+      const resp = await requestDatalayerAPI<ICreateSurveyResponseType>({
         url: `${growthRunUrl}/api/growth/v1/surveys`,
         method: 'POST',
         body: {

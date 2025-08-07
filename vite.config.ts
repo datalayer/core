@@ -4,8 +4,9 @@
  */
 
 /// <reference types="vitest/config" />
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { treatAsCommonjs } from "vite-plugin-treat-umd-as-commonjs";
 
 // https://vite.dev/config/
 import path from "node:path";
@@ -18,17 +19,74 @@ const dirname =
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    treatAsCommonjs(),
+    {
+      name: 'raw-css-as-string',
+      enforce: 'pre',
+      async resolveId(source, importer) {
+        if (source.endsWith('.raw.css') && !source.includes('?raw')) {
+          // rewrite import to append ?raw query
+          const resolved = await this.resolve(source + '?raw', importer, { skipSelf: true });
+          if (resolved) return resolved.id;
+          return null;
+        }
+        return null;
+      }
+    },
+    {
+      name: "fix-text-query",
+      enforce: "pre",
+      async resolveId(source, importer) {
+        if (source.includes("?text")) {
+          const fixed = source.replace("?text", "?raw");
+          const resolved = await this.resolve(fixed, importer, { skipSelf: true });
+          if (resolved) {
+            return resolved.id;
+          }
+          return fixed;
+        }
+        return null;
+      },
+    },
+  ],
   define: {
     global: 'globalThis',
+    __webpack_public_path__: '""',
+  },
+  assetsInclude: ["**/*.whl", "**/*.raw.css"],
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          if (/pypi\//.test(assetInfo.names[0])) {
+            return "pypi/[name][extname]";
+          }
+          return "assets/[name][extname]";
+        },
+      },
+    },
   },
   resolve: {
-    alias: {
-      crypto: 'crypto-browserify',
-    },
+    alias: [
+      {
+        find: /^~(.*)$/,
+        replacement: "$1",
+      },
+      {
+        find: 'crypto',
+        replacement: 'crypto-browserify',
+      },
+    ],
   },
   optimizeDeps: {
     include: ['crypto-browserify'],
+    esbuildOptions: {
+      loader: {
+        ".whl": "text",
+      },
+    },
   },
   test: {
     coverage: {

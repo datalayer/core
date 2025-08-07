@@ -8,7 +8,7 @@ import { Session, type KernelMessage } from '@jupyterlab/services';
 import { CommandRegistry } from '@lumino/commands';
 import { Button } from '@primer/react';
 import { PlayIcon, StopIcon } from '@primer/octicons-react';
-import { type IRuntimeDesc } from '../../api';
+import type { IRuntimeDesc } from '../../models';
 import { useEffect, useState } from 'react';
 
 /**
