@@ -7,7 +7,6 @@ Runtime classes for the Datalayer SDK.
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
 
-from ast import literal_eval
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -303,20 +302,10 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             Value of the variable, or None if not found or runtime not started.
         """
         if self._kernel_client:
-            response = self._kernel_client.get_variable(name)
-            data = response[0]
-            import numpy as np
-
-            if isinstance(data, dict) and "text/plain" in data:
-                try:
-                    return literal_eval(data["text/plain"])
-                except (ValueError, SyntaxError):
-                    return None
-            else:
-                return data
+            return self._kernel_client.get_variable(name)
         return None
 
-    def set_variable(self, name: str, value: Any) -> Response:
+    def set_variable(self, name: str, value: Any) -> None:
         """
         Set a variable in the runtime.
 
@@ -332,9 +321,9 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
         Response
             Response object containing execution results.
         """
-        return self.set_variables({name: value})
+        self.set_variables({name: value})
 
-    def set_variables(self, variables: dict[str, Any]) -> Response:
+    def set_variables(self, variables: dict[str, Any]) -> None:
         """
         Set variables in the runtime.
 
@@ -349,16 +338,9 @@ class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
             Response object containing execution results.
         """
         if self._kernel_client:
-            variables_code = []
             if variables is not None:
-                for key, value in variables.items():
-                    variables_code.append(f"{key} = {repr(value)}")
-
-            if variables_code:
-                self._kernel_client.execute("\n".join(variables_code))
-
-            return Response([])
-        return Response([])
+                for name, value in variables.items():
+                    self._kernel_client.set_variable(name, value)
 
     def execute_file(
         self,
