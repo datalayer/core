@@ -27,15 +27,18 @@ export const StudentItemStatus = (props: Props) => {
   const nokColor = useMemo(() => theme?.colorSchemes.light.colors.severe.muted, []);
   if (student && studentItem) {
     switch(studentItem.itemType) {
-      case('dataset'):
+      case('dataset'): {
         const datasetColor = studentItem?.completed ? okColor : nokColor;
         return <Box sx={{backgroundColor: datasetColor, width: '14px', height: '14px', borderRadius: 3}} ml={1} />
-      case('lesson'):
+      }
+      case('lesson'): {
         const lessonColor = studentItem?.completed ? okColor : nokColor;
         return <Box sx={{backgroundColor: lessonColor, width: '14px', height: '14px', borderRadius: 3}} ml={1} />
-      case('exercise'):
+      }
+      case('exercise'): {
         const exerciseColor = getExercisePoints(studentItem) > 0 ? okColor : nokColor;
         return <Box sx={{backgroundColor: exerciseColor, width: '14px', height: '14px', borderRadius: 3}} ml={1} />
+      }
       case('assignment'):
         return (
           <Box display="flex">

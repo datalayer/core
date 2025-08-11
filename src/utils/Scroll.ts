@@ -11,10 +11,10 @@ const easeInOutQuad = (t, b, c, d) => {
 };
 
 const scrollGo = (element: HTMLElement, target: string, to, duration: number) => {
-  var start = element.scrollTop,
+  const start = element.scrollTop,
     change = to - start,
-    currentTime = 0,
     increment = 20;
+  let currentTime = 0;
   const animateScroll = () => {
     currentTime += increment;
     const scrollTop: number = easeInOutQuad(
@@ -35,7 +35,7 @@ const scrollGo = (element: HTMLElement, target: string, to, duration: number) =>
 };
 
 const smoothScroll = (target: string) => {
-  var targetScroll = document.getElementById(target);
+  const targetScroll = document.getElementById(target);
   scrollGo(document.body, target, targetScroll?.offsetTop, 1250);
 };
 

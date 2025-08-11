@@ -38,7 +38,7 @@ The project uses two test environments:
 ## Test Files
 
 - `src/__tests__/index.test.ts` - Tests main exports
-- `src/__tests__/App.test.tsx` - Tests React App component  
+- `src/__tests__/App.test.tsx` - Tests React App component
 - `src/__tests__/hooks.test.ts` - Tests custom hooks
 - `src/__tests__/utils.test.ts` - Tests utility functions
 
@@ -51,10 +51,10 @@ Run `npm run test:coverage` to generate coverage reports.
 Tests should follow the existing patterns:
 
 ```typescript
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-describe('Component/Function Name', () => {
-  it('should describe what it tests', () => {
+describe("Component/Function Name", () => {
+  it("should describe what it tests", () => {
     expect(actual).toBe(expected);
   });
 });

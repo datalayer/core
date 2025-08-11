@@ -115,6 +115,16 @@ datalayer runtime exec my-script.py --runtime <runtime-id>
 datalayer snapshots create <pod-name> my-snapshot 'AI work!' False
 ```
 
+## Examples
+
+For comprehensive usage examples, see the [`examples/`](https://github.com/datalayer/core/tree/main/examples) directory which includes:
+
+- **FastAPI + scikit-learn**: Web application with ML models
+- **Streamlit + scikit-learn**: Interactive data science apps
+- **PyTorch GPU workloads**: High-performance computing examples
+- **Decorator patterns**: Remote function execution with `@datalayer`
+- **And more**: Complete examples with documentation and setup instructions
+
 ## Platform Integration
 
 Datalayer adds AI capabilities and scalable compute runtimes to your development workflows. The platform is designed to seamlessly integrate into your existing processes and supercharge your computations with the processing power you need.

@@ -12,7 +12,7 @@ export type IDataset = IItem & {
   contentLength: number;
   contentType: string;
   mimeType: string;
-  mimeTypeParams?: {};
+  mimeTypeParams?: object;
   bucketName?: string;
   path?: string
   creationDate: Date;

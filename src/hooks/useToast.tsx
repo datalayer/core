@@ -231,9 +231,11 @@ export const useToast = () => {
      * @param id Toast id
      */
     dismiss: (id?: Id) => {
-      insideJupyterLab
-        ? Notification.dismiss(id as string | undefined)
-        : toast.dismiss(id);
+      if (insideJupyterLab) {
+        Notification.dismiss(id as string | undefined);
+      } else {
+        toast.dismiss(id);
+      }
     },
     /**
      * Track the progress of an asynchronous task

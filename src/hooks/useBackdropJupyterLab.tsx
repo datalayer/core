@@ -30,7 +30,8 @@ function JupyterLabBackdrop({ open, element }: JupyterLabBackdropType) {
 
 export default JupyterLabBackdrop;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+ 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface JupyterLabBackdropProps {}
 
 type UseJupyterLabBackdropProps = {

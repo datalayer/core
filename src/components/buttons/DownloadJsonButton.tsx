@@ -9,7 +9,7 @@ import { downloadJson } from '../../utils';
 import { VariantType } from './VariantType';
 
 type IDownloadJsonButtonProps = {
-  data?: {};
+  data?: object;
   fileName: string;
   extension: string;
   variant: VariantType;

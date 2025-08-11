@@ -148,7 +148,11 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
               task.resolve(finalModel);
             }
           }
-          selectedItem ? selectedItem.refresh() : refresh();
+          if (selectedItem) {
+            selectedItem.refresh();
+          } else {
+            refresh();
+          }
           return finalModel;
         } catch (error) {
           task.reject(error);
@@ -158,7 +162,11 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
         const task = uploadChunk(file);
         trackAsyncTask(task, toastOptions);
         task.then(() => {
-          selectedItem ? selectedItem.refresh() : refresh();
+          if (selectedItem) {
+            selectedItem.refresh();
+          } else {
+            refresh();
+          }
         });
         return task;
       }

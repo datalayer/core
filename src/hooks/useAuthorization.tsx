@@ -100,7 +100,7 @@ export const useAuthorization = () => {
     for (let i=0; i < team.members.length; i++) {      
       if (team.members[i].id === user.id) {
         if (checkIsTeamOwer(team.members[i])) {
-          return true;0
+          return true;
         }
       }
     }

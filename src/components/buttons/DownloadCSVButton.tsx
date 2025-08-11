@@ -9,7 +9,7 @@ import { downloadCSV } from '../../utils';
 import { VariantType } from './VariantType';
 
 type IDownloadCSVButtonProps = {
-  data?: {};
+  data?: object;
   fileName: string;
   variant: VariantType;
 }

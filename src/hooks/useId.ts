@@ -99,14 +99,14 @@ function useId(): string | undefined;
 
 function useId(providedId?: number | string | undefined | null) {
 	if (maybeReactUseId !== undefined) {
-		let generatedId = maybeReactUseId();
+		const generatedId = maybeReactUseId();
 		return providedId ?? generatedId;
 	}
 
 	// If this instance isn't part of the initial render, we don't have to do the
 	// double render/patch-up dance. We can just generate the ID and return it.
-	let initialId = providedId ?? (serverHandoffComplete ? genId() : null);
-	let [id, setId] = React.useState(initialId);
+	const initialId = providedId ?? (serverHandoffComplete ? genId() : null);
+	const [id, setId] = React.useState(initialId);
 
 	useLayoutEffect(() => {
 		if (id === null) {

@@ -52,7 +52,7 @@ export function TextRevealAnimation({children, ...rest}: TextRevealAnimationProp
     }
   }, [ref])
   if (typeof children !== 'string' && (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')) {
-    // eslint-disable-next-line no-console
+     
     console.warn('Children passed to TextRevealAnimation must be a string')
     return null
   }

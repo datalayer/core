@@ -16,7 +16,7 @@ const LOOKUP_VALUE_SYMBOL = [
 // https://stackoverflow.com/questions/9461621/format-a-number-as-2-5k-if-a-thousand-or-more-otherwise-900
 export function numberFormatter(num: number, digits: number = 1) {
   const rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
-  var item = LOOKUP_VALUE_SYMBOL.slice().reverse().find(function(item) {
+  const item = LOOKUP_VALUE_SYMBOL.slice().reverse().find(function(item) {
     return num >= item.value;
   });
   return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";

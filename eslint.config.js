@@ -15,7 +15,7 @@ import { globalIgnores } from "eslint/config";
 
 export default tseslint.config(
   [
-    globalIgnores(["dist"]),
+    globalIgnores(["dist", "docs/**", "htmlcov/**", "lib/**", "**/*.min.js"]),
     {
       files: ["**/*.{ts,tsx}"],
       extends: [
@@ -31,8 +31,25 @@ export default tseslint.config(
       rules: {
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": "off",
+        "react-refresh/only-export-components": "off",
+      },
+    },
+    {
+      files: ["**/*.{js,jsx}"],
+      extends: [
+        js.configs.recommended,
+        reactHooks.configs["recommended-latest"],
+      ],
+      languageOptions: {
+        ecmaVersion: 2020,
+        globals: globals.browser,
+        parserOptions: {
+          ecmaFeatures: {
+            jsx: true,
+          },
+        },
       },
     },
   ],
-  storybook.configs["flat/recommended"]
+  storybook.configs["flat/recommended"],
 );

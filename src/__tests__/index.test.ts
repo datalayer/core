@@ -14,7 +14,8 @@ describe('@datalayer/core - index', () => {
 
   it('should export BackdropContext from hooks', () => {
     expect(coreIndex.BackdropContext).toBeDefined();
-    expect(coreIndex.BackdropContext).toBe('lkj');
+    expect(coreIndex.BackdropContext).toHaveProperty('$$typeof');
+    expect(typeof coreIndex.BackdropContext).toBe('object');
   });
 
   it('should export utils functions', () => {

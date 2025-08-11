@@ -2,7 +2,7 @@ exclude: "^conda.recipe|dev|docs|style|src|jupyter-config|.github|.storybook$"
 repos:
   # Basic file checks and formatting
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-toml
       - id: check-yaml
@@ -11,14 +11,14 @@ repos:
 
   # Code formatting for non-Python files
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.2.1
+    rev: v3.1.0
     hooks:
       - id: prettier
         exclude_types: ["python", "jupyter", "shell", "gitignore"]
 
   # Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.12.8
     hooks:
       # Run the linter
       - id: ruff-check
@@ -36,7 +36,7 @@ repos:
 
   # Security checks
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.9
+    rev: 1.8.6
     hooks:
       - id: bandit
         args: ["-c", "pyproject.toml"]
@@ -44,13 +44,13 @@ repos:
 
   # Check for common Python security issues (using pip-audit instead of safety)
   - repo: https://github.com/pypa/pip-audit
-    rev: v2.7.3
+    rev: v2.9.0
     hooks:
       - id: pip-audit
 
   # Check for large files that shouldn't be committed
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
         args: ["--maxkb=1000"]

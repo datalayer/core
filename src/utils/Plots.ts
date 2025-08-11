@@ -12,7 +12,7 @@ import { getDate, getDaysInMonth, getMonth, isSameMonth, isSameYear } from 'date
  * @param usages Usages
  * @param interval Histogram interval
  * @param range Range with month in 1-based scale
- * @returns Histogram data {x: [], y: []}
+ * @returns Histogram data &lcub;x: [], y: []&rcub;
  */
 export function createHistogram(
   usages: IUsage[],

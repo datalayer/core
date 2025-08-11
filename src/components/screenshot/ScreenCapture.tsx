@@ -178,7 +178,7 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
     } = this.state;
     const body = document.querySelector('body');
     if (body) {
-      let scale = window.devicePixelRatio;
+      const scale = window.devicePixelRatio;
       html2canvas(body, {
         width: windowWidth,
         height: windowHeight,
