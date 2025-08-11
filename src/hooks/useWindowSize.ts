@@ -59,7 +59,6 @@ export function useWindowSize() {
       })
     }
 
-    // eslint-disable-next-line github/prefer-observers
     window.addEventListener('resize', handleResize)
 
     handleResize()

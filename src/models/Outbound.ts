@@ -22,12 +22,12 @@ export class Outbound implements IOutbound {
   constructor(u: any) {
     this.id = u.uid;
     this.subType = u.subType;
-    this.name = u.name,
-    this.description = u.description,
-    this.tags = u.tags ?? [],
-    this.status = u.status,
-    this.emailSubject = u.emailSubject,
-    this.emailContent = u.emailContent,
+    this.name = u.name;
+    this.description = u.description;
+    this.tags = u.tags ?? [];
+    this.status = u.status;
+    this.emailSubject = u.emailSubject;
+    this.emailContent = u.emailContent;
     this.senderUid = u.senderUid;
     this.senderDisplayName = u.senderDisplayName;
     this.recipients = u.recipients;

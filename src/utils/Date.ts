@@ -20,7 +20,7 @@ const rtf = new Intl.RelativeTimeFormat(undefined, {
 });
 
 export const getRelativeTime = (d1: Date, d2: Date = new Date()): string => {
-  var elapsed = d1.getTime() - d2.getTime();
+  const elapsed = d1.getTime() - d2.getTime();
 
   // "Math.abs" accounts for both "past" & "future" scenarios
   for (const u in units)
@@ -37,8 +37,8 @@ const p = (i: number) => {
 };
 
 export const timeSince = (date: Date) => {
-  var seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-  var interval = seconds / 31536000;
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  let interval = seconds / 31536000;
   if (interval > 1) {
     const i = Math.floor(interval);
     return i + ` year${p(i)}`;

@@ -68,7 +68,7 @@ export class User implements IUser {
     this.displayName = displayName === "" ? u.handle_s : displayName;
     this.avatarUrl = u.avatar_url_s;
     this.origin = u.origin_s;
-    this.joinDate = u.join_ts_dt ? new Date(u.join_ts_dt) : undefined,
+    this.joinDate = u.join_ts_dt ? new Date(u.join_ts_dt) : undefined;
     this.credits = u.credits_i ? Number(u.credits_i) : 0;
     this.creditsCustomerId = u.credits_customer_uid;
     this.roles = u.roles_ss ?? [];

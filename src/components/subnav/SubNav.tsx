@@ -441,7 +441,7 @@ const SubNavLink = forwardRef<HTMLAnchorElement | HTMLDivElement, SubNavLinkProp
 
   const hasSubMenu = childrenArr.some(child => {
     if (isValidElement(child)) {
-      return child.type === _SubMenu
+      return child.type === SubMenu
     }
   })
 
@@ -466,7 +466,7 @@ const SubNavLink = forwardRef<HTMLAnchorElement | HTMLDivElement, SubNavLinkProp
   if (hasSubMenu) {
     const isAnchorVariantSubMenu = childrenArr.some(child => {
       if (isValidElement(child)) {
-        return child.type === _SubMenu && child.props.variant === 'anchor'
+        return child.type === SubMenu && child.props.variant === 'anchor'
       }
     })
 
@@ -517,7 +517,7 @@ type SubMenuProps = {
 } & React.HTMLAttributes<HTMLUListElement> &
   BaseProps<HTMLUListElement>
 
-function _SubMenu({children, className, variant = 'dropdown', ...props}: SubMenuProps) {
+function SubMenu({children, className, variant = 'dropdown', ...props}: SubMenuProps) {
   const context = React.useContext(SubNavContext)
   const navRef = useRef<HTMLElement>(null)
 
@@ -624,6 +624,6 @@ export const SubNav = Object.assign(_SubNavRoot, {
   Heading: SubNavHeading,
   Link: SubNavLink,
   Action: _SubNavAction,
-  SubMenu: _SubMenu,
+  SubMenu: SubMenu,
   testIds,
 })

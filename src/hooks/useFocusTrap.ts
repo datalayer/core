@@ -33,7 +33,7 @@ export interface FocusTrapHookSettings {
 /**
  * Hook used to trap focus inside a container. Returns a ref that can be added to the container
  * that should trap focus.
- * @param settings {FocusTrapHookSettings}
+ * @param settings &lcub;FocusTrapHookSettings&rcub;
  */
 export function useFocusTrap(
   settings?: FocusTrapHookSettings,

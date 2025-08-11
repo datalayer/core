@@ -6,10 +6,11 @@
 from pathlib import Path
 
 import streamlit as st
-from models import Iris
 from sklearn.datasets import load_iris
 
 from datalayer_core import DatalayerClient
+
+from .models import Iris
 
 try:
     from dotenv import load_dotenv

@@ -7,10 +7,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from models import Iris
 from sklearn.datasets import load_iris
 
 from datalayer_core import DatalayerClient
+
+from .models import Iris
 
 load_dotenv()
 

@@ -13,7 +13,6 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-*-lock.json
 .pnp.*
 
 # Logs

@@ -26,7 +26,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "latest"
-          python-version: 3.12
+          python-version: 3.11
           activate-environment: true
 
       - name: Install dependencies

@@ -398,7 +398,7 @@ type SearchProps = {
   searchTerm?: string
 }
 
-const _SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, onSubmit, onChange}: Omit<SearchProps, "ref">, ref) => {
+const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, onSubmit, onChange}: Omit<SearchProps, "ref">, ref) => {
   const dialogRef = useRef<HTMLDivElement | null>(null)
 
   useFocusTrap({containerRef: dialogRef, restoreFocusOnCleanUp: true, disabled: !active})
@@ -605,7 +605,7 @@ const _SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, o
   )
 }
 
-const Search = forwardRef(_SearchInternal)
+const Search = forwardRef(SearchInternal)
 
 type CTAActionProps = {
   hasArrow?: boolean,

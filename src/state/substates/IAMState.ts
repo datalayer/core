@@ -40,7 +40,7 @@ export type IIAMState = {
   /**
    * Mapping of IAM providers and the corresponding Authorization URL.
    */
-  iamProvidersAuthorizationURL: Record<IIAMProviderName, IAMProviderAuthorizationURL> | {};
+  iamProvidersAuthorizationURL: Record<IIAMProviderName, IAMProviderAuthorizationURL> | object;
   /**
    * User authenticated to Datalayer.
    */
@@ -355,7 +355,7 @@ coreStore.subscribe((state, prevState) => {
     console.log('Updating iamRunUrl with new value', iamRunUrl);
     iamStore.setState({ iamRunUrl });
     // Check the token is valid with the new server.
-    iamStore.getState().externalToken ?
+    if (iamStore.getState().externalToken) {
       iamStore.getState()
         .login(iamStore.getState().externalToken!)
         .catch(reason => {
@@ -363,16 +363,17 @@ coreStore.subscribe((state, prevState) => {
             'Failed to refresh the user after updating the IAM RUN URL.',
             reason
           );
-        })
-      :
-    iamStore.getState()
-      .refreshUser()
-      .catch(reason => {
-        console.error(
-          'Failed to refresh the user after updating the IAM server URL.',
-          reason
-        );
-      })
+        });
+    } else {
+      iamStore.getState()
+        .refreshUser()
+        .catch(reason => {
+          console.error(
+            'Failed to refresh the user after updating the IAM server URL.',
+            reason
+          );
+        });
+    }
   }
 });
 

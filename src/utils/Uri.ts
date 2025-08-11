@@ -19,7 +19,7 @@ export const dataURItoBlob = (dataURI: any) => {
   // Create a view into the buffer.
   const ia = new Uint8Array(ab);
   // Set the bytes of the buffer to the correct values.
-  for (var i = 0; i < byteString.length; i++) {
+  for (let i = 0; i < byteString.length; i++) {
       ia[i] = byteString.charCodeAt(i);
   }
   // Write the ArrayBuffer to a blob, and you're done.

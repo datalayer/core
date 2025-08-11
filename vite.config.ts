@@ -23,17 +23,19 @@ export default defineConfig({
     react(),
     treatAsCommonjs(),
     {
-      name: 'raw-css-as-string',
-      enforce: 'pre',
+      name: "raw-css-as-string",
+      enforce: "pre",
       async resolveId(source, importer) {
-        if (source.endsWith('.raw.css') && !source.includes('?raw')) {
+        if (source.endsWith(".raw.css") && !source.includes("?raw")) {
           // rewrite import to append ?raw query
-          const resolved = await this.resolve(source + '?raw', importer, { skipSelf: true });
+          const resolved = await this.resolve(source + "?raw", importer, {
+            skipSelf: true,
+          });
           if (resolved) return resolved.id;
           return null;
         }
         return null;
-      }
+      },
     },
     {
       name: "fix-text-query",
@@ -41,7 +43,9 @@ export default defineConfig({
       async resolveId(source, importer) {
         if (source.includes("?text")) {
           const fixed = source.replace("?text", "?raw");
-          const resolved = await this.resolve(fixed, importer, { skipSelf: true });
+          const resolved = await this.resolve(fixed, importer, {
+            skipSelf: true,
+          });
           if (resolved) {
             return resolved.id;
           }
@@ -52,7 +56,7 @@ export default defineConfig({
     },
   ],
   define: {
-    global: 'globalThis',
+    global: "globalThis",
     __webpack_public_path__: '""',
   },
   assetsInclude: ["**/*.whl", "**/*.raw.css"],
@@ -75,13 +79,17 @@ export default defineConfig({
         replacement: "$1",
       },
       {
-        find: 'crypto',
-        replacement: 'crypto-browserify',
+        find: "crypto",
+        replacement: "crypto-browserify",
+      },
+      {
+        find: "buffer",
+        replacement: "buffer",
       },
     ],
   },
   optimizeDeps: {
-    include: ['crypto-browserify'],
+    include: ["crypto-browserify", "buffer"],
     esbuildOptions: {
       loader: {
         ".whl": "text",
@@ -96,10 +104,15 @@ export default defineConfig({
         "src/test-setup.ts",
         "src/stories/**",
         "src/main.tsx",
-        "src/vite-env.d.ts"
+        "src/vite-env.d.ts",
       ],
       reporter: ["text", "html", "lcov"],
-      reportsDirectory: "./coverage"
+      reportsDirectory: "./coverage",
+    },
+    server: {
+      deps: {
+        external: ["@datalayer/jupyter-react", "@jupyter/web-components"],
+      },
     },
     projects: [
       // Unit tests
@@ -109,7 +122,7 @@ export default defineConfig({
           include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
           environment: "jsdom",
           setupFiles: ["src/test-setup.ts"],
-        }
+        },
       },
       // Storybook tests
       {

@@ -112,6 +112,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
     | ((location: string, e?: any, resetPortals?: boolean) => void)
     | undefined;
   try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     navigate = useNavigate();
   } catch (reason) {
     // TODO when would this component be shown outside of a react-router? navigation is only available within a react-router.

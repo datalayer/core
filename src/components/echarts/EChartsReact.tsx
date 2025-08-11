@@ -58,7 +58,11 @@ export const EChartsReact = ({
   }, [chart, options, settings]);
   useEffect(() => {
     if (chart && !chart.isDisposed()) {
-      loading === true ? chart.showLoading() : chart.hideLoading();
+      if (loading === true) {
+        chart.showLoading();
+      } else {
+        chart.hideLoading();
+      }
     }
   }, [chart, loading]);
   return (
