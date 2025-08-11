@@ -2,10 +2,10 @@
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
-import gulp from 'gulp';
-import gap from 'gulp-append-prepend';
-import watch from 'gulp-watch';
-import filter from 'gulp-filter';
+import gulp from "gulp";
+import gap from "gulp-append-prepend";
+import watch from "gulp-watch";
+import filter from "gulp-filter";
 
 gulp.task("resources-to-lib-watch", function () {
   const f = filter(["**", "!src/**/*.js", "!src/**/*.ts", "!src/**/*.tsx"]);
