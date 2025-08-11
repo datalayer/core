@@ -2,13 +2,6 @@
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
-
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import gulp from "gulp";
 import gap from "gulp-append-prepend";
 import watch from "gulp-watch";
