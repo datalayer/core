@@ -1208,14 +1208,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   const linkUserWithContact = (userId, contactId) => {
     return requestDatalayer({
-      url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}`,
+      url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
       method: 'POST',
     });
   }
 
   const unlinkUserFromContact = (userId, contactId) => {
     return requestDatalayer({
-      url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}`,
+      url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
       method: 'DELETE',
     });
   }

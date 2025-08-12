@@ -250,7 +250,7 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
             />
             {!configuration.whiteLabel &&
               <FormControl disabled={!!selectedRuntimeDesc?.kernelId || selectedRuntimeDesc?.location !== 'remote'} layout="horizontal">
-                <FormControl.Label>
+                <FormControl.Label id="user-storage-picker-label">
                   User storage
                   <Tooltip text='The runtime will be slower to start.' direction="e" style={{ marginLeft: 3 }}>
                     <IconButton icon={AlertIcon} aria-label="" variant="invisible"/>
@@ -261,6 +261,7 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
                   checked={userStorage}
                   size="small"
                   onClick={handleUserStorageChange}
+                  aria-labelledby="user-storage-picker-label"
                 />
               </FormControl>
             }

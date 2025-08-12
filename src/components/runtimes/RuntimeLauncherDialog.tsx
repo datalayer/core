@@ -421,7 +421,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
         }
         {!configuration.whiteLabel &&
           <FormControl layout="horizontal">
-            <FormControl.Label>
+            <FormControl.Label id="user-storage-label">
               User storage
               <Tooltip text={'The runtime will be slower to start.'} direction="e" style={{ marginLeft: 3 }}>
                 <IconButton icon={AlertIcon} aria-label="" variant="invisible"/>
@@ -431,6 +431,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
               checked={userStorage}
               size="small"
               onClick={handleUserStorageChange}
+              aria-labelledby="user-storage-label"
             />
           </FormControl>
         }
@@ -445,7 +446,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
         </FormControl>
         {hasExample && jupyterLabAdapter?.jupyterLab && !configuration.whiteLabel &&
           <FormControl sx={{ paddingTop: '10px' }}>
-            <FormControl.Label>Open example notebook</FormControl.Label>
+            <FormControl.Label id="open-example-label">Open example notebook</FormControl.Label>
             <ToggleSwitch
               disabled={
                 !environments.find(spec => spec.name === selection)?.example
@@ -453,6 +454,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
               checked={openExample}
               size="small"
               onClick={handleSwitchClick}
+              aria-labelledby="open-example-label"
             />
           </FormControl>
         }
