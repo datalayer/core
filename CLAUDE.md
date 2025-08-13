@@ -27,6 +27,8 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 - Zustand state management
 - 70+ TypeScript models
 - Custom hooks for auth, platform integration, UI/UX
+- Datalayer kernel provisioning: `DatalayerKernelAPI` class for remote kernels
+- Storybook: `npm run storybook` (port 6006)
 
 ## Configuration
 

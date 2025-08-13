@@ -34,6 +34,7 @@ export * from './Inbound';
 export * from './Invite';
 export * from './Item';
 export * from './ItemType';
+export * from './Kernel';
 export * from './LandingRoles';
 export * from './Lesson';
 export * from './Library';

@@ -3,6 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './exec';
-export * from './kernels';
-export * from './kernelsHandler';
+export * from './collaboration';
+export * from './config';
+export * from './services';

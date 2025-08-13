@@ -3,6 +3,4 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './exec';
-export * from './kernels';
-export * from './kernelsHandler';
+export * from './DatalayerCollaboration';

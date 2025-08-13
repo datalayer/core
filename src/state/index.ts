@@ -6,3 +6,5 @@
 export * from "./storage";
 export * from './State';
 export * from './substates';
+export * from './IDatalayerConfig';
+export * from './DatalayerReactState';
