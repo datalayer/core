@@ -50,22 +50,25 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 
 ## Datalayer Extensions
 
-**Collaboration System**: Auto-registers `DatalayerCollaborationProvider`
-```typescript
-// Automatically available when importing from core
-<Notebook collaborative="datalayer" ... />
-```
+**Generic Extension Pattern**: Extends `@datalayer/jupyter-react` via composition, not modification
+- **Collaboration**: Auto-registers `DatalayerCollaborationProvider` for `collaborative="datalayer"`
+- **State Management**: `DatalayerReactState` extends generic `JupyterReactState`  
+- **Types**: `DatalayerCollaborationTypes.ts` with platform-specific collaboration config
+- **Services**: `DatalayerServiceManager` with platform defaults
 
-**State Management**: Extends generic Jupyter state with Datalayer configuration
 ```typescript
-// DatalayerReactState extends JupyterReactState
+// All Datalayer providers auto-register on import
+<Notebook collaborative="datalayer" ... /> // Works automatically
 const { datalayerConfig } = datalayerReactStore.getState();
 ```
 
-**Service Management**: Datalayer-specific defaults and configuration
-```typescript
-const serviceManager = new DatalayerServiceManager(); // Uses Datalayer defaults
-```
+## Recent Updates (Session 2025-08-13)
+
+- Fixed collaboration type definitions (IJupyterCollaborationServer now correctly has type: 'jupyter')
+- Made ICollaborationProvider truly generic (`string | undefined`) accepting any provider name
+- Moved all Datalayer-specific types from jupyter-ui to core package
+- Created comprehensive generic examples in jupyter-ui demonstrating all features
+- Updated MIGRATION_JUPYTER_UI.md with complete import change guide
 
 ## Dependencies
 
