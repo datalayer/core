@@ -22,13 +22,16 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 
 **TypeScript/React**: NPM package `@datalayer/core`
 
-- API layer with `DatalayerApi.ts`
-- Component library (UI, Jupyter, business logic)
-- Zustand state management
-- 70+ TypeScript models
-- Custom hooks for auth, platform integration, UI/UX
-- Datalayer kernel provisioning: `DatalayerKernelAPI` class for remote kernels
-- Storybook: `npm run storybook` (port 6006)
+- **Architecture**: Extends `@datalayer/jupyter-react` with Datalayer-specific functionality
+- **API layer**: `DatalayerApi.ts` for platform integration
+- **Component library**: Datalayer-specific UI, Jupyter extensions, business logic
+- **State management**: `DatalayerReactState` extends `JupyterReactState` with typed configuration
+- **Collaboration**: `DatalayerCollaborationProvider` for platform-specific collaboration
+- **Configuration**: `DatalayerJupyterConfig`, `DatalayerServiceManager` with platform defaults
+- **Models**: 70+ TypeScript models for platform resources
+- **Hooks**: Custom hooks for auth, platform integration, UI/UX
+- **Kernel provisioning**: `DatalayerKernelAPI` class for remote kernels
+- **Storybook**: `npm run storybook` (port 6006)
 
 ## Configuration
 
@@ -44,3 +47,29 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 - **Security**: bandit compliance, replaced `eval()` with `ast.literal_eval()`
 - **Documentation**: NumPy-style docstrings, TypeDoc API docs, Docusaurus site
 - **Pre-commit**: Updated to latest versions (ruff v0.12.8, bandit 1.8.6, pip-audit v2.9.0)
+
+## Datalayer Extensions
+
+**Collaboration System**: Auto-registers `DatalayerCollaborationProvider`
+```typescript
+// Automatically available when importing from core
+<Notebook collaborative="datalayer" ... />
+```
+
+**State Management**: Extends generic Jupyter state with Datalayer configuration
+```typescript
+// DatalayerReactState extends JupyterReactState
+const { datalayerConfig } = datalayerReactStore.getState();
+```
+
+**Service Management**: Datalayer-specific defaults and configuration
+```typescript
+const serviceManager = new DatalayerServiceManager(); // Uses Datalayer defaults
+```
+
+## Dependencies
+
+**IMPORTANT**: Core depends on `@datalayer/jupyter-react` (NOT the reverse)
+- Core: `"@datalayer/jupyter-react": "file:../jupyter-ui/packages/react"` (local development)
+- Jupyter-ui remains completely generic and platform-agnostic
+- All Datalayer-specific functionality is contained in core package

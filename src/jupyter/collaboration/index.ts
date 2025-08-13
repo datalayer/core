@@ -4,3 +4,6 @@
  */
 
 export * from './DatalayerCollaboration';
+export * from './DatalayerCollaborationProvider';
+export * from './DatalayerCollaborationTypes';
+export * from './registerDatalayerProviders';

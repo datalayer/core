@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { type Id, toast } from 'react-toastify';
+import { type Id, toast, ToastPosition } from 'react-toastify';
 import { Notification } from '@jupyterlab/apputils';
 import { Button } from '@primer/react';
 import type { VariantType } from './../components/buttons';
@@ -26,7 +26,7 @@ export type ToastProps = {
   variant: 'info' | 'success' | 'warning' | 'error';
 };
 
-const TOAST_POSITION = toast.POSITION.BOTTOM_RIGHT;
+const TOAST_POSITION = 'bottom-right' as ToastPosition;
 
 interface IToastButtonProps {
   /**
