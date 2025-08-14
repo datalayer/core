@@ -22,11 +22,16 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 
 **TypeScript/React**: NPM package `@datalayer/core`
 
-- API layer with `DatalayerApi.ts`
-- Component library (UI, Jupyter, business logic)
-- Zustand state management
-- 70+ TypeScript models
-- Custom hooks for auth, platform integration, UI/UX
+- **Architecture**: Extends `@datalayer/jupyter-react` with Datalayer-specific functionality
+- **API layer**: `DatalayerApi.ts` for platform integration
+- **Component library**: Datalayer-specific UI, Jupyter extensions, business logic
+- **State management**: `DatalayerReactState` extends `JupyterReactState` with typed configuration
+- **Collaboration**: `DatalayerCollaborationProvider` for platform-specific collaboration
+- **Configuration**: `DatalayerJupyterConfig`, `DatalayerServiceManager` with platform defaults
+- **Models**: 70+ TypeScript models for platform resources
+- **Hooks**: Custom hooks for auth, platform integration, UI/UX
+- **Kernel provisioning**: `DatalayerKernelAPI` class for remote kernels
+- **Storybook**: `npm run storybook` (port 6006)
 
 ## Configuration
 
@@ -42,3 +47,32 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 - **Security**: bandit compliance, replaced `eval()` with `ast.literal_eval()`
 - **Documentation**: NumPy-style docstrings, TypeDoc API docs, Docusaurus site
 - **Pre-commit**: Updated to latest versions (ruff v0.12.8, bandit 1.8.6, pip-audit v2.9.0)
+
+## Datalayer Extensions
+
+**Generic Extension Pattern**: Extends `@datalayer/jupyter-react` via composition, not modification
+- **Collaboration**: Auto-registers `DatalayerCollaborationProvider` for `collaborative="datalayer"`
+- **State Management**: `DatalayerReactState` extends generic `JupyterReactState`  
+- **Types**: `DatalayerCollaborationTypes.ts` with platform-specific collaboration config
+- **Services**: `DatalayerServiceManager` with platform defaults
+
+```typescript
+// All Datalayer providers auto-register on import
+<Notebook collaborative="datalayer" ... /> // Works automatically
+const { datalayerConfig } = datalayerReactStore.getState();
+```
+
+## Recent Updates (Session 2025-08-13)
+
+- Fixed collaboration type definitions (IJupyterCollaborationServer now correctly has type: 'jupyter')
+- Made ICollaborationProvider truly generic (`string | undefined`) accepting any provider name
+- Moved all Datalayer-specific types from jupyter-ui to core package
+- Created comprehensive generic examples in jupyter-ui demonstrating all features
+- Updated MIGRATION_JUPYTER_UI.md with complete import change guide
+
+## Dependencies
+
+**IMPORTANT**: Core depends on `@datalayer/jupyter-react` (NOT the reverse)
+- Core: `"@datalayer/jupyter-react": "file:../jupyter-ui/packages/react"` (local development)
+- Jupyter-ui remains completely generic and platform-agnostic
+- All Datalayer-specific functionality is contained in core package
