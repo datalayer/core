@@ -63,6 +63,26 @@ vi.mock('@datalayer/jupyter-react', () => ({
     serviceManager: null,
   }),
   JupyterReactTheme: ({ children }: { children: React.ReactNode }) => children,
+  CollaborationProviderBase: class CollaborationProviderBase {},
+  CollaborationStatus: {
+    IDLE: 'idle',
+    CONNECTING: 'connecting',
+    CONNECTED: 'connected',
+    DISCONNECTED: 'disconnected',
+  },
 }));
 
 vi.mock('@jupyter/web-components', () => ({}));
+
+vi.mock('@jupyter/ydoc', () => ({
+  YNotebook: class YNotebook {},
+}));
+
+vi.mock('y-websocket', () => ({
+  WebsocketProvider: class WebsocketProvider {
+    constructor() {}
+    connect() {}
+    disconnect() {}
+    destroy() {}
+  },
+}));

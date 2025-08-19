@@ -9,23 +9,62 @@
  * MIT License
  */
 
-import { useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Box } from '@datalayer/primer-addons';
-import { Notebook2, Kernel, NotebookToolbar, CellSidebarExtension, CellSidebarButton } from '@datalayer/jupyter-react';
+import { Notebook2, Kernel, NotebookToolbar, CellSidebarExtension, CellSidebarButton, createServerSettings, getJupyterServerUrl, getJupyterServerToken } from '@datalayer/jupyter-react';
 import { ServiceManager } from '@jupyterlab/services';
 
 const NOTEBOOK_ID = 'notebook-example-1';
 
 type INotebookExampleProps = {
-  kernel: Kernel;
-  serviceManager: ServiceManager.IManager;
+  serviceManager?: ServiceManager.IManager;
 }
 
 export const NotebookExample = (props: INotebookExampleProps) => {
-  const { kernel, serviceManager } = props;
+  const [kernel, setKernel] = useState<Kernel | undefined>();
+  const [serviceManager, setServiceManager] = useState<ServiceManager.IManager | undefined>(props.serviceManager);
+  
+  useEffect(() => {
+    // Create service manager if not provided
+    if (!props.serviceManager) {
+      const serverSettings = createServerSettings(
+        getJupyterServerUrl(),
+        getJupyterServerToken()
+      );
+      const manager = new ServiceManager({ serverSettings });
+      setServiceManager(manager);
+    }
+  }, [props.serviceManager]);
+  
+  useEffect(() => {
+    if (!kernel && serviceManager) {
+      // Create a kernel using the service manager
+      const createKernel = async () => {
+        const k = new Kernel({
+          kernelName: 'python3',
+        } as any);
+        // @ts-expect-error - Set service manager after construction
+        k._serviceManager = serviceManager;
+        await k.ready;
+        setKernel(k);
+      };
+      createKernel();
+    }
+  }, [serviceManager]);
+  
   const extensions = useMemo(() => [
     new CellSidebarExtension({ factory: CellSidebarButton })
   ], []);
+  
+  if (!kernel || !serviceManager) {
+    return (
+      <Box p={4}>
+        <Box as="h1">A Jupyter Notebook</Box>
+        <Box>Loading kernel and services...</Box>
+      </Box>
+    );
+  }
+  
   return (
     <>
       <Box as="h1">A Jupyter Notebook</Box>

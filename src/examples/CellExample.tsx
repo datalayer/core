@@ -9,8 +9,11 @@
  * MIT License
  */
 
+import { useEffect, useState } from 'react';
 import { Box, Button, Label } from '@primer/react';
 import { Cell, KernelIndicator, useKernelsStore, useCellsStore, Kernel } from '@datalayer/jupyter-react';
+import { ServiceManager } from '@jupyterlab/services';
+import { createServerSettings, getJupyterServerUrl, getJupyterServerToken } from '@datalayer/jupyter-react';
 
 const CELL_ID = 'cell-example-1';
 
@@ -20,13 +23,53 @@ for i in range(10):
     display('I am a long string which is repeatedly added to the dom in separated divs: %d' % i)`;
 
 type ICellExampleProps = {
-  kernel: Kernel;
+  serviceManager?: ServiceManager.IManager;
 }
 
 export const CellExample = (props: ICellExampleProps) => {
-  const { kernel } = props;
-  const cellsStore = useCellsStore();
+  const [kernel, setKernel] = useState<Kernel | undefined>();
+  const [serviceManager, setServiceManager] = useState<ServiceManager.IManager | undefined>(props.serviceManager);
   const kernelsStore = useKernelsStore();
+  
+  useEffect(() => {
+    // Create service manager if not provided
+    if (!props.serviceManager) {
+      const serverSettings = createServerSettings(
+        getJupyterServerUrl(),
+        getJupyterServerToken()
+      );
+      const manager = new ServiceManager({ serverSettings });
+      setServiceManager(manager);
+    }
+  }, [props.serviceManager]);
+  
+  useEffect(() => {
+    if (!kernel && serviceManager) {
+      // Create a kernel using the service manager
+      const createKernel = async () => {
+        // Create a Kernel wrapper
+        const k = new Kernel({
+          kernelName: 'python3',
+        } as any);
+        // @ts-expect-error - Set service manager after construction
+        k._serviceManager = serviceManager;
+        await k.ready;
+        setKernel(k);
+      };
+      createKernel();
+    }
+  }, [serviceManager]);
+  const cellsStore = useCellsStore();
+  
+  if (!kernel) {
+    return (
+      <Box p={4}>
+        <Box as="h1">A Jupyter Cell</Box>
+        <Box>Loading kernel...</Box>
+      </Box>
+    );
+  }
+  
   return (
     <>
       <Box as="h1">A Jupyter Cell</Box>

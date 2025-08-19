@@ -3,6 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './Configuration';
-export * from './DatalayerRuntimeConfig';
-export * from './integrations';
+export * from './NotebookMutationsKernel';
+export * from './NotebookMutationsServiceManager';
