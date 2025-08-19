@@ -25,13 +25,15 @@ const JupyterLabBackdropComponent = styled.div`
 `;
 
 function JupyterLabBackdrop({ open, element }: JupyterLabBackdropType) {
-  return open ? <JupyterLabBackdropComponent>{element}</JupyterLabBackdropComponent> : <></>;
+  return open ? (
+    <JupyterLabBackdropComponent>{element}</JupyterLabBackdropComponent>
+  ) : (
+    <></>
+  );
 }
 
 export default JupyterLabBackdrop;
 
- 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface JupyterLabBackdropProps {}
 
 type UseJupyterLabBackdropProps = {
@@ -45,11 +47,11 @@ const JupyterLabBackdropContext = createContext<UseJupyterLabBackdropProps>({
   },
   closeBackdrop: () => {
     /* no-op */
-  }
+  },
 });
 
 const JupyterLabBackdropProvider = ({
-  children
+  children,
 }: React.PropsWithChildren<JupyterLabBackdropProps>) => {
   const [opened, setOpened] = useState<boolean>(false);
   const [element, setElement] = useState<JSX.Element>();
@@ -65,7 +67,7 @@ const JupyterLabBackdropProvider = ({
     <JupyterLabBackdropContext.Provider
       value={{
         openBackdrop: openBackdrop,
-        closeBackdrop: closeBackdrop
+        closeBackdrop: closeBackdrop,
       }}
     >
       <JupyterLabBackdrop open={opened} element={element} />

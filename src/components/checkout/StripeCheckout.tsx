@@ -5,7 +5,7 @@
 
 import { createElement, useCallback, useEffect, useState } from 'react';
 import { Button, Flash, FormControl, Spinner, Text } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import type { Stripe } from '@stripe/stripe-js';
 import { useCache } from '../../hooks';
 import type { ICheckoutPortal } from '../../models';
@@ -41,7 +41,7 @@ export interface IPrice {
  * Stripe checkout.
  */
 export function StripeCheckout({
-  checkoutPortal
+  checkoutPortal,
 }: {
   checkoutPortal: ICheckoutPortal | null;
 }) {
@@ -100,10 +100,10 @@ export function StripeCheckout({
         createElement(
           components.EmbeddedCheckoutProvider,
           { stripe, options },
-          createElement(components.EmbeddedCheckout)
-        )
+          createElement(components.EmbeddedCheckout),
+        ),
       );
-    } 
+    }
   } else if (items) {
     view = items.length ? (
       <Box
@@ -121,7 +121,7 @@ export function StripeCheckout({
             display: 'grid',
             gap: 'var(--stack-gap-normal)',
             gridTemplateColumns: Array(items.length).fill('1fr').join(' '),
-            padding: 'var(--stack-padding-normal) 0'
+            padding: 'var(--stack-padding-normal) 0',
           }}
         >
           {items.map(item => (
@@ -141,13 +141,13 @@ export function StripeCheckout({
                     ? 'var(--borderColor-accent-emphasis)'
                     : 'var(--borderColor-default)',
                 padding: 'var(--stack-padding-condensed)',
-                cursor: 'pointer'
+                cursor: 'pointer',
               }}
             >
               <FormControl
                 key={item.id}
                 sx={{
-                  alignItems: 'center'
+                  alignItems: 'center',
                 }}
               >
                 <FormControl.Label
@@ -159,7 +159,7 @@ export function StripeCheckout({
                 <Text as="p">
                   {new Intl.NumberFormat(undefined, {
                     style: 'currency',
-                    currency: item.currency
+                    currency: item.currency,
                   }).format(item.amount / 100)}
                 </Text>
                 <Text as="p">{item.credits} credits</Text>

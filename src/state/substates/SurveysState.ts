@@ -6,14 +6,19 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import { requestDatalayerAPI, type RunResponseError } from '../../api';
-import { ISurvey, asSurvey, IGetSurveysResponseType, ICreateSurveyResponseType } from '../../models';
+import {
+  ISurvey,
+  asSurvey,
+  IGetSurveysResponseType,
+  ICreateSurveyResponseType,
+} from '../../models';
 import { coreStore } from './CoreState';
 import { iamStore } from './IAMState';
 
 export type ISuccessState = {
   growthRunUrl: string;
   surveys?: Map<string, ISurvey>;
-}
+};
 
 export type SuccessState = ISuccessState & {
   setSurveys: (surveys: Array<ISurvey>) => void;
@@ -72,15 +77,14 @@ export const surveysStore = createStore<SuccessState>((set, get) => ({
       });
       if (resp.success && resp.survey) {
         const survey = asSurvey(resp.survey);
-        const surveys = get().surveys
+        const surveys = get().surveys;
         if (surveys) {
           surveys.set(survey.name, survey);
           set((state: SuccessState) => ({ surveys }));
-        }
-        else {
-          set((state: SuccessState) => ({ surveys: new Map<string, ISurvey>([
-            [survey.name, survey]
-          ])}));
+        } else {
+          set((state: SuccessState) => ({
+            surveys: new Map<string, ISurvey>([[survey.name, survey]]),
+          }));
         }
       } else {
         console.error('Failed to create the survey.', resp);

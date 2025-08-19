@@ -7,14 +7,14 @@ import { KernelExecutor } from '@datalayer/jupyter-react';
 import { Kernel } from '@jupyterlab/services';
 import { createRuntimeSnapshotDownloadURL, uploadRuntimeSnapshot } from '.';
 
-type Props =  {
+type Props = {
   connection: Kernel.IKernelConnection;
   metadata: {
     filename: string;
     [key: string]: string;
   };
   onUploadProgress?: (bytesUploaded: number, bytesTotal: number) => void;
-}
+};
 
 /**
  * Snapshot a runtime through the frontend and upload it to the cloud.
@@ -23,18 +23,21 @@ type Props =  {
  */
 export async function createRuntimeSnapshot(props: Props): Promise<void> {
   const { connection, metadata, onUploadProgress } = props;
-  const dump = await new KernelExecutor({connection})
-    .execute(GET_RUNTIME_SNAPSHOT_SNIPPET, {
-      storeHistory: false
-    });
-  const serializedData = (dump.get(0)?.data['application/vnd.jupyter.stdout'] ?? '') as string;
+  const dump = await new KernelExecutor({ connection }).execute(
+    GET_RUNTIME_SNAPSHOT_SNIPPET,
+    {
+      storeHistory: false,
+    },
+  );
+  const serializedData = (dump.get(0)?.data['application/vnd.jupyter.stdout'] ??
+    '') as string;
   // Convert the data to blob.
   const bytes = base64ToBytes(serializedData);
   const file = new Blob([bytes.buffer]);
   return uploadRuntimeSnapshot({
     file,
     metadata,
-    onProgress: onUploadProgress
+    onProgress: onUploadProgress,
   });
 }
 
@@ -51,8 +54,8 @@ function base64ToBytes(base64: string) {
  * Note: You should use this only for browser kernels.
  */
 export async function loadBrowserRuntimeSnapshot({
-connection,
-  id
+  connection,
+  id,
 }: {
   connection: Kernel.IKernelConnection;
   id: string;
@@ -62,17 +65,17 @@ connection,
   const buffer = await response.arrayBuffer();
   const base64 = bytesToBase64(new Uint8Array(buffer));
   await new KernelExecutor({
-    connection
+    connection,
   }).execute(getLoadRuntimeSnapshotSnippet(base64), {
     storeHistory: false,
-    silent: true
+    silent: true,
   });
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
   // Taken from https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa#unicode_strings
   const binString = Array.from(bytes, byte => String.fromCodePoint(byte)).join(
-    ''
+    '',
   );
   return btoa(binString);
 }

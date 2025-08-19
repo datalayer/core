@@ -3,7 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export {
-  createDatalayerServiceManager,
-} from './DatalayerServiceManager';
+export { createDatalayerServiceManager } from './DatalayerServiceManager';
 export { default as DatalayerServiceManager } from './DatalayerServiceManager';

@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { asArray } from "../utils";
-import { asUser } from "./User";
-import { ITeam } from "./Team";
-import { ISchool } from "./School";
-import { IOrganizationMember } from "./OrganizationMember";
+import { asArray } from '../utils';
+import { asUser } from './User';
+import { ITeam } from './Team';
+import { ISchool } from './School';
+import { IOrganizationMember } from './OrganizationMember';
 
 /**
  * Convert the raw user object to {@link IOrganization}.
@@ -21,7 +21,7 @@ export function asOrganization(org: any): IOrganization {
     members = asArray(org.members).map(m => {
       const member: IOrganizationMember = asUser(m);
       return member;
-    })
+    });
   }
   const organization: IOrganization = {
     id: org.uid,
@@ -55,7 +55,7 @@ export type IBaseOrganization = {
 };
 
 export type IOrganization = IBaseOrganization & {
-  type: "organization";
+  type: 'organization';
   teams: ITeam[];
 };
 

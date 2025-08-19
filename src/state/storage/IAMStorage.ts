@@ -22,7 +22,7 @@ export type IJWTToken = {
   jti: number;
   roles: Array<string>;
   sub: IUser;
-}
+};
 
 /**
  * Return the user from the local storage.
@@ -39,7 +39,7 @@ export const getStoredUser = (): IUser | undefined => {
     }
   }
   return ANONYMOUS_USER;
-}
+};
 
 /**
  * Set the user in the local storage.
@@ -50,7 +50,7 @@ export const storeUser = (user?: IUser): void => {
   } else {
     window.localStorage.removeItem(DATALAYER_IAM_USER_KEY);
   }
-}
+};
 
 /**
  * Return the IAM token from the local storage.
@@ -61,7 +61,7 @@ export const getStoredToken = (): string | undefined => {
     return token;
   }
   return ANONYMOUS_USER_TOKEN;
-}
+};
 
 /**
  * Set the IAM token in the local storage.
@@ -73,7 +73,7 @@ export const storeToken = (token?: string) => {
         const jwt = jwt_decode<IJWTToken>(token);
         console.debug('JWT Token', jwt);
       } catch (error) {
-        console.error("Error while decoding JWT Token.", error);
+        console.error('Error while decoding JWT Token.', error);
         throw error;
       }
     }
@@ -81,7 +81,7 @@ export const storeToken = (token?: string) => {
   } else {
     window.localStorage.removeItem(DATALAYER_IAM_TOKEN_KEY);
   }
-}
+};
 
 /**
  * Load a JWT refresh token stored in a cookie.

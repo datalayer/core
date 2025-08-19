@@ -10,7 +10,12 @@ const easeInOutQuad = (t, b, c, d) => {
   return (-c / 2) * (t * (t - 2) - 1) + b;
 };
 
-const scrollGo = (element: HTMLElement, target: string, to, duration: number) => {
+const scrollGo = (
+  element: HTMLElement,
+  target: string,
+  to,
+  duration: number,
+) => {
   const start = element.scrollTop,
     change = to - start,
     increment = 20;
@@ -21,13 +26,12 @@ const scrollGo = (element: HTMLElement, target: string, to, duration: number) =>
       currentTime,
       start,
       change,
-      duration
+      duration,
     );
     element.scrollTop = scrollTop;
     if (currentTime < duration) {
       setTimeout(animateScroll, increment);
-    }
-    else {
+    } else {
       window.location.hash = target;
     }
   };

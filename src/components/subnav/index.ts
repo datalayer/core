@@ -3,4 +3,4 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './SubNav'
+export * from './SubNav';

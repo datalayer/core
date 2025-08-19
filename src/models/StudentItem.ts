@@ -3,12 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IItemType } from "./ItemType";
-import { IStudent } from "./Student";
-import { ISpaceItem } from "./SpaceItem";
+import { IItemType } from './ItemType';
+import { IStudent } from './Student';
+import { ISpaceItem } from './SpaceItem';
 
 export type IStudentItem = {
-  id: string,
+  id: string;
   type: 'student_item';
   student?: IStudent;
   item?: ISpaceItem;

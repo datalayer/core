@@ -15,14 +15,14 @@ import { ServerConnection } from '@jupyterlab/services';
  */
 export async function requestJupyterKernelsExtension<T>(
   endPoint = '',
-  init: RequestInit = {}
+  init: RequestInit = {},
 ): Promise<T> {
   // Make request to Jupyter API
   const settings = ServerConnection.makeSettings();
   const requestUrl = URLExt.join(
     settings.baseUrl,
     'jupyter_kernels', // API Namespace
-    endPoint
+    endPoint,
   );
   let response: Response;
   try {

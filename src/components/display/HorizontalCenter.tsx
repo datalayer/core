@@ -3,13 +3,15 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { PropsWithChildren } from "react";
+import { PropsWithChildren } from 'react';
 
 type IHorizontalCenterProps = {
   margin?: string;
-}
+};
 
-export const HorizontalCenter = (props: PropsWithChildren<IHorizontalCenterProps>) => {
+export const HorizontalCenter = (
+  props: PropsWithChildren<IHorizontalCenterProps>,
+) => {
   const { children, margin } = props;
   return (
     <div
@@ -23,10 +25,10 @@ export const HorizontalCenter = (props: PropsWithChildren<IHorizontalCenterProps
       {children}
     </div>
   );
-}
+};
 
 HorizontalCenter.defaultProps = {
-  margin: "0px",
-} as IHorizontalCenterProps
+  margin: '0px',
+} as IHorizontalCenterProps;
 
 export default HorizontalCenter;

@@ -11,13 +11,14 @@ import { IRuntimeLocation, IRuntimeDesc } from '../../models';
 
 const ASSIGN_NEW_RUNTIME_LABEL = 'Assign a new Runtime';
 
-const ASSIGN_EXISTING_REMOTE_RUNTIME_LABEL = 'Assign an existing Remote Runtime';
+const ASSIGN_EXISTING_REMOTE_RUNTIME_LABEL =
+  'Assign an existing Remote Runtime';
 
 const ASSIGN_EXISTING_RUNTIME_LABEL = 'Assign an existing Runtime';
 
 export type IDatalayerRuntimeDesc = IRuntimeDesc & {
   gpu?: string;
-}
+};
 
 /**
  * Create the grouped runtime descriptions.
@@ -40,7 +41,7 @@ export function getGroupedRuntimeDescs(
       session =>
         session.kernel &&
         session.kernel.id !== kernelId &&
-        specs.kernelspecs[session.kernel!.name]
+        specs.kernelspecs[session.kernel!.name],
     )
     .map(session => {
       const spec = specs.kernelspecs[session.kernel!.name];
@@ -56,16 +57,19 @@ export function getGroupedRuntimeDescs(
       Array.from(multiServiceManager.browser?.sessions.running() ?? [])
         .filter(session => session.kernel && session.kernel.id !== kernelId)
         .map(session => {
-          const spec = multiServiceManager.browser!.kernelspecs.specs!.kernelspecs[session.kernel!.name];
+          const spec =
+            multiServiceManager.browser!.kernelspecs.specs!.kernelspecs[
+              session.kernel!.name
+            ];
           return {
-            id: "", // TODO Assign a proper ID.
+            id: '', // TODO Assign a proper ID.
             kernelId: session.kernel!.id,
             name: spec!.name,
             language: spec!.language,
             displayName: session.name || PathExt.basename(session.path),
             location: 'browser' as IRuntimeLocation,
           } satisfies IDatalayerRuntimeDesc;
-        })
+        }),
     )
     .filter(filterKernels);
   // Add the running runtimes.
@@ -86,7 +90,9 @@ export function getGroupedRuntimeDescs(
       (multiServiceManager.remote?.runtimesManager.get() ?? [])
         .filter(k => k.id && !listedAsSession.includes(k.id))
         .map(runtime => {
-          const environment = multiServiceManager.remote!.environments.get().find(env => env.name === runtime.environment_name)!;
+          const environment = multiServiceManager
+            .remote!.environments.get()
+            .find(env => env.name === runtime.environment_name)!;
           return {
             kernelId: runtime.id,
             name: environment!.name,
@@ -96,65 +102,80 @@ export function getGroupedRuntimeDescs(
             podName: runtime.pod_name,
             gpu: environment.resources?.['nvidia.com/gpu'],
           } satisfies IDatalayerRuntimeDesc;
-        })
+        }),
     )
     .concat(
       Array.from(multiServiceManager.browser?.kernels.running() ?? [])
         .filter(k => !listedAsSession.includes(k.id))
         .map(k => {
-          const spec = multiServiceManager.browser!.kernelspecs.specs!.kernelspecs[k.name]!;
+          const spec =
+            multiServiceManager.browser!.kernelspecs.specs!.kernelspecs[
+              k.name
+            ]!;
           return {
             kernelId: k.id,
             name: spec!.name,
             language: spec!.language,
             displayName: spec!.display_name,
-            location: 'browser' as IRuntimeLocation
+            location: 'browser' as IRuntimeLocation,
           } satisfies IDatalayerRuntimeDesc;
-        })
+        }),
     )
     .filter(filterKernels);
   runningSessions.push(...runningKernels);
   if (runningSessions.length) {
-    const key = (variant === 'cell') ?
-      ASSIGN_EXISTING_REMOTE_RUNTIME_LABEL
-    :
-      ASSIGN_EXISTING_RUNTIME_LABEL;
+    const key =
+      variant === 'cell'
+        ? ASSIGN_EXISTING_REMOTE_RUNTIME_LABEL
+        : ASSIGN_EXISTING_RUNTIME_LABEL;
     kernels[key] = runningSessions;
   }
   // Environments.
   const environments = Object.values(specs.kernelspecs)
     .filter(spec => !!spec)
-    .map(spec => ({
-      name: spec!.name,
-      language: spec!.language,
-      displayName: spec!.display_name,
-      gpu: spec!.resources?.['nvidia.com/gpu'],
-      location: 'local' as IRuntimeLocation,
-    }) as IDatalayerRuntimeDesc)
+    .map(
+      spec =>
+        ({
+          name: spec!.name,
+          language: spec!.language,
+          displayName: spec!.display_name,
+          gpu: spec!.resources?.['nvidia.com/gpu'],
+          location: 'local' as IRuntimeLocation,
+        }) as IDatalayerRuntimeDesc,
+    )
     .filter(filterKernels);
   environments.push(
     ...(multiServiceManager.remote?.environments
       .get()
-      .map(spec => ({
-        name: spec!.name,
-        language: spec!.language,
-        displayName: spec!.title,
-        location: 'remote' as IRuntimeLocation,
-        gpu: spec!.resources?.['nvidia.com/gpu'],
-        burningRate: spec!.burning_rate
-      }) satisfies IDatalayerRuntimeDesc)
-      .filter(filterKernels) ?? [])
+      .map(
+        spec =>
+          ({
+            name: spec!.name,
+            language: spec!.language,
+            displayName: spec!.title,
+            location: 'remote' as IRuntimeLocation,
+            gpu: spec!.resources?.['nvidia.com/gpu'],
+            burningRate: spec!.burning_rate,
+          }) satisfies IDatalayerRuntimeDesc,
+      )
+      .filter(filterKernels) ?? []),
   );
   environments.push(
     ...Object.values(
-      multiServiceManager.browser?.kernelspecs.specs?.kernelspecs ?? {}
-    ).filter(spec => !!spec).map(spec =>({
-        name: spec!.name,
-        language: spec!.language,
-        displayName: spec!.display_name,
-        location: 'browser' as IRuntimeLocation
-      }) satisfies IDatalayerRuntimeDesc
-    ).filter(filterKernels));
+      multiServiceManager.browser?.kernelspecs.specs?.kernelspecs ?? {},
+    )
+      .filter(spec => !!spec)
+      .map(
+        spec =>
+          ({
+            name: spec!.name,
+            language: spec!.language,
+            displayName: spec!.display_name,
+            location: 'browser' as IRuntimeLocation,
+          }) satisfies IDatalayerRuntimeDesc,
+      )
+      .filter(filterKernels),
+  );
   if (environments.length) {
     kernels[trans.__(ASSIGN_NEW_RUNTIME_LABEL)] = environments;
   }
@@ -164,7 +185,9 @@ export function getGroupedRuntimeDescs(
 /**
  * Get the default kernel name given a selector.
  */
-export function getDefaultKernelName(selector: SessionContext.IKernelSearch): string | null {
+export function getDefaultKernelName(
+  selector: SessionContext.IKernelSearch,
+): string | null {
   const { specs, preference } = selector;
   const { name, language, canStart, autoStartDefault } = preference;
   if (!specs || canStart === false) {
@@ -194,7 +217,15 @@ export function getDefaultKernelName(selector: SessionContext.IKernelSearch): st
   }
   if (matches.length === 1) {
     const specName = matches[0];
-    console.warn('No exact match found for ' + specName + ', using runtime ' + specName + ' that matches ' + 'language=' + language);
+    console.warn(
+      'No exact match found for ' +
+        specName +
+        ', using runtime ' +
+        specName +
+        ' that matches ' +
+        'language=' +
+        language,
+    );
     return specName;
   }
   // No matches found.

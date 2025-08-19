@@ -3,13 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { SpaceMember } from "./SpaceMember";
-import { ISpaceItem } from "./SpaceItem";
-import { ICourse as ICourse } from "./Course";
-import { IOrganization } from "./Organization";
-import { asUser, IUser } from "./User";
-import { asArray } from "../utils";
-import { newUserMock } from './../mocks/models'
+import { SpaceMember } from './SpaceMember';
+import { ISpaceItem } from './SpaceItem';
+import { ICourse as ICourse } from './Course';
+import { IOrganization } from './Organization';
+import { asUser, IUser } from './User';
+import { asArray } from '../utils';
+import { newUserMock } from './../mocks/models';
 
 /**
  * Convert the raw space object to {@link ISpace}.
@@ -24,7 +24,7 @@ export const asSpace = (raw_space: any): ISpace => {
     members = asArray(raw_space.members).map(m => {
       const member: SpaceMember = asUser(m);
       return member;
-    })
+    });
   }
   const space: ISpace = {
     id: raw_space.uid,
@@ -39,15 +39,12 @@ export const asSpace = (raw_space: any): ISpace => {
     owner,
     organization: {
       handle: raw_space.handle_s,
-    }
-  }
+    },
+  };
   return space;
-}
+};
 
-export type ISpaceVariant =
-  | 'default'
-  | 'course'
-  ;
+export type ISpaceVariant = 'default' | 'course';
 
 export type IAnySpace = ISpace | ICourse;
 

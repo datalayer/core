@@ -3,23 +3,23 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import {useCallback, useEffect} from 'react'
+import { useCallback, useEffect } from 'react';
 
 export function useKeyboardEscape(handler) {
   const handleKeyboardEscape = useCallback(
     event => {
       if (event.key === 'Escape') {
-        handler()
+        handler();
       }
     },
-    [handler]
-  )
+    [handler],
+  );
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyboardEscape, false)
+    document.addEventListener('keydown', handleKeyboardEscape, false);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyboardEscape, false)
-    }
-  }, [handleKeyboardEscape])
+      document.removeEventListener('keydown', handleKeyboardEscape, false);
+    };
+  }, [handleKeyboardEscape]);
 }

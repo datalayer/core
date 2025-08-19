@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { JSONExt } from '@lumino/coreutils';
 import { Autocomplete, FormControl, TextInputWithTokens } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 
 /**
  * {@link KernelCellVariables} properties
@@ -64,7 +64,9 @@ type Datum = {
 /**
  * Kernel variables picker
  */
-export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Element {
+export function KernelCellVariables(
+  props: IKernelCellVariablesProps,
+): JSX.Element {
   const {
     getInputOptions,
     inputs,
@@ -72,29 +74,29 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
     getOutputOptions,
     output,
     setOutput,
-    translator
+    translator,
   } = props;
   const trans = useMemo(
     () => (translator ?? nullTranslator).load('jupyterlab'),
-    [translator]
+    [translator],
   );
   const inputForOutputRef = useRef<HTMLInputElement | null>(null);
   const [willSaveOutput, setWillSaveOutput] = useState(false);
   const [inputLoading, setInputLoading] = useState(!!getInputOptions);
   const [outputsState, setOutputsState] = useState<Datum[] | null>(null);
   const [inputsState, setInputsState] = useState<Datum[]>(
-    inputs.map(id => ({ id, text: id, selected: true }))
+    inputs.map(id => ({ id, text: id, selected: true })),
   );
   const [filterVal, setFilterVal] = useState<string>('');
   // Add inputs prop in inputsState
   useEffect(() => {
     const candidates = inputs.filter(
-      item => !inputsState.find(localItem => localItem.text === item)
+      item => !inputsState.find(localItem => localItem.text === item),
     );
     if (candidates.length) {
       setInputsState([
         ...inputsState,
-        ...candidates.map(text => ({ id: text, text, selected: true }))
+        ...candidates.map(text => ({ id: text, text, selected: true })),
       ]);
     }
   }, [inputs]);
@@ -123,8 +125,8 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
             .map(text => ({
               id: text,
               text,
-              selected: false
-            }))
+              selected: false,
+            })),
         ]);
         setInputLoading(false);
       });
@@ -154,8 +156,8 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
               .map(text => ({
                 id: text,
                 text,
-                selected: false
-              }))
+                selected: false,
+              })),
           );
         })
         .catch(err => {
@@ -172,7 +174,7 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
         setInputsState([...inputsState]);
       }
     },
-    [inputsState]
+    [inputsState],
   );
   const onSelectedInputsChange = useCallback(
     (newlySelectedItems: Datum | Datum[]) => {
@@ -184,11 +186,11 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
         ...inputsState.map(localItem =>
           selectedIds.includes(localItem.id)
             ? Object.assign(localItem, { selected: true })
-            : Object.assign(localItem, { selected: false })
-        )
+            : Object.assign(localItem, { selected: false }),
+        ),
       ]);
     },
-    [inputsState]
+    [inputsState],
   );
   const onItemSelect = useCallback(
     (item: Datum) => {
@@ -200,7 +202,7 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
         setInputsState([...inputsState]);
       }
     },
-    [inputsState]
+    [inputsState],
   );
   const handleChange = useCallback((e: any) => {
     if (e.currentTarget) {
@@ -229,7 +231,7 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
         setWillSaveOutput(false);
       }
     },
-    [willSaveOutput]
+    [willSaveOutput],
   );
   return (
     <Box as="form" sx={{ p: 3 }}>
@@ -256,10 +258,10 @@ export function KernelCellVariables(props: IKernelCellVariablesProps): JSX.Eleme
                         onItemSelect({
                           ...item,
                           text: filterVal,
-                          selected: true
+                          selected: true,
                         });
                         setFilterVal('');
-                      }
+                      },
                     }
                   : undefined
               }

@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ProgressBar, Tooltip, Button } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { useInterval } from 'usehooks-ts';
 
 const CRITICAL_LEVEL = 90;
@@ -60,19 +60,19 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
     onClick,
     onUpdate,
     refreshInterval = 2000,
-    style
+    style,
   } = props;
   const duration = useMemo(
     () => (expiredAt ? expiredAt - startedAt : Date.now() / 1000 - startedAt),
-    [expiredAt, startedAt]
+    [expiredAt, startedAt],
   );
   const [progress, setProgress] = useState<number>(
     expiredAt
       ? Math.min(
           Math.max(0, ((Date.now() / 1000 - startedAt) / duration!) * 100),
-          100
+          100,
         )
-      : 100
+      : 100,
   );
 
   useEffect(() => {
@@ -86,8 +86,8 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
       setProgress(
         Math.min(
           Math.max(0, ((Date.now() / 1000 - startedAt) / duration!) * 100),
-          100
-        )
+          100,
+        ),
       );
     }
   }, refreshInterval);

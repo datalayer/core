@@ -3,7 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-const EMAIL_REGEX = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const EMAIL_REGEX =
+  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 
 export const isValidEmail = (value?: string) => {
   if (!value) {
@@ -18,7 +19,10 @@ export const isValidEmail = (value?: string) => {
 /**
  * Verify if a string has a given length or not.
  */
-export const validateLength = (value: string | undefined, minLength: number) => {
+export const validateLength = (
+  value: string | undefined,
+  minLength: number,
+) => {
   if (!value) {
     return false;
   }

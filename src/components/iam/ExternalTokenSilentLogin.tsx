@@ -11,9 +11,11 @@ import { useToast, useIAM } from '../../hooks';
 
 type IExternalTokenSilentLoginProps = {
   message: string;
-}
+};
 
-const ExternalTokenSilentLoginRoute = (props: IExternalTokenSilentLoginProps) => {
+const ExternalTokenSilentLoginRoute = (
+  props: IExternalTokenSilentLoginProps,
+) => {
   const { message } = props;
   const { loginAndNavigate } = useIAM();
   const { logout, checkIAMToken, externalToken } = useIAMStore();
@@ -21,28 +23,33 @@ const ExternalTokenSilentLoginRoute = (props: IExternalTokenSilentLoginProps) =>
   useEffect(() => {
     if (externalToken) {
       loginAndNavigate(externalToken, logout, checkIAMToken)
-      .catch(error => {
-        console.debug('Failed to login with the provided token.', error);
-        enqueueToast('Failed to login with the provided token.', { variant: 'error' });
-      })
-      .finally(() => {
-        enqueueToast('Runtimes are available.', { variant: 'success' });
-      });
+        .catch(error => {
+          console.debug('Failed to login with the provided token.', error);
+          enqueueToast('Failed to login with the provided token.', {
+            variant: 'error',
+          });
+        })
+        .finally(() => {
+          enqueueToast('Runtimes are available.', { variant: 'success' });
+        });
     }
   }, [externalToken]);
-  return (
-    <CenteredSpinner size="small" message={message} />
-  )
-}
+  return <CenteredSpinner size="small" message={message} />;
+};
 
-export const ExternalTokenSilentLogin = (props: IExternalTokenSilentLoginProps) => {
+export const ExternalTokenSilentLogin = (
+  props: IExternalTokenSilentLoginProps,
+) => {
   return (
-    <MemoryRouter initialEntries={["/"]}>
+    <MemoryRouter initialEntries={['/']}>
       <Routes>
-        <Route path="*" element={<ExternalTokenSilentLoginRoute {...props} />} />
+        <Route
+          path="*"
+          element={<ExternalTokenSilentLoginRoute {...props} />}
+        />
       </Routes>
     </MemoryRouter>
-  )
-}
+  );
+};
 
 export default ExternalTokenSilentLogin;

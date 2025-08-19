@@ -4,16 +4,16 @@
  */
 
 /// <reference types="vitest/config" />
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
-import { treatAsCommonjs } from "vite-plugin-treat-umd-as-commonjs";
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
 
 // https://vite.dev/config/
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 const dirname =
-  typeof __dirname !== "undefined"
+  typeof __dirname !== 'undefined'
     ? __dirname
     : path.dirname(fileURLToPath(import.meta.url));
 
@@ -23,12 +23,12 @@ export default defineConfig({
     react(),
     treatAsCommonjs(),
     {
-      name: "raw-css-as-string",
-      enforce: "pre",
+      name: 'raw-css-as-string',
+      enforce: 'pre',
       async resolveId(source, importer) {
-        if (source.endsWith(".raw.css") && !source.includes("?raw")) {
+        if (source.endsWith('.raw.css') && !source.includes('?raw')) {
           // rewrite import to append ?raw query
-          const resolved = await this.resolve(source + "?raw", importer, {
+          const resolved = await this.resolve(source + '?raw', importer, {
             skipSelf: true,
           });
           if (resolved) return resolved.id;
@@ -38,11 +38,11 @@ export default defineConfig({
       },
     },
     {
-      name: "fix-text-query",
-      enforce: "pre",
+      name: 'fix-text-query',
+      enforce: 'pre',
       async resolveId(source, importer) {
-        if (source.includes("?text")) {
-          const fixed = source.replace("?text", "?raw");
+        if (source.includes('?text')) {
+          const fixed = source.replace('?text', '?raw');
           const resolved = await this.resolve(fixed, importer, {
             skipSelf: true,
           });
@@ -56,18 +56,18 @@ export default defineConfig({
     },
   ],
   define: {
-    global: "globalThis",
+    global: 'globalThis',
     __webpack_public_path__: '""',
   },
-  assetsInclude: ["**/*.whl", "**/*.raw.css"],
+  assetsInclude: ['**/*.whl', '**/*.raw.css'],
   build: {
     rollupOptions: {
       output: {
-        assetFileNames: (assetInfo) => {
+        assetFileNames: assetInfo => {
           if (/pypi\//.test(assetInfo.names[0])) {
-            return "pypi/[name][extname]";
+            return 'pypi/[name][extname]';
           }
-          return "assets/[name][extname]";
+          return 'assets/[name][extname]';
         },
       },
     },
@@ -76,52 +76,52 @@ export default defineConfig({
     alias: [
       {
         find: /^~(.*)$/,
-        replacement: "$1",
+        replacement: '$1',
       },
       {
-        find: "crypto",
-        replacement: "crypto-browserify",
+        find: 'crypto',
+        replacement: 'crypto-browserify',
       },
       {
-        find: "buffer",
-        replacement: "buffer",
+        find: 'buffer',
+        replacement: 'buffer',
       },
     ],
   },
   optimizeDeps: {
-    include: ["crypto-browserify", "buffer"],
+    include: ['crypto-browserify', 'buffer'],
     esbuildOptions: {
       loader: {
-        ".whl": "text",
+        '.whl': 'text',
       },
     },
   },
   test: {
     coverage: {
-      include: ["src/**/*"],
+      include: ['src/**/*'],
       exclude: [
-        "src/**/*.{test,spec}.{js,ts,tsx}",
-        "src/test-setup.ts",
-        "src/stories/**",
-        "src/main.tsx",
-        "src/vite-env.d.ts",
+        'src/**/*.{test,spec}.{js,ts,tsx}',
+        'src/test-setup.ts',
+        'src/stories/**',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
       ],
-      reporter: ["text", "html", "lcov"],
-      reportsDirectory: "./coverage",
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
     },
     server: {
       deps: {
-        external: ["@datalayer/jupyter-react", "@jupyter/web-components"],
+        external: ['@datalayer/jupyter-react', '@jupyter/web-components'],
       },
     },
     projects: [
       // Unit tests
       {
         test: {
-          name: "unit",
-          include: ["src/**/*.{test,spec}.{js,ts,tsx}"],
-          environment: "jsdom",
-          setupFiles: ["src/test-setup.ts"],
+          name: 'unit',
+          include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
+          environment: 'jsdom',
+          setupFiles: ['src/test-setup.ts'],
         },
       },
       // Storybook tests
@@ -131,22 +131,22 @@ export default defineConfig({
           // The plugin will run tests for the stories defined in your Storybook config
           // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
           storybookTest({
-            configDir: path.join(dirname, ".storybook"),
+            configDir: path.join(dirname, '.storybook'),
           }),
         ],
         test: {
-          name: "storybook",
+          name: 'storybook',
           browser: {
             enabled: true,
             headless: true,
-            provider: "playwright",
+            provider: 'playwright',
             instances: [
               {
-                browser: "chromium",
+                browser: 'chromium',
               },
             ],
           },
-          setupFiles: [".storybook/vitest.setup.ts"],
+          setupFiles: ['.storybook/vitest.setup.ts'],
         },
       },
     ],

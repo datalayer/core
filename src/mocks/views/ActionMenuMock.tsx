@@ -4,11 +4,19 @@
  */
 
 import { ActionMenu, ActionList } from '@primer/react';
-import { WorkflowIcon, ArchiveIcon, GearIcon, RocketIcon, CopyIcon, CommentIcon, BookIcon } from '@primer/octicons-react';
+import {
+  WorkflowIcon,
+  ArchiveIcon,
+  GearIcon,
+  RocketIcon,
+  CopyIcon,
+  CommentIcon,
+  BookIcon,
+} from '@primer/octicons-react';
 
 type Props = {
-  title: string
-}
+  title: string;
+};
 
 export const ActionMenuMock = (props: Props) => {
   const { title } = props;
@@ -66,7 +74,7 @@ export const ActionMenuMock = (props: Props) => {
         </ActionList>
       </ActionMenu.Overlay>
     </ActionMenu>
-  )
-}
+  );
+};
 
 export default ActionMenuMock;

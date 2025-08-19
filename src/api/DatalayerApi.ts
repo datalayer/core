@@ -31,7 +31,7 @@ export class RunResponseError extends Error {
         warnings,
         errors,
         exception,
-        traceback ?? ''
+        traceback ?? '',
       );
       return responseError;
     } catch (e) {
@@ -49,7 +49,7 @@ export class RunResponseError extends Error {
     warnings = undefined,
     errors = undefined,
     exceptionMessage = undefined,
-    traceback = ''
+    traceback = '',
   ) {
     super(message);
     this.name = 'RunResponseError';
@@ -137,7 +137,7 @@ export async function requestDatalayerAPI<T = any>({
   body,
   token,
   signal,
-  headers = {}
+  headers = {},
 }: IRequestDatalayerAPIOptions): Promise<T> {
   const headers_ = new Headers(headers);
   if (!headers_.has('Accept')) {
@@ -160,7 +160,7 @@ export async function requestDatalayerAPI<T = any>({
       credentials: 'include',
       mode: 'cors',
       cache: 'no-store',
-      signal
+      signal,
     });
   } catch (error) {
     throw new NetworkError(error as TypeError);
@@ -177,7 +177,7 @@ export async function requestDatalayerAPI<T = any>({
 async function wait_for_redirection(
   response: Response,
   url: string,
-  headers_: Headers
+  headers_: Headers,
 ) {
   let redirect = response.headers.get('Location');
   if (redirect) {
@@ -196,7 +196,7 @@ async function wait_for_redirection(
       headers: headers_,
       credentials: 'include',
       mode: 'cors',
-      cache: 'no-store'
+      cache: 'no-store',
     });
     if (!response.ok) {
       throw await RunResponseError.create(response);

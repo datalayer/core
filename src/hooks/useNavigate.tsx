@@ -3,13 +3,18 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useNavigate as useRouterNavigate } from "react-router-dom";
+import { useNavigate as useRouterNavigate } from 'react-router-dom';
 import { useLayoutStore } from '../state';
 
 export const useNavigate = () => {
   const routerNavigate = useRouterNavigate();
   const layoutStore = useLayoutStore();
-  const navigate = (location: string, e: any = undefined, resetPortals = true, options: any = undefined) => {
+  const navigate = (
+    location: string,
+    e: any = undefined,
+    resetPortals = true,
+    options: any = undefined,
+  ) => {
     if (e) {
       e.preventDefault();
     }

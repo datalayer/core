@@ -9,14 +9,26 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { Contents } from '@jupyterlab/services';
 import { PromiseDelegate } from '@lumino/coreutils';
-import { ActionList, ActionMenu, Heading, IconButton, Spinner, TreeView } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import {
+  ActionList,
+  ActionMenu,
+  Heading,
+  IconButton,
+  Spinner,
+  TreeView,
+} from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { Blankslate, Dialog } from '@primer/react/experimental';
 import { CounterClockWiseIcon } from '@datalayer/icons-react';
 import { useIsMounted } from 'usehooks-ts';
 import { useToast } from '../../hooks';
 import { UploadIconButton } from '../buttons';
-import { DirectoryItem, TreeItem, IContentsView, modelToView } from './ContentsItems';
+import {
+  DirectoryItem,
+  TreeItem,
+  IContentsView,
+  modelToView,
+} from './ContentsItems';
 
 /**
  * The maximum upload size (in bytes) for notebook version < 5.1.0
@@ -56,24 +68,31 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   const [children, setChildren] = useState<IContentsView[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<
-    (IContentsView & {
-      /**
-       * Refresh the model children.
-       */
-      refresh: () => void;
-    }) | null>(null);
-  const [contextMenuAnchor, setContextMenuAnchor] = useState<MutableRefObject<HTMLElement | null> | null>(null);
+    | (IContentsView & {
+        /**
+         * Refresh the model children.
+         */
+        refresh: () => void;
+      })
+    | null
+  >(null);
+  const [contextMenuAnchor, setContextMenuAnchor] =
+    useState<MutableRefObject<HTMLElement | null> | null>(null);
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
   const [copyToLocalConfirmation, setCopyToLocalConfirmation] = useState(false);
   const refresh = useCallback(() => {
-    contents.get('')
+    contents
+      .get('')
       .then(model => {
         setIsLoading(false);
         setChildren(modelToView(model.content, documentRegistry));
       })
       .catch(reason => {
         setIsLoading(false);
-        console.error(`Failed to fetch folder '' content for manager ${contents.serverSettings.appUrl}.`, reason);
+        console.error(
+          `Failed to fetch folder '' content for manager ${contents.serverSettings.appUrl}.`,
+          reason,
+        );
       });
   }, [contents]);
   useEffect(() => {
@@ -86,7 +105,9 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
     async (file: File) => {
       const checkIsMounted = () => {
         if (!isMounted()) {
-          return Promise.reject(`Failed to upload ${file.name}; StorageBrowser component is unmounted.`);
+          return Promise.reject(
+            `Failed to upload ${file.name}; StorageBrowser component is unmounted.`,
+          );
         }
       };
       checkIsMounted();
@@ -102,13 +123,17 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
       const name = file.name;
       const type = 'file';
       const format = 'base64';
-      const uploadChunk = async (blob: Blob, chunk?: number): Promise<Contents.IModel> => {
+      const uploadChunk = async (
+        blob: Blob,
+        chunk?: number,
+      ): Promise<Contents.IModel> => {
         checkIsMounted();
         const reader = new FileReader();
         reader.readAsDataURL(blob);
         await new Promise((resolve, reject) => {
           reader.onload = resolve;
-          reader.onerror = event => reject(`Failed to upload "${file.name}":` + event);
+          reader.onerror = event =>
+            reject(`Failed to upload "${file.name}":` + event);
         });
         checkIsMounted();
         // remove header https://stackoverflow.com/a/24289420/907060
@@ -121,17 +146,17 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
           content,
         };
         return await contents.save(path, model);
-      }
+      };
       const toastOptions = {
         error: {
           message: reason => {
             const msg = `Failed to upload ${file.name}.`;
             console.error(msg, reason);
             return msg;
-          }
+          },
         },
         pending: { message: `Uploading ${file.name}…` },
-        success: { message: () => `${file.name} uploaded.` }
+        success: { message: () => `${file.name} uploaded.` },
       } satisfies Notification.IPromiseOptions<any>;
       if (chunked) {
         const task = new PromiseDelegate<any>();
@@ -142,7 +167,10 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
             const end = start + CHUNK_SIZE;
             const lastChunk = end >= file.size;
             const chunk = lastChunk ? -1 : end / CHUNK_SIZE;
-            const currentModel = await uploadChunk(file.slice(start, end), chunk);
+            const currentModel = await uploadChunk(
+              file.slice(start, end),
+              chunk,
+            );
             if (lastChunk) {
               finalModel = currentModel;
               task.resolve(finalModel);
@@ -171,7 +199,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
         return task;
       }
     },
-    [contents, selectedItem, refresh]
+    [contents, selectedItem, refresh],
   );
   const onContextMenu = useCallback(
     (ref: MutableRefObject<HTMLElement | null>) => {
@@ -181,7 +209,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
         setContextMenuAnchor(ref);
       }
     },
-    [contextMenuAnchor]
+    [contextMenuAnchor],
   );
   const onSelectDelete = useCallback(() => {
     setOpenDeleteConfirmation(true);
@@ -192,11 +220,12 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
       trackAsyncTask(task, {
         success: { message: () => `${selectedItem.path} deleted.` },
         pending: { message: `Deleting ${selectedItem.path}…` },
-        error: { message: reason => {
+        error: {
+          message: reason => {
             const msg = `Failed to delete ${selectedItem.path}.`;
             console.error(msg, reason);
             return msg;
-          }
+          },
         },
       });
       task.finally(() => {
@@ -210,16 +239,17 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   }, []);
   const copyToLocal = useCallback(() => {
     if (selectedItem && localContents) {
-      contents.get(selectedItem.path).then((model) => {
+      contents.get(selectedItem.path).then(model => {
         const copyTask = localContents?.save(model.path, model);
         trackAsyncTask(copyTask, {
           success: { message: () => `${selectedItem.path} copied to local.` },
           pending: { message: `Copying to local ${selectedItem.path}…` },
-          error: { message: reason => {
+          error: {
+            message: reason => {
               const msg = `Failed to copy to local ${selectedItem.path}.`;
               console.error(msg, reason);
               return msg;
-            }
+            },
           },
         });
         copyTask.finally(() => {
@@ -231,9 +261,11 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   }, [localContents, selectedItem]);
   const onSelect = useCallback(
     (item: IContentsView, refresh: () => void) => {
-      setSelectedItem(item.path === selectedItem?.path ? null : { ...item, refresh });
+      setSelectedItem(
+        item.path === selectedItem?.path ? null : { ...item, refresh },
+      );
     },
-    [selectedItem]
+    [selectedItem],
   );
   return (
     <Box sx={{ display: 'grid', gridTemplateAreas: `"header" "content"` }}>
@@ -244,7 +276,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
             fontSize: 'var(--text-title-size-small)',
             lineHeight: 'var(--text-title-lineHeight-medium)',
             fontWeight: 'var(--text-title-weight-medium)',
-            flex: '1 1 auto'
+            flex: '1 1 auto',
           }}
         >
           Contents Browser
@@ -256,12 +288,8 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
             title={'Refresh contents browser.'}
             icon={CounterClockWiseIcon}
             onClick={refresh}
-          />          
-          <UploadIconButton
-            label={'Upload a file'}
-            multiple
-            upload={upload}
           />
+          <UploadIconButton label={'Upload a file'} multiple upload={upload} />
           {/*
             <IconButton
               aria-label={'Refresh'}
@@ -275,7 +303,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
           */}
         </Box>
       </Box>
-      {isLoading ?
+      {isLoading ? (
         <Box
           sx={{
             gridArea: 'content',
@@ -283,18 +311,18 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '40px',
-            height: '100vh'
+            height: '100vh',
           }}
         >
           <Spinner />
         </Box>
-      :
+      ) : (
         <Box sx={{ gridArea: 'content' }}>
-          {children ?
+          {children ? (
             <>
               <TreeView>
                 {children?.map(child => {
-                  return child.type === 'directory' ?
+                  return child.type === 'directory' ? (
                     <DirectoryItem
                       key={child.name}
                       item={child}
@@ -304,78 +332,101 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
                       onContextMenu={onContextMenu}
                       onSelect={onSelect}
                     />
-                  :
+                  ) : (
                     <TreeItem
                       key={child.name}
                       item={child}
                       current={selectedItem?.path === child.path}
-                      onSelect={item => {onSelect(item, refresh)}}
+                      onSelect={item => {
+                        onSelect(item, refresh);
+                      }}
                       onContextMenu={onContextMenu}
                     />
+                  );
                 })}
               </TreeView>
               <ActionMenu
                 anchorRef={contextMenuAnchor ?? undefined}
                 open={contextMenuAnchor?.current !== null}
-                onOpenChange={() => {setContextMenuAnchor(null)}}
+                onOpenChange={() => {
+                  setContextMenuAnchor(null);
+                }}
               >
                 <ActionMenu.Overlay>
                   <ActionList>
-                    <ActionList.Item title="Delete the active item." onSelect={onSelectDelete}>
+                    <ActionList.Item
+                      title="Delete the active item."
+                      onSelect={onSelectDelete}
+                    >
                       Delete…
                     </ActionList.Item>
-                    {localContents &&
-                      <ActionList.Item title="Copy the active item to the local drive." onSelect={onSelectCopyToLocal}>
+                    {localContents && (
+                      <ActionList.Item
+                        title="Copy the active item to the local drive."
+                        onSelect={onSelectCopyToLocal}
+                      >
                         Copy to local drive…
                       </ActionList.Item>
-                    }
+                    )}
                   </ActionList>
                 </ActionMenu.Overlay>
               </ActionMenu>
-              {openDeleteConfirmation &&
+              {openDeleteConfirmation && (
                 <Dialog
                   title="Confirm deletion"
-                  onClose={() => {setOpenDeleteConfirmation(false)}}
+                  onClose={() => {
+                    setOpenDeleteConfirmation(false);
+                  }}
                   footerButtons={[
                     {
                       buttonType: 'default',
                       content: 'Cancel',
-                      onClick: () => {setOpenDeleteConfirmation(false)}
+                      onClick: () => {
+                        setOpenDeleteConfirmation(false);
+                      },
                     },
                     {
                       buttonType: 'danger',
                       content: 'Delete',
-                      onClick: () => {deleteItem()}
-                    }
+                      onClick: () => {
+                        deleteItem();
+                      },
+                    },
                   ]}
                 >{`Are you sure you want to delete ${selectedItem?.path}?`}</Dialog>
-              }
-              {copyToLocalConfirmation &&
+              )}
+              {copyToLocalConfirmation && (
                 <Dialog
                   title="Confirm copy to local"
-                  onClose={() => {setCopyToLocalConfirmation(false)}}
+                  onClose={() => {
+                    setCopyToLocalConfirmation(false);
+                  }}
                   footerButtons={[
                     {
                       buttonType: 'default',
                       content: 'Cancel',
-                      onClick: () => {setCopyToLocalConfirmation(false)}
+                      onClick: () => {
+                        setCopyToLocalConfirmation(false);
+                      },
                     },
                     {
                       buttonType: 'danger',
                       content: 'Copy to local',
-                      onClick: () => {copyToLocal()}
-                    }
+                      onClick: () => {
+                        copyToLocal();
+                      },
+                    },
                   ]}
                 >{`Are you sure you want to copy to local ${selectedItem?.path}?`}</Dialog>
-              }
+              )}
             </>
-          :
+          ) : (
             <Blankslate>
               <Blankslate.Heading>No contents</Blankslate.Heading>
             </Blankslate>
-          }
+          )}
         </Box>
-      }
+      )}
     </Box>
   );
 }

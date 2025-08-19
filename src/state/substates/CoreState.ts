@@ -27,7 +27,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
     category: 'Datalayer',
     name: 'Datalayer Runtimes',
     icon: 'https://raw.githubusercontent.com/datalayer/icons/main/svg/data1/jupyter-base.svg',
-    rank: 1
+    rank: 1,
   },
   brand: {
     name: 'Datalayer',
@@ -40,22 +40,28 @@ let initialConfiguration: IDatalayerCoreConfig = {
     termsUrl: 'https://datalayer.app/terms',
     pricingUrl: 'https://datalayer.app/pricing',
     privacyUrl: 'https://datalayer.app/privacy',
-  }
-}
+  },
+};
 
 // Try loading initial state from datalayer-config-data element
 try {
   const rawConfig = document.getElementById('datalayer-config-data');
   if (rawConfig?.innerText) {
-    const htmlOverridingConfiguration = JSON.parse(rawConfig?.innerText || '{}') as IDatalayerCoreConfig;
+    const htmlOverridingConfiguration = JSON.parse(
+      rawConfig?.innerText || '{}',
+    ) as IDatalayerCoreConfig;
     if (htmlOverridingConfiguration.loadConfigurationFromServer != undefined) {
-      loadConfigurationFromServer = htmlOverridingConfiguration.loadConfigurationFromServer;
+      loadConfigurationFromServer =
+        htmlOverridingConfiguration.loadConfigurationFromServer;
     }
     initialConfiguration = {
       ...initialConfiguration,
       ...htmlOverridingConfiguration,
     };
-    console.log('Datalayer configuration loaded from HTML page', initialConfiguration);
+    console.log(
+      'Datalayer configuration loaded from HTML page',
+      initialConfiguration,
+    );
     window.document.title = `${initialConfiguration.brand.name} Ξ ${initialConfiguration.brand.about}`;
   }
 } catch (error) {
@@ -80,7 +86,9 @@ export type DatalayerCoreState = {
   version: string;
   setVersion: (version: string) => void;
   loadConfigurationFromServer: boolean;
-  setLoadConfigurationFromServer: (loadConfigurationFromServer: boolean) => void;
+  setLoadConfigurationFromServer: (
+    loadConfigurationFromServer: boolean,
+  ) => void;
 };
 
 export const coreStore = createStore<DatalayerCoreState>((set, get) => ({
@@ -93,8 +101,8 @@ export const coreStore = createStore<DatalayerCoreState>((set, get) => ({
     set(state => ({
       configuration: {
         ...state.configuration,
-        ...configuration
-      }
+        ...configuration,
+      },
     }));
   },
   version: '',

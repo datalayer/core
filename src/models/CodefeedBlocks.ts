@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { CodeBlock } from "./CodeBlock";
+import { CodeBlock } from './CodeBlock';
 
 export type ICodefeedBlocks = {
   id: string;
-  type: "codefeed";
+  type: 'codefeed';
   blocks: CodeBlock[];
 };
 

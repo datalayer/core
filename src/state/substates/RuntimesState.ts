@@ -10,8 +10,12 @@ import { JSONExt } from '@lumino/coreutils';
 import { Poll } from '@lumino/polling';
 import type { IMultiServiceManager } from '../../api';
 import { getRuntimes } from '../../api';
-import type { IRuntimesConfiguration } from '../../config/Configuration';
-import type { IRuntimePod, IRuntimeSnapshot, IRuntimeModel } from '../../models';
+import type { IRuntimesConfiguration } from '../../config';
+import type {
+  IRuntimePod,
+  IRuntimeSnapshot,
+  IRuntimeModel,
+} from '../../models';
 import { coreStore } from './CoreState';
 import { iamStore } from './IAMState';
 
@@ -100,13 +104,13 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
   return {
     configuration: {
       maxNotebookRuntimes: 5,
-      maxCellRuntimes: 3
+      maxCellRuntimes: 3,
     },
     setConfiguration: (configuration: IRuntimesConfiguration) => {
       set(state =>
         JSONExt.deepEqual(state.configuration as any, configuration as any)
           ? {}
-          : { configuration: { ...configuration } }
+          : { configuration: { ...configuration } },
       );
     },
     runtimesRunUrl: coreStore.getState().configuration?.runtimesRunUrl,
@@ -212,7 +216,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
       if (version && !get().version) {
         set(state => ({ version }));
       }
-    }
+    },
   };
 });
 
@@ -223,49 +227,45 @@ const kernelsPoll = new Poll({
   frequency: {
     interval: 61 * 1000,
     backoff: true,
-    max: 300 * 1000
+    max: 300 * 1000,
   },
   name: '@datalayer/jupyter-kernels:KernelsManager#kernels',
   standby: () =>
     iamStore.getState().token || runtimesStore.getState().runtimesRunUrl
       ? 'when-hidden'
-      : true
+      : true,
 });
 
 // Force refresh at expiration date if next tick is after it.
-runtimesStore.subscribe(
-  (state: RuntimesState, prevState: RuntimesState) => {
-    if (
-      !JSONExt.deepEqual(
-        state.runtimePods as any,
-        prevState.runtimePods as any
-      )
-    ) {
-      const now = Date.now();
-      const minExpiredAt =
-        Math.min(
-          ...state.runtimePods.map(kernel =>
-            kernel.expired_at ? parseFloat(kernel.expired_at) : Infinity
-          )
-        ) * 1_000;
-      // Refresh 2 sec after the closest expiration time
-      // to let some times to the system to dispose the resources.
-      if (now + kernelsPoll.frequency.interval > minExpiredAt + 2_000) {
-        setTimeout(
-          () => {
-            kernelsPoll.refresh();
-          },
-          minExpiredAt + 2_000 - now
-        );
-      }
+runtimesStore.subscribe((state: RuntimesState, prevState: RuntimesState) => {
+  if (
+    !JSONExt.deepEqual(state.runtimePods as any, prevState.runtimePods as any)
+  ) {
+    const now = Date.now();
+    const minExpiredAt =
+      Math.min(
+        ...state.runtimePods.map(kernel =>
+          kernel.expired_at ? parseFloat(kernel.expired_at) : Infinity,
+        ),
+      ) * 1_000;
+    // Refresh 2 sec after the closest expiration time
+    // to let some times to the system to dispose the resources.
+    if (now + kernelsPoll.frequency.interval > minExpiredAt + 2_000) {
+      setTimeout(
+        () => {
+          kernelsPoll.refresh();
+        },
+        minExpiredAt + 2_000 - now,
+      );
     }
   }
-);
+});
 
 coreStore.subscribe((state, prevState) => {
   if (
     state.configuration.runtimesRunUrl &&
-    state.configuration.runtimesRunUrl !== prevState.configuration.runtimesRunUrl
+    state.configuration.runtimesRunUrl !==
+      prevState.configuration.runtimesRunUrl
   ) {
     const runtimesRunUrl = state.configuration.runtimesRunUrl;
     console.log(`Updating runtimesRunUrl with new value ${runtimesRunUrl}`);
@@ -276,7 +276,7 @@ coreStore.subscribe((state, prevState) => {
       .catch(reason => {
         console.error(
           'Failed to refresh kernel servers list following service URL changed.',
-          reason
+          reason,
         );
       });
   }

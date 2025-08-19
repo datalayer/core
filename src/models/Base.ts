@@ -17,7 +17,7 @@ export type IIAMResponseType = {
   success: boolean;
   user: IUser;
   token?: string;
-  provided_token?: string,
-  provided_token_issuer?: string,
-  is_provided_token_external?: boolean,
-}
+  provided_token?: string;
+  provided_token_issuer?: string;
+  is_provided_token_external?: boolean;
+};

@@ -29,6 +29,12 @@ jobs:
     - name: Run linting
       run: npm run lint
 
+    - name: Run Format
+      run: npm run format
+  
+    - name: Run type checks
+      run: npm run type-check
+
     - name: Run unit tests
       run: npm test
 

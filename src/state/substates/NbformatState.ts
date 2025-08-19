@@ -8,11 +8,11 @@ import { useStore } from 'zustand';
 
 type SaveRequest = {
   counter: number;
-}
+};
 
 export type INbformatState = {
   saveRequest: SaveRequest;
-}
+};
 
 export type NbformatState = INbformatState & {
   save: (saveRequest: SaveRequest) => void;
@@ -22,7 +22,8 @@ export const nbformatStore = createStore<NbformatState>((set, get) => ({
   saveRequest: {
     counter: -1,
   },
-  save: (saveRequest: SaveRequest) => set((state: NbformatState) => ({ saveRequest })),
+  save: (saveRequest: SaveRequest) =>
+    set((state: NbformatState) => ({ saveRequest })),
 }));
 
 export function useNbformatStore(): NbformatState;

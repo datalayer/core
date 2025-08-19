@@ -13,7 +13,11 @@ import { CloudIcon, EyeIcon, UnfoldIcon } from '@primer/octicons-react';
 import { BrowserIcon, PlusIcon } from '@datalayer/icons-react';
 import { ArtifactIcon } from '../../components/icons';
 import { KernelLauncherDialog } from '../../components/runtimes';
-import { IRuntimeModel, type IRuntimeDesc, type IRuntimeLocation } from '../../models';
+import {
+  IRuntimeModel,
+  type IRuntimeDesc,
+  type IRuntimeLocation,
+} from '../../models';
 import { useRuntimesStore } from '../../state';
 
 export interface IRuntimeAssignOptions {
@@ -60,23 +64,32 @@ enum RuntimeDialogCause {
   /**
    * Transfer the state from the current Runtime to a new Remote Runtime.
    */
-  Transfer = 2
+  Transfer = 2,
 }
 
 /**
  * Runtime simple picker component.
  */
-export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Element {
+export function RuntimeSimplePicker(
+  props: IRuntimeSimplePickerProps,
+): JSX.Element {
   const { assignRuntime, sessionConnection } = props;
-  const { runtimeModels, multiServiceManager, jupyterLabAdapter } = useRuntimesStore();
+  const { runtimeModels, multiServiceManager, jupyterLabAdapter } =
+    useRuntimesStore();
   const [runtimeLocation, setRuntimeLocation] = useState<IRuntimeLocation>();
-  const [luminoServices, setLuminoServices] = useState<{ [k: string]: any }>({});
-  const [dialogCause, setDialogCause] = useState<RuntimeDialogCause>(RuntimeDialogCause.None);
+  const [luminoServices, setLuminoServices] = useState<{ [k: string]: any }>(
+    {},
+  );
+  const [dialogCause, setDialogCause] = useState<RuntimeDialogCause>(
+    RuntimeDialogCause.None,
+  );
   const [status, setStatus] = useState('');
   useEffect(() => {
     if (sessionConnection) {
       function onStatusChanged(connection: Session.ISessionConnection) {
-        setStatus(`Runtime ${connection.kernel?.connectionStatus} - Status: ${connection.kernel?.status}`);
+        setStatus(
+          `Runtime ${connection.kernel?.connectionStatus} - Status: ${connection.kernel?.status}`,
+        );
       }
       onStatusChanged(sessionConnection);
       sessionConnection?.statusChanged.connect(onStatusChanged);
@@ -108,7 +121,7 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                 runtimeDesc,
                 runtimeModel: multiServiceManager?.remote?.runtimesManager
                   .get()
-                  .find(model => model.id === runtimeDesc.kernelId)
+                  .find(model => model.id === runtimeDesc.kernelId),
               });
             });
             break;
@@ -120,17 +133,17 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
       }
       setDialogCause(RuntimeDialogCause.None);
     },
-    [refreshRemoteKernels, multiServiceManager?.remote, dialogCause]
+    [refreshRemoteKernels, multiServiceManager?.remote, dialogCause],
   );
   useEffect(() => {
     if (jupyterLabAdapter) {
       Promise.all([
         jupyterLabAdapter.jupyterLab.resolveOptionalService(IMarkdownParser),
-        jupyterLabAdapter.jupyterLab.resolveOptionalService(ISanitizer)
+        jupyterLabAdapter.jupyterLab.resolveOptionalService(ISanitizer),
       ]).then(services => {
         setLuminoServices({
           [IMarkdownParser.name]: services[0],
-          [ISanitizer.name]: services[1]
+          [ISanitizer.name]: services[1],
         });
       });
     } else {
@@ -153,13 +166,13 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
             return <ArtifactIcon type="runtime" />;
           }}
           trailingVisual={() =>
-            sessionConnection
-              ?
-                <Box sx={{ paddingTop: '5px' }}>
-                  <KernelIndicator kernel={sessionConnection.kernel} />
-                </Box>
-              :
-                <></>
+            sessionConnection ? (
+              <Box sx={{ paddingTop: '5px' }}>
+                <KernelIndicator kernel={sessionConnection.kernel} />
+              </Box>
+            ) : (
+              <></>
+            )
           }
           size="small"
           variant="invisible"
@@ -174,7 +187,10 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
           <ActionList selectionVariant="single" showDividers>
             <ActionList.Group>
               <ActionList.Item
-                selected={runtimeLocation === undefined && sessionConnection === undefined}
+                selected={
+                  runtimeLocation === undefined &&
+                  sessionConnection === undefined
+                }
                 onSelect={() => {
                   setRuntimeLocation(undefined);
                   assignRuntime({ runtimeDesc: undefined });
@@ -196,8 +212,8 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                     runtimeDesc: {
                       name: 'pyodide',
                       location: 'browser',
-                      language: 'python'
-                    }
+                      language: 'python',
+                    },
                   });
                 }}
               >
@@ -212,11 +228,15 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
             </ActionList.Group>
             {runtimeModels.length > 0 && (
               <ActionList.Group>
-                <ActionList.GroupHeading>Cloud Runtimes</ActionList.GroupHeading>
+                <ActionList.GroupHeading>
+                  Cloud Runtimes
+                </ActionList.GroupHeading>
                 {runtimeModels.map(kernelModel => {
                   return (
                     <ActionList.Item
-                      selected={sessionConnection?.kernel?.id === kernelModel.id}
+                      selected={
+                        sessionConnection?.kernel?.id === kernelModel.id
+                      }
                       onSelect={() => {
                         setRuntimeLocation('remote');
                         assignRuntime({
@@ -227,15 +247,15 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                             displayName: kernelModel.given_name,
                             kernelId: kernelModel.id,
                             burningRate: kernelModel.burning_rate,
-                            podName: kernelModel.pod_name
+                            podName: kernelModel.pod_name,
                           },
-                          runtimeModel: kernelModel
+                          runtimeModel: kernelModel,
                         });
                       }}
                       key={kernelModel.id}
                     >
                       <ActionList.LeadingVisual>
-                        <ArtifactIcon type="runtime"/>
+                        <ArtifactIcon type="runtime" />
                       </ActionList.LeadingVisual>
                       {kernelModel.given_name}
                       <ActionList.Description variant="block">
@@ -266,7 +286,7 @@ export function RuntimeSimplePicker(props: IRuntimeSimplePickerProps): JSX.Eleme
                 title="Transfer the state of the current Runtime to a new Remote Runtime."
               >
                 <ActionList.LeadingVisual>
-                  <UnfoldIcon/>
+                  <UnfoldIcon />
                 </ActionList.LeadingVisual>
                 Transfer state to a new Runtime…
               </ActionList.Item>

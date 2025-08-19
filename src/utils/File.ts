@@ -5,7 +5,7 @@
 
 /**
  * creates name of file.
- * 
+ *
  * @param {string} extension
  * @param {string[]} parts of file name
  */
@@ -14,5 +14,4 @@ export const createFileName = (extension = '', ...names) => {
     return '';
   }
   return `${names.join('')}.${extension}`;
-}
-
+};

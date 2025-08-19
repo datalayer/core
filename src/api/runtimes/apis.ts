@@ -10,7 +10,14 @@ import { ISessionContext } from '@jupyterlab/apputils';
 import { ServiceManager, Kernel, ServerConnection } from '@jupyterlab/services';
 import { IDisposable } from '@lumino/disposable';
 import { ISignal } from '@lumino/signaling';
-import type { IRuntimeSnapshot, IRuntimeCapabilities, IRuntimeModel, IDatalayerEnvironment, IRuntimeType, IRuntimeLocation } from '../../models';
+import type {
+  IRuntimeSnapshot,
+  IRuntimeCapabilities,
+  IRuntimeModel,
+  IDatalayerEnvironment,
+  IRuntimeType,
+  IRuntimeLocation,
+} from '../../models';
 
 /**
  * Abstract interface for the Datalayer session context.
@@ -58,7 +65,10 @@ export interface IEnvironmentsManager extends IDisposable {
   /**
    * Signal emitted when the environments changes.
    */
-  readonly changed: ISignal<IEnvironmentsManager, readonly IDatalayerEnvironment[]>;
+  readonly changed: ISignal<
+    IEnvironmentsManager,
+    readonly IDatalayerEnvironment[]
+  >;
 
   /**
    * A signal emitted when there is a connection failure.
@@ -152,7 +162,7 @@ export interface IRemoteRuntimesManager extends IDisposable {
     connectOptions?: Omit<
       Kernel.IKernelConnection.IOptions,
       'model' | 'serverSettings'
-    >
+    >,
   ): Promise<Kernel.IKernelConnection>;
 
   /**
@@ -171,7 +181,9 @@ export interface IRemoteRuntimesManager extends IDisposable {
    *
    * @returns A promise that resolves with the new kernel instance.
    */
-  connectTo(options: Kernel.IKernelConnection.IOptions): Kernel.IKernelConnection;
+  connectTo(
+    options: Kernel.IKernelConnection.IOptions,
+  ): Kernel.IKernelConnection;
 
   /**
    * Shut down a kernel by id.
@@ -259,7 +271,7 @@ export interface IRemoteServicesManager extends IDisposable {
    * The remote runtimes manager.
    */
   readonly runtimesManager: IRemoteRuntimesManager;
-  
+
   /**
    * The server settings.
    */
@@ -302,7 +314,10 @@ export interface IMultiServiceManager extends ServiceManager.IManager {
   /**
    * Signal emitted when the browser services changes.
    */
-  readonly browserChanged: ISignal<ServiceManager.IManager, ServiceManager.IManager | undefined>;
+  readonly browserChanged: ISignal<
+    ServiceManager.IManager,
+    ServiceManager.IManager | undefined
+  >;
 
   /**
    * Classical Service manager on the Local Jupyter server.
@@ -317,5 +332,8 @@ export interface IMultiServiceManager extends ServiceManager.IManager {
   /**
    * Signal emitted when the remote services changes.
    */
-  readonly remoteChanged: ISignal<ServiceManager.IManager, IRemoteServicesManager | undefined>;
+  readonly remoteChanged: ISignal<
+    ServiceManager.IManager,
+    IRemoteServicesManager | undefined
+  >;
 }

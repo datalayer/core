@@ -8,18 +8,13 @@ import { IUser, asUser } from './User';
 import { PageTagName } from './PageTag';
 import { asRuntimeSnapshot, IRuntimeSnapshot } from './RuntimeSnapshot';
 
-export type PageTheme = 
-  'default';
+export type PageTheme = 'default';
 
-export type PageVariant =
-  'document' |
-  'cell' |
-  'notebook'
-  ;
+export type PageVariant = 'document' | 'cell' | 'notebook';
 
 /**
  * Page attributes.
- * 
+ *
  * - Notebook
  * - Screen Capture
  * - Theme
@@ -40,7 +35,7 @@ export type IPage = {
   tags: Array<PageTagName>;
   nbformat: INotebookContent;
   screenCapture?: string;
-  creator?: IUser,
+  creator?: IUser;
   creatorId?: string;
   kernelSnapshot?: IRuntimeSnapshot;
   kernelSnapshotId?: string;
@@ -56,12 +51,14 @@ export const asPage = (s: any): IPage => {
     theme: s.theme_s,
     nbformat: s.nbformat_s ? JSON.parse(s.nbformat_s) : undefined,
     screenCapture: s.screen_capture_s,
-    tags: (s.tags_ss ?? []),
+    tags: s.tags_ss ?? [],
     creator: s.creator ? asUser(s.creator) : undefined,
     creatorId: s.creator_uid,
-    kernelSnapshot: s.kernel_snapshot ? asRuntimeSnapshot(s.kernel_snapshot) : undefined,
+    kernelSnapshot: s.kernel_snapshot
+      ? asRuntimeSnapshot(s.kernel_snapshot)
+      : undefined,
     kernelSnapshotId: s.kernel_snapshot_uid,
-  }
-}
+  };
+};
 
 export default IPage;

@@ -19,7 +19,6 @@ export class Inbound implements IInbound {
     this.creationDate = new Date(u.creationDate);
     this.lastUpdateDate = new Date(u.lastUpdateDate);
   }
-
 }
 
 /**
@@ -39,6 +38,6 @@ export type IInbound = {
   payloadJson: string;
   creationDate?: Date;
   lastUpdateDate?: Date;
-}
+};
 
 export default IInbound;

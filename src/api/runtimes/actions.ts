@@ -9,9 +9,18 @@
 import { URLExt } from '@jupyterlab/coreutils';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Upload } from 'tus-js-client';
-import { IRuntimeOptions, requestDatalayerAPI, type RunResponseError } from '..';
+import {
+  IRuntimeOptions,
+  requestDatalayerAPI,
+  type RunResponseError,
+} from '..';
 import { asRuntimeSnapshot } from '../../models';
-import type { IRuntimeSnapshot, IAPIRuntimeSnapshot, IDatalayerEnvironment, IRuntimePod } from '../../models';
+import type {
+  IRuntimeSnapshot,
+  IAPIRuntimeSnapshot,
+  IDatalayerEnvironment,
+  IRuntimePod,
+} from '../../models';
 import { iamStore, runtimesStore } from '../../state';
 import { sleep } from '../../utils';
 
@@ -26,9 +35,9 @@ export async function getEnvironments(): Promise<IDatalayerEnvironment[]> {
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/environments'
+      'api/runtimes/v1/environments',
     ),
-    token: iamStore.getState().token
+    token: iamStore.getState().token,
   });
   if (!data.success) {
     console.error('Failed to fetch available environments.', data);
@@ -40,13 +49,15 @@ export async function getEnvironments(): Promise<IDatalayerEnvironment[]> {
 /**
  * Create a Runtime.
  */
-export async function createRuntime(options: IRuntimeOptions): Promise<IRuntimePod> {
+export async function createRuntime(
+  options: IRuntimeOptions,
+): Promise<IRuntimePod> {
   const { externalToken, token } = iamStore.getState();
   const body: Record<string, unknown> = {
     environment_name: options.environmentName,
     type: options.type ?? 'notebook',
     given_name: options.givenName,
-    credits_limit: options.creditsLimit
+    credits_limit: options.creditsLimit,
   };
   if (options.capabilities) {
     body['capabilities'] = options.capabilities;
@@ -59,16 +70,19 @@ export async function createRuntime(options: IRuntimeOptions): Promise<IRuntimeP
     message: string;
     runtime?: IRuntimePod;
   }>({
-    url: URLExt.join(runtimesStore.getState().runtimesRunUrl, `api/runtimes/v1/runtimes`),
+    url: URLExt.join(
+      runtimesStore.getState().runtimesRunUrl,
+      `api/runtimes/v1/runtimes`,
+    ),
     method: 'POST',
     body,
     token: token,
     // externalToken may be needed for addons (like credits...).
-    headers: externalToken ?
-      {
-        'X-External-Token': externalToken
-      }
-    : undefined
+    headers: externalToken
+      ? {
+          'X-External-Token': externalToken,
+        }
+      : undefined,
   });
   if (!data.success || !data.runtime) {
     const msg = `Failed to create a kernel for the environment ${options.environmentName}.`;
@@ -87,8 +101,11 @@ export async function getRuntimes(): Promise<IRuntimePod[]> {
     message: string;
     runtimes?: IRuntimePod[];
   }>({
-    url: URLExt.join(runtimesStore.getState().runtimesRunUrl, 'api/runtimes/v1/runtimes'),
-    token: iamStore.getState().token
+    url: URLExt.join(
+      runtimesStore.getState().runtimesRunUrl,
+      'api/runtimes/v1/runtimes',
+    ),
+    token: iamStore.getState().token,
   });
   if (!data.success) {
     const msg = 'Failed to list the running kernels.';
@@ -114,17 +131,21 @@ export async function deleteRuntime(options: {
   const externalToken = iamStore.getState().externalToken;
   await requestDatalayerAPI({
     url:
-      URLExt.join(runtimesStore.getState().runtimesRunUrl, `api/runtimes/v1/runtimes/${options.id}`) +
-      URLExt.objectToQueryString(options.reason ? { reason: options.reason } : {}),
+      URLExt.join(
+        runtimesStore.getState().runtimesRunUrl,
+        `api/runtimes/v1/runtimes/${options.id}`,
+      ) +
+      URLExt.objectToQueryString(
+        options.reason ? { reason: options.reason } : {},
+      ),
     method: 'DELETE',
     token: iamStore.getState().token,
     // externalToken may be needed for addons (like credits...).
-    headers: externalToken ?
-      {
-        'X-External-Token': externalToken
-      }
-    :
-      undefined
+    headers: externalToken
+      ? {
+          'X-External-Token': externalToken,
+        }
+      : undefined,
   });
 }
 
@@ -156,19 +177,21 @@ export async function snapshotRuntime(options: {
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/runtime-snapshots'
+      'api/runtimes/v1/runtime-snapshots',
     ),
     method: 'POST',
     body: {
       pod_name: options.id,
       name: options.name,
       description: options.description,
-      stop: options.stop
+      stop: options.stop,
     },
-    token: iamStore.getState().token
+    token: iamStore.getState().token,
   });
   if (!data.success || !data.snapshot) {
-    throw new Error(`Failed to pause the kernel snapshot ${options.id} - ${data}`);
+    throw new Error(
+      `Failed to pause the kernel snapshot ${options.id} - ${data}`,
+    );
   }
   return asRuntimeSnapshot(data.snapshot);
 }
@@ -184,9 +207,9 @@ export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/runtime-snapshots'
+      'api/runtimes/v1/runtime-snapshots',
     ),
-    token: iamStore.getState().token
+    token: iamStore.getState().token,
   });
   if (!data.success) {
     console.error('Failed to fetch kernel snapshots.', data);
@@ -215,13 +238,13 @@ export async function loadRuntimeSnapshot(options: {
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
       'api/runtimes/v1/runtimes',
-      options.id
+      options.id,
     ),
     method: 'PUT',
     body: {
-      from: options.from
+      from: options.from,
     },
-    token: iamStore.getState().token
+    token: iamStore.getState().token,
   });
 
   if (!data.success) {
@@ -239,11 +262,11 @@ export function createRuntimeSnapshotDownloadURL(id: string): string {
   return (
     URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      `api/runtimes/v1/runtime-snapshots/${id}`
+      `api/runtimes/v1/runtime-snapshots/${id}`,
     ) +
     URLExt.objectToQueryString({
       download: '1',
-      token: iamStore.getState().token ?? ''
+      token: iamStore.getState().token ?? '',
     })
   );
 }
@@ -272,9 +295,12 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
     message: string;
     snapshots?: IAPIRuntimeSnapshot[];
   }>({
-    url: URLExt.join(runtimesStore.getState().runtimesRunUrl, `api/runtimes/v1/runtime-snapshots/${id}`),
+    url: URLExt.join(
+      runtimesStore.getState().runtimesRunUrl,
+      `api/runtimes/v1/runtime-snapshots/${id}`,
+    ),
     method: 'DELETE',
-    token: iamStore.getState().token
+    token: iamStore.getState().token,
   });
 
   // Poll Runtime Snapshot state up-to its deletion
@@ -290,9 +316,9 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
       }>({
         url: URLExt.join(
           runtimesStore.getState().runtimesRunUrl,
-          `api/runtimes/v1/runtime-snapshots/${id}`
+          `api/runtimes/v1/runtime-snapshots/${id}`,
         ),
-        token: iamStore.getState().token
+        token: iamStore.getState().token,
       });
       if (response.success === false) {
         throw new Error(response.message);
@@ -315,7 +341,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
  */
 export async function updateRuntimeSnapshot(
   id: string,
-  metadata: { name?: string, description?: string }
+  metadata: { name?: string; description?: string },
 ): Promise<void> {
   if (metadata.name || metadata.description) {
     await requestDatalayerAPI<{
@@ -325,11 +351,11 @@ export async function updateRuntimeSnapshot(
     }>({
       url: URLExt.join(
         runtimesStore.getState().runtimesRunUrl,
-        `api/runtimes/v1/runtime-snapshots/${id}`
+        `api/runtimes/v1/runtime-snapshots/${id}`,
       ),
       method: 'PATCH',
       body: { ...metadata },
-      token: iamStore.getState().token
+      token: iamStore.getState().token,
     });
   }
 }
@@ -368,7 +394,7 @@ export async function uploadRuntimeSnapshot(options: {
     // Callback for once the upload is completed.
     onSuccess: () => {
       tracker.resolve();
-    }
+    },
   });
   // Check if there are any previous uploads to continue then start the upload.
   const previousUploads = await upload.findPreviousUploads();

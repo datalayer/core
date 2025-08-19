@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Member } from "./Member";
-import { IOrganization } from "./Organization";
+import { Member } from './Member';
+import { IOrganization } from './Organization';
 
 export type IOrganizationMember = Member & {
   organization?: IOrganization;

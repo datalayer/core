@@ -3,10 +3,19 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { CircleCurrentColorIcon, CircleGreenIcon, CircleOrangeIcon } from '@datalayer/icons-react';
+import {
+  CircleCurrentColorIcon,
+  CircleGreenIcon,
+  CircleOrangeIcon,
+} from '@datalayer/icons-react';
 import { Text } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
-import { Sparklines, SparklinesBars, SparklinesLine, SparklinesReferenceLine } from 'react-sparklines';
+import { Box } from '@datalayer/primer-addons';
+import {
+  Sparklines,
+  SparklinesBars,
+  SparklinesLine,
+  SparklinesReferenceLine,
+} from 'react-sparklines';
 import { DatalayerThemeProvider } from '../../theme';
 
 function boxMullerRandom() {

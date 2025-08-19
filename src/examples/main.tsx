@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { 
+import {
   loadJupyterConfig,
   JupyterReactTheme,
   createServerSettings,
@@ -23,20 +23,22 @@ import { createDatalayerServiceManager } from '../services/DatalayerServiceManag
 // Load configurations from DOM
 const loadConfigurations = () => {
   // Load Datalayer configuration
-  const datalayerConfigElement = document.getElementById('datalayer-config-data');
+  const datalayerConfigElement = document.getElementById(
+    'datalayer-config-data',
+  );
   if (datalayerConfigElement?.textContent) {
     try {
       const datalayerConfig = JSON.parse(datalayerConfigElement.textContent);
       if (datalayerConfig.runUrl) {
         console.log('Setting Datalayer config:', datalayerConfig);
         datalayerStore.getState().setDatalayerConfig(datalayerConfig);
-        
+
         // Also set the token in the IAM store for API authentication
         if (datalayerConfig.token) {
           // Use the setLogin method to set the token in IAM store
           // For now, we'll just set a minimal user object since we don't have full user data
           iamStore.getState().setLogin(
-            { 
+            {
               id: 'example-id',
               handle: 'example-user',
               email: 'example@datalayer.com',
@@ -51,9 +53,9 @@ const loadConfigurations = () => {
               settings: {} as any,
               unsubscribedFromOutbounds: false,
               onboarding: {} as any,
-              events: []
+              events: [],
             },
-            datalayerConfig.token
+            datalayerConfig.token,
           );
         }
       }
@@ -64,7 +66,7 @@ const loadConfigurations = () => {
 
   // Load Jupyter configuration
   loadJupyterConfig();
-  
+
   // Also set Jupyter server URL and token if available in jupyter-config-data
   const jupyterConfigElement = document.getElementById('jupyter-config-data');
   if (jupyterConfigElement?.textContent) {
@@ -84,10 +86,12 @@ const loadConfigurations = () => {
 
 // Main App component that loads and renders the selected example
 const ExampleApp: React.FC = () => {
-  const [ExampleComponent, setExampleComponent] = useState<React.ComponentType | null>(null);
+  const [ExampleComponent, setExampleComponent] =
+    useState<React.ComponentType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [serviceManager, setServiceManager] = useState<ServiceManager.IManager | null>(null);
+  const [serviceManager, setServiceManager] =
+    useState<ServiceManager.IManager | null>(null);
 
   useEffect(() => {
     // Load configurations
@@ -96,14 +100,14 @@ const ExampleApp: React.FC = () => {
     // Create service manager
     const createManager = async () => {
       const datalayerConfig = datalayerStore.getState().datalayerConfig;
-      
+
       // Try to use DatalayerServiceManager if we have a token
       if (datalayerConfig?.token) {
         console.log('Using DatalayerServiceManager with token');
         try {
           const manager = await createDatalayerServiceManager(
             datalayerConfig.cpuEnvironment || 'python-3.11',
-            datalayerConfig.credits || 100
+            datalayerConfig.credits || 100,
           );
           await manager.ready;
           console.log('DatalayerServiceManager is ready');
@@ -114,19 +118,19 @@ const ExampleApp: React.FC = () => {
           console.log('Falling back to regular ServiceManager');
         }
       }
-      
+
       // Fall back to regular ServiceManager
       console.log('Using regular ServiceManager (no Datalayer token)');
       const serverSettings = createServerSettings(
         getJupyterServerUrl(),
-        getJupyterServerToken()
+        getJupyterServerToken(),
       );
       const manager = new ServiceManager({ serverSettings });
       await manager.ready;
       console.log('Regular ServiceManager is ready');
       setServiceManager(manager);
     };
-    
+
     createManager();
 
     // Load the selected example
@@ -183,13 +187,15 @@ const ExampleApp: React.FC = () => {
   return (
     <JupyterReactTheme>
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-        <div style={{ 
-          padding: '10px', 
-          background: '#f0f0f0', 
-          borderBottom: '1px solid #ccc',
-          fontSize: '14px',
-          fontFamily: 'monospace'
-        }}>
+        <div
+          style={{
+            padding: '10px',
+            background: '#f0f0f0',
+            borderBottom: '1px solid #ccc',
+            fontSize: '14px',
+            fontFamily: 'monospace',
+          }}
+        >
           Running Example: <strong>{getSelectedExampleName()}</strong>
         </div>
         <div style={{ height: 'calc(100vh - 40px)', overflow: 'auto' }}>

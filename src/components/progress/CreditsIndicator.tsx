@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useState, useEffect } from "react";
-import { Box } from "@datalayer/primer-addons";
-import { ConsumptionBar } from "../../components/progress";
-import type { IRemoteServicesManager } from "../../api";
-import type { IRuntimeModel } from "../../models";
+import { useState, useEffect } from 'react';
+import { Box } from '@datalayer/primer-addons';
+import { ConsumptionBar } from '../../components/progress';
+import type { IRemoteServicesManager } from '../../api';
+import type { IRuntimeModel } from '../../models';
 
 type ICreditsIndicatorProps = {
   /**
@@ -29,12 +29,14 @@ type ICreditsIndicatorProps = {
    * Duration is the kernel max duration
    */
   onUpdate?: (progress: number, duration: number) => void;
-}
+};
 
 /**
  * Credits indicator component.
  */
-export function CreditsIndicator(props: ICreditsIndicatorProps): JSX.Element | null {
+export function CreditsIndicator(
+  props: ICreditsIndicatorProps,
+): JSX.Element | null {
   const { serviceManager, kernelId, onClick, onUpdate } = props;
   const [model, setModel] = useState<IRuntimeModel>();
   useEffect(() => {
@@ -42,7 +44,7 @@ export function CreditsIndicator(props: ICreditsIndicatorProps): JSX.Element | n
       setModel(model);
     });
   }, [kernelId, serviceManager]);
-  return model ? 
+  return model ? (
     <Box display="flex" style={{ alignItems: 'center' }}>
       {/*
       <Box style={{ padding: '0px 6px 12px 0px', userSelect: 'none' }} color="fg.subtle">
@@ -58,6 +60,7 @@ export function CreditsIndicator(props: ICreditsIndicatorProps): JSX.Element | n
         style={{ cursor: 'pointer' }}
       />
     </Box>
-  :
+  ) : (
     <></>
+  );
 }

@@ -5,10 +5,10 @@
 
 export const strip = (s: string | undefined, max = 50) => {
   if (!s) {
-    return "";
+    return '';
   }
   if (s.length > max) {
-    return s.substring(0, max) + "…"
+    return s.substring(0, max) + '…';
   }
   return s;
 };

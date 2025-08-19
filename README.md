@@ -193,6 +193,37 @@ npm run build:lib
 python -m build
 ```
 
+### Setup
+
+```bash
+# Install Python dependencies
+pip install -e .[test]
+
+# Install TypeScript dependencies
+npm install
+```
+
+### Code Quality
+
+This project maintains high code quality standards with automated linting, formatting, and type checking:
+
+```bash
+# Run all checks (format, lint, type-check)
+npm run check
+
+# Auto-fix all issues
+npm run check:fix
+
+# Individual commands
+npm run lint          # ESLint with React/TypeScript rules
+npm run lint:fix      # Auto-fix linting issues
+npm run format        # Prettier formatting
+npm run format:check  # Check formatting without changes
+npm run type-check    # TypeScript compilation check
+```
+
+Pre-commit hooks automatically run formatting and linting on staged files via Husky and lint-staged.
+
 ### Running Tests
 
 ```bash
@@ -205,6 +236,8 @@ npm run test
 
 # TypeScript type checking
 npm run type-check
+npm run test:watch    # Watch mode
+npm run test:coverage # With coverage
 ```
 
 ### Contributing

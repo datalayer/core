@@ -4,7 +4,13 @@
  */
 
 import type { IUsage } from '../models';
-import { getDate, getDaysInMonth, getMonth, isSameMonth, isSameYear } from 'date-fns';
+import {
+  getDate,
+  getDaysInMonth,
+  getMonth,
+  isSameMonth,
+  isSameYear,
+} from 'date-fns';
 
 /**
  * Compute the data for plotting the usage histogram.
@@ -17,7 +23,7 @@ import { getDate, getDaysInMonth, getMonth, isSameMonth, isSameYear } from 'date
 export function createHistogram(
   usages: IUsage[],
   interval: number,
-  range: { month: number; year: number }
+  range: { month: number; year: number },
 ) {
   const referenceDate = new Date(range.year, range.month - 1);
   const now = Date.now();
@@ -25,7 +31,7 @@ export function createHistogram(
     .filter(c =>
       interval === 0
         ? isSameMonth(c.startDate, referenceDate)
-        : isSameYear(c.startDate, referenceDate)
+        : isSameYear(c.startDate, referenceDate),
     )
     .map(c => {
       const start = c.startDate;
@@ -36,7 +42,7 @@ export function createHistogram(
             ? c.credits
             : ((end - start.getTime()) * c.burningRate) / 1000,
         // getDate is 1-based but getMonth is 0-based
-        category: interval === 0 ? getDate(start) - 1 : getMonth(start)
+        category: interval === 0 ? getDate(start) - 1 : getMonth(start),
       };
     })
     .reduce<number[]>(
@@ -44,7 +50,7 @@ export function createHistogram(
         agg[d.category] += d.credits;
         return agg;
       },
-      new Array(interval === 0 ? getDaysInMonth(referenceDate) : 12).fill(0)
+      new Array(interval === 0 ? getDaysInMonth(referenceDate) : 12).fill(0),
     )
     .map(c => Math.round(c));
   return {
@@ -63,8 +69,8 @@ export function createHistogram(
             'Sep',
             'Oct',
             'Nov',
-            'Dec'
+            'Dec',
           ],
-    y: credits
+    y: credits,
   };
 }

@@ -3,8 +3,4 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export type IProfileType = 
-| "user"
-| "organization"
-| undefined
-;
+export type IProfileType = 'user' | 'organization' | undefined;

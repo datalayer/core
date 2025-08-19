@@ -8,10 +8,20 @@ import { ISessionContext } from '@jupyterlab/apputils';
 import { ITranslator } from '@jupyterlab/translation';
 import { nullTranslator } from '@jupyterlab/translation';
 //import { kernelIcon } from '@jupyterlab/ui-components';
-import { ActionList, ActionMenu, IconButton, Text, RadioGroup, Radio, FormControl, LabelGroup, Label } from '@primer/react';
+import {
+  ActionList,
+  ActionMenu,
+  IconButton,
+  Text,
+  RadioGroup,
+  Radio,
+  FormControl,
+  LabelGroup,
+  Label,
+} from '@primer/react';
 import CloudUploadIcon from '@datalayer/icons-react/data1/CloudUploadIcon';
-import { Box } from "@datalayer/primer-addons";
-import { CpuIcon} from '@primer/octicons-react'
+import { Box } from '@datalayer/primer-addons';
+import { CpuIcon } from '@primer/octicons-react';
 import { BrowserIcon, LaptopSimpleIcon } from '@datalayer/icons-react';
 import { CreditsIndicator } from '../../components/progress';
 import { IRuntimeDesc } from '../../models';
@@ -25,15 +35,9 @@ const RUNTIME_DISPLAY_NAME_MAX_LENGTH = 25;
 
 type Height = 'large';
 
-type Width =
-| 'auto'
-| 'small'
-;
+type Width = 'auto' | 'small';
 
-type IDisplayMode =
-| 'menu'
-| 'radio'
-;
+type IDisplayMode = 'menu' | 'radio';
 
 /**
  * {@link RuntimePickerBase} properties
@@ -97,7 +101,9 @@ export interface IRuntimePickerBaseProps {
 /**
  * Base Kernel Picker component.
  */
-export function RuntimePickerBase(props: IRuntimePickerBaseProps): ReactElement {
+export function RuntimePickerBase(
+  props: IRuntimePickerBaseProps,
+): ReactElement {
   const {
     disabled,
     display,
@@ -112,15 +118,26 @@ export function RuntimePickerBase(props: IRuntimePickerBaseProps): ReactElement 
     translator,
     variant,
   } = props;
-  const [groupedKernelDescs, _] = useState<{ [k: string]: IDatalayerRuntimeDesc[] } | undefined>(
-    getGroupedRuntimeDescs(multiServiceManager, preference?.id, translator, filterKernel, variant)
+  const [groupedKernelDescs, _] = useState<
+    { [k: string]: IDatalayerRuntimeDesc[] } | undefined
+  >(
+    getGroupedRuntimeDescs(
+      multiServiceManager,
+      preference?.id,
+      translator,
+      filterKernel,
+      variant,
+    ),
   );
-  const trans = useMemo(() => (translator ?? nullTranslator).load('jupyterlab'), [translator]);
+  const trans = useMemo(
+    () => (translator ?? nullTranslator).load('jupyterlab'),
+    [translator],
+  );
   const [defaultSet, setDefaultSet] = useState(false);
   // Trick because overflow is an unknown prop of ActionMenu.Overlay.
   const overlayProps = {
     maxHeight: 'large' as Height,
-    width: (variant === 'cell' ? 'small' : 'auto') as Width
+    width: (variant === 'cell' ? 'small' : 'auto') as Width,
   };
   /*
   // TODO this effect generates refresh of the react components which discards any change in the selection.
@@ -155,7 +172,7 @@ export function RuntimePickerBase(props: IRuntimePickerBaseProps): ReactElement 
       const kernelId = sessionContext.session?.kernel?.id;
       if (kernelId) {
         Object.entries(groupedKernelDescs).forEach(([group, runtimeDescs]) => {
-          runtimeDescs.forEach( runtimeDesc => {
+          runtimeDescs.forEach(runtimeDesc => {
             if (runtimeDesc.kernelId === kernelId) {
               setRuntimeDesc(runtimeDesc);
             }
@@ -170,28 +187,36 @@ export function RuntimePickerBase(props: IRuntimePickerBaseProps): ReactElement 
   // https://github.com/primer/react/pull/3585
   return (
     <>
-      {display === 'menu' ?
+      {display === 'menu' ? (
         /*
          * Section for Menu display.
          */
         <ActionMenu>
-          {variant === 'cell' ?
+          {variant === 'cell' ? (
             <ActionMenu.Anchor>
               <IconButton
                 disabled={disabled || groupedKernelDescs === null}
-//                icon={() => <kernelIcon.react className="dla-Cell-runtime-icon" tag={'span'} />}
-                icon={() => <span className="dla-Cell-runtime-icon"><CpuIcon/></span>}
+                //                icon={() => <kernelIcon.react className="dla-Cell-runtime-icon" tag={'span'} />}
+                icon={() => (
+                  <span className="dla-Cell-runtime-icon">
+                    <CpuIcon />
+                  </span>
+                )}
                 aria-label={trans.__('Assign a Runtime to the Cell.')}
                 title={trans.__('Assign a Runtime to the Cell.')}
                 size="small"
                 variant="invisible"
               />
             </ActionMenu.Anchor>
-          :
-            <ActionMenu.Button variant="default" disabled={disabled || groupedKernelDescs === null}>
-              <Text fontWeight={'bold'}>{trans.__('Runtime:')}</Text>{' ' + (runtimeDesc?.displayName ?? trans.__('No Runtime'))}
+          ) : (
+            <ActionMenu.Button
+              variant="default"
+              disabled={disabled || groupedKernelDescs === null}
+            >
+              <Text fontWeight={'bold'}>{trans.__('Runtime:')}</Text>
+              {' ' + (runtimeDesc?.displayName ?? trans.__('No Runtime'))}
             </ActionMenu.Button>
-          }
+          )}
           <ActionMenu.Overlay
             {...overlayProps}
             width="medium"
@@ -204,106 +229,177 @@ export function RuntimePickerBase(props: IRuntimePickerBaseProps): ReactElement 
                     {trans.__('No Runtime')}
                 </ActionList.Item>
               */}
-              {variant === 'cell' &&
-                <ActionList.Item key={'null'} selected={runtimeDesc === undefined} onSelect={() => {setRuntimeDesc(undefined);}}>
+              {variant === 'cell' && (
+                <ActionList.Item
+                  key={'null'}
+                  selected={runtimeDesc === undefined}
+                  onSelect={() => {
+                    setRuntimeDesc(undefined);
+                  }}
+                >
                   {preference?.location && (
                     <ActionList.LeadingVisual>
-                      {preference.location === 'local' ? <LaptopSimpleIcon /> : preference.location === 'browser' ? <BrowserIcon /> : <CloudUploadIcon />}
+                      {preference.location === 'local' ? (
+                        <LaptopSimpleIcon />
+                      ) : preference.location === 'browser' ? (
+                        <BrowserIcon />
+                      ) : (
+                        <CloudUploadIcon />
+                      )}
                     </ActionList.LeadingVisual>
                   )}
                   {trans.__('Assign the Notebook Runtime')}
                 </ActionList.Item>
-              }
+              )}
               {!!preActions && preActions}
-              {Object.entries(groupedKernelDescs ?? {}).map(([group, runtimeDescs]) => (
-                <ActionList.Group key={group}>
-                  <ActionList.GroupHeading>{group}</ActionList.GroupHeading>
-                  {runtimeDescs.map(runtimeDesc => {
-                    const annotation = runtimeDesc.podName ? ` - ${runtimeDesc.podName.split('-', 2).reverse()[0]}` : runtimeDesc.kernelId ? ` - ${runtimeDesc.kernelId}` : '';
-                    const fullDisplayName = (runtimeDesc.displayName ?? '') + annotation;
-                    const displayName = (runtimeDesc.displayName?.length ?? 0) > RUNTIME_DISPLAY_NAME_MAX_LENGTH ? runtimeDesc.displayName!.slice(0, RUNTIME_DISPLAY_NAME_MAX_LENGTH) + '…' : runtimeDesc.displayName ?? '';
-                    return (
-                      <ActionList.Item
-                        key={runtimeDesc.name}
-                        title={fullDisplayName}
-                        selected={(runtimeDesc.location === runtimeDesc?.location || (isRuntimeRemote(runtimeDesc.location) &&
-                          isRuntimeRemote(runtimeDesc?.location ?? 'local'))) && (runtimeDesc.kernelId ?? runtimeDesc.name) === (runtimeDesc?.kernelId ?? runtimeDesc?.name)
-                        }
-                        onSelect={() => {setRuntimeDesc(runtimeDesc)}}
-                      >
-                        <ActionList.LeadingVisual>
-                          {runtimeDesc.location === 'local' ? <LaptopSimpleIcon /> : runtimeDesc.location === 'browser' ? <BrowserIcon /> : <CloudUploadIcon />}
-                        </ActionList.LeadingVisual>
-                        {displayName + annotation.slice(0, 10)}
-                      </ActionList.Item>
-                    );
-                  })}
-                </ActionList.Group>
-              ))}
-              {!!postActions &&
+              {Object.entries(groupedKernelDescs ?? {}).map(
+                ([group, runtimeDescs]) => (
+                  <ActionList.Group key={group}>
+                    <ActionList.GroupHeading>{group}</ActionList.GroupHeading>
+                    {runtimeDescs.map(runtimeDesc => {
+                      const annotation = runtimeDesc.podName
+                        ? ` - ${runtimeDesc.podName.split('-', 2).reverse()[0]}`
+                        : runtimeDesc.kernelId
+                          ? ` - ${runtimeDesc.kernelId}`
+                          : '';
+                      const fullDisplayName =
+                        (runtimeDesc.displayName ?? '') + annotation;
+                      const displayName =
+                        (runtimeDesc.displayName?.length ?? 0) >
+                        RUNTIME_DISPLAY_NAME_MAX_LENGTH
+                          ? runtimeDesc.displayName!.slice(
+                              0,
+                              RUNTIME_DISPLAY_NAME_MAX_LENGTH,
+                            ) + '…'
+                          : (runtimeDesc.displayName ?? '');
+                      return (
+                        <ActionList.Item
+                          key={runtimeDesc.name}
+                          title={fullDisplayName}
+                          selected={
+                            (runtimeDesc.location === runtimeDesc?.location ||
+                              (isRuntimeRemote(runtimeDesc.location) &&
+                                isRuntimeRemote(
+                                  runtimeDesc?.location ?? 'local',
+                                ))) &&
+                            (runtimeDesc.kernelId ?? runtimeDesc.name) ===
+                              (runtimeDesc?.kernelId ?? runtimeDesc?.name)
+                          }
+                          onSelect={() => {
+                            setRuntimeDesc(runtimeDesc);
+                          }}
+                        >
+                          <ActionList.LeadingVisual>
+                            {runtimeDesc.location === 'local' ? (
+                              <LaptopSimpleIcon />
+                            ) : runtimeDesc.location === 'browser' ? (
+                              <BrowserIcon />
+                            ) : (
+                              <CloudUploadIcon />
+                            )}
+                          </ActionList.LeadingVisual>
+                          {displayName + annotation.slice(0, 10)}
+                        </ActionList.Item>
+                      );
+                    })}
+                  </ActionList.Group>
+                ),
+              )}
+              {!!postActions && (
                 <>
                   <ActionList.Divider />
                   {postActions}
                 </>
-              }
+              )}
             </ActionList>
           </ActionMenu.Overlay>
         </ActionMenu>
-      :
+      ) : (
         /*
          * Section for Radio display.
          */
         <>
-          {defaultSet &&
+          {defaultSet && (
             <RadioGroup name="kernel-options" aria-labelledby="kernel-options">
-              {Object.entries(groupedKernelDescs ?? {}).map(([group, runtimeDescs]) => (
-                <Box key={group}>
-                  <Box as="h4" style={{marginTop: 0}}>{group}</Box>
-                  {runtimeDescs.map(k => {
-                    return <Box key={k.kernelId} title={k.name}>
-                      <FormControl>
-                        <Radio
-                          value={k.kernelId!}
-                          onChange={() => {setRuntimeDesc(k)}}
-                          checked={(k.location === k?.location || (isRuntimeRemote(k.location) &&
-                            isRuntimeRemote(k?.location ?? 'local'))) && (k.kernelId ?? k.name) === (runtimeDesc?.kernelId ?? runtimeDesc?.name)
-                          }
-                        />
-                        <FormControl.Label>
-                          <Box display="flex">
-                            <Box>{k.displayName}</Box>
-                            {k.kernelId && k.location === "remote" &&
-                              <Box ml={3} mt={1}>
-                                <CreditsIndicator
-                                  key="credits-indicator"
-                                  kernelId={k.kernelId}
-                                  serviceManager={multiServiceManager.remote!}
-                                />
-                              </Box>
-                            }
-                          </Box>
-                        </FormControl.Label>
-                        <FormControl.Caption>
-                          <LabelGroup sx={{ marginTop: 1 }}>
-                            <Label variant="secondary">{k.name}</Label> 
-                            <Label variant="secondary" sx={{ marginLeft: 1}}>{k.location}</Label>
-                            {k.burningRate && <Label variant="sponsors" sx={{ marginLeft: 1}}>{k.burningRate} credits/second</Label>}
-                            {k.gpu && <Label variant="success" sx={{ marginLeft: 1}}>GPU</Label>}
-                          </LabelGroup>
-                        </FormControl.Caption>
-                      </FormControl>
-                      <ActionList.Divider/>
+              {Object.entries(groupedKernelDescs ?? {}).map(
+                ([group, runtimeDescs]) => (
+                  <Box key={group}>
+                    <Box as="h4" style={{ marginTop: 0 }}>
+                      {group}
                     </Box>
-                  }
-                )}
-                </Box>
-              ))
-            }
+                    {runtimeDescs.map(k => {
+                      return (
+                        <Box key={k.kernelId} title={k.name}>
+                          <FormControl>
+                            <Radio
+                              value={k.kernelId!}
+                              onChange={() => {
+                                setRuntimeDesc(k);
+                              }}
+                              checked={
+                                (k.location === k?.location ||
+                                  (isRuntimeRemote(k.location) &&
+                                    isRuntimeRemote(k?.location ?? 'local'))) &&
+                                (k.kernelId ?? k.name) ===
+                                  (runtimeDesc?.kernelId ?? runtimeDesc?.name)
+                              }
+                            />
+                            <FormControl.Label>
+                              <Box display="flex">
+                                <Box>{k.displayName}</Box>
+                                {k.kernelId && k.location === 'remote' && (
+                                  <Box ml={3} mt={1}>
+                                    <CreditsIndicator
+                                      key="credits-indicator"
+                                      kernelId={k.kernelId}
+                                      serviceManager={
+                                        multiServiceManager.remote!
+                                      }
+                                    />
+                                  </Box>
+                                )}
+                              </Box>
+                            </FormControl.Label>
+                            <FormControl.Caption>
+                              <LabelGroup sx={{ marginTop: 1 }}>
+                                <Label variant="secondary">{k.name}</Label>
+                                <Label
+                                  variant="secondary"
+                                  sx={{ marginLeft: 1 }}
+                                >
+                                  {k.location}
+                                </Label>
+                                {k.burningRate && (
+                                  <Label
+                                    variant="sponsors"
+                                    sx={{ marginLeft: 1 }}
+                                  >
+                                    {k.burningRate} credits/second
+                                  </Label>
+                                )}
+                                {k.gpu && (
+                                  <Label
+                                    variant="success"
+                                    sx={{ marginLeft: 1 }}
+                                  >
+                                    GPU
+                                  </Label>
+                                )}
+                              </LabelGroup>
+                            </FormControl.Caption>
+                          </FormControl>
+                          <ActionList.Divider />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                ),
+              )}
             </RadioGroup>
-          }
+          )}
           {!!postActions && <>{postActions}</>}
         </>
-      }
+      )}
     </>
   );
 }

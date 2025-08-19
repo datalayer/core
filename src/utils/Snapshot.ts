@@ -3,14 +3,18 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
+import {
+  adjectives,
+  animals,
+  uniqueNamesGenerator,
+} from 'unique-names-generator';
 
 /**
  * Kernel snapshot description configuration.
  */
 const KERNEL_SNAPSHOT_DESCRIPTION_CONFIGURATION = {
   dictionaries: [adjectives, animals],
-  separator: '-'
+  separator: '-',
 };
 
 /**

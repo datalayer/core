@@ -3,16 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IBaseSpace } from "./Space";
-import { Instructor } from "./Instructor";
-import { IStudent } from "./Student";
-import { ISchool } from "./School";
-import { ISpace } from "./Space";
-import { ISpaceItem } from "./SpaceItem";
+import { IBaseSpace } from './Space';
+import { Instructor } from './Instructor';
+import { IStudent } from './Student';
+import { ISchool } from './School';
+import { ISpace } from './Space';
+import { ISpaceItem } from './SpaceItem';
 
 export type ICourse = IBaseSpace & {
   type: 'space';
-  variant: "course";
+  variant: 'course';
   seedSpace?: ISpace;
   school?: ISchool;
   instructor?: Instructor;

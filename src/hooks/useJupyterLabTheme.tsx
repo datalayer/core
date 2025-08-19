@@ -12,8 +12,13 @@ export enum JupyterLabTheme {
 }
 
 export const useJupyterLabTheme = (themeManager: IThemeManager): any => {
-  const isLight = themeManager && themeManager.theme ? themeManager.isLight(themeManager.theme) : true;
-  const [theme, setTheme] = useState(isLight ? JupyterLabTheme.LIGHT : JupyterLabTheme.DARK);
+  const isLight =
+    themeManager && themeManager.theme
+      ? themeManager.isLight(themeManager.theme)
+      : true;
+  const [theme, setTheme] = useState(
+    isLight ? JupyterLabTheme.LIGHT : JupyterLabTheme.DARK,
+  );
   useEffect(() => {
     const handleThemeChange = (newTheme: any, event: any): any => {
       setTheme(event.newValue);
@@ -24,4 +29,4 @@ export const useJupyterLabTheme = (themeManager: IThemeManager): any => {
     };
   }, []);
   return theme;
-}
+};

@@ -10,15 +10,10 @@ export const asSecret = (s: any): ISecret => {
     name: s.name_s,
     description: s.description_t,
     value: s.value_s,
-  }
-}
+  };
+};
 
-export type ISecretVariant =
-  | 'generic'
-  | 'password'
-  | 'key'
-  | 'token'
-  ;
+export type ISecretVariant = 'generic' | 'password' | 'key' | 'token';
 
 export type ISecret = {
   id: string;

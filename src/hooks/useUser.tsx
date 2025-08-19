@@ -6,13 +6,15 @@
 import { IUser, IRole } from '../models';
 import { useIAMStore } from '../state';
 
-const LOGIN_HREF = "/login";
+const LOGIN_HREF = '/login';
 
 export const useUser = (role?: IRole): IUser => {
   const { user } = useIAMStore();
   if (role) {
     if (!user?.roles.includes(role.handle)) {
-      console.log(`User should have role ${role.handle} - Forcing navigation to login page...`);
+      console.log(
+        `User should have role ${role.handle} - Forcing navigation to login page...`,
+      );
       window.location.href = LOGIN_HREF;
       throw new Error(`User should have role ${role.handle}`);
     }
@@ -22,6 +24,6 @@ export const useUser = (role?: IRole): IUser => {
     window.location.href = LOGIN_HREF;
   }
   return user as IUser;
-}
+};
 
 export default useUser;

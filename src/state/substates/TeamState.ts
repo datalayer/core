@@ -10,7 +10,7 @@ import { TEAMS_MOCK } from '../../mocks';
 
 export type ITeamState = {
   teams: IBaseTeam[];
-}
+};
 
 export type TeamState = ITeamState & {
   update: (teams: IBaseTeam[]) => void;
@@ -18,9 +18,10 @@ export type TeamState = ITeamState & {
 
 export const teamStore = createStore<TeamState>((set, get) => ({
   teams: TEAMS_MOCK,
-  update: (teams: IBaseTeam[]) => set((state: TeamState) => ({
-    teams
-  })),
+  update: (teams: IBaseTeam[]) =>
+    set((state: TeamState) => ({
+      teams,
+    })),
 }));
 
 export function useTeamStore(): TeamState;

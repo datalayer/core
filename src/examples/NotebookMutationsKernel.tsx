@@ -45,13 +45,13 @@ const NotebookMutationsKernel = () => {
   const [serviceManager, setServiceManager] =
     useState<ServiceManager.IManager>(SERVICE_MANAGER_LESS);
   const [sessions, setSessions] = useState<Array<Session.ISessionConnection>>(
-    []
+    [],
   );
   const datalayerConfig = useDatalayerStore(state => state.datalayerConfig);
   const notebookStore = useNotebookStore();
   const notebook = notebookStore.selectNotebook(NOTEBOOK_ID);
   const onSessionConnection: OnSessionConnection = (
-    session: Session.ISessionConnection | undefined
+    session: Session.ISessionConnection | undefined,
   ) => {
     console.log('Received a Kernel Session.', session);
     if (session) {
@@ -64,7 +64,7 @@ const NotebookMutationsKernel = () => {
       case 0: {
         setKernelIndex(-1);
         setNbformat(
-          notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent
+          notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent,
         );
         setServerless(true);
         setReadonly(true);
@@ -79,7 +79,7 @@ const NotebookMutationsKernel = () => {
           console.log('Lite Service Manager is available', liteServiceManager);
           setServiceManager(liteServiceManager);
           setNbformat(
-            notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent
+            notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent,
           );
           setServerless(false);
           setReadonly(false);
@@ -91,14 +91,14 @@ const NotebookMutationsKernel = () => {
         setJupyterServerUrl(DEFAULT_JUPYTER_SERVER_URL);
         setKernelIndex(-1);
         setNbformat(
-          notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent
+          notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent,
         );
         setServerless(false);
         setReadonly(false);
         setLite(false);
         const serverSettings = createServerSettings(
           getJupyterServerUrl(),
-          getJupyterServerToken()
+          getJupyterServerToken(),
         );
         const serviceManager = new ServiceManager({ serverSettings });
         (serviceManager as any)['__NAME__'] = 'MutatingServiceManager';
@@ -110,7 +110,7 @@ const NotebookMutationsKernel = () => {
         setLite(false);
         createDatalayerServiceManager(
           datalayerConfig?.cpuEnvironment || 'python-simple-env',
-          datalayerConfig?.credits || 1
+          datalayerConfig?.credits || 1,
         ).then(serviceManager => {
           (serviceManager as any)['__NAME__'] = 'DatalayerCPUServiceManager';
           setServiceManager(serviceManager);
@@ -118,7 +118,7 @@ const NotebookMutationsKernel = () => {
           setReadonly(false);
           setKernelIndex(0);
           setNbformat(
-            notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent
+            notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent,
           );
           //          setWaiting(false);
         });
@@ -129,13 +129,13 @@ const NotebookMutationsKernel = () => {
         setLite(false);
         createDatalayerServiceManager(
           datalayerConfig?.gpuEnvironment || 'pytorch-cuda-env',
-          datalayerConfig?.credits || 1
+          datalayerConfig?.credits || 1,
         ).then(serviceManager => {
           setKernelIndex(0);
           (serviceManager as any)['__NAME__'] = 'DatalayerGPUServiceManager';
           setServiceManager(serviceManager);
           setNbformat(
-            notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent
+            notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent,
           );
           setServerless(false);
           setReadonly(false);

@@ -17,13 +17,13 @@ const AWARENESS_NOTIFICATION_TIMEOUT_MS = 30_000;
 enum NotificationType {
   PROGRESS = 'var(--borderColor-accent-emphasis)',
   ERROR = 'var(--borderColor-danger-emphasis)',
-  SUCCESS = 'var(--borderColor-success-emphasis)'
+  SUCCESS = 'var(--borderColor-success-emphasis)',
 }
 
 const MSG_TO_NOTIFICATION = {
   '-1': NotificationType.ERROR,
   '0': NotificationType.PROGRESS,
-  '1': NotificationType.SUCCESS
+  '1': NotificationType.SUCCESS,
 };
 
 /**
@@ -64,7 +64,10 @@ function defaultAvatarSrc(color: string, text: string): string {
 /**
  * Connected peers indicator
  */
-export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicatorProps): JSX.Element | null {
+export function PeersIndicator({
+  awareness,
+  currentUserHandle,
+}: IPeersIndicatorProps): JSX.Element | null {
   const [peers, setPeers] = useState<PeerAvatar[]>([]);
   useEffect(() => {
     const onAwarenessChange = () => {
@@ -75,17 +78,18 @@ export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicator
             p =>
               p.user &&
               p.user?.name !== currentUserHandle &&
-              !(p.user?.agent ?? '').startsWith(SPACER_USER_AGENT)
+              !(p.user?.agent ?? '').startsWith(SPACER_USER_AGENT),
           )
           .reduce<PeerAvatar[]>((agg, peer) => {
             const user = peer.user;
             const notExpiredNotification = !isExpired(
-              peer.notification?.timestamp ?? 0
+              peer.notification?.timestamp ?? 0,
             );
             const newPeer = user.agent
               ? ({
                   // TODO pick something better
-                  avatarUrl: 'https://static.vecteezy.com/system/resources/previews/006/662/139/large_2x/artificial-intelligence-ai-processor-chip-icon-symbol-for-graphic-design-logo-web-site-social-media-mobile-app-ui-illustration-free-vector.jpg',
+                  avatarUrl:
+                    'https://static.vecteezy.com/system/resources/previews/006/662/139/large_2x/artificial-intelligence-ai-processor-chip-icon-symbol-for-graphic-design-logo-web-site-social-media-mobile-app-ui-illustration-free-vector.jpg',
                   color: user.color,
                   displayName: user.agent,
                   handle: 'agent',
@@ -97,8 +101,10 @@ export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicator
                   notificationType:
                     notExpiredNotification &&
                     peer.notification?.message_type !== undefined
-                      ? MSG_TO_NOTIFICATION[peer.notification?.message_type.toString()]
-                      : undefined
+                      ? MSG_TO_NOTIFICATION[
+                          peer.notification?.message_type.toString()
+                        ]
+                      : undefined,
                 } satisfies PeerAvatar)
               : ({
                   avatarUrl: user.avatar_url,
@@ -106,7 +112,7 @@ export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicator
                   displayName: user.display_name,
                   handle: user.name,
                   initials: user.initials,
-                  username: user.username
+                  username: user.username,
                 } satisfies PeerAvatar);
 
             // Ensure to display a peer only once
@@ -114,7 +120,7 @@ export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicator
               agg.push(newPeer);
             }
             return agg;
-          }, [])
+          }, []),
       );
     };
     onAwarenessChange();
@@ -122,7 +128,7 @@ export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicator
     // Force regular update to update agent notification
     const updateInterval = setInterval(
       onAwarenessChange,
-      AWARENESS_NOTIFICATION_TIMEOUT_MS / 3
+      AWARENESS_NOTIFICATION_TIMEOUT_MS / 3,
     );
     return () => {
       clearInterval(updateInterval);
@@ -142,7 +148,7 @@ export function PeersIndicator({ awareness, currentUserHandle }: IPeersIndicator
             sx={{
               border: peer.notificationType
                 ? `var(--borderWidth-thick) solid ${peer.notificationType}`
-                : 'none'
+                : 'none',
             }}
             title={title}
             src={

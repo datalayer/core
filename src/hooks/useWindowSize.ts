@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import {useState, useEffect} from 'react'
+import { useState, useEffect } from 'react';
 
 export enum BreakpointSize {
   XSMALL = 'xsmall',
@@ -15,16 +15,16 @@ export enum BreakpointSize {
 }
 
 type WindowSize = {
-  width?: number
-  height?: number
-  isXSmall?: boolean
-  isSmall?: boolean
-  isMedium?: boolean
-  isLarge?: boolean
-  isXLarge?: boolean
-  isXXLarge?: boolean
-  currentBreakpointSize?: BreakpointSize
-}
+  width?: number;
+  height?: number;
+  isXSmall?: boolean;
+  isSmall?: boolean;
+  isMedium?: boolean;
+  isLarge?: boolean;
+  isXLarge?: boolean;
+  isXXLarge?: boolean;
+  currentBreakpointSize?: BreakpointSize;
+};
 
 export function useWindowSize() {
   const [windowSize, setWindowSize] = useState<WindowSize>({
@@ -37,7 +37,7 @@ export function useWindowSize() {
     isXLarge: undefined, // undefined to avoid client/server mismatch on initial mount,
     isXXLarge: undefined, // undefined to avoid client/server mismatch on initial mount,
     currentBreakpointSize: undefined, // undefined to avoid client/server mismatch on initial mount,
-  })
+  });
 
   useEffect(() => {
     // should only execute all the code below on client
@@ -56,39 +56,39 @@ export function useWindowSize() {
         isXLarge: window.innerWidth >= 1280,
         isXXLarge: window.innerWidth >= 1440,
         currentBreakpointSize: breakpointSwitch(window.innerWidth),
-      })
+      });
     }
 
-    window.addEventListener('resize', handleResize)
+    window.addEventListener('resize', handleResize);
 
-    handleResize()
+    handleResize();
 
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  return windowSize
+  return windowSize;
 }
 
 const breakpointSwitch = (value: number) => {
-  let current = BreakpointSize.XXLARGE
+  let current = BreakpointSize.XXLARGE;
   switch (true) {
     case value >= 320 && value < 544:
-      current = BreakpointSize.XSMALL
-      break
+      current = BreakpointSize.XSMALL;
+      break;
     case value >= 544 && value < 768:
-      current = BreakpointSize.SMALL
-      break
+      current = BreakpointSize.SMALL;
+      break;
     case value >= 768 && value < 1012:
-      current = BreakpointSize.MEDIUM
-      break
+      current = BreakpointSize.MEDIUM;
+      break;
     case value >= 1012 && value < 1280:
-      current = BreakpointSize.LARGE
-      break
+      current = BreakpointSize.LARGE;
+      break;
     case value >= 1280 && value < 1440:
-      current = BreakpointSize.XLARGE
-      break
+      current = BreakpointSize.XLARGE;
+      break;
     default:
-      current = BreakpointSize.XXLARGE
+      current = BreakpointSize.XXLARGE;
   }
-  return current
-}
+  return current;
+};

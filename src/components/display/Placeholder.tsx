@@ -4,9 +4,7 @@
  */
 
 export const Placeholder = () => {
-  return (
-    <></>
-  )
-}
+  return <></>;
+};
 
 export default Placeholder;

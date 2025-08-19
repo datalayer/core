@@ -4,7 +4,7 @@
  */
 
 import { createContext, useState, useContext } from 'react';
-import { LayoutScreenshot } from "./layouts";
+import { LayoutScreenshot } from './layouts';
 
 type ScreenshotContextType = {
   closeScreenshot: () => void;
@@ -19,7 +19,7 @@ export const ScreenshotContext = createContext<ScreenshotContextType>({
 export function useScreenshot(): ScreenshotContextType {
   const context = useContext(ScreenshotContext);
   if (!context)
-  throw new Error('useContext must be inside a provider with a value.');
+    throw new Error('useContext must be inside a provider with a value.');
   return context;
 }
 
@@ -33,12 +33,12 @@ type IScreenshotProviderProps = {
   zIndex?: number;
   disableDarken?: boolean;
   screenshotSurface?: (qfds: any) => JSX.Element;
-}
+};
 
 export function ScreenshotProvider(props: IScreenshotProviderProps) {
   const { children, zIndex, disableDarken, screenshotSurface } = props;
   const defaultScreenshotSurface = {
-    position: "fixed",
+    position: 'fixed',
     top: 0,
     left: 0,
     width: '100%',
@@ -48,28 +48,28 @@ export function ScreenshotProvider(props: IScreenshotProviderProps) {
     justifyContent: 'center',
     backgroundColor: disableDarken ? 'initial' : 'rgba(0, 0, 0, 0.5)',
     zIndex,
-  }
+  };
   const [screenshot, setScreenshot] = useState({
     open: false,
-    render: (closeScreenshot: any) => <></>
-  })
+    render: (closeScreenshot: any) => <></>,
+  });
   const displayScreenshot = (nextScreenshot: any) => {
     setScreenshot({
       open: true,
-      render: nextScreenshot
+      render: nextScreenshot,
     });
-  }
+  };
   const closeScreenshot = () => {
     setScreenshot({
       open: false,
-      render: (closeScreenshot: any) => <></>
+      render: (closeScreenshot: any) => <></>,
     });
-  }
+  };
   return (
     <ScreenshotContextProvider value={{ closeScreenshot, displayScreenshot }}>
-      <LayoutScreenshot/>
+      <LayoutScreenshot />
       {children}
-      { screenshot.open &&
+      {screenshot.open &&
         (screenshotSurface ? (
           screenshotSurface(screenshot.render(closeScreenshot))
         ) : (
@@ -78,7 +78,7 @@ export function ScreenshotProvider(props: IScreenshotProviderProps) {
           </div>
         ))}
     </ScreenshotContextProvider>
-  )
+  );
 }
 
 ScreenshotProvider.defaultProps = {

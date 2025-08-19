@@ -44,7 +44,7 @@ const displayType2Class: Record<Notification.ActionDisplayType, VariantType> = {
   accent: 'primary',
   link: 'invisible',
   warn: 'danger',
-  default: 'default'
+  default: 'default',
 };
 
 /**
@@ -79,7 +79,7 @@ function ToastButton({ action, closeToast }: IToastButtonProps): JSX.Element {
 function createContent(
   message: string,
   closeHandler: () => void,
-  actions?: Notification.IAction[]
+  actions?: Notification.IAction[],
 ): React.ReactNode {
   return (
     <>
@@ -116,16 +116,15 @@ export const useToast = () => {
   const insideJupyterLab = isInsideJupyterLab();
   const enqueueToast = (
     message: string,
-    options: ToastProps = { variant: 'info' }
+    options: ToastProps = { variant: 'info' },
   ) => {
     const { actions, autoClose } = options;
     switch (options.variant) {
       case 'info': {
         return insideJupyterLab
-          ? 
-            Notification.info(message, {
+          ? Notification.info(message, {
               autoClose: autoClose ?? 5000,
-              actions
+              actions,
             })
           : toast.info(
               ({ closeToast }: { closeToast?: () => void }) =>
@@ -134,16 +133,16 @@ export const useToast = () => {
                   () => {
                     if (closeToast) closeToast();
                   },
-                  actions
+                  actions,
                 ),
-              { autoClose, position: TOAST_POSITION }
+              { autoClose, position: TOAST_POSITION },
             );
       }
       case 'success': {
         return insideJupyterLab
           ? Notification.success(message, {
               autoClose: autoClose ?? 5000,
-              actions
+              actions,
             })
           : toast.success(
               ({ closeToast }: { closeToast?: () => void }) =>
@@ -152,16 +151,16 @@ export const useToast = () => {
                   () => {
                     if (closeToast) closeToast();
                   },
-                  actions
+                  actions,
                 ),
-              { autoClose, position: TOAST_POSITION }
+              { autoClose, position: TOAST_POSITION },
             );
       }
       case 'warning': {
         return insideJupyterLab
           ? Notification.warning(message, {
               autoClose: autoClose ?? false,
-              actions
+              actions,
             })
           : toast.warning(
               ({ closeToast }: { closeToast?: () => void }) =>
@@ -170,16 +169,16 @@ export const useToast = () => {
                   () => {
                     if (closeToast) closeToast();
                   },
-                  actions
+                  actions,
                 ),
-              { autoClose: autoClose ?? false, position: TOAST_POSITION }
+              { autoClose: autoClose ?? false, position: TOAST_POSITION },
             );
       }
       case 'error': {
         return insideJupyterLab
           ? Notification.error(message, {
               autoClose: autoClose ?? false,
-              actions
+              actions,
             })
           : toast.error(
               ({ closeToast }: { closeToast?: () => void }) =>
@@ -188,9 +187,9 @@ export const useToast = () => {
                   () => {
                     if (closeToast) closeToast();
                   },
-                  actions
+                  actions,
                 ),
-              { autoClose: autoClose ?? false, position: TOAST_POSITION }
+              { autoClose: autoClose ?? false, position: TOAST_POSITION },
             );
       }
     }
@@ -198,7 +197,7 @@ export const useToast = () => {
 
   const trackAsyncTask = (
     promise: Promise<any>,
-    options: Notification.IPromiseOptions<any>, 
+    options: Notification.IPromiseOptions<any>,
   ) => {
     return insideJupyterLab
       ? Notification.promise(promise, options)
@@ -207,12 +206,15 @@ export const useToast = () => {
           {
             error: { render: options.error.message, ...options.error.options },
             pending: options.pending.message,
-            success: { render: options.success.message, ...options.success.options }
+            success: {
+              render: options.success.message,
+              ...options.success.options,
+            },
           },
           {
             position: TOAST_POSITION,
-            ...options.pending.options
-          }
+            ...options.pending.options,
+          },
         );
   };
 
@@ -245,7 +247,7 @@ export const useToast = () => {
      * @param options Task progress options
      * @returns Toast id
      */
-    trackAsyncTask
+    trackAsyncTask,
   });
 };
 

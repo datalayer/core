@@ -13,7 +13,7 @@ type IDownloadJsonButtonProps = {
   fileName: string;
   extension: string;
   variant: VariantType;
-}
+};
 
 export const DownloadJsonButton = (props: IDownloadJsonButtonProps) => {
   const { data, fileName, variant, extension } = props;
@@ -26,12 +26,12 @@ export const DownloadJsonButton = (props: IDownloadJsonButtonProps) => {
       Download
     </Button>
   );
-}
+};
 
 DownloadJsonButton.defaultProps = {
   variant: 'default',
   name: 'data',
   extension: 'json',
-}
+};
 
 export default DownloadJsonButton;

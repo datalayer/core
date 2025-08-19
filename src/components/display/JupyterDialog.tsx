@@ -3,30 +3,42 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { JSXElementConstructor, PropsWithChildren, createElement, useState } from 'react';
+import {
+  JSXElementConstructor,
+  PropsWithChildren,
+  createElement,
+  useState,
+} from 'react';
 import { Dialog } from '@jupyterlab/apputils';
 import { ReactWidget } from '@jupyterlab/ui-components';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Widget } from '@lumino/widgets';
 import { FocusKeys } from '@primer/behaviors';
 import { Checkbox, FormControl, useFocusZone } from '@primer/react';
-import { DialogButtonProps, DialogProps, Dialog as PrimerDialog } from '@primer/react/experimental';
+import {
+  DialogButtonProps,
+  DialogProps,
+  Dialog as PrimerDialog,
+} from '@primer/react/experimental';
 
 type IDialogFooterProps = React.PropsWithChildren<DialogProps> & {
   checkbox: Partial<Dialog.ICheckbox> | null;
   setChecked: (v: boolean) => void;
-}
+};
 
 function DialogFooter(props: IDialogFooterProps): JSX.Element {
   const { checkbox, footerButtons, setChecked } = props;
   const [checked, setLocalChecked] = useState<boolean>();
   const { containerRef: footerRef } = useFocusZone({
     bindKeys: FocusKeys.ArrowHorizontal | FocusKeys.Tab,
-    focusInStrategy: 'closest'
+    focusInStrategy: 'closest',
   });
   return (
-    <PrimerDialog.Footer className="dla-dialog-footer" ref={footerRef as React.RefObject<HTMLDivElement>}>
-      {checkbox &&
+    <PrimerDialog.Footer
+      className="dla-dialog-footer"
+      ref={footerRef as React.RefObject<HTMLDivElement>}
+    >
+      {checkbox && (
         <FormControl layout="horizontal">
           <Checkbox
             className={checkbox.className ?? ''}
@@ -40,11 +52,11 @@ function DialogFooter(props: IDialogFooterProps): JSX.Element {
           />
           <FormControl.Label>{checkbox.label ?? ''}</FormControl.Label>
         </FormControl>
-      }
+      )}
       <div className="dla-dialog-footer-spacer"></div>
-      {footerButtons &&
+      {footerButtons && (
         <PrimerDialog.Buttons buttons={footerButtons}></PrimerDialog.Buttons>
-      }
+      )}
     </PrimerDialog.Footer>
   );
 }
@@ -65,7 +77,9 @@ export interface IDialogWrapperOptions<T> {
    *   body is expected to call {@link setValue} in reaction.
    * - {@link setValue} A callback to set the dialog body value.
    */
-  body: JSXElementConstructor<PropsWithChildren<DialogProps & { setValue: (v: T | Error) => void; }>>;
+  body: JSXElementConstructor<
+    PropsWithChildren<DialogProps & { setValue: (v: T | Error) => void }>
+  >;
   /**
    * The checkbox to display in the footer. Default non checkbox.
    */
@@ -84,7 +98,9 @@ export interface IDialogWrapperOptions<T> {
  * A primer dialog mimicking the JupyterLab dialog interface
  */
 export class JupyterDialog<T> extends ReactWidget {
-  protected body: JSXElementConstructor<PropsWithChildren<DialogProps & { setValue: (v: T | Error) => void; }>>;
+  protected body: JSXElementConstructor<
+    PropsWithChildren<DialogProps & { setValue: (v: T | Error) => void }>
+  >;
   protected checkbox: Partial<Dialog.ICheckbox> | null;
   protected buttons: Dialog.IButton[];
   protected host: HTMLElement;
@@ -93,7 +109,7 @@ export class JupyterDialog<T> extends ReactWidget {
   private _result: Dialog.IResult<T> = {
     button: null as any,
     isChecked: null,
-    value: null
+    value: null,
   };
 
   /**
@@ -106,7 +122,7 @@ export class JupyterDialog<T> extends ReactWidget {
     this.checkbox = options.checkbox ?? null;
     this.buttons = options.buttons ?? [
       Dialog.cancelButton(),
-      Dialog.okButton()
+      Dialog.okButton(),
     ];
     this.dialogTitle = options.title;
   }
@@ -115,10 +131,10 @@ export class JupyterDialog<T> extends ReactWidget {
     <PrimerDialog.Body>
       {createElement(this.body, {
         ...props,
-        setValue: this.setValue
+        setValue: this.setValue,
       })}
     </PrimerDialog.Body>
-  )
+  );
 
   private _renderFooter = (props: PropsWithChildren<DialogProps>) => (
     <DialogFooter
@@ -126,7 +142,7 @@ export class JupyterDialog<T> extends ReactWidget {
       checkbox={this.checkbox}
       setChecked={this.setChecked}
     />
-  )
+  );
 
   protected render(): JSX.Element | null {
     return (
@@ -141,13 +157,18 @@ export class JupyterDialog<T> extends ReactWidget {
         onClose={this.close}
         footerButtons={this.buttons.map((but, idx) => {
           const footerButton: DialogButtonProps = {
-            buttonType: but.displayType === 'default'
-              ? but.accept ? 'primary' : 'default'
-              : 'danger',
-            onClick: () => { this.handleButton(idx) },
+            buttonType:
+              but.displayType === 'default'
+                ? but.accept
+                  ? 'primary'
+                  : 'default'
+                : 'danger',
+            onClick: () => {
+              this.handleButton(idx);
+            },
             content: but.label,
             'aria-label': but.ariaLabel,
-            autoFocus: but.accept
+            autoFocus: but.accept,
           };
           return footerButton;
         })}
@@ -172,15 +193,15 @@ export class JupyterDialog<T> extends ReactWidget {
   protected handleButton = (idx: number): void => {
     this.setButton(this.buttons[idx]);
     this.close();
-  }
+  };
 
   protected setButton = (button: Dialog.IButton): void => {
     this._result.button = button;
-  }
+  };
 
   protected setChecked = (c: boolean): void => {
     this._result.isChecked = c;
-  }
+  };
 
   protected setValue = (v: T | Error): void => {
     if (v instanceof Error) {
@@ -188,13 +209,12 @@ export class JupyterDialog<T> extends ReactWidget {
     } else {
       this._result.value = v;
     }
-  }
+  };
 
   close = (): void => {
     Widget.detach(this);
     this._closing.resolve();
   };
-
 }
 
 export default JupyterDialog;

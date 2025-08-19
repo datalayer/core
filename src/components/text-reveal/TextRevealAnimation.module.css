@@ -14,7 +14,8 @@
 
 .TextRevealAnimation {
   opacity: 0;
-  transition: opacity var(--brand-animation-duration-default) var(--brand-animation-easing-default);
+  transition: opacity var(--brand-animation-duration-default)
+    var(--brand-animation-easing-default);
 }
 
 .TextRevealAnimation--visible {
@@ -38,6 +39,7 @@
   height: 100%;
   background-color: var(--brand-color-accent-primary);
   transform-origin: right;
-  animation: wipe var(--brand-animation-duration-extended) forwards var(--brand-animation-easing-default);
+  animation: wipe var(--brand-animation-duration-extended) forwards
+    var(--brand-animation-easing-default);
   animation-delay: var(--animation-delay);
 }

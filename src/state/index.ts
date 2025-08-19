@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from "./storage";
+export * from './storage';
 export * from './State';
 export * from './substates';
 export * from './DatalayerState';

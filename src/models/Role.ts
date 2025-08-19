@@ -10,6 +10,6 @@ export type IRole = {
   description: string;
   permissions: Array<any>;
   icon: React.ElementType;
-}
+};
 
 export default IRole;

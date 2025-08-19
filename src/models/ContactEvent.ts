@@ -11,16 +11,16 @@ export const asContactEvent = (ce: any): IContactEvent => {
     detailsJson: ce.detailsJson ?? '',
     token: ce.token,
     eventDate: ce.eventDate,
-  }
-}
+  };
+};
 
 export type IContactEvent = {
   id: string;
   subType: string;
   token: string;
-  detailsJson: string,
+  detailsJson: string;
   message: string;
   eventDate: string;
-}
+};
 
 export default IContactEvent;

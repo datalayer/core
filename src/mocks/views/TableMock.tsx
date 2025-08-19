@@ -3,28 +3,36 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Box, LabelGroup, ActionMenu, ActionList, IconButton, Label, RelativeTime } from '@primer/react';
+import {
+  Box,
+  LabelGroup,
+  ActionMenu,
+  ActionList,
+  IconButton,
+  Label,
+  RelativeTime,
+} from '@primer/react';
 import { Table, DataTable } from '@primer/react/experimental';
 import { KebabHorizontalIcon, DownloadIcon } from '@primer/octicons-react';
 import { VisuallyHidden } from './../../components/display';
 
-const now = Date.now()
-const Second = 1000
-const Minute = 60 * Second
-const Hour = 60 * Minute
-const Day = 24 * Hour
-const Week = 7 * Day
-const Month = 4 * Week
+const now = Date.now();
+const Second = 1000;
+const Minute = 60 * Second;
+const Hour = 60 * Minute;
+const Day = 24 * Hour;
+const Week = 7 * Day;
+const Month = 4 * Week;
 
 interface Repo {
-  id: number
-  name: string
-  type: 'public' | 'internal'
-  updatedAt: number
+  id: number;
+  name: string;
+  type: 'public' | 'internal';
+  updatedAt: number;
   securityFeatures: {
-    dependabot: Array<string>
-    codeScanning: Array<string>
-  }
+    dependabot: Array<string>;
+    codeScanning: Array<string>;
+  };
 }
 
 const data: Array<Repo> = [
@@ -108,15 +116,15 @@ const data: Array<Repo> = [
       codeScanning: [],
     },
   },
-]
+];
 
 function uppercase(input: string): string {
-  return input[0].toUpperCase() + input.slice(1)
+  return input[0].toUpperCase() + input.slice(1);
 }
 
 type Props = {
-  title: string
-}
+  title: string;
+};
 
 export const TableMock = (props: Props) => {
   const { title } = props;
@@ -143,14 +151,14 @@ export const TableMock = (props: Props) => {
               header: 'Type',
               field: 'type',
               renderCell: row => {
-                return <Label>{uppercase(row.type)}</Label>
+                return <Label>{uppercase(row.type)}</Label>;
               },
             },
             {
               header: 'Updated',
               field: 'updatedAt',
               renderCell: row => {
-                return <RelativeTime date={new Date(row.updatedAt)} />
+                return <RelativeTime date={new Date(row.updatedAt)} />;
               },
             },
             {
@@ -160,10 +168,10 @@ export const TableMock = (props: Props) => {
                 return row.securityFeatures.dependabot.length > 0 ? (
                   <LabelGroup>
                     {row.securityFeatures.dependabot.map(feature => {
-                      return <Label key={feature}>{uppercase(feature)}</Label>
+                      return <Label key={feature}>{uppercase(feature)}</Label>;
                     })}
                   </LabelGroup>
-                ) : null
+                ) : null;
               },
             },
             {
@@ -173,10 +181,10 @@ export const TableMock = (props: Props) => {
                 return row.securityFeatures.codeScanning.length > 0 ? (
                   <LabelGroup>
                     {row.securityFeatures.codeScanning.map(feature => {
-                      return <Label key={feature}>{uppercase(feature)}</Label>
+                      return <Label key={feature}>{uppercase(feature)}</Label>;
                     })}
                   </LabelGroup>
-                ) : null
+                ) : null;
               },
             },
             {
@@ -191,7 +199,7 @@ export const TableMock = (props: Props) => {
                       icon={DownloadIcon}
                       variant="invisible"
                       onClick={() => {
-                        alert(row)
+                        alert(row);
                       }}
                     />
                     <ActionMenu>
@@ -215,19 +223,21 @@ export const TableMock = (props: Props) => {
                           <ActionList.Item>Edit row</ActionList.Item>
                           <ActionList.Item>Export row as CSV</ActionList.Item>
                           <ActionList.Divider />
-                          <ActionList.Item variant="danger">Delete row</ActionList.Item>
+                          <ActionList.Item variant="danger">
+                            Delete row
+                          </ActionList.Item>
                         </ActionList>
                       </ActionMenu.Overlay>
                     </ActionMenu>
                   </>
-                )
+                );
               },
             },
           ]}
         />
       </Table.Container>
     </Box>
-  )
-}
+  );
+};
 
 export default TableMock;

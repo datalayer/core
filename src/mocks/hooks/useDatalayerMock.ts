@@ -4,24 +4,24 @@
  */
 
 import { useLocation } from 'react-router-dom';
-import { IAMStateProps } from "./../../hooks";
-import { DatalayerRequest } from "./../../hooks";
+import { IAMStateProps } from './../../hooks';
+import { DatalayerRequest } from './../../hooks';
 import { useNavigate } from './../../hooks';
 import { useToast } from './../../hooks';
 import { useIAMStore } from '../../state';
 
-import {
-  systemAdminLogin,
-} from './rests';
+import { systemAdminLogin } from './rests';
 
 const getMockResponse = (request: DatalayerRequest) => {
   const { url, method, body } = request;
-  if (url.match('/api/iam/v1/login$') && method === "POST") {
+  if (url.match('/api/iam/v1/login$') && method === 'POST') {
     return systemAdminLogin(body!.handle);
   }
-}
+};
 
-export const useDatalayerMock = (props: IAMStateProps = { user: undefined, token: undefined }) => {
+export const useDatalayerMock = (
+  props: IAMStateProps = { user: undefined, token: undefined },
+) => {
   const location = useLocation();
   const navigate = useNavigate();
   const iamStore = useIAMStore();
@@ -37,7 +37,7 @@ export const useDatalayerMock = (props: IAMStateProps = { user: undefined, token
     const token_ = request.token ?? iamStore.token;
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
     if (token_) {
       headers['Authorization'] = `Bearer ${token_}`;
@@ -46,8 +46,8 @@ export const useDatalayerMock = (props: IAMStateProps = { user: undefined, token
       method: request.method,
       headers,
       body: request.body ? JSON.stringify(request.body) : undefined,
-      credentials: token_ ? 'include' : 'omit'
-    }).then((resp) => {
+      credentials: token_ ? 'include' : 'omit',
+    }).then(resp => {
       if (resp.status < 200 || resp.status >= 300) {
         if (resp.status === 401) {
           console.log('Datalayer RUN sent a 401 return code.');
@@ -56,11 +56,13 @@ export const useDatalayerMock = (props: IAMStateProps = { user: undefined, token
             navigate(request.loginRoute ?? loginRoute);
           }
         } else {
-          resp.json().then((r) => {
+          resp.json().then(r => {
             const message = r.message;
             const errors = r.errors;
             if (errors) {
-              (errors as Array<string>).forEach(error => enqueueToast(`${error}`, { variant: 'error' }));
+              (errors as Array<string>).forEach(error =>
+                enqueueToast(`${error}`, { variant: 'error' }),
+              );
             } else {
               if (message) {
                 enqueueToast(`API Error: ${message}`, { variant: 'error' });
@@ -75,10 +77,10 @@ export const useDatalayerMock = (props: IAMStateProps = { user: undefined, token
       return resp.json() as Promise<T>;
     });
     return r;
-  }
+  };
   return {
     requestRun,
-  }
-}
+  };
+};
 
 export default useDatalayerMock;

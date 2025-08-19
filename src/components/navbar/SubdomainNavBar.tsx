@@ -3,24 +3,44 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, {useState, useCallback, useRef, PropsWithChildren, forwardRef, useMemo, useEffect} from 'react'
-import clsx from 'clsx'
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  PropsWithChildren,
+  forwardRef,
+  useMemo,
+  useEffect,
+} from 'react';
+import clsx from 'clsx';
 import { SearchIcon, XIcon, LinkExternalIcon } from '@primer/octicons-react';
-import { Button, FormControl, Text, TextInput, Label } from '@primer/react-brand';
+import {
+  Button,
+  FormControl,
+  Text,
+  TextInput,
+  Label,
+} from '@primer/react-brand';
 import { CircleYellowIcon } from '@datalayer/icons-react';
 import { NavigationVisbilityObserver } from './NavigationVisbilityObserver';
-import { useCoreStore } from "../../state"
-import { useOnClickOutside, useFocusTrap, useKeyboardEscape, useWindowSize, useNavigate } from "../../hooks";
-import { useRunStore } from "../../state";
-import {useId} from '../../hooks';
+import { useCoreStore } from '../../state';
+import {
+  useOnClickOutside,
+  useFocusTrap,
+  useKeyboardEscape,
+  useWindowSize,
+  useNavigate,
+} from '../../hooks';
+import { useRunStore } from '../../state';
+import { useId } from '../../hooks';
 
 /**
  * Design tokens
  */
-import '@primer/brand-primitives/lib/design-tokens/css/tokens/functional/components/subdomain-nav-bar/colors-with-modes.css'
+import '@primer/brand-primitives/lib/design-tokens/css/tokens/functional/components/subdomain-nav-bar/colors-with-modes.css';
 
 /** * Main Stylesheet (as a CSS Module) */
-import styles from './SubdomainNavBar.module.css'
+import styles from './SubdomainNavBar.module.css';
 
 export type SubdomainNavBarProps = {
   /**
@@ -31,47 +51,47 @@ export type SubdomainNavBarProps = {
     | React.ReactNode
     | React.ReactElement<LinkProps>
     | React.ReactElement<SearchProps>
-    | React.ReactElement<CTAActionProps>
+    | React.ReactElement<CTAActionProps>;
   /**
    * Forward a custom HTML class attribute
    */
-  className?: string
+  className?: string;
   /**
    * Fixes the navigation bar to the top of the viewport. Defaults to `true`.
    */
-  fixed?: boolean
+  fixed?: boolean;
   /**
    * Fill the maximum width of the parent container. Defaults to `false`.
    */
-  fullWidth?: boolean
+  fullWidth?: boolean;
   /**
    * The title or name of the subdomain. Appears adjacent to the logo and is required for communicating content to assisitive technologies.
    */
-  title: string
+  title: string;
   /**
    * The URL for the site. Typically used to link the titleText prop value to the site root.
    */
-  titleHref?: string
+  titleHref?: string;
   /**
    * Optionally change the URL of the logo
    */
-  logoHref?: string
-}
+  logoHref?: string;
+};
 const testIds = {
   root: 'SubdomainNavBar',
   get innerContainer() {
-    return `${this.root}-inner-container`
+    return `${this.root}-inner-container`;
   },
   get menuButton() {
-    return `${this.root}-menuButton`
+    return `${this.root}-menuButton`;
   },
   get menuLinks() {
-    return `${this.root}-menuLinks`
+    return `${this.root}-menuLinks`;
   },
   get liveRegion() {
-    return `${this.root}-search-live-region`
+    return `${this.root}-search-live-region`;
   },
-}
+};
 
 function Root({
   children,
@@ -90,43 +110,57 @@ function Root({
   const isDev = runStore.isDev;
   const [menuHidden, setMenuHidden] = useState(true);
   const [searchVisible, setSearchVisible] = useState(false);
-  const [startOfContentButtonFocused, setStartOfContentButtonFocused] = useState(false);
+  const [startOfContentButtonFocused, setStartOfContentButtonFocused] =
+    useState(false);
   const mainElRef = useRef<HTMLElement | null>(null);
   const startOfContentID = useId('dla-start-of-content');
   const handleMobileMenuClick = () => setMenuHidden(!menuHidden);
   const handleSearchVisibility = () => setSearchVisible(!searchVisible);
   const focusTrapRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    const mainEl = document.querySelector('main')
+    const mainEl = document.querySelector('main');
     if (mainEl) {
-      mainEl.id = mainEl.id || startOfContentID
-      mainElRef.current = mainEl
+      mainEl.id = mainEl.id || startOfContentID;
+      mainElRef.current = mainEl;
     }
-  }, [startOfContentID])
-  useFocusTrap({containerRef: focusTrapRef, restoreFocusOnCleanUp: true, disabled: menuHidden})
+  }, [startOfContentID]);
+  useFocusTrap({
+    containerRef: focusTrapRef,
+    restoreFocusOnCleanUp: true,
+    disabled: menuHidden,
+  });
   useKeyboardEscape(() => {
-    setMenuHidden(true)
-  })
+    setMenuHidden(true);
+  });
   useEffect(() => {
     if (isMedium) {
-      setMenuHidden(true)
+      setMenuHidden(true);
     }
-  }, [isMedium, menuHidden])
+  }, [isMedium, menuHidden]);
   useEffect(() => {
-    const newOverflowState = menuHidden ? 'auto' : 'hidden'
-    document.body.style.overflow = newOverflowState
-  }, [menuHidden])
-  const setStartOfContentButtonFocusedTrue = useCallback(() => setStartOfContentButtonFocused(true), [])
-  const setStartOfContentButtonFocusedFalse = useCallback(() => setStartOfContentButtonFocused(false), [])
+    const newOverflowState = menuHidden ? 'auto' : 'hidden';
+    document.body.style.overflow = newOverflowState;
+  }, [menuHidden]);
+  const setStartOfContentButtonFocusedTrue = useCallback(
+    () => setStartOfContentButtonFocused(true),
+    [],
+  );
+  const setStartOfContentButtonFocusedFalse = useCallback(
+    () => setStartOfContentButtonFocused(false),
+    [],
+  );
   const hasLinks =
     useMemo(
       () =>
         React.Children.toArray(children).filter(
-          child => React.isValidElement(child) && typeof child.type !== 'string' && child.type === Link,
+          child =>
+            React.isValidElement(child) &&
+            typeof child.type !== 'string' &&
+            child.type === Link,
         ),
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [],
-    ).length > 0
+    ).length > 0;
   const menuItems = useMemo(
     () =>
       React.Children.toArray(children)
@@ -140,14 +174,14 @@ function Root({
                 style: {
                   [`--animation-order`]: index,
                 },
-              })
+              });
             }
-            return null
+            return null;
           }
         })
         .filter(Boolean),
     [children],
-  )
+  );
   return (
     <>
       <div
@@ -160,18 +194,26 @@ function Root({
           as="a"
           href={`#${mainElRef.current?.id || startOfContentID}`}
           variant="primary"
-          className={clsx(styles['SubdomainNavBar-skip-to-content'], !startOfContentButtonFocused && 'visually-hidden')}
+          className={clsx(
+            styles['SubdomainNavBar-skip-to-content'],
+            !startOfContentButtonFocused && 'visually-hidden',
+          )}
           onFocus={setStartOfContentButtonFocusedTrue}
           onBlur={setStartOfContentButtonFocusedFalse}
         >
           Skip to content
         </Button>
-        <header className={clsx(styles['SubdomainNavBar'], className)} data-testid={testIds.root} {...rest}>
+        <header
+          className={clsx(styles['SubdomainNavBar'], className)}
+          data-testid={testIds.root}
+          {...rest}
+        >
           <div
             ref={focusTrapRef}
             className={clsx(
               styles['SubdomainNavBar-inner-container'],
-              searchVisible && styles['SubdomainNavBar-inner-container--search-open'],
+              searchVisible &&
+                styles['SubdomainNavBar-inner-container--search-open'],
               !fullWidth && styles['SubdomainNavBar-inner-container--centered'],
             )}
             data-testid={testIds.innerContainer}
@@ -179,23 +221,34 @@ function Root({
             <nav aria-label="global breadcrumb">
               <ol className={styles['SubdomainNavBar-title-area']}>
                 <li>
-                  <a href="javascript: return false;" aria-label="Datalayer Home" className={styles['SubdomainNavBar-logo-mark']} onClick={e => navigate('/', e)}>
+                  <a
+                    href="javascript: return false;"
+                    aria-label="Datalayer Home"
+                    className={styles['SubdomainNavBar-logo-mark']}
+                    onClick={e => navigate('/', e)}
+                  >
                     {/*
                     <span className={clsx(styles['SubdomainNavBar-back-arrow'])}>
                       <ChevronLeftIcon fill="currentColor" size={24} />
                     </span>
                     <DatalayerGreenIcon fill="currentColor" size={24} colored/>
                     */}
-                    <img src={configuration.brand.logoUrl} style={{ height: 25 }} />
+                    <img
+                      src={configuration.brand.logoUrl}
+                      style={{ height: 25 }}
+                    />
                   </a>
                 </li>
-                {isDev &&
+                {isDev && (
                   <li>
-                    <Label leadingVisual={<CircleYellowIcon/>} color="green-blue">
+                    <Label
+                      leadingVisual={<CircleYellowIcon />}
+                      color="green-blue"
+                    >
                       DEV
                     </Label>
                   </li>
-                }
+                )}
                 {/*title && isSmall && (
                   <>
                     <li role="separator" className={styles['SubdomainNavBar-title-separator']} aria-hidden>
@@ -222,7 +275,11 @@ function Root({
                 className={styles['SubdomainNavBar-primary-nav']}
                 data-testid={testIds.menuLinks}
               >
-                <NavigationVisbilityObserver className={clsx(styles['SubdomainNavBar-primary-nav-list--invisible'])}>
+                <NavigationVisbilityObserver
+                  className={clsx(
+                    styles['SubdomainNavBar-primary-nav-list--invisible'],
+                  )}
+                >
                   {menuItems}
                 </NavigationVisbilityObserver>
               </nav>
@@ -230,15 +287,18 @@ function Root({
             <div className={clsx(styles['SubdomainNavBar-secondary-nav'])}>
               {React.Children.toArray(children)
                 .map(child => {
-                  if (React.isValidElement(child) && typeof child.type !== 'string') {
+                  if (
+                    React.isValidElement(child) &&
+                    typeof child.type !== 'string'
+                  ) {
                     if (child.type === Search) {
                       return React.cloneElement(child as React.ReactElement, {
                         active: searchVisible,
                         handlerFn: handleSearchVisibility,
                         title,
-                      })
+                      });
                     }
-                    return null
+                    return null;
                   }
                 })
                 .filter(Boolean)}
@@ -256,9 +316,15 @@ function Root({
                   data-testid={testIds.menuButton}
                   onClick={handleMobileMenuClick}
                 >
-                  <div className={clsx(styles['SubdomainNavBar-menu-button-bar'])}></div>
-                  <div className={clsx(styles['SubdomainNavBar-menu-button-bar'])}></div>
-                  <div className={clsx(styles['SubdomainNavBar-menu-button-bar'])}></div>
+                  <div
+                    className={clsx(styles['SubdomainNavBar-menu-button-bar'])}
+                  ></div>
+                  <div
+                    className={clsx(styles['SubdomainNavBar-menu-button-bar'])}
+                  ></div>
+                  <div
+                    className={clsx(styles['SubdomainNavBar-menu-button-bar'])}
+                  ></div>
                 </button>
               )}
               {isMedium && (
@@ -271,22 +337,28 @@ function Root({
                   <div className={styles['SubdomainNavBar-button-area-inner']}>
                     {React.Children.toArray(children)
                       .map(child => {
-                        if (React.isValidElement(child) && typeof child.type !== 'string') {
+                        if (
+                          React.isValidElement(child) &&
+                          typeof child.type !== 'string'
+                        ) {
                           if (child.type === PrimaryAction) {
-                            return child
+                            return child;
                           }
-                          return null
+                          return null;
                         }
                       })
                       .filter(Boolean)}
 
                     {React.Children.toArray(children)
                       .map(child => {
-                        if (React.isValidElement(child) && typeof child.type !== 'string') {
+                        if (
+                          React.isValidElement(child) &&
+                          typeof child.type !== 'string'
+                        ) {
                           if (child.type === SecondaryAction) {
-                            return child
+                            return child;
                           }
-                          return null
+                          return null;
                         }
                       })
                       .filter(Boolean)}
@@ -306,7 +378,10 @@ function Root({
                         <a
                           href={titleHref}
                           aria-label={`${title} home`}
-                          className={clsx(styles['SubdomainNavBar-link'], styles['SubdomainNavBar-link--title'])}
+                          className={clsx(
+                            styles['SubdomainNavBar-link'],
+                            styles['SubdomainNavBar-link--title'],
+                          )}
                         >
                           {title}
                         </a>
@@ -315,7 +390,9 @@ function Root({
                     {hasLinks && !menuHidden && (
                       <NavigationVisbilityObserver
                         showOnlyOnNarrow
-                        className={clsx(styles['SubdomainNavBar-primary-nav-list--visible'])}
+                        className={clsx(
+                          styles['SubdomainNavBar-primary-nav-list--visible'],
+                        )}
                       >
                         {menuItems}
                       </NavigationVisbilityObserver>
@@ -327,24 +404,32 @@ function Root({
                       styles['SubdomainNavBar-button-area--visible'],
                     )}
                   >
-                    <div className={styles['SubdomainNavBar-button-area-inner']}>
+                    <div
+                      className={styles['SubdomainNavBar-button-area-inner']}
+                    >
                       {React.Children.toArray(children)
                         .map(child => {
-                          if (React.isValidElement(child) && typeof child.type !== 'string') {
+                          if (
+                            React.isValidElement(child) &&
+                            typeof child.type !== 'string'
+                          ) {
                             if (child.type === PrimaryAction) {
-                              return child
+                              return child;
                             }
-                            return null
+                            return null;
                           }
                         })
                         .filter(Boolean)}
                       {React.Children.toArray(children)
                         .map(child => {
-                          if (React.isValidElement(child) && typeof child.type !== 'string') {
+                          if (
+                            React.isValidElement(child) &&
+                            typeof child.type !== 'string'
+                          ) {
                             if (child.type === SecondaryAction) {
-                              return child
+                              return child;
                             }
-                            return null
+                            return null;
                           }
                         })
                         .filter(Boolean)}
@@ -358,133 +443,181 @@ function Root({
       </div>
       {!mainElRef.current && <div id={`${startOfContentID}`} tabIndex={-1} />}
     </>
-  )
+  );
 }
 
 type LinkProps = {
   href: string;
   isExternal?: boolean;
   target?: string;
-} & React.DetailedHTMLProps<React.LiHTMLAttributes<HTMLLIElement>, HTMLLIElement>
+} & React.DetailedHTMLProps<
+  React.LiHTMLAttributes<HTMLLIElement>,
+  HTMLLIElement
+>;
 
-function Link({href, className, children, isExternal, target, ...rest}: PropsWithChildren<LinkProps>) {
+function Link({
+  href,
+  className,
+  children,
+  isExternal,
+  target,
+  ...rest
+}: PropsWithChildren<LinkProps>) {
   return (
-    <li className={clsx(styles['SubdomainNavBar-primary-nav-list-item'], className)} {...rest}>
-      <a href={href} target={target ?? "_self"}className={clsx(styles['SubdomainNavBar-link'])}>
-      <span className={clsx(styles['SubdomainNavBar-link-text'])}>{children}</span>
-        {isExternal && <LinkExternalIcon size={16} aria-label="External link" />}
+    <li
+      className={clsx(
+        styles['SubdomainNavBar-primary-nav-list-item'],
+        className,
+      )}
+      {...rest}
+    >
+      <a
+        href={href}
+        target={target ?? '_self'}
+        className={clsx(styles['SubdomainNavBar-link'])}
+      >
+        <span className={clsx(styles['SubdomainNavBar-link-text'])}>
+          {children}
+        </span>
+        {isExternal && (
+          <LinkExternalIcon size={16} aria-label="External link" />
+        )}
       </a>
     </li>
-  )
+  );
 }
 
 export type SubdomainNavBarSearchResultProps = {
-  title: string
-  description: string
-  url: string
-  date: string
-  category?: string
-}
+  title: string;
+  description: string;
+  url: string;
+  date: string;
+  category?: string;
+};
 
 type SearchProps = {
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  ref: React.RefObject<HTMLInputElement>
-  active?: boolean
-  title?: string
-  handlerFn?: (event: MouseEvent | TouchEvent | FocusEvent) => void
-  autoComplete?: boolean
-  searchResults?: SubdomainNavBarSearchResultProps[]
-  searchTerm?: string
-}
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  ref: React.RefObject<HTMLInputElement>;
+  active?: boolean;
+  title?: string;
+  handlerFn?: (event: MouseEvent | TouchEvent | FocusEvent) => void;
+  autoComplete?: boolean;
+  searchResults?: SubdomainNavBarSearchResultProps[];
+  searchTerm?: string;
+};
 
-const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, onSubmit, onChange}: Omit<SearchProps, "ref">, ref) => {
-  const dialogRef = useRef<HTMLDivElement | null>(null)
+const SearchInternal = (
+  {
+    active,
+    title,
+    searchResults,
+    searchTerm,
+    handlerFn,
+    onSubmit,
+    onChange,
+  }: Omit<SearchProps, 'ref'>,
+  ref,
+) => {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
 
-  useFocusTrap({containerRef: dialogRef, restoreFocusOnCleanUp: true, disabled: !active})
-  useOnClickOutside(dialogRef, handlerFn)
+  useFocusTrap({
+    containerRef: dialogRef,
+    restoreFocusOnCleanUp: true,
+    disabled: !active,
+  });
+  useOnClickOutside(dialogRef, handlerFn);
 
-  const [activeDescendant, setActiveDescendant] = useState<number>(-1)
-  const [listboxActive, setListboxActive] = useState<boolean>()
-  const [liveRegion, setLiveRegion] = useState<boolean>(false)
+  const [activeDescendant, setActiveDescendant] = useState<number>(-1);
+  const [listboxActive, setListboxActive] = useState<boolean>();
+  const [liveRegion, setLiveRegion] = useState<boolean>(false);
 
   const handleClose = useCallback(
     (event = null) => {
-      if (handlerFn) handlerFn(event as any)
-      setActiveDescendant(-1)
+      if (handlerFn) handlerFn(event as any);
+      setActiveDescendant(-1);
     },
     [handlerFn],
-  )
+  );
 
-  useOnClickOutside(dialogRef, handleClose)
+  useOnClickOutside(dialogRef, handleClose);
   useKeyboardEscape(() => {
     // Close the dialog if combobox is already collapsed
     if (!listboxActive && active) {
-      handleClose()
-      return false
+      handleClose();
+      return false;
     }
 
-    setListboxActive(false)
-    setActiveDescendant(-1)
-  })
+    setListboxActive(false);
+    setActiveDescendant(-1);
+  });
 
   const handleAriaFocus = useCallback(
     event => {
-      const supportedKeys = ['ArrowDown', 'ArrowUp', 'Escape', 'Enter']
-      const currentCount = activeDescendant
-      const searchResultsLength = searchResults ? searchResults.length : 0
-      const dialog = dialogRef.current
-      let count
+      const supportedKeys = ['ArrowDown', 'ArrowUp', 'Escape', 'Enter'];
+      const currentCount = activeDescendant;
+      const searchResultsLength = searchResults ? searchResults.length : 0;
+      const dialog = dialogRef.current;
+      let count;
 
       // Prevent any other keys outside of supported from being prevented.
       // Only prevent "Enter" if activeDescendant is greater than -1.
-      if (!supportedKeys.includes(event.key) || (event.key === 'Enter' && activeDescendant === -1) || !dialog) {
-        return false
+      if (
+        !supportedKeys.includes(event.key) ||
+        (event.key === 'Enter' && activeDescendant === -1) ||
+        !dialog
+      ) {
+        return false;
       }
 
-      event.preventDefault()
+      event.preventDefault();
 
       if (event.key === 'ArrowDown') {
         // If count reaches last search result item, reset to -1
-        count = currentCount < searchResultsLength - 1 ? currentCount + 1 : -1
-        setActiveDescendant(count)
+        count = currentCount < searchResultsLength - 1 ? currentCount + 1 : -1;
+        setActiveDescendant(count);
       } else if (event.key === 'ArrowUp') {
         // Reset to last search result item if
-        count = currentCount === -1 ? searchResultsLength - 1 : currentCount - 1
-        setActiveDescendant(count)
+        count =
+          currentCount === -1 ? searchResultsLength - 1 : currentCount - 1;
+        setActiveDescendant(count);
       }
 
       if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
-        dialog.querySelector(`#subdomainnavbar-search-result-${count}`)?.scrollIntoView()
+        dialog
+          .querySelector(`#subdomainnavbar-search-result-${count}`)
+          ?.scrollIntoView();
       }
 
       if (event.key === 'Enter') {
-        const link = dialog.querySelector(`#subdomainnavbar-search-result-${activeDescendant} a`) as HTMLAnchorElement
-        link.click()
+        const link = dialog.querySelector(
+          `#subdomainnavbar-search-result-${activeDescendant} a`,
+        ) as HTMLAnchorElement;
+        link.click();
       }
     },
     [searchResults, activeDescendant],
-  )
+  );
 
   const searchLiveRegion = useCallback(() => {
     // Adding a non-breaking space and then removing it will force screen readers to announce the text,
     // as it thinks that there was a change within the live region.
-    setLiveRegion(true)
+    setLiveRegion(true);
 
     setTimeout(() => {
-      if (active) setLiveRegion(false)
-    }, 200)
-  }, [active])
+      if (active) setLiveRegion(false);
+    }, 200);
+  }, [active]);
 
   useEffect(() => {
     // We want to set "listboxActive" when search results are present,
     // or the user pressed "Escape". We watch for "searchTerm", as we -
     // want the listbox to become active if they pressed "Escape", and -
     // adjusted their existing value.
-    const search = searchResults && searchResults.length ? true : false
-    setListboxActive(search)
-    searchLiveRegion()
-  }, [searchResults, searchTerm, searchLiveRegion])
+    const search = searchResults && searchResults.length ? true : false;
+    setListboxActive(search);
+    searchLiveRegion();
+  }, [searchResults, searchTerm, searchLiveRegion]);
 
   return (
     <>
@@ -507,8 +640,16 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
           tabIndex={-1}
           className={clsx(styles['SubdomainNavBar-search-dialog'])}
         >
-          <div className={clsx(styles['SubdomainNavBar-search-dialog-control-area'])}>
-            <form className={clsx(styles['SubdomainNavBar-search-form'])} onSubmit={onSubmit} role="search">
+          <div
+            className={clsx(
+              styles['SubdomainNavBar-search-dialog-control-area'],
+            )}
+          >
+            <form
+              className={clsx(styles['SubdomainNavBar-search-form'])}
+              onSubmit={onSubmit}
+              role="search"
+            >
               <FormControl fullWidth size="medium">
                 <FormControl.Label visuallyHidden>Search</FormControl.Label>
                 <TextInput
@@ -524,7 +665,9 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
                   invisible
                   leadingVisual={<SearchIcon size={16} />}
                   aria-activedescendant={
-                    activeDescendant === -1 ? undefined : `subdomainnavbar-search-result-${activeDescendant}`
+                    activeDescendant === -1
+                      ? undefined
+                      : `subdomainnavbar-search-result-${activeDescendant}`
                   }
                   onKeyDown={handleAriaFocus}
                 />
@@ -532,7 +675,10 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
             </form>
             <button
               aria-label="Close"
-              className={clsx(styles['SubdomainNavBar-menu-button'], styles['SubdomainNavBar-menu-button--close'])}
+              className={clsx(
+                styles['SubdomainNavBar-menu-button'],
+                styles['SubdomainNavBar-menu-button--close'],
+              )}
               onClick={handleClose as any}
             >
               <XIcon size={24} />
@@ -540,7 +686,11 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
           </div>
           <div id="listbox-search-results">
             {listboxActive && (
-              <div className={clsx(styles['SubdomainNavBar-search-results-container'])}>
+              <div
+                className={clsx(
+                  styles['SubdomainNavBar-search-results-container'],
+                )}
+              >
                 <Text
                   id="subdomainnavbar-search-results-heading"
                   className={styles['SubdomainNavBar-search-results-heading']}
@@ -561,7 +711,11 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
                       role="option"
                       aria-selected={index === activeDescendant}
                     >
-                      <div className={styles['SubdomainNavBar-search-result-item-container']}>
+                      <div
+                        className={
+                          styles['SubdomainNavBar-search-result-item-container']
+                        }
+                      >
                         <a href={result.url}>{result.title}</a>
                       </div>
 
@@ -569,21 +723,42 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
                         as="p"
                         size="200"
                         id={`subdomainnavbar-search-result-item-desc${index}`}
-                        className={styles['SubdomainNavBar-search-result-item-desc']}
+                        className={
+                          styles['SubdomainNavBar-search-result-item-desc']
+                        }
                       >
                         {result.description}
                       </Text>
                       <div>
-                        <Text size="100" className={styles['SubdomainNavBar-search-result-item-desc']}>
+                        <Text
+                          size="100"
+                          className={
+                            styles['SubdomainNavBar-search-result-item-desc']
+                          }
+                        >
                           {result.date}
                         </Text>
                         {result.category && (
                           <>
-                            <Text size="100" className={styles['SubdomainNavBar-search-result-item-desc']}>
+                            <Text
+                              size="100"
+                              className={
+                                styles[
+                                  'SubdomainNavBar-search-result-item-desc'
+                                ]
+                              }
+                            >
                               {' '}
                               •{' '}
                             </Text>
-                            <Text size="100" className={styles['SubdomainNavBar-search-result-item-desc']}>
+                            <Text
+                              size="100"
+                              className={
+                                styles[
+                                  'SubdomainNavBar-search-result-item-desc'
+                                ]
+                              }
+                            >
                               {result.category}
                             </Text>
                           </>
@@ -594,7 +769,12 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
                 </ul>
               </div>
             )}
-            <div aria-live="polite" aria-atomic="true" data-testid={testIds.liveRegion} className="visually-hidden">
+            <div
+              aria-live="polite"
+              aria-atomic="true"
+              data-testid={testIds.liveRegion}
+              className="visually-hidden"
+            >
               {`${searchResults?.length} suggestions.`}
               {liveRegion && <span>&nbsp;</span>}
             </div>
@@ -602,18 +782,21 @@ const SearchInternal = ({active, title, searchResults, searchTerm, handlerFn, on
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
-const Search = forwardRef(SearchInternal)
+const Search = forwardRef(SearchInternal);
 
 type CTAActionProps = {
-  hasArrow?: boolean,
-  size?: string,
-} & React.HTMLAttributes<HTMLAnchorElement>
+  hasArrow?: boolean;
+  size?: string;
+} & React.HTMLAttributes<HTMLAnchorElement>;
 
-function PrimaryAction({children, ...rest}: PropsWithChildren<CTAActionProps>) {
-  const { hasArrow = false, size="small" } = rest;
+function PrimaryAction({
+  children,
+  ...rest
+}: PropsWithChildren<CTAActionProps>) {
+  const { hasArrow = false, size = 'small' } = rest;
   return (
     <Button
       as="a"
@@ -626,23 +809,29 @@ function PrimaryAction({children, ...rest}: PropsWithChildren<CTAActionProps>) {
     >
       {children}
     </Button>
-  )
+  );
 }
 
-function SecondaryAction({children, ...rest}: PropsWithChildren<CTAActionProps>) {
-  const { hasArrow = false, size="small" } = rest;
+function SecondaryAction({
+  children,
+  ...rest
+}: PropsWithChildren<CTAActionProps>) {
+  const { hasArrow = false, size = 'small' } = rest;
   return (
     <Button
       as="a"
       href="javascript: return false;"
-      className={clsx(styles['SubdomainNavBar-cta-button'], styles['SubdomainNavBar-cta-button--secondary'])}
+      className={clsx(
+        styles['SubdomainNavBar-cta-button'],
+        styles['SubdomainNavBar-cta-button--secondary'],
+      )}
       size={size}
       hasArrow={hasArrow}
       {...rest}
     >
       {children}
     </Button>
-  )
+  );
 }
 
 export const SubdomainNavBar = Object.assign(Root, {

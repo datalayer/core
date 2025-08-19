@@ -9,62 +9,63 @@
  * MIT License
  */
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Box } from '@datalayer/primer-addons';
-import { Notebook2, Kernel, NotebookToolbar, CellSidebarExtension, CellSidebarButton, createServerSettings, getJupyterServerUrl, getJupyterServerToken } from '@datalayer/jupyter-react';
+import {
+  Notebook2,
+  Kernel,
+  NotebookToolbar,
+  CellSidebarExtension,
+  CellSidebarButton,
+} from '@datalayer/jupyter-react';
 import { ServiceManager } from '@jupyterlab/services';
 
 const NOTEBOOK_ID = 'notebook-example-1';
 
 type INotebookExampleProps = {
   serviceManager?: ServiceManager.IManager;
-}
+};
 
 export const NotebookExample = (props: INotebookExampleProps) => {
   const [kernel, setKernel] = useState<Kernel | undefined>();
-  const [serviceManager, setServiceManager] = useState<ServiceManager.IManager | undefined>(props.serviceManager);
-  
+  const { serviceManager } = props;
+
   useEffect(() => {
-    // Create service manager if not provided
-    if (!props.serviceManager) {
-      const serverSettings = createServerSettings(
-        getJupyterServerUrl(),
-        getJupyterServerToken()
-      );
-      const manager = new ServiceManager({ serverSettings });
-      setServiceManager(manager);
-    }
-  }, [props.serviceManager]);
-  
-  useEffect(() => {
-    if (!kernel && serviceManager) {
+    if (serviceManager && !kernel) {
       // Create a kernel using the service manager
       const createKernel = async () => {
-        const k = new Kernel({
-          kernelName: 'python3',
-        } as any);
-        // @ts-expect-error - Set service manager after construction
-        k._serviceManager = serviceManager;
-        await k.ready;
-        setKernel(k);
+        try {
+          // Create a kernel session
+          const kernelConnection = await serviceManager.kernels.startNew({
+            name: 'python3',
+          });
+          // Create a Kernel wrapper
+          const k = new Kernel({
+            kernelConnection,
+            kernelName: 'python3',
+          } as any);
+          await k.ready;
+          setKernel(k);
+        } catch (error) {
+          console.error('Failed to create kernel:', error);
+        }
       };
       createKernel();
     }
-  }, [serviceManager]);
-  
-  const extensions = useMemo(() => [
-    new CellSidebarExtension({ factory: CellSidebarButton })
-  ], []);
-  
-  if (!kernel || !serviceManager) {
+  }, [serviceManager, kernel]);
+  const extensions = useMemo(
+    () => [new CellSidebarExtension({ factory: CellSidebarButton })],
+    [],
+  );
+  if (!serviceManager || !kernel) {
     return (
-      <Box p={4}>
-        <Box as="h1">A Jupyter Notebook</Box>
-        <Box>Loading kernel and services...</Box>
+      <Box as="h1">
+        A Jupyter Notebook
+        <div>Loading...</div>
       </Box>
     );
   }
-  
+
   return (
     <>
       <Box as="h1">A Jupyter Notebook</Box>
@@ -77,7 +78,7 @@ export const NotebookExample = (props: INotebookExampleProps) => {
         Toolbar={NotebookToolbar}
       />
     </>
-  )
-}
+  );
+};
 
 export default NotebookExample;

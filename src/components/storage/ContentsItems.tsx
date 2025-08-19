@@ -41,7 +41,8 @@ interface ITreeItemProps {
 /**
  * Directory component properties
  */
-interface IDirectoryItemProps extends Omit<ITreeItemProps, 'current' | 'onSelect' | 'refresh'> {
+interface IDirectoryItemProps
+  extends Omit<ITreeItemProps, 'current' | 'onSelect' | 'refresh'> {
   /**
    * Jupyter contents manager
    */
@@ -60,10 +61,13 @@ interface IDirectoryItemProps extends Omit<ITreeItemProps, 'current' | 'onSelect
   onSelect: (item: IContentsView, refresh: () => void) => void;
 }
 
-export function modelToView(models: Contents.IModel[], docRegistry?: DocumentRegistry): IContentsView[] {
+export function modelToView(
+  models: Contents.IModel[],
+  docRegistry?: DocumentRegistry,
+): IContentsView[] {
   let items = models.map(model => ({
     ...model,
-    fileType: docRegistry?.getFileTypeForModel(model)
+    fileType: docRegistry?.getFileTypeForModel(model),
   }));
   items = items.filter(model => !model.name.startsWith('.'));
   items.sort((a, b) => {
@@ -82,20 +86,15 @@ export function modelToView(models: Contents.IModel[], docRegistry?: DocumentReg
  * Directory tree item component
  */
 export function DirectoryItem(props: IDirectoryItemProps): JSX.Element {
-  const {
-    item,
-    contents,
-    current,
-    documentRegistry,
-    onContextMenu,
-    onSelect
-  } = props;
+  const { item, contents, current, documentRegistry, onContextMenu, onSelect } =
+    props;
   const ref = useRef<HTMLElement | null>(null);
   const [children, setChildren] = useState<IContentsView[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const refresh = useCallback(() => {
     setIsLoading(true);
-    contents.get(item.path)
+    contents
+      .get(item.path)
       .then(model => {
         setIsLoading(false);
         setChildren(modelToView(model.content, documentRegistry));
@@ -110,14 +109,16 @@ export function DirectoryItem(props: IDirectoryItemProps): JSX.Element {
         refresh();
       }
     },
-    [children, item, contents]
+    [children, item, contents],
   );
   return (
     <TreeView.Item
       ref={ref}
       id={`${item.type}-${item.name}`}
       onExpandedChange={onExpandedChange}
-      onSelect={() => {onSelect(item, refresh)}}
+      onSelect={() => {
+        onSelect(item, refresh);
+      }}
       current={item.path === current?.path}
     >
       <TreeView.LeadingVisual>
@@ -144,7 +145,7 @@ export function DirectoryItem(props: IDirectoryItemProps): JSX.Element {
         }
       >
         {children?.map(child => {
-          return child.type === 'directory' ?
+          return child.type === 'directory' ? (
             <DirectoryItem
               key={child.name}
               item={child}
@@ -154,7 +155,7 @@ export function DirectoryItem(props: IDirectoryItemProps): JSX.Element {
               onContextMenu={onContextMenu}
               onSelect={onSelect}
             />
-          :
+          ) : (
             <TreeItem
               key={child.name}
               item={child}
@@ -162,7 +163,7 @@ export function DirectoryItem(props: IDirectoryItemProps): JSX.Element {
               onSelect={item => onSelect(item, refresh)}
               onContextMenu={onContextMenu}
             />
-          ;
+          );
         })}
       </TreeView.SubTree>
     </TreeView.Item>
@@ -179,7 +180,9 @@ export function TreeItem(props: ITreeItemProps) {
       ref={ref}
       id={`${item.type}-${item.name}`}
       current={current}
-      onSelect={() => {onSelect(item)}}
+      onSelect={() => {
+        onSelect(item);
+      }}
     >
       <TreeView.LeadingVisual>
         {icon ? <icon.react tag={'span'} /> : <FileIcon />}

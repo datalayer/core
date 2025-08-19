@@ -8,10 +8,10 @@ export const CodePreview = (props: { code: string }) => {
   return (
     <pre
       style={{
-        fontSize: "12px",
-        wordBreak: "break-all",
-        wordWrap: "break-word",
-        whiteSpace: "pre-wrap",
+        fontSize: '12px',
+        wordBreak: 'break-all',
+        wordWrap: 'break-word',
+        whiteSpace: 'pre-wrap',
       }}
     >
       {code}

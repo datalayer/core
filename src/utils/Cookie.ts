@@ -16,10 +16,10 @@ export function getCookie(cname: string): string | undefined {
     return cookie as undefined;
   }
   // From https://www.w3schools.com/js/js_cookies.asp
-  const name = cname + "=";
+  const name = cname + '=';
   const decodedCookie = decodeURIComponent(document.cookie);
   const ca = decodedCookie.split(';');
-  for(let i = 0; i <ca.length; i++) {
+  for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
     while (c.charAt(0) === ' ') {
       c = c.substring(1);
@@ -34,10 +34,10 @@ export function getCookie(cname: string): string | undefined {
  * Set a cookie in the document.
  */
 export function setCookie(name: string, value: string, path: string = '/') {
-//  document.cookie = "username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC; path=/";
+  //  document.cookie = "username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC; path=/";
   const expire = new Date();
   const time = expire.getTime();
-  const expireTime = time + 1000*36000;
+  const expireTime = time + 1000 * 36000;
   expire.setTime(expireTime);
   document.cookie = `${name}=${value}; expires=${expire.toUTCString()}; SameSite=Lax; path=${path}`;
 }
@@ -46,5 +46,5 @@ export function setCookie(name: string, value: string, path: string = '/') {
  * Set a cookie in the document.
  */
 export function deleteCookie(name: string) {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`; 
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }

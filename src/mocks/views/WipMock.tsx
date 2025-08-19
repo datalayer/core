@@ -7,8 +7,8 @@ import { Box, PageHeader, Flash, PageLayout } from '@primer/react';
 import { ConstructionIcon } from '@datalayer/icons-react';
 
 type Props = {
-  title: string
-}
+  title: string;
+};
 
 export const WipMock = (props: Props) => {
   const { title } = props;

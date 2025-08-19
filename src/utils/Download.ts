@@ -10,10 +10,10 @@ export function jsonToCSVString(json) {
   json.forEach(obj => {
     const rowCells = headers.map(header => {
       const val = obj[header];
-      if (typeof val === "number") {
+      if (typeof val === 'number') {
         return val;
       }
-      if (typeof val === "string") {
+      if (typeof val === 'string') {
         return val;
       }
       if (val instanceof Date) {
@@ -27,8 +27,14 @@ export function jsonToCSVString(json) {
   return csvString;
 }
 
-export const downloadJson = (data: any, fileName: string, extension: string) => {
-  const jsonData = new Blob([JSON.stringify(data)], { type: 'application/json' });
+export const downloadJson = (
+  data: any,
+  fileName: string,
+  extension: string,
+) => {
+  const jsonData = new Blob([JSON.stringify(data)], {
+    type: 'application/json',
+  });
   const jsonURL = URL.createObjectURL(jsonData);
   const jsonLink = document.createElement('a');
   jsonLink.href = jsonURL;

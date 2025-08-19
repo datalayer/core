@@ -4,7 +4,7 @@
  */
 
 import { Label, Link } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { Banner } from '@primer/react/experimental';
 import { useCoreStore, useRuntimesStore } from '../../state';
 import { useNavigate } from '../../hooks';
@@ -15,22 +15,36 @@ export const FlashDisclaimer = () => {
   const navigate = useNavigate();
   return (
     <>
-      {configuration?.whiteLabel === false && showDisclaimer &&
+      {configuration?.whiteLabel === false && showDisclaimer && (
         <Banner
           variant="info"
           title="AI Platform for Data Analysis"
           description={
             <Box>
               <Label style={{ marginRight: 10 }}>PRIVATE BETA</Label>
-              Create Kernels and use them from your JupyterLab, VS Code or CLI. Read the <Link href="javascript: return false;" onClick={e => navigate('/docs', e)}>documentation</Link> for any question
-              or <Link href="javascript: return false;" onClick={e => navigate('/support/request', e)}>contact us for support</Link>.
+              Create Kernels and use them from your JupyterLab, VS Code or CLI.
+              Read the{' '}
+              <Link
+                href="javascript: return false;"
+                onClick={e => navigate('/docs', e)}
+              >
+                documentation
+              </Link>{' '}
+              for any question or{' '}
+              <Link
+                href="javascript: return false;"
+                onClick={e => navigate('/support/request', e)}
+              >
+                contact us for support
+              </Link>
+              .
             </Box>
           }
           onDismiss={() => setShowDisclaimer(false)}
         />
-      }
+      )}
     </>
   );
-}
+};
 
 export default FlashDisclaimer;
