@@ -2,6 +2,10 @@
   "name": "@datalayer/core",
   "version": "0.0.3",
   "type": "module",
+  "workspaces": [
+    ".",
+    "examples/*"
+  ],
   "author": {
     "name": "Datalayer",
     "email": "info@datalayer.io"
@@ -43,11 +47,11 @@
     "dev": "vite",
     "build": "gulp resources-to-lib && tsc -b && vite build",
     "build:lib": "gulp resources-to-lib && tsc -b",
-    "lint": "eslint . --quiet",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
-    "type-check": "tsc --noEmit",
+    "lint": "eslint . --quiet && npm run lint --workspace=nextjs-notebook-example",
+    "lint:fix": "eslint . --fix && npm run lint:fix --workspace=nextjs-notebook-example",
+    "format": "prettier --write \"{src,examples}/**/*.{js,jsx,ts,tsx,css,json,md,mjs}\" && npm run format --workspace=nextjs-notebook-example",
+    "format:check": "prettier --check \"{src,examples}/**/*.{js,jsx,ts,tsx,css,json,md,mjs}\" && npm run format:check --workspace=nextjs-notebook-example",
+    "type-check": "tsc --noEmit && npm run type-check --workspace=nextjs-notebook-example",
     "check": "npm run format:check && npm run lint && npm run type-check",
     "check:fix": "npm run format && npm run lint:fix && npm run type-check",
     "preview": "vite preview",
@@ -65,6 +69,7 @@
     "watch:lib:res": "gulp resources-to-lib-watch",
     "watch:lib:src": "tsc -b -w",
     "example": "vite --config vite.examples.config.ts",
+    "example:nextjs": "npm run dev --workspace=nextjs-notebook-example",
     "prepare": "husky"
   },
   "dependencies": {
@@ -97,7 +102,6 @@
     "react": "18.3.1",
     "react-confetti": "^6.4.0",
     "react-dom": "18.3.1",
-    "react-router-dom": "^6.22.3",
     "tus-js-client": "^4.2.3",
     "ulid": "^2.3.0",
     "unique-names-generator": "^4.7.1",
@@ -105,9 +109,18 @@
     "validator": "^13.7.0",
     "zustand": "^4.4.1"
   },
+  "peerDependencies": {
+    "react-router-dom": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react-router-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.0",
     "@eslint/js": "^9.29.0",
+    "react-router-dom": "^6.22.3",
     "@storybook/addon-a11y": "^9.1.1",
     "@storybook/addon-docs": "^9.1.1",
     "@storybook/addon-onboarding": "^9.1.1",

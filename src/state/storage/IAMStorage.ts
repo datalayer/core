@@ -28,6 +28,9 @@ export type IJWTToken = {
  * Return the user from the local storage.
  */
 export const getStoredUser = (): IUser | undefined => {
+  if (typeof window === 'undefined') {
+    return ANONYMOUS_USER;
+  }
   const user = window.localStorage.getItem(DATALAYER_IAM_USER_KEY);
   if (user) {
     try {
@@ -45,6 +48,9 @@ export const getStoredUser = (): IUser | undefined => {
  * Set the user in the local storage.
  */
 export const storeUser = (user?: IUser): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   if (user) {
     window.localStorage.setItem(DATALAYER_IAM_USER_KEY, JSON.stringify(user));
   } else {
@@ -56,6 +62,9 @@ export const storeUser = (user?: IUser): void => {
  * Return the IAM token from the local storage.
  */
 export const getStoredToken = (): string | undefined => {
+  if (typeof window === 'undefined') {
+    return ANONYMOUS_USER_TOKEN;
+  }
   const token = window.localStorage.getItem(DATALAYER_IAM_TOKEN_KEY);
   if (token) {
     return token;
@@ -67,6 +76,9 @@ export const getStoredToken = (): string | undefined => {
  * Set the IAM token in the local storage.
  */
 export const storeToken = (token?: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   if (token) {
     if (token !== ANONYMOUS_USER_TOKEN) {
       try {
@@ -77,7 +89,7 @@ export const storeToken = (token?: string) => {
         throw error;
       }
     }
-    localStorage.setItem(DATALAYER_IAM_TOKEN_KEY, token);
+    window.localStorage.setItem(DATALAYER_IAM_TOKEN_KEY, token);
   } else {
     window.localStorage.removeItem(DATALAYER_IAM_TOKEN_KEY);
   }

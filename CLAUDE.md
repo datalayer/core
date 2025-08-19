@@ -82,6 +82,25 @@ The examples are served at http://localhost:3000/ and include:
 - `NotebookExample`: Basic notebook example
 - `CellExample`: Individual cell execution example
 
+**Next.js Notebook Example:**
+
+Located in `examples/nextjs-notebook/`, this is a full Next.js application demonstrating platform integration:
+
+```bash
+cd examples/nextjs-notebook
+npm install
+npm run dev
+```
+
+Features:
+
+- Token authentication with Datalayer IAM
+- Browse and create notebooks from workspace
+- Select compute environments for execution
+- Interactive notebook viewer with real-time outputs
+- Clean UI with centered empty states and proper spacing
+- Mock data support for UI testing (line 129 in notebooks/page.tsx)
+
 **Configuration:**
 
 - Set `VITE_DATALAYER_API_TOKEN` in `.env` file for authentication
@@ -117,7 +136,7 @@ The examples are served at http://localhost:3000/ and include:
   - `npm run format` / `npm run format:check` - Prettier formatting
   - `npm run type-check` - TypeScript compilation check
 
-## Development Tips
+## AI Notes IMPORTANT
 
 - Use npm, not yarn
 - Prefer editing over creating files
@@ -125,3 +144,5 @@ The examples are served at http://localhost:3000/ and include:
   - npm run format
   - npm run lint
   - npm run type-check
+- Avoid old-school require imports
+- Use playwright MCP to inspect things directly

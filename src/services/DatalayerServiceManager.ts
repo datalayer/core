@@ -67,10 +67,22 @@ export const createDatalayerServiceManager = async (
 
     const serviceManager = new ServiceManager({ serverSettings });
 
+    // Store runtime info on the serviceManager instance for access
+    (serviceManager as any).__datalayerRuntime = {
+      environmentName: actualEnvironmentName,
+      credits: actualCredits,
+      reservationId: runtime.reservation_id,
+      podName: runtime.pod_name,
+      ingress: runtime.ingress,
+      token: runtime.token,
+      createdAt: new Date().toISOString(),
+    };
+
     console.log('Created Datalayer service manager:', {
       environmentName: actualEnvironmentName,
       credits: actualCredits,
       reservationId: runtime.reservation_id,
+      podName: runtime.pod_name,
       ingress: runtime.ingress,
     });
 

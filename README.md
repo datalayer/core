@@ -164,6 +164,24 @@ Available at http://localhost:3000/:
 - **NotebookExample**: Basic Jupyter notebook in React
 - **CellExample**: Individual code cell execution
 
+### Next.js Application Example
+
+A complete Next.js application demonstrating platform integration:
+
+```bash
+cd examples/nextjs-notebook
+npm install
+npm run dev
+```
+
+Features:
+
+- Token authentication with Datalayer IAM
+- Browse and create notebooks from your workspace
+- Select compute environments for execution
+- Interactive notebook viewer with real-time outputs
+- Clean, responsive UI with GitHub Primer components
+
 ## Platform Integration
 
 Datalayer adds AI capabilities and scalable compute runtimes to your development workflows. The platform is designed to seamlessly integrate into your existing processes and supercharge your computations with the processing power you need.

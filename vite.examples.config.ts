@@ -15,6 +15,8 @@ const EXAMPLE =
 // 'NotebookExample';
 // 'NotebookMutationsKernel';
 // 'NotebookMutationsServiceManager';
+// 'ReactRouterNavigationExample';
+// 'NativeNavigationExample';
 
 // Allow override via environment variable
 const SELECTED_EXAMPLE = process.env.EXAMPLE || EXAMPLE;

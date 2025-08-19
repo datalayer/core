@@ -73,6 +73,10 @@ export type IIAMState = {
    * IAM service version
    */
   version: string;
+  /**
+   * Flag to indicate if login is in progress
+   */
+  isLoginInProgress?: boolean;
 };
 
 export type IAMState = IIAMState & {
@@ -123,6 +127,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
     iamRunUrl: coreStore.getState().configuration?.iamRunUrl,
     iamProvidersAuthorizationURL: {},
     version: '',
+    isLoginInProgress: false,
     addIAMProviderAuthorizationURL: (
       provider: string,
       authorizationURL: IAMProviderAuthorizationURL,
@@ -136,6 +141,8 @@ export const iamStore = createStore<IAMState>((set, get) => {
     },
     login: async (token: string) => {
       const { refreshUserByToken, iamRunUrl, logout } = get();
+      // Set flag to prevent interference from automatic token refresh
+      set({ isLoginInProgress: true });
       try {
         const resp = await requestDatalayerAPI<IIAMResponseType>({
           url: `${iamRunUrl}/api/iam/v1/login`,
@@ -143,7 +150,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
           body: { token },
         });
         if (resp.success && resp.token) {
-          refreshUserByToken(resp.token);
+          await refreshUserByToken(resp.token);
         } else {
           throw new Error('Invalid Token.');
         }
@@ -157,6 +164,8 @@ export const iamStore = createStore<IAMState>((set, get) => {
           logout();
         }
         throw error;
+      } finally {
+        set({ isLoginInProgress: false });
       }
     },
     logout: () => {
@@ -277,7 +286,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }
     },
     refreshUserByToken: async (token: string) => {
-      const { iamRunUrl, logout } = get();
+      const { iamRunUrl, logout, isLoginInProgress } = get();
       try {
         const data = await requestDatalayerAPI({
           url: `${iamRunUrl}/api/iam/v1/whoami`,
@@ -303,7 +312,10 @@ export const iamStore = createStore<IAMState>((set, get) => {
         } else {
           console.debug('Failed to fetch user identity.', error);
         }
-        logout();
+        // Only logout if we're not in the middle of a login attempt
+        if (!isLoginInProgress) {
+          logout();
+        }
       }
     },
     setExternalToken: (externalToken: string) =>
@@ -347,53 +359,58 @@ const creditsPoll = new Poll({
 });
 
 // Initialize the IAM store with the stored token if it is valid.
-iamStore
-  .getState()
-  .refreshUserByTokenStored()
-  .catch(reason => {
-    console.error('Failed to refresh to validate the stored token.', reason);
-  })
-  .finally(() => {
-    const { externalToken, iamRunUrl, checkIAMToken, token } =
-      iamStore.getState();
-    // If the stored token is invalid and an external token exists, try authenticating with it.
-    if (!token && externalToken) {
-      console.debug(
-        'Can not login with token - Trying with the external token.',
-      );
-      requestDatalayerAPI<{ token?: string }>({
-        url: `${iamRunUrl}/api/iam/v1/login`,
-        method: 'POST',
-        body: { token: externalToken },
-      })
-        .then(response => {
-          if (response.token) {
-            checkIAMToken(response.token);
-          }
+// Delay initialization slightly to allow apps to set up first
+setTimeout(() => {
+  iamStore
+    .getState()
+    .refreshUserByTokenStored()
+    .catch(reason => {
+      console.error('Failed to refresh to validate the stored token.', reason);
+    })
+    .finally(() => {
+      const { externalToken, iamRunUrl, checkIAMToken, token } =
+        iamStore.getState();
+      // If the stored token is invalid and an external token exists, try authenticating with it.
+      if (!token && externalToken) {
+        console.debug(
+          'Can not login with token - Trying with the external token.',
+        );
+        requestDatalayerAPI<{ token?: string }>({
+          url: `${iamRunUrl}/api/iam/v1/login`,
+          method: 'POST',
+          body: { token: externalToken },
         })
-        .catch(reason => {
-          console.debug('Can not login with token.', token, reason);
+          .then(response => {
+            if (response.token) {
+              checkIAMToken(response.token);
+            }
+          })
+          .catch(reason => {
+            console.debug('Can not login with token.', token, reason);
+          });
+      }
+      if (token) {
+        console.log('Logged in with token and external token.');
+      } else {
+        console.debug(
+          'Failed to login with token and no external token available.',
+        );
+      }
+
+      // Start the credits poll in any case after trying to validate the user token.
+      creditsPoll.start();
+
+      // Force a refresh when the user comeback to the application tab
+      // Useful for checkout platform redirecting to another tab to add credits.
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden && iamStore.getState().user?.id) {
+            creditsPoll.refresh();
+          }
         });
-    }
-    if (token) {
-      console.log('Logged in with token and external token.');
-    } else {
-      console.debug(
-        'Failed to login with token and no external token available.',
-      );
-    }
-
-    // Start the credits poll in any case after trying to validate the user token.
-    creditsPoll.start();
-
-    // Force a refresh when the user comeback to the application tab
-    // Useful for checkout platform redirecting to another tab to add credits.
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && iamStore.getState().user?.id) {
-        creditsPoll.refresh();
       }
     });
-  });
+}, 100); // 100ms delay to allow app initialization
 
 // Connect the core store with the iam store.
 coreStore.subscribe((state, prevState) => {

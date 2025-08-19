@@ -3,29 +3,46 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useNavigate as useRouterNavigate } from 'react-router-dom';
+import { useCallback } from 'react';
 import { useLayoutStore } from '../state';
+import { createNativeNavigate } from '../navigation/adapters/native';
 
+/**
+ * Main navigation hook that provides a universal navigate function
+ * Works with React Router, Next.js, or native browser navigation
+ *
+ * This simplified version always uses native navigation to avoid
+ * React hooks ordering issues. For framework-specific navigation,
+ * use the framework's own hooks directly.
+ */
 export const useNavigate = () => {
-  const routerNavigate = useRouterNavigate();
   const layoutStore = useLayoutStore();
-  const navigate = (
-    location: string,
-    e: any = undefined,
-    resetPortals = true,
-    options: any = undefined,
-  ) => {
-    if (e) {
-      e.preventDefault();
-    }
-    if (resetPortals) {
-      layoutStore.resetLeftPortal();
-      layoutStore.resetRightPortal();
-    }
-    window.scrollTo(0, 0);
-    document.body.scrollTop = 0;
-    routerNavigate(location, options);
-  };
+
+  // Always use native navigation for simplicity and consistency
+  const baseNavigate = createNativeNavigate();
+
+  // Wrap with our custom behavior
+  const navigate = useCallback(
+    (
+      location: string,
+      e: any = undefined,
+      resetPortals = true,
+      options: any = undefined,
+    ) => {
+      if (e) {
+        e.preventDefault();
+      }
+      if (resetPortals) {
+        layoutStore.resetLeftPortal();
+        layoutStore.resetRightPortal();
+      }
+      window.scrollTo(0, 0);
+      document.body.scrollTop = 0;
+      baseNavigate(location, options);
+    },
+    [baseNavigate, layoutStore],
+  );
+
   return navigate;
 };
 

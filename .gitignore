@@ -181,3 +181,6 @@ dmypy.json
 
 # Ignore environment files
 .env
+
+# mcp files
+.playwright-mcp/
