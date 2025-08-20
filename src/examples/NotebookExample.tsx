@@ -9,55 +9,31 @@
  * MIT License
  */
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import {
   Notebook2,
-  Kernel,
   NotebookToolbar,
   CellSidebarExtension,
   CellSidebarButton,
 } from '@datalayer/jupyter-react';
 import { ServiceManager } from '@jupyterlab/services';
+import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
 const NOTEBOOK_ID = 'notebook-example-1';
-
 type INotebookExampleProps = {
   serviceManager?: ServiceManager.IManager;
 };
 
 export const NotebookExample = (props: INotebookExampleProps) => {
-  const [kernel, setKernel] = useState<Kernel | undefined>();
   const { serviceManager } = props;
 
-  useEffect(() => {
-    if (serviceManager && !kernel) {
-      // Create a kernel using the service manager
-      const createKernel = async () => {
-        try {
-          // Create a kernel session
-          const kernelConnection = await serviceManager.kernels.startNew({
-            name: 'python3',
-          });
-          // Create a Kernel wrapper
-          const k = new Kernel({
-            kernelConnection,
-            kernelName: 'python3',
-          } as any);
-          await k.ready;
-          setKernel(k);
-        } catch (error) {
-          console.error('Failed to create kernel:', error);
-        }
-      };
-      createKernel();
-    }
-  }, [serviceManager, kernel]);
   const extensions = useMemo(
     () => [new CellSidebarExtension({ factory: CellSidebarButton })],
     [],
   );
-  if (!serviceManager || !kernel) {
+
+  if (!serviceManager) {
     return (
       <Box as="h1">
         A Jupyter Notebook
@@ -70,10 +46,10 @@ export const NotebookExample = (props: INotebookExampleProps) => {
     <>
       <Box as="h1">A Jupyter Notebook</Box>
       <Notebook2
-        path="ipywidgets.ipynb"
         id={NOTEBOOK_ID}
+        nbformat={nbformatExample}
         serviceManager={serviceManager}
-        kernelId={kernel.id}
+        startDefaultKernel={true}
         extensions={extensions}
         Toolbar={NotebookToolbar}
       />
