@@ -1,4 +1,4 @@
-exclude: "^conda.recipe|dev|docs|style|src|jupyter-config|.github|.storybook$"
+exclude: '^conda.recipe|dev|docs|style|src|jupyter-config|.github|.storybook$'
 repos:
   # Basic file checks and formatting
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -14,7 +14,7 @@ repos:
     rev: v3.1.0
     hooks:
       - id: prettier
-        exclude_types: ["python", "jupyter", "shell", "gitignore"]
+        exclude_types: ['python', 'jupyter', 'shell', 'gitignore']
 
   # Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -22,7 +22,7 @@ repos:
     hooks:
       # Run the linter
       - id: ruff-check
-        args: ["check", "--select", "I", "--fix"]
+        args: ['check', '--select', 'I', '--fix']
         types_or: [python, pyi]
       # Run the formatter
       - id: ruff-format
@@ -39,8 +39,8 @@ repos:
     rev: 1.8.6
     hooks:
       - id: bandit
-        args: ["-c", "pyproject.toml"]
-        additional_dependencies: ["bandit[toml]"]
+        args: ['-c', 'pyproject.toml']
+        additional_dependencies: ['bandit[toml]']
 
   # Check for common Python security issues (using pip-audit instead of safety)
   - repo: https://github.com/pypa/pip-audit
@@ -53,7 +53,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
-        args: ["--maxkb=1000"]
+        args: ['--maxkb=1000']
 
   # Python docstring coverage
   - repo: https://github.com/econchick/interrogate

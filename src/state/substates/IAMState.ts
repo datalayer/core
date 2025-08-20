@@ -6,9 +6,27 @@
 import { Poll } from '@lumino/polling';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
-import { ANONYMOUS_USER_TOKEN, ANONYMOUS_USER, IUser, asUser, IIAMProviderName, IAMProvidersSpecs, IIAMResponseType } from '../../models';
-import type { ICredits, ICreditsReservation, IRESTBaseResponse } from '../../models';
-import { getStoredToken, getStoredUser, loadRefreshTokenFromCookie, storeToken, storeUser } from '../storage';
+import {
+  ANONYMOUS_USER_TOKEN,
+  ANONYMOUS_USER,
+  IUser,
+  asUser,
+  IIAMProviderName,
+  IAMProvidersSpecs,
+  IIAMResponseType,
+} from '../../models';
+import type {
+  ICredits,
+  ICreditsReservation,
+  IRESTBaseResponse,
+} from '../../models';
+import {
+  getStoredToken,
+  getStoredUser,
+  loadRefreshTokenFromCookie,
+  storeToken,
+  storeUser,
+} from '../storage';
 import { requestDatalayerAPI, type RunResponseError } from '../../api';
 import { getCookie, setCookie, deleteCookie } from '../../utils';
 import { coreStore } from './CoreState';
@@ -40,7 +58,9 @@ export type IIAMState = {
   /**
    * Mapping of IAM providers and the corresponding Authorization URL.
    */
-  iamProvidersAuthorizationURL: Record<IIAMProviderName, IAMProviderAuthorizationURL> | object;
+  iamProvidersAuthorizationURL:
+    | Record<IIAMProviderName, IAMProviderAuthorizationURL>
+    | object;
   /**
    * User authenticated to Datalayer.
    */
@@ -56,17 +76,26 @@ export type IIAMState = {
 };
 
 export type IAMState = IIAMState & {
-  addIAMProviderAuthorizationURL: (provider: IIAMProviderName, authorizationURL: IAMProviderAuthorizationURL) => void;
+  addIAMProviderAuthorizationURL: (
+    provider: IIAMProviderName,
+    authorizationURL: IAMProviderAuthorizationURL,
+  ) => void;
   login: (token: string) => Promise<void>;
   logout: () => void;
   /**
-   * Refresh user credits. It also warn if any 
+   * Refresh user credits. It also warn if any
    * reservation is getting close to the end.
    */
   refreshCredits: () => Promise<void>;
   checkIAMToken: (token: string) => Promise<void>;
-  setIAMProviderAccessToken: (provider: IIAMProviderName, accessToken?: string | null) => void;
-  getIAMProviderAccessToken: (user: IUser, provider: IIAMProviderName) => string | undefined;
+  setIAMProviderAccessToken: (
+    provider: IIAMProviderName,
+    accessToken?: string | null,
+  ) => void;
+  getIAMProviderAccessToken: (
+    user: IUser,
+    provider: IIAMProviderName,
+  ) => string | undefined;
   refreshUser: () => Promise<void>;
   refreshUserByTokenStored: () => Promise<void>;
   refreshUserByToken: (token: string) => Promise<void>;
@@ -94,12 +123,15 @@ export const iamStore = createStore<IAMState>((set, get) => {
     iamRunUrl: coreStore.getState().configuration?.iamRunUrl,
     iamProvidersAuthorizationURL: {},
     version: '',
-    addIAMProviderAuthorizationURL: (provider: string, authorizationURL: IAMProviderAuthorizationURL) => {
+    addIAMProviderAuthorizationURL: (
+      provider: string,
+      authorizationURL: IAMProviderAuthorizationURL,
+    ) => {
       set(state => ({
         iamProvidersAuthorizationURL: {
           ...state.iamProvidersAuthorizationURL,
           [provider]: authorizationURL,
-       }
+        },
       }));
     },
     login: async (token: string) => {
@@ -111,13 +143,16 @@ export const iamStore = createStore<IAMState>((set, get) => {
           body: { token },
         });
         if (resp.success && resp.token) {
-          refreshUserByToken(resp.token)
+          refreshUserByToken(resp.token);
         } else {
           throw new Error('Invalid Token.');
         }
       } catch (error) {
         console.debug('Failed to login.', error);
-        if ((error as RunResponseError).name === 'RunResponseError' && (error as RunResponseError).response.status === 401) {
+        if (
+          (error as RunResponseError).name === 'RunResponseError' &&
+          (error as RunResponseError).response.status === 401
+        ) {
           console.debug('Received 401 error - Logging out.');
           logout();
         }
@@ -140,14 +175,19 @@ export const iamStore = createStore<IAMState>((set, get) => {
         await get().refreshUserByToken(token);
       }
     },
-    setIAMProviderAccessToken: (provider: IIAMProviderName, accessToken?: string | null) => {
+    setIAMProviderAccessToken: (
+      provider: IIAMProviderName,
+      accessToken?: string | null,
+    ) => {
       const { user } = get();
       if (!user) {
-        throw Error('You need to be authenticated to set an Access Token for an IAM provider.');
+        throw Error(
+          'You need to be authenticated to set an Access Token for an IAM provider.',
+        );
       }
       const iamProvider = IAMProvidersSpecs.getProvider(provider);
       if (accessToken) {
-        setCookie(iamProvider.accessTokenCookieName(user), accessToken);  
+        setCookie(iamProvider.accessTokenCookieName(user), accessToken);
       } else {
         deleteCookie(iamProvider.accessTokenCookieName(user));
       }
@@ -165,7 +205,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
           user: {
             ...state.user,
             ...(user as IUser),
-          }
+          },
         };
         /*
         if (state.user?.email && !updatedState.user.email) {
@@ -173,33 +213,37 @@ export const iamStore = createStore<IAMState>((set, get) => {
         }
         */
         return updatedState;
-      }
-    ),
+      }),
     refreshCredits: async () => {
       const { externalToken, token, iamRunUrl, logout } = get();
       if (token) {
         try {
-          const creditsRaw = await requestDatalayerAPI<IRESTBaseResponse & { credits: ICredits } & { reservations: ICreditsReservation[]; }>({
+          const creditsRaw = await requestDatalayerAPI<
+            IRESTBaseResponse & { credits: ICredits } & {
+              reservations: ICreditsReservation[];
+            }
+          >({
             url: `${iamRunUrl}/api/iam/v1/usage/credits`,
             token,
             headers: externalToken
               ? {
-                  'X-External-Token': externalToken
+                  'X-External-Token': externalToken,
                 }
-              : undefined
+              : undefined,
           });
-          const { credits, reservations: creditsReservations = [] } = creditsRaw;
+          const { credits, reservations: creditsReservations = [] } =
+            creditsRaw;
           let available =
             credits.quota !== null
               ? credits.quota - credits.credits
               : credits.credits;
           available -= creditsReservations.reduce(
             (consumed, reservation) => consumed + reservation.credits,
-            0
+            0,
           );
           set({
             credits: { ...credits, available: Math.max(0, available) },
-            creditsReservations: creditsReservations
+            creditsReservations: creditsReservations,
           });
         } catch (error) {
           console.error('Failed to refresh user credits.', error);
@@ -244,7 +288,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
         storeToken(token);
         set(() => ({ user, token }));
         // TODO Centralize User Setting Management.
-        const aiagentsRunUrl= user.settings?.aiAgentsUrl;
+        const aiagentsRunUrl = user.settings?.aiAgentsUrl;
         if (aiagentsRunUrl) {
           coreStore.getState().setConfiguration({
             aiagentsRunUrl,
@@ -262,17 +306,19 @@ export const iamStore = createStore<IAMState>((set, get) => {
         logout();
       }
     },
-    setExternalToken: (externalToken: string) => set((state: IAMState) => { return { externalToken} }),
+    setExternalToken: (externalToken: string) =>
+      set((state: IAMState) => {
+        return { externalToken };
+      }),
     setLogin: (user: IUser, token: string) =>
       set((state: IAMState) => {
         storeUser(user);
         storeToken(token);
         return {
           user,
-          token
+          token,
         };
-      }
-    ),
+      }),
     setVersion: version => {
       if (version && !get().version) {
         set(state => ({ version }));
@@ -295,9 +341,9 @@ const creditsPoll = new Poll({
   frequency: {
     interval: 60 * 1000,
     backoff: true,
-    max: 600 * 1000
+    max: 600 * 1000,
   },
-  standby: () => (iamStore.getState().user?.id ? 'when-hidden' : true)
+  standby: () => (iamStore.getState().user?.id ? 'when-hidden' : true),
 });
 
 // Initialize the IAM store with the stored token if it is valid.
@@ -308,14 +354,17 @@ iamStore
     console.error('Failed to refresh to validate the stored token.', reason);
   })
   .finally(() => {
-    const { externalToken, iamRunUrl, checkIAMToken, token } = iamStore.getState();
+    const { externalToken, iamRunUrl, checkIAMToken, token } =
+      iamStore.getState();
     // If the stored token is invalid and an external token exists, try authenticating with it.
     if (!token && externalToken) {
-      console.debug('Can not login with token - Trying with the external token.');
+      console.debug(
+        'Can not login with token - Trying with the external token.',
+      );
       requestDatalayerAPI<{ token?: string }>({
         url: `${iamRunUrl}/api/iam/v1/login`,
         method: 'POST',
-        body: { token: externalToken }
+        body: { token: externalToken },
       })
         .then(response => {
           if (response.token) {
@@ -329,7 +378,9 @@ iamStore
     if (token) {
       console.log('Logged in with token and external token.');
     } else {
-      console.debug('Failed to login with token and no external token available.');
+      console.debug(
+        'Failed to login with token and no external token available.',
+      );
     }
 
     // Start the credits poll in any case after trying to validate the user token.
@@ -342,7 +393,6 @@ iamStore
         creditsPoll.refresh();
       }
     });
-
   });
 
 // Connect the core store with the iam store.
@@ -356,21 +406,23 @@ coreStore.subscribe((state, prevState) => {
     iamStore.setState({ iamRunUrl });
     // Check the token is valid with the new server.
     if (iamStore.getState().externalToken) {
-      iamStore.getState()
+      iamStore
+        .getState()
         .login(iamStore.getState().externalToken!)
         .catch(reason => {
           console.error(
             'Failed to refresh the user after updating the IAM RUN URL.',
-            reason
+            reason,
           );
         });
     } else {
-      iamStore.getState()
+      iamStore
+        .getState()
         .refreshUser()
         .catch(reason => {
           console.error(
             'Failed to refresh the user after updating the IAM server URL.',
-            reason
+            reason,
           );
         });
     }

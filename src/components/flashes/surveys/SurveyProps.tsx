@@ -7,6 +7,6 @@ export type ISurveyProps = {
   formData?: any;
   readonly?: boolean;
   onSubmit?: (data, e) => void;
-}
+};
 
 export default ISurveyProps;

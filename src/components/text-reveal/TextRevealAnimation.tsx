@@ -3,36 +3,40 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, {useEffect} from 'react'
-import clsx from 'clsx'
-import {useTextRevealAnimationLines} from './useTextRevealAnimationLines'
-import { BaseProps } from '../primer'
+import React, { useEffect } from 'react';
+import clsx from 'clsx';
+import { useTextRevealAnimationLines } from './useTextRevealAnimationLines';
+import { BaseProps } from '../primer';
 
-import styles from './TextRevealAnimation.module.css'
+import styles from './TextRevealAnimation.module.css';
 
 export type TextRevealAnimationProps = BaseProps<HTMLSpanElement> &
   Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> & {
-    children: React.ReactChild
-  }
+    children: React.ReactChild;
+  };
 
-export function TextRevealAnimation({children, ...rest}: TextRevealAnimationProps) {
-  const [animationStarted, setAnimationStarted] = React.useState(false)
-  const [hasAnimationCompleted, setHasAnimationCompleted] = React.useState(false)
-  const {ref, lines} = useTextRevealAnimationLines(children.toString() || '')
+export function TextRevealAnimation({
+  children,
+  ...rest
+}: TextRevealAnimationProps) {
+  const [animationStarted, setAnimationStarted] = React.useState(false);
+  const [hasAnimationCompleted, setHasAnimationCompleted] =
+    React.useState(false);
+  const { ref, lines } = useTextRevealAnimationLines(children.toString() || '');
   const onLineAnimationEnd = (i: number) => {
     if (lines && i === lines.length - 1) {
-      setHasAnimationCompleted(true)
+      setHasAnimationCompleted(true);
     }
-  }
+  };
   useEffect(() => {
-    const el = ref.current
+    const el = ref.current;
     const observer = new IntersectionObserver(
       entries => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setAnimationStarted(true)
+            setAnimationStarted(true);
             if (el) {
-              observer.unobserve(el)
+              observer.unobserve(el);
             }
           }
         }
@@ -41,20 +45,22 @@ export function TextRevealAnimation({children, ...rest}: TextRevealAnimationProp
         threshold: 1,
         rootMargin: '0px 0px -10% 0px',
       },
-    )
+    );
     if (el) {
-      observer.observe(el)
+      observer.observe(el);
     }
     return () => {
       if (el) {
-        observer.unobserve(el)
+        observer.unobserve(el);
       }
-    }
-  }, [ref])
-  if (typeof children !== 'string' && (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')) {
-     
-    console.warn('Children passed to TextRevealAnimation must be a string')
-    return null
+    };
+  }, [ref]);
+  if (
+    typeof children !== 'string' &&
+    (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')
+  ) {
+    console.warn('Children passed to TextRevealAnimation must be a string');
+    return null;
   }
   return (
     <span ref={ref} {...rest}>
@@ -65,9 +71,15 @@ export function TextRevealAnimation({children, ...rest}: TextRevealAnimationProp
               styles.TextRevealAnimation,
               animationStarted && styles['TextRevealAnimation--visible'],
               animationStarted &&
-                (hasAnimationCompleted ? styles['TextRevealAnimation'] : styles['TextRevealAnimation--animated']),
+                (hasAnimationCompleted
+                  ? styles['TextRevealAnimation']
+                  : styles['TextRevealAnimation--animated']),
             )}
-            style={{'--animation-delay': `${220 + i * 200}ms`} as React.CSSProperties}
+            style={
+              {
+                '--animation-delay': `${220 + i * 200}ms`,
+              } as React.CSSProperties
+            }
             onAnimationEnd={() => onLineAnimationEnd(i)}
           >
             {line}
@@ -76,5 +88,5 @@ export function TextRevealAnimation({children, ...rest}: TextRevealAnimationProp
         </React.Fragment>
       ))}
     </span>
-  )
+  );
 }

@@ -10,7 +10,7 @@ type ScreenCaptureProps = {
   children: any;
   onStartCapture?: () => void;
   onEndCapture: (url: string) => void;
-}
+};
 
 type ScreenCaptureState = {
   on: boolean;
@@ -29,10 +29,12 @@ type ScreenCaptureState = {
   cropWidth: number;
   cropHeigth: number;
   imageURL: string;
-}
+};
 
-export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureState> {
-
+export class ScreenCapture extends Component<
+  ScreenCaptureProps,
+  ScreenCaptureState
+> {
   state = {
     on: false,
     startX: 0,
@@ -65,12 +67,12 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       windowWidth,
       windowHeight,
     });
-  }
+  };
 
   componentDidMount = () => {
     this.handleWindowResize();
     window.addEventListener('resize', this.handleWindowResize);
-  }
+  };
 
   componentWillUnmount = () => {
     window.removeEventListener('resize', this.handleWindowResize);
@@ -85,7 +87,7 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       windowHeight,
       startX,
       startY,
-      borderWidth
+      borderWidth,
     } = this.state;
     let cropPositionTop = startY;
     let cropPositionLeft = startX;
@@ -104,28 +106,32 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
     let cropHeigth = 0;
     if (isMouseDown) {
       if (isStartTopLeft) {
-        newBorderWidth = `${startY}px ${windowWidth - endX}px ${windowHeight -
-          endY}px ${startX}px`;
+        newBorderWidth = `${startY}px ${windowWidth - endX}px ${
+          windowHeight - endY
+        }px ${startX}px`;
         cropWidth = endX - startX;
         cropHeigth = endY - startY;
       }
       if (isStartTopRight) {
-        newBorderWidth = `${startY}px ${windowWidth - startX}px ${windowHeight -
-          endY}px ${endX}px`;
+        newBorderWidth = `${startY}px ${windowWidth - startX}px ${
+          windowHeight - endY
+        }px ${endX}px`;
         cropWidth = startX - endX;
         cropHeigth = endY - startY;
         cropPositionLeft = endX;
       }
       if (isStartBottomLeft) {
-        newBorderWidth = `${endY}px ${windowWidth - endX}px ${windowHeight -
-          startY}px ${startX}px`;
+        newBorderWidth = `${endY}px ${windowWidth - endX}px ${
+          windowHeight - startY
+        }px ${startX}px`;
         cropWidth = endX - startX;
         cropHeigth = startY - endY;
         cropPositionTop = endY;
       }
       if (isStartBottomRight) {
-        newBorderWidth = `${endY}px ${windowWidth - startX}px ${windowHeight -
-          startY}px ${endX}px`;
+        newBorderWidth = `${endY}px ${windowWidth - startX}px ${
+          windowHeight - startY
+        }px ${endX}px`;
         cropWidth = startX - endX;
         cropHeigth = startY - endY;
         cropPositionLeft = endX;
@@ -143,7 +149,7 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       cropPositionTop: cropPositionTop,
       cropPositionLeft: cropPositionLeft,
     });
-  }
+  };
 
   handleMouseDown = (e: any) => {
     const startX = e.clientX;
@@ -156,7 +162,7 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       isMouseDown: true,
       borderWidth: `${prevState.windowWidth}px ${prevState.windowHeight}px`,
     }));
-  }
+  };
 
   handleMouseUp = () => {
     this.handleClickTakeScreenShot();
@@ -165,12 +171,12 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       isMouseDown: false,
       borderWidth: 0,
     });
-  }
+  };
 
   handleClickTakeScreenShot = () => {
     const {
       windowWidth,
-      windowHeight, 
+      windowHeight,
       cropPositionTop,
       cropPositionLeft,
       cropWidth,
@@ -182,7 +188,7 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       html2canvas(body, {
         width: windowWidth,
         height: windowHeight,
-        scale: scale
+        scale: scale,
       }).then(canvas => {
         const croppedCanvas = document.createElement('canvas');
         const croppedCanvasContext = croppedCanvas.getContext('2d');
@@ -200,7 +206,7 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
             cropWidth * scale,
             cropHeigth * scale,
           );
-        }        
+        }
         if (croppedCanvas) {
           const type = 'image/png';
           const quality = 1;
@@ -213,27 +219,22 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
       crossHairsTop: 0,
       crossHairsLeft: 0,
     });
-  }
+  };
 
   renderChild = () => {
     const { children } = this.props;
     const props = {
-      onStartCapture: this.handStartCapture
+      onStartCapture: this.handStartCapture,
     };
     if (typeof children === 'function') {
       return children(props);
     }
     return children;
-  }
+  };
 
   render() {
-    const {
-      on,
-      crossHairsTop,
-      crossHairsLeft,
-      borderWidth,
-      isMouseDown,
-    } = this.state;
+    const { on, crossHairsTop, crossHairsLeft, borderWidth, isMouseDown } =
+      this.state;
     if (!on) {
       return this.renderChild();
     }
@@ -244,12 +245,17 @@ export class ScreenCapture extends Component<ScreenCaptureProps, ScreenCaptureSt
         onMouseUp={this.handleMouseUp}
       >
         {this.renderChild()}
-        <div className={`overlay ${isMouseDown && 'highlighting'}`} style={{ borderWidth: `${borderWidth}` }} />
-        <div className='crosshairs' style={{left: crossHairsLeft + 'px', top: crossHairsTop + 'px'}} />
+        <div
+          className={`overlay ${isMouseDown && 'highlighting'}`}
+          style={{ borderWidth: `${borderWidth}` }}
+        />
+        <div
+          className="crosshairs"
+          style={{ left: crossHairsLeft + 'px', top: crossHairsTop + 'px' }}
+        />
       </div>
     );
   }
-
 }
 
 export default ScreenCapture;

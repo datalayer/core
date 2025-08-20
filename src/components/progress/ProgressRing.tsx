@@ -25,7 +25,9 @@ export interface IProgressRingItemProps {
 /**
  * Progress ring properties
  */
-export interface IProgressRingProps extends React.SVGAttributes<SVGElement>, IProgressRingItemProps {
+export interface IProgressRingProps
+  extends React.SVGAttributes<SVGElement>,
+    IProgressRingItemProps {
   /**
    * Accessible short description
    */
@@ -49,7 +51,7 @@ function Item(props: IProgressRingItemProps): JSX.Element {
         transformOrigin: '50% 50%',
         transform: 'rotate(-90deg)',
         transition: 'all 0.2s ease-in-out',
-        strokeDasharray: `${(PROGRESS_SEGMENTS * props.progress) / 100}px ${PROGRESS_SEGMENTS}px`
+        strokeDasharray: `${(PROGRESS_SEGMENTS * props.progress) / 100}px ${PROGRESS_SEGMENTS}px`,
       }}
       cx="8px"
       cy="8px"
@@ -64,7 +66,7 @@ function Item(props: IProgressRingItemProps): JSX.Element {
  * Children {@link Item} must be order in decreasing progress order.
  */
 export function ProgressRing(
-  props: React.PropsWithChildren<IProgressRingProps>
+  props: React.PropsWithChildren<IProgressRingProps>,
 ): JSX.Element {
   const { children, progress, color, title, ...others } = props;
   return (
@@ -86,7 +88,7 @@ export function ProgressRing(
         style={{
           stroke: 'var(--control-bgColor-rest)',
           fill: 'none',
-          strokeWidth: '2px'
+          strokeWidth: '2px',
         }}
       />
       {children ?? <Item progress={progress} color={color} />}

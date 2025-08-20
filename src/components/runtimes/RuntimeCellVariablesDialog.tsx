@@ -46,13 +46,15 @@ export interface IRuntimeCellVariablesDialogProps {
 /**
  * Dialog to define the runtime cell variables to transfer
  */
-export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogProps): JSX.Element {
+export function RuntimeCellVariablesDialog(
+  props: IRuntimeCellVariablesDialogProps,
+): JSX.Element {
   const { onClose, model, preference, sessionContext, translator } = props;
   const [inputs, setInputs] = useState<string[]>([]);
   const [output, setOutput] = useState<string | undefined>();
   const trans = useMemo(
     () => (translator ?? nullTranslator).load('jupyterlab'),
-    [translator]
+    [translator],
   );
   useEffect(() => {
     const updateState = (model: ICellModel) => {
@@ -90,14 +92,17 @@ export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogPro
       return [];
     }
     const connection = sessionContext.session!.kernel!;
-    const spec = sessionContext.specsManager.specs!.kernelspecs[connection.model.name]!;
+    const spec =
+      sessionContext.specsManager.specs!.kernelspecs[connection.model.name]!;
     const snippets = new RuntimeSnippetsFacade(spec.language);
-    const outputs = await new KernelExecutor({connection}).execute(snippets.listVariables());
+    const outputs = await new KernelExecutor({ connection }).execute(
+      snippets.listVariables(),
+    );
     const content = outputs.get(0).data['text/plain'] as string;
     if (content) {
       const runtimeVariables = JSON.parse(
         // We need to remove the quotes prior to parsing
-        content.slice(1, content.length - 1)
+        content.slice(1, content.length - 1),
       );
       return Object.keys(runtimeVariables ?? {});
     }
@@ -105,7 +110,9 @@ export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogPro
   }, [preference, sessionContext]);
   const getOutputCandidates = useCallback(async () => {
     // TODO this is only valid for python - using cell mimetype?
-    return new RuntimeSnippetsFacade('python').getOutputCandidates(model.sharedModel.source);
+    return new RuntimeSnippetsFacade('python').getOutputCandidates(
+      model.sharedModel.source,
+    );
   }, [model]);
   const datalayerMeta = model.getMetadata('datalayer') ?? {};
   let title = 'Define cell variables to transfer';
@@ -126,14 +133,14 @@ export function RuntimeCellVariablesDialog(props: IRuntimeCellVariablesDialogPro
         {
           buttonType: 'default',
           content: trans.__('Cancel'),
-          onClick: onClose
+          onClick: onClose,
         },
         {
           buttonType: 'primary',
           content: trans.__('Set variables'),
           onClick: setVariables,
-          autoFocus: true
-        }
+          autoFocus: true,
+        },
       ]}
     >
       <KernelCellVariables

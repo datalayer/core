@@ -4,7 +4,11 @@
  */
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { BaseStyles, ThemeProvider as PrimerThemeProvider, ThemeProviderProps } from '@primer/react';
+import {
+  BaseStyles,
+  ThemeProvider as PrimerThemeProvider,
+  ThemeProviderProps,
+} from '@primer/react';
 import { IThemeManager } from '@jupyterlab/apputils';
 import { loadJupyterConfig, jupyterLabTheme } from '@datalayer/jupyter-react';
 import { datalayerTheme } from '../theme';
@@ -25,17 +29,21 @@ export interface IDatalayerThemeProviderProps extends ThemeProviderProps {
  * ThemeProvider component changing color mode with JupyterLab theme
  * if embedded in Jupyter or with the browser color scheme preference.
  */
-export function DatalayerThemeProvider( props: React.PropsWithChildren<IDatalayerThemeProviderProps>): JSX.Element {
+export function DatalayerThemeProvider(
+  props: React.PropsWithChildren<IDatalayerThemeProviderProps>,
+): JSX.Element {
   const {
     children,
     colorMode: colorModeProps,
-//    inJupyterLab,
+    //    inJupyterLab,
     baseStyles,
     ...rest
   } = props;
   const { jupyterLabAdapter } = useRuntimesStore();
   const [colorMode, setColorMode] = useState(colorModeProps ?? 'light');
-  const [inJupyterLab, setInJupterLab] = useState<boolean | undefined>(undefined);
+  const [inJupyterLab, setInJupterLab] = useState<boolean | undefined>(
+    undefined,
+  );
   useEffect(() => {
     setInJupterLab(loadJupyterConfig().insideJupyterLab);
   }, []);
@@ -45,12 +53,18 @@ export function DatalayerThemeProvider( props: React.PropsWithChildren<IDatalaye
         setColorMode(matches ? 'dark' : 'light');
       }
       function updateColorMode(themeManager: IThemeManager) {
-        setColorMode(themeManager.theme && !themeManager.isLight(themeManager.theme) ? 'dark' : 'light');
+        setColorMode(
+          themeManager.theme && !themeManager.isLight(themeManager.theme)
+            ? 'dark'
+            : 'light',
+        );
       }
       if (inJupyterLab) {
         // TODO remove the try/catch for JupyterLab > 4.1.
         try {
-          const themeManager = jupyterLabAdapter?.service('@jupyterlab/apputils-extension:themes') as IThemeManager;
+          const themeManager = jupyterLabAdapter?.service(
+            '@jupyterlab/apputils-extension:themes',
+          ) as IThemeManager;
           if (themeManager) {
             updateColorMode(themeManager);
             themeManager.themeChanged.connect(updateColorMode);
@@ -58,36 +72,42 @@ export function DatalayerThemeProvider( props: React.PropsWithChildren<IDatalaye
               themeManager.themeChanged.disconnect(updateColorMode);
             };
           }
-        }
-        catch(e) {
+        } catch (e) {
           console.error('Error while setting the theme', e);
         }
       } else {
         colorSchemeFromMedia({
-          matches: window.matchMedia('(prefers-color-scheme: dark)').matches
+          matches: window.matchMedia('(prefers-color-scheme: dark)').matches,
         });
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', colorSchemeFromMedia);
+        window
+          .matchMedia('(prefers-color-scheme: dark)')
+          .addEventListener('change', colorSchemeFromMedia);
         return () => {
-          window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', colorSchemeFromMedia);
+          window
+            .matchMedia('(prefers-color-scheme: dark)')
+            .removeEventListener('change', colorSchemeFromMedia);
         };
       }
     }
   }, [inJupyterLab, jupyterLabAdapter]);
-  return (
-    inJupyterLab !== undefined ?
-      <PrimerThemeProvider colorMode={colorMode} theme={inJupyterLab ? jupyterLabTheme : datalayerTheme} {...rest}>
-        <BaseStyles
-          style={{
-            backgroundColor: 'var(--bgColor-default)',
-            color: 'var(--fgColor-default)',
-            fontSize: 'var(--text-body-size-medium)',
-            ...baseStyles
-          }}
-        >
-          {children}
-        </BaseStyles>
-      </PrimerThemeProvider>
-    :
-      <></>
+  return inJupyterLab !== undefined ? (
+    <PrimerThemeProvider
+      colorMode={colorMode}
+      theme={inJupyterLab ? jupyterLabTheme : datalayerTheme}
+      {...rest}
+    >
+      <BaseStyles
+        style={{
+          backgroundColor: 'var(--bgColor-default)',
+          color: 'var(--fgColor-default)',
+          fontSize: 'var(--text-body-size-medium)',
+          ...baseStyles,
+        }}
+      >
+        {children}
+      </BaseStyles>
+    </PrimerThemeProvider>
+  ) : (
+    <></>
   );
 }

@@ -56,14 +56,14 @@ import {
   asToken,
   asUsage,
   asUser,
-} from "../models";
+} from '../models';
 import { useCoreStore, useIAMStore } from '../state';
-import { IPrice } from "./../components/checkout";
-import { asDisplayName, namesAsInitials, asArray } from "../utils";
+import { IPrice } from './../components/checkout';
+import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { IAMProvidersSpecs, type IRESTBaseResponse } from '../models';
 import { newUserMock } from './../mocks';
-import { useDatalayer } from "./useDatalayer";
-import { useAuthorization } from "./useAuthorization";
+import { useDatalayer } from './useDatalayer';
+import { useAuthorization } from './useAuthorization';
 
 import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
 
@@ -85,8 +85,14 @@ const PUBLIC_COURSES_BY_ID = new Map<string, ICourse>();
 const PUBLIC_ITEMS_BY_ID = new Map<string, ISpaceItem>();
 const SCHOOLS_BY_ID = new Map<string, ISchool>();
 const SECRETS_BY_ID = new Map<string, ISecret>();
-const SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE = new Map<string, Map<string, IAnySpace>>();
-const SPACES_BY_ID_BY_ORGANISATION_ID = new Map<string, Map<string, IAnySpace>>();
+const SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE = new Map<
+  string,
+  Map<string, IAnySpace>
+>();
+const SPACES_BY_ID_BY_ORGANISATION_ID = new Map<
+  string,
+  Map<string, IAnySpace>
+>();
 const SPACES_FOR_USER_BY_HANDLE = new Map<string, IAnySpace>();
 const SPACES_FOR_USER_BY_ID = new Map<string, IAnySpace>();
 const SPACE_ASSIGNMENTS_BY_ID = new Map<string, IAssignment>();
@@ -109,22 +115,21 @@ const USERS_BY_ID = new Map<string, IUser>();
 
 type CacheProps = {
   loginRoute?: string;
-}
+};
 
 type ISearchOpts = {
   q: string;
   types: string[];
   max: number;
   public: boolean;
-}
+};
 
 const DEFAULT_SEARCH_OPTS = {
   q: '*',
   types: ['page'],
   max: 3,
   public: true,
-}
-
+};
 
 /**
  * Callbacks to RUN service.
@@ -178,22 +183,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     TOKENS_BY_ID.clear();
     USERS_BY_HANDLE.clear();
     USERS_BY_ID.clear();
-  }
+  };
 
   const clearCachedItems = () => {
     PUBLIC_ITEMS_BY_ID.clear();
     SPACE_ASSIGNMENTS_BY_ID.clear();
     SPACE_DATASETS_BY_ID.clear();
     SPACE_DOCUMENTS_BY_ID.clear();
-    SPACE_ENVIRONMENTS_BY_ID.clear()
-    SPACE_EXERCISES_BY_ID.clear()
+    SPACE_ENVIRONMENTS_BY_ID.clear();
+    SPACE_EXERCISES_BY_ID.clear();
     SPACE_ITEMS_CACHE.clear();
     SPACE_ITEMS_CACHE.clear();
     SPACE_LESSONS_BY_ID.clear();
     SPACE_NOTEBOOKS_BY_ID.clear();
-    SPACE_CELLS_BY_ID.clear()
     SPACE_CELLS_BY_ID.clear();
-  }
+    SPACE_CELLS_BY_ID.clear();
+  };
 
   // Authentication ------------------------------------------------------------------
 
@@ -204,9 +209,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         handle,
         password,
-      }
+      },
     });
-  }
+  };
 
   const logout = () => {
     clearAllCaches();
@@ -214,11 +219,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       url: `${configuration.iamRunUrl}/api/iam/v1/logout`,
       method: 'GET',
     });
-  }
+  };
 
   // Join ------------------------------------------------------------------
 
-  const requestJoin = (handle, email, firstName, lastName, password, passwordConfirm) => {
+  const requestJoin = (
+    handle,
+    email,
+    firstName,
+    lastName,
+    password,
+    passwordConfirm,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/join/request`,
       method: 'POST',
@@ -229,11 +241,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         lastName,
         password,
         passwordConfirm,
-      }
+      },
     });
-  }
+  };
 
-  const requestJoinToken = (handle, email, firstName, lastName, password, passwordConfirm) => {
+  const requestJoinToken = (
+    handle,
+    email,
+    firstName,
+    lastName,
+    password,
+    passwordConfirm,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/join/request/token`,
       method: 'POST',
@@ -244,9 +263,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         lastName,
         password,
         passwordConfirm,
-      }
+      },
     });
-  }
+  };
 
   const joinWithInvite = (formValues, token) => {
     return requestDatalayer({
@@ -257,14 +276,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token,
       },
     });
-  }
+  };
 
   const confirmJoinWithToken = (userHandle, token) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/join/users/${userHandle}/tokens/${token}`,
       method: 'GET',
     });
-  }
+  };
 
   // Password ------------------------------------------------------------------
 
@@ -276,9 +295,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle,
         password,
         passwordConfirm,
-      }
+      },
     });
-  }
+  };
 
   const createTokenForPasswordChange = (handle, password, passwordConfirm) => {
     return requestDatalayer({
@@ -288,93 +307,117 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle,
         password,
         passwordConfirm,
-      }
+      },
     });
-  }
+  };
 
   const confirmPassworkWithToken = (userHandle, token) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/password/confirm/users/${userHandle}/tokens/${token}`,
       method: 'PUT',
     });
-  }
+  };
 
   // OAuth2 -------------------------------------------------------------------
 
-  const getOAuth2AuthorizationURL = async (queryArgs: Record<string, string>) => {
+  const getOAuth2AuthorizationURL = async (
+    queryArgs: Record<string, string>,
+  ) => {
     return requestDatalayer<{ success: boolean; autorization_url: string }>({
-      url: URLExt.join(configuration.iamRunUrl, 'api/iam/v1/oauth2/authz/url') + URLExt.objectToQueryString(queryArgs),
+      url:
+        URLExt.join(configuration.iamRunUrl, 'api/iam/v1/oauth2/authz/url') +
+        URLExt.objectToQueryString(queryArgs),
       notifyOnError: false,
     });
-  }
+  };
 
-  const getOAuth2AuthorizationLinkURL = async (queryArgs: Record<string, string>) => {
+  const getOAuth2AuthorizationLinkURL = async (
+    queryArgs: Record<string, string>,
+  ) => {
     return requestDatalayer<{ success: boolean; autorization_url: string }>({
-      url: URLExt.join(configuration.iamRunUrl, 'api/iam/v1/oauth2/authz/url/link') + URLExt.objectToQueryString(queryArgs),
+      url:
+        URLExt.join(
+          configuration.iamRunUrl,
+          'api/iam/v1/oauth2/authz/url/link',
+        ) + URLExt.objectToQueryString(queryArgs),
     });
-  }
+  };
 
   // IAM Providers ------------------------------------------------------------
 
   const getGitHubProfile = async (accessToken: string) => {
-    return fetch(IAMProvidersSpecs.GitHub.userInfoURL,
-      {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/vnd.github+json',
-          'Authorization': `Bearer ${accessToken}`,
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-      }
-    ).then(resp => resp.json());
-  }
+    return fetch(IAMProvidersSpecs.GitHub.userInfoURL, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${accessToken}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+    }).then(resp => resp.json());
+  };
 
   /*
    * CORS is not supported @see https://github.com/linkedin-developers/linkedin-api-js-client
    */
   const getLinkedinProfile = async (accessToken: string) => {
-    return proxyGET(IAMProvidersSpecs.LinkedIn.userInfoURL, accessToken).then(resp => {
-      return new LinkedInUser(resp.response);
-    });
-  }
-
-  const postLinkedinShare = async (linkedinUser: ILinkedInUser, postText: string, accessToken: string) => {
-    const POST_SHARE_REQUEST = {
-      "author": linkedinUser.getUrn(),
-      "lifecycleState": "PUBLISHED",
-      "specificContent": {
-        "com.linkedin.ugc.ShareContent": {
-          "shareCommentary": {
-            "text": postText
-          },
-          "shareMediaCategory": "NONE"
-        }
+    return proxyGET(IAMProvidersSpecs.LinkedIn.userInfoURL, accessToken).then(
+      resp => {
+        return new LinkedInUser(resp.response);
       },
-      "visibility": {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-      }
-    };
-    return proxyPOST(IAMProvidersSpecs.LinkedIn.postShareURL, POST_SHARE_REQUEST, accessToken);
-  }
+    );
+  };
 
-  const postLinkedinShareWithUpload = async (linkedinUser: ILinkedInUser, postText: string, uploadObject: string, accessToken: string) => {
-    const REGISTER_UPLOAD_REQUEST = {
-      "registerUploadRequest": {
-        "recipes": [
-          "urn:li:digitalmediaRecipe:feedshare-image"
-        ],
-        "owner": linkedinUser.getUrn(),
-        "serviceRelationships": [
-          {
-            "relationshipType": "OWNER",
-            "identifier": "urn:li:userGeneratedContent"
-          }
-        ]
-      }
+  const postLinkedinShare = async (
+    linkedinUser: ILinkedInUser,
+    postText: string,
+    accessToken: string,
+  ) => {
+    const POST_SHARE_REQUEST = {
+      author: linkedinUser.getUrn(),
+      lifecycleState: 'PUBLISHED',
+      specificContent: {
+        'com.linkedin.ugc.ShareContent': {
+          shareCommentary: {
+            text: postText,
+          },
+          shareMediaCategory: 'NONE',
+        },
+      },
+      visibility: {
+        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+      },
     };
-    return proxyPOST(IAMProvidersSpecs.LinkedIn.registerUploadURL, REGISTER_UPLOAD_REQUEST, accessToken)
-      .then(registerUploadReponse => {
-        /*
+    return proxyPOST(
+      IAMProvidersSpecs.LinkedIn.postShareURL,
+      POST_SHARE_REQUEST,
+      accessToken,
+    );
+  };
+
+  const postLinkedinShareWithUpload = async (
+    linkedinUser: ILinkedInUser,
+    postText: string,
+    uploadObject: string,
+    accessToken: string,
+  ) => {
+    const REGISTER_UPLOAD_REQUEST = {
+      registerUploadRequest: {
+        recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+        owner: linkedinUser.getUrn(),
+        serviceRelationships: [
+          {
+            relationshipType: 'OWNER',
+            identifier: 'urn:li:userGeneratedContent',
+          },
+        ],
+      },
+    };
+    return proxyPOST(
+      IAMProvidersSpecs.LinkedIn.registerUploadURL,
+      REGISTER_UPLOAD_REQUEST,
+      accessToken,
+    ).then(registerUploadReponse => {
+      /*
         {
           "value": {
               "uploadMechanism": {
@@ -388,48 +431,54 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           }
         }
         */
-        const asset = registerUploadReponse.response.value.asset;
-        const uploadURL = registerUploadReponse.response.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
-        const UPLOAD_OBJECT_REQUEST = {
-          uploadURL: uploadURL,
-          content: uploadObject,
-          userURN: linkedinUser.getUrn(),
-        }
-        return proxyPUT(uploadURL, UPLOAD_OBJECT_REQUEST, accessToken)
-          .then(resp => {
-            const share = {
-              "author": linkedinUser.getUrn(),
-              "lifecycleState": "PUBLISHED",
-              "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                  "shareCommentary": {
-                    "text": postText
+      const asset = registerUploadReponse.response.value.asset;
+      const uploadURL =
+        registerUploadReponse.response.value.uploadMechanism[
+          'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
+        ].uploadUrl;
+      const UPLOAD_OBJECT_REQUEST = {
+        uploadURL: uploadURL,
+        content: uploadObject,
+        userURN: linkedinUser.getUrn(),
+      };
+      return proxyPUT(uploadURL, UPLOAD_OBJECT_REQUEST, accessToken).then(
+        resp => {
+          const share = {
+            author: linkedinUser.getUrn(),
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+              'com.linkedin.ugc.ShareContent': {
+                shareCommentary: {
+                  text: postText,
+                },
+                shareMediaCategory: 'IMAGE',
+                media: [
+                  {
+                    status: 'READY',
+                    description: {
+                      text: 'Datalayer Notebook',
+                    },
+                    media: asset,
+                    title: {
+                      text: 'Datalayer Notebook',
+                    },
                   },
-                  "shareMediaCategory": "IMAGE",
-                  "media": [
-                    {
-                        "status": "READY",
-                        "description": {
-                            "text": "Datalayer Notebook"
-                        },
-                        "media": asset,
-                        "title": {
-                            "text": "Datalayer Notebook"
-                        }
-                    }
-                  ]
-                }
+                ],
               },
-              "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-              }
-            };
-            return proxyPOST(IAMProvidersSpecs.LinkedIn.postShareURL, share, accessToken);
-          }
-        );
-      }
-    );
-  }
+            },
+            visibility: {
+              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+            },
+          };
+          return proxyPOST(
+            IAMProvidersSpecs.LinkedIn.postShareURL,
+            share,
+            accessToken,
+          );
+        },
+      );
+    });
+  };
 
   // Proxy -------------------------------------------------------------------
 
@@ -441,9 +490,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         request_method: 'GET',
         request_url: url,
         request_token: token,
-      }
+      },
     });
-  }
+  };
 
   const proxyPOST = async (url: string, body: object, token: string) => {
     return requestDatalayer({
@@ -454,9 +503,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         request_url: url,
         request_token: token,
         request_body: body,
-      }
+      },
     });
-  }
+  };
 
   const proxyPUT = async (url: string, body: object, token: string) => {
     return requestDatalayer({
@@ -467,9 +516,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         request_url: url,
         request_token: token,
         request_body: body,
-      }
+      },
     });
-  }
+  };
 
   // Waiting List -------------------------------------------------------------
 
@@ -481,20 +530,24 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        affiliation: formData.affiliation || ''
-      }
+        affiliation: formData.affiliation || '',
+      },
     })
-    .then(resp => {
-      // Special case, make the error very explicit to the user...
-      if (!resp.success) {
-        alert('Sorry, something has gone wrong... Please send an email to eric@datalayer.io to register to the waiting list.');
-      }
-    })
-    .catch(err => {
-      // Special case, make the error very explicit to the user...
-      console.error(err);
-      alert('Sorry, something has gone wrong... Please send an email to eric@datalayer.io to register to the waiting list.');
-    });
+      .then(resp => {
+        // Special case, make the error very explicit to the user...
+        if (!resp.success) {
+          alert(
+            'Sorry, something has gone wrong... Please send an email to eric@datalayer.io to register to the waiting list.',
+          );
+        }
+      })
+      .catch(err => {
+        // Special case, make the error very explicit to the user...
+        console.error(err);
+        alert(
+          'Sorry, something has gone wrong... Please send an email to eric@datalayer.io to register to the waiting list.',
+        );
+      });
   };
 
   // Profile ------------------------------------------------------------------
@@ -503,7 +556,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const resp = await requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/me`,
       method: 'GET',
-      token
+      token,
     });
     const me = resp.me;
     if (me) {
@@ -511,7 +564,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       return user;
     }
     return null;
-  }
+  };
 
   const updateMe = (email, firstName, lastName) => {
     return requestDatalayer({
@@ -521,36 +574,36 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         email,
         firstName,
         lastName,
-      }
+      },
     });
-  }
+  };
 
   const whoami = () => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/whoami`,
       method: 'GET',
     });
-  }
+  };
 
-  const requestEmailUpdate = (email) => {
+  const requestEmailUpdate = email => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/me/email`,
       method: 'PUT',
       body: {
         email,
-      }
+      },
     });
-  }
+  };
 
-  const confirmEmailUpdate = (token) => {
+  const confirmEmailUpdate = token => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/me/email`,
       method: 'POST',
       body: {
         token,
-      }
+      },
     });
-  }
+  };
 
   // Onboarding ---------------------------------------------------------------
 
@@ -560,9 +613,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'PUT',
       body: {
         onboarding,
-      }
+      },
     });
-  }
+  };
 
   // Settings -----------------------------------------------------------------
 
@@ -575,7 +628,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         can_invite_b: settings.canInvite || false,
       },
     });
-  }
+  };
 
   // Pages ------------------------------------------------------------------
 
@@ -585,13 +638,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       PAGES_BY_ID.set(s.uid, page);
       return page;
     }
-  }
+  };
 
   const createPage = (page: Omit<IPage, 'id'>) => {
     return requestDatalayer({
       url: `${configuration.libraryRunUrl}/api/library/v1/pages`,
       method: 'POST',
-      body: { ...page }
+      body: { ...page },
     }).then(resp => {
       if (resp.success) {
         if (resp.page) {
@@ -604,13 +657,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const updatePage = (page: Pick<IPage, "id" | "name" | "description" | "tags" >) => {
+  const updatePage = (
+    page: Pick<IPage, 'id' | 'name' | 'description' | 'tags'>,
+  ) => {
     return requestDatalayer({
       url: `${configuration.libraryRunUrl}/api/library/v1/pages/${page.id}`,
       method: 'PUT',
-      body: { 
+      body: {
         name: page.name,
         description: page.description,
         tags: page.tags,
@@ -623,14 +678,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const deletePage = (page: IPage) => {
     return requestDatalayer({
       url: `${configuration.libraryRunUrl}/api/library/v1/pages/${page.id}`,
       method: 'DELETE',
     });
-  }
+  };
 
   const getPage = (pageId: string) => PAGES_BY_ID.get(pageId);
 
@@ -648,11 +703,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getPages = () => {
     return Array.from(PAGES_BY_ID.values());
-  }
+  };
 
   const refreshPages = () => {
     return requestDatalayer({
@@ -670,8 +725,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-
-  }
+  };
 
   // Datasources ------------------------------------------------------------------
 
@@ -681,13 +735,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       DATASOURCES_BY_ID.set(s.uid, datasource);
       return datasource;
     }
-  }
+  };
 
   const createDatasource = (datasource: Omit<IDatasource, 'id'>) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/datasources`,
       method: 'POST',
-      body: { ...datasource }
+      body: { ...datasource },
     }).then(resp => {
       if (resp.success) {
         if (resp.datasource) {
@@ -696,13 +750,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateDatasource = (datasource: IDatasource) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
       method: 'PUT',
-      body: { ...datasource }
+      body: { ...datasource },
     }).then(resp => {
       if (resp.success) {
         if (resp.datasource) {
@@ -711,9 +765,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getDatasource = (datasourceId: string) => DATASOURCES_BY_ID.get(datasourceId);
+  const getDatasource = (datasourceId: string) =>
+    DATASOURCES_BY_ID.get(datasourceId);
 
   const clearCachedDatasources = () => DATASOURCES_BY_ID.clear();
 
@@ -729,11 +784,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getDatasources = () => {
     return Array.from(DATASOURCES_BY_ID.values());
-  }
+  };
 
   const refreshDatasources = () => {
     return requestDatalayer({
@@ -751,8 +806,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-
-  }
+  };
 
   // Secrets ------------------------------------------------------------------
 
@@ -762,13 +816,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       SECRETS_BY_ID.set(s.uid, secret);
       return secret;
     }
-  }
+  };
 
   const createSecret = (secret: Omit<ISecret, 'id'>) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/secrets`,
       method: 'POST',
-      body: { ...secret }
+      body: { ...secret },
     }).then(resp => {
       if (resp.success) {
         if (resp.secret) {
@@ -777,13 +831,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateSecret = (secret: ISecret) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
       method: 'PUT',
-      body: { ...secret }
+      body: { ...secret },
     }).then(resp => {
       if (resp.success) {
         if (resp.secret) {
@@ -792,14 +846,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const deleteSecret = (secret: ISecret) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
       method: 'DELETE',
-   });
-  }
+    });
+  };
 
   const getSecret = (secretId: string) => SECRETS_BY_ID.get(secretId);
 
@@ -817,11 +871,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSecrets = () => {
     return Array.from(SECRETS_BY_ID.values());
-  }
+  };
 
   const refreshSecrets = () => {
     return requestDatalayer({
@@ -839,8 +893,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-
-  }
+  };
 
   // Tokens ------------------------------------------------------------------
 
@@ -850,7 +903,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       TOKENS_BY_ID.set(s.uid, token);
       return token;
     }
-  }
+  };
 
   const createToken = (token: Omit<IIAMToken, 'id' | 'value'>) => {
     return requestDatalayer({
@@ -859,7 +912,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         ...token,
         expirationDate: token.expirationDate.getTime(),
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         if (resp.token) {
@@ -868,13 +921,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateToken = (token: IIAMToken) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/tokens/${token.id}`,
       method: 'PUT',
-      body: { ...token }
+      body: { ...token },
     }).then(resp => {
       if (resp.success) {
         if (resp.token) {
@@ -883,7 +936,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getToken = (tokenId: string) => TOKENS_BY_ID.get(tokenId);
 
@@ -901,11 +954,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getTokens = () => {
     return Array.from(TOKENS_BY_ID.values());
-  }
+  };
 
   const refreshTokens = () => {
     return requestDatalayer({
@@ -923,12 +976,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-
-  }
+  };
 
   // Layout -------------------------------------------------------------------
 
-  const refreshLayout = (accountHandle: string, spaceHandle?: string, user?: IUser) => {
+  const refreshLayout = (
+    accountHandle: string,
+    spaceHandle?: string,
+    user?: IUser,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/layouts/accounts/${accountHandle}${spaceHandle !== undefined ? '/spaces/' + spaceHandle : ''}`,
       method: 'GET',
@@ -953,25 +1009,35 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               SPACES_BY_ID_BY_ORGANISATION_ID.set(organization.id, osById);
             }
             osById.set(space.id, space);
-            let osByHandle = SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE.get(organization.handle);
+            let osByHandle = SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE.get(
+              organization.handle,
+            );
             if (!osByHandle) {
               osByHandle = new Map<string, IAnySpace>();
-              SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE.set(organization.handle, osByHandle);
+              SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE.set(
+                organization.handle,
+                osByHandle,
+              );
             }
             osByHandle.set(space.handle, space);
           } else {
             SPACES_FOR_USER_BY_HANDLE.set(space.handle, space);
-            SPACES_FOR_USER_BY_ID.set(space.id, space)
-          }  
+            SPACES_FOR_USER_BY_ID.set(space.id, space);
+          }
         }
       }
       return resp;
     });
-  }
+  };
 
   // Invites -------------------------------------------------------------------
 
-  const requestInvite = (firstName: string, lastName: string, email: string, socialUrl: string) => {
+  const requestInvite = (
+    firstName: string,
+    lastName: string,
+    email: string,
+    socialUrl: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/invites/request`,
       method: 'POST',
@@ -980,9 +1046,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         last_name: lastName,
         email: email,
         social_url: socialUrl,
-      }
-   });
-  }
+      },
+    });
+  };
 
   const sendInvite = (invite: IInvite) => {
     return requestDatalayer({
@@ -994,9 +1060,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         lastName: invite.to.lastName,
         message: invite.message,
         brand: invite.brand,
-      }
+      },
     });
-  }
+  };
 
   const getInvite = (token: string) => INVITES_BY_TOKEN.get(token);
 
@@ -1018,11 +1084,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getInvites = () => {
     return Array.from(INVITES_BY_TOKEN.values());
-  }
+  };
 
   const refreshInvites = (accountId: string) => {
     return requestDatalayer({
@@ -1039,14 +1105,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const putInvite = (token: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/invites/tokens/${token}`,
       method: 'PUT',
-   });
-  }
+    });
+  };
 
   // Accounts -------------------------------------------------------------------
 
@@ -1065,8 +1131,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
-
+  };
 
   // Contacts ---------------------------------------------------------------------
 
@@ -1077,11 +1142,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       CONTACTS_BY_HANDLE.set(contact.handle, contact);
       return contact;
     }
-  }
+  };
 
   const getContactById = (contactId: string) => CONTACTS_BY_ID.get(contactId);
 
-  const getContactByHandle = (contactHandle: string) => CONTACTS_BY_HANDLE.get(contactHandle);
+  const getContactByHandle = (contactHandle: string) =>
+    CONTACTS_BY_HANDLE.get(contactHandle);
 
   const createContact = (contact: IContact) => {
     return requestDatalayer({
@@ -1089,14 +1155,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'POST',
       body: {
         contact,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         toContact(resp.contact);
       }
       return resp;
     });
-  }
+  };
 
   const updateContact = (contactId, contact: IContact) => {
     return requestDatalayer({
@@ -1104,14 +1170,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'PUT',
       body: {
         contact,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         toContact(resp.contact);
       }
       return resp;
     });
-  }
+  };
 
   const refreshContact = (contactId: string) => {
     return requestDatalayer({
@@ -1123,7 +1189,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const searchContacts = (query: string) => {
     return requestDatalayer({
@@ -1131,7 +1197,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'POST',
       body: {
         query,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         const contacts = resp.contacts.map(contact => toContact(contact));
@@ -1139,28 +1205,28 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const assignTagToContact = (contactId, tagName) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/tags/${tagName}`,
       method: 'POST',
     });
-  }
+  };
 
   const unassignTagFromContact = (contactId, tagName) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/tags/${tagName}`,
       method: 'DELETE',
     });
-  }
+  };
 
   const deleteContact = (contactId: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}`,
       method: 'DELETE',
     });
-  }
+  };
 
   const sendInviteToContact = (contact: IContact, message: string) => {
     return requestDatalayer({
@@ -1169,9 +1235,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         contactId: contact.id,
         message,
-      }
-   });
-  }
+      },
+    });
+  };
 
   // Contacts Enrich ----------------------------------------------------------
 
@@ -1180,29 +1246,32 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/enrich/email?useDomain=${useDomain}`,
       method: 'GET',
     });
-  }
+  };
 
-  const enrichContactLinkedin = (contactId) => {
+  const enrichContactLinkedin = contactId => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/enrich/linkedin`,
       method: 'GET',
     });
-  }
+  };
 
-  const sendLinkedinConnectionRequest = (contact: IContact, message: string) => {
+  const sendLinkedinConnectionRequest = (
+    contact: IContact,
+    message: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contact.id}/connect/linkedin`,
       method: 'POST',
       body: {
         message,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         toContact(resp.contact);
       }
       return resp;
     });
-  }
+  };
 
   // Contacts Links -----------------------------------------------------------
 
@@ -1211,14 +1280,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
       method: 'POST',
     });
-  }
+  };
 
   const unlinkUserFromContact = (userId, contactId) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
       method: 'DELETE',
     });
-  }
+  };
 
   // Users --------------------------------------------------------------------
 
@@ -1229,7 +1298,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       USERS_BY_HANDLE.set(user.handle, user);
       return user;
     }
-  }
+  };
 
   const getUser = (id: string) => USERS_BY_ID.get(id);
 
@@ -1245,15 +1314,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const searchUsers = (namingPattern: string) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/users/search`,
       method: 'POST',
       body: {
-        namingPattern
-      }
+        namingPattern,
+      },
     }).then(resp => {
       if (resp.success) {
         const users = resp.users.map(user => toUser(user));
@@ -1261,7 +1330,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   // User Roles ---------------------------------------------------------------
 
@@ -1270,14 +1339,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/roles/${roleName}`,
       method: 'POST',
     });
-  }
+  };
 
   const unassignRoleFromUser = (userId, roleName) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/roles/${roleName}`,
       method: 'DELETE',
     });
-  }
+  };
 
   // Organizations -------------------------------------------------------------------
 
@@ -1286,7 +1355,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     ORGANISATIONS_BY_ID.set(organization.id, organization);
     ORGANISATIONS_BY_HANDLE.set(organization.handle, organization);
     return organization;
-  }
+  };
 
   const createOrganization = (organization: Partial<IOrganization>) => {
     return requestDatalayer({
@@ -1296,23 +1365,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: organization.handle,
         name: organization.name,
         description: organization.description,
-      }
+      },
     }).then(resp => {
       const organization = toOrganization(resp.organization);
       ORGANISATIONS_FOR_USER_BY_ID.set(organization.id, organization);
       return resp;
     });
-  }
+  };
 
-  const getOrganizationById = (organizationId: string) => ORGANISATIONS_BY_ID.get(organizationId);
+  const getOrganizationById = (organizationId: string) =>
+    ORGANISATIONS_BY_ID.get(organizationId);
 
-  const getOrganizationByHandle = (organizationHandle: string) => ORGANISATIONS_BY_HANDLE.get(organizationHandle);
+  const getOrganizationByHandle = (organizationHandle: string) =>
+    ORGANISATIONS_BY_HANDLE.get(organizationHandle);
 
   const clearCachedOrganizations = () => {
-    ORGANISATIONS_BY_HANDLE.clear()
+    ORGANISATIONS_BY_HANDLE.clear();
     ORGANISATIONS_BY_ID.clear();
     ORGANISATIONS_FOR_USER_BY_ID.clear();
-  }
+  };
 
   const refreshOrganization = (user: IUser, organizationId: string) => {
     return requestDatalayer({
@@ -1330,7 +1401,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateOrganization = (organization: Partial<IAnyOrganization>) => {
     return requestDatalayer({
@@ -1339,7 +1410,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name: organization.name,
         description: organization.description,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         const org = getOrganizationById(organization.id!);
@@ -1350,11 +1421,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getUserOrganizations = () => Array.from(ORGANISATIONS_FOR_USER_BY_ID.values());
+  const getUserOrganizations = () =>
+    Array.from(ORGANISATIONS_FOR_USER_BY_ID.values());
 
-  const getUserOrganizationById = (organizationId: string) => ORGANISATIONS_FOR_USER_BY_ID.get(organizationId);
+  const getUserOrganizationById = (organizationId: string) =>
+    ORGANISATIONS_FOR_USER_BY_ID.get(organizationId);
 
   const refreshUserOrganizations = (user: IUser) => {
     return requestDatalayer({
@@ -1371,35 +1444,46 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const addMemberToOrganization = (organizationId: string, userId: string) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}`,
       method: 'POST',
-   });
-  }
+    });
+  };
 
-  const removeMemberFromOrganization = (organizationId: string, userId: string) => {
+  const removeMemberFromOrganization = (
+    organizationId: string,
+    userId: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}`,
       method: 'DELETE',
-   });
-  }
+    });
+  };
 
-  const addRoleToOrganizationMember = (organizationId: string, userId: string, roleName: string) => {
+  const addRoleToOrganizationMember = (
+    organizationId: string,
+    userId: string,
+    roleName: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}/roles/${roleName}`,
       method: 'POST',
-   });
-  }
+    });
+  };
 
-  const removeRoleFromOrganizationMember = (organizationId: string, userId: string, roleName: string) => {
+  const removeRoleFromOrganizationMember = (
+    organizationId: string,
+    userId: string,
+    roleName: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}/roles/${roleName}`,
       method: 'DELETE',
-   });
-  }
+    });
+  };
 
   // Teams -------------------------------------------------------------------
 
@@ -1408,7 +1492,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     TEAMS_BY_ID.set(team.id, team);
     TEAMS_BY_HANDLE.set(team.handle, team);
     return team;
-  }
+  };
 
   const createTeam = (team: Partial<ITeam>, organization: IAnyOrganization) => {
     return requestDatalayer({
@@ -1419,23 +1503,24 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         name: team.name,
         description: team.description,
         organizationId: organization.id,
-      }
+      },
     }).then(resp => {
       const team = toTeam(resp.team, organization.id);
       TEAMS_BY_HANDLE.set(team.handle, team);
       TEAMS_BY_ID.set(team.id, team);
       return resp;
     });
-  }
+  };
 
   const getTeamById = (teamId: string) => TEAMS_BY_ID.get(teamId);
 
-  const getTeamByHandle = (teamHandle: string) => TEAMS_BY_HANDLE.get(teamHandle);
+  const getTeamByHandle = (teamHandle: string) =>
+    TEAMS_BY_HANDLE.get(teamHandle);
 
   const clearCachedTeams = () => {
     TEAMS_BY_HANDLE.clear();
     TEAMS_BY_ID.clear();
-  }
+  };
 
   const refreshTeam = (teamId: string, organizationId: string) => {
     return requestDatalayer({
@@ -1452,7 +1537,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateTeam = (team: Partial<ITeam>) => {
     return requestDatalayer({
@@ -1461,7 +1546,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name: team.name,
         description: team.description,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         const t = resp.team;
@@ -1473,9 +1558,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getTeamsByOrganizationId = (organizationId: string) => TEAMS_BY_ORGANIZATION_BY_ID.get(organizationId);
+  const getTeamsByOrganizationId = (organizationId: string) =>
+    TEAMS_BY_ORGANIZATION_BY_ID.get(organizationId);
 
   const refreshTeams = (organizationId: string) => {
     return requestDatalayer({
@@ -1493,41 +1579,49 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const addMemberToTeam = (teamId: string, userId: string) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}`,
       method: 'POST',
-   });
-  }
+    });
+  };
 
   const removeMemberFromTeam = (teamId: string, userId: string) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}`,
       method: 'DELETE',
-   });
-  }
+    });
+  };
 
-  const addRoleToTeamMember = (teamId: string, userId: string, roleName: string) => {
+  const addRoleToTeamMember = (
+    teamId: string,
+    userId: string,
+    roleName: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}/roles/${roleName}`,
       method: 'POST',
-   });
-  }
+    });
+  };
 
-  const removeRoleFromTeamMember = (teamId: string, userId: string, roleName: string) => {
+  const removeRoleFromTeamMember = (
+    teamId: string,
+    userId: string,
+    roleName: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}/roles/${roleName}`,
       method: 'DELETE',
-   });
-  }
+    });
+  };
 
   // Schools -------------------------------------------------------------------
 
   const getSchools = () => {
     return Array.from(SCHOOLS_BY_ID.values());
-  }
+  };
 
   const refreshSchools = () => {
     return requestDatalayer({
@@ -1554,26 +1648,28 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             creationDate: new Date(s.creation_ts_dt),
             setMembers(members: IOrganizationMember[]) {
               this.members = members;
-            }
-          }
+            },
+          };
           SCHOOLS_BY_ID.set(school.id, school);
         });
       }
       return resp;
     });
-  }
+  };
 
   // Spaces -------------------------------------------------------------------
 
   const toSpace = (spc: any) => {
     const space = asSpace(spc);
     return space;
-  }
-  
-  const createSpace = (space: Partial<IAnySpace>, organization?: IAnyOrganization) => {
-    const seedSpaceId = (space.variant === 'course')
-      ? (space as ICourse).seedSpace?.id
-      : undefined
+  };
+
+  const createSpace = (
+    space: Partial<IAnySpace>,
+    organization?: IAnyOrganization,
+  ) => {
+    const seedSpaceId =
+      space.variant === 'course' ? (space as ICourse).seedSpace?.id : undefined;
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces`,
       method: 'POST',
@@ -1585,7 +1681,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         spaceHandle: space.handle,
         organizationId: organization?.id,
         seedSpaceId,
-      }
+      },
     }).then(resp => {
       const spc = resp.space;
       if (spc) {
@@ -1599,24 +1695,32 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           os.set(space.id, space);
         } else {
           SPACES_FOR_USER_BY_HANDLE.set(space.handle, space);
-          SPACES_FOR_USER_BY_ID.set(space.id, space)
-        }  
+          SPACES_FOR_USER_BY_ID.set(space.id, space);
+        }
       }
       return resp;
     });
-  }
+  };
 
   const getOrganizationSpace = (organizationId: string, spaceId: string) => {
-    const organizationSpaces = SPACES_BY_ID_BY_ORGANISATION_ID.get(organizationId);
+    const organizationSpaces =
+      SPACES_BY_ID_BY_ORGANISATION_ID.get(organizationId);
     return organizationSpaces ? organizationSpaces.get(spaceId) : undefined;
-  }
+  };
 
-  const getOrganizationSpaceByHandle = (organizationHandle: string, spaceHandle: string) => {
-    const organizationSpaces = SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE.get(organizationHandle);
+  const getOrganizationSpaceByHandle = (
+    organizationHandle: string,
+    spaceHandle: string,
+  ) => {
+    const organizationSpaces =
+      SPACES_BY_HANDLE_BY_ORGANISATION_HANDLE.get(organizationHandle);
     return organizationSpaces ? organizationSpaces.get(spaceHandle) : undefined;
-  }
+  };
 
-  const refreshOrganizationSpace = (organizationId: string, spaceId: string) => {
+  const refreshOrganizationSpace = (
+    organizationId: string,
+    spaceId: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}`,
       method: 'GET',
@@ -1635,23 +1739,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const exportSpace = (spaceId: string) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/export`,
       method: 'GET',
-   });
-  }
+    });
+  };
 
-  const updateOrganizationSpace = (organization: IAnyOrganization, space: Partial<IAnySpace>) => {
+  const updateOrganizationSpace = (
+    organization: IAnyOrganization,
+    space: Partial<IAnySpace>,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/organizations/${organization.id}`,
       method: 'PUT',
       body: {
         name: space.name,
         description: space.description,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         const spc = getOrganizationSpace(organization.id, space.id!);
@@ -1662,7 +1769,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getOrganizationSpaces = (organizationId: string) => {
     const spaces = SPACES_BY_ID_BY_ORGANISATION_ID.get(organizationId);
@@ -1670,7 +1777,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       return Array.from(spaces.values());
     }
     return [];
-  }
+  };
 
   const refreshOrganizationSpaces = (organizationId: string) => {
     return requestDatalayer({
@@ -1680,17 +1787,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       if (resp.success) {
         resp.spaces.forEach(org => {
           const space = toSpace(org);
-          let organizationSpaces = SPACES_BY_ID_BY_ORGANISATION_ID.get(organizationId);
+          let organizationSpaces =
+            SPACES_BY_ID_BY_ORGANISATION_ID.get(organizationId);
           if (!organizationSpaces) {
             organizationSpaces = new Map<string, IAnySpace>();
-            SPACES_BY_ID_BY_ORGANISATION_ID.set(organizationId, organizationSpaces);
+            SPACES_BY_ID_BY_ORGANISATION_ID.set(
+              organizationId,
+              organizationSpaces,
+            );
           }
           organizationSpaces.set(space.id, space);
         });
       }
       return resp;
     });
-  }
+  };
 
   const getUserSpaces = () => Array.from(SPACES_FOR_USER_BY_ID.values());
 
@@ -1708,12 +1819,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getUserSpace = (userId: string) => SPACES_FOR_USER_BY_ID.get(userId);
-  const getUserSpaceByHandle = (userHandle: string) => SPACES_FOR_USER_BY_HANDLE.get(userHandle);
+  const getUserSpaceByHandle = (userHandle: string) =>
+    SPACES_FOR_USER_BY_HANDLE.get(userHandle);
 
-  const refreshUserSpace = (userId: string, spaceId: string) => {  
+  const refreshUserSpace = (userId: string, spaceId: string) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/users/${userId}`,
       method: 'GET',
@@ -1728,7 +1840,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateSpace = (space: Partial<IAnySpace>) => {
     return requestDatalayer({
@@ -1737,7 +1849,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name: space.name,
         description: space.description,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         const spc = getUserSpace(space.id!);
@@ -1748,40 +1860,48 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const addMemberToOrganizationSpace = (organizationId: string, spaceId: string, accountId: string) => {
+  const addMemberToOrganizationSpace = (
+    organizationId: string,
+    spaceId: string,
+    accountId: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}/members/${accountId}`,
       method: 'POST',
-   });
-  }
+    });
+  };
 
-  const removeMemberFromOrganizationSpace = (organizationId: string, spaceId: string, accountId: string) => {
+  const removeMemberFromOrganizationSpace = (
+    organizationId: string,
+    spaceId: string,
+    accountId: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}/members/${accountId}`,
       method: 'DELETE',
     }).then(resp => {
-//      if (resp.success) {
-//        OR.delete(accountHandle);
-//      }
+      //      if (resp.success) {
+      //        OR.delete(accountHandle);
+      //      }
       return resp;
     });
-  }
+  };
 
   const makeSpacePublic = (spaceId: string) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/public`,
       method: 'PUT',
-    })
-  }
+    });
+  };
 
   const makeSpacePrivate = (spaceId: string) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/private`,
       method: 'PUT',
-    })
-  }
+    });
+  };
 
   // Courses -------------------------------------------------------------------
 
@@ -1803,7 +1923,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       nbgradesTotalScore: raw_student_item.nbgrades_total_score_f,
     };
     return studentItem;
-  }
+  };
 
   const toStudent = (raw_student: any, courseId: string) => {
     let student: IStudent | undefined = undefined;
@@ -1822,12 +1942,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         student = {
           ...user,
           studentItems,
-        }
+        };
         STUDENTS_BY_ID.set(courseId + '-' + student.id, student);
       }
     }
     return student;
-  }
+  };
 
   const toCourse = (raw_course: any, cache: Map<string, ICourse>) => {
     const owner = newUserMock();
@@ -1844,8 +1964,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         email: raw_instructor.email_s,
         firstName: raw_instructor.first_name_t,
         lastName: raw_instructor.last_name_t,
-        initials: namesAsInitials(raw_instructor.to_first_name_t, raw_instructor.to_last_name_t),
-        displayName: asDisplayName(raw_instructor.first_name_t, raw_instructor.last_name_t),
+        initials: namesAsInitials(
+          raw_instructor.to_first_name_t,
+          raw_instructor.to_last_name_t,
+        ),
+        displayName: asDisplayName(
+          raw_instructor.first_name_t,
+          raw_instructor.last_name_t,
+        ),
         roles: [],
         iamProviders: [],
         setRoles: (roles: string[]) => {},
@@ -1853,8 +1979,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         onboarding: BOOTSTRAP_USER_ONBOARDING,
         linkedContactId: undefined,
         events: [],
-        settings: {}
-      }
+        settings: {},
+      };
       USERS_BY_ID.set(instructor.id, instructor);
     }
     let students: Map<string, IUser> | undefined = undefined;
@@ -1865,7 +1991,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (student) {
           students!.set(student.id, student);
         }
-      })
+      });
     }
     let itemIds = new Array<string>();
     let raw_item_uids: string = raw_course.item_uids_s;
@@ -1878,13 +2004,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       raw_course.items.forEach(item => {
         const i = toItem(item);
         items.push(i);
-      })
+      });
     }
     const course: ICourse = {
       id: raw_course.uid,
       handle: raw_course.handle_s,
       type: 'space',
-      variant: "course",
+      variant: 'course',
       name: raw_course.name_t,
       description: raw_course.description_t,
       creationDate: new Date(raw_course.creation_ts_dt),
@@ -1894,11 +2020,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       instructor,
       students,
       owner,
-    }
+    };
     cache.set(course.id, course);
     return course;
-  }
-  
+  };
+
   const getCourse = (courseId: string) => COURSES_BY_ID.get(courseId);
 
   const updateCourse = (courseId, name, description) => {
@@ -1908,10 +2034,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name,
         description,
-      }
+      },
     });
-
-  }
+  };
 
   const refreshCourse = (courseId: string) => {
     return requestDatalayer({
@@ -1926,14 +2051,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const enrollStudentToCourse = (courseId: string, studentId: string) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
       method: 'POST',
-   });
-  }
+    });
+  };
 
   const removeStudentFromCourse = (courseId: string, studentId: string) => {
     return requestDatalayer({
@@ -1945,9 +2070,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getStudent = (courseId, studentId) => STUDENTS_BY_ID.get(courseId + '-' + studentId);
+  const getStudent = (courseId, studentId) =>
+    STUDENTS_BY_ID.get(courseId + '-' + studentId);
 
   const refreshStudent = (courseId, studentHandle) => {
     return requestDatalayer({
@@ -1959,7 +2085,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getPublicCourses = () => Array.from(PUBLIC_COURSES_BY_ID.values());
 
@@ -1974,10 +2100,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       }
       return resp;
-    })
+    });
   };
 
-  const getInstructorCourses = () => Array.from(COURSES_INSTRUCTORS_BY_ID.values());
+  const getInstructorCourses = () =>
+    Array.from(COURSES_INSTRUCTORS_BY_ID.values());
 
   const refreshInstructorCourses = () => {
     return requestDatalayer({
@@ -1991,9 +2118,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getCoursesEnrollments = () => Array.from(COURSES_ENROLLMENTS_BY_ID.values());
+  const getCoursesEnrollments = () =>
+    Array.from(COURSES_ENROLLMENTS_BY_ID.values());
 
   const refreshCoursesEnrollments = () => {
     return requestDatalayer({
@@ -2007,17 +2135,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const confirmCourseItemCompletion = (courseId: any, itemType: IItemType, itemId: string, completed: boolean) => {
+  const confirmCourseItemCompletion = (
+    courseId: any,
+    itemType: IItemType,
+    itemId: string,
+    completed: boolean,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${courseId}/types/${itemType}/items/${itemId}/complete`,
       method: 'PUT',
       body: {
         completed,
-      }
-   });
-  }
+      },
+    });
+  };
 
   const setCourseItems = (courseId, itemIds) => {
     return requestDatalayer({
@@ -2025,10 +2158,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'PUT',
       body: {
         itemIds,
-      }
+      },
     });
-
-  }
+  };
 
   // Surveys ---------------------------------------------------------------------
 
@@ -2046,9 +2178,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
-
-
+  };
 
   // Inbounds ---------------------------------------------------------------------
 
@@ -2059,7 +2189,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       INBOUNDS_BY_HANDLE.set(inbound.handle, inbound);
       return inbound;
     }
-  }
+  };
 
   const getInbound = (id: string) => INBOUNDS_BY_ID.get(id);
 
@@ -2075,7 +2205,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getInbounds = () => {
     return requestDatalayer({
@@ -2088,7 +2218,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   // Outbounds ---------------------------------------------------------------------
 
@@ -2098,7 +2228,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       OUTBOUNDS_BY_ID.set(user.id, user);
       return user;
     }
-  }
+  };
 
   const getOutbound = (id: string) => OUTBOUNDS_BY_ID.get(id);
 
@@ -2113,7 +2243,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getOutbounds = () => {
     return requestDatalayer({
@@ -2126,33 +2256,38 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const draftBulkEmailsOutbounds = (params: any) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/emails/bulk/draft`,
       method: 'POST',
       body: params,
-   });
-  }
+    });
+  };
 
   const tryBulkEmailsOutbounds = (outboundId: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}/try`,
       method: 'POST',
       body: {},
-   });
-  }
+    });
+  };
 
   const launchBulkEmailsOutbounds = (outboundId: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}/launch`,
       method: 'POST',
       body: {},
-   });
-  }
+    });
+  };
 
-  const sendOutboundEmailToUser = (userId: string, recipient: string, subject: string, content: string) => {
+  const sendOutboundEmailToUser = (
+    userId: string,
+    recipient: string,
+    subject: string,
+    content: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/email`,
       method: 'POST',
@@ -2162,22 +2297,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         subject,
         content,
       },
-   });
-  }
+    });
+  };
 
   const enableUserMFA = () => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/mfa`,
       method: 'PUT',
     });
-  }
-  
+  };
+
   const disableUserMFA = () => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/mfa`,
       method: 'DELETE',
     });
-  }
+  };
 
   const validateUserMFACode = (userUid, code: string) => {
     return requestDatalayer({
@@ -2188,71 +2323,71 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         code,
       },
     });
-  }
+  };
 
   const subscribeUserToOutbounds = (userId: string) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/outbounds/users/${userId}`,
       method: 'PUT',
     });
-  }
+  };
 
   const unsubscribeUserFromOutbounds = (userId: string) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/outbounds/users/${userId}`,
       method: 'DELETE',
     });
-  }
+  };
 
   const unsubscribeContactFromOutbounds = (contactId: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/contacts/unsubscribe/${contactId}`,
       method: 'GET',
     });
-  }
+  };
 
   const unsubscribeInviteeFromOutbounds = (token: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/unsubscribe/${token}`,
       method: 'GET',
     });
-  }
+  };
 
   const deleteOutbound = (outboundId: string) => {
     return requestDatalayer({
       url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}`,
       method: 'DELETE',
     });
-  }
+  };
 
   // Items --------------------------------------------------------------
 
   const toItem: any = (item: any) => {
     if (!item.type_s) {
-      console.error("No type_s found on item", item);
+      console.error('No type_s found on item', item);
       return {};
     }
-    switch(item.type_s) {
+    switch (item.type_s) {
       case 'assignment':
         return toAssignment(item);
       case 'cell':
-        return toCell(item)
+        return toCell(item);
       case 'dataset':
         return toDataset(item);
       case 'document':
-        return toDocument(item)
+        return toDocument(item);
       case 'exercise':
         return toExercise(item);
       case 'lesson':
         return toLesson(item);
       case 'notebook':
-        return toNotebook(item)
+        return toNotebook(item);
       case 'page':
-        return toPage(item)
+        return toPage(item);
       default:
         return {};
     }
-  }
+  };
 
   const clearCachedPublicItems = () => PUBLIC_ITEMS_BY_ID.clear();
 
@@ -2270,7 +2405,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       }
       return resp;
-    })
+    });
   };
 
   const getSpaceItems = () => Array.from(SPACE_ITEMS_CACHE.values());
@@ -2285,26 +2420,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           asArray(resp.items).forEach(itm => {
             const item = toItem(itm);
             SPACE_ITEMS_CACHE.set(item.id, item);
-          });  
+          });
         }
       }
       return resp;
-    })
+    });
   };
 
   const makeItemPublic = (id: string) => {
     return requestDatalayer({
       url: `${configuration.libraryRunUrl}/api/library/v1/items/${id}/public`,
       method: 'PUT',
-    })
-  }
+    });
+  };
 
   const makeItemPrivate = (id: string) => {
     return requestDatalayer({
       url: `${configuration.libraryRunUrl}/api/library/v1/items/${id}/private`,
       method: 'PUT',
-    })
-  }
+    });
+  };
 
   const deleteItem = (itemId: string) => {
     return requestDatalayer({
@@ -2350,11 +2485,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   // Datasets ------------------------------------------------------------------
 
-  const toDataset = (raw_dataset) => {
+  const toDataset = raw_dataset => {
     const owner = newUserMock();
     USERS_BY_ID.set(owner.id, owner);
     const dataset: IDataset = {
@@ -2371,20 +2506,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       cdnUrl: raw_dataset.cdn_url_s,
       creationDate: new Date(raw_dataset.creation_ts_dt),
       public: raw_dataset.public_b ?? false,
-      lastPublicationDate: raw_dataset.creation_ts_dt ? new Date(raw_dataset.creation_ts_dt) : undefined,
+      lastPublicationDate: raw_dataset.creation_ts_dt
+        ? new Date(raw_dataset.creation_ts_dt)
+        : undefined,
       owner,
       space: {
         handle: raw_dataset.handle_s,
       },
       organization: {
         handle: raw_dataset.handle_s,
-      }
-    }
+      },
+    };
     SPACE_DATASETS_BY_ID.set(dataset.id, dataset);
     return dataset;
-  }
+  };
 
-  const getDataset = (id) => SPACE_DATASETS_BY_ID.get(id);
+  const getDataset = id => SPACE_DATASETS_BY_ID.get(id);
 
   const refreshDataset = (id: string) => {
     return requestDatalayer({
@@ -2399,13 +2536,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSpaceDatasets = () => Array.from(SPACE_DATASETS_BY_ID.values());
 
-  const refreshSpaceDatasets = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/dataset`
+  const refreshSpaceDatasets = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/dataset`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2417,7 +2556,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateDataset = (id, name, description) => {
     return requestDatalayer({
@@ -2426,13 +2565,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name,
         description,
-      }
+      },
     });
-  }
+  };
 
   // Cells ------------------------------------------------------------------
 
-  const toCell = (cl) => {
+  const toCell = cl => {
     const owner = newUserMock();
     USERS_BY_ID.set(owner.id, owner);
     const cell: ICell = {
@@ -2443,7 +2582,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       source: cl.source_t,
       creationDate: new Date(cl.creation_ts_dt),
       public: cl.public_b ?? false,
-      lastPublicationDate: cl.last_publication_ts_dt ? new Date(cl.last_publication_ts_dt) : undefined,
+      lastPublicationDate: cl.last_publication_ts_dt
+        ? new Date(cl.last_publication_ts_dt)
+        : undefined,
       outputshotUrl: cl.outputshot_url_s || '',
       outputshotData: OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG,
       owner,
@@ -2453,10 +2594,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       organization: {
         handle: cl.handle_s,
       },
-    }
+    };
     SPACE_CELLS_BY_ID.set(cell.id, cell);
     return cell;
-  }
+  };
 
   const getCell = (id: string) => SPACE_CELLS_BY_ID.get(id);
 
@@ -2473,13 +2614,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSpaceCells = () => Array.from(SPACE_CELLS_BY_ID.values());
 
-  const refreshSpaceCells = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/cell`
+  const refreshSpaceCells = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/cell`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2491,22 +2634,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateCell = (cell: {
-      id: string;
-      name: string;
-      description: string;
-      source: string;
-      outputshotUrl?: string;
-      outputshotData?: string;
-      spaceId: string;
-    }
-   ) => {
+    id: string;
+    name: string;
+    description: string;
+    source: string;
+    outputshotUrl?: string;
+    outputshotData?: string;
+    spaceId: string;
+  }) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/cells/${cell.id}`,
       method: 'PUT',
-      body: cell
+      body: cell,
     });
   };
 
@@ -2520,11 +2662,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   // Notebooks ------------------------------------------------------------------
 
-  const toNotebook = (raw_notebook) => {
+  const toNotebook = raw_notebook => {
     const owner = newUserMock();
     USERS_BY_ID.set(owner.id, owner);
     const notebook: INotebook = {
@@ -2532,11 +2674,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'notebook',
       name: raw_notebook.name_t,
       description: raw_notebook.description_t,
-      nbformat: raw_notebook.model_s ? JSON.parse(raw_notebook.model_s) : undefined,
+      nbformat: raw_notebook.model_s
+        ? JSON.parse(raw_notebook.model_s)
+        : undefined,
       public: raw_notebook.public_b ?? false,
       creationDate: new Date(raw_notebook.creation_ts_dt),
-      lastUpdateDate: raw_notebook.last_update_ts_dt ? new Date(raw_notebook.last_update_ts_dt) : undefined,
-      lastPublicationDate: raw_notebook.creation_ts_dt ? new Date(raw_notebook.creation_ts_dt) : undefined,
+      lastUpdateDate: raw_notebook.last_update_ts_dt
+        ? new Date(raw_notebook.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw_notebook.creation_ts_dt
+        ? new Date(raw_notebook.creation_ts_dt)
+        : undefined,
       datasets: [],
       owner,
       space: {
@@ -2544,13 +2692,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       organization: {
         handle: raw_notebook.handle_s,
-      }
-    }
+      },
+    };
     SPACE_NOTEBOOKS_BY_ID.set(notebook.id, notebook);
     return notebook;
-  }
+  };
 
-  const getNotebook = (notebookId) => SPACE_NOTEBOOKS_BY_ID.get(notebookId);
+  const getNotebook = notebookId => SPACE_NOTEBOOKS_BY_ID.get(notebookId);
 
   const refreshNotebook = (notebookId: string) => {
     return requestDatalayer({
@@ -2565,15 +2713,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSpaceNotebooks = () => Array.from(SPACE_NOTEBOOKS_BY_ID.values());
 
-  const getSpaceNotebook = (id) => SPACE_NOTEBOOKS_BY_ID.get(id);
+  const getSpaceNotebook = id => SPACE_NOTEBOOKS_BY_ID.get(id);
 
-  const refreshSpaceNotebooks = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/notebook`
+  const refreshSpaceNotebooks = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/notebook`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2585,7 +2735,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
   const cloneNotebook = (notebookId: string) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${notebookId}/clone`,
@@ -2596,7 +2746,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateNotebook = (id, name, description) => {
     return requestDatalayer({
@@ -2605,9 +2755,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name,
         description,
-      }
+      },
     });
-  }
+  };
 
   const updateNotebookModel = (notebookId, nbformat) => {
     return requestDatalayer({
@@ -2615,13 +2765,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'PUT',
       body: {
         nbformat,
-      }
+      },
     });
-  }
+  };
 
   // Documents ------------------------------------------------------------------
 
-  const toDocument = (doc) => {
+  const toDocument = doc => {
     const owner = newUserMock();
     USERS_BY_ID.set(owner.id, owner);
     const document: IDocument = {
@@ -2632,21 +2782,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       model: doc.model_s ? JSON.parse(doc.model_s) : undefined,
       public: doc.public_b ?? false,
       creationDate: new Date(doc.creation_ts_dt),
-      lastUpdateDate: doc.last_update_ts_dt ? new Date(doc.last_update_ts_dt) : undefined,
-      lastPublicationDate: doc.creation_ts_dt ? new Date(doc.creation_ts_dt) : undefined,
+      lastUpdateDate: doc.last_update_ts_dt
+        ? new Date(doc.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: doc.creation_ts_dt
+        ? new Date(doc.creation_ts_dt)
+        : undefined,
       owner,
       space: {
         handle: doc.handle_s,
       },
       organization: {
         handle: doc.handle_s,
-      }
-    }
+      },
+    };
     SPACE_DOCUMENTS_BY_ID.set(document.id, document);
     return document;
-  }
+  };
 
-  const getDocument = (id) => SPACE_DOCUMENTS_BY_ID.get(id);
+  const getDocument = id => SPACE_DOCUMENTS_BY_ID.get(id);
 
   const refreshDocument = (id: string) => {
     return requestDatalayer({
@@ -2661,15 +2815,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSpaceDocuments = () => Array.from(SPACE_DOCUMENTS_BY_ID.values());
 
-  const getSpaceDocument = (id) => SPACE_DOCUMENTS_BY_ID.get(id);
+  const getSpaceDocument = id => SPACE_DOCUMENTS_BY_ID.get(id);
 
-  const refreshSpaceDocuments = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/document`
+  const refreshSpaceDocuments = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/document`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2681,7 +2837,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const cloneDocument = (documentId: string) => {
     return requestDatalayer({
@@ -2693,7 +2849,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateDocument = (id, name, description) => {
     return requestDatalayer({
@@ -2702,9 +2858,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         name,
         description,
-      }
+      },
     });
-  }
+  };
 
   const updateDocumentModel = (id, model) => {
     return requestDatalayer({
@@ -2712,9 +2868,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'PUT',
       body: {
         model,
-      }
+      },
     });
-  }
+  };
 
   // Environments ------------------------------------------------------------------
 
@@ -2728,18 +2884,20 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       description: env.description_t,
       creationDate: new Date(env.creation_ts_dt),
       public: env.public_b ?? false,
-      lastPublicationDate: env.creation_ts_dt ? new Date(env.creation_ts_dt) : undefined,
+      lastPublicationDate: env.creation_ts_dt
+        ? new Date(env.creation_ts_dt)
+        : undefined,
       owner,
       space: {
         handle: env.handle_s,
       },
       organization: {
         handle: env.handle_s,
-      }
-    }
+      },
+    };
     cache.set(environment.id, environment);
     return environment;
-  }
+  };
 
   const getEnvironment = (id: string) => SPACE_ENVIRONMENTS_BY_ID.get(id);
 
@@ -2756,13 +2914,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getSpaceEnvironments = () => Array.from(SPACE_ENVIRONMENTS_BY_ID.values());
+  const getSpaceEnvironments = () =>
+    Array.from(SPACE_ENVIRONMENTS_BY_ID.values());
 
-  const refreshSpaceEnvironments = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/environment`
+  const refreshSpaceEnvironments = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/environment`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2774,11 +2935,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   // Lessons ------------------------------------------------------------------
 
-  const toLesson = (raw_lesson) => {
+  const toLesson = raw_lesson => {
     const owner = newUserMock();
     USERS_BY_ID.set(owner.id, owner);
     const lesson: ILesson = {
@@ -2789,22 +2950,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       nbformat: raw_lesson.model_s ? JSON.parse(raw_lesson.model_s) : undefined,
       public: raw_lesson.public_b ?? false,
       creationDate: new Date(raw_lesson.creation_ts_dt),
-      lastUpdateDate: raw_lesson.last_update_ts_dt ? new Date(raw_lesson.last_update_ts_dt) : undefined,
-      lastPublicationDate: raw_lesson.creation_ts_dt ? new Date(raw_lesson.creation_ts_dt) : undefined,
+      lastUpdateDate: raw_lesson.last_update_ts_dt
+        ? new Date(raw_lesson.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw_lesson.creation_ts_dt
+        ? new Date(raw_lesson.creation_ts_dt)
+        : undefined,
       owner,
       space: {
         handle: raw_lesson.handle_s,
       },
       organization: {
         handle: raw_lesson.handle_s,
-      },      
+      },
       datasets: [],
-    }
+    };
     SPACE_LESSONS_BY_ID.set(lesson.id, lesson);
     return lesson;
-  }
+  };
 
-  const getLesson = (id) => SPACE_LESSONS_BY_ID.get(id);
+  const getLesson = id => SPACE_LESSONS_BY_ID.get(id);
 
   const refreshLesson = (id: string) => {
     return requestDatalayer({
@@ -2819,15 +2984,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSpaceLessons = () => Array.from(SPACE_LESSONS_BY_ID.values());
 
-  const getSpaceLesson = (id) => SPACE_LESSONS_BY_ID.get(id);
+  const getSpaceLesson = id => SPACE_LESSONS_BY_ID.get(id);
 
-  const refreshSpaceLessons = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/lesson`
+  const refreshSpaceLessons = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/lesson`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2839,7 +3006,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const cloneLesson = (lessonId: string) => {
     return requestDatalayer({
@@ -2851,7 +3018,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   // Exercises ------------------------------------------------------------------
 
@@ -2870,20 +3037,24 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       codeTest: ex.code_test_t,
       public: ex.public_b ?? false,
       creationDate: new Date(ex.creation_ts_dt),
-      lastUpdateDate: ex.last_update_ts_dt ? new Date(ex.last_update_ts_dt) : undefined,
-      lastPublicationDate: ex.creation_ts_dt ? new Date(ex.creation_ts_dt) : undefined,
+      lastUpdateDate: ex.last_update_ts_dt
+        ? new Date(ex.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: ex.creation_ts_dt
+        ? new Date(ex.creation_ts_dt)
+        : undefined,
       owner,
       space: {
         handle: ex.handle_s,
       },
       organization: {
         handle: ex.handle_s,
-      },      
+      },
       datasets: [],
-    }
+    };
     SPACE_EXERCISES_BY_ID.set(exercise.id, exercise);
     return exercise;
-  }
+  };
 
   const getExercise = (id: string) => SPACE_EXERCISES_BY_ID.get(id);
 
@@ -2900,15 +3071,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const getSpaceExercises = () => {
     return Array.from(SPACE_EXERCISES_BY_ID.values());
-  }
+  };
 
-  const refreshSpaceExercises = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/exercise`
+  const refreshSpaceExercises = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/exercise`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -2920,7 +3093,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const cloneExercise = (exerciseId: string) => {
     return requestDatalayer({
@@ -2932,7 +3105,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const updateExercise = ({
     id,
@@ -2955,9 +3128,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         codeSolution,
         codeQuestion,
         codeTest,
-      }
-   });
-  }
+      },
+    });
+  };
 
   const updateExercisePoints = (id, codeStudent, points) => {
     return requestDatalayer({
@@ -2966,9 +3139,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       body: {
         codeStudent,
         points,
-      }
-   });
-  }
+      },
+    });
+  };
 
   // Assignments ------------------------------------------------------------------
 
@@ -2980,14 +3153,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       raw_assignment.student_items.forEach(student_item => {
         studentItem = {
           id: student_item.uid,
-          type: "student_item",
+          type: 'student_item',
           itemId: student_item.item_uid,
           itemType: student_item.item_type_s,
           nbgrades: student_item.nbgrades,
           nbgradesTotalPoints: student_item.nbgrades_total_points_f,
           nbgradesTotalScore: student_item.nbgrades_total_score_f,
-        }
-      })
+        };
+      });
     }
     USERS_BY_ID.set(owner.id, owner);
     const assignment: IAssignment = {
@@ -2995,11 +3168,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'assignment',
       name: raw_assignment.name_t,
       description: raw_assignment.description_t,
-      nbformat: raw_assignment.model_s ? JSON.parse(raw_assignment.model_s) : undefined,
+      nbformat: raw_assignment.model_s
+        ? JSON.parse(raw_assignment.model_s)
+        : undefined,
       public: raw_assignment.public_b ?? false,
       creationDate: new Date(raw_assignment.creation_ts_dt),
-      lastUpdateDate: raw_assignment.last_update_ts_dt ? new Date(raw_assignment.last_update_ts_dt) : undefined,
-      lastPublicationDate: raw_assignment.creation_ts_dt ? new Date(raw_assignment.creation_ts_dt) : undefined,
+      lastUpdateDate: raw_assignment.last_update_ts_dt
+        ? new Date(raw_assignment.last_update_ts_dt)
+        : undefined,
+      lastPublicationDate: raw_assignment.creation_ts_dt
+        ? new Date(raw_assignment.creation_ts_dt)
+        : undefined,
       studentItem,
       datasets: [],
       owner,
@@ -3009,13 +3188,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       organization: {
         handle: raw_assignment.handle_s,
       },
-    }
+    };
     SPACE_ASSIGNMENTS_BY_ID.set(assignment.id, assignment);
     STUDENT_ASSIGNMENTS_BY_ID.set(assignment.id, assignment);
     return assignment;
-  }
+  };
 
-  const getAssignment = (assignmentId) => SPACE_ASSIGNMENTS_BY_ID.get(assignmentId);
+  const getAssignment = assignmentId =>
+    SPACE_ASSIGNMENTS_BY_ID.get(assignmentId);
 
   const refreshAssignment = (assignmentId: string) => {
     return requestDatalayer({
@@ -3030,11 +3210,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getAssignmentForStudent = (assignmentId: string) => STUDENT_ASSIGNMENTS_BY_ID.get(assignmentId);
+  const getAssignmentForStudent = (assignmentId: string) =>
+    STUDENT_ASSIGNMENTS_BY_ID.get(assignmentId);
 
-  const refreshAssignmentForStudent = (courseId: string, user: IUser, assignmentId: string) => {
+  const refreshAssignmentForStudent = (
+    courseId: string,
+    user: IUser,
+    assignmentId: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/courses/${courseId}/students/${user.id}`,
       method: 'GET',
@@ -3047,9 +3232,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const resetAssignmentForStudent = (courseId: string, user: IUser, assignmentId: string) => {
+  const resetAssignmentForStudent = (
+    courseId: string,
+    user: IUser,
+    assignmentId: string,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/reset`,
       method: 'POST',
@@ -3062,15 +3251,20 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const gradeAssignmentForStudent = (courseId: string, user: IUser, assignmentId: string, model: any) => {
+  const gradeAssignmentForStudent = (
+    courseId: string,
+    user: IUser,
+    assignmentId: string,
+    model: any,
+  ) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/students/${user.id}/grade`,
       method: 'PUT',
       body: {
         model,
-      }
+      },
     }).then(resp => {
       if (resp.success) {
         const assignment = resp.assignment;
@@ -3080,15 +3274,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getSpaceAssignments = () => Array.from(SPACE_ASSIGNMENTS_BY_ID.values());
+  const getSpaceAssignments = () =>
+    Array.from(SPACE_ASSIGNMENTS_BY_ID.values());
 
-  const getSpaceAssignment = (id) => SPACE_ASSIGNMENTS_BY_ID.get(id);
+  const getSpaceAssignment = id => SPACE_ASSIGNMENTS_BY_ID.get(id);
 
-  const refreshSpaceAssignments = (space: IAnySpace, organization?: IAnyOrganization) => {
-    const url =
-      `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/assignment`
+  const refreshSpaceAssignments = (
+    space: IAnySpace,
+    organization?: IAnyOrganization,
+  ) => {
+    const url = `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/items/types/assignment`;
     return requestDatalayer({
       url,
       method: 'GET',
@@ -3100,7 +3297,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
   const cloneAssignment = (assignmentId: string) => {
     return requestDatalayer({
@@ -3112,14 +3309,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }
       return resp;
     });
-  }
+  };
 
-  const getAssignmentStudentVersion = (assignmentId) => {
+  const getAssignmentStudentVersion = assignmentId => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/student_version`,
       method: 'GET',
     });
-  }
+  };
 
   // Prices -------------------------------------------------------------------
 
@@ -3128,7 +3325,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       url: `${configuration.iamRunUrl}/api/iam/stripe/v1/prices`,
       method: 'GET',
     });
-  }
+  };
 
   // Checkout -------------------------------------------------------------------
 
@@ -3138,56 +3335,56 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       method: 'POST',
       body: {
         price_id: product?.id,
-        return_url: `${location.protocol}//${location.host}${location.pathname.split('/').slice(0, -1).join('/')}`
-      }
+        return_url: `${location.protocol}//${location.host}${location.pathname.split('/').slice(0, -1).join('/')}`,
+      },
     })
-    .then(data => data.client_secret)
-    .catch(error => {
-      console.error('Failed to create Stripe checkout session.', error);
-    });
-  }
+      .then(data => data.client_secret)
+      .catch(error => {
+        console.error('Failed to create Stripe checkout session.', error);
+      });
+  };
 
   // Credits -------------------------------------------------------------------
 
-  const burnCredit = (credits) => {
+  const burnCredit = credits => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits`,
-      method: "DELETE",
+      method: 'DELETE',
       body: {
         credits,
-      }
+      },
     });
-  }
+  };
 
-  const getUserCredits = (userId) => {
+  const getUserCredits = userId => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/users/${userId}`,
-      method: "GET",
+      method: 'GET',
     });
-  }
+  };
 
   const updateUserCredits = (userId, credits, brand) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/users/${userId}`,
-      method: "PUT",
+      method: 'PUT',
       body: {
         credits,
         brand,
-      }
+      },
     });
-  }
+  };
 
   const updateUserCreditsQuota = (userId: string, quota?: number) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/quota`,
-      method: "PUT",
+      method: 'PUT',
       body: {
         user_uid: userId,
         quota,
-        reset: "0",
-      }
+        reset: '0',
+      },
     });
-  }
+  };
 
   // Usages -------------------------------------------------------------------
 
@@ -3201,27 +3398,29 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   }> => {
     const data = await requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
-      method: "GET",
+      method: 'GET',
     });
     data.usages = (data.usages ?? []).map(u => asUsage(u));
     return data;
-  }
+  };
 
   /**
    * Get user usages
    */
-  const getUsagesForUser = async (userId: string): Promise<{
+  const getUsagesForUser = async (
+    userId: string,
+  ): Promise<{
     success: boolean;
     message: string;
     usages?: IUsage[];
   }> => {
     const data = await requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/users/${userId}`,
-      method: "GET",
+      method: 'GET',
     });
     data.usages = (data.usages ?? []).map(u => asUsage(u));
     return data;
-  }
+  };
 
   /**
    * Get platform usages
@@ -3233,12 +3432,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   }> => {
     const data = await requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/usage/platform`,
-      method: "GET",
+      method: 'GET',
     });
     data.usages = (data.usages ?? []).map(u => asUsage(u));
     return data;
-  }
-
+  };
 
   // Support ------------------------------------------------------------------
 
@@ -3251,11 +3449,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         message,
         email,
         brand,
-      }
+      },
     });
-  }
+  };
 
-  const requestPlatformSupport2 = (accountHandle, firstName, lastName, email, message) => {
+  const requestPlatformSupport2 = (
+    accountHandle,
+    firstName,
+    lastName,
+    email,
+    message,
+  ) => {
     return requestDatalayer({
       url: `${configuration.supportRunUrl}/api/support/v1/support/request2`,
       method: 'POST',
@@ -3265,9 +3469,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         lastName,
         email,
         message,
-      }
+      },
     });
-  }
+  };
 
   // Growth ------------------------------------------------------------------
 
@@ -3276,7 +3480,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       url: `${configuration.growthRunUrl}/api/growth/v1/kpis`,
       method: 'GET',
     });
-  }
+  };
 
   // --------------------------------------------------------------------------
 
@@ -3529,7 +3733,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     validateUserMFACode,
     whoami,
   };
-
-}
+};
 
 export default useCache;

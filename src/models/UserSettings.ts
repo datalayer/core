@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export const AI_AGENTS_URL_KEY = "aiagents_url_s";
-export const CAN_INVITE_URL_KEY = "can_invite_b";
+export const AI_AGENTS_URL_KEY = 'aiagents_url_s';
+export const CAN_INVITE_URL_KEY = 'can_invite_b';
 
 export type IUserSettings = {
   aiAgentsUrl?: string;
@@ -15,7 +15,7 @@ export class UserSettings implements IUserSettings {
   private _aiAgentsUrl?: string;
   private _canInvite?: boolean;
 
-  constructor (s: any) {
+  constructor(s: any) {
     this._aiAgentsUrl = s[AI_AGENTS_URL_KEY] ?? undefined;
     this._canInvite = s[CAN_INVITE_URL_KEY] ?? undefined;
   }
@@ -35,7 +35,6 @@ export class UserSettings implements IUserSettings {
   set canInvite(value: boolean | undefined) {
     this._canInvite = value;
   }
-
 }
 
 export default UserSettings;

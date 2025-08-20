@@ -7,7 +7,7 @@
 // import { Box, Flash as PrimerFlash, Link } from '@primer/react';
 import { Link } from '@primer/react';
 import { Banner } from '@primer/react/experimental';
-import { QuestionIcon } from "@primer/octicons-react";
+import { QuestionIcon } from '@primer/octicons-react';
 import { useNavigate } from '../../hooks';
 
 export const FlashUnauthorized = (): JSX.Element => {
@@ -17,15 +17,25 @@ export const FlashUnauthorized = (): JSX.Element => {
       <Banner
         title="Warning"
         variant="warning"
-  //    onDismiss={action('onDismiss')}
+        //    onDismiss={action('onDismiss')}
         description={
-        <>
-            Your current roles does not allow you to access this feature.
-            Please <Link inline href="javascript: return false;" onClick={e => navigate("/support", e)}>contact support</Link> for more information.
-        </>
+          <>
+            Your current roles does not allow you to access this feature. Please{' '}
+            <Link
+              inline
+              href="javascript: return false;"
+              onClick={e => navigate('/support', e)}
+            >
+              contact support
+            </Link>{' '}
+            for more information.
+          </>
         }
         primaryAction={
-          <Banner.PrimaryAction onClick={e => navigate("/support/request", e)} leadingVisual={QuestionIcon}>
+          <Banner.PrimaryAction
+            onClick={e => navigate('/support/request', e)}
+            leadingVisual={QuestionIcon}
+          >
             Contact support
           </Banner.PrimaryAction>
         }
@@ -57,7 +67,7 @@ export const FlashUnauthorized = (): JSX.Element => {
       </PrimerFlash>
       */}
     </>
-  )
-}
+  );
+};
 
 export default FlashUnauthorized;

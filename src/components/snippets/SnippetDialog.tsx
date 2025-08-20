@@ -8,7 +8,7 @@ import { CodeCellModel } from '@jupyterlab/cells';
 import type { IMarkdownParser, IRenderMime } from '@jupyterlab/rendermime';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { FormControl, Select, Text } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { Dialog } from '@primer/react/experimental';
 import { Markdown } from '../display';
 import type { ISnippet } from '../../models';
@@ -64,14 +64,14 @@ export function SnippetDialog(props: ISnippetDialogProps): JSX.Element {
     snippets,
     markdownParser,
     sanitizer,
-    translator
+    translator,
   } = props;
 
   const [selection, setSelection] = useState<ISnippet>(snippets[0]);
 
   const trans = useMemo(
     () => (translator ?? nullTranslator).load('jupyterlab'),
-    [translator]
+    [translator],
   );
 
   const onSelectionChange = useCallback(
@@ -79,7 +79,7 @@ export function SnippetDialog(props: ISnippetDialogProps): JSX.Element {
       const selection = (e.target as HTMLSelectElement).value;
       setSelection(snippets[parseInt(selection, 10)]);
     },
-    [setSelection, snippets]
+    [setSelection, snippets],
   );
 
   const injectSnippet = useCallback(() => {
@@ -87,7 +87,7 @@ export function SnippetDialog(props: ISnippetDialogProps): JSX.Element {
     model.sharedModel.updateSource(
       size,
       size,
-      '\n'.repeat(size ? 2 : 0) + selection.code
+      '\n'.repeat(size ? 2 : 0) + selection.code,
     );
     onClose();
   }, [model, selection, onClose]);
@@ -100,14 +100,14 @@ export function SnippetDialog(props: ISnippetDialogProps): JSX.Element {
         {
           buttonType: 'default',
           content: trans.__('Cancel'),
-          onClick: onClose
+          onClick: onClose,
         },
         {
           buttonType: 'primary',
           content: trans.__('Inject snippet'),
           onClick: injectSnippet,
-          autoFocus: true
-        }
+          autoFocus: true,
+        },
       ]}
     >
       <Box as="form">

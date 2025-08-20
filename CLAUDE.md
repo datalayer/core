@@ -13,10 +13,16 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 ## Development Commands
 
 **Python**: `pip install -e .[test]` | `pytest datalayer_core/tests/` | `mypy datalayer_core/`
+<<<<<<< HEAD
 **TypeScript Library**: `npm install` | `npm run build:lib` | `npm run lint` | `npm run test`
 **Examples**: `npm run example` (starts dev server at http://localhost:3000/)
-**Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs)
-**Make**: `make build` | `make start` | `make docs`
+=======
+**TypeScript**: `npm install` | `npm run dev` | `npm run build` | `npm run test`
+**Code Quality**: `npm run check` | `npm run check:fix` | `npm run lint` | `npm run format` | `npm run type-check`
+
+> > > > > > > f7972e5 (Add lint, format and type checks for TS)
+> > > > > > > **Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs)
+> > > > > > > **Make**: `make build` | `make start` | `make docs`
 
 **CLI Scripts**: `datalayer`/`dla`/`d`, `datalayer-config`, `datalayer-migrate`, `datalayer-server`, `datalayer-troubleshoot`
 
@@ -45,9 +51,10 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 
 ## Quality Standards
 
-- **Type checking**: 100% mypy compliance (102 files)
+- **Type checking**: 100% mypy compliance (Python), strict TypeScript checks
 - **Testing**: pytest + Vitest with React Testing Library + comprehensive test mocks
-- **Linting**: ESLint (0 errors), ruff, prettier - all passing
+- **Linting**: ESLint with React/TypeScript rules, ruff for Python
+- **Formatting**: Prettier for consistent code style (80 char width, single quotes)
 - **Security**: bandit compliance, replaced `eval()` with `ast.literal_eval()`
 - **Documentation**: NumPy-style docstrings, TypeDoc API docs, Docusaurus site
 - **Pre-commit**: Updated to latest versions (ruff v0.12.8, bandit 1.8.6, pip-audit v2.9.0)
@@ -102,3 +109,10 @@ The examples are served at http://localhost:3000/ and include:
 - **Required Headers**: Authorization (Bearer token), X-External-Token (for some operations)
 - **Proxy Setup**: Vite dev server proxies `/api` to `https://prod1.datalayer.run` for CORS
 - **API Docs**: Available at https://prod1.datalayer.run/api/runtimes/v1/ui/
+- **Pre-commit hooks**: Husky + lint-staged for automatic code quality checks
+- **Code Quality Scripts**:
+  - `npm run check` - Run all checks (format, lint, type-check)
+  - `npm run check:fix` - Auto-fix all issues
+  - `npm run lint` / `npm run lint:fix` - ESLint checking
+  - `npm run format` / `npm run format:check` - Prettier formatting
+  - `npm run type-check` - TypeScript compilation check

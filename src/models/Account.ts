@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IUser } from "./User";
-import { IOrganization } from "./Organization";
+import { IUser } from './User';
+import { IOrganization } from './Organization';
 
 export type IAccount = IUser | IOrganization;
 

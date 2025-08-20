@@ -7,11 +7,13 @@ import { ThemeProvider, BaseStyles } from '@primer/react';
 import { jupyterLabTheme } from '@datalayer/jupyter-react';
 
 export const Styles = () => {
-    return <>
+  return (
+    <>
       <ThemeProvider theme={jupyterLabTheme}>
-        <BaseStyles/>
+        <BaseStyles />
       </ThemeProvider>
     </>
-}
+  );
+};
 
 export default Styles;

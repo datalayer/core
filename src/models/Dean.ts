@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IUser } from "./User";
+import { IUser } from './User';
 
 export type IDean = IUser & {};
 

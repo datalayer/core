@@ -3,14 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { PropsWithChildren } from "react";
-import { Link, Tooltip, Button } from "@primer/react";
-import { ScreenFullIcon } from "@primer/octicons-react";
-import { lazyWithPreload, WithSuspense } from "../../utils";
-import { useToast } from "../../hooks";
-import { useLayoutStore } from "../../state";
+import { PropsWithChildren } from 'react';
+import { Link, Tooltip, Button } from '@primer/react';
+import { ScreenFullIcon } from '@primer/octicons-react';
+import { lazyWithPreload, WithSuspense } from '../../utils';
+import { useToast } from '../../hooks';
+import { useLayoutStore } from '../../state';
 
-const ScreenCapture = WithSuspense(lazyWithPreload(() => import("../screenshot/ScreenCapture")));
+const ScreenCapture = WithSuspense(
+  lazyWithPreload(() => import('../screenshot/ScreenCapture')),
+);
 
 export const ScreenCaptureButton = (props: PropsWithChildren) => {
   const { enqueueToast } = useToast();
@@ -25,20 +27,27 @@ export const ScreenCaptureButton = (props: PropsWithChildren) => {
       {({ onStartCapture }) => (
         <Tooltip text="Take a screen capture" direction="s">
           <Button variant="invisible">
-            <Link href="javascript: return false;"
+            <Link
+              href="javascript: return false;"
               sx={{
                 color: 'fg.muted',
-                ':hover, :focus, &[aria-expanded=true]': {background: 'none !important', color: 'accent.fg'}
+                ':hover, :focus, &[aria-expanded=true]': {
+                  background: 'none !important',
+                  color: 'accent.fg',
+                },
               }}
-              onClick={e => { e.preventDefault(); onStartCapture(); } }
+              onClick={e => {
+                e.preventDefault();
+                onStartCapture();
+              }}
             >
-              <ScreenFullIcon/>
+              <ScreenFullIcon />
             </Link>
           </Button>
         </Tooltip>
       )}
     </ScreenCapture>
-  )
-}
+  );
+};
 
 export default ScreenCaptureButton;

@@ -3,7 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { asContactIAMProvider, IContactIAMProvider } from "./ContactIAMProvider";
+import {
+  asContactIAMProvider,
+  IContactIAMProvider,
+} from './ContactIAMProvider';
 import { asContactEvent, IContactEvent } from './ContactEvent';
 import { asDisplayName, namesAsInitials } from '../utils';
 
@@ -39,34 +42,38 @@ export class Contact implements IContact {
   constructor(c: any) {
     this.id = c.uid;
     this.handle = c.handle;
-    this.firstName = c.firstName ?? "";
-    this.lastName = c.lastName ?? "";
-    this.jobTitle = c.jobTitle ?? "";
-    this.email = c.email ?? "";
-    this.emailPersonal = c.emailPersonal ?? "";
-    this.countryCode = c.countryCode ?? "";
+    this.firstName = c.firstName ?? '';
+    this.lastName = c.lastName ?? '';
+    this.jobTitle = c.jobTitle ?? '';
+    this.email = c.email ?? '';
+    this.emailPersonal = c.emailPersonal ?? '';
+    this.countryCode = c.countryCode ?? '';
     this.initials = namesAsInitials(this.firstName, this.lastName);
     const displayName = asDisplayName(this.firstName, this.lastName);
     this.displayName = displayName || '❓';
     this.text = this.displayName;
-    this.avatarUrl = c.avatarUrl ?? "";
-    this.affiliation = c.affiliation ?? "";
-    this.affiliationUrl = c.affiliationUrl ?? "";
-    this.affiliationLinkedinUrl = c.affiliationLinkedinUrl ?? "";
-    this.affiliationSecondary = c.affiliationSecondary ?? "";
-    this.affiliationTertiary = c.affiliationTertiary ?? "";
-    this.notes = c.notes ?? "";
+    this.avatarUrl = c.avatarUrl ?? '';
+    this.affiliation = c.affiliation ?? '';
+    this.affiliationUrl = c.affiliationUrl ?? '';
+    this.affiliationLinkedinUrl = c.affiliationLinkedinUrl ?? '';
+    this.affiliationSecondary = c.affiliationSecondary ?? '';
+    this.affiliationTertiary = c.affiliationTertiary ?? '';
+    this.notes = c.notes ?? '';
     this.tags = c.tags ?? [];
     let iamProviders = c.iamProviders ?? [];
     if (!Array.isArray(iamProviders)) {
       iamProviders = [iamProviders];
     }
-    this.iamProviders = iamProviders.map(iamProvider => asContactIAMProvider(iamProvider));
+    this.iamProviders = iamProviders.map(iamProvider =>
+      asContactIAMProvider(iamProvider),
+    );
     let events = c.events ?? [];
     if (!Array.isArray(events)) {
       events = [events];
     }
-    this.events = events.map(event => asContactEvent(event)) as Array<IContactEvent>;
+    this.events = events.map(event =>
+      asContactEvent(event),
+    ) as Array<IContactEvent>;
     this.events.sort((x, y) => (x.eventDate < y.eventDate ? 1 : -1));
     this.creationDate = new Date(c.creationDate);
     this.lastUpdateDate = new Date(c.lastUpdateDate);
@@ -83,7 +90,6 @@ export class Contact implements IContact {
   public addEvent(event: IContactEvent) {
     this.events.push(event);
   }
-
 }
 
 /**
@@ -126,6 +132,6 @@ export type IContact = {
   linkedinEnrichJson: string;
   unsubscribedFromOutbounds: boolean;
   linkedUserUid?: string;
-}
+};
 
 export default IContact;

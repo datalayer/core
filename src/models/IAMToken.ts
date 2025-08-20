@@ -11,12 +11,10 @@ export const asToken = (s: any): IIAMToken => {
     expirationDate: new Date(s.expiration_ts_dt),
     description: s.description_t,
     value: s.value_s,
-  }
-}
+  };
+};
 
-export type IIAMTokenVariant =
-  'user_token'
-  ;
+export type IIAMTokenVariant = 'user_token';
 
 export type IIAMToken = {
   id: string;

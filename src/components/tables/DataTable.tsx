@@ -9,7 +9,7 @@ import { Dialog } from '@primer/react/experimental';
 
 type IDataTableProps = {
   data: Array<any>;
-}
+};
 
 const DataTableDetails = (props: IDataTableProps) => {
   return (
@@ -18,32 +18,32 @@ const DataTableDetails = (props: IDataTableProps) => {
       padding="normal"
       sx={{ overflow: 'visible' }}
     >
-      <PageLayout.Content>
-    </PageLayout.Content>
-  </PageLayout>
-  )
-}
+      <PageLayout.Content></PageLayout.Content>
+    </PageLayout>
+  );
+};
 
 export const DataTable = (props: IDataTableProps) => {
   const [dialog, setDialog] = useState(false);
   return (
     <>
       <Box>
-        {dialog ?
-          <Dialog sx={{width: "100%", height: '100%'}} onClose={e => setDialog(false)}>
-            <DataTableDetails {...props}/>
+        {dialog ? (
+          <Dialog
+            sx={{ width: '100%', height: '100%' }}
+            onClose={e => setDialog(false)}
+          >
+            <DataTableDetails {...props} />
           </Dialog>
-        :
-          <DataTableDetails {...props}/>
-        }
+        ) : (
+          <DataTableDetails {...props} />
+        )}
       </Box>
       <Box>
-        <Button onClick={e => setDialog(true)}>
-          Zoom
-        </Button>
+        <Button onClick={e => setDialog(true)}>Zoom</Button>
       </Box>
     </>
-  )
-}
+  );
+};
 
 export default DataTable;

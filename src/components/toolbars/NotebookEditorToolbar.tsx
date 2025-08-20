@@ -36,9 +36,13 @@ export type INotebookEditorToolbar = {
 /**
  * Notebook editor toolbar
  */
-export function NotebookEditorToolbar(props: INotebookEditorToolbar): JSX.Element {
+export function NotebookEditorToolbar(
+  props: INotebookEditorToolbar,
+): JSX.Element {
   const { commandRegistry, runtimeDesc, sessionConnection } = props;
-  const [kernelStatus, setKernelStatus] = useState<KernelMessage.Status | undefined>();
+  const [kernelStatus, setKernelStatus] = useState<
+    KernelMessage.Status | undefined
+  >();
   useEffect(() => {
     const onStatusChanged = () => {
       setKernelStatus(sessionConnection?.kernel?.status);
@@ -69,7 +73,9 @@ export function NotebookEditorToolbar(props: INotebookEditorToolbar): JSX.Elemen
         size="small"
         leadingVisual={PlayIcon}
         disabled={!runtimeDesc?.location || kernelStatus === 'busy'}
-        onClick={(e: any) => commandRegistry?.execute(NotebookCommandIds.runAll)}
+        onClick={(e: any) =>
+          commandRegistry?.execute(NotebookCommandIds.runAll)
+        }
       >
         Run all
       </Button>
@@ -78,7 +84,9 @@ export function NotebookEditorToolbar(props: INotebookEditorToolbar): JSX.Elemen
         size="small"
         leadingVisual={StopIcon}
         disabled={!runtimeDesc?.location || kernelStatus !== 'busy'}
-        onClick={(e: any) => commandRegistry?.execute(NotebookCommandIds.interrupt) }
+        onClick={(e: any) =>
+          commandRegistry?.execute(NotebookCommandIds.interrupt)
+        }
       >
         Interrupt
       </Button>

@@ -102,6 +102,6 @@ export function asRuntimeSnapshot(s: IAPIRuntimeSnapshot): IRuntimeSnapshot {
     ...others,
     id: uid,
     updatedAt: new Date(updated_at),
-    formatVersion: format_version
+    formatVersion: format_version,
   };
 }

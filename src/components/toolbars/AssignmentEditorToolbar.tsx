@@ -20,36 +20,36 @@ export const AssignmentEditorToolbar = (props: { notebookId: string }) => {
           size="small"
           leadingVisual={RepoPushIcon}
           onClick={() => grade(new Date())}
-          >
-            Grade
+        >
+          Grade
         </Button>
       </Box>
-      {notebook?.kernelStatus !== 'busy' &&
+      {notebook?.kernelStatus !== 'busy' && (
         <Box>
           <Button
             variant="invisible"
             size="small"
             leadingVisual={PlayIcon}
             onClick={e => notebookStore.getState().runAll(notebookId)}
-            >
-              Run all
+          >
+            Run all
           </Button>
         </Box>
-      }
-      {notebook?.kernelStatus === 'busy' &&
+      )}
+      {notebook?.kernelStatus === 'busy' && (
         <Box>
           <Button
             variant="danger"
             size="small"
             leadingVisual={StopIcon}
             onClick={e => notebookStore.getState().interrupt(notebookId)}
-            >
-              Interrupt
+          >
+            Interrupt
           </Button>
         </Box>
-      }
+      )}
     </Box>
-  )
-}
+  );
+};
 
 export default AssignmentEditorToolbar;

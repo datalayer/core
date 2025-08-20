@@ -50,6 +50,7 @@ npm run build
 ### UI Components
 
 #### Avatars
+
 ```tsx
 import { BoringAvatar, UserProfileAvatar } from '@datalayer/core';
 
@@ -69,11 +70,12 @@ import { BoringAvatar, UserProfileAvatar } from '@datalayer/core';
 ```
 
 #### Buttons
+
 ```tsx
-import { 
-  LongActionButton, 
-  DownloadCSVButton, 
-  UploadButton 
+import {
+  LongActionButton,
+  DownloadCSVButton,
+  UploadButton
 } from '@datalayer/core';
 
 // Long-running action with loading state
@@ -106,6 +108,7 @@ import {
 ```
 
 #### Display Components
+
 ```tsx
 import {
   CenteredSpinner,
@@ -140,6 +143,7 @@ import {
 ### Data Visualization
 
 #### Charts (ECharts Integration)
+
 ```tsx
 import { EChartsReact } from '@datalayer/core';
 
@@ -147,33 +151,33 @@ const chartOptions = {
   title: { text: 'Sample Chart' },
   xAxis: { type: 'category', data: ['Mon', 'Tue', 'Wed'] },
   yAxis: { type: 'value' },
-  series: [{
-    data: [120, 200, 150],
-    type: 'line'
-  }]
+  series: [
+    {
+      data: [120, 200, 150],
+      type: 'line',
+    },
+  ],
 };
 
-<EChartsReact
-  option={chartOptions}
-  style={{ height: '400px' }}
-/>
+<EChartsReact option={chartOptions} style={{ height: '400px' }} />;
 ```
 
 #### Progress Components
+
 ```tsx
-import { 
-  ProgressBar, 
-  ProgressRing, 
+import {
+  ProgressBar,
+  ProgressRing,
   ConsumptionBar,
-  CreditsIndicator 
+  CreditsIndicator
 } from '@datalayer/core';
 
 // Linear progress bar
 <ProgressBar value={75} max={100} label="Upload Progress" />
 
 // Circular progress ring
-<ProgressRing 
-  value={60} 
+<ProgressRing
+  value={60}
   size={80}
   strokeWidth={8}
   color="#0066CC"
@@ -198,11 +202,12 @@ import {
 ### Jupyter Integration
 
 #### Notebook Components
+
 ```tsx
-import { 
+import {
   JupyterNotebook,
   JupyterNotebookToolbar,
-  RuntimePickerNotebook 
+  RuntimePickerNotebook
 } from '@datalayer/core';
 
 // Full notebook viewer
@@ -230,6 +235,7 @@ import {
 ```
 
 #### Runtime Management
+
 ```tsx
 import {
   RuntimePickerBase,
@@ -264,6 +270,7 @@ import {
 ### Navigation & Layout
 
 #### Navigation Bar
+
 ```tsx
 import { SubdomainNavBar } from '@datalayer/core';
 
@@ -273,13 +280,14 @@ import { SubdomainNavBar } from '@datalayer/core';
   navigation={[
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Notebooks', href: '/notebooks' },
-    { label: 'Runtimes', href: '/runtimes' }
+    { label: 'Runtimes', href: '/runtimes' },
   ]}
   onSignOut={handleSignOut}
-/>
+/>;
 ```
 
 #### Sub Navigation
+
 ```tsx
 import { SubNav } from '@datalayer/core';
 
@@ -287,15 +295,16 @@ import { SubNav } from '@datalayer/core';
   items={[
     { key: 'overview', label: 'Overview', href: '/overview' },
     { key: 'settings', label: 'Settings', href: '/settings' },
-    { key: 'members', label: 'Members', href: '/members' }
+    { key: 'members', label: 'Members', href: '/members' },
   ]}
   activeKey="overview"
-/>
+/>;
 ```
 
 ### Forms & Inputs
 
 #### Context Selectors
+
 ```tsx
 import { OrganizationSelect, SpaceSelect } from '@datalayer/core';
 
@@ -366,16 +375,12 @@ function UserProfile() {
 ### Platform Integration Hooks
 
 ```tsx
-import { 
-  useDatalayer, 
-  useRuntimes, 
-  useNotebookAIAgent 
-} from '@datalayer/core';
+import { useDatalayer, useRuntimes, useNotebookAIAgent } from '@datalayer/core';
 
 function RuntimeDashboard() {
   // Main Datalayer platform integration
   const { client, isConnected } = useDatalayer();
-  
+
   // Runtime management
   const {
     runtimes,
@@ -383,7 +388,7 @@ function RuntimeDashboard() {
     createRuntime,
     deleteRuntime,
     startRuntime,
-    stopRuntime
+    stopRuntime,
   } = useRuntimes();
 
   // AI agent for notebooks
@@ -392,7 +397,7 @@ function RuntimeDashboard() {
   const handleCreateRuntime = async () => {
     await createRuntime({
       name: 'new-runtime',
-      environment: 'python-3.11'
+      environment: 'python-3.11',
     });
   };
 
@@ -402,7 +407,9 @@ function RuntimeDashboard() {
       <button onClick={handleCreateRuntime}>Create Runtime</button>
       {runtimes.map(runtime => (
         <div key={runtime.id}>
-          <span>{runtime.name} - {runtime.status}</span>
+          <span>
+            {runtime.name} - {runtime.status}
+          </span>
           <button onClick={() => startRuntime(runtime.id)}>Start</button>
           <button onClick={() => stopRuntime(runtime.id)}>Stop</button>
         </div>
@@ -420,7 +427,7 @@ import {
   useBackdrop,
   useScreenshot,
   useUpload,
-  useVisibilityObserver
+  useVisibilityObserver,
 } from '@datalayer/core';
 
 function InteractiveComponent() {
@@ -452,12 +459,8 @@ function InteractiveComponent() {
       <button onClick={handleAction}>Perform Action</button>
       <button onClick={handleScreenshot}>Take Screenshot</button>
       {isVisible && <div>Component is visible!</div>}
-      
-      <input
-        type="file"
-        onChange={(e) => uploadFiles(e.target.files)}
-        multiple
-      />
+
+      <input type="file" onChange={e => uploadFiles(e.target.files)} multiple />
       {uploading && <div>Upload progress: {progress}%</div>}
     </div>
   );
@@ -471,14 +474,14 @@ import { useCache, useWindowSize } from '@datalayer/core';
 
 function CachedDataComponent() {
   const { width, height } = useWindowSize();
-  
+
   const { data, loading, error, refresh } = useCache(
     'expensive-data',
     async () => {
       const response = await fetch('/api/expensive-data');
       return response.json();
     },
-    { ttl: 5 * 60 * 1000 } // 5 minutes cache
+    { ttl: 5 * 60 * 1000 }, // 5 minutes cache
   );
 
   // Responsive behavior based on window size
@@ -515,7 +518,7 @@ function AppHeader() {
     sidebarOpen,
     setSidebarOpen,
     notifications,
-    addNotification
+    addNotification,
   } = useCoreState();
 
   return (
@@ -546,16 +549,11 @@ function OrganizationDashboard() {
     currentOrganization,
     setCurrentOrganization,
     organizations,
-    fetchOrganizations
+    fetchOrganizations,
   } = useOrganizationState();
 
-  const {
-    spaces,
-    currentSpace,
-    setCurrentSpace,
-    createSpace,
-    deleteSpace
-  } = useSpaceState();
+  const { spaces, currentSpace, setCurrentSpace, createSpace, deleteSpace } =
+    useSpaceState();
 
   useEffect(() => {
     fetchOrganizations();
@@ -565,7 +563,7 @@ function OrganizationDashboard() {
     await createSpace({
       name: 'New Space',
       description: 'A new workspace',
-      organizationId: currentOrganization?.id
+      organizationId: currentOrganization?.id,
     });
   };
 
@@ -603,7 +601,7 @@ function RuntimeManager() {
     createRuntime,
     updateRuntime,
     deleteRuntime,
-    fetchRuntimes
+    fetchRuntimes,
   } = useRuntimesState();
 
   const handleRuntimeAction = async (runtimeId: string, action: string) => {
@@ -619,13 +617,13 @@ function RuntimeManager() {
       <h2>Runtime Management</h2>
       {loading && <div>Loading runtimes...</div>}
       {error && <div>Error: {error}</div>}
-      
+
       {runtimes.map(runtime => (
         <div key={runtime.id} className="runtime-card">
           <h3>{runtime.name}</h3>
           <p>Status: {runtime.status}</p>
           <p>Environment: {runtime.environment}</p>
-          
+
           <div className="runtime-actions">
             <button onClick={() => handleRuntimeAction(runtime.id, 'start')}>
               Start
@@ -636,9 +634,7 @@ function RuntimeManager() {
             <button onClick={() => handleRuntimeAction(runtime.id, 'restart')}>
               Restart
             </button>
-            <button onClick={() => deleteRuntime(runtime.id)}>
-              Delete
-            </button>
+            <button onClick={() => deleteRuntime(runtime.id)}>Delete</button>
           </div>
         </div>
       ))}
@@ -652,12 +648,12 @@ function RuntimeManager() {
 ### Array Utilities
 
 ```tsx
-import { 
-  uniqueBy, 
-  groupBy, 
-  sortBy, 
+import {
+  uniqueBy,
+  groupBy,
+  sortBy,
   chunk,
-  flatten 
+  flatten,
 } from '@datalayer/core/utils';
 
 // Remove duplicates by property
@@ -679,12 +675,12 @@ const flatList = flatten(nestedArrays);
 ### Date Utilities
 
 ```tsx
-import { 
+import {
   formatRelativeTime,
   formatDate,
   parseDate,
   addDays,
-  isToday
+  isToday,
 } from '@datalayer/core/utils';
 
 // Relative time formatting
@@ -713,7 +709,7 @@ import {
   readFileAsText,
   validateFileType,
   formatFileSize,
-  getFileExtension
+  getFileExtension,
 } from '@datalayer/core/utils';
 
 // Download file
@@ -743,7 +739,7 @@ import {
   kebabCase,
   truncate,
   stripHtml,
-  generateSlug
+  generateSlug,
 } from '@datalayer/core/utils';
 
 // String transformations
@@ -775,7 +771,7 @@ import {
   formatCurrency,
   formatPercentage,
   clamp,
-  randomBetween
+  randomBetween,
 } from '@datalayer/core/utils';
 
 // Number formatting
@@ -822,14 +818,14 @@ const customTheme = createDatalayerTheme({
     primary: {
       main: '#1976d2',
       light: '#42a5f5',
-      dark: '#1565c0'
+      dark: '#1565c0',
     },
     secondary: {
-      main: '#dc004e'
-    }
+      main: '#dc004e',
+    },
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   },
   spacing: 8,
   breakpoints: {
@@ -837,8 +833,8 @@ const customTheme = createDatalayerTheme({
     sm: 600,
     md: 960,
     lg: 1280,
-    xl: 1920
-  }
+    xl: 1920,
+  },
 });
 ```
 
@@ -859,7 +855,7 @@ describe('MyComponent', () => {
   it('handles click events', () => {
     const handleClick = jest.fn();
     render(<MyComponent onClick={handleClick} />);
-    
+
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalled();
   });
@@ -875,11 +871,11 @@ import { useCounter } from './useCounter';
 describe('useCounter', () => {
   it('increments counter', () => {
     const { result } = renderHook(() => useCounter(0));
-    
+
     act(() => {
       result.current.increment();
     });
-    
+
     expect(result.current.count).toBe(1);
   });
 });
@@ -990,21 +986,21 @@ import {
   DatalayerBox,
   UserProfileAvatar,
   JupyterNotebook,
-  
+
   // Hooks
   useUser,
   useRuntimes,
   useDatalayer,
-  
+
   // Utilities
   formatDate,
   downloadFile,
   generateSlug,
-  
+
   // Types
   User,
   Runtime,
-  Organization
+  Organization,
 } from '@datalayer/core';
 ```
 

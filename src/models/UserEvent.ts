@@ -11,16 +11,16 @@ export const asUserEvent = (u: any): IUserEvent => {
     detailsJson: u.details_json_t ?? '',
     token: u.token_s,
     eventDate: u.event_ts_dt,
-  }
-}
+  };
+};
 
 export type IUserEvent = {
   id: string;
   subType: string;
   token: string;
-  detailsJson: string,
+  detailsJson: string;
   message: string;
   eventDate: string;
-}
+};
 
 export default IUserEvent;

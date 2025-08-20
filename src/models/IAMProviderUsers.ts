@@ -21,7 +21,7 @@ export type IGitHubUser = {
   location: string;
   email: string;
   bio: string;
-}
+};
 
 export type ILinkedInUser = {
   iamProvider: IIAMProviderName;
@@ -68,6 +68,6 @@ export class LinkedInUser implements ILinkedInUser {
     this.displayName = asDisplayName(this.given_name, this.family_name);
   }
   getUrn(): string {
-    return `urn:li:person:${this.sub}`
+    return `urn:li:person:${this.sub}`;
   }
 }

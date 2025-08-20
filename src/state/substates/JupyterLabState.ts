@@ -10,12 +10,12 @@ import { JupyterFrontEndPlugin } from '@jupyterlab/application';
 
 // TODO import the Plugin type from jupyter-react.
 export type Plugin = JupyterFrontEndPlugin<any, any, any> & {
-    service: any;
+  service: any;
 };
 
 export type IJupyterLabState = {
   jupyterLabAdapter?: JupyterLabAppAdapter;
-}
+};
 
 export type JupyterLabState = IJupyterLabState & {
   setJupyterLabAdapter: (jupyterLabAdapter?: JupyterLabAppAdapter) => void;
@@ -24,15 +24,20 @@ export type JupyterLabState = IJupyterLabState & {
 
 export const jupyterLabStore = createStore<JupyterLabState>((set, get) => ({
   jupyterLabAdapter: undefined,
-  setJupyterLabAdapter: (jupyterLabAdapter?: JupyterLabAppAdapter) => set((state: JupyterLabState) => ({ jupyterLabAdapter })),
+  setJupyterLabAdapter: (jupyterLabAdapter?: JupyterLabAppAdapter) =>
+    set((state: JupyterLabState) => ({ jupyterLabAdapter })),
   plugin: (id: string) => {
     return get().jupyterLabAdapter?.plugin(id);
-  }
+  },
 }));
 
 export function useJupyterLabStore(): JupyterLabState;
-export function useJupyterLabStore<T>(selector: (state: JupyterLabState) => T): T;
-export function useJupyterLabStore<T>(selector?: (state: JupyterLabState) => T) {
+export function useJupyterLabStore<T>(
+  selector: (state: JupyterLabState) => T,
+): T;
+export function useJupyterLabStore<T>(
+  selector?: (state: JupyterLabState) => T,
+) {
   return useStore(jupyterLabStore, selector!);
 }
 

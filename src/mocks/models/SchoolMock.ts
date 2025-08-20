@@ -3,16 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IOrganizationMember, ISchool } from "./../../models";
-import { newUlid } from "../../utils";
+import { IOrganizationMember, ISchool } from './../../models';
+import { newUlid } from '../../utils';
 
 export const newSchoolMock = (name: string) => {
   const school: ISchool = {
     id: newUlid(),
     handle: newUlid(),
-    type: "school",
+    type: 'school',
     name: name,
-    description: name + " description.",
+    description: name + ' description.',
     public: false,
     members: [],
     students: [],
@@ -23,8 +23,8 @@ export const newSchoolMock = (name: string) => {
   return school;
 };
 
-export const SCHOOL_1_MOCK = newSchoolMock("School 1");
-export const SCHOOL_2_MOCK = newSchoolMock("School 2");
-export const SCHOOL_3_MOCK = newSchoolMock("School 3");
+export const SCHOOL_1_MOCK = newSchoolMock('School 1');
+export const SCHOOL_2_MOCK = newSchoolMock('School 2');
+export const SCHOOL_3_MOCK = newSchoolMock('School 3');
 
 export const SCHOOLS_MOCK = [SCHOOL_1_MOCK, SCHOOL_2_MOCK, SCHOOL_3_MOCK];

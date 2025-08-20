@@ -3,21 +3,21 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Token } from "@primer/react";
-import { ProjectIcon } from "@primer/octicons-react";
-import { StudentIcon } from "@datalayer/icons-react";
-import { ISpaceVariant } from "../../models";
+import { Token } from '@primer/react';
+import { ProjectIcon } from '@primer/octicons-react';
+import { StudentIcon } from '@datalayer/icons-react';
+import { ISpaceVariant } from '../../models';
 
-export const SpaceVariantToken = (props: { variant: ISpaceVariant}) => {
+export const SpaceVariantToken = (props: { variant: ISpaceVariant }) => {
   const { variant } = props;
   switch (variant) {
-    case ("default"):
-      return <Token text="default" leadingVisual={ProjectIcon}/>
-    case ("course"):
-      return <Token text="course" leadingVisual={StudentIcon}/>
+    case 'default':
+      return <Token text="default" leadingVisual={ProjectIcon} />;
+    case 'course':
+      return <Token text="course" leadingVisual={StudentIcon} />;
     default:
-      return <></>
-    }
-}
+      return <></>;
+  }
+};
 
 export default SpaceVariantToken;

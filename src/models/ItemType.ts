@@ -38,7 +38,6 @@ export type IItemType =
   | 'team'
   | 'usage'
   | 'user'
-  | 'undefined'
-  ;
+  | 'undefined';
 
-export default IItemType
+export default IItemType;

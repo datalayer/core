@@ -61,19 +61,19 @@
 
 /* eslint-disable react-hooks/rules-of-hooks */
 
-import * as React from "react";
-import { useLayoutEffect } from "react";
+import * as React from 'react';
+import { useLayoutEffect } from 'react';
 
 let serverHandoffComplete = false;
 let id = 0;
 function genId() {
-	return ++id;
+  return ++id;
 }
 
 // Workaround for https://github.com/webpack/webpack/issues/14814
 // https://github.com/eps1lon/material-ui/blob/8d5f135b4d7a58253a99ab56dce4ac8de61f5dc1/packages/mui-utils/src/useId.ts#L21
 const maybeReactUseId: undefined | (() => string) = (React as any)[
-	"useId".toString()
+  'useId'.toString()
 ];
 
 /**
@@ -93,42 +93,42 @@ function useId(idFromProps: string | number): string | number;
 function useId(idFromProps: string | undefined | null): string | undefined;
 function useId(idFromProps: number | undefined | null): number | undefined;
 function useId(
-	idFromProps: string | number | undefined | null
+  idFromProps: string | number | undefined | null,
 ): string | number | undefined;
 function useId(): string | undefined;
 
 function useId(providedId?: number | string | undefined | null) {
-	if (maybeReactUseId !== undefined) {
-		const generatedId = maybeReactUseId();
-		return providedId ?? generatedId;
-	}
+  if (maybeReactUseId !== undefined) {
+    const generatedId = maybeReactUseId();
+    return providedId ?? generatedId;
+  }
 
-	// If this instance isn't part of the initial render, we don't have to do the
-	// double render/patch-up dance. We can just generate the ID and return it.
-	const initialId = providedId ?? (serverHandoffComplete ? genId() : null);
-	const [id, setId] = React.useState(initialId);
+  // If this instance isn't part of the initial render, we don't have to do the
+  // double render/patch-up dance. We can just generate the ID and return it.
+  const initialId = providedId ?? (serverHandoffComplete ? genId() : null);
+  const [id, setId] = React.useState(initialId);
 
-	useLayoutEffect(() => {
-		if (id === null) {
-			// Patch the ID after render. We do this in `useLayoutEffect` to avoid any
-			// rendering flicker, though it'll make the first render slower (unlikely
-			// to matter, but you're welcome to measure your app and let us know if
-			// it's a problem).
-			setId(genId());
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+  useLayoutEffect(() => {
+    if (id === null) {
+      // Patch the ID after render. We do this in `useLayoutEffect` to avoid any
+      // rendering flicker, though it'll make the first render slower (unlikely
+      // to matter, but you're welcome to measure your app and let us know if
+      // it's a problem).
+      setId(genId());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-	React.useEffect(() => {
-		if (serverHandoffComplete === false) {
-			// Flag all future uses of `useId` to skip the update dance. This is in
-			// `useEffect` because it goes after `useLayoutEffect`, ensuring we don't
-			// accidentally bail out of the patch-up dance prematurely.
-			serverHandoffComplete = true;
-		}
-	}, []);
+  React.useEffect(() => {
+    if (serverHandoffComplete === false) {
+      // Flag all future uses of `useId` to skip the update dance. This is in
+      // `useEffect` because it goes after `useLayoutEffect`, ensuring we don't
+      // accidentally bail out of the patch-up dance prematurely.
+      serverHandoffComplete = true;
+    }
+  }, []);
 
-	return providedId ?? id ?? undefined;
+  return providedId ?? id ?? undefined;
 }
 
 export { useId };

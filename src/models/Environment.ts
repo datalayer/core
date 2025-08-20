@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IContent } from "./Content";
-import { IItem } from "./Item";
+import { IContent } from './Content';
+import { IItem } from './Item';
 
 export type IEnvironment = IItem & {
   type: 'environment';

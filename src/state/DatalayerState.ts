@@ -26,7 +26,7 @@ if (typeof document !== 'undefined') {
   }
 }
 
-export const datalayerStore = create<DatalayerState>((set) => ({
+export const datalayerStore = create<DatalayerState>(set => ({
   datalayerConfig: initialDatalayerConfig,
   setDatalayerConfig: (config?: IDatalayerConfig) => {
     const mergedConfig = mergeConfigWithDefaults(config);
@@ -35,5 +35,5 @@ export const datalayerStore = create<DatalayerState>((set) => ({
 }));
 
 export const useDatalayerStore = datalayerStore;
-export const useDatalayerConfig = () => 
+export const useDatalayerConfig = () =>
   useDatalayerStore(state => state.datalayerConfig);

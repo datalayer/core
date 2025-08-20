@@ -25,14 +25,16 @@ export const FlashGuest = () => {
   }, []);
   return (
     <>
-      {!isPlatformMember &&
+      {!isPlatformMember && (
         <FlashClosable
           variant="warning"
           actions={
             <>
               <Button
                 onClick={onRefreshPermission}
-                title={'If your roles have recently been updated, you need to refresh your browser.'}
+                title={
+                  'If your roles have recently been updated, you need to refresh your browser.'
+                }
               >
                 Refresh permissions
               </Button>
@@ -49,13 +51,13 @@ export const FlashGuest = () => {
         >
           <Text>
             We appreciate your interest in joining Datalayer with a guest role.
-            The platform administrator has been notified and will
-            reach out to you to confirm the granting of your access.
+            The platform administrator has been notified and will reach out to
+            you to confirm the granting of your access.
           </Text>
         </FlashClosable>
-      }
+      )}
     </>
   );
-}
+};
 
 export default FlashGuest;

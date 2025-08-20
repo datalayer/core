@@ -15,7 +15,7 @@
 
 .crosshairs::before,
 .crosshairs::after {
-  content: "";
+  content: '';
   position: absolute;
 }
 

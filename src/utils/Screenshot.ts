@@ -5,12 +5,14 @@
 
 import html2canvas from 'html2canvas';
 
-export const takeHTMLNodeScreenshot = async (node: HTMLDivElement): Promise<string> => {
+export const takeHTMLNodeScreenshot = async (
+  node: HTMLDivElement,
+): Promise<string> => {
   const sc = html2canvas(node, {
     width: node.getBoundingClientRect().width,
     height: node.getBoundingClientRect().height,
   });
-  return sc.then((canvas) => {
+  return sc.then(canvas => {
     const croppedCanvas = document.createElement('canvas');
     const croppedCanvasContext = croppedCanvas.getContext('2d');
     const top = 0;
@@ -21,13 +23,19 @@ export const takeHTMLNodeScreenshot = async (node: HTMLDivElement): Promise<stri
     croppedCanvas.height = height;
     croppedCanvasContext?.drawImage(
       canvas,
-      left, top, width, height,
-      left, top, width, height,
+      left,
+      top,
+      width,
+      height,
+      left,
+      top,
+      width,
+      height,
     );
-//    const type = 'image/jpeg';
+    //    const type = 'image/jpeg';
     const type = 'image/png';
     const quality = 1;
     const outputshotData = croppedCanvas.toDataURL(type, quality);
     return outputshotData;
   });
-}
+};

@@ -9,7 +9,7 @@ import { ICell } from '../../models';
 
 export type ICellState = {
   cell?: ICell;
-}
+};
 
 export type CellState = ICellState & {
   create: (cell: ICell) => void;
@@ -19,15 +19,15 @@ export type CellState = ICellState & {
 export const cellStore = createStore<CellState>((set, get) => ({
   cell: undefined,
   create: (cell: ICell) => set((state: CellState) => ({ cell })),
-  update: (cell: Partial<ICell>) => set((state: CellState) => ({
-    cell:
-      cell ? {
-        ...state.cell,
-        ...cell as ICell,
-      }
-      : undefined
-    })
-  ),
+  update: (cell: Partial<ICell>) =>
+    set((state: CellState) => ({
+      cell: cell
+        ? {
+            ...state.cell,
+            ...(cell as ICell),
+          }
+        : undefined,
+    })),
 }));
 
 export function useCellStore(): CellState;

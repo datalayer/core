@@ -11,15 +11,14 @@ export const asDatasource = (s: any): IDatasource => {
     description: s.description_t,
     database: s.database_s,
     outputBucket: s.output_bucket_s,
-  }
-}
+  };
+};
 
 export type IDatasourceVariant =
-| 'athena'
-| 'bigquery'
-| 'mssentinel'
-| 'splunk'
-;
+  | 'athena'
+  | 'bigquery'
+  | 'mssentinel'
+  | 'splunk';
 
 export type IDatasource = {
   id: string;
@@ -28,6 +27,6 @@ export type IDatasource = {
   description: string;
   database: string;
   outputBucket: string;
-}
+};
 
 export default IDatasource;

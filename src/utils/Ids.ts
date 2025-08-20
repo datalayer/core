@@ -4,12 +4,12 @@
  */
 
 import { v4 as uuid_v4 } from 'uuid';
-import { ulid } from 'ulid'
+import { ulid } from 'ulid';
 
 export const newUuid = () => {
   return uuid_v4();
-}
+};
 
 export const newUlid = () => {
   return ulid();
-}
+};

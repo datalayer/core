@@ -24,7 +24,10 @@ import { RuntimeCellVariablesDialog } from './RuntimeCellVariablesDialog';
 /**
  * {@link RuntimePickerCell} properties
  */
-export type IRuntimePickerCellProps = Pick<IRuntimePickerBaseProps, 'multiServiceManager' | 'preference' | 'translator'> & {
+export type IRuntimePickerCellProps = Pick<
+  IRuntimePickerBaseProps,
+  'multiServiceManager' | 'preference' | 'translator'
+> & {
   /**
    * Callback to allow the user to login
    */
@@ -59,7 +62,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
     sanitizer,
     multiServiceManager,
     sessionContext,
-    translator
+    translator,
   } = props;
   const { token } = useIAMStore();
   const { configuration } = useCoreStore();
@@ -72,7 +75,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
   const [isSnippetDialogOpen, setIsSnippetDialogOpen] = useState(false);
   const trans = useMemo(
     () => (translator ?? nullTranslator).load('jupyterlab'),
-    [translator]
+    [translator],
   );
   useEffect(() => {
     const updateState = (model: ICellModel) => {
@@ -82,7 +85,9 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
       setHasCellKernel(kernel?.params?.notebook === false);
       const newSnippets = new Array<ISnippet>();
       if (kernel) {
-        const spec = multiServiceManager.remote?.environments.get().find(env => env.name === kernel.name);
+        const spec = multiServiceManager.remote?.environments
+          .get()
+          .find(env => env.name === kernel.name);
         setLanguage(spec?.language ?? '');
         if (spec?.snippets) {
           newSnippets.push(...spec.snippets);
@@ -104,22 +109,24 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
         (!preference?.language || desc.language === preference?.language)
       );
     },
-    [preference]
+    [preference],
   );
   const setSelectedKernelDesc = useCallback(
     (kernel?: IRuntimeDesc): void => {
-      const datalayerMeta = model.getMetadata('datalayer') ?? { kernel: undefined };
+      const datalayerMeta = model.getMetadata('datalayer') ?? {
+        kernel: undefined,
+      };
       if (!kernel) {
         delete datalayerMeta.kernel;
         model.setMetadata('datalayer', datalayerMeta);
       } else {
         model.setMetadata(
           'datalayer',
-          Object.assign(datalayerMeta, { kernel })
+          Object.assign(datalayerMeta, { kernel }),
         );
       }
     },
-    [model]
+    [model],
   );
   const closeVariableDialog = useCallback(() => {
     setIsVariableDialogOpen(false);
@@ -141,13 +148,13 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
       if (desc) {
         desc.params = {
           ...desc.params,
-          notebook: false
+          notebook: false,
         };
         setSelectedKernelDesc(desc);
       }
       setIsKernelDialogOpen(false);
     },
-    [setSelectedKernelDesc]
+    [setSelectedKernelDesc],
   );
   const datalayerMeta = model.getMetadata('datalayer') ?? {};
   return (
@@ -178,37 +185,43 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
           </ActionList.Item>
         }
         postActions={
-          token || !logIn ?
+          token || !logIn ? (
             <>
               {RuntimeSnippetsFacade.supports(preference?.language ?? '') && (
                 <ActionList.Item
                   onSelect={openVariableDialog}
                   disabled={!isForeign}
                   title={trans.__(
-                    'Define variables to transfer between the document kernel and the cell kernel.'
+                    'Define variables to transfer between the document kernel and the cell kernel.',
                   )}
                 >
                   {trans.__('Define Cell Variables Transfer')}
                 </ActionList.Item>
               )}
-              {!configuration.whiteLabel &&
+              {!configuration.whiteLabel && (
                 <ActionList.Item
                   onSelect={openSnippetDialog}
                   disabled={snippets.length === 0}
-                  title={trans.__('Inject a code snippet at the end of the cell.')}
+                  title={trans.__(
+                    'Inject a code snippet at the end of the cell.',
+                  )}
                 >
                   {trans.__('Inject Code Snippet')}
                 </ActionList.Item>
-              }
+              )}
             </>
-          :
-            <ActionList.Item onSelect={props.logIn} title={'Connect to the Runtime provider.'}>
+          ) : (
+            <ActionList.Item
+              onSelect={props.logIn}
+              title={'Connect to the Runtime provider.'}
+            >
               <ExternalTokenSilentLogin message="Connect to the Runtime provider" />
             </ActionList.Item>
+          )
         }
         translator={translator}
       />
-      {isVariableDialogOpen &&
+      {isVariableDialogOpen && (
         <RuntimeCellVariablesDialog
           model={model}
           onClose={closeVariableDialog}
@@ -216,8 +229,8 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
           sessionContext={sessionContext}
           translator={translator}
         />
-      }
-      {isSnippetDialogOpen &&
+      )}
+      {isSnippetDialogOpen && (
         <SnippetDialog
           language={language}
           model={model}
@@ -226,8 +239,8 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
           markdownParser={markdownParser}
           sanitizer={sanitizer}
         />
-      }
-      {isKernelDialogOpen &&
+      )}
+      {isKernelDialogOpen && (
         <KernelLauncherDialog
           manager={multiServiceManager.remote!}
           onSubmit={onStartRemote}
@@ -235,7 +248,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
           markdownParser={markdownParser}
           sanitizer={sanitizer}
         />
-      }
+      )}
     </>
   );
 }

@@ -35,7 +35,6 @@ export class Outbound implements IOutbound {
     this.lastUpdateDate = new Date(u.lastUpdateDate);
     this.launchedDate = u.launchedDate ? new Date(u.launchedDate) : undefined;
   }
-
 }
 
 /**
@@ -63,6 +62,6 @@ export type IOutbound = {
   creationDate?: Date;
   lastUpdateDate?: Date;
   launchedDate?: Date;
-}
+};
 
 export default IOutbound;

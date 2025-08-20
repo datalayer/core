@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { SkeletonAvatar } from "@primer/react/experimental";
+import { SkeletonAvatar } from '@primer/react/experimental';
 
 type IAvatarSkeletonProps = {
   size?: number;
-}
+};
 
 export const AvatarSkeleton = (props: IAvatarSkeletonProps) => {
   const { size } = props;

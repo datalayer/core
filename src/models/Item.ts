@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { ISpaceItem } from "./SpaceItem";
-import { IUser } from "./User";
-import { IAnyOrganization } from "./Organization";
-import { IAnySpace }  from "./Space";
-import { IItemType }  from "./ItemType";
+import { ISpaceItem } from './SpaceItem';
+import { IUser } from './User';
+import { IAnyOrganization } from './Organization';
+import { IAnySpace } from './Space';
+import { IItemType } from './ItemType';
 
 export type IAnyItem = ISpaceItem;
 

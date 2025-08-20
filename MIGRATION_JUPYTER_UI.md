@@ -117,24 +117,22 @@ This document tracks the migration of all Datalayer-specific functionality from 
 
    ```typescript
    // Before
-   import { createDatalayerServiceManager } from "@datalayer/jupyter-react";
+   import { createDatalayerServiceManager } from '@datalayer/jupyter-react';
 
    // After
-   import { createDatalayerServiceManager } from "@datalayer/core";
+   import { createDatalayerServiceManager } from '@datalayer/core';
    ```
 
 2. **State Management**: Use separate stores for Datalayer state:
 
    ```typescript
    // Before
-   import { useJupyterReactStore } from "@datalayer/jupyter-react";
-   const datalayerConfig = useJupyterReactStore(
-     (state) => state.datalayerConfig,
-   );
+   import { useJupyterReactStore } from '@datalayer/jupyter-react';
+   const datalayerConfig = useJupyterReactStore(state => state.datalayerConfig);
 
    // After
-   import { useDatalayerStore } from "@datalayer/core";
-   const datalayerConfig = useDatalayerStore((state) => state.datalayerConfig);
+   import { useDatalayerStore } from '@datalayer/core';
+   const datalayerConfig = useDatalayerStore(state => state.datalayerConfig);
    ```
 
 3. **Collaboration**: Use the provider-based system with direct instantiation:

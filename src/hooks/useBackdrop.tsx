@@ -5,7 +5,7 @@
 
 import { createContext, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { LayoutBackdrop } from "./layouts";
+import { LayoutBackdrop } from './layouts';
 
 type BackdropContextType = {
   closeBackdrop: () => void;
@@ -20,7 +20,7 @@ export const BackdropContext = createContext<BackdropContextType>({
 export function useBackdrop(): BackdropContextType {
   const context = useContext(BackdropContext);
   if (!context)
-  throw new Error('useContext must be inside a provider with a value.');
+    throw new Error('useContext must be inside a provider with a value.');
   return context;
 }
 
@@ -34,7 +34,7 @@ type IBackdropProviderProps = {
   zIndex?: number;
   disableDarken?: boolean;
   backdropSurface?: any;
-}
+};
 
 /*
 Example
@@ -67,7 +67,7 @@ export default App
 export function BackdropProvider(props: IBackdropProviderProps) {
   const { children, zIndex, disableDarken, backdropSurface } = props;
   const defaultBackdropSurface = {
-    position: "fixed",
+    position: 'fixed',
     top: 0,
     left: 0,
     width: '100%',
@@ -77,28 +77,28 @@ export function BackdropProvider(props: IBackdropProviderProps) {
     justifyContent: 'center',
     backgroundColor: disableDarken ? 'initial' : 'rgba(0, 0, 0, 0.5)',
     zIndex,
-  }
+  };
   const [backdrop, setBackdrop] = useState({
     open: false,
-    render: (closeBackdrop: any) => <></>
-  })
+    render: (closeBackdrop: any) => <></>,
+  });
   const displayBackdrop = (nextBackdrop: any) => {
     setBackdrop({
       open: true,
-      render: nextBackdrop
+      render: nextBackdrop,
     });
-  }
+  };
   const closeBackdrop = () => {
     setBackdrop({
       open: false,
-      render: (closeBackdrop: any) => <></>
+      render: (closeBackdrop: any) => <></>,
     });
-  }
+  };
   return (
     <BackdropContextProvider value={{ closeBackdrop, displayBackdrop }}>
-      <LayoutBackdrop/>
+      <LayoutBackdrop />
       {children}
-      { backdrop.open &&
+      {backdrop.open &&
         (backdropSurface ? (
           backdropSurface(backdrop.render(closeBackdrop))
         ) : (
@@ -107,7 +107,7 @@ export function BackdropProvider(props: IBackdropProviderProps) {
           </div>
         ))}
     </BackdropContextProvider>
-  )
+  );
 }
 
 BackdropProvider.propTypes = {
@@ -119,12 +119,12 @@ BackdropProvider.propTypes = {
   // A render function that returns a Component that overrides (takes the
   // place of) the default darkened div background.
   // See /example/src/ExampleApp.jsx for proper use.
-  backdropSurface: PropTypes.func
-}
+  backdropSurface: PropTypes.func,
+};
 
 BackdropProvider.defaultProps = {
   children: undefined,
   disableBackdrop: false,
   zIndex: 9999,
-  backdropSurface: null
+  backdropSurface: null,
 } as IBackdropProviderProps;

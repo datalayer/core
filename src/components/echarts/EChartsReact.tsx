@@ -22,7 +22,7 @@ export const EChartsReact = ({
   style,
   settings,
   loading,
-  theme
+  theme,
 }: EChartsProps) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chart, setChart] = useState<ECharts | undefined>();
@@ -68,6 +68,6 @@ export const EChartsReact = ({
   return (
     <div ref={chartRef} style={{ width: '100%', height: '100px', ...style }} />
   );
-}
+};
 
 export default EChartsReact;

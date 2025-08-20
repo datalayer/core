@@ -16,7 +16,7 @@ export const ProgressBar = () => {
       setProgress(progress + 1);
     }
   }, 100);
-  return <PrimerProgressBar progress={progress} aria-label="" />
+  return <PrimerProgressBar progress={progress} aria-label="" />;
 };
 
 export default ProgressBar;

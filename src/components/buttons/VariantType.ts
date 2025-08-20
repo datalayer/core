@@ -3,4 +3,9 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export type VariantType = 'default' | 'primary' | 'invisible' | 'danger' | 'link';
+export type VariantType =
+  | 'default'
+  | 'primary'
+  | 'invisible'
+  | 'danger'
+  | 'link';

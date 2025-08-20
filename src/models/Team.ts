@@ -3,10 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { asArray } from "../utils";
-import { asUser } from "./User";
-import { TeamMember } from "./TeamMember";
-import IOrganization from "./Organization";
+import { asArray } from '../utils';
+import { asUser } from './User';
+import { TeamMember } from './TeamMember';
+import IOrganization from './Organization';
 
 export type IAnyTeam = ITeam;
 
@@ -16,7 +16,7 @@ export function asTeam(t: any, organizationId: string): ITeam {
     members = asArray(t.members).map(m => {
       const member: TeamMember = asUser(m);
       return member;
-    })
+    });
   }
   const team: ITeam = {
     id: t.uid,
@@ -47,12 +47,12 @@ export type IBaseTeam = {
   creationDate: Date;
   lastUpdateDate?: Date;
   lastPublicationDate?: Date;
-  setMembers: (members: TeamMember[]) => void
+  setMembers: (members: TeamMember[]) => void;
 };
 
 export type ITeam = IBaseTeam & {
   type: 'team';
-  organization: Pick<IOrganization, "id">,
+  organization: Pick<IOrganization, 'id'>;
   members: TeamMember[];
 };
 

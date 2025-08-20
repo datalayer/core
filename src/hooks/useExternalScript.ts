@@ -3,14 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 const useExternalScript = (url: string) => {
   useEffect(() => {
-    const head = document.querySelector("head") as HTMLElement;
-    const script = document.createElement("script");
+    const head = document.querySelector('head') as HTMLElement;
+    const script = document.createElement('script');
 
-    script.setAttribute("src", url);
+    script.setAttribute('src', url);
     head.appendChild(script);
 
     return () => {

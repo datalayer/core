@@ -3,9 +3,15 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { AlertIcon, CheckIcon, InfoIcon, StopIcon, XIcon } from '@primer/octicons-react';
+import {
+  AlertIcon,
+  CheckIcon,
+  InfoIcon,
+  StopIcon,
+  XIcon,
+} from '@primer/octicons-react';
 import { Flash as PrimerFlash, FlashProps, IconButton } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { useCallback, useState } from 'react';
 
 /**
@@ -61,8 +67,8 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
           gridTemplateAreas: `
                 'visual message close'
                 '.      actions actions'
-              `
-        }
+              `,
+        },
       }}
     >
       <Box
@@ -70,7 +76,7 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
           display: 'grid',
           paddingBlock: 'var(--base-size-8)',
           alignSelf: 'center',
-          gridArea: 'visual'
+          gridArea: 'visual',
         }}
       >
         {visual}
@@ -79,7 +85,7 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
         sx={{
           alignSelf: 'center',
           display: 'grid',
-          gridArea: 'message'
+          gridArea: 'message',
         }}
       >
         {children}
@@ -91,8 +97,8 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
           marginLeft: 'actions',
           '@media screen and (max-width: 544px)': {
             alignSelf: 'start',
-            margin: 'var(--base-size-8) 0 0 var(--base-size-8)'
-          }
+            margin: 'var(--base-size-8) 0 0 var(--base-size-8)',
+          },
         }}
       >
         {actions}
@@ -101,7 +107,7 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
         <Box
           sx={{
             alignSelf: 'start',
-            marginLeft: 'close'
+            marginLeft: 'close',
           }}
         >
           <IconButton
@@ -111,14 +117,16 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
             variant="invisible"
             icon={XIcon}
             sx={{
-              '& > svg': { marginRight: 0, color: 'var(--fgColor-default)' }
+              '& > svg': { marginRight: 0, color: 'var(--fgColor-default)' },
             }}
           />
         </Box>
       )}
     </PrimerFlash>
-  ) : <></>
-}
+  ) : (
+    <></>
+  );
+};
 
 FlashClosable.defaultProps = {
   closable: true,

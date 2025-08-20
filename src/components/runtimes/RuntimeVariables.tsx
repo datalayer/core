@@ -5,7 +5,7 @@
 
 import { ReactElement, useMemo } from 'react';
 import { IconButton, ToggleSwitch, FormControl } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { Blankslate, DataTable, Table } from '@primer/react/experimental';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { checkIcon } from '@jupyterlab/ui-components';
@@ -52,11 +52,11 @@ export function RuntimeVariables(props: IRuntimeVariablesProps): ReactElement {
     setSelectVariable,
     transferVariables,
     setTransferVariable,
-    kernelVariables
+    kernelVariables,
   } = props;
   const trans = useMemo(
     () => (translator ?? nullTranslator).load('jupyterlab'),
-    [translator]
+    [translator],
   );
   const nRows = Object.keys(kernelVariables ?? {}).length;
   // Sorting and actions does not play nice together :'(
@@ -64,11 +64,11 @@ export function RuntimeVariables(props: IRuntimeVariablesProps): ReactElement {
     {
       header: trans.__('Name'),
       field: 'name',
-      rowHeader: true
+      rowHeader: true,
     },
     {
       header: trans.__('Type'),
-      field: 'type'
+      field: 'type',
     },
     {
       id: 'select',
@@ -132,19 +132,17 @@ export function RuntimeVariables(props: IRuntimeVariablesProps): ReactElement {
             }}
           />
         );
-      }
-    }
+      },
+    },
   ];
   return (
-    <Box className={className} sx={{ paddingTop: "10px" }}>
+    <Box className={className} sx={{ paddingTop: '10px' }}>
       <FormControl layout="horizontal">
-        <FormControl.Label>
-          {trans.__('Transfer variables')}
-        </FormControl.Label>
+        <FormControl.Label>{trans.__('Transfer variables')}</FormControl.Label>
         <ToggleSwitch
           checked={transferVariables}
           size="small"
-          onClick={(e) => {
+          onClick={e => {
             e.preventDefault();
             setTransferVariable(!transferVariables);
           }}

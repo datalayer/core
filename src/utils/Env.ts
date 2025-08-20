@@ -4,5 +4,8 @@
  */
 
 export const isDevDeployment = () => {
-  return location.hostname.startsWith('dev') || location.hostname.startsWith('localhost');
-}
+  return (
+    location.hostname.startsWith('dev') ||
+    location.hostname.startsWith('localhost')
+  );
+};

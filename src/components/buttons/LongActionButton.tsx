@@ -27,7 +27,7 @@ type ILongActionButtonProps = {
    * Button disabled state
    */
   disabled?: boolean;
-}
+};
 
 /**
  * Icon button displaying a spinner while its callback is running.
@@ -48,7 +48,9 @@ export function LongActionButton(props: ILongActionButtonProps): JSX.Element {
       aria-label={label}
       title={label}
       disabled={disabled || internalInProgress || inProgress}
-      icon={internalInProgress || inProgress ? () => <Spinner size="small" /> : icon}
+      icon={
+        internalInProgress || inProgress ? () => <Spinner size="small" /> : icon
+      }
       size="small"
       variant="invisible"
       onClick={handleClick}

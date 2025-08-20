@@ -3,10 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IDean } from "./Dean";
-import { IStudent } from "./Student";
-import { ICourse } from "./Course";
-import { IBaseOrganization } from "./Organization";
+import { IDean } from './Dean';
+import { IStudent } from './Student';
+import { ICourse } from './Course';
+import { IBaseOrganization } from './Organization';
 
 export type ISchool = IBaseOrganization & {
   type: 'school';

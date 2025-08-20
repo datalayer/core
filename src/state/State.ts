@@ -17,7 +17,7 @@ import { organizationStore } from './substates/OrganizationState';
 import { spaceStore } from './substates/SpaceState';
 import { surveysStore } from './substates/SurveysState';
 import { teamStore } from './substates/TeamState';
-import { isDevDeployment } from '../utils'
+import { isDevDeployment } from '../utils';
 
 export type DatalayerRunState = {
   version: string;

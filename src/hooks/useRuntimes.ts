@@ -6,31 +6,30 @@
 import { requestJupyterKernelsExtension } from '../api';
 
 export const useRuntimes = () => {
-
   // Folder Mounting ----------------------------------------------------------
 
   const mountLocalFolder = (kernelId: string) => {
     requestJupyterKernelsExtension<any>(`jump/${kernelId}`)
       .then(data => {
-//        console.log('--- Mount Local Folder', data);
+        //        console.log('--- Mount Local Folder', data);
       })
       .catch(reason => {
         console.error(
-          `Error while accessing the jupyter server jupyter_kernels extension.\n${reason}`
+          `Error while accessing the jupyter server jupyter_kernels extension.\n${reason}`,
         );
       });
   };
 
   const unmountLocalFolder = (kernelId: string) => {
     requestJupyterKernelsExtension<any>(`jump/${kernelId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     })
       .then(data => {
-//        console.log('--- Unmount Local Folder', data);
+        //        console.log('--- Unmount Local Folder', data);
       })
       .catch(reason => {
         console.error(
-          `Error while accessing the jupyter server jupyter_kernels extension.\n${reason}`
+          `Error while accessing the jupyter server jupyter_kernels extension.\n${reason}`,
         );
       });
   };
@@ -39,7 +38,7 @@ export const useRuntimes = () => {
 
   return {
     mountLocalFolder,
-    unmountLocalFolder
+    unmountLocalFolder,
   };
 };
 

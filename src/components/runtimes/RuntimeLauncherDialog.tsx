@@ -6,21 +6,39 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsMounted } from 'usehooks-ts';
 import type { IMarkdownParser, IRenderMime } from '@jupyterlab/rendermime';
-import { Button, FormControl, Select, Spinner, Text, TextInput, ToggleSwitch, Tooltip, IconButton } from '@primer/react';
+import {
+  Button,
+  FormControl,
+  Select,
+  Spinner,
+  Text,
+  TextInput,
+  ToggleSwitch,
+  Tooltip,
+  IconButton,
+} from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 import { AlertIcon } from '@primer/octicons-react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { USAGE_ROUTE } from '../../routes';
 import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
 import type { IRemoteServicesManager, RunResponseError } from '../../api';
 import type { IRuntimeSnapshot, IRuntimeDesc } from '../../models';
-import { iamStore, useCoreStore, useIAMStore, useRuntimesStore } from '../../state';
+import {
+  iamStore,
+  useCoreStore,
+  useIAMStore,
+  useRuntimesStore,
+} from '../../state';
 import { createNotebook, sleep } from '../../utils';
 import { Markdown } from '../display';
 import { Timer } from '../progress';
 import { FlashClosable } from '../flashes';
-import { RuntimeReservationControl, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES } from './RuntimeReservationControl';
+import {
+  RuntimeReservationControl,
+  MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES,
+} from './RuntimeReservationControl';
 
 /**
  * Initial time in milliseconds before retrying in case no kernels are available
@@ -88,7 +106,9 @@ export interface IKernelLauncherDialogProps {
 /**
  * Start Remote Runtime Dialog.
  */
-export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Element {
+export function KernelLauncherDialog(
+  props: IKernelLauncherDialogProps,
+): JSX.Element {
   const {
     dialogTitle,
     kernelSnapshot,
@@ -97,7 +117,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
     markdownParser,
     sanitizer,
     upgradeSubscription,
-    startKernel = true
+    startKernel = true,
   } = props;
 
   const hasExample = startKernel === 'with-example';
@@ -120,10 +140,14 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
   }
   const { jupyterLabAdapter } = useRuntimesStore();
   const [selection, setSelection] = useState(
-    (kernelSnapshot?.environment || environments[0]?.name) ?? ''
+    (kernelSnapshot?.environment || environments[0]?.name) ?? '',
   );
-  const [timeLimit, setTimeLimit] = useState<number>(Math.min(credits?.available ?? 0, 10));
-  const [runtimeName, setRuntimeName] = useState(environments[0]?.kernel?.givenNameTemplate || environments[0]?.title || '');
+  const [timeLimit, setTimeLimit] = useState<number>(
+    Math.min(credits?.available ?? 0, 10),
+  );
+  const [runtimeName, setRuntimeName] = useState(
+    environments[0]?.kernel?.givenNameTemplate || environments[0]?.title || '',
+  );
   // Whether the runtim name has been changed by the user or not
   const [hasCustomRuntimeName, setHasCustomRuntimeName] = useState(false);
   const [userStorage, setUserStorage] = useState(false);
@@ -139,13 +163,14 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
   }, [startKernel]);
   const spec = useMemo(
     () => environments.find(spec => spec.name === selection),
-    [environments, selection]
+    [environments, selection],
   );
   const description = spec?.description ?? '';
   const burningRate = spec?.burning_rate ?? 1;
   const creditsToMinutes = 1.0 / burningRate / 60.0;
   const max = Math.floor((credits?.available ?? 0) * creditsToMinutes);
-  const outOfCredits = startKernel && (!credits?.available || max < Number.EPSILON);
+  const outOfCredits =
+    startKernel && (!credits?.available || max < Number.EPSILON);
   const handleSelectionChange = useCallback(
     (e: any) => {
       const selection = (e.target as HTMLSelectElement).value;
@@ -155,7 +180,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
         setRuntimeName(spec?.kernel?.givenNameTemplate || spec?.title || '');
       }
     },
-    [setSelection, hasCustomRuntimeName]
+    [setSelection, hasCustomRuntimeName],
   );
   const handleSubmitKernel = useCallback(async () => {
     if (selection) {
@@ -168,7 +193,9 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
         location: 'remote',
         displayName: runtimeName ?? spec?.title,
       };
-      const creditsLimit = Math.min(timeLimit, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES) / creditsToMinutes;
+      const creditsLimit =
+        Math.min(timeLimit, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES) /
+        creditsToMinutes;
       desc.params = {};
       if (startKernel === 'defer') {
         desc.params['creditsLimit'] = creditsLimit;
@@ -190,38 +217,35 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
                 type: 'notebook',
                 givenName: runtimeName,
                 creditsLimit: creditsLimit,
-                capabilities: userStorage
-                  ? ['user_storage']
-                  : undefined,
-                snapshot: kernelSnapshot?.id
+                capabilities: userStorage ? ['user_storage'] : undefined,
+                snapshot: kernelSnapshot?.id,
               },
               {
                 username: user?.handle,
-                handleComms: true
-              }
+                handleComms: true,
+              },
             );
             desc.kernelId = connection.id;
             if (jupyterLabAdapter?.jupyterLab && hasExample && openExample) {
               const example = environments.find(
-                spec => spec.name === selection
+                spec => spec.name === selection,
               )?.example;
               if (example) {
                 const options = {
                   kernelId: connection.id,
-                  kernelName: connection.name
+                  kernelName: connection.name,
                 };
                 createNotebook({
                   app: jupyterLabAdapter.jupyterLab,
                   name: selection,
                   url: example,
-                  options
+                  options,
                 });
               }
             }
             // Close the connection as we are not using it.
             connection.dispose();
-          }
-          catch (error) {
+          } catch (error) {
             let msg = <Text>Failed to create the remote runtime…</Text>;
             let level: 'danger' | 'warning' = 'danger';
             let retry = false;
@@ -230,9 +254,9 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
                 retry = true;
                 msg = (
                   <Text>
-                    The runtime you have requested is currently not available due
-                    to resource limitations. Leave this dialog open, new trial
-                    in <Timer duration={retryDelay * 0.001} />
+                    The runtime you have requested is currently not available
+                    due to resource limitations. Leave this dialog open, new
+                    trial in <Timer duration={retryDelay * 0.001} />
                     {` (${availableTrial - 1}/${NOT_AVAILABLE_RETRIES}).`}
                   </Text>
                 );
@@ -243,14 +267,16 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
             } else if ((error as any).name === 'MaxRuntimesExceededError') {
               msg = (
                 <Text>
-                  You reached your remote runtime limits. Stop existing runtimes before starting new ones.
+                  You reached your remote runtime limits. Stop existing runtimes
+                  before starting new ones.
                 </Text>
               );
               level = 'warning';
             } else if ((error as any).name === 'RuntimeUnreachable') {
               msg = (
                 <Text>
-                  The runtime has been created but can not be accessed. Please contact your IT support team to report this issue.
+                  The runtime has been created but can not be accessed. Please
+                  contact your IT support team to report this issue.
                 </Text>
               );
             }
@@ -287,21 +313,21 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
     openExample,
     jupyterLabAdapter,
     timeLimit,
-    isMounted
+    isMounted,
   ]);
   const handleUserStorageChange = useCallback(
     (e: any) => {
       (e as MouseEvent).preventDefault();
       setUserStorage(!userStorage);
     },
-    [userStorage]
+    [userStorage],
   );
   const handleSwitchClick = useCallback(
     (e: any) => {
       (e as MouseEvent).preventDefault();
       setOpenExample(!openExample);
     },
-    [openExample]
+    [openExample],
   );
   const handleUpgrade = useCallback(() => {
     if (upgradeSubscription) {
@@ -317,24 +343,32 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
   return (
     <Dialog
       title={dialogTitle || 'Launch a new Runtime'}
-      onClose={() => {onSubmit(undefined);}}
+      onClose={() => {
+        onSubmit(undefined);
+      }}
       footerButtons={[
         {
           buttonType: 'default',
-          onClick: () => {onSubmit(undefined);},
+          onClick: () => {
+            onSubmit(undefined);
+          },
           content: 'Cancel',
-          disabled: waitingForRuntime
+          disabled: waitingForRuntime,
         },
         {
           buttonType: 'primary',
           onClick: handleSubmitKernel,
-          content: waitingForRuntime ?
+          content: waitingForRuntime ? (
             <Spinner size="small" />
-          :
-            startKernel ?? true ? 'Launch' : 'Assign from the Environment',
-          disabled: waitingForRuntime || outOfCredits || timeLimit < Number.EPSILON,
-          autoFocus: true
-        }
+          ) : (startKernel ?? true) ? (
+            'Launch'
+          ) : (
+            'Assign from the Environment'
+          ),
+          disabled:
+            waitingForRuntime || outOfCredits || timeLimit < Number.EPSILON,
+          autoFocus: true,
+        },
       ]}
     >
       <Box
@@ -349,11 +383,15 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
           }
         }}
       >
-        <FormControl disabled={!!kernelSnapshot?.environment || environments.length === 0}>
+        <FormControl
+          disabled={!!kernelSnapshot?.environment || environments.length === 0}
+        >
           <FormControl.Label>Environment</FormControl.Label>
           <Select
             name="environment"
-            disabled={!!kernelSnapshot?.environment || environments.length === 0}
+            disabled={
+              !!kernelSnapshot?.environment || environments.length === 0
+            }
             value={selection}
             onChange={handleSelectionChange}
             block
@@ -363,7 +401,8 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
                 {spec.name}
                 {spec.title && (
                   <>
-                    {' - '}{spec.title as string}
+                    {' - '}
+                    {spec.title as string}
                   </>
                 )}
               </Select.Option>
@@ -402,13 +441,14 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
             </>
           </FormControl.Caption>
         </FormControl>
-        {startKernel &&
+        {startKernel && (
           <RuntimeReservationControl
             addCredits={
-              navigate ?
-                () => {navigate!(USAGE_ROUTE)}
-              : 
-                undefined
+              navigate
+                ? () => {
+                    navigate!(USAGE_ROUTE);
+                  }
+                : undefined
             }
             disabled={outOfCredits}
             label={'Time reservation'}
@@ -416,15 +456,25 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
             time={timeLimit}
             burningRate={burningRate}
             onTimeChange={setTimeLimit}
-            error={outOfCredits ? 'You must add credits to your account.' : undefined}
+            error={
+              outOfCredits ? 'You must add credits to your account.' : undefined
+            }
           />
-        }
-        {!configuration.whiteLabel &&
+        )}
+        {!configuration.whiteLabel && (
           <FormControl layout="horizontal">
             <FormControl.Label id="user-storage-label">
               User storage
-              <Tooltip text={'The runtime will be slower to start.'} direction="e" style={{ marginLeft: 3 }}>
-                <IconButton icon={AlertIcon} aria-label="" variant="invisible"/>
+              <Tooltip
+                text={'The runtime will be slower to start.'}
+                direction="e"
+                style={{ marginLeft: 3 }}
+              >
+                <IconButton
+                  icon={AlertIcon}
+                  aria-label=""
+                  variant="invisible"
+                />
               </Tooltip>
             </FormControl.Label>
             <ToggleSwitch
@@ -434,7 +484,7 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
               aria-labelledby="user-storage-label"
             />
           </FormControl>
-        }
+        )}
         <FormControl sx={{ paddingTop: '10px' }}>
           <FormControl.Label>Runtime name</FormControl.Label>
           <TextInput
@@ -444,35 +494,41 @@ export function KernelLauncherDialog(props: IKernelLauncherDialogProps): JSX.Ele
             block
           />
         </FormControl>
-        {hasExample && jupyterLabAdapter?.jupyterLab && !configuration.whiteLabel &&
-          <FormControl sx={{ paddingTop: '10px' }}>
-            <FormControl.Label id="open-example-label">Open example notebook</FormControl.Label>
-            <ToggleSwitch
-              disabled={
-                !environments.find(spec => spec.name === selection)?.example
-              }
-              checked={openExample}
-              size="small"
-              onClick={handleSwitchClick}
-              aria-labelledby="open-example-label"
-            />
-          </FormControl>
-        }
-        {error &&
+        {hasExample &&
+          jupyterLabAdapter?.jupyterLab &&
+          !configuration.whiteLabel && (
+            <FormControl sx={{ paddingTop: '10px' }}>
+              <FormControl.Label id="open-example-label">
+                Open example notebook
+              </FormControl.Label>
+              <ToggleSwitch
+                disabled={
+                  !environments.find(spec => spec.name === selection)?.example
+                }
+                checked={openExample}
+                size="small"
+                onClick={handleSwitchClick}
+                aria-labelledby="open-example-label"
+              />
+            </FormControl>
+          )}
+        {error && (
           <FlashClosable
             variant={flashLevel}
             actions={
-              navigate && upgradeSubscription && flashLevel === 'warning' ?
-                <Button onClick={handleUpgrade} title={'Upgrade your subscription.'}>
+              navigate && upgradeSubscription && flashLevel === 'warning' ? (
+                <Button
+                  onClick={handleUpgrade}
+                  title={'Upgrade your subscription.'}
+                >
                   Upgrade
                 </Button>
-              :
-                undefined
+              ) : undefined
             }
           >
             {error}
           </FlashClosable>
-        }
+        )}
       </Box>
     </Dialog>
   );

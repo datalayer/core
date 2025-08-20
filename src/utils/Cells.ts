@@ -3,10 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IDataset } from "../models";
+import { IDataset } from '../models';
 
 export const getDatasetCell = (dataset: IDataset) => {
-  switch(dataset.contentType) {
+  switch (dataset.contentType) {
     case 'application/vnd.ms-excel':
     case 'text/csv':
       return `# --- ✅ Load the ${dataset.fileName}.${dataset.datasetExtension} dataset (${dataset.mimeType})
@@ -28,5 +28,4 @@ Image(url, width=300)
       return `# --- 😞 File of type ${dataset.contentType} is not supported for now.
 `;
   }
-
-}
+};

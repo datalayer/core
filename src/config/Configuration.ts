@@ -97,7 +97,7 @@ export type IDatalayerCoreConfig = {
    * Whether to display the white labelled user interface or not.
    */
   whiteLabel: boolean;
-}
+};
 
 export interface IRuntimesConfiguration {
   /**
@@ -111,10 +111,17 @@ export interface IRuntimesConfiguration {
 }
 
 export class DatalayerConfiguration {
-  private _configuration: IDatalayerCoreConfig = coreStore.getState().configuration;
-  private _configurationChanged: Signal<DatalayerConfiguration, IDatalayerCoreConfig>;
+  private _configuration: IDatalayerCoreConfig =
+    coreStore.getState().configuration;
+  private _configurationChanged: Signal<
+    DatalayerConfiguration,
+    IDatalayerCoreConfig
+  >;
   constructor() {
-    this._configurationChanged = new Signal<DatalayerConfiguration, IDatalayerCoreConfig>(this);
+    this._configurationChanged = new Signal<
+      DatalayerConfiguration,
+      IDatalayerCoreConfig
+    >(this);
   }
   set configuration(configuration: IDatalayerCoreConfig) {
     this._configuration = configuration;
@@ -123,7 +130,10 @@ export class DatalayerConfiguration {
   get configuration(): IDatalayerCoreConfig {
     return this._configuration;
   }
-  get configurationChanged(): ISignal<DatalayerConfiguration, IDatalayerCoreConfig> {
+  get configurationChanged(): ISignal<
+    DatalayerConfiguration,
+    IDatalayerCoreConfig
+  > {
     return this._configurationChanged;
   }
 }

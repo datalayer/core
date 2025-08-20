@@ -36,7 +36,6 @@ export default meta;
 type Story = StoryObj<typeof Cell | typeof Jupyter | { lite: string }>;
 
 const Template = (args, { globals: { colorScheme } }) => {
-
   const { browser, initCode, ...others } = args;
   const lite = {
     true: true,

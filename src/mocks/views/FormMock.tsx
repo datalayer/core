@@ -4,22 +4,30 @@
  */
 
 import { useState } from 'react';
-import { Box, FormControl, TextInputWithTokens, Autocomplete, Select, Textarea, Heading } from '@primer/react';
+import {
+  Box,
+  FormControl,
+  TextInputWithTokens,
+  Autocomplete,
+  Select,
+  Textarea,
+  Heading,
+} from '@primer/react';
 
 type Props = {
-  title: string
-}
+  title: string;
+};
 
 export const FormMock = (props: Props) => {
   const { title } = props;
   const [tokens, setTokens] = useState([
-    {text: 'zero', id: '0'},
-    {text: 'one', id: '1'},
-    {text: 'two', id: '2'},
-  ])
+    { text: 'zero', id: '0' },
+    { text: 'one', id: '1' },
+    { text: 'two', id: '2' },
+  ]);
   const onTokenRemove = tokenId => {
-    setTokens(tokens.filter(token => token.id !== tokenId))
-  }
+    setTokens(tokens.filter(token => token.id !== tokenId));
+  };
   return (
     <Box display="grid" sx={{ gap: 3 }}>
       <Heading>{title}</Heading>
@@ -34,13 +42,13 @@ export const FormMock = (props: Props) => {
           <Autocomplete.Overlay>
             <Autocomplete.Menu
               items={[
-                {text: 'css', id: '0'},
-                {text: 'css-in-js', id: '1'},
-                {text: 'styled-system', id: '2'},
-                {text: 'javascript', id: '3'},
-                {text: 'typescript', id: '4'},
-                {text: 'react', id: '5'},
-                {text: 'design-systems', id: '6'},
+                { text: 'css', id: '0' },
+                { text: 'css-in-js', id: '1' },
+                { text: 'styled-system', id: '2' },
+                { text: 'javascript', id: '3' },
+                { text: 'typescript', id: '4' },
+                { text: 'react', id: '5' },
+                { text: 'design-systems', id: '6' },
               ]}
               selectedItemIds={[]}
               aria-labelledby=""
@@ -62,7 +70,7 @@ export const FormMock = (props: Props) => {
         <Textarea />
       </FormControl>
     </Box>
-  )
-}
+  );
+};
 
 export default FormMock;

@@ -16,12 +16,12 @@ export const DocumentEditorToolbar = () => {
           size="small"
           leadingVisual={RepoPushIcon}
           onClick={() => documentStore.getState().save(new Date())}
-          >
-            Save
+        >
+          Save
         </Button>
       </Box>
     </Box>
-  )
-}
+  );
+};
 
 export default DocumentEditorToolbar;

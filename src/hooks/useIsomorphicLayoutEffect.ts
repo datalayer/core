@@ -10,6 +10,6 @@ const useIsomorphicLayoutEffect =
   typeof window.document !== 'undefined' &&
   typeof window.document.createElement !== 'undefined'
     ? useLayoutEffect
-    : useEffect
+    : useEffect;
 
-export default useIsomorphicLayoutEffect
+export default useIsomorphicLayoutEffect;

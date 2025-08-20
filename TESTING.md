@@ -51,10 +51,10 @@ Run `npm run test:coverage` to generate coverage reports.
 Tests should follow the existing patterns:
 
 ```typescript
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 
-describe("Component/Function Name", () => {
-  it("should describe what it tests", () => {
+describe('Component/Function Name', () => {
+  it('should describe what it tests', () => {
     expect(actual).toBe(expected);
   });
 });

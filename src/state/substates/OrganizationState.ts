@@ -9,7 +9,7 @@ import { IAnyOrganization } from '../../models';
 
 export type IOrganizationState = {
   organizations: IAnyOrganization[];
-}
+};
 
 export type OrganizationState = IOrganizationState & {
   updateOrganizations: (organizations: IAnyOrganization[]) => void;
@@ -17,14 +17,19 @@ export type OrganizationState = IOrganizationState & {
 
 export const organizationStore = createStore<OrganizationState>((set, get) => ({
   organizations: [],
-  updateOrganizations: (organizations: IAnyOrganization[]) => set((state: OrganizationState) => ({
-    organizations
-  })),
+  updateOrganizations: (organizations: IAnyOrganization[]) =>
+    set((state: OrganizationState) => ({
+      organizations,
+    })),
 }));
 
 export function useOrganizationStore(): OrganizationState;
-export function useOrganizationStore<T>(selector: (state: OrganizationState) => T): T;
-export function useOrganizationStore<T>(selector?: (state: OrganizationState) => T) {
+export function useOrganizationStore<T>(
+  selector: (state: OrganizationState) => T,
+): T;
+export function useOrganizationStore<T>(
+  selector?: (state: OrganizationState) => T,
+) {
   return useStore(organizationStore, selector!);
 }
 

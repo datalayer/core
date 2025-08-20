@@ -6,11 +6,10 @@
 /**
  * Credits level below which we refused to start a remote kernel
  * without explicit reservation.
- * 
+ *
  * TODO what is a good LOW_CREDITS bar? - A better way would be to set it from a server settings or a cloud config.
  */
 export const LOW_CREDITS = 3;
-
 
 /**
  * User credits
@@ -18,7 +17,7 @@ export const LOW_CREDITS = 3;
 export interface ICredits {
   /**
    * User credits
-   * 
+   *
    * They are the remaining credits if {@link quota} is `null`
    * otherwise they are the credit consumed (remaining credits is `quota - credits`).
    */

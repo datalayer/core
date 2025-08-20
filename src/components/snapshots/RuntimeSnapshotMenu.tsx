@@ -3,14 +3,33 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useCallback, useEffect, useState, type PropsWithChildren } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from 'react';
 import { CameraIcon } from '@datalayer/icons-react';
 import { Kernel } from '@jupyterlab/services';
-import { ActionList, ActionMenu, Box, Flash, FormControl, Select, Spinner } from '@primer/react';
+import {
+  ActionList,
+  ActionMenu,
+  Box,
+  Flash,
+  FormControl,
+  Select,
+  Spinner,
+} from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 import { useToast } from '../../hooks';
 import { type IRuntimeSnapshot } from '../../models';
-import { createRuntimeSnapshot, getRuntimeSnapshots, loadBrowserRuntimeSnapshot, loadRuntimeSnapshot, IMultiServiceManager } from '../../api';
+import {
+  createRuntimeSnapshot,
+  getRuntimeSnapshots,
+  loadBrowserRuntimeSnapshot,
+  loadRuntimeSnapshot,
+  IMultiServiceManager,
+} from '../../api';
 import { useRuntimesStore } from '../../state';
 import { createRuntimeSnapshotName } from '../../utils';
 
@@ -38,14 +57,22 @@ type IRuntimeSnapshotMenu = {
    * Whether the menu is disabled.
    */
   disabled: boolean;
-}
+};
 
 /**
  * Runtime Snapshot menu component.
  */
-export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMenu>): JSX.Element {
-  const { children, connection, podName, multiServiceManager, disabled } = props;
-  const { addRuntimeSnapshot, runtimesRunUrl, runtimeSnapshots, setRuntimeSnapshots } = useRuntimesStore();
+export function RuntimeSnapshotMenu(
+  props: PropsWithChildren<IRuntimeSnapshotMenu>,
+): JSX.Element {
+  const { children, connection, podName, multiServiceManager, disabled } =
+    props;
+  const {
+    addRuntimeSnapshot,
+    runtimesRunUrl,
+    runtimeSnapshots,
+    setRuntimeSnapshots,
+  } = useRuntimesStore();
   const { trackAsyncTask } = useToast();
   const [openLoadDialog, setOpenLoadDialog] = useState(false);
   const [loadingKernelSnapshot, setLoadingKernelSnapshot] = useState(false);
@@ -56,8 +83,8 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
     getRuntimeSnapshots()
       .then(snapshots => {
         setRuntimeSnapshots(snapshots);
-        if(!selection && snapshots.length > 0) {
-          setSelection(snapshots[0].id)
+        if (!selection && snapshots.length > 0) {
+          setSelection(snapshots[0].id);
         }
       })
       .catch(reason => {
@@ -72,7 +99,11 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
     setSelection(event.target.value);
   }, []);
   const onLoadKernelSnapshotSubmit = useCallback(
-    async ({ id, connection, podName }: {
+    async ({
+      id,
+      connection,
+      podName,
+    }: {
       id: string;
       connection?: Kernel.IKernelConnection;
       podName?: string;
@@ -82,7 +113,9 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
       } else if (connection) {
         await loadBrowserRuntimeSnapshot({ connection, id });
       }
-    }, []);
+    },
+    [],
+  );
   const onTakeKernelSnapshot = useCallback(async () => {
     try {
       setTakingSnapshot(true);
@@ -96,21 +129,20 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
           podName,
           name: snapshotName,
           description: snapshotName,
-          stop: false
+          stop: false,
         });
         ref = podName.split('-', 2).reverse()[0];
         task.then(s => {
           snapshot = s;
         });
-      }
-      else if (connection && multiServiceManager?.browser) {
+      } else if (connection && multiServiceManager?.browser) {
         const model = connection.model;
         ref = model.id;
         snapshotName = createRuntimeSnapshotName('browser');
         let isPending = true;
         task = createRuntimeSnapshot({
           connection: multiServiceManager.browser.kernels.connectTo({
-            model
+            model,
           }),
           metadata: { filename: `${snapshotName}.data` },
           onUploadProgress: () => {
@@ -121,23 +153,25 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
                 snapshot = snapshots.find(s => s.name === snapshotName);
               });
             }
-          }
+          },
         });
       }
       if (task) {
         trackAsyncTask(task, {
           error: {
             message: (reason, data) => {
-              const msg = reason === 'Empty snapshot'
-                ? `Runtime ${ref} will not be snapshotted as it does not contain any serializable state.`
-                : `Failed to pause runtime ${ref} - ${reason}`
+              const msg =
+                reason === 'Empty snapshot'
+                  ? `Runtime ${ref} will not be snapshotted as it does not contain any serializable state.`
+                  : `Failed to pause runtime ${ref} - ${reason}`;
               return msg;
-            }
+            },
           },
           pending: { message: `Taking a snapshot of runtime ${ref}…` },
           success: {
-            message: () => `Runtime ${ref} successfully snapshotted as ${snapshotName}.`
-          }
+            message: () =>
+              `Runtime ${ref} successfully snapshotted as ${snapshotName}.`,
+          },
         });
         await task;
         if (snapshot) {
@@ -179,7 +213,9 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
       {openLoadDialog && (
         <Dialog
           title="Choose a runtime snapshot to load"
-          onClose={() => {setOpenLoadDialog(false)}}
+          onClose={() => {
+            setOpenLoadDialog(false);
+          }}
           footerButtons={[
             {
               buttonType: 'default',
@@ -189,11 +225,15 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
                   event.preventDefault();
                   setOpenLoadDialog(false);
                 }
-              }
+              },
             },
             {
               buttonType: 'primary',
-              content: loadingKernelSnapshot ? <Spinner size="small" /> : 'Load',
+              content: loadingKernelSnapshot ? (
+                <Spinner size="small" />
+              ) : (
+                'Load'
+              ),
               disabled: loadingKernelSnapshot,
               onClick: async event => {
                 if (!event.defaultPrevented) {
@@ -202,13 +242,13 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
                   try {
                     setError(undefined);
                     const snapshot = runtimeSnapshots.find(
-                      s => s.id === selection
+                      s => s.id === selection,
                     );
                     if (snapshot && (connection || podName)) {
                       await onLoadKernelSnapshotSubmit({
                         connection,
                         id: snapshot.id,
-                        podName
+                        podName,
                       });
                     } else {
                       setError('No runtime snapshot found.');
@@ -219,8 +259,8 @@ export function RuntimeSnapshotMenu(props: PropsWithChildren<IRuntimeSnapshotMen
                   }
                 }
               },
-              autoFocus: true
-            }
+              autoFocus: true,
+            },
           ]}
         >
           <Box as="form">

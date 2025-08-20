@@ -24,7 +24,7 @@ export const MEMORY_UNIT_LIMITS: {
 
 export function formatForDisplay(
   numBytes: number | undefined,
-  units?: MemoryUnit | undefined
+  units?: MemoryUnit | undefined,
 ): string {
   const lu = convertToLargestUnit(numBytes, units);
   return lu[0].toFixed(2) + ' ' + lu[1];
@@ -37,7 +37,7 @@ export function formatForDisplay(
  */
 export function convertToLargestUnit(
   numBytes: number | undefined,
-  units?: MemoryUnit
+  units?: MemoryUnit,
 ): [number, MemoryUnit] {
   if (!numBytes) {
     return [0, 'B'];

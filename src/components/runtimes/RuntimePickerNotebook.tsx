@@ -4,20 +4,33 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { ActionList, FormControl, ToggleSwitch, Tooltip, IconButton } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import {
+  ActionList,
+  FormControl,
+  ToggleSwitch,
+  Tooltip,
+  IconButton,
+} from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { AlertIcon } from '@primer/octicons-react';
 import { ITranslator } from '@jupyterlab/translation';
 import { JSONExt } from '@lumino/coreutils';
 import { CommandRegistry } from '@lumino/commands';
 import { KernelExecutor } from '@datalayer/jupyter-react';
-import type { IRuntimeOptions, IMultiServiceManager, IDatalayerSessionContext } from '../../api';
+import type {
+  IRuntimeOptions,
+  IMultiServiceManager,
+  IDatalayerSessionContext,
+} from '../../api';
 import { DatalayerThemeProvider } from '../../theme';
 import { RuntimeSnippetsFacade } from '../../api';
 import { IRuntimeDesc } from '../../models';
 import { ExternalTokenSilentLogin } from '../../components/iam';
 import { useCoreStore, useIAMStore } from '../../state';
-import { RuntimeReservationControl, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES } from './RuntimeReservationControl';
+import {
+  RuntimeReservationControl,
+  MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES,
+} from './RuntimeReservationControl';
 import { RuntimeVariables } from './RuntimeVariables';
 import { RuntimePickerBase } from './RuntimePickerBase';
 import { RuntimeTransfer } from './RuntimeTransfer';
@@ -59,18 +72,25 @@ export interface IRuntimePickerNotebookProps {
 /**
  * Runtime Picker components for a Notebook.
  */
-export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.Element {
+export function RuntimePickerNotebook(
+  props: IRuntimePickerNotebookProps,
+): JSX.Element {
   const { multiServiceManager, sessionContext, setValue, translator } = props;
   const { configuration } = useCoreStore();
   const { credits, refreshCredits, token } = useIAMStore();
-  const [selectedRuntimeDesc, setSelectedRuntimeDesc] = useState<IRuntimeDesc>();
-  const [timeLimit, setTimeLimit] = useState<number>(Math.min(credits?.available ?? 0, 10));
+  const [selectedRuntimeDesc, setSelectedRuntimeDesc] =
+    useState<IRuntimeDesc>();
+  const [timeLimit, setTimeLimit] = useState<number>(
+    Math.min(credits?.available ?? 0, 10),
+  );
   const [userStorage, setUserStorage] = useState(false);
   const [canTransferFrom, setTransferFrom] = useState<boolean>(false);
   const [canTransferTo, setTransferTo] = useState<boolean>(false);
   const [transferVariables, setTransferVariables] = useState<boolean>(false);
   const [hasLoadedVariables, setHasLoadedVariables] = useState<boolean>(false);
-  const [kernelVariables, setRuntimeVariables] = useState<{[name: string]: string;}>();
+  const [kernelVariables, setRuntimeVariables] = useState<{
+    [name: string]: string;
+  }>();
   const [toTransfer, setToTransfer] = useState<string[]>([]);
   useEffect(() => {
     refreshCredits();
@@ -79,7 +99,7 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
     const specs = sessionContext.specsManager.specs?.kernelspecs;
     if (sessionContext.session?.kernel?.name && specs) {
       const spec = Object.values(specs).find(
-        spec => spec?.name === sessionContext.session!.kernel!.name
+        spec => spec?.name === sessionContext.session!.kernel!.name,
       );
       if (spec) {
         setSelectedRuntimeDesc({
@@ -87,7 +107,7 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
           kernelId: sessionContext.session.kernel.id,
           location: (sessionContext as IDatalayerSessionContext).location,
           language: spec.language,
-          displayName: sessionContext.kernelDisplayName
+          displayName: sessionContext.kernelDisplayName,
         });
         setTransferFrom(RuntimeSnippetsFacade.supports(spec.language));
       }
@@ -99,16 +119,19 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
     }
     setHasLoadedVariables(true);
     const connection = sessionContext.session!.kernel!;
-    const spec = sessionContext.specsManager.specs!.kernelspecs[connection.model.name]!;
+    const spec =
+      sessionContext.specsManager.specs!.kernelspecs[connection.model.name]!;
     const snippets = new RuntimeSnippetsFacade(spec.language);
-    const outputs = await new KernelExecutor({connection}).execute(snippets.listVariables());
+    const outputs = await new KernelExecutor({ connection }).execute(
+      snippets.listVariables(),
+    );
     const content = outputs.get(0).data['text/plain'] as string;
     if (content) {
       setRuntimeVariables(
         JSON.parse(
           // We need to remove the quotes prior to parsing.
-          content.slice(1, content.length - 1)
-        )
+          content.slice(1, content.length - 1),
+        ),
       );
       if (toTransfer.length) {
         const candidates = Object.keys(kernelVariables ?? {});
@@ -127,7 +150,7 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
         setToTransfer(l);
       }
     },
-    [toTransfer]
+    [toTransfer],
   );
   const setTransferVariable = useCallback(
     (value: boolean): void => {
@@ -141,58 +164,70 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
         setTransferVariables(value);
       }
     },
-    [transferVariables]
+    [transferVariables],
   );
-  const setRuntimeDesc = useCallback((runtimeDesc?: IRuntimeDesc): void => {
-    if (!runtimeDesc) {
-      if (selectedRuntimeDesc) {
-        setSelectedRuntimeDesc(undefined);
-        setTransferTo(false);
+  const setRuntimeDesc = useCallback(
+    (runtimeDesc?: IRuntimeDesc): void => {
+      if (!runtimeDesc) {
+        if (selectedRuntimeDesc) {
+          setSelectedRuntimeDesc(undefined);
+          setTransferTo(false);
+        }
+        return;
       }
-      return;
-    }
-    if (selectedRuntimeDesc?.displayName !== runtimeDesc.displayName || selectedRuntimeDesc?.kernelId !== runtimeDesc.kernelId) {
-      setSelectedRuntimeDesc({...runtimeDesc});
-      setTransferTo(RuntimeSnippetsFacade.supports(runtimeDesc.language));
-    }
-  },[selectedRuntimeDesc]);
+      if (
+        selectedRuntimeDesc?.displayName !== runtimeDesc.displayName ||
+        selectedRuntimeDesc?.kernelId !== runtimeDesc.kernelId
+      ) {
+        setSelectedRuntimeDesc({ ...runtimeDesc });
+        setTransferTo(RuntimeSnippetsFacade.supports(runtimeDesc.language));
+      }
+    },
+    [selectedRuntimeDesc],
+  );
   const handleUserStorageChange = useCallback(
     (e: any) => {
       (e as MouseEvent).preventDefault();
       setUserStorage(!userStorage);
     },
-    [userStorage]
+    [userStorage],
   );
   useEffect((): void => {
     const creditsLimit =
-      selectedRuntimeDesc?.location === 'remote' && selectedRuntimeDesc.burningRate
+      selectedRuntimeDesc?.location === 'remote' &&
+      selectedRuntimeDesc.burningRate
         ? Math.min(timeLimit, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES) *
           selectedRuntimeDesc.burningRate *
           60
         : undefined;
     setValue(
-      creditsLimit !== 0 ? 
-        {
-          kernel: selectedRuntimeDesc
-            ?
-              ({
-                  environmentName: ['browser', 'remote'].includes(selectedRuntimeDesc.location)
+      creditsLimit !== 0
+        ? {
+            kernel: selectedRuntimeDesc
+              ? ({
+                  environmentName: ['browser', 'remote'].includes(
+                    selectedRuntimeDesc.location,
+                  )
                     ? `${selectedRuntimeDesc.location}-${selectedRuntimeDesc.name}`
                     : selectedRuntimeDesc.name,
                   id: selectedRuntimeDesc.kernelId,
                   creditsLimit,
-                  capabilities: userStorage ? ['user_storage'] : undefined
-                } satisfies Partial<Omit<IRuntimeOptions, 'kernelType'> & { id: string;}> | null
-              )
-            :
-              null,
-          selectedVariables: toTransfer,
-        }
-        : new Error('Credits limit must be strictly positive.')
+                  capabilities: userStorage ? ['user_storage'] : undefined,
+                } satisfies Partial<
+                  Omit<IRuntimeOptions, 'kernelType'> & { id: string }
+                > | null)
+              : null,
+            selectedVariables: toTransfer,
+          }
+        : new Error('Credits limit must be strictly positive.'),
     );
   }, [selectedRuntimeDesc, userStorage, toTransfer, timeLimit]);
-  const { kernelPreference: { canStart } } = sessionContext;
-  const max = Math.floor((credits?.available ?? 0) / (selectedRuntimeDesc?.burningRate ?? -1) / 60.0);
+  const {
+    kernelPreference: { canStart },
+  } = sessionContext;
+  const max = Math.floor(
+    (credits?.available ?? 0) / (selectedRuntimeDesc?.burningRate ?? -1) / 60.0,
+  );
   const outOfCredits = !credits?.available || max < Number.EPSILON;
   return (
     <DatalayerThemeProvider>
@@ -203,15 +238,18 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
             disabled={canStart === false}
             preference={{
               id: sessionContext.session?.id,
-              kernelDisplayName: sessionContext.kernelPreference.shouldStart ? sessionContext.kernelDisplayName : undefined,
+              kernelDisplayName: sessionContext.kernelPreference.shouldStart
+                ? sessionContext.kernelDisplayName
+                : undefined,
             }}
             sessionContext={sessionContext}
             multiServiceManager={multiServiceManager}
             translator={translator}
             runtimeDesc={selectedRuntimeDesc}
             setRuntimeDesc={setRuntimeDesc}
-            postActions={token || !props.logIn ?
-              /*
+            postActions={
+              token || !props.logIn ? (
+                /*
               <Button
                 variant="default"
                 onClick={e => {
@@ -223,51 +261,75 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
                 Launch a New Runtime
               </Button>
               */
-              <></>
-            :
-              <ActionList.Item onSelect={props.logIn} title={'Connect to Runtime provider.'}>
-                <ExternalTokenSilentLogin message="Connect to the Runtime provider" />
-              </ActionList.Item>
+                <></>
+              ) : (
+                <ActionList.Item
+                  onSelect={props.logIn}
+                  title={'Connect to Runtime provider.'}
+                >
+                  <ExternalTokenSilentLogin message="Connect to the Runtime provider" />
+                </ActionList.Item>
+              )
             }
           />
         </Box>
-        {!selectedRuntimeDesc?.kernelId && selectedRuntimeDesc?.location === 'remote' &&
-          <>
-            <RuntimeReservationControl
-              disabled={outOfCredits || selectedRuntimeDesc?.location !== 'remote'}
-              label={'Time reservation'}
-              max={max < 0 ? 1 : max}
-              time={timeLimit}
-              onTimeChange={setTimeLimit}
-              error={
-                outOfCredits && max >= 0 ?
-                  'You must add credits to your account.'
-                  : timeLimit === 0
-                    ? 'You must set a time limit.'
-                    : undefined
-              }
-              burningRate={selectedRuntimeDesc.burningRate}
-            />
-            {!configuration.whiteLabel &&
-              <FormControl disabled={!!selectedRuntimeDesc?.kernelId || selectedRuntimeDesc?.location !== 'remote'} layout="horizontal">
-                <FormControl.Label id="user-storage-picker-label">
-                  User storage
-                  <Tooltip text='The runtime will be slower to start.' direction="e" style={{ marginLeft: 3 }}>
-                    <IconButton icon={AlertIcon} aria-label="" variant="invisible"/>
-                  </Tooltip>
-                </FormControl.Label>
-                <ToggleSwitch
-                  disabled={!!selectedRuntimeDesc?.kernelId ||selectedRuntimeDesc?.location !== 'remote'}
-                  checked={userStorage}
-                  size="small"
-                  onClick={handleUserStorageChange}
-                  aria-labelledby="user-storage-picker-label"
-                />
-              </FormControl>
-            }
-          </>
-        }
-        {canTransferFrom && canTransferTo &&
+        {!selectedRuntimeDesc?.kernelId &&
+          selectedRuntimeDesc?.location === 'remote' && (
+            <>
+              <RuntimeReservationControl
+                disabled={
+                  outOfCredits || selectedRuntimeDesc?.location !== 'remote'
+                }
+                label={'Time reservation'}
+                max={max < 0 ? 1 : max}
+                time={timeLimit}
+                onTimeChange={setTimeLimit}
+                error={
+                  outOfCredits && max >= 0
+                    ? 'You must add credits to your account.'
+                    : timeLimit === 0
+                      ? 'You must set a time limit.'
+                      : undefined
+                }
+                burningRate={selectedRuntimeDesc.burningRate}
+              />
+              {!configuration.whiteLabel && (
+                <FormControl
+                  disabled={
+                    !!selectedRuntimeDesc?.kernelId ||
+                    selectedRuntimeDesc?.location !== 'remote'
+                  }
+                  layout="horizontal"
+                >
+                  <FormControl.Label id="user-storage-picker-label">
+                    User storage
+                    <Tooltip
+                      text="The runtime will be slower to start."
+                      direction="e"
+                      style={{ marginLeft: 3 }}
+                    >
+                      <IconButton
+                        icon={AlertIcon}
+                        aria-label=""
+                        variant="invisible"
+                      />
+                    </Tooltip>
+                  </FormControl.Label>
+                  <ToggleSwitch
+                    disabled={
+                      !!selectedRuntimeDesc?.kernelId ||
+                      selectedRuntimeDesc?.location !== 'remote'
+                    }
+                    checked={userStorage}
+                    size="small"
+                    onClick={handleUserStorageChange}
+                    aria-labelledby="user-storage-picker-label"
+                  />
+                </FormControl>
+              )}
+            </>
+          )}
+        {canTransferFrom && canTransferTo && (
           <RuntimeVariables
             selectedVariables={toTransfer}
             setSelectVariable={setSelectedVariables}
@@ -276,7 +338,7 @@ export function RuntimePickerNotebook(props: IRuntimePickerNotebookProps): JSX.E
             kernelVariables={kernelVariables}
             translator={translator}
           />
-        }
+        )}
       </Box>
     </DatalayerThemeProvider>
   );

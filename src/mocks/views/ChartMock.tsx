@@ -4,15 +4,18 @@
  */
 
 import { Heading } from '@primer/react-brand';
-import { lazyWithPreload, WithSuspense } from "../../utils";
+import { lazyWithPreload, WithSuspense } from '../../utils';
 import { HorizontalCenter } from '../../components/display';
 import { CHART_4 } from './ChartMockOptions';
 
-const ReactEcharts = WithSuspense(lazyWithPreload(() => import("echarts-for-react")), true);
+const ReactEcharts = WithSuspense(
+  lazyWithPreload(() => import('echarts-for-react')),
+  true,
+);
 
 type Props = {
-  title: string
-}
+  title: string;
+};
 
 export const ChartMock = (props: Props) => {
   const { title } = props;
@@ -21,7 +24,7 @@ export const ChartMock = (props: Props) => {
       <Heading size="3">{title}</Heading>
       <ReactEcharts
         option={CHART_4}
-        style={{ width: "600px", height: "300px" }}
+        style={{ width: '600px', height: '300px' }}
       />
     </HorizontalCenter>
   );

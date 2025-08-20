@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Spinner, Text } from "@primer/react";
-import { Box } from "@datalayer/primer-addons";
+import { Spinner, Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 
 declare const sizeMap: {
   small: string;
@@ -14,8 +14,8 @@ declare const sizeMap: {
 
 type ICenteredSpinnerProps = {
   message?: string;
-  size?:  keyof typeof sizeMap;
-}
+  size?: keyof typeof sizeMap;
+};
 
 export const CenteredSpinner = (props: ICenteredSpinnerProps) => {
   const { message, size } = props;
@@ -25,17 +25,17 @@ export const CenteredSpinner = (props: ICenteredSpinnerProps) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '40px'
+        minHeight: '40px',
       }}
     >
       <Spinner size={size} />
-      { message && <Text sx={{ marginLeft: 3 }}>{message}</Text> }
+      {message && <Text sx={{ marginLeft: 3 }}>{message}</Text>}
     </Box>
-  )
-}
+  );
+};
 
 CenteredSpinner.defaultProps = {
-  size: "medium",
+  size: 'medium',
 } as Partial<ICenteredSpinnerProps>;
 
 export default CenteredSpinner;

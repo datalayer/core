@@ -11,7 +11,7 @@ describe('@datalayer/core - Integration Tests', () => {
     const testNumber: number = 42;
     const testString: string = 'hello';
     const testBoolean: boolean = true;
-    
+
     expect(typeof testNumber).toBe('number');
     expect(typeof testString).toBe('string');
     expect(typeof testBoolean).toBe('boolean');

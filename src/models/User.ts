@@ -4,8 +4,8 @@
  */
 
 import { asDisplayName, namesAsInitials } from '../utils';
-import { IInvite } from "./Invite";
-import { asIAMProviderLinked, IIAMProviderLinked } from "./IAMProviderLinked";
+import { IInvite } from './Invite';
+import { asIAMProviderLinked, IIAMProviderLinked } from './IAMProviderLinked';
 import { BOOTSTRAP_USER_ONBOARDING, IUserOnboarding } from './UserOnboarding';
 import { IUserSettings, UserSettings } from './UserSettings';
 import { asUserEvent, IUserEvent } from './UserEvent';
@@ -32,7 +32,8 @@ const USER_COLORS = [
 /**
  * Get a random color from the list of colors.
  */
-export const getUserRandomColor = (): string => USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)];
+export const getUserRandomColor = (): string =>
+  USER_COLORS[Math.floor(Math.random() * USER_COLORS.length)];
 
 export class User implements IUser {
   id: string;
@@ -65,16 +66,18 @@ export class User implements IUser {
     this.lastName = u.last_name_t;
     this.initials = namesAsInitials(u.first_name_t, u.last_name_t);
     const displayName = asDisplayName(u.first_name_t, u.last_name_t);
-    this.displayName = displayName === "" ? u.handle_s : displayName;
+    this.displayName = displayName === '' ? u.handle_s : displayName;
     this.avatarUrl = u.avatar_url_s;
     this.origin = u.origin_s;
     this.joinDate = u.join_ts_dt ? new Date(u.join_ts_dt) : undefined;
     this.credits = u.credits_i ? Number(u.credits_i) : 0;
     this.creditsCustomerId = u.credits_customer_uid;
     this.roles = u.roles_ss ?? [];
-    let iamProviders = []
+    let iamProviders = [];
     try {
-      iamProviders = (u.iam_providers ?? []).map(iamProvider => asIAMProviderLinked(iamProvider));
+      iamProviders = (u.iam_providers ?? []).map(iamProvider =>
+        asIAMProviderLinked(iamProvider),
+      );
     } catch (e) {
       // no-op for backwards compatibility.
     }
@@ -82,7 +85,9 @@ export class User implements IUser {
     this.settings = new UserSettings(u.settings ?? {});
     this.unsubscribedFromOutbounds = u.unsubscribed_from_outbounds_b ?? false;
     this.mfaUrl = u.mfa_url_s;
-    this.onboarding = u.onboarding_s ? JSON.parse(u.onboarding_s) : BOOTSTRAP_USER_ONBOARDING;
+    this.onboarding = u.onboarding_s
+      ? JSON.parse(u.onboarding_s)
+      : BOOTSTRAP_USER_ONBOARDING;
     this.linkedContactId = u.linked_contact_uid;
     let events = u.events ?? [];
     if (!Array.isArray(events)) {
@@ -95,7 +100,6 @@ export class User implements IUser {
   public setRoles(roles: string[]) {
     this.roles = roles;
   }
-
 }
 
 /**
@@ -117,7 +121,7 @@ export type IBaseUser = {
   joinDate?: Date;
   roles: string[];
   setRoles: (roles: string[]) => void;
-}
+};
 
 export type IUser = IBaseUser & {
   id: string;
@@ -134,6 +138,6 @@ export type IUser = IBaseUser & {
   onboarding: IUserOnboarding;
   linkedContactId?: string;
   events: Array<IUserEvent>;
-}
+};
 
 export default IUser;

@@ -7,11 +7,11 @@ import { Kernel } from '@jupyterlab/services';
 
 export const BACKWARDS_COMPATIBLE_KERNEL_TYPES_MAP = {
   // Backwards compatible mapping.
-  'default': 'notebook' as IRuntimeType,
-  'snippet': 'cell' as IRuntimeType,
-  'notebook': 'notebook' as IRuntimeType,
-  'cell': 'cell' as IRuntimeType,
-}
+  default: 'notebook' as IRuntimeType,
+  snippet: 'cell' as IRuntimeType,
+  notebook: 'notebook' as IRuntimeType,
+  cell: 'cell' as IRuntimeType,
+};
 
 /**
  * Error thrown when a runtime has been created
@@ -24,11 +24,7 @@ export class RuntimeUnreachable extends Error {
 /**
  * Runtime location.
  */
-export type IRuntimeLocation =
-| 'browser'
-| 'local'
-| string
-;
+export type IRuntimeLocation = 'browser' | 'local' | string;
 
 /**
  * Runtime model.
@@ -82,10 +78,7 @@ export interface IRuntimeDesc {
  *
  * TODO refactor with type { RuntimeLocation }
  */
-export type IRuntimeType =
-| 'notebook'
-| 'cell'
-;
+export type IRuntimeType = 'notebook' | 'cell';
 
 /**
  * Runtime optional capabilities.

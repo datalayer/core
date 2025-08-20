@@ -13,7 +13,7 @@ export type IAIAgent = {
   documentId: string;
   /**
    * ID of the runtime connected to the agent.
-   * 
+   *
    * This is not the name of the remote pod but
    * the Jupyter Kernel ID of the process within it.
    */

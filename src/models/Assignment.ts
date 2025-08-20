@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IBaseNotebook } from "./Notebook";
-import { IStudentItem } from "./StudentItem";
+import { IBaseNotebook } from './Notebook';
+import { IStudentItem } from './StudentItem';
 
 export type IAssignment = IBaseNotebook & {
   type: 'assignment';

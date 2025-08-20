@@ -9,7 +9,7 @@ import { IBaseSpace } from '../../models';
 
 export type ISpaceState = {
   spaces: IBaseSpace[];
-}
+};
 
 export type SpaceState = ISpaceState & {
   updateSpaces: (spaces: IBaseSpace[]) => void;
@@ -17,9 +17,10 @@ export type SpaceState = ISpaceState & {
 
 export const spaceStore = createStore<SpaceState>((set, get) => ({
   spaces: [],
-  updateSpaces: (spaces: IBaseSpace[]) => set((state: SpaceState) => ({
-    spaces
-  })),
+  updateSpaces: (spaces: IBaseSpace[]) =>
+    set((state: SpaceState) => ({
+      spaces,
+    })),
 }));
 
 export function useSpaceStore(): SpaceState;

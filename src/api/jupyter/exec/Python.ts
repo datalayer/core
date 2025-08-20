@@ -101,8 +101,8 @@ _change_current_directory()
 export function getOutputCandidates(code: string): string[] {
   return Array.from(
     code.matchAll(
-      /^((?<output>[A-z][\w]*)\s*=[^=]|\((?<walrus>[A-z][\w]*)\s*:=[^=)]+\))/gm
-    )
+      /^((?<output>[A-z][\w]*)\s*=[^=]|\((?<walrus>[A-z][\w]*)\s*:=[^=)]+\))/gm,
+    ),
   )
     .map(match => match.groups?.output ?? match.groups?.walrus ?? '')
     .filter(n => !!n);

@@ -3,18 +3,24 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import { Flash } from '@primer/react';
 
-export const ErrorMessage: React.FC<{ message: Array<string> | string | null }> = ({
-  message
-}) => {
+export const ErrorMessage: React.FC<{
+  message: Array<string> | string | null;
+}> = ({ message }) => {
   if (message instanceof Array) {
-    return <div>
-      {message.map( (m, i) => <Flash variant="danger" key={i}>{m}</Flash>)}
-    </div>
+    return (
+      <div>
+        {message.map((m, i) => (
+          <Flash variant="danger" key={i}>
+            {m}
+          </Flash>
+        ))}
+      </div>
+    );
   } else {
-    return <Flash variant="danger">{message}</Flash>
+    return <Flash variant="danger">{message}</Flash>;
   }
 };
 

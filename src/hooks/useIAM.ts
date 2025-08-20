@@ -5,8 +5,20 @@
 
 import { useEffect, useState } from 'react';
 import { useCache } from './useCache';
-import { coreStore, useIAMStore, useLayoutStore, useOrganizationStore, useSpaceStore } from '../state';
-import { asUser, IUser, ANONYMOUS_USER, ANONYMOUS_USER_TOKEN, IIAMResponseType } from '../models';
+import {
+  coreStore,
+  useIAMStore,
+  useLayoutStore,
+  useOrganizationStore,
+  useSpaceStore,
+} from '../state';
+import {
+  asUser,
+  IUser,
+  ANONYMOUS_USER,
+  ANONYMOUS_USER_TOKEN,
+  IIAMResponseType,
+} from '../models';
 import { requestDatalayerAPI, type RunResponseError } from '../api';
 
 export type IAMStateProps = {
@@ -16,7 +28,7 @@ export type IAMStateProps = {
 };
 
 export const useIAM = (
-  props: IAMStateProps = { user: undefined, token: undefined }
+  props: IAMStateProps = { user: undefined, token: undefined },
 ) => {
   const { token } = props;
   const [iamState, setIAMState] = useState(props);
@@ -30,7 +42,7 @@ export const useIAM = (
     logout: () => void,
     refresh: (token: string) => void,
     navigate?: (location: string, e?: any, resetPortals?: boolean) => void,
-    homeRoute?: string
+    homeRoute?: string,
   ): Promise<void> => {
     try {
       const resp = await requestDatalayerAPI<IIAMResponseType>({
@@ -81,14 +93,13 @@ export const useIAM = (
   };
   useEffect(() => {
     if (token) {
-      whoami()
-      .then(resp => {
+      whoami().then(resp => {
         if (resp.success) {
           const user = asUser(resp.profile);
           setIAMState({ user, token });
           iamStore.setLogin(user, token);
           // TODO centralize user settings management.
-          const aiagentsRunUrl= user.settings?.aiAgentsUrl;
+          const aiagentsRunUrl = user.settings?.aiAgentsUrl;
           if (aiagentsRunUrl) {
             coreStore.getState().setConfiguration({
               aiagentsRunUrl,
@@ -103,7 +114,7 @@ export const useIAM = (
     token: iamState.token,
     loginAndNavigate,
     setLogin,
-    logout
+    logout,
   };
 };
 

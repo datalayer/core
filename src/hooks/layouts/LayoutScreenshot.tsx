@@ -3,35 +3,36 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-
-import { useEffect } from "react";
-import { Box } from "@primer/react";
+import { useEffect } from 'react';
+import { Box } from '@primer/react';
 import { useScreenshot, useToast } from '..';
-import { lazyWithPreload, WithSuspense } from "../../utils";
+import { lazyWithPreload, WithSuspense } from '../../utils';
 import { useLayoutStore, ScreenshotDisplay } from '../../state';
 
 import './LayoutScreenshot.css';
 
-const ScreenCapture = WithSuspense(lazyWithPreload(() => import("../../components/screenshot/ScreenCapture")));
+const ScreenCapture = WithSuspense(
+  lazyWithPreload(() => import('../../components/screenshot/ScreenCapture')),
+);
 
 type IContentScreenshotProps = {
   screenshotDisplay: ScreenshotDisplay;
-}
+};
 
 type ICaptureProps = {
-  onStartCapture: () => void,
-}
+  onStartCapture: () => void;
+};
 
 const Capture = (props: ICaptureProps) => {
   const { onStartCapture } = props;
   useEffect(() => {
     onStartCapture();
-  }, [])
-  return <></>
-}
+  }, []);
+  return <></>;
+};
 
 const ScreenshotContent = (props: IContentScreenshotProps) => {
-//  const { screenshotDisplay } = props;
+  //  const { screenshotDisplay } = props;
   const { enqueueToast } = useToast();
   const { setScreenCapture, hideScreenshot } = useLayoutStore();
   const handleScreenCapture = (screenCapture: string) => {
@@ -42,25 +43,25 @@ const ScreenshotContent = (props: IContentScreenshotProps) => {
   return (
     <Box>
       <ScreenCapture onEndCapture={handleScreenCapture}>
-        {({ onStartCapture }) => (
-          <Capture onStartCapture={onStartCapture}/>
-        )}
+        {({ onStartCapture }) => <Capture onStartCapture={onStartCapture} />}
       </ScreenCapture>
     </Box>
-  )
-}
+  );
+};
 
 export const LayoutScreenshot = () => {
   const { screenshot } = useLayoutStore();
   const { displayScreenshot, closeScreenshot } = useScreenshot();
   useEffect(() => {
     if (screenshot && screenshot.open) {
-      displayScreenshot(() => <ScreenshotContent screenshotDisplay={screenshot}/>);
+      displayScreenshot(() => (
+        <ScreenshotContent screenshotDisplay={screenshot} />
+      ));
     } else {
       closeScreenshot();
     }
   }, [screenshot]);
-  return <></>
-}
- 
+  return <></>;
+};
+
 export default LayoutScreenshot;

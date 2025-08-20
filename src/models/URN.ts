@@ -3,7 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-
 export class URN implements IURN {
   private _partition: string;
   private _service: string;
@@ -11,10 +10,10 @@ export class URN implements IURN {
   private _account: string;
   private _type: string;
   private _uid: string;
-//  private _path: string;
+  //  private _path: string;
 
   constructor(urn: string) {
-    const parts = urn.split(":");
+    const parts = urn.split(':');
     this._partition = parts[1];
     this._service = parts[2];
     this._region = parts[3];
@@ -46,7 +45,6 @@ export class URN implements IURN {
   get uid() {
     return this._uid;
   }
-
 }
 
 /**
@@ -96,5 +94,5 @@ export type IURN = {
   account: string;
   type: string;
   uid: string;
-//  path: string;
-}
+  //  path: string;
+};

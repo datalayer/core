@@ -4,7 +4,7 @@
  */
 
 import { FormControl, IconButton, Text, TextInput } from '@primer/react';
-import { Box } from "@datalayer/primer-addons";
+import { Box } from '@datalayer/primer-addons';
 import { PlusIcon } from '@primer/octicons-react';
 import { Slider } from '@datalayer/primer-addons';
 
@@ -56,7 +56,9 @@ export interface IKernelReservationControlProps {
 /**
  * Runtime reservation control
  */
-export function RuntimeReservationControl(props: IKernelReservationControlProps): JSX.Element {
+export function RuntimeReservationControl(
+  props: IKernelReservationControlProps,
+): JSX.Element {
   const {
     addCredits,
     burningRate,
@@ -70,65 +72,71 @@ export function RuntimeReservationControl(props: IKernelReservationControlProps)
   const max = Math.min(maxProps, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES);
   // Temporary workaround to not show disabled components.
   const hidden = disabled;
-  return (
-    !hidden ?
-      <FormControl disabled={disabled} sx={{ paddingBottom: 'var(--stack-padding-condensed)' }}>
-        <FormControl.Label>{label}</FormControl.Label>
-        <Box
-          style={{
-            alignItems: 'center',
-            display: 'grid',
-            gridTemplateColumns: 'max-content 1fr max-content max-content',
-            gridGap: 'var(--stack-gap-condensed)',
-            width: '100%'
+  return !hidden ? (
+    <FormControl
+      disabled={disabled}
+      sx={{ paddingBottom: 'var(--stack-padding-condensed)' }}
+    >
+      <FormControl.Label>{label}</FormControl.Label>
+      <Box
+        style={{
+          alignItems: 'center',
+          display: 'grid',
+          gridTemplateColumns: 'max-content 1fr max-content max-content',
+          gridGap: 'var(--stack-gap-condensed)',
+          width: '100%',
+        }}
+      >
+        <Slider
+          step={1}
+          min={1}
+          max={max}
+          value={time}
+          onChange={onTimeChange}
+          disabled={disabled}
+          label=""
+          displayValue={false}
+        />
+        <TextInput
+          type="number"
+          step="1"
+          min="1"
+          max={max}
+          disabled={disabled}
+          value={Math.min(max, time).toFixed(2)}
+          onChange={event => {
+            onTimeChange(parseFloat(event.target.value));
           }}
-        >
-          <Slider
-            step={1}
-            min={1}
-            max={max}
-            value={time}
-            onChange={onTimeChange}
-            disabled={disabled}
-            label=""
-            displayValue={false}
-          />
-          <TextInput
-            type="number"
-            step="1"
-            min="1"
-            max={max}
-            disabled={disabled}
-            value={Math.min(max, time).toFixed(2)}
-            onChange={event => {
-              onTimeChange(parseFloat(event.target.value));
-            }}
-          />
-          {(max === 0 || max > Number.EPSILON) && (
-            <>
-              <Text>out of {maxProps} available minutes</Text>
-              {addCredits &&
-                <IconButton
-                  icon={PlusIcon}
-                  aria-label="Add credits"
-                  onClick={() => addCredits()}
-                />
-              }
-            </>
-          )}
-        </Box>
-        <FormControl.Caption>
-          Maximum execution time that can be consumed by the runtime. It must be less than {(MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES / 60).toFixed(0)}{' '} hours.
-          {burningRate &&
-            <>
-              <br />
-              {`With the current value, the runtime execution will consume at most ${(time * burningRate * 60).toFixed(2)} credits.`}
-            </>
-          }
-        </FormControl.Caption>
-        {error && <FormControl.Validation variant="error">{error}</FormControl.Validation>}
-      </FormControl>
-    :
-      <></>
+        />
+        {(max === 0 || max > Number.EPSILON) && (
+          <>
+            <Text>out of {maxProps} available minutes</Text>
+            {addCredits && (
+              <IconButton
+                icon={PlusIcon}
+                aria-label="Add credits"
+                onClick={() => addCredits()}
+              />
+            )}
+          </>
+        )}
+      </Box>
+      <FormControl.Caption>
+        Maximum execution time that can be consumed by the runtime. It must be
+        less than {(MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES / 60).toFixed(0)}{' '}
+        hours.
+        {burningRate && (
+          <>
+            <br />
+            {`With the current value, the runtime execution will consume at most ${(time * burningRate * 60).toFixed(2)} credits.`}
+          </>
+        )}
+      </FormControl.Caption>
+      {error && (
+        <FormControl.Validation variant="error">{error}</FormControl.Validation>
+      )}
+    </FormControl>
+  ) : (
+    <></>
   );
 }

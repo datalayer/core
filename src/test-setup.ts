@@ -7,7 +7,7 @@
 // Add any global test configuration here
 
 // Define webpack globals that are expected by some dependencies
-(global as any).__webpack_public_path__ = "";
+(global as any).__webpack_public_path__ = '';
 
 // Define other globals that might be needed
 (global as any).global = globalThis;
@@ -17,7 +17,7 @@ class MockDragEvent extends Event {
   dataTransfer: DataTransfer | null = null;
   constructor(type: string, init?: DragEventInit) {
     super(type, init);
-    this.dataTransfer = (init?.dataTransfer || null);
+    this.dataTransfer = init?.dataTransfer || null;
   }
 }
 
@@ -28,9 +28,11 @@ class MockDataTransfer {
   files: FileList = [] as any;
   items: DataTransferItemList = [] as any;
   types: string[] = [];
-  
+
   clearData(format?: string): void {}
-  getData(format: string): string { return ''; }
+  getData(format: string): string {
+    return '';
+  }
   setData(format: string, data: string): void {}
   setDragImage(image: Element, x: number, y: number): void {}
 }

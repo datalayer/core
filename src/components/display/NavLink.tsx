@@ -23,5 +23,5 @@ export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(
         {children}
       </a>
     );
-  }
+  },
 );

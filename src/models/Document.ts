@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IItem } from "./Item";
+import { IItem } from './Item';
 
 export type IBaseDocument = IItem & {
   model?: any;

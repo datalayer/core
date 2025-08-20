@@ -7,14 +7,17 @@ import { YNotebook } from '@jupyter/ydoc';
 import { WebsocketProvider } from 'y-websocket';
 import { URLExt } from '@jupyterlab/coreutils';
 import { Signal } from '@lumino/signaling';
-import type { ICollaborationProvider, ICollaborationProviderEvents } from '@datalayer/jupyter-react';
+import type {
+  ICollaborationProvider,
+  ICollaborationProviderEvents,
+} from '@datalayer/jupyter-react';
 
 // Import CollaborationStatus enum separately since it's exported
 enum CollaborationStatus {
   Disconnected = 'disconnected',
   Connecting = 'connecting',
   Connected = 'connected',
-  Error = 'error'
+  Error = 'error',
 }
 import { requestDatalayerCollaborationSessionId } from './DatalayerCollaboration';
 import { datalayerStore } from '../state/DatalayerState';
@@ -35,12 +38,12 @@ export interface IDatalayerCollaborationConfig {
 
 /**
  * Datalayer collaboration provider
- * 
+ *
  * This provider connects to Datalayer's collaboration service using WebSockets.
  */
 export class DatalayerCollaborationProvider implements ICollaborationProvider {
   readonly type = 'datalayer';
-  
+
   private _status: CollaborationStatus = CollaborationStatus.Disconnected;
   private _provider: WebsocketProvider | null = null;
   private _sharedModel: YNotebook | null = null;
@@ -48,27 +51,28 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
   private _errorOccurred = new Signal<this, Error>(this);
   private _syncStateChanged = new Signal<this, boolean>(this);
   private _isDisposed = false;
-  
+
   private _config: IDatalayerCollaborationConfig;
   private _onSync: ((isSynced: boolean) => void) | null = null;
-  private _onConnectionClose: ((event: CloseEvent | null) => void) | null = null;
+  private _onConnectionClose: ((event: CloseEvent | null) => void) | null =
+    null;
 
   constructor(config: IDatalayerCollaborationConfig) {
     this._config = config;
   }
-  
+
   get status(): CollaborationStatus {
     return this._status;
   }
-  
+
   get isConnected(): boolean {
     return this._status === CollaborationStatus.Connected;
   }
-  
+
   get isDisposed(): boolean {
     return this._isDisposed;
   }
-  
+
   get events(): ICollaborationProviderEvents {
     return {
       statusChanged: this._statusChanged,
@@ -76,7 +80,7 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
       syncStateChanged: this._syncStateChanged,
     };
   }
-  
+
   private setStatus(status: CollaborationStatus): void {
     if (this._status !== status) {
       this._status = status;
@@ -87,7 +91,7 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
   async connect(
     sharedModel: YNotebook,
     documentId: string,
-    options?: Record<string, any>
+    options?: Record<string, any>,
   ): Promise<void> {
     if (this.isConnected) {
       console.warn('Already connected to Datalayer collaboration service');
@@ -169,11 +173,11 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
     this._sharedModel = null;
     this.setStatus(CollaborationStatus.Disconnected);
   }
-  
+
   getProvider(): WebsocketProvider | null {
     return this._provider;
   }
-  
+
   getSharedModel(): YNotebook | null {
     return this._sharedModel;
   }
@@ -181,21 +185,21 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
   handleConnectionClose(event: CloseEvent): void {
     console.warn('Collaboration connection closed:', event);
     this.setStatus(CollaborationStatus.Disconnected);
-    
+
     // Handle session expiration (code 4002)
     if (event.code === 4002) {
       console.warn('Datalayer collaboration session expired');
       // Attempt to reconnect could be implemented here
     }
   }
-  
+
   handleSync(isSynced: boolean): void {
     this._syncStateChanged.emit(isSynced);
     if (isSynced) {
       this.setStatus(CollaborationStatus.Connected);
     }
   }
-  
+
   dispose(): void {
     if (this._isDisposed) {
       return;

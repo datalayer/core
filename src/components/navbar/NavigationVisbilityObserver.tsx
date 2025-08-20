@@ -3,29 +3,33 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, {useCallback, useRef, useState} from 'react'
-import clsx from 'clsx'
-import {ChevronDownIcon} from '@primer/octicons-react'
+import React, { useCallback, useRef, useState } from 'react';
+import clsx from 'clsx';
+import { ChevronDownIcon } from '@primer/octicons-react';
 
-import {BaseProps} from '../primer'
-import {useVisibilityObserver} from '../../hooks/useVisibilityObserver'
-import {useOnClickOutside} from '../../hooks/useOnClickOutside'
-import type {VisibilityMap} from '../../hooks/useVisibilityObserver'
+import { BaseProps } from '../primer';
+import { useVisibilityObserver } from '../../hooks/useVisibilityObserver';
+import { useOnClickOutside } from '../../hooks/useOnClickOutside';
+import type { VisibilityMap } from '../../hooks/useVisibilityObserver';
 
-import {useKeyboardEscape} from '../../hooks/useKeyboardEscape'
-import {useWindowSize} from '../../hooks/useWindowSize'
+import { useKeyboardEscape } from '../../hooks/useKeyboardEscape';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
-import styles from './SubdomainNavBar.module.css'
+import styles from './SubdomainNavBar.module.css';
 
-export function NavigationVisbilityObserver({children, className, ...rest}) {
-  const navRef = useRef<HTMLUListElement | null>(null)
-  const [visibilityMap] = useVisibilityObserver(navRef, children)
-  const {isMedium} = useWindowSize()
+export function NavigationVisbilityObserver({ children, className, ...rest }) {
+  const navRef = useRef<HTMLUListElement | null>(null);
+  const [visibilityMap] = useVisibilityObserver(navRef, children);
+  const { isMedium } = useWindowSize();
 
-  const showOverflow = Object.values(visibilityMap).includes(false)
+  const showOverflow = Object.values(visibilityMap).includes(false);
 
   return (
-    <ul className={clsx(styles['SubdomainNavBar-primary-nav-list'], className)} ref={navRef} {...rest}>
+    <ul
+      className={clsx(styles['SubdomainNavBar-primary-nav-list'], className)}
+      ref={navRef}
+      {...rest}
+    >
       {React.Children.map(children, child => {
         return React.cloneElement(child, {
           className: clsx(
@@ -37,48 +41,65 @@ export function NavigationVisbilityObserver({children, className, ...rest}) {
               !visibilityMap[child.props['data-navitemid']] &&
               styles['SubdomainNavBar-primary-nav-list-item--invisible'],
           ),
-        })
+        });
       })}
 
-      {showOverflow && <AnchoredOverlay visibilityMap={visibilityMap}>{children}</AnchoredOverlay>}
+      {showOverflow && (
+        <AnchoredOverlay visibilityMap={visibilityMap}>
+          {children}
+        </AnchoredOverlay>
+      )}
     </ul>
-  )
+  );
 }
 
 type AnchoredOverlayProps = {
-  visibilityMap: VisibilityMap
-} & BaseProps<HTMLDivElement>
+  visibilityMap: VisibilityMap;
+} & BaseProps<HTMLDivElement>;
 
-function AnchoredOverlay({children, className, visibilityMap}: React.PropsWithChildren<AnchoredOverlayProps>) {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null)
-  const ref = useRef<HTMLLIElement | null>(null)
+function AnchoredOverlay({
+  children,
+  className,
+  visibilityMap,
+}: React.PropsWithChildren<AnchoredOverlayProps>) {
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const ref = useRef<HTMLLIElement | null>(null);
 
-  useOnClickOutside(ref, () => handleClose())
+  useOnClickOutside(ref, () => handleClose());
 
-  const open = Boolean(anchorEl)
+  const open = Boolean(anchorEl);
 
   const handleClick = event => {
     if (anchorEl) {
-      handleClose()
+      handleClose();
     } else {
-      setAnchorEl(event.currentTarget)
+      setAnchorEl(event.currentTarget);
     }
-  }
+  };
 
   const handleClose = useCallback(() => {
-    setAnchorEl(null)
-  }, [])
+    setAnchorEl(null);
+  }, []);
 
-  useKeyboardEscape(handleClose)
+  useKeyboardEscape(handleClose);
 
   return (
-    <li className={clsx(styles['SubdomainNavBar-primary-nav-list-item--overflow'], className)} ref={ref}>
+    <li
+      className={clsx(
+        styles['SubdomainNavBar-primary-nav-list-item--overflow'],
+        className,
+      )}
+      ref={ref}
+    >
       <button
         aria-expanded={open ? 'true' : 'false'}
         aria-controls="more-navigation"
         aria-haspopup="true"
         onClick={handleClick}
-        className={clsx(styles['SubdomainNavBar-link'], styles['SubdomainNavBar-more-link'])}
+        className={clsx(
+          styles['SubdomainNavBar-link'],
+          styles['SubdomainNavBar-more-link'],
+        )}
       >
         More
         <ChevronDownIcon />
@@ -86,29 +107,32 @@ function AnchoredOverlay({children, className, visibilityMap}: React.PropsWithCh
 
       <div
         id="more-navigation"
-        style={{display: open ? 'block' : 'none'}}
+        style={{ display: open ? 'block' : 'none' }}
         className={clsx(styles['SubdomainNavBar-overflow-menu'])}
       >
         <ul className={clsx(styles['SubdomainNavBar-overflow-menu-list'])}>
           {React.Children.map(children, child => {
             if (React.isValidElement(child)) {
-              const navItemChild = child.props['data-navitemid']
+              const navItemChild = child.props['data-navitemid'];
 
               if (!visibilityMap[navItemChild]) {
                 return (
                   <React.Fragment>
                     {React.cloneElement(child as React.ReactElement, {
                       onClick: handleClose,
-                      className: clsx(styles['SubdomainNavBar-overflow-menu-item'], child.props.className),
+                      className: clsx(
+                        styles['SubdomainNavBar-overflow-menu-item'],
+                        child.props.className,
+                      ),
                     })}
                   </React.Fragment>
-                )
+                );
               }
             }
-            return null
+            return null;
           })}
         </ul>
       </div>
     </li>
-  )
+  );
 }

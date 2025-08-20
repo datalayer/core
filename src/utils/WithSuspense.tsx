@@ -3,34 +3,35 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Suspense } from "react";
-import { SkeletonBox } from "@primer/react/experimental";
+import { Suspense } from 'react';
+import { SkeletonBox } from '@primer/react/experimental';
 
 type ILoadingProps = {
   skeleton: boolean;
-}
+};
 
 const Loading = (props: ILoadingProps) => {
   const { skeleton } = props;
-  return (
-    skeleton ?
-      <>
-        <SkeletonBox height="100px" />
-      </>
-    :
-      <></>
-  )
-}
+  return skeleton ? (
+    <>
+      <SkeletonBox height="100px" />
+    </>
+  ) : (
+    <></>
+  );
+};
 
-export const WithSuspense = (Component: any, preload = true, skeleton = false) => (props: any) => {
-  if (preload) {
-    Component.preload();
-  }
-  return (
-    <Suspense fallback={<Loading skeleton={skeleton} />}>
-      <Component {...props} />
-    </Suspense>
-  )
-}
+export const WithSuspense =
+  (Component: any, preload = true, skeleton = false) =>
+  (props: any) => {
+    if (preload) {
+      Component.preload();
+    }
+    return (
+      <Suspense fallback={<Loading skeleton={skeleton} />}>
+        <Component {...props} />
+      </Suspense>
+    );
+  };
 
 export default WithSuspense;

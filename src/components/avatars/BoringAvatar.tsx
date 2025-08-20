@@ -6,13 +6,13 @@
 import BoringAvatars from 'boring-avatars';
 
 type VariantType =
-| "marble"
-| "beam"
-| "pixel"
-| "sunset"
-| "ring"
-| "bauhaus"
-| undefined;
+  | 'marble'
+  | 'beam'
+  | 'pixel'
+  | 'sunset'
+  | 'ring'
+  | 'bauhaus'
+  | undefined;
 
 type IBoringAvatarProps = {
   displayName: string;
@@ -20,7 +20,7 @@ type IBoringAvatarProps = {
   size: number;
   square: boolean;
   style: object;
-}
+};
 /*
 const variants = [
   "bauhaus",
@@ -32,7 +32,7 @@ const variants = [
 ];
 export const getRandomBoringAvatarVariant = () => variants[Math.floor(Math.random() * variants.length)] as VariantType;
 */
-const getRandomBoringAvatarVariant = () => "bauhaus" as VariantType;
+const getRandomBoringAvatarVariant = () => 'bauhaus' as VariantType;
 
 const RANDOM_BORING_AVATOR_VARIANT = getRandomBoringAvatarVariant();
 
@@ -40,7 +40,7 @@ export const BoringAvatar = (props: IBoringAvatarProps) => {
   const { displayName, size, square, style } = props;
   const variant = props.variant ?? getRandomBoringAvatarVariant();
   return (
-    <span style={{...style || {}}}>
+    <span style={{ ...(style || {}) }}>
       <BoringAvatars
         size={size}
         name={displayName}
@@ -57,12 +57,12 @@ export const BoringAvatar = (props: IBoringAvatarProps) => {
           '#C20D90',
           '#C271B4',
           '#F0AB3D',
-    //      '#FFFFFF',
+          //      '#FFFFFF',
         ]}
       />
     </span>
-  )
-}
+  );
+};
 
 BoringAvatar.defaultProps = {
   displayName: '',
@@ -70,6 +70,6 @@ BoringAvatar.defaultProps = {
   size: 40,
   square: false,
   style: undefined,
-}
+};
 
 export default BoringAvatar;

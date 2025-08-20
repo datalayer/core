@@ -57,7 +57,8 @@ function UploadBaseButton(props: IUploadBaseButtonProps): JSX.Element {
   );
 }
 
-export interface IUploadIconButtonProps extends Omit<IUploadBaseButtonProps, 'buttonFactory'> {
+export interface IUploadIconButtonProps
+  extends Omit<IUploadBaseButtonProps, 'buttonFactory'> {
   /**
    * Button aria-label
    */
@@ -75,11 +76,14 @@ export function UploadIconButton(props: IUploadIconButtonProps): JSX.Element {
         variant="invisible"
         onClick={onClick}
       />
-    ), []);
+    ),
+    [],
+  );
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }
 
-export interface IUploadButtonProps extends Omit<IUploadBaseButtonProps, 'buttonFactory'> {
+export interface IUploadButtonProps
+  extends Omit<IUploadBaseButtonProps, 'buttonFactory'> {
   /**
    * Button aria-label
    */
@@ -103,12 +107,14 @@ export function UploadButton(props: IUploadButtonProps): JSX.Element {
       >
         {label}
       </Button>
-    ), []);
+    ),
+    [],
+  );
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }
 
 UploadButton.defaultProps = {
-  variant: "primary",
+  variant: 'primary',
 } as Partial<IUploadButtonProps>;
 
 export default UploadButton;

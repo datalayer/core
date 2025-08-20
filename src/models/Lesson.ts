@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IBaseNotebook } from "./Notebook";
+import { IBaseNotebook } from './Notebook';
 
 export type ILesson = IBaseNotebook & {
   type: 'lesson';

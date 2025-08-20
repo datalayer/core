@@ -10,7 +10,7 @@ const JUPYTERLAB_COLLABORATORS_COLORS = {
   '--jp-collaborator-color4': '#00e4d0',
   '--jp-collaborator-color5': '#45d4ff',
   '--jp-collaborator-color6': '#e2b1ff',
-  '--jp-collaborator-color7': '#ff9de6'
+  '--jp-collaborator-color7': '#ff9de6',
 };
 
 export const jpCssToColor = (cssVariableName: string) => {

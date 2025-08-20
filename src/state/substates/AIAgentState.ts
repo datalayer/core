@@ -12,7 +12,7 @@ export type AIAgentState = {
   addAIAgent: (aiAgent: IAIAgent) => void;
   deleteAIAgent: (documentId: string) => void;
   updateAIAgent: (documentId: string, runtimeId?: string) => void;
-}
+};
 
 export const aiAgentStore = createStore<AIAgentState>(set => ({
   aiAgents: [],
@@ -27,12 +27,16 @@ export const aiAgentStore = createStore<AIAgentState>(set => ({
   },
   deleteAIAgent: (documentId: string) => {
     set((state: AIAgentState) => {
-      return { aiAgents: state.aiAgents.filter(a => a.documentId === documentId) };
+      return {
+        aiAgents: state.aiAgents.filter(a => a.documentId === documentId),
+      };
     });
   },
   updateAIAgent: (documentId: string, runtimeId?: string) => {
     set((state: AIAgentState) => {
-      const index = state.aiAgents.findIndex(aiAgent => aiAgent.documentId === documentId);
+      const index = state.aiAgents.findIndex(
+        aiAgent => aiAgent.documentId === documentId,
+      );
       if (index >= 0) {
         state.aiAgents[index].runtimeId = runtimeId;
         return { aiAgents: [...state.aiAgents] };
@@ -40,8 +44,8 @@ export const aiAgentStore = createStore<AIAgentState>(set => ({
         return {};
       }
     });
-  }
-}))
+  },
+}));
 
 export function useAIAgentStore(): AIAgentState;
 export function useAIAgentStore<T>(selector: (state: AIAgentState) => T): T;

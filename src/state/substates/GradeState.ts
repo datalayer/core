@@ -8,7 +8,7 @@ import { useStore } from 'zustand';
 
 export type IGradeState = {
   gradeRequest?: Date;
-}
+};
 
 export type GradeState = IGradeState & {
   grade: (gradeRequest: Date) => void;

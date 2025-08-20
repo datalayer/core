@@ -6,13 +6,12 @@
 import { IUser } from './User';
 
 export type IIAMProviderName =
-| 'bluesky'
-| 'discord'
-| 'github'
-| 'linkedin'
-| 'okta'
-| 'x'
-;
+  | 'bluesky'
+  | 'discord'
+  | 'github'
+  | 'linkedin'
+  | 'okta'
+  | 'x';
 
 export type IIAMProviderSpec = {
   name: IIAMProviderName;
@@ -24,7 +23,7 @@ export type IIAMProviderSpec = {
   tokenRefreshURL: string;
   postShareURL: string;
   registerUploadURL: string;
-}
+};
 
 export class IAMProvidersSpecs {
   private constructor() {}
@@ -54,46 +53,51 @@ export class IAMProvidersSpecs {
     name: 'bluesky',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/bluesky/callback',
-    accessTokenCookieName: (user: IUser) => `__datalayer__bluesky_access_token_${user.id}`,
+    accessTokenCookieName: (user: IUser) =>
+      `__datalayer__bluesky_access_token_${user.id}`,
     refreshTokenCookieName: '__datalayer__bluesky_refresh_token',
     userInfoURL: '',
     tokenRefreshURL: '',
     postShareURL: '',
     registerUploadURL: '',
-  }
+  };
   static readonly GitHub: IIAMProviderSpec = {
     name: 'github',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/github/callback',
-    accessTokenCookieName: (user: IUser) => `__datalayer__github_access_token_${user.id}`,
+    accessTokenCookieName: (user: IUser) =>
+      `__datalayer__github_access_token_${user.id}`,
     refreshTokenCookieName: '__datalayer__github_refresh_token',
     userInfoURL: 'https://api.github.com/user',
     tokenRefreshURL: 'https://github.com/login/oauth/access_token',
     postShareURL: '',
     registerUploadURL: '',
-  }
+  };
   static readonly LinkedIn: IIAMProviderSpec = {
     name: 'linkedin',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/linkedin/callback',
-    accessTokenCookieName: (user: IUser) => `__datalayer__linkedin_access_token_${user.id}`,
+    accessTokenCookieName: (user: IUser) =>
+      `__datalayer__linkedin_access_token_${user.id}`,
     refreshTokenCookieName: '__datalayer__linkedin_refresh_token',
     userInfoURL: 'https://api.linkedin.com/v2/userinfo',
     tokenRefreshURL: '',
     postShareURL: 'https://api.linkedin.com/v2/ugcPosts',
-    registerUploadURL: 'https://api.linkedin.com/v2/assets?action=registerUpload',
-  }
+    registerUploadURL:
+      'https://api.linkedin.com/v2/assets?action=registerUpload',
+  };
   static readonly Okta: IIAMProviderSpec = {
     name: 'okta',
     oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
     oauth2CallbackUIRoute: '/iam/oauth2/linkedin/callback',
-    accessTokenCookieName: (user: IUser) => `__datalayer__okta_access_token_${user.id}`,
+    accessTokenCookieName: (user: IUser) =>
+      `__datalayer__okta_access_token_${user.id}`,
     refreshTokenCookieName: '__datalayer__okta_refresh_token',
     userInfoURL: 'https://trial-4368308.okta.com/oauth2/default/v1/userinfo',
     tokenRefreshURL: '',
     postShareURL: '',
     registerUploadURL: '',
-  }
+  };
 }
 
 export default IAMProvidersSpecs;

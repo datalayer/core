@@ -193,7 +193,6 @@ export class RuntimeSnippetsFacade {
       .get(this.language)!
       .getOutputCandidates(code);
   }
-
 }
 
 RuntimeSnippetsFacade.register('python', Python);

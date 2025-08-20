@@ -11,20 +11,20 @@ export const asSurvey = (s: any): ISurvey => {
     form: s.form,
     createdAt: new Date(s.creation_ts_dt),
     updatedAt: new Date(s.last_update_ts_dt),
-  }
-}
+  };
+};
 
 export type ICreateSurveyResponseType = {
   success: boolean;
   message: string;
   survey: ISurvey;
-}
+};
 
 export type IGetSurveysResponseType = {
   success: boolean;
   message: string;
   surveys: Array<ISurvey>;
-}
+};
 
 export type ISurvey = {
   id: string;

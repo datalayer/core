@@ -16,7 +16,8 @@ export type DocumentState = IDocumentState & {
 
 export const documentStore = createStore<DocumentState>((set, get) => ({
   documentSaveRequest: undefined,
-  save: (documentSaveRequest: Date) => set((state: DocumentState) => ({ documentSaveRequest })),
+  save: (documentSaveRequest: Date) =>
+    set((state: DocumentState) => ({ documentSaveRequest })),
 }));
 
 export function useDocumentStore(): DocumentState;

@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IItem } from "./Item";
+import { IItem } from './Item';
 
 export type IDataset = IItem & {
   type: 'dataset';
@@ -14,7 +14,7 @@ export type IDataset = IItem & {
   mimeType: string;
   mimeTypeParams?: object;
   bucketName?: string;
-  path?: string
+  path?: string;
   creationDate: Date;
   lastPublicationDate?: Date;
   cdnUrl: string;

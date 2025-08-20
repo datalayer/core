@@ -43,7 +43,13 @@
     "dev": "vite",
     "build": "gulp resources-to-lib && tsc -b && vite build",
     "build:lib": "gulp resources-to-lib && tsc -b",
-    "lint": "eslint .",
+    "lint": "eslint . --quiet",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "check": "npm run format:check && npm run lint && npm run type-check",
+    "check:fix": "npm run format && npm run lint:fix && npm run type-check",
     "preview": "vite preview",
     "start": "vite",
     "clean": "rimraf lib tsconfig.tsbuildinfo",
@@ -59,7 +65,7 @@
     "watch:lib:res": "gulp resources-to-lib-watch",
     "watch:lib:src": "tsc -b -w",
     "example": "vite --config vite.examples.config.ts",
-    "example:list": "node scripts/list-examples.js"
+    "prepare": "husky"
   },
   "dependencies": {
     "@datalayer/icons-react": "^1.0.6",
@@ -116,6 +122,9 @@
     "@vitest/coverage-v8": "^3.2.4",
     "crypto-browserify": "^3.12.1",
     "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "eslint-plugin-storybook": "^9.1.1",
@@ -124,9 +133,12 @@
     "gulp-append-prepend": "^1.0.8",
     "gulp-filter": "^6.0.0",
     "gulp-watch": "^5.0.1",
+    "husky": "^9.1.7",
     "jsdom": "^26.0.0",
+    "lint-staged": "^16.1.5",
     "npm-run-all": "^4.1.5",
     "playwright": "^1.53.2",
+    "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "storybook": "^9.1.1",
     "typedoc-plugin-markdown": "^4.0.0",
@@ -150,5 +162,14 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "src/**/*.{css,json,md}": [
+      "prettier --write"
+    ]
   }
 }

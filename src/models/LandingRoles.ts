@@ -6,26 +6,25 @@
 export const LANDING_ANIMATION_DELAY_SEC = 3;
 
 export const LANDING_ROLES = [
-  "✨ AI Engineers",
-  "🧑‍💻 Data Scientists",
-  "🤖 ML Developers",
-  "🌎 Earth Scientists",
-  "⚗️ Biochemists",
-  "📊 Data Analysts",
-  "🗺️ GIS Specialists",
-  "🧪 Biophysicists",
-  "🛰️ EO Researchers",
-  "🚀 Geospatial Engineers",
-  "🧬 Computational Biologists",
-  "🌐 Geospatial Scientists",
+  '✨ AI Engineers',
+  '🧑‍💻 Data Scientists',
+  '🤖 ML Developers',
+  '🌎 Earth Scientists',
+  '⚗️ Biochemists',
+  '📊 Data Analysts',
+  '🗺️ GIS Specialists',
+  '🧪 Biophysicists',
+  '🛰️ EO Researchers',
+  '🚀 Geospatial Engineers',
+  '🧬 Computational Biologists',
+  '🌐 Geospatial Scientists',
 ];
 
 export const LANDING_STUDIO_EASES = [
-    "🧑‍💻 real-time editing",
-    "✨ AI-powered content",
-    "🤖 version control efficiency",
-    "🌎 real-time synchronisation",
-    "⚗️ amazing content experience",
-    "📊 whiteboard collaboration",
-  ];
-  
+  '🧑‍💻 real-time editing',
+  '✨ AI-powered content',
+  '🤖 version control efficiency',
+  '🌎 real-time synchronisation',
+  '⚗️ amazing content experience',
+  '📊 whiteboard collaboration',
+];

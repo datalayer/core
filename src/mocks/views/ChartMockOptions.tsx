@@ -22,15 +22,15 @@ export const ECHART_MOCK_1 = {
   tooltip: {
     trigger: 'axis',
   },
-}
+};
 
 export const ECHART_MOCK_2 = {
   xAxis: {
     type: 'category',
-    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   },
   yAxis: {
-    type: 'value'
+    type: 'value',
   },
   series: [
     {
@@ -39,36 +39,36 @@ export const ECHART_MOCK_2 = {
         {
           value: 200,
           itemStyle: {
-            color: '#a90000'
-          }
+            color: '#a90000',
+          },
         },
         150,
         80,
         70,
         110,
-        130
+        130,
       ],
-      type: 'bar'
-    }
-  ]
-}
+      type: 'bar',
+    },
+  ],
+};
 
 export const ECHART_MOCK_3 = {
   title: [
     {
-      text: 'Radial Polar Bar Label Position (middle)'
-    }
+      text: 'Radial Polar Bar Label Position (middle)',
+    },
   ],
   polar: {
-    radius: [30, '80%']
+    radius: [30, '80%'],
   },
   radiusAxis: {
-    max: 4
+    max: 4,
   },
   angleAxis: {
     type: 'category',
     data: ['a', 'b', 'c', 'd'],
-    startAngle: 75
+    startAngle: 75,
   },
   tooltip: {},
   series: {
@@ -78,29 +78,29 @@ export const ECHART_MOCK_3 = {
     label: {
       show: true,
       position: 'middle',
-      formatter: '{b}: {c}'
-    }
+      formatter: '{b}: {c}',
+    },
   },
-  animation: true
-}
+  animation: true,
+};
 
 export const CHART_4 = {
   grid: { top: 20, right: 40, bottom: 20, left: 40 },
   xAxis: {
-    type: "category",
-    data: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
+    type: 'category',
+    data: ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5'],
   },
   yAxis: {
-    type: "value"
+    type: 'value',
   },
   series: [
     {
       data: [400, 300, 350, 200, 280],
-      type: "bar",
-      smooth: true
-    }
+      type: 'bar',
+      smooth: true,
+    },
   ],
   tooltip: {
-    trigger: "axis"
-  }
-}
+    trigger: 'axis',
+  },
+};
