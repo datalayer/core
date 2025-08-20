@@ -33,8 +33,8 @@ export function getExampleNames(): string[] {
 export function getSelectedExample(): () => Promise<{
   default: React.ComponentType;
 }> {
-  // process.env.EXAMPLE is defined in vite config
-  const exampleName = process.env.EXAMPLE || 'NotebookExample';
+  // import.meta.env.EXAMPLE is defined in vite config
+  const exampleName = (import.meta.env.EXAMPLE as string) || 'NotebookExample';
 
   if (!EXAMPLES[exampleName]) {
     console.warn(
@@ -52,7 +52,7 @@ export function getSelectedExample(): () => Promise<{
  * Get the selected example name
  */
 export function getSelectedExampleName(): string {
-  // process.env.EXAMPLE is defined in vite config
-  const exampleName = process.env.EXAMPLE || 'NotebookExample';
+  // import.meta.env.EXAMPLE is defined in vite config
+  const exampleName = (import.meta.env.EXAMPLE as string) || 'NotebookExample';
   return EXAMPLES[exampleName] ? exampleName : 'NotebookExample';
 }

@@ -106,7 +106,7 @@ export default defineConfig(({ mode }) => {
     define: {
       global: 'globalThis',
       __webpack_public_path__: '""',
-      'process.env.EXAMPLE': JSON.stringify(SELECTED_EXAMPLE),
+      'import.meta.env.EXAMPLE': JSON.stringify(SELECTED_EXAMPLE),
     },
 
     assetsInclude: ['**/*.whl', '**/*.raw.css'],

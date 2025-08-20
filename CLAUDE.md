@@ -116,3 +116,12 @@ The examples are served at http://localhost:3000/ and include:
   - `npm run lint` / `npm run lint:fix` - ESLint checking
   - `npm run format` / `npm run format:check` - Prettier formatting
   - `npm run type-check` - TypeScript compilation check
+
+## Development Tips
+
+- Use npm, not yarn
+- Prefer editing over creating files
+- Run checks after changes:
+  - npm run format
+  - npm run lint
+  - npm run type-check
