@@ -36,9 +36,6 @@ dependencies = [
     "requests",
     "rich",
     "traitlets",
-    # Testing streamlit
-    "scikit-learn",
-    "pydantic",
 ]
 dynamic = ["version"]
 

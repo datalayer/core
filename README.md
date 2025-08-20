@@ -37,11 +37,14 @@ This package serves as the base foundation used by many other Datalayer packages
 - **📸 Snapshot Management**: Create and manage compute snapshots of your runtimes for reproducible environments
 - **🔒 Secrets Management**: Securely handle sensitive data and credentials in your workflows
 - **🐍 Python SDK**: Programmatic access to Datalayer platform with context managers and clean resource management
-- **🌐 TypeScript SDK**: Programmatic access to Datalayer platform with context managers and clean resource management
+- **🌐 TypeScript/React SDK**: React components and services for building Jupyter-based applications
 - **💻 Command Line Interface**: CLI tools for managing runtimes, snapshots, and platform resources
 - **🔧 Base Classes**: Core application classes and configuration inherited by other Datalayer projects
+- **📓 Jupyter Integration**: ServiceManager and collaboration providers for notebook experiences
 
 ## Installation
+
+### Python SDK
 
 Install Datalayer Core using pip:
 
@@ -49,12 +52,25 @@ Install Datalayer Core using pip:
 pip install datalayer-core
 ```
 
-For development installation:
+### TypeScript/React SDK
+
+Install as an npm package:
+
+```bash
+npm install @datalayer/core
+```
+
+### Development Installation
 
 ```bash
 git clone https://github.com/datalayer/core.git
 cd core
+
+# Python development
 pip install -e .[test]
+
+# TypeScript development
+npm install
 ```
 
 ## Quick Start with Python
@@ -117,13 +133,36 @@ datalayer snapshots create <pod-name> my-snapshot 'AI work!' False
 
 ## Examples
 
-For comprehensive usage examples, see the [`examples/`](https://github.com/datalayer/core/tree/main/examples) directory which includes:
+### Python Examples
+
+For comprehensive Python usage examples, see the [`examples/`](https://github.com/datalayer/core/tree/main/examples) directory which includes:
 
 - **FastAPI + scikit-learn**: Web application with ML models
 - **Streamlit + scikit-learn**: Interactive data science apps
 - **PyTorch GPU workloads**: High-performance computing examples
 - **Decorator patterns**: Remote function execution with `@datalayer`
 - **And more**: Complete examples with documentation and setup instructions
+
+### TypeScript/React Examples
+
+Run the interactive examples locally:
+
+```bash
+# Install dependencies
+npm install
+
+# Set your Datalayer API token in .env
+echo "VITE_DATALAYER_API_TOKEN=your-token-here" > .env
+
+# Start the examples server
+npm run example
+```
+
+Available at http://localhost:3000/:
+
+- **DatalayerNotebookExample**: Full integration with Datalayer services and collaboration
+- **NotebookExample**: Basic Jupyter notebook in React
+- **CellExample**: Individual code cell execution
 
 ## Platform Integration
 
@@ -144,11 +183,28 @@ Key platform features accessible through this SDK and CLI:
 
 ## Development
 
+### Building the Library
+
+```bash
+# Build TypeScript library
+npm run build:lib
+
+# Build Python package
+python -m build
+```
+
 ### Running Tests
 
 ```bash
+# Python tests
 pip install -e .[test]
 pytest datalayer_core/tests/
+
+# TypeScript tests
+npm run test
+
+# TypeScript type checking
+npm run type-check
 ```
 
 ### Contributing

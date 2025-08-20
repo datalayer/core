@@ -26,7 +26,7 @@ export type ToastProps = {
   variant: 'info' | 'success' | 'warning' | 'error';
 };
 
-const TOAST_POSITION = toast.POSITION.BOTTOM_RIGHT;
+const TOAST_POSITION = 'bottom-right' as const;
 
 interface IToastButtonProps {
   /**

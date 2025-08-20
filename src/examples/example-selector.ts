@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * Registry of available examples with dynamic imports.
+ * Add new examples here to make them available in the example runner.
+ */
+export const EXAMPLES: Record<string, () => Promise<{ default: React.ComponentType }>> = {
+  'CellExample': () => import('./CellExample'),
+  'DatalayerNotebookExample': () => import('./DatalayerNotebookExample'),
+  'NotebookExample': () => import('./NotebookExample'),
+  'NotebookMutationsKernel': () => import('./NotebookMutationsKernel'),
+  'NotebookMutationsServiceManager': () => import('./NotebookMutationsServiceManager'),
+};
+
+/**
+ * Get the list of available example names
+ */
+export function getExampleNames(): string[] {
+  return Object.keys(EXAMPLES);
+}
+
+/**
+ * Get the selected example based on environment variable
+ * Falls back to 'NotebookExample' if not specified or invalid
+ */
+export function getSelectedExample(): () => Promise<{ default: React.ComponentType }> {
+  // process.env.EXAMPLE is defined in vite config
+  const exampleName = process.env.EXAMPLE || 'NotebookExample';
+  
+  if (!EXAMPLES[exampleName]) {
+    console.warn(`Example "${exampleName}" not found. Available examples:`, getExampleNames());
+    console.log('Falling back to NotebookExample');
+    return EXAMPLES['NotebookExample'];
+  }
+  
+  return EXAMPLES[exampleName];
+}
+
+/**
+ * Get the selected example name
+ */
+export function getSelectedExampleName(): string {
+  // process.env.EXAMPLE is defined in vite config
+  const exampleName = process.env.EXAMPLE || 'NotebookExample';
+  return EXAMPLES[exampleName] ? exampleName : 'NotebookExample';
+}

@@ -57,11 +57,13 @@
     "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api",
     "watch:lib": "run-p 'watch:lib:*'",
     "watch:lib:res": "gulp resources-to-lib-watch",
-    "watch:lib:src": "tsc -b -w"
+    "watch:lib:src": "tsc -b -w",
+    "example": "vite --config vite.examples.config.ts",
+    "example:list": "node scripts/list-examples.js"
   },
   "dependencies": {
     "@datalayer/icons-react": "^1.0.6",
-    "@datalayer/jupyter-react": "^1.0.5",
+    "@datalayer/jupyter-react": "^1.1.0",
     "@datalayer/primer-addons": "^1.0.3",
     "@datalayer/primer-rjsf": "^1.0.1",
     "@jupyterlab/coreutils": "^6.0.0",
