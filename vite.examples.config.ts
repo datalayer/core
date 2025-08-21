@@ -7,7 +7,6 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
 import path from 'node:path';
-import fs from 'fs';
 
 // Select which example to run by uncommenting the desired line
 const EXAMPLE =
@@ -119,14 +118,11 @@ export default defineConfig(({ mode }) => {
         },
         {
           find: 'crypto',
-          replacement: path.resolve(
-            __dirname,
-            'node_modules/crypto-browserify',
-          ),
+          replacement: 'crypto-browserify',
         },
         {
           find: 'buffer',
-          replacement: path.resolve(__dirname, 'node_modules/buffer'),
+          replacement: 'buffer',
         },
       ],
     },

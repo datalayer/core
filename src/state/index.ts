@@ -6,4 +6,3 @@
 export * from './storage';
 export * from './State';
 export * from './substates';
-export * from './DatalayerState';

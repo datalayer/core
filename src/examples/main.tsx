@@ -15,7 +15,7 @@ import {
   getJupyterServerToken,
 } from '@datalayer/jupyter-react';
 import { ServiceManager } from '@jupyterlab/services';
-import { datalayerStore } from '../state/DatalayerState';
+import { coreStore } from '../state/substates/CoreState';
 import { iamStore } from '../state';
 import { getSelectedExample, getSelectedExampleName } from './example-selector';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
@@ -31,7 +31,7 @@ const loadConfigurations = () => {
       const datalayerConfig = JSON.parse(datalayerConfigElement.textContent);
       if (datalayerConfig.runUrl) {
         console.log('Setting Datalayer config:', datalayerConfig);
-        datalayerStore.getState().setDatalayerConfig(datalayerConfig);
+        coreStore.getState().setConfiguration(datalayerConfig);
 
         // Also set the token in the IAM store for API authentication
         if (datalayerConfig.token) {
@@ -99,15 +99,15 @@ const ExampleApp: React.FC = () => {
 
     // Create service manager
     const createManager = async () => {
-      const datalayerConfig = datalayerStore.getState().datalayerConfig;
+      const { configuration } = coreStore.getState();
 
       // Try to use DatalayerServiceManager if we have a token
-      if (datalayerConfig?.token) {
+      if (configuration?.token) {
         console.log('Using DatalayerServiceManager with token');
         try {
           const manager = await createDatalayerServiceManager(
-            datalayerConfig.cpuEnvironment || 'python-3.11',
-            datalayerConfig.credits || 100,
+            configuration.cpuEnvironment || 'python-3.11',
+            configuration.credits || 100,
           );
           await manager.ready;
           console.log('DatalayerServiceManager is ready');

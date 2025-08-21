@@ -28,7 +28,7 @@ export type DatalayerRunState = {
   document: typeof documentStore.getState;
   grade: typeof gradeStore.getState;
   iam: typeof iamStore.getState;
-  kernels: typeof runtimesStore.getState;
+  runtimes: typeof runtimesStore.getState;
   layout: typeof layoutStore.getState;
   nbformat: typeof nbformatStore.getState;
   organization: typeof organizationStore.getState;
@@ -50,7 +50,7 @@ export const runStore = createStore<DatalayerRunState>((set, get) => ({
   document: documentStore.getState,
   grade: gradeStore.getState,
   iam: iamStore.getState,
-  kernels: runtimesStore.getState,
+  runtimes: runtimesStore.getState,
   layout: layoutStore.getState,
   nbformat: nbformatStore.getState,
   organization: organizationStore.getState,

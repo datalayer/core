@@ -23,7 +23,7 @@ import {
   SpinnerCentered,
   JupyterReactTheme,
 } from '@datalayer/jupyter-react';
-import { useDatalayerStore } from '../state/DatalayerState';
+import { useCoreStore } from '../state/substates/CoreState';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
 
 import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
@@ -47,7 +47,7 @@ const NotebookMutationsKernel = () => {
   const [sessions, setSessions] = useState<Array<Session.ISessionConnection>>(
     [],
   );
-  const datalayerConfig = useDatalayerStore(state => state.datalayerConfig);
+  const { configuration } = useCoreStore();
   const notebookStore = useNotebookStore();
   const notebook = notebookStore.selectNotebook(NOTEBOOK_ID);
   const onSessionConnection: OnSessionConnection = (
@@ -109,8 +109,8 @@ const NotebookMutationsKernel = () => {
         //        setWaiting(true);
         setLite(false);
         createDatalayerServiceManager(
-          datalayerConfig?.cpuEnvironment || 'python-simple-env',
-          datalayerConfig?.credits || 1,
+          configuration?.cpuEnvironment || 'python-simple-env',
+          configuration?.credits || 1,
         ).then(serviceManager => {
           (serviceManager as any)['__NAME__'] = 'DatalayerCPUServiceManager';
           setServiceManager(serviceManager);
@@ -128,8 +128,8 @@ const NotebookMutationsKernel = () => {
         setWaiting(true);
         setLite(false);
         createDatalayerServiceManager(
-          datalayerConfig?.gpuEnvironment || 'pytorch-cuda-env',
-          datalayerConfig?.credits || 1,
+          configuration?.gpuEnvironment || 'pytorch-cuda-env',
+          configuration?.credits || 1,
         ).then(serviceManager => {
           setKernelIndex(0);
           (serviceManager as any)['__NAME__'] = 'DatalayerGPUServiceManager';

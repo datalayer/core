@@ -5,11 +5,16 @@
 
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import type { IDatalayerCoreConfig } from '../../config';
+import type { IDatalayerCoreConfig } from '../../config/Configuration';
 
 let loadConfigurationFromServer = true;
 
 let initialConfiguration: IDatalayerCoreConfig = {
+  runUrl: 'https://prod1.datalayer.run',
+  token: '',
+  credits: 0,
+  cpuEnvironment: 'python-cpu-env"',
+  gpuEnvironment: 'ai-env',
   useMock: false,
   whiteLabel: true,
   loadConfigurationFromServer: true,

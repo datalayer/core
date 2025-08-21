@@ -14,7 +14,7 @@ import {
 } from '@datalayer/jupyter-react';
 import { DatalayerCollaborationProvider } from '../collaboration/DatalayerCollaborationProvider';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
-import { useDatalayerStore } from '../state/DatalayerState';
+import { useCoreStore } from '../state/substates/CoreState';
 
 import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
@@ -46,7 +46,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
     ServiceManager.IManager | undefined
   >(props.serviceManager);
 
-  const datalayerConfig = useDatalayerStore(state => state.datalayerConfig);
+  const { configuration } = useCoreStore();
 
   useEffect(() => {
     // Create DatalayerServiceManager if not provided
@@ -59,15 +59,15 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
       }
 
       // Create DatalayerServiceManager if we have credentials
-      if (datalayerConfig?.token && datalayerConfig?.runUrl) {
+      if (configuration?.token && configuration?.runUrl) {
         try {
           console.log(
             'Creating DatalayerServiceManager for Datalayer infrastructure',
           );
           // Now we can pass undefined to use config/defaults
           const manager = await createDatalayerServiceManager(
-            datalayerConfig?.cpuEnvironment,
-            datalayerConfig?.credits,
+            configuration?.cpuEnvironment,
+            configuration?.credits,
           );
           await manager.ready;
           setServiceManager(manager);
@@ -82,7 +82,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
     };
 
     createManager();
-  }, [props.serviceManager, datalayerConfig]);
+  }, [props.serviceManager, configuration]);
 
   // Create the collaboration provider when enabled
   const collaborationProvider = useMemo(() => {
@@ -90,8 +90,8 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
       return undefined;
     }
 
-    const runUrl = datalayerConfig?.runUrl;
-    const token = datalayerConfig?.token;
+    const runUrl = configuration?.runUrl;
+    const token = configuration?.token;
 
     if (!runUrl || !token) {
       console.warn(
@@ -106,7 +106,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
       runUrl,
       token,
     });
-  }, [enableCollaboration, datalayerConfig]);
+  }, [enableCollaboration, configuration]);
 
   return (
     <JupyterReactTheme>
@@ -127,7 +127,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
           </FormControl>
         </Box>
 
-        {(!datalayerConfig?.runUrl || !datalayerConfig?.token) && (
+        {(!configuration?.runUrl || !configuration?.token) && (
           <Box sx={{ mb: 2, p: 2, bg: 'danger.subtle' }}>
             Warning: Datalayer configuration is missing. Please configure runUrl
             and token to use DatalayerServiceManager and collaboration features.

@@ -4,5 +4,4 @@
  */
 
 export * from './Configuration';
-export * from './DatalayerRuntimeConfig';
 export * from './integrations';
