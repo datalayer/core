@@ -8,12 +8,12 @@ const IS_LOCALHOST = location.hostname === 'localhost';
 export const getLoomPublicAppId = () => {
   return IS_LOCALHOST
     ? LOOM_PUBLIC_APP_ID.LOCALHOST
-    : LOOM_PUBLIC_APP_ID.DATALAYER_IO;
+    : LOOM_PUBLIC_APP_ID.DATALAYER_APP;
 };
 
 // It is safe to expose PUBLIC APP ID here.
 // @see https://dev.loom.com/docs
 const LOOM_PUBLIC_APP_ID = {
   LOCALHOST: '05754d5d-4778-4e6f-852a-a22fa0b5e87f',
-  DATALAYER_IO: '4b431848-adf7-457e-a545-0b0c7d21602a',
+  DATALAYER_APP: '4b431848-adf7-457e-a545-0b0c7d21602a',
 };

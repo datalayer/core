@@ -4,8 +4,8 @@
  */
 
 import { ServerConnection, ServiceManager } from '@jupyterlab/services';
-import { datalayerStore } from '../state/DatalayerState';
-import { DEFAULT_DATALAYER_CONFIG } from '../config/DatalayerRuntimeConfig';
+import { coreStore } from '../state/substates/CoreState';
+import { DEFAULT_DATALAYER_CONFIG } from '../config/Configuration';
 import { createRuntime } from '../api/runtimes/actions';
 
 /**
@@ -31,16 +31,16 @@ export const createDatalayerServiceManager = async (
   environmentName?: string,
   credits?: number,
 ): Promise<ServiceManager.IManager> => {
-  const datalayerConfig = datalayerStore.getState().datalayerConfig;
-  const token = datalayerConfig?.token || '';
+  const { configuration } = coreStore.getState();
+  const token = configuration?.token || '';
 
   // Use provided values or fall back to config or defaults
   const actualEnvironmentName =
     environmentName ||
-    datalayerConfig?.cpuEnvironment ||
+    configuration?.cpuEnvironment ||
     DEFAULT_DATALAYER_CONFIG.cpuEnvironment!;
   const actualCredits =
-    credits ?? datalayerConfig?.credits ?? DEFAULT_DATALAYER_CONFIG.credits!;
+    credits ?? configuration?.credits ?? DEFAULT_DATALAYER_CONFIG.credits!;
 
   if (!token) {
     throw new Error(

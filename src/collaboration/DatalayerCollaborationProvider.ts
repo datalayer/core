@@ -20,7 +20,7 @@ enum CollaborationStatus {
   Error = 'error',
 }
 import { requestDatalayerCollaborationSessionId } from './DatalayerCollaboration';
-import { datalayerStore } from '../state/DatalayerState';
+import { coreStore } from '../state/substates/CoreState';
 
 /**
  * Configuration for Datalayer collaboration provider
@@ -102,9 +102,9 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
 
     try {
       // Get configuration from store or use provided config
-      const { datalayerConfig } = datalayerStore.getState();
-      const runUrl = this._config.runUrl ?? datalayerConfig?.runUrl;
-      const token = this._config.token ?? datalayerConfig?.token;
+      const { configuration } = coreStore.getState();
+      const runUrl = this._config.runUrl ?? configuration?.runUrl;
+      const token = this._config.token ?? configuration?.token;
 
       if (!runUrl) {
         throw new Error('Datalayer runUrl is not configured');
