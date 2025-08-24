@@ -1,0 +1,65 @@
+{
+  "name": "@datalayer/electron-example",
+  "version": "0.0.1",
+  "description": "Electron example showcasing Datalayer frontend SDK",
+  "main": "dist/main/index.js",
+  "author": "Datalayer",
+  "license": "BSD-3-Clause",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run type-check && electron-vite build",
+    "preview": "electron-vite preview",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --quiet",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
+    "start": "electron-vite preview",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux"
+  },
+  "dependencies": {
+    "@datalayer/core": "file:../..",
+    "@datalayer/jupyter-react": "^1.1.0",
+    "@jupyterlab/services": "^7.0.0",
+    "@primer/react": "^36.27.0",
+    "electron-store": "^10.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.17",
+    "@types/react": "^18.3.13",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.0.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  },
+  "build": {
+    "appId": "io.datalayer.electron-example",
+    "productName": "Datalayer Electron Example",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Development"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
