@@ -120,10 +120,13 @@ Features:
 - Located in `src/collaboration/DatalayerCollaborationProvider.ts`
 - Requires Datalayer credentials (runUrl and token)
 - Integrates with Jupyter notebooks for collaborative editing
+- **IMPORTANT**: Uses notebook UIDs (not paths) for document IDs in Datalayer SaaS
+- Collaboration is enabled by default in Notebook2 components
 
 ## API Notes
 
 - **Runtime API**: `POST /api/runtimes/v1/runtimes` - Creates compute runtimes
+- **Collaboration API**: `/api/spacer/v1/documents/{notebook_uid}` - Works for notebooks (not just documents!)
 - **Required Headers**: Authorization (Bearer token), X-External-Token (for some operations)
 - **Proxy Setup**: Vite dev server proxies `/api` to `https://prod1.datalayer.run` for CORS
 - **API Docs**: Available at https://prod1.datalayer.run/api/runtimes/v1/ui/
