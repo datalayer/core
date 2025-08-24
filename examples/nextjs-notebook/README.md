@@ -30,7 +30,7 @@ This example showcases:
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm
 - Datalayer account and API token ([Create one here](https://datalayer.app/settings/iam/tokens))
 

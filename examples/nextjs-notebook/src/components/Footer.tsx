@@ -38,7 +38,7 @@ export default function Footer() {
           {/* Datalayer Info */}
           <Box>
             <Box sx={{ mb: 3 }}>
-              {/* eslint-disable-next-line */}
+              {}
               <img
                 src="https://assets.datalayer.tech/datalayer-25.svg"
                 alt="Datalayer"
