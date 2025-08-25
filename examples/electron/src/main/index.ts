@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, shell, session } from 'electron';
 import { join } from 'path';
 import { apiService } from './services/api-service';
 
@@ -22,6 +22,28 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
   });
+
+  // Set Content Security Policy
+  // In development, we need 'unsafe-eval' for hot reload, but in production it should be removed
+  const isDev = process.env.ELECTRON_RENDERER_URL ? true : false;
+  if (!isDev) {
+    // Production CSP - stricter
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [
+            "default-src 'self'; " +
+            "script-src 'self'; " +
+            "style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: https:; " +
+            "connect-src 'self' https://prod1.datalayer.run https://*.datalayer.io; " +
+            "font-src 'self' data:;"
+          ]
+        }
+      });
+    });
+  }
 
   // Load the app
   if (process.env.ELECTRON_RENDERER_URL) {
@@ -241,6 +263,10 @@ ipcMain.handle('datalayer:create-runtime', async (_, options) => {
 
 ipcMain.handle('datalayer:request', async (_, { endpoint, options }) => {
   return apiService.makeRequest(endpoint, options);
+});
+
+ipcMain.handle('datalayer:list-notebooks', async () => {
+  return apiService.listNotebooks();
 });
 
 // App event handlers

@@ -1,5 +1,4 @@
 import { net } from 'electron';
-import Store from 'electron-store';
 
 interface SecureStore {
   credentials?: {
@@ -8,11 +7,20 @@ interface SecureStore {
   };
 }
 
-// Secure encrypted storage for credentials
-const store = new Store<SecureStore>({
-  name: 'datalayer-secure',
-  encryptionKey: 'datalayer-electron-app', // In production, use a more secure key
-});
+// Store instance will be initialized lazily
+let store: any = null;
+
+// Initialize store asynchronously
+async function getStore() {
+  if (!store) {
+    const { default: Store } = await import('electron-store');
+    store = new Store<SecureStore>({
+      name: 'datalayer-secure',
+      encryptionKey: 'datalayer-electron-app', // In production, use a more secure key
+    });
+  }
+  return store;
+}
 
 // Whitelist of allowed domains for API requests
 const ALLOWED_DOMAINS = [
@@ -25,8 +33,13 @@ class DatalayerAPIService {
   private token: string = '';
 
   constructor() {
-    // Load stored credentials on startup
-    const stored = store.get('credentials');
+    // Load stored credentials on startup (async)
+    this.loadCredentials();
+  }
+
+  private async loadCredentials() {
+    const storeInstance = await getStore();
+    const stored = storeInstance.get('credentials');
     if (stored) {
       this.baseUrl = stored.runUrl;
       this.token = stored.token;
@@ -69,7 +82,8 @@ class DatalayerAPIService {
       this.baseUrl = runUrl;
       this.token = token;
 
-      store.set('credentials', { runUrl, token });
+      const storeInstance = await getStore();
+      storeInstance.set('credentials', { runUrl, token });
 
       // Test the credentials by fetching environments
       const testResponse = await this.getEnvironments();
@@ -90,7 +104,8 @@ class DatalayerAPIService {
   async logout(): Promise<{ success: boolean }> {
     this.token = '';
     this.baseUrl = 'https://prod1.datalayer.run';
-    store.delete('credentials');
+    const storeInstance = await getStore();
+    storeInstance.delete('credentials');
     return { success: true };
   }
 
@@ -238,6 +253,211 @@ class DatalayerAPIService {
         success: false,
         error:
           error instanceof Error ? error.message : 'Failed to create runtime',
+      };
+    }
+  }
+
+  /**
+   * Get user spaces
+   */
+  async getUserSpaces(): Promise<{
+    success: boolean;
+    data?: any[];
+    error?: string;
+  }> {
+    try {
+      const response = await this.request('/api/spacer/v1/spaces/users/me');
+      return { success: true, data: response.spaces || [] };
+    } catch (error) {
+      console.error('Failed to fetch user spaces:', error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to fetch spaces',
+      };
+    }
+  }
+
+  /**
+   * Get all items in a space
+   */
+  async getSpaceItems(spaceId: string): Promise<{
+    success: boolean;
+    data?: any[];
+    error?: string;
+  }> {
+    try {
+      const response = await this.request(
+        `/api/spacer/v1/spaces/${spaceId}/items`
+      );
+      // The response has items directly or nested in the response
+      return { success: true, data: response.items || response || [] };
+    } catch (error) {
+      console.error('Failed to fetch space items:', error);
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'Failed to fetch items',
+      };
+    }
+  }
+
+  /**
+   * List notebooks in a space
+   */
+  async listNotebooks(spaceId?: string): Promise<{
+    success: boolean;
+    data?: any[];
+    spaceInfo?: any;
+    error?: string;
+  }> {
+    try {
+      console.log('listNotebooks: Starting notebook fetch...');
+      console.log('listNotebooks: Current token:', this.token ? 'Set' : 'Not set');
+      console.log('listNotebooks: Current baseUrl:', this.baseUrl);
+      
+      // Check if we're authenticated
+      if (!this.token) {
+        console.log('listNotebooks: No token available, returning mock data');
+        // Return mock data for demo
+        return {
+          success: true,
+          data: [
+            {
+              uid: 'mock-1',
+              name_t: 'Sample Data Analysis.ipynb',
+              creation_ts_dt: new Date(Date.now() - 86400000).toISOString(),
+              last_update_ts_dt: new Date().toISOString(),
+              type: 'notebook',
+            },
+            {
+              uid: 'mock-2', 
+              name_t: 'Machine Learning Tutorial.ipynb',
+              creation_ts_dt: new Date(Date.now() - 172800000).toISOString(),
+              last_update_ts_dt: new Date(Date.now() - 3600000).toISOString(),
+              type: 'notebook',
+            },
+            {
+              uid: 'mock-3',
+              name_t: 'Data Visualization.ipynb',
+              creation_ts_dt: new Date(Date.now() - 259200000).toISOString(),
+              last_update_ts_dt: new Date(Date.now() - 7200000).toISOString(),
+              type: 'notebook',
+            },
+          ],
+          error: 'Using mock data - not authenticated'
+        };
+      }
+      
+      // First get user spaces if no spaceId provided
+      let selectedSpace: any;
+      
+      if (!spaceId) {
+        console.log('listNotebooks: No spaceId provided, fetching user spaces...');
+        const spacesResponse = await this.getUserSpaces();
+        console.log('listNotebooks: Spaces response:', JSON.stringify(spacesResponse, null, 2));
+        
+        if (spacesResponse.success && spacesResponse.data && spacesResponse.data.length > 0) {
+          // Find default space or one called "library"
+          selectedSpace = spacesResponse.data.find(
+            (space: any) => 
+              space.handle === 'library' || 
+              space.name === 'Library' ||
+              space.is_default === true
+          ) || spacesResponse.data[0];
+          
+          console.log('listNotebooks: Selected space:', selectedSpace);
+          
+          if (selectedSpace) {
+            spaceId = selectedSpace.id || selectedSpace.uid;
+          }
+        } else {
+          console.log('listNotebooks: No spaces found, using mock data');
+          // Return mock data if no spaces
+          return {
+            success: true,
+            data: [
+              {
+                uid: 'mock-1',
+                name_t: 'Welcome to Datalayer.ipynb',
+                creation_ts_dt: new Date().toISOString(),
+                last_update_ts_dt: new Date().toISOString(),
+                type: 'notebook',
+              },
+            ],
+            error: spacesResponse.error || 'No spaces available'
+          };
+        }
+      }
+
+      if (!spaceId) {
+        console.log('listNotebooks: No space available, returning mock data');
+        return { 
+          success: true, 
+          data: [
+            {
+              uid: 'mock-1',
+              name_t: 'Getting Started.ipynb',
+              creation_ts_dt: new Date().toISOString(),
+              last_update_ts_dt: new Date().toISOString(),
+              type: 'notebook',
+            },
+          ],
+          error: 'No spaces available'
+        };
+      }
+
+      console.log(`listNotebooks: Fetching items from space ${spaceId}...`);
+      
+      // Fetch all items from the space
+      const itemsResponse = await this.getSpaceItems(spaceId);
+      console.log('listNotebooks: Items response:', JSON.stringify(itemsResponse, null, 2));
+      
+      if (itemsResponse.success && itemsResponse.data && itemsResponse.data.length > 0) {
+        // Filter only notebook items - the field is type_s in the actual response
+        const notebooks = itemsResponse.data.filter(
+          (item: any) => item.type === 'notebook' || item.type_s === 'notebook' || item.item_type === 'notebook'
+        );
+        
+        console.log(`listNotebooks: Found ${notebooks.length} notebooks out of ${itemsResponse.data.length} items`);
+        
+        if (notebooks.length > 0) {
+          return { 
+            success: true, 
+            data: notebooks,
+            spaceInfo: selectedSpace
+          };
+        }
+      }
+      
+      // Fallback to specific notebook endpoint
+      console.log('listNotebooks: Trying fallback notebook endpoint...');
+      const response = await this.request(
+        `/api/spacer/v1/spaces/${spaceId}/items/types/notebook`
+      );
+      
+      console.log('listNotebooks: Fallback response:', JSON.stringify(response, null, 2));
+      
+      return { 
+        success: true, 
+        data: response.items || response || [],
+        spaceInfo: selectedSpace
+      };
+    } catch (error) {
+      console.error('listNotebooks: Error fetching notebooks:', error);
+      // Return mock data on error
+      return {
+        success: true,
+        data: [
+          {
+            uid: 'error-mock-1',
+            name_t: 'Example Notebook.ipynb',
+            creation_ts_dt: new Date().toISOString(),
+            last_update_ts_dt: new Date().toISOString(),
+            type: 'notebook',
+          },
+        ],
+        error: error instanceof Error ? error.message : 'Failed to fetch notebooks',
       };
     }
   }

@@ -236,8 +236,8 @@ const EnvironmentsList: React.FC = () => {
               <Timeline.Body>
                 <Box
                   sx={{
-                    p: 3,
-                    mb: 2,
+                    p: 2,
+                    mb: 1,
                     bg: 'canvas.subtle',
                     border: '1px solid',
                     borderColor:
@@ -259,11 +259,11 @@ const EnvironmentsList: React.FC = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'start',
-                      mb: 3,
+                      mb: 2,
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'start', gap: 3 }}>
-                      <Box sx={{ color: 'fg.muted', mt: 1, minWidth: 60 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
+                      <Box sx={{ color: 'fg.muted', minWidth: 40 }}>
                         {(() => {
                           const parsed = parseEnvironmentDescription(
                             env.description || ''
@@ -271,8 +271,8 @@ const EnvironmentsList: React.FC = () => {
                           return parsed?.imageUrl ? (
                             <img
                               src={parsed.imageUrl}
-                              width="60"
-                              height="60"
+                              width="40"
+                              height="40"
                               alt={env.name}
                               style={{ display: 'block' }}
                             />
@@ -290,7 +290,7 @@ const EnvironmentsList: React.FC = () => {
                             mb: 1,
                           }}
                         >
-                          <Heading as="h3" sx={{ fontSize: 3 }}>
+                          <Heading as="h3" sx={{ fontSize: 2 }}>
                             {env.display_name || env.name}
                           </Heading>
                           <Label
@@ -334,7 +334,7 @@ const EnvironmentsList: React.FC = () => {
                                   </Text>
                                 )}
                                 {parsed.packages.length > 0 && (
-                                  <Box sx={{ mt: 2 }}>
+                                  <Box sx={{ mt: 1 }}>
                                     <Text
                                       sx={{
                                         fontSize: 0,
@@ -352,15 +352,15 @@ const EnvironmentsList: React.FC = () => {
                                       }}
                                     >
                                       {parsed.packages
-                                        .slice(0, 8)
+                                        .slice(0, 6)
                                         .map((pkg, idx) => (
                                           <Label key={idx} size="small">
                                             {pkg}
                                           </Label>
                                         ))}
-                                      {parsed.packages.length > 8 && (
+                                      {parsed.packages.length > 6 && (
                                         <Label size="small" variant="default">
-                                          +{parsed.packages.length - 8} more
+                                          and more
                                         </Label>
                                       )}
                                     </Box>
@@ -385,7 +385,7 @@ const EnvironmentsList: React.FC = () => {
                               fontSize: 0,
                               color: 'fg.subtle',
                               fontFamily: 'mono',
-                              mt: 2,
+                              mt: 1,
                             }}
                           >
                             Image: {env.image}
@@ -404,16 +404,16 @@ const EnvironmentsList: React.FC = () => {
                   {env.resources && (
                     <Box
                       sx={{
-                        mt: 3,
-                        pt: 3,
+                        mt: 2,
+                        pt: 2,
                         borderTop: '1px solid',
                         borderColor: 'border.muted',
                       }}
                     >
-                      <Text sx={{ fontSize: 1, fontWeight: 'bold', mb: 2 }}>
-                        <PackageIcon size={16} /> Resources:
+                      <Text sx={{ fontSize: 0, fontWeight: 'bold', mb: 1 }}>
+                        <PackageIcon size={14} /> Resources:
                       </Text>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {formatResources(env.resources).map((resource, idx) => (
                           <Label key={idx} size="small">
                             {resource}
@@ -446,13 +446,17 @@ const EnvironmentsList: React.FC = () => {
       )}
 
       {configuration?.token && environments.length > 0 && (
-        <Box sx={{ mt: 4, p: 3, bg: 'canvas.subtle', borderRadius: 2 }}>
-          <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-            <strong>Selected Environment:</strong> {selectedEnv || 'None'}
-          </Text>
-          <Text sx={{ fontSize: 0, color: 'fg.subtle', mt: 1 }}>
-            This environment will be used when creating new runtimes and
-            notebooks.
+        <Box sx={{ mt: 4, p: 4, bg: 'canvas.subtle', borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+            <Text sx={{ fontSize: 1, color: 'fg.muted', fontWeight: 'bold' }}>
+              Selected Environment:
+            </Text>
+            <Text sx={{ fontSize: 1, color: 'fg.default' }}>
+              {selectedEnv || 'None'}
+            </Text>
+          </Box>
+          <Text sx={{ fontSize: 0, color: 'fg.subtle', mt: 2, lineHeight: 1.5 }}>
+            This environment will be used when creating new runtimes and notebooks.
           </Text>
         </Box>
       )}

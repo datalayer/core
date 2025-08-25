@@ -47,6 +47,9 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
     endpoint: string,
     options?: { method?: string; body?: any; headers?: Record<string, string> }
   ) => ipcRenderer.invoke('datalayer:request', { endpoint, options }),
+
+  // Notebooks
+  listNotebooks: () => ipcRenderer.invoke('datalayer:list-notebooks'),
 });
 
 // Type definitions for TypeScript
@@ -87,6 +90,11 @@ export interface DatalayerAPI {
     endpoint: string,
     options?: { method?: string; body?: any; headers?: Record<string, string> }
   ) => Promise<{ success: boolean; data?: any; error?: string }>;
+  listNotebooks: () => Promise<{
+    success: boolean;
+    data?: any[];
+    error?: string;
+  }>;
 }
 
 declare global {
