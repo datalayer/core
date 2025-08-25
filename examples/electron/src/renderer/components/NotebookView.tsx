@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Heading, Text, Checkbox, FormControl } from '@primer/react';
 import { INotebookContent } from '@jupyterlab/nbformat';

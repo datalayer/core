@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import { app, BrowserWindow, Menu, ipcMain, shell, session } from 'electron';
 import { join } from 'path';
 import { apiService } from './services/api-service';

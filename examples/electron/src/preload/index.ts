@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import { contextBridge, ipcRenderer } from 'electron';
 
 // Expose protected methods that allow the renderer process to use

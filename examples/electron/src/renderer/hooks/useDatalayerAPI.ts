@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 import { useState, useCallback, useEffect } from 'react';
 import { useCoreStore } from '@datalayer/core';
 import type { IDatalayerEnvironment } from '@datalayer/core';
