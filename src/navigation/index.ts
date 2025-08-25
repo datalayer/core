@@ -3,21 +3,21 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// Export adapter utilities (for advanced usage)
+// Export React Router hook exports for direct use
 export {
-  checkReactRouterAvailability,
-  getReactRouterHooks,
-  getReactRouterNavigate,
+  useParamsRR,
+  useLocationRR,
+  useNavigateRR,
 } from './adapters/react-router';
 
+// Export Next.js hook exports for direct use
 export {
+  useParamsNext,
+  useSearchParamsNext,
+  useRouterNext,
+  usePathnameNext,
+  useRouterNextPages,
   isNextJsEnvironment,
-  checkNextAppRouterAvailability,
-  checkNextPagesRouterAvailability,
-  getNextAppRouterHooks,
-  getNextPagesRouterHooks,
-  createNextAppRouterNavigate,
-  createNextPagesRouterNavigate,
 } from './adapters/nextjs';
 
 // Native adapter utilities

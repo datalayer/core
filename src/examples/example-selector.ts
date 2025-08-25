@@ -17,7 +17,7 @@ export const EXAMPLES: Record<
   NotebookMutationsKernel: () => import('./NotebookMutationsKernel'),
   NotebookMutationsServiceManager: () =>
     import('./NotebookMutationsServiceManager'),
-  ReactRouterNavigationExample: () => import('./ReactRouterNavigationExample'),
+  ReactRouterExample: () => import('./ReactRouterExample'),
   NativeNavigationExample: () => import('./NativeNavigationExample'),
 };
 

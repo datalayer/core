@@ -3,7 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useLocation, useParams } from './useLocation';
+import { useLocation } from './useLocation';
+import { useParams } from './useParams';
 import { useRunStore } from '../state';
 
 export const useLocationHandles = () => {

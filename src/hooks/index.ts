@@ -22,6 +22,7 @@ export * from './useKeyboardEscape';
 export * from './useLocation';
 export * from './useLocationHandles';
 export * from './useNavigate';
+export * from './useParams';
 export * from './useNotebookAIAgent';
 export * from './useOnClickOutside';
 export * from './useRef';

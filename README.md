@@ -41,6 +41,7 @@ This package serves as the base foundation used by many other Datalayer packages
 - **💻 Command Line Interface**: CLI tools for managing runtimes, snapshots, and platform resources
 - **🔧 Base Classes**: Core application classes and configuration inherited by other Datalayer projects
 - **📓 Jupyter Integration**: ServiceManager and collaboration providers for notebook experiences
+- **🧭 Universal Navigation**: Smart navigation hooks that auto-detect and work with React Router, Next.js, or native browser
 
 ## Installation
 
@@ -163,6 +164,9 @@ Available at http://localhost:3000/:
 - **DatalayerNotebookExample**: Full integration with Datalayer services and collaboration
 - **NotebookExample**: Basic Jupyter notebook in React
 - **CellExample**: Individual code cell execution
+- **ReactRouterAdvancedExample**: Comprehensive navigation demo with React Router integration
+- **ReactRouterNavigationExample**: Basic navigation with route parameters
+- **NativeNavigationExample**: Browser-native navigation fallback
 
 ### Next.js Application Example
 

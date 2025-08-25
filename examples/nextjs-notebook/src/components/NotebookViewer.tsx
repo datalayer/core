@@ -221,7 +221,7 @@ export default function NotebookViewer({
       // Only dispose in non-development environments
       if (process.env.NODE_ENV !== 'development' && serviceManagerRef.current) {
         serviceManagerRef.current.dispose?.();
-        serviceManagerRef.current = undefined;
+        serviceManagerRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

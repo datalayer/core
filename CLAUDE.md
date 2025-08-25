@@ -13,16 +13,11 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 ## Development Commands
 
 **Python**: `pip install -e .[test]` | `pytest datalayer_core/tests/` | `mypy datalayer_core/`
-<<<<<<< HEAD
 **TypeScript Library**: `npm install` | `npm run build:lib` | `npm run lint` | `npm run test`
 **Examples**: `npm run example` (starts dev server at http://localhost:3000/)
-=======
-**TypeScript**: `npm install` | `npm run dev` | `npm run build` | `npm run test`
 **Code Quality**: `npm run check` | `npm run check:fix` | `npm run lint` | `npm run format` | `npm run type-check`
-
-> > > > > > > f7972e5 (Add lint, format and type checks for TS)
-> > > > > > > **Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs)
-> > > > > > > **Make**: `make build` | `make start` | `make docs`
+**Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs)
+**Make**: `make build` | `make start` | `make docs`
 
 **CLI Scripts**: `datalayer`/`dla`/`d`, `datalayer-config`, `datalayer-migrate`, `datalayer-server`, `datalayer-troubleshoot`
 
@@ -42,6 +37,7 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 - Zustand state management
 - 70+ TypeScript models
 - Custom hooks for auth, platform integration, UI/UX
+- Universal navigation system that auto-detects React Router, Next.js, or falls back to native browser navigation
 
 ## Configuration
 
@@ -99,13 +95,16 @@ Features:
 - Select compute environments for execution
 - Interactive notebook viewer with real-time outputs
 - Clean UI with centered empty states and proper spacing
-- Mock data support for UI testing (line 129 in notebooks/page.tsx)
+- Welcome page with token authentication
+- Navigation between notebooks, environments, and viewer pages
+- Error handling for runtime creation failures
 
 **Configuration:**
 
-- Set `VITE_DATALAYER_API_TOKEN` in `.env` file for authentication
-- Examples use Vite proxy to handle CORS for API calls to prod1.datalayer.run
-- Select which example to run in `vite.examples.config.ts`
+- The application uses local storage for token management
+- Authentication happens through the welcome page where users enter their Datalayer API token
+- The app communicates directly with `https://prod1.datalayer.run` API endpoints
+- Built with Next.js 14, TypeScript, and GitHub Primer components
 
 ## TypeScript/React Services
 

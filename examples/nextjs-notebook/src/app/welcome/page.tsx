@@ -25,7 +25,6 @@ import {
   LinkExternalIcon,
 } from '@primer/octicons-react';
 import { useIAMStore } from '@datalayer/core';
-import ThemeSelector from '@/components/ThemeSelector';
 
 export default function WelcomePage() {
   const [tokenInput, setTokenInput] = useState('');
@@ -61,10 +60,6 @@ export default function WelcomePage() {
         position: 'relative',
       }}
     >
-      <Box sx={{ position: 'absolute', top: 4, right: 4 }}>
-        <ThemeSelector />
-      </Box>
-
       <Box
         sx={{
           maxWidth: '448px',

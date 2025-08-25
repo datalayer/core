@@ -119,8 +119,7 @@ nextjs-notebook/
 │   │   ├── AppNavBar.tsx        # Navigation bar
 │   │   ├── Footer.tsx            # Footer component
 │   │   ├── NotebookViewer.tsx   # Notebook execution component
-│   │   ├── Providers.tsx        # App providers (theme, navigation, etc.)
-│   │   └── ThemeSelector.tsx    # Theme toggle component
+│   │   └── Providers.tsx        # App providers (theme, navigation, etc.)
 │   ├── contexts/                 # React contexts
 │   │   └── ActiveNotebookContext.tsx
 │   └── styles/                   # CSS styles

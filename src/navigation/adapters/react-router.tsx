@@ -3,63 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// Cache for the react-router-dom module
-let reactRouterDomModule: any = null;
-let isReactRouterAvailable: boolean | null = null;
+// Import React Router hooks directly
+// If react-router-dom is not installed, the build will fail
+// which is expected behavior
+import * as ReactRouterDom from 'react-router-dom';
 
-/**
- * Check if react-router-dom is available
- */
-export const checkReactRouterAvailability = async (): Promise<boolean> => {
-  if (isReactRouterAvailable !== null) {
-    return isReactRouterAvailable;
-  }
-
-  // Don't even try to load React Router in Next.js environment
-  if (typeof window !== 'undefined' && (window as any).__NEXT_DATA__) {
-    isReactRouterAvailable = false;
-    return false;
-  }
-
-  try {
-    reactRouterDomModule = await import('react-router-dom');
-    isReactRouterAvailable = true;
-    return true;
-  } catch {
-    isReactRouterAvailable = false;
-    return false;
-  }
-};
-
-/**
- * Get React Router hooks if available
- */
-export const getReactRouterHooks = () => {
-  if (!reactRouterDomModule || !isReactRouterAvailable) {
-    return null;
-  }
-
-  const { useLocation, useNavigate, useParams } = reactRouterDomModule;
-
-  return {
-    useLocation,
-    useNavigate,
-    useParams,
-  };
-};
-
-/**
- * Get React Router's navigate function if in context
- */
-export const getReactRouterNavigate = () => {
-  if (!reactRouterDomModule || !isReactRouterAvailable) {
-    return null;
-  }
-
-  try {
-    const { useNavigate } = reactRouterDomModule;
-    return useNavigate;
-  } catch {
-    return null;
-  }
-};
+// Export hooks for use in our navigation hooks
+export const useParamsRR = ReactRouterDom.useParams;
+export const useLocationRR = ReactRouterDom.useLocation;
+export const useNavigateRR = ReactRouterDom.useNavigate;
