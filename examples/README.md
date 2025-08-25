@@ -36,6 +36,22 @@ An interactive web application for machine learning model inference using Stream
 - **Technologies**: Streamlit, Scikit-learn
 - **Features**: Web UI, model training, snapshot management, real-time predictions
 
+## 📓 Interactive Notebooks
+
+### ⚛️ [Next.js + Datalayer Notebook](./nextjs-notebook/README.md)
+
+A modern Next.js application integrating Jupyter notebooks with Datalayer's cloud platform for interactive data science workflows.
+
+- **Use Case**: Web-based notebook interfaces with cloud runtime execution
+- **Technologies**: Next.js 14, TypeScript, @datalayer/jupyter-react, Zustand
+- **Features**:
+  - Token authentication with Datalayer IAM
+  - Browse and create notebooks from workspace
+  - Select compute environments for execution
+  - Interactive notebook viewer with real-time outputs
+  - Clean, responsive UI with GitHub Primer components
+  - Centered empty states with proper spacing
+
 ## 🔥 High-Performance Computing
 
 ### ⚡ [PyTorch GPU Workloads](./pytorch-workloads/README.md)

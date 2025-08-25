@@ -50,24 +50,28 @@ let initialConfiguration: IDatalayerCoreConfig = {
 
 // Try loading initial state from datalayer-config-data element
 try {
-  const rawConfig = document.getElementById('datalayer-config-data');
-  if (rawConfig?.innerText) {
-    const htmlOverridingConfiguration = JSON.parse(
-      rawConfig?.innerText || '{}',
-    ) as IDatalayerCoreConfig;
-    if (htmlOverridingConfiguration.loadConfigurationFromServer != undefined) {
-      loadConfigurationFromServer =
-        htmlOverridingConfiguration.loadConfigurationFromServer;
+  if (typeof document !== 'undefined') {
+    const rawConfig = document.getElementById('datalayer-config-data');
+    if (rawConfig?.innerText) {
+      const htmlOverridingConfiguration = JSON.parse(
+        rawConfig?.innerText || '{}',
+      ) as IDatalayerCoreConfig;
+      if (
+        htmlOverridingConfiguration.loadConfigurationFromServer != undefined
+      ) {
+        loadConfigurationFromServer =
+          htmlOverridingConfiguration.loadConfigurationFromServer;
+      }
+      initialConfiguration = {
+        ...initialConfiguration,
+        ...htmlOverridingConfiguration,
+      };
+      console.log(
+        'Datalayer configuration loaded from HTML page',
+        initialConfiguration,
+      );
+      window.document.title = `${initialConfiguration.brand.name} Ξ ${initialConfiguration.brand.about}`;
     }
-    initialConfiguration = {
-      ...initialConfiguration,
-      ...htmlOverridingConfiguration,
-    };
-    console.log(
-      'Datalayer configuration loaded from HTML page',
-      initialConfiguration,
-    );
-    window.document.title = `${initialConfiguration.brand.name} Ξ ${initialConfiguration.brand.about}`;
   }
 } catch (error) {
   console.debug('No valid configuration found in the webpage.', error);

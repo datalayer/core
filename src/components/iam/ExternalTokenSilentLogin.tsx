@@ -4,7 +4,6 @@
  */
 
 import { useEffect } from 'react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { CenteredSpinner } from '../../components/display';
 import { useIAMStore } from '../../state';
 import { useToast, useIAM } from '../../hooks';
@@ -40,16 +39,8 @@ const ExternalTokenSilentLoginRoute = (
 export const ExternalTokenSilentLogin = (
   props: IExternalTokenSilentLoginProps,
 ) => {
-  return (
-    <MemoryRouter initialEntries={['/']}>
-      <Routes>
-        <Route
-          path="*"
-          element={<ExternalTokenSilentLoginRoute {...props} />}
-        />
-      </Routes>
-    </MemoryRouter>
-  );
+  // No navigation provider needed anymore - auto-detection works without it
+  return <ExternalTokenSilentLoginRoute {...props} />;
 };
 
 export default ExternalTokenSilentLogin;

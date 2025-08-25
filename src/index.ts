@@ -3,8 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './hooks';
 export * from './utils';
 export * from './state';
 export * from './collaboration';
 export * from './services';
+// Export navigation before hooks to avoid conflicts
+export * from './navigation';
+export * from './hooks';

@@ -64,6 +64,7 @@ import { IAMProvidersSpecs, type IRESTBaseResponse } from '../models';
 import { newUserMock } from './../mocks';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
+import { useUploadForm } from './useUpload';
 
 import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
 
@@ -139,10 +140,21 @@ const DEFAULT_SEARCH_OPTS = {
  * instead of redirecting to the login page).
  */
 export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
-  const { configuration } = useCoreStore();
+  const coreStore = useCoreStore();
+  const { configuration } = coreStore;
   const { user } = useIAMStore();
   const { requestDatalayer } = useDatalayer({ loginRoute });
   const { checkIsOrganizationMember } = useAuthorization();
+
+  // Hook for notebook upload/creation
+  const {
+    isLoading: notebookUploadLoading,
+    uploadAndSubmit: uploadNotebook,
+    progress: notebookUploadProgress,
+    reset: resetNotebookUpload,
+  } = useUploadForm(
+    `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/notebooks`,
+  );
 
   // Caches -------------------------------------------------------------------
 
@@ -2748,6 +2760,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  const createNotebook = async (
+    spaceId: string,
+    name: string,
+    description?: string,
+    notebookType: string = 'notebook',
+  ) => {
+    // Create FormData for the upload
+    const formData = new FormData();
+    formData.append('spaceId', spaceId);
+    formData.append('notebookType', notebookType);
+    formData.append('name', name);
+    formData.append('description', description || '');
+
+    try {
+      const resp = await uploadNotebook(formData);
+      if (resp.success) {
+        if (resp.notebook) {
+          toNotebook(resp.notebook);
+        }
+      }
+      return resp;
+    } catch (error) {
+      console.error('Failed to create notebook:', error);
+      return { success: false, error };
+    }
+  };
+
   const updateNotebook = (id, name, description) => {
     return requestDatalayer({
       url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${id}`,
@@ -3510,6 +3549,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     cloneExercise,
     cloneLesson,
     cloneNotebook,
+    createNotebook,
     confirmCourseItemCompletion,
     confirmEmailUpdate,
     confirmJoinWithToken,
@@ -3732,6 +3772,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     updateUserSettings,
     validateUserMFACode,
     whoami,
+    notebookUploadLoading,
+    notebookUploadProgress,
+    resetNotebookUpload,
   };
 };
 

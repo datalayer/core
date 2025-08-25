@@ -3,11 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from './useLocation';
+import { useParams } from './useParams';
 import { useRunStore } from '../state';
 
 export const useLocationHandles = () => {
-  const { accountHandle, spaceHandle } = useParams();
+  const params = useParams();
+  const { accountHandle, spaceHandle } = params;
   const { pathname } = useLocation();
   const runStore = useRunStore();
   if (pathname.startsWith('/public')) {

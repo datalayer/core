@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useLocation } from 'react-router-dom';
+import { useLocation } from './../../hooks';
 import { IAMStateProps } from './../../hooks';
 import { DatalayerRequest } from './../../hooks';
 import { useNavigate } from './../../hooks';

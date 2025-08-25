@@ -5,3 +5,5 @@
 
 export { createDatalayerServiceManager } from './DatalayerServiceManager';
 export { default as DatalayerServiceManager } from './DatalayerServiceManager';
+export { reconnectToRuntime } from './reconnectToRuntime';
+export type { RuntimeInfo } from './reconnectToRuntime';

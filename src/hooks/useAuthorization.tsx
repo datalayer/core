@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useLocation } from 'react-router-dom';
+import { useLocation } from './useLocation';
 import {
   IAnyOrganization,
   IOrganizationMember,

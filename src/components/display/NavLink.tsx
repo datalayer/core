@@ -8,18 +8,27 @@ import { useNavigate } from '../../hooks';
 
 // Taken from https://primer.style/react/storybook/?path=/story/components-navlist--with-react-router-link
 
-export type NavLinkProps = { to: string; children: ReactNode };
+export type NavLinkProps = {
+  to: string;
+  children: ReactNode;
+  [key: string]: any;
+};
 /**
- * React router Link for primer NavList
+ * Navigation link for primer NavList
+ * Works with React Router, Next.js, or native browser navigation
  */
 export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(
   ({ to, children, ...props }, ref) => {
     const navigate = useNavigate();
-    const onClick = useCallback(() => {
-      navigate(to);
-    }, [to]);
+    const onClick = useCallback(
+      (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault();
+        navigate(to);
+      },
+      [to, navigate],
+    );
     return (
-      <a ref={ref} {...props} onClick={onClick}>
+      <a ref={ref} href={to} {...props} onClick={onClick}>
         {children}
       </a>
     );
