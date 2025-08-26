@@ -95,45 +95,6 @@ export const useParams = (): Record<string, string> => {
     };
   }, [isClient, paramsSource]);
 
-  // 4. For fallback, also try to parse route params from URL path
-  const fallbackRouteParams = useMemo(() => {
-    if (!isClient || paramsSource !== 'fallback') return {};
-
-    const pathname = window.location.pathname;
-    const params: Record<string, string> = {};
-
-    // Common patterns to match
-    // /products/123 -> { id: '123' }
-    // /users/john-doe -> { username: 'john-doe' }
-    // /blog/2024/01/my-post -> { year: '2024', month: '01', slug: 'my-post' }
-
-    const patterns = [
-      { regex: /^\/products\/([^/]+)$/, params: ['id'] },
-      { regex: /^\/products\/([^/]+)\/reviews$/, params: ['id'] },
-      { regex: /^\/users\/([^/]+)$/, params: ['username'] },
-      {
-        regex: /^\/blog\/(\d{4})\/(\d{2})\/([^/]+)$/,
-        params: ['year', 'month', 'slug'],
-      },
-      { regex: /^\/posts\/([^/]+)$/, params: ['slug'] },
-      { regex: /^\/([^/]+)\/([^/]+)$/, params: ['category', 'id'] },
-    ];
-
-    for (const pattern of patterns) {
-      const match = pathname.match(pattern.regex);
-      if (match) {
-        pattern.params.forEach((paramName, index) => {
-          if (match[index + 1]) {
-            params[paramName] = match[index + 1];
-          }
-        });
-        break;
-      }
-    }
-
-    return params;
-  }, [isClient, paramsSource, isClient ? window.location.pathname : '']);
-
   // Combine all params with proper memoization to prevent re-renders
   const combinedParams = useMemo(() => {
     const result: Record<string, string> = {};
@@ -158,12 +119,7 @@ export const useParams = (): Record<string, string> => {
       }
     }
 
-    // Add fallback route params
-    if (paramsSource === 'fallback') {
-      for (const [key, value] of Object.entries(fallbackRouteParams)) {
-        result[key] = value;
-      }
-    }
+    // Fallback route params are not supported without router configuration
 
     return result;
   }, [
@@ -171,7 +127,6 @@ export const useParams = (): Record<string, string> => {
     JSON.stringify(routeParams),
     JSON.stringify(queryParams),
     JSON.stringify(searchParams),
-    JSON.stringify(fallbackRouteParams),
     paramsSource,
   ]);
 

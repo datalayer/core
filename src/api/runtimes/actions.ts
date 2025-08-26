@@ -89,6 +89,26 @@ export async function createRuntime(
     console.error(msg, data);
     throw new Error(msg);
   }
+
+  // Add the newly created runtime to the store immediately
+  const currentPods = runtimesStore.getState().runtimePods;
+  const existingIndex = currentPods.findIndex(
+    pod => pod.pod_name === data.runtime!.pod_name,
+  );
+  if (existingIndex === -1) {
+    // Add new runtime to the pods array
+    runtimesStore.setState({
+      runtimePods: [...currentPods, data.runtime],
+    });
+  } else {
+    // Update existing runtime if it somehow already exists
+    const updatedPods = [...currentPods];
+    updatedPods[existingIndex] = data.runtime;
+    runtimesStore.setState({
+      runtimePods: updatedPods,
+    });
+  }
+
   return data.runtime;
 }
 
