@@ -36,7 +36,6 @@ export default function EnvironmentsPage() {
       // Redirect to welcome page if no token
       router.push('/welcome');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, router]);
 
   const fetchEnvironments = async () => {
@@ -142,7 +141,6 @@ export default function EnvironmentsPage() {
                     }}
                   >
                     {imageUrl ? (
-                      // eslint-disable-next-line
                       <img
                         src={imageUrl}
                         alt={displayName}
