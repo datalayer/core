@@ -5,6 +5,7 @@
 
 import { ServerConnection, ServiceManager } from '@jupyterlab/services';
 import { coreStore } from '../state/substates/CoreState';
+import { runtimesStore } from '../state/substates/RuntimesState';
 import { DEFAULT_DATALAYER_CONFIG } from '../config/Configuration';
 import { createRuntime } from '../api/runtimes/actions';
 
@@ -67,16 +68,25 @@ export const createDatalayerServiceManager = async (
 
     const serviceManager = new ServiceManager({ serverSettings });
 
-    // Store runtime info on the serviceManager instance for access
-    (serviceManager as any).__datalayerRuntime = {
-      environmentName: actualEnvironmentName,
-      credits: actualCredits,
-      reservationId: runtime.reservation_id,
-      podName: runtime.pod_name,
-      ingress: runtime.ingress,
-      token: runtime.token,
-      createdAt: new Date().toISOString(),
-    };
+    // Add the runtime to the store immediately
+    // The runtime pods will be synced by polling, but we can add to runtimePods immediately
+    const currentPods = runtimesStore.getState().runtimePods;
+    const existingIndex = currentPods.findIndex(
+      pod => pod.pod_name === runtime.pod_name,
+    );
+    if (existingIndex === -1) {
+      // Add new runtime to the pods array
+      runtimesStore.setState({
+        runtimePods: [...currentPods, runtime],
+      });
+    } else {
+      // Update existing runtime
+      const updatedPods = [...currentPods];
+      updatedPods[existingIndex] = runtime;
+      runtimesStore.setState({
+        runtimePods: updatedPods,
+      });
+    }
 
     console.log('Created Datalayer service manager:', {
       environmentName: actualEnvironmentName,

@@ -12,7 +12,7 @@ import { INotebookContent } from '@jupyterlab/nbformat';
 import { createDatalayerServiceManager } from '@datalayer/core/lib/services/DatalayerServiceManager';
 import { reconnectToRuntime } from '@datalayer/core/lib/services';
 import { DatalayerCollaborationProvider } from '@datalayer/core/lib/collaboration/DatalayerCollaborationProvider';
-import { useIAMStore, useCoreStore } from '@datalayer/core';
+import { useIAMStore, useCoreStore, useRuntimesStore } from '@datalayer/core';
 import { Flash, Spinner, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { getStoredRuntime, storeRuntime } from '../utils/runtimeStorage';
@@ -49,6 +49,7 @@ export default function NotebookViewer({
   const [nbformat, setNbformat] = useState<INotebookContent | null>(null);
   const iamStore = useIAMStore();
   const coreStore = useCoreStore();
+  const runtimesStore = useRuntimesStore();
   const { token } = iamStore;
   const serviceManagerRef = useRef<ServiceManager.IManager | null>(null);
   const [collaborationProvider, setCollaborationProvider] = useState<
@@ -117,26 +118,30 @@ export default function NotebookViewer({
             100,
           );
 
-          // Get runtime info from the serviceManager instance
-          const runtimeInfo = (manager as any).__datalayerRuntime;
-          if (runtimeInfo) {
-            runtimeId = runtimeInfo.reservationId;
-            podName = runtimeInfo.podName;
+          // Get runtime info from the store - find the runtime for our environment
+          const currentPods = runtimesStore.runtimePods;
+          const matchingRuntime = currentPods.find(
+            pod => pod.environment_name === (runtime || 'python-cpu-env'),
+          );
+
+          if (matchingRuntime && matchingRuntime.reservation_id) {
+            runtimeId = matchingRuntime.reservation_id;
+            podName = matchingRuntime.pod_name;
 
             // Store runtime info for reuse
             storeRuntime(runtimeKey, {
-              runtimeId: runtimeInfo.reservationId,
-              podName: runtimeInfo.podName,
-              ingress: runtimeInfo.ingress,
-              token: runtimeInfo.token,
+              runtimeId: matchingRuntime.reservation_id,
+              podName: matchingRuntime.pod_name,
+              ingress: matchingRuntime.ingress,
+              token: matchingRuntime.token,
               environment: runtime,
               notebookPath: notebookPath,
             });
-            console.log('Stored runtime for reuse:', runtimeInfo);
+            console.log('Stored runtime for reuse:', matchingRuntime);
           }
         }
 
-        if (onRuntimeCreated && runtimeId) {
+        if (onRuntimeCreated && runtimeId && podName) {
           onRuntimeCreated(runtimeId, podName);
         }
 

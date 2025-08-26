@@ -359,58 +359,55 @@ const creditsPoll = new Poll({
 });
 
 // Initialize the IAM store with the stored token if it is valid.
-// Delay initialization slightly to allow apps to set up first
-setTimeout(() => {
-  iamStore
-    .getState()
-    .refreshUserByTokenStored()
-    .catch(reason => {
-      console.error('Failed to refresh to validate the stored token.', reason);
-    })
-    .finally(() => {
-      const { externalToken, iamRunUrl, checkIAMToken, token } =
-        iamStore.getState();
-      // If the stored token is invalid and an external token exists, try authenticating with it.
-      if (!token && externalToken) {
-        console.debug(
-          'Can not login with token - Trying with the external token.',
-        );
-        requestDatalayerAPI<{ token?: string }>({
-          url: `${iamRunUrl}/api/iam/v1/login`,
-          method: 'POST',
-          body: { token: externalToken },
-        })
-          .then(response => {
-            if (response.token) {
-              checkIAMToken(response.token);
-            }
-          })
-          .catch(reason => {
-            console.debug('Can not login with token.', token, reason);
-          });
-      }
-      if (token) {
-        console.log('Logged in with token and external token.');
-      } else {
-        console.debug(
-          'Failed to login with token and no external token available.',
-        );
-      }
-
-      // Start the credits poll in any case after trying to validate the user token.
-      creditsPoll.start();
-
-      // Force a refresh when the user comeback to the application tab
-      // Useful for checkout platform redirecting to another tab to add credits.
-      if (typeof document !== 'undefined') {
-        document.addEventListener('visibilitychange', () => {
-          if (!document.hidden && iamStore.getState().user?.id) {
-            creditsPoll.refresh();
+iamStore
+  .getState()
+  .refreshUserByTokenStored()
+  .catch(reason => {
+    console.error('Failed to refresh to validate the stored token.', reason);
+  })
+  .finally(() => {
+    const { externalToken, iamRunUrl, checkIAMToken, token } =
+      iamStore.getState();
+    // If the stored token is invalid and an external token exists, try authenticating with it.
+    if (!token && externalToken) {
+      console.debug(
+        'Can not login with token - Trying with the external token.',
+      );
+      requestDatalayerAPI<{ token?: string }>({
+        url: `${iamRunUrl}/api/iam/v1/login`,
+        method: 'POST',
+        body: { token: externalToken },
+      })
+        .then(response => {
+          if (response.token) {
+            checkIAMToken(response.token);
           }
+        })
+        .catch(reason => {
+          console.debug('Can not login with token.', token, reason);
         });
-      }
-    });
-}, 100); // 100ms delay to allow app initialization
+    }
+    if (token) {
+      console.log('Logged in with token and external token.');
+    } else {
+      console.debug(
+        'Failed to login with token and no external token available.',
+      );
+    }
+
+    // Start the credits poll in any case after trying to validate the user token.
+    creditsPoll.start();
+
+    // Force a refresh when the user comeback to the application tab
+    // Useful for checkout platform redirecting to another tab to add credits.
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && iamStore.getState().user?.id) {
+          creditsPoll.refresh();
+        }
+      });
+    }
+  });
 
 // Connect the core store with the iam store.
 coreStore.subscribe((state, prevState) => {
