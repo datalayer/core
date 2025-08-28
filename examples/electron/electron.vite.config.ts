@@ -5,6 +5,7 @@
 
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
+import commonjs from '@rollup/plugin-commonjs';
 import { resolve } from 'path';
 import { copyFileSync, mkdirSync, readFileSync } from 'fs';
 import importAsString from 'vite-plugin-string';
@@ -72,6 +73,16 @@ export default defineConfig({
           '@react-navigation/stack',
           /\.whl$/,
         ],
+        plugins: [
+          commonjs({
+            transformMixedEsModules: true, // Handle mixed CJS/ESM modules
+            include: [
+              /node_modules/,
+              /\.js$/,
+            ],
+            requireReturnsDefault: 'auto',
+          }),
+        ],
         onwarn(warning, warn) {
           // Suppress "use of eval" warnings
           if (warning.message.includes('Use of eval')) return;
@@ -80,7 +91,20 @@ export default defineConfig({
       },
     },
     plugins: [
-      react(),
+      react({
+        jsxRuntime: 'automatic', // Use automatic JSX runtime to avoid CJS/ESM issues
+      }),
+      {
+        name: 'fix-jupyterlab-deep-imports',
+        resolveId(source) {
+          // Handle deep imports from @jupyterlab/services
+          if (source.startsWith('@jupyterlab/services/lib/')) {
+            const path = source.replace('@jupyterlab/services/lib/', '');
+            return resolve(__dirname, `../../node_modules/@jupyterlab/services/lib/${path}`);
+          }
+          return null;
+        },
+      },
       {
         name: 'fix-require-statements',
         enforce: 'pre',
@@ -147,7 +171,14 @@ export default defineConfig({
       },
     },
     optimizeDeps: {
-      include: ['json5'],
+      include: [
+        'json5', 
+        'react', 
+        'react-dom', 
+        'react/jsx-runtime',
+        '@jupyterlab/services',
+        '@datalayer/jupyter-react',
+      ],
       exclude: [
         'next/navigation',
         'next/router',
@@ -155,6 +186,11 @@ export default defineConfig({
         '@jupyterlite/pyodide-kernel',
         '@jupyterlab/apputils-extension',
       ],
+      esbuildOptions: {
+        loader: {
+          '.js': 'jsx', // Help with React packages that use JSX in .js files
+        },
+      },
     },
     server: {
       port: 5173,

@@ -17,7 +17,7 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,json,md}\"",
     "check": "npm run format:check && npm run lint && npm run type-check",
     "check:fix": "npm run format && npm run lint:fix && npm run type-check",
-    "start": "electron-vite preview",
+    "start": "electron-vite dev",
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:win": "npm run build && electron-builder --win",
@@ -38,6 +38,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
     "@types/form-data": "^2.2.1",
     "@types/node": "^20.16.17",
     "@types/react": "^18.3.13",

@@ -57,10 +57,10 @@ This example demonstrates how to integrate the Datalayer frontend SDK into an El
 
 ## Development
 
-Run the app in development mode with hot-reload:
+### Quick Start
 
 ```bash
-npm run dev
+npm start  # or npm run dev
 ```
 
 This will:
@@ -68,20 +68,35 @@ This will:
 - Start the Electron app with hot-reload enabled
 - Open developer tools automatically
 - Proxy API requests to Datalayer cloud services
+- Handle CJS/ESM module resolution dynamically
 
-## Building
-
-### Type checking
-
-```bash
-npm run type-check
-```
-
-### Build for development
+### Available Scripts
 
 ```bash
-npm run build
+npm start           # Start the app in development mode
+npm run dev         # Same as npm start
+npm run build       # Build for production (may have CJS/ESM issues)
+npm run type-check  # Check TypeScript types
+npm run lint        # Run ESLint
+npm run lint:fix    # Fix ESLint issues
+npm run format      # Format code with Prettier
+npm run format:check # Check code formatting
+npm run check       # Run all checks (format, lint, type-check)
+npm run check:fix   # Fix all auto-fixable issues
 ```
+
+### Known Issues & Solutions
+
+#### CJS/ESM Module Resolution
+
+The project uses a custom Vite configuration to handle mixed CommonJS and ESM modules from the Jupyter ecosystem. Key fixes include:
+
+- **Automatic JSX Runtime**: Uses React 17+ automatic runtime to avoid import issues
+- **CommonJS Plugin**: Rollup plugin to handle mixed module formats
+- **Custom Resolvers**: Handles deep imports from `@jupyterlab/services`
+- **Safe Console Logging**: Prevents EPIPE errors in Electron main process
+
+If you encounter module resolution errors, use `npm start` (dev mode) which handles these dynamically.
 
 ## Packaging for Distribution
 

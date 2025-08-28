@@ -9,8 +9,47 @@ import log from 'electron-log/main';
 // Configure electron-log for main process immediately
 log.initialize();
 log.transports.file.level = 'info';
+// Disable console transport in production to avoid EPIPE errors
 log.transports.console.level =
-  process.env.NODE_ENV === 'development' ? 'debug' : 'info';
+  process.env.NODE_ENV === 'development' ? 'debug' : false;
+
+// Override console.log to use electron-log to prevent EPIPE errors
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+console.log = (...args: any[]) => {
+  try {
+    log.info(...args);
+  } catch (e: any) {
+    // Silently ignore EPIPE errors
+    if (e?.code !== 'EPIPE') {
+      originalConsoleLog('Log error:', e);
+    }
+  }
+};
+
+console.error = (...args: any[]) => {
+  try {
+    log.error(...args);
+  } catch (e: any) {
+    // Silently ignore EPIPE errors
+    if (e?.code !== 'EPIPE') {
+      originalConsoleError('Log error:', e);
+    }
+  }
+};
+
+console.warn = (...args: any[]) => {
+  try {
+    log.warn(...args);
+  } catch (e: any) {
+    // Silently ignore EPIPE errors
+    if (e?.code !== 'EPIPE') {
+      originalConsoleWarn('Log error:', e);
+    }
+  }
+};
 
 import { app, BrowserWindow, Menu, ipcMain, shell, session } from 'electron';
 import { join } from 'path';
