@@ -143,7 +143,13 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
      */
     addRuntimeModel: (model: IRuntimeModel) => {
       const kernels = get().runtimeModels;
-      const index = kernels.findIndex(m => model.id === m.id) ?? -1;
+      // TODO
+      // We need to review the IRuntimeModel/IRuntimePod/Kernel.IModel and their id/uid handling.
+      // The id is the kernel id, which is no more always present for some reasons.
+      // So we need to also check the uid of the model.
+      const index = kernels.findIndex(
+        m => (model.id === m.id || (model as any).uid === (m as any).uid) ?? -1,
+      );
       if (index < 0) {
         set({ runtimeModels: [...kernels, model] });
       }
