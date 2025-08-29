@@ -8,6 +8,7 @@ This directory contains the comprehensive TypeScript/React frontend architecture
 src/
 ├── api/                    # API layer and Jupyter integration
 ├── components/             # React component library (70+ components)
+│   └── *.stories.tsx      # Storybook stories colocated with components
 ├── config/                 # Configuration utilities
 ├── examples/              # Usage examples
 ├── hooks/                 # Custom React hooks (25+ hooks)
@@ -15,7 +16,6 @@ src/
 ├── models/                # TypeScript type definitions (70+ models)
 ├── routes/                # Routing configuration
 ├── state/                 # Zustand state management
-├── stories/               # Storybook stories
 ├── theme/                 # Theme and styling
 ├── utils/                 # Utility functions (20+ utilities)
 └── mocks/                 # Testing mocks
@@ -44,6 +44,44 @@ npm run test
 # Build for production
 npm run build
 ```
+
+## 📚 Storybook
+
+All UI components have comprehensive Storybook coverage with interactive documentation and testing capabilities.
+
+### Running Storybook
+
+```bash
+# Start Storybook dev server (default port 6006)
+npm run storybook
+
+# Build static Storybook
+npm run build-storybook
+
+# Run on different port
+npm run storybook -- --port 6007
+```
+
+### Story Organization
+
+Stories are colocated with their components for better maintainability:
+
+- `components/buttons/Button.tsx` → `components/buttons/Button.stories.tsx`
+- Each story file contains multiple variants showcasing different states
+- Interactive controls allow real-time prop testing
+- Comprehensive mocking for external dependencies
+
+### Available Components in Storybook
+
+All 50+ UI components are documented with stories:
+
+**Core UI**: Avatars, Buttons, Icons, Labels, Tokens  
+**Layout**: Banners, Display, NavBar, SubNav, Toolbars  
+**Data**: Tables, Progress, Charts (ECharts)  
+**Specialized**: Notebooks, Runtimes, Storage, Snapshots  
+**User Features**: IAM, Context, Students, Users  
+**Feedback**: Flashes, Confetti, TextReveal  
+**Advanced**: NBGrader, Screenshot, Snippets
 
 ## 🧩 Components
 

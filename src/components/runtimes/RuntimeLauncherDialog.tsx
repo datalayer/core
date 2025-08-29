@@ -533,3 +533,6 @@ export function KernelLauncherDialog(
     </Dialog>
   );
 }
+
+// Alias for consistency with component naming convention
+export const RuntimeLauncherDialog = KernelLauncherDialog;

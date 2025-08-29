@@ -69,7 +69,7 @@ export default function WelcomePage() {
       >
         <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-            {/* eslint-disable-next-line */}
+            {}
             <img
               src="/favicon.png"
               alt="Datalayer Logo"
