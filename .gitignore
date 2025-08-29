@@ -27,6 +27,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-electron
 *.local
 
 # Editor directories and files
@@ -181,6 +182,7 @@ dmypy.json
 
 # Ignore environment files
 .env
+.env.example
 
-# mcp files
+# Palywaright files
 .playwright-mcp/

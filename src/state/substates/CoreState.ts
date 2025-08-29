@@ -6,6 +6,7 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { IDatalayerCoreConfig } from '../../config/Configuration';
+import { configLogger } from '../../utils/logger';
 
 let loadConfigurationFromServer = true;
 
@@ -66,7 +67,7 @@ try {
         ...initialConfiguration,
         ...htmlOverridingConfiguration,
       };
-      console.log(
+      configLogger.info(
         'Datalayer configuration loaded from HTML page',
         initialConfiguration,
       );
@@ -74,7 +75,7 @@ try {
     }
   }
 } catch (error) {
-  console.debug('No valid configuration found in the webpage.', error);
+  configLogger.debug('No valid configuration found in the webpage.', error);
 }
 
 export type DatalayerCoreState = {
@@ -106,7 +107,7 @@ export const coreStore = createStore<DatalayerCoreState>((set, get) => ({
   setTab: (tab: number) => set((state: DatalayerCoreState) => ({ tab })),
   configuration: initialConfiguration,
   setConfiguration: (configuration?: Partial<IDatalayerCoreConfig>) => {
-    console.log('Setting Datalayer configuration', configuration);
+    configLogger.debug('Setting Datalayer configuration', configuration);
     set(state => ({
       configuration: {
         ...state.configuration,
