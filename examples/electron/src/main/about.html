@@ -1,0 +1,255 @@
+<!--
+  ~ Copyright (c) 2023-2025 Datalayer, Inc.
+  ~ Distributed under the terms of the Modified BSD License.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>About Datalayer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      user-select: none;
+      cursor: default;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .container {
+      text-align: center;
+      padding: 40px;
+      max-width: 400px;
+      animation: fadeIn 0.5s ease-in;
+      position: relative;
+      -webkit-app-region: no-drag;  /* Make content not draggable */
+    }
+    
+    .close-button {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      font-size: 18px;
+      line-height: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+    
+    .close-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .logo-container {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    
+    .logo-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 30px;
+      object-fit: cover;
+    }
+    
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      font-weight: 600;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .tagline {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+    
+    .version {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 5px;
+    }
+    
+    .info {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    button {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-app-region: no-drag;  /* Make buttons clickable */
+    }
+    
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .copyright {
+      margin-top: 20px;
+      font-size: 11px;
+      opacity: 0.6;
+    }
+    
+    .badge {
+      display: inline-block;
+      background: #14a085;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-top: 10px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="close-button" onclick="closeWindow()" title="Close (ESC)">×</div>
+    <div class="logo-container">
+      <img src="../../resources/icon.png" alt="Datalayer Logo" class="logo-img" />
+    </div>
+    
+    <h1>Datalayer</h1>
+    <div class="tagline">AI-Powered Data Platform</div>
+    
+    <div class="badge">Electron Example</div>
+    
+    <div class="version">Version <span id="app-version">1.0.0</span></div>
+    <div class="info">
+      Electron <span id="electron-version"></span><br>
+      Node.js <span id="node-version"></span><br>
+      Chrome <span id="chrome-version"></span>
+    </div>
+    
+    <div class="buttons">
+      <button onclick="openWebsite()">Website</button>
+      <button onclick="openDocs()">Documentation</button>
+      <button onclick="openGithub()">GitHub</button>
+    </div>
+    
+    <div class="copyright">
+      © 2024 Datalayer, Inc. All rights reserved.
+    </div>
+  </div>
+  
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // Set version information
+    document.getElementById('electron-version').textContent = process.versions.electron;
+    document.getElementById('node-version').textContent = process.versions.node;
+    document.getElementById('chrome-version').textContent = process.versions.chrome;
+    
+    // Get app version
+    ipcRenderer.invoke('get-version').then(versions => {
+      if (versions.app) {
+        document.getElementById('app-version').textContent = versions.app;
+      }
+    });
+    
+    function openWebsite() {
+      ipcRenderer.send('open-external', 'https://datalayer.io');
+    }
+    
+    function openDocs() {
+      ipcRenderer.send('open-external', 'https://docs.datalayer.io');
+    }
+    
+    function openGithub() {
+      ipcRenderer.send('open-external', 'https://github.com/datalayer/core');
+    }
+    
+    function closeWindow() {
+      window.close();
+    }
+    
+    // Close on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeWindow();
+      }
+    });
+  </script>
+</body>
+</html>

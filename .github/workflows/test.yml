@@ -3,8 +3,24 @@ name: Test
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '*.json'
+      - '*.js'
+      - '*.ts'
+      - '*.tsx'
+      - '.github/workflows/test.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'examples/**'
+      - '*.json'
+      - '*.js'
+      - '*.ts'
+      - '*.tsx'
+      - '.github/workflows/test.yml'
 
 jobs:
   test:
@@ -26,7 +42,10 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Install dependencies
+    - name: Fix Rollup native dependencies
+      run: npm install @rollup/rollup-linux-x64-gnu --no-save
+
+    - name: Build project
       run: npm run build
 
     - name: Run linting
@@ -47,10 +66,11 @@ jobs:
     - name: Build project
       run: npm run build:lib
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+    # TODO: Fix codecov action version - currently having resolution issues
+    # - name: Upload coverage to Codecov  
+    #   uses: codecov/codecov-action@v4
+    #   with:
+    #     file: ./coverage/lcov.info
+    #     flags: unittests
+    #     name: codecov-umbrella
+    #     fail_ci_if_error: false

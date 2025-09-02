@@ -106,6 +106,33 @@ Features:
 - The app communicates directly with `https://prod1.datalayer.run` API endpoints
 - Built with Next.js 14, TypeScript, and GitHub Primer components
 
+**Electron Example:**
+
+Located in `examples/electron/`, a desktop application with Jupyter integration:
+
+```bash
+cd examples/electron
+npm install
+npm start  # Uses dev mode to handle CJS/ESM issues
+```
+
+Features:
+
+- Native desktop app with Electron
+- Full Jupyter notebook integration
+- Real-time collaboration support
+- WebSocket proxy for kernel communication
+- Custom Vite config for CJS/ESM module resolution
+
+**Important Electron Configuration Notes:**
+
+- Uses automatic JSX runtime to avoid React import issues
+- Includes @rollup/plugin-commonjs for mixed module formats
+- Custom resolver for @jupyterlab/services deep imports
+- Safe console logging to prevent EPIPE errors in main process
+- Development mode (`npm start`) handles module resolution better than production builds
+- See `examples/electron/CLAUDE.md` for detailed troubleshooting
+
 ## TypeScript/React Services
 
 **DatalayerServiceManager**: Creates and configures ServiceManager for Datalayer infrastructure
@@ -120,10 +147,13 @@ Features:
 - Located in `src/collaboration/DatalayerCollaborationProvider.ts`
 - Requires Datalayer credentials (runUrl and token)
 - Integrates with Jupyter notebooks for collaborative editing
+- **IMPORTANT**: Uses notebook UIDs (not paths) for document IDs in Datalayer SaaS
+- Collaboration is enabled by default in Notebook2 components
 
 ## API Notes
 
 - **Runtime API**: `POST /api/runtimes/v1/runtimes` - Creates compute runtimes
+- **Collaboration API**: `/api/spacer/v1/documents/{notebook_uid}` - Works for notebooks (not just documents!)
 - **Required Headers**: Authorization (Bearer token), X-External-Token (for some operations)
 - **Proxy Setup**: Vite dev server proxies `/api` to `https://prod1.datalayer.run` for CORS
 - **API Docs**: Available at https://prod1.datalayer.run/api/runtimes/v1/ui/
