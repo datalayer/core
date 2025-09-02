@@ -3,9 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// Apply polyfills FIRST - Node.js built-ins and constructor fixes
+// CRITICAL: Load underscore/lodash FIRST for Backbone
+import './preload-underscore';
+
+// Apply polyfills - Node.js built-ins and constructor fixes
 import './utils/lodash-polyfills';
 import './utils/polyfills';
+import './utils/requirejs-shim';
 
 // Polyfill for global object required by MathJax
 if (typeof global === 'undefined') {

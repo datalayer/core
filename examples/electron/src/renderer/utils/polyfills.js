@@ -181,39 +181,58 @@ const nodeModules = (function () {
         globalThis[name] = modules[name];
       }
     });
+
+    // Ensure path is REALLY available globally (BuildManager needs it)
+    if (!globalThis.path) {
+      globalThis.path = modules.path;
+    }
+    // Double-check on window too
+    if (typeof window !== 'undefined' && !window.path) {
+      window.path = modules.path;
+    }
   }
 
-  // Enhanced require polyfill
-  if (typeof require === 'undefined') {
-    window.require = function (id) {
-      // Handle Node.js built-ins
-      if (modules[id]) {
-        return modules[id];
-      }
+  // Enhanced require polyfill - always override to ensure our polyfills work
+  const originalRequire = typeof require !== 'undefined' ? require : null;
 
-      // Handle relative and absolute paths
-      if (id.startsWith('./') || id.startsWith('../') || id.startsWith('/')) {
-        console.warn(
-          'require() called for local module:',
-          id,
-          '- not supported in browser'
-        );
-        throw new Error('Local module imports not supported: ' + id);
-      }
+  window.require = function (id) {
+    // Handle Node.js built-ins with our polyfills
+    if (modules[id]) {
+      console.log('Polyfilling module:', id);
+      return modules[id];
+    }
 
-      // For unknown modules, provide a helpful error
-      console.warn('require() called for unknown module:', id);
-      throw new Error(
-        'Module not found: ' +
-          id +
-          ' (Node.js modules not available in renderer process)'
+    // If we have an original require, try that for non-builtin modules
+    if (originalRequire && !modules[id]) {
+      try {
+        return originalRequire(id);
+      } catch (e) {
+        // Fall through to error handling
+      }
+    }
+
+    // Handle relative and absolute paths
+    if (id.startsWith('./') || id.startsWith('../') || id.startsWith('/')) {
+      console.warn(
+        'require() called for local module:',
+        id,
+        '- not supported in browser'
       );
-    };
+      throw new Error('Local module imports not supported: ' + id);
+    }
 
-    // Also set it globally
-    globalThis.require = window.require;
-    console.log('Enhanced require polyfill injected with Node.js built-ins');
-  }
+    // For unknown modules, provide a helpful error
+    console.warn('require() called for unknown module:', id);
+    throw new Error(
+      'Module not found: ' +
+        id +
+        ' (Node.js modules not available in renderer process)'
+    );
+  };
+
+  // Also set it globally
+  globalThis.require = window.require;
+  console.log('Enhanced require polyfill injected with Node.js built-ins');
 
   // Return the modules object to make it available as nodeModules
   return modules;

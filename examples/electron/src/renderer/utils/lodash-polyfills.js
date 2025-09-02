@@ -20,8 +20,8 @@ const NativeUint8Array = globalThis.Uint8Array;
 
 // ListCache implementation (lodash internal data structure)
 function ListCache(entries) {
-  let index = -1,
-    length = entries == null ? 0 : entries.length;
+  let index = -1;
+  const length = entries == null ? 0 : entries.length;
 
   this.clear();
   while (++index < length) {
@@ -36,9 +36,9 @@ ListCache.prototype.clear = function () {
 };
 
 ListCache.prototype['delete'] = function (key) {
-  let data = this.__data__,
-    index = -1,
-    length = data.length;
+  const data = this.__data__;
+  let index = -1;
+  const length = data.length;
 
   while (++index < length) {
     if (data[index][0] === key) {
@@ -56,9 +56,9 @@ ListCache.prototype['delete'] = function (key) {
 };
 
 ListCache.prototype.get = function (key) {
-  let data = this.__data__,
-    index = -1,
-    length = data.length;
+  const data = this.__data__;
+  let index = -1;
+  const length = data.length;
 
   while (++index < length) {
     if (data[index][0] === key) {
@@ -69,9 +69,9 @@ ListCache.prototype.get = function (key) {
 };
 
 ListCache.prototype.has = function (key) {
-  let data = this.__data__,
-    index = -1,
-    length = data.length;
+  const data = this.__data__;
+  let index = -1;
+  const length = data.length;
 
   while (++index < length) {
     if (data[index][0] === key) {
@@ -82,9 +82,9 @@ ListCache.prototype.has = function (key) {
 };
 
 ListCache.prototype.set = function (key, value) {
-  let data = this.__data__,
-    index = -1,
-    length = data.length;
+  const data = this.__data__;
+  let index = -1;
+  const length = data.length;
 
   while (++index < length) {
     if (data[index][0] === key) {
@@ -155,8 +155,8 @@ globalThis.Uint8Array$6 = NativeUint8Array;
 
 // MapCache implementation that uses Map or ListCache
 function MapCache(entries) {
-  let index = -1,
-    length = entries == null ? 0 : entries.length;
+  let index = -1;
+  const length = entries == null ? 0 : entries.length;
 
   this.clear();
   while (++index < length) {
@@ -199,8 +199,8 @@ MapCache.prototype.set = function (key, value) {
 
 // Hash implementation (simplified)
 function Hash(entries) {
-  let index = -1,
-    length = entries == null ? 0 : entries.length;
+  let index = -1;
+  const length = entries == null ? 0 : entries.length;
 
   this.clear();
   while (++index < length) {

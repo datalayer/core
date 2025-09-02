@@ -1032,6 +1032,191 @@ class DatalayerAPIService {
       };
     }
   }
+
+  /**
+   * Get current user information from IAM
+   */
+  async getCurrentUser(): Promise<{
+    success: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
+  }> {
+    try {
+      log.debug(`[IAM API] Fetching current user info`);
+      const response = await this.request('/api/iam/v1/whoami');
+      log.debug(`[IAM API] Current user info:`, response);
+      // The response contains profile nested, extract it
+      const profile = (response as any).profile || response;
+      return { success: true, data: profile };
+    } catch (error) {
+      log.error('Failed to fetch current user:', error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch current user',
+      };
+    }
+  }
+
+  /**
+   * Fetch GitHub user data
+   */
+  async getGitHubUser(githubId: number): Promise<{
+    success: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
+  }> {
+    try {
+      log.debug(`[GitHub API] Fetching user data for ID: ${githubId}`);
+
+      // Use Electron's net module to fetch from GitHub API
+      return new Promise((resolve, reject) => {
+        const request = net.request({
+          method: 'GET',
+          url: `https://api.github.com/user/${githubId}`,
+        });
+
+        // Set headers for GitHub API
+        request.setHeader('Accept', 'application/vnd.github.v3+json');
+        request.setHeader('User-Agent', 'Datalayer-Electron-App');
+
+        let responseData = '';
+
+        request.on('response', response => {
+          response.on('data', chunk => {
+            responseData += chunk.toString();
+          });
+
+          response.on('end', () => {
+            try {
+              const data = responseData ? JSON.parse(responseData) : {};
+
+              if (
+                response.statusCode &&
+                response.statusCode >= 200 &&
+                response.statusCode < 300
+              ) {
+                log.debug(`[GitHub API] User data fetched successfully`);
+                resolve({ success: true, data });
+              } else if (response.statusCode === 404) {
+                // User not found, try search API as fallback
+                log.debug(
+                  `[GitHub API] User not found by ID, trying search API`
+                );
+                this.searchGitHubUser(githubId)
+                  .then(searchResult => resolve(searchResult))
+                  .catch(error => reject(error));
+              } else {
+                const errorMsg = data.message || `HTTP ${response.statusCode}`;
+                log.error(`[GitHub API] Error: ${errorMsg}`);
+                reject(new Error(errorMsg));
+              }
+            } catch (error) {
+              log.error(`[GitHub API] Parse error:`, error);
+              reject(new Error(`Failed to parse response: ${responseData}`));
+            }
+          });
+        });
+
+        request.on('error', error => {
+          log.error(`[GitHub API] Request error:`, error);
+          reject(error);
+        });
+
+        request.end();
+      });
+    } catch (error) {
+      log.error('Failed to fetch GitHub user:', error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to fetch GitHub user',
+      };
+    }
+  }
+
+  /**
+   * Search GitHub user by ID (fallback)
+   */
+  private async searchGitHubUser(githubId: number): Promise<{
+    success: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
+  }> {
+    return new Promise(resolve => {
+      const request = net.request({
+        method: 'GET',
+        url: `https://api.github.com/search/users?q=id:${githubId}`,
+      });
+
+      request.setHeader('Accept', 'application/vnd.github.v3+json');
+      request.setHeader('User-Agent', 'Datalayer-Electron-App');
+
+      let responseData = '';
+
+      request.on('response', response => {
+        response.on('data', chunk => {
+          responseData += chunk.toString();
+        });
+
+        response.on('end', () => {
+          try {
+            const data = responseData ? JSON.parse(responseData) : {};
+
+            if (
+              response.statusCode &&
+              response.statusCode >= 200 &&
+              response.statusCode < 300
+            ) {
+              const items = data.items || [];
+              if (items.length > 0) {
+                log.debug(`[GitHub API] User found via search`);
+                resolve({ success: true, data: items[0] });
+              } else {
+                // Return a default user object if nothing found
+                log.debug(`[GitHub API] No user found, returning default`);
+                resolve({
+                  success: true,
+                  data: {
+                    login: 'User',
+                    name: 'Datalayer User',
+                    avatar_url: `https://avatars.githubusercontent.com/u/${githubId}?v=4`,
+                    id: githubId,
+                  },
+                });
+              }
+            } else {
+              log.error(`[GitHub API] Search failed: ${response.statusCode}`);
+              resolve({
+                success: false,
+                error: `GitHub search failed: ${response.statusCode}`,
+              });
+            }
+          } catch (error) {
+            log.error(`[GitHub API] Search parse error:`, error);
+            resolve({
+              success: false,
+              error: 'Failed to parse search response',
+            });
+          }
+        });
+      });
+
+      request.on('error', error => {
+        log.error(`[GitHub API] Search request error:`, error);
+        resolve({
+          success: false,
+          error: error.message || 'GitHub search request failed',
+        });
+      });
+
+      request.end();
+    });
+  }
 }
 
 // Export singleton instance

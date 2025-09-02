@@ -5,6 +5,37 @@
 
 /* Import styles from dependencies */
 
+/* Datalayer Color Palette CSS Variables */
+:root {
+  /* Primary Datalayer Colors */
+  --datalayer-green-light: #2ecc71; /* RGB: 46, 204, 113 */
+  --datalayer-green-main: #1abc9c; /* RGB: 26, 188, 156 */
+  --datalayer-green-dark: #16a085; /* RGB: 22, 160, 133 */
+  --datalayer-gray: #59595c; /* RGB: 89, 89, 92 */
+  --datalayer-black: #000000; /* RGB: 0, 0, 0 */
+  --datalayer-white: #ffffff; /* RGB: 255, 255, 255 */
+
+  /* Semantic Color Mappings */
+  --color-primary: var(--datalayer-green-main);
+  --color-primary-hover: var(--datalayer-green-dark);
+  --color-primary-light: var(--datalayer-green-light);
+  --color-success: var(--datalayer-green-main);
+  --color-text-primary: var(--datalayer-black);
+  --color-text-secondary: var(--datalayer-gray);
+  --color-text-inverse: var(--datalayer-white);
+  --color-bg-primary: var(--datalayer-white);
+  --color-bg-secondary: #f8f9fa;
+
+  /* Override Primer defaults with Datalayer colors */
+  --color-canvas-default: var(--datalayer-white);
+  --color-fg-default: var(--datalayer-black);
+  --color-fg-muted: var(--datalayer-gray);
+  --color-accent-fg: var(--datalayer-green-main);
+  --color-success-fg: var(--datalayer-green-main);
+  --color-btn-primary-bg: var(--datalayer-green-main);
+  --color-btn-primary-hover-bg: var(--datalayer-green-dark);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -32,21 +63,21 @@ body {
   height: 100%;
 }
 
-/* Scrollbar styles */
+/* Scrollbar styles with Datalayer colors */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
+  background: var(--datalayer-gray);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--datalayer-green-main);
 }

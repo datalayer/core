@@ -27,6 +27,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Platform info
   platform: process.platform,
+
+  // About dialog methods
+  closeAboutWindow: () => ipcRenderer.send('close-about-window'),
+  openExternal: (url: string) => ipcRenderer.send('open-external', url),
 });
 
 // Expose proxy APIs for ServiceManager
@@ -136,6 +140,12 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
 
   getCollaborationToken: () =>
     ipcRenderer.invoke('datalayer:get-collaboration-token'),
+
+  // User and GitHub API
+  getCurrentUser: () => ipcRenderer.invoke('datalayer:current-user'),
+
+  getGitHubUser: (githubId: number) =>
+    ipcRenderer.invoke('datalayer:github-user', githubId),
 });
 
 // Type definitions for TypeScript
@@ -192,6 +202,8 @@ export interface ElectronAPI {
   onMenuAction: (callback: (action: string) => void) => void;
   removeMenuActionListener: () => void;
   platform: NodeJS.Platform;
+  closeAboutWindow: () => void;
+  openExternal: (url: string) => void;
 }
 
 // API response data types
@@ -328,6 +340,16 @@ export interface DatalayerAPI {
     runUrl: string;
     token?: string;
     isAuthenticated: boolean;
+  }>;
+  getCurrentUser: () => Promise<{
+    success: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
+  }>;
+  getGitHubUser: (githubId: number) => Promise<{
+    success: boolean;
+    data?: Record<string, unknown>;
+    error?: string;
   }>;
 }
 

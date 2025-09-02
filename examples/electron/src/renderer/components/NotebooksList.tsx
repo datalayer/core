@@ -563,7 +563,7 @@ const NotebooksList: React.FC<NotebooksListProps> = ({ onNotebookSelect }) => {
                           <ClockIcon size={14} />{' '}
                           {formatDate(notebook.modifiedAt)}
                         </Text>
-                        <Label size="small" variant="accent">
+                        <Label size="small" variant="default">
                           {notebook.kernel}
                         </Label>
                       </Box>
@@ -575,6 +575,13 @@ const NotebooksList: React.FC<NotebooksListProps> = ({ onNotebookSelect }) => {
                           icon={PlayIcon}
                           size="small"
                           variant="invisible"
+                          sx={{
+                            color: COLORS.brand.primary,
+                            '&:hover': {
+                              color: COLORS.brand.primaryHover,
+                              backgroundColor: `${COLORS.brand.primary}15`,
+                            },
+                          }}
                           onClick={e => {
                             e.stopPropagation();
                             handleOpenNotebook(notebook);

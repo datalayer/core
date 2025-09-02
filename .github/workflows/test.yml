@@ -40,22 +40,48 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
-
-    - name: Fix Rollup native dependencies
-      run: npm install @rollup/rollup-linux-x64-gnu --no-save
+      run: npm install --workspaces
 
     - name: Build project
       run: npm run build
 
+    - name: Install Linux dependencies for Electron
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libnss3-dev \
+          libatk-bridge2.0-dev \
+          libdrm2 \
+          libxss1 \
+          libxrandr2 \
+          libasound2-dev \
+          libpangocairo-1.0-0 \
+          libatk1.0-dev \
+          libcairo-gobject2 \
+          libgtk-3-dev \
+          libgdk-pixbuf2.0-dev \
+          xvfb
+
+    - name: Setup virtual display
+      run: |
+        export DISPLAY=:99
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+        sleep 3
+
+    - name: Build examples
+      run: npm run build:examples
+      env:
+        CI: true
+        DISPLAY: ':99.0'
+
     - name: Run linting
-      run: npm run lint
+      run: npm run lint:all
 
     - name: Run Format
-      run: npm run format
+      run: npm run format:all
   
     - name: Run type checks
-      run: npm run type-check
+      run: npm run type-check:all
 
     - name: Run unit tests
       run: npm test

@@ -82,33 +82,24 @@ const App: React.FC = () => {
       // Extract GitHub user ID from the handle (e.g., "urn:dla:iam:ext::github:3627835")
       const match = userId.match(/github:(\d+)/);
       if (match && match[1]) {
-        const githubId = match[1];
+        const githubId = parseInt(match[1], 10);
+        logger.debug(`Fetching GitHub user data for ID: ${githubId}`);
 
-        // First try to get user by ID
-        const response = await fetch(`https://api.github.com/user/${githubId}`);
-        if (response.ok) {
-          const userData = (await response.json()) as GitHubUser;
+        // Use IPC bridge to fetch GitHub user data from main process
+        const response = await window.datalayerAPI.getGitHubUser(githubId);
+        if (response.success && response.data) {
+          const userData = response.data as unknown as GitHubUser;
           setGithubUser(userData);
           logger.debug('GitHub user data:', userData);
         } else {
-          // Fallback: search for user by ID
-          const searchResponse = await fetch(
-            `https://api.github.com/search/users?q=id:${githubId}`
-          );
-          if (searchResponse.ok) {
-            const searchData = (await searchResponse.json()) as {
-              items: GitHubUser[];
-            };
-            if (searchData.items && searchData.items.length > 0) {
-              const user = searchData.items[0];
-              // Fetch full user details
-              const userResponse = await fetch(user.url || '');
-              if (userResponse.ok) {
-                const userData = (await userResponse.json()) as GitHubUser;
-                setGithubUser(userData);
-              }
-            }
-          }
+          console.warn('Failed to fetch GitHub user:', response.error);
+          // Set a default avatar for fallback
+          setGithubUser({
+            login: 'User',
+            name: 'Datalayer User',
+            avatar_url: `https://avatars.githubusercontent.com/u/${githubId}?v=4`,
+            id: githubId,
+          });
         }
       }
     } catch (error) {
@@ -117,11 +108,38 @@ const App: React.FC = () => {
       setGithubUser({
         login: 'User',
         name: 'Datalayer User',
-        avatar_url: `https://avatars.githubusercontent.com/u/3627835?v=4`,
-        id: 3627835,
+        avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
+        id: 0,
       });
     }
   }, []);
+
+  // Handle user data from login
+  const handleUserDataFetched = useCallback(
+    (userData: Record<string, unknown>) => {
+      logger.debug('User data from login:', userData);
+
+      // Extract the GitHub ID from origin_s field
+      const originStr = (userData.origin_s ||
+        userData.origin ||
+        userData.handle ||
+        userData.user_handle) as string;
+      if (originStr && originStr.includes('github:')) {
+        fetchGitHubUser(originStr);
+      } else {
+        logger.warn('Could not find GitHub ID in login user data:', userData);
+        logger.warn('Available fields:', Object.keys(userData));
+        // Don't use a default - let user remain anonymous
+        setGithubUser({
+          login: 'User',
+          name: 'Datalayer User',
+          avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
+          id: 0,
+        });
+      }
+    },
+    [fetchGitHubUser]
+  );
 
   useEffect(() => {
     // Check if already authenticated using secure IPC
@@ -134,8 +152,54 @@ const App: React.FC = () => {
           if ('runUrl' in credentials) {
             logger.debug('Authenticated with:', credentials.runUrl);
           }
-          // Fetch GitHub user data based on the user handle from the console logs
-          fetchGitHubUser('urn:dla:iam:ext::github:3627835');
+
+          // Fetch current user info to get the actual GitHub ID
+          try {
+            const userResponse = await window.datalayerAPI.getCurrentUser();
+            if (userResponse.success && userResponse.data) {
+              const userData = userResponse.data;
+              logger.debug('Current user data:', userData);
+
+              // Extract the GitHub ID from origin_s field (e.g., "urn:dla:iam:ext::github:226720")
+              const originStr = (userData.origin_s ||
+                userData.origin ||
+                userData.handle ||
+                userData.user_handle) as string;
+              if (originStr && originStr.includes('github:')) {
+                fetchGitHubUser(originStr);
+              } else {
+                // Try alternate fields
+                const userId = (userData.user_id ||
+                  userData.external_id ||
+                  userData.id) as string;
+                if (userId && userId.includes('github:')) {
+                  fetchGitHubUser(userId);
+                } else {
+                  logger.warn(
+                    'Could not find GitHub ID in user data:',
+                    userData
+                  );
+                  logger.warn('Available fields:', Object.keys(userData));
+                  // Don't use a default - let user remain anonymous
+                  setGithubUser({
+                    login: 'User',
+                    name: 'Datalayer User',
+                    avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
+                    id: 0,
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            logger.error('Failed to fetch current user:', error);
+            // Don't use a default - let user remain anonymous
+            setGithubUser({
+              login: 'User',
+              name: 'Datalayer User',
+              avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
+              id: 0,
+            });
+          }
 
           // Try to reconnect to existing runtimes after authentication
           try {
@@ -266,7 +330,7 @@ const App: React.FC = () => {
     return (
       <ThemeProvider>
         <BaseStyles>
-          <LoginView />
+          <LoginView onUserDataFetched={handleUserDataFetched} />
         </BaseStyles>
       </ThemeProvider>
     );
