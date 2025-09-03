@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "type": "module",
   "workspaces": [
     ".",
