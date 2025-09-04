@@ -19,9 +19,17 @@
     "check:fix": "npm run format && npm run lint:fix && npm run type-check",
     "start": "electron-vite dev",
     "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:mac": "npm run build && electron-builder --mac --universal",
+    "dist:mac-universal": "npm run build && electron-builder --mac --universal",
+    "dist:mac-intel": "npm run build && electron-builder --mac --x64",
+    "dist:mac-arm": "npm run build && electron-builder --mac --arm64",
+    "dist:mac-all": "npm run build && electron-builder --mac --x64 --arm64",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "dist:linux": "npm run build && electron-builder --linux",
+    "dist:dev-prod": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder",
+    "dist:dev-prod:mac": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --mac --universal",
+    "dist:dev-prod:win": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --win",
+    "dist:dev-prod:linux": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --linux"
   },
   "dependencies": {
     "@datalayer/core": "file:../..",
@@ -38,6 +46,11 @@
     "ws": "^8.18.3",
     "zustand": "^5.0.1"
   },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.8",
+    "utf-8-validate": "^6.0.5",
+    "@rollup/rollup-linux-x64-gnu": "4.45.1"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.6",
     "@types/form-data": "^2.2.1",
@@ -45,8 +58,10 @@
     "@types/react": "^18.3.13",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^7.0.3",
     "electron": "^34.0.0",
     "electron-builder": "^25.1.8",
+    "@electron/rebuild": "^3.7.2",
     "electron-vite": "^2.3.0",
     "patch-package": "^8.0.0",
     "typescript": "^5.7.2",
@@ -62,12 +77,23 @@
     },
     "files": [
       "dist/**/*",
-      "resources/**/*"
+      "resources/**/*",
+      "!node_modules/bufferutil/build/**/*",
+      "!node_modules/utf-8-validate/build/**/*"
     ],
     "icon": "resources/icon.png",
+    "npmRebuild": false,
     "mac": {
       "category": "public.app-category.developer-tools",
-      "icon": "resources/icon.png"
+      "icon": "resources/icon.png",
+      "target": [
+        {
+          "target": "default",
+          "arch": "universal"
+        }
+      ],
+      "mergeASARs": false,
+      "singleArchFiles": "*"
     },
     "linux": {
       "target": "AppImage",

@@ -65,5 +65,3 @@ jobs:
           DATALAYER_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
         run: |
           pytest datalayer_core/tests/ --cov=datalayer_core --cov-report term-missing
-
-

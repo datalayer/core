@@ -16,8 +16,13 @@ import {
 import { CheckIcon } from '@primer/octicons-react';
 import { useDatalayerAPI } from '../hooks/useDatalayerAPI';
 import { COLORS } from '../constants/colors';
+import iconImage from '../assets/icon.png';
 
-const LoginView: React.FC = () => {
+interface LoginViewProps {
+  onUserDataFetched?: (userData: Record<string, unknown>) => void;
+}
+
+const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
   const [runUrl, setRunUrl] = useState('https://prod1.datalayer.run');
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
@@ -41,6 +46,9 @@ const LoginView: React.FC = () => {
         setError(
           result.message || 'Failed to login. Please check your credentials.'
         );
+      } else if (onUserDataFetched && (result as any).userData) {
+        // Pass user data to parent component if available
+        onUserDataFetched((result as any).userData);
       }
       // If successful, the hook will handle updating the store and navigation
     } catch (err) {
@@ -94,7 +102,7 @@ const LoginView: React.FC = () => {
             }}
           >
             <img
-              src="/icon.png"
+              src={iconImage}
               alt="Datalayer"
               style={{
                 width: '96px',
@@ -147,7 +155,19 @@ const LoginView: React.FC = () => {
             aria-label="API Token"
           />
           <FormControl.Caption>
-            Your Datalayer API token for authentication
+            <Text>
+              Your Datalayer API token for authentication.{' '}
+              <Button
+                as="a"
+                variant="invisible"
+                size="small"
+                href="https://datalayer.app/settings/iam/tokens"
+                target="_blank"
+                sx={{ p: 0, fontSize: 'inherit', verticalAlign: 'baseline' }}
+              >
+                Get a token
+              </Button>
+            </Text>
           </FormControl.Caption>
         </FormControl>
 

@@ -7,7 +7,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
 import react from '@vitejs/plugin-react';
 import commonjs from '@rollup/plugin-commonjs';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, readFileSync } from 'fs';
+import { copyFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
 import importAsString from 'vite-plugin-string';
 
 export default defineConfig({
@@ -24,6 +24,11 @@ export default defineConfig({
             copyFileSync(
               resolve(__dirname, 'src/main/about.html'),
               resolve(__dirname, 'dist/main/about.html')
+            );
+            // Copy about.js to dist/main
+            copyFileSync(
+              resolve(__dirname, 'src/main/about.js'),
+              resolve(__dirname, 'dist/main/about.js')
             );
           } catch (err) {
             console.error('Failed to copy static files:', err);
@@ -47,6 +52,7 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/preload/index.ts'),
+          about: resolve(__dirname, 'src/preload/about.js'),
         },
       },
     },
@@ -85,8 +91,63 @@ export default defineConfig({
         plugins: [
           commonjs({
             transformMixedEsModules: true, // Handle mixed CJS/ESM modules
-            include: [/node_modules/, /\.js$/],
+            include: [/node_modules/, /\.js$/, /\.cjs$/],
             requireReturnsDefault: 'auto',
+            dynamicRequireTargets: [
+              'node_modules/@jupyterlab/services/**/*.js',
+            ],
+            // Explicitly handle @jupyterlab/services and jQuery CommonJS exports
+            namedExports: {
+              jquery: ['default'],
+              '@jupyterlab/services': [
+                'ServiceManager',
+                'ServerConnection',
+                'KernelManager',
+                'SessionManager',
+                'ContentsManager',
+                'TerminalManager',
+                'SettingManager',
+                'WorkspaceManager',
+                'EventManager',
+                'NbConvertManager',
+                'KernelSpecManager',
+                'UserManager',
+                'BuildManager',
+                'BaseManager',
+                'ConfigSection',
+                'ConfigSectionManager',
+                'ConfigWithDefaults',
+                'ConnectionStatus',
+                'Drive',
+                'RestContentProvider',
+              ],
+              '@jupyterlab/services/lib/manager': ['ServiceManager'],
+              '@jupyterlab/services/lib/serverconnection': ['ServerConnection'],
+              '@jupyterlab/services/lib/kernel': ['KernelManager'],
+              '@jupyterlab/services/lib/session': ['SessionManager'],
+              '@jupyterlab/services/lib/contents': ['ContentsManager'],
+              '@jupyterlab/services/lib/config': [
+                'ConfigSection',
+                'ConfigSectionManager',
+              ],
+              '@jupyterlab/services/lib/terminal': ['TerminalManager'],
+              '@jupyterlab/services/lib/kernelspec': ['KernelSpecManager'],
+              '@jupyterlab/services/lib/setting': ['SettingManager'],
+              '@jupyterlab/services/lib/workspace': ['WorkspaceManager'],
+              '@jupyterlab/services/lib/event': ['EventManager'],
+              '@jupyterlab/services/lib/nbconvert': ['NbConvertManager'],
+              '@jupyterlab/services/lib/user': ['UserManager'],
+              '@jupyterlab/services/lib/builder': ['BuildManager'],
+              // Handle nested node_modules from @jupyterlite
+              '@jupyterlite/server/node_modules/@jupyterlab/services': [
+                'ServiceManager',
+                'ServerConnection',
+              ],
+              '@jupyterlite/server/node_modules/@jupyterlab/services/lib/manager':
+                ['ServiceManager'],
+              '@jupyterlite/server/node_modules/@jupyterlab/services/lib/serverconnection':
+                ['ServerConnection'],
+            },
           }),
         ] as any,
         onwarn(warning, warn) {
@@ -97,6 +158,170 @@ export default defineConfig({
       },
     },
     plugins: [
+      {
+        name: 'fix-sanitize-html-postcss',
+        enforce: 'pre',
+        resolveId(id) {
+          // Intercept postcss and source-map-js to prevent externalization
+          if (id === 'postcss' || id.startsWith('postcss/')) {
+            return { id: '\0virtual:postcss-stub', external: false };
+          }
+          if (id === 'source-map-js') {
+            return { id: '\0virtual:source-map-js-stub', external: false };
+          }
+          return null;
+        },
+        load(id) {
+          if (id === '\0virtual:postcss-stub') {
+            // Provide a minimal postcss stub for sanitize-html
+            return `
+              export const parse = () => ({});
+              export const stringify = () => '';
+              export default { parse, stringify };
+            `;
+          }
+          if (id === '\0virtual:source-map-js-stub') {
+            // Provide a minimal source-map stub
+            return `
+              export class SourceMapConsumer {
+                constructor() {}
+                destroy() {}
+              }
+              export class SourceMapGenerator {
+                constructor() {}
+                addMapping() {}
+                toString() { return ''; }
+              }
+              export default { SourceMapConsumer, SourceMapGenerator };
+            `;
+          }
+          return null;
+        },
+      },
+      {
+        name: 'fix-backbone-underscore',
+        enforce: 'pre',
+        transform(code, id) {
+          // Fix Backbone's dependency on underscore/lodash
+          if (id.includes('backbone')) {
+            // Make sure underscore methods are available
+            const underscorePolyfill = `
+              // Ensure underscore/lodash methods are available for Backbone
+              if (typeof window !== 'undefined' && !window._) {
+                window._ = window.lodash || {
+                  extend: Object.assign || function(target, ...sources) {
+                    sources.forEach(source => {
+                      for (let key in source) {
+                        if (source.hasOwnProperty(key)) {
+                          target[key] = source[key];
+                        }
+                      }
+                    });
+                    return target;
+                  },
+                  isFunction: function(obj) { return typeof obj === 'function'; },
+                  isObject: function(obj) { return obj === Object(obj); },
+                  isArray: Array.isArray,
+                  keys: Object.keys,
+                  values: Object.values,
+                  pairs: function(obj) { return Object.entries(obj); },
+                  invert: function(obj) {
+                    const result = {};
+                    const keys = Object.keys(obj);
+                    for (let i = 0, length = keys.length; i < length; i++) {
+                      result[obj[keys[i]]] = keys[i];
+                    }
+                    return result;
+                  },
+                  pick: function(object, ...keys) {
+                    const result = {};
+                    keys = keys.flat();
+                    keys.forEach(key => {
+                      if (key in object) result[key] = object[key];
+                    });
+                    return result;
+                  },
+                  omit: function(obj, ...keys) {
+                    const result = { ...obj };
+                    keys = keys.flat();
+                    keys.forEach(key => delete result[key]);
+                    return result;
+                  },
+                  defaults: function(obj, ...sources) {
+                    sources.forEach(source => {
+                      for (let key in source) {
+                        if (obj[key] === undefined) obj[key] = source[key];
+                      }
+                    });
+                    return obj;
+                  },
+                  clone: function(obj) { return obj ? JSON.parse(JSON.stringify(obj)) : obj; },
+                  has: function(obj, key) { return obj != null && Object.prototype.hasOwnProperty.call(obj, key); },
+                  bind: function(func, context) { return func.bind(context); },
+                  each: function(obj, iteratee) {
+                    if (Array.isArray(obj)) {
+                      obj.forEach((val, idx) => iteratee(val, idx, obj));
+                    } else {
+                      Object.keys(obj).forEach(key => iteratee(obj[key], key, obj));
+                    }
+                  },
+                  map: function(obj, iteratee) {
+                    if (Array.isArray(obj)) return obj.map(iteratee);
+                    return Object.keys(obj).map(key => iteratee(obj[key], key, obj));
+                  },
+                  reduce: function(obj, iteratee, memo) {
+                    if (Array.isArray(obj)) return obj.reduce(iteratee, memo);
+                    return Object.keys(obj).reduce((m, key) => iteratee(m, obj[key], key, obj), memo);
+                  },
+                  filter: function(obj, predicate) {
+                    if (Array.isArray(obj)) return obj.filter(predicate);
+                    const result = {};
+                    Object.keys(obj).forEach(key => {
+                      if (predicate(obj[key], key, obj)) result[key] = obj[key];
+                    });
+                    return result;
+                  },
+                  isEmpty: function(obj) {
+                    if (obj == null) return true;
+                    if (Array.isArray(obj) || typeof obj === 'string') return obj.length === 0;
+                    return Object.keys(obj).length === 0;
+                  },
+                  isString: function(obj) { return typeof obj === 'string'; },
+                  isNumber: function(obj) { return typeof obj === 'number'; },
+                  isBoolean: function(obj) { return obj === true || obj === false; },
+                  isNull: function(obj) { return obj === null; },
+                  isUndefined: function(obj) { return obj === undefined; },
+                  uniqueId: (function() {
+                    let idCounter = 0;
+                    return function(prefix) {
+                      const id = ++idCounter + '';
+                      return prefix ? prefix + id : id;
+                    };
+                  })(),
+                  result: function(obj, path) {
+                    const value = obj == null ? undefined : obj[path];
+                    return typeof value === 'function' ? value.call(obj) : value;
+                  },
+                  now: Date.now,
+                  escape: function(string) {
+                    const escapeMap = {
+                      '&': '&amp;',
+                      '<': '&lt;',
+                      '>': '&gt;',
+                      '"': '&quot;',
+                      "'": '&#x27;',
+                      '/': '&#x2F;'
+                    };
+                    return string ? string.replace(/[&<>"'\\/]/g, s => escapeMap[s]) : '';
+                  }
+                };
+              }
+            `;
+            return underscorePolyfill + '\n' + code;
+          }
+          return null;
+        },
+      },
       {
         name: 'node-builtins-polyfill',
         enforce: 'pre',
@@ -126,19 +351,78 @@ export default defineConfig({
 
             if (name === 'path') {
               return `
-                const path = {
-                  join: (...parts) => parts.filter(p => p && p !== '.').join('/').replace(/\\/+/g, '/'),
-                  dirname: (p) => { const i = p.lastIndexOf('/'); return i === -1 ? '.' : p.substring(0, i) || '/'; },
-                  basename: (p, ext) => { const n = p.substring(p.lastIndexOf('/') + 1); return ext && n.endsWith(ext) ? n.slice(0, -ext.length) : n; },
-                  extname: (p) => { const d = p.lastIndexOf('.'); const s = p.lastIndexOf('/'); return d > s ? p.substring(d) : ''; },
-                  resolve: (...paths) => '/' + paths.filter(p => p).join('/').replace(/\\/+/g, '/'),
-                  relative: (from, to) => to,
+                const pathModule = {
+                  join: function(...parts) {
+                    if (!parts || parts.length === 0) return '.';
+                    return parts.filter(p => p != null && p !== '').join('/').replace(/\\/+/g, '/');
+                  },
+                  dirname: function(p) {
+                    if (!p) return '.';
+                    const i = p.lastIndexOf('/');
+                    return i === -1 ? '.' : p.substring(0, i) || '/';
+                  },
+                  basename: function(p, ext) {
+                    if (!p) return '';
+                    const n = p.substring(p.lastIndexOf('/') + 1);
+                    return ext && n.endsWith(ext) ? n.slice(0, -ext.length) : n;
+                  },
+                  extname: function(p) {
+                    if (!p) return '';
+                    const d = p.lastIndexOf('.');
+                    const s = p.lastIndexOf('/');
+                    return d > s ? p.substring(d) : '';
+                  },
+                  resolve: function(...paths) {
+                    return '/' + paths.filter(p => p).join('/').replace(/\\/+/g, '/');
+                  },
+                  relative: function(from, to) { return to; },
+                  normalize: function(path) {
+                    if (!path || path === '') return '.';
+                    const isAbsolute = path[0] === '/';
+                    const parts = path.split('/').filter(p => p && p !== '.');
+                    const result = [];
+                    for (let i = 0; i < parts.length; i++) {
+                      if (parts[i] === '..') {
+                        if (result.length > 0 && result[result.length - 1] !== '..') {
+                          result.pop();
+                        } else if (!isAbsolute) {
+                          result.push('..');
+                        }
+                      } else {
+                        result.push(parts[i]);
+                      }
+                    }
+                    let normalized = result.join('/');
+                    if (isAbsolute) normalized = '/' + normalized;
+                    else if (normalized === '') normalized = '.';
+                    return normalized;
+                  },
                   sep: '/',
                   delimiter: ':',
-                  parse: function(p) { return { root: '', dir: this.dirname(p), base: this.basename(p), ext: this.extname(p), name: this.basename(p, this.extname(p)) }; }
+                  parse: function(p) {
+                    return {
+                      root: '',
+                      dir: this.dirname(p),
+                      base: this.basename(p),
+                      ext: this.extname(p),
+                      name: this.basename(p, this.extname(p))
+                    };
+                  },
+                  posix: null
                 };
-                export default path;
-                export const { join, dirname, basename, extname, resolve, relative, sep, delimiter, parse } = path;
+                // Add self-reference for posix
+                pathModule.posix = pathModule;
+
+                // Ensure global availability
+                if (typeof globalThis !== 'undefined' && !globalThis.path) {
+                  globalThis.path = pathModule;
+                }
+                if (typeof window !== 'undefined' && !window.path) {
+                  window.path = pathModule;
+                }
+
+                export default pathModule;
+                export const { join, dirname, basename, extname, resolve, relative, normalize, sep, delimiter, parse, posix } = pathModule;
               `;
             }
 
@@ -195,60 +479,150 @@ export default defineConfig({
         },
       },
       {
-        name: 'resolve-jupyterlab-services',
+        name: 'inject-path-polyfill',
         enforce: 'pre',
-        resolveId(id) {
-          // Intercept @jupyterlab/services imports
-          if (id === '@jupyterlab/services') {
-            // Return a virtual module ID
-            return '\0virtual:jupyterlab-services';
+        transform(code, id) {
+          // Inject path polyfill for @jupyterlab/coreutils
+          if (
+            id.includes('@jupyterlab/coreutils') &&
+            code.includes('require("path")')
+          ) {
+            // Replace require("path") with our polyfill
+            const pathPolyfill = `
+              const path = {
+                join: function(...parts) {
+                  if (!parts || parts.length === 0) return '.';
+                  return parts.filter(p => p != null && p !== '').join('/').replace(/\\/+/g, '/');
+                },
+                dirname: function(p) {
+                  if (!p) return '.';
+                  const i = p.lastIndexOf('/');
+                  return i === -1 ? '.' : p.substring(0, i) || '/';
+                },
+                basename: function(p, ext) {
+                  if (!p) return '';
+                  const n = p.substring(p.lastIndexOf('/') + 1);
+                  return ext && n.endsWith(ext) ? n.slice(0, -ext.length) : n;
+                },
+                extname: function(p) {
+                  if (!p) return '';
+                  const d = p.lastIndexOf('.');
+                  const s = p.lastIndexOf('/');
+                  return d > s ? p.substring(d) : '';
+                },
+                resolve: function(...paths) {
+                  return '/' + paths.filter(p => p).join('/').replace(/\\/+/g, '/');
+                },
+                relative: function(from, to) { return to; },
+                normalize: function(p) {
+                  if (!p || p === '') return '.';
+                  const isAbsolute = p[0] === '/';
+                  const parts = p.split('/').filter(part => part && part !== '.');
+                  const result = [];
+                  for (let i = 0; i < parts.length; i++) {
+                    if (parts[i] === '..') {
+                      if (result.length > 0 && result[result.length - 1] !== '..') {
+                        result.pop();
+                      } else if (!isAbsolute) {
+                        result.push('..');
+                      }
+                    } else {
+                      result.push(parts[i]);
+                    }
+                  }
+                  let normalized = result.join('/');
+                  if (isAbsolute) normalized = '/' + normalized;
+                  else if (normalized === '') normalized = '.';
+                  return normalized;
+                },
+                sep: '/',
+                delimiter: ':',
+                parse: function(p) {
+                  return {
+                    root: '',
+                    dir: this.dirname(p),
+                    base: this.basename(p),
+                    ext: this.extname(p),
+                    name: this.basename(p, this.extname(p))
+                  };
+                },
+                posix: null
+              };
+              path.posix = path;
+            `;
+
+            // Replace require("path") with inline polyfill
+            let modified = code.replace(
+              /const path_1 = require\("path"\);?/g,
+              pathPolyfill + '\nconst path_1 = path;'
+            );
+
+            if (modified !== code) {
+              return { code: modified, map: null };
+            }
           }
           return null;
         },
-        load(id) {
-          // Provide a virtual module that re-exports everything correctly
-          if (id === '\0virtual:jupyterlab-services') {
+      },
+      {
+        name: 'fix-jquery-import',
+        enforce: 'pre',
+        resolveId(id: string) {
+          if (id === 'jquery') {
+            return {
+              id: 'jquery',
+              external: false,
+              moduleSideEffects: false,
+            };
+          }
+          return null;
+        },
+        load(id: string) {
+          if (id === 'jquery') {
+            // Return jQuery as both default and named export
             return `
-              // Import and re-export ESM modules
-              import * as managerModule from '@jupyterlab/services/lib/manager';
-              import * as serverConnectionModule from '@jupyterlab/services/lib/serverconnection';
-              import * as kernelModule from '@jupyterlab/services/lib/kernel';
-              import * as kernelMessagesModule from '@jupyterlab/services/lib/kernel/messages';
-              import * as sessionModule from '@jupyterlab/services/lib/session';
-              import * as contentsModule from '@jupyterlab/services/lib/contents';
-              import * as configModule from '@jupyterlab/services/lib/config';
-              import * as kernelspecModule from '@jupyterlab/services/lib/kernelspec';
-              import * as nbconvertModule from '@jupyterlab/services/lib/nbconvert';
-              import * as settingModule from '@jupyterlab/services/lib/setting';
-              import * as terminalModule from '@jupyterlab/services/lib/terminal';
-              import * as userModule from '@jupyterlab/services/lib/user';
-              import * as workspaceModule from '@jupyterlab/services/lib/workspace';
-              import * as eventModule from '@jupyterlab/services/lib/event';
-              import * as basemanagerModule from '@jupyterlab/services/lib/basemanager';
-
-              // Export specific items - try both CommonJS and ESM patterns
-              export const ServiceManager = managerModule.ServiceManager || managerModule.default?.ServiceManager;
-              export const ServerConnection = serverConnectionModule.ServerConnection || serverConnectionModule.default?.ServerConnection;
-              export const KernelMessage = kernelMessagesModule;
-              export const Kernel = kernelModule;
-
-              // Re-export everything from each module
-              export * from '@jupyterlab/services/lib/kernel';
-              export * from '@jupyterlab/services/lib/session';
-              export * from '@jupyterlab/services/lib/contents';
-              export * from '@jupyterlab/services/lib/manager';
-              export * from '@jupyterlab/services/lib/config';
-              export * from '@jupyterlab/services/lib/kernelspec';
-              export * from '@jupyterlab/services/lib/nbconvert';
-              export * from '@jupyterlab/services/lib/serverconnection';
-              export * from '@jupyterlab/services/lib/setting';
-              export * from '@jupyterlab/services/lib/terminal';
-              export * from '@jupyterlab/services/lib/user';
-              export * from '@jupyterlab/services/lib/workspace';
-              export * from '@jupyterlab/services/lib/event';
-              export * from '@jupyterlab/services/lib/basemanager';
+              import * as jQuery from 'jquery/dist/jquery.js';
+              const $ = jQuery.jQuery || jQuery.$ || jQuery.default || jQuery;
+              export { $ as jQuery, $ };
+              export default $;
             `;
           }
+          return null;
+        },
+      },
+      {
+        name: 'fix-jupyterlab-services-imports',
+        enforce: 'pre',
+        transform(code: string, id: string) {
+          // Only process files that import from @jupyterlab/services
+          if (!code.includes('@jupyterlab/services')) {
+            return null;
+          }
+
+          // Don't transform the proxy file itself or the loader
+          if (
+            id.includes('jupyterlab-services-proxy') ||
+            id.includes('serviceManagerLoader')
+          ) {
+            return null;
+          }
+
+          // Replace @jupyterlab/services imports with our proxy
+          let modified = code;
+
+          // Handle imports from '@jupyterlab/services'
+          modified = modified.replace(
+            /from\s+['"]@jupyterlab\/services['"]/g,
+            `from '${resolve(
+              __dirname,
+              'src/renderer/utils/jupyterlab-services-proxy.js'
+            )}'`
+          );
+
+          if (modified !== code) {
+            return { code: modified, map: null };
+          }
+
           return null;
         },
       },
@@ -305,9 +679,32 @@ export default defineConfig({
                   extname: function(path) { const dotIndex = path.lastIndexOf('.'); const slashIndex = path.lastIndexOf('/'); return dotIndex > slashIndex ? path.substring(dotIndex) : ''; },
                   resolve: function(...paths) { return this.join('/', ...paths); },
                   relative: function(from, to) { return to; },
+                  normalize: function(path) {
+                    if (!path || path === '') return '.';
+                    const isAbsolute = path[0] === '/';
+                    const parts = path.split('/').filter(p => p && p !== '.');
+                    const result = [];
+                    for (let i = 0; i < parts.length; i++) {
+                      if (parts[i] === '..') {
+                        if (result.length > 0 && result[result.length - 1] !== '..') {
+                          result.pop();
+                        } else if (!isAbsolute) {
+                          result.push('..');
+                        }
+                      } else {
+                        result.push(parts[i]);
+                      }
+                    }
+                    let normalized = result.join('/');
+                    if (isAbsolute) normalized = '/' + normalized;
+                    else if (normalized === '') normalized = '.';
+                    return normalized;
+                  },
                   sep: '/', delimiter: ':',
-                  parse: function(path) { const ext = this.extname(path); const base = this.basename(path); const name = this.basename(path, ext); const dir = this.dirname(path); return { root: '', dir, base, ext, name }; }
+                  parse: function(path) { const ext = this.extname(path); const base = this.basename(path); const name = this.basename(path, ext); const dir = this.dirname(path); return { root: '', dir, base, ext, name }; },
+                  posix: null
                 };
+                pathPolyfill.posix = pathPolyfill;
               `;
 
               // Replace all forms of path imports
@@ -953,18 +1350,47 @@ export default defineConfig({
         ),
         '~react-toastify': 'react-toastify',
         json5: resolve(__dirname, '../../node_modules/json5/lib/index.js'),
+        // Alias underscore to lodash
+        underscore: 'lodash',
+        // Force @jupyterlite to use our root @jupyterlab/services
+        '@jupyterlite/server/node_modules/@jupyterlab/services': resolve(
+          __dirname,
+          '../../node_modules/@jupyterlab/services'
+        ),
       },
     },
     optimizeDeps: {
       include: [
+        'lodash',
+        'lodash-es',
+        'underscore',
+        'backbone',
         'json5',
         'react',
         'react-dom',
         'react/jsx-runtime',
         '@jupyterlab/services',
+        '@jupyterlab/services/lib/manager',
+        '@jupyterlab/services/lib/serverconnection',
+        '@jupyterlab/services/lib/kernel',
+        '@jupyterlab/services/lib/kernel/messages',
+        '@jupyterlab/services/lib/kernel/serialize',
+        '@jupyterlab/services/lib/session',
+        '@jupyterlab/services/lib/contents',
+        '@jupyterlab/services/lib/config',
+        '@jupyterlab/services/lib/kernelspec',
+        '@jupyterlab/services/lib/setting',
+        '@jupyterlab/services/lib/terminal',
+        '@jupyterlab/services/lib/workspace',
+        '@jupyterlab/services/lib/user',
+        '@jupyterlab/services/lib/nbconvert',
+        '@jupyterlab/services/lib/event',
+        '@jupyterlab/services/lib/basemanager',
         '@datalayer/jupyter-react',
-        'lodash',
-        'lodash-es',
+        '@primer/react',
+        'zustand',
+        'ws',
+        'form-data',
       ],
       exclude: [
         'next/navigation',
@@ -972,6 +1398,12 @@ export default defineConfig({
         '@react-navigation/native',
         '@jupyterlite/pyodide-kernel',
         '@jupyterlab/apputils-extension',
+        // Exclude Node.js built-ins from optimization
+        'path',
+        'fs',
+        'url',
+        'source-map-js',
+        'postcss',
       ],
       esbuildOptions: {
         loader: {

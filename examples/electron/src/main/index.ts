@@ -56,6 +56,23 @@ import { join } from 'path';
 import { apiService } from './services/api-service';
 import { websocketProxy } from './services/websocket-proxy';
 
+// Environment detection utilities
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === 'development';
+}
+
+function isDevProd(): boolean {
+  return process.env.ELECTRON_DEV_PROD === 'true';
+}
+
+function shouldEnableDevTools(): boolean {
+  return isDevelopment() || isDevProd();
+}
+
+function shouldUseProductionSecurity(): boolean {
+  return !isDevelopment();
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {
@@ -67,6 +84,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       webSecurity: true,
+      devTools: shouldEnableDevTools(), // Disable DevTools in pure production
     },
     icon: join(__dirname, '../../resources/icon.png'),
     titleBarStyle: 'default',
@@ -79,8 +97,7 @@ function createWindow() {
 
   // Set Content Security Policy
   // In development, we need 'unsafe-eval' for hot reload, but in production it should be removed
-  const isDev = process.env.ELECTRON_RENDERER_URL ? true : false;
-  if (!isDev) {
+  if (shouldUseProductionSecurity()) {
     // Production CSP - stricter
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       callback({
@@ -103,7 +120,10 @@ function createWindow() {
   if (process.env.ELECTRON_RENDERER_URL) {
     // Development mode
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
-    mainWindow.webContents.openDevTools();
+    // Only open DevTools if allowed by environment settings
+    if (shouldEnableDevTools()) {
+      mainWindow.webContents.openDevTools();
+    }
   } else {
     // Production mode
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
@@ -119,6 +139,30 @@ function createWindow() {
     shell.openExternal(url);
     return { action: 'deny' };
   });
+
+  // Disable DevTools keyboard shortcuts in production
+  if (!shouldEnableDevTools()) {
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+      // Disable common DevTools shortcuts
+      if (
+        ((input.control || input.meta) &&
+          input.shift &&
+          input.key.toLowerCase() === 'i') || // Ctrl/Cmd+Shift+I
+        (input.shift && input.key.toLowerCase() === 'c') || // Ctrl/Cmd+Shift+C
+        (input.shift && input.key.toLowerCase() === 'j') || // Ctrl/Cmd+Shift+J
+        input.key === 'F12'
+      ) {
+        event.preventDefault();
+      }
+    });
+  }
+
+  // Disable right-click context menu in production
+  if (!shouldEnableDevTools()) {
+    mainWindow.webContents.on('context-menu', event => {
+      event.preventDefault();
+    });
+  }
 }
 
 // Create app menu
@@ -140,8 +184,11 @@ function createMenu() {
                 maximizable: false,
                 show: false,
                 webPreferences: {
-                  nodeIntegration: true,
-                  contextIsolation: false,
+                  preload: join(__dirname, '../preload/about.js'),
+                  nodeIntegration: false,
+                  contextIsolation: true,
+                  webSecurity: true,
+                  devTools: shouldEnableDevTools(), // Disable DevTools in production
                 },
                 parent: mainWindow || undefined,
                 modal: true,
@@ -166,6 +213,20 @@ function createMenu() {
                   }
                 }
               );
+
+              // Handle close button click from renderer
+              const closeHandler = () => {
+                if (aboutWindow && !aboutWindow.isDestroyed()) {
+                  aboutWindow.close();
+                }
+              };
+
+              ipcMain.on('close-about-window', closeHandler);
+
+              // Clean up handler when window is closed
+              aboutWindow.on('closed', () => {
+                ipcMain.removeListener('close-about-window', closeHandler);
+              });
             },
           },
           { type: 'separator' },
@@ -208,8 +269,15 @@ function createMenu() {
         submenu: [
           { label: 'Reload', role: 'reload' },
           { label: 'Force Reload', role: 'forceReload' },
-          { label: 'Toggle Developer Tools', role: 'toggleDevTools' },
-          { type: 'separator' },
+          ...(shouldEnableDevTools()
+            ? [
+                {
+                  label: 'Toggle Developer Tools',
+                  role: 'toggleDevTools' as const,
+                },
+                { type: 'separator' as const },
+              ]
+            : []),
           { label: 'Actual Size', role: 'resetZoom' },
           { label: 'Zoom In', role: 'zoomIn' },
           { label: 'Zoom Out', role: 'zoomOut' },
@@ -286,8 +354,15 @@ function createMenu() {
         submenu: [
           { label: 'Reload', role: 'reload' },
           { label: 'Force Reload', role: 'forceReload' },
-          { label: 'Toggle Developer Tools', role: 'toggleDevTools' },
-          { type: 'separator' },
+          ...(shouldEnableDevTools()
+            ? [
+                {
+                  label: 'Toggle Developer Tools',
+                  role: 'toggleDevTools' as const,
+                },
+                { type: 'separator' as const },
+              ]
+            : []),
           { label: 'Actual Size', role: 'resetZoom' },
           { label: 'Zoom In', role: 'zoomIn' },
           { label: 'Zoom Out', role: 'zoomOut' },
@@ -358,6 +433,11 @@ ipcMain.handle('datalayer:logout', async () => {
 
 ipcMain.handle('datalayer:get-credentials', () => {
   return apiService.getCredentials();
+});
+
+// About dialog handlers
+ipcMain.on('open-external', (_, url) => {
+  shell.openExternal(url);
 });
 
 ipcMain.handle('datalayer:get-environments', async () => {
@@ -441,6 +521,15 @@ ipcMain.handle('datalayer:get-collaboration-token', async () => {
   // Return the real token for collaboration WebSocket authentication
   const credentials = apiService.getCredentialsWithToken();
   return credentials;
+});
+
+// User and GitHub API IPC handlers
+ipcMain.handle('datalayer:current-user', async () => {
+  return apiService.getCurrentUser();
+});
+
+ipcMain.handle('datalayer:github-user', async (_, githubId: number) => {
+  return apiService.getGitHubUser(githubId);
 });
 
 // HTTP Proxy IPC handlers

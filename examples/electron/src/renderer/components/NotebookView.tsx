@@ -4,13 +4,13 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Heading, Text, Button } from '@primer/react';
+import { Box, Heading, Text, Button, Dialog } from '@primer/react';
 import { INotebookContent } from '@jupyterlab/nbformat';
 import { Notebook2 } from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
-import { XIcon } from '@primer/octicons-react';
+import { XIcon, AlertIcon } from '@primer/octicons-react';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import type { ServiceManager } from '@jupyterlab/services';
 
@@ -93,6 +93,8 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notebookError, setNotebookError] = useState<boolean>(false);
+  const [showTerminateDialog, setShowTerminateDialog] = useState(false);
+  const [isTerminating, setIsTerminating] = useState(false);
   const { configuration } = useCoreStore();
 
   // Use runtime store for runtime management
@@ -127,19 +129,25 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   // Function to terminate and close the runtime
   const handleTerminateRuntime = async () => {
     if (selectedNotebook) {
-      // Set a flag to prevent re-creating runtime if component re-mounts
-      sessionStorage.setItem(
-        `notebook-${selectedNotebook.id}-terminated`,
-        'true'
-      );
-      await terminateRuntimeForNotebook(selectedNotebook.id);
-      setNotebookContent(null);
-      setError(null);
-      // Clear the active notebook from the store
-      setActiveNotebook(null);
-      // Redirect to notebooks listing after terminating
-      if (onClose) {
-        onClose();
+      setIsTerminating(true);
+      try {
+        // Set a flag to prevent re-creating runtime if component re-mounts
+        sessionStorage.setItem(
+          `notebook-${selectedNotebook.id}-terminated`,
+          'true'
+        );
+        await terminateRuntimeForNotebook(selectedNotebook.id);
+        setNotebookContent(null);
+        setError(null);
+        // Clear the active notebook from the store
+        setActiveNotebook(null);
+        setShowTerminateDialog(false);
+        // Redirect to notebooks listing after terminating
+        if (onClose) {
+          onClose();
+        }
+      } finally {
+        setIsTerminating(false);
       }
     }
   };
@@ -359,8 +367,13 @@ const NotebookView: React.FC<NotebookViewProps> = ({
               'Creating new ServiceManager for runtime:',
               runtime.uid
             );
-            manager = createProxyServiceManager(jupyterServerUrl, jupyterToken);
-            await manager.ready;
+            manager = await createProxyServiceManager(
+              jupyterServerUrl,
+              jupyterToken
+            );
+            if (manager) {
+              await manager.ready;
+            }
 
             if (cancelled || !mountedRef.current) {
               // Clean up if component was unmounted during async operation
@@ -411,11 +424,13 @@ const NotebookView: React.FC<NotebookViewProps> = ({
                 'Cached ServiceManager was disposed, creating new one'
               );
               delete (window as Record<string, any>)[cacheKey];
-              manager = createProxyServiceManager(
+              manager = await createProxyServiceManager(
                 jupyterServerUrl,
                 jupyterToken
               );
-              await manager.ready;
+              if (manager) {
+                await manager.ready;
+              }
 
               if (cancelled || !mountedRef.current) {
                 try {
@@ -439,7 +454,9 @@ const NotebookView: React.FC<NotebookViewProps> = ({
             return;
           }
 
-          setServiceManagerForNotebook(selectedNotebook.id, manager);
+          if (manager) {
+            setServiceManagerForNotebook(selectedNotebook.id, manager);
+          }
           console.info('ServiceManager ready with runtime Jupyter server');
         } catch (error) {
           console.error('Failed to create ProxyServiceManager:', error);
@@ -661,7 +678,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
           <Button
             variant="danger"
             size="small"
-            onClick={handleTerminateRuntime}
+            onClick={() => setShowTerminateDialog(true)}
             disabled={isTerminatingRuntime || !serviceManager}
             leadingVisual={XIcon}
           >
@@ -716,6 +733,64 @@ const NotebookView: React.FC<NotebookViewProps> = ({
           </Box>
         )}
       </Box>
+
+      {/* Terminate Runtime Confirmation Dialog */}
+      <Dialog
+        isOpen={showTerminateDialog}
+        onDismiss={() => {
+          if (!isTerminating) {
+            setShowTerminateDialog(false);
+          }
+        }}
+        aria-labelledby="terminate-runtime-title"
+      >
+        <Dialog.Header id="terminate-runtime-title">
+          Terminate Runtime
+        </Dialog.Header>
+
+        <Box sx={{ p: 4 }}>
+          <Text sx={{ mb: 4, color: 'danger.fg', display: 'block' }}>
+            <Box sx={{ mr: 2, display: 'inline-block' }}>
+              <AlertIcon />
+            </Box>
+            Are you sure you want to terminate the runtime for{' '}
+            <strong>"{selectedNotebook?.name || 'this notebook'}"</strong>?
+          </Text>
+
+          <Text sx={{ mb: 4, display: 'block' }}>
+            This will stop all kernel execution and close the notebook. Any
+            unsaved changes in running cells will be lost.
+          </Text>
+
+          {error && (
+            <Text sx={{ color: 'danger.fg', mb: 3, display: 'block' }}>
+              {error}
+            </Text>
+          )}
+        </Box>
+
+        <Box
+          sx={{ p: 3, borderTop: '1px solid', borderColor: 'border.default' }}
+        >
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button
+              variant="default"
+              onClick={() => setShowTerminateDialog(false)}
+              disabled={isTerminating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleTerminateRuntime}
+              disabled={isTerminating}
+              leadingVisual={XIcon}
+            >
+              {isTerminating ? 'Terminating...' : 'Terminate Runtime'}
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
     </Box>
   );
 };

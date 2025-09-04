@@ -10,12 +10,10 @@ import {
   Text,
   Button,
   Label,
-  Timeline,
   Spinner,
   Flash,
 } from '@primer/react';
 import {
-  CheckCircleIcon,
   CpuIcon,
   ZapIcon,
   PackageIcon,
@@ -216,216 +214,201 @@ const EnvironmentsList: React.FC = () => {
       )}
 
       {!loading && environments.length > 0 && (
-        <Timeline>
+        <Box>
           {environments.map(env => (
-            <Timeline.Item key={env.name}>
-              <Timeline.Badge>
-                <CheckCircleIcon className="color-fg-success" />
-              </Timeline.Badge>
-              <Timeline.Body>
-                <Box
-                  sx={{
-                    p: 2,
-                    mb: 1,
-                    bg: 'canvas.subtle',
-                    border: '1px solid',
-                    borderColor:
-                      selectedEnv === env.name
-                        ? COLORS.brand.primary
-                        : 'border.default',
-                    borderRadius: 2,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      borderColor: COLORS.brand.primaryLight,
-                      bg: 'canvas.default',
-                    },
-                  }}
-                  onClick={() => handleSelectEnvironment(env.name)}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'start',
-                      mb: 2,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
-                      <Box sx={{ color: 'fg.muted', minWidth: 40 }}>
-                        {(() => {
-                          const parsed = parseEnvironmentDescription(
-                            env.description || ''
-                          );
-                          return parsed?.imageUrl ? (
-                            <img
-                              src={parsed.imageUrl}
-                              width="40"
-                              height="40"
-                              alt={env.name}
-                              style={{ display: 'block' }}
-                            />
-                          ) : (
-                            getEnvironmentIcon(env)
-                          );
-                        })()}
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2,
-                            mb: 1,
-                          }}
-                        >
-                          <Heading as="h3" sx={{ fontSize: 2 }}>
-                            {env.title || env.name}
-                          </Heading>
-                          <Label
-                            size="small"
-                            variant={
-                              getEnvironmentType(env) === 'GPU'
-                                ? 'accent'
-                                : 'default'
-                            }
-                          >
-                            {getEnvironmentType(env)}
-                          </Label>
-                        </Box>
+            <Box
+              key={env.name}
+              sx={{
+                p: 3,
+                mb: 2,
+                bg: 'canvas.subtle',
+                border: '1px solid',
+                borderColor:
+                  selectedEnv === env.name
+                    ? COLORS.brand.primary
+                    : 'border.default',
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: COLORS.brand.primaryLight,
+                  bg: 'canvas.default',
+                },
+              }}
+              onClick={() => handleSelectEnvironment(env.name)}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'start',
+                  mb: 2,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
+                  <Box sx={{ color: 'fg.muted', minWidth: 40 }}>
+                    {(() => {
+                      const parsed = parseEnvironmentDescription(
+                        env.description || ''
+                      );
+                      return parsed?.imageUrl ? (
+                        <img
+                          src={parsed.imageUrl}
+                          width="40"
+                          height="40"
+                          alt={env.name}
+                          style={{ display: 'block' }}
+                        />
+                      ) : (
+                        getEnvironmentIcon(env)
+                      );
+                    })()}
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        mb: 1,
+                      }}
+                    >
+                      <Heading as="h3" sx={{ fontSize: 2 }}>
+                        {env.title || env.name}
+                      </Heading>
+                      <Label size="small" variant="default">
+                        {getEnvironmentType(env)}
+                      </Label>
+                    </Box>
 
-                        {(() => {
-                          const parsed = parseEnvironmentDescription(
-                            env.description || ''
-                          );
-                          if (parsed && parsed.mainDescription) {
-                            return (
-                              <>
+                    {(() => {
+                      const parsed = parseEnvironmentDescription(
+                        env.description || ''
+                      );
+                      if (parsed && parsed.mainDescription) {
+                        return (
+                          <>
+                            <Text
+                              sx={{
+                                fontSize: 1,
+                                color: 'fg.default',
+                                fontWeight: 'bold',
+                                mb: 1,
+                              }}
+                            >
+                              {parsed.mainDescription}
+                            </Text>
+                            {parsed.gpuDetail && (
+                              <Text
+                                sx={{
+                                  fontSize: 1,
+                                  color: 'fg.muted',
+                                  mb: 1,
+                                }}
+                              >
+                                GPU: {parsed.gpuDetail}
+                              </Text>
+                            )}
+                            {parsed.packages.length > 0 && (
+                              <Box sx={{ mt: 1 }}>
                                 <Text
                                   sx={{
-                                    fontSize: 1,
-                                    color: 'fg.default',
-                                    fontWeight: 'bold',
+                                    fontSize: 0,
+                                    color: 'fg.subtle',
                                     mb: 1,
                                   }}
                                 >
-                                  {parsed.mainDescription}
+                                  <strong>Packages:</strong>
                                 </Text>
-                                {parsed.gpuDetail && (
-                                  <Text
-                                    sx={{
-                                      fontSize: 1,
-                                      color: 'fg.muted',
-                                      mb: 1,
-                                    }}
-                                  >
-                                    GPU: {parsed.gpuDetail}
-                                  </Text>
-                                )}
-                                {parsed.packages.length > 0 && (
-                                  <Box sx={{ mt: 1 }}>
-                                    <Text
-                                      sx={{
-                                        fontSize: 0,
-                                        color: 'fg.subtle',
-                                        mb: 1,
-                                      }}
-                                    >
-                                      <strong>Packages:</strong>
-                                    </Text>
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: 1,
-                                      }}
-                                    >
-                                      {parsed.packages
-                                        .slice(0, 6)
-                                        .map((pkg, idx) => (
-                                          <Label key={idx} size="small">
-                                            {pkg}
-                                          </Label>
-                                        ))}
-                                      {parsed.packages.length > 6 && (
-                                        <Label size="small" variant="default">
-                                          and more
-                                        </Label>
-                                      )}
-                                    </Box>
-                                  </Box>
-                                )}
-                              </>
-                            );
-                          } else {
-                            return (
-                              <Text
-                                sx={{ fontSize: 1, color: 'fg.muted', mb: 2 }}
-                              >
-                                {env.description || `Environment: ${env.name}`}
-                              </Text>
-                            );
-                          }
-                        })()}
-
-                        {env.image && (
-                          <Text
-                            sx={{
-                              fontSize: 0,
-                              color: 'fg.subtle',
-                              fontFamily: 'mono',
-                              mt: 1,
-                            }}
-                          >
-                            Image: {env.image}
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: 1,
+                                  }}
+                                >
+                                  {parsed.packages
+                                    .slice(0, 6)
+                                    .map((pkg, idx) => (
+                                      <Label key={idx} size="small">
+                                        {pkg}
+                                      </Label>
+                                    ))}
+                                  {parsed.packages.length > 6 && (
+                                    <Label size="small" variant="default">
+                                      and more
+                                    </Label>
+                                  )}
+                                </Box>
+                              </Box>
+                            )}
+                          </>
+                        );
+                      } else {
+                        return (
+                          <Text sx={{ fontSize: 1, color: 'fg.muted', mb: 2 }}>
+                            {env.description || `Environment: ${env.name}`}
                           </Text>
-                        )}
-                      </Box>
-                    </Box>
+                        );
+                      }
+                    })()}
 
-                    {selectedEnv === env.name && (
-                      <Button
-                        size="small"
+                    {env.image && (
+                      <Text
                         sx={{
-                          backgroundColor: COLORS.brand.primary,
-                          color: 'white',
-                          cursor: 'default',
-                          '&:hover': {
-                            backgroundColor: COLORS.brand.primary,
-                          },
+                          fontSize: 0,
+                          color: 'fg.subtle',
+                          fontFamily: 'mono',
+                          mt: 1,
                         }}
                       >
-                        <CheckCircleIcon size={16} /> Selected
-                      </Button>
+                        Image: {env.image}
+                      </Text>
                     )}
                   </Box>
-
-                  {env.resources && (
-                    <Box
-                      sx={{
-                        mt: 2,
-                        pt: 2,
-                        borderTop: '1px solid',
-                        borderColor: 'border.muted',
-                      }}
-                    >
-                      <Text sx={{ fontSize: 0, fontWeight: 'bold', mb: 1 }}>
-                        <PackageIcon size={14} /> Resources:
-                      </Text>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {formatResources(env.resources).map((resource, idx) => (
-                          <Label key={idx} size="small">
-                            {resource}
-                          </Label>
-                        ))}
-                      </Box>
-                    </Box>
-                  )}
                 </Box>
-              </Timeline.Body>
-            </Timeline.Item>
+
+                {selectedEnv === env.name && (
+                  <Button
+                    size="small"
+                    sx={{
+                      backgroundColor: COLORS.brand.primary,
+                      color: 'white',
+                      cursor: 'default',
+                      '&:hover': {
+                        backgroundColor: COLORS.brand.primary,
+                      },
+                    }}
+                  >
+                    Selected
+                  </Button>
+                )}
+              </Box>
+
+              {env.resources && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    pt: 2,
+                    borderTop: '1px solid',
+                    borderColor: 'border.muted',
+                  }}
+                >
+                  <Text sx={{ fontSize: 0, fontWeight: 'bold', mb: 1 }}>
+                    <PackageIcon size={14} /> Resources:
+                  </Text>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {formatResources(env.resources).map((resource, idx) => (
+                      <Label key={idx} size="small">
+                        {resource}
+                      </Label>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
           ))}
-        </Timeline>
+        </Box>
       )}
 
       {!loading && environments.length === 0 && !error && (

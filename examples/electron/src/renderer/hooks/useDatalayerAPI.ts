@@ -49,7 +49,11 @@ export function useDatalayerAPI() {
     async (runUrl: string, token: string) => {
       if (!isElectron()) {
         setError('Not in Electron environment');
-        return { success: false, message: 'Not in Electron environment' };
+        return {
+          success: false,
+          message: 'Not in Electron environment',
+          userData: null,
+        };
       }
 
       setLoading(true);
@@ -68,15 +72,25 @@ export function useDatalayerAPI() {
             gpuEnvironment: 'ai-env',
             credits: 100,
           });
+
+          // Fetch current user data after successful login
+          try {
+            const userResponse = await window.datalayerAPI.getCurrentUser();
+            if (userResponse.success && userResponse.data) {
+              return { ...result, userData: userResponse.data };
+            }
+          } catch (error) {
+            console.error('Failed to fetch user data after login:', error);
+          }
         } else {
           setError(result.message || 'Login failed');
         }
 
-        return result;
+        return { ...result, userData: null };
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Login failed';
         setError(message);
-        return { success: false, message };
+        return { success: false, message, userData: null };
       } finally {
         setLoading(false);
       }

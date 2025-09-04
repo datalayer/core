@@ -8,8 +8,8 @@
  * Proxies all HTTP and WebSocket traffic through IPC
  */
 
-import { ServiceManager, ServerConnection } from '@jupyterlab/services';
 import { proxyLogger } from '../utils/logger';
+import { loadServiceManager } from './serviceManagerLoader';
 
 /**
  * Custom fetch function that proxies HTTP requests through IPC
@@ -354,11 +354,14 @@ export class ProxyWebSocket extends EventTarget {
 /**
  * Create a ServiceManager that uses proxy connections
  */
-export function createProxyServiceManager(
+export async function createProxyServiceManager(
   baseUrl: string,
   token: string = ''
-): ServiceManager {
+) {
   proxyLogger.debug(`Creating ServiceManager with baseUrl: ${baseUrl}`);
+
+  // Load the real ServiceManager and ServerConnection at runtime
+  const { ServiceManager, ServerConnection } = await loadServiceManager();
 
   const settings = ServerConnection.makeSettings({
     baseUrl,
