@@ -15,6 +15,7 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 **Python**: `pip install -e .[test]` | `pytest datalayer_core/tests/` | `mypy datalayer_core/`
 **TypeScript Library**: `npm install` | `npm run build:lib` | `npm run lint` | `npm run test`
 **Examples**: `npm run example` (starts dev server at http://localhost:3000/)
+**Storybook**: `npm run storybook` (starts on http://localhost:6006/) | `npm run build-storybook`
 **Code Quality**: `npm run check` | `npm run check:fix` | `npm run lint` | `npm run format` | `npm run type-check`
 **Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs)
 **Make**: `make build` | `make start` | `make docs`
@@ -63,6 +64,36 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 - Use playwright MCP servers when you need to check stuff
 - Ensure things always build after changes
 - Run also npm run format/lint/type-check to ensure all is working properly
+
+## Storybook Component Testing
+
+**Component Story Structure:**
+- All UI components have `.stories.tsx` files colocated with their source code
+- Stories follow the pattern: `ComponentName.tsx` → `ComponentName.stories.tsx`
+- Each story file includes multiple variants showcasing different states
+- Interactive controls allow testing component props in real-time
+
+**Running Storybook:**
+```bash
+npm run storybook         # Start dev server (http://localhost:6006)
+npm run build-storybook   # Build static Storybook
+```
+
+**Component Coverage:**
+All 50+ UI components have comprehensive stories including:
+- Avatars, Banners, Buttons, Checkout, Confetti
+- Context, Display, ECharts, Flashes, IAM
+- Icons, Labels, Landings, NavBar, NBGrader  
+- Notebooks, Primer, Progress, Runtimes, Screenshot
+- Snapshots, Snippets, Storage, Students, SubNav
+- Tables, TextReveal, Tokens, Toolbars, Users
+
+**Story Best Practices:**
+- Mock external dependencies (API calls, services)
+- Provide realistic test data
+- Include edge cases (loading, error, empty states)
+- Use TypeScript for type safety
+- Follow existing patterns in the codebase
 
 ## Running Examples
 

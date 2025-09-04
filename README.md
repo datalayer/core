@@ -225,6 +225,35 @@ pip install -e .[test]
 npm install
 ```
 
+### Storybook Component Development
+
+Datalayer Core includes comprehensive Storybook coverage for all UI components. Each component has its own `.stories.tsx` file located next to the component source code.
+
+```bash
+# Start Storybook development server
+npm run storybook         # Runs on http://localhost:6006
+
+# Build static Storybook
+npm run build-storybook
+
+# Run Storybook on a different port
+npm run storybook -- --port 6007
+```
+
+**Component Story Structure:**
+- Stories are colocated with components (e.g., `Button.tsx` → `Button.stories.tsx`)
+- All UI components have comprehensive test coverage
+- Multiple story variants showcase different component states
+- Interactive controls for testing component props
+
+**Available Component Categories:**
+- Avatars, Banners, Buttons, Checkout, Confetti
+- Context, Display, ECharts, Flashes, IAM
+- Icons, Labels, Landings, NavBar, NBGrader
+- Notebooks, Primer, Progress, Runtimes, Screenshot
+- Snapshots, Snippets, Storage, Students, SubNav
+- Tables, TextReveal, Tokens, Toolbars, Users
+
 ### Code Quality
 
 This project maintains high code quality standards with automated linting, formatting, and type checking:
