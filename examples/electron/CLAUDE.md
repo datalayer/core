@@ -500,7 +500,52 @@ npm run dist:linux    # Package for Linux
 - `src/renderer/services/serviceManagerLoader.ts` - Dynamic ServiceManager loader
 - `src/renderer/components/NotebookView.tsx` - Jupyter notebook integration with runtime termination dialog
 - `src/renderer/components/LoginView.tsx` - Authentication UI with user data callback
+- `src/renderer/components/LexicalEditor.tsx` - Rich text editor integration with toolbar and formatting
 - `src/renderer/App.tsx` - Main app with dynamic GitHub user profile fetching
+
+## Rich Text Editor (Lexical Integration)
+
+The application includes a rich text editor powered by Facebook's Lexical framework, accessible via the "Editor" tab in the navigation.
+
+### Key Features
+
+- **Rich Text Formatting**: Bold, italic, underline text styling
+- **List Support**: Bullet points and numbered lists
+- **Block Elements**: Quote blocks and headings (H1-H3)
+- **Link Insertion**: URL link creation with user prompts
+- **Toolbar Interface**: Visual toolbar with formatting buttons using Primer React components
+
+### Implementation Details
+
+```typescript
+// Core Lexical setup in LexicalEditor.tsx
+const initialConfig = {
+  namespace: 'DatalayerLexicalEditor',
+  theme,
+  onError,
+  nodes: [
+    HeadingNode,
+    ListNode,
+    ListItemNode,
+    QuoteNode,
+    LinkNode,
+    AutoLinkNode,
+  ],
+};
+```
+
+### Key Files
+
+- `src/renderer/components/LexicalEditor.tsx` - Main editor component with toolbar and plugins
+- `src/renderer/components/LexicalEditor.css` - GitHub-inspired styling for editor elements
+
+### Lexical Dependencies
+
+- `lexical@^0.22.0` - Core Lexical framework
+- `@lexical/react@^0.22.0` - React integration components
+- `@lexical/rich-text@^0.22.0` - Rich text functionality
+- `@lexical/list@^0.22.0` - List support
+- `@lexical/link@^0.22.0` - Link functionality
 
 ## Dependencies to Note
 
@@ -509,6 +554,7 @@ npm run dist:linux    # Package for Linux
 - `vite-plugin-string` - Handles raw CSS imports
 - `@datalayer/jupyter-react` - Jupyter components
 - `@jupyterlab/services` - Kernel and session management
+- `lexical` and `@lexical/*` packages - Rich text editor framework
 
 ## Polyfill Files Overview
 

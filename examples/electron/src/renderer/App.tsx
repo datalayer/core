@@ -17,18 +17,24 @@ import {
   ActionList,
   Spinner,
 } from '@primer/react';
-import { DatabaseIcon, SignOutIcon, BookIcon } from '@primer/octicons-react';
+import {
+  DatabaseIcon,
+  SignOutIcon,
+  BookIcon,
+  PencilIcon,
+} from '@primer/octicons-react';
 import { useCoreStore } from '@datalayer/core';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
 import NotebookView from './components/NotebookView';
 import NotebooksList from './components/NotebooksList';
 import EnvironmentsList from './components/EnvironmentsList';
+import LexicalEditor from './components/LexicalEditor';
 import { useRuntimeStore } from './stores/runtimeStore';
 import { COLORS } from './constants/colors';
 import { logger } from './utils/logger';
 
-type ViewType = 'notebooks' | 'notebook' | 'environments';
+type ViewType = 'notebooks' | 'notebook' | 'environments' | 'editor';
 
 interface GitHubUser {
   login: string;
@@ -292,6 +298,8 @@ const App: React.FC = () => {
         );
       case 'environments':
         return <EnvironmentsList />;
+      case 'editor':
+        return <LexicalEditor />;
       default:
         return <EnvironmentsList />;
     }
@@ -394,6 +402,24 @@ const App: React.FC = () => {
                 >
                   <BookIcon size={16} />
                   <span>Notebooks</span>
+                </Header.Link>
+              </Header.Item>
+              <Header.Item>
+                <Header.Link
+                  href="#"
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault();
+                    setCurrentView('editor');
+                  }}
+                  sx={{
+                    fontWeight: currentView === 'editor' ? 'bold' : 'normal',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <PencilIcon size={16} />
+                  <span>Editor</span>
                 </Header.Link>
               </Header.Item>
               <Header.Item full />
