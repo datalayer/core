@@ -7,8 +7,8 @@
 A native desktop application showcasing the Datalayer frontend SDK with Jupyter notebook integration.
 
 - **Use Case**: Desktop-based data science environment with cloud compute
-- **Technologies**: Electron, React, TypeScript, Datalayer SDK
-- **Features**: Jupyter notebooks, runtime management, environment selection, real-time collaboration
+- **Technologies**: Electron, React, TypeScript, Lexical, Datalayer SDK
+- **Features**: Jupyter notebooks, rich text editing, runtime management, environment selection, real-time collaboration
 - **Status**: ✅ Production builds working! Universal binaries for all Mac processors!
 
 This example demonstrates how to integrate the Datalayer frontend SDK into an Electron desktop application. It showcases notebook editing, runtime management, and environment selection using Datalayer's cloud infrastructure.
