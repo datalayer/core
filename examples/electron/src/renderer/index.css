@@ -58,6 +58,13 @@ body {
   overflow: hidden;
 }
 
+/* Ensure header stays at the top */
+.Header-root {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 100 !important;
+}
+
 /* Jupyter notebook specific styles */
 .jp-Notebook {
   height: 100%;

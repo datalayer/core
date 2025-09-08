@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { JupyterReactTheme } from '@datalayer/jupyter-react';
 import {
   ThemeProvider,
   BaseStyles,
@@ -347,174 +346,170 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <BaseStyles>
-        <JupyterReactTheme>
-          <Box
-            sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-          >
-            <Header>
+        <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <Header>
+            <Header.Item>
+              <Text
+                sx={{
+                  fontSize: 3,
+                  fontWeight: 'bold',
+                  color: COLORS.brand.primary,
+                  mr: 4,
+                }}
+              >
+                Datalayer Electron Example
+              </Text>
+            </Header.Item>
+            <Header.Item>
+              <Header.Link
+                href="#"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  setCurrentView('environments');
+                }}
+                sx={{
+                  fontWeight:
+                    currentView === 'environments' ? 'bold' : 'normal',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <DatabaseIcon size={16} />
+                <span>Environments</span>
+              </Header.Link>
+            </Header.Item>
+            <Header.Item>
+              <Header.Link
+                href="#"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  setCurrentView('notebooks');
+                }}
+                sx={{
+                  fontWeight:
+                    currentView === 'notebooks' || currentView === 'notebook'
+                      ? 'bold'
+                      : 'normal',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <BookIcon size={16} />
+                <span>Notebooks</span>
+              </Header.Link>
+            </Header.Item>
+            <Header.Item>
+              <Header.Link
+                href="#"
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  setCurrentView('editor');
+                }}
+                sx={{
+                  fontWeight: currentView === 'editor' ? 'bold' : 'normal',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+              >
+                <PencilIcon size={16} />
+                <span>Editor</span>
+              </Header.Link>
+            </Header.Item>
+            <Header.Item full />
+            {isAuthenticated && githubUser && (
               <Header.Item>
-                <Text
-                  sx={{
-                    fontSize: 3,
-                    fontWeight: 'bold',
-                    color: COLORS.brand.primary,
-                    mr: 4,
-                  }}
-                >
-                  Datalayer Electron Example
-                </Text>
-              </Header.Item>
-              <Header.Item>
-                <Header.Link
-                  href="#"
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault();
-                    setCurrentView('environments');
-                  }}
-                  sx={{
-                    fontWeight:
-                      currentView === 'environments' ? 'bold' : 'normal',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <DatabaseIcon size={16} />
-                  <span>Environments</span>
-                </Header.Link>
-              </Header.Item>
-              <Header.Item>
-                <Header.Link
-                  href="#"
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault();
-                    setCurrentView('notebooks');
-                  }}
-                  sx={{
-                    fontWeight:
-                      currentView === 'notebooks' || currentView === 'notebook'
-                        ? 'bold'
-                        : 'normal',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <BookIcon size={16} />
-                  <span>Notebooks</span>
-                </Header.Link>
-              </Header.Item>
-              <Header.Item>
-                <Header.Link
-                  href="#"
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault();
-                    setCurrentView('editor');
-                  }}
-                  sx={{
-                    fontWeight: currentView === 'editor' ? 'bold' : 'normal',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <PencilIcon size={16} />
-                  <span>Editor</span>
-                </Header.Link>
-              </Header.Item>
-              <Header.Item full />
-              {isAuthenticated && githubUser && (
-                <Header.Item>
-                  <ActionMenu>
-                    <ActionMenu.Anchor>
-                      <Button
-                        variant="invisible"
+                <ActionMenu>
+                  <ActionMenu.Anchor>
+                    <Button
+                      variant="invisible"
+                      sx={{
+                        p: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        borderRadius: '50%',
+                      }}
+                    >
+                      <Avatar
+                        src={githubUser.avatar_url}
+                        size={32}
+                        alt={githubUser.name || githubUser.login}
                         sx={{
-                          p: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
                           borderRadius: '50%',
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                        }}
+                      />
+                    </Button>
+                  </ActionMenu.Anchor>
+
+                  <ActionMenu.Overlay width="medium">
+                    <ActionList>
+                      <ActionList.Item disabled sx={{ py: 3 }}>
+                        <ActionList.LeadingVisual>
+                          <Avatar
+                            src={githubUser.avatar_url}
+                            size={24}
+                            alt={githubUser.name || githubUser.login}
+                            sx={{
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              flexShrink: 0,
+                            }}
+                          />
+                        </ActionList.LeadingVisual>
+                        <Box>
+                          <Text
+                            sx={{ fontWeight: 'semibold', display: 'block' }}
+                          >
+                            {githubUser.name || githubUser.login}
+                          </Text>
+                          <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                            @{githubUser.login}
+                          </Text>
+                        </Box>
+                      </ActionList.Item>
+
+                      <ActionList.Divider />
+
+                      <ActionList.Item
+                        onSelect={handleLogout}
+                        sx={{
+                          color: 'danger.fg',
+                          '&:hover': {
+                            bg: 'canvas.subtle',
+                            color: 'danger.fg',
+                          },
+                          '&:active': {
+                            bg: 'canvas.subtle',
+                          },
                         }}
                       >
-                        <Avatar
-                          src={githubUser.avatar_url}
-                          size={32}
-                          alt={githubUser.name || githubUser.login}
-                          sx={{
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            flexShrink: 0,
-                          }}
-                        />
-                      </Button>
-                    </ActionMenu.Anchor>
+                        <ActionList.LeadingVisual>
+                          <SignOutIcon />
+                        </ActionList.LeadingVisual>
+                        Sign out
+                      </ActionList.Item>
+                    </ActionList>
+                  </ActionMenu.Overlay>
+                </ActionMenu>
+              </Header.Item>
+            )}
+          </Header>
 
-                    <ActionMenu.Overlay width="medium">
-                      <ActionList>
-                        <ActionList.Item disabled sx={{ py: 3 }}>
-                          <ActionList.LeadingVisual>
-                            <Avatar
-                              src={githubUser.avatar_url}
-                              size={24}
-                              alt={githubUser.name || githubUser.login}
-                              sx={{
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                              }}
-                            />
-                          </ActionList.LeadingVisual>
-                          <Box>
-                            <Text
-                              sx={{ fontWeight: 'semibold', display: 'block' }}
-                            >
-                              {githubUser.name || githubUser.login}
-                            </Text>
-                            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                              @{githubUser.login}
-                            </Text>
-                          </Box>
-                        </ActionList.Item>
-
-                        <ActionList.Divider />
-
-                        <ActionList.Item
-                          onSelect={handleLogout}
-                          sx={{
-                            color: 'danger.fg',
-                            '&:hover': {
-                              bg: 'canvas.subtle',
-                              color: 'danger.fg',
-                            },
-                            '&:active': {
-                              bg: 'canvas.subtle',
-                            },
-                          }}
-                        >
-                          <ActionList.LeadingVisual>
-                            <SignOutIcon />
-                          </ActionList.LeadingVisual>
-                          Sign out
-                        </ActionList.Item>
-                      </ActionList>
-                    </ActionMenu.Overlay>
-                  </ActionMenu>
-                </Header.Item>
-              )}
-            </Header>
-
-            <Box
-              sx={{
-                flex: 1,
-                overflow: 'auto',
-                p: currentView === 'notebook' ? 0 : 3,
-              }}
-            >
-              {renderView()}
-            </Box>
+          <Box
+            sx={{
+              flex: 1,
+              overflow: 'auto',
+              p: currentView === 'notebook' ? 0 : 3,
+            }}
+          >
+            {renderView()}
           </Box>
-        </JupyterReactTheme>
+        </Box>
       </BaseStyles>
     </ThemeProvider>
   );

@@ -3,399 +3,461 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './LexicalEditor.css';
-import { Box, Text, Button, ActionMenu, ActionList } from '@primer/react';
-import {
-  BoldIcon,
-  ItalicIcon,
-  LinkIcon,
-  ListUnorderedIcon,
-  ListOrderedIcon,
-  QuoteIcon,
-} from '@primer/octicons-react';
-
-import { $getSelection, $isRangeSelection } from 'lexical';
-import { $createHeadingNode, $createQuoteNode } from '@lexical/rich-text';
-import { $createListItemNode, $createListNode } from '@lexical/list';
-import { $createLinkNode } from '@lexical/link';
-import {
-  $getSelectionStyleValueForProperty,
-  $patchStyleText,
-} from '@lexical/selection';
-
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
-import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
-import { ListPlugin } from '@lexical/react/LexicalListPlugin';
-import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { ListItemNode, ListNode } from '@lexical/list';
-import { LinkNode, AutoLinkNode } from '@lexical/link';
-
+import { Box, Text, Spinner } from '@primer/react';
+import { Editor, LexicalProvider } from '@datalayer/jupyter-lexical';
+import { Jupyter } from '@datalayer/jupyter-react';
+import { useCoreStore } from '@datalayer/core';
 import { COLORS } from '../constants/colors';
+import { createProxyServiceManager } from '../services/proxyServiceManager';
+import { useRuntimeStore } from '../stores/runtimeStore';
+import type { ServiceManager } from '@jupyterlab/services';
 
-const theme = {
-  ltr: 'ltr',
-  rtl: 'rtl',
-  placeholder: 'editor-placeholder',
-  paragraph: 'editor-paragraph',
-  quote: 'editor-quote',
-  heading: {
-    h1: 'editor-heading-h1',
-    h2: 'editor-heading-h2',
-    h3: 'editor-heading-h3',
-    h4: 'editor-heading-h4',
-    h5: 'editor-heading-h5',
-  },
-  list: {
-    nested: {
-      listitem: 'editor-nested-listitem',
+// Import lexical editor styles
+import '@datalayer/jupyter-lexical/style/index.css';
+
+const LEXICAL_EDITOR_ID = 'lexical-editor';
+
+// Basic empty notebook model for the Lexical editor
+const EMPTY_NOTEBOOK = {
+  cells: [
+    {
+      cell_type: 'markdown',
+      metadata: {},
+      source: [
+        '# Welcome to Lexical Editor\n',
+        '\n',
+        'Start writing your rich text content here...',
+      ],
     },
-    ol: 'editor-list-ol',
-    ul: 'editor-list-ul',
-    listitem: 'editor-listitem',
-  },
-  image: 'editor-image',
-  link: 'editor-link',
-  text: {
-    bold: 'editor-text-bold',
-    italic: 'editor-text-italic',
-    overflowed: 'editor-text-overflowed',
-    hashtag: 'editor-text-hashtag',
-    underline: 'editor-text-underline',
-    strikethrough: 'editor-text-strikethrough',
-    underlineStrikethrough: 'editor-text-underlineStrikethrough',
-    code: 'editor-text-code',
-  },
-  code: 'editor-code',
-  codeHighlight: {
-    atrule: 'editor-tokenAttr',
-    attr: 'editor-tokenAttr',
-    boolean: 'editor-tokenProperty',
-    builtin: 'editor-tokenSelector',
-    cdata: 'editor-tokenComment',
-    char: 'editor-tokenSelector',
-    class: 'editor-tokenFunction',
-    'class-name': 'editor-tokenFunction',
-    comment: 'editor-tokenComment',
-    constant: 'editor-tokenProperty',
-    deleted: 'editor-tokenProperty',
-    doctype: 'editor-tokenComment',
-    entity: 'editor-tokenOperator',
-    function: 'editor-tokenFunction',
-    important: 'editor-tokenVariable',
-    inserted: 'editor-tokenSelector',
-    keyword: 'editor-tokenAttr',
-    namespace: 'editor-tokenVariable',
-    number: 'editor-tokenProperty',
-    operator: 'editor-tokenOperator',
-    prolog: 'editor-tokenComment',
-    property: 'editor-tokenProperty',
-    punctuation: 'editor-tokenPunctuation',
-    regex: 'editor-tokenVariable',
-    selector: 'editor-tokenSelector',
-    string: 'editor-tokenSelector',
-    symbol: 'editor-tokenProperty',
-    tag: 'editor-tokenProperty',
-    url: 'editor-tokenOperator',
-    variable: 'editor-tokenVariable',
-  },
-};
-
-function onError(error: Error) {
-  console.error(error);
-}
-
-const initialConfig = {
-  namespace: 'DatalayerLexicalEditor',
-  theme,
-  onError,
-  nodes: [
-    HeadingNode,
-    ListNode,
-    ListItemNode,
-    QuoteNode,
-    LinkNode,
-    AutoLinkNode,
   ],
+  metadata: {
+    kernelspec: {
+      display_name: 'Python 3',
+      language: 'python',
+      name: 'python3',
+    },
+    language_info: {
+      name: 'python',
+      version: '3.9.0',
+    },
+  },
+  nbformat: 4,
+  nbformat_minor: 4,
 };
 
-interface ToolbarPluginProps {
-  activeFormats: Set<string>;
-  onFormatText: (format: string) => void;
-  onInsertLink: () => void;
-  onInsertList: (type: 'ul' | 'ol') => void;
-  onInsertQuote: () => void;
-  onInsertHeading: (level: 1 | 2 | 3) => void;
-}
+// Text-only editor inner component
+const TextOnlyEditorInner: React.FC = () => {
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-function ToolbarPlugin({
-  activeFormats,
-  onFormatText,
-  onInsertLink,
-  onInsertList,
-  onInsertQuote,
-  onInsertHeading,
-}: ToolbarPluginProps) {
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        p: 2,
-        borderBottom: '1px solid',
-        borderColor: 'border.default',
-        bg: 'canvas.subtle',
-      }}
-    >
-      {/* Text Formatting */}
-      <Button
-        variant={activeFormats.has('bold') ? 'primary' : 'default'}
-        size="small"
-        onClick={() => onFormatText('bold')}
-        sx={{ minWidth: 32 }}
-      >
-        <BoldIcon size={16} />
-      </Button>
-      <Button
-        variant={activeFormats.has('italic') ? 'primary' : 'default'}
-        size="small"
-        onClick={() => onFormatText('italic')}
-        sx={{ minWidth: 32 }}
-      >
-        <ItalicIcon size={16} />
-      </Button>
-      <Button
-        variant={activeFormats.has('underline') ? 'primary' : 'default'}
-        size="small"
-        onClick={() => onFormatText('underline')}
-        sx={{ minWidth: 32 }}
-      >
-        <Text sx={{ fontSize: 0, fontWeight: 'bold' }}>U</Text>
-      </Button>
-
-      {/* Separator */}
-      <Box sx={{ width: '1px', height: 24, bg: 'border.default', mx: 1 }} />
-
-      {/* Lists */}
-      <Button
-        variant="default"
-        size="small"
-        onClick={() => onInsertList('ul')}
-        sx={{ minWidth: 32 }}
-      >
-        <ListUnorderedIcon size={16} />
-      </Button>
-      <Button
-        variant="default"
-        size="small"
-        onClick={() => onInsertList('ol')}
-        sx={{ minWidth: 32 }}
-      >
-        <ListOrderedIcon size={16} />
-      </Button>
-
-      {/* Separator */}
-      <Box sx={{ width: '1px', height: 24, bg: 'border.default', mx: 1 }} />
-
-      {/* Quote */}
-      <Button
-        variant="default"
-        size="small"
-        onClick={onInsertQuote}
-        sx={{ minWidth: 32 }}
-      >
-        <QuoteIcon size={16} />
-      </Button>
-
-      {/* Headings */}
-      <ActionMenu>
-        <ActionMenu.Anchor>
-          <Button variant="default" size="small" sx={{ minWidth: 'auto' }}>
-            <Text sx={{ fontSize: 0, fontWeight: 'bold' }}>H</Text>
-          </Button>
-        </ActionMenu.Anchor>
-        <ActionMenu.Overlay>
-          <ActionList>
-            <ActionList.Item onSelect={() => onInsertHeading(1)}>
-              <Text sx={{ fontSize: 2, fontWeight: 'bold' }}>Heading 1</Text>
-            </ActionList.Item>
-            <ActionList.Item onSelect={() => onInsertHeading(2)}>
-              <Text sx={{ fontSize: 1, fontWeight: 'bold' }}>Heading 2</Text>
-            </ActionList.Item>
-            <ActionList.Item onSelect={() => onInsertHeading(3)}>
-              <Text sx={{ fontSize: 0, fontWeight: 'bold' }}>Heading 3</Text>
-            </ActionList.Item>
-          </ActionList>
-        </ActionMenu.Overlay>
-      </ActionMenu>
-
-      {/* Separator */}
-      <Box sx={{ width: '1px', height: 24, bg: 'border.default', mx: 1 }} />
-
-      {/* Link */}
-      <Button
-        variant="default"
-        size="small"
-        onClick={onInsertLink}
-        sx={{ minWidth: 32 }}
-      >
-        <LinkIcon size={16} />
-      </Button>
-    </Box>
-  );
-}
-
-function EditorToolbarPlugin() {
-  const [editor] = useLexicalComposerContext();
-  const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
-
-  const updateToolbar = useCallback(() => {
-    const selection = $getSelection();
-    if (!selection || !$isRangeSelection(selection)) return;
-
-    const formats = new Set<string>();
-
-    // Check for text formatting
-    if (
-      $getSelectionStyleValueForProperty(selection, 'font-weight') === '700'
-    ) {
-      formats.add('bold');
-    }
-    if (
-      $getSelectionStyleValueForProperty(selection, 'font-style') === 'italic'
-    ) {
-      formats.add('italic');
-    }
-    if (
-      $getSelectionStyleValueForProperty(selection, 'text-decoration-line') ===
-      'underline'
-    ) {
-      formats.add('underline');
-    }
-
-    setActiveFormats(formats);
-  }, []);
-
+  // Move table of contents to sidebar when it appears
   useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        updateToolbar();
-      });
-    });
-  }, [editor, updateToolbar]);
+    const moveTableOfContents = () => {
+      const tocSelectors = [
+        '.table-of-contents',
+        'div[data-lexical-table-of-contents]',
+        '.TableOfContentsPlugin__tableOfContents',
+        '[class*="table-of-contents"]',
+        '[class*="TableOfContents"]'
+      ];
 
-  const formatText = useCallback(
-    (format: string) => {
-      editor.update(() => {
-        const selection = $getSelection();
-        if (selection) {
-          if (format === 'bold') {
-            $patchStyleText(selection, {
-              'font-weight': activeFormats.has('bold') ? 'normal' : 'bold',
-            });
-          } else if (format === 'italic') {
-            $patchStyleText(selection, {
-              'font-style': activeFormats.has('italic') ? 'normal' : 'italic',
-            });
-          } else if (format === 'underline') {
-            $patchStyleText(selection, {
-              'text-decoration-line': activeFormats.has('underline')
-                ? 'none'
-                : 'underline',
-            });
+      for (const selector of tocSelectors) {
+        const tocElement = document.querySelector(selector);
+        if (tocElement && sidebarRef.current) {
+          // Check if it's not already in our sidebar
+          if (!sidebarRef.current.contains(tocElement)) {
+            console.log('Moving table of contents to sidebar (text-only):', selector);
+            sidebarRef.current.appendChild(tocElement);
+            break;
           }
         }
-      });
-    },
-    [editor, activeFormats]
-  );
-
-  const insertLink = useCallback(() => {
-    const url = window.prompt('Enter URL:');
-    if (url) {
-      editor.update(() => {
-        const selection = $getSelection();
-        if (selection) {
-          const linkNode = $createLinkNode(url);
-          selection.insertNodes([linkNode]);
-        }
-      });
-    }
-  }, [editor]);
-
-  const insertList = useCallback(
-    (type: 'ul' | 'ol') => {
-      editor.update(() => {
-        const selection = $getSelection();
-        if (selection) {
-          const listNode = $createListNode(type === 'ul' ? 'bullet' : 'number');
-          const listItemNode = $createListItemNode();
-          listNode.append(listItemNode);
-          selection.insertNodes([listNode]);
-        }
-      });
-    },
-    [editor]
-  );
-
-  const insertQuote = useCallback(() => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if (selection) {
-        const quoteNode = $createQuoteNode();
-        selection.insertNodes([quoteNode]);
       }
-    });
-  }, [editor]);
+    };
 
-  const insertHeading = useCallback(
-    (level: 1 | 2 | 3) => {
-      editor.update(() => {
-        const selection = $getSelection();
-        if (selection) {
-          const headingNode = $createHeadingNode(
-            `h${level}` as 'h1' | 'h2' | 'h3'
-          );
-          selection.insertNodes([headingNode]);
-        }
-      });
-    },
-    [editor]
-  );
+    // Check periodically for table of contents
+    const interval = setInterval(moveTableOfContents, 1000);
+    
+    // Also check immediately and after a short delay
+    setTimeout(moveTableOfContents, 100);
+    setTimeout(moveTableOfContents, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <ToolbarPlugin
-      activeFormats={activeFormats}
-      onFormatText={formatText}
-      onInsertLink={insertLink}
-      onInsertList={insertList}
-      onInsertQuote={insertQuote}
-      onInsertHeading={insertHeading}
-    />
+    <div className="lexical-editor-layout">
+      <div className="lexical-editor-main">
+        <Box
+          sx={{
+            height: '100%',
+            position: 'relative',
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 2,
+              right: 2,
+              zIndex: 1000,
+              fontSize: 0,
+              color: 'attention.fg',
+              bg: 'attention.subtle',
+              px: 2,
+              py: 1,
+              borderRadius: 2,
+            }}
+          >
+            No Jupyter Runtime (Text-only mode)
+          </Box>
+          <Editor />
+        </Box>
+      </div>
+      <div className="lexical-editor-sidebar" ref={sidebarRef}>
+        {/* Sidebar for text-only mode (table of contents will still work) */}
+      </div>
+    </div>
   );
-}
+};
+
+// Inner component that uses the useLexical hook
+const LexicalEditorInner: React.FC = () => {
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Move table of contents to sidebar when it appears
+  useEffect(() => {
+    const moveTableOfContents = () => {
+      const tocSelectors = [
+        '.table-of-contents',
+        'div[data-lexical-table-of-contents]',
+        '.TableOfContentsPlugin__tableOfContents',
+        '[class*="table-of-contents"]',
+        '[class*="TableOfContents"]'
+      ];
+
+      for (const selector of tocSelectors) {
+        const tocElement = document.querySelector(selector);
+        if (tocElement && sidebarRef.current) {
+          // Check if it's not already in our sidebar
+          if (!sidebarRef.current.contains(tocElement)) {
+            console.log('Moving table of contents to sidebar:', selector);
+            sidebarRef.current.appendChild(tocElement);
+            break;
+          }
+        }
+      }
+    };
+
+    // Check periodically for table of contents
+    const interval = setInterval(moveTableOfContents, 1000);
+    
+    // Also check immediately and after a short delay
+    setTimeout(moveTableOfContents, 100);
+    setTimeout(moveTableOfContents, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="lexical-editor-layout">
+      <div className="lexical-editor-main">
+        <Editor notebook={EMPTY_NOTEBOOK} />
+      </div>
+      <div className="lexical-editor-sidebar" ref={sidebarRef}>
+        {/* This div will be filled by the moved TableOfContentsPlugin */}
+      </div>
+    </div>
+  );
+};
 
 const LexicalEditor: React.FC = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [runtimeCreationFailed, setRuntimeCreationFailed] = useState(false);
+  const { configuration } = useCoreStore();
+  const mountedRef = useRef(true);
+
+  // Use runtime store for runtime management
+  const {
+    isCreatingRuntime,
+    runtimeError,
+    createRuntimeForEditor,
+    getRuntimeForNotebook,
+    setServiceManagerForNotebook,
+    loadRuntimesFromStorage,
+  } = useRuntimeStore();
+
+  // Get runtime and service manager for the lexical editor
+  const editorRuntime = getRuntimeForNotebook(LEXICAL_EDITOR_ID);
+  const serviceManager = editorRuntime?.serviceManager || null;
+
+  // Component mount/unmount tracking
+  useEffect(() => {
+    mountedRef.current = true;
+    // Load any existing runtimes from storage on mount
+    loadRuntimesFromStorage();
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Initialize runtime for lexical editor
+  useEffect(() => {
+    const initializeRuntime = async (): Promise<void> => {
+      if (!mountedRef.current || runtimeCreationFailed) return;
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Check if we already have a runtime
+        if (serviceManager) {
+          setIsLoading(false);
+          return;
+        }
+
+        const token = configuration.token || '';
+        if (!token) {
+          throw new Error('No authentication token available');
+        }
+
+        const cancelled = false;
+
+        // Get or create runtime for the lexical editor
+        let runtime = getRuntimeForNotebook(LEXICAL_EDITOR_ID)?.runtime;
+
+        // Only create a new runtime if one doesn't exist
+        if (!runtime) {
+          console.log('Creating runtime for lexical editor with parameters:', {
+            editorId: LEXICAL_EDITOR_ID,
+            editorType: 'lexical',
+            config: {
+              environment: 'python-cpu-env',
+              credits: 3, // Reduce credits even more for editors
+            },
+          });
+
+          const newRuntime = await createRuntimeForEditor(
+            LEXICAL_EDITOR_ID,
+            'lexical',
+            {
+              environment: 'python-cpu-env',
+              credits: 3, // Reduce credits even more for editors
+            }
+          );
+
+          if (!newRuntime) {
+            throw new Error(runtimeError || 'Failed to create runtime');
+          }
+          runtime = newRuntime;
+        }
+
+        if (cancelled || !mountedRef.current) return;
+
+        console.info('Runtime ready for lexical editor:', runtime.uid);
+        const jupyterServerUrl = runtime?.ingress;
+
+        if (!jupyterServerUrl) {
+          throw new Error('No Jupyter server URL provided in runtime response');
+        }
+
+        // Use the runtime token for Jupyter server authentication
+        const jupyterToken = runtime?.token || configuration.token;
+
+        if (cancelled || !mountedRef.current) return;
+
+        // Check if we already have a service manager for this runtime
+        const cacheKey = `serviceManager-${runtime.uid}`;
+        let manager = (window as Record<string, any>)[cacheKey] as
+          | ServiceManager.IManager
+          | undefined;
+
+        if (!manager) {
+          console.info(
+            'Creating new ServiceManager for lexical editor runtime:',
+            runtime.uid
+          );
+          console.info('ServiceManager parameters:', {
+            jupyterServerUrl,
+            token: jupyterToken ? 'present' : 'missing',
+          });
+          try {
+            manager = await createProxyServiceManager(
+              jupyterServerUrl,
+              jupyterToken
+            );
+            console.info(
+              'ServiceManager created successfully:',
+              typeof manager,
+              !!manager
+            );
+            if (manager) {
+              console.info('Waiting for ServiceManager to be ready...');
+              await manager.ready;
+              console.info('ServiceManager is ready!');
+            }
+          } catch (error) {
+            console.error('Failed to create ServiceManager:', error);
+            throw error;
+          }
+
+          if (cancelled || !mountedRef.current) {
+            // Clean up if component was unmounted during async operation
+            try {
+              if (
+                manager &&
+                typeof (manager as any).dispose === 'function' &&
+                !(manager as any).isDisposed
+              ) {
+                (manager as any).dispose();
+              }
+            } catch (e) {
+              console.warn(
+                'Error disposing service manager during cleanup:',
+                e
+              );
+            }
+            return;
+          }
+
+          // Cache the service manager
+          (window as Record<string, any>)[cacheKey] = manager;
+
+          // Store the ServiceManager in the runtime store (this is the missing piece!)
+          if (manager) {
+            setServiceManagerForNotebook(LEXICAL_EDITOR_ID, manager);
+            console.info(
+              'ServiceManager stored in runtime store for editor:',
+              LEXICAL_EDITOR_ID
+            );
+
+            // Create and start a kernel for the Lexical editor
+            try {
+              console.info('Creating kernel for Lexical editor...');
+              const kernelManager = manager.kernels;
+              const kernelModel = await kernelManager.startNew({
+                name: 'python3',
+              });
+              console.info('Kernel created successfully:', kernelModel.id);
+            } catch (kernelError) {
+              console.error('Failed to create kernel:', kernelError);
+            }
+          }
+        }
+      } catch (err) {
+        if (mountedRef.current) {
+          console.error(
+            'Failed to initialize runtime for lexical editor:',
+            err
+          );
+          const errorMessage =
+            err instanceof Error
+              ? err.message
+              : 'Failed to initialize Jupyter connection';
+
+          // Mark runtime creation as failed to prevent retries
+          setRuntimeCreationFailed(true);
+
+          if (
+            errorMessage.includes('500') ||
+            errorMessage.includes('Server Error')
+          ) {
+            setError(
+              'Server temporarily unavailable. The platform may be experiencing high load. The editor will work in text-only mode.'
+            );
+          } else if (errorMessage.includes('404')) {
+            setError(
+              'Runtime endpoint not found. Please check your network connection. The editor will work in text-only mode.'
+            );
+          } else {
+            setError(
+              `${errorMessage}. The editor will work in text-only mode.`
+            );
+          }
+        }
+      } finally {
+        if (mountedRef.current) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeRuntime();
+  }, [configuration.token, serviceManager]);
+
+  if (isLoading || isCreatingRuntime) {
+    return (
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+        }}
+      >
+        <Spinner size="large" sx={{ color: COLORS.brand.primary }} />
+        <Text sx={{ color: 'fg.muted' }}>
+          {isCreatingRuntime
+            ? 'Creating runtime for Lexical Editor...'
+            : 'Initializing Jupyter Lexical Editor...'}
+        </Text>
+      </Box>
+    );
+  }
+
+  // Show error but continue with editor in text-only mode if runtime creation failed
+  const showRuntimeWarning = (error || runtimeError) && runtimeCreationFailed;
+
+  // Allow editor to work without serviceManager for basic text editing
+  const hasJupyterSupport = !!serviceManager;
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {showRuntimeWarning && (
+        <Box
+          sx={{
+            mb: 2,
+            p: 3,
+            bg: 'attention.subtle',
+            borderColor: 'attention.muted',
+            borderWidth: 1,
+            borderStyle: 'solid',
+            borderRadius: 2,
+          }}
+        >
+          <Text
+            sx={{
+              color: 'attention.fg',
+              fontSize: 1,
+              fontWeight: 'bold',
+              mb: 1,
+            }}
+          >
+            Runtime Connection Failed
+          </Text>
+          <Text sx={{ color: 'attention.fg', fontSize: 0 }}>
+            {error || runtimeError}
+          </Text>
+        </Box>
+      )}
+
       <Box sx={{ mb: 3 }}>
         <Text
           sx={{ fontSize: 3, fontWeight: 'bold', color: COLORS.brand.primary }}
         >
-          Rich Text Editor&nbsp;
+          Jupyter Lexical Editor&nbsp;
+          {!hasJupyterSupport && (
+            <Text as="span" sx={{ fontSize: 1, color: 'attention.fg' }}>
+              (Text-only mode)
+            </Text>
+          )}
         </Text>
         <Text sx={{ fontSize: 1, color: 'fg.muted', mt: 2 }}>
-          Create and edit rich text content with formatting, lists, links, and
-          more.
+          {hasJupyterSupport
+            ? 'Advanced rich text editor with Jupyter integration, supporting code execution, equations, images, and more.'
+            : 'Rich text editor for formatting text, creating lists, and adding links. Code execution features are not available.'}
         </Text>
       </Box>
 
@@ -410,48 +472,23 @@ const LexicalEditor: React.FC = () => {
           flexDirection: 'column',
         }}
       >
-        <LexicalComposer initialConfig={initialConfig}>
-          <EditorToolbarPlugin />
-          <Box sx={{ flex: 1, position: 'relative', overflow: 'auto' }}>
-            <RichTextPlugin
-              contentEditable={
-                <ContentEditable
-                  style={{
-                    minHeight: '400px',
-                    padding: '24px',
-                    outline: 'none',
-                    resize: 'none',
-                    fontSize: '15px',
-                    lineHeight: '1.7',
-                    fontFamily: 'inherit',
-                    background: 'transparent',
-                  }}
-                />
-              }
-              placeholder={
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 24,
-                    left: 24,
-                    color: 'fg.muted',
-                    fontSize: 1,
-                    pointerEvents: 'none',
-                    userSelect: 'none',
-                  }}
-                >
-                  Start writing...
-                </Box>
-              }
-              ErrorBoundary={LexicalErrorBoundary}
-            />
-            <HistoryPlugin />
-            <AutoFocusPlugin />
-            <LinkPlugin />
-            <ListPlugin />
-            <TabIndentationPlugin />
-          </Box>
-        </LexicalComposer>
+        {hasJupyterSupport ? (
+          <>
+            {console.log(
+              'LexicalEditor: Rendering with serviceManager:',
+              serviceManager
+            )}
+            <Jupyter serviceManager={serviceManager} startDefaultKernel>
+              <LexicalProvider>
+                <LexicalEditorInner />
+              </LexicalProvider>
+            </Jupyter>
+          </>
+        ) : (
+          <LexicalProvider>
+            <TextOnlyEditorInner />
+          </LexicalProvider>
+        )}
       </Box>
     </Box>
   );

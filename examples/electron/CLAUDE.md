@@ -503,49 +503,126 @@ npm run dist:linux    # Package for Linux
 - `src/renderer/components/LexicalEditor.tsx` - Rich text editor integration with toolbar and formatting
 - `src/renderer/App.tsx` - Main app with dynamic GitHub user profile fetching
 
-## Rich Text Editor (Lexical Integration)
+## Jupyter Lexical Editor Integration (NEW!)
 
-The application includes a rich text editor powered by Facebook's Lexical framework, accessible via the "Editor" tab in the navigation.
+The application includes a **Jupyter-enabled rich text editor** powered by Facebook's Lexical framework and Datalayer's Jupyter-Lexical integration, accessible via the "Editor" tab in the navigation.
 
 ### Key Features
 
-- **Rich Text Formatting**: Bold, italic, underline text styling
+- **Rich Text Formatting**: Bold, italic, underline text styling with toolbar
 - **List Support**: Bullet points and numbered lists
 - **Block Elements**: Quote blocks and headings (H1-H3)
 - **Link Insertion**: URL link creation with user prompts
-- **Toolbar Interface**: Visual toolbar with formatting buttons using Primer React components
+- **🔥 Jupyter Integration**: Insert and execute code cells directly in the rich text editor
+- **Code Execution**: Execute Python code in Jupyter cells with live outputs
+- **Runtime Integration**: Connects to Datalayer runtime infrastructure for kernel management
+- **Hybrid Document**: Seamlessly mix rich text content with executable code
 
-### Implementation Details
+### Jupyter Features
+
+- **ComponentPickerMenuPlugin**: Type `/` to insert Jupyter code cells, equations, images, etc.
+- **JupyterInputOutputPlugin**: Execute code cells and display outputs inline
+- **Kernel Management**: Automatic Python kernel creation and lifecycle management
+- **Real-time Execution**: Code execution with immediate results display
+- **Error Handling**: Graceful fallback to text-only mode if runtime fails
+
+### Implementation Architecture
 
 ```typescript
-// Core Lexical setup in LexicalEditor.tsx
-const initialConfig = {
-  namespace: 'DatalayerLexicalEditor',
-  theme,
-  onError,
-  nodes: [
-    HeadingNode,
-    ListNode,
-    ListItemNode,
-    QuoteNode,
-    LinkNode,
-    AutoLinkNode,
-  ],
+// Runtime and ServiceManager creation
+const initializeRuntime = async () => {
+  // 1. Create runtime via Datalayer API
+  const newRuntime = await createRuntimeForEditor(
+    LEXICAL_EDITOR_ID,
+    'lexical',
+    { environment: 'python-cpu-env', credits: 3 }
+  );
+  
+  // 2. Create ServiceManager for runtime
+  const manager = await createProxyServiceManager(
+    jupyterServerUrl, 
+    jupyterToken
+  );
+  
+  // 3. Store in runtime store for component access
+  setServiceManagerForNotebook(LEXICAL_EDITOR_ID, manager);
 };
+
+// Jupyter + Lexical integration
+<Jupyter serviceManager={serviceManager} startDefaultKernel>
+  <LexicalProvider>
+    <LexicalEditorInner />
+  </LexicalProvider>
+</Jupyter>
 ```
+
+### Critical Integration Points
+
+1. **Runtime Management**: Uses `useRuntimeStore` for editor-specific runtime lifecycle
+2. **ServiceManager Pattern**: Creates runtime-specific ServiceManager via `createProxyServiceManager`
+3. **Kernel Creation**: `startDefaultKernel` prop enables automatic kernel creation
+4. **Context Hierarchy**: `<Jupyter>` → `<LexicalProvider>` → `<Editor>` component tree
+5. **Jupyter Nodes**: Registered JupyterInputNode, JupyterOutputNode for code cell support
 
 ### Key Files
 
-- `src/renderer/components/LexicalEditor.tsx` - Main editor component with toolbar and plugins
+- `src/renderer/components/LexicalEditor.tsx` - Main editor with Jupyter runtime integration
 - `src/renderer/components/LexicalEditor.css` - GitHub-inspired styling for editor elements
+- `src/renderer/stores/runtimeStore.ts` - Runtime management with `createRuntimeForEditor`
+- `src/renderer/services/proxyServiceManager.ts` - WebSocket proxy for kernel communication
 
-### Lexical Dependencies
+### Dependencies
 
-- `lexical@^0.22.0` - Core Lexical framework
-- `@lexical/react@^0.22.0` - React integration components
-- `@lexical/rich-text@^0.22.0` - Rich text functionality
-- `@lexical/list@^0.22.0` - List support
-- `@lexical/link@^0.22.0` - Link functionality
+- `@datalayer/jupyter-lexical` - Jupyter-enabled Lexical editor components
+- `@datalayer/jupyter-react` - Jupyter React context and providers
+- **Lexical Core Dependencies**:
+  - `lexical@^0.33.1` - Core Lexical framework
+  - `@lexical/react@^0.33.1` - React integration components  
+  - `@lexical/rich-text@^0.33.1` - Rich text functionality
+  - `@lexical/list@^0.33.1` - List support
+  - `@lexical/link@^0.33.1` - Link functionality
+- **Additional**: `katex`, `yjs`, `react-json-tree`, `styled-components`
+
+### Vite Configuration for Lexical
+
+```typescript
+// electron.vite.config.ts - Lexical package aliases
+resolve: {
+  alias: {
+    // Point to jupyter-ui lexical packages
+    '@datalayer/jupyter-lexical': resolve(__dirname, '../../../jupyter-ui/packages/lexical/src'),
+    
+    // Sub-path aliases for @lexical/react imports
+    '@lexical/react/LexicalComposerContext': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalComposerContext'),
+    '@lexical/react/LexicalComposer': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalComposer'),
+    // ... 20+ more sub-path aliases for proper module resolution
+  }
+},
+server: {
+  fs: {
+    allow: [
+      // Allow serving files from jupyter-ui directory
+      resolve(__dirname, '../../../jupyter-ui'),
+    ]
+  }
+}
+```
+
+### Troubleshooting Lexical Integration
+
+1. **"Could not read from file: @lexical/react/..."**: Missing sub-path aliases in Vite config
+2. **"No Jupyter Runtime (Text-only mode)"**: Runtime creation failed, check ServiceManager creation
+3. **"ServiceManager is undefined"**: Missing `setServiceManagerForNotebook` call after manager creation
+4. **ComponentPickerMenu not showing code cells**: `defaultKernel` not available, check `startDefaultKernel` prop
+5. **WebSocket 404 errors**: Kernel trying to connect but endpoints unavailable, check runtime URL
+
+### Usage Instructions
+
+1. **Navigate to Editor Tab**: Click "Editor" in the main navigation
+2. **Wait for Initialization**: Runtime creation takes ~10-15 seconds
+3. **Insert Code Cells**: Type `/` in editor to open component picker, select "Code Block"
+4. **Execute Code**: Click the play button or use Ctrl+Enter to run Python code
+5. **Mix Content**: Seamlessly combine rich text, code cells, equations, and images
 
 ## Dependencies to Note
 

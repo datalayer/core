@@ -61,6 +61,11 @@ interface RuntimeState {
     notebookPath?: string,
     options?: { environment?: string; name?: string; credits?: number }
   ) => Promise<Runtime | null>;
+  createRuntimeForEditor: (
+    editorId: string,
+    editorType: string,
+    options?: { environment?: string; name?: string; credits?: number }
+  ) => Promise<Runtime | null>;
   getRuntimeForNotebook: (notebookId: string) => NotebookRuntime | undefined;
   setServiceManagerForNotebook: (
     notebookId: string,
@@ -175,6 +180,74 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to create runtime';
       console.error('Error creating runtime:', errorMessage);
+      setRuntimeError(errorMessage);
+      return null;
+    } finally {
+      setIsCreatingRuntime(false);
+    }
+  },
+
+  // Create a runtime specifically for editors (not notebooks)
+  createRuntimeForEditor: async (editorId, editorType, options) => {
+    const { notebookRuntimes, setIsCreatingRuntime, setRuntimeError } = get();
+
+    // Check if this editor already has a runtime
+    const existingRuntime = notebookRuntimes.get(editorId);
+    if (existingRuntime) {
+      console.info(
+        `Reusing existing runtime for ${editorType} editor ${editorId}:`,
+        existingRuntime.runtime.uid
+      );
+      return existingRuntime.runtime;
+    }
+
+    setIsCreatingRuntime(true);
+    setRuntimeError(null);
+
+    try {
+      console.info(
+        `Creating new runtime for ${editorType} editor ${editorId} with options:`,
+        options
+      );
+
+      // Add timestamp to ensure unique runtime names
+      const timestamp = Date.now().toString(36);
+      const result = await (window as any).datalayerAPI.createRuntime({
+        environment: options?.environment || 'python-cpu-env',
+        name: `electron-${editorType}-${editorId}-${timestamp}`,
+        credits: options?.credits || 5, // Use fewer credits for editors
+      });
+
+      if (result.success && result.data?.runtime) {
+        const runtime = result.data.runtime;
+
+        console.info(
+          `Runtime created successfully for ${editorType} editor ${editorId}:`,
+          runtime.uid
+        );
+
+        // Store the runtime for this editor (treating it like a notebook)
+        const newRuntimes = new Map(notebookRuntimes);
+        newRuntimes.set(editorId, {
+          notebookId: editorId,
+          notebookPath: `virtual:${editorType}:${editorId}`,
+          runtime,
+        });
+        set({ notebookRuntimes: newRuntimes });
+
+        // Save to storage for persistence
+        get().saveRuntimesToStorage();
+
+        return runtime;
+      } else {
+        throw new Error(result.error || 'Failed to create runtime for editor');
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to create runtime for editor';
+      console.error('Error creating editor runtime:', errorMessage);
       setRuntimeError(errorMessage);
       return null;
     } finally {

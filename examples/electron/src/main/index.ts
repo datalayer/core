@@ -61,12 +61,10 @@ function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
-function isDevProd(): boolean {
-  return process.env.ELECTRON_DEV_PROD === 'true';
-}
 
 function shouldEnableDevTools(): boolean {
-  return isDevelopment() || isDevProd();
+  // Always enable DevTools for all builds
+  return true;
 }
 
 function shouldUseProductionSecurity(): boolean {

@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Box, Heading, Text, Button, Dialog } from '@primer/react';
 import { INotebookContent } from '@jupyterlab/nbformat';
-import { Notebook2 } from '@datalayer/jupyter-react';
+import { Notebook2, JupyterReactTheme } from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
@@ -645,153 +645,155 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box
-        sx={{
-          p: 3,
-          pb: 2,
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
-        }}
-      >
+    <JupyterReactTheme>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            p: 3,
+            pb: 2,
+            borderBottom: '1px solid',
+            borderColor: 'border.default',
           }}
         >
-          <Box>
-            <Heading as="h2" sx={{ mb: 1 }}>
-              {selectedNotebook?.name || 'Jupyter Notebook'}
-            </Heading>
-            <Text sx={{ color: 'fg.subtle', fontSize: 1 }}>
-              {selectedNotebook?.description ||
-                'Interactive notebook environment powered by Datalayer'}
-              {configuration?.token && (
-                <Text as="span" sx={{ color: 'success.fg', ml: 2 }}>
-                  ✓ Real-time collaboration enabled
-                </Text>
-              )}
-            </Text>
-          </Box>
-          <Button
-            variant="danger"
-            size="small"
-            onClick={() => setShowTerminateDialog(true)}
-            disabled={isTerminatingRuntime || !serviceManager}
-            leadingVisual={XIcon}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
           >
-            {isTerminatingRuntime ? 'Terminating...' : 'Terminate Runtime'}
-          </Button>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          flex: 1,
-          overflow: 'auto',
-        }}
-      >
-        {!notebookError ? (
-          notebookProps ? (
-            <NotebookErrorBoundary onError={handleNotebookError}>
-              <Notebook2
-                key={`notebook-${stableNotebookKey}`} // Add prefix to ensure stability
-                {...notebookProps}
-              />
-            </NotebookErrorBoundary>
-          ) : (
-            <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
-              <Text sx={{ color: 'fg.muted' }}>
-                Service manager not available. Please configure Datalayer
-                credentials.
+            <Box>
+              <Heading as="h2" sx={{ mb: 1 }}>
+                {selectedNotebook?.name || 'Jupyter Notebook'}
+              </Heading>
+              <Text sx={{ color: 'fg.subtle', fontSize: 1 }}>
+                {selectedNotebook?.description ||
+                  'Interactive notebook environment powered by Datalayer'}
+                {configuration?.token && (
+                  <Text as="span" sx={{ color: 'success.fg', ml: 2 }}>
+                    ✓ Real-time collaboration enabled
+                  </Text>
+                )}
               </Text>
             </Box>
-          )
-        ) : (
-          <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
-            <Text sx={{ color: 'danger.fg', mb: 2 }}>
-              Notebook component encountered an error
-            </Text>
-            <Text sx={{ color: 'fg.muted', fontSize: 1, mb: 3 }}>
-              This may be due to collaboration state conflicts or component
-              lifecycle issues
-            </Text>
-            <Text
-              sx={{
-                color: 'accent.fg',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-              onClick={() => {
-                setNotebookError(false);
-              }}
+            <Button
+              variant="danger"
+              size="small"
+              onClick={() => setShowTerminateDialog(true)}
+              disabled={isTerminatingRuntime || !serviceManager}
+              leadingVisual={XIcon}
             >
-              Reset notebook
-            </Text>
+              {isTerminatingRuntime ? 'Terminating...' : 'Terminate Runtime'}
+            </Button>
           </Box>
-        )}
-      </Box>
+        </Box>
 
-      {/* Terminate Runtime Confirmation Dialog */}
-      <Dialog
-        isOpen={showTerminateDialog}
-        onDismiss={() => {
-          if (!isTerminating) {
-            setShowTerminateDialog(false);
-          }
-        }}
-        aria-labelledby="terminate-runtime-title"
-      >
-        <Dialog.Header id="terminate-runtime-title">
-          Terminate Runtime
-        </Dialog.Header>
-
-        <Box sx={{ p: 4 }}>
-          <Text sx={{ mb: 4, color: 'danger.fg', display: 'block' }}>
-            <Box sx={{ mr: 2, display: 'inline-block' }}>
-              <AlertIcon />
+        <Box
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+          }}
+        >
+          {!notebookError ? (
+            notebookProps ? (
+              <NotebookErrorBoundary onError={handleNotebookError}>
+                <Notebook2
+                  key={`notebook-${stableNotebookKey}`} // Add prefix to ensure stability
+                  {...notebookProps}
+                />
+              </NotebookErrorBoundary>
+            ) : (
+              <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
+                <Text sx={{ color: 'fg.muted' }}>
+                  Service manager not available. Please configure Datalayer
+                  credentials.
+                </Text>
+              </Box>
+            )
+          ) : (
+            <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
+              <Text sx={{ color: 'danger.fg', mb: 2 }}>
+                Notebook component encountered an error
+              </Text>
+              <Text sx={{ color: 'fg.muted', fontSize: 1, mb: 3 }}>
+                This may be due to collaboration state conflicts or component
+                lifecycle issues
+              </Text>
+              <Text
+                sx={{
+                  color: 'accent.fg',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                }}
+                onClick={() => {
+                  setNotebookError(false);
+                }}
+              >
+                Reset notebook
+              </Text>
             </Box>
-            Are you sure you want to terminate the runtime for{' '}
-            <strong>"{selectedNotebook?.name || 'this notebook'}"</strong>?
-          </Text>
-
-          <Text sx={{ mb: 4, display: 'block' }}>
-            This will stop all kernel execution and close the notebook. Any
-            unsaved changes in running cells will be lost.
-          </Text>
-
-          {error && (
-            <Text sx={{ color: 'danger.fg', mb: 3, display: 'block' }}>
-              {error}
-            </Text>
           )}
         </Box>
 
-        <Box
-          sx={{ p: 3, borderTop: '1px solid', borderColor: 'border.default' }}
+        {/* Terminate Runtime Confirmation Dialog */}
+        <Dialog
+          isOpen={showTerminateDialog}
+          onDismiss={() => {
+            if (!isTerminating) {
+              setShowTerminateDialog(false);
+            }
+          }}
+          aria-labelledby="terminate-runtime-title"
         >
-          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button
-              variant="default"
-              onClick={() => setShowTerminateDialog(false)}
-              disabled={isTerminating}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleTerminateRuntime}
-              disabled={isTerminating}
-              leadingVisual={XIcon}
-            >
-              {isTerminating ? 'Terminating...' : 'Terminate Runtime'}
-            </Button>
+          <Dialog.Header id="terminate-runtime-title">
+            Terminate Runtime
+          </Dialog.Header>
+
+          <Box sx={{ p: 4 }}>
+            <Text sx={{ mb: 4, color: 'danger.fg', display: 'block' }}>
+              <Box sx={{ mr: 2, display: 'inline-block' }}>
+                <AlertIcon />
+              </Box>
+              Are you sure you want to terminate the runtime for{' '}
+              <strong>"{selectedNotebook?.name || 'this notebook'}"</strong>?
+            </Text>
+
+            <Text sx={{ mb: 4, display: 'block' }}>
+              This will stop all kernel execution and close the notebook. Any
+              unsaved changes in running cells will be lost.
+            </Text>
+
+            {error && (
+              <Text sx={{ color: 'danger.fg', mb: 3, display: 'block' }}>
+                {error}
+              </Text>
+            )}
           </Box>
-        </Box>
-      </Dialog>
-    </Box>
+
+          <Box
+            sx={{ p: 3, borderTop: '1px solid', borderColor: 'border.default' }}
+          >
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              <Button
+                variant="default"
+                onClick={() => setShowTerminateDialog(false)}
+                disabled={isTerminating}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleTerminateRuntime}
+                disabled={isTerminating}
+                leadingVisual={XIcon}
+              >
+                {isTerminating ? 'Terminating...' : 'Terminate Runtime'}
+              </Button>
+            </Box>
+          </Box>
+        </Dialog>
+      </Box>
+    </JupyterReactTheme>
   );
 };
 

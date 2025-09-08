@@ -358,25 +358,40 @@ export async function createProxyServiceManager(
   baseUrl: string,
   token: string = ''
 ) {
-  proxyLogger.debug(`Creating ServiceManager with baseUrl: ${baseUrl}`);
+  try {
+    proxyLogger.debug(`Creating ServiceManager with baseUrl: ${baseUrl}`);
 
-  // Load the real ServiceManager and ServerConnection at runtime
-  const { ServiceManager, ServerConnection } = await loadServiceManager();
+    // Load the real ServiceManager and ServerConnection at runtime
+    proxyLogger.debug('Loading ServiceManager and ServerConnection...');
+    const { ServiceManager, ServerConnection } = await loadServiceManager();
+    proxyLogger.debug(
+      'ServiceManager and ServerConnection loaded successfully'
+    );
 
-  const settings = ServerConnection.makeSettings({
-    baseUrl,
-    token,
-    appUrl: '',
-    wsUrl: baseUrl.replace(/^https?/, 'wss'),
-    init: {
-      cache: 'no-store' as RequestCache,
-    },
-    fetch: proxyFetch,
-    WebSocket: ProxyWebSocket as typeof WebSocket,
-    appendToken: true,
-  });
+    proxyLogger.debug('Creating server settings...');
+    const settings = ServerConnection.makeSettings({
+      baseUrl,
+      token,
+      appUrl: '',
+      wsUrl: baseUrl.replace(/^https?/, 'wss'),
+      init: {
+        cache: 'no-store' as RequestCache,
+      },
+      fetch: proxyFetch,
+      WebSocket: ProxyWebSocket as typeof WebSocket,
+      appendToken: true,
+    });
+    proxyLogger.debug('Server settings created successfully');
 
-  return new ServiceManager({
-    serverSettings: settings,
-  });
+    proxyLogger.debug('Creating ServiceManager instance...');
+    const serviceManager = new ServiceManager({
+      serverSettings: settings,
+    });
+    proxyLogger.debug('ServiceManager instance created successfully');
+
+    return serviceManager;
+  } catch (error) {
+    proxyLogger.error('Failed to create ServiceManager:', error);
+    throw error;
+  }
 }
