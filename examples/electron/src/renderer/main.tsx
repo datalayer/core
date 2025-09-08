@@ -11,10 +11,8 @@ import './utils/lodash-polyfills';
 import './utils/polyfills';
 import './utils/requirejs-shim';
 
-// Polyfill for global object required by MathJax
-if (typeof global === 'undefined') {
-  (window as any).global = window;
-}
+// MathJax configuration now handled early in polyfills.js
+// This ensures it's available before JupyterLab components try to access it
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';

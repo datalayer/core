@@ -26,7 +26,7 @@ import { useCoreStore } from '@datalayer/core';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
 import NotebookView from './components/NotebookView';
-import NotebooksList from './components/NotebooksList';
+import DocumentsList from './components/DocumentsList';
 import EnvironmentsList from './components/EnvironmentsList';
 import LexicalEditor from './components/LexicalEditor';
 import { useRuntimeStore } from './stores/runtimeStore';
@@ -284,7 +284,7 @@ const App: React.FC = () => {
   const renderView = (): React.ReactElement => {
     switch (currentView) {
       case 'notebooks':
-        return <NotebooksList onNotebookSelect={handleNotebookSelect} />;
+        return <DocumentsList onNotebookSelect={handleNotebookSelect} />;
       case 'notebook':
         return (
           <NotebookView
@@ -368,8 +368,9 @@ const App: React.FC = () => {
                   setCurrentView('environments');
                 }}
                 sx={{
-                  fontWeight:
-                    currentView === 'environments' ? 'bold' : 'normal',
+                  fontWeight: 'normal',
+                  textDecoration: currentView === 'environments' ? `underline 2px solid ${COLORS.brand.primary}` : 'none',
+                  textUnderlineOffset: '4px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
@@ -387,17 +388,19 @@ const App: React.FC = () => {
                   setCurrentView('notebooks');
                 }}
                 sx={{
-                  fontWeight:
+                  fontWeight: 'normal',
+                  textDecoration:
                     currentView === 'notebooks' || currentView === 'notebook'
-                      ? 'bold'
-                      : 'normal',
+                      ? `underline 2px solid ${COLORS.brand.primary}`
+                      : 'none',
+                  textUnderlineOffset: '4px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
                 }}
               >
                 <BookIcon size={16} />
-                <span>Notebooks</span>
+                <span>Documents</span>
               </Header.Link>
             </Header.Item>
             <Header.Item>
@@ -408,7 +411,9 @@ const App: React.FC = () => {
                   setCurrentView('editor');
                 }}
                 sx={{
-                  fontWeight: currentView === 'editor' ? 'bold' : 'normal',
+                  fontWeight: 'normal',
+                  textDecoration: currentView === 'editor' ? `underline 2px solid ${COLORS.brand.primary}` : 'none',
+                  textUnderlineOffset: '4px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,

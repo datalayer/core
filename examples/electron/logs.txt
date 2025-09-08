@@ -1,0 +1,570 @@
+Opening document: Demo Notebook
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: false, hasCells: false, cellsCount: undefined, hasCollaborationProvider: false, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: false, hasCells: false, cellsCount: undefined, hasCollaborationProvider: false, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+App.tsx:64 [NotebookView DEBUG] useEffect triggered for ServiceManager init: {hasToken: true, hasRunUrl: true, hasServiceManager: false, selectedNotebookId: '01JZQRQ35GG871QQCZW9TB1A8J', selectedNotebookPath: '/Demo Notebook'}
+NotebookView.tsx:320 Creating runtime with Datalayer production service...
+NotebookView.tsx:321 Using Datalayer run URL: https://prod1.datalayer.run
+NotebookView.tsx:324 Creating runtime for notebook execution...
+runtimeStore.ts:137 Creating new runtime for notebook 01JZQRQ35GG871QQCZW9TB1A8J with options: {environment: 'python-cpu-env', credits: 10}
+NotebookView.tsx:553 [NotebookView] Creating Electron collaboration provider v1
+NotebookView.tsx:557 [NotebookView] Configuration token: secured...
+NotebookView.tsx:561 [NotebookView] Configuration runUrl: https://prod1.datalayer.run
+App.tsx:64 [NotebookView DEBUG] useEffect triggered for ServiceManager init: {hasToken: true, hasRunUrl: true, hasServiceManager: false, selectedNotebookId: '01JZQRQ35GG871QQCZW9TB1A8J', selectedNotebookPath: '/Demo Notebook'}
+NotebookView.tsx:320 Creating runtime with Datalayer production service...
+NotebookView.tsx:321 Using Datalayer run URL: https://prod1.datalayer.run
+NotebookView.tsx:324 Creating runtime for notebook execution...
+runtimeStore.ts:137 Creating new runtime for notebook 01JZQRQ35GG871QQCZW9TB1A8J with options: {environment: 'python-cpu-env', credits: 10}
+NotebookView.tsx:553 [NotebookView] Creating Electron collaboration provider v2
+NotebookView.tsx:557 [NotebookView] Configuration token: secured...
+NotebookView.tsx:561 [NotebookView] Configuration runUrl: https://prod1.datalayer.run
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: false, hasCells: false, cellsCount: undefined, hasCollaborationProvider: true, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: false, hasCells: false, cellsCount: undefined, hasCollaborationProvider: true, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+electron-log_renderer.js?v=4c0e4937:366 22:43:17.360 › Selected notebook: {id: '01JZQRQ35GG871QQCZW9TB1A8J', name: 'Demo Notebook', path: '/Demo Notebook', cdnUrl: 'https://notebooks.datalayer.io/datalayer.app/01JY2…1R1W0VT/nbformat/01JZQRQ35GG871QQCZW9TB1A8J.ipynb', description: 'A demo notebook for datalayer!'}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: true, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: true, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+electron-log_renderer.js?v=4c0e4937:366 22:43:17.376 › [HTTP Proxy] GET https://notebooks.datalayer.io/datalayer.app/01JY2SAWPG0F1X737SB1R1W0VT/nbformat/01JZQRQ35GG871QQCZW9TB1A8J.ipynb
+electron-log_renderer.js?v=4c0e4937:366 22:43:17.407 › [API] Creating runtime with body: {
+  "environment_name": "python-cpu-env",
+  "type": "notebook",
+  "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktyte",
+  "credits_limit": 10,
+  "capabilities": []
+}
+electron-log_renderer.js?v=4c0e4937:366 22:43:17.408 › [HTTP Proxy] GET https://notebooks.datalayer.io/datalayer.app/01JY2SAWPG0F1X737SB1R1W0VT/nbformat/01JZQRQ35GG871QQCZW9TB1A8J.ipynb
+electron-log_renderer.js?v=4c0e4937:366 22:43:17.409 › [API] Creating runtime with body: {
+  "environment_name": "python-cpu-env",
+  "type": "notebook",
+  "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktytf",
+  "credits_limit": 10,
+  "capabilities": []
+}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: true, hasCells: true, cellsCount: 6, hasCollaborationProvider: true, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: true, hasCells: true, cellsCount: 6, hasCollaborationProvider: true, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: true, hasCells: true, cellsCount: 6, hasCollaborationProvider: true, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: false, hasNotebookContent: true, hasCells: true, cellsCount: 6, hasCollaborationProvider: true, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: true, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.127 › [API Request] 201 for /api/runtimes/v1/runtimes
+runtimeStore.ts:154 🔍 Complete runtime object structure: {
+  "burning_rate": 0.008,
+  "environment_name": "python-cpu-env",
+  "environment_title": "Python CPU Environment",
+  "uid": "01k4kp7cbf4w57aw8eqgyf12tn",
+  "pod_name": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+  "type": "notebook",
+  "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktyte",
+  "token": "0bd013ee792cb0d925698198dcf0c8e5164452be",
+  "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn",
+  "reservation_id": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+  "started_at": "1757302997.000",
+  "expired_at": "1757304247.000"
+}
+runtimeStore.ts:171 Runtime created successfully for notebook 01JZQRQ35GG871QQCZW9TB1A8J: 01k4kp7cbf4w57aw8eqgyf12tn
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:376 Runtime ready: 01k4kp7cbf4w57aw8eqgyf12tn
+NotebookView.tsx:385 Connecting to Jupyter server: https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn
+NotebookView.tsx:389 Using Jupyter token: Available
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.128 › [API Response] Raw: {"success": true, "message": "The Runtime is available.", "runtime": {"burning_rate": 0.008, "environment_name": "python-cpu-env", "environment_title": "Python CPU Environment", "uid": "01k4kp7cbf4w57aw8eqgyf12tn", "pod_name": "runtime-01k4kp7cbf4w57aw8eqgyf12tn", "type": "notebook", "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktyte", "token": "0bd013ee792cb0d925698198dcf0c8e5164452be", "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn", "reservation_id": "runtime-01k4kp7cbf4w57aw8eqgyf12tn", "started_at": "1757302997.000", "expired_at": "1757304247.000"}}
+
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.128 › [API Response] Parsed: {
+  "success": true,
+  "message": "The Runtime is available.",
+  "runtime": {
+    "burning_rate": 0.008,
+    "environment_name": "python-cpu-env",
+    "environment_title": "Python CPU Environment",
+    "uid": "01k4kp7cbf4w57aw8eqgyf12tn",
+    "pod_name": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+    "type": "notebook",
+    "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktyte",
+    "token": "0bd013ee792cb0d925698198dcf0c8e5164452be",
+    "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn",
+    "reservation_id": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+    "started_at": "1757302997.000",
+    "expired_at": "1757304247.000"
+  }
+}
+runtimeStore.ts:154 🔍 Complete runtime object structure: {
+  "burning_rate": 0.008,
+  "environment_name": "python-cpu-env",
+  "environment_title": "Python CPU Environment",
+  "uid": "01k4kp7cbf4w57aw8eqgyf12tn",
+  "pod_name": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+  "type": "notebook",
+  "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktytf",
+  "token": "0bd013ee792cb0d925698198dcf0c8e5164452be",
+  "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn",
+  "reservation_id": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+  "started_at": "1757302997.000",
+  "expired_at": "1757304247.000"
+}
+runtimeStore.ts:171 Runtime created successfully for notebook 01JZQRQ35GG871QQCZW9TB1A8J: 01k4kp7cbf4w57aw8eqgyf12tn
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: false, …}
+NotebookView.tsx:376 Runtime ready: 01k4kp7cbf4w57aw8eqgyf12tn
+NotebookView.tsx:385 Connecting to Jupyter server: https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn
+NotebookView.tsx:389 Using Jupyter token: Available
+NotebookView.tsx:403 Creating new ServiceManager for runtime: 01k4kp7cbf4w57aw8eqgyf12tn
+App.tsx:64 [ServiceManagerLoader] Loading @jupyterlab/services dynamically...
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.272 › [API Request] 201 for /api/runtimes/v1/runtimes
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.277 (proxy) › Creating ServiceManager with baseUrl: https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.278 (proxy) › Loading ServiceManager and ServerConnection...
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.272 › [API Response] Raw: {"success": true, "message": "The Runtime is available.", "runtime": {"burning_rate": 0.008, "environment_name": "python-cpu-env", "environment_title": "Python CPU Environment", "uid": "01k4kp7cbf4w57aw8eqgyf12tn", "pod_name": "runtime-01k4kp7cbf4w57aw8eqgyf12tn", "type": "notebook", "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktytf", "token": "0bd013ee792cb0d925698198dcf0c8e5164452be", "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn", "reservation_id": "runtime-01k4kp7cbf4w57aw8eqgyf12tn", "started_at": "1757302997.000", "expired_at": "1757304247.000"}}
+
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.272 › [API Response] Parsed: {
+  "success": true,
+  "message": "The Runtime is available.",
+  "runtime": {
+    "burning_rate": 0.008,
+    "environment_name": "python-cpu-env",
+    "environment_title": "Python CPU Environment",
+    "uid": "01k4kp7cbf4w57aw8eqgyf12tn",
+    "pod_name": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+    "type": "notebook",
+    "given_name": "electron-example-01JZQRQ35GG871QQCZW9TB1A8J-mfaktytf",
+    "token": "0bd013ee792cb0d925698198dcf0c8e5164452be",
+    "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn",
+    "reservation_id": "runtime-01k4kp7cbf4w57aw8eqgyf12tn",
+    "started_at": "1757302997.000",
+    "expired_at": "1757304247.000"
+  }
+}
+App.tsx:64 [ServiceManagerLoader] Loaded jupyterlab-services-proxy
+App.tsx:64 [ServiceManagerLoader] Services type: object
+App.tsx:64 [ServiceManagerLoader] Keys: (35) ['BaseManager', 'BuildManager', 'ConfigSection', 'ConfigSectionManager', 'ConfigWithDefaults', 'ConnectionStatus', 'Contents', 'ContentsManager', 'Drive', 'Event', 'EventManager', 'IConfigSectionManager', 'Kernel', 'KernelAPI', 'KernelConnection', 'KernelManager', 'KernelMessage', 'KernelSpec', 'KernelSpecAPI', 'KernelSpecManager', 'NbConvertManager', 'Nbconvert', 'RestContentProvider', 'ServerConnection', 'ServiceManager', 'Session', 'SessionManager', 'Setting', 'SettingManager', 'Terminal', 'TerminalManager', 'User', 'UserManager', 'Workspace', 'WorkspaceManager']
+App.tsx:64 [ServiceManagerLoader] Export 'BaseManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'BuildManager': type=undefined, isFunction=false, constructor=N/A
+App.tsx:64 [ServiceManagerLoader] Export 'ConfigSection': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'ConfigSectionManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'ConfigWithDefaults': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'ConnectionStatus': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Contents': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'ContentsManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Drive': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Event': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'EventManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'IConfigSectionManager': type=object, isFunction=false, constructor=Token
+App.tsx:64 [ServiceManagerLoader] Export 'Kernel': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'KernelAPI': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'KernelConnection': type=undefined, isFunction=false, constructor=N/A
+App.tsx:64 [ServiceManagerLoader] Export 'KernelManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'KernelMessage': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'KernelSpec': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'KernelSpecAPI': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'KernelSpecManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'NbConvertManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Nbconvert': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'RestContentProvider': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'ServerConnection': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'ServiceManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Session': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'SessionManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Setting': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'SettingManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Terminal': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'TerminalManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'User': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'UserManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Export 'Workspace': type=object, isFunction=false, constructor=Object
+App.tsx:64 [ServiceManagerLoader] Export 'WorkspaceManager': type=function, isFunction=true, constructor=Function
+App.tsx:64 [ServiceManagerLoader] Successfully loaded real ServiceManager
+App.tsx:64 [ServiceManagerLoader] ServiceManager type: function
+App.tsx:64 [ServiceManagerLoader] ServiceManager constructor name: Function
+App.tsx:64 [ServiceManagerLoader] ServiceManager is a constructor? true
+App.tsx:64 [ServiceManagerLoader] Successfully loaded real ServerConnection
+App.tsx:64 [ServiceManagerLoader] ServerConnection type: object
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.280 (proxy) › ServiceManager and ServerConnection loaded successfully
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.280 (proxy) › Creating server settings...
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.281 (proxy) › Server settings created successfully
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.281 (proxy) › Creating ServiceManager instance...
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.283 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernelspecs?1757302999283
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.283 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/me?1757302999283
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.284 (proxy) › ServiceManager instance created successfully
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.285 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757302999285
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.285 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757302999285
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.283 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernelspecs?1757302999283
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.285 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/me?1757302999283
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.286 › [WebSocket Proxy] Opening connection ws-1 to wss://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/events/subscribe?token=0bd013ee792cb0d925698198dcf0c8e5164452be
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.289 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757302999285
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.289 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757302999285
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.797 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernelspecs?1757302999797
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.798 › [WebSocket Proxy] Connection ws-1 opened
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.799 (proxy) › Event open for ws-1
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.798 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernelspecs?1757302999797
+NotebookView.tsx:497 ServiceManager ready with runtime Jupyter server
+App.tsx:64 [NotebookView DEBUG] Setting loading to false
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: true, hasNotebookContent: true, hasCells: true, cellsCount: 6, hasCollaborationProvider: true, …}
+NotebookView.tsx:629 [NotebookView] Notebook props created: {id: '01JZQRQ35GG871QQCZW9TB1A8J', height: '100%', nbformat: {…}, readonly: false, serviceManager: ServiceManager, …}
+NotebookView.tsx:630 [NotebookView] ServiceManager isReady: true
+NotebookView.tsx:634 [NotebookView] ServiceManager isDisposed: false
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: true, …}
+NotebookView.tsx:597 [NotebookView] Creating notebook props: {hasServiceManager: true, hasNotebookContent: true, hasCells: true, cellsCount: 6, hasCollaborationProvider: true, …}
+NotebookView.tsx:629 [NotebookView] Notebook props created: {id: '01JZQRQ35GG871QQCZW9TB1A8J', height: '100%', nbformat: {…}, readonly: false, serviceManager: ServiceManager, …}
+NotebookView.tsx:630 [NotebookView] ServiceManager isReady: true
+NotebookView.tsx:634 [NotebookView] ServiceManager isDisposed: false
+App.tsx:64 [NotebookView DEBUG] Loading state: {loading: true, loadingNotebook: false, isCreatingRuntime: false, selectedNotebook: 'Demo Notebook', hasServiceManager: true, …}
+NotebookView.tsx:643 [NotebookView] Available kernelspecs: {default: 'python3', kernelspecs: {…}}
+NotebookView.tsx:643 [NotebookView] Available kernelspecs: {default: 'python3', kernelspecs: {…}}
+App.tsx:64 [NotebookView DEBUG] Rendering Notebook2 with props: {hasNotebookProps: true, notebookId: '01JZQRQ35GG871QQCZW9TB1A8J', hasServiceManager: true, hasNbformat: true, cellsCount: 6, …}
+App.tsx:64 [NotebookView DEBUG] Rendering Notebook2 with props: {hasNotebookProps: true, notebookId: '01JZQRQ35GG871QQCZW9TB1A8J', hasServiceManager: true, hasNbformat: true, cellsCount: 6, …}
+App.tsx:64 Starting new kernel.
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.867 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/me?1757302999866
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.867 (proxy) › HTTP POST https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757302999863
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.867 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/me?1757302999866
+electron-log_renderer.js?v=4c0e4937:366 22:43:19.868 › [HTTP Proxy] POST https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757302999863
+chunk-YBHOQY7R.js?v=4c0e4937:1782 Starting WebSocket: wss://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels/9d9c839f-99b3-4ad5-a8b7-6d415c629442
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.255 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757303000255
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.255 › [WebSocket Proxy] Opening connection ws-2 to wss://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels/9d9c839f-99b3-4ad5-a8b7-6d415c629442/channels?session_id=6f0dda20-ee64-4aa3-8a5c-155525bfda16&token=0bd013ee792cb0d925698198dcf0c8e5164452be
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.256 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757303000255
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.690 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303000690
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.691 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303000690
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.758 › [WebSocket Proxy] Connection ws-2 opened
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.759 (proxy) › Event open for ws-2
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.760 › [WebSocket Proxy] Sent message on ws-2
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.766 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_48", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.766 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_48", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.766 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_50", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.766 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_50", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.766 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_51", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.766 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_51", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.923 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_52", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.923 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_52", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.925 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_54", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.925 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_54", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.926 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_53", "msg_type": "kernel_info_reply", "u
+electron-log_renderer.js?v=4c0e4937:366 22:43:20.926 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_53", "msg_type": "kernel_info_reply", "u
+electron-log_renderer.js?v=4c0e4937:366 22:43:21.354 › [WebSocket Proxy] Message on ws-1: {"schema_id": "https://events.jupyter.org/jupyter_server/kernel_actions/v1", "kernel_name": "python3
+electron-log_renderer.js?v=4c0e4937:366 22:43:21.355 › [WebSocket Proxy] JSON message on ws-1: {"schema_id": "https://events.jupyter.org/jupyter_server/kernel_actions/v1", "kernel_name": "python3
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.348 › [API Request] 200 for /api/spacer/v1/documents/01JZQRQ35GG871QQCZW9TB1A8J
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.349 › [API Response] Raw: {"success":true,"message":"The document 01JZQRQ35GG871QQCZW9TB1A8J is available.","documentId":"01JZQRQ35GG871QQCZW9TB1A8J","documentType":"notebook_persist","sessionId":"01K48D0XFQEJECZ4R305F809D2"}
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.349 › [API Response] Parsed: {
+  "success": true,
+  "message": "The document 01JZQRQ35GG871QQCZW9TB1A8J is available.",
+  "documentId": "01JZQRQ35GG871QQCZW9TB1A8J",
+  "documentType": "notebook_persist",
+  "sessionId": "01K48D0XFQEJECZ4R305F809D2"
+}
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.352 › [WebSocket Proxy] Opening connection ws-3 to wss://prod1.datalayer.run/api/spacer/v1/documents/01JZQRQ35GG871QQCZW9TB1A8J?sessionId=01K48D0XFQEJECZ4R305F809D2&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.525 › [API Request] 200 for /api/spacer/v1/documents/01JZQRQ35GG871QQCZW9TB1A8J
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.525 › [API Response] Raw: {"success":true,"message":"The document 01JZQRQ35GG871QQCZW9TB1A8J is available.","documentId":"01JZQRQ35GG871QQCZW9TB1A8J","documentType":"notebook_persist","sessionId":"01K48D0XFQEJECZ4R305F809D2"}
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.525 › [API Response] Parsed: {
+  "success": true,
+  "message": "The document 01JZQRQ35GG871QQCZW9TB1A8J is available.",
+  "documentId": "01JZQRQ35GG871QQCZW9TB1A8J",
+  "documentType": "notebook_persist",
+  "sessionId": "01K48D0XFQEJECZ4R305F809D2"
+}
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.526 › [WebSocket Proxy] Opening connection ws-4 to wss://prod1.datalayer.run/api/spacer/v1/documents/01JZQRQ35GG871QQCZW9TB1A8J?sessionId=01K48D0XFQEJECZ4R305F809D2&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.570 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303005570
+chunk-TKTSSOR7.js?v=4c0e4937:521 Warning: Lumino: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.
+    at Lumino (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3TPMMIC5.js?v=4c0e4937:17559:42)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at Notebook2Base (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3TPMMIC5.js?v=4c0e4937:47987:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at Notebook2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3TPMMIC5.js?v=4c0e4937:48605:20)
+    at NotebookErrorBoundary (http://localhost:5173/components/NotebookView.tsx:28:5)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at div
+    at BoxWithFallback2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3JOMDFEG.js?v=4c0e4937:5658:50)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3JOMDFEG.js?v=4c0e4937:16417:51)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3JOMDFEG.js?v=4c0e4937:11505:3)
+    at JupyterReactTheme (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-3TPMMIC5.js?v=4c0e4937:12116:11)
+    at NotebookView (http://localhost:5173/components/NotebookView.tsx:88:3)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1459:6)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=4c0e4937:5370:5)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=4c0e4937:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=4c0e4937:5188:3)
+    at App (http://localhost:5173/App.tsx:49:3)
+printWarning @ chunk-TKTSSOR7.js?v=4c0e4937:521
+error @ chunk-TKTSSOR7.js?v=4c0e4937:505
+validateFunctionComponentInDev @ chunk-TKTSSOR7.js?v=4c0e4937:15019
+mountIndeterminateComponent @ chunk-TKTSSOR7.js?v=4c0e4937:14988
+beginWork @ chunk-TKTSSOR7.js?v=4c0e4937:15914
+beginWork$1 @ chunk-TKTSSOR7.js?v=4c0e4937:19753
+performUnitOfWork @ chunk-TKTSSOR7.js?v=4c0e4937:19198
+workLoopSync @ chunk-TKTSSOR7.js?v=4c0e4937:19137
+renderRootSync @ chunk-TKTSSOR7.js?v=4c0e4937:19116
+performConcurrentWorkOnRoot @ chunk-TKTSSOR7.js?v=4c0e4937:18678
+workLoop @ chunk-TKTSSOR7.js?v=4c0e4937:197
+flushWork @ chunk-TKTSSOR7.js?v=4c0e4937:176
+performWorkUntilDeadline @ chunk-TKTSSOR7.js?v=4c0e4937:384
+App.tsx:64 Lumino useEffect - ref.current: <div id=​"01JZQRQ35GG871QQCZW9TB1A8J" style=​"height:​ 100%;​ min-height:​ 100%;​">​…​</div>​ children: NotebookPanel {_flags: 0, _layout: _BoxLayout, _parent: null, _disposed: Signal, _hiddenMode: 0, …} children.isAttached: false
+App.tsx:64 Attaching widget to DOM
+App.tsx:64 Widget attached successfully
+App.tsx:64 Widget node: <div class=​"lm-Widget jp-MainAreaWidget jp-NotebookPanel" id=​"id-182c255b-52b5-4e5e-a528-ce689ed886f7" data-direction=​"top-to-bottom" data-alignment=​"start" style=​"min-width:​ 0px;​ min-height:​ 8px;​ --neutral-layer-card-container:​ #f7f7f7;​ --neutral-layer-floating:​ #ffffff;​ --neutral-layer-1:​ #ffffff;​ --neutral-layer-2:​ #e5e5e5;​ --neutral-layer-3:​ #dddddd;​ --neutral-layer-4:​ #d5d5d5;​ --fill-color:​ #ffffff;​ --accent-fill-rest:​ #2675c3;​ --accent-fill-hover:​ #176bbf;​ --accent-fill-active:​ #3a81c8;​ --accent-fill-focus:​ #2675c3;​ --accent-foreground-rest:​ #176bbf;​ --accent-foreground-hover:​ #135aa0;​ --accent-foreground-active:​ #2675c3;​ --accent-foreground-focus:​ #176bbf;​ --neutral-fill-rest:​ #ededed;​ --neutral-fill-hover:​ #e5e5e5;​ --neutral-fill-active:​ #f2f2f2;​ --neutral-fill-focus:​ #ffffff;​ --neutral-fill-input-rest:​ #ffffff;​ --neutral-fill-input-hover:​ #ffffff;​ --neutral-fill-input-active:​ #ffffff;​ --neutral-fill-input-focus:​ #ffffff;​ --neutral-fill-stealth-rest:​ #ffffff;​ --neutral-fill-stealth-hover:​ #f2f2f2;​ --neutral-fill-stealth-active:​ #f7f7f7;​ --neutral-fill-stealth-focus:​ #ffffff;​ --neutral-fill-strong-rest:​ #757575;​ --neutral-fill-strong-hover:​ #616161;​ --neutral-fill-strong-active:​ #828282;​ --neutral-fill-strong-focus:​ #757575;​ --neutral-fill-layer-rest:​ #f7f7f7;​ --focus-stroke-outer:​ #878787;​ --focus-stroke-inner:​ #fbfdfe;​ --neutral-foreground-hint:​ #757575;​ --neutral-foreground-rest:​ #2b2b2b;​ --neutral-stroke-rest:​ #bebebe;​ --neutral-stroke-hover:​ #979797;​ --neutral-stroke-active:​ #d5d5d5;​ --neutral-stroke-focus:​ #bebebe;​ --neutral-stroke-divider-rest:​ #eaeaea;​ --error-fill-rest:​ #c73737;​ --error-fill-hover:​ #c32929;​ --error-fill-active:​ #cc4848;​ --error-fill-focus:​ #c73737;​ --error-foreground-rest:​ #c32929;​ --error-foreground-hover:​ #a02222;​ --error-foreground-active:​ #c73737;​ --error-foreground-focus:​ #c32929;​ --clear-button-hover:​ #f2f2f2;​ --clear-button-active:​ #ededed;​ --tree-item-expand-collapse-hover:​ #e5e5e5;​ --tree-item-expand-collapse-selected-hover:​ #e0e0e0;​">​…​</div>​
+App.tsx:64 Widget node parent: <div id=​"01JZQRQ35GG871QQCZW9TB1A8J" style=​"height:​ 100%;​ min-height:​ 100%;​">​…​</div>​
+App.tsx:64 Container children after attach: 1
+App.tsx:64 Widget is visible: true
+App.tsx:64 Lumino cleanup - detaching widget
+App.tsx:64 Detaching widget from DOM
+chunk-TKTSSOR7.js?v=4c0e4937:521 Warning: Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.
+printWarning @ chunk-TKTSSOR7.js?v=4c0e4937:521
+error @ chunk-TKTSSOR7.js?v=4c0e4937:505
+ReactDOMHydrationRoot.unmount.ReactDOMRoot.unmount @ chunk-TKTSSOR7.js?v=4c0e4937:21130
+onBeforeDetach @ chunk-KAC7N36X.js?v=4c0e4937:48567
+processMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4141
+invokeHandler @ chunk-CEEDI6NX.js?v=4c0e4937:916
+sendMessage @ chunk-CEEDI6NX.js?v=4c0e4937:798
+onBeforeDetach @ chunk-CEEDI6NX.js?v=4c0e4937:4692
+processParentMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4580
+notifyLayout @ chunk-CEEDI6NX.js?v=4c0e4937:4182
+processMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4140
+invokeHandler @ chunk-CEEDI6NX.js?v=4c0e4937:916
+sendMessage @ chunk-CEEDI6NX.js?v=4c0e4937:798
+onBeforeDetach @ chunk-CEEDI6NX.js?v=4c0e4937:4692
+processParentMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4580
+notifyLayout @ chunk-CEEDI6NX.js?v=4c0e4937:4182
+processMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4140
+invokeHandler @ chunk-CEEDI6NX.js?v=4c0e4937:916
+sendMessage @ chunk-CEEDI6NX.js?v=4c0e4937:798
+detach @ chunk-CEEDI6NX.js?v=4c0e4937:4426
+(anonymous) @ chunk-3TPMMIC5.js?v=4c0e4937:17595
+safelyCallDestroy @ chunk-TKTSSOR7.js?v=4c0e4937:16748
+commitHookEffectListUnmount @ chunk-TKTSSOR7.js?v=4c0e4937:16875
+invokePassiveEffectUnmountInDEV @ chunk-TKTSSOR7.js?v=4c0e4937:18363
+invokeEffectsInDev @ chunk-TKTSSOR7.js?v=4c0e4937:19701
+commitDoubleInvokeEffectsInDEV @ chunk-TKTSSOR7.js?v=4c0e4937:19682
+flushPassiveEffectsImpl @ chunk-TKTSSOR7.js?v=4c0e4937:19503
+flushPassiveEffects @ chunk-TKTSSOR7.js?v=4c0e4937:19447
+(anonymous) @ chunk-TKTSSOR7.js?v=4c0e4937:19328
+workLoop @ chunk-TKTSSOR7.js?v=4c0e4937:197
+flushWork @ chunk-TKTSSOR7.js?v=4c0e4937:176
+performWorkUntilDeadline @ chunk-TKTSSOR7.js?v=4c0e4937:384
+App.tsx:64 Lumino useEffect - ref.current: <div id=​"01JZQRQ35GG871QQCZW9TB1A8J" style=​"height:​ 100%;​ min-height:​ 100%;​">​…​</div>​ children: NotebookPanel {_flags: 0, _layout: _BoxLayout, _parent: null, _disposed: Signal, _hiddenMode: 0, …} children.isAttached: false
+App.tsx:64 Attaching widget to DOM
+App.tsx:64 Widget attached successfully
+App.tsx:64 Widget node: <div class=​"lm-Widget jp-MainAreaWidget jp-NotebookPanel" id=​"id-182c255b-52b5-4e5e-a528-ce689ed886f7" data-direction=​"top-to-bottom" data-alignment=​"start" style=​"min-width:​ 0px;​ min-height:​ 8px;​ --neutral-layer-card-container:​ #f7f7f7;​ --neutral-layer-floating:​ #ffffff;​ --neutral-layer-1:​ #ffffff;​ --neutral-layer-2:​ #e5e5e5;​ --neutral-layer-3:​ #dddddd;​ --neutral-layer-4:​ #d5d5d5;​ --fill-color:​ #ffffff;​ --accent-fill-rest:​ #2675c3;​ --accent-fill-hover:​ #176bbf;​ --accent-fill-active:​ #3a81c8;​ --accent-fill-focus:​ #2675c3;​ --accent-foreground-rest:​ #176bbf;​ --accent-foreground-hover:​ #135aa0;​ --accent-foreground-active:​ #2675c3;​ --accent-foreground-focus:​ #176bbf;​ --neutral-fill-rest:​ #ededed;​ --neutral-fill-hover:​ #e5e5e5;​ --neutral-fill-active:​ #f2f2f2;​ --neutral-fill-focus:​ #ffffff;​ --neutral-fill-input-rest:​ #ffffff;​ --neutral-fill-input-hover:​ #ffffff;​ --neutral-fill-input-active:​ #ffffff;​ --neutral-fill-input-focus:​ #ffffff;​ --neutral-fill-stealth-rest:​ #ffffff;​ --neutral-fill-stealth-hover:​ #f2f2f2;​ --neutral-fill-stealth-active:​ #f7f7f7;​ --neutral-fill-stealth-focus:​ #ffffff;​ --neutral-fill-strong-rest:​ #757575;​ --neutral-fill-strong-hover:​ #616161;​ --neutral-fill-strong-active:​ #828282;​ --neutral-fill-strong-focus:​ #757575;​ --neutral-fill-layer-rest:​ #f7f7f7;​ --focus-stroke-outer:​ #878787;​ --focus-stroke-inner:​ #fbfdfe;​ --neutral-foreground-hint:​ #757575;​ --neutral-foreground-rest:​ #2b2b2b;​ --neutral-stroke-rest:​ #bebebe;​ --neutral-stroke-hover:​ #979797;​ --neutral-stroke-active:​ #d5d5d5;​ --neutral-stroke-focus:​ #bebebe;​ --neutral-stroke-divider-rest:​ #eaeaea;​ --error-fill-rest:​ #c73737;​ --error-fill-hover:​ #c32929;​ --error-fill-active:​ #cc4848;​ --error-fill-focus:​ #c73737;​ --error-foreground-rest:​ #c32929;​ --error-foreground-hover:​ #a02222;​ --error-foreground-active:​ #c73737;​ --error-foreground-focus:​ #c32929;​ --clear-button-hover:​ #f2f2f2;​ --clear-button-active:​ #ededed;​ --tree-item-expand-collapse-hover:​ #e5e5e5;​ --tree-item-expand-collapse-selected-hover:​ #e0e0e0;​">​…​</div>​
+App.tsx:64 Widget node parent: <div id=​"01JZQRQ35GG871QQCZW9TB1A8J" style=​"height:​ 100%;​ min-height:​ 100%;​">​…​</div>​
+App.tsx:64 Container children after attach: 1
+App.tsx:64 Widget is visible: true
+chunk-KAC7N36X.js?v=4c0e4937:3782 SVG HTML was malformed for LabIcon instance.
+name: ui-components:ellipses, svgstr: /@fs/Users/goanpeca/Desktop/develop/datalayer/core/node_modules/@jupyterlab/ui-components/style/icons/toolbar/ellipses.svg
+resolveSvg @ chunk-KAC7N36X.js?v=4c0e4937:3782
+_initSvg @ chunk-KAC7N36X.js?v=4c0e4937:4040
+get svgElement @ chunk-KAC7N36X.js?v=4c0e4937:3931
+get svgInnerHTML @ chunk-KAC7N36X.js?v=4c0e4937:3937
+(anonymous) @ chunk-KAC7N36X.js?v=4c0e4937:3989
+renderWithHooks @ chunk-TKTSSOR7.js?v=4c0e4937:11548
+updateForwardRef @ chunk-TKTSSOR7.js?v=4c0e4937:14325
+beginWork @ chunk-TKTSSOR7.js?v=4c0e4937:15946
+beginWork$1 @ chunk-TKTSSOR7.js?v=4c0e4937:19753
+performUnitOfWork @ chunk-TKTSSOR7.js?v=4c0e4937:19198
+workLoopSync @ chunk-TKTSSOR7.js?v=4c0e4937:19137
+renderRootSync @ chunk-TKTSSOR7.js?v=4c0e4937:19116
+performConcurrentWorkOnRoot @ chunk-TKTSSOR7.js?v=4c0e4937:18678
+workLoop @ chunk-TKTSSOR7.js?v=4c0e4937:197
+flushWork @ chunk-TKTSSOR7.js?v=4c0e4937:176
+performWorkUntilDeadline @ chunk-TKTSSOR7.js?v=4c0e4937:384
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.572 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303005570
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.956 › [WebSocket Proxy] Connection ws-3 opened
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.958 (proxy) › Event open for ws-3
+2electron-log_renderer.js?v=4c0e4937:366 22:43:25.959 › [WebSocket Proxy] Sent message on ws-3
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.960 › [WebSocket Proxy] Message on ws-3:   8	�ӈ������
+3�˚�
+զ���������������ү
+����
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.960 › [WebSocket Proxy] Binary message on ws-3, size: 59
+electron-log_renderer.js?v=4c0e4937:366 22:43:25.962 › [WebSocket Proxy] Sent message on ws-3
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.126 › [WebSocket Proxy] Connection ws-4 opened
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.126 (proxy) › Event open for ws-4
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.126 › [WebSocket Proxy] Message on ws-4:   8	�ӈ������
+3�˚�
+զ���������������ү
+����
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.126 › [WebSocket Proxy] Binary message on ws-4, size: 59
+3electron-log_renderer.js?v=4c0e4937:366 22:43:26.127 › [WebSocket Proxy] Sent message on ws-4
+App.tsx:64 Current Jupyter Kernel Connection. null
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.133 (proxy) › HTTP POST https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303006133
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.133 › [HTTP Proxy] POST https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303006133
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.301 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303006301
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.301 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303006301
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.468 › [WebSocket Proxy] Message on ws-3:  ��	��ү �����
+~�����wrunning�����viopub.status.busyw2025-09-03T21:29:34.193439Zvio
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.469 › [WebSocket Proxy] Binary message on ws-3, size: 102556
+chunk-YBHOQY7R.js?v=4c0e4937:1782 Starting WebSocket: wss://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels/9d9c839f-99b3-4ad5-a8b7-6d415c629442
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.505 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757303006505
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.505 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303006505
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.505 (proxy) › HTTP PATCH https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions/0cfd8f2f-5762-4571-b50d-bf0752328f5b?1757303006504
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.473 › [WebSocket Proxy] Message on ws-3: 
+�Ǵ� {}
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.473 › [WebSocket Proxy] Binary message on ws-3, size: 12
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.477 › [WebSocket Proxy] Message on ws-3: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.477 › [WebSocket Proxy] Binary message on ws-3, size: 200
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.504 › [WebSocket Proxy] Opening connection ws-5 to wss://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels/9d9c839f-99b3-4ad5-a8b7-6d415c629442/channels?session_id=88a5bd04-d6a5-4e8f-ad1c-54a65521cf24&token=0bd013ee792cb0d925698198dcf0c8e5164452be
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.505 › [WebSocket Proxy] Sent message on ws-3
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.505 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757303006505
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.505 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303006505
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.506 › [HTTP Proxy] PATCH https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions/0cfd8f2f-5762-4571-b50d-bf0752328f5b?1757303006504
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.680 › [WebSocket Proxy] Message on ws-3: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.680 › [WebSocket Proxy] Binary message on ws-3, size: 200
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.812 › [WebSocket Proxy] Message on ws-4:  ��	��ү �����
+~�����wrunning�����viopub.status.busyw2025-09-03T21:29:34.193439Zvio
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.813 › [WebSocket Proxy] Binary message on ws-4, size: 102556
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.816 › [WebSocket Proxy] Message on ws-4: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.816 › [WebSocket Proxy] Binary message on ws-4, size: 200
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.817 › [WebSocket Proxy] Message on ws-4: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:26.817 › [WebSocket Proxy] Binary message on ws-4, size: 200
+proxyServiceManager.ts:236 TypeError: Cannot read properties of undefined (reading 'handlers')
+    at Object.ensureMathDocument (chunk-3TPMMIC5.js?v=4c0e4937:42227:15)
+    at async MathJaxTypesetter._ensureInitialized (chunk-3TPMMIC5.js?v=4c0e4937:42183:28)
+    at async MathJaxTypesetter.typeset (chunk-3TPMMIC5.js?v=4c0e4937:42199:7)
+typeset @ chunk-3TPMMIC5.js?v=4c0e4937:42201
+await in typeset
+(anonymous) @ chunk-X4PY2Q2R.js?v=4c0e4937:1232
+Promise.then
+onAfterAttach @ chunk-X4PY2Q2R.js?v=4c0e4937:1230
+processMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4137
+invokeHandler @ chunk-CEEDI6NX.js?v=4c0e4937:916
+sendMessage @ chunk-CEEDI6NX.js?v=4c0e4937:798
+attachWidget @ chunk-CEEDI6NX.js?v=4c0e4937:5187
+insertWidget @ chunk-CEEDI6NX.js?v=4c0e4937:5099
+addWidget @ chunk-CEEDI6NX.js?v=4c0e4937:5075
+renderInput @ chunk-5I4TXQM5.js?v=4c0e4937:5625
+renderInput @ chunk-5I4TXQM5.js?v=4c0e4937:7522
+_handleRendered @ chunk-5I4TXQM5.js?v=4c0e4937:7567
+await in _handleRendered
+initializeDOM @ chunk-5I4TXQM5.js?v=4c0e4937:7445
+set placeholder @ chunk-5I4TXQM5.js?v=4c0e4937:5991
+onBeforeAttach @ chunk-5I4TXQM5.js?v=4c0e4937:6318
+processMessage @ chunk-CEEDI6NX.js?v=4c0e4937:4129
+invokeHandler @ chunk-CEEDI6NX.js?v=4c0e4937:916
+sendMessage @ chunk-CEEDI6NX.js?v=4c0e4937:798
+attachWidget @ chunk-FO25VMV7.js?v=4c0e4937:3886
+insertWidget @ chunk-CEEDI6NX.js?v=4c0e4937:5099
+_updateForDeferMode @ chunk-FO25VMV7.js?v=4c0e4937:4778
+_runOnIdleTime @ chunk-FO25VMV7.js?v=4c0e4937:4752
+_idleCallBack.requestIdleCallback.timeout @ chunk-FO25VMV7.js?v=4c0e4937:4708
+requestIdleCallback
+_scheduleCellRenderOnIdle @ chunk-FO25VMV7.js?v=4c0e4937:4706
+_runOnIdleTime @ chunk-FO25VMV7.js?v=4c0e4937:4767
+await in _runOnIdleTime
+_idleCallBack.requestIdleCallback.timeout @ chunk-FO25VMV7.js?v=4c0e4937:4708
+requestIdleCallback
+_scheduleCellRenderOnIdle @ chunk-FO25VMV7.js?v=4c0e4937:4706
+_insertCell @ chunk-FO25VMV7.js?v=4c0e4937:4569
+_onCellsChanged @ chunk-FO25VMV7.js?v=4c0e4937:4513
+_onCellsChanged @ chunk-FO25VMV7.js?v=4c0e4937:5103
+invokeSlot @ chunk-YV3BESW3.js?v=4c0e4937:275
+emit @ chunk-YV3BESW3.js?v=4c0e4937:257
+emit @ chunk-YV3BESW3.js?v=4c0e4937:72
+(anonymous) @ chunk-FO25VMV7.js?v=4c0e4937:2468
+_onSharedModelChanged @ chunk-FO25VMV7.js?v=4c0e4937:2468
+invokeSlot @ chunk-YV3BESW3.js?v=4c0e4937:275
+emit @ chunk-YV3BESW3.js?v=4c0e4937:257
+emit @ chunk-YV3BESW3.js?v=4c0e4937:72
+_onYCellsChanged @ chunk-WVEJVJXX.js?v=4c0e4937:1455
+callAll @ chunk-H6OOKOME.js?v=4c0e4937:950
+callEventHandlerListeners @ chunk-H6OOKOME.js?v=4c0e4937:2619
+callTypeObservers @ chunk-H6OOKOME.js?v=4c0e4937:4570
+_callObserver @ chunk-H6OOKOME.js?v=4c0e4937:5131
+(anonymous) @ chunk-H6OOKOME.js?v=4c0e4937:3307
+callAll @ chunk-H6OOKOME.js?v=4c0e4937:950
+cleanupTransactions @ chunk-H6OOKOME.js?v=4c0e4937:3327
+transact @ chunk-H6OOKOME.js?v=4c0e4937:3426
+readUpdateV2 @ chunk-H6OOKOME.js?v=4c0e4937:2496
+applyUpdateV2 @ chunk-H6OOKOME.js?v=4c0e4937:2548
+applyUpdate @ chunk-H6OOKOME.js?v=4c0e4937:2550
+readSyncStep2 @ chunk-2CASHOTP.js?v=4c0e4937:103
+readSyncMessage @ chunk-2CASHOTP.js?v=4c0e4937:120
+messageHandlers.<computed> @ chunk-2CASHOTP.js?v=4c0e4937:151
+readMessage @ chunk-2CASHOTP.js?v=4c0e4937:197
+websocket.onmessage @ chunk-2CASHOTP.js?v=4c0e4937:245
+eventHandler @ proxyServiceManager.ts:236
+(anonymous) @ VM6:32
+emit @ VM4 sandbox_bundle:2
+onMessage @ VM4 sandbox_bundle:2
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.038 (proxy) › HTTP PATCH https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions/0cfd8f2f-5762-4571-b50d-bf0752328f5b?1757303007038
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.039 › [HTTP Proxy] PATCH https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions/0cfd8f2f-5762-4571-b50d-bf0752328f5b?1757303007038
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.040 › [WebSocket Proxy] Connection ws-5 opened
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.040 (proxy) › Event open for ws-5
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.040 › [WebSocket Proxy] Sent message on ws-5
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.047 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_56", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.047 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_56", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.047 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_55", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.047 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_55", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.047 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_56", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.047 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_56", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.049 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_59", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.049 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_59", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.049 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_60", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.049 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_60", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.050 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_59", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.050 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_59", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.050 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_60", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.050 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_60", "msg_type": "status", "username": "
+App.tsx:64 Current Jupyter Session Connection. SessionConnection {_id: '0cfd8f2f-5762-4571-b50d-bf0752328f5b', _path: '.datalayer/ping.ipynb', _name: 'ping.ipynb', _type: 'notebook', _kernel: _KernelConnection, …}
+App.tsx:64 Current Jupyter Kernel Connection. _KernelConnection {_id: '9d9c839f-99b3-4ad5-a8b7-6d415c629442', _createSocket: ƒ, _onWSOpen: ƒ, _onWSMessage: ƒ, _onWSClose: ƒ, …}
+App.tsx:64 Updating the current Kernel Connection to enforce Comms support. false
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.209 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernelspecs?1757303007209
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.209 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_61", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.209 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_61", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.209 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernelspecs?1757303007209
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.210 › [WebSocket Proxy] Sent message on ws-5
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.210 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_63", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.210 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_63", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.210 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_62", "msg_type": "kernel_info_reply", "u
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.210 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_62", "msg_type": "kernel_info_reply", "u
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.211 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_61", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.211 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_61", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.211 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_63", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.211 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_63", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.401 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_64", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.401 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_64", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.401 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_64", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.401 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_64", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.402 › [WebSocket Proxy] Message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_66", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.402 › [WebSocket Proxy] JSON message on ws-2: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_66", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.403 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_65", "msg_type": "history_reply", "usern
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.403 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_65", "msg_type": "history_reply", "usern
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.403 › [WebSocket Proxy] Message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_66", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:27.403 › [WebSocket Proxy] JSON message on ws-5: {"header": {"msg_id": "ff85d707-a310bac79f61bdc60e8bbd14_31_66", "msg_type": "status", "username": "
+electron-log_renderer.js?v=4c0e4937:366 22:43:29.518 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303009518
+electron-log_renderer.js?v=4c0e4937:366 22:43:29.520 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303009518
+electron-log_renderer.js?v=4c0e4937:366 22:43:34.863 › [WebSocket Proxy] Sent message on ws-3
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.419 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757303016419
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.419 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/kernels?1757303016419
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.853 › [WebSocket Proxy] Message on ws-3: 
+�Ǵ�{}
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.853 › [WebSocket Proxy] Binary message on ws-3, size: 12
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.854 › [WebSocket Proxy] Message on ws-4: 
+�Ǵ�{}
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.855 › [WebSocket Proxy] Binary message on ws-4, size: 12
+electron-log_renderer.js?v=4c0e4937:366 22:43:36.856 › [WebSocket Proxy] Sent message on ws-4
+electron-log_renderer.js?v=4c0e4937:366 22:43:37.016 › [WebSocket Proxy] Message on ws-3: 
+�Ǵ�{}
+electron-log_renderer.js?v=4c0e4937:366 22:43:37.016 › [WebSocket Proxy] Binary message on ws-3, size: 12
+electron-log_renderer.js?v=4c0e4937:366 22:43:37.016 › [WebSocket Proxy] Message on ws-4: 
+�Ǵ�{}
+electron-log_renderer.js?v=4c0e4937:366 22:43:37.016 › [WebSocket Proxy] Binary message on ws-4, size: 12
+electron-log_renderer.js?v=4c0e4937:366 22:43:38.484 (proxy) › HTTP GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303018484
+electron-log_renderer.js?v=4c0e4937:366 22:43:38.485 › [HTTP Proxy] GET https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4kp7cbf4w57aw8eqgyf12tn/api/sessions?1757303018484
+electron-log_renderer.js?v=4c0e4937:366 22:43:40.863 › [WebSocket Proxy] Sent message on ws-4
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.032 › [WebSocket Proxy] Message on ws-3: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.033 › [WebSocket Proxy] Binary message on ws-3, size: 200
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.034 › [WebSocket Proxy] Sent message on ws-3
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.034 › [WebSocket Proxy] Message on ws-4: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.035 › [WebSocket Proxy] Binary message on ws-4, size: 200
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.192 › [WebSocket Proxy] Message on ws-3: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.192 › [WebSocket Proxy] Binary message on ws-3, size: 200
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.193 › [WebSocket Proxy] Message on ws-4: ��ܝ��{"user":{"username":"e417ce0a229941aa94e580d6b33d10b8","name":"Anonymous Aitne","display_
+electron-log_renderer.js?v=4c0e4937:366 22:43:41.193 › [WebSocket Proxy] Binary message on ws-4, size: 200

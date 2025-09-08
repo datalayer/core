@@ -37,6 +37,13 @@ class NotebookErrorBoundary extends React.Component<
       error,
       errorInfo
     );
+    
+    console.error('[NotebookErrorBoundary] Error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
 
     // Log specific error types for better debugging
     if (error.message.includes('Disposed')) {
@@ -46,6 +53,14 @@ class NotebookErrorBoundary extends React.Component<
     } else if (error.message.includes('removeChild')) {
       console.info(
         '[NotebookErrorBoundary] DOM manipulation error - component mounting/unmounting conflict'
+      );
+    } else if (error.message.includes('__dirname')) {
+      console.info(
+        '[NotebookErrorBoundary] __dirname not defined - Node.js polyfill issue'
+      );
+    } else if (error.message.includes('handlers')) {
+      console.info(
+        '[NotebookErrorBoundary] handlers undefined - ServiceManager issue'
       );
     }
 
@@ -271,10 +286,32 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }, [selectedNotebook]);
 
   useEffect(() => {
+    console.log('[NotebookView DEBUG] useEffect triggered for ServiceManager init:', {
+      hasToken: !!configuration?.token,
+      hasRunUrl: !!configuration?.runUrl,
+      hasServiceManager: !!serviceManager,
+      selectedNotebookId: selectedNotebook?.id,
+      selectedNotebookPath: selectedNotebook?.path
+    });
+    
+    // Prevent multiple executions for the same notebook
+    if (!selectedNotebook?.id) {
+      console.log('[NotebookView DEBUG] Skipping useEffect - no notebook selected');
+      return;
+    }
+    
+    // If ServiceManager already exists, just set loading to false
+    if (serviceManager) {
+      console.log('[NotebookView DEBUG] ServiceManager exists, setting loading to false');
+      setLoading(false);
+      return;
+    }
+    
     let cancelled = false;
 
     const initServiceManager = async () => {
       if (!mountedRef.current) {
+        console.log('[NotebookView DEBUG] Component not mounted, skipping');
         return;
       }
       if (configuration?.token && configuration?.runUrl && !serviceManager) {
@@ -479,6 +516,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
       } else if (!configuration?.token || !configuration?.runUrl) {
         console.info('No Datalayer credentials configured');
       }
+      console.log('[NotebookView DEBUG] Setting loading to false');
       setLoading(false);
     };
 
@@ -491,8 +529,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
     configuration?.token,
     configuration?.runUrl,
     selectedNotebook?.id,
-    selectedNotebook?.path,
-    // Don't include functions or derived values that change frequently
+    // Removed selectedNotebook?.path as it might cause unnecessary re-runs
   ]);
 
   // Store the collaboration provider in a ref to prevent component re-renders
@@ -623,6 +660,14 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   ]);
 
   if (loading || loadingNotebook || isCreatingRuntime) {
+    console.log('[NotebookView DEBUG] Loading state:', {
+      loading,
+      loadingNotebook,
+      isCreatingRuntime,
+      selectedNotebook: selectedNotebook?.name,
+      hasServiceManager: !!serviceManager,
+      hasNotebookContent: !!notebookContent
+    });
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Text>
@@ -637,6 +682,13 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }
 
   if (error || runtimeError) {
+    console.log('[NotebookView DEBUG] Error state:', {
+      error,
+      runtimeError,
+      selectedNotebook: selectedNotebook?.name,
+      hasServiceManager: !!serviceManager,
+      hasNotebookContent: !!notebookContent
+    });
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Text sx={{ color: 'danger.fg' }}>{error || runtimeError}</Text>
@@ -697,18 +749,49 @@ const NotebookView: React.FC<NotebookViewProps> = ({
           {!notebookError ? (
             notebookProps ? (
               <NotebookErrorBoundary onError={handleNotebookError}>
-                <Notebook2
-                  key={`notebook-${stableNotebookKey}`} // Add prefix to ensure stability
-                  {...notebookProps}
-                />
+                {(() => {
+                  console.log('[NotebookView DEBUG] Rendering Notebook2 with props:', {
+                    hasNotebookProps: !!notebookProps,
+                    notebookId: notebookProps.id,
+                    hasServiceManager: !!notebookProps.serviceManager,
+                    hasNbformat: !!notebookProps.nbformat,
+                    cellsCount: notebookProps.nbformat?.cells?.length,
+                    stableNotebookKey
+                  });
+                  return (
+                    <Notebook2
+                      key={`notebook-${stableNotebookKey}`} // Add prefix to ensure stability
+                      {...notebookProps}
+                    />
+                  );
+                })()}
               </NotebookErrorBoundary>
             ) : (
-              <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
-                <Text sx={{ color: 'fg.muted' }}>
-                  Service manager not available. Please configure Datalayer
-                  credentials.
-                </Text>
-              </Box>
+              (() => {
+                console.log('[NotebookView DEBUG] No notebookProps available:', {
+                  hasServiceManager: !!serviceManager,
+                  hasNotebookContent: !!notebookContent,
+                  hasCells: notebookContent?.cells ? 'yes' : 'no',
+                  isArrayCells: notebookContent?.cells ? Array.isArray(notebookContent.cells) : 'no-cells',
+                  cellsLength: notebookContent?.cells?.length || 0,
+                  selectedNotebook: selectedNotebook?.name,
+                  loading,
+                  loadingNotebook,
+                  isCreatingRuntime
+                });
+                return (
+                  <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
+                    <Text sx={{ color: 'fg.muted', mb: 3 }}>
+                      DEBUG: Notebook not rendering
+                    </Text>
+                    <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+                      ServiceManager: {serviceManager ? '✓' : '✗'} | 
+                      NotebookContent: {notebookContent ? '✓' : '✗'} |
+                      Cells: {notebookContent?.cells ? (Array.isArray(notebookContent.cells) ? notebookContent.cells.length : 'not-array') : '✗'}
+                    </Text>
+                  </Box>
+                );
+              })()
             )
           ) : (
             <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
@@ -759,8 +842,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
             </Text>
 
             <Text sx={{ mb: 4, display: 'block' }}>
-              This will stop all kernel execution and close the notebook. Any
-              unsaved changes in running cells will be lost.
+              This will stop all kernel execution and close the notebook.
             </Text>
 
             {error && (

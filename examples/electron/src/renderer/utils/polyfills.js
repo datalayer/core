@@ -7,6 +7,70 @@
  * Comprehensive polyfills for Node.js built-ins and require() in Electron renderer
  */
 
+// CRITICAL: Initialize MathJax configuration FIRST before any other JavaScript loads
+// This prevents "Cannot read properties of undefined (reading 'handlers')" error
+(function initializeMathJaxEarly() {
+  // Polyfill global object for MathJax Node.js compatibility
+  if (typeof global === 'undefined') {
+    window.global = window;
+  }
+
+  // Polyfill __dirname and __filename for MathJax Node.js compatibility
+  if (typeof window.__dirname === 'undefined') {
+    window.__dirname = '/';
+  }
+  if (typeof window.__filename === 'undefined') {
+    window.__filename = 'main.js';
+  }
+
+  // Initialize comprehensive MathJax configuration BEFORE JupyterLab loads
+  window.MathJax = {
+    loader: {
+      load: ['input/tex-base', 'output/svg'],
+      paths: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3' }
+    },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true,
+      processEnvironments: true,
+      packages: ['base', 'autoload', 'require', 'ams', 'newcommand']
+    },
+    svg: {
+      fontCache: 'global',
+      displayAlign: 'left'
+    },
+    startup: {
+      ready: function() {
+        const MathJax = window.MathJax;
+        if (MathJax.startup && typeof MathJax.startup.defaultReady === 'function') {
+          MathJax.startup.defaultReady();
+        }
+        console.log('[MathJax Early Init] Initialized with handlers:', MathJax.handlers || 'undefined');
+      }
+    },
+    // CRITICAL: Initialize comprehensive handlers object to prevent undefined access
+    handlers: {
+      document: [],
+      startup: [],
+      error: [],
+      ready: []
+    },
+    // Ensure Document is available for MathJax
+    document: (typeof document !== 'undefined') ? document : {},
+    // Add require configuration path helper
+    require: {
+      getRoot: function() { return '/'; }
+    },
+    // Provide empty typesetting methods to prevent early calls from failing
+    typesetPromise: Promise.resolve(),
+    typesetClear: function() { return Promise.resolve(); },
+    typeset: function() { return Promise.resolve(); }
+  };
+
+  console.log('[MathJax Early Init] Configuration loaded in polyfills.js');
+})();
+
 // Define nodeModules in global scope so it's accessible throughout
 const nodeModules = (function () {
   // Node.js built-in modules polyfills
