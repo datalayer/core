@@ -18,16 +18,25 @@ export const DATALAYER_PALETTE = {
   greenLight: '#2ECC71',
   greenMain: '#1ABC9C',
   greenDark: '#16A085',
+  // Accessible variants (WCAG AA compliant)
+  greenAccessible: '#16A085', // 3.28:1 ratio - meets UI component standards
+  greenAccessibleHover: '#138D75', // 4.12:1 ratio - darker for hover states
+  greenAccessibleDark: '#117964', // 5.33:1 ratio - even darker for high contrast needs
+  // Red variants for error/delete actions
+  redPrimary: '#DC3545', // 4.53:1 ratio - good contrast
+  redHover: '#B02A37', // 6.5:1 ratio - excellent contrast
+  redAccessible: '#C82333', // 4.93:1 ratio - accessible for light backgrounds
+  // Neutral colors
   gray: '#59595C',
   black: '#000000',
   white: '#FFFFFF',
 } as const;
 
 export const DATALAYER_BRAND = {
-  primary: DATALAYER_PALETTE.greenMain, // Main brand color
-  primaryHover: DATALAYER_PALETTE.greenDark, // Hover state
+  primary: DATALAYER_PALETTE.greenAccessibleDark, // High contrast: #117964 (5.33:1 ratio) - meets AA standard
+  primaryHover: DATALAYER_PALETTE.greenAccessibleHover, // Darker hover state (4.12:1 ratio)
   primaryLight: DATALAYER_PALETTE.greenLight, // Light variant
-  primaryDark: DATALAYER_PALETTE.greenDark, // Dark variant
+  primaryDark: DATALAYER_PALETTE.greenAccessibleDark, // High contrast variant
 } as const;
 
 export const COLORS = {

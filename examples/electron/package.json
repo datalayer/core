@@ -47,11 +47,12 @@
     "zustand": "^5.0.1"
   },
   "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.45.1",
     "bufferutil": "^4.0.8",
-    "utf-8-validate": "^6.0.5",
-    "@rollup/rollup-linux-x64-gnu": "4.45.1"
+    "utf-8-validate": "^6.0.5"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.10.2",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@types/form-data": "^2.2.1",
     "@types/node": "^20.16.17",
@@ -59,10 +60,10 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^7.0.3",
-    "electron": "^34.0.0",
+    "electron": "34.5.8",
     "electron-builder": "^25.1.8",
-    "@electron/rebuild": "^3.7.2",
     "electron-vite": "^2.3.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "patch-package": "^8.0.0",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
@@ -79,10 +80,14 @@
       "dist/**/*",
       "resources/**/*",
       "!node_modules/bufferutil/build/**/*",
-      "!node_modules/utf-8-validate/build/**/*"
+      "!node_modules/utf-8-validate/build/**/*",
+      "!node_modules/.cache",
+      "!node_modules/.vite"
     ],
     "icon": "resources/icon.png",
     "npmRebuild": false,
+    "buildDependenciesFromSource": false,
+    "nodeGypRebuild": false,
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "resources/icon.png",

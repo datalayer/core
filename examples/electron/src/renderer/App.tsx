@@ -22,7 +22,7 @@ import { useCoreStore } from '@datalayer/core';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
 import NotebookView from './components/NotebookView';
-import NotebooksList from './components/NotebooksList';
+import DocumentsList from './components/DocumentsList';
 import EnvironmentsList from './components/EnvironmentsList';
 import { useRuntimeStore } from './stores/runtimeStore';
 import { COLORS } from './constants/colors';
@@ -72,6 +72,7 @@ const App: React.FC = () => {
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
   );
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { configuration } = useCoreStore();
   const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
   const { reconnectToExistingRuntimes } = useRuntimeStore();
@@ -253,6 +254,26 @@ const App: React.FC = () => {
     };
   }, [checkAuth, fetchGitHubUser]);
 
+  // Handle Escape key for user menu
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isUserMenuOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener('keydown', handleEscapeKey, true);
+      return () => {
+        document.removeEventListener('keydown', handleEscapeKey, true);
+      };
+    }
+
+    return undefined;
+  }, [isUserMenuOpen]);
+
   // Monitor configuration changes
   useEffect(() => {
     if (configuration?.token && configuration?.runUrl) {
@@ -277,24 +298,32 @@ const App: React.FC = () => {
   };
 
   const renderView = (): React.ReactElement => {
-    switch (currentView) {
-      case 'notebooks':
-        return <NotebooksList onNotebookSelect={handleNotebookSelect} />;
-      case 'notebook':
-        return (
-          <NotebookView
-            selectedNotebook={selectedNotebook}
-            onClose={() => {
-              setCurrentView('notebooks');
-              setSelectedNotebook(null);
-            }}
-          />
-        );
-      case 'environments':
-        return <EnvironmentsList />;
-      default:
-        return <EnvironmentsList />;
+    // Handle notebook view separately since it needs proper mounting/unmounting
+    if (currentView === 'notebook') {
+      return (
+        <NotebookView
+          selectedNotebook={selectedNotebook}
+          onClose={() => {
+            setCurrentView('notebooks');
+            setSelectedNotebook(null);
+          }}
+        />
+      );
     }
+
+    // For list views, keep them mounted and toggle visibility
+    return (
+      <>
+        <Box sx={{ display: currentView === 'notebooks' ? 'block' : 'none' }}>
+          <DocumentsList onNotebookSelect={handleNotebookSelect} />
+        </Box>
+        <Box
+          sx={{ display: currentView === 'environments' ? 'block' : 'none' }}
+        >
+          <EnvironmentsList />
+        </Box>
+      </>
+    );
   };
 
   // Show loading state while checking authentication or reconnecting
@@ -364,11 +393,22 @@ const App: React.FC = () => {
                     setCurrentView('environments');
                   }}
                   sx={{
-                    fontWeight:
-                      currentView === 'environments' ? 'bold' : 'normal',
+                    fontWeight: 'normal',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
+                    borderBottom:
+                      currentView === 'environments'
+                        ? `2px solid ${COLORS.brand.primary}`
+                        : '2px solid transparent',
+                    paddingBottom: '4px',
+                    '&:hover': {
+                      textDecoration: 'none',
+                      borderBottom:
+                        currentView === 'environments'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                    },
                   }}
                 >
                   <DatabaseIcon size={16} />
@@ -383,38 +423,59 @@ const App: React.FC = () => {
                     setCurrentView('notebooks');
                   }}
                   sx={{
-                    fontWeight:
-                      currentView === 'notebooks' || currentView === 'notebook'
-                        ? 'bold'
-                        : 'normal',
+                    fontWeight: 'normal',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
+                    borderBottom:
+                      currentView === 'notebooks' || currentView === 'notebook'
+                        ? `2px solid ${COLORS.brand.primary}`
+                        : '2px solid transparent',
+                    paddingBottom: '4px',
+                    '&:hover': {
+                      textDecoration: 'none',
+                      borderBottom:
+                        currentView === 'notebooks' ||
+                        currentView === 'notebook'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                    },
                   }}
                 >
                   <BookIcon size={16} />
-                  <span>Notebooks</span>
+                  <span>Documents</span>
                 </Header.Link>
               </Header.Item>
               <Header.Item full />
               {isAuthenticated && githubUser && (
                 <Header.Item>
-                  <ActionMenu>
+                  <ActionMenu
+                    open={isUserMenuOpen}
+                    onOpenChange={setIsUserMenuOpen}
+                  >
                     <ActionMenu.Anchor>
                       <Button
                         variant="invisible"
+                        aria-label={`User menu for ${githubUser.name || githubUser.login}`}
+                        aria-describedby="user-menu-description"
+                        aria-expanded={isUserMenuOpen}
                         sx={{
                           p: 0,
                           display: 'flex',
                           alignItems: 'center',
                           gap: 2,
                           borderRadius: '50%',
+                          '&:focus-visible': {
+                            outline: '2px solid',
+                            outlineColor: COLORS.brand.primary,
+                            outlineOffset: '2px',
+                          },
                         }}
                       >
                         <Avatar
                           src={githubUser.avatar_url}
                           size={32}
-                          alt={githubUser.name || githubUser.login}
+                          alt=""
                           sx={{
                             borderRadius: '50%',
                             objectFit: 'cover',
@@ -424,14 +485,40 @@ const App: React.FC = () => {
                       </Button>
                     </ActionMenu.Anchor>
 
-                    <ActionMenu.Overlay width="medium">
+                    <ActionMenu.Overlay
+                      width="medium"
+                      role="menu"
+                      aria-labelledby="user-menu-description"
+                    >
+                      <div
+                        id="user-menu-description"
+                        style={{
+                          position: 'absolute',
+                          width: '1px',
+                          height: '1px',
+                          padding: '0',
+                          margin: '-1px',
+                          overflow: 'hidden',
+                          clip: 'rect(0, 0, 0, 0)',
+                          whiteSpace: 'nowrap',
+                          border: '0',
+                        }}
+                      >
+                        User account menu with profile information and sign out
+                        option
+                      </div>
                       <ActionList>
-                        <ActionList.Item disabled sx={{ py: 3 }}>
+                        <ActionList.Item
+                          disabled
+                          sx={{ py: 3 }}
+                          role="menuitem"
+                          aria-label={`Profile information for ${githubUser.name || githubUser.login}`}
+                        >
                           <ActionList.LeadingVisual>
                             <Avatar
                               src={githubUser.avatar_url}
                               size={24}
-                              alt={githubUser.name || githubUser.login}
+                              alt=""
                               sx={{
                                 borderRadius: '50%',
                                 objectFit: 'cover',
@@ -454,7 +541,12 @@ const App: React.FC = () => {
                         <ActionList.Divider />
 
                         <ActionList.Item
-                          onSelect={handleLogout}
+                          onSelect={() => {
+                            handleLogout();
+                            setIsUserMenuOpen(false);
+                          }}
+                          role="menuitem"
+                          aria-label="Sign out of your account"
                           sx={{
                             color: 'danger.fg',
                             '&:hover': {
@@ -463,6 +555,11 @@ const App: React.FC = () => {
                             },
                             '&:active': {
                               bg: 'canvas.subtle',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: COLORS.brand.primary,
+                              outlineOffset: '-2px',
                             },
                           }}
                         >

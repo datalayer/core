@@ -28,6 +28,7 @@ enum CollaborationStatus {
 export interface IElectronCollaborationConfig {
   runUrl?: string;
   token?: string;
+  runtimeId?: string;
 }
 
 /**
@@ -171,6 +172,14 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       // Import ProxyWebSocket class dynamically to use with WebsocketProvider
       const { ProxyWebSocket } = await import('./proxyServiceManager');
 
+      // Create a runtime-aware WebSocket factory with runtime ID
+      const runtimeId = this._config.runtimeId;
+      const RuntimeProxyWebSocket = class extends ProxyWebSocket {
+        constructor(url: string | URL, protocols?: string | string[]) {
+          super(url, protocols, undefined, runtimeId);
+        }
+      };
+
       // Configure WebSocket params
       const wsParams = {
         sessionId,
@@ -183,7 +192,7 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
         disableBc: true,
         params: wsParams,
         awareness,
-        WebSocketPolyfill: ProxyWebSocket as typeof WebSocket,
+        WebSocketPolyfill: RuntimeProxyWebSocket as typeof WebSocket,
         ...options,
       });
 

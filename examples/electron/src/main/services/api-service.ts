@@ -503,14 +503,14 @@ class DatalayerAPIService {
    */
   async getUserSpaces(): Promise<{
     success: boolean;
-    data?: Record<string, unknown>[];
+    spaces?: Record<string, unknown>[];
     error?: string;
   }> {
     try {
       const response = await this.request('/api/spacer/v1/spaces/users/me');
       return {
         success: true,
-        data: (response.spaces as Record<string, unknown>[]) || [],
+        spaces: (response.spaces as Record<string, unknown>[]) || [],
       };
     } catch (error) {
       log.error('Failed to fetch user spaces:', error);
@@ -688,17 +688,17 @@ class DatalayerAPIService {
 
         if (
           spacesResponse.success &&
-          spacesResponse.data &&
-          spacesResponse.data.length > 0
+          spacesResponse.spaces &&
+          spacesResponse.spaces.length > 0
         ) {
           // Find default space or one called "library"
           selectedSpace =
-            spacesResponse.data.find(
+            spacesResponse.spaces.find(
               (space: Record<string, unknown>) =>
                 space.handle === 'library' ||
                 space.name === 'Library' ||
                 space.is_default === true
-            ) || spacesResponse.data[0];
+            ) || spacesResponse.spaces[0];
 
           log.debug('listNotebooks: Selected space:', selectedSpace);
 

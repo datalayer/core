@@ -95,6 +95,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   const [notebookError, setNotebookError] = useState<boolean>(false);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
+  const [runtimeTerminated, setRuntimeTerminated] = useState(false);
   const { configuration } = useCoreStore();
 
   // Use runtime store for runtime management
@@ -139,6 +140,8 @@ const NotebookView: React.FC<NotebookViewProps> = ({
         await terminateRuntimeForNotebook(selectedNotebook.id);
         setNotebookContent(null);
         setError(null);
+        // Set runtime terminated flag to prevent collaboration provider recreation
+        setRuntimeTerminated(true);
         // Clear the active notebook from the store
         setActiveNotebook(null);
         setShowTerminateDialog(false);
@@ -163,10 +166,11 @@ const NotebookView: React.FC<NotebookViewProps> = ({
     };
   }, []); // Empty dependency array - only run on mount
 
-  // Reset notebook error when changing notebooks
+  // Reset notebook error and termination flag when changing notebooks
   useEffect(() => {
     if (mountedRef.current) {
       setNotebookError(false);
+      setRuntimeTerminated(false); // Reset termination flag for new notebook
     }
   }, [selectedNotebook?.id]);
 
@@ -369,7 +373,8 @@ const NotebookView: React.FC<NotebookViewProps> = ({
             );
             manager = await createProxyServiceManager(
               jupyterServerUrl,
-              jupyterToken
+              jupyterToken,
+              runtime.uid
             );
             if (manager) {
               await manager.ready;
@@ -426,7 +431,8 @@ const NotebookView: React.FC<NotebookViewProps> = ({
               delete (window as Record<string, any>)[cacheKey];
               manager = await createProxyServiceManager(
                 jupyterServerUrl,
-                jupyterToken
+                jupyterToken,
+                runtime.uid
               );
               if (manager) {
                 await manager.ready;
@@ -505,12 +511,31 @@ const NotebookView: React.FC<NotebookViewProps> = ({
 
   // Create collaboration provider instance when configuration is available
   useEffect(() => {
-    if (configuration?.runUrl && configuration?.token) {
+    if (configuration?.runUrl && configuration?.token && !runtimeTerminated) {
+      // Additional check: Verify runtime hasn't been marked as terminated in global registry
+      const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+      const runtimeId = notebookRuntime?.runtime?.uid;
+
+      if (
+        cleanupRegistry &&
+        runtimeId &&
+        cleanupRegistry.has(runtimeId) &&
+        cleanupRegistry.get(runtimeId).terminated
+      ) {
+        console.info(
+          '🛑 [Collaboration] Blocking collaboration provider creation for terminated runtime:',
+          runtimeId
+        );
+        return;
+      }
+
       // Dispose existing provider
       if (collaborationProviderRef.current) {
         collaborationProviderRef.current.dispose();
         collaborationProviderRef.current = null;
       }
+
+      // Get the runtime ID for WebSocket tracking
 
       collaborationProviderVersion.current++;
       console.info(
@@ -525,9 +550,14 @@ const NotebookView: React.FC<NotebookViewProps> = ({
         '[NotebookView] Configuration runUrl:',
         configuration.runUrl
       );
+      console.info(
+        '[NotebookView] Runtime ID for collaboration:',
+        runtimeId || 'NONE'
+      );
       const provider = new ElectronCollaborationProvider({
         runUrl: configuration.runUrl,
         token: configuration.token,
+        runtimeId: runtimeId,
       });
 
       // Listen for collaboration errors but don't let them break the notebook
@@ -537,7 +567,59 @@ const NotebookView: React.FC<NotebookViewProps> = ({
 
       collaborationProviderRef.current = provider;
     }
-  }, [configuration?.runUrl, configuration?.token, selectedNotebook?.id]); // Add selectedNotebook as dependency to force recreation
+  }, [
+    configuration?.runUrl,
+    configuration?.token,
+    selectedNotebook?.id,
+    notebookRuntime?.runtime?.uid,
+    runtimeTerminated,
+  ]); // Add runtime ID and termination flag as dependencies
+
+  // Listen for runtime collaboration cleanup events
+  useEffect(() => {
+    const handleCollaborationCleanup = (event: CustomEvent) => {
+      const { runtimeId, notebookId } = event.detail;
+      console.info(
+        `🤝 [NotebookView] Received collaboration cleanup event for runtime: ${runtimeId}, notebook: ${notebookId}`
+      );
+
+      // Check if this cleanup event is for our current notebook
+      if (
+        notebookId === selectedNotebook?.id &&
+        collaborationProviderRef.current
+      ) {
+        console.info(
+          `🤝 [NotebookView] Disposing collaboration provider for notebook: ${notebookId}`
+        );
+        try {
+          collaborationProviderRef.current.dispose();
+          collaborationProviderRef.current = null;
+          console.info(
+            `🤝 [NotebookView] Collaboration provider disposed successfully`
+          );
+        } catch (error) {
+          console.error(
+            '🤝 [NotebookView] Error disposing collaboration provider:',
+            error
+          );
+        }
+      }
+    };
+
+    // Add event listener for runtime collaboration cleanup
+    window.addEventListener(
+      'runtime-collaboration-cleanup',
+      handleCollaborationCleanup as EventListener
+    );
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener(
+        'runtime-collaboration-cleanup',
+        handleCollaborationCleanup as EventListener
+      );
+    };
+  }, [selectedNotebook?.id]); // Dependency on notebook ID to handle changes
 
   // Create a stable key that uses the notebook UID (needed for collaboration)
   const stableNotebookKey = useMemo(() => {
@@ -743,14 +825,21 @@ const NotebookView: React.FC<NotebookViewProps> = ({
           }
         }}
         aria-labelledby="terminate-runtime-title"
+        aria-describedby="terminate-runtime-description"
+        role="alertdialog"
       >
         <Dialog.Header id="terminate-runtime-title">
           Terminate Runtime
         </Dialog.Header>
 
         <Box sx={{ p: 4 }}>
-          <Text sx={{ mb: 4, color: 'danger.fg', display: 'block' }}>
-            <Box sx={{ mr: 2, display: 'inline-block' }}>
+          <Text
+            id="terminate-runtime-description"
+            sx={{ mb: 4, color: 'danger.fg', display: 'block' }}
+            role="alert"
+            aria-live="polite"
+          >
+            <Box sx={{ mr: 2, display: 'inline-block' }} aria-hidden="true">
               <AlertIcon />
             </Box>
             Are you sure you want to terminate the runtime for{' '}
@@ -758,12 +847,15 @@ const NotebookView: React.FC<NotebookViewProps> = ({
           </Text>
 
           <Text sx={{ mb: 4, display: 'block' }}>
-            This will stop all kernel execution and close the notebook. Any
-            unsaved changes in running cells will be lost.
+            This will stop all kernel execution and close the notebook.
           </Text>
 
           {error && (
-            <Text sx={{ color: 'danger.fg', mb: 3, display: 'block' }}>
+            <Text
+              sx={{ color: 'danger.fg', mb: 3, display: 'block' }}
+              role="alert"
+              aria-live="assertive"
+            >
               {error}
             </Text>
           )}
@@ -777,6 +869,14 @@ const NotebookView: React.FC<NotebookViewProps> = ({
               variant="default"
               onClick={() => setShowTerminateDialog(false)}
               disabled={isTerminating}
+              aria-label="Cancel runtime termination and close dialog"
+              sx={{
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: '#0969da',
+                  outlineOffset: '2px',
+                },
+              }}
             >
               Cancel
             </Button>
@@ -785,8 +885,40 @@ const NotebookView: React.FC<NotebookViewProps> = ({
               onClick={handleTerminateRuntime}
               disabled={isTerminating}
               leadingVisual={XIcon}
+              aria-label={`Terminate runtime for ${selectedNotebook?.name || 'this notebook'}`}
+              sx={{
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'white',
+                  outlineOffset: '-2px',
+                },
+              }}
             >
-              {isTerminating ? 'Terminating...' : 'Terminate Runtime'}
+              {isTerminating ? (
+                <>
+                  <Box as="span" aria-hidden="true">
+                    Terminating...
+                  </Box>
+                  <Box
+                    as="span"
+                    style={{
+                      position: 'absolute',
+                      width: '1px',
+                      height: '1px',
+                      padding: '0',
+                      margin: '-1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: '0',
+                    }}
+                  >
+                    Terminating runtime, please wait
+                  </Box>
+                </>
+              ) : (
+                'Terminate Runtime'
+              )}
             </Button>
           </Box>
         </Box>

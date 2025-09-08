@@ -526,6 +526,112 @@ The `src/renderer/utils/` folder contains only the **essential** polyfill files 
 - `jupyterlab-services-loader.js` - Replaced by jupyterlab-services-proxy.js
 - `path-polyfill.js` - Path polyfills are now injected inline by Vite config
 
+## WebSocket Connection Cleanup System
+
+### Runtime Termination and WebSocket Prevention (NEW!)
+
+The app implements a comprehensive WebSocket cleanup system to prevent connection errors after runtime termination:
+
+#### 1. **Global Cleanup Registry**
+
+Both renderer and main processes maintain a global cleanup registry:
+
+```typescript
+// Renderer process (window scope)
+(window as any).__datalayerRuntimeCleanup = new Map();
+
+// Main process (global scope)
+(global as any).__datalayerRuntimeCleanup = new Map();
+```
+
+The registry tracks terminated runtimes with structure: `Map<string, { terminated: boolean }>`
+
+#### 2. **WebSocket Connection Prevention**
+
+**WebSocket Proxy Blocking** (`src/main/services/websocket-proxy.ts:35-42`):
+
+```typescript
+// Check if this runtime has been terminated
+if (runtimeId) {
+  const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+  if (
+    cleanupRegistry &&
+    cleanupRegistry.has(runtimeId) &&
+    cleanupRegistry.get(runtimeId).terminated
+  ) {
+    log.debug(
+      `[WebSocket Proxy] 🛑 BLOCKED: Preventing new connection to terminated runtime ${runtimeId}`
+    );
+    throw new Error(
+      `Runtime ${runtimeId} has been terminated - no new connections allowed`
+    );
+  }
+}
+```
+
+#### 3. **IPC Communication Bridge**
+
+**Main Process Handler** (`src/main/index.ts:635-647`):
+
+```typescript
+ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
+  // Initialize global cleanup registry in main process
+  if (!(global as any).__datalayerRuntimeCleanup) {
+    (global as any).__datalayerRuntimeCleanup = new Map();
+  }
+
+  const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+  cleanupRegistry.set(runtimeId, { terminated: true });
+
+  log.debug(
+    `[Runtime Cleanup] 🛑 Main process marked runtime ${runtimeId} as terminated`
+  );
+
+  return { success: true };
+});
+```
+
+**Preload Method** (`src/preload/index.ts:36-37`):
+
+```typescript
+// Runtime termination notification
+notifyRuntimeTerminated: (runtimeId: string) =>
+  ipcRenderer.invoke('runtime-terminated', { runtimeId }),
+```
+
+#### 4. **Runtime Store Integration**
+
+**Termination Notification** (`src/renderer/stores/runtimeStore.ts:317-322`):
+
+```typescript
+// Mark this runtime as terminated to prevent new timers
+cleanupRegistry.set(runtimeId, { terminated: true });
+
+console.info('🛑 [Targeted Cleanup] Marked runtime as terminated:', runtimeId);
+
+// Notify main process to update its cleanup registry for WebSocket blocking
+try {
+  (window as any).electronAPI?.notifyRuntimeTerminated?.(runtimeId);
+} catch (error) {
+  console.warn('🛑 [Targeted Cleanup] Error notifying main process:', error);
+}
+```
+
+#### 5. **Multi-Layer Protection**
+
+The system provides multiple layers of protection:
+
+1. **HTTP Request Blocking**: `proxyFetch()` blocks API requests to terminated runtimes
+2. **Collaboration Provider Prevention**: Checks termination flag before creating providers
+3. **WebSocket Proxy Blocking**: Prevents new WebSocket connections at the source
+4. **Service Manager Cleanup**: Aggressively disposes kernel/session managers
+
+#### 6. **Known Limitations**
+
+- Some "Connection ws-X not found" errors may still occur for connections created before termination
+- The system prevents NEW connections but doesn't immediately close existing ones
+- WebSocket cleanup is async, so there may be a brief window where connections exist
+
 ## For AI Assistants
 
 When working with this codebase:
@@ -555,3 +661,8 @@ When working with this codebase:
 23. **About Dialog Security**: Uses secure context isolation with preload scripts and IPC handlers
 24. **Environment Variables**: Use `ELECTRON_DEV_PROD=true` to enable DevTools in production builds for testing
 25. **Security Best Practices**: Keyboard shortcuts and right-click context menu disabled in production for security
+26. **WebSocket Cleanup System**: Multi-layer cleanup prevents new connections to terminated runtimes via global registry
+27. **Runtime Termination**: Always notify both renderer and main processes when terminating runtimes via IPC
+28. **Connection Prevention**: WebSocket proxy checks global cleanup registry before creating new connections
+29. **Cleanup Registry**: Use `window.__datalayerRuntimeCleanup` (renderer) and `global.__datalayerRuntimeCleanup` (main) for tracking
+30. **Connection Errors**: Some "Connection ws-X not found" errors may persist due to timing of existing connections

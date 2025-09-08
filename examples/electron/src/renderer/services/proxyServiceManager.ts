@@ -20,9 +20,39 @@ async function proxyFetch(
 ): Promise<Response> {
   const r = new Request(request, init ?? undefined);
 
+  // Check if this request is to a terminated runtime
+  const url = r.url;
+  if (url.includes('/api/kernels') || url.includes('/api/sessions')) {
+    const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+    if (cleanupRegistry) {
+      // Extract runtime ID from URL to check if it's terminated
+      const urlParts = url.split('/');
+      const serverIndex = urlParts.findIndex(
+        part => part.includes('python-cpu-pool') || part.includes('gpu-pool')
+      );
+      if (serverIndex !== -1 && serverIndex + 1 < urlParts.length) {
+        const runtimeId = urlParts[serverIndex + 1];
+        if (
+          cleanupRegistry.has(runtimeId) &&
+          cleanupRegistry.get(runtimeId).terminated
+        ) {
+          console.info(
+            '🛑 [Request Blocked] Blocking request to terminated runtime:',
+            runtimeId,
+            url
+          );
+          // Return a fake empty response instead of making the actual request
+          return new Response(JSON.stringify({ kernels: [], sessions: [] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    }
+  }
+
   // Prepare request for IPC
   const method = r.method;
-  const url = r.url;
   const headers: Record<string, string> = {};
   r.headers.forEach((value, key) => {
     headers[key] = value;
@@ -88,6 +118,7 @@ export class ProxyWebSocket extends EventTarget {
   private _url: string;
   private _protocol: string;
   private _headers: Record<string, string> | undefined;
+  private _runtimeId: string | undefined;
   private _id: string | null = null;
   private _eventListenerCleanup: (() => void) | null = null;
 
@@ -103,12 +134,14 @@ export class ProxyWebSocket extends EventTarget {
   constructor(
     url: string | URL,
     protocols?: string | string[],
-    headers?: Record<string, string>
+    headers?: Record<string, string>,
+    runtimeId?: string
   ) {
     super();
 
     this._url = url.toString();
     this._headers = headers;
+    this._runtimeId = runtimeId;
 
     // Handle protocol parameter
     if (typeof protocols === 'string') {
@@ -145,6 +178,7 @@ export class ProxyWebSocket extends EventTarget {
         url: this._url,
         protocol: this._protocol || undefined,
         headers: this._headers,
+        runtimeId: this._runtimeId,
       });
 
       this._id = result.id;
@@ -356,12 +390,20 @@ export class ProxyWebSocket extends EventTarget {
  */
 export async function createProxyServiceManager(
   baseUrl: string,
-  token: string = ''
+  token: string = '',
+  runtimeId?: string
 ) {
   proxyLogger.debug(`Creating ServiceManager with baseUrl: ${baseUrl}`);
 
   // Load the real ServiceManager and ServerConnection at runtime
   const { ServiceManager, ServerConnection } = await loadServiceManager();
+
+  // Create a WebSocket factory that includes runtime ID
+  const WebSocketFactory = class extends ProxyWebSocket {
+    constructor(url: string | URL, protocols?: string | string[]) {
+      super(url, protocols, undefined, runtimeId);
+    }
+  };
 
   const settings = ServerConnection.makeSettings({
     baseUrl,
@@ -372,7 +414,7 @@ export async function createProxyServiceManager(
       cache: 'no-store' as RequestCache,
     },
     fetch: proxyFetch,
-    WebSocket: ProxyWebSocket as typeof WebSocket,
+    WebSocket: WebSocketFactory as typeof WebSocket,
     appendToken: true,
   });
 

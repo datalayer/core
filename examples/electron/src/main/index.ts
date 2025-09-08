@@ -61,12 +61,9 @@ function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
-function isDevProd(): boolean {
-  return process.env.ELECTRON_DEV_PROD === 'true';
-}
-
 function shouldEnableDevTools(): boolean {
-  return isDevelopment() || isDevProd();
+  // Always enable DevTools on all builds
+  return true;
 }
 
 function shouldUseProductionSecurity(): boolean {
@@ -513,6 +510,10 @@ ipcMain.handle('datalayer:get-user-spaces', async () => {
   return apiService.getUserSpaces();
 });
 
+ipcMain.handle('datalayer:get-space-items', async (_, spaceId: string) => {
+  return apiService.getSpaceItems(spaceId);
+});
+
 ipcMain.handle('datalayer:get-collaboration-session', async (_, documentId) => {
   return apiService.getCollaborationSessionId(documentId);
 });
@@ -600,13 +601,19 @@ ipcMain.handle(
 // WebSocket Proxy IPC handlers
 ipcMain.handle(
   'proxy:websocket-open',
-  async (_, { url, protocol, headers }) => {
+  async (_, { url, protocol, headers, runtimeId }) => {
     if (!mainWindow) {
       throw new Error('Main window not available');
     }
 
     try {
-      const result = websocketProxy.open(mainWindow, url, protocol, headers);
+      const result = websocketProxy.open(
+        mainWindow,
+        url,
+        protocol,
+        headers,
+        runtimeId
+      );
       return result;
     } catch (error: unknown) {
       log.error('[WebSocket Proxy] Failed to open connection:', error);
@@ -622,6 +629,28 @@ ipcMain.handle('proxy:websocket-send', async (_, { id, data }) => {
 
 ipcMain.handle('proxy:websocket-close', async (_, { id, code, reason }) => {
   websocketProxy.close(id, code, reason);
+  return { success: true };
+});
+
+ipcMain.handle('proxy:websocket-close-runtime', async (_, { runtimeId }) => {
+  websocketProxy.closeConnectionsForRuntime(runtimeId);
+  return { success: true };
+});
+
+// Runtime termination notification handler
+ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
+  // Initialize global cleanup registry in main process
+  if (!(global as any).__datalayerRuntimeCleanup) {
+    (global as any).__datalayerRuntimeCleanup = new Map();
+  }
+
+  const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+  cleanupRegistry.set(runtimeId, { terminated: true });
+
+  log.debug(
+    `[Runtime Cleanup] 🛑 Main process marked runtime ${runtimeId} as terminated`
+  );
+
   return { success: true };
 });
 
