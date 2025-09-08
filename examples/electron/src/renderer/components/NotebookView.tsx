@@ -500,7 +500,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }, [selectedNotebook?.id, selectedNotebook?.path, selectedNotebook?.name]);
 
   // Track if notebook component is mounted to prevent re-initialization
-  const notebookComponentRef = useRef<unknown>(null);
+  // const notebookComponentRef = useRef<unknown>(null);
 
   // Create notebook props with collaboration always enabled - NEVER changes
   const notebookProps = useMemo(() => {

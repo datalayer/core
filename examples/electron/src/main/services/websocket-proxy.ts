@@ -219,7 +219,7 @@ class WebSocketProxyService {
     } catch (error) {
       log.error(
         `[WebSocket Proxy] Failed to send message on ${id}:`,
-        error.message
+        error instanceof Error ? error.message : String(error)
       );
     }
   }

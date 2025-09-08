@@ -11,7 +11,6 @@ import {
   Button,
   ActionList,
   IconButton,
-  Label,
   Spinner,
   Flash,
   Dialog,
@@ -367,7 +366,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
           document.type === 'notebook' ? 'application/json' : 'text/plain';
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = window.document.createElement('a');
         a.href = url;
 
         // Set appropriate file extension
@@ -377,9 +376,9 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
         }
         a.download = fileName;
 
-        document.body.appendChild(a);
+        window.document.body.appendChild(a);
         a.click();
-        document.body.removeChild(a);
+        window.document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
         console.info('Document downloaded successfully');
