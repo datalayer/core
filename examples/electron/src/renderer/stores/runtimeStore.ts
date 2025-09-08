@@ -295,12 +295,43 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         notebookRuntime.runtime.uid
       );
 
-      // Dispose service manager first
+      // Dispose service manager first with proper cleanup
       if (
         notebookRuntime.serviceManager &&
         !notebookRuntime.serviceManager.isDisposed
       ) {
-        console.info('Disposing service manager...');
+        console.info('Disposing service manager and stopping all managers...');
+
+        // Stop all individual managers to prevent background requests
+        try {
+          if (
+            notebookRuntime.serviceManager.kernels &&
+            !notebookRuntime.serviceManager.kernels.isDisposed
+          ) {
+            console.info('Disposing kernel manager...');
+            notebookRuntime.serviceManager.kernels.dispose();
+          }
+
+          if (
+            notebookRuntime.serviceManager.sessions &&
+            !notebookRuntime.serviceManager.sessions.isDisposed
+          ) {
+            console.info('Disposing session manager...');
+            notebookRuntime.serviceManager.sessions.dispose();
+          }
+
+          if (
+            notebookRuntime.serviceManager.contents &&
+            !notebookRuntime.serviceManager.contents.isDisposed
+          ) {
+            console.info('Disposing contents manager...');
+            notebookRuntime.serviceManager.contents.dispose();
+          }
+        } catch (error) {
+          console.warn('Error disposing individual managers:', error);
+        }
+
+        // Finally dispose the service manager itself
         notebookRuntime.serviceManager.dispose();
       }
 
@@ -309,6 +340,23 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
       if ((window as Record<string, any>)[cacheKey]) {
         delete (window as Record<string, any>)[cacheKey];
       }
+
+      // Close all WebSocket connections for this runtime/notebook
+      console.info('Closing all WebSocket connections for runtime...');
+      try {
+        if (
+          (window as any).proxyAPI &&
+          (window as any).proxyAPI.websocketCloseAll
+        ) {
+          await (window as any).proxyAPI.websocketCloseAll();
+        }
+      } catch (error) {
+        console.warn('Error closing WebSocket connections:', error);
+      }
+
+      // Wait a moment for all cleanup to complete before server deletion
+      console.info('Waiting for cleanup to settle...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Call API to delete runtime on server
       console.info(

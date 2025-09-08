@@ -622,6 +622,11 @@ ipcMain.handle('proxy:websocket-close', async (_, { id, code, reason }) => {
   return { success: true };
 });
 
+ipcMain.handle('proxy:websocket-close-all', async () => {
+  websocketProxy.closeAll();
+  return { success: true };
+});
+
 // App event handlers
 app.whenReady().then(() => {
   // Set the dock icon on macOS

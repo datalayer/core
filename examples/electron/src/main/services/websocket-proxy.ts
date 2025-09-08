@@ -31,7 +31,7 @@ class WebSocketProxyService {
   ): { id: string } {
     const id = `ws-${++this.connectionCounter}`;
 
-    log.debug(`[WebSocket Proxy] Opening connection ${id} to ${url}`);
+    log.info(`[WebSocket Proxy] Opening connection ${id} to ${url}`);
     if (headers) {
       log.debug(
         `[WebSocket Proxy] With headers:`,
@@ -83,7 +83,6 @@ class WebSocketProxyService {
 
       // Set up event handlers
       ws.on('open', () => {
-        log.debug(`[WebSocket Proxy] Connection ${id} opened`);
         if (
           !window.isDestroyed() &&
           window.webContents &&
@@ -97,11 +96,6 @@ class WebSocketProxyService {
       });
 
       ws.on('message', (data: WebSocket.RawData) => {
-        log.debug(
-          `[WebSocket Proxy] Message on ${id}:`,
-          data.toString().substring(0, 100)
-        );
-
         // Convert Buffer to appropriate format, but detect if it's actually JSON
         let messageData: string | { type: string; data: number[] };
         if (Buffer.isBuffer(data)) {
@@ -110,37 +104,21 @@ class WebSocketProxyService {
           try {
             // Try to parse as JSON - if successful, it's a text message
             JSON.parse(str);
-            log.debug(
-              `[WebSocket Proxy] JSON message on ${id}:`,
-              str.substring(0, 100)
-            );
             messageData = str; // Send as string
           } catch (_e) {
             // Not JSON, treat as binary data
-            log.debug(
-              `[WebSocket Proxy] Binary message on ${id}, size:`,
-              data.length
-            );
             messageData = {
               type: 'Buffer',
               data: Array.from(data),
             };
           }
         } else if (data instanceof ArrayBuffer) {
-          log.debug(
-            `[WebSocket Proxy] ArrayBuffer message on ${id}, size:`,
-            data.byteLength
-          );
           messageData = {
             type: 'ArrayBuffer',
             data: Array.from(new Uint8Array(data)),
           };
         } else {
           // String data
-          log.debug(
-            `[WebSocket Proxy] String message on ${id}:`,
-            data.toString().substring(0, 100)
-          );
           messageData = data.toString();
         }
 
@@ -158,9 +136,6 @@ class WebSocketProxyService {
       });
 
       ws.on('close', (code: number, reason: Buffer) => {
-        log.debug(
-          `[WebSocket Proxy] Connection ${id} closed: ${code} ${reason}`
-        );
         this.connections.delete(id);
         // Remove from window tracking
         this.windowConnections.forEach(connIds => {
@@ -182,7 +157,7 @@ class WebSocketProxyService {
       });
 
       ws.on('error', (error: Error) => {
-        log.error(`[WebSocket Proxy] Error on ${id}:`, error);
+        log.error(`[WebSocket Proxy] Error on ${id}:`, error.message);
         if (
           !window.isDestroyed() &&
           window.webContents &&
@@ -241,9 +216,11 @@ class WebSocketProxyService {
           connection.ws.send(String(data));
         }
       }
-      log.debug(`[WebSocket Proxy] Sent message on ${id}`);
     } catch (error) {
-      log.error(`[WebSocket Proxy] Failed to send message on ${id}:`, error);
+      log.error(
+        `[WebSocket Proxy] Failed to send message on ${id}:`,
+        error.message
+      );
     }
   }
 
@@ -257,7 +234,6 @@ class WebSocketProxyService {
       return;
     }
 
-    log.debug(`[WebSocket Proxy] Closing connection ${id}`);
     connection.ws.close(code, reason);
     this.connections.delete(id);
   }
@@ -266,11 +242,13 @@ class WebSocketProxyService {
    * Close all connections
    */
   closeAll(): void {
-    log.debug(
-      `[WebSocket Proxy] Closing all ${this.connections.size} connections`
-    );
-    for (const [, connection] of this.connections) {
-      connection.ws.close();
+    if (this.connections.size > 0) {
+      log.info(
+        `[WebSocket Proxy] Closing all ${this.connections.size} connections`
+      );
+      for (const [, connection] of this.connections) {
+        connection.ws.close();
+      }
     }
     this.connections.clear();
   }

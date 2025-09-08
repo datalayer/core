@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('proxyAPI', {
 
   websocketClose: (options: { id: string; code?: number; reason?: string }) =>
     ipcRenderer.invoke('proxy:websocket-close', options),
+  websocketCloseAll: () => ipcRenderer.invoke('proxy:websocket-close-all'),
 
   // Listen for WebSocket events
   onWebSocketEvent: (
@@ -175,6 +176,7 @@ export interface ProxyAPI {
     code?: number;
     reason?: string;
   }) => Promise<{ success: boolean }>;
+  websocketCloseAll: () => Promise<{ success: boolean }>;
   onWebSocketEvent: (
     callback: (event: {
       id: string;

@@ -552,7 +552,7 @@ export default defineConfig({
             `;
 
             // Replace require("path") with inline polyfill
-            let modified = code.replace(
+            const modified = code.replace(
               /const path_1 = require\("path"\);?/g,
               pathPolyfill + '\nconst path_1 = path;'
             );
@@ -851,7 +851,7 @@ export default defineConfig({
 
             // Comprehensive lodash polyfills for all the internal functions
             const lodashPolyfills = `
-              
+
               // Save original constructors at the very beginning
               (function() {
                 if (!globalThis._OriginalUint8Array) {
@@ -1063,7 +1063,7 @@ export default defineConfig({
             }
 
             // CRITICAL FIX: Global assignment approach - avoid all var declarations
-            
+
             // Use completely safe variable names without $ characters
             const globalAssignments = `
 // Global assignments to prevent redeclaration conflicts
@@ -1075,32 +1075,77 @@ globalThis._DL_base1 = globalThis._DL_base1 || {};
 globalThis._DL_base2 = globalThis._DL_base2 || globalThis._DL_base1;
 globalThis._DL_base3 = globalThis._DL_base3 || globalThis._DL_base1;
 `;
-            
+
             modified = globalAssignments + modified;
-            
+
             // Replace all occurrences with safe property access, but NOT in variable declarations
             // First pass: replace function calls and property access
-            modified = modified.replace(/([^a-zA-Z_$])isObject\$1\b/g, '$1globalThis._DL_isObject1');
-            modified = modified.replace(/([^a-zA-Z_$])baseGetTag\$1\b/g, '$1globalThis._DL_baseGetTag1');
-            modified = modified.replace(/([^a-zA-Z_$])baseGetTag\$2\b/g, '$1globalThis._DL_baseGetTag2');
-            modified = modified.replace(/([^a-zA-Z_$])baseGetTag\$3\b/g, '$1globalThis._DL_baseGetTag3');
-            modified = modified.replace(/([^a-zA-Z_$])base\$1\b/g, '$1globalThis._DL_base1');
-            modified = modified.replace(/([^a-zA-Z_$])base\$2\b/g, '$1globalThis._DL_base2');
-            modified = modified.replace(/([^a-zA-Z_$])base\$3\b/g, '$1globalThis._DL_base3');
+            modified = modified.replace(
+              /([^a-zA-Z_$])isObject\$1\b/g,
+              '$1globalThis._DL_isObject1'
+            );
+            modified = modified.replace(
+              /([^a-zA-Z_$])baseGetTag\$1\b/g,
+              '$1globalThis._DL_baseGetTag1'
+            );
+            modified = modified.replace(
+              /([^a-zA-Z_$])baseGetTag\$2\b/g,
+              '$1globalThis._DL_baseGetTag2'
+            );
+            modified = modified.replace(
+              /([^a-zA-Z_$])baseGetTag\$3\b/g,
+              '$1globalThis._DL_baseGetTag3'
+            );
+            modified = modified.replace(
+              /([^a-zA-Z_$])base\$1\b/g,
+              '$1globalThis._DL_base1'
+            );
+            modified = modified.replace(
+              /([^a-zA-Z_$])base\$2\b/g,
+              '$1globalThis._DL_base2'
+            );
+            modified = modified.replace(
+              /([^a-zA-Z_$])base\$3\b/g,
+              '$1globalThis._DL_base3'
+            );
 
             // Also handle cases at start of line (but not after var/let/const)
-            modified = modified.replace(/^(\s*)isObject\$1\b/gm, '$1globalThis._DL_isObject1');
-            modified = modified.replace(/^(\s*)baseGetTag\$1\b/gm, '$1globalThis._DL_baseGetTag1');
-            modified = modified.replace(/^(\s*)baseGetTag\$2\b/gm, '$1globalThis._DL_baseGetTag2');
-            modified = modified.replace(/^(\s*)baseGetTag\$3\b/gm, '$1globalThis._DL_baseGetTag3');
-            modified = modified.replace(/^(\s*)base\$1\b/gm, '$1globalThis._DL_base1');
-            modified = modified.replace(/^(\s*)base\$2\b/gm, '$1globalThis._DL_base2');
-            modified = modified.replace(/^(\s*)base\$3\b/gm, '$1globalThis._DL_base3');
-            
+            modified = modified.replace(
+              /^(\s*)isObject\$1\b/gm,
+              '$1globalThis._DL_isObject1'
+            );
+            modified = modified.replace(
+              /^(\s*)baseGetTag\$1\b/gm,
+              '$1globalThis._DL_baseGetTag1'
+            );
+            modified = modified.replace(
+              /^(\s*)baseGetTag\$2\b/gm,
+              '$1globalThis._DL_baseGetTag2'
+            );
+            modified = modified.replace(
+              /^(\s*)baseGetTag\$3\b/gm,
+              '$1globalThis._DL_baseGetTag3'
+            );
+            modified = modified.replace(
+              /^(\s*)base\$1\b/gm,
+              '$1globalThis._DL_base1'
+            );
+            modified = modified.replace(
+              /^(\s*)base\$2\b/gm,
+              '$1globalThis._DL_base2'
+            );
+            modified = modified.replace(
+              /^(\s*)base\$3\b/gm,
+              '$1globalThis._DL_base3'
+            );
+
             // Fix any invalid var declarations that got through
             modified = modified.replace(/var globalThis\._DL_/g, 'var _DL_');
             modified = modified.replace(/let globalThis\._DL_/g, 'let _DL_');
-            modified = modified.replace(/const globalThis\._DL_/g, 'const _DL_');
+            modified = modified.replace(
+              /const globalThis\._DL_/g,
+              'const _DL_'
+            );
 
             // Wrap ALL Uint8Array constructor calls to ensure it's available
             modified = modified.replace(
@@ -1375,47 +1420,167 @@ globalThis._DL_base3 = globalThis._DL_base3 || globalThis._DL_base1;
           __dirname,
           '../../node_modules/@datalayer/jupyter-react'
         ),
-        '@lexical/react': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react'),
-        '@lexical/react/LexicalComposerContext': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalComposerContext'),
-        '@lexical/react/LexicalComposer': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalComposer'),
-        '@lexical/react/LexicalRichTextPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalRichTextPlugin'),
-        '@lexical/react/LexicalContentEditable': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalContentEditable'),
-        '@lexical/react/LexicalHistoryPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalHistoryPlugin'),
-        '@lexical/react/LexicalAutoFocusPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalAutoFocusPlugin'),
-        '@lexical/react/LexicalTablePlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalTablePlugin'),
-        '@lexical/react/LexicalLinkPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalLinkPlugin'),
-        '@lexical/react/LexicalListPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalListPlugin'),
-        '@lexical/react/LexicalOnChangePlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalOnChangePlugin'),
-        '@lexical/react/LexicalCheckListPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalCheckListPlugin'),
-        '@lexical/react/LexicalHorizontalRuleNode': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalHorizontalRuleNode'),
-        '@lexical/react/LexicalErrorBoundary': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalErrorBoundary'),
-        '@lexical/react/LexicalHashtagPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalHashtagPlugin'),
-        '@lexical/react/LexicalNestedComposer': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalNestedComposer'),
-        '@lexical/react/useLexicalNodeSelection': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/useLexicalNodeSelection'),
-        '@lexical/react/LexicalDecoratorBlockNode': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalDecoratorBlockNode'),
-        '@lexical/react/LexicalBlockWithAlignableContents': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalBlockWithAlignableContents'),
-        '@lexical/react/LexicalPlainTextPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalPlainTextPlugin'),
-        '@lexical/react/LexicalClearEditorPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalClearEditorPlugin'),
-        '@lexical/react/LexicalCollaborationContext': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalCollaborationContext'),
-        '@lexical/react/LexicalMarkdownShortcutPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalMarkdownShortcutPlugin'),
-        '@lexical/react/LexicalAutoLinkPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalAutoLinkPlugin'),
-        '@lexical/react/LexicalTreeView': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalTreeView'),
-        '@lexical/react/LexicalTableOfContentsPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalTableOfContentsPlugin'),
-        '@lexical/react/LexicalAutoEmbedPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalAutoEmbedPlugin'),
-        '@lexical/react/LexicalTypeaheadMenuPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalTypeaheadMenuPlugin'),
-        '@lexical/react/LexicalTabIndentationPlugin': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/react/LexicalTabIndentationPlugin'),
-        '@lexical/code': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/code'),
-        '@lexical/link': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/link'),
-        '@lexical/list': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/list'),
-        '@lexical/plain-text': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/plain-text'),
-        '@lexical/rich-text': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/rich-text'),
-        '@lexical/selection': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/selection'),
-        '@lexical/table': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/table'),
-        '@lexical/utils': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/utils'),
-        '@lexical/yjs': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/yjs'),
-        '@lexical/hashtag': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/hashtag'),
-        '@lexical/mark': resolve(__dirname, '../../../jupyter-ui/node_modules/@lexical/mark'),
-        'lexical': resolve(__dirname, '../../../jupyter-ui/node_modules/lexical'),
+        '@lexical/react': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react'
+        ),
+        '@lexical/react/LexicalComposerContext': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalComposerContext'
+        ),
+        '@lexical/react/LexicalComposer': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalComposer'
+        ),
+        '@lexical/react/LexicalRichTextPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalRichTextPlugin'
+        ),
+        '@lexical/react/LexicalContentEditable': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalContentEditable'
+        ),
+        '@lexical/react/LexicalHistoryPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalHistoryPlugin'
+        ),
+        '@lexical/react/LexicalAutoFocusPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalAutoFocusPlugin'
+        ),
+        '@lexical/react/LexicalTablePlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalTablePlugin'
+        ),
+        '@lexical/react/LexicalLinkPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalLinkPlugin'
+        ),
+        '@lexical/react/LexicalListPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalListPlugin'
+        ),
+        '@lexical/react/LexicalOnChangePlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalOnChangePlugin'
+        ),
+        '@lexical/react/LexicalCheckListPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalCheckListPlugin'
+        ),
+        '@lexical/react/LexicalHorizontalRuleNode': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalHorizontalRuleNode'
+        ),
+        '@lexical/react/LexicalErrorBoundary': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalErrorBoundary'
+        ),
+        '@lexical/react/LexicalHashtagPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalHashtagPlugin'
+        ),
+        '@lexical/react/LexicalNestedComposer': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalNestedComposer'
+        ),
+        '@lexical/react/useLexicalNodeSelection': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/useLexicalNodeSelection'
+        ),
+        '@lexical/react/LexicalDecoratorBlockNode': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalDecoratorBlockNode'
+        ),
+        '@lexical/react/LexicalBlockWithAlignableContents': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalBlockWithAlignableContents'
+        ),
+        '@lexical/react/LexicalPlainTextPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalPlainTextPlugin'
+        ),
+        '@lexical/react/LexicalClearEditorPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalClearEditorPlugin'
+        ),
+        '@lexical/react/LexicalCollaborationContext': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalCollaborationContext'
+        ),
+        '@lexical/react/LexicalMarkdownShortcutPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalMarkdownShortcutPlugin'
+        ),
+        '@lexical/react/LexicalAutoLinkPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalAutoLinkPlugin'
+        ),
+        '@lexical/react/LexicalTreeView': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalTreeView'
+        ),
+        '@lexical/react/LexicalTableOfContentsPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalTableOfContentsPlugin'
+        ),
+        '@lexical/react/LexicalAutoEmbedPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalAutoEmbedPlugin'
+        ),
+        '@lexical/react/LexicalTypeaheadMenuPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalTypeaheadMenuPlugin'
+        ),
+        '@lexical/react/LexicalTabIndentationPlugin': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/react/LexicalTabIndentationPlugin'
+        ),
+        '@lexical/code': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/code'
+        ),
+        '@lexical/link': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/link'
+        ),
+        '@lexical/list': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/list'
+        ),
+        '@lexical/plain-text': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/plain-text'
+        ),
+        '@lexical/rich-text': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/rich-text'
+        ),
+        '@lexical/selection': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/selection'
+        ),
+        '@lexical/table': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/table'
+        ),
+        '@lexical/utils': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/utils'
+        ),
+        '@lexical/yjs': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/yjs'
+        ),
+        '@lexical/hashtag': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/hashtag'
+        ),
+        '@lexical/mark': resolve(
+          __dirname,
+          '../../../jupyter-ui/node_modules/@lexical/mark'
+        ),
+        lexical: resolve(__dirname, '../../../jupyter-ui/node_modules/lexical'),
         '~react-toastify': 'react-toastify',
         json5: resolve(__dirname, '../../node_modules/json5/lib/index.js'),
         // Alias underscore to lodash
@@ -1526,8 +1691,8 @@ globalThis._DL_base3 = globalThis._DL_base3 || globalThis._DL_base1;
           // Allow serving files from jupyter-ui directory for lexical assets
           resolve(__dirname, '../../../jupyter-ui'),
           // Allow serving files from core node_modules for CSS and other assets
-          resolve(__dirname, '../../node_modules')
-        ]
+          resolve(__dirname, '../../node_modules'),
+        ],
       },
       proxy: {
         '/api': {

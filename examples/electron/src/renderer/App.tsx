@@ -369,7 +369,10 @@ const App: React.FC = () => {
                 }}
                 sx={{
                   fontWeight: 'normal',
-                  textDecoration: currentView === 'environments' ? `underline 2px solid ${COLORS.brand.primary}` : 'none',
+                  textDecoration:
+                    currentView === 'environments'
+                      ? `underline 2px solid ${COLORS.brand.primary}`
+                      : 'none',
                   textUnderlineOffset: '4px',
                   display: 'flex',
                   alignItems: 'center',
@@ -412,7 +415,10 @@ const App: React.FC = () => {
                 }}
                 sx={{
                   fontWeight: 'normal',
-                  textDecoration: currentView === 'editor' ? `underline 2px solid ${COLORS.brand.primary}` : 'none',
+                  textDecoration:
+                    currentView === 'editor'
+                      ? `underline 2px solid ${COLORS.brand.primary}`
+                      : 'none',
                   textUnderlineOffset: '4px',
                   display: 'flex',
                   alignItems: 'center',

@@ -123,31 +123,32 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
       const spacesResponse = await window.datalayerAPI.getUserSpaces();
       let currentSpaceId: string | null = null;
       let spaceItems: Record<string, unknown>[] = [];
-      
+
       console.log('getUserSpaces response:', spacesResponse);
-      
+
       if (
         spacesResponse.success &&
         spacesResponse.data &&
         spacesResponse.data.length > 0
       ) {
         // Find the library/default space
-        let defaultSpace = spacesResponse.data.find((space: any) => 
-          space.handle_s === 'library' || 
-          space.variant_s === 'default' || 
-          space.tags_ss?.includes('library')
+        let defaultSpace = spacesResponse.data.find(
+          (space: any) =>
+            space.handle_s === 'library' ||
+            space.variant_s === 'default' ||
+            space.tags_ss?.includes('library')
         );
-        
+
         // Fallback to first space if no library space found
         if (!defaultSpace) {
           defaultSpace = spacesResponse.data[0];
         }
-        
+
         console.log('Selected default space:', defaultSpace);
-        
+
         currentSpaceId = defaultSpace.uid || defaultSpace.id || null;
         setSpaceId(currentSpaceId);
-        
+
         // Get items directly from the space response (they're already included)
         spaceItems = (defaultSpace.items as Record<string, unknown>[]) || [];
       }
@@ -173,7 +174,10 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
             );
             const path = String(item.path || `/${itemName}`);
             const itemType = String(item.type_s || item.type || '');
-            const type = itemType === 'notebook' || path.endsWith('.ipynb') ? 'notebook' : 'document';
+            const type =
+              itemType === 'notebook' || path.endsWith('.ipynb')
+                ? 'notebook'
+                : 'document';
 
             return {
               id: String(item.id || item.uid || item.path || ''),
@@ -182,10 +186,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
               path: path,
               type: type,
               createdAt: String(
-                item.creation_ts_dt || item.created_at || new Date().toISOString()
+                item.creation_ts_dt ||
+                  item.created_at ||
+                  new Date().toISOString()
               ),
               modifiedAt: String(
-                item.last_update_ts_dt || item.modified_at || new Date().toISOString()
+                item.last_update_ts_dt ||
+                  item.modified_at ||
+                  new Date().toISOString()
               ),
               size:
                 (item.content_length_i as number | undefined) ||
@@ -199,16 +207,18 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
 
         console.log('Transformed documentItems:', documentItems);
         console.log('Number of documents:', documentItems.length);
-        
+
         setDocuments(documentItems);
-        
+
         // Group documents by type
         const notebooks = documentItems.filter(doc => doc.type === 'notebook');
-        const otherDocuments = documentItems.filter(doc => doc.type !== 'notebook');
-        
+        const otherDocuments = documentItems.filter(
+          doc => doc.type !== 'notebook'
+        );
+
         console.log('Notebooks:', notebooks);
         console.log('Other documents:', otherDocuments);
-        
+
         setGroupedDocuments({ notebooks, otherDocuments });
       } else {
         setError('No documents found in the space');
@@ -353,19 +363,20 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
         }
 
         // Create a blob and trigger download
-        const mimeType = document.type === 'notebook' ? 'application/json' : 'text/plain';
+        const mimeType =
+          document.type === 'notebook' ? 'application/json' : 'text/plain';
         const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        
+
         // Set appropriate file extension
         let fileName = document.name;
         if (document.type === 'notebook' && !fileName.endsWith('.ipynb')) {
           fileName = `${fileName}.ipynb`;
         }
         a.download = fileName;
-        
+
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -537,21 +548,38 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                   backgroundColor: `${COLORS.brand.primary} !important`,
                   borderColor: `${COLORS.brand.primary} !important`,
                   color: 'white !important',
+                  // Make sure the icon is white
+                  '& svg': {
+                    fill: 'white !important',
+                    color: 'white !important',
+                  },
                   '&:hover:not([disabled])': {
                     backgroundColor: `${COLORS.brand.primaryHover} !important`,
                     borderColor: `${COLORS.brand.primaryHover} !important`,
                     color: 'white !important',
+                    '& svg': {
+                      fill: 'white !important',
+                      color: 'white !important',
+                    },
                   },
                   '&:active:not([disabled])': {
                     backgroundColor: `${COLORS.brand.primaryDark} !important`,
                     borderColor: `${COLORS.brand.primaryDark} !important`,
                     color: 'white !important',
+                    '& svg': {
+                      fill: 'white !important',
+                      color: 'white !important',
+                    },
                   },
                   '&:focus:not([disabled])': {
                     backgroundColor: `${COLORS.brand.primary} !important`,
                     borderColor: `${COLORS.brand.primaryLight} !important`,
                     boxShadow: `0 0 0 3px ${COLORS.brand.primary}33 !important`,
                     color: 'white !important',
+                    '& svg': {
+                      fill: 'white !important',
+                      color: 'white !important',
+                    },
                   },
                 }}
               >
@@ -576,26 +604,43 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                   <Button
                     onClick={handleCreateDocument}
                     leadingVisual={FileAddedIcon}
-                    size="small"
+                    size="medium"
                     sx={{
                       backgroundColor: `${COLORS.brand.primary} !important`,
                       borderColor: `${COLORS.brand.primary} !important`,
                       color: 'white !important',
+                      // Make sure the icon is white
+                      '& svg': {
+                        fill: 'white !important',
+                        color: 'white !important',
+                      },
                       '&:hover:not([disabled])': {
                         backgroundColor: `${COLORS.brand.primaryHover} !important`,
                         borderColor: `${COLORS.brand.primaryHover} !important`,
                         color: 'white !important',
+                        '& svg': {
+                          fill: 'white !important',
+                          color: 'white !important',
+                        },
                       },
                       '&:active:not([disabled])': {
                         backgroundColor: `${COLORS.brand.primaryDark} !important`,
                         borderColor: `${COLORS.brand.primaryDark} !important`,
                         color: 'white !important',
+                        '& svg': {
+                          fill: 'white !important',
+                          color: 'white !important',
+                        },
                       },
                       '&:focus:not([disabled])': {
                         backgroundColor: `${COLORS.brand.primary} !important`,
                         borderColor: `${COLORS.brand.primaryLight} !important`,
                         boxShadow: `0 0 0 3px ${COLORS.brand.primary}33 !important`,
                         color: 'white !important',
+                        '& svg': {
+                          fill: 'white !important',
+                          color: 'white !important',
+                        },
                       },
                     }}
                   >
@@ -625,11 +670,19 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                                 : undefined,
                           }}
                         >
-                          <ActionList.LeadingVisual sx={{ alignSelf: 'center' }}>
+                          <ActionList.LeadingVisual
+                            sx={{ alignSelf: 'center' }}
+                          >
                             <FileIcon size={20} />
                           </ActionList.LeadingVisual>
                           <Box sx={{ flex: 1 }}>
-                            <Text sx={{ fontWeight: 'semibold', fontSize: 2, mb: 1 }}>
+                            <Text
+                              sx={{
+                                fontWeight: 'semibold',
+                                fontSize: 2,
+                                mb: 1,
+                              }}
+                            >
                               {document.name}
                             </Text>
                             <Box
@@ -644,17 +697,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                                 <ClockIcon size={14} />{' '}
                                 {formatDate(document.modifiedAt)}
                               </Text>
-                              <Label size="small" variant="default">
-                                {document.kernel}
-                              </Label>
                             </Box>
                           </Box>
                           <ActionList.TrailingVisual>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                               <IconButton
                                 aria-label="Open"
                                 icon={PlayIcon}
-                                size="small"
+                                size="medium"
                                 variant="invisible"
                                 sx={{
                                   color: COLORS.brand.primary,
@@ -671,7 +721,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                               <IconButton
                                 aria-label="Download"
                                 icon={DownloadIcon}
-                                size="small"
+                                size="medium"
                                 variant="invisible"
                                 onClick={e => {
                                   e.stopPropagation();
@@ -681,7 +731,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                               <IconButton
                                 aria-label="Delete"
                                 icon={TrashIcon}
-                                size="small"
+                                size="medium"
                                 variant="invisible"
                                 sx={{
                                   color: 'danger.fg',
@@ -723,26 +773,43 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                       console.log('Create new document clicked');
                     }}
                     leadingVisual={FileAddedIcon}
-                    size="small"
+                    size="medium"
                     sx={{
                       backgroundColor: `${COLORS.brand.primary} !important`,
                       borderColor: `${COLORS.brand.primary} !important`,
                       color: 'white !important',
+                      // Make sure the icon is white
+                      '& svg': {
+                        fill: 'white !important',
+                        color: 'white !important',
+                      },
                       '&:hover:not([disabled])': {
                         backgroundColor: `${COLORS.brand.primaryHover} !important`,
                         borderColor: `${COLORS.brand.primaryHover} !important`,
                         color: 'white !important',
+                        '& svg': {
+                          fill: 'white !important',
+                          color: 'white !important',
+                        },
                       },
                       '&:active:not([disabled])': {
                         backgroundColor: `${COLORS.brand.primaryDark} !important`,
                         borderColor: `${COLORS.brand.primaryDark} !important`,
                         color: 'white !important',
+                        '& svg': {
+                          fill: 'white !important',
+                          color: 'white !important',
+                        },
                       },
                       '&:focus:not([disabled])': {
                         backgroundColor: `${COLORS.brand.primary} !important`,
                         borderColor: `${COLORS.brand.primaryLight} !important`,
                         boxShadow: `0 0 0 3px ${COLORS.brand.primary}33 !important`,
                         color: 'white !important',
+                        '& svg': {
+                          fill: 'white !important',
+                          color: 'white !important',
+                        },
                       },
                     }}
                   >
@@ -772,11 +839,19 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                                 : undefined,
                           }}
                         >
-                          <ActionList.LeadingVisual sx={{ alignSelf: 'center' }}>
+                          <ActionList.LeadingVisual
+                            sx={{ alignSelf: 'center' }}
+                          >
                             <FileIcon size={20} />
                           </ActionList.LeadingVisual>
                           <Box sx={{ flex: 1 }}>
-                            <Text sx={{ fontWeight: 'semibold', fontSize: 2, mb: 1 }}>
+                            <Text
+                              sx={{
+                                fontWeight: 'semibold',
+                                fontSize: 2,
+                                mb: 1,
+                              }}
+                            >
                               {document.name}
                             </Text>
                             <Box
@@ -791,17 +866,14 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                                 <ClockIcon size={14} />{' '}
                                 {formatDate(document.modifiedAt)}
                               </Text>
-                              <Label size="small" variant="secondary">
-                                {document.type}
-                              </Label>
                             </Box>
                           </Box>
                           <ActionList.TrailingVisual>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                               <IconButton
                                 aria-label="Download"
                                 icon={DownloadIcon}
-                                size="small"
+                                size="medium"
                                 variant="invisible"
                                 onClick={e => {
                                   e.stopPropagation();
@@ -811,7 +883,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
                               <IconButton
                                 aria-label="Delete"
                                 icon={TrashIcon}
-                                size="small"
+                                size="medium"
                                 variant="invisible"
                                 sx={{
                                   color: 'danger.fg',
@@ -920,7 +992,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
           >
             {isCreating ? (
               <>
-                <Spinner size="small" sx={{ mr: 1, color: 'white' }} />
+                <Spinner size="medium" sx={{ mr: 1, color: 'white' }} />
                 Creating...
               </>
             ) : (
@@ -953,7 +1025,10 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
               <AlertIcon />
             </Box>
             This action cannot be undone. This will permanently delete the
-            {documentToDelete?.type === 'notebook' ? ' notebook' : ' document'} <strong>"{documentToDelete?.name}"</strong>.
+            {documentToDelete?.type === 'notebook'
+              ? ' notebook'
+              : ' document'}{' '}
+            <strong>"{documentToDelete?.name}"</strong>.
           </Text>
 
           <FormControl sx={{ width: '100%' }} disabled={isDeleting}>
@@ -1006,7 +1081,7 @@ const DocumentsList: React.FC<DocumentsListProps> = ({ onNotebookSelect }) => {
           >
             {isDeleting ? (
               <>
-                <Spinner size="small" sx={{ mr: 1 }} />
+                <Spinner size="medium" sx={{ mr: 1 }} />
                 Deleting...
               </>
             ) : (

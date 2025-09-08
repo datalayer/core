@@ -27,45 +27,63 @@
   window.MathJax = {
     loader: {
       load: ['input/tex-base', 'output/svg'],
-      paths: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3' }
+      paths: { mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3' },
     },
     tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      inlineMath: [
+        ['$', '$'],
+        ['\\(', '\\)'],
+      ],
+      displayMath: [
+        ['$$', '$$'],
+        ['\\[', '\\]'],
+      ],
       processEscapes: true,
       processEnvironments: true,
-      packages: ['base', 'autoload', 'require', 'ams', 'newcommand']
+      packages: ['base', 'autoload', 'require', 'ams', 'newcommand'],
     },
     svg: {
       fontCache: 'global',
-      displayAlign: 'left'
+      displayAlign: 'left',
     },
     startup: {
-      ready: function() {
+      ready: function () {
         const MathJax = window.MathJax;
-        if (MathJax.startup && typeof MathJax.startup.defaultReady === 'function') {
+        if (
+          MathJax.startup &&
+          typeof MathJax.startup.defaultReady === 'function'
+        ) {
           MathJax.startup.defaultReady();
         }
-        console.log('[MathJax Early Init] Initialized with handlers:', MathJax.handlers || 'undefined');
-      }
+        console.log(
+          '[MathJax Early Init] Initialized with handlers:',
+          MathJax.handlers || 'undefined'
+        );
+      },
     },
     // CRITICAL: Initialize comprehensive handlers object to prevent undefined access
     handlers: {
       document: [],
       startup: [],
       error: [],
-      ready: []
+      ready: [],
     },
     // Ensure Document is available for MathJax
-    document: (typeof document !== 'undefined') ? document : {},
+    document: typeof document !== 'undefined' ? document : {},
     // Add require configuration path helper
     require: {
-      getRoot: function() { return '/'; }
+      getRoot: function () {
+        return '/';
+      },
     },
     // Provide empty typesetting methods to prevent early calls from failing
     typesetPromise: Promise.resolve(),
-    typesetClear: function() { return Promise.resolve(); },
-    typeset: function() { return Promise.resolve(); }
+    typesetClear: function () {
+      return Promise.resolve();
+    },
+    typeset: function () {
+      return Promise.resolve();
+    },
   };
 
   console.log('[MathJax Early Init] Configuration loaded in polyfills.js');

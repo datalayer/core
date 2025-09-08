@@ -6,84 +6,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Box, Heading, Text, Button, Dialog } from '@primer/react';
 import { INotebookContent } from '@jupyterlab/nbformat';
-import { Notebook2, JupyterReactTheme } from '@datalayer/jupyter-react';
+import { Notebook2 } from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import { XIcon, AlertIcon } from '@primer/octicons-react';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import type { ServiceManager } from '@jupyterlab/services';
-
-// Error boundary component to catch and handle Notebook2 errors
-class NotebookErrorBoundary extends React.Component<
-  { children: React.ReactNode; onError: (error: Error) => void },
-  { hasError: boolean }
-> {
-  constructor(props: {
-    children: React.ReactNode;
-    onError: (error: Error) => void;
-  }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(
-      '[NotebookErrorBoundary] Caught notebook error:',
-      error,
-      errorInfo
-    );
-    
-    console.error('[NotebookErrorBoundary] Error details:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
-    });
-
-    // Log specific error types for better debugging
-    if (error.message.includes('Disposed')) {
-      console.info(
-        '[NotebookErrorBoundary] SessionContext disposal error - likely component lifecycle issue'
-      );
-    } else if (error.message.includes('removeChild')) {
-      console.info(
-        '[NotebookErrorBoundary] DOM manipulation error - component mounting/unmounting conflict'
-      );
-    } else if (error.message.includes('__dirname')) {
-      console.info(
-        '[NotebookErrorBoundary] __dirname not defined - Node.js polyfill issue'
-      );
-    } else if (error.message.includes('handlers')) {
-      console.info(
-        '[NotebookErrorBoundary] handlers undefined - ServiceManager issue'
-      );
-    }
-
-    this.props.onError(error);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
-          <Text sx={{ color: 'danger.fg', mb: 2 }}>
-            Notebook component encountered an error
-          </Text>
-          <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-            Try refreshing the page or selecting a different notebook
-          </Text>
-        </Box>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 // Note: No fallback notebook - we only use real data from Datalayer service
 
@@ -107,7 +36,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
     useState<INotebookContent | null>(null);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notebookError, setNotebookError] = useState<boolean>(false);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
   const { configuration } = useCoreStore();
@@ -134,12 +62,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   // Use refs to prevent race conditions and component lifecycle issues
   const mountedRef = useRef(true);
   const notebookMountedRef = useRef(false);
-
-  // Handle notebook component errors
-  const handleNotebookError = (error: Error) => {
-    console.error('[NotebookView] Notebook component error:', error);
-    setNotebookError(true);
-  };
 
   // Function to terminate and close the runtime
   const handleTerminateRuntime = async () => {
@@ -177,13 +99,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
       notebookMountedRef.current = false;
     };
   }, []); // Empty dependency array - only run on mount
-
-  // Reset notebook error when changing notebooks
-  useEffect(() => {
-    if (mountedRef.current) {
-      setNotebookError(false);
-    }
-  }, [selectedNotebook?.id]);
 
   // Fetch notebook content when selected notebook changes
   useEffect(() => {
@@ -286,27 +201,34 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }, [selectedNotebook]);
 
   useEffect(() => {
-    console.log('[NotebookView DEBUG] useEffect triggered for ServiceManager init:', {
-      hasToken: !!configuration?.token,
-      hasRunUrl: !!configuration?.runUrl,
-      hasServiceManager: !!serviceManager,
-      selectedNotebookId: selectedNotebook?.id,
-      selectedNotebookPath: selectedNotebook?.path
-    });
-    
+    console.log(
+      '[NotebookView DEBUG] useEffect triggered for ServiceManager init:',
+      {
+        hasToken: !!configuration?.token,
+        hasRunUrl: !!configuration?.runUrl,
+        hasServiceManager: !!serviceManager,
+        selectedNotebookId: selectedNotebook?.id,
+        selectedNotebookPath: selectedNotebook?.path,
+      }
+    );
+
     // Prevent multiple executions for the same notebook
     if (!selectedNotebook?.id) {
-      console.log('[NotebookView DEBUG] Skipping useEffect - no notebook selected');
+      console.log(
+        '[NotebookView DEBUG] Skipping useEffect - no notebook selected'
+      );
       return;
     }
-    
+
     // If ServiceManager already exists, just set loading to false
     if (serviceManager) {
-      console.log('[NotebookView DEBUG] ServiceManager exists, setting loading to false');
+      console.log(
+        '[NotebookView DEBUG] ServiceManager exists, setting loading to false'
+      );
       setLoading(false);
       return;
     }
-    
+
     let cancelled = false;
 
     const initServiceManager = async () => {
@@ -514,9 +436,8 @@ const NotebookView: React.FC<NotebookViewProps> = ({
           }
         }
       } else if (!configuration?.token || !configuration?.runUrl) {
-        console.info('No Datalayer credentials configured');
+        // No Datalayer credentials configured
       }
-      console.log('[NotebookView DEBUG] Setting loading to false');
       setLoading(false);
     };
 
@@ -550,18 +471,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
       }
 
       collaborationProviderVersion.current++;
-      console.info(
-        '[NotebookView] Creating Electron collaboration provider v' +
-          collaborationProviderVersion.current
-      );
-      console.info(
-        '[NotebookView] Configuration token:',
-        configuration.token?.substring(0, 10) + '...'
-      );
-      console.info(
-        '[NotebookView] Configuration runUrl:',
-        configuration.runUrl
-      );
+      collaborationProviderVersion.current++;
       const provider = new ElectronCollaborationProvider({
         runUrl: configuration.runUrl,
         token: configuration.token,
@@ -569,7 +479,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
 
       // Listen for collaboration errors but don't let them break the notebook
       provider.events.errorOccurred.connect((_sender, error) => {
-        console.error('[NotebookView] Collaboration error (non-fatal):', error);
+        console.error('Collaboration error (non-fatal):', error);
       });
 
       collaborationProviderRef.current = provider;
@@ -594,17 +504,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
 
   // Create notebook props with collaboration always enabled - NEVER changes
   const notebookProps = useMemo(() => {
-    console.info('[NotebookView] Creating notebook props:', {
-      hasServiceManager: !!serviceManager,
-      hasNotebookContent: !!notebookContent,
-      hasCells: notebookContent?.cells
-        ? Array.isArray(notebookContent.cells)
-        : false,
-      cellsCount: notebookContent?.cells?.length,
-      hasCollaborationProvider: !!collaborationProviderRef.current,
-      notebookId: selectedNotebook?.id,
-    });
-
     if (
       !serviceManager ||
       !notebookContent ||
@@ -626,30 +525,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
       collaborationProvider: collaborationProviderRef.current || undefined, // Add collaboration provider
     };
 
-    console.info('[NotebookView] Notebook props created:', props);
-    console.info(
-      '[NotebookView] ServiceManager isReady:',
-      serviceManager.isReady
-    );
-    console.info(
-      '[NotebookView] ServiceManager isDisposed:',
-      serviceManager.isDisposed
-    );
-
-    // Log available kernelspecs only once
-    if (serviceManager && !notebookComponentRef.current) {
-      serviceManager.kernelspecs.ready
-        .then(() => {
-          console.info(
-            '[NotebookView] Available kernelspecs:',
-            serviceManager.kernelspecs.specs
-          );
-        })
-        .catch(error => {
-          console.error('[NotebookView] Error getting kernelspecs:', error);
-        });
-    }
-
     return props;
   }, [
     stableNotebookKey,
@@ -660,14 +535,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   ]);
 
   if (loading || loadingNotebook || isCreatingRuntime) {
-    console.log('[NotebookView DEBUG] Loading state:', {
-      loading,
-      loadingNotebook,
-      isCreatingRuntime,
-      selectedNotebook: selectedNotebook?.name,
-      hasServiceManager: !!serviceManager,
-      hasNotebookContent: !!notebookContent
-    });
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Text>
@@ -682,13 +549,6 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }
 
   if (error || runtimeError) {
-    console.log('[NotebookView DEBUG] Error state:', {
-      error,
-      runtimeError,
-      selectedNotebook: selectedNotebook?.name,
-      hasServiceManager: !!serviceManager,
-      hasNotebookContent: !!notebookContent
-    });
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Text sx={{ color: 'danger.fg' }}>{error || runtimeError}</Text>
@@ -697,185 +557,125 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   }
 
   return (
-    <JupyterReactTheme>
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          p: 3,
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'border.default',
+        }}
+      >
         <Box
           sx={{
-            p: 3,
-            pb: 2,
-            borderBottom: '1px solid',
-            borderColor: 'border.default',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Heading as="h2" sx={{ mb: 1 }}>
-                {selectedNotebook?.name || 'Jupyter Notebook'}
-              </Heading>
-              <Text sx={{ color: 'fg.subtle', fontSize: 1 }}>
-                {selectedNotebook?.description ||
-                  'Interactive notebook environment powered by Datalayer'}
-                {configuration?.token && (
-                  <Text as="span" sx={{ color: 'success.fg', ml: 2 }}>
-                    ✓ Real-time collaboration enabled
-                  </Text>
-                )}
-              </Text>
-            </Box>
-            <Button
-              variant="danger"
-              size="small"
-              onClick={() => setShowTerminateDialog(true)}
-              disabled={isTerminatingRuntime || !serviceManager}
-              leadingVisual={XIcon}
-            >
-              {isTerminatingRuntime ? 'Terminating...' : 'Terminate Runtime'}
-            </Button>
+          <Box>
+            <Heading as="h2" sx={{ mb: 1 }}>
+              {selectedNotebook?.name || 'Jupyter Notebook'}
+            </Heading>
+            <Text sx={{ color: 'fg.subtle', fontSize: 1 }}>
+              {selectedNotebook?.description ||
+                'Interactive notebook environment powered by Datalayer'}
+              {configuration?.token && (
+                <Text as="span" sx={{ color: 'success.fg', ml: 2 }}>
+                  ✓ Real-time collaboration enabled
+                </Text>
+              )}
+            </Text>
           </Box>
+          <Button
+            variant="danger"
+            size="small"
+            onClick={() => setShowTerminateDialog(true)}
+            disabled={isTerminatingRuntime || !serviceManager}
+            leadingVisual={XIcon}
+          >
+            {isTerminatingRuntime ? 'Terminating...' : 'Terminate Runtime'}
+          </Button>
         </Box>
+      </Box>
 
-        <Box
-          sx={{
-            flex: 1,
-            overflow: 'auto',
-          }}
-        >
-          {!notebookError ? (
-            notebookProps ? (
-              <NotebookErrorBoundary onError={handleNotebookError}>
-                {(() => {
-                  console.log('[NotebookView DEBUG] Rendering Notebook2 with props:', {
-                    hasNotebookProps: !!notebookProps,
-                    notebookId: notebookProps.id,
-                    hasServiceManager: !!notebookProps.serviceManager,
-                    hasNbformat: !!notebookProps.nbformat,
-                    cellsCount: notebookProps.nbformat?.cells?.length,
-                    stableNotebookKey
-                  });
-                  return (
-                    <Notebook2
-                      key={`notebook-${stableNotebookKey}`} // Add prefix to ensure stability
-                      {...notebookProps}
-                    />
-                  );
-                })()}
-              </NotebookErrorBoundary>
-            ) : (
-              (() => {
-                console.log('[NotebookView DEBUG] No notebookProps available:', {
-                  hasServiceManager: !!serviceManager,
-                  hasNotebookContent: !!notebookContent,
-                  hasCells: notebookContent?.cells ? 'yes' : 'no',
-                  isArrayCells: notebookContent?.cells ? Array.isArray(notebookContent.cells) : 'no-cells',
-                  cellsLength: notebookContent?.cells?.length || 0,
-                  selectedNotebook: selectedNotebook?.name,
-                  loading,
-                  loadingNotebook,
-                  isCreatingRuntime
-                });
-                return (
-                  <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
-                    <Text sx={{ color: 'fg.muted', mb: 3 }}>
-                      DEBUG: Notebook not rendering
-                    </Text>
-                    <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-                      ServiceManager: {serviceManager ? '✓' : '✗'} | 
-                      NotebookContent: {notebookContent ? '✓' : '✗'} |
-                      Cells: {notebookContent?.cells ? (Array.isArray(notebookContent.cells) ? notebookContent.cells.length : 'not-array') : '✗'}
-                    </Text>
-                  </Box>
-                );
-              })()
-            )
-          ) : (
-            <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
-              <Text sx={{ color: 'danger.fg', mb: 2 }}>
-                Notebook component encountered an error
-              </Text>
-              <Text sx={{ color: 'fg.muted', fontSize: 1, mb: 3 }}>
-                This may be due to collaboration state conflicts or component
-                lifecycle issues
-              </Text>
-              <Text
-                sx={{
-                  color: 'accent.fg',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-                onClick={() => {
-                  setNotebookError(false);
-                }}
-              >
-                Reset notebook
-              </Text>
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+        }}
+      >
+        {notebookProps ? (
+          <Notebook2 key={`notebook-${stableNotebookKey}`} {...notebookProps} />
+        ) : (
+          <Box sx={{ p: 4, textAlign: 'center', bg: 'canvas.subtle' }}>
+            <Text sx={{ color: 'fg.muted', mb: 3 }}>
+              Notebook not available
+            </Text>
+            <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+              Please check your connection and try again.
+            </Text>
+          </Box>
+        )}
+      </Box>
+
+      {/* Terminate Runtime Confirmation Dialog */}
+      <Dialog
+        isOpen={showTerminateDialog}
+        onDismiss={() => {
+          if (!isTerminating) {
+            setShowTerminateDialog(false);
+          }
+        }}
+        aria-labelledby="terminate-runtime-title"
+      >
+        <Dialog.Header id="terminate-runtime-title">
+          Terminate Runtime
+        </Dialog.Header>
+
+        <Box sx={{ p: 4 }}>
+          <Text sx={{ mb: 4, color: 'danger.fg', display: 'block' }}>
+            <Box sx={{ mr: 2, display: 'inline-block' }}>
+              <AlertIcon />
             </Box>
+            Are you sure you want to terminate the runtime for{' '}
+            <strong>"{selectedNotebook?.name || 'this notebook'}"</strong>?
+          </Text>
+
+          <Text sx={{ mb: 4, display: 'block' }}>
+            This will stop all kernel execution and close the notebook.
+          </Text>
+
+          {error && (
+            <Text sx={{ color: 'danger.fg', mb: 3, display: 'block' }}>
+              {error}
+            </Text>
           )}
         </Box>
 
-        {/* Terminate Runtime Confirmation Dialog */}
-        <Dialog
-          isOpen={showTerminateDialog}
-          onDismiss={() => {
-            if (!isTerminating) {
-              setShowTerminateDialog(false);
-            }
-          }}
-          aria-labelledby="terminate-runtime-title"
+        <Box
+          sx={{ p: 3, borderTop: '1px solid', borderColor: 'border.default' }}
         >
-          <Dialog.Header id="terminate-runtime-title">
-            Terminate Runtime
-          </Dialog.Header>
-
-          <Box sx={{ p: 4 }}>
-            <Text sx={{ mb: 4, color: 'danger.fg', display: 'block' }}>
-              <Box sx={{ mr: 2, display: 'inline-block' }}>
-                <AlertIcon />
-              </Box>
-              Are you sure you want to terminate the runtime for{' '}
-              <strong>"{selectedNotebook?.name || 'this notebook'}"</strong>?
-            </Text>
-
-            <Text sx={{ mb: 4, display: 'block' }}>
-              This will stop all kernel execution and close the notebook.
-            </Text>
-
-            {error && (
-              <Text sx={{ color: 'danger.fg', mb: 3, display: 'block' }}>
-                {error}
-              </Text>
-            )}
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button
+              variant="default"
+              onClick={() => setShowTerminateDialog(false)}
+              disabled={isTerminating}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleTerminateRuntime}
+              disabled={isTerminating}
+              leadingVisual={XIcon}
+            >
+              {isTerminating ? 'Terminating...' : 'Terminate Runtime'}
+            </Button>
           </Box>
-
-          <Box
-            sx={{ p: 3, borderTop: '1px solid', borderColor: 'border.default' }}
-          >
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button
-                variant="default"
-                onClick={() => setShowTerminateDialog(false)}
-                disabled={isTerminating}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleTerminateRuntime}
-                disabled={isTerminating}
-                leadingVisual={XIcon}
-              >
-                {isTerminating ? 'Terminating...' : 'Terminate Runtime'}
-              </Button>
-            </Box>
-          </Box>
-        </Dialog>
-      </Box>
-    </JupyterReactTheme>
+        </Box>
+      </Dialog>
+    </Box>
   );
 };
 
