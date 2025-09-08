@@ -59,7 +59,7 @@ const TextOnlyEditorInner: React.FC = () => {
         'div[data-lexical-table-of-contents]',
         '.TableOfContentsPlugin__tableOfContents',
         '[class*="table-of-contents"]',
-        '[class*="TableOfContents"]'
+        '[class*="TableOfContents"]',
       ];
 
       for (const selector of tocSelectors) {
@@ -67,7 +67,10 @@ const TextOnlyEditorInner: React.FC = () => {
         if (tocElement && sidebarRef.current) {
           // Check if it's not already in our sidebar
           if (!sidebarRef.current.contains(tocElement)) {
-            console.log('Moving table of contents to sidebar (text-only):', selector);
+            console.log(
+              'Moving table of contents to sidebar (text-only):',
+              selector
+            );
             sidebarRef.current.appendChild(tocElement);
             break;
           }
@@ -77,7 +80,7 @@ const TextOnlyEditorInner: React.FC = () => {
 
     // Check periodically for table of contents
     const interval = setInterval(moveTableOfContents, 1000);
-    
+
     // Also check immediately and after a short delay
     setTimeout(moveTableOfContents, 100);
     setTimeout(moveTableOfContents, 500);
@@ -132,7 +135,7 @@ const LexicalEditorInner: React.FC = () => {
         'div[data-lexical-table-of-contents]',
         '.TableOfContentsPlugin__tableOfContents',
         '[class*="table-of-contents"]',
-        '[class*="TableOfContents"]'
+        '[class*="TableOfContents"]',
       ];
 
       for (const selector of tocSelectors) {
@@ -150,7 +153,7 @@ const LexicalEditorInner: React.FC = () => {
 
     // Check periodically for table of contents
     const interval = setInterval(moveTableOfContents, 1000);
-    
+
     // Also check immediately and after a short delay
     setTimeout(moveTableOfContents, 100);
     setTimeout(moveTableOfContents, 500);

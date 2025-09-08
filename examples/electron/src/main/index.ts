@@ -61,7 +61,6 @@ function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
-
 function shouldEnableDevTools(): boolean {
   // Always enable DevTools for all builds
   return true;

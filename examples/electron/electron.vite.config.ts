@@ -851,6 +851,7 @@ export default defineConfig({
 
             // Comprehensive lodash polyfills for all the internal functions
             const lodashPolyfills = `
+              
               // Save original constructors at the very beginning
               (function() {
                 if (!globalThis._OriginalUint8Array) {
@@ -869,15 +870,7 @@ export default defineConfig({
                 }
               })();
 
-              // Lodash internal function polyfills
-              if (typeof baseGetTag$1 === 'undefined') {
-                var baseGetTag$1 = function(value) {
-                  if (value == null) {
-                    return value === undefined ? '[object Undefined]' : '[object Null]';
-                  }
-                  return Object.prototype.toString.call(value);
-                };
-              }
+              // Lodash internal function polyfills removed - now using global assignments
 
               // Ensure global constructors are available (handle multiple variations)
               if (typeof Map$1 === 'undefined') var Map$1 = _OriginalMap;
@@ -959,13 +952,7 @@ export default defineConfig({
               var Uint8Array$4 = globalThis._OriginalUint8Array;
               var Uint8Array$5 = globalThis._OriginalUint8Array;
 
-              // Additional lodash helpers
-              if (typeof isObject$1 === 'undefined') {
-                var isObject$1 = function(value) {
-                  var type = typeof value;
-                  return value != null && (type == 'object' || type == 'function');
-                };
-              }
+              // Additional lodash helpers (isObject$1 defined globally after 'use strict')
 
               // Define toSource function (used by lodash internally)
               if (typeof toSource === 'undefined') {
@@ -1074,6 +1061,46 @@ export default defineConfig({
             } else {
               modified = lodashPolyfills + modified;
             }
+
+            // CRITICAL FIX: Global assignment approach - avoid all var declarations
+            
+            // Use completely safe variable names without $ characters
+            const globalAssignments = `
+// Global assignments to prevent redeclaration conflicts
+globalThis._DL_isObject1 = globalThis._DL_isObject1 || function(v){var t=typeof v;return v!=null&&(t=='object'||t=='function');};
+globalThis._DL_baseGetTag1 = globalThis._DL_baseGetTag1 || function(v){return v==null?(v===undefined?'[object Undefined]':'[object Null]'):Object.prototype.toString.call(v);};
+globalThis._DL_baseGetTag2 = globalThis._DL_baseGetTag2 || globalThis._DL_baseGetTag1;
+globalThis._DL_baseGetTag3 = globalThis._DL_baseGetTag3 || globalThis._DL_baseGetTag1;
+globalThis._DL_base1 = globalThis._DL_base1 || {};
+globalThis._DL_base2 = globalThis._DL_base2 || globalThis._DL_base1;
+globalThis._DL_base3 = globalThis._DL_base3 || globalThis._DL_base1;
+`;
+            
+            modified = globalAssignments + modified;
+            
+            // Replace all occurrences with safe property access, but NOT in variable declarations
+            // First pass: replace function calls and property access
+            modified = modified.replace(/([^a-zA-Z_$])isObject\$1\b/g, '$1globalThis._DL_isObject1');
+            modified = modified.replace(/([^a-zA-Z_$])baseGetTag\$1\b/g, '$1globalThis._DL_baseGetTag1');
+            modified = modified.replace(/([^a-zA-Z_$])baseGetTag\$2\b/g, '$1globalThis._DL_baseGetTag2');
+            modified = modified.replace(/([^a-zA-Z_$])baseGetTag\$3\b/g, '$1globalThis._DL_baseGetTag3');
+            modified = modified.replace(/([^a-zA-Z_$])base\$1\b/g, '$1globalThis._DL_base1');
+            modified = modified.replace(/([^a-zA-Z_$])base\$2\b/g, '$1globalThis._DL_base2');
+            modified = modified.replace(/([^a-zA-Z_$])base\$3\b/g, '$1globalThis._DL_base3');
+
+            // Also handle cases at start of line (but not after var/let/const)
+            modified = modified.replace(/^(\s*)isObject\$1\b/gm, '$1globalThis._DL_isObject1');
+            modified = modified.replace(/^(\s*)baseGetTag\$1\b/gm, '$1globalThis._DL_baseGetTag1');
+            modified = modified.replace(/^(\s*)baseGetTag\$2\b/gm, '$1globalThis._DL_baseGetTag2');
+            modified = modified.replace(/^(\s*)baseGetTag\$3\b/gm, '$1globalThis._DL_baseGetTag3');
+            modified = modified.replace(/^(\s*)base\$1\b/gm, '$1globalThis._DL_base1');
+            modified = modified.replace(/^(\s*)base\$2\b/gm, '$1globalThis._DL_base2');
+            modified = modified.replace(/^(\s*)base\$3\b/gm, '$1globalThis._DL_base3');
+            
+            // Fix any invalid var declarations that got through
+            modified = modified.replace(/var globalThis\._DL_/g, 'var _DL_');
+            modified = modified.replace(/let globalThis\._DL_/g, 'let _DL_');
+            modified = modified.replace(/const globalThis\._DL_/g, 'const _DL_');
 
             // Wrap ALL Uint8Array constructor calls to ensure it's available
             modified = modified.replace(

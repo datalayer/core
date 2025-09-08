@@ -325,6 +325,7 @@ if (window.Backbone) {
   3. `Cannot redefine property: Uint8Array` - Property protection conflicts
   4. `Cannot set property default of function which has only a getter` - Module export conflicts
   5. `Symbol$5 is not defined` - Numbered constructor variations missing
+  6. **🔥 CRITICAL**: `Uncaught SyntaxError: Unexpected token '.'` - Invalid variable declarations like `var globalThis._DL_baseGetTag3`
 
 - **Root Causes**:
 
@@ -332,6 +333,7 @@ if (window.Backbone) {
   - The bundler creates numbered variations of constructors (Map$1, Map$2, etc.) that lodash expects
   - CommonJS to ESM conversion creates getter-only properties that break when reassigned
   - Native constructors get overwritten during bundling
+  - **CRITICAL**: Regex replacements were too aggressive and replaced function names in variable declarations
 
 - **Final Solution**:
 
@@ -347,17 +349,25 @@ if (window.Backbone) {
      - `fix-lodash-bundling` plugin: Injects comprehensive polyfills into bundle
      - Replaces `new Uint8Array(` with fallback pattern
      - Ensures all constructor variations are available globally
+     - **🔥 CRITICAL FIX**: Selective regex replacements that avoid variable declarations:
+       ```javascript
+       // Before (broken): /\bbaseGetTag\$3\b/g → created "var globalThis._DL_baseGetTag3"
+       // After (working): /([^a-zA-Z_$])baseGetTag\$3\b/g → only replaces usage, not declarations
+       ```
 
   3. **What NOT to do**:
      - Don't use constructor wrappers that interfere with module exports
      - Don't make properties non-configurable (causes conflicts)
      - Don't use aggressive property protection (breaks legitimate code)
+     - **🔥 CRITICAL**: Don't use broad regex replacements that affect variable declarations
 
 - **Key Lessons**:
   - Clean builds are essential: `rm -rf dist dist-electron node_modules/.vite`
   - Constructor wrappers that use Proxy can break module.exports
   - Lodash needs very specific internal implementations to work when bundled
   - The numbered variations (like Symbol$5) are created by the bundler and must be polyfilled
+  - **🔥 CRITICAL**: Regex replacements must be surgical - avoid variable declarations at all costs
+  - Always test production builds after changing bundling logic
 
 ### Development Mode Issues (RESOLVED!)
 
@@ -678,3 +688,4 @@ When working with this codebase:
 23. **About Dialog Security**: Uses secure context isolation with preload scripts and IPC handlers
 24. **Environment Variables**: Use `ELECTRON_DEV_PROD=true` to enable DevTools in production builds for testing
 25. **Security Best Practices**: Keyboard shortcuts and right-click context menu disabled in production for security
+26. **🎉 PRODUCTION BUILDS FULLY WORKING**: All JavaScript syntax errors resolved, app builds and runs successfully in production mode

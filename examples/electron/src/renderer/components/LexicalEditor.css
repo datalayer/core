@@ -31,8 +31,8 @@
 body .table-of-contents,
 body div[data-lexical-table-of-contents],
 body .TableOfContentsPlugin__tableOfContents,
-body [class*="table-of-contents"],
-body [class*="TableOfContents"] {
+body [class*='table-of-contents'],
+body [class*='TableOfContents'] {
   display: none !important;
 }
 
@@ -40,8 +40,8 @@ body [class*="TableOfContents"] {
 .lexical-editor-sidebar .table-of-contents,
 .lexical-editor-sidebar div[data-lexical-table-of-contents],
 .lexical-editor-sidebar .TableOfContentsPlugin__tableOfContents,
-.lexical-editor-sidebar [class*="table-of-contents"],
-.lexical-editor-sidebar [class*="TableOfContents"] {
+.lexical-editor-sidebar [class*='table-of-contents'],
+.lexical-editor-sidebar [class*='TableOfContents'] {
   display: block !important;
   position: static !important;
   top: auto !important;
