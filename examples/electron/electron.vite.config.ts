@@ -138,6 +138,10 @@ export default defineConfig({
               '@jupyterlab/services/lib/nbconvert': ['NbConvertManager'],
               '@jupyterlab/services/lib/user': ['UserManager'],
               '@jupyterlab/services/lib/builder': ['BuildManager'],
+              '@jupyterlab/statedb': ['DataConnector'],
+              'lodash.escape': ['default'],
+              'ajv': ['default'],
+              'yjs': ['default', 'Doc', 'Map', 'Array', 'Text', 'XmlElement', 'XmlFragment', 'XmlHook', 'XmlText'],
               // Handle nested node_modules from @jupyterlite
               '@jupyterlite/server/node_modules/@jupyterlab/services': [
                 'ServiceManager',
@@ -1370,6 +1374,10 @@ export default defineConfig({
         'react-dom',
         'react/jsx-runtime',
         '@jupyterlab/services',
+        '@jupyterlab/statedb',
+        'lodash.escape',
+        'ajv',
+        'yjs',
         '@jupyterlab/services/lib/manager',
         '@jupyterlab/services/lib/serverconnection',
         '@jupyterlab/services/lib/kernel',

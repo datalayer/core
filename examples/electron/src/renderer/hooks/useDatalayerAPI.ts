@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useCoreStore } from '@datalayer/core';
+import { useCoreStore, useIAMStore } from '@datalayer/core';
 
 // Define the interface locally since it's not exported from @datalayer/core
 interface IDatalayerEnvironment {
@@ -32,6 +32,7 @@ interface IDatalayerEnvironment {
  */
 export function useDatalayerAPI() {
   const { setConfiguration } = useCoreStore();
+  const { login: iamLogin } = useIAMStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,14 +65,21 @@ export function useDatalayerAPI() {
 
         if (result.success) {
           // Update the store with credentials
-          // We need runUrl for some components but use a dummy token for security
+          // Pass the real token so @datalayer/core can make authenticated API calls
           setConfiguration({
             runUrl, // Required by NotebookView and collaboration
-            token: 'secured', // Dummy token - real token is only in main process
+            token, // Real token - needed for @datalayer/core API calls
             cpuEnvironment: 'python-cpu-env',
             gpuEnvironment: 'ai-env',
             credits: 100,
           });
+
+          // Also login to IAM store so it has the token for API calls
+          try {
+            await iamLogin(token);
+          } catch (error) {
+            console.warn('IAM login failed, but continuing:', error);
+          }
 
           // Fetch current user data after successful login
           try {
@@ -95,7 +103,7 @@ export function useDatalayerAPI() {
         setLoading(false);
       }
     },
-    [setConfiguration]
+    [setConfiguration, iamLogin]
   );
 
   /**
@@ -134,14 +142,26 @@ export function useDatalayerAPI() {
 
       if (credentials.isAuthenticated) {
         // Update store with credentials
-        // We need runUrl for some components but use a dummy token for security
+        // Pass the real token so @datalayer/core can make authenticated API calls
         setConfiguration({
           runUrl: credentials.runUrl, // Required by NotebookView and collaboration
-          token: 'secured', // Dummy token - real token is only in main process
+          token: credentials.token, // Real token - needed for @datalayer/core API calls
           cpuEnvironment: 'python-cpu-env',
           gpuEnvironment: 'ai-env',
           credits: 100,
         });
+
+        // Also login to IAM store so it has the token for API calls
+        if (credentials.token) {
+          try {
+            await iamLogin(credentials.token);
+          } catch (error) {
+            console.warn(
+              'IAM login failed during auth check, but continuing:',
+              error
+            );
+          }
+        }
       }
 
       return credentials;
@@ -149,7 +169,7 @@ export function useDatalayerAPI() {
       console.error('Auth check error:', err);
       return { isAuthenticated: false };
     }
-  }, [setConfiguration]);
+  }, [setConfiguration, iamLogin]);
 
   /**
    * Fetch environments

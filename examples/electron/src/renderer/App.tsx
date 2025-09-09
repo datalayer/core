@@ -17,7 +17,12 @@ import {
   ActionList,
   Spinner,
 } from '@primer/react';
-import { DatabaseIcon, SignOutIcon, BookIcon } from '@primer/octicons-react';
+import {
+  DatabaseIcon,
+  SignOutIcon,
+  BookIcon,
+  PencilIcon,
+} from '@primer/octicons-react';
 import { useCoreStore } from '@datalayer/core';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
@@ -72,6 +77,7 @@ const App: React.FC = () => {
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
   );
+  const [isNotebookEditorActive, setIsNotebookEditorActive] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { configuration } = useCoreStore();
   const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
@@ -283,30 +289,42 @@ const App: React.FC = () => {
 
   // Monitor network connectivity
 
+  const handleNotebookEditorDeactivate = useCallback(() => {
+    logger.debug('Deactivating notebook editor');
+    setIsNotebookEditorActive(false);
+    setCurrentView('notebooks');
+    setSelectedNotebook(null);
+  }, []);
+
   const handleLogout = async () => {
     // Use secure IPC to logout
     await logoutAPI();
     setIsAuthenticated(false);
     setCurrentView('environments');
     setSelectedNotebook(null);
+    setIsNotebookEditorActive(false);
   };
 
   const handleNotebookSelect = (notebook: NotebookData) => {
     logger.debug('Selected notebook:', notebook);
     setSelectedNotebook(notebook);
     setCurrentView('notebook');
+    setIsNotebookEditorActive(true);
   };
 
   const renderView = (): React.ReactElement => {
-    // Handle notebook view separately since it needs proper mounting/unmounting
-    if (currentView === 'notebook') {
+    // Handle notebook view with conditional mounting to avoid MathJax conflicts
+    if (currentView === 'notebook' && selectedNotebook) {
       return (
         <NotebookView
+          key={`notebook-${selectedNotebook.id}`}
           selectedNotebook={selectedNotebook}
           onClose={() => {
             setCurrentView('notebooks');
             setSelectedNotebook(null);
+            setIsNotebookEditorActive(false);
           }}
+          onRuntimeTerminated={handleNotebookEditorDeactivate}
         />
       );
     }
@@ -428,15 +446,14 @@ const App: React.FC = () => {
                     alignItems: 'center',
                     gap: 1,
                     borderBottom:
-                      currentView === 'notebooks' || currentView === 'notebook'
+                      currentView === 'notebooks'
                         ? `2px solid ${COLORS.brand.primary}`
                         : '2px solid transparent',
                     paddingBottom: '4px',
                     '&:hover': {
                       textDecoration: 'none',
                       borderBottom:
-                        currentView === 'notebooks' ||
-                        currentView === 'notebook'
+                        currentView === 'notebooks'
                           ? `2px solid ${COLORS.brand.primary}`
                           : '2px solid transparent',
                     },
@@ -446,6 +463,38 @@ const App: React.FC = () => {
                   <span>Documents</span>
                 </Header.Link>
               </Header.Item>
+              {isNotebookEditorActive && (
+                <Header.Item>
+                  <Header.Link
+                    href="#"
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault();
+                      setCurrentView('notebook');
+                    }}
+                    sx={{
+                      fontWeight: 'normal',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      borderBottom:
+                        currentView === 'notebook'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                      paddingBottom: '4px',
+                      '&:hover': {
+                        textDecoration: 'none',
+                        borderBottom:
+                          currentView === 'notebook'
+                            ? `2px solid ${COLORS.brand.primary}`
+                            : '2px solid transparent',
+                      },
+                    }}
+                  >
+                    <PencilIcon size={16} />
+                    <span>Notebook Editor</span>
+                  </Header.Link>
+                </Header.Item>
+              )}
               <Header.Item full />
               {isAuthenticated && githubUser && (
                 <Header.Item>

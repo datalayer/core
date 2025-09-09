@@ -429,7 +429,7 @@ ipcMain.handle('datalayer:logout', async () => {
 });
 
 ipcMain.handle('datalayer:get-credentials', () => {
-  return apiService.getCredentials();
+  return apiService.getCredentialsWithToken();
 });
 
 // About dialog handlers

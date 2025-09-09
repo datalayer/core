@@ -4,14 +4,19 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Heading, Text, Button, Dialog } from '@primer/react';
+import { Box, Heading, Text, Button, Dialog, Spinner } from '@primer/react';
 import { INotebookContent } from '@jupyterlab/nbformat';
-import { Notebook2 } from '@datalayer/jupyter-react';
+import {
+  Notebook2,
+  CellSidebarExtension,
+  CellSidebarButton,
+} from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import { XIcon, AlertIcon } from '@primer/octicons-react';
 import { useRuntimeStore } from '../stores/runtimeStore';
+import { COLORS } from '../constants/colors';
 import type { ServiceManager } from '@jupyterlab/services';
 
 // Error boundary component to catch and handle Notebook2 errors
@@ -81,11 +86,13 @@ interface NotebookViewProps {
     description?: string;
   } | null;
   onClose?: () => void;
+  onRuntimeTerminated?: () => void;
 }
 
 const NotebookView: React.FC<NotebookViewProps> = ({
   selectedNotebook,
   onClose,
+  onRuntimeTerminated,
 }) => {
   const [loading, setLoading] = useState(true);
   const [notebookContent, setNotebookContent] =
@@ -145,6 +152,10 @@ const NotebookView: React.FC<NotebookViewProps> = ({
         // Clear the active notebook from the store
         setActiveNotebook(null);
         setShowTerminateDialog(false);
+        // Notify parent about runtime termination to update navigation
+        if (onRuntimeTerminated) {
+          onRuntimeTerminated();
+        }
         // Redirect to notebooks listing after terminating
         if (onClose) {
           onClose();
@@ -281,7 +292,19 @@ const NotebookView: React.FC<NotebookViewProps> = ({
       if (!mountedRef.current) {
         return;
       }
-      if (configuration?.token && configuration?.runUrl && !serviceManager) {
+      // Check if we already have a runtime with service manager for this notebook
+      const existingRuntime = selectedNotebook
+        ? getRuntimeForNotebook(selectedNotebook.id)
+        : null;
+      const hasExistingServiceManager =
+        existingRuntime?.serviceManager &&
+        !existingRuntime.serviceManager.isDisposed;
+
+      if (
+        configuration?.token &&
+        configuration?.runUrl &&
+        !hasExistingServiceManager
+      ) {
         setError(null);
         try {
           console.info('Creating runtime with Datalayer production service...');
@@ -498,6 +521,7 @@ const NotebookView: React.FC<NotebookViewProps> = ({
     configuration?.runUrl,
     selectedNotebook?.id,
     selectedNotebook?.path,
+    getRuntimeForNotebook,
     // Don't include functions or derived values that change frequently
   ]);
 
@@ -637,6 +661,12 @@ const NotebookView: React.FC<NotebookViewProps> = ({
   // Track if notebook component is mounted to prevent re-initialization
   const notebookComponentRef = useRef<unknown>(null);
 
+  // Create extensions for enhanced notebook UI
+  const notebookExtensions = useMemo(
+    () => [new CellSidebarExtension({ factory: CellSidebarButton })],
+    []
+  );
+
   // Create notebook props with collaboration always enabled - NEVER changes
   const notebookProps = useMemo(() => {
     console.info('[NotebookView] Creating notebook props:', {
@@ -669,6 +699,8 @@ const NotebookView: React.FC<NotebookViewProps> = ({
       collaborative: true, // Enable Jupyter RTC collaboration
       collaborationEnabled: true, // Enable collaboration
       collaborationProvider: collaborationProviderRef.current || undefined, // Add collaboration provider
+      extensions: notebookExtensions, // Add cell sidebar extensions
+      cellSidebarMargin: 60, // Add margin for sidebar
     };
 
     console.info('[NotebookView] Notebook props created:', props);
@@ -706,8 +738,20 @@ const NotebookView: React.FC<NotebookViewProps> = ({
 
   if (loading || loadingNotebook || isCreatingRuntime) {
     return (
-      <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Text>
+      <Box
+        sx={{
+          p: 4,
+          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          height: '100%',
+        }}
+      >
+        <Spinner size="large" sx={{ color: COLORS.brand.primary }} />
+        <Text sx={{ color: 'fg.muted' }}>
           {loadingNotebook
             ? 'Loading notebook...'
             : isCreatingRuntime

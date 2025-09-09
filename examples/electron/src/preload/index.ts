@@ -276,7 +276,11 @@ export interface DatalayerAPI {
     token: string;
   }) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<{ success: boolean }>;
-  getCredentials: () => Promise<{ runUrl: string; isAuthenticated: boolean }>;
+  getCredentials: () => Promise<{
+    runUrl: string;
+    token?: string;
+    isAuthenticated: boolean;
+  }>;
   getEnvironments: () => Promise<{
     success: boolean;
     data?: EnvironmentData[];
