@@ -1,0 +1,638 @@
+Opening document: Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.656 › Selected document: {id: '01K2W8DX0WWRF3P0F3YNDCM2PB', name: 'Testing the rich editor', path: '/Testing the rich editor', cdnUrl: 'https://documents.datalayer.io/datalayer.app/01JY2…R1W0VT/lexical/01K2W8DX0WWRF3P0F3YNDCM2PB.lexical', description: 'Wohoo'}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.662 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.662 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.671 › Loading document: {id: '01K2W8DX0WWRF3P0F3YNDCM2PB', name: 'Testing the rich editor', path: '/Testing the rich editor', cdnUrl: 'https://documents.datalayer.io/datalayer.app/01JY2…R1W0VT/lexical/01K2W8DX0WWRF3P0F3YNDCM2PB.lexical', description: 'Wohoo'}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.672 › Loading document content for: /Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.672 › Using Electron proxy API to fetch CDN URL
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.672 › Loading document: {id: '01K2W8DX0WWRF3P0F3YNDCM2PB', name: 'Testing the rich editor', path: '/Testing the rich editor', cdnUrl: 'https://documents.datalayer.io/datalayer.app/01JY2…R1W0VT/lexical/01K2W8DX0WWRF3P0F3YNDCM2PB.lexical', description: 'Wohoo'}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.672 › Loading document content for: /Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.672 › Using Electron proxy API to fetch CDN URL
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.672 › [HTTP Proxy] GET https://documents.datalayer.io/datalayer.app/01JY2SAWPG0F1X737SB1R1W0VT/lexical/01K2W8DX0WWRF3P0F3YNDCM2PB.lexical
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.701 › [HTTP Proxy] GET https://documents.datalayer.io/datalayer.app/01JY2SAWPG0F1X737SB1R1W0VT/lexical/01K2W8DX0WWRF3P0F3YNDCM2PB.lexical
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.763 › Loaded document content from CDN URL via Electron proxy
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.764 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.764 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.765 › Loaded document content from CDN URL via Electron proxy
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.765 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:13.765 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.173 › Document loaded successfully
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.173 › Auto-starting runtime for document: Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.173 › Document loaded successfully
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.173 › Auto-starting runtime for document: Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.173 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.173 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+runtimeStore.ts:132 Creating new runtime for notebook 01K2W8DX0WWRF3P0F3YNDCM2PB with options: undefined
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.673 › autoStartRuntime called with: {selectedDocument: 'Testing the rich editor', hasConfiguration: true, configurationReady: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwM…iJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE'}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.674 › Auto-starting runtime for document: Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.674 › Creating runtime for document: Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.675 › No existing runtime found, creating new one
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.682 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.683 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.686 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.686 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:14.677 › [API] Creating runtime with body: {
+  "environment_name": "python-cpu-env",
+  "type": "notebook",
+  "given_name": "electron-example-01K2W8DX0WWRF3P0F3YNDCM2PB-mfcmuinn",
+  "credits_limit": 10,
+  "capabilities": []
+}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.125 › [API Request] 201 for /api/runtimes/v1/runtimes
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.125 › [API Response] Raw: {"success": true, "message": "The Runtime is available.", "runtime": {"burning_rate": 0.008, "environment_name": "python-cpu-env", "environment_title": "Python CPU Environment", "uid": "01k4pg4aghdbr3kk0k1112p0ap", "pod_name": "runtime-01k4pg4aghdbr3kk0k1112p0ap", "type": "notebook", "given_name": "electron-example-01K2W8DX0WWRF3P0F3YNDCM2PB-mfcmuinn", "token": "f56cf58dc03d9b191df3c52ba05d0328de2eba4e", "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4pg4aghdbr3kk0k1112p0ap", "reservation_id": "runtime-01k4pg4aghdbr3kk0k1112p0ap", "started_at": "1757427315.000", "expired_at": "1757428565.000"}}
+
+runtimeStore.ts:149 🔍 Complete runtime object structure: {
+  "burning_rate": 0.008,
+  "environment_name": "python-cpu-env",
+  "environment_title": "Python CPU Environment",
+  "uid": "01k4pg4aghdbr3kk0k1112p0ap",
+  "pod_name": "runtime-01k4pg4aghdbr3kk0k1112p0ap",
+  "type": "notebook",
+  "given_name": "electron-example-01K2W8DX0WWRF3P0F3YNDCM2PB-mfcmuinn",
+  "token": "f56cf58dc03d9b191df3c52ba05d0328de2eba4e",
+  "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4pg4aghdbr3kk0k1112p0ap",
+  "reservation_id": "runtime-01k4pg4aghdbr3kk0k1112p0ap",
+  "started_at": "1757427315.000",
+  "expired_at": "1757428565.000"
+}
+runtimeStore.ts:166 Runtime created successfully for notebook 01K2W8DX0WWRF3P0F3YNDCM2PB: 01k4pg4aghdbr3kk0k1112p0ap
+App.tsx:73 [ServiceManagerLoader] Loading @jupyterlab/services dynamically...
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.130 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.130 › ServiceManager state: {hasServiceManager: false, isReady: undefined, kernelspecs: undefined, sessions: undefined, kernelspecsReady: 'missing', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.131 › Runtime created: {notebookId: '01K2W8DX0WWRF3P0F3YNDCM2PB', notebookPath: 'Testing the rich editor', runtime: {…}}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.131 › Creating service manager for runtime
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.131 (proxy) › Creating ServiceManager with baseUrl: https://prod1.datalayer.run
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.131 (proxy) › Normalized baseUrl: https://prod1.datalayer.run/
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.126 › [API Response] Parsed: {
+  "success": true,
+  "message": "The Runtime is available.",
+  "runtime": {
+    "burning_rate": 0.008,
+    "environment_name": "python-cpu-env",
+    "environment_title": "Python CPU Environment",
+    "uid": "01k4pg4aghdbr3kk0k1112p0ap",
+    "pod_name": "runtime-01k4pg4aghdbr3kk0k1112p0ap",
+    "type": "notebook",
+    "given_name": "electron-example-01K2W8DX0WWRF3P0F3YNDCM2PB-mfcmuinn",
+    "token": "f56cf58dc03d9b191df3c52ba05d0328de2eba4e",
+    "ingress": "https://prod1.datalayer.run/jupyter/server/python-cpu-pool/01k4pg4aghdbr3kk0k1112p0ap",
+    "reservation_id": "runtime-01k4pg4aghdbr3kk0k1112p0ap",
+    "started_at": "1757427315.000",
+    "expired_at": "1757428565.000"
+  }
+}
+App.tsx:73 [ServiceManagerLoader] Loaded jupyterlab-services-proxy
+App.tsx:73 [ServiceManagerLoader] Services type: object
+App.tsx:73 [ServiceManagerLoader] Keys: (35) ['BaseManager', 'BuildManager', 'ConfigSection', 'ConfigSectionManager', 'ConfigWithDefaults', 'ConnectionStatus', 'Contents', 'ContentsManager', 'Drive', 'Event', 'EventManager', 'IConfigSectionManager', 'Kernel', 'KernelAPI', 'KernelConnection', 'KernelManager', 'KernelMessage', 'KernelSpec', 'KernelSpecAPI', 'KernelSpecManager', 'NbConvertManager', 'Nbconvert', 'RestContentProvider', 'ServerConnection', 'ServiceManager', 'Session', 'SessionManager', 'Setting', 'SettingManager', 'Terminal', 'TerminalManager', 'User', 'UserManager', 'Workspace', 'WorkspaceManager']
+App.tsx:73 [ServiceManagerLoader] Export 'BaseManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'BuildManager': type=undefined, isFunction=false, constructor=N/A
+App.tsx:73 [ServiceManagerLoader] Export 'ConfigSection': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'ConfigSectionManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'ConfigWithDefaults': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'ConnectionStatus': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Contents': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'ContentsManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Drive': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Event': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'EventManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'IConfigSectionManager': type=object, isFunction=false, constructor=Token
+App.tsx:73 [ServiceManagerLoader] Export 'Kernel': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'KernelAPI': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'KernelConnection': type=undefined, isFunction=false, constructor=N/A
+App.tsx:73 [ServiceManagerLoader] Export 'KernelManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'KernelMessage': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'KernelSpec': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'KernelSpecAPI': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'KernelSpecManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'NbConvertManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Nbconvert': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'RestContentProvider': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'ServerConnection': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'ServiceManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Session': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'SessionManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Setting': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'SettingManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Terminal': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'TerminalManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'User': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'UserManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Export 'Workspace': type=object, isFunction=false, constructor=Object
+App.tsx:73 [ServiceManagerLoader] Export 'WorkspaceManager': type=function, isFunction=true, constructor=Function
+App.tsx:73 [ServiceManagerLoader] Successfully loaded real ServiceManager
+App.tsx:73 [ServiceManagerLoader] ServiceManager type: function
+App.tsx:73 [ServiceManagerLoader] ServiceManager constructor name: Function
+App.tsx:73 [ServiceManagerLoader] ServiceManager is a constructor? true
+App.tsx:73 [ServiceManagerLoader] Successfully loaded real ServerConnection
+App.tsx:73 [ServiceManagerLoader] ServerConnection type: object
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+chunk-TKTSSOR7.js?v=8e1a8dc1:521 Warning: Jupyter: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.
+    at Jupyter (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:9094:11)
+    at DocumentViewContent (http://localhost:5173/components/DocumentView.tsx:69:3)
+    at LexicalProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:5644:26)
+    at DocumentView (http://localhost:5173/components/DocumentView.tsx:42:3)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at BoxWithFallback2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:5658:50)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:16417:51)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:11505:3)
+    at JupyterReactTheme (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:5935:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=8e1a8dc1:5370:5)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=8e1a8dc1:5188:3)
+    at App (http://localhost:5173/App.tsx:50:3)
+printWarning @ chunk-TKTSSOR7.js?v=8e1a8dc1:521
+error @ chunk-TKTSSOR7.js?v=8e1a8dc1:505
+validateFunctionComponentInDev @ chunk-TKTSSOR7.js?v=8e1a8dc1:15019
+mountIndeterminateComponent @ chunk-TKTSSOR7.js?v=8e1a8dc1:14988
+beginWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:15914
+beginWork$1 @ chunk-TKTSSOR7.js?v=8e1a8dc1:19753
+performUnitOfWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:19198
+workLoopSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:19137
+renderRootSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:19116
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18874
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+(anonymous) @ chunk-TKTSSOR7.js?v=8e1a8dc1:18627
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+App.tsx:73 Checking kernels for the new Service Manager: undefined
+App.tsx:73 Setting Service Manager from props ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+App.tsx:73 Checking kernels for the new Service Manager: ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+App.tsx:73 Checking kernels for the new Service Manager: undefined
+App.tsx:73 Setting Service Manager from props ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+App.tsx:73 Checking kernels for the new Service Manager: ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.136 (proxy) › HTTP GET https://prod1.datalayer.run/api/kernelspecs?1757427316136
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.136 (proxy) › HTTP GET https://prod1.datalayer.run/api/me?1757427316136
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.137 › Service manager created for document
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.139 › ServiceManager state: {hasServiceManager: true, isReady: false, kernelspecs: false, sessions: false, kernelspecsReady: 'exists', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.140 › ServiceManager state: {hasServiceManager: true, isReady: false, kernelspecs: false, sessions: false, kernelspecsReady: 'exists', …}
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.205 › Document editor session connected: undefined
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.209 › Service manager is ready, can start kernel operations
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.210 › Document editor session connected: undefined
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.228 (proxy) › HTTP GET https://prod1.datalayer.run/api/kernels?1757427316228
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.228 (proxy) › HTTP GET https://prod1.datalayer.run/api/sessions?1757427316228
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.231 › ServiceManager state: {hasServiceManager: true, isReady: false, kernelspecs: false, sessions: false, kernelspecsReady: 'exists', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.232 › ServiceManager state: {hasServiceManager: true, isReady: false, kernelspecs: false, sessions: false, kernelspecsReady: 'exists', …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.236 › Document editor session connected: undefined
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.236 › Loading document content for: /Testing the rich editor
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.236 › Using Electron proxy API to fetch CDN URL
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.136 › [HTTP Proxy] GET https://prod1.datalayer.run/api/kernelspecs?1757427316136
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.138 › [HTTP Proxy] GET https://prod1.datalayer.run/api/me?1757427316136
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.228 › [WebSocket Proxy] 🟢 OPENING: Connection ws-1 to wss://prod1.datalayer.run/api/events/subscribe?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.228 › [WebSocket Proxy] 🟢 RUNTIME ASSOCIATION: Connection ws-1 associated with runtime runtime-01k4pg4aghdbr3kk0k1112p0ap
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.230 › [WebSocket Proxy] 🟢 NEW RUNTIME TRACKING: Created tracking for runtime runtime-01k4pg4aghdbr3kk0k1112p0ap
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.230 › [WebSocket Proxy] 🟢 TRACKING ADDED: Connection ws-1 added to runtime runtime-01k4pg4aghdbr3kk0k1112p0ap (now has 1 connections)
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.230 › [HTTP Proxy] GET https://prod1.datalayer.run/api/kernels?1757427316228
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.231 › [HTTP Proxy] GET https://prod1.datalayer.run/api/sessions?1757427316228
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.242 › [HTTP Proxy] GET https://documents.datalayer.io/datalayer.app/01JY2SAWPG0F1X737SB1R1W0VT/lexical/01K2W8DX0WWRF3P0F3YNDCM2PB.lexical
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.266 › Loaded document content from CDN URL via Electron proxy
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.266 › Initializing Lexical editor with document content
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+DocumentView.tsx:213 Warning: Cannot update a component (`Editor`) while rendering a different component (`Output`). To locate the bad setState() call inside `Output`, follow the stack trace as described in https://reactjs.org/link/setstate-in-render
+    at Output (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:43052:29)
+    at Suspense
+    at ErrorBoundary2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:15443:35)
+    at LexicalErrorBoundary (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:15500:3)
+    at RichTextPlugin (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:11395:3)
+    at div
+    at div
+    at div
+    at LexicalComposer (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:11148:18)
+    at Editor (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:22265:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at JupyterContextProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:32885:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at BoxWithFallback2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:5658:50)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:16417:51)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:11505:3)
+    at ErrorBoundary2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:8951:35)
+    at Jupyter (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:9094:11)
+    at DocumentViewContent (http://localhost:5173/components/DocumentView.tsx:69:3)
+    at LexicalProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:5644:26)
+    at DocumentView (http://localhost:5173/components/DocumentView.tsx:42:3)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at BoxWithFallback2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:5658:50)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:16417:51)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:11505:3)
+    at JupyterReactTheme (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:5935:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=8e1a8dc1:5370:5)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=8e1a8dc1:5188:3)
+    at App (http://localhost:5173/App.tsx:50:3)
+printWarning @ chunk-TKTSSOR7.js?v=8e1a8dc1:521
+error @ chunk-TKTSSOR7.js?v=8e1a8dc1:505
+warnAboutRenderPhaseUpdatesInDEV @ chunk-TKTSSOR7.js?v=8e1a8dc1:19793
+scheduleUpdateOnFiber @ chunk-TKTSSOR7.js?v=8e1a8dc1:18546
+forceStoreRerender @ chunk-TKTSSOR7.js?v=8e1a8dc1:11999
+handleStoreChange @ chunk-TKTSSOR7.js?v=8e1a8dc1:11981
+(anonymous) @ chunk-LLKFOFOK.js?v=8e1a8dc1:10
+setState @ chunk-LLKFOFOK.js?v=8e1a8dc1:10
+setJupyterConfig @ chunk-JI6UXY2L.js?v=8e1a8dc1:32710
+(anonymous) @ chunk-JI6UXY2L.js?v=8e1a8dc1:32734
+mountMemo @ chunk-TKTSSOR7.js?v=8e1a8dc1:12194
+useMemo @ chunk-TKTSSOR7.js?v=8e1a8dc1:12518
+useMemo @ chunk-LD4AXFEC.js?v=8e1a8dc1:1094
+useJupyterReactStoreFromProps @ chunk-JI6UXY2L.js?v=8e1a8dc1:32727
+useJupyter @ chunk-JI6UXY2L.js?v=8e1a8dc1:32845
+Output @ chunk-JI6UXY2L.js?v=8e1a8dc1:43052
+renderWithHooks @ chunk-TKTSSOR7.js?v=8e1a8dc1:11548
+mountIndeterminateComponent @ chunk-TKTSSOR7.js?v=8e1a8dc1:14926
+beginWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:15914
+beginWork$1 @ chunk-TKTSSOR7.js?v=8e1a8dc1:19753
+performUnitOfWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:19198
+workLoopSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:19137
+renderRootSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:19116
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18874
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+flushSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:18959
+flushSync$1 @ chunk-TKTSSOR7.js?v=8e1a8dc1:21538
+(anonymous) @ @datalayer_jupyter-lexical.js?v=8e1a8dc1:11361
+triggerListeners @ chunk-FVHPGMG6.js?v=8e1a8dc1:6930
+$commitPendingUpdates @ chunk-FVHPGMG6.js?v=8e1a8dc1:6885
+setEditorState @ chunk-FVHPGMG6.js?v=8e1a8dc1:8822
+populateEditor @ DocumentView.tsx:213
+(anonymous) @ DocumentView.tsx:322
+setTimeout
+loadDocumentContent @ DocumentView.tsx:321
+await in loadDocumentContent
+(anonymous) @ DocumentView.tsx:332
+commitHookEffectListMount @ chunk-TKTSSOR7.js?v=8e1a8dc1:16915
+commitPassiveMountOnFiber @ chunk-TKTSSOR7.js?v=8e1a8dc1:18156
+commitPassiveMountEffects_complete @ chunk-TKTSSOR7.js?v=8e1a8dc1:18129
+commitPassiveMountEffects_begin @ chunk-TKTSSOR7.js?v=8e1a8dc1:18119
+commitPassiveMountEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:18109
+flushPassiveEffectsImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19490
+flushPassiveEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:19447
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18868
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+commitRootImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19432
+commitRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:19277
+finishConcurrentRender @ chunk-TKTSSOR7.js?v=8e1a8dc1:18805
+performConcurrentWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18718
+workLoop @ chunk-TKTSSOR7.js?v=8e1a8dc1:197
+flushWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:176
+performWorkUntilDeadline @ chunk-TKTSSOR7.js?v=8e1a8dc1:384
+App.tsx:73 Returning existing Jupyter React config {jupyterServerUrl: 'https://oss.datalayer.run/api/jupyter-server', jupyterServerToken: '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6', insideJupyterLab: false, insideJupyterHub: false}
+DocumentView.tsx:213 Warning: Output: Support for defaultProps will be removed from function components in a future major release. Use JavaScript default parameters instead.
+    at Output (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:43052:29)
+    at Suspense
+    at ErrorBoundary2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:15443:35)
+    at LexicalErrorBoundary (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:15500:3)
+    at RichTextPlugin (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:11395:3)
+    at div
+    at div
+    at div
+    at LexicalComposer (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:11148:18)
+    at Editor (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:22265:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at JupyterContextProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:32885:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at BoxWithFallback2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:5658:50)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:16417:51)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:11505:3)
+    at ErrorBoundary2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:8951:35)
+    at Jupyter (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:9094:11)
+    at DocumentViewContent (http://localhost:5173/components/DocumentView.tsx:69:3)
+    at LexicalProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@datalayer_jupyter-lexical.js?v=8e1a8dc1:5644:26)
+    at DocumentView (http://localhost:5173/components/DocumentView.tsx:42:3)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at div
+    at BoxWithFallback2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:5658:50)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:16417:51)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-YXQMQGQS.js?v=8e1a8dc1:11505:3)
+    at JupyterReactTheme (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-JI6UXY2L.js?v=8e1a8dc1:5935:11)
+    at div
+    at P2 (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1459:6)
+    at BaseStyles (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=8e1a8dc1:5370:5)
+    at Le (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/chunk-6ZWWDJNL.js?v=8e1a8dc1:1419:40)
+    at ThemeProvider (http://localhost:5173/@fs/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron/node_modules/.vite/deps/@primer_react.js?v=8e1a8dc1:5188:3)
+    at App (http://localhost:5173/App.tsx:50:3)
+printWarning @ chunk-TKTSSOR7.js?v=8e1a8dc1:521
+error @ chunk-TKTSSOR7.js?v=8e1a8dc1:505
+validateFunctionComponentInDev @ chunk-TKTSSOR7.js?v=8e1a8dc1:15019
+mountIndeterminateComponent @ chunk-TKTSSOR7.js?v=8e1a8dc1:14988
+beginWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:15914
+beginWork$1 @ chunk-TKTSSOR7.js?v=8e1a8dc1:19753
+performUnitOfWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:19198
+workLoopSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:19137
+renderRootSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:19116
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18874
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+flushSync @ chunk-TKTSSOR7.js?v=8e1a8dc1:18959
+flushSync$1 @ chunk-TKTSSOR7.js?v=8e1a8dc1:21538
+(anonymous) @ @datalayer_jupyter-lexical.js?v=8e1a8dc1:11361
+triggerListeners @ chunk-FVHPGMG6.js?v=8e1a8dc1:6930
+$commitPendingUpdates @ chunk-FVHPGMG6.js?v=8e1a8dc1:6885
+setEditorState @ chunk-FVHPGMG6.js?v=8e1a8dc1:8822
+populateEditor @ DocumentView.tsx:213
+(anonymous) @ DocumentView.tsx:322
+setTimeout
+loadDocumentContent @ DocumentView.tsx:321
+await in loadDocumentContent
+(anonymous) @ DocumentView.tsx:332
+commitHookEffectListMount @ chunk-TKTSSOR7.js?v=8e1a8dc1:16915
+commitPassiveMountOnFiber @ chunk-TKTSSOR7.js?v=8e1a8dc1:18156
+commitPassiveMountEffects_complete @ chunk-TKTSSOR7.js?v=8e1a8dc1:18129
+commitPassiveMountEffects_begin @ chunk-TKTSSOR7.js?v=8e1a8dc1:18119
+commitPassiveMountEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:18109
+flushPassiveEffectsImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19490
+flushPassiveEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:19447
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18868
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+commitRootImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19432
+commitRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:19277
+finishConcurrentRender @ chunk-TKTSSOR7.js?v=8e1a8dc1:18805
+performConcurrentWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18718
+workLoop @ chunk-TKTSSOR7.js?v=8e1a8dc1:197
+flushWork @ chunk-TKTSSOR7.js?v=8e1a8dc1:176
+performWorkUntilDeadline @ chunk-TKTSSOR7.js?v=8e1a8dc1:384
+App.tsx:73 Checking kernels for the new Service Manager: undefined
+App.tsx:73 Checking kernels for the new Service Manager: undefined
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.290 › Populated editor with Lexical editor state
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at getSpecs (chunk-ZPTIAAGM.js?v=8e1a8dc1:97:77)
+    at async KernelSpecManager.requestSpecs (chunk-6VMJNQFT.js?v=8e1a8dc1:131:23)
+    at async Promise.all (:5173/index 0)
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at UserManager.requestUser (chunk-L3IQ7PFK.js?v=8e1a8dc1:143:43)
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.645 (proxy) › HTTP GET https://prod1.datalayer.run/api/kernelspecs?1757427316644
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.645 › [HTTP Proxy] GET https://prod1.datalayer.run/api/kernelspecs?1757427316644
+VM5:31 09:15:16.731 › [WebSocket Proxy] Error on ws-1: Error: Unexpected server response: 404
+    at ClientRequest.<anonymous> (/Users/goanpeca/Desktop/develop/datalayer/core/node_modules/ws/lib/websocket.js:913:7)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at TLSSocket.socketOnData (node:_http_client:544:22)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:366
+setTimeout
+writeFn @ electron-log_renderer.js?v=8e1a8dc1:366
+transport @ electron-log_renderer.js?v=8e1a8dc1:370
+processMessage @ electron-log_renderer.js?v=8e1a8dc1:221
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:604
+postMessage
+(anonymous) @ VM5:31
+emit @ VM4 sandbox_bundle:2
+onMessage @ VM4 sandbox_bundle:2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.734 (proxy) › Event error for ws-1
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.735 (proxy) › Event close for ws-1
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.734 › [WebSocket Proxy] Connection ws-1 closed: 1006 
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at listRunning (chunk-JO3GAJOV.js?v=8e1a8dc1:3617:77)
+    at async SessionManager.requestRunning (chunk-JO3GAJOV.js?v=8e1a8dc1:4346:20)
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at listRunning (chunk-WOJWNEFB.js?v=8e1a8dc1:110:77)
+    at async KernelManager.requestRunning (chunk-JO3GAJOV.js?v=8e1a8dc1:3307:20)
+App.tsx:73 Jupyter Kernel Manager is ready KernelManager {_isDisposed: false, _disposed: Signal, serverSettings: {…}, _commsOverSubshells: 'perCommTarget', _isReady: true, …}
+App.tsx:73 Starting a Jupyter Kernel: python
+App.tsx:73 Jupyter Kernel Manager is ready KernelManager {_isDisposed: false, _disposed: Signal, serverSettings: {…}, _commsOverSubshells: 'perCommTarget', _isReady: true, …}
+App.tsx:73 Starting a Jupyter Kernel: python
+2electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.740 (proxy) › HTTP POST https://prod1.datalayer.run/api/sessions?1757427316739
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.740 › [HTTP Proxy] POST https://prod1.datalayer.run/api/sessions?1757427316739
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:16.744 › [HTTP Proxy] POST https://prod1.datalayer.run/api/sessions?1757427316739
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at getSpecs (chunk-ZPTIAAGM.js?v=8e1a8dc1:97:77)
+    at async KernelSpecManager.requestSpecs (chunk-6VMJNQFT.js?v=8e1a8dc1:131:23)
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at startSession (chunk-JO3GAJOV.js?v=8e1a8dc1:3674:77)
+    at async SessionManager.startNew (chunk-JO3GAJOV.js?v=8e1a8dc1:4272:23)
+    at async Kernel.requestKernel (chunk-JI6UXY2L.js?v=8e1a8dc1:30994:23)
+chunk-USAVQTV4.js?v=8e1a8dc1:62 Uncaught (in promise) ResponseError: Invalid response: 404 Not Found
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:62:20)
+    at async startSession (chunk-JO3GAJOV.js?v=8e1a8dc1:3674:21)
+    at async SessionManager.startNew (chunk-JO3GAJOV.js?v=8e1a8dc1:4272:23)
+    at async Kernel.requestKernel (chunk-JI6UXY2L.js?v=8e1a8dc1:30994:23)
+create @ chunk-USAVQTV4.js?v=8e1a8dc1:62
+await in create
+startSession @ chunk-JO3GAJOV.js?v=8e1a8dc1:3674
+await in startSession
+startNew @ chunk-JO3GAJOV.js?v=8e1a8dc1:3749
+startNew @ chunk-JO3GAJOV.js?v=8e1a8dc1:4272
+requestKernel @ chunk-JI6UXY2L.js?v=8e1a8dc1:30994
+await in requestKernel
+Kernel @ chunk-JI6UXY2L.js?v=8e1a8dc1:30958
+(anonymous) @ chunk-JI6UXY2L.js?v=8e1a8dc1:32811
+Promise.then
+(anonymous) @ chunk-JI6UXY2L.js?v=8e1a8dc1:32782
+commitHookEffectListMount @ chunk-TKTSSOR7.js?v=8e1a8dc1:16915
+commitPassiveMountOnFiber @ chunk-TKTSSOR7.js?v=8e1a8dc1:18156
+commitPassiveMountEffects_complete @ chunk-TKTSSOR7.js?v=8e1a8dc1:18129
+commitPassiveMountEffects_begin @ chunk-TKTSSOR7.js?v=8e1a8dc1:18119
+commitPassiveMountEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:18109
+flushPassiveEffectsImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19490
+flushPassiveEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:19447
+commitRootImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19416
+commitRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:19277
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18895
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+(anonymous) @ chunk-TKTSSOR7.js?v=8e1a8dc1:18627
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at startSession (chunk-JO3GAJOV.js?v=8e1a8dc1:3674:77)
+    at async SessionManager.startNew (chunk-JO3GAJOV.js?v=8e1a8dc1:4272:23)
+    at async Kernel.requestKernel (chunk-JI6UXY2L.js?v=8e1a8dc1:30994:23)
+chunk-USAVQTV4.js?v=8e1a8dc1:62 Uncaught (in promise) ResponseError: Invalid response: 404 Not Found
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:62:20)
+    at async startSession (chunk-JO3GAJOV.js?v=8e1a8dc1:3674:21)
+    at async SessionManager.startNew (chunk-JO3GAJOV.js?v=8e1a8dc1:4272:23)
+    at async Kernel.requestKernel (chunk-JI6UXY2L.js?v=8e1a8dc1:30994:23)
+create @ chunk-USAVQTV4.js?v=8e1a8dc1:62
+await in create
+startSession @ chunk-JO3GAJOV.js?v=8e1a8dc1:3674
+await in startSession
+startNew @ chunk-JO3GAJOV.js?v=8e1a8dc1:3749
+startNew @ chunk-JO3GAJOV.js?v=8e1a8dc1:4272
+requestKernel @ chunk-JI6UXY2L.js?v=8e1a8dc1:30994
+await in requestKernel
+Kernel @ chunk-JI6UXY2L.js?v=8e1a8dc1:30958
+(anonymous) @ chunk-JI6UXY2L.js?v=8e1a8dc1:32811
+Promise.then
+(anonymous) @ chunk-JI6UXY2L.js?v=8e1a8dc1:32782
+commitHookEffectListMount @ chunk-TKTSSOR7.js?v=8e1a8dc1:16915
+invokePassiveEffectMountInDEV @ chunk-TKTSSOR7.js?v=8e1a8dc1:18324
+invokeEffectsInDev @ chunk-TKTSSOR7.js?v=8e1a8dc1:19701
+commitDoubleInvokeEffectsInDEV @ chunk-TKTSSOR7.js?v=8e1a8dc1:19686
+flushPassiveEffectsImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19503
+flushPassiveEffects @ chunk-TKTSSOR7.js?v=8e1a8dc1:19447
+commitRootImpl @ chunk-TKTSSOR7.js?v=8e1a8dc1:19416
+commitRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:19277
+performSyncWorkOnRoot @ chunk-TKTSSOR7.js?v=8e1a8dc1:18895
+flushSyncCallbacks @ chunk-TKTSSOR7.js?v=8e1a8dc1:9119
+(anonymous) @ chunk-TKTSSOR7.js?v=8e1a8dc1:18627
+112Chrome is moving towards a new experience that allows users to choose to browse without third-party cookies.
+App.tsx:73 Checking kernels for the new Service Manager: ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+App.tsx:73 Checking kernels for the new Service Manager: ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+App.tsx:73 Checking kernels for the new Service Manager: ServiceManager {_isDisposed: false, _connectionFailure: Signal, _isReady: false, serverSettings: {…}, contents: ContentsManager, …}
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:17.416 › [WebSocket Proxy] 🟢 OPENING: Connection ws-2 to wss://prod1.datalayer.run/api/events/subscribe?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:17.416 › [WebSocket Proxy] 🟢 RUNTIME ASSOCIATION: Connection ws-2 associated with runtime runtime-01k4pg4aghdbr3kk0k1112p0ap
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:17.416 › [WebSocket Proxy] 🟢 TRACKING ADDED: Connection ws-2 added to runtime runtime-01k4pg4aghdbr3kk0k1112p0ap (now has 1 connections)
+App.tsx:73 Jupyter Kernel Manager is ready KernelManager {_isDisposed: false, _disposed: Signal, serverSettings: {…}, _commsOverSubshells: 'perCommTarget', _isReady: true, …}
+App.tsx:73 Jupyter Kernel Manager is ready KernelManager {_isDisposed: false, _disposed: Signal, serverSettings: {…}, _commsOverSubshells: 'perCommTarget', _isReady: true, …}
+App.tsx:73 Jupyter Kernel Manager is ready KernelManager {_isDisposed: false, _disposed: Signal, serverSettings: {…}, _commsOverSubshells: 'perCommTarget', _isReady: true, …}
+VM5:31 09:15:17.928 › [WebSocket Proxy] Error on ws-2: Error: Unexpected server response: 404
+    at ClientRequest.<anonymous> (/Users/goanpeca/Desktop/develop/datalayer/core/node_modules/ws/lib/websocket.js:913:7)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at TLSSocket.socketOnData (node:_http_client:544:22)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:366
+setTimeout
+writeFn @ electron-log_renderer.js?v=8e1a8dc1:366
+transport @ electron-log_renderer.js?v=8e1a8dc1:370
+processMessage @ electron-log_renderer.js?v=8e1a8dc1:221
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:604
+postMessage
+(anonymous) @ VM5:31
+emit @ VM4 sandbox_bundle:2
+onMessage @ VM4 sandbox_bundle:2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:17.929 (proxy) › Event error for ws-2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:17.930 (proxy) › Event close for ws-2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:17.929 › [WebSocket Proxy] Connection ws-2 closed: 1006 
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:18.979 › [WebSocket Proxy] 🟢 OPENING: Connection ws-3 to wss://prod1.datalayer.run/api/events/subscribe?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:18.979 › [WebSocket Proxy] 🟢 RUNTIME ASSOCIATION: Connection ws-3 associated with runtime runtime-01k4pg4aghdbr3kk0k1112p0ap
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:18.981 › [WebSocket Proxy] 🟢 TRACKING ADDED: Connection ws-3 added to runtime runtime-01k4pg4aghdbr3kk0k1112p0ap (now has 1 connections)
+VM5:31 09:15:19.471 › [WebSocket Proxy] Error on ws-3: Error: Unexpected server response: 404
+    at ClientRequest.<anonymous> (/Users/goanpeca/Desktop/develop/datalayer/core/node_modules/ws/lib/websocket.js:913:7)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at TLSSocket.socketOnData (node:_http_client:544:22)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:366
+setTimeout
+writeFn @ electron-log_renderer.js?v=8e1a8dc1:366
+transport @ electron-log_renderer.js?v=8e1a8dc1:370
+processMessage @ electron-log_renderer.js?v=8e1a8dc1:221
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:604
+postMessage
+(anonymous) @ VM5:31
+emit @ VM4 sandbox_bundle:2
+onMessage @ VM4 sandbox_bundle:2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:19.473 (proxy) › Event error for ws-3
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:19.473 (proxy) › Event close for ws-3
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:19.472 › [WebSocket Proxy] Connection ws-3 closed: 1006 
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:21.437 › [WebSocket Proxy] 🟢 OPENING: Connection ws-4 to wss://prod1.datalayer.run/api/events/subscribe?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:21.438 › [WebSocket Proxy] 🟢 RUNTIME ASSOCIATION: Connection ws-4 associated with runtime runtime-01k4pg4aghdbr3kk0k1112p0ap
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:21.438 › [WebSocket Proxy] 🟢 TRACKING ADDED: Connection ws-4 added to runtime runtime-01k4pg4aghdbr3kk0k1112p0ap (now has 1 connections)
+VM5:31 09:15:21.930 › [WebSocket Proxy] Error on ws-4: Error: Unexpected server response: 404
+    at ClientRequest.<anonymous> (/Users/goanpeca/Desktop/develop/datalayer/core/node_modules/ws/lib/websocket.js:913:7)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at TLSSocket.socketOnData (node:_http_client:544:22)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:366
+setTimeout
+writeFn @ electron-log_renderer.js?v=8e1a8dc1:366
+transport @ electron-log_renderer.js?v=8e1a8dc1:370
+processMessage @ electron-log_renderer.js?v=8e1a8dc1:221
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:604
+postMessage
+(anonymous) @ VM5:31
+emit @ VM4 sandbox_bundle:2
+onMessage @ VM4 sandbox_bundle:2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:21.931 (proxy) › Event error for ws-4
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:21.931 (proxy) › Event close for ws-4
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:21.931 › [WebSocket Proxy] Connection ws-4 closed: 1006 
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:22.625 (proxy) › HTTP GET https://prod1.datalayer.run/api/sessions?1757427322625
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:22.625 › [HTTP Proxy] GET https://prod1.datalayer.run/api/sessions?1757427322625
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at listRunning (chunk-JO3GAJOV.js?v=8e1a8dc1:3617:77)
+    at async SessionManager.requestRunning (chunk-JO3GAJOV.js?v=8e1a8dc1:4346:20)
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:23.683 (proxy) › HTTP GET https://prod1.datalayer.run/api/kernels?1757427323682
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:23.683 › [HTTP Proxy] GET https://prod1.datalayer.run/api/kernels?1757427323682
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at listRunning (chunk-WOJWNEFB.js?v=8e1a8dc1:110:77)
+    at async KernelManager.requestRunning (chunk-JO3GAJOV.js?v=8e1a8dc1:3307:20)
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:25.527 › [WebSocket Proxy] 🟢 OPENING: Connection ws-5 to wss://prod1.datalayer.run/api/events/subscribe?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwMUswQllXWTJBNUZHWTNKRENETUhNVzFZUCIsImlzcyI6Imh0dHBzOi8vaWQuZGF0YWxheWVyLnJ1biIsImlhdCI6MTc1Mjc0ODE2MSwiZXhwIjoxNzk2MTAxMjAwLjAsInN1YiI6eyJpZCI6ImMyZDcyMjJlLTExYTMtNGRmNS04NTM0LWQ0YjE3OTEzYTgyOSIsInVpZCI6IjAxSlkyU0FUMURBNDRUODc3WVRCNU1QQzVKIiwiaGFuZGxlIjoidXJuOmRsYTppYW06ZXh0OjpnaXRodWI6MzYyNzgzNSIsImVtYWlsIjoiIiwiZmlyc3ROYW1lIjoiIiwibGFzdE5hbWUiOiIiLCJhdmF0YXJVcmwiOiIiLCJyb2xlcyI6WyJwbGF0Zm9ybV9tZW1iZXIiLCJwbGF0Zm9ybV9pYW1fdG9rZW4iXX0sInJvbGVzIjpbInBsYXRmb3JtX21lbWJlciIsInBsYXRmb3JtX2lhbV90b2tlbiJdfQ.PL_72xX2Kn9zk_ZJjIahdtEGNQAZ8ZKavzpKml5EWLE
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:25.527 › [WebSocket Proxy] 🟢 RUNTIME ASSOCIATION: Connection ws-5 associated with runtime runtime-01k4pg4aghdbr3kk0k1112p0ap
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:25.527 › [WebSocket Proxy] 🟢 TRACKING ADDED: Connection ws-5 added to runtime runtime-01k4pg4aghdbr3kk0k1112p0ap (now has 1 connections)
+VM5:31 09:15:26.014 › [WebSocket Proxy] Error on ws-5: Error: Unexpected server response: 404
+    at ClientRequest.<anonymous> (/Users/goanpeca/Desktop/develop/datalayer/core/node_modules/ws/lib/websocket.js:913:7)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at TLSSocket.socketOnData (node:_http_client:544:22)
+    at TLSSocket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TLSWrap.onStreamRead (node:internal/stream_base_commons:191:23)
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:366
+setTimeout
+writeFn @ electron-log_renderer.js?v=8e1a8dc1:366
+transport @ electron-log_renderer.js?v=8e1a8dc1:370
+processMessage @ electron-log_renderer.js?v=8e1a8dc1:221
+(anonymous) @ electron-log_renderer.js?v=8e1a8dc1:604
+postMessage
+(anonymous) @ VM5:31
+emit @ VM4 sandbox_bundle:2
+onMessage @ VM4 sandbox_bundle:2
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:26.015 (proxy) › Event error for ws-5
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:26.015 (proxy) › Event close for ws-5
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:26.014 › [WebSocket Proxy] Connection ws-5 closed: 1006 
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:26.621 (proxy) › HTTP GET https://prod1.datalayer.run/api/kernelspecs?1757427326621
+electron-log_renderer.js?v=8e1a8dc1:366 09:15:26.621 › [HTTP Proxy] GET https://prod1.datalayer.run/api/kernelspecs?1757427326621
+chunk-USAVQTV4.js?v=8e1a8dc1:61 SyntaxError: Failed to execute 'json' on 'Response': Unexpected non-whitespace character after JSON at position 4 (line 1 column 5)
+    at ResponseError.create (chunk-USAVQTV4.js?v=8e1a8dc1:54:41)
+    at getSpecs (chunk-ZPTIAAGM.js?v=8e1a8dc1:97:77)
+    at async KernelSpecManager.requestSpecs (chunk-6VMJNQFT.js?v=8e1a8dc1:131:23)

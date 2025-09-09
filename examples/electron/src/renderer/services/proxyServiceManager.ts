@@ -393,7 +393,11 @@ export async function createProxyServiceManager(
   token: string = '',
   runtimeId?: string
 ) {
+  // Normalize baseUrl to avoid double slashes - ensure it ends with exactly one slash
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, '') + '/';
+
   proxyLogger.debug(`Creating ServiceManager with baseUrl: ${baseUrl}`);
+  proxyLogger.debug(`Normalized baseUrl: ${normalizedBaseUrl}`);
 
   // Load the real ServiceManager and ServerConnection at runtime
   const { ServiceManager, ServerConnection } = await loadServiceManager();
@@ -406,10 +410,10 @@ export async function createProxyServiceManager(
   };
 
   const settings = ServerConnection.makeSettings({
-    baseUrl,
+    baseUrl: normalizedBaseUrl,
     token,
     appUrl: '',
-    wsUrl: baseUrl.replace(/^https?/, 'wss'),
+    wsUrl: normalizedBaseUrl.replace(/^https?/, 'wss'),
     init: {
       cache: 'no-store' as RequestCache,
     },

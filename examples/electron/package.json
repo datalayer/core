@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@datalayer/core": "file:../..",
+    "@datalayer/jupyter-lexical": "^1.0.4",
     "@datalayer/jupyter-react": "^1.1.0",
     "@jupyterlab/services": "^7.0.0",
     "@primer/react": "^36.27.0",

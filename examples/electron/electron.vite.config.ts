@@ -140,8 +140,18 @@ export default defineConfig({
               '@jupyterlab/services/lib/builder': ['BuildManager'],
               '@jupyterlab/statedb': ['DataConnector'],
               'lodash.escape': ['default'],
-              'ajv': ['default'],
-              'yjs': ['default', 'Doc', 'Map', 'Array', 'Text', 'XmlElement', 'XmlFragment', 'XmlHook', 'XmlText'],
+              ajv: ['default'],
+              yjs: [
+                'default',
+                'Doc',
+                'Map',
+                'Array',
+                'Text',
+                'XmlElement',
+                'XmlFragment',
+                'XmlHook',
+                'XmlText',
+              ],
               // Handle nested node_modules from @jupyterlite
               '@jupyterlite/server/node_modules/@jupyterlab/services': [
                 'ServiceManager',
@@ -873,14 +883,27 @@ export default defineConfig({
                 }
               })();
 
-              // Lodash internal function polyfills
-              if (typeof baseGetTag$1 === 'undefined') {
-                var baseGetTag$1 = function(value) {
-                  if (value == null) {
-                    return value === undefined ? '[object Undefined]' : '[object Null]';
-                  }
-                  return Object.prototype.toString.call(value);
-                };
+              // BaseGetTag function variations - use global assignments to avoid duplicate declarations
+              // Handle all variations from $1 to $10
+              for (let i = 1; i <= 10; i++) {
+                const varName = 'baseGetTag$' + i;
+                if (typeof globalThis[varName] === 'undefined') {
+                  globalThis[varName] = function(value) {
+                    if (value == null) {
+                      return value === undefined ? '[object Undefined]' : '[object Null]';
+                    }
+                    return Object.prototype.toString.call(value);
+                  };
+                }
+              }
+
+              // Base function variations - use global assignments to avoid duplicate declarations
+              // Handle all variations from $1 to $10
+              for (let i = 1; i <= 10; i++) {
+                const varName = 'base$' + i;
+                if (typeof globalThis[varName] === 'undefined') {
+                  globalThis[varName] = function(object, source) { return object && source; };
+                }
               }
 
               // Ensure global constructors are available (handle multiple variations)
@@ -1248,10 +1271,16 @@ export default defineConfig({
               'var $1$$2 = globalThis.$1 || $1;'
             );
 
-            // Fix baseGetTag references - handle both require$$ and assignments with $$
+            // Fix baseGetTag references - handle both require$$ and assignments with $$ for all variations
             modified = modified.replace(
-              /baseGetTag\$1\s*=\s*require\$\$[^,;]+/g,
-              'baseGetTag$1 = baseGetTag$1 || function(value) { return value == null ? (value === undefined ? "[object Undefined]" : "[object Null]") : Object.prototype.toString.call(value); }'
+              /baseGetTag\$(\d+)\s*=\s*require\$\$[^,;]+/g,
+              'baseGetTag$$1 = baseGetTag$$1 || function(value) { return value == null ? (value === undefined ? "[object Undefined]" : "[object Null]") : Object.prototype.toString.call(value); }'
+            );
+
+            // Fix base function references for all variations
+            modified = modified.replace(
+              /var\s+base\$(\d+)\s*=\s*require\$\$[^,;]+/g,
+              'var base$$1 = base$$1 || function(object, source) { return object && source; }'
             );
 
             // Fix isObject references - handle both require assignments and function declarations

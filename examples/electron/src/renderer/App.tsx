@@ -27,13 +27,14 @@ import { useCoreStore } from '@datalayer/core';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
 import NotebookView from './components/NotebookView';
+import DocumentView from './components/DocumentView';
 import DocumentsList from './components/DocumentsList';
 import EnvironmentsList from './components/EnvironmentsList';
 import { useRuntimeStore } from './stores/runtimeStore';
 import { COLORS } from './constants/colors';
 import { logger } from './utils/logger';
 
-type ViewType = 'notebooks' | 'notebook' | 'environments';
+type ViewType = 'notebooks' | 'notebook' | 'document' | 'environments';
 
 interface GitHubUser {
   login: string;
@@ -45,6 +46,14 @@ interface GitHubUser {
 }
 
 interface NotebookData {
+  id: string;
+  name: string;
+  path: string;
+  cdnUrl?: string;
+  description?: string;
+}
+
+interface DocumentData {
   id: string;
   name: string;
   path: string;
@@ -77,7 +86,11 @@ const App: React.FC = () => {
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
   );
+  const [selectedDocument, setSelectedDocument] = useState<DocumentData | null>(
+    null
+  );
   const [isNotebookEditorActive, setIsNotebookEditorActive] = useState(false);
+  const [isDocumentEditorActive, setIsDocumentEditorActive] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { configuration } = useCoreStore();
   const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
@@ -296,13 +309,22 @@ const App: React.FC = () => {
     setSelectedNotebook(null);
   }, []);
 
+  const handleDocumentEditorDeactivate = useCallback(() => {
+    logger.debug('Deactivating document editor');
+    setIsDocumentEditorActive(false);
+    setCurrentView('notebooks');
+    setSelectedDocument(null);
+  }, []);
+
   const handleLogout = async () => {
     // Use secure IPC to logout
     await logoutAPI();
     setIsAuthenticated(false);
     setCurrentView('environments');
     setSelectedNotebook(null);
+    setSelectedDocument(null);
     setIsNotebookEditorActive(false);
+    setIsDocumentEditorActive(false);
   };
 
   const handleNotebookSelect = (notebook: NotebookData) => {
@@ -310,6 +332,13 @@ const App: React.FC = () => {
     setSelectedNotebook(notebook);
     setCurrentView('notebook');
     setIsNotebookEditorActive(true);
+  };
+
+  const handleDocumentSelect = (document: DocumentData) => {
+    logger.debug('Selected document:', document);
+    setSelectedDocument(document);
+    setCurrentView('document');
+    setIsDocumentEditorActive(true);
   };
 
   const renderView = (): React.ReactElement => {
@@ -329,11 +358,25 @@ const App: React.FC = () => {
       );
     }
 
+    // Handle document view
+    if (currentView === 'document' && selectedDocument) {
+      return (
+        <DocumentView
+          key={`document-${selectedDocument.id}`}
+          selectedDocument={selectedDocument}
+          onClose={handleDocumentEditorDeactivate}
+        />
+      );
+    }
+
     // For list views, keep them mounted and toggle visibility
     return (
       <>
         <Box sx={{ display: currentView === 'notebooks' ? 'block' : 'none' }}>
-          <DocumentsList onNotebookSelect={handleNotebookSelect} />
+          <DocumentsList
+            onNotebookSelect={handleNotebookSelect}
+            onDocumentSelect={handleDocumentSelect}
+          />
         </Box>
         <Box
           sx={{ display: currentView === 'environments' ? 'block' : 'none' }}
@@ -492,6 +535,38 @@ const App: React.FC = () => {
                   >
                     <PencilIcon size={16} />
                     <span>Notebook Editor</span>
+                  </Header.Link>
+                </Header.Item>
+              )}
+              {isDocumentEditorActive && (
+                <Header.Item>
+                  <Header.Link
+                    href="#"
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault();
+                      setCurrentView('document');
+                    }}
+                    sx={{
+                      fontWeight: 'normal',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      borderBottom:
+                        currentView === 'document'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                      paddingBottom: '4px',
+                      '&:hover': {
+                        textDecoration: 'none',
+                        borderBottom:
+                          currentView === 'document'
+                            ? `2px solid ${COLORS.brand.primary}`
+                            : '2px solid transparent',
+                      },
+                    }}
+                  >
+                    <PencilIcon size={16} />
+                    <span>Document Editor</span>
                   </Header.Link>
                 </Header.Item>
               )}

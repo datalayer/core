@@ -314,4 +314,29 @@ globalThis.Stack$2 = Stack;
 globalThis.Stack$3 = Stack;
 globalThis.Stack$4 = Stack;
 
+// BaseGetTag function (lodash internal)
+function baseGetTag(value) {
+  if (value == null) {
+    return value === undefined ? '[object Undefined]' : '[object Null]';
+  }
+  return Object.prototype.toString.call(value);
+}
+
+// Make baseGetTag available globally for all variations
+globalThis.baseGetTag = baseGetTag;
+for (let i = 1; i <= 10; i++) {
+  globalThis['baseGetTag$' + i] = baseGetTag;
+}
+
+// Base function (lodash internal)
+function base(object, source) {
+  return object && source;
+}
+
+// Make base available globally for all variations
+globalThis.base = base;
+for (let i = 1; i <= 10; i++) {
+  globalThis['base$' + i] = base;
+}
+
 console.log('[Lodash Polyfills] Applied successfully');

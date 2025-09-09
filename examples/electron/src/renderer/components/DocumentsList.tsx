@@ -71,9 +71,19 @@ interface NotebooksListProps {
     cdnUrl?: string;
     description?: string;
   }) => void;
+  onDocumentSelect?: (document: {
+    id: string;
+    name: string;
+    path: string;
+    cdnUrl?: string;
+    description?: string;
+  }) => void;
 }
 
-const DocumentsList: React.FC<NotebooksListProps> = ({ onNotebookSelect }) => {
+const DocumentsList: React.FC<NotebooksListProps> = ({
+  onNotebookSelect,
+  onDocumentSelect,
+}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
@@ -578,6 +588,24 @@ const DocumentsList: React.FC<NotebooksListProps> = ({ onNotebookSelect }) => {
     }
   };
 
+  const handleOpenDocument = (document: DocumentItem) => {
+    console.info('Opening document:', document.name);
+
+    // For documents, we don't need runtime checks like notebooks
+    setSelectedNotebook(document.id); // Reuse this state for selection highlighting
+
+    // Call the parent callback if provided
+    if (onDocumentSelect) {
+      onDocumentSelect({
+        id: document.uid || document.id,
+        name: document.name,
+        path: document.path,
+        cdnUrl: document.cdnUrl,
+        description: document.description,
+      });
+    }
+  };
+
   const handleDownloadNotebook = async (notebook: NotebookItem) => {
     console.info('Downloading notebook:', notebook.name);
 
@@ -1043,7 +1071,7 @@ const DocumentsList: React.FC<NotebooksListProps> = ({ onNotebookSelect }) => {
                 return (
                   <ActionList.Item
                     key={document.id}
-                    onSelect={() => handleOpenNotebook(document)}
+                    onSelect={() => handleOpenDocument(document)}
                     sx={{
                       cursor: 'pointer',
                       py: 3,
