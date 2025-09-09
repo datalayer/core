@@ -60,20 +60,21 @@ export function DatalayerThemeProvider(
         );
       }
       if (inJupyterLab) {
-        // TODO remove the try/catch for JupyterLab > 4.1.
-        try {
-          const themeManager = jupyterLabAdapter?.service(
-            '@jupyterlab/apputils-extension:themes',
-          ) as IThemeManager;
-          if (themeManager) {
-            updateColorMode(themeManager);
-            themeManager.themeChanged.connect(updateColorMode);
-            return () => {
-              themeManager.themeChanged.disconnect(updateColorMode);
-            };
-          }
-        } catch (e) {
-          console.error('Error while setting the theme', e);
+        const themeManager = jupyterLabAdapter?.service(
+          '@jupyterlab/apputils-extension:themes',
+        ) as IThemeManager;
+        console.log(
+          '---------DLA',
+          inJupyterLab,
+          jupyterLabAdapter,
+          themeManager,
+        );
+        if (themeManager) {
+          updateColorMode(themeManager);
+          themeManager.themeChanged.connect(updateColorMode);
+          return () => {
+            themeManager.themeChanged.disconnect(updateColorMode);
+          };
         }
       } else {
         colorSchemeFromMedia({
