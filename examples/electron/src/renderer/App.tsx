@@ -17,18 +17,24 @@ import {
   ActionList,
   Spinner,
 } from '@primer/react';
-import { DatabaseIcon, SignOutIcon, BookIcon } from '@primer/octicons-react';
+import {
+  DatabaseIcon,
+  SignOutIcon,
+  BookIcon,
+  PencilIcon,
+} from '@primer/octicons-react';
 import { useCoreStore } from '@datalayer/core';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
 import NotebookView from './components/NotebookView';
-import NotebooksList from './components/NotebooksList';
+import DocumentView from './components/DocumentView';
+import DocumentsList from './components/DocumentsList';
 import EnvironmentsList from './components/EnvironmentsList';
 import { useRuntimeStore } from './stores/runtimeStore';
 import { COLORS } from './constants/colors';
 import { logger } from './utils/logger';
 
-type ViewType = 'notebooks' | 'notebook' | 'environments';
+type ViewType = 'notebooks' | 'notebook' | 'document' | 'environments';
 
 interface GitHubUser {
   login: string;
@@ -40,6 +46,14 @@ interface GitHubUser {
 }
 
 interface NotebookData {
+  id: string;
+  name: string;
+  path: string;
+  cdnUrl?: string;
+  description?: string;
+}
+
+interface DocumentData {
   id: string;
   name: string;
   path: string;
@@ -72,6 +86,12 @@ const App: React.FC = () => {
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
   );
+  const [selectedDocument, setSelectedDocument] = useState<DocumentData | null>(
+    null
+  );
+  const [isNotebookEditorActive, setIsNotebookEditorActive] = useState(false);
+  const [isDocumentEditorActive, setIsDocumentEditorActive] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { configuration } = useCoreStore();
   const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
   const { reconnectToExistingRuntimes } = useRuntimeStore();
@@ -253,6 +273,26 @@ const App: React.FC = () => {
     };
   }, [checkAuth, fetchGitHubUser]);
 
+  // Handle Escape key for user menu
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isUserMenuOpen) {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener('keydown', handleEscapeKey, true);
+      return () => {
+        document.removeEventListener('keydown', handleEscapeKey, true);
+      };
+    }
+
+    return undefined;
+  }, [isUserMenuOpen]);
+
   // Monitor configuration changes
   useEffect(() => {
     if (configuration?.token && configuration?.runUrl) {
@@ -262,39 +302,89 @@ const App: React.FC = () => {
 
   // Monitor network connectivity
 
+  const handleNotebookEditorDeactivate = useCallback(() => {
+    logger.debug('Deactivating notebook editor');
+    setIsNotebookEditorActive(false);
+    setCurrentView('notebooks');
+    setSelectedNotebook(null);
+  }, []);
+
+  const handleDocumentEditorDeactivate = useCallback(() => {
+    logger.debug('Deactivating document editor');
+    setIsDocumentEditorActive(false);
+    setCurrentView('notebooks');
+    setSelectedDocument(null);
+  }, []);
+
   const handleLogout = async () => {
     // Use secure IPC to logout
     await logoutAPI();
     setIsAuthenticated(false);
     setCurrentView('environments');
     setSelectedNotebook(null);
+    setSelectedDocument(null);
+    setIsNotebookEditorActive(false);
+    setIsDocumentEditorActive(false);
   };
 
   const handleNotebookSelect = (notebook: NotebookData) => {
     logger.debug('Selected notebook:', notebook);
     setSelectedNotebook(notebook);
     setCurrentView('notebook');
+    setIsNotebookEditorActive(true);
+  };
+
+  const handleDocumentSelect = (document: DocumentData) => {
+    logger.debug('Selected document:', document);
+    setSelectedDocument(document);
+    setCurrentView('document');
+    setIsDocumentEditorActive(true);
   };
 
   const renderView = (): React.ReactElement => {
-    switch (currentView) {
-      case 'notebooks':
-        return <NotebooksList onNotebookSelect={handleNotebookSelect} />;
-      case 'notebook':
-        return (
-          <NotebookView
-            selectedNotebook={selectedNotebook}
-            onClose={() => {
-              setCurrentView('notebooks');
-              setSelectedNotebook(null);
-            }}
-          />
-        );
-      case 'environments':
-        return <EnvironmentsList />;
-      default:
-        return <EnvironmentsList />;
+    // Handle notebook view with conditional mounting to avoid MathJax conflicts
+    if (currentView === 'notebook' && selectedNotebook) {
+      return (
+        <NotebookView
+          key={`notebook-${selectedNotebook.id}`}
+          selectedNotebook={selectedNotebook}
+          onClose={() => {
+            setCurrentView('notebooks');
+            setSelectedNotebook(null);
+            setIsNotebookEditorActive(false);
+          }}
+          onRuntimeTerminated={handleNotebookEditorDeactivate}
+        />
+      );
     }
+
+    // Handle document view
+    if (currentView === 'document' && selectedDocument) {
+      return (
+        <DocumentView
+          key={`document-${selectedDocument.id}`}
+          selectedDocument={selectedDocument}
+          onClose={handleDocumentEditorDeactivate}
+        />
+      );
+    }
+
+    // For list views, keep them mounted and toggle visibility
+    return (
+      <>
+        <Box sx={{ display: currentView === 'notebooks' ? 'block' : 'none' }}>
+          <DocumentsList
+            onNotebookSelect={handleNotebookSelect}
+            onDocumentSelect={handleDocumentSelect}
+          />
+        </Box>
+        <Box
+          sx={{ display: currentView === 'environments' ? 'block' : 'none' }}
+        >
+          <EnvironmentsList />
+        </Box>
+      </>
+    );
   };
 
   // Show loading state while checking authentication or reconnecting
@@ -364,11 +454,22 @@ const App: React.FC = () => {
                     setCurrentView('environments');
                   }}
                   sx={{
-                    fontWeight:
-                      currentView === 'environments' ? 'bold' : 'normal',
+                    fontWeight: 'normal',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
+                    borderBottom:
+                      currentView === 'environments'
+                        ? `2px solid ${COLORS.brand.primary}`
+                        : '2px solid transparent',
+                    paddingBottom: '4px',
+                    '&:hover': {
+                      textDecoration: 'none',
+                      borderBottom:
+                        currentView === 'environments'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                    },
                   }}
                 >
                   <DatabaseIcon size={16} />
@@ -383,38 +484,122 @@ const App: React.FC = () => {
                     setCurrentView('notebooks');
                   }}
                   sx={{
-                    fontWeight:
-                      currentView === 'notebooks' || currentView === 'notebook'
-                        ? 'bold'
-                        : 'normal',
+                    fontWeight: 'normal',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
+                    borderBottom:
+                      currentView === 'notebooks'
+                        ? `2px solid ${COLORS.brand.primary}`
+                        : '2px solid transparent',
+                    paddingBottom: '4px',
+                    '&:hover': {
+                      textDecoration: 'none',
+                      borderBottom:
+                        currentView === 'notebooks'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                    },
                   }}
                 >
                   <BookIcon size={16} />
-                  <span>Notebooks</span>
+                  <span>Documents</span>
                 </Header.Link>
               </Header.Item>
+              {isNotebookEditorActive && (
+                <Header.Item>
+                  <Header.Link
+                    href="#"
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault();
+                      setCurrentView('notebook');
+                    }}
+                    sx={{
+                      fontWeight: 'normal',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      borderBottom:
+                        currentView === 'notebook'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                      paddingBottom: '4px',
+                      '&:hover': {
+                        textDecoration: 'none',
+                        borderBottom:
+                          currentView === 'notebook'
+                            ? `2px solid ${COLORS.brand.primary}`
+                            : '2px solid transparent',
+                      },
+                    }}
+                  >
+                    <PencilIcon size={16} />
+                    <span>Notebook Editor</span>
+                  </Header.Link>
+                </Header.Item>
+              )}
+              {isDocumentEditorActive && (
+                <Header.Item>
+                  <Header.Link
+                    href="#"
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault();
+                      setCurrentView('document');
+                    }}
+                    sx={{
+                      fontWeight: 'normal',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      borderBottom:
+                        currentView === 'document'
+                          ? `2px solid ${COLORS.brand.primary}`
+                          : '2px solid transparent',
+                      paddingBottom: '4px',
+                      '&:hover': {
+                        textDecoration: 'none',
+                        borderBottom:
+                          currentView === 'document'
+                            ? `2px solid ${COLORS.brand.primary}`
+                            : '2px solid transparent',
+                      },
+                    }}
+                  >
+                    <PencilIcon size={16} />
+                    <span>Document Editor</span>
+                  </Header.Link>
+                </Header.Item>
+              )}
               <Header.Item full />
               {isAuthenticated && githubUser && (
                 <Header.Item>
-                  <ActionMenu>
+                  <ActionMenu
+                    open={isUserMenuOpen}
+                    onOpenChange={setIsUserMenuOpen}
+                  >
                     <ActionMenu.Anchor>
                       <Button
                         variant="invisible"
+                        aria-label={`User menu for ${githubUser.name || githubUser.login}`}
+                        aria-describedby="user-menu-description"
+                        aria-expanded={isUserMenuOpen}
                         sx={{
                           p: 0,
                           display: 'flex',
                           alignItems: 'center',
                           gap: 2,
                           borderRadius: '50%',
+                          '&:focus-visible': {
+                            outline: '2px solid',
+                            outlineColor: COLORS.brand.primary,
+                            outlineOffset: '2px',
+                          },
                         }}
                       >
                         <Avatar
                           src={githubUser.avatar_url}
                           size={32}
-                          alt={githubUser.name || githubUser.login}
+                          alt=""
                           sx={{
                             borderRadius: '50%',
                             objectFit: 'cover',
@@ -424,14 +609,40 @@ const App: React.FC = () => {
                       </Button>
                     </ActionMenu.Anchor>
 
-                    <ActionMenu.Overlay width="medium">
+                    <ActionMenu.Overlay
+                      width="medium"
+                      role="menu"
+                      aria-labelledby="user-menu-description"
+                    >
+                      <div
+                        id="user-menu-description"
+                        style={{
+                          position: 'absolute',
+                          width: '1px',
+                          height: '1px',
+                          padding: '0',
+                          margin: '-1px',
+                          overflow: 'hidden',
+                          clip: 'rect(0, 0, 0, 0)',
+                          whiteSpace: 'nowrap',
+                          border: '0',
+                        }}
+                      >
+                        User account menu with profile information and sign out
+                        option
+                      </div>
                       <ActionList>
-                        <ActionList.Item disabled sx={{ py: 3 }}>
+                        <ActionList.Item
+                          disabled
+                          sx={{ py: 3 }}
+                          role="menuitem"
+                          aria-label={`Profile information for ${githubUser.name || githubUser.login}`}
+                        >
                           <ActionList.LeadingVisual>
                             <Avatar
                               src={githubUser.avatar_url}
                               size={24}
-                              alt={githubUser.name || githubUser.login}
+                              alt=""
                               sx={{
                                 borderRadius: '50%',
                                 objectFit: 'cover',
@@ -454,7 +665,12 @@ const App: React.FC = () => {
                         <ActionList.Divider />
 
                         <ActionList.Item
-                          onSelect={handleLogout}
+                          onSelect={() => {
+                            handleLogout();
+                            setIsUserMenuOpen(false);
+                          }}
+                          role="menuitem"
+                          aria-label="Sign out of your account"
                           sx={{
                             color: 'danger.fg',
                             '&:hover': {
@@ -463,6 +679,11 @@ const App: React.FC = () => {
                             },
                             '&:active': {
                               bg: 'canvas.subtle',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid',
+                              outlineColor: COLORS.brand.primary,
+                              outlineOffset: '-2px',
                             },
                           }}
                         >

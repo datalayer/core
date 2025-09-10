@@ -234,8 +234,23 @@ const EnvironmentsList: React.FC = () => {
                   borderColor: COLORS.brand.primaryLight,
                   bg: 'canvas.default',
                 },
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: COLORS.brand.primary,
+                  outlineOffset: '2px',
+                },
               }}
               onClick={() => handleSelectEnvironment(env.name)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSelectEnvironment(env.name);
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label={`Select ${env.title || env.name} environment`}
+              aria-pressed={selectedEnv === env.name}
             >
               <Box
                 sx={{
@@ -246,7 +261,18 @@ const EnvironmentsList: React.FC = () => {
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'start', gap: 2 }}>
-                  <Box sx={{ color: 'fg.muted', minWidth: 40 }}>
+                  <Box
+                    sx={{
+                      color: 'fg.muted',
+                      minWidth: 40,
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: COLORS.brand.primary,
+                        outlineOffset: '2px',
+                        borderRadius: 1,
+                      },
+                    }}
+                  >
                     {(() => {
                       const parsed = parseEnvironmentDescription(
                         env.description || ''
@@ -256,7 +282,7 @@ const EnvironmentsList: React.FC = () => {
                           src={parsed.imageUrl}
                           width="40"
                           height="40"
-                          alt={env.name}
+                          alt={`${env.title || env.name} environment`}
                           style={{ display: 'block' }}
                         />
                       ) : (
@@ -371,12 +397,18 @@ const EnvironmentsList: React.FC = () => {
                 {selectedEnv === env.name && (
                   <Button
                     size="small"
+                    aria-label={`${env.title || env.name} is currently selected`}
                     sx={{
                       backgroundColor: COLORS.brand.primary,
                       color: 'white',
                       cursor: 'default',
                       '&:hover': {
                         backgroundColor: COLORS.brand.primary,
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: COLORS.palette.white,
+                        outlineOffset: '2px',
                       },
                     }}
                   >

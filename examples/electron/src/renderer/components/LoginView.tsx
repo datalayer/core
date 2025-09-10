@@ -78,6 +78,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
       }}
     >
       <Box
+        as="main"
         sx={{
           width: '100%',
           maxWidth: 480,
@@ -88,8 +89,11 @@ const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
           borderColor: 'border.default',
           boxShadow: 'shadow.medium',
         }}
+        role="main"
+        aria-labelledby="login-heading"
+        aria-describedby="login-description"
       >
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <header style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <Box
             sx={{
               width: 96,
@@ -103,7 +107,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
           >
             <img
               src={iconImage}
-              alt="Datalayer"
+              alt="Datalayer application logo"
               style={{
                 width: '96px',
                 height: '96px',
@@ -112,87 +116,207 @@ const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
               }}
             />
           </Box>
-          <Heading as="h1" sx={{ mb: 2 }}>
+          <Heading as="h1" id="login-heading" sx={{ mb: 2 }}>
             Connect to Datalayer
           </Heading>
-          <Text sx={{ color: 'fg.subtle' }}>
+          <Text id="login-description" sx={{ color: 'fg.subtle' }}>
             Enter your Datalayer credentials to access cloud resources
           </Text>
-        </Box>
+        </header>
 
         {error && (
-          <Flash variant="danger" sx={{ mb: 3 }}>
+          <Flash
+            variant="danger"
+            sx={{ mb: 3 }}
+            role="alert"
+            aria-live="assertive"
+          >
             {error}
           </Flash>
         )}
 
-        <FormControl sx={{ mb: 3 }}>
-          <FormControl.Label>Run URL</FormControl.Label>
-          <TextInput
-            block
-            size="large"
-            value={runUrl}
-            onChange={e => setRunUrl(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="https://prod1.datalayer.run"
-            aria-label="Run URL"
-          />
-          <FormControl.Caption>
-            The URL of your Datalayer instance
-          </FormControl.Caption>
-        </FormControl>
-
-        <FormControl sx={{ mb: 4 }}>
-          <FormControl.Label>API Token</FormControl.Label>
-          <TextInput
-            block
-            size="large"
-            type="password"
-            value={token}
-            onChange={e => setToken(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Enter your API token"
-            aria-label="API Token"
-          />
-          <FormControl.Caption>
-            <Text>
-              Your Datalayer API token for authentication.{' '}
-              <Button
-                as="a"
-                variant="invisible"
-                size="small"
-                href="https://datalayer.app/settings/iam/tokens"
-                target="_blank"
-                sx={{ p: 0, fontSize: 'inherit', verticalAlign: 'baseline' }}
-              >
-                Get a token
-              </Button>
-            </Text>
-          </FormControl.Caption>
-        </FormControl>
-
-        <Button
-          size="large"
-          block
-          onClick={handleLogin}
-          disabled={loading || !runUrl || !token}
-          sx={{
-            backgroundColor: COLORS.brand.primary,
-            '&:hover': { backgroundColor: COLORS.brand.primaryHover },
-            '&:disabled': { opacity: 0.5 },
-            color: 'white',
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleLogin();
           }}
+          noValidate
+          aria-label="Datalayer authentication form"
         >
-          {loading ? (
-            <>Connecting...</>
-          ) : (
-            <>
-              <CheckIcon /> Connect
-            </>
-          )}
-        </Button>
+          <fieldset
+            disabled={loading}
+            style={{ border: 'none', padding: 0, margin: 0 }}
+          >
+            <legend
+              style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: '0',
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: '0',
+              }}
+            >
+              Login credentials
+            </legend>
+
+            <FormControl sx={{ mb: 3 }} required>
+              <FormControl.Label htmlFor="run-url-input">
+                Run URL *
+              </FormControl.Label>
+              <TextInput
+                id="run-url-input"
+                block
+                size="large"
+                value={runUrl}
+                onChange={e => setRunUrl(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="https://prod1.datalayer.run"
+                aria-label="Datalayer instance URL"
+                aria-describedby="run-url-help"
+                aria-invalid={!runUrl && error ? 'true' : 'false'}
+                required
+                sx={{
+                  '&:focus-visible': {
+                    outline: '2px solid',
+                    outlineColor: COLORS.brand.primary,
+                    outlineOffset: '2px',
+                  },
+                }}
+              />
+              <FormControl.Caption id="run-url-help">
+                The URL of your Datalayer instance (required)
+              </FormControl.Caption>
+            </FormControl>
+
+            <FormControl sx={{ mb: 4 }} required>
+              <FormControl.Label htmlFor="api-token-input">
+                API Token *
+              </FormControl.Label>
+              <TextInput
+                id="api-token-input"
+                block
+                size="large"
+                type="password"
+                value={token}
+                onChange={e => setToken(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter your API token"
+                aria-label="Datalayer API authentication token"
+                aria-describedby="api-token-help"
+                aria-invalid={!token && error ? 'true' : 'false'}
+                required
+                autoComplete="current-password"
+                sx={{
+                  '&:focus-visible': {
+                    outline: '2px solid',
+                    outlineColor: COLORS.brand.primary,
+                    outlineOffset: '2px',
+                  },
+                }}
+              />
+              <FormControl.Caption id="api-token-help">
+                <Text>
+                  Your Datalayer API token for authentication (required).{' '}
+                  <Button
+                    as="a"
+                    variant="invisible"
+                    size="small"
+                    href="https://datalayer.app/settings/iam/tokens"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open Datalayer settings to get an API token (opens in new tab)"
+                    sx={{
+                      p: 0,
+                      fontSize: 'inherit',
+                      verticalAlign: 'baseline',
+                      '&:focus-visible': {
+                        outline: '2px solid',
+                        outlineColor: COLORS.brand.primary,
+                        outlineOffset: '2px',
+                        borderRadius: 1,
+                      },
+                    }}
+                  >
+                    Get a token
+                  </Button>
+                </Text>
+              </FormControl.Caption>
+            </FormControl>
+
+            <Button
+              type="submit"
+              size="large"
+              block
+              onClick={handleLogin}
+              disabled={loading || !runUrl || !token}
+              aria-describedby="connect-button-help"
+              sx={{
+                backgroundColor: COLORS.brand.primary,
+                '&:hover': { backgroundColor: COLORS.brand.primaryHover },
+                '&:disabled': { opacity: 0.5 },
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'white',
+                  outlineOffset: '-2px',
+                },
+                color: 'white',
+              }}
+            >
+              {loading ? (
+                <>
+                  <Box as="span" aria-hidden="true">
+                    Connecting...
+                  </Box>
+                  <Box
+                    as="span"
+                    style={{
+                      position: 'absolute',
+                      width: '1px',
+                      height: '1px',
+                      padding: '0',
+                      margin: '-1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0, 0, 0, 0)',
+                      whiteSpace: 'nowrap',
+                      border: '0',
+                    }}
+                  >
+                    Authenticating with Datalayer, please wait
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <CheckIcon aria-hidden="true" /> Connect
+                </>
+              )}
+            </Button>
+            <div
+              id="connect-button-help"
+              style={{
+                position: 'absolute',
+                width: '1px',
+                height: '1px',
+                padding: '0',
+                margin: '-1px',
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: '0',
+              }}
+            >
+              {!runUrl || !token
+                ? 'Complete both URL and token fields to enable connection'
+                : 'Submit form to authenticate with Datalayer'}
+            </div>
+          </fieldset>
+        </form>
 
         <Box
+          as="footer"
           sx={{
             mt: 4,
             pt: 3,
@@ -208,7 +332,18 @@ const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
               size="small"
               href="https://docs.datalayer.io"
               target="_blank"
-              sx={{ p: 0, fontSize: 0 }}
+              rel="noopener noreferrer"
+              aria-label="Visit Datalayer documentation (opens in new tab)"
+              sx={{
+                p: 0,
+                fontSize: 0,
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: COLORS.brand.primary,
+                  outlineOffset: '2px',
+                  borderRadius: 1,
+                },
+              }}
             >
               docs.datalayer.io
             </Button>{' '}
@@ -217,7 +352,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onUserDataFetched }) => {
         </Box>
       </Box>
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Box as="aside" sx={{ mt: 4, textAlign: 'center' }}>
         <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
           Datalayer Electron Example • Version{' '}
           {window.electronAPI ? 'Desktop' : 'Web'}

@@ -232,6 +232,17 @@ const nodeModules = (function () {
 
   // Also set it globally
   globalThis.require = window.require;
+
+  // Add __dirname and __filename for MathJax compatibility
+  if (typeof __dirname === 'undefined') {
+    globalThis.__dirname = '/';
+    window.__dirname = '/';
+  }
+  if (typeof __filename === 'undefined') {
+    globalThis.__filename = '/index.js';
+    window.__filename = '/index.js';
+  }
+
   console.log('Enhanced require polyfill injected with Node.js built-ins');
 
   // Return the modules object to make it available as nodeModules

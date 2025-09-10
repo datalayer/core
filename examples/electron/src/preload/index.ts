@@ -31,6 +31,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // About dialog methods
   closeAboutWindow: () => ipcRenderer.send('close-about-window'),
   openExternal: (url: string) => ipcRenderer.send('open-external', url),
+
+  // Runtime termination notification
+  notifyRuntimeTerminated: (runtimeId: string) =>
+    ipcRenderer.invoke('runtime-terminated', { runtimeId }),
 });
 
 // Expose proxy APIs for ServiceManager
@@ -48,6 +52,7 @@ contextBridge.exposeInMainWorld('proxyAPI', {
     url: string;
     protocol?: string;
     headers?: Record<string, string>;
+    runtimeId?: string;
   }) => ipcRenderer.invoke('proxy:websocket-open', options),
 
   websocketSend: (options: { id: string; data: unknown }) =>
@@ -55,6 +60,9 @@ contextBridge.exposeInMainWorld('proxyAPI', {
 
   websocketClose: (options: { id: string; code?: number; reason?: string }) =>
     ipcRenderer.invoke('proxy:websocket-close', options),
+
+  websocketCloseRuntime: (options: { runtimeId: string }) =>
+    ipcRenderer.invoke('proxy:websocket-close-runtime', options),
 
   // Listen for WebSocket events
   onWebSocketEvent: (
@@ -134,6 +142,9 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
 
   getUserSpaces: () => ipcRenderer.invoke('datalayer:get-user-spaces'),
 
+  getSpaceItems: (spaceId: string) =>
+    ipcRenderer.invoke('datalayer:get-space-items', spaceId),
+
   // Collaboration
   getCollaborationSession: (documentId: string) =>
     ipcRenderer.invoke('datalayer:get-collaboration-session', documentId),
@@ -165,6 +176,7 @@ export interface ProxyAPI {
     url: string;
     protocol?: string;
     headers?: Record<string, string>;
+    runtimeId?: string;
   }) => Promise<{ id: string }>;
   websocketSend: (options: {
     id: string;
@@ -174,6 +186,9 @@ export interface ProxyAPI {
     id: string;
     code?: number;
     reason?: string;
+  }) => Promise<{ success: boolean }>;
+  websocketCloseRuntime: (options: {
+    runtimeId: string;
   }) => Promise<{ success: boolean }>;
   onWebSocketEvent: (
     callback: (event: {
@@ -251,6 +266,7 @@ export interface SpaceData {
   uid?: string;
   id?: string;
   name?: string;
+  items?: Record<string, unknown>[];
   [key: string]: unknown;
 }
 
@@ -260,7 +276,11 @@ export interface DatalayerAPI {
     token: string;
   }) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<{ success: boolean }>;
-  getCredentials: () => Promise<{ runUrl: string; isAuthenticated: boolean }>;
+  getCredentials: () => Promise<{
+    runUrl: string;
+    token?: string;
+    isAuthenticated: boolean;
+  }>;
   getEnvironments: () => Promise<{
     success: boolean;
     data?: EnvironmentData[];
@@ -328,7 +348,12 @@ export interface DatalayerAPI {
   }>;
   getUserSpaces: () => Promise<{
     success: boolean;
-    data?: SpaceData[];
+    spaces?: SpaceData[];
+    error?: string;
+  }>;
+  getSpaceItems: (spaceId: string) => Promise<{
+    success: boolean;
+    data?: Record<string, unknown>[];
     error?: string;
   }>;
   getCollaborationSession: (documentId: string) => Promise<{

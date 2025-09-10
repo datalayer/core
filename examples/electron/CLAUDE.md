@@ -393,9 +393,44 @@ if (window.Backbone) {
    - Fixed by wrapping console methods in try-catch blocks
    - Only affects the main process, not renderer
 
-4. **"baseGetTag is not defined"** (RESOLVED)
-   - Fixed by custom lodash bundling plugin
-   - Provides proper implementations for lodash internals
+4. **Lodash Bundling Issues (COMPLETELY RESOLVED - MAJOR BREAKTHROUGH!)**
+
+   **Final Complete Solution for Production Builds:**
+
+   - **Problems**: `baseGetTag$2 is not defined`, `baseGetTag$5 is not defined`, `Cannot access 'base$1' before initialization`, `Identifier 'base$2' has already been declared`
+   - **Root Cause**: Lodash bundler creates numbered variations (baseGetTag$1-$10, base$1-$10) that must be polyfilled dynamically
+
+   **Complete Fix Applied in Two Files:**
+
+   1. **`src/renderer/utils/lodash-polyfills.js`**:
+
+      ```javascript
+      // Dynamic polyfills for ALL numbered variations
+      for (let i = 1; i <= 10; i++) {
+        globalThis['baseGetTag$' + i] = baseGetTag;
+        globalThis['base$' + i] = base;
+      }
+      ```
+
+   2. **`electron.vite.config.ts`** (Vite config polyfills):
+      ```typescript
+      // Dynamic polyfills using global assignments (NOT var declarations)
+      for (let i = 1; i <= 10; i++) {
+        const varName = 'baseGetTag$' + i;
+        if (typeof globalThis[varName] === 'undefined') {
+          globalThis[varName] = function (value) {
+            /* implementation */
+          };
+        }
+      }
+      ```
+
+   **Key Lessons:**
+
+   - Use `globalThis.functionName$X = ...` instead of `var functionName$X = ...` to avoid duplicate declarations
+   - Dynamic loops handle ALL numbered variations (bundler can create up to $10 or higher)
+   - Both polyfill files AND Vite config must be updated together
+   - Production builds now work perfectly: `npm run dist:mac` succeeds without lodash errors
 
 ## Development Commands
 
@@ -498,6 +533,7 @@ npm run dist:linux    # Package for Linux
 - `src/renderer/utils/logger.ts` - Logging utilities
 - `src/renderer/services/proxyServiceManager.ts` - WebSocket proxy for kernels
 - `src/renderer/services/serviceManagerLoader.ts` - Dynamic ServiceManager loader
+- `src/renderer/components/DocumentView.tsx` - Lexical document editor with Jupyter code execution and runtime management
 - `src/renderer/components/NotebookView.tsx` - Jupyter notebook integration with runtime termination dialog
 - `src/renderer/components/LoginView.tsx` - Authentication UI with user data callback
 - `src/renderer/App.tsx` - Main app with dynamic GitHub user profile fetching
@@ -525,6 +561,287 @@ The `src/renderer/utils/` folder contains only the **essential** polyfill files 
 - `jupyterlab-services-interop.cjs` - Replaced by jupyterlab-services-proxy.js
 - `jupyterlab-services-loader.js` - Replaced by jupyterlab-services-proxy.js
 - `path-polyfill.js` - Path polyfills are now injected inline by Vite config
+
+## WebSocket Connection Cleanup System
+
+### Runtime Termination and WebSocket Prevention (NEW!)
+
+The app implements a comprehensive WebSocket cleanup system to prevent connection errors after runtime termination:
+
+#### 1. **Global Cleanup Registry**
+
+Both renderer and main processes maintain a global cleanup registry:
+
+```typescript
+// Renderer process (window scope)
+(window as any).__datalayerRuntimeCleanup = new Map();
+
+// Main process (global scope)
+(global as any).__datalayerRuntimeCleanup = new Map();
+```
+
+The registry tracks terminated runtimes with structure: `Map<string, { terminated: boolean }>`
+
+#### 2. **WebSocket Connection Prevention**
+
+**WebSocket Proxy Blocking** (`src/main/services/websocket-proxy.ts:35-42`):
+
+```typescript
+// Check if this runtime has been terminated
+if (runtimeId) {
+  const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+  if (
+    cleanupRegistry &&
+    cleanupRegistry.has(runtimeId) &&
+    cleanupRegistry.get(runtimeId).terminated
+  ) {
+    log.debug(
+      `[WebSocket Proxy] 🛑 BLOCKED: Preventing new connection to terminated runtime ${runtimeId}`
+    );
+    throw new Error(
+      `Runtime ${runtimeId} has been terminated - no new connections allowed`
+    );
+  }
+}
+```
+
+#### 3. **IPC Communication Bridge**
+
+**Main Process Handler** (`src/main/index.ts:635-647`):
+
+```typescript
+ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
+  // Initialize global cleanup registry in main process
+  if (!(global as any).__datalayerRuntimeCleanup) {
+    (global as any).__datalayerRuntimeCleanup = new Map();
+  }
+
+  const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
+  cleanupRegistry.set(runtimeId, { terminated: true });
+
+  log.debug(
+    `[Runtime Cleanup] 🛑 Main process marked runtime ${runtimeId} as terminated`
+  );
+
+  return { success: true };
+});
+```
+
+**Preload Method** (`src/preload/index.ts:36-37`):
+
+```typescript
+// Runtime termination notification
+notifyRuntimeTerminated: (runtimeId: string) =>
+  ipcRenderer.invoke('runtime-terminated', { runtimeId }),
+```
+
+#### 4. **Runtime Store Integration**
+
+**Termination Notification** (`src/renderer/stores/runtimeStore.ts:317-322`):
+
+```typescript
+// Mark this runtime as terminated to prevent new timers
+cleanupRegistry.set(runtimeId, { terminated: true });
+
+console.info('🛑 [Targeted Cleanup] Marked runtime as terminated:', runtimeId);
+
+// Notify main process to update its cleanup registry for WebSocket blocking
+try {
+  (window as any).electronAPI?.notifyRuntimeTerminated?.(runtimeId);
+} catch (error) {
+  console.warn('🛑 [Targeted Cleanup] Error notifying main process:', error);
+}
+```
+
+#### 5. **Multi-Layer Protection**
+
+The system provides multiple layers of protection:
+
+1. **HTTP Request Blocking**: `proxyFetch()` blocks API requests to terminated runtimes
+2. **Collaboration Provider Prevention**: Checks termination flag before creating providers
+3. **WebSocket Proxy Blocking**: Prevents new WebSocket connections at the source
+4. **Service Manager Cleanup**: Aggressively disposes kernel/session managers
+
+#### 6. **Known Limitations**
+
+- Some "Connection ws-X not found" errors may still occur for connections created before termination
+- The system prevents NEW connections but doesn't immediately close existing ones
+- WebSocket cleanup is async, so there may be a brief window where connections exist
+
+## DocumentView Implementation (CRITICAL!)
+
+### ServiceManager Configuration Fix (RESOLVED!)
+
+**The Problem**: DocumentView editor was showing "❌ OutputAdapter has no kernel - cannot execute!" because ServiceManager was configured with wrong base URL and token.
+
+**Root Cause**: ServiceManager was using general platform credentials instead of runtime-specific credentials:
+
+- ❌ **Wrong**: `configuration.runUrl` (`https://oss.datalayer.run/api/jupyter-server`)
+- ❌ **Wrong**: `configuration.token` (general platform token)
+- ✅ **Correct**: `runtime.runtime.ingress` (`https://prod1.datalayer.run/jupyter/server/python-cpu-pool/xxxxx`)
+- ✅ **Correct**: `runtime.runtime.token` (runtime-specific token)
+
+**The Fix** (`src/renderer/components/DocumentView.tsx:539-543`):
+
+```typescript
+// BEFORE (WRONG)
+const proxyServiceManager = await createProxyServiceManager(
+  configuration.runUrl, // ❌ General platform URL
+  configuration.token, // ❌ General platform token
+  runtime.runtime?.pod_name || ''
+);
+
+// AFTER (CORRECT)
+const proxyServiceManager = await createProxyServiceManager(
+  runtime.runtime.ingress, // ✅ Runtime-specific URL
+  runtime.runtime.token, // ✅ Runtime-specific token
+  runtime.runtime?.pod_name || ''
+);
+```
+
+**Impact**: This fix enables DocumentView to properly execute code cells by connecting ServiceManager to the correct runtime's Jupyter server.
+
+### Component Architecture
+
+**DocumentView Structure**:
+
+1. **DocumentView** (Wrapper) - Provides LexicalProvider context
+2. **DocumentViewContent** (Main Logic) - Handles runtime management, document loading, and editor rendering
+
+**Key Features**:
+
+- ✅ **Runtime Management**: Auto-creates runtimes for documents when needed
+- ✅ **Loading States**: Proper spinners during runtime creation and document loading
+- ✅ **Error Handling**: Auto-closes document on runtime failures
+- ✅ **Runtime Readiness Polling**: Waits for Jupyter server to be accessible before connecting
+- ✅ **Termination Dialog**: Confirmation dialog for runtime termination
+- ✅ **Code Execution**: Full Jupyter code cell execution with proper kernel access
+- ✅ **Component Consolidation**: Single unified component (no duplicate runtime creation)
+
+### Runtime Readiness Polling (NEW!)
+
+**Problem**: ServiceManager was trying to connect before runtime's Jupyter server was ready, causing 404 WebSocket errors.
+
+**Solution**: Added `waitForRuntimeReady` function that polls `/api/kernelspecs` endpoint until accessible:
+
+```typescript
+async function waitForRuntimeReady(
+  runtimeIngress: string,
+  runtimeToken: string,
+  maxWaitTime = 60000,
+  pollInterval = 5000
+): Promise<boolean> {
+  // Wait for runtime to start (8 second initial delay)
+  await new Promise(resolve => setTimeout(resolve, 8000));
+
+  const startTime = Date.now();
+  let attempts = 0;
+
+  while (Date.now() - startTime < maxWaitTime) {
+    attempts++;
+    try {
+      // Test Jupyter server connectivity
+      const testUrl = `${runtimeIngress}/api/kernelspecs`;
+      const response = await (window as any).proxyAPI.httpRequest({
+        url: testUrl,
+        method: 'GET',
+        headers: {
+          Authorization: `token ${runtimeToken}`,
+        },
+      });
+
+      if (response.status === 200) {
+        logger.debug(`Jupyter server is ready after ${attempts} attempts`);
+        return true;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    } catch (error) {
+      // Continue waiting for connection errors
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+  }
+
+  return true; // Proceed anyway if timeout
+}
+```
+
+### Loading Sequence
+
+**Correct Order** (as requested by user):
+
+1. **Create Runtime** (spinner: "Loading document...")
+2. **Wait for Runtime Ready** (spinner: "Loading document...")
+3. **Create ServiceManager** (spinner: "Preparing kernel environment...")
+4. **Load Document Content** (populate editor)
+5. **Full Connected Editor Visible**
+
+### Key Implementation Details
+
+**Runtime Creation with Readiness Check**:
+
+```typescript
+// Create runtime if needed
+if (!runtime?.runtime?.ingress || !runtime?.runtime?.token) {
+  const newRuntime = await createRuntimeForNotebook(
+    selectedDocument.id,
+    envName
+  );
+  if (newRuntime?.runtime?.ingress && newRuntime?.runtime?.token) {
+    // Wait for runtime to be ready before proceeding
+    const isReady = await waitForRuntimeReady(
+      newRuntime.runtime.ingress,
+      newRuntime.runtime.token
+    );
+    if (isReady) {
+      // Now create ServiceManager with correct credentials
+      const proxyServiceManager = await createProxyServiceManager(
+        newRuntime.runtime.ingress,
+        newRuntime.runtime.token,
+        newRuntime.runtime?.pod_name || ''
+      );
+    }
+  }
+}
+```
+
+**TypeScript Safety** (NULL CHECKS REQUIRED):
+
+```typescript
+// CRITICAL: Add null checks for runtime properties
+if (
+  runtime &&
+  !runtime.serviceManager &&
+  configuration &&
+  runtime.runtime.ingress &&
+  runtime.runtime.token
+) {
+  // Safe to create ServiceManager
+}
+```
+
+### Major Issues Resolved
+
+1. **✅ ServiceManager Wrong Base URL**: Fixed by using `runtime.runtime.ingress` instead of `configuration.runUrl`
+2. **✅ Duplicate Runtime Creation**: Fixed by removing problematic useEffect dependency
+3. **✅ Loading Order**: Implemented exact user-requested sequence with proper spinners
+4. **✅ Runtime Readiness**: Added polling to wait for Jupyter server accessibility
+5. **✅ TypeScript Errors**: Added proper null checks for potentially undefined properties
+6. **✅ Component Consolidation**: Merged multiple components into single unified DocumentView
+7. **✅ Save Button Removed**: Cleaned up interface by removing unused save functionality
+8. **✅ Auto-close on Errors**: Document closes automatically if runtime creation fails
+9. **✅ Variable Hoisting**: Fixed "Cannot access before initialization" errors
+
+### DocumentView vs NotebookView
+
+| Feature               | DocumentView                          | NotebookView                    |
+| --------------------- | ------------------------------------- | ------------------------------- |
+| Editor                | Lexical Editor                        | Jupyter Notebook                |
+| File Format           | Documents (JSON)                      | .ipynb files                    |
+| Code Execution        | ✅ Jupyter cells in Lexical           | ✅ Native Jupyter cells         |
+| Runtime Management    | ✅ Auto-create with readiness polling | ✅ Manual runtime selection     |
+| ServiceManager Config | ✅ Runtime-specific credentials       | ✅ Runtime-specific credentials |
+| Save Button           | ❌ Removed (cleaner UI)               | ✅ Present                      |
 
 ## For AI Assistants
 
@@ -555,3 +872,18 @@ When working with this codebase:
 23. **About Dialog Security**: Uses secure context isolation with preload scripts and IPC handlers
 24. **Environment Variables**: Use `ELECTRON_DEV_PROD=true` to enable DevTools in production builds for testing
 25. **Security Best Practices**: Keyboard shortcuts and right-click context menu disabled in production for security
+26. **WebSocket Cleanup System**: Multi-layer cleanup prevents new connections to terminated runtimes via global registry
+27. **Runtime Termination**: Always notify both renderer and main processes when terminating runtimes via IPC
+28. **Connection Prevention**: WebSocket proxy checks global cleanup registry before creating new connections
+29. **Cleanup Registry**: Use `window.__datalayerRuntimeCleanup` (renderer) and `global.__datalayerRuntimeCleanup` (main) for tracking
+30. **Connection Errors**: Some "Connection ws-X not found" errors may persist due to timing of existing connections
+31. **CRITICAL - ServiceManager Configuration**: ALWAYS use `runtime.runtime.ingress` and `runtime.runtime.token` for ServiceManager, NOT general platform credentials
+32. **DocumentView Code Execution**: The "❌ OutputAdapter has no kernel" error is fixed by using runtime-specific credentials in createProxyServiceManager
+33. **Runtime Readiness**: Always implement `waitForRuntimeReady` polling when creating new runtimes to avoid 404 WebSocket errors
+34. **Component Consolidation**: DocumentView is a single unified component - don't create separate editor components
+35. **Save Button**: DocumentView has no save functionality - it was removed for cleaner UX focused on editing and execution
+36. **Lodash Bundling Errors - Complete Solution**: Production builds require extensive lodash internal function polyfills to avoid "baseGetTag$X is not defined" errors
+37. **Global Assignment Pattern**: Use `globalThis.functionName$X = function` instead of `var functionName$X` to avoid duplicate declaration errors
+38. **Extended Function Variations**: Lodash bundler creates numbered variations up to $10 or higher - polyfills must cover ALL variations dynamically
+39. **Polyfill Files Updates**: Both `lodash-polyfills.js` and `electron.vite.config.ts` must be updated with dynamic loops for baseGetTag$1-$10 and base$1-$10
+40. **Production Build Success**: After implementing comprehensive polyfills, production packaging with `npm run dist:mac` works without lodash errors
