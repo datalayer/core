@@ -442,7 +442,13 @@ ipcMain.handle('datalayer:get-environments', async () => {
 });
 
 ipcMain.handle('datalayer:create-runtime', async (_, options) => {
-  return apiService.createRuntime(options);
+  log.info(
+    '🎯 [IPC] Received datalayer:create-runtime request with options:',
+    options
+  );
+  const result = await apiService.createRuntime(options);
+  log.info('🎯 [IPC] datalayer:create-runtime result:', result);
+  return result;
 });
 
 ipcMain.handle('datalayer:delete-runtime', async (_, podName) => {

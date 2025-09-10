@@ -11,6 +11,16 @@
 import { create } from 'zustand';
 import { ServiceManager } from '@jupyterlab/services';
 
+// Type declarations for globalThis properties
+declare global {
+  var __datalayerRuntimeCleanup:
+    | Map<string, { terminated: boolean }>
+    | undefined;
+  var __runtimeCreationPromises:
+    | Map<string, Promise<Runtime | null>>
+    | undefined;
+}
+
 interface Runtime {
   uid: string;
   given_name?: string;
@@ -57,6 +67,11 @@ interface RuntimeState {
 
   // Runtime management
   createRuntimeForNotebook: (
+    notebookId: string,
+    notebookPath?: string,
+    options?: { environment?: string; name?: string; credits?: number }
+  ) => Promise<Runtime | null>;
+  _createRuntimeInternal: (
     notebookId: string,
     notebookPath?: string,
     options?: { environment?: string; name?: string; credits?: number }
@@ -113,17 +128,68 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
   // Create a runtime for a specific notebook
   createRuntimeForNotebook: async (notebookId, notebookPath, options) => {
-    const { notebookRuntimes, setIsCreatingRuntime, setRuntimeError } = get();
+    const { notebookRuntimes } = get();
 
     // Check if this notebook already has a runtime
     const existingRuntime = notebookRuntimes.get(notebookId);
     if (existingRuntime) {
-      console.info(
-        `Reusing existing runtime for notebook ${notebookId}:`,
-        existingRuntime.runtime.uid
-      );
-      return existingRuntime.runtime;
+      // CRITICAL: Check if the runtime has been terminated
+      const cleanupRegistry = globalThis.__datalayerRuntimeCleanup;
+      const isTerminated =
+        cleanupRegistry &&
+        cleanupRegistry.has(existingRuntime.runtime.uid) &&
+        cleanupRegistry.get(existingRuntime.runtime.uid)?.terminated;
+
+      if (isTerminated) {
+        console.info(
+          `⚠️ [Runtime Check] Existing runtime ${existingRuntime.runtime.uid} for notebook ${notebookId} has been terminated, creating new one`
+        );
+      } else {
+        console.info(
+          `Reusing existing runtime for notebook ${notebookId}:`,
+          existingRuntime.runtime.uid
+        );
+        return existingRuntime.runtime;
+      }
     }
+
+    // CRITICAL: Prevent race condition by checking if runtime creation is already in progress
+    // This prevents React strict mode from triggering duplicate API calls
+    if (!globalThis.__runtimeCreationPromises) {
+      globalThis.__runtimeCreationPromises = new Map();
+    }
+
+    const existingPromise =
+      globalThis.__runtimeCreationPromises.get(notebookId);
+    if (existingPromise) {
+      console.info(
+        `🔄 [Race Condition Protection] Runtime creation already in progress for notebook ${notebookId}, waiting for existing request...`
+      );
+      return existingPromise;
+    }
+
+    // Create and store the promise to prevent concurrent requests
+    const creationPromise = get()._createRuntimeInternal(
+      notebookId,
+      notebookPath,
+      options
+    );
+    globalThis.__runtimeCreationPromises.set(notebookId, creationPromise);
+
+    try {
+      const result = await creationPromise;
+      globalThis.__runtimeCreationPromises.delete(notebookId);
+      return result;
+    } catch (error) {
+      globalThis.__runtimeCreationPromises.delete(notebookId);
+      throw error;
+    }
+  },
+
+  // Internal runtime creation method (extracted to allow promise caching)
+  _createRuntimeInternal: async (notebookId, notebookPath, options) => {
+    const { notebookRuntimes } = get();
+    const { setIsCreatingRuntime, setRuntimeError } = get();
 
     setIsCreatingRuntime(true);
     setRuntimeError(null);
@@ -136,10 +202,47 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
       // Add timestamp to ensure unique runtime names
       const timestamp = Date.now().toString(36); // Convert to base36 for shorter string
-      const result = await (window as any).datalayerAPI.createRuntime({
+      const createRuntimeParams = {
         environment: options?.environment || 'python-cpu-env',
         name: `electron-example-${notebookId}-${timestamp}`,
         credits: options?.credits || 10,
+      };
+
+      // Check authentication state before API call
+      const authState = await (window as any).datalayerAPI.getCredentials();
+      console.info('[RUNTIME DEBUG] Authentication state:', {
+        isAuthenticated: authState.isAuthenticated,
+        runUrl: authState.runUrl,
+        hasToken: !!authState.token,
+      });
+
+      console.info(
+        '[RUNTIME DEBUG] Calling createRuntime with params:',
+        createRuntimeParams
+      );
+
+      // DEBUG: Check if datalayerAPI is available
+      console.info(
+        '[RUNTIME DEBUG] datalayerAPI exists:',
+        !!(window as any).datalayerAPI
+      );
+      console.info(
+        '[RUNTIME DEBUG] createRuntime method exists:',
+        typeof (window as any).datalayerAPI?.createRuntime
+      );
+      console.info(
+        '[RUNTIME DEBUG] datalayerAPI keys:',
+        Object.keys((window as any).datalayerAPI || {})
+      );
+
+      const result = await (window as any).datalayerAPI.createRuntime(
+        createRuntimeParams
+      );
+      console.info('[RUNTIME DEBUG] createRuntime response:', {
+        success: result.success,
+        hasData: !!result.data,
+        error: result.error,
+        fullResult: result,
       });
 
       if (result.success && result.data?.runtime) {
@@ -221,6 +324,17 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
         `Terminating runtime for notebook ${notebookId}:`,
         notebookRuntime.runtime.uid
       );
+
+      // CRITICAL: Clear cached creation promise for this notebook
+      // This ensures new requests create fresh runtimes instead of reusing terminated ones
+      if (globalThis.__runtimeCreationPromises) {
+        if (globalThis.__runtimeCreationPromises.has(notebookId)) {
+          console.info(
+            `🔄 [Race Condition Protection] Clearing cached promise for terminated runtime ${notebookId}`
+          );
+          globalThis.__runtimeCreationPromises.delete(notebookId);
+        }
+      }
 
       // Close WebSocket connections for this runtime first
       try {

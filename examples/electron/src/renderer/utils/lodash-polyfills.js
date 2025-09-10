@@ -339,4 +339,226 @@ for (let i = 1; i <= 10; i++) {
   globalThis['base$' + i] = base;
 }
 
-console.log('[Lodash Polyfills] Applied successfully');
+// CRITICAL: Safe extend function that handles undefined destination
+function safeExtend(destination, ...sources) {
+  // Handle undefined destination - CRITICAL FIX for theme errors
+  let safeDestination = destination;
+  if (!safeDestination || typeof safeDestination !== 'object') {
+    safeDestination = {};
+  }
+
+  // Process sources to fix 'class-name' properties
+  const processedSources = sources.map(source => {
+    if (source && typeof source === 'object') {
+      const processed = { ...source };
+
+      // Fix 'class-name' -> 'className'
+      if (
+        processed.hasOwnProperty &&
+        Object.prototype.hasOwnProperty.call(processed, 'class-name')
+      ) {
+        if (!Object.prototype.hasOwnProperty.call(processed, 'className')) {
+          processed.className = processed['class-name'];
+        }
+        try {
+          delete processed['class-name'];
+        } catch (e) {
+          // If can't delete, leave both
+        }
+      }
+
+      return processed;
+    }
+    return source;
+  });
+
+  // Use Object.assign for safe merge
+  processedSources.forEach(src => {
+    if (src && typeof src === 'object') {
+      Object.assign(safeDestination, src);
+    }
+  });
+
+  return safeDestination;
+}
+
+// CRITICAL: Bulletproof extend function that handles ALL edge cases
+function bulletproofExtend(object, ...sources) {
+  console.log('[BulletproofExtend] Called with:', { object, sources });
+
+  // Handle undefined/null/non-object destination - create safe target
+  let target;
+  if (object && typeof object === 'object') {
+    target = object;
+  } else {
+    console.warn(
+      '[BulletproofExtend] Target was undefined/null, creating new object:',
+      object
+    );
+    target = {};
+  }
+
+  // Process each source
+  sources.forEach((source, index) => {
+    if (source != null && typeof source === 'object') {
+      console.log(`[BulletproofExtend] Processing source ${index}:`, source);
+      for (const key in source) {
+        if (
+          source.hasOwnProperty &&
+          Object.prototype.hasOwnProperty.call(source, key)
+        ) {
+          // Fix 'class-name' -> 'className' during assignment
+          const finalKey = key === 'class-name' ? 'className' : key;
+          console.log(`[BulletproofExtend] Setting ${finalKey}:`, source[key]);
+          target[finalKey] = source[key];
+        }
+      }
+    } else {
+      console.log(
+        `[BulletproofExtend] Skipping invalid source ${index}:`,
+        source
+      );
+    }
+  });
+
+  console.log('[BulletproofExtend] Result:', target);
+  return target;
+}
+
+// CRITICAL: Remove Object.assign interception to avoid class inheritance conflicts
+// The real fix needs to be in ensuring Prism languages are properly defined
+console.log(
+  '[Lodash Polyfills] Skipping Object.assign interception to avoid class conflicts'
+);
+
+// Make bulletproofExtend available for ALL numbered variations the bundler might create
+globalThis.safeExtend = bulletproofExtend;
+globalThis.extend = bulletproofExtend;
+
+// Override ALL possible extend variations (following baseGetTag$ pattern)
+for (let i = 1; i <= 10; i++) {
+  globalThis['extend$' + i] = bulletproofExtend;
+}
+
+// CRITICAL: Override the actual lodash extend functions
+if (window._) {
+  window._.extend = bulletproofExtend;
+}
+if (window.lodash) {
+  window.lodash.extend = bulletproofExtend;
+}
+
+// CRITICAL: Add comprehensive polyfills for ALL lodash internal functions
+// that might have numbered variations in production builds
+
+// defineProperty function (used by baseSetToString and others)
+function defineProperty(obj, key, descriptor) {
+  if (obj && typeof obj === 'object' && key != null) {
+    try {
+      return Object.defineProperty(obj, key, descriptor);
+    } catch (e) {
+      // Fallback to simple assignment if defineProperty fails
+      if (
+        descriptor &&
+        Object.prototype.hasOwnProperty.call(descriptor, 'value')
+      ) {
+        obj[key] = descriptor.value;
+      }
+      return obj;
+    }
+  }
+  return obj;
+}
+
+globalThis.defineProperty = defineProperty;
+for (let i = 1; i <= 10; i++) {
+  globalThis['defineProperty$' + i] = defineProperty;
+}
+
+// baseSetToString function (lodash internal)
+function baseSetToString(func, string) {
+  return defineProperty(func, 'toString', {
+    configurable: true,
+    enumerable: false,
+    value: function () {
+      return string;
+    },
+    writable: true,
+  });
+}
+
+globalThis.baseSetToString = baseSetToString;
+for (let i = 1; i <= 10; i++) {
+  globalThis['baseSetToString$' + i] = baseSetToString;
+}
+
+// baseRest function (lodash internal)
+function baseRest(func, start) {
+  return function () {
+    const args = Array.prototype.slice.call(arguments, start || 0);
+    return func.apply(this, args);
+  };
+}
+
+globalThis.baseRest = baseRest;
+for (let i = 1; i <= 10; i++) {
+  globalThis['baseRest$' + i] = baseRest;
+}
+
+// createAssigner function (lodash internal)
+function createAssigner(assigner) {
+  return function (object) {
+    const sources = Array.prototype.slice.call(arguments, 1);
+    sources.forEach(function (source) {
+      if (source) {
+        assigner(object, source);
+      }
+    });
+    return object;
+  };
+}
+
+globalThis.createAssigner = createAssigner;
+for (let i = 1; i <= 10; i++) {
+  globalThis['createAssigner$' + i] = createAssigner;
+}
+
+// isObject function (lodash internal)
+function isObject(value) {
+  const type = typeof value;
+  return value != null && (type == 'object' || type == 'function');
+}
+
+globalThis.isObject = isObject;
+for (let i = 1; i <= 10; i++) {
+  globalThis['isObject$' + i] = isObject;
+}
+
+// toSource function (lodash internal)
+function toSource(func) {
+  if (func != null) {
+    try {
+      return Function.prototype.toString.call(func);
+    } catch (e) {
+      // Ignore toString errors
+    }
+    try {
+      return func + '';
+    } catch (e) {
+      // Ignore string conversion errors
+    }
+  }
+  return '';
+}
+
+globalThis.toSource = toSource;
+for (let i = 1; i <= 10; i++) {
+  globalThis['toSource$' + i] = toSource;
+}
+
+// CRITICAL: Instead of patching Function.prototype.call (which causes infinite recursion),
+// we'll patch Prism.languages.extend directly at runtime
+
+console.log(
+  '[Lodash Polyfills] Applied successfully with comprehensive function polyfills'
+);

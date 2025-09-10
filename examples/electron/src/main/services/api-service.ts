@@ -438,20 +438,35 @@ class DatalayerAPIService {
     data?: Record<string, unknown>;
     error?: string;
   }> {
-    try {
-      const requestBody = {
-        environment_name: options.environment,
-        type: 'notebook',
-        given_name: options.name || `runtime-${Date.now()}`,
-        credits_limit: options.credits || 100,
-        capabilities: [],
-        // Don't include 'from' field if empty
-      };
+    const requestBody = {
+      environment_name: options.environment,
+      type: 'notebook',
+      given_name: options.name || `runtime-${Date.now()}`,
+      credits_limit: options.credits || 100,
+      capabilities: [],
+      // Don't include 'from' field if empty
+    };
 
+    // ENHANCED LOGGING: Always log runtime creation attempts
+    log.info('🚀 [RUNTIME CREATION] Starting runtime creation...');
+    log.info(
+      '🚀 [RUNTIME CREATION] Request body:',
+      JSON.stringify(requestBody, null, 2)
+    );
+    log.info('🚀 [RUNTIME CREATION] Token available:', !!this.token);
+    log.info('🚀 [RUNTIME CREATION] Base URL:', this.baseUrl);
+    log.info(
+      '🚀 [RUNTIME CREATION] Full URL:',
+      `${this.baseUrl}/api/runtimes/v1/runtimes`
+    );
+
+    try {
       log.debug(
         '[API] Creating runtime with body:',
         JSON.stringify(requestBody, null, 2)
       );
+      log.debug('[API] Authentication token available:', !!this.token);
+      log.debug('[API] Base URL:', this.baseUrl);
 
       const response = await this.request('/api/runtimes/v1/runtimes', {
         method: 'POST',
@@ -460,9 +475,63 @@ class DatalayerAPIService {
           // Don't use X-External-Token, just use the regular Bearer auth
         },
       });
+
+      log.debug('[API] Runtime creation successful, response:', response);
       return { success: true, data: response };
     } catch (error) {
-      log.error('Failed to create runtime:', error);
+      // ENHANCED ERROR LOGGING: Always log runtime creation failures
+      log.error('💥 [RUNTIME CREATION] FAILED! Error:', error);
+
+      // Capture additional details about the error
+      const errorDetails: Record<string, any> = {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        tokenAvailable: !!this.token,
+        baseUrl: this.baseUrl,
+        requestBody: requestBody,
+        fullError: error,
+      };
+
+      // Log the raw error object structure
+      log.error('💥 [RUNTIME CREATION] Error type:', typeof error);
+      log.error(
+        '💥 [RUNTIME CREATION] Error constructor:',
+        error?.constructor?.name
+      );
+      log.error('💥 [RUNTIME CREATION] Error keys:', Object.keys(error || {}));
+
+      // If error has a response property (HTTP error)
+      if (error && typeof error === 'object' && 'response' in error) {
+        const httpError = error as any;
+        errorDetails.httpStatus = httpError.response?.status;
+        errorDetails.httpStatusText = httpError.response?.statusText;
+        errorDetails.responseBody = httpError.response?.body;
+        errorDetails.responseHeaders = httpError.response?.headers;
+
+        log.error(
+          '💥 [RUNTIME CREATION] HTTP Status:',
+          httpError.response?.status
+        );
+        log.error(
+          '💥 [RUNTIME CREATION] HTTP Status Text:',
+          httpError.response?.statusText
+        );
+        log.error(
+          '💥 [RUNTIME CREATION] Response Body:',
+          httpError.response?.body
+        );
+      }
+
+      // If error has stack trace
+      if (error instanceof Error && error.stack) {
+        errorDetails.stack = error.stack;
+        log.error('💥 [RUNTIME CREATION] Stack trace:', error.stack);
+      }
+
+      log.error(
+        '💥 [RUNTIME CREATION] Complete error details:',
+        JSON.stringify(errorDetails, null, 2)
+      );
+
       return {
         success: false,
         error:

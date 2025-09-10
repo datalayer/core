@@ -69,6 +69,7 @@ export function useDatalayerAPI() {
           setConfiguration({
             runUrl, // Required by NotebookView and collaboration
             token, // Real token - needed for @datalayer/core API calls
+            spacerRunUrl: runUrl, // Same as runUrl for lexical collaboration WebSocket
             cpuEnvironment: 'python-cpu-env',
             gpuEnvironment: 'ai-env',
             credits: 100,

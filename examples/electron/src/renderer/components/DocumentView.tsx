@@ -3,7 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   Box,
   Heading,
@@ -14,18 +20,51 @@ import {
   Dialog,
 } from '@primer/react';
 import { AlertIcon, XIcon } from '@primer/octicons-react';
-import { $getRoot, $createParagraphNode, $createTextNode } from 'lexical';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
+import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { ListItemNode, ListNode } from '@lexical/list';
+import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { AutoLinkNode, LinkNode } from '@lexical/link';
+import { LoroCollaborativePlugin } from '@datalayer/lexical-loro';
 import {
-  useLexical,
-  LexicalProvider,
-  Editor,
-} from '@datalayer/jupyter-lexical';
-import { Jupyter } from '@datalayer/jupyter-react';
+  JupyterCellNode,
+  JupyterInputNode,
+  JupyterOutputNode,
+  JupyterInputHighlightNode,
+} from '@datalayer/jupyter-lexical/lib/nodes';
+import {
+  JupyterCellPlugin,
+  JupyterInputOutputPlugin,
+} from '@datalayer/jupyter-lexical/lib/plugins';
+// import jupyterTheme from '@datalayer/jupyter-lexical/lib/themes/Theme';
+import '@datalayer/jupyter-react/style/index.css';
+import {
+  Jupyter,
+  useJupyter,
+  loadJupyterConfig,
+} from '@datalayer/jupyter-react';
 import { useCoreStore } from '@datalayer/core';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import { COLORS } from '../constants/colors';
 import { logger } from '../utils/logger';
+import type { LexicalEditor } from 'lexical';
+
+// Import Jupyter theme - will be fixed by Vite plugin at build time
+import jupyterTheme from '@datalayer/jupyter-lexical/lib/themes/Theme';
+
+// Use the Jupyter theme directly - the Vite plugin will fix any 'class-name' issues
+const theme = jupyterTheme;
+
+// Error handler for Lexical
+function onError(error: Error) {
+  console.error('Lexical error:', error);
+}
 
 // Helper function to wait for runtime to be ready by testing Jupyter server connectivity
 async function waitForRuntimeReady(
@@ -104,6 +143,36 @@ interface DocumentViewProps {
   onClose: () => void;
 }
 
+// Lexical editor configuration - use minimal theme to isolate the error
+const initialConfig = {
+  namespace: 'DatalayerDocumentEditor',
+  theme: theme,
+  onError,
+  nodes: [
+    HeadingNode,
+    QuoteNode,
+    ListNode,
+    ListItemNode,
+    CodeNode,
+    CodeHighlightNode,
+    AutoLinkNode,
+    LinkNode,
+    JupyterCellNode,
+    JupyterInputNode,
+    JupyterOutputNode,
+    JupyterInputHighlightNode,
+  ],
+};
+
+// LexicalProvider component that provides LexicalComposer context
+const LexicalProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  return (
+    <LexicalComposer initialConfig={initialConfig}>{children}</LexicalComposer>
+  );
+};
+
 const DocumentView: React.FC<DocumentViewProps> = ({
   selectedDocument,
   onClose,
@@ -123,13 +192,15 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
   onClose,
 }) => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const lexicalContext = useLexical();
-  const [documentContent, setDocumentContent] = useState<string>('');
-  const [contentLoaded, setContentLoaded] = useState(false);
+  const [error] = useState<string | null>(null);
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
+  const [collaborationEnabled, setCollaborationEnabled] = useState(true);
+  const [collaborationStatus, setCollaborationStatus] = useState<
+    'disconnected' | 'connecting' | 'connected' | 'error'
+  >('connecting');
+  const [, setLexicalEditor] = useState<LexicalEditor | null>(null);
   const { configuration } = useCoreStore();
   const mountedRef = useRef(true);
 
@@ -158,45 +229,21 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
     (serviceManager.isReady ||
       (serviceManager.kernelspecs && serviceManager.sessions));
 
-  // Load document when component mounts
+  // ServiceManager will be created with runtime-specific Jupyter config
+
+  // Initialize document - just set loading to false after brief delay
   useEffect(() => {
-    const loadDocument = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        logger.debug('Loading document:', selectedDocument);
-
-        // For now, we'll just simulate loading
-        // TODO: Implement actual document loading from API
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        logger.debug('Document loaded successfully');
-
-        // Auto-start runtime for document after loading
-        logger.debug(
-          'Auto-starting runtime for document:',
-          selectedDocument.name
-        );
-        // The runtime startup will be handled by the auto-start useEffect below
-      } catch (err: any) {
-        console.error('Failed to load document:', err);
-        setError(
-          err instanceof Error ? err.message : 'Failed to load document'
-        );
-        // Auto-close document on load error
-        if (onClose) {
-          logger.debug('Auto-closing document due to load error');
-          setTimeout(() => onClose(), 1000); // Small delay to show error briefly
-        }
-      } finally {
-        setLoading(false);
-      }
+    const initDocument = async () => {
+      logger.debug('Initializing document:', selectedDocument);
+      // Brief delay to ensure runtime setup starts
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setLoading(false);
     };
 
     if (selectedDocument) {
-      loadDocument();
+      initDocument();
     }
-  }, [selectedDocument, onClose]);
+  }, [selectedDocument]);
 
   // Function to show terminate dialog
   const handleStopRuntime = () => {
@@ -254,138 +301,13 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
     }
   };
 
-  // Function to populate the Lexical editor with content
-  const populateEditor = (content: string, editor: any) => {
-    // Ensure content is a string
-    const contentStr = typeof content === 'string' ? content : String(content);
-
-    try {
-      // Try to parse as Lexical editor state JSON first
-      const editorState = JSON.parse(contentStr);
-
-      if (editorState && editorState.root) {
-        // This is a Lexical editor state, load it directly
-        editor.setEditorState(editor.parseEditorState(contentStr));
-        logger.debug('Populated editor with Lexical editor state');
-        return;
-      }
-    } catch (jsonError) {
-      // Not valid JSON, treat as plain text
-      logger.debug('Content is not valid JSON, treating as plain text');
-    }
-
-    // Fallback: treat as plain text
-    editor.update(() => {
-      const root = $getRoot();
-
-      // Clear existing content
-      root.clear();
-
-      // Split content into lines and create paragraph nodes
-      const lines = contentStr.split('\n');
-
-      lines.forEach(line => {
-        const paragraph = $createParagraphNode();
-        if (line.trim()) {
-          const textNode = $createTextNode(line);
-          paragraph.append(textNode);
-        }
-        root.append(paragraph);
-      });
-
-      logger.debug(
-        `Populated editor with ${lines.length} lines of plain text content`
-      );
-    });
-  };
-
-  // Load document content when component mounts or selectedDocument changes
-  useEffect(() => {
-    const loadDocumentContent = async () => {
-      if (!selectedDocument) return;
-
-      try {
-        logger.debug('Loading document content for:', selectedDocument.path);
-
-        let content = '';
-
-        // Try to load from CDN URL first if available
-        if (selectedDocument.cdnUrl) {
-          try {
-            // Use Electron's proxy API to bypass CORS
-            if ((window as any).proxyAPI?.httpRequest) {
-              logger.debug('Using Electron proxy API to fetch CDN URL');
-              const response = await (window as any).proxyAPI.httpRequest({
-                url: selectedDocument.cdnUrl,
-                method: 'GET',
-              });
-              if (response.status === 200) {
-                // Handle different response body types
-                if (typeof response.body === 'string') {
-                  content = response.body;
-                } else if (Array.isArray(response.body)) {
-                  // Convert byte array to string
-                  const uint8Array = new Uint8Array(response.body);
-                  const decoder = new TextDecoder('utf-8');
-                  content = decoder.decode(uint8Array);
-                } else {
-                  content = JSON.stringify(response.body);
-                }
-                logger.debug(
-                  'Loaded document content from CDN URL via Electron proxy'
-                );
-              } else {
-                logger.warn(
-                  'CDN URL returned non-200 status:',
-                  response.status
-                );
-              }
-            } else {
-              // Fallback to direct fetch (may fail due to CORS)
-              const response = await fetch(selectedDocument.cdnUrl);
-              if (response.ok) {
-                content = await response.text();
-                logger.debug('Loaded document content from CDN URL');
-              }
-            }
-          } catch (cdnError) {
-            logger.warn('Failed to load from CDN URL:', cdnError);
-          }
-        }
-
-        // If no content from CDN, try local file system (if available through Electron API)
-        if (!content && (window as any).electronAPI?.readFile) {
-          try {
-            content = await (window as any).electronAPI.readFile(
-              selectedDocument.path
-            );
-            logger.debug('Loaded document content from local file');
-          } catch (fsError) {
-            logger.warn('Failed to load from file system:', fsError);
-          }
-        }
-
-        // Set the content (even if empty, to indicate loading completed)
-        setDocumentContent(content);
-        setContentLoaded(true);
-
-        // Initialize the Lexical editor with the content if available
-        if (content && lexicalContext?.editor) {
-          logger.debug('Initializing Lexical editor with document content');
-          // Use setTimeout to avoid setState during render
-          setTimeout(() => {
-            populateEditor(content, lexicalContext.editor);
-          }, 0);
-        }
-      } catch (error) {
-        logger.error('Failed to load document content:', error);
-        setDocumentContent('');
-        setContentLoaded(true);
-      }
-    };
-
-    loadDocumentContent();
-  }, [selectedDocument, lexicalContext?.editor]);
+  // Handle editor initialization
+  const handleEditorInit = useCallback((editor: LexicalEditor) => {
+    setLexicalEditor(editor);
+    logger.debug(
+      'Lexical editor initialized - collaboration will handle content loading'
+    );
+  }, []);
 
   // Component mount/unmount tracking and runtime management
   useEffect(() => {
@@ -395,7 +317,7 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
     return () => {
       mountedRef.current = false;
     };
-  }, [loadRuntimesFromStorage]);
+  }, []); // Empty deps - only run on mount/unmount
 
   // Update runtime error from store
   useEffect(() => {
@@ -410,6 +332,9 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
       logger.debug('Service manager is ready, can start kernel operations');
     }
   }, [isServiceManagerReady, serviceManager]);
+
+  // NOTE: loadJupyterConfig is now called BEFORE ServiceManager creation
+  // No need for separate useEffect to override config after the fact
 
   // Auto-start runtime when document is selected - using stable reference to avoid double execution
   useEffect(() => {
@@ -533,6 +458,24 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
           runtime.runtime.token
         ) {
           logger.debug('Creating service manager for runtime');
+
+          // Override Jupyter config BEFORE creating ServiceManager
+          try {
+            loadJupyterConfig({
+              jupyterServerUrl: runtime.runtime.ingress,
+              jupyterServerToken: runtime.runtime.token,
+            });
+            logger.debug(
+              '✅ Configured Jupyter with runtime-specific settings:',
+              {
+                url: runtime.runtime.ingress,
+                hasToken: !!runtime.runtime.token,
+              }
+            );
+          } catch (error) {
+            logger.error('❌ Failed to configure Jupyter settings:', error);
+          }
+
           const proxyServiceManager = await createProxyServiceManager(
             runtime.runtime.ingress,
             runtime.runtime.token,
@@ -631,7 +574,7 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
   }
 
   // Step 2: Loading document and waiting for serviceManager to be ready (spinner only)
-  if (loading || !contentLoaded || !isServiceManagerReady) {
+  if (loading || !isServiceManagerReady) {
     return (
       <Box
         sx={{
@@ -672,10 +615,29 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
     );
   }
 
-  // Main document view - everything is now in one component
+  // Main document view - only render Jupyter component when we have a valid ServiceManager
+  // This prevents the Jupyter React component from falling back to default hardcoded config
+  if (!serviceManager) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          height: '100%',
+        }}
+      >
+        <Spinner size="large" sx={{ color: COLORS.brand.primary }} />
+        <Text sx={{ color: 'fg.muted' }}>Preparing runtime environment...</Text>
+      </Box>
+    );
+  }
+
   return (
     <Jupyter
-      serviceManager={serviceManager || undefined}
+      serviceManager={serviceManager}
       startDefaultKernel={!!isServiceManagerReady}
     >
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -722,6 +684,53 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
               <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Not connected</Text>
             )}
           </Box>
+
+          {/* Collaboration Status */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+            <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Collaboration:</Text>
+            {collaborationEnabled ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Text
+                  sx={{
+                    fontSize: 1,
+                    color:
+                      collaborationStatus === 'connected'
+                        ? 'success.fg'
+                        : collaborationStatus === 'error'
+                          ? 'danger.fg'
+                          : 'fg.muted',
+                  }}
+                >
+                  {collaborationStatus === 'connected' && '✓ Connected'}
+                  {collaborationStatus === 'connecting' && '⏳ Connecting...'}
+                  {collaborationStatus === 'disconnected' && '○ Disconnected'}
+                  {collaborationStatus === 'error' && '✗ Error'}
+                </Text>
+                <Button
+                  size="small"
+                  variant="invisible"
+                  onClick={() => {
+                    setCollaborationEnabled(!collaborationEnabled);
+                  }}
+                  sx={{ fontSize: 0 }}
+                >
+                  {collaborationStatus === 'connected' ? 'Disable' : 'Enable'}
+                </Button>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Disabled</Text>
+                <Button
+                  size="small"
+                  variant="invisible"
+                  onClick={() => setCollaborationEnabled(true)}
+                  sx={{ fontSize: 0 }}
+                >
+                  Enable
+                </Button>
+              </Box>
+            )}
+          </Box>
           {selectedDocument.description && (
             <Text sx={{ color: 'fg.subtle', mt: 1 }}>
               {selectedDocument.description}
@@ -738,25 +747,13 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
 
         {/* Document Editor - Step 3: Full connected editor visible */}
         <Box sx={{ flex: 1, overflow: 'hidden' }}>
-          {documentContent && (
-            <Box
-              sx={{
-                p: 2,
-                bg: 'canvas.subtle',
-                borderBottom: '1px solid',
-                borderColor: 'border.default',
-              }}
-            >
-              <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-                Loaded {documentContent.length} characters from{' '}
-                {selectedDocument.path}
-              </Text>
-            </Box>
-          )}
-          <Editor
-            onSessionConnection={session => {
-              logger.debug('Document editor session connected:', session);
-            }}
+          <CustomLexicalEditor
+            selectedDocument={selectedDocument}
+            collaborationEnabled={collaborationEnabled}
+            collaborationStatus={collaborationStatus}
+            onCollaborationStatusChange={setCollaborationStatus}
+            onEditorInit={handleEditorInit}
+            serviceManager={serviceManager || undefined}
           />
         </Box>
 
@@ -809,6 +806,334 @@ const DocumentViewContent: React.FC<DocumentViewProps> = ({
       </Box>
     </Jupyter>
   );
+};
+
+// Custom Lexical Editor component with Loro collaboration and Jupyter integration
+interface CustomLexicalEditorProps {
+  selectedDocument: DocumentData;
+  collaborationEnabled: boolean;
+  collaborationStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
+  onCollaborationStatusChange: (
+    status: 'disconnected' | 'connecting' | 'connected' | 'error'
+  ) => void;
+  onEditorInit: (editor: LexicalEditor) => void;
+  serviceManager?: any;
+}
+
+const CustomLexicalEditor: React.FC<CustomLexicalEditorProps> = ({
+  selectedDocument,
+  collaborationEnabled,
+  onCollaborationStatusChange,
+  onEditorInit,
+  serviceManager,
+}) => {
+  const { configuration } = useCoreStore();
+  const { defaultKernel } = useJupyter();
+
+  // Debug kernel availability
+  logger.debug('CustomLexicalEditor kernel state:', {
+    hasServiceManager: !!serviceManager,
+    hasDefaultKernel: !!defaultKernel,
+    kernelReady: defaultKernel?.ready,
+    kernelId: defaultKernel?.id,
+  });
+  const [editorRef, setEditorRef] = useState<LexicalEditor | null>(null);
+  const [lastConnectedTime, setLastConnectedTime] = useState<number>(0);
+  const disconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Placeholder component
+  const Placeholder = () => (
+    <div
+      style={{
+        position: 'absolute',
+        top: '16px',
+        left: '16px',
+        color: '#999',
+        pointerEvents: 'none',
+        userSelect: 'none',
+      }}
+    >
+      Start writing your document...
+    </div>
+  );
+
+  // Initialize editor and call onEditorInit when editor is ready
+  const handleEditorRef = useCallback(
+    (editor: LexicalEditor | null) => {
+      if (editor && editor !== editorRef) {
+        setEditorRef(editor);
+        onEditorInit(editor);
+      }
+    },
+    [onEditorInit, editorRef]
+  );
+
+  // Debounced collaboration status to prevent excessive re-renders
+  const handleConnectionChange = useCallback(
+    (connected: boolean) => {
+      logger.debug('Loro collaboration connection changed:', connected);
+
+      if (connected) {
+        // Immediately show connected state
+        setLastConnectedTime(Date.now());
+        onCollaborationStatusChange('connected');
+
+        // Clear any pending disconnect timeout
+        if (disconnectTimeoutRef.current) {
+          clearTimeout(disconnectTimeoutRef.current);
+          disconnectTimeoutRef.current = null;
+        }
+      } else {
+        // Don't immediately show disconnected - wait to see if it reconnects quickly
+        if (disconnectTimeoutRef.current) {
+          clearTimeout(disconnectTimeoutRef.current);
+        }
+
+        disconnectTimeoutRef.current = setTimeout(() => {
+          // Only show disconnected if we've been disconnected for 3+ seconds
+          const timeSinceLastConnected = Date.now() - lastConnectedTime;
+          if (timeSinceLastConnected > 3000) {
+            onCollaborationStatusChange('disconnected');
+          }
+          disconnectTimeoutRef.current = null;
+        }, 3000);
+      }
+    },
+    [lastConnectedTime, onCollaborationStatusChange]
+  );
+
+  const handlePeerIdChange = useCallback((peerId: string) => {
+    logger.debug('Loro collaboration peer ID changed:', peerId);
+  }, []);
+
+  const handleAwarenessChange = useCallback((awarenessData: any) => {
+    logger.debug('Loro collaboration awareness changed:', awarenessData);
+
+    // Enhanced stale peer cleanup
+    if (awarenessData && awarenessData.states) {
+      const currentTime = Date.now();
+      const staleThreshold = 30000; // 30 seconds
+      const stalePeers: string[] = [];
+
+      // Check for stale peers
+      Object.entries(awarenessData.states).forEach(
+        ([peerId, state]: [string, any]) => {
+          if (state && state.lastSeen && typeof state.lastSeen === 'number') {
+            const timeSinceLastSeen = currentTime - state.lastSeen;
+            if (timeSinceLastSeen > staleThreshold) {
+              stalePeers.push(peerId);
+              logger.debug(
+                `[Awareness Cleanup] Peer ${peerId} is stale (last seen: ${timeSinceLastSeen}ms ago)`
+              );
+            }
+          }
+        }
+      );
+
+      // Log peer count for debugging
+      const activePeerCount =
+        Object.keys(awarenessData.states).length - stalePeers.length;
+      const totalPeers = Object.keys(awarenessData.states).length;
+      logger.debug(
+        `[Awareness State] Active peers: ${activePeerCount}, Total peers: ${totalPeers}, Stale peers: ${stalePeers.length}`
+      );
+
+      // Force cleanup of stale peers if we have more than 2 total peers
+      if (stalePeers.length > 0 && totalPeers > 2) {
+        logger.warn(
+          `[Awareness Cleanup] Found ${stalePeers.length} stale peers, attempting manual cleanup`
+        );
+        stalePeers.forEach(peerId => {
+          logger.debug(
+            `[Awareness Cleanup] Requesting removal of stale peer: ${peerId}`
+          );
+          // The plugin should handle this internally, but we're logging for debugging
+        });
+      }
+    }
+  }, []);
+
+  const handleCollaborationInit = useCallback(
+    (success: boolean) => {
+      logger.debug('Loro collaboration initialization:', {
+        success,
+        documentId: selectedDocument.id,
+      });
+      if (!success) {
+        onCollaborationStatusChange('error');
+      }
+      // Don't set connected here - let handleConnectionChange handle it
+    },
+    [selectedDocument.id, onCollaborationStatusChange]
+  );
+
+  // Store disconnect function for cleanup
+  const [collaborationDisconnectFn, setCollaborationDisconnectFn] = useState<
+    (() => void) | null
+  >(null);
+
+  const handleDisconnectReady = useCallback((disconnectFn: () => void) => {
+    setCollaborationDisconnectFn(() => disconnectFn);
+    logger.debug('Loro disconnect function ready and stored');
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (disconnectTimeoutRef.current) {
+        clearTimeout(disconnectTimeoutRef.current);
+        disconnectTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleSendMessageReady = useCallback(
+    (sendMessageFn: (message: any) => void) => {
+      // Store sendMessage function for potential future use
+      logger.debug('Loro send message function ready:', typeof sendMessageFn);
+    },
+    []
+  );
+
+  // Cleanup stale connections when component unmounts or document changes
+  useEffect(() => {
+    return () => {
+      // Cleanup function when component unmounts or dependencies change
+      if (collaborationDisconnectFn) {
+        logger.debug(
+          '[Peer Cleanup] Disconnecting collaboration on component cleanup'
+        );
+        try {
+          collaborationDisconnectFn();
+        } catch (error) {
+          logger.warn(
+            '[Peer Cleanup] Error during collaboration disconnect:',
+            error
+          );
+        }
+      }
+
+      // Clear stored functions
+      setCollaborationDisconnectFn(null);
+
+      logger.debug(
+        '[Peer Cleanup] Collaboration cleanup completed for document:',
+        selectedDocument.id
+      );
+    };
+  }, [selectedDocument.id, collaborationDisconnectFn]); // Re-run cleanup when document or disconnect function changes
+
+  // Build WebSocket URL for collaboration with authentication
+  const collaborationWebSocketUrl = useMemo(() => {
+    if (!configuration?.spacerRunUrl || !configuration?.token) return null;
+
+    const spacerWsUrl = configuration.spacerRunUrl.replace(/^http/, 'ws');
+    return `${spacerWsUrl}/api/spacer/v1/lexical/ws/${selectedDocument.id}?token=${configuration.token}`;
+  }, [configuration?.spacerRunUrl, configuration?.token, selectedDocument.id]);
+
+  return (
+    <Box
+      sx={{
+        height: '100%',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Box
+        sx={{
+          flex: 1,
+          overflow: 'auto',
+          position: 'relative',
+          border: '1px solid',
+          borderColor: 'border.default',
+          borderRadius: 2,
+          m: 2,
+        }}
+      >
+        <RichTextPlugin
+          contentEditable={
+            <ContentEditable
+              style={{
+                minHeight: '200px',
+                padding: '16px',
+                outline: 'none',
+                resize: 'none',
+                fontSize: '14px',
+                fontFamily:
+                  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                lineHeight: '1.5',
+                position: 'relative',
+              }}
+              spellCheck={true}
+            />
+          }
+          placeholder={<Placeholder />}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+
+        {/* History Plugin for undo/redo */}
+        <HistoryPlugin />
+
+        {/* Jupyter Plugins - re-enabled */}
+        {serviceManager && defaultKernel && (
+          <>
+            <JupyterCellPlugin />
+            <JupyterInputOutputPlugin kernel={defaultKernel as any} />
+          </>
+        )}
+
+        {/* Loro Collaborative Plugin - re-enabled with enhanced cleanup */}
+        {collaborationEnabled && collaborationWebSocketUrl && editorRef && (
+          <LoroCollaborativePlugin
+            docId={selectedDocument.id}
+            websocketUrl={collaborationWebSocketUrl}
+            onConnectionChange={handleConnectionChange}
+            onPeerIdChange={handlePeerIdChange}
+            onAwarenessChange={handleAwarenessChange}
+            onInitialization={handleCollaborationInit}
+            onDisconnectReady={handleDisconnectReady}
+            onSendMessageReady={handleSendMessageReady}
+          />
+        )}
+
+        {/* Editor initialization */}
+        <EditorInitPlugin onEditorInit={handleEditorRef} />
+      </Box>
+
+      {/* Editor Status Bar */}
+      <Box
+        sx={{
+          borderTop: '1px solid',
+          borderColor: 'border.default',
+          p: 2,
+          fontSize: 1,
+          color: 'fg.muted',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Text>Ready to edit • Press Ctrl+Z to undo • Press Ctrl+Y to redo</Text>
+        {serviceManager && (
+          <Text sx={{ color: 'success.fg' }}>✓ Jupyter kernel ready</Text>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
+// Plugin to capture editor reference for initialization
+const EditorInitPlugin: React.FC<{
+  onEditorInit: (editor: LexicalEditor) => void;
+}> = ({ onEditorInit }) => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    onEditorInit(editor);
+  }, [editor, onEditorInit]);
+
+  return null;
 };
 
 export default DocumentView;
