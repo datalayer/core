@@ -20,6 +20,7 @@ import {
   DialogProps,
   Dialog as PrimerDialog,
 } from '@primer/react/experimental';
+import { DatalayerThemeProvider } from '../../theme';
 
 type IDialogFooterProps = React.PropsWithChildren<DialogProps> & {
   checkbox: Partial<Dialog.ICheckbox> | null;
@@ -128,54 +129,60 @@ export class JupyterDialog<T> extends ReactWidget {
   }
 
   private _renderBody = (props: PropsWithChildren<DialogProps>) => (
-    <PrimerDialog.Body>
-      {createElement(this.body, {
-        ...props,
-        setValue: this.setValue,
-      })}
-    </PrimerDialog.Body>
+    <DatalayerThemeProvider>
+      <PrimerDialog.Body>
+        {createElement(this.body, {
+          ...props,
+          setValue: this.setValue,
+        })}
+      </PrimerDialog.Body>
+    </DatalayerThemeProvider>
   );
 
   private _renderFooter = (props: PropsWithChildren<DialogProps>) => (
-    <DialogFooter
-      {...props}
-      checkbox={this.checkbox}
-      setChecked={this.setChecked}
-    />
+    <DatalayerThemeProvider>
+      <DialogFooter
+        {...props}
+        checkbox={this.checkbox}
+        setChecked={this.setChecked}
+      />
+    </DatalayerThemeProvider>
   );
 
   protected render(): JSX.Element | null {
     return (
-      <PrimerDialog
-        sx={{
-          color: 'var(--fgColor-default)',
-          backgroundColor: 'var(--bgColor-default)',
-          fontFamily: 'var(--fontStack-system)',
-          fontSize: 'var(--text-body-size-medium)',
-          lineHeight: 'var(--text-body-lineHeight-medium)',
-        }}
-        onClose={this.close}
-        footerButtons={this.buttons.map((but, idx) => {
-          const footerButton: DialogButtonProps = {
-            buttonType:
-              but.displayType === 'default'
-                ? but.accept
-                  ? 'primary'
-                  : 'default'
-                : 'danger',
-            onClick: () => {
-              this.handleButton(idx);
-            },
-            content: but.label,
-            'aria-label': but.ariaLabel,
-            autoFocus: but.accept,
-          };
-          return footerButton;
-        })}
-        renderBody={this._renderBody}
-        renderFooter={this._renderFooter}
-        title={this.dialogTitle}
-      />
+      <DatalayerThemeProvider>
+        <PrimerDialog
+          sx={{
+            color: 'var(--fgColor-default)',
+            backgroundColor: 'var(--bgColor-default)',
+            fontFamily: 'var(--fontStack-system)',
+            fontSize: 'var(--text-body-size-medium)',
+            lineHeight: 'var(--text-body-lineHeight-medium)',
+          }}
+          onClose={this.close}
+          footerButtons={this.buttons.map((but, idx) => {
+            const footerButton: DialogButtonProps = {
+              buttonType:
+                but.displayType === 'default'
+                  ? but.accept
+                    ? 'primary'
+                    : 'default'
+                  : 'danger',
+              onClick: () => {
+                this.handleButton(idx);
+              },
+              content: but.label,
+              'aria-label': but.ariaLabel,
+              autoFocus: but.accept,
+            };
+            return footerButton;
+          })}
+          renderBody={this._renderBody}
+          renderFooter={this._renderFooter}
+          title={this.dialogTitle}
+        />
+      </DatalayerThemeProvider>
     );
   }
 

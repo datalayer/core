@@ -10,15 +10,15 @@ import {
   ThemeProviderProps,
 } from '@primer/react';
 import { IThemeManager } from '@jupyterlab/apputils';
-import { loadJupyterConfig, jupyterLabTheme } from '@datalayer/jupyter-react';
+import {
+  jupyterLabTheme,
+  loadJupyterConfig,
+  //  useJupyterReactStore,
+} from '@datalayer/jupyter-react';
 import { datalayerTheme } from '../theme';
 import { useRuntimesStore } from '../state';
 
 export interface IDatalayerThemeProviderProps extends ThemeProviderProps {
-  /**
-   * Whether the components is embedded in Jupyter UI or not.
-   */
-  inJupyterLab?: boolean;
   /**
    * Base styles
    */
@@ -32,28 +32,30 @@ export interface IDatalayerThemeProviderProps extends ThemeProviderProps {
 export function DatalayerThemeProvider(
   props: React.PropsWithChildren<IDatalayerThemeProviderProps>,
 ): JSX.Element {
-  const {
-    children,
-    colorMode: colorModeProps,
-    //    inJupyterLab,
-    baseStyles,
-    ...rest
-  } = props;
+  const { children, colorMode: colormodeProps, baseStyles, ...rest } = props;
   const { jupyterLabAdapter } = useRuntimesStore();
-  const [colorMode, setColorMode] = useState(colorModeProps ?? 'light');
+  //  const { colormode: colormodeJupyterReact } = useJupyterReactStore();
+  const [colormode, setColormode] = useState(colormodeProps ?? 'light');
   const [inJupyterLab, setInJupterLab] = useState<boolean | undefined>(
     undefined,
   );
   useEffect(() => {
-    setInJupterLab(loadJupyterConfig().insideJupyterLab);
+    const config = loadJupyterConfig();
+    const { insideJupyterLab } = config;
+    setInJupterLab(insideJupyterLab);
   }, []);
+  /*
+  useEffect(() => {
+    setColormode(colormodeJupyterReact);
+  }, [colormodeJupyterReact]);
+  */
   useEffect(() => {
     if (inJupyterLab !== undefined) {
       function colorSchemeFromMedia({ matches }: { matches: boolean }) {
-        setColorMode(matches ? 'dark' : 'light');
+        setColormode(matches ? 'dark' : 'light');
       }
       function updateColorMode(themeManager: IThemeManager) {
-        setColorMode(
+        setColormode(
           themeManager.theme && !themeManager.isLight(themeManager.theme)
             ? 'dark'
             : 'light',
@@ -63,12 +65,6 @@ export function DatalayerThemeProvider(
         const themeManager = jupyterLabAdapter?.service(
           '@jupyterlab/apputils-extension:themes',
         ) as IThemeManager;
-        console.log(
-          '---------DLA',
-          inJupyterLab,
-          jupyterLabAdapter,
-          themeManager,
-        );
         if (themeManager) {
           updateColorMode(themeManager);
           themeManager.themeChanged.connect(updateColorMode);
@@ -93,7 +89,7 @@ export function DatalayerThemeProvider(
   }, [inJupyterLab, jupyterLabAdapter]);
   return inJupyterLab !== undefined ? (
     <PrimerThemeProvider
-      colorMode={colorMode}
+      colorMode={colormode}
       theme={inJupyterLab ? jupyterLabTheme : datalayerTheme}
       {...rest}
     >

@@ -20,6 +20,7 @@ import {
 import { Dialog } from '@primer/react/experimental';
 import { AlertIcon } from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
+import { DatalayerThemeProvider } from '../../theme';
 import { USAGE_ROUTE } from '../../routes';
 import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
@@ -44,13 +45,14 @@ import {
  * Initial time in milliseconds before retrying in case no kernels are available
  */
 const NOT_AVAILABLE_INIT_RETRY = 10_000;
+
 /**
  * Number of trials in case of unavailable kernels
  */
 const NOT_AVAILABLE_RETRIES = 5;
 
 /**
- * {@link KernelLauncherDialog} properties.
+ * {@link RuntimeLauncherDialog} properties.
  */
 export interface IKernelLauncherDialogProps {
   /**
@@ -104,9 +106,9 @@ export interface IKernelLauncherDialogProps {
 }
 
 /**
- * Start Remote Runtime Dialog.
+ * Start Runtime Launcher Dialog.
  */
-export function KernelLauncherDialog(
+export function RuntimeLauncherDialog(
   props: IKernelLauncherDialogProps,
 ): JSX.Element {
   const {
@@ -182,7 +184,7 @@ export function KernelLauncherDialog(
     },
     [setSelection, hasCustomRuntimeName],
   );
-  const handleSubmitKernel = useCallback(async () => {
+  const handleSubmitRuntime = useCallback(async () => {
     if (selection) {
       setError(undefined);
       setWaitingForRuntime(true);
@@ -341,195 +343,201 @@ export function KernelLauncherDialog(
     }
   }, []);
   return (
-    <Dialog
-      title={dialogTitle || 'Launch a new Runtime'}
-      onClose={() => {
-        onSubmit(undefined);
-      }}
-      footerButtons={[
-        {
-          buttonType: 'default',
-          onClick: () => {
-            onSubmit(undefined);
-          },
-          content: 'Cancel',
-          disabled: waitingForRuntime,
-        },
-        {
-          buttonType: 'primary',
-          onClick: handleSubmitKernel,
-          content: waitingForRuntime ? (
-            <Spinner size="small" />
-          ) : (startKernel ?? true) ? (
-            'Launch'
-          ) : (
-            'Assign from the Environment'
-          ),
-          disabled:
-            waitingForRuntime || outOfCredits || timeLimit < Number.EPSILON,
-          autoFocus: true,
-        },
-      ]}
-    >
-      <Box
-        as="form"
-        onKeyDown={event => {
-          if (event.defaultPrevented) {
-            return;
-          }
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            handleSubmitKernel();
-          }
+    <DatalayerThemeProvider>
+      <Dialog
+        title={dialogTitle || 'Launch a new Runtime'}
+        onClose={() => {
+          onSubmit(undefined);
         }}
+        footerButtons={[
+          {
+            buttonType: 'default',
+            onClick: () => {
+              onSubmit(undefined);
+            },
+            content: 'Cancel',
+            disabled: waitingForRuntime,
+          },
+          {
+            buttonType: 'primary',
+            onClick: handleSubmitRuntime,
+            content: waitingForRuntime ? (
+              <Spinner size="small" />
+            ) : (startKernel ?? true) ? (
+              'Launch'
+            ) : (
+              'Assign from the Environment'
+            ),
+            disabled:
+              waitingForRuntime || outOfCredits || timeLimit < Number.EPSILON,
+            autoFocus: true,
+          },
+        ]}
       >
-        <FormControl
-          disabled={!!kernelSnapshot?.environment || environments.length === 0}
+        <Box
+          as="form"
+          onKeyDown={event => {
+            if (event.defaultPrevented) {
+              return;
+            }
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              handleSubmitRuntime();
+            }
+          }}
         >
-          <FormControl.Label>Environment</FormControl.Label>
-          <Select
-            name="environment"
+          <FormControl
             disabled={
               !!kernelSnapshot?.environment || environments.length === 0
             }
-            value={selection}
-            onChange={handleSelectionChange}
-            block
           >
-            {environments.map(spec => (
-              <Select.Option key={spec.name} value={spec.name}>
-                {spec.name}
-                {spec.title && (
+            <FormControl.Label>Environment</FormControl.Label>
+            <Select
+              name="environment"
+              disabled={
+                !!kernelSnapshot?.environment || environments.length === 0
+              }
+              value={selection}
+              onChange={handleSelectionChange}
+              block
+            >
+              {environments.map(spec => (
+                <Select.Option key={spec.name} value={spec.name}>
+                  {spec.name}
+                  {spec.title && (
+                    <>
+                      {' - '}
+                      {spec.title as string}
+                    </>
+                  )}
+                </Select.Option>
+              ))}
+            </Select>
+            <FormControl.Caption>
+              <>
+                {markdownParser ? (
+                  <Box sx={{ img: { maxWidth: '100%' } }}>
+                    <Markdown
+                      text={description}
+                      markdownParser={markdownParser}
+                      sanitizer={sanitizer}
+                    />
+                  </Box>
+                ) : (
+                  description
+                )}
+                {/*
+                {spec?.contents?.length && (
                   <>
-                    {' - '}
-                    {spec.title as string}
+                    <FormControl>
+                      <FormControl.Label>Contents</FormControl.Label>
+                    </FormControl>
+                    {spec?.contents?.map(content => {
+                      return (
+                        <Box mb={1}>
+                          <Label>{content.name}</Label> mounted on{' '}
+                          <Label>{content.mount}</Label>
+                        </Box>
+                      );
+                    })}
                   </>
                 )}
-              </Select.Option>
-            ))}
-          </Select>
-          <FormControl.Caption>
-            <>
-              {markdownParser ? (
-                <Box sx={{ img: { maxWidth: '100%' } }}>
-                  <Markdown
-                    text={description}
-                    markdownParser={markdownParser}
-                    sanitizer={sanitizer}
-                  />
-                </Box>
-              ) : (
-                description
-              )}
-              {/*
-              {spec?.contents?.length && (
-                <>
-                  <FormControl>
-                    <FormControl.Label>Contents</FormControl.Label>
-                  </FormControl>
-                  {spec?.contents?.map(content => {
-                    return (
-                      <Box mb={1}>
-                        <Label>{content.name}</Label> mounted on{' '}
-                        <Label>{content.mount}</Label>
-                      </Box>
-                    );
-                  })}
-                </>
-              )}
-              */}
-            </>
-          </FormControl.Caption>
-        </FormControl>
-        {startKernel && (
-          <RuntimeReservationControl
-            addCredits={
-              navigate
-                ? () => {
-                    navigate!(USAGE_ROUTE);
-                  }
-                : undefined
-            }
-            disabled={outOfCredits}
-            label={'Time reservation'}
-            max={max}
-            time={timeLimit}
-            burningRate={burningRate}
-            onTimeChange={setTimeLimit}
-            error={
-              outOfCredits ? 'You must add credits to your account.' : undefined
-            }
-          />
-        )}
-        {!configuration.whiteLabel && (
-          <FormControl layout="horizontal">
-            <FormControl.Label id="user-storage-label">
-              User storage
-              <Tooltip
-                text={'The runtime will be slower to start.'}
-                direction="e"
-                style={{ marginLeft: 3 }}
-              >
-                <IconButton
-                  icon={AlertIcon}
-                  aria-label=""
-                  variant="invisible"
-                />
-              </Tooltip>
-            </FormControl.Label>
-            <ToggleSwitch
-              checked={userStorage}
-              size="small"
-              onClick={handleUserStorageChange}
-              aria-labelledby="user-storage-label"
-            />
+                */}
+              </>
+            </FormControl.Caption>
           </FormControl>
-        )}
-        <FormControl sx={{ paddingTop: '10px' }}>
-          <FormControl.Label>Runtime name</FormControl.Label>
-          <TextInput
-            name="name"
-            value={runtimeName}
-            onChange={handleKernelNameChange}
-            block
-          />
-        </FormControl>
-        {hasExample &&
-          jupyterLabAdapter?.jupyterLab &&
-          !configuration.whiteLabel && (
-            <FormControl sx={{ paddingTop: '10px' }}>
-              <FormControl.Label id="open-example-label">
-                Open example notebook
+          {startKernel && (
+            <RuntimeReservationControl
+              addCredits={
+                navigate
+                  ? () => {
+                      navigate!(USAGE_ROUTE);
+                    }
+                  : undefined
+              }
+              disabled={outOfCredits}
+              label={'Time reservation'}
+              max={max}
+              time={timeLimit}
+              burningRate={burningRate}
+              onTimeChange={setTimeLimit}
+              error={
+                outOfCredits
+                  ? 'You must add credits to your account.'
+                  : undefined
+              }
+            />
+          )}
+          {!configuration.whiteLabel && (
+            <FormControl layout="horizontal">
+              <FormControl.Label id="user-storage-label">
+                User storage
+                <Tooltip
+                  text={'The runtime will be slower to start.'}
+                  direction="e"
+                  style={{ marginLeft: 3 }}
+                >
+                  <IconButton
+                    icon={AlertIcon}
+                    aria-label=""
+                    variant="invisible"
+                  />
+                </Tooltip>
               </FormControl.Label>
               <ToggleSwitch
-                disabled={
-                  !environments.find(spec => spec.name === selection)?.example
-                }
-                checked={openExample}
+                checked={userStorage}
                 size="small"
-                onClick={handleSwitchClick}
-                aria-labelledby="open-example-label"
+                onClick={handleUserStorageChange}
+                aria-labelledby="user-storage-label"
               />
             </FormControl>
           )}
-        {error && (
-          <FlashClosable
-            variant={flashLevel}
-            actions={
-              navigate && upgradeSubscription && flashLevel === 'warning' ? (
-                <Button
-                  onClick={handleUpgrade}
-                  title={'Upgrade your subscription.'}
-                >
-                  Upgrade
-                </Button>
-              ) : undefined
-            }
-          >
-            {error}
-          </FlashClosable>
-        )}
-      </Box>
-    </Dialog>
+          <FormControl sx={{ paddingTop: '10px' }}>
+            <FormControl.Label>Runtime name</FormControl.Label>
+            <TextInput
+              name="name"
+              value={runtimeName}
+              onChange={handleKernelNameChange}
+              block
+            />
+          </FormControl>
+          {hasExample &&
+            jupyterLabAdapter?.jupyterLab &&
+            !configuration.whiteLabel && (
+              <FormControl sx={{ paddingTop: '10px' }}>
+                <FormControl.Label id="open-example-label">
+                  Open example notebook
+                </FormControl.Label>
+                <ToggleSwitch
+                  disabled={
+                    !environments.find(spec => spec.name === selection)?.example
+                  }
+                  checked={openExample}
+                  size="small"
+                  onClick={handleSwitchClick}
+                  aria-labelledby="open-example-label"
+                />
+              </FormControl>
+            )}
+          {error && (
+            <FlashClosable
+              variant={flashLevel}
+              actions={
+                navigate && upgradeSubscription && flashLevel === 'warning' ? (
+                  <Button
+                    onClick={handleUpgrade}
+                    title={'Upgrade your subscription.'}
+                  >
+                    Upgrade
+                  </Button>
+                ) : undefined
+              }
+            >
+              {error}
+            </FlashClosable>
+          )}
+        </Box>
+      </Dialog>
+    </DatalayerThemeProvider>
   );
 }
