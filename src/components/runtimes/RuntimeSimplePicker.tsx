@@ -12,7 +12,7 @@ import { ActionList, ActionMenu, Box, Button, Tooltip } from '@primer/react';
 import { CloudIcon, EyeIcon, UnfoldIcon } from '@primer/octicons-react';
 import { BrowserIcon, PlusIcon } from '@datalayer/icons-react';
 import { ArtifactIcon } from '../../components/icons';
-import { KernelLauncherDialog } from '../../components/runtimes';
+import { RuntimeLauncherDialog } from '../../components/runtimes';
 import {
   IRuntimeModel,
   type IRuntimeDesc,
@@ -295,7 +295,7 @@ export function RuntimeSimplePicker(
         </ActionMenu.Overlay>
       </ActionMenu>
       {multiServiceManager?.remote && dialogCause > 0 && (
-        <KernelLauncherDialog
+        <RuntimeLauncherDialog
           dialogTitle={
             dialogCause === RuntimeDialogCause.Transfer
               ? 'Switch to a new Cloud Runtime'

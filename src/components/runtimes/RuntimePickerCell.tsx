@@ -10,15 +10,15 @@ import type { IMarkdownParser, IRenderMime } from '@jupyterlab/rendermime';
 import { nullTranslator } from '@jupyterlab/translation';
 import { ActionList } from '@primer/react';
 import { CloudUploadIcon } from '@datalayer/icons-react';
-import { ExternalTokenSilentLogin } from '../../components/iam';
 import type { ISnippet } from '../../models';
 import { useCoreStore, useIAMStore } from '../../state';
 import { IRuntimeDesc } from '../../models';
 import { isRuntimeRemote, RuntimeSnippetsFacade } from '../../api';
+import { ExternalTokenSilentLogin } from '../../components/iam';
 import { SnippetDialog } from './../snippets/SnippetDialog';
-import { KernelLauncherDialog } from './RuntimeLauncherDialog';
-import { RuntimePickerBase } from './RuntimePickerBase';
 import { IRuntimePickerBaseProps } from './RuntimePickerBase';
+import { RuntimeLauncherDialog } from './RuntimeLauncherDialog';
+import { RuntimePickerBase } from './RuntimePickerBase';
 import { RuntimeCellVariablesDialog } from './RuntimeCellVariablesDialog';
 
 /**
@@ -241,7 +241,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
         />
       )}
       {isKernelDialogOpen && (
-        <KernelLauncherDialog
+        <RuntimeLauncherDialog
           manager={multiServiceManager.remote!}
           onSubmit={onStartRemote}
           startKernel={false}
