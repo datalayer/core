@@ -4,7 +4,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { KernelIndicator } from '@datalayer/jupyter-react';
+import {
+  KernelIndicator,
+  useJupyterReactStore,
+} from '@datalayer/jupyter-react';
 import { ISanitizer } from '@jupyterlab/apputils';
 import { IMarkdownParser } from '@jupyterlab/rendermime';
 import { Session } from '@jupyterlab/services';
@@ -23,15 +26,15 @@ import { DatalayerThemeProvider } from '../../theme';
 
 export interface IRuntimeAssignOptions {
   /**
-   * Kernel description.
+   * Runtime description.
    */
   runtimeDesc?: IRuntimeDesc;
   /**
-   * Kernel model to connect to.
+   * Runtime model to connect to.
    */
   runtimeModel?: IRuntimeModel;
   /**
-   * Whether to transfer the state to the new Kernel model.
+   * Whether to transfer the state to the runtime model.
    */
   transferState?: boolean;
 }
@@ -41,11 +44,11 @@ export interface IRuntimeAssignOptions {
  */
 interface IRuntimeSimplePickerProps {
   /**
-   * Kernel assignment callback.
+   * Runtime assignment callback.
    */
   assignRuntime: (options: IRuntimeAssignOptions) => Promise<void>;
   /**
-   * Connection to the active Kernel.
+   * Connection to the active runtime.
    */
   sessionConnection?: Session.ISessionConnection;
 }
@@ -75,8 +78,8 @@ export function RuntimeSimplePicker(
   props: IRuntimeSimplePickerProps,
 ): JSX.Element {
   const { assignRuntime, sessionConnection } = props;
-  const { runtimeModels, multiServiceManager, jupyterLabAdapter } =
-    useRuntimesStore();
+  const { runtimeModels, multiServiceManager } = useRuntimesStore();
+  const { jupyterLabAdapter } = useJupyterReactStore();
   const [runtimeLocation, setRuntimeLocation] = useState<IRuntimeLocation>();
   const [luminoServices, setLuminoServices] = useState<{ [k: string]: any }>(
     {},

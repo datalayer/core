@@ -20,18 +20,14 @@ import {
 import { Dialog } from '@primer/react/experimental';
 import { AlertIcon } from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
+import { useJupyterReactStore } from '@datalayer/jupyter-react';
 import { DatalayerThemeProvider } from '../../theme';
 import { USAGE_ROUTE } from '../../routes';
 import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
 import type { IRemoteServicesManager, RunResponseError } from '../../api';
 import type { IRuntimeSnapshot, IRuntimeDesc } from '../../models';
-import {
-  iamStore,
-  useCoreStore,
-  useIAMStore,
-  useRuntimesStore,
-} from '../../state';
+import { iamStore, useCoreStore, useIAMStore } from '../../state';
 import { createNotebook, sleep } from '../../utils';
 import { Markdown } from '../display';
 import { Timer } from '../progress';
@@ -140,7 +136,7 @@ export function RuntimeLauncherDialog(
     // TODO when would this component be shown outside of a react-router? navigation is only available within a react-router.
     console.warn(reason);
   }
-  const { jupyterLabAdapter } = useRuntimesStore();
+  const { jupyterLabAdapter } = useJupyterReactStore();
   const [selection, setSelection] = useState(
     (kernelSnapshot?.environment || environments[0]?.name) ?? '',
   );

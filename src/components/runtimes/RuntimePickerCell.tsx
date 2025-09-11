@@ -51,7 +51,7 @@ export type IRuntimePickerCellProps = Pick<
 };
 
 /**
- * Kernel picker component for a cell.
+ * Runtime picker component for a cell.
  */
 export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
   const {
@@ -67,7 +67,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
   const { token } = useIAMStore();
   const { configuration } = useCoreStore();
   const [isForeign, setIsForeign] = useState(false);
-  const [hasCellKernel, setHasCellKernel] = useState(false);
+  const [hasCellRuntime, setHasCellRuntime] = useState(false);
   const [isKernelDialogOpen, setIsKernelDialogOpen] = useState(false);
   const [isVariableDialogOpen, setIsVariableDialogOpen] = useState(false);
   const [language, setLanguage] = useState<string>('');
@@ -80,14 +80,14 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
   useEffect(() => {
     const updateState = (model: ICellModel) => {
       const datalayerMeta = model.getMetadata('datalayer') ?? {};
-      const kernel = datalayerMeta.kernel as IRuntimeDesc | undefined;
-      setIsForeign(!!kernel);
-      setHasCellKernel(kernel?.params?.notebook === false);
+      const runtime = datalayerMeta.kernel as IRuntimeDesc | undefined;
+      setIsForeign(!!runtime);
+      setHasCellRuntime(runtime?.params?.notebook === false);
       const newSnippets = new Array<ISnippet>();
-      if (kernel) {
+      if (runtime) {
         const spec = multiServiceManager.remote?.environments
           .get()
-          .find(env => env.name === kernel.name);
+          .find(env => env.name === runtime.name);
         setLanguage(spec?.language ?? '');
         if (spec?.snippets) {
           newSnippets.push(...spec.snippets);
@@ -111,7 +111,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
     },
     [preference],
   );
-  const setSelectedKernelDesc = useCallback(
+  const setSelectedRuntimeDesc = useCallback(
     (kernel?: IRuntimeDesc): void => {
       const datalayerMeta = model.getMetadata('datalayer') ?? {
         kernel: undefined,
@@ -150,28 +150,28 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
           ...desc.params,
           notebook: false,
         };
-        setSelectedKernelDesc(desc);
+        setSelectedRuntimeDesc(desc);
       }
       setIsKernelDialogOpen(false);
     },
-    [setSelectedKernelDesc],
+    [setSelectedRuntimeDesc],
   );
   const datalayerMeta = model.getMetadata('datalayer') ?? {};
   return (
     <>
       <RuntimePickerBase
         display="menu"
-        filterKernel={filterKernel}
+        filterRuntime={filterKernel}
         preference={preference}
         multiServiceManager={multiServiceManager}
         runtimeDesc={datalayerMeta.kernel ? datalayerMeta.kernel : undefined}
-        setRuntimeDesc={setSelectedKernelDesc}
+        setRuntimeDesc={setSelectedRuntimeDesc}
         variant={'cell'}
         preActions={
           <ActionList.Item
             disabled={!multiServiceManager.remote}
             onSelect={setCell}
-            selected={hasCellKernel}
+            selected={hasCellRuntime}
             title={
               !multiServiceManager.remote
                 ? 'You are not connected with Datalayer.'

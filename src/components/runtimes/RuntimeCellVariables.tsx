@@ -10,9 +10,9 @@ import { Autocomplete, FormControl, TextInputWithTokens } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 
 /**
- * {@link KernelCellVariables} properties
+ * {@link RuntimeCellVariables} properties
  */
-interface IKernelCellVariablesProps {
+interface IRuntimeCellVariablesProps {
   /**
    * Variable names to be imported
    */
@@ -62,17 +62,17 @@ type Datum = {
 };
 
 /**
- * Kernel variables picker
+ * Runtime Cell Variables Picker.
  */
-export function KernelCellVariables(
-  props: IKernelCellVariablesProps,
+export function RuntimeCellVariables(
+  props: IRuntimeCellVariablesProps,
 ): JSX.Element {
   const {
     getInputOptions,
-    inputs,
-    setInputs,
     getOutputOptions,
+    inputs,
     output,
+    setInputs,
     setOutput,
     translator,
   } = props;
@@ -304,4 +304,4 @@ export function KernelCellVariables(
   );
 }
 
-export default KernelCellVariables;
+export default RuntimeCellVariables;
