@@ -5,40 +5,28 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useIAMStore } from '@datalayer/core';
-import { Box } from '@datalayer/primer-addons';
-import { Spinner, Text } from '@primer/react';
+import dynamicImport from 'next/dynamic';
 
-export default function Home() {
-  const router = useRouter();
-  const { token } = useIAMStore();
+// Disable static generation for this page since it requires authentication
+export const dynamic = 'force-dynamic';
 
-  useEffect(() => {
-    if (token) {
-      // Redirect to notebooks page if authenticated
-      router.push('/notebooks');
-    } else {
-      // Redirect to welcome page if not authenticated
-      router.push('/welcome');
-    }
-  }, [token, router]);
-
-  return (
-    <Box
-      sx={{
+// Import all potentially problematic dependencies dynamically
+const DynamicHomeContent = dynamicImport(() => import('./HomeContent'), {
+  ssr: false,
+  loading: () => (
+    <div
+      style={{
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         justifyContent: 'center',
+        alignItems: 'center',
         minHeight: '100vh',
-        bg: 'canvas.default',
-        gap: 2,
       }}
     >
-      <Spinner size="large" />
-      <Text sx={{ color: 'fg.muted' }}>Loading...</Text>
-    </Box>
-  );
+      <div>Loading...</div>
+    </div>
+  ),
+});
+
+export default function Home() {
+  return <DynamicHomeContent />;
 }

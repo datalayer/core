@@ -9,6 +9,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Browser polyfills path
+const browserPolyfillPath = path.join(__dirname, 'browser-polyfill.js');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false, // Required for Jupyter components
@@ -31,7 +34,7 @@ const nextConfig = {
     '@jupyterlab/settingregistry',
     '@jupyterlite/settings',
   ],
-  webpack: (config, { webpack }) => {
+  webpack: (config, { webpack, isServer }) => {
     // Use the webpack instance provided by Next.js
     config.resolve.fallback = {
       ...config.resolve.fallback,
@@ -52,15 +55,47 @@ const nextConfig = {
       json5: 'json5/lib/index.js',
     };
 
+    // Add comprehensive polyfills for server-side rendering
+    if (isServer) {
+      // Inject polyfills at the beginning of server bundles
+      const originalEntry = config.entry;
+      config.entry = async () => {
+        const entries = await originalEntry();
+        for (const [key, entry] of Object.entries(entries)) {
+          if (key.includes('app/') || key.includes('page')) {
+            if (Array.isArray(entry.import)) {
+              entry.import.unshift(browserPolyfillPath);
+            }
+          }
+        }
+        return entries;
+      };
+    }
+
     // Add webpack plugins using Next.js's webpack instance
     config.plugins.push(
       new webpack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
         process: 'process/browser',
+        ...(isServer && {
+          navigator: [browserPolyfillPath, 'navigator'],
+          document: [browserPolyfillPath, 'document'],
+          window: [browserPolyfillPath, 'window'],
+          localStorage: [browserPolyfillPath, 'localStorage'],
+          sessionStorage: [browserPolyfillPath, 'sessionStorage'],
+          Event: [browserPolyfillPath, 'createEvent'],
+        }),
       }),
       new webpack.DefinePlugin({
         'process.env.WS_NO_BUFFER_UTIL': JSON.stringify('1'),
         'process.env.WS_NO_UTF_8_VALIDATE': JSON.stringify('1'),
+        ...(isServer
+          ? {
+              'typeof window': JSON.stringify('object'),
+              'typeof document': JSON.stringify('object'),
+              'typeof navigator': JSON.stringify('object'),
+            }
+          : {}),
       }),
     );
 

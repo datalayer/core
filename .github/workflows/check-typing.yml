@@ -4,9 +4,27 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'datalayer_core/**'
+      - 'examples/decorator/**'
+      - 'examples/fastapi-sklearn/**'
+      - 'examples/pytorch-workloads/**'
+      - 'examples/streamlit-sklearn/**'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - '.github/workflows/check-typing.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'datalayer_core/**'
+      - 'examples/**/*.py'
+      - 'examples/**/pyproject.toml'
+      - 'examples/**/setup.py'
+      - 'examples/**/requirements*.txt'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - '.github/workflows/check-typing.yml'
   workflow_dispatch:
 
 concurrency:

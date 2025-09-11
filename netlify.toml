@@ -8,7 +8,7 @@ conda create -n datalayer make python nodejs -y && \
 conda activate datalayer && \
 npm install && \
 make typedoc && \
-pip install .[docs] && \
+pip install ".[docs]" && \
 make pydoc && \
 cd docs && \
 npm install && \

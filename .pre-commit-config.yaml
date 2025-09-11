@@ -9,13 +9,6 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  # Code formatting for non-Python files
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
-    hooks:
-      - id: prettier
-        exclude_types: ['python', 'jupyter', 'shell', 'gitignore']
-
   # Python linting and formatting
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.8
@@ -54,6 +47,7 @@ repos:
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=1000']
+        exclude: '\.md$'
 
   # Python docstring coverage
   - repo: https://github.com/econchick/interrogate

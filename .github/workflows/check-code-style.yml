@@ -4,9 +4,29 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'datalayer_core/**'
+      - 'examples/decorator/**'
+      - 'examples/fastapi-sklearn/**'
+      - 'examples/pytorch-workloads/**'
+      - 'examples/streamlit-sklearn/**'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/check-code-style.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'datalayer_core/**'
+      - 'examples/**/*.py'
+      - 'examples/**/pyproject.toml'
+      - 'examples/**/setup.py'
+      - 'examples/**/requirements*.txt'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/check-code-style.yml'
   workflow_dispatch:
 
 concurrency:

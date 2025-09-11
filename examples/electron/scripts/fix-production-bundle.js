@@ -3,8 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-#!/usr/bin/env node
-
 /**
  * Post-build script to fix temporal dead zone issues in production bundles
  * This script automatically injects polyfills at the beginning of the main bundle
@@ -121,7 +119,7 @@ async function fixBundle() {
     // Find the main bundle (largest JS file)
     const distPath = path.join(__dirname, '..', 'dist', 'renderer', 'assets');
     const jsFiles = await glob('index-*.js', { cwd: distPath });
-    
+
     if (jsFiles.length === 0) {
       console.log('❌ No bundle files found');
       return false;
@@ -146,7 +144,9 @@ async function fixBundle() {
     }
 
     const bundlePath = path.join(distPath, largestFile);
-    console.log(`🎯 Fixing bundle: ${largestFile} (${Math.round(largestSize / 1024)}kb)`);
+    console.log(
+      `🎯 Fixing bundle: ${largestFile} (${Math.round(largestSize / 1024)}kb)`
+    );
 
     let content = fs.readFileSync(bundlePath, 'utf8');
 
@@ -158,28 +158,25 @@ async function fixBundle() {
 
     // Step 2: Rename conflicting widget base$1 to widgetBase$1
     const originalContent = content;
-    
+
     // Find const base$1 = Object.freeze(Object.defineProperty({
     content = content.replace(
       /const base\$1 = Object\.freeze\(Object\.defineProperty\({/g,
       'const widgetBase$1 = Object.freeze(Object.defineProperty({'
     );
-    
+
     // Update references to widget exports
     content = content.replace(
       /window\.define\('@jupyter-widgets\/base', base\$1\);/g,
       "window.define('@jupyter-widgets/base', widgetBase$1);"
     );
-    
+
     content = content.replace(
       /__vitePreload\(\(\)=>Promise\.resolve\(\)\.then\(\(\)=>base\$1\)/g,
       '__vitePreload(()=>Promise.resolve().then(()=>widgetBase$1)'
     );
-    
-    content = content.replace(
-      /resolve\(base\$1\);/g,
-      'resolve(widgetBase$1);'
-    );
+
+    content = content.replace(/resolve\(base\$1\);/g, 'resolve(widgetBase$1);');
 
     if (content !== originalContent) {
       console.log('✅ Renamed conflicting widget base$1 to widgetBase$1');
@@ -189,7 +186,6 @@ async function fixBundle() {
     fs.writeFileSync(bundlePath, content, 'utf8');
     console.log('🎉 Bundle fixes applied successfully!');
     return true;
-
   } catch (error) {
     console.error('❌ Error fixing bundle:', error);
     return false;
