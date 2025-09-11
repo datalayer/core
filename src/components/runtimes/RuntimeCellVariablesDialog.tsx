@@ -11,7 +11,7 @@ import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { JSONExt } from '@lumino/coreutils';
 import { KernelExecutor } from '@datalayer/jupyter-react';
 import { RuntimeSnippetsFacade } from '../../api';
-import { KernelCellVariables } from './RuntimeCellVariables';
+import { RuntimeCellVariables } from './RuntimeCellVariables';
 
 /**
  * {@link RuntimeCellVariablesDialog} properties
@@ -143,7 +143,7 @@ export function RuntimeCellVariablesDialog(
         },
       ]}
     >
-      <KernelCellVariables
+      <RuntimeCellVariables
         inputs={inputs}
         getInputOptions={sessionContext ? getInputCandidates : undefined}
         setInputs={setInputs}

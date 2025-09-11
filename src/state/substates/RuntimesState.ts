@@ -5,7 +5,6 @@
 
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
-import type { JupyterLabAppAdapter } from '@datalayer/jupyter-react';
 import { JSONExt } from '@lumino/coreutils';
 import { Poll } from '@lumino/polling';
 import type { IMultiServiceManager } from '../../api';
@@ -32,14 +31,6 @@ export type RuntimesState = {
    * Runtimes RUN URL.
    */
   runtimesRunUrl: string;
-  /**
-   * JupyterLabApp adapter.
-   */
-  jupyterLabAdapter?: JupyterLabAppAdapter;
-  /**
-   * Set the JupyterLabAdapter.
-   */
-  setJupyterLabAdapter: (jupyterLabAdapter: JupyterLabAppAdapter) => void;
   tab: number;
   getIntTab: () => number;
   setTab: (tab: number) => void;
@@ -114,9 +105,6 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
       );
     },
     runtimesRunUrl: coreStore.getState().configuration?.runtimesRunUrl,
-    setJupyterLabAdapter: (jupyterLabAdapter: JupyterLabAppAdapter) => {
-      set(state => ({ jupyterLabAdapter }));
-    },
     tab: 0.0,
     getIntTab: () => Math.floor(get().tab),
     setTab: (tab: number) => set(state => ({ tab })),

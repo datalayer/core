@@ -7,9 +7,11 @@ import React from 'react';
 import { type Id, toast } from 'react-toastify';
 import { Notification } from '@jupyterlab/apputils';
 import { Button } from '@primer/react';
+import { JupyterReactTheme } from '@datalayer/jupyter-react';
 import type { VariantType } from './../components/buttons';
 import { isInsideJupyterLab } from '../utils';
-import { DatalayerThemeProvider } from '../theme';
+
+const TOAST_POSITION = 'bottom-right' as const;
 
 export type ToastProps = {
   /**
@@ -25,8 +27,6 @@ export type ToastProps = {
    */
   variant: 'info' | 'success' | 'warning' | 'error';
 };
-
-const TOAST_POSITION = 'bottom-right' as const;
 
 interface IToastButtonProps {
   /**
@@ -96,13 +96,13 @@ function createContent(
           <div className="jp-toast-spacer" />
           {actions!.map((action, idx) => {
             return (
-              <DatalayerThemeProvider>
+              <JupyterReactTheme>
                 <ToastButton
                   key={'button-' + idx}
                   action={action}
                   closeToast={closeHandler}
                 />
-              </DatalayerThemeProvider>
+              </JupyterReactTheme>
             );
           })}
         </div>

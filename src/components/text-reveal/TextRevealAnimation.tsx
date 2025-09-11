@@ -5,8 +5,8 @@
 
 import React, { useEffect } from 'react';
 import clsx from 'clsx';
+import { BaseProps } from '@datalayer/primer-addons';
 import { useTextRevealAnimationLines } from './useTextRevealAnimationLines';
-import { BaseProps } from '../primer';
 
 import styles from './TextRevealAnimation.module.css';
 

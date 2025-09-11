@@ -6,12 +6,10 @@
 import React, { useCallback, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { ChevronDownIcon } from '@primer/octicons-react';
-
-import { BaseProps } from '../primer';
+import { BaseProps } from '@datalayer/primer-addons';
 import { useVisibilityObserver } from '../../hooks/useVisibilityObserver';
 import { useOnClickOutside } from '../../hooks/useOnClickOutside';
 import type { VisibilityMap } from '../../hooks/useVisibilityObserver';
-
 import { useKeyboardEscape } from '../../hooks/useKeyboardEscape';
 import { useWindowSize } from '../../hooks/useWindowSize';
 

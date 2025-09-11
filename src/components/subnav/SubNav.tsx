@@ -32,8 +32,8 @@ import {
   useWindowSize,
 } from '@primer/react-brand';
 import { ChevronDownIcon, ChevronUpIcon } from '@primer/octicons-react';
+import { BaseProps } from '@datalayer/primer-addons';
 import { default as clsx } from 'clsx';
-import { BaseProps } from '../primer';
 import { useId } from '../../hooks';
 import {
   useKeyboardEscape,

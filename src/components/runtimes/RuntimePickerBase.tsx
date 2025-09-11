@@ -62,7 +62,7 @@ export interface IRuntimePickerBaseProps {
   /**
    * Runtime description passing this filter function will be displayed.
    */
-  filterKernel?: (desc: IRuntimeDesc) => boolean;
+  filterRuntime?: (desc: IRuntimeDesc) => boolean;
   /**
    * Session preference.
    */
@@ -107,7 +107,7 @@ export function RuntimePickerBase(
   const {
     disabled,
     display,
-    filterKernel,
+    filterRuntime,
     multiServiceManager,
     postActions,
     preActions,
@@ -118,14 +118,14 @@ export function RuntimePickerBase(
     translator,
     variant,
   } = props;
-  const [groupedKernelDescs, _] = useState<
+  const [groupedRuntimeDescs, _] = useState<
     { [k: string]: IDatalayerRuntimeDesc[] } | undefined
   >(
     getGroupedRuntimeDescs(
       multiServiceManager,
       preference?.id,
       translator,
-      filterKernel,
+      filterRuntime,
       variant,
     ),
   );
@@ -142,36 +142,36 @@ export function RuntimePickerBase(
   /*
   // TODO this effect generates refresh of the react components which discards any change in the selection.
   useEffect(() => {
-    const updateGroupedKernelDescs = () => {
+    const updateGroupedRuntimeDescs = () => {
       setGroupedKernelDescs(getGroupedRuntimeDescs(multiServiceManager, preference?.id, translator, filterKernel, variant));
     };
-    multiServiceManager.browser?.kernels.runningChanged.connect(updateGroupedKernelDescs);
-    multiServiceManager.browser?.kernelspecs.specsChanged.connect(updateGroupedKernelDescs);
-    multiServiceManager.browser?.sessions.runningChanged.connect(updateGroupedKernelDescs);
-    multiServiceManager.local.kernels.runningChanged.connect(updateGroupedKernelDescs);
-    multiServiceManager.local.kernelspecs.specsChanged.connect(updateGroupedKernelDescs);
-    multiServiceManager.local.sessions.runningChanged.connect(updateGroupedKernelDescs);
-    multiServiceManager.remote?.kernels.changed.connect(updateGroupedKernelDescs);
-    multiServiceManager.remote?.environments.changed.connect(updateGroupedKernelDescs);
+    multiServiceManager.browser?.kernels.runningChanged.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.browser?.kernelspecs.specsChanged.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.browser?.sessions.runningChanged.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.local.kernels.runningChanged.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.local.kernelspecs.specsChanged.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.local.sessions.runningChanged.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.remote?.kernels.changed.connect(updateGroupedRuntimeDescs);
+    multiServiceManager.remote?.environments.changed.connect(updateGroupedRuntimeDescs);
     // multiServiceManager.remote?.sessions.runningChanged.connect(updateOptions);
     return () => {
-      multiServiceManager.browser?.kernels.runningChanged.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.browser?.kernelspecs.specsChanged.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.browser?.sessions.runningChanged.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.local.kernels.runningChanged.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.local.kernelspecs.specsChanged.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.local.sessions.runningChanged.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.remote?.kernels.changed.disconnect(updateGroupedKernelDescs);
-      multiServiceManager.remote?.environments.changed.disconnect(updateGroupedKernelDescs);
+      multiServiceManager.browser?.kernels.runningChanged.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.browser?.kernelspecs.specsChanged.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.browser?.sessions.runningChanged.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.local.kernels.runningChanged.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.local.kernelspecs.specsChanged.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.local.sessions.runningChanged.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.remote?.kernels.changed.disconnect(updateGroupedRuntimeDescs);
+      multiServiceManager.remote?.environments.changed.disconnect(updateGroupedRuntimeDescs);
       // multiServiceManager.remote?.sessions.runningChanged.disconnect(updateOptions);
     };
   }, [multiServiceManager, preference, translator, filterKernel, variant]);
   */
   useEffect(() => {
-    if (sessionContext && groupedKernelDescs) {
+    if (sessionContext && groupedRuntimeDescs) {
       const kernelId = sessionContext.session?.kernel?.id;
       if (kernelId) {
-        Object.entries(groupedKernelDescs).forEach(([group, runtimeDescs]) => {
+        Object.entries(groupedRuntimeDescs).forEach(([group, runtimeDescs]) => {
           runtimeDescs.forEach(runtimeDesc => {
             if (runtimeDesc.kernelId === kernelId) {
               setRuntimeDesc(runtimeDesc);
@@ -181,7 +181,7 @@ export function RuntimePickerBase(
       }
     }
     setDefaultSet(true);
-  }, [groupedKernelDescs]);
+  }, [groupedRuntimeDescs]);
   // For cell using submenu instead of group would be nice unfortunately the feature
   // is not yet implemented in the component there has been a not-great demo story.
   // https://github.com/primer/react/pull/3585
@@ -195,7 +195,7 @@ export function RuntimePickerBase(
           {variant === 'cell' ? (
             <ActionMenu.Anchor>
               <IconButton
-                disabled={disabled || groupedKernelDescs === null}
+                disabled={disabled || groupedRuntimeDescs === null}
                 //                icon={() => <kernelIcon.react className="dla-Cell-runtime-icon" tag={'span'} />}
                 icon={() => (
                   <span className="dla-Cell-runtime-icon">
@@ -211,7 +211,7 @@ export function RuntimePickerBase(
           ) : (
             <ActionMenu.Button
               variant="default"
-              disabled={disabled || groupedKernelDescs === null}
+              disabled={disabled || groupedRuntimeDescs === null}
             >
               <Text fontWeight={'bold'}>{trans.__('Runtime:')}</Text>
               {' ' + (runtimeDesc?.displayName ?? trans.__('No Runtime'))}
@@ -252,7 +252,7 @@ export function RuntimePickerBase(
                 </ActionList.Item>
               )}
               {!!preActions && preActions}
-              {Object.entries(groupedKernelDescs ?? {}).map(
+              {Object.entries(groupedRuntimeDescs ?? {}).map(
                 ([group, runtimeDescs]) => (
                   <ActionList.Group key={group}>
                     <ActionList.GroupHeading>{group}</ActionList.GroupHeading>
@@ -321,7 +321,7 @@ export function RuntimePickerBase(
         <>
           {defaultSet && (
             <RadioGroup name="kernel-options" aria-labelledby="kernel-options">
-              {Object.entries(groupedKernelDescs ?? {}).map(
+              {Object.entries(groupedRuntimeDescs ?? {}).map(
                 ([group, runtimeDescs]) => (
                   <Box key={group}>
                     <Box as="h4" style={{ marginTop: 0 }}>

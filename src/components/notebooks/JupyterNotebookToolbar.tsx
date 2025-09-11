@@ -16,7 +16,7 @@ import {
   SparklinesLine,
   SparklinesReferenceLine,
 } from 'react-sparklines';
-import { DatalayerThemeProvider } from '../../theme';
+import { JupyterReactTheme } from '@datalayer/jupyter-react';
 
 function boxMullerRandom() {
   let phase = false;
@@ -49,7 +49,7 @@ const SAMPLE_DATA_100 = randomData(100);
 
 export const JupyterNotebookToolbar = () => {
   return (
-    <DatalayerThemeProvider>
+    <JupyterReactTheme>
       <Box display="flex" m={5}>
         <Box ml={3}>
           <Box mb={3}>
@@ -103,7 +103,7 @@ export const JupyterNotebookToolbar = () => {
           </Box>
         </Box>
       </Box>
-    </DatalayerThemeProvider>
+    </JupyterReactTheme>
   );
 };
 

@@ -4,7 +4,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { KernelIndicator } from '@datalayer/jupyter-react';
+import {
+  KernelIndicator,
+  useJupyterReactStore,
+} from '@datalayer/jupyter-react';
 import { ISanitizer } from '@jupyterlab/apputils';
 import { IMarkdownParser } from '@jupyterlab/rendermime';
 import { Session } from '@jupyterlab/services';
@@ -22,15 +25,15 @@ import { useRuntimesStore } from '../../state';
 
 export interface IRuntimeAssignOptions {
   /**
-   * Kernel description.
+   * Runtime description.
    */
   runtimeDesc?: IRuntimeDesc;
   /**
-   * Kernel model to connect to.
+   * Runtime model to connect to.
    */
   runtimeModel?: IRuntimeModel;
   /**
-   * Whether to transfer the state to the new Kernel model.
+   * Whether to transfer the state to the runtime model.
    */
   transferState?: boolean;
 }
@@ -40,11 +43,11 @@ export interface IRuntimeAssignOptions {
  */
 interface IRuntimeSimplePickerProps {
   /**
-   * Kernel assignment callback.
+   * Runtime assignment callback.
    */
   assignRuntime: (options: IRuntimeAssignOptions) => Promise<void>;
   /**
-   * Connection to the active Kernel.
+   * Connection to the active runtime.
    */
   sessionConnection?: Session.ISessionConnection;
 }
@@ -58,11 +61,11 @@ enum RuntimeDialogCause {
    */
   None = 0,
   /**
-   * Launch a new Remote Runtime.
+   * Launch a new runtime.
    */
   New = 1,
   /**
-   * Transfer the state from the current Runtime to a new Remote Runtime.
+   * Transfer the state from the current runtime to a new runtime.
    */
   Transfer = 2,
 }
@@ -74,8 +77,8 @@ export function RuntimeSimplePicker(
   props: IRuntimeSimplePickerProps,
 ): JSX.Element {
   const { assignRuntime, sessionConnection } = props;
-  const { runtimeModels, multiServiceManager, jupyterLabAdapter } =
-    useRuntimesStore();
+  const { runtimeModels, multiServiceManager } = useRuntimesStore();
+  const { jupyterLabAdapter } = useJupyterReactStore();
   const [runtimeLocation, setRuntimeLocation] = useState<IRuntimeLocation>();
   const [luminoServices, setLuminoServices] = useState<{ [k: string]: any }>(
     {},
@@ -305,7 +308,7 @@ export function RuntimeSimplePicker(
           onSubmit={handleCloseDialog}
           markdownParser={luminoServices[IMarkdownParser.name]}
           sanitizer={luminoServices[ISanitizer.name]}
-          startKernel={
+          startRuntime={
             dialogCause === RuntimeDialogCause.Transfer
               ? 'defer'
               : dialogCause === RuntimeDialogCause.New

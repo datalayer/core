@@ -20,7 +20,7 @@ import {
   DialogProps,
   Dialog as PrimerDialog,
 } from '@primer/react/experimental';
-import { DatalayerThemeProvider } from '../../theme';
+import { JupyterReactTheme } from '@datalayer/jupyter-react';
 
 type IDialogFooterProps = React.PropsWithChildren<DialogProps> & {
   checkbox: Partial<Dialog.ICheckbox> | null;
@@ -129,29 +129,25 @@ export class JupyterDialog<T> extends ReactWidget {
   }
 
   private _renderBody = (props: PropsWithChildren<DialogProps>) => (
-    <DatalayerThemeProvider>
-      <PrimerDialog.Body>
-        {createElement(this.body, {
-          ...props,
-          setValue: this.setValue,
-        })}
-      </PrimerDialog.Body>
-    </DatalayerThemeProvider>
+    <PrimerDialog.Body>
+      {createElement(this.body, {
+        ...props,
+        setValue: this.setValue,
+      })}
+    </PrimerDialog.Body>
   );
 
   private _renderFooter = (props: PropsWithChildren<DialogProps>) => (
-    <DatalayerThemeProvider>
-      <DialogFooter
-        {...props}
-        checkbox={this.checkbox}
-        setChecked={this.setChecked}
-      />
-    </DatalayerThemeProvider>
+    <DialogFooter
+      {...props}
+      checkbox={this.checkbox}
+      setChecked={this.setChecked}
+    />
   );
 
   protected render(): JSX.Element | null {
     return (
-      <DatalayerThemeProvider>
+      <JupyterReactTheme>
         <PrimerDialog
           sx={{
             color: 'var(--fgColor-default)',
@@ -182,7 +178,7 @@ export class JupyterDialog<T> extends ReactWidget {
           renderFooter={this._renderFooter}
           title={this.dialogTitle}
         />
-      </DatalayerThemeProvider>
+      </JupyterReactTheme>
     );
   }
 
