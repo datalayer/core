@@ -305,3 +305,6 @@ export function KernelCellVariables(
 }
 
 export default KernelCellVariables;
+
+// Alias for consistency with component naming convention
+export const RuntimeCellVariables = KernelCellVariables;
