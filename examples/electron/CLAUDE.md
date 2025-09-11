@@ -280,18 +280,21 @@ if (window.Backbone) {
 ### Production Build CJS/ESM Issues (RESOLVED!)
 
 - **Problems Encountered**:
+
   1. `"default" is not exported by "@jupyterlab/services"` - Module export issues
   2. `ServiceManager not found in services: Module` - Vite's \_\_require wrapper in production
   3. `Cannot convert object to primitive value` - Direct object logging causing TypeErrors
   4. `path_1.posix.normalize is not a function` - Missing path polyfill functions
 
 - **Solutions**:
+
   1. **Module Imports**: Changed from default import to namespace import: `import * as services`
   2. **\_\_require Wrapper Handling**: Added detection and unwrapping for Vite's production module wrapper
   3. **Safe Logging**: Use `typeof` and `Object.keys()` instead of direct object logging
   4. **Path Polyfills**: Added complete `normalize` function to all three path polyfills in Vite config
 
 - **Key Files**:
+
   - `src/renderer/utils/jupyterlab-services-proxy.js` - Handles \_\_require wrapper and module exports
   - `src/renderer/services/serviceManagerLoader.ts` - Dynamically loads ServiceManager
   - `electron.vite.config.ts` - Contains path polyfills injected inline that MUST include normalize function
@@ -316,6 +319,7 @@ if (window.Backbone) {
 ### Lodash Bundling Issues (RESOLVED - MAJOR HEADACHE!)
 
 - **Problems Encountered**:
+
   1. `(Map$3 || ListCache$2) is not a constructor` - Lodash internal constructors undefined
   2. `Uint8Array is not a constructor` - Native constructor overwritten
   3. `Cannot redefine property: Uint8Array` - Property protection conflicts
@@ -323,18 +327,22 @@ if (window.Backbone) {
   5. `Symbol$5 is not defined` - Numbered constructor variations missing
 
 - **Root Causes**:
+
   - Lodash uses internal data structures (ListCache, MapCache, Stack) that aren't properly defined in production builds
   - The bundler creates numbered variations of constructors (Map$1, Map$2, etc.) that lodash expects
   - CommonJS to ESM conversion creates getter-only properties that break when reassigned
   - Native constructors get overwritten during bundling
 
 - **Final Solution**:
+
   1. **Lodash Polyfills** (`src/renderer/utils/lodash-polyfills.js`):
+
      - Provides ListCache, MapCache, Stack, and Hash implementations
      - Makes all numbered constructor variations available (Map$1-$6, Symbol$1-$6, etc.)
      - Imported at the very beginning of `src/renderer/main.tsx`
 
   2. **Vite Config Fixes** (`electron.vite.config.ts`):
+
      - `fix-module-exports` plugin: Wraps `.default = ` assignments in try-catch
      - `fix-lodash-bundling` plugin: Injects comprehensive polyfills into bundle
      - Replaces `new Uint8Array(` with fallback pattern
@@ -354,6 +362,7 @@ if (window.Backbone) {
 ### Development Mode Issues (RESOLVED!)
 
 - **Problems Encountered**:
+
   1. `Module "path" has been externalized for browser compatibility` - Node.js modules being externalized
   2. `Module "postcss" has been externalized` - PostCSS and source-map-js externalization
   3. `_.extend is not a function` - Backbone loading before underscore
@@ -370,24 +379,29 @@ if (window.Backbone) {
 ### Common Error Messages
 
 1. **"ServerConnection is not exported"**
+
    - The custom resolver handles this in dev mode
    - For production, may need additional webpack/rollup configuration
 
 2. **"KernelMessage is not exported"**
+
    - These are namespace exports from @jupyterlab/services
    - Dev server resolves these dynamically
 
 3. **EPIPE Errors**
+
    - Fixed by wrapping console methods in try-catch blocks
    - Only affects the main process, not renderer
 
 4. **Lodash Bundling Issues (COMPLETELY RESOLVED - MAJOR BREAKTHROUGH!)**
 
    **Final Complete Solution for Production Builds:**
+
    - **Problems**: `baseGetTag$2 is not defined`, `baseGetTag$5 is not defined`, `Cannot access 'base$1' before initialization`, `Identifier 'base$2' has already been declared`
    - **Root Cause**: Lodash bundler creates numbered variations (baseGetTag$1-$10, base$1-$10) that must be polyfilled dynamically
 
    **Complete Fix Applied in Two Files:**
+
    1. **`src/renderer/utils/lodash-polyfills.js`**:
 
       ```javascript
@@ -412,6 +426,7 @@ if (window.Backbone) {
       ```
 
    **Key Lessons:**
+
    - Use `globalThis.functionName$X = ...` instead of `var functionName$X = ...` to avoid duplicate declarations
    - Dynamic loops handle ALL numbered variations (bundler can create up to $10 or higher)
    - Both polyfill files AND Vite config must be updated together
@@ -477,6 +492,7 @@ npm run dist:linux    # Package for Linux
    ```
 
 2. **Check Node Version**
+
    - Requires Node 18+
    - Use `node --version` to verify
 
@@ -487,11 +503,13 @@ npm run dist:linux    # Package for Linux
    ```
 
 4. **Debug Module Issues**
+
    - Check browser DevTools console
    - Look for module resolution errors
    - Use `npm run dev` instead of `npm run build`
 
 5. **CSP Violations in Production**
+
    - "Refused to connect" errors mean API calls need to go through main process
    - Add new API methods to `api-service.ts` using Electron's `net` module
    - Register IPC handlers in `main/index.ts`

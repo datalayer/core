@@ -306,6 +306,7 @@ Edit the `build` section in `package.json`:
 ### Distribution Methods
 
 1. **Direct Download**:
+
    - Upload to your website or GitHub Releases
    - Users download and install manually
 
@@ -460,16 +461,19 @@ The app includes native menus for:
 ### Critical Files for Production Builds
 
 1. **`src/renderer/utils/jupyterlab-services-proxy.js`**
+
    - Handles Vite's `__require` wrapper in production
    - Manages CommonJS/ESM module exports
    - Must use namespace imports: `import * as services`
 
 2. **`src/renderer/utils/lodash-polyfills.js`**
+
    - Provides internal data structures (ListCache, MapCache, Stack)
    - Required for lodash to work in production bundles
    - Loaded at the start of `main.tsx`
 
 3. **`electron.vite.config.ts`**
+
    - Contains THREE path polyfills that MUST include `normalize` function
    - Custom plugins for module resolution
    - CommonJS plugin configuration

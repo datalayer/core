@@ -609,7 +609,7 @@ export default defineConfig({
             `;
 
             // Replace require("path") with inline polyfill
-            const modified = code.replace(
+            let modified = code.replace(
               /const path_1 = require\("path"\);?/g,
               pathPolyfill + '\nconst path_1 = path;'
             );
