@@ -185,5 +185,8 @@ dmypy.json
 .env
 .env.example
 
-# Palywaright files
+# Playwright files
 .playwright-mcp/
+
+# Include
+!**/.*ignore
