@@ -19,6 +19,7 @@ import {
   type IRuntimeLocation,
 } from '../../models';
 import { useRuntimesStore } from '../../state';
+import { DatalayerThemeProvider } from '../../theme';
 
 export interface IRuntimeAssignOptions {
   /**
@@ -58,11 +59,11 @@ enum RuntimeDialogCause {
    */
   None = 0,
   /**
-   * Launch a new Remote Runtime.
+   * Launch a new runtime.
    */
   New = 1,
   /**
-   * Transfer the state from the current Runtime to a new Remote Runtime.
+   * Transfer the state from the current runtime to a new runtime.
    */
   Transfer = 2,
 }
@@ -151,7 +152,7 @@ export function RuntimeSimplePicker(
     }
   }, [jupyterLabAdapter]);
   return (
-    <>
+    <DatalayerThemeProvider>
       <ActionMenu>
         <ActionMenu.Button
           leadingVisual={() => {
@@ -305,13 +306,13 @@ export function RuntimeSimplePicker(
           onSubmit={handleCloseDialog}
           markdownParser={luminoServices[IMarkdownParser.name]}
           sanitizer={luminoServices[ISanitizer.name]}
-          startKernel={
+          startRuntime={
             dialogCause === RuntimeDialogCause.Transfer
               ? 'defer'
               : dialogCause === RuntimeDialogCause.New
           }
         />
       )}
-    </>
+    </DatalayerThemeProvider>
   );
 }

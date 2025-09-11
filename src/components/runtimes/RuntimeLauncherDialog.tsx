@@ -54,7 +54,7 @@ const NOT_AVAILABLE_RETRIES = 5;
 /**
  * {@link RuntimeLauncherDialog} properties.
  */
-export interface IKernelLauncherDialogProps {
+export interface IRuntimeLauncherDialogProps {
   /**
    * Dialog title
    */
@@ -81,7 +81,7 @@ export interface IKernelLauncherDialogProps {
    *
    * Default: `true`
    */
-  startKernel?: boolean | 'with-example' | 'defer';
+  startRuntime?: boolean | 'with-example' | 'defer';
 
   /**
    * Markdown parser
@@ -109,7 +109,7 @@ export interface IKernelLauncherDialogProps {
  * Start Runtime Launcher Dialog.
  */
 export function RuntimeLauncherDialog(
-  props: IKernelLauncherDialogProps,
+  props: IRuntimeLauncherDialogProps,
 ): JSX.Element {
   const {
     dialogTitle,
@@ -119,10 +119,10 @@ export function RuntimeLauncherDialog(
     markdownParser,
     sanitizer,
     upgradeSubscription,
-    startKernel = true,
+    startRuntime = true,
   } = props;
 
-  const hasExample = startKernel === 'with-example';
+  const hasExample = startRuntime === 'with-example';
 
   const user = iamStore.getState().user;
   const environments = manager.environments.get();
@@ -159,10 +159,10 @@ export function RuntimeLauncherDialog(
   const [flashLevel, setFlashLevel] = useState<'danger' | 'warning'>('danger');
   const isMounted = useIsMounted();
   useEffect(() => {
-    if (startKernel) {
+    if (startRuntime) {
       refreshCredits();
     }
-  }, [startKernel]);
+  }, [startRuntime]);
   const spec = useMemo(
     () => environments.find(spec => spec.name === selection),
     [environments, selection],
@@ -172,7 +172,7 @@ export function RuntimeLauncherDialog(
   const creditsToMinutes = 1.0 / burningRate / 60.0;
   const max = Math.floor((credits?.available ?? 0) * creditsToMinutes);
   const outOfCredits =
-    startKernel && (!credits?.available || max < Number.EPSILON);
+    startRuntime && (!credits?.available || max < Number.EPSILON);
   const handleSelectionChange = useCallback(
     (e: any) => {
       const selection = (e.target as HTMLSelectElement).value;
@@ -199,14 +199,14 @@ export function RuntimeLauncherDialog(
         Math.min(timeLimit, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES) /
         creditsToMinutes;
       desc.params = {};
-      if (startKernel === 'defer') {
+      if (startRuntime === 'defer') {
         desc.params['creditsLimit'] = creditsLimit;
       }
       if (userStorage) {
         desc.params['capabilities'] = ['user_storage'];
       }
       let success = true;
-      if (startKernel && startKernel !== 'defer') {
+      if (startRuntime && startRuntime !== 'defer') {
         success = false;
         let availableTrial = 1;
         let retryDelay = NOT_AVAILABLE_INIT_RETRY;
@@ -308,7 +308,7 @@ export function RuntimeLauncherDialog(
   }, [
     manager,
     selection,
-    startKernel,
+    startRuntime,
     runtimeName,
     onSubmit,
     userStorage,
@@ -363,7 +363,7 @@ export function RuntimeLauncherDialog(
             onClick: handleSubmitRuntime,
             content: waitingForRuntime ? (
               <Spinner size="small" />
-            ) : (startKernel ?? true) ? (
+            ) : (startRuntime ?? true) ? (
               'Launch'
             ) : (
               'Assign from the Environment'
@@ -446,7 +446,7 @@ export function RuntimeLauncherDialog(
               </>
             </FormControl.Caption>
           </FormControl>
-          {startKernel && (
+          {startRuntime && (
             <RuntimeReservationControl
               addCredits={
                 navigate
