@@ -3,13 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { Colormode } from '@datalayer/jupyter-react';
 import { registerPortalRoot } from '@primer/react';
-// import { render } from 'react-dom';
-// import { Styles } from './Styles';
-
-const PRIMER_PORTAL_ROOT_ID = '__primerPortalRoot__';
 
 import '@primer/react-brand/lib/css/main.css';
+
+const PRIMER_PORTAL_ROOT_ID = '__primerPortalRoot__';
 
 /**
  * Ensure we define a root for Primer portal root.
@@ -17,15 +16,14 @@ import '@primer/react-brand/lib/css/main.css';
  *  @see https://github.com/primer/react/blob/main/packages/react/src/Portal/Portal.tsx#L23
  *  @see https://github.com/primer/react/blob/030fe020b48b7f12c2994c6614e5d4191fe764ee/src/Portal/Portal.tsx#L33
  */
-export const setupPrimerPortals = () => {
-  const div = document.body;
-  div.dataset['portalRoot'] = 'true';
-  div.dataset['colorMode'] = 'light';
-  div.dataset['lightTheme'] = 'light';
-  div.dataset['darkTheme'] = 'dark';
-  div.id = PRIMER_PORTAL_ROOT_ID;
-  registerPortalRoot(div);
-  //  render(<Styles/>, div);
+export const setupPrimerPortals = (colormode: Colormode = 'light') => {
+  const body = document.body;
+  body.dataset['portalRoot'] = 'true';
+  body.dataset['colorMode'] = colormode;
+  body.dataset['lightTheme'] = 'light';
+  body.dataset['darkTheme'] = 'dark';
+  body.id = PRIMER_PORTAL_ROOT_ID;
+  registerPortalRoot(body);
 };
 
 export default setupPrimerPortals;

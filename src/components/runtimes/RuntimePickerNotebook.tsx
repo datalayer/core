@@ -22,7 +22,6 @@ import type {
   IMultiServiceManager,
   IDatalayerSessionContext,
 } from '../../api';
-import { DatalayerThemeProvider } from '../../theme';
 import { RuntimeSnippetsFacade } from '../../api';
 import { IRuntimeDesc } from '../../models';
 import { ExternalTokenSilentLogin } from '../../components/iam';
@@ -230,117 +229,115 @@ export function RuntimePickerNotebook(
   );
   const outOfCredits = !credits?.available || max < Number.EPSILON;
   return (
-    <DatalayerThemeProvider>
-      <Box as="form" className="dla-Runtimes-picker">
-        <Box sx={{ padding: 'var(--stack-padding-condensed) 0' }}>
-          <RuntimePickerBase
-            display="radio"
-            disabled={canStart === false}
-            preference={{
-              id: sessionContext.session?.id,
-              kernelDisplayName: sessionContext.kernelPreference.shouldStart
-                ? sessionContext.kernelDisplayName
-                : undefined,
-            }}
-            sessionContext={sessionContext}
-            multiServiceManager={multiServiceManager}
-            translator={translator}
-            runtimeDesc={selectedRuntimeDesc}
-            setRuntimeDesc={setRuntimeDesc}
-            postActions={
-              token || !props.logIn ? (
-                /*
-              <Button
-                variant="default"
-                onClick={e => {
-                  e.preventDefault();
-                  commands.execute(CommandIDs.launchRemoteRuntime);
-                  close();
-                }}
+    <Box as="form" className="dla-Runtimes-picker">
+      <Box sx={{ padding: 'var(--stack-padding-condensed) 0' }}>
+        <RuntimePickerBase
+          display="radio"
+          disabled={canStart === false}
+          preference={{
+            id: sessionContext.session?.id,
+            kernelDisplayName: sessionContext.kernelPreference.shouldStart
+              ? sessionContext.kernelDisplayName
+              : undefined,
+          }}
+          sessionContext={sessionContext}
+          multiServiceManager={multiServiceManager}
+          translator={translator}
+          runtimeDesc={selectedRuntimeDesc}
+          setRuntimeDesc={setRuntimeDesc}
+          postActions={
+            token || !props.logIn ? (
+              /*
+            <Button
+              variant="default"
+              onClick={e => {
+                e.preventDefault();
+                commands.execute(CommandIDs.launchRemoteRuntime);
+                close();
+              }}
+            >
+              Launch a New Runtime
+            </Button>
+            */
+              <></>
+            ) : (
+              <ActionList.Item
+                onSelect={props.logIn}
+                title={'Connect to Runtime provider.'}
               >
-                Launch a New Runtime
-              </Button>
-              */
-                <></>
-              ) : (
-                <ActionList.Item
-                  onSelect={props.logIn}
-                  title={'Connect to Runtime provider.'}
-                >
-                  <ExternalTokenSilentLogin message="Connect to the Runtime provider" />
-                </ActionList.Item>
-              )
-            }
-          />
-        </Box>
-        {!selectedRuntimeDesc?.kernelId &&
-          selectedRuntimeDesc?.location === 'remote' && (
-            <>
-              <RuntimeReservationControl
+                <ExternalTokenSilentLogin message="Connect to the Runtime provider" />
+              </ActionList.Item>
+            )
+          }
+        />
+      </Box>
+      {!selectedRuntimeDesc?.kernelId &&
+        selectedRuntimeDesc?.location === 'remote' && (
+          <>
+            <RuntimeReservationControl
+              disabled={
+                outOfCredits || selectedRuntimeDesc?.location !== 'remote'
+              }
+              label={'Time reservation'}
+              max={max < 0 ? 1 : max}
+              time={timeLimit}
+              onTimeChange={setTimeLimit}
+              error={
+                outOfCredits && max >= 0
+                  ? 'You must add credits to your account.'
+                  : timeLimit === 0
+                    ? 'You must set a time limit.'
+                    : undefined
+              }
+              burningRate={selectedRuntimeDesc.burningRate}
+            />
+            {!configuration.whiteLabel && (
+              <FormControl
                 disabled={
-                  outOfCredits || selectedRuntimeDesc?.location !== 'remote'
+                  !!selectedRuntimeDesc?.kernelId ||
+                  selectedRuntimeDesc?.location !== 'remote'
                 }
-                label={'Time reservation'}
-                max={max < 0 ? 1 : max}
-                time={timeLimit}
-                onTimeChange={setTimeLimit}
-                error={
-                  outOfCredits && max >= 0
-                    ? 'You must add credits to your account.'
-                    : timeLimit === 0
-                      ? 'You must set a time limit.'
-                      : undefined
-                }
-                burningRate={selectedRuntimeDesc.burningRate}
-              />
-              {!configuration.whiteLabel && (
-                <FormControl
+                layout="horizontal"
+              >
+                <FormControl.Label id="user-storage-picker-label">
+                  User storage
+                  <Tooltip
+                    text="The runtime will be slower to start."
+                    direction="e"
+                    style={{ marginLeft: 3 }}
+                  >
+                    <IconButton
+                      icon={AlertIcon}
+                      aria-label=""
+                      variant="invisible"
+                    />
+                  </Tooltip>
+                </FormControl.Label>
+                <ToggleSwitch
                   disabled={
                     !!selectedRuntimeDesc?.kernelId ||
                     selectedRuntimeDesc?.location !== 'remote'
                   }
-                  layout="horizontal"
-                >
-                  <FormControl.Label id="user-storage-picker-label">
-                    User storage
-                    <Tooltip
-                      text="The runtime will be slower to start."
-                      direction="e"
-                      style={{ marginLeft: 3 }}
-                    >
-                      <IconButton
-                        icon={AlertIcon}
-                        aria-label=""
-                        variant="invisible"
-                      />
-                    </Tooltip>
-                  </FormControl.Label>
-                  <ToggleSwitch
-                    disabled={
-                      !!selectedRuntimeDesc?.kernelId ||
-                      selectedRuntimeDesc?.location !== 'remote'
-                    }
-                    checked={userStorage}
-                    size="small"
-                    onClick={handleUserStorageChange}
-                    aria-labelledby="user-storage-picker-label"
-                  />
-                </FormControl>
-              )}
-            </>
-          )}
-        {canTransferFrom && canTransferTo && (
-          <RuntimeVariables
-            selectedVariables={toTransfer}
-            setSelectVariable={setSelectedVariables}
-            transferVariables={transferVariables}
-            setTransferVariable={setTransferVariable}
-            kernelVariables={kernelVariables}
-            translator={translator}
-          />
+                  checked={userStorage}
+                  size="small"
+                  onClick={handleUserStorageChange}
+                  aria-labelledby="user-storage-picker-label"
+                />
+              </FormControl>
+            )}
+          </>
         )}
-      </Box>
-    </DatalayerThemeProvider>
+      {canTransferFrom && canTransferTo && (
+        <RuntimeVariables
+          selectedVariables={toTransfer}
+          setSelectVariable={setSelectedVariables}
+          transferVariables={transferVariables}
+          setTransferVariable={setTransferVariable}
+          kernelVariables={kernelVariables}
+          translator={translator}
+        />
+      )}
+    </Box>
   );
 }
 

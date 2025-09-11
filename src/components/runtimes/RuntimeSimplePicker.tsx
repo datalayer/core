@@ -22,7 +22,6 @@ import {
   type IRuntimeLocation,
 } from '../../models';
 import { useRuntimesStore } from '../../state';
-import { DatalayerThemeProvider } from '../../theme';
 
 export interface IRuntimeAssignOptions {
   /**
@@ -155,7 +154,7 @@ export function RuntimeSimplePicker(
     }
   }, [jupyterLabAdapter]);
   return (
-    <DatalayerThemeProvider>
+    <>
       <ActionMenu>
         <ActionMenu.Button
           leadingVisual={() => {
@@ -316,6 +315,6 @@ export function RuntimeSimplePicker(
           }
         />
       )}
-    </DatalayerThemeProvider>
+    </>
   );
 }

@@ -50,7 +50,6 @@ export default tseslint.config(
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
-          tsconfigRootDir: __dirname,
         },
       },
     },
