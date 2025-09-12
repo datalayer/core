@@ -18,16 +18,6 @@ Comprehensive examples demonstrating the `@datalayer` decorator for seamless rem
 - **Technologies**: Datalayer SDK decorators, remote runtime execution
 - **Features**: Function decoration, input/output mapping, snapshot integration, multiple environments
 
-## 🖥️ Desktop Applications
-
-### ⚡ [Electron Desktop App](./electron/README.md)
-
-A native desktop application showcasing the Datalayer frontend SDK with Jupyter notebook integration.
-
-- **Use Case**: Desktop-based data science environment with cloud compute
-- **Technologies**: Electron, React, TypeScript, Datalayer SDK
-- **Features**: Jupyter notebooks, runtime management, environment selection, real-time collaboration
-
 ## 🚀 Web Frameworks & APIs
 
 ### 🚀 [FastAPI + Scikit-learn](./fastapi-sklearn/README.md)
