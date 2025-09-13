@@ -672,7 +672,7 @@ export default defineConfig({
             /from\s+['"]@jupyterlab\/services['"]/g,
             `from '${resolve(
               __dirname,
-              'src/renderer/utils/jupyterlab-services-proxy.js'
+              'src/renderer/polyfills/jupyterlab-proxy.js'
             )}'`
           );
 
@@ -2169,6 +2169,87 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
         jsxRuntime: 'automatic', // Use automatic JSX runtime to avoid CJS/ESM issues
       }),
       wasm(), // Add WASM support for loro-crdt
+      {
+        name: 'inject-symbol-polyfill-first',
+        enforce: 'post',
+        renderChunk(code, chunk) {
+          // Only inject in the main bundle
+          if (chunk.fileName.includes('index') && code.length > 1000000) {
+            // Find where the async wrapper starts (after the initial const declarations)
+            // We need to inject Symbol BEFORE any async code
+            const asyncPattern = /let __tla = Promise\.all\(/;
+            const match = code.match(asyncPattern);
+
+            if (match) {
+              const insertIndex = match.index;
+
+              // Symbol polyfill that runs SYNCHRONOUSLY before ANY async code
+              const symbolPolyfill = `
+// CRITICAL: Symbol polyfill MUST run before any async code
+(function() {
+  if (typeof Symbol === 'undefined') {
+    globalThis.Symbol = function Symbol(desc) {
+      return '@@Symbol' + (desc || '') + '_' + Math.random();
+    };
+  }
+  if (!Symbol.for) {
+    var reg = {};
+    Symbol.for = function(k) {
+      if (!reg[k]) reg[k] = Symbol(k);
+      return reg[k];
+    };
+    Symbol.keyFor = function(s) {
+      for (var k in reg) if (reg[k] === s) return k;
+    };
+  }
+  if (!Symbol.iterator) Symbol.iterator = Symbol('iterator');
+  if (!Symbol.toStringTag) Symbol.toStringTag = Symbol('toStringTag');
+  console.log('[Vite Symbol] Injected before async wrapper');
+})();
+`;
+
+              // Insert the polyfill RIGHT BEFORE the async wrapper
+              const modifiedCode =
+                code.slice(0, insertIndex) +
+                symbolPolyfill +
+                code.slice(insertIndex);
+
+              return {
+                code: modifiedCode,
+                map: null
+              };
+            } else {
+              // Fallback: inject at the very beginning if pattern not found
+              const symbolPolyfill = `// Symbol polyfill at start
+(function() {
+  if (typeof Symbol === 'undefined') {
+    globalThis.Symbol = function Symbol(desc) {
+      return '@@Symbol' + (desc || '') + '_' + Math.random();
+    };
+  }
+  if (!Symbol.for) {
+    var reg = {};
+    Symbol.for = function(k) {
+      if (!reg[k]) reg[k] = Symbol(k);
+      return reg[k];
+    };
+    Symbol.keyFor = function(s) {
+      for (var k in reg) if (reg[k] === s) return k;
+    };
+  }
+  if (!Symbol.iterator) Symbol.iterator = Symbol('iterator');
+  if (!Symbol.toStringTag) Symbol.toStringTag = Symbol('toStringTag');
+})();
+`;
+              return {
+                code: symbolPolyfill + code,
+                map: null
+              };
+            }
+          }
+          return null;
+        }
+      },
       topLevelAwait(), // Add top-level await support
       {
         name: 'fix-require-statements',

@@ -3,23 +3,9 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// CRITICAL: Load critical polyfills FIRST - before anything else to prevent temporal dead zone
-import './utils/critical-polyfills';
-
-// CRITICAL: Load bulletproof extend polyfills SECOND - before anything else
-import './utils/lodash-polyfills';
-
-// CRITICAL: Load underscore/lodash SECOND for Backbone
-import './preload-underscore';
-
-// Theme compatibility is now handled by bulletproofExtend in lodash-polyfills.js and Vite config
-import './utils/polyfills';
-import './utils/requirejs-shim';
-
-// Polyfill for global object required by MathJax
-if (typeof global === 'undefined') {
-  (window as any).global = window;
-}
+// CRITICAL: Load all polyfills in the correct order
+// This single import handles Symbol, lodash, Node.js builtins, RequireJS, etc.
+import './polyfills';
 
 // Import Prism for syntax highlighting and make it globally available
 import Prism from 'prismjs';

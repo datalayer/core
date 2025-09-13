@@ -381,6 +381,13 @@ if (window.Backbone) {
    - Fixed by wrapping console methods in try-catch blocks
    - Only affects the main process, not renderer
 
+4. **"Cannot find module 'fast-deep-equal'" (RESOLVED!)**
+   - **Problem**: Production build fails with missing `fast-deep-equal` module required by `ajv`
+   - **Root Cause**: `ajv` is a dependency that requires `fast-deep-equal` but it wasn't included as a direct dependency
+   - **Solution**: Add `fast-deep-equal` as a direct dependency in package.json
+   - **Fix Applied**: `npm install fast-deep-equal` adds it to dependencies
+   - **Result**: Production build now works successfully!
+
 4. **Lodash Bundling Issues (COMPLETELY RESOLVED - MAJOR BREAKTHROUGH!)**
 
    **Final Complete Solution for Production Builds:**
@@ -869,3 +876,134 @@ When working with this codebase:
 38. **Extended Function Variations**: Lodash bundler creates numbered variations up to $10 or higher - polyfills must cover ALL variations dynamically
 39. **Polyfill Files Updates**: Both `lodash-polyfills.js` and `electron.vite.config.ts` must be updated with dynamic loops for baseGetTag$1-$10 and base$1-$10
 40. **Production Build Success**: After implementing comprehensive polyfills, production packaging with `npm run dist:mac` works without lodash errors
+
+## Production Build Symbol.for Error (CRITICAL - ONGOING)
+
+### Failed Attempts
+
+1. **Attempt 1: Adding Symbol polyfills to fix-production-bundle.js**
+   - **What we tried**: Added Symbol.for and Symbol.keyFor polyfills to CRITICAL_POLYFILLS
+   - **Result**: Error moved from line 380 to line 427 (polyfills injected but Symbol still undefined)
+   - **Why it failed**: Symbol is undefined when code tries to access Symbol.for, timing issue
+
+2. **Attempt 2: Polyfill reorganization + Symbol.js**
+   - **What we tried**:
+     - Created new polyfills/ folder structure
+     - Created robust Symbol polyfill in symbol.js
+     - Load Symbol first in polyfills/index.ts
+   - **Result**: Error now at line 411: `Cannot read properties of undefined (reading 'for')`
+   - **Why it failed**: React code runs before our Symbol polyfill loads
+
+### Root Cause Analysis
+
+The issue is that React's minified code (`var l$4 = Symbol.for("react.element")`) executes before our Symbol polyfill loads. The production bundler is:
+1. Bundling React early in the bundle
+2. Our polyfills load later (even though imported first in main.tsx)
+3. React crashes when it tries to use Symbol.for
+
+### Failed Attempt 3 - Symbol.for Detection Issue
+
+**Attempt 3: Full Symbol polyfill in fix-production-bundle.js** ❌ **FAILED**
+- **What we did**:
+  - Injected a complete Symbol polyfill at the very start of the bundle
+  - Includes Symbol constructor, Symbol.for, Symbol.keyFor, and well-known symbols
+  - Polyfill runs immediately before React or any other code
+- **Result**: Still fails with "Cannot read properties of undefined (reading 'for')" at line 497
+- **Problem**: The polyfill incorrectly detects that Symbol.for exists when it doesn't
+- **Console shows**: "[Symbol Polyfill] Native Symbol with Symbol.for detected" but Symbol.for is actually undefined!
+
+### Failed Attempt 4 - Defensive Symbol Polyfill with Getter/Setter
+
+**Attempt 4: Object.defineProperty protection for Symbol** ❌ **FAILED**
+- **What we did**:
+  - Used Object.defineProperty to create a getter/setter for globalThis.Symbol
+  - Ensured any attempt to reassign Symbol preserves our .for and .keyFor methods
+  - Added defensive `ensureSymbolMethods` function that patches any Symbol-like object
+- **Result**: Still fails with "Cannot read properties of undefined (reading 'for')" at line 455
+- **Console shows**: "[Symbol Polyfill] ✅ Symbol.for and Symbol.keyFor secured"
+- **Problem**: Despite the polyfill claiming success, Symbol.for is still undefined when React tries to use it
+
+### Failed Attempt 5 - Vite Plugin Symbol Injection
+
+**Attempt 5: Inject Symbol polyfill via Vite renderChunk plugin** ❌ **FAILED**
+- **What we did**:
+  - Added `inject-symbol-polyfill-first` plugin with `enforce: 'post'`
+  - Plugin injects Symbol polyfill at the very beginning of the bundle in renderChunk
+  - Logs "[Vite Symbol] Injected at bundle start" for verification
+- **Result**: Still fails with "Cannot read properties of undefined (reading 'for')" at line 17
+- **Problem**: Even though we inject at the beginning, React code at line 17 still sees Symbol as undefined
+- **Critical Discovery**: The error is now at line 17 (very early in bundle), suggesting our polyfill IS at the start but something else is wrong
+
+### Failed Attempt 6 - Symbol Polyfill Before Async Wrapper
+
+**Attempt 6: Inject Symbol polyfill before Promise.all async wrapper** ❌ **FAILED**
+- **What we did**:
+  - Modified Vite plugin to find the `let __tla = Promise.all(` pattern
+  - Inject Symbol polyfill RIGHT BEFORE the async wrapper
+  - Also used fix-production-bundle.js to inject at absolute beginning
+- **Result**: STILL fails with "Cannot read properties of undefined (reading 'for')" at line 155
+- **Console shows**: Symbol polyfill WORKS at start (logs show Symbol.for exists)
+- **CRITICAL DISCOVERY**: Line 155 is ANOTHER Symbol polyfill INSIDE the async wrapper!
+- **The Real Problem**: We have DUPLICATE polyfills:
+  1. Our injected polyfill at line 1-40 (WORKS)
+  2. Vite's bundled polyfill at line 150-160 inside async (FAILS because Symbol is undefined in that scope)
+- **Root Cause**: The async wrapper creates a new scope where Symbol is undefined again
+
+### Failed Attempt 7 - Remove Duplicate Symbol Polyfills
+
+**Attempt 7: Remove duplicate Symbol polyfills from async wrapper** ❌ **FAILED**
+- **What we did**:
+  - Added regex pattern to remove duplicate Symbol polyfills from inside async wrapper
+  - Pattern: `/(function() { if (typeof Symbol === 'undefined')[\s\S]*?Symbol\.toStringTag[\s\S]*?})();/g`
+  - Kept only the first polyfill at bundle start
+- **Result**: STILL fails with "Cannot read properties of undefined (reading 'for')" at line 155
+- **Problem**: The removal didn't work or there's still code trying to use Symbol.for in async scope
+
+### Failed Attempt 8 - Add Symbol to Async Scope
+
+**Attempt 8: Add `const Symbol = globalThis.Symbol` in async scope** ❌ **FAILED**
+- **What we did**:
+  - Injected `const Symbol = globalThis.Symbol || window.Symbol;` at start of async function
+  - Intended to make global Symbol available in async scope
+- **Result**: SyntaxError: Identifier 'Symbol' has already been declared
+- **Problem**: Symbol is already declared somewhere in the async scope, can't redeclare it
+
+### Current Analysis
+
+**The Core Problem**:
+- Line 17 in the bundle is trying to access `Symbol.for` (moved from line 455 to 17!)
+- Our polyfill is being injected but Symbol is STILL undefined
+- This suggests the issue is NOT about ordering but about HOW the code executes
+
+**New Theory**:
+1. **Module wrapper issue**: The bundle might be wrapped in a way that isolates our polyfill
+2. **Strict mode scoping**: 'use strict' might be preventing global assignment
+3. **IIFE isolation**: React code might be in an IIFE that doesn't see our global Symbol
+4. **Timing**: The polyfill might not execute before the code that needs it
+
+**Question**: Do we actually need all these polyfills?
+- Lodash polyfills: Added to fix production bundling issues (REQUIRED)
+- Symbol polyfills: Added to fix React's Symbol.for usage (CRITICAL - NOT WORKING)
+- Node.js polyfills: Required for Jupyter packages that expect Node APIs (REQUIRED)
+- RequireJS shim: Required for AMD module compatibility (REQUIRED)
+
+## Production Build Missing Dependencies (RESOLVED - December 2024)
+
+### fast-deep-equal Module Not Found
+
+**Problem**: Production build runs but shows error:
+```
+Cannot find module 'fast-deep-equal'
+Require stack: - .../app.asar/node_modules/ajv/dist/compile/resolve.js
+```
+
+**Root Cause**: The `ajv` package (likely a transitive dependency) requires `fast-deep-equal` but it wasn't explicitly included in our dependencies. This only manifests in production builds where the module resolution is stricter.
+
+**Solution**: Add `fast-deep-equal` as a direct dependency:
+```bash
+npm install fast-deep-equal
+```
+
+**Result**: ✅ Production build now works! The app starts successfully without module resolution errors.
+
+**Key Learning**: Production builds may reveal missing transitive dependencies that work in development due to hoisting. Always test production builds and add missing modules as direct dependencies when needed.

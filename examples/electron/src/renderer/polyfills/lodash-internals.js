@@ -18,6 +18,20 @@ const NativePromise = globalThis.Promise;
 const NativeSymbol = globalThis.Symbol;
 const NativeUint8Array = globalThis.Uint8Array;
 
+// Ensure Symbol.for is available
+if (NativeSymbol && !NativeSymbol.for) {
+  NativeSymbol.for = function(key) {
+    return NativeSymbol(String(key));
+  };
+}
+
+// Ensure Symbol.keyFor is available
+if (NativeSymbol && !NativeSymbol.keyFor) {
+  NativeSymbol.keyFor = function(sym) {
+    return undefined;
+  };
+}
+
 // ListCache implementation (lodash internal data structure)
 function ListCache(entries) {
   let index = -1;
@@ -558,6 +572,34 @@ for (let i = 1; i <= 10; i++) {
 
 // CRITICAL: Instead of patching Function.prototype.call (which causes infinite recursion),
 // we'll patch Prism.languages.extend directly at runtime
+
+// CRITICAL: Ensure Symbol.for is available globally
+if (typeof globalThis !== 'undefined' && globalThis.Symbol) {
+  if (!globalThis.Symbol.for) {
+    globalThis.Symbol.for = function(key) {
+      return NativeSymbol ? NativeSymbol(String(key)) : key;
+    };
+  }
+  if (!globalThis.Symbol.keyFor) {
+    globalThis.Symbol.keyFor = function(sym) {
+      return undefined;
+    };
+  }
+}
+
+// Also ensure window.Symbol has these methods in browser environment
+if (typeof window !== 'undefined' && window.Symbol) {
+  if (!window.Symbol.for) {
+    window.Symbol.for = function(key) {
+      return NativeSymbol ? NativeSymbol(String(key)) : key;
+    };
+  }
+  if (!window.Symbol.keyFor) {
+    window.Symbol.keyFor = function(sym) {
+      return undefined;
+    };
+  }
+}
 
 console.log(
   '[Lodash Polyfills] Applied successfully with comprehensive function polyfills'
