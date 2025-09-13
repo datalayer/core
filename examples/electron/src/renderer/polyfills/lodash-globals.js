@@ -41,7 +41,10 @@ try {
     window.lodash.extend = bulletproofExtend;
   }
 } catch (e) {
-  console.warn('[Lodash Globals] Could not override extend functions:', e.message);
+  console.warn(
+    '[Lodash Globals] Could not override extend functions:',
+    e.message
+  );
 }
 
 // Make Backbone available globally for widgets

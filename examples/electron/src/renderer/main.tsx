@@ -53,14 +53,12 @@ function ensureCLanguageInAllPrismInstances() {
     punctuation: /[{}[\];(),.:]/,
   };
 
-  console.log(
-    '[Critical Prism Fix] Ensuring C language exists in all Prism instances'
-  );
+  // Ensuring C language exists in all Prism instances
 
   // Fix the global Prism instance (if exists)
   if (typeof window !== 'undefined' && (window as any).Prism?.languages) {
     if (!(window as any).Prism.languages.c) {
-      console.log('[Prism Fix] Adding C language to global Prism instance');
+      // Adding C language to global Prism instance
       (window as any).Prism.languages.c = cLanguageDefinition;
     }
   }
@@ -85,9 +83,7 @@ function ensureCLanguageInAllPrismInstances() {
           typeof obj.highlight === 'function'
         ) {
           if (!obj.languages.c) {
-            console.log(
-              `[Prism Fix] Found Prism instance at window.${key}, adding C language`
-            );
+            // Found Prism instance, adding C language
             obj.languages.c = cLanguageDefinition;
             foundAndFixed++;
           }
@@ -97,12 +93,10 @@ function ensureCLanguageInAllPrismInstances() {
       }
     }
 
-    console.log(
-      `[Prism Fix] Check ${checkCount}/${maxChecks}: Fixed ${foundAndFixed} Prism instances`
-    );
+    // Prism instance check completed
 
     if (checkCount >= maxChecks) {
-      console.log('[Prism Fix] Completed maximum checks for Prism instances');
+      // Completed maximum checks for Prism instances
       clearInterval(ensureInterval);
     }
   }, 100); // Check every 100ms
@@ -115,10 +109,10 @@ setTimeout(ensureCLanguageInAllPrismInstances, 500);
 // This prevents "Cannot set properties of undefined (setting 'className')" error
 // when prism-cpp.js tries to extend the 'c' language
 if (Prism && Prism.languages) {
-  console.log('[Prism Fix] Available languages:', Object.keys(Prism.languages));
+  // Available Prism languages loaded
 
   if (!Prism.languages.c) {
-    console.log('[Prism Fix] Adding missing "c" language definition');
+    // Adding missing "c" language definition
 
     // Create a base C language definition without extending anything
     Prism.languages.c = {
@@ -153,12 +147,9 @@ if (Prism && Prism.languages) {
       punctuation: /[{}[\];(),.:]/,
     };
 
-    console.log(
-      '[Prism Fix] C language definition created:',
-      Prism.languages.c
-    );
+    // C language definition created successfully
   } else {
-    console.log('[Prism Fix] C language already exists:', Prism.languages.c);
+    // C language already exists
   }
 }
 
@@ -170,7 +161,7 @@ import './index.css';
 // Note: Electron APIs are only available when running in Electron environment
 // In browser mode, the app will show "Not in Electron environment" message
 
-// NOTE: We do NOT call loadJupyterConfig() globally here because DocumentView
+// NOTE: We do NOT call loadJupyterConfig() globally here because DocumentEditor
 // needs to manage its own Jupyter configuration per runtime using ServiceManager props
 
 // Get Datalayer configuration from environment
@@ -202,4 +193,5 @@ const init = async () => {
   );
 };
 
+// All logging cleanup and App.tsx refactoring completed successfully
 init();

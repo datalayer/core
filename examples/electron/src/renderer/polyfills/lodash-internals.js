@@ -20,14 +20,14 @@ const NativeUint8Array = globalThis.Uint8Array;
 
 // Ensure Symbol.for is available
 if (NativeSymbol && !NativeSymbol.for) {
-  NativeSymbol.for = function(key) {
+  NativeSymbol.for = function (key) {
     return NativeSymbol(String(key));
   };
 }
 
 // Ensure Symbol.keyFor is available
 if (NativeSymbol && !NativeSymbol.keyFor) {
-  NativeSymbol.keyFor = function(sym) {
+  NativeSymbol.keyFor = function (sym) {
     return undefined;
   };
 }
@@ -576,12 +576,12 @@ for (let i = 1; i <= 10; i++) {
 // CRITICAL: Ensure Symbol.for is available globally
 if (typeof globalThis !== 'undefined' && globalThis.Symbol) {
   if (!globalThis.Symbol.for) {
-    globalThis.Symbol.for = function(key) {
+    globalThis.Symbol.for = function (key) {
       return NativeSymbol ? NativeSymbol(String(key)) : key;
     };
   }
   if (!globalThis.Symbol.keyFor) {
-    globalThis.Symbol.keyFor = function(sym) {
+    globalThis.Symbol.keyFor = function (sym) {
       return undefined;
     };
   }
@@ -590,12 +590,12 @@ if (typeof globalThis !== 'undefined' && globalThis.Symbol) {
 // Also ensure window.Symbol has these methods in browser environment
 if (typeof window !== 'undefined' && window.Symbol) {
   if (!window.Symbol.for) {
-    window.Symbol.for = function(key) {
+    window.Symbol.for = function (key) {
       return NativeSymbol ? NativeSymbol(String(key)) : key;
     };
   }
   if (!window.Symbol.keyFor) {
-    window.Symbol.keyFor = function(sym) {
+    window.Symbol.keyFor = function (sym) {
       return undefined;
     };
   }

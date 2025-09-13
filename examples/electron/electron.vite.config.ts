@@ -227,20 +227,20 @@ export default defineConfig({
             const fixedCode = code.replace(
               /extend: function\(id, redef\) {\s*var lang2 = _\.util\.clone\(_\.languages\[id\]\);\s*for \(var key in redef\) {\s*lang2\[key\] = redef\[key\];\s*}\s*return lang2;\s*}/g,
               `extend: function(id, redef) {
-            console.log('[Prism Fix] Extending language:', id, 'with:', redef);
+            // Extending Prism language definition
             var baseLang = _.languages[id];
             if (!baseLang) {
-              console.warn('[Prism Fix] Base language not found:', id, 'creating empty base');
+              // Base language not found, creating empty base
               baseLang = {};
             }
             var lang2 = _.util.clone(baseLang);
             for (var key in redef) {
               if (redef.hasOwnProperty(key)) {
-                console.log('[Prism Fix] Setting', key, '=', redef[key]);
+                // Setting language property
                 lang2[key] = redef[key];
               }
             }
-            console.log('[Prism Fix] Extended language result:', lang2);
+            // Language extension completed
             return lang2;
           }`
             );
@@ -2216,7 +2216,7 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
 
               return {
                 code: modifiedCode,
-                map: null
+                map: null,
               };
             } else {
               // Fallback: inject at the very beginning if pattern not found
@@ -2243,12 +2243,12 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
 `;
               return {
                 code: symbolPolyfill + code,
-                map: null
+                map: null,
               };
             }
           }
           return null;
-        }
+        },
       },
       topLevelAwait(), // Add top-level await support
       {

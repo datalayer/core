@@ -207,9 +207,13 @@ async function fixBundle() {
     // Replace all Symbol.for calls with a safe version that uses the global Symbol
 
     // First, ensure global Symbol is available in async scope
-    const asyncStartPattern = /let __tla = Promise\.all\(\[[\s\S]*?\]\)\.then\(async \(\)=>{/;
-    content = content.replace(asyncStartPattern, (match) => {
-      return match + '\n    // Ensure Symbol is available in async scope\n    if (typeof Symbol === "undefined") { var Symbol = globalThis.Symbol || window.Symbol; }\n';
+    const asyncStartPattern =
+      /let __tla = Promise\.all\(\[[\s\S]*?\]\)\.then\(async \(\)=>{/;
+    content = content.replace(asyncStartPattern, match => {
+      return (
+        match +
+        '\n    // Ensure Symbol is available in async scope\n    if (typeof Symbol === "undefined") { var Symbol = globalThis.Symbol || window.Symbol; }\n'
+      );
     });
 
     console.log('✅ Added Symbol reference to async scope');

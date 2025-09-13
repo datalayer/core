@@ -34,7 +34,8 @@
       ? Symbol
       : function Symbol(description) {
           // Create a unique identifier
-          const key = '@@Symbol(' + (description || '') + ')_' + ++symbolCounter;
+          const key =
+            '@@Symbol(' + (description || '') + ')_' + ++symbolCounter;
 
           // Return a unique object that acts like a symbol
           // In older environments, we use a string as fallback
@@ -146,6 +147,12 @@
   }
 
   console.log('[Symbol Polyfill] ✅ Symbol polyfill installed successfully');
-  console.log('[Symbol Polyfill] Symbol.for available:', typeof SymbolPolyfill.for === 'function');
-  console.log('[Symbol Polyfill] Symbol.keyFor available:', typeof SymbolPolyfill.keyFor === 'function');
+  console.log(
+    '[Symbol Polyfill] Symbol.for available:',
+    typeof SymbolPolyfill.for === 'function'
+  );
+  console.log(
+    '[Symbol Polyfill] Symbol.keyFor available:',
+    typeof SymbolPolyfill.keyFor === 'function'
+  );
 })();
