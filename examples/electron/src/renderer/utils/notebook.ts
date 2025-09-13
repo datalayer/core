@@ -53,13 +53,8 @@ export const validateNotebookContent = (content: any): boolean => {
     return true;
   }
 
-  console.error(
-    'Invalid notebook content structure. Content:',
-    content
-  );
-  console.error(
-    'Expected: object with cells (array) and nbformat properties'
-  );
+  console.error('Invalid notebook content structure. Content:', content);
+  console.error('Expected: object with cells (array) and nbformat properties');
   return false;
 };
 
@@ -77,19 +72,14 @@ export const isRuntimeTerminated = (notebookId: string): boolean => {
  * Mark runtime as terminated in session storage
  */
 export const markRuntimeTerminated = (notebookId: string): void => {
-  sessionStorage.setItem(
-    `notebook-${notebookId}-terminated`,
-    'true'
-  );
+  sessionStorage.setItem(`notebook-${notebookId}-terminated`, 'true');
 };
 
 /**
  * Clear runtime termination flag
  */
 export const clearRuntimeTerminationFlag = (notebookId: string): void => {
-  sessionStorage.removeItem(
-    `notebook-${notebookId}-terminated`
-  );
+  sessionStorage.removeItem(`notebook-${notebookId}-terminated`);
 };
 
 /**
@@ -238,7 +228,13 @@ export const logNotebookInfo = (
   });
 
   if (serviceManager) {
-    console.info('[NotebookView] ServiceManager isReady:', serviceManager.isReady);
-    console.info('[NotebookView] ServiceManager isDisposed:', serviceManager.isDisposed);
+    console.info(
+      '[NotebookView] ServiceManager isReady:',
+      serviceManager.isReady
+    );
+    console.info(
+      '[NotebookView] ServiceManager isDisposed:',
+      serviceManager.isDisposed
+    );
   }
 };

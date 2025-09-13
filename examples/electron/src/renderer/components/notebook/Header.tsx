@@ -16,7 +16,11 @@ const Header: React.FC<NotebookHeaderProps> = ({
   onTerminateRuntime,
 }) => {
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    if ((event.key === 'Enter' || event.key === ' ') && !isTerminating && hasServiceManager) {
+    if (
+      (event.key === 'Enter' || event.key === ' ') &&
+      !isTerminating &&
+      hasServiceManager
+    ) {
       event.preventDefault();
       onTerminateRuntime();
     }
@@ -69,7 +73,14 @@ const Header: React.FC<NotebookHeaderProps> = ({
                 'Interactive notebook environment powered by Datalayer'}
             </Text>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+            >
               {selectedNotebook?.path && (
                 <Text
                   sx={{
@@ -146,7 +157,10 @@ const Header: React.FC<NotebookHeaderProps> = ({
             }}
           >
             {isTerminating ? (
-              <Box as="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                as="span"
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
                 <Box
                   sx={{
                     width: '12px',
@@ -202,7 +216,8 @@ const Header: React.FC<NotebookHeaderProps> = ({
           aria-live="polite"
         >
           <Text sx={{ color: 'attention.fg', fontSize: 1 }}>
-            Service manager not available. Please configure Datalayer credentials.
+            Service manager not available. Please configure Datalayer
+            credentials.
           </Text>
         </Box>
       )}

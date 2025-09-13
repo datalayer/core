@@ -15,7 +15,7 @@ import {
   Spinner,
 } from '@primer/react';
 import { AlertIcon } from '@primer/octicons-react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { DeleteConfirmationDialogProps } from '../../../shared/types';
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({

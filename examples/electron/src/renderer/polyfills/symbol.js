@@ -59,7 +59,7 @@
     const stringKey = String(key);
 
     // Return existing symbol if it exists
-    if (globalSymbolRegistry.hasOwnProperty(stringKey)) {
+    if (Object.prototype.hasOwnProperty.call(globalSymbolRegistry, stringKey)) {
       return globalSymbolRegistry[stringKey];
     }
 

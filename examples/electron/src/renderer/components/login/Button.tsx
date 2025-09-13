@@ -6,7 +6,7 @@
 import React from 'react';
 import { Box, Button as PrimerButton } from '@primer/react';
 import { CheckIcon } from '@primer/octicons-react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { LoginButtonProps } from '../../../shared/types';
 
 const Button: React.FC<LoginButtonProps> = ({ loading, disabled, onClick }) => {

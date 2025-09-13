@@ -7,7 +7,9 @@ import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { EditorInitPluginProps } from '../../../shared/types';
 
-const EditorInitPlugin: React.FC<EditorInitPluginProps> = ({ onEditorInit }) => {
+const EditorInitPlugin: React.FC<EditorInitPluginProps> = ({
+  onEditorInit,
+}) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {

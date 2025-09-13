@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Header } from '@primer/react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { NavigationTabProps } from '../../../shared/types';
 
 const NavigationTab: React.FC<NavigationTabProps> = ({

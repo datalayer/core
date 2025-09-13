@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Box, Heading, Text, Button } from '@primer/react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { EnvironmentCardProps } from '../../../shared/types';
 import Icon from './Icon';
 import TypeLabel from './TypeLabel';

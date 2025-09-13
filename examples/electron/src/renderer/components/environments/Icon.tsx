@@ -7,7 +7,10 @@ import React from 'react';
 import { Box } from '@primer/react';
 import { CpuIcon, ZapIcon } from '@primer/octicons-react';
 import { EnvironmentIconProps } from '../../../shared/types';
-import { isGPUEnvironmentType, parseEnvironmentDescription } from '../../utils/environments';
+import {
+  isGPUEnvironmentType,
+  parseEnvironmentDescription,
+} from '../../utils/environments';
 
 const Icon: React.FC<EnvironmentIconProps> = ({ environment, size = 24 }) => {
   const parsed = parseEnvironmentDescription(environment.description || '');

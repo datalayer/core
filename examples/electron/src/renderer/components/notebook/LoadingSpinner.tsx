@@ -5,10 +5,10 @@
 
 import React from 'react';
 import { Box, Text, Spinner } from '@primer/react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { NotebookLoadingStateProps } from '../../../shared/types';
 
-const LoadingState: React.FC<NotebookLoadingStateProps> = ({
+const LoadingSpinner: React.FC<NotebookLoadingStateProps> = ({
   loading,
   loadingNotebook,
   isCreatingRuntime,
@@ -149,4 +149,4 @@ const LoadingState: React.FC<NotebookLoadingStateProps> = ({
   );
 };
 
-export default LoadingState;
+export default LoadingSpinner;

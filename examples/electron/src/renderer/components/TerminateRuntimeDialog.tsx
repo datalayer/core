@@ -6,12 +6,22 @@
 import React, { useEffect } from 'react';
 import { Box, Text, Button, Dialog } from '@primer/react';
 import { XIcon, AlertIcon } from '@primer/octicons-react';
-import { TerminateRuntimeDialogProps } from '../../../shared/types';
+
+export interface TerminateRuntimeDialogProps {
+  isOpen: boolean;
+  isTerminating: boolean;
+  itemName: string;
+  itemType?: 'notebook' | 'document';
+  error?: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
 const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
   isOpen,
   isTerminating,
-  notebookName,
+  itemName,
+  itemType = 'notebook',
   error,
   onConfirm,
   onCancel,
@@ -40,6 +50,8 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
   if (!isOpen) {
     return null;
   }
+
+  const itemTypeLabel = itemType === 'document' ? 'document' : 'notebook';
 
   return (
     <Dialog
@@ -99,7 +111,7 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
               fontFamily: 'mono',
             }}
           >
-            "{notebookName || 'this notebook'}"
+            "{itemName || `this ${itemTypeLabel}`}"
           </Text>
           ?
         </Text>
@@ -114,7 +126,14 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
             mb: error ? 3 : 4,
           }}
         >
-          <Text sx={{ mb: 2, display: 'block', color: 'fg.default', fontWeight: 'semibold' }}>
+          <Text
+            sx={{
+              mb: 2,
+              display: 'block',
+              color: 'fg.default',
+              fontWeight: 'semibold',
+            }}
+          >
             This action will:
           </Text>
           <Box as="ul" sx={{ pl: 3, m: 0, color: 'fg.muted' }}>
@@ -122,14 +141,14 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
               Stop all kernel execution and running processes
             </Text>
             <Text as="li" sx={{ mb: 1 }}>
-              Close the notebook and return to the documents list
+              Close the {itemTypeLabel} and return to the documents list
             </Text>
-            <Text as="li" sx={{ mb: 1 }}>
-              Disconnect from the collaborative session
-            </Text>
-            <Text as="li">
-              Release allocated compute resources
-            </Text>
+            {itemType === 'notebook' && (
+              <Text as="li" sx={{ mb: 1 }}>
+                Disconnect from the collaborative session
+              </Text>
+            )}
+            <Text as="li">Release allocated compute resources</Text>
           </Box>
         </Box>
 
@@ -148,25 +167,28 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               <Box sx={{ color: 'danger.fg', mt: 0.5, flexShrink: 0 }}>
-                <AlertIcon
-                  size={16}
-                  aria-hidden="true"
-                />
+                <AlertIcon size={16} aria-hidden="true" />
               </Box>
               <Box>
-                <Text sx={{ color: 'danger.fg', fontWeight: 'semibold', display: 'block', mb: 1 }}>
+                <Text
+                  sx={{
+                    color: 'danger.fg',
+                    fontWeight: 'semibold',
+                    display: 'block',
+                    mb: 1,
+                  }}
+                >
                   Error occurred
                 </Text>
-                <Text sx={{ color: 'danger.fg', fontSize: 1 }}>
-                  {error}
-                </Text>
+                <Text sx={{ color: 'danger.fg', fontSize: 1 }}>{error}</Text>
               </Box>
             </Box>
           </Box>
         )}
 
         <Text sx={{ color: 'fg.muted', fontSize: 1, fontStyle: 'italic' }}>
-          Tip: Press <kbd>Ctrl+Enter</kbd> to confirm or <kbd>Esc</kbd> to cancel
+          Tip: Press <kbd>Ctrl+Enter</kbd> to confirm or <kbd>Esc</kbd> to
+          cancel
         </Text>
       </Box>
 
@@ -204,7 +226,7 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
             onClick={onConfirm}
             disabled={isTerminating}
             leadingVisual={XIcon}
-            aria-label={`Confirm termination of runtime for ${notebookName || 'this notebook'}`}
+            aria-label={`Confirm termination of runtime for ${itemName || `this ${itemTypeLabel}`}`}
             sx={{
               '&:focus-visible': {
                 outline: '2px solid',
@@ -218,7 +240,10 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
             }}
           >
             {isTerminating ? (
-              <Box as="span" sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                as="span"
+                sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+              >
                 <Box
                   sx={{
                     width: '14px',

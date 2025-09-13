@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Box, Text, Button } from '@primer/react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { LoginFooterProps } from '../../../shared/types';
 
 const Footer: React.FC<LoginFooterProps> = () => {

@@ -4,7 +4,10 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { UseCollaborationOptions, UseCollaborationReturn } from '../../shared/types';
+import {
+  UseCollaborationOptions,
+  UseCollaborationReturn,
+} from '../../shared/types';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import { isRuntimeInCleanupRegistry } from '../utils/notebook';
 
@@ -19,7 +22,9 @@ export const useCollaboration = ({
   const [collaborationReady, setCollaborationReady] = useState(false);
 
   // Store the collaboration provider in a ref to prevent component re-renders
-  const collaborationProviderRef = useRef<ElectronCollaborationProvider | null>(null);
+  const collaborationProviderRef = useRef<ElectronCollaborationProvider | null>(
+    null
+  );
   const collaborationVersionRef = useRef(0);
 
   // Create collaboration provider instance when configuration is available
@@ -39,7 +44,10 @@ export const useCollaboration = ({
         try {
           collaborationProviderRef.current.dispose();
         } catch (error) {
-          console.warn('[useCollaboration] Error disposing existing provider:', error);
+          console.warn(
+            '[useCollaboration] Error disposing existing provider:',
+            error
+          );
         }
         collaborationProviderRef.current = null;
         setCollaborationProvider(null);
@@ -73,7 +81,10 @@ export const useCollaboration = ({
 
         // Listen for collaboration errors but don't let them break the notebook
         provider.events.errorOccurred.connect((_sender, error) => {
-          console.error('[useCollaboration] Collaboration error (non-fatal):', error);
+          console.error(
+            '[useCollaboration] Collaboration error (non-fatal):',
+            error
+          );
           setCollaborationReady(false);
         });
 
@@ -82,7 +93,9 @@ export const useCollaboration = ({
           const readyEvent = provider.events.ready as any;
           if (readyEvent && typeof readyEvent.connect === 'function') {
             readyEvent.connect(() => {
-              console.info('[useCollaboration] Collaboration provider is ready');
+              console.info(
+                '[useCollaboration] Collaboration provider is ready'
+              );
               setCollaborationReady(true);
             });
           }
@@ -91,9 +104,14 @@ export const useCollaboration = ({
         collaborationProviderRef.current = provider;
         setCollaborationProvider(provider);
 
-        console.info('[useCollaboration] Collaboration provider created successfully');
+        console.info(
+          '[useCollaboration] Collaboration provider created successfully'
+        );
       } catch (error) {
-        console.error('[useCollaboration] Error creating collaboration provider:', error);
+        console.error(
+          '[useCollaboration] Error creating collaboration provider:',
+          error
+        );
         setCollaborationProvider(null);
         setCollaborationReady(false);
       }
@@ -103,7 +121,10 @@ export const useCollaboration = ({
         try {
           collaborationProviderRef.current.dispose();
         } catch (error) {
-          console.warn('[useCollaboration] Error disposing provider on cleanup:', error);
+          console.warn(
+            '[useCollaboration] Error disposing provider on cleanup:',
+            error
+          );
         }
         collaborationProviderRef.current = null;
       }
@@ -111,7 +132,9 @@ export const useCollaboration = ({
       setCollaborationReady(false);
 
       if (runtimeTerminated) {
-        console.info('[useCollaboration] Runtime terminated, clearing collaboration provider');
+        console.info(
+          '[useCollaboration] Runtime terminated, clearing collaboration provider'
+        );
       }
     }
   }, [
@@ -177,7 +200,10 @@ export const useCollaboration = ({
         try {
           collaborationProviderRef.current.dispose();
         } catch (error) {
-          console.warn('[useCollaboration] Error disposing provider on unmount:', error);
+          console.warn(
+            '[useCollaboration] Error disposing provider on unmount:',
+            error
+          );
         }
       }
     };
@@ -191,9 +217,14 @@ export const useCollaboration = ({
         collaborationProviderRef.current = null;
         setCollaborationProvider(null);
         setCollaborationReady(false);
-        console.info('[useCollaboration] Collaboration provider disposed manually');
+        console.info(
+          '[useCollaboration] Collaboration provider disposed manually'
+        );
       } catch (error) {
-        console.error('[useCollaboration] Error disposing collaboration provider:', error);
+        console.error(
+          '[useCollaboration] Error disposing collaboration provider:',
+          error
+        );
       }
     }
   }, []);

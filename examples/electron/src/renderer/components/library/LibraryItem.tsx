@@ -6,26 +6,41 @@
 import React from 'react';
 import { Box, Text, ActionList, IconButton } from '@primer/react';
 import {
-  BookIcon,
   PlayIcon,
   DownloadIcon,
   TrashIcon,
   ClockIcon,
 } from '@primer/octicons-react';
-import { COLORS } from '../../constants/colors';
-import { NotebookItemProps } from '../../../shared/types';
+import { COLORS } from '../../../shared/constants/colors';
 import { formatDate } from '../../utils/library';
 
-const NotebookItem: React.FC<NotebookItemProps> = ({
-  notebook,
+export interface LibraryItemProps {
+  item: {
+    id: string;
+    name: string;
+    modifiedAt: string;
+    type?: string;
+  };
+  icon: React.ComponentType<{ size?: number }>;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+  showOpenButton?: boolean;
+}
+
+const LibraryItem: React.FC<LibraryItemProps> = ({
+  item,
+  icon: Icon,
   isSelected,
   onSelect,
   onDownload,
   onDelete,
+  showOpenButton = false,
 }) => {
   return (
     <ActionList.Item
-      key={notebook.id}
+      key={item.id}
       onSelect={onSelect}
       sx={{
         cursor: 'pointer',
@@ -39,11 +54,11 @@ const NotebookItem: React.FC<NotebookItemProps> = ({
       }}
     >
       <ActionList.LeadingVisual sx={{ alignSelf: 'center' }}>
-        <BookIcon size={20} />
+        <Icon size={20} />
       </ActionList.LeadingVisual>
       <Box sx={{ flex: 1 }}>
         <Text sx={{ fontWeight: 'semibold', fontSize: 2, mb: 1 }}>
-          {notebook.name}
+          {item.name}
         </Text>
         <Box
           sx={{
@@ -54,37 +69,39 @@ const NotebookItem: React.FC<NotebookItemProps> = ({
           }}
         >
           <Text sx={{ fontSize: 1, color: 'fg.subtle' }}>
-            <ClockIcon size={14} /> {formatDate(notebook.modifiedAt)}
+            <ClockIcon size={14} /> {formatDate(item.modifiedAt)}
           </Text>
         </Box>
       </Box>
       <ActionList.TrailingVisual>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton
-            aria-label="Open"
-            icon={PlayIcon}
-            size="medium"
-            variant="invisible"
-            sx={{
-              color: COLORS.brand.primary + ' !important',
-              '& svg': {
+          {showOpenButton && (
+            <IconButton
+              aria-label="Open"
+              icon={PlayIcon}
+              size="medium"
+              variant="invisible"
+              sx={{
                 color: COLORS.brand.primary + ' !important',
-                fill: COLORS.brand.primary + ' !important',
-              },
-              '&:hover': {
-                color: COLORS.brand.primaryHover + ' !important',
-                backgroundColor: `${COLORS.brand.primary}15`,
                 '& svg': {
-                  color: COLORS.brand.primaryHover + ' !important',
-                  fill: COLORS.brand.primaryHover + ' !important',
+                  color: COLORS.brand.primary + ' !important',
+                  fill: COLORS.brand.primary + ' !important',
                 },
-              },
-            }}
-            onClick={e => {
-              e.stopPropagation();
-              onSelect();
-            }}
-          />
+                '&:hover': {
+                  color: COLORS.brand.primaryHover + ' !important',
+                  backgroundColor: `${COLORS.brand.primary}15`,
+                  '& svg': {
+                    color: COLORS.brand.primaryHover + ' !important',
+                    fill: COLORS.brand.primaryHover + ' !important',
+                  },
+                },
+              }}
+              onClick={e => {
+                e.stopPropagation();
+                onSelect();
+              }}
+            />
+          )}
           <IconButton
             aria-label="Download"
             icon={DownloadIcon}
@@ -126,4 +143,4 @@ const NotebookItem: React.FC<NotebookItemProps> = ({
   );
 };
 
-export default NotebookItem;
+export default LibraryItem;

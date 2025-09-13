@@ -5,13 +5,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { INotebookContent } from '@jupyterlab/nbformat';
-import { UseNotebookContentOptions, UseNotebookContentReturn } from '../../shared/types';
-import { parseNotebookContent, validateNotebookContent } from '../utils/notebook';
+import {
+  UseNotebookContentOptions,
+  UseNotebookContentReturn,
+} from '../../shared/types';
+import {
+  parseNotebookContent,
+  validateNotebookContent,
+} from '../utils/notebook';
 
 export const useNotebookContent = ({
   selectedNotebook,
 }: UseNotebookContentOptions): UseNotebookContentReturn => {
-  const [notebookContent, setNotebookContent] = useState<INotebookContent | null>(null);
+  const [notebookContent, setNotebookContent] =
+    useState<INotebookContent | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +40,10 @@ export const useNotebookContent = ({
         throw new Error('proxyAPI not available');
       }
 
-      console.info('[useNotebookContent] Fetching notebook from:', selectedNotebook.cdnUrl);
+      console.info(
+        '[useNotebookContent] Fetching notebook from:',
+        selectedNotebook.cdnUrl
+      );
 
       // Use the proxy API to fetch the notebook to avoid CORS issues
       const response = await (window as any).proxyAPI.httpRequest({
@@ -66,7 +76,10 @@ export const useNotebookContent = ({
         throw new Error('Failed to fetch notebook from server');
       }
     } catch (fetchError) {
-      console.error('[useNotebookContent] Error fetching notebook:', fetchError);
+      console.error(
+        '[useNotebookContent] Error fetching notebook:',
+        fetchError
+      );
       setError('Failed to load notebook content');
       setNotebookContent(null);
     } finally {

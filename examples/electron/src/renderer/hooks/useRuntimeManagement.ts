@@ -5,7 +5,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ServiceManager } from '@jupyterlab/services';
-import { UseRuntimeManagementOptions, UseRuntimeManagementReturn } from '../../shared/types';
+import {
+  UseRuntimeManagementOptions,
+  UseRuntimeManagementReturn,
+} from '../../shared/types';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import {
@@ -23,7 +26,8 @@ export const useRuntimeManagement = ({
   selectedNotebook,
   configuration,
 }: UseRuntimeManagementOptions): UseRuntimeManagementReturn => {
-  const [serviceManager, setServiceManager] = useState<ServiceManager.IManager | null>(null);
+  const [serviceManager, setServiceManager] =
+    useState<ServiceManager.IManager | null>(null);
   const [creating, setCreating] = useState(false);
   const [terminating, setTerminating] = useState(false);
   const [terminated, setTerminated] = useState(false);
@@ -92,7 +96,9 @@ export const useRuntimeManagement = ({
         setCreating(true);
 
         try {
-          console.info('[useRuntimeManagement] Creating runtime with Datalayer service...');
+          console.info(
+            '[useRuntimeManagement] Creating runtime with Datalayer service...'
+          );
 
           // Check if this notebook was just terminated
           if (isRuntimeTerminated(selectedNotebook.id)) {
@@ -130,11 +136,16 @@ export const useRuntimeManagement = ({
 
           const jupyterServerUrl = currentRuntime?.ingress;
           if (!jupyterServerUrl) {
-            throw new Error('No Jupyter server URL provided in runtime response');
+            throw new Error(
+              'No Jupyter server URL provided in runtime response'
+            );
           }
 
           const jupyterToken = currentRuntime?.token || configuration.token;
-          console.info('[useRuntimeManagement] Connecting to Jupyter server:', jupyterServerUrl);
+          console.info(
+            '[useRuntimeManagement] Connecting to Jupyter server:',
+            jupyterServerUrl
+          );
 
           if (cancelled || !mountedRef.current) return;
 
@@ -177,7 +188,10 @@ export const useRuntimeManagement = ({
                 try {
                   originalDispose();
                 } catch (e) {
-                  console.error('[useRuntimeManagement] Error in original dispose:', e);
+                  console.error(
+                    '[useRuntimeManagement] Error in original dispose:',
+                    e
+                  );
                 }
               };
             }
@@ -219,9 +233,14 @@ export const useRuntimeManagement = ({
             setServiceManagerForNotebook(selectedNotebook.id, manager);
             setServiceManager(manager);
           }
-          console.info('[useRuntimeManagement] ServiceManager ready with runtime Jupyter server');
+          console.info(
+            '[useRuntimeManagement] ServiceManager ready with runtime Jupyter server'
+          );
         } catch (initError) {
-          console.error('[useRuntimeManagement] Failed to create ProxyServiceManager:', initError);
+          console.error(
+            '[useRuntimeManagement] Failed to create ProxyServiceManager:',
+            initError
+          );
           if (!cancelled) {
             const errorMessage = formatErrorMessage(initError as Error);
             setError(errorMessage);
@@ -230,7 +249,9 @@ export const useRuntimeManagement = ({
           setCreating(false);
         }
       } else if (!configuration?.token || !configuration?.runUrl) {
-        console.info('[useRuntimeManagement] No Datalayer credentials configured');
+        console.info(
+          '[useRuntimeManagement] No Datalayer credentials configured'
+        );
         setServiceManager(null);
         setError(null);
       } else if (hasExistingServiceManager) {
@@ -278,7 +299,10 @@ export const useRuntimeManagement = ({
 
       console.info('[useRuntimeManagement] Runtime terminated successfully');
     } catch (terminateError) {
-      console.error('[useRuntimeManagement] Error terminating runtime:', terminateError);
+      console.error(
+        '[useRuntimeManagement] Error terminating runtime:',
+        terminateError
+      );
       // Don't set error state here - let the parent component handle it
     } finally {
       setTerminating(false);

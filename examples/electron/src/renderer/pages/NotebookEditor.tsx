@@ -10,10 +10,10 @@ import { NotebookViewProps } from '../../shared/types';
 import { createStableNotebookKey } from '../utils/notebook';
 
 // Import atomic components
-import LoadingState from '../components/notebook/LoadingState';
+import LoadingSpinner from '../components/notebook/LoadingSpinner';
 import Header from '../components/notebook/Header';
 import Content from '../components/notebook/Content';
-import TerminateRuntimeDialog from '../components/notebook/TerminateRuntimeDialog';
+import TerminateRuntimeDialog from '../components/TerminateRuntimeDialog';
 
 // Import custom hooks
 import { useNotebookContent } from '../hooks/useNotebookContent';
@@ -33,7 +33,11 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
   const { configuration } = useCoreStore();
 
   // Custom hooks for business logic
-  const { notebookContent, loading: loadingNotebook, error: contentError } = useNotebookContent({
+  const {
+    notebookContent,
+    loading: loadingNotebook,
+    error: contentError,
+  } = useNotebookContent({
     selectedNotebook: selectedNotebook || null,
   });
 
@@ -101,7 +105,7 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
   // Show loading state while loading notebook or creating runtime
   if (loadingNotebook || creatingRuntime) {
     return (
-      <LoadingState
+      <LoadingSpinner
         loading={true}
         loadingNotebook={loadingNotebook}
         isCreatingRuntime={creatingRuntime}
@@ -172,7 +176,8 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
       <TerminateRuntimeDialog
         isOpen={showTerminateDialog}
         isTerminating={terminatingRuntime}
-        notebookName={selectedNotebook?.name || null}
+        itemName={selectedNotebook?.name || ''}
+        itemType="notebook"
         error={runtimeError}
         onConfirm={handleTerminateRuntime}
         onCancel={() => setShowTerminateDialog(false)}

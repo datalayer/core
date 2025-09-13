@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Header, Text } from '@primer/react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import NavigationTabs from './NavigationTabs';
 import UserMenu from './UserMenu';
 import { AppHeaderProps } from '../../../shared/types';

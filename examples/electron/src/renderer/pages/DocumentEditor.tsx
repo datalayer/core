@@ -3,12 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-} from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box } from '@primer/react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
@@ -26,14 +21,11 @@ import { useCoreStore } from '@datalayer/core/state';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import { DocumentViewProps, CollaborationStatus } from '../../shared/types';
-import {
-  waitForRuntimeReady,
-  onLexicalError,
-} from '../utils/document';
+import { waitForRuntimeReady, onLexicalError } from '../utils/document';
 import { logger } from '../utils/logger';
 import Header from '../components/document/Header';
-import LoadingState from '../components/document/LoadingState';
-import TerminateDialog from '../components/document/TerminateDialog';
+import LoadingSpinner from '../components/document/LoadingSpinner';
+import TerminateRuntimeDialog from '../components/TerminateRuntimeDialog';
 import LexicalEditorComponent from '../components/document/LexicalEditor';
 import { type LexicalEditor as LexicalEditorType } from 'lexical';
 
@@ -97,7 +89,8 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
   const [showTerminateDialog, setShowTerminateDialog] = useState(false);
   const [isTerminating, setIsTerminating] = useState(false);
   const [collaborationEnabled, setCollaborationEnabled] = useState(true);
-  const [collaborationStatus, setCollaborationStatus] = useState<CollaborationStatus>('connecting');
+  const [collaborationStatus, setCollaborationStatus] =
+    useState<CollaborationStatus>('connecting');
   const [, setLexicalEditor] = useState<LexicalEditorType | null>(null);
   const { configuration } = useCoreStore();
   const mountedRef = useRef(true);
@@ -455,7 +448,7 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
   // Step 1: Creating runtime (spinner only)
   if (isCreatingRuntime) {
     return (
-      <LoadingState
+      <LoadingSpinner
         isCreatingRuntime={true}
         loading={false}
         serviceManager={null}
@@ -466,7 +459,7 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
   // Step 2: Loading document and waiting for serviceManager to be ready (spinner only)
   if (loading || !isServiceManagerReady) {
     return (
-      <LoadingState
+      <LoadingSpinner
         isCreatingRuntime={false}
         loading={loading}
         serviceManager={serviceManager}
@@ -477,7 +470,7 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
   // Handle errors by auto-closing
   if (error || runtimeError) {
     return (
-      <LoadingState
+      <LoadingSpinner
         isCreatingRuntime={false}
         loading={true}
         serviceManager={null}
@@ -489,7 +482,7 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
   // This prevents the Jupyter React component from falling back to default hardcoded config
   if (!serviceManager) {
     return (
-      <LoadingState
+      <LoadingSpinner
         isCreatingRuntime={false}
         loading={false}
         serviceManager={null}
@@ -529,10 +522,12 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
         </Box>
 
         {/* Terminate Runtime Dialog */}
-        <TerminateDialog
+        <TerminateRuntimeDialog
           isOpen={showTerminateDialog}
           isTerminating={isTerminating}
-          runtimeName={documentRuntime?.runtime?.pod_name}
+          itemName={selectedDocument?.name || ''}
+          itemType="document"
+          error={runtimeError}
           onConfirm={handleTerminateRuntime}
           onCancel={() => setShowTerminateDialog(false)}
         />

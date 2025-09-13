@@ -5,11 +5,14 @@
 
 import React from 'react';
 import UnifiedLoadingSpinner from '../LoadingSpinner';
-import { LoadingSpinnerProps } from '../../../shared/types';
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message }) => {
+const LoadingSpinner: React.FC = () => {
   return (
-    <UnifiedLoadingSpinner message={message} variant="card" size="medium" />
+    <UnifiedLoadingSpinner
+      message="Loading environments..."
+      variant="inline"
+      sx={{ py: 6 }}
+    />
   );
 };
 

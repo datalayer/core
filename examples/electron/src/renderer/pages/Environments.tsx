@@ -10,7 +10,7 @@ import { useEnvironments } from '../stores/environmentStore';
 import { isGPUEnvironment } from '../utils/environments';
 
 import AuthWarning from '../components/environments/AuthWarning';
-import LoadingState from '../components/environments/LoadingState';
+import LoadingSpinner from '../components/environments/LoadingSpinner';
 import ErrorState from '../components/environments/ErrorState';
 import EmptyState from '../components/environments/EmptyState';
 import Card from '../components/environments/Card';
@@ -89,7 +89,7 @@ const Environments: React.FC = () => {
 
       {!configuration?.token && <AuthWarning />}
 
-      {loading && <LoadingState />}
+      {loading && <LoadingSpinner />}
 
       {error && !loading && (
         <ErrorState error={error} onRetry={fetchEnvironments} />

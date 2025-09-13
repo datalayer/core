@@ -13,7 +13,7 @@ import {
   Select,
 } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { HeaderProps } from '../../../shared/types';
 
 const Header: React.FC<HeaderProps> = ({

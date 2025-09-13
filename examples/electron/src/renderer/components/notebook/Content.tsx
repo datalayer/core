@@ -44,7 +44,12 @@ const Content: React.FC<NotebookContentProps> = ({
     }
 
     // Log notebook information for debugging
-    logNotebookInfo(serviceManager, notebookContent, collaborationProvider, stableNotebookKey);
+    logNotebookInfo(
+      serviceManager,
+      notebookContent,
+      collaborationProvider,
+      stableNotebookKey
+    );
 
     const props = createNotebookProps(
       stableNotebookKey,
@@ -105,8 +110,8 @@ const Content: React.FC<NotebookContentProps> = ({
         </Text>
 
         <Text sx={{ color: 'fg.muted', fontSize: 1, mb: 3 }}>
-          This may be due to collaboration state conflicts, component
-          lifecycle issues, or rendering conflicts.
+          This may be due to collaboration state conflicts, component lifecycle
+          issues, or rendering conflicts.
         </Text>
 
         <Text
@@ -175,10 +180,7 @@ const Content: React.FC<NotebookContentProps> = ({
       }}
     >
       <ErrorBoundary onError={onNotebookError}>
-        <Notebook2
-          key={`notebook-${stableNotebookKey}`}
-          {...notebookProps}
-        />
+        <Notebook2 key={`notebook-${stableNotebookKey}`} {...notebookProps} />
       </ErrorBoundary>
     </Box>
   );

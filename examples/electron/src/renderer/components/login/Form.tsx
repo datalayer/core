@@ -10,7 +10,7 @@ import {
   Text,
   Button as PrimerButton,
 } from '@primer/react';
-import { COLORS } from '../../constants/colors';
+import { COLORS } from '../../../shared/constants/colors';
 import { LoginFormProps } from '../../../shared/types';
 import Button from './Button';
 

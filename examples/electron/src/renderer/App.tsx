@@ -14,8 +14,8 @@ import Library from './pages/Library';
 import Environments from './pages/Environments';
 import { useRuntimeStore } from './stores/runtimeStore';
 import LoadingScreen from './components/app/LoadingScreen';
-import AppHeader from './components/app/AppHeader';
-import AppLayout from './components/app/AppLayout';
+import AppHeader from './components/app/Header';
+import AppLayout from './components/app/Layout';
 import {
   ViewType,
   GitHubUser,

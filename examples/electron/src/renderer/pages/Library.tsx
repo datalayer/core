@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
+import { BookIcon, FileIcon } from '@primer/octicons-react';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import { testApplicationColors } from '../utils/colorContrast';
 import {
@@ -18,11 +19,11 @@ import {
   mapApiItemToDocumentItem,
   groupDocumentsByType,
   createDataHash,
+  getDocumentIcon,
 } from '../utils/library';
 import Header from '../components/library/Header';
 import ErrorMessage from '../components/library/ErrorMessage';
-import NotebooksSection from '../components/library/NotebooksSection';
-import DocumentsSection from '../components/library/DocumentsSection';
+import LibrarySection from '../components/library/LibrarySection';
 import DeleteConfirmationDialog from '../components/library/DeleteConfirmationDialog';
 
 const Documents: React.FC<DocumentsListProps> = ({
@@ -510,22 +511,35 @@ const Documents: React.FC<DocumentsListProps> = ({
 
       <ErrorMessage error={error} warning={warningMessage} />
 
-      <NotebooksSection
-        notebooks={groupedDocuments.notebooks}
+      <LibrarySection
+        title="Notebooks"
+        icon={BookIcon as React.ComponentType<{ size?: number }>}
+        items={groupedDocuments.notebooks}
         loading={loading}
-        selectedNotebook={selectedNotebook}
-        onNotebookSelect={handleOpenNotebook}
-        onDownloadNotebook={handleDownloadItem}
-        onDeleteNotebook={handleDeleteItem}
+        selectedItemId={selectedNotebook}
+        emptyMessage="No notebooks yet"
+        onItemSelect={handleOpenNotebook}
+        onItemDownload={handleDownloadItem}
+        onItemDelete={handleDeleteItem}
+        showOpenButton={true}
       />
 
-      <DocumentsSection
-        documents={groupedDocuments.documents}
+      <LibrarySection
+        title="Documents"
+        icon={FileIcon as React.ComponentType<{ size?: number }>}
+        items={groupedDocuments.documents}
         loading={loading}
-        selectedNotebook={selectedNotebook}
-        onDocumentSelect={handleOpenDocument}
-        onDownloadDocument={handleDownloadItem}
-        onDeleteDocument={handleDeleteItem}
+        selectedItemId={selectedNotebook}
+        emptyMessage="No documents yet"
+        onItemSelect={handleOpenDocument}
+        onItemDownload={handleDownloadItem}
+        onItemDelete={handleDeleteItem}
+        showOpenButton={false}
+        getItemIcon={
+          getDocumentIcon as (
+            item: any
+          ) => React.ComponentType<{ size?: number }>
+        }
       />
 
       <DeleteConfirmationDialog
