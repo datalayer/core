@@ -3,10 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './utils';
-export * from './state';
-export * from './collaboration';
-export * from './services';
-// Export navigation before hooks to avoid conflicts
-export * from './navigation';
-export * from './hooks';
+// This file is intentionally kept minimal to avoid barrel export issues.
+// Please use subpath imports instead:
+//
+// import { useUser } from '@datalayer/core/hooks';
+// import { useCoreStore } from '@datalayer/core/state';
+// import { formatDate } from '@datalayer/core/utils';
+//
+// See MIGRATION_GUIDE.md for more details.

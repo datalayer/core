@@ -48,7 +48,7 @@ import {
   useJupyter,
   loadJupyterConfig,
 } from '@datalayer/jupyter-react';
-import { useCoreStore } from '@datalayer/core';
+import { useCoreStore } from '@datalayer/core/state';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import { COLORS } from '../constants/colors';

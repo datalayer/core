@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { useIAMStore } from '@datalayer/core';
+import { useIAMStore } from '@datalayer/core/state';
 import { useActiveNotebook } from '@/contexts/ActiveNotebookContext';
 import dynamic from 'next/dynamic';
 import { ZapIcon, ThreeBarsIcon, XIcon } from '@primer/octicons-react';

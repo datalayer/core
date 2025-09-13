@@ -11,7 +11,7 @@ import {
   CellSidebarExtension,
   CellSidebarButton,
 } from '@datalayer/jupyter-react';
-import { useCoreStore } from '@datalayer/core';
+import { useCoreStore } from '@datalayer/core/state';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import { XIcon, AlertIcon } from '@primer/octicons-react';

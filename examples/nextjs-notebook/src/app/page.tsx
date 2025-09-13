@@ -7,7 +7,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIAMStore } from '@datalayer/core';
+import { useIAMStore } from '@datalayer/core/state';
 import { Box } from '@datalayer/primer-addons';
 import { Spinner, Text } from '@primer/react';
 

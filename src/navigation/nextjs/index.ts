@@ -29,12 +29,12 @@ export const isNextJsEnvironment = (): boolean => {
   return typeof window !== 'undefined' && (window as any).__NEXT_DATA__;
 };
 
-// Export App Router hooks directly for synchronous access
-export const useParamsNext = nextNavigationModule?.useParams || undefined;
-export const useSearchParamsNext =
+// Export App Router hooks with clean names (path already indicates Next.js)
+export const useParams = nextNavigationModule?.useParams || undefined;
+export const useSearchParams =
   nextNavigationModule?.useSearchParams || undefined;
-export const useRouterNext = nextNavigationModule?.useRouter || undefined;
-export const usePathnameNext = nextNavigationModule?.usePathname || undefined;
+export const useRouter = nextNavigationModule?.useRouter || undefined;
+export const usePathname = nextNavigationModule?.usePathname || undefined;
 
 // Export Pages Router hooks (for potential future use)
-export const useRouterNextPages = nextRouterModule?.useRouter || undefined;
+export const useRouterPages = nextRouterModule?.useRouter || undefined;

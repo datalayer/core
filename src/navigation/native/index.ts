@@ -11,9 +11,9 @@ const notifyNavigationChange = () => {
 };
 
 /**
- * Create native browser navigation function
+ * Create browser navigation function
  */
-export const createNativeNavigate = () => {
+export const createNavigate = () => {
   return (to: string, options?: any) => {
     if (typeof window === 'undefined') return;
 
@@ -45,9 +45,9 @@ export const createNativeNavigate = () => {
 };
 
 /**
- * Simple native adapter for backward compatibility
+ * Simple adapter for browser navigation
  */
-export const createNativeAdapter = () => {
+export const createAdapter = () => {
   return {
     name: 'native',
     isAvailable: () =>

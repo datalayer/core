@@ -19,7 +19,7 @@ import {
   PackageIcon,
   AlertIcon,
 } from '@primer/octicons-react';
-import { useCoreStore } from '@datalayer/core';
+import { useCoreStore } from '@datalayer/core/state';
 import { COLORS } from '../constants/colors';
 import { useEnvironments } from '../stores/environmentStore';
 

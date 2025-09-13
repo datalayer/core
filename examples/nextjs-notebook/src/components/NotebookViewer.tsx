@@ -9,10 +9,16 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState, useRef } from 'react';
 import { ServiceManager } from '@jupyterlab/services';
 import { INotebookContent } from '@jupyterlab/nbformat';
-import { createDatalayerServiceManager } from '@datalayer/core/lib/services/DatalayerServiceManager';
-import { reconnectToRuntime } from '@datalayer/core/lib/services';
-import { DatalayerCollaborationProvider } from '@datalayer/core/lib/collaboration/DatalayerCollaborationProvider';
-import { useIAMStore, useCoreStore, useRuntimesStore } from '@datalayer/core';
+import {
+  createDatalayerServiceManager,
+  reconnectToRuntime,
+} from '@datalayer/core/services';
+import { DatalayerCollaborationProvider } from '@datalayer/core/collaboration';
+import {
+  useIAMStore,
+  useCoreStore,
+  useRuntimesStore,
+} from '@datalayer/core/state';
 import { Flash, Spinner, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { getStoredRuntime, storeRuntime } from '../utils/runtimeStorage';

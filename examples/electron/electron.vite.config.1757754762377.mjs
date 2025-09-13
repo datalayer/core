@@ -1,203 +1,192 @@
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
-import react from '@vitejs/plugin-react';
-import commonjs from '@rollup/plugin-commonjs';
-import { resolve } from 'path';
-import { copyFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
-import importAsString from 'vite-plugin-string';
-import wasm from 'vite-plugin-wasm';
-import topLevelAwait from 'vite-plugin-top-level-await';
-
-export default defineConfig({
+// electron.vite.config.ts
+import { defineConfig, externalizeDepsPlugin } from "electron-vite";
+import react from "@vitejs/plugin-react";
+import commonjs from "@rollup/plugin-commonjs";
+import { resolve } from "path";
+import { copyFileSync, mkdirSync } from "fs";
+import importAsString from "vite-plugin-string";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
+var __electron_vite_injected_dirname = "/Users/goanpeca/Desktop/develop/datalayer/core/examples/electron";
+var electron_vite_config_default = defineConfig({
   main: {
     plugins: [
       externalizeDepsPlugin(),
       {
-        name: 'copy-static-files',
+        name: "copy-static-files",
         closeBundle() {
-          // Ensure dist/main directory exists
           try {
-            mkdirSync(resolve(__dirname, 'dist/main'), { recursive: true });
-            // Copy about.html to dist/main
+            mkdirSync(resolve(__electron_vite_injected_dirname, "dist/main"), { recursive: true });
             copyFileSync(
-              resolve(__dirname, 'src/main/about.html'),
-              resolve(__dirname, 'dist/main/about.html')
+              resolve(__electron_vite_injected_dirname, "src/main/about.html"),
+              resolve(__electron_vite_injected_dirname, "dist/main/about.html")
             );
-            // Copy about.js to dist/main
             copyFileSync(
-              resolve(__dirname, 'src/main/about.js'),
-              resolve(__dirname, 'dist/main/about.js')
+              resolve(__electron_vite_injected_dirname, "src/main/about.js"),
+              resolve(__electron_vite_injected_dirname, "dist/main/about.js")
             );
           } catch (err) {
-            console.error('Failed to copy static files:', err);
+            console.error("Failed to copy static files:", err);
           }
-        },
-      },
+        }
+      }
     ],
     build: {
-      outDir: 'dist/main',
+      outDir: "dist/main",
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/main/index.ts'),
-        },
-      },
-    },
+          index: resolve(__electron_vite_injected_dirname, "src/main/index.ts")
+        }
+      }
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
     build: {
-      outDir: 'dist/preload',
+      outDir: "dist/preload",
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/preload/index.ts'),
-          about: resolve(__dirname, 'src/preload/about.js'),
-        },
-      },
-    },
+          index: resolve(__electron_vite_injected_dirname, "src/preload/index.ts"),
+          about: resolve(__electron_vite_injected_dirname, "src/preload/about.js")
+        }
+      }
+    }
   },
   renderer: {
-    root: 'src/renderer',
+    root: "src/renderer",
     define: {
       __webpack_public_path__: '""',
-      'process.env.NODE_ENV': JSON.stringify(
-        process.env.NODE_ENV || 'production'
+      "process.env.NODE_ENV": JSON.stringify(
+        process.env.NODE_ENV || "production"
       ),
-      global: 'globalThis',
+      global: "globalThis"
     },
     esbuild: {
       // Ensure native globals are preserved
-      keepNames: true,
+      keepNames: true
     },
-    publicDir: '../../resources',
+    publicDir: "../../resources",
     build: {
-      outDir: 'dist/renderer',
-      target: 'esnext', // Use modern JS to avoid polyfill conflicts
+      outDir: "dist/renderer",
+      target: "esnext",
+      // Use modern JS to avoid polyfill conflicts
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/renderer/index.html'),
+          index: resolve(__electron_vite_injected_dirname, "src/renderer/index.html")
         },
         external: [
-          'next/navigation',
-          'next/router',
-          'next/link',
-          '@react-navigation/native',
-          '@react-navigation/stack',
-          '@jupyterlite/pyodide-kernel',
-          '@jupyterlite/kernel',
-          /\.whl$/,
+          "next/navigation",
+          "next/router",
+          "next/link",
+          "@react-navigation/native",
+          "@react-navigation/stack",
+          "@jupyterlite/pyodide-kernel",
+          "@jupyterlite/kernel",
+          /\.whl$/
         ],
         plugins: [
           commonjs({
-            transformMixedEsModules: true, // Handle mixed CJS/ESM modules
+            transformMixedEsModules: true,
+            // Handle mixed CJS/ESM modules
             include: [/node_modules/, /\.js$/, /\.cjs$/],
-            requireReturnsDefault: 'auto',
+            requireReturnsDefault: "auto",
             dynamicRequireTargets: [
-              'node_modules/@jupyterlab/services/**/*.js',
+              "node_modules/@jupyterlab/services/**/*.js"
             ],
             // Explicitly handle @jupyterlab/services and jQuery CommonJS exports
             namedExports: {
-              jquery: ['default'],
-              '@jupyterlab/services': [
-                'ServiceManager',
-                'ServerConnection',
-                'KernelManager',
-                'SessionManager',
-                'ContentsManager',
-                'TerminalManager',
-                'SettingManager',
-                'WorkspaceManager',
-                'EventManager',
-                'NbConvertManager',
-                'KernelSpecManager',
-                'UserManager',
-                'BuildManager',
-                'BaseManager',
-                'ConfigSection',
-                'ConfigSectionManager',
-                'ConfigWithDefaults',
-                'ConnectionStatus',
-                'Drive',
-                'RestContentProvider',
+              jquery: ["default"],
+              "@jupyterlab/services": [
+                "ServiceManager",
+                "ServerConnection",
+                "KernelManager",
+                "SessionManager",
+                "ContentsManager",
+                "TerminalManager",
+                "SettingManager",
+                "WorkspaceManager",
+                "EventManager",
+                "NbConvertManager",
+                "KernelSpecManager",
+                "UserManager",
+                "BuildManager",
+                "BaseManager",
+                "ConfigSection",
+                "ConfigSectionManager",
+                "ConfigWithDefaults",
+                "ConnectionStatus",
+                "Drive",
+                "RestContentProvider"
               ],
-              '@jupyterlab/services/lib/manager': ['ServiceManager'],
-              '@jupyterlab/services/lib/serverconnection': ['ServerConnection'],
-              '@jupyterlab/services/lib/kernel': ['KernelManager'],
-              '@jupyterlab/services/lib/session': ['SessionManager'],
-              '@jupyterlab/services/lib/contents': ['ContentsManager'],
-              '@jupyterlab/services/lib/config': [
-                'ConfigSection',
-                'ConfigSectionManager',
+              "@jupyterlab/services/lib/manager": ["ServiceManager"],
+              "@jupyterlab/services/lib/serverconnection": ["ServerConnection"],
+              "@jupyterlab/services/lib/kernel": ["KernelManager"],
+              "@jupyterlab/services/lib/session": ["SessionManager"],
+              "@jupyterlab/services/lib/contents": ["ContentsManager"],
+              "@jupyterlab/services/lib/config": [
+                "ConfigSection",
+                "ConfigSectionManager"
               ],
-              '@jupyterlab/services/lib/terminal': ['TerminalManager'],
-              '@jupyterlab/services/lib/kernelspec': ['KernelSpecManager'],
-              '@jupyterlab/services/lib/setting': ['SettingManager'],
-              '@jupyterlab/services/lib/workspace': ['WorkspaceManager'],
-              '@jupyterlab/services/lib/event': ['EventManager'],
-              '@jupyterlab/services/lib/nbconvert': ['NbConvertManager'],
-              '@jupyterlab/services/lib/user': ['UserManager'],
-              '@jupyterlab/services/lib/builder': ['BuildManager'],
-              '@jupyterlab/statedb': ['DataConnector'],
-              'lodash.escape': ['default'],
-              ajv: ['default'],
+              "@jupyterlab/services/lib/terminal": ["TerminalManager"],
+              "@jupyterlab/services/lib/kernelspec": ["KernelSpecManager"],
+              "@jupyterlab/services/lib/setting": ["SettingManager"],
+              "@jupyterlab/services/lib/workspace": ["WorkspaceManager"],
+              "@jupyterlab/services/lib/event": ["EventManager"],
+              "@jupyterlab/services/lib/nbconvert": ["NbConvertManager"],
+              "@jupyterlab/services/lib/user": ["UserManager"],
+              "@jupyterlab/services/lib/builder": ["BuildManager"],
+              "@jupyterlab/statedb": ["DataConnector"],
+              "lodash.escape": ["default"],
+              ajv: ["default"],
               yjs: [
-                'default',
-                'Doc',
-                'Map',
-                'Array',
-                'Text',
-                'XmlElement',
-                'XmlFragment',
-                'XmlHook',
-                'XmlText',
+                "default",
+                "Doc",
+                "Map",
+                "Array",
+                "Text",
+                "XmlElement",
+                "XmlFragment",
+                "XmlHook",
+                "XmlText"
               ],
               // Handle nested node_modules from @jupyterlite
-              '@jupyterlite/server/node_modules/@jupyterlab/services': [
-                'ServiceManager',
-                'ServerConnection',
+              "@jupyterlite/server/node_modules/@jupyterlab/services": [
+                "ServiceManager",
+                "ServerConnection"
               ],
-              '@jupyterlite/server/node_modules/@jupyterlab/services/lib/manager':
-                ['ServiceManager'],
-              '@jupyterlite/server/node_modules/@jupyterlab/services/lib/serverconnection':
-                ['ServerConnection'],
-            },
-          }),
-        ] as any,
+              "@jupyterlite/server/node_modules/@jupyterlab/services/lib/manager": ["ServiceManager"],
+              "@jupyterlite/server/node_modules/@jupyterlab/services/lib/serverconnection": ["ServerConnection"]
+            }
+          })
+        ],
         onwarn(warning, warn) {
-          // Suppress "use of eval" warnings
-          if (warning.message.includes('Use of eval')) return;
+          if (warning.message.includes("Use of eval")) return;
           warn(warning);
-        },
-      },
+        }
+      }
     },
     plugins: [
       {
-        name: 'fix-sanitize-html-postcss',
-        enforce: 'pre',
+        name: "fix-sanitize-html-postcss",
+        enforce: "pre",
         resolveId(id) {
-          // Intercept postcss and source-map-js to prevent externalization
-          if (id === 'postcss' || id.startsWith('postcss/')) {
-            return { id: '\0virtual:postcss-stub', external: false };
+          if (id === "postcss" || id.startsWith("postcss/")) {
+            return { id: "\0virtual:postcss-stub", external: false };
           }
-          if (id === 'source-map-js') {
-            return { id: '\0virtual:source-map-js-stub', external: false };
+          if (id === "source-map-js") {
+            return { id: "\0virtual:source-map-js-stub", external: false };
           }
           return null;
         },
         load(id) {
-          if (id === '\0virtual:postcss-stub') {
-            // Provide a minimal postcss stub for sanitize-html
+          if (id === "\0virtual:postcss-stub") {
             return `
               export const parse = () => ({});
               export const stringify = () => '';
               export default { parse, stringify };
             `;
           }
-          if (id === '\0virtual:source-map-js-stub') {
-            // Provide a minimal source-map stub
+          if (id === "\0virtual:source-map-js-stub") {
             return `
               export class SourceMapConsumer {
                 constructor() {}
@@ -212,18 +201,13 @@ export default defineConfig({
             `;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-prism-extend-calls',
+        name: "fix-prism-extend-calls",
         transform(code, id) {
-          // Fix Prism extend calls in all files that contain them
-          if (
-            code.includes('extend: function(id, redef)') &&
-            code.includes('_.util.clone(_.languages[id])')
-          ) {
+          if (code.includes("extend: function(id, redef)") && code.includes("_.util.clone(_.languages[id])")) {
             console.log(`[Vite Plugin] Fixing Prism extend calls in ${id}`);
-
             const fixedCode = code.replace(
               /extend: function\(id, redef\) {\s*var lang2 = _\.util\.clone\(_\.languages\[id\]\);\s*for \(var key in redef\) {\s*lang2\[key\] = redef\[key\];\s*}\s*return lang2;\s*}/g,
               `extend: function(id, redef) {
@@ -244,7 +228,6 @@ export default defineConfig({
             return lang2;
           }`
             );
-
             if (fixedCode !== code) {
               console.log(
                 `[Vite Plugin] Successfully fixed Prism extend calls in ${id}`
@@ -253,15 +236,13 @@ export default defineConfig({
             }
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-backbone-underscore',
-        enforce: 'pre',
+        name: "fix-backbone-underscore",
+        enforce: "pre",
         transform(code, id) {
-          // Fix Backbone's dependency on underscore/lodash
-          if (id.includes('backbone')) {
-            // Make sure underscore methods are available
+          if (id.includes("backbone")) {
             const underscorePolyfill = `
               // Ensure underscore/lodash methods are available for Backbone
               if (typeof window !== 'undefined' && !window._) {
@@ -374,39 +355,38 @@ export default defineConfig({
                 };
               }
             `;
-            return underscorePolyfill + '\n' + code;
+            return underscorePolyfill + "\n" + code;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'node-builtins-polyfill',
-        enforce: 'pre',
+        name: "node-builtins-polyfill",
+        enforce: "pre",
         resolveId(id) {
           const builtins = [
-            'path',
-            'fs',
-            'os',
-            'util',
-            'crypto',
-            'stream',
-            'events',
-            'buffer',
+            "path",
+            "fs",
+            "os",
+            "util",
+            "crypto",
+            "stream",
+            "events",
+            "buffer"
           ];
           if (builtins.includes(id)) {
             return {
               id: `\0node-builtin:${id}`,
               external: false,
-              moduleSideEffects: false,
+              moduleSideEffects: false
             };
           }
           return null;
         },
         load(id) {
-          if (id.startsWith('\0node-builtin:')) {
+          if (id.startsWith("\0node-builtin:")) {
             const name = id.slice(14);
-
-            if (name === 'path') {
+            if (name === "path") {
               return `
                 const pathModule = {
                   join: function(...parts) {
@@ -482,8 +462,7 @@ export default defineConfig({
                 export const { join, dirname, basename, extname, resolve, relative, normalize, sep, delimiter, parse, posix } = pathModule;
               `;
             }
-
-            if (name === 'fs') {
+            if (name === "fs") {
               return `
                 const fs = {
                   existsSync: () => false,
@@ -508,8 +487,7 @@ export default defineConfig({
                 export const { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, unlinkSync, rmSync, promises } = fs;
               `;
             }
-
-            if (name === 'os') {
+            if (name === "os") {
               return `
                 const os = {
                   platform: () => 'darwin',
@@ -525,26 +503,19 @@ export default defineConfig({
                 export const { platform, arch, release, type, tmpdir, homedir, hostname, endianness } = os;
               `;
             }
-
-            // Return empty stub for other modules
             return `
               const stub = {};
               export default stub;
             `;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'inject-path-polyfill',
-        enforce: 'pre',
+        name: "inject-path-polyfill",
+        enforce: "pre",
         transform(code, id) {
-          // Inject path polyfill for @jupyterlab/coreutils
-          if (
-            id.includes('@jupyterlab/coreutils') &&
-            code.includes('require("path")')
-          ) {
-            // Replace require("path") with our polyfill
+          if (id.includes("@jupyterlab/coreutils") && code.includes('require("path")')) {
             const pathPolyfill = `
               const path = {
                 join: function(...parts) {
@@ -607,36 +578,32 @@ export default defineConfig({
               };
               path.posix = path;
             `;
-
-            // Replace require("path") with inline polyfill
             const modified = code.replace(
               /const path_1 = require\("path"\);?/g,
-              pathPolyfill + '\nconst path_1 = path;'
+              pathPolyfill + "\nconst path_1 = path;"
             );
-
             if (modified !== code) {
               return { code: modified, map: null };
             }
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-jquery-import',
-        enforce: 'pre',
-        resolveId(id: string) {
-          if (id === 'jquery') {
+        name: "fix-jquery-import",
+        enforce: "pre",
+        resolveId(id) {
+          if (id === "jquery") {
             return {
-              id: 'jquery',
+              id: "jquery",
               external: false,
-              moduleSideEffects: false,
+              moduleSideEffects: false
             };
           }
           return null;
         },
-        load(id: string) {
-          if (id === 'jquery') {
-            // Return jQuery as both default and named export
+        load(id) {
+          if (id === "jquery") {
             return `
               import * as jQuery from 'jquery/dist/jquery.js';
               const $ = jQuery.jQuery || jQuery.$ || jQuery.default || jQuery;
@@ -645,60 +612,46 @@ export default defineConfig({
             `;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-jupyterlab-services-imports',
-        enforce: 'pre',
-        transform(code: string, id: string) {
-          // Only process files that import from @jupyterlab/services
-          if (!code.includes('@jupyterlab/services')) {
+        name: "fix-jupyterlab-services-imports",
+        enforce: "pre",
+        transform(code, id) {
+          if (!code.includes("@jupyterlab/services")) {
             return null;
           }
-
-          // Don't transform the proxy file itself or the loader
-          if (
-            id.includes('jupyterlab-services-proxy') ||
-            id.includes('serviceManagerLoader')
-          ) {
+          if (id.includes("jupyterlab-services-proxy") || id.includes("serviceManagerLoader")) {
             return null;
           }
-
-          // Replace @jupyterlab/services imports with our proxy
           let modified = code;
-
-          // Handle imports from '@jupyterlab/services'
           modified = modified.replace(
             /from\s+['"]@jupyterlab\/services['"]/g,
             `from '${resolve(
-              __dirname,
-              'src/renderer/utils/jupyterlab-services-proxy.js'
+              __electron_vite_injected_dirname,
+              "src/renderer/utils/jupyterlab-services-proxy.js"
             )}'`
           );
-
           if (modified !== code) {
             return { code: modified, map: null };
           }
-
           return null;
-        },
+        }
       },
       {
-        name: 'resolve-vscode-jsonrpc',
-        enforce: 'pre',
+        name: "resolve-vscode-jsonrpc",
+        enforce: "pre",
         resolveId(id) {
-          // Intercept vscode-jsonrpc deep imports
-          if (id === 'vscode-jsonrpc/lib/common/messageReader') {
-            return '\0virtual:vscode-jsonrpc-messageReader';
+          if (id === "vscode-jsonrpc/lib/common/messageReader") {
+            return "\0virtual:vscode-jsonrpc-messageReader";
           }
-          if (id === 'vscode-jsonrpc/lib/common/messageWriter') {
-            return '\0virtual:vscode-jsonrpc-messageWriter';
+          if (id === "vscode-jsonrpc/lib/common/messageWriter") {
+            return "\0virtual:vscode-jsonrpc-messageWriter";
           }
           return null;
         },
         load(id) {
-          // Provide virtual modules that properly export from CommonJS
-          if (id === '\0virtual:vscode-jsonrpc-messageReader') {
+          if (id === "\0virtual:vscode-jsonrpc-messageReader") {
             return `
               import * as messageReader from 'vscode-jsonrpc/lib/common/messageReader.js';
               export const AbstractMessageReader = messageReader.AbstractMessageReader;
@@ -706,7 +659,7 @@ export default defineConfig({
               export const ReadableStreamMessageReader = messageReader.ReadableStreamMessageReader;
             `;
           }
-          if (id === '\0virtual:vscode-jsonrpc-messageWriter') {
+          if (id === "\0virtual:vscode-jsonrpc-messageWriter") {
             return `
               import * as messageWriter from 'vscode-jsonrpc/lib/common/messageWriter.js';
               export const AbstractMessageWriter = messageWriter.AbstractMessageWriter;
@@ -715,19 +668,16 @@ export default defineConfig({
             `;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-nodejs-imports-in-bundle',
+        name: "fix-nodejs-imports-in-bundle",
         generateBundle(options, bundle) {
-          // Fix Node.js imports in the final bundle
-          Object.keys(bundle).forEach(fileName => {
+          Object.keys(bundle).forEach((fileName) => {
             const chunk = bundle[fileName];
-            if (chunk.type === 'chunk' && chunk.code) {
+            if (chunk.type === "chunk" && chunk.code) {
               let modified = false;
               let code = chunk.code;
-
-              // Define path polyfill
               const pathPolyfill = `
                 const pathPolyfill = {
                   join: function(...parts) { return parts.filter(part => part && part !== '.').join('/').replace(/\\/+/g, '/'); },
@@ -763,153 +713,108 @@ export default defineConfig({
                 };
                 pathPolyfill.posix = pathPolyfill;
               `;
-
-              // Replace all forms of path imports
-              // Handle: import 'path'
-              if (
-                code.includes("import 'path'") ||
-                code.includes('import "path"')
-              ) {
+              if (code.includes("import 'path'") || code.includes('import "path"')) {
                 code = code.replace(
                   /import\s+['"]path['"];?/g,
-                  '/* path polyfill injected */'
+                  "/* path polyfill injected */"
                 );
                 modified = true;
               }
-
-              // Handle: import path from 'path'
-              if (
-                code.includes("from 'path'") ||
-                code.includes('from "path"')
-              ) {
+              if (code.includes("from 'path'") || code.includes('from "path"')) {
                 code = code.replace(
                   /import\s+(\w+)\s+from\s+['"]path['"];?/g,
                   (match, varName) => {
-                    return `${pathPolyfill}\nconst ${varName} = pathPolyfill;`;
+                    return `${pathPolyfill}
+const ${varName} = pathPolyfill;`;
                   }
                 );
                 modified = true;
               }
-
-              // Handle: import require$$X from 'path'
-              if (
-                code.includes('require$$') &&
-                (code.includes("from 'path'") || code.includes('from "path"'))
-              ) {
+              if (code.includes("require$$") && (code.includes("from 'path'") || code.includes('from "path"'))) {
                 code = code.replace(
                   /import\s+(require\$\$[\w$]+)\s+from\s+['"]path['"];?/g,
                   (match, varName) => {
-                    return `${pathPolyfill}\nconst ${varName} = pathPolyfill;`;
+                    return `${pathPolyfill}
+const ${varName} = pathPolyfill;`;
                   }
                 );
                 modified = true;
               }
-
-              // Handle: import * as path from 'path'
-              if (
-                code.includes('* as') &&
-                (code.includes("from 'path'") || code.includes('from "path"'))
-              ) {
+              if (code.includes("* as") && (code.includes("from 'path'") || code.includes('from "path"'))) {
                 code = code.replace(
                   /import\s+\*\s+as\s+(\w+)\s+from\s+['"]path['"];?/g,
                   (match, varName) => {
-                    return `${pathPolyfill}\nconst ${varName} = pathPolyfill;`;
+                    return `${pathPolyfill}
+const ${varName} = pathPolyfill;`;
                   }
                 );
                 modified = true;
               }
-
-              // Handle other Node.js built-ins with similar patterns
               const nodeBuiltins = [
-                'os',
-                'util',
-                'events',
-                'crypto',
-                'buffer',
-                'stream',
-                'fs',
+                "os",
+                "util",
+                "events",
+                "crypto",
+                "buffer",
+                "stream",
+                "fs"
               ];
-              nodeBuiltins.forEach(builtin => {
-                // Side-effect imports
-                if (
-                  code.includes(`import '${builtin}'`) ||
-                  code.includes(`import "${builtin}"`)
-                ) {
+              nodeBuiltins.forEach((builtin) => {
+                if (code.includes(`import '${builtin}'`) || code.includes(`import "${builtin}"`)) {
                   code = code.replace(
-                    new RegExp(`import\\s+['"]${builtin}['"];?`, 'g'),
+                    new RegExp(`import\\s+['"]${builtin}['"];?`, "g"),
                     `/* ${builtin} stub */`
                   );
                   modified = true;
                 }
-
-                // Default imports
-                if (
-                  code.includes(`from '${builtin}'`) ||
-                  code.includes(`from "${builtin}"`)
-                ) {
+                if (code.includes(`from '${builtin}'`) || code.includes(`from "${builtin}"`)) {
                   code = code.replace(
                     new RegExp(
                       `import\\s+(\\w+|require\\$\\$[\\w\\$]+)\\s+from\\s+['"]${builtin}['"];?`,
-                      'g'
+                      "g"
                     ),
                     `const $1 = {};`
                   );
                   modified = true;
                 }
-
-                // Namespace imports
-                if (
-                  code.includes(`* as`) &&
-                  (code.includes(`from '${builtin}'`) ||
-                    code.includes(`from "${builtin}"`))
-                ) {
+                if (code.includes(`* as`) && (code.includes(`from '${builtin}'`) || code.includes(`from "${builtin}"`))) {
                   code = code.replace(
                     new RegExp(
                       `import\\s+\\*\\s+as\\s+(\\w+)\\s+from\\s+['"]${builtin}['"];?`,
-                      'g'
+                      "g"
                     ),
                     `const $1 = {};`
                   );
                   modified = true;
                 }
               });
-
               if (modified) {
                 chunk.code = code;
               }
             }
           });
-        },
+        }
       },
       {
-        name: 'fix-module-exports',
+        name: "fix-module-exports",
         renderChunk(code, chunk) {
-          // Fix CommonJS default export assignments that fail with getters
-          if (chunk.fileName.includes('index')) {
+          if (chunk.fileName.includes("index")) {
             let modified = code;
-
-            // Replace any X.default = X pattern with try-catch
             modified = modified.replace(
               /([\w$]+)(\.default\s*=\s*\1);/g,
               `try { $1$2; } catch(e) { /* Ignore setter errors for $1.default */ }`
             );
-
             return modified !== code ? modified : null;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-lodash-bundling',
+        name: "fix-lodash-bundling",
         renderChunk(code, chunk) {
-          // Only fix lodash issues in the main bundle
-          if (chunk.fileName.includes('index') && code.length > 1000000) {
+          if (chunk.fileName.includes("index") && code.length > 1e6) {
             let modified = code;
-
-            // CRITICAL: Fix temporal dead zone issues by injecting polyfills at the very beginning
-            // Always inject for large bundles
             {
-              // Step 1: Inject polyfills at the very beginning
               const immediatePolyfills = `// CRITICAL POLYFILLS - Execute synchronously at bundle start
 var base$1 = function(object, source) { return object && source; };
 var base$2 = function(object, source) { return object && source; };
@@ -1007,39 +912,27 @@ var createAssigner$4 = createAssigner$1;
 var createAssigner$5 = createAssigner$1;
 
 `;
-
-              // Force inject at the VERY beginning of the entire bundle
-              modified = immediatePolyfills + '\n' + modified;
+              modified = immediatePolyfills + "\n" + modified;
               console.log(
-                '[Vite Plugin] ✅ Added synchronous polyfills at file start'
+                "[Vite Plugin] \u2705 Added synchronous polyfills at file start"
               );
-
-              // Step 2: Rename conflicting widget base$1 to widgetBase$1
-              // Look for the pattern: const base$1 = Object.freeze(Object.defineProperty({
               modified = modified.replace(
                 /const base\$1 = Object\.freeze\(Object\.defineProperty\({/g,
-                'const widgetBase$1 = Object.freeze(Object.defineProperty({'
+                "const widgetBase$1 = Object.freeze(Object.defineProperty({"
               );
-
-              // Step 3: Update all references to the widget export (not our polyfill functions)
               modified = modified.replace(
                 /window\.define\('@jupyter-widgets\/base', base\$1\);/g,
                 "window.define('@jupyter-widgets/base', widgetBase$1);"
               );
-
               modified = modified.replace(
                 /__vitePreload\(\(\)=>Promise\.resolve\(\)\.then\(\(\)=>base\$1\)/g,
-                '__vitePreload(()=>Promise.resolve().then(()=>widgetBase$1)'
+                "__vitePreload(()=>Promise.resolve().then(()=>widgetBase$1)"
               );
-
               modified = modified.replace(
                 /resolve\(base\$1\);/g,
-                'resolve(widgetBase$1);'
+                "resolve(widgetBase$1);"
               );
             }
-
-            // Comprehensive lodash polyfills for all the internal functions
-            // INJECT AT THE VERY BEGINNING OF THE BUNDLE
             const lodashPolyfills = `
               // CRITICAL: Lodash polyfills must execute before any bundle code
               // Save original constructors at the very beginning
@@ -1721,11 +1614,6 @@ var createAssigner$5 = createAssigner$1;
                 }
               }
             `;
-
-            // CRITICAL: Simplified polyfill injection for essential functions only
-            // The main critical polyfills are now handled by the critical-polyfills.js import
-            // This just adds extra safety for any remaining issues
-
             const synchronousPolyfills = `
 // SYNCHRONOUS LODASH POLYFILLS - Use function declarations to avoid var conflicts
 // These execute IMMEDIATELY and are available before line 3 variable declarations
@@ -1787,26 +1675,18 @@ if (!globalThis.__datalayerPolyfillsLoaded) {
   function baseGetTag$9(value) { return baseGetTag$1(value); }
   function baseGetTag$10(value) { return baseGetTag$1(value); }
 
-  console.log('[Synchronous Polyfills] ✅ All lodash functions defined with function declarations');
+  console.log('[Synchronous Polyfills] \u2705 All lodash functions defined with function declarations');
 }
 
 `;
-
-            // ULTIMATE FIX: Direct global injection at the bundle start
-            // This bypasses all Promise.then issues by making polyfills immediately available
-            if (modified.includes('const __vite__mapDeps=')) {
+            if (modified.includes("const __vite__mapDeps=")) {
               console.log(
-                '[Vite Plugin] 🔥 ULTIMATE FIX: Injecting polyfills as immediate globals'
+                "[Vite Plugin] \u{1F525} ULTIMATE FIX: Injecting polyfills as immediate globals"
               );
-
-              // Inject polyfills RIGHT after the first const declaration
-              const viteMapIndex = modified.indexOf('const __vite__mapDeps=');
-              const lineEnd = modified.indexOf('\n', viteMapIndex);
-
+              const viteMapIndex = modified.indexOf("const __vite__mapDeps=");
+              const lineEnd = modified.indexOf("\n", viteMapIndex);
               const beforeInjection = modified.substring(0, lineEnd + 1);
               const afterInjection = modified.substring(lineEnd + 1);
-
-              // Create immediate polyfills that execute synchronously
               const immediatePolyfills = `
 // IMMEDIATE POLYFILLS - Execute synchronously at bundle start
 // These are available BEFORE any other code runs
@@ -1870,73 +1750,50 @@ var baseRest$2 = function(func, start) { return func; };
 var createAssigner$1 = function(assigner) { return function(object) { return object; }; };
 var createAssigner$2 = function(assigner) { return function(object) { return object; }; };
 
-console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronously');
+console.log('[IMMEDIATE POLYFILLS] \u2705 All lodash functions available synchronously');
 `;
-
               modified = beforeInjection + immediatePolyfills + afterInjection;
-
               console.log(
-                '[Vite Plugin] ✅ Injected immediate polyfills at bundle start'
+                "[Vite Plugin] \u2705 Injected immediate polyfills at bundle start"
               );
               return modified !== code ? modified : null;
             }
-
-            // Fallback to normal injection
             if (modified.includes("'use strict'")) {
               modified = modified.replace(
                 "'use strict';",
                 `'use strict';${synchronousPolyfills}`
               );
               console.log(
-                '[Vite Plugin] ✅ Added synchronous polyfills after use strict'
+                "[Vite Plugin] \u2705 Added synchronous polyfills after use strict"
               );
             } else {
-              modified = synchronousPolyfills + '\n' + modified;
+              modified = synchronousPolyfills + "\n" + modified;
               console.log(
-                '[Vite Plugin] ✅ Added synchronous polyfills at file start'
+                "[Vite Plugin] \u2705 Added synchronous polyfills at file start"
               );
             }
-
-            // Instead of trying to wrap every assignment, add a global handler at runtime
-            // This ensures any extend property assignment attempt is caught and handled gracefully
-
-            // Wrap ALL Uint8Array constructor calls to ensure it's available
             modified = modified.replace(
               /new Uint8Array\(/g,
-              'new (window.Uint8Array || globalThis.Uint8Array || Uint8Array)('
+              "new (window.Uint8Array || globalThis.Uint8Array || Uint8Array)("
             );
-
-            // Prevent Uint8Array from being overwritten - more careful approach
-            if (
-              modified.includes('Uint8Array =') &&
-              !modified.includes('new Uint8Array')
-            ) {
-              // Find and comment out problematic reassignments
+            if (modified.includes("Uint8Array =") && !modified.includes("new Uint8Array")) {
               modified = modified.replace(
                 /^(\s*)(Uint8Array\s*=\s*[^;]+;)/gm,
-                '$1/* $2 */'
+                "$1/* $2 */"
               );
             }
-
-            // Fix any var Uint8Array = statements
             modified = modified.replace(
               /var\s+Uint8Array\s*=\s*[^;]+;/g,
-              '/* var Uint8Array assignment blocked */'
+              "/* var Uint8Array assignment blocked */"
             );
-
-            // Fix let Uint8Array = statements
             modified = modified.replace(
               /let\s+Uint8Array\s*=\s*[^;]+;/g,
-              '/* let Uint8Array assignment blocked */'
+              "/* let Uint8Array assignment blocked */"
             );
-
-            // Fix const Uint8Array = statements that aren't legitimate uses
             modified = modified.replace(
               /const\s+Uint8Array\s*=\s*require[^;]+;/g,
-              '/* const Uint8Array require blocked */'
+              "/* const Uint8Array require blocked */"
             );
-
-            // Inject ListCache polyfill right before it's used
             const listCachePolyfill = `
               if (typeof ListCache$2 === 'undefined' && typeof Map$3 === 'undefined') {
                 var ListCache$2 = (function() {
@@ -1998,183 +1855,138 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
                 var Map$3 = globalThis.Map || Map;
               }
             `;
-
-            // Inject the polyfill before MapCache constructor usage
             modified = modified.replace(
               /function MapCache\$2\(/,
-              listCachePolyfill + '\nfunction MapCache$2('
+              listCachePolyfill + "\nfunction MapCache$2("
             );
-
-            // Fix all instances of (Map$X || ListCache$Y) pattern
             modified = modified.replace(
               /new\s*\(Map\$(\d+)\s*\|\|\s*ListCache\$(\d+)\)/g,
-              'new (globalThis.Map || globalThis.ListCache$$$2 || globalThis.ListCache)'
+              "new (globalThis.Map || globalThis.ListCache$$$2 || globalThis.ListCache)"
             );
-
-            // Also fix without "new" keyword (in case it's used differently)
             modified = modified.replace(
               /\(Map\$(\d+)\s*\|\|\s*ListCache\$(\d+)\)/g,
-              function (match, map, list) {
-                // If it's not preceded by "new", provide the constructor reference
-                if (!match.includes('new')) {
+              function(match, map, list) {
+                if (!match.includes("new")) {
                   return `(globalThis.Map || globalThis.ListCache$$${list} || globalThis.ListCache)`;
                 }
                 return match;
               }
             );
-
-            // Fix specific lodash require patterns - don't override if already defined
             modified = modified.replace(
               /var\s+DataView\$1\s*=\s*require\$\$[^,;]+/g,
-              'DataView$1 = DataView$1 || globalThis.DataView || DataView'
+              "DataView$1 = DataView$1 || globalThis.DataView || DataView"
             );
             modified = modified.replace(
               /([,\s])Map\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1Map$1 = Map$1 || globalThis.Map || Map'
+              "$1Map$1 = Map$1 || globalThis.Map || Map"
             );
             modified = modified.replace(
               /([,\s])Promise\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1Promise$1 = Promise$1 || globalThis.Promise || Promise'
+              "$1Promise$1 = Promise$1 || globalThis.Promise || Promise"
             );
             modified = modified.replace(
               /([,\s])Set\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1Set$1 = Set$1 || globalThis.Set || Set'
+              "$1Set$1 = Set$1 || globalThis.Set || Set"
             );
             modified = modified.replace(
               /([,\s])WeakMap\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1WeakMap$1 = WeakMap$1 || globalThis.WeakMap || WeakMap'
+              "$1WeakMap$1 = WeakMap$1 || globalThis.WeakMap || WeakMap"
             );
             modified = modified.replace(
               /([,\s])WeakSet\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1WeakSet$1 = WeakSet$1 || globalThis.WeakSet || WeakSet'
+              "$1WeakSet$1 = WeakSet$1 || globalThis.WeakSet || WeakSet"
             );
             modified = modified.replace(
               /([,\s])Symbol\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1Symbol$1 = Symbol$1 || globalThis.Symbol || Symbol'
+              "$1Symbol$1 = Symbol$1 || globalThis.Symbol || Symbol"
             );
             modified = modified.replace(
               /([,\s])Uint8Array\$1\s*=\s*require\$\$[^,;]+/g,
-              '$1Uint8Array$1 = Uint8Array$1 || globalThis.Uint8Array || Uint8Array'
+              "$1Uint8Array$1 = Uint8Array$1 || globalThis.Uint8Array || Uint8Array"
             );
-
-            // Fix all variations of constructor assignments (with $2, $3, etc.)
             modified = modified.replace(
               /var\s+(Map|Set|WeakMap|WeakSet|DataView|Promise|Symbol|Uint8Array)\$(\d+)\s*=\s*require\$\$[^,;]+/g,
-              'var $1$$2 = globalThis.$1 || $1'
+              "var $1$$2 = globalThis.$1 || $1"
             );
-
-            // Fix root-based assignments like Uint8Array$3 = root$5.Uint8Array
             modified = modified.replace(
               /var\s+(Map|Set|WeakMap|WeakSet|DataView|Promise|Symbol|Uint8Array)\$(\d+)\s*=\s*root\$\d+\.(Map|Set|WeakMap|WeakSet|DataView|Promise|Symbol|Uint8Array);/g,
-              'var $1$$2 = globalThis.$1 || $1;'
+              "var $1$$2 = globalThis.$1 || $1;"
             );
-
-            // Fix baseGetTag references - handle both require$$ and assignments with $$ for all variations
             modified = modified.replace(
               /baseGetTag\$(\d+)\s*=\s*require\$\$[^,;]+/g,
               'baseGetTag$$1 = baseGetTag$$1 || function(value) { return value == null ? (value === undefined ? "[object Undefined]" : "[object Null]") : Object.prototype.toString.call(value); }'
             );
-
-            // Fix base function references for all variations
             modified = modified.replace(
               /var\s+base\$(\d+)\s*=\s*require\$\$[^,;]+/g,
-              'var base$$1 = base$$1 || function(object, source) { return object && source; }'
+              "var base$$1 = base$$1 || function(object, source) { return object && source; }"
             );
-
-            // Fix isObject references - handle both require assignments and function declarations
             modified = modified.replace(
               /var\s+isObject\$1\s*=\s*require\$\$[^,;]+/g,
               'isObject$1 = isObject$1 || function(value) { var type = typeof value; return value != null && (type == "object" || type == "function"); }'
             );
-
-            // Remove duplicate function declarations of isObject$1
             modified = modified.replace(
               /function\s+isObject\$1\s*\([^)]*\)\s*\{[^}]*\}/g,
-              function (match, offset) {
-                // Only remove if it's not the first occurrence (keep the polyfill)
-                if (offset > 100000) {
-                  // The polyfill is at the beginning
-                  return '/* isObject$1 already defined */';
+              function(match, offset) {
+                if (offset > 1e5) {
+                  return "/* isObject$1 already defined */";
                 }
                 return match;
               }
             );
-
-            // Fix initCloneByTag patterns
             modified = modified.replace(
               /case setTag\$(\d+):\s*return new Ctor\(\);/g,
-              'case setTag$$1: return new Set$1();'
+              "case setTag$$1: return new Set$1();"
             );
             modified = modified.replace(
               /case mapTag\$(\d+):\s*return new Ctor\(\);/g,
-              'case mapTag$$1: return new Map$1();'
+              "case mapTag$$1: return new Map$1();"
             );
-
             return modified !== code ? modified : null;
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-jupyter-theme-class-name',
-        enforce: 'pre',
+        name: "fix-jupyter-theme-class-name",
+        enforce: "pre",
         transform(code, id) {
           let modified = code;
           let hasChanges = false;
-
-          // Fix the problematic 'class-name' property in any theme objects
-          if (
-            id.includes('Theme.js') ||
-            id.includes('theme') ||
-            code.includes('class-name')
-          ) {
-            // Replace 'class-name': with className: in theme objects
+          if (id.includes("Theme.js") || id.includes("theme") || code.includes("class-name")) {
             modified = modified.replace(
               /'class-name':\s*(['"][^'"]*['"])/g,
-              'className: $1'
+              "className: $1"
             );
-
-            // Also handle cases where it's set dynamically
             modified = modified.replace(/\['class-name'\]/g, "['className']");
             modified = modified.replace(/\["class-name"\]/g, '["className"]');
-
-            // Handle extend operations that might be setting 'class-name'
-            if (
-              modified.includes('extend') &&
-              (modified.includes('class-name') ||
-                modified.includes("'class-name'"))
-            ) {
-              // Replace any remaining 'class-name' references with 'className'
+            if (modified.includes("extend") && (modified.includes("class-name") || modified.includes("'class-name'"))) {
               modified = modified.replace(/['"]class-name['"]/g, '"className"');
             }
-
             if (modified !== code) {
               hasChanges = true;
             }
           }
-
-          // Removed broken extend call transformations - they were causing syntax errors
-
           if (hasChanges) {
             console.log(
               `Fixed extend calls and 'class-name' property in: ${id}`
             );
             return modified;
           }
-
           return null;
-        },
+        }
       },
       react({
-        jsxRuntime: 'automatic', // Use automatic JSX runtime to avoid CJS/ESM issues
+        jsxRuntime: "automatic"
+        // Use automatic JSX runtime to avoid CJS/ESM issues
       }),
-      wasm(), // Add WASM support for loro-crdt
-      topLevelAwait(), // Add top-level await support
+      wasm(),
+      // Add WASM support for loro-crdt
+      topLevelAwait(),
+      // Add top-level await support
       {
-        name: 'fix-require-statements',
-        enforce: 'pre',
+        name: "fix-require-statements",
+        enforce: "pre",
         transform(code, id) {
-          // Replace require("../package.json").version with a hardcoded version
           if (code.includes('require("../package.json").version')) {
             return code.replace(
               /require\("\.\.\/package\.json"\)\.version/g,
@@ -2182,140 +1994,139 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
             );
           }
           return null;
-        },
+        }
       },
       {
-        name: 'fix-raw-css-imports',
-        enforce: 'pre',
+        name: "fix-raw-css-imports",
+        enforce: "pre",
         transform(code, id) {
-          // Fix the import in themesplugins.js
-          if (id.includes('themesplugins.js')) {
-            // Replace the problematic import with a dummy value
+          if (id.includes("themesplugins.js")) {
             return code.replace(
               "import scrollbarStyleText from '../style/scrollbar.raw.css';",
               "const scrollbarStyleText = '';"
             );
           }
           return null;
-        },
+        }
       },
       importAsString({
-        include: ['**/*.raw.css', '**/*.raw.css?*'],
+        include: ["**/*.raw.css", "**/*.raw.css?*"]
       }),
       {
-        name: 'handle-special-imports',
+        name: "handle-special-imports",
         transform(code, id) {
-          if (id.endsWith('.whl')) {
-            // Skip .whl files
-            return '';
+          if (id.endsWith(".whl")) {
+            return "";
           }
-          // Handle service-worker?text imports
-          if (id.includes('service-worker') && id.includes('?text')) {
+          if (id.includes("service-worker") && id.includes("?text")) {
             return 'export default "";';
           }
         },
         resolveId(source) {
-          // Handle service-worker?text imports
-          if (source.includes('service-worker?text')) {
+          if (source.includes("service-worker?text")) {
             return { id: source, external: false };
           }
-        },
-      },
-    ] as any,
+        }
+      }
+    ],
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src/renderer'),
-        '@datalayer/core': resolve(__dirname, '../../lib'),
-        '@primer/css': resolve(__dirname, '../../node_modules/@primer/css'),
-        '@datalayer/jupyter-react': resolve(
-          __dirname,
-          '../../node_modules/@datalayer/jupyter-react'
+        "@": resolve(__electron_vite_injected_dirname, "src/renderer"),
+        "@datalayer/core": resolve(__electron_vite_injected_dirname, "../../lib"),
+        "@primer/css": resolve(__electron_vite_injected_dirname, "../../node_modules/@primer/css"),
+        "@datalayer/jupyter-react": resolve(
+          __electron_vite_injected_dirname,
+          "../../node_modules/@datalayer/jupyter-react"
         ),
-        '~react-toastify': 'react-toastify',
-        json5: resolve(__dirname, '../../node_modules/json5/lib/index.js'),
+        "~react-toastify": "react-toastify",
+        json5: resolve(__electron_vite_injected_dirname, "../../node_modules/json5/lib/index.js"),
         // Alias underscore to lodash
-        underscore: 'lodash',
+        underscore: "lodash",
         // Force @jupyterlite to use our root @jupyterlab/services
-        '@jupyterlite/server/node_modules/@jupyterlab/services': resolve(
-          __dirname,
-          '../../node_modules/@jupyterlab/services'
-        ),
-      },
+        "@jupyterlite/server/node_modules/@jupyterlab/services": resolve(
+          __electron_vite_injected_dirname,
+          "../../node_modules/@jupyterlab/services"
+        )
+      }
     },
     optimizeDeps: {
       include: [
-        'lodash-es',
-        'json5',
-        'react',
-        'react-dom',
-        'react/jsx-runtime',
-        '@jupyterlab/services',
-        '@jupyterlab/statedb',
-        'lodash.escape',
-        'ajv',
-        'yjs',
-        '@jupyterlab/services/lib/manager',
-        '@jupyterlab/services/lib/serverconnection',
-        '@jupyterlab/services/lib/kernel',
-        '@jupyterlab/services/lib/kernel/messages',
-        '@jupyterlab/services/lib/kernel/serialize',
-        '@jupyterlab/services/lib/session',
-        '@jupyterlab/services/lib/contents',
-        '@jupyterlab/services/lib/config',
-        '@jupyterlab/services/lib/kernelspec',
-        '@jupyterlab/services/lib/setting',
-        '@jupyterlab/services/lib/terminal',
-        '@jupyterlab/services/lib/workspace',
-        '@jupyterlab/services/lib/user',
-        '@jupyterlab/services/lib/nbconvert',
-        '@jupyterlab/services/lib/event',
-        '@jupyterlab/services/lib/basemanager',
-        '@datalayer/jupyter-react',
-        '@primer/react',
-        'zustand',
-        'ws',
-        'form-data',
+        "lodash-es",
+        "json5",
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        "@jupyterlab/services",
+        "@jupyterlab/statedb",
+        "lodash.escape",
+        "ajv",
+        "yjs",
+        "@jupyterlab/services/lib/manager",
+        "@jupyterlab/services/lib/serverconnection",
+        "@jupyterlab/services/lib/kernel",
+        "@jupyterlab/services/lib/kernel/messages",
+        "@jupyterlab/services/lib/kernel/serialize",
+        "@jupyterlab/services/lib/session",
+        "@jupyterlab/services/lib/contents",
+        "@jupyterlab/services/lib/config",
+        "@jupyterlab/services/lib/kernelspec",
+        "@jupyterlab/services/lib/setting",
+        "@jupyterlab/services/lib/terminal",
+        "@jupyterlab/services/lib/workspace",
+        "@jupyterlab/services/lib/user",
+        "@jupyterlab/services/lib/nbconvert",
+        "@jupyterlab/services/lib/event",
+        "@jupyterlab/services/lib/basemanager",
+        "@datalayer/jupyter-react",
+        "@primer/react",
+        "zustand",
+        "ws",
+        "form-data",
         // Collaboration dependencies
-        '@datalayer/lexical-loro',
+        "@datalayer/lexical-loro"
       ],
       exclude: [
-        'next/navigation',
-        'next/router',
-        '@react-navigation/native',
-        '@jupyterlite/pyodide-kernel',
-        '@jupyterlab/apputils-extension',
+        "next/navigation",
+        "next/router",
+        "@react-navigation/native",
+        "@jupyterlite/pyodide-kernel",
+        "@jupyterlab/apputils-extension",
         // Exclude Node.js built-ins from optimization
-        'path',
-        'fs',
-        'url',
-        'source-map-js',
-        'postcss',
+        "path",
+        "fs",
+        "url",
+        "source-map-js",
+        "postcss",
         // Exclude WASM modules from optimization
-        'loro-crdt',
+        "loro-crdt"
       ],
       esbuildOptions: {
         loader: {
-          '.js': 'jsx', // Help with React packages that use JSX in .js files
+          ".js": "jsx"
+          // Help with React packages that use JSX in .js files
         },
         define: {
           // Ensure DataView and other globals are available
-          'globalThis.DataView': 'DataView',
-          'globalThis.Map': 'Map',
-          'globalThis.Set': 'Set',
-          'globalThis.WeakMap': 'WeakMap',
-          'globalThis.Promise': 'Promise',
-        },
-      },
+          "globalThis.DataView": "DataView",
+          "globalThis.Map": "Map",
+          "globalThis.Set": "Set",
+          "globalThis.WeakMap": "WeakMap",
+          "globalThis.Promise": "Promise"
+        }
+      }
     },
     server: {
       port: 5173,
       proxy: {
-        '/api': {
-          target: 'https://prod1.datalayer.run',
+        "/api": {
+          target: "https://prod1.datalayer.run",
           changeOrigin: true,
-          secure: true,
-        },
-      },
-    },
-  },
+          secure: true
+        }
+      }
+    }
+  }
 });
+export {
+  electron_vite_config_default as default
+};

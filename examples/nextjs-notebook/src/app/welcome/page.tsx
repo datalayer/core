@@ -24,7 +24,7 @@ import {
   EyeClosedIcon,
   LinkExternalIcon,
 } from '@primer/octicons-react';
-import { useIAMStore } from '@datalayer/core';
+import { useIAMStore } from '@datalayer/core/state';
 
 export default function WelcomePage() {
   const [tokenInput, setTokenInput] = useState('');

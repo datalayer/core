@@ -23,7 +23,7 @@ import {
   BookIcon,
   PencilIcon,
 } from '@primer/octicons-react';
-import { useCoreStore } from '@datalayer/core';
+import { useCoreStore } from '@datalayer/core/state';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import LoginView from './components/LoginView';
 import NotebookView from './components/NotebookView';

@@ -7,9 +7,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIAMStore, useCache } from '@datalayer/core';
+import { useIAMStore } from '@datalayer/core/state';
+import { useCache } from '@datalayer/core/hooks';
 import { useActiveNotebook } from '@/contexts/ActiveNotebookContext';
-import { getEnvironments } from '@datalayer/core/lib/api/runtimes/actions';
+import { getEnvironments } from '@datalayer/core/api/runtimes/actions';
 import { FileIcon, PlusIcon, BookIcon } from '@primer/octicons-react';
 import {
   Button,

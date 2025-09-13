@@ -5,28 +5,29 @@
 
 import { describe, it, expect } from 'vitest';
 import * as coreIndex from '../index';
+import { BackdropContext } from '../hooks';
+import { convertToLargestUnit, asArray } from '../utils';
+import { createDatalayerServiceManager } from '../services';
 
 describe('@datalayer/core - index', () => {
   it('should export BackdropContext from hooks', () => {
-    expect(coreIndex.BackdropContext).toBeDefined();
-    expect(coreIndex.BackdropContext).toHaveProperty('$$typeof');
-    expect(typeof coreIndex.BackdropContext).toBe('object');
+    expect(BackdropContext).toBeDefined();
+    expect(BackdropContext).toHaveProperty('$$typeof');
+    expect(typeof BackdropContext).toBe('object');
   });
 
   it('should export utils functions', () => {
-    expect(coreIndex.convertToLargestUnit).toBeDefined();
-    expect(coreIndex.asArray).toBeDefined();
+    expect(convertToLargestUnit).toBeDefined();
+    expect(asArray).toBeDefined();
   });
 
   it('should export DatalayerServiceManager from services', () => {
-    expect(coreIndex.createDatalayerServiceManager).toBeDefined();
-    expect(typeof coreIndex.createDatalayerServiceManager).toBe('function');
+    expect(createDatalayerServiceManager).toBeDefined();
+    expect(typeof createDatalayerServiceManager).toBe('function');
   });
 
-  it('should have all expected exports', () => {
+  it('should have minimal main index exports', () => {
     const exports = Object.keys(coreIndex);
-    expect(exports).toContain('convertToLargestUnit');
-    expect(exports).toContain('asArray');
-    expect(exports).toContain('createDatalayerServiceManager');
+    expect(exports.length).toBe(0);
   });
 });

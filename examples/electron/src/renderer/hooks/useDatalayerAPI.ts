@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useCoreStore, useIAMStore } from '@datalayer/core';
+import { useCoreStore, useIAMStore } from '@datalayer/core/state';
 
 // Define the interface locally since it's not exported from @datalayer/core
 interface IDatalayerEnvironment {

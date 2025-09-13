@@ -4,7 +4,7 @@
  */
 
 import React, { forwardRef, useCallback } from 'react';
-import { useNavigate } from '../hooks/useNavigate';
+import { useNavigate } from '../../hooks/useNavigate';
 
 // Simple type definition for NavigationLink props
 export interface NavigationLinkProps
