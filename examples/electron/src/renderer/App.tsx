@@ -3,19 +3,24 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  lazy,
+  Suspense,
+} from 'react';
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/state';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
+import { useParallelPreload } from './hooks/usePreload';
 import Login from './pages/Login';
-import NotebookEditor from './pages/NotebookEditor';
-import DocumentEditor from './pages/DocumentEditor';
-import Library from './pages/Library';
 import Environments from './pages/Environments';
-import { useRuntimeStore } from './stores/runtimeStore';
 import LoadingScreen from './components/app/LoadingScreen';
 import AppHeader from './components/app/Header';
 import AppLayout from './components/app/Layout';
+import LoadingSpinner from './components/LoadingSpinner';
 import {
   ViewType,
   GitHubUser,
@@ -24,6 +29,11 @@ import {
 } from '../shared/types';
 import { processUserData, setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
+
+// Lazy load heavy components that aren't needed on startup
+const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
+const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
+const Library = lazy(() => import('./pages/Library'));
 
 const App: React.FC = () => {
   // Filter out noisy Jupyter React config logging
@@ -35,7 +45,6 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('environments');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isReconnecting, setIsReconnecting] = useState(false);
   const [githubUser, setGithubUser] = useState<GitHubUser | null>(null);
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
@@ -45,9 +54,9 @@ const App: React.FC = () => {
   );
   const [isNotebookEditorActive, setIsNotebookEditorActive] = useState(false);
   const [isDocumentEditorActive, setIsDocumentEditorActive] = useState(false);
+  const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   const { configuration } = useCoreStore();
   const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
-  const { reconnectToExistingRuntimes } = useRuntimeStore();
 
   // Handle user data from login
   const handleUserDataFetched = useCallback(
@@ -58,45 +67,83 @@ const App: React.FC = () => {
     []
   );
 
-  useEffect(() => {
-    // Check if already authenticated using secure IPC
-    const checkAuthentication = async () => {
-      setIsCheckingAuth(true);
-      try {
-        const credentials = await checkAuth();
-        if (credentials.isAuthenticated) {
-          setIsAuthenticated(true);
-          if ('runUrl' in credentials) {
-            // Authentication successful - credentials available
-          }
-
-          // Fetch current user info to get the actual GitHub ID
-          try {
-            const userResponse = await window.datalayerAPI.getCurrentUser();
-            if (userResponse.success && userResponse.data) {
-              const githubUser = await processUserData(userResponse.data);
-              setGithubUser(githubUser);
+  // Preload configurations for parallel loading
+  const preloadConfigs = useMemo(
+    () => [
+      {
+        name: 'login',
+        preloadFn: async () => {
+          // Preload Login component resources
+          // This ensures Login is ready to display instantly
+          await new Promise(resolve => setTimeout(resolve, 50));
+        },
+      },
+      {
+        name: 'environments',
+        preloadFn: async () => {
+          // Preload Environments data in parallel with auth check
+          // This way they're ready instantly when auth succeeds
+          if (configuration?.token) {
+            try {
+              const response = await window.datalayerAPI.getEnvironments();
+              if (response.success) {
+                logger.debug('Environments preloaded:', response.data?.length);
+              }
+            } catch (error) {
+              logger.error('Failed to preload environments:', error);
             }
-          } catch (error) {
-            logger.error('Failed to fetch current user:', error);
           }
+        },
+      },
+    ],
+    [configuration?.token]
+  );
 
-          // Try to reconnect to existing runtimes after authentication
-          try {
-            setIsReconnecting(true);
-            await reconnectToExistingRuntimes();
-          } catch (error) {
-            console.error('Failed to reconnect to existing runtimes:', error);
-          } finally {
-            setIsReconnecting(false);
+  const { preloadStates, startAllPreloads, isAllPreloaded } =
+    useParallelPreload(preloadConfigs);
+
+  useEffect(() => {
+    // Start all operations in parallel for faster startup
+    const initializeApp = async () => {
+      setIsCheckingAuth(true);
+
+      // Start preloading components immediately
+      const preloadPromise = startAllPreloads();
+
+      // Check authentication in parallel with preloading
+      const authPromise = (async () => {
+        try {
+          const credentials = await checkAuth();
+          if (credentials.isAuthenticated) {
+            setIsAuthenticated(true);
+            if ('runUrl' in credentials) {
+              // Authentication successful - credentials available
+            }
+
+            // Fetch current user info to get the actual GitHub ID
+            try {
+              const userResponse = await window.datalayerAPI.getCurrentUser();
+              if (userResponse.success && userResponse.data) {
+                const githubUser = await processUserData(userResponse.data);
+                setGithubUser(githubUser);
+              }
+            } catch (error) {
+              logger.error('Failed to fetch current user:', error);
+            }
+
+            // Runtime reconnection removed from startup - will be done lazily when needed
           }
+        } finally {
+          setIsCheckingAuth(false);
         }
-      } finally {
-        setIsCheckingAuth(false);
-      }
+      })();
+
+      // Wait for both auth check and preloading to complete
+      await Promise.allSettled([authPromise, preloadPromise]);
+      setComponentsPreloaded(true);
     };
 
-    checkAuthentication();
+    initializeApp();
 
     // Listen for menu actions
     if (window.electronAPI) {
@@ -130,7 +177,7 @@ const App: React.FC = () => {
         window.electronAPI.removeMenuActionListener();
       }
     };
-  }, [checkAuth]);
+  }, [checkAuth, startAllPreloads]);
 
   // Monitor configuration changes
   useEffect(() => {
@@ -180,27 +227,45 @@ const App: React.FC = () => {
     // Handle notebook view with conditional mounting to avoid MathJax conflicts
     if (currentView === 'notebook' && selectedNotebook) {
       return (
-        <NotebookEditor
-          key={`notebook-${selectedNotebook.id}`}
-          selectedNotebook={selectedNotebook}
-          onClose={() => {
-            setCurrentView('notebooks');
-            setSelectedNotebook(null);
-            setIsNotebookEditorActive(false);
-          }}
-          onRuntimeTerminated={handleNotebookEditorDeactivate}
-        />
+        <Suspense
+          fallback={
+            <LoadingSpinner
+              variant="fullscreen"
+              message="Loading notebook editor..."
+            />
+          }
+        >
+          <NotebookEditor
+            key={`notebook-${selectedNotebook.id}`}
+            selectedNotebook={selectedNotebook}
+            onClose={() => {
+              setCurrentView('notebooks');
+              setSelectedNotebook(null);
+              setIsNotebookEditorActive(false);
+            }}
+            onRuntimeTerminated={handleNotebookEditorDeactivate}
+          />
+        </Suspense>
       );
     }
 
     // Handle document view
     if (currentView === 'document' && selectedDocument) {
       return (
-        <DocumentEditor
-          key={`document-${selectedDocument.id}`}
-          selectedDocument={selectedDocument}
-          onClose={handleDocumentEditorDeactivate}
-        />
+        <Suspense
+          fallback={
+            <LoadingSpinner
+              variant="inline"
+              message="Loading document editor..."
+            />
+          }
+        >
+          <DocumentEditor
+            key={`document-${selectedDocument.id}`}
+            selectedDocument={selectedDocument}
+            onClose={handleDocumentEditorDeactivate}
+          />
+        </Suspense>
       );
     }
 
@@ -208,10 +273,16 @@ const App: React.FC = () => {
     return (
       <>
         <Box sx={{ display: currentView === 'notebooks' ? 'block' : 'none' }}>
-          <Library
-            onNotebookSelect={handleNotebookSelect}
-            onDocumentSelect={handleDocumentSelect}
-          />
+          <Suspense
+            fallback={
+              <LoadingSpinner variant="inline" message="Loading library..." />
+            }
+          >
+            <Library
+              onNotebookSelect={handleNotebookSelect}
+              onDocumentSelect={handleDocumentSelect}
+            />
+          </Suspense>
         </Box>
         <Box
           sx={{ display: currentView === 'environments' ? 'block' : 'none' }}
@@ -222,50 +293,77 @@ const App: React.FC = () => {
     );
   };
 
-  // Show loading state while checking authentication or reconnecting
-  if (isCheckingAuth || isReconnecting) {
+  // Show loading state while checking authentication or preloading
+  if (isCheckingAuth || !componentsPreloaded) {
     return (
       <LoadingScreen
         isCheckingAuth={isCheckingAuth}
-        isReconnecting={isReconnecting}
+        isReconnecting={false}
+        isPreloading={!isAllPreloaded}
+        preloadStates={preloadStates}
       />
     );
   }
 
-  // Show login view if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <ThemeProvider>
-        <BaseStyles>
-          <Login onUserDataFetched={handleUserDataFetched} />
-        </BaseStyles>
-      </ThemeProvider>
-    );
-  }
+  // Render both login and main app, control visibility based on auth state
+  // This enables instant switching without remounting components
+  const showLogin = !isAuthenticated;
+  const showMainApp = isAuthenticated;
 
   // App.tsx refactoring completed successfully - clean component composition achieved
   return (
-    <AppLayout>
-      <AppHeader
-        currentView={currentView}
-        isNotebookEditorActive={isNotebookEditorActive}
-        isDocumentEditorActive={isDocumentEditorActive}
-        isAuthenticated={isAuthenticated}
-        githubUser={githubUser}
-        onViewChange={setCurrentView}
-        onLogout={handleLogout}
-      />
-
+    <>
+      {/* Login view - preloaded and visibility controlled */}
       <Box
         sx={{
-          flex: 1,
-          overflow: 'auto',
-          p: currentView === 'notebook' ? 0 : 3,
+          display: showLogin ? 'block' : 'none',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: showLogin ? 10 : -1,
         }}
       >
-        {renderView()}
+        <ThemeProvider>
+          <BaseStyles>
+            <Login onUserDataFetched={handleUserDataFetched} />
+          </BaseStyles>
+        </ThemeProvider>
       </Box>
-    </AppLayout>
+
+      {/* Main app view - preloaded and visibility controlled */}
+      <Box
+        sx={{
+          display: showMainApp ? 'flex' : 'none',
+          flexDirection: 'column',
+          height: '100vh',
+          visibility: showMainApp ? 'visible' : 'hidden',
+        }}
+      >
+        <AppLayout>
+          <AppHeader
+            currentView={currentView}
+            isNotebookEditorActive={isNotebookEditorActive}
+            isDocumentEditorActive={isDocumentEditorActive}
+            isAuthenticated={isAuthenticated}
+            githubUser={githubUser}
+            onViewChange={setCurrentView}
+            onLogout={handleLogout}
+          />
+
+          <Box
+            sx={{
+              flex: 1,
+              overflow: 'auto',
+              p: currentView === 'notebook' ? 0 : 3,
+            }}
+          >
+            {renderView()}
+          </Box>
+        </AppLayout>
+      </Box>
+    </>
   );
 };
 
