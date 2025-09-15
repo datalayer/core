@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module useCollaboration
+ * @description React hook for managing collaboration provider lifecycle and real-time collaboration features in Electron
+ */
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   UseCollaborationOptions,
@@ -11,6 +16,17 @@ import {
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
 import { isRuntimeInCleanupRegistry } from '../utils/notebook';
 
+/**
+ * React hook that manages the lifecycle of collaboration providers for real-time notebook collaboration.
+ * Handles creation, disposal, and cleanup of collaboration instances based on runtime state.
+ *
+ * @param options - Configuration options for collaboration
+ * @param options.configuration - Datalayer configuration with authentication and service URLs
+ * @param options.selectedNotebook - Currently selected notebook object
+ * @param options.runtimeId - Runtime identifier for collaboration context
+ * @param options.runtimeTerminated - Whether the runtime has been terminated
+ * @returns Object containing collaboration provider, ready state, and disposal function
+ */
 export const useCollaboration = ({
   configuration,
   selectedNotebook,
@@ -209,7 +225,9 @@ export const useCollaboration = ({
     };
   }, []);
 
-  // Dispose collaboration provider
+  /**
+   * Manually disposes the current collaboration provider and cleans up all associated resources
+   */
   const disposeCollaboration = useCallback(() => {
     if (collaborationProviderRef.current) {
       try {

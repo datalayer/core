@@ -3,27 +3,60 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module main/services/websocket-proxy
+ * @description WebSocket proxy service for handling WebSocket connections in the main process.
+ * Manages WebSocket connections for Jupyter kernel communication.
+ */
+
 import { BrowserWindow } from 'electron';
 import WebSocket from 'ws';
 import log from 'electron-log/main';
 
+/**
+ * Interface representing a WebSocket connection.
+ * @interface WebSocketConnection
+ */
 interface WebSocketConnection {
+  /** Unique connection identifier */
   id: string;
+  /** WebSocket instance */
   ws: WebSocket;
+  /** Target URL for the connection */
   url: string;
+  /** Optional WebSocket subprotocol */
   protocol?: string;
+  /** Optional headers for the connection */
   headers?: Record<string, string>;
+  /** Optional runtime ID associated with this connection */
   runtimeId?: string;
 }
 
+/**
+ * Service for proxying WebSocket connections between renderer and main process.
+ * Handles connection lifecycle, message routing, and runtime association.
+ * @class WebSocketProxyService
+ */
 class WebSocketProxyService {
+  /** Map of active WebSocket connections by ID */
   private connections = new Map<string, WebSocketConnection>();
+  /** Counter for generating unique connection IDs */
   private connectionCounter = 0;
+  /** Map tracking which connections belong to which window */
   private windowConnections = new Map<BrowserWindow, Set<string>>();
+  /** Map tracking which connections belong to which runtime */
   private runtimeConnections = new Map<string, Set<string>>();
 
   /**
-   * Open a new WebSocket connection
+   * Open a new WebSocket connection.
+   * Prevents connections to terminated runtimes.
+   * @param window - The browser window making the request
+   * @param url - WebSocket URL to connect to
+   * @param protocol - Optional WebSocket subprotocol
+   * @param headers - Optional headers for the connection
+   * @param runtimeId - Optional runtime ID to associate with the connection
+   * @returns Object containing the connection ID
+   * @throws Error if runtime has been terminated
    */
   open(
     window: BrowserWindow,

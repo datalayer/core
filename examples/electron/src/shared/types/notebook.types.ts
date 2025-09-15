@@ -3,10 +3,19 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module NotebookTypes
+ * @description TypeScript type definitions for notebook data structures, components, and operations
+ */
+
 import type { ServiceManager } from '@jupyterlab/services';
 import { INotebookContent } from '@jupyterlab/nbformat';
 import type { ElectronCollaborationProvider } from '../../renderer/services/electronCollaborationProvider';
 
+/**
+ * Notebook data structure interface
+ * @interface
+ */
 export interface NotebookData {
   id: string;
   name: string;

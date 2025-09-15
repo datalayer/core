@@ -3,11 +3,29 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module NotebookHeader
+ * @description Header component for notebook editor displaying notebook information and runtime controls
+ */
+
 import React from 'react';
 import { Box, Heading, Text, Button } from '@primer/react';
 import { XIcon } from '@primer/octicons-react';
 import { NotebookHeaderProps } from '../../../shared/types';
 
+/**
+ * Header component for notebook editor that displays notebook metadata and provides runtime management controls.
+ * Shows notebook name, description, file path, collaboration status, and terminate runtime button.
+ *
+ * @component
+ * @param props - Component properties
+ * @param props.selectedNotebook - The currently selected notebook object
+ * @param props.hasCollaboration - Whether real-time collaboration is enabled
+ * @param props.isTerminating - Whether runtime termination is in progress
+ * @param props.hasServiceManager - Whether service manager is available
+ * @param props.onTerminateRuntime - Callback function to terminate the runtime
+ * @returns The rendered header component
+ */
 const Header: React.FC<NotebookHeaderProps> = ({
   selectedNotebook,
   hasCollaboration,
@@ -15,6 +33,10 @@ const Header: React.FC<NotebookHeaderProps> = ({
   hasServiceManager,
   onTerminateRuntime,
 }) => {
+  /**
+   * Handles keyboard events for the terminate runtime button
+   * @param event - The keyboard event
+   */
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (
       (event.key === 'Enter' || event.key === ' ') &&

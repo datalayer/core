@@ -3,14 +3,28 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module NotebookErrorBoundary
+ * @description Error boundary component for handling notebook-specific errors and providing user-friendly error recovery options
+ */
+
 import React from 'react';
 import { Box, Text } from '@primer/react';
 import { NotebookErrorBoundaryProps } from '../../../shared/types';
 
+/**
+ * Error boundary component for notebook components that catches and handles errors gracefully.
+ * Provides user-friendly error messages and recovery options for notebook-specific issues.
+ *
+ * @component
+ */
 class ErrorBoundary extends React.Component<
   NotebookErrorBoundaryProps,
   { hasError: boolean; errorInfo: string | null }
 > {
+  /**
+   * @param props - The component props
+   */
   constructor(props: NotebookErrorBoundaryProps) {
     super(props);
     this.state = {
@@ -19,6 +33,11 @@ class ErrorBoundary extends React.Component<
     };
   }
 
+  /**
+   * Static method to update state when an error is caught
+   * @param error - The error that was thrown
+   * @returns Updated state object
+   */
   static getDerivedStateFromError(error: Error) {
     return {
       hasError: true,
@@ -26,6 +45,11 @@ class ErrorBoundary extends React.Component<
     };
   }
 
+  /**
+   * Lifecycle method called when an error is caught. Logs error details and calls the onError callback.
+   * @param error - The error that was thrown
+   * @param errorInfo - Additional error information from React
+   */
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error(
       '[NotebookErrorBoundary] Caught notebook error:',
@@ -55,6 +79,9 @@ class ErrorBoundary extends React.Component<
     this.props.onError(error);
   }
 
+  /**
+   * Resets the error boundary state to clear the error and re-render children
+   */
   handleReset = () => {
     this.setState({
       hasError: false,

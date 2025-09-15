@@ -7,7 +7,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@primer/react';
 import { BookIcon, FileIcon } from '@primer/octicons-react';
 import { useRuntimeStore } from '../stores/runtimeStore';
-import { testApplicationColors } from '../utils/colorContrast';
 import {
   DocumentsListProps,
   SpaceInfo,
@@ -51,6 +50,10 @@ const Documents: React.FC<DocumentsListProps> = ({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastDataHash, setLastDataHash] = useState<string>('');
 
+  // Track previous item counts for skeleton loading
+  const [previousNotebookCount, setPreviousNotebookCount] = useState(0);
+  const [previousDocumentCount, setPreviousDocumentCount] = useState(0);
+
   const { canOpenNotebook, getRuntimeForNotebook, setActiveNotebook } =
     useRuntimeStore();
 
@@ -61,10 +64,6 @@ const Documents: React.FC<DocumentsListProps> = ({
     if (!isInitializedRef.current) {
       isInitializedRef.current = true;
       initializeComponent();
-
-      if (process.env.NODE_ENV === 'development') {
-        testApplicationColors();
-      }
     }
 
     return () => {
@@ -231,6 +230,10 @@ const Documents: React.FC<DocumentsListProps> = ({
           'Documents:',
           groupedResults.documents.length
         );
+
+        // Update previous counts for skeleton loading
+        setPreviousNotebookCount(groupedResults.notebooks.length);
+        setPreviousDocumentCount(groupedResults.documents.length);
 
         setGroupedDocuments(groupedResults);
 
@@ -522,6 +525,7 @@ const Documents: React.FC<DocumentsListProps> = ({
         onItemDownload={handleDownloadItem}
         onItemDelete={handleDeleteItem}
         showOpenButton={true}
+        previousItemCount={previousNotebookCount}
       />
 
       <LibrarySection
@@ -534,12 +538,13 @@ const Documents: React.FC<DocumentsListProps> = ({
         onItemSelect={handleOpenDocument}
         onItemDownload={handleDownloadItem}
         onItemDelete={handleDeleteItem}
-        showOpenButton={false}
+        showOpenButton={true}
         getItemIcon={
           getDocumentIcon as (
             item: any
           ) => React.ComponentType<{ size?: number }>
         }
+        previousItemCount={previousDocumentCount}
       />
 
       <DeleteConfirmationDialog

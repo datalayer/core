@@ -3,10 +3,19 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module TerminateRuntimeDialog
+ * @description Modal dialog component for confirming runtime termination with keyboard shortcuts and error handling
+ */
+
 import React, { useEffect } from 'react';
 import { Box, Text, Button, Dialog } from '@primer/react';
 import { XIcon, AlertIcon } from '@primer/octicons-react';
 
+/**
+ * Props for the TerminateRuntimeDialog component
+ * @interface
+ */
 export interface TerminateRuntimeDialogProps {
   isOpen: boolean;
   isTerminating: boolean;
@@ -17,6 +26,21 @@ export interface TerminateRuntimeDialogProps {
   onCancel: () => void;
 }
 
+/**
+ * Modal dialog that prompts users to confirm runtime termination for notebooks or documents.
+ * Features keyboard shortcuts (Ctrl+Enter to confirm, Esc to cancel), error display, and loading states.
+ *
+ * @component
+ * @param props - Component properties
+ * @param props.isOpen - Whether the dialog is currently open
+ * @param props.isTerminating - Whether termination is in progress
+ * @param props.itemName - Name of the item whose runtime is being terminated
+ * @param props.itemType - Type of item ('notebook' or 'document')
+ * @param props.error - Error message to display if termination failed
+ * @param props.onConfirm - Callback function when user confirms termination
+ * @param props.onCancel - Callback function when user cancels termination
+ * @returns The rendered dialog component or null if not open
+ */
 const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
   isOpen,
   isTerminating,
@@ -75,8 +99,6 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
         sx={{
           borderBottom: '1px solid',
           borderColor: 'border.default',
-          bg: 'danger.subtle',
-          color: 'danger.fg',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -89,12 +111,11 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
         <Text
           id="terminate-runtime-description"
           sx={{
-            mb: 3,
-            color: 'danger.fg',
+            mb: error ? 3 : 4,
             display: 'block',
             fontSize: 2,
-            fontWeight: 'semibold',
             lineHeight: 1.4,
+            color: 'danger.fg',
           }}
           role="alert"
           aria-live="polite"
@@ -104,10 +125,6 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
             as="span"
             sx={{
               fontWeight: 'bold',
-              bg: 'danger.subtle',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
               fontFamily: 'mono',
             }}
           >
@@ -115,42 +132,6 @@ const TerminateRuntimeDialog: React.FC<TerminateRuntimeDialogProps> = ({
           </Text>
           ?
         </Text>
-
-        <Box
-          sx={{
-            bg: 'canvas.subtle',
-            p: 3,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'border.default',
-            mb: error ? 3 : 4,
-          }}
-        >
-          <Text
-            sx={{
-              mb: 2,
-              display: 'block',
-              color: 'fg.default',
-              fontWeight: 'semibold',
-            }}
-          >
-            This action will:
-          </Text>
-          <Box as="ul" sx={{ pl: 3, m: 0, color: 'fg.muted' }}>
-            <Text as="li" sx={{ mb: 1 }}>
-              Stop all kernel execution and running processes
-            </Text>
-            <Text as="li" sx={{ mb: 1 }}>
-              Close the {itemTypeLabel} and return to the documents list
-            </Text>
-            {itemType === 'notebook' && (
-              <Text as="li" sx={{ mb: 1 }}>
-                Disconnect from the collaborative session
-              </Text>
-            )}
-            <Text as="li">Release allocated compute resources</Text>
-          </Box>
-        </Box>
 
         {error && (
           <Box

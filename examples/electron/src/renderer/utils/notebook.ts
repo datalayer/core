@@ -3,10 +3,17 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/utils/notebook
+ * @description Notebook content parsing and validation utilities.
+ */
+
 import { INotebookContent } from '@jupyterlab/nbformat';
 
 /**
- * Parse notebook content from API response
+ * Parse notebook content from API response.
+ * @param data - Raw API response data
+ * @returns Parsed notebook content or null if invalid
  */
 export const parseNotebookContent = (responseBody: any): INotebookContent => {
   let content;

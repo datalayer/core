@@ -102,7 +102,7 @@ const Login: React.FC<LoginProps> = ({ onUserDataFetched }) => {
       <Box
         sx={{
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '480px',
           backgroundColor: 'canvas.overlay',
           borderRadius: 2,
           border: '1px solid',

@@ -3,12 +3,25 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module Resources
+ * @description Component for displaying environment resource information as labels.
+ * Formats and displays hardware resources like CPU, memory, GPU specifications.
+ */
+
 import React from 'react';
 import { Box, Text, Label } from '@primer/react';
 import { PackageIcon } from '@primer/octicons-react';
 import { EnvironmentResourcesProps } from '../../../shared/types';
 import { formatResources } from '../../utils/environments';
 
+/**
+ * @component Resources
+ * @description Renders environment resource specifications as formatted labels
+ * @param {EnvironmentResourcesProps} props - The component props
+ * @param {EnvironmentResources} props.resources - Resource specifications to display
+ * @returns {JSX.Element | null} The rendered resources component or null if no resources
+ */
 const Resources: React.FC<EnvironmentResourcesProps> = ({ resources }) => {
   if (!resources) {
     return null;

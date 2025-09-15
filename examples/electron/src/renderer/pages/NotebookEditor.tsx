@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module NotebookEditor
+ * @description Main notebook editor page that orchestrates notebook content loading, runtime management, and collaboration
+ */
+
 import React, { useState, useMemo } from 'react';
 import { Box } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/state';
@@ -20,6 +25,17 @@ import { useNotebookContent } from '../hooks/useNotebookContent';
 import { useRuntimeManagement } from '../hooks/useRuntimeManagement';
 import { useCollaboration } from '../hooks/useCollaboration';
 
+/**
+ * Main notebook editor component that provides a complete notebook editing experience.
+ * Integrates content loading, runtime management, collaboration, and UI controls.
+ *
+ * @component
+ * @param props - Component properties
+ * @param props.selectedNotebook - The notebook object to display and edit
+ * @param props.onClose - Callback function when closing the notebook
+ * @param props.onRuntimeTerminated - Callback function when runtime is terminated
+ * @returns The rendered notebook editor page
+ */
 const NotebookViewer: React.FC<NotebookViewProps> = ({
   selectedNotebook,
   onClose,

@@ -3,6 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module Icon
+ * @description Environment icon component that displays appropriate icons or images for different environment types.
+ * Shows custom images when available, or falls back to GPU (ZapIcon) or CPU (CpuIcon) icons based on environment type.
+ */
+
 import React from 'react';
 import { Box } from '@primer/react';
 import { CpuIcon, ZapIcon } from '@primer/octicons-react';
@@ -12,6 +18,14 @@ import {
   parseEnvironmentDescription,
 } from '../../utils/environments';
 
+/**
+ * @component Icon
+ * @description Renders an icon for an environment, using custom images when available or type-appropriate icons as fallback
+ * @param {EnvironmentIconProps} props - The component props
+ * @param {Environment} props.environment - The environment object containing name, title, description, etc.
+ * @param {number} [props.size=24] - The size of the icon in pixels
+ * @returns {JSX.Element} The rendered icon component
+ */
 const Icon: React.FC<EnvironmentIconProps> = ({ environment, size = 24 }) => {
   const parsed = parseEnvironmentDescription(environment.description || '');
 

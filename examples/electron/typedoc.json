@@ -1,0 +1,71 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
+  "out": "./docs",
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/dist-electron/**",
+    "**/polyfills/**",
+    "**/lodash-polyfills.js",
+    "**/jupyterlab-services-proxy.js"
+  ],
+  "tsconfig": "./tsconfig.json",
+  "name": "Datalayer Electron Application",
+  "readme": "./README.md",
+  "theme": "default",
+  "includeVersion": true,
+  "excludePrivate": false,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "excludeExternals": false,
+  "disableSources": false,
+  "gitRevision": "main",
+  "hideGenerator": false,
+  "validation": {
+    "notExported": false,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "categorizeByGroup": true,
+  "defaultCategory": "Other",
+  "categoryOrder": [
+    "Main Process",
+    "Preload",
+    "Renderer",
+    "Components",
+    "Hooks",
+    "Services",
+    "Stores",
+    "Utilities",
+    "Types",
+    "*",
+    "Other"
+  ],
+  "navigationLinks": {
+    "GitHub": "https://github.com/datalayer/core",
+    "Datalayer": "https://datalayer.io"
+  },
+  "excludeTags": ["@internal"],
+  "commentStyle": "JSDoc",
+  "blockTags": [
+    "@module",
+    "@description",
+    "@param",
+    "@returns",
+    "@example",
+    "@see",
+    "@since",
+    "@deprecated",
+    "@throws",
+    "@component",
+    "@category"
+  ],
+  "inlineTags": ["@link", "@linkcode", "@linkplain"],
+  "modifierTags": ["@public", "@private", "@protected", "@readonly", "@override", "@virtual", "@abstract", "@async", "@generator"],
+  "lightHighlightTheme": "github-light",
+  "darkHighlightTheme": "github-dark"
+}

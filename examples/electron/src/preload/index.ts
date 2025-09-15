@@ -1,3 +1,9 @@
+/**
+ * @module preload/index
+ * @description Preload script that provides a secure bridge between the main and renderer processes.
+ * Exposes protected APIs for Electron, Datalayer, and proxy communication.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
@@ -6,8 +12,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 // import log from 'electron-log/renderer'; // Uncomment when needed for logging
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
+/**
+ * Expose Electron API methods to the renderer process.
+ * Provides safe access to system information and menu actions.
+ */
 contextBridge.exposeInMainWorld('electronAPI', {
   // Get app version info
   getVersion: () => ipcRenderer.invoke('get-version'),
@@ -37,7 +45,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('runtime-terminated', { runtimeId }),
 });
 
-// Expose proxy APIs for ServiceManager
+/**
+ * Expose proxy APIs for ServiceManager.
+ * Provides HTTP and WebSocket proxy functionality for Jupyter kernel communication.
+ */
 contextBridge.exposeInMainWorld('proxyAPI', {
   // HTTP proxy
   httpRequest: (options: {
@@ -84,7 +95,10 @@ contextBridge.exposeInMainWorld('proxyAPI', {
   },
 });
 
-// Expose Datalayer API methods
+/**
+ * Expose Datalayer API methods.
+ * Provides access to authentication, runtime management, and notebook operations.
+ */
 contextBridge.exposeInMainWorld('datalayerAPI', {
   // Authentication
   login: (credentials: { runUrl: string; token: string }) =>
@@ -159,7 +173,10 @@ contextBridge.exposeInMainWorld('datalayerAPI', {
     ipcRenderer.invoke('datalayer:github-user', githubId),
 });
 
-// Type definitions for TypeScript
+/**
+ * Proxy API interface for HTTP and WebSocket communication.
+ * Used primarily for Jupyter kernel connections.
+ */
 export interface ProxyAPI {
   httpRequest: (options: {
     url: string;
@@ -203,6 +220,10 @@ export interface ProxyAPI {
   removeWebSocketEventListener: () => void;
 }
 
+/**
+ * Electron API interface for system and application information.
+ * Provides access to version info, environment variables, and platform actions.
+ */
 export interface ElectronAPI {
   getVersion: () => Promise<{
     electron: string;
@@ -221,7 +242,10 @@ export interface ElectronAPI {
   openExternal: (url: string) => void;
 }
 
-// API response data types
+/**
+ * Environment data structure returned from Datalayer API.
+ * Represents available compute environments.
+ */
 export interface EnvironmentData {
   name: string;
   display_name?: string;
@@ -237,6 +261,10 @@ export interface EnvironmentData {
   [key: string]: unknown;
 }
 
+/**
+ * Runtime data structure for active compute instances.
+ * Contains connection details and runtime metadata.
+ */
 export interface RuntimeData {
   uid: string;
   given_name?: string;
@@ -254,6 +282,10 @@ export interface RuntimeData {
   [key: string]: unknown;
 }
 
+/**
+ * Notebook data structure for Jupyter notebooks.
+ * Contains notebook identification and metadata.
+ */
 export interface NotebookData {
   uid?: string;
   id?: string;
@@ -262,6 +294,10 @@ export interface NotebookData {
   [key: string]: unknown;
 }
 
+/**
+ * Space data structure for organizing notebooks and documents.
+ * Represents a workspace or collection of items.
+ */
 export interface SpaceData {
   uid?: string;
   id?: string;
@@ -270,6 +306,10 @@ export interface SpaceData {
   [key: string]: unknown;
 }
 
+/**
+ * Complete Datalayer API interface.
+ * Provides all methods for interacting with the Datalayer platform.
+ */
 export interface DatalayerAPI {
   login: (credentials: {
     runUrl: string;
@@ -378,6 +418,10 @@ export interface DatalayerAPI {
   }>;
 }
 
+/**
+ * Global window interface extensions.
+ * Makes APIs available on the window object in the renderer process.
+ */
 declare global {
   interface Window {
     electronAPI: ElectronAPI;

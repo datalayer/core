@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/utils/library
+ * @description Utility functions for document library operations and formatting.
+ */
+
 import { FileIcon, BookIcon } from '@primer/octicons-react';
 import { DocumentItem } from '../../shared/types';
 

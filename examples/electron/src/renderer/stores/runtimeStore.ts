@@ -1,11 +1,12 @@
+/**
+ * @module renderer/stores/runtimeStore
+ * @description Zustand store for managing compute runtime state.
+ * Handles runtime creation, termination, and lifecycle management.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
- */
-
-/**
- * Runtime Store
- * Manages the state of compute runtimes
  */
 
 import { create } from 'zustand';
@@ -21,30 +22,60 @@ declare global {
     | undefined;
 }
 
+/**
+ * Runtime information from Datalayer API.
+ * @interface Runtime
+ */
 interface Runtime {
+  /** Unique identifier for the runtime */
   uid: string;
+  /** Optional display name */
   given_name?: string;
+  /** Kubernetes pod name */
   pod_name: string;
+  /** Ingress URL for accessing the runtime */
   ingress?: string;
+  /** Authentication token for the runtime */
   token?: string;
+  /** Environment name used */
   environment_name?: string;
+  /** Environment display title */
   environment_title?: string;
+  /** Runtime type */
   type?: string;
+  /** Credit burning rate */
   burning_rate?: number;
+  /** Reservation identifier */
   reservation_id?: string;
+  /** Start timestamp */
   started_at?: string;
+  /** Expiration timestamp */
   expired_at?: string;
+  /** Current runtime status */
   status?: string;
+  /** Additional properties */
   [key: string]: unknown;
 }
 
+/**
+ * Associates a notebook with its runtime and service manager.
+ * @interface NotebookRuntime
+ */
 interface NotebookRuntime {
+  /** Unique notebook identifier */
   notebookId: string;
+  /** Optional notebook file path */
   notebookPath?: string;
+  /** Associated runtime instance */
   runtime: Runtime;
+  /** Optional Jupyter service manager */
   serviceManager?: ServiceManager.IManager;
 }
 
+/**
+ * Runtime store state and actions.
+ * @interface RuntimeState
+ */
 interface RuntimeState {
   // Map of notebook IDs to their runtimes
   notebookRuntimes: Map<string, NotebookRuntime>;

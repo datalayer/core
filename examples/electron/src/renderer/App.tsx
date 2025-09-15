@@ -1,3 +1,9 @@
+/**
+ * @module renderer/App
+ * @description Main React application component for the Datalayer Electron app.
+ * Manages authentication, view navigation, and component orchestration.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
@@ -30,11 +36,20 @@ import {
 import { processUserData, setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
 
-// Lazy load heavy components that aren't needed on startup
+/**
+ * Lazy load heavy components that aren't needed on startup.
+ * This improves initial load performance.
+ */
 const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
 const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
 const Library = lazy(() => import('./pages/Library'));
 
+/**
+ * Main application component.
+ * Handles authentication flow, view routing, and global state management.
+ * @component
+ * @returns The rendered application
+ */
 const App: React.FC = () => {
   // Filter out noisy Jupyter React config logging
   useEffect(() => {
@@ -81,17 +96,22 @@ const App: React.FC = () => {
       {
         name: 'environments',
         preloadFn: async () => {
+          // Skip preloading environments if no token
+          // This prevents "Server Error" when not authenticated
+          if (!configuration?.token) {
+            logger.debug('Skipping environments preload - no token');
+            return;
+          }
+
           // Preload Environments data in parallel with auth check
           // This way they're ready instantly when auth succeeds
-          if (configuration?.token) {
-            try {
-              const response = await window.datalayerAPI.getEnvironments();
-              if (response.success) {
-                logger.debug('Environments preloaded:', response.data?.length);
-              }
-            } catch (error) {
-              logger.error('Failed to preload environments:', error);
+          try {
+            const response = await window.datalayerAPI.getEnvironments();
+            if (response.success) {
+              logger.debug('Environments preloaded:', response.data?.length);
             }
+          } catch (error) {
+            logger.error('Failed to preload environments:', error);
           }
         },
       },
@@ -132,7 +152,15 @@ const App: React.FC = () => {
             }
 
             // Runtime reconnection removed from startup - will be done lazily when needed
+          } else {
+            // Authentication failed - ensure we show login page
+            setIsAuthenticated(false);
+            setCurrentView('environments'); // Reset to default view
           }
+        } catch (error) {
+          // Auth check failed - show login page
+          logger.error('Auth check failed:', error);
+          setIsAuthenticated(false);
         } finally {
           setIsCheckingAuth(false);
         }

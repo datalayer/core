@@ -1,25 +1,42 @@
+/**
+ * @module renderer/main
+ * @description Main entry point for the Electron renderer process.
+ * Handles polyfills, Prism.js configuration, and React application initialization.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
 
-// CRITICAL: Load all polyfills in the correct order
-// This single import handles Symbol, lodash, Node.js builtins, RequireJS, etc.
+/**
+ * Load all polyfills in the correct order.
+ * This single import handles Symbol, lodash, Node.js builtins, RequireJS, etc.
+ */
 import './polyfills';
 
-// Import Prism for syntax highlighting and make it globally available
+/**
+ * Import Prism for syntax highlighting and make it globally available.
+ */
 import Prism from 'prismjs';
 
-// Import common language components
+/**
+ * Import common language components for Prism.js.
+ */
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-json';
 
-// Make Prism available globally for Lexical code highlighting
+/**
+ * Make Prism available globally for Lexical code highlighting.
+ */
 (window as any).Prism = Prism;
 
-// CRITICAL: Ensure all Prism instances have the 'c' language to prevent extension errors
-// This must run after Prism is loaded but before any extensions load
+/**
+ * Ensure all Prism instances have the 'c' language to prevent extension errors.
+ * This must run after Prism is loaded but before any extensions load.
+ * @internal
+ */
 function ensureCLanguageInAllPrismInstances() {
   const cLanguageDefinition = {
     comment: [
@@ -102,12 +119,16 @@ function ensureCLanguageInAllPrismInstances() {
   }, 100); // Check every 100ms
 }
 
-// Run the fix after a short delay to ensure Prism is fully loaded
+/**
+ * Run the fix after a short delay to ensure Prism is fully loaded.
+ */
 setTimeout(ensureCLanguageInAllPrismInstances, 500);
 
-// CRITICAL FIX: Add missing Prism.js 'c' language definition
-// This prevents "Cannot set properties of undefined (setting 'className')" error
-// when prism-cpp.js tries to extend the 'c' language
+/**
+ * Add missing Prism.js 'c' language definition.
+ * This prevents "Cannot set properties of undefined (setting 'className')" error
+ * when prism-cpp.js tries to extend the 'c' language.
+ */
 if (Prism && Prism.languages) {
   // Available Prism languages loaded
 
@@ -158,18 +179,26 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Note: Electron APIs are only available when running in Electron environment
-// In browser mode, the app will show "Not in Electron environment" message
+/**
+ * Note: Electron APIs are only available when running in Electron environment.
+ * In browser mode, the app will show "Not in Electron environment" message.
+ */
 
-// NOTE: We do NOT call loadJupyterConfig() globally here because DocumentEditor
-// needs to manage its own Jupyter configuration per runtime using ServiceManager props
+/**
+ * NOTE: We do NOT call loadJupyterConfig() globally here because DocumentEditor
+ * needs to manage its own Jupyter configuration per runtime using ServiceManager props.
+ */
 
-// Get Datalayer configuration from environment
+/**
+ * Get Datalayer configuration from environment.
+ * Loads configuration from Electron environment variables.
+ * @returns Promise that resolves when configuration is loaded
+ */
 const loadDatalayerConfig = async () => {
   if (window.electronAPI) {
     const env = await window.electronAPI.getEnv();
     if (env.DATALAYER_RUN_URL && env.DATALAYER_TOKEN) {
-      // Store in window for now (in production, use proper state management)
+      /** Store in window for now (in production, use proper state management) */
       (window as any).datalayerConfig = {
         runUrl: env.DATALAYER_RUN_URL,
         token: env.DATALAYER_TOKEN,
@@ -178,7 +207,11 @@ const loadDatalayerConfig = async () => {
   }
 };
 
-// Initialize and render app
+/**
+ * Initialize and render the React application.
+ * Loads configuration and mounts the app to the DOM.
+ * @returns Promise that resolves when app is initialized
+ */
 const init = async () => {
   await loadDatalayerConfig();
 
@@ -193,5 +226,7 @@ const init = async () => {
   );
 };
 
-// All logging cleanup and App.tsx refactoring completed successfully
+/**
+ * Start the application initialization process.
+ */
 init();

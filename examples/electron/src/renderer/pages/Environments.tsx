@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module Environments
+ * @description Environments page for browsing and selecting compute environments with GPU support detection
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Heading, Text } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/state';
@@ -16,6 +21,13 @@ import EmptyState from '../components/environments/EmptyState';
 import Card from '../components/environments/Card';
 import SelectionSummary from '../components/environments/SelectionSummary';
 
+/**
+ * Environments page component that displays available compute environments for notebooks.
+ * Includes environment selection, GPU detection, authentication checks, and caching.
+ *
+ * @component
+ * @returns The rendered environments page
+ */
 const Environments: React.FC = () => {
   const [selectedEnv, setSelectedEnv] = useState<string | null>(null);
   const { configuration, setConfiguration } = useCoreStore();
@@ -77,7 +89,10 @@ const Environments: React.FC = () => {
   };
 
   return (
-    <Box>
+    <Box
+      className="environments-page"
+      sx={{ height: '100%', overflowY: 'scroll' }}
+    >
       <Box sx={{ mb: 4 }}>
         <Heading as="h2" sx={{ mb: 2 }}>
           Runtime Environments

@@ -1,3 +1,8 @@
+/**
+ * @module renderer/components/app/Header
+ * @description Application header component with navigation and user menu.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
@@ -10,6 +15,20 @@ import NavigationTabs from './NavigationTabs';
 import UserMenu from './UserMenu';
 import { AppHeaderProps } from '../../../shared/types';
 
+/**
+ * Application header component.
+ * Displays the app title, navigation tabs, and user menu.
+ * @component
+ * @param props - Component props
+ * @param props.currentView - Currently active view
+ * @param props.isNotebookEditorActive - Whether notebook editor is active
+ * @param props.isDocumentEditorActive - Whether document editor is active
+ * @param props.isAuthenticated - User authentication status
+ * @param props.githubUser - GitHub user information
+ * @param props.onViewChange - Callback for view navigation
+ * @param props.onLogout - Callback for logout action
+ * @returns Rendered header component
+ */
 const AppHeader: React.FC<AppHeaderProps> = ({
   currentView,
   isNotebookEditorActive,
@@ -22,7 +41,13 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   return (
-    <Header>
+    <Header
+      sx={{
+        backgroundColor: COLORS.background.secondary, // Light gray background
+        borderBottom: '1px solid',
+        borderColor: 'border.default',
+      }}
+    >
       <Header.Item>
         <Text
           sx={{
@@ -32,7 +57,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             mr: 4,
           }}
         >
-          Datalayer Electron Example
+          Datalayer Desktop
         </Text>
       </Header.Item>
 

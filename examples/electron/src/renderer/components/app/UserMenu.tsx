@@ -1,29 +1,39 @@
+/**
+ * @module renderer/components/app/UserMenu
+ * @description User profile dropdown menu component with GitHub user display and logout.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
 
 import React, { useEffect } from 'react';
-import {
-  Header,
-  Button,
-  Avatar,
-  ActionMenu,
-  ActionList,
-  Box,
-  Text,
-} from '@primer/react';
+import { Header, Button, Avatar, Box, Text } from '@primer/react';
 import { SignOutIcon } from '@primer/octicons-react';
-import { COLORS } from '../../../shared/constants/colors';
 import { UserMenuProps } from '../../../shared/types';
 
+/**
+ * User menu dropdown component for the application header.
+ * Displays GitHub user profile information and provides logout functionality.
+ * @component
+ * @param props - Component props
+ * @param props.githubUser - GitHub user information
+ * @param props.isOpen - Whether the menu is currently open
+ * @param props.onOpenChange - Callback to toggle menu open state
+ * @param props.onLogout - Callback when user logs out
+ * @returns Rendered user menu dropdown
+ */
 const UserMenu: React.FC<UserMenuProps> = ({
   githubUser,
   isOpen,
   onOpenChange,
   onLogout,
 }) => {
-  // Handle Escape key for user menu
+  /**
+   * Handle Escape key press to close user menu.
+   * Captures escape key at document level when menu is open.
+   */
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
@@ -43,31 +53,80 @@ const UserMenu: React.FC<UserMenuProps> = ({
     return undefined;
   }, [isOpen, onOpenChange]);
 
+  /**
+   * Handle user logout action.
+   * Triggers logout callback and closes menu.
+   */
   const handleLogout = () => {
     onLogout();
     onOpenChange(false);
   };
 
+  /**
+   * Toggle user menu visibility.
+   */
+  const handleMenuToggle = () => {
+    onOpenChange(!isOpen);
+  };
+
   return (
-    <Header.Item>
-      <ActionMenu open={isOpen} onOpenChange={onOpenChange}>
-        <ActionMenu.Anchor>
-          <Button
-            variant="invisible"
-            aria-label={`User menu for ${githubUser.name || githubUser.login}`}
-            aria-describedby="user-menu-description"
-            aria-expanded={isOpen}
+    <Header.Item sx={{ position: 'relative' }}>
+      <Button
+        variant="invisible"
+        onClick={handleMenuToggle}
+        aria-label={`User menu for ${githubUser.name || githubUser.login}`}
+        aria-describedby="user-menu-description"
+        aria-expanded={isOpen}
+        sx={{
+          p: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          borderRadius: '50%',
+          cursor: 'pointer',
+          '&:hover': {
+            opacity: 0.8,
+          },
+        }}
+      >
+        <Avatar
+          src={githubUser.avatar_url}
+          size={32}
+          alt=""
+          sx={{
+            borderRadius: '50%',
+            objectFit: 'cover',
+            flexShrink: 0,
+          }}
+        />
+      </Button>
+
+      {isOpen && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: '60px',
+            right: '16px',
+            width: '280px',
+            bg: 'canvas.default',
+            border: '1px solid',
+            borderColor: 'border.default',
+            borderRadius: 2,
+            boxShadow: 'shadow.large',
+            zIndex: 9999,
+            overflow: 'hidden',
+          }}
+          role="menu"
+          aria-labelledby="user-menu-description"
+        >
+          <Box
             sx={{
-              p: 0,
+              p: 3,
+              borderBottom: '1px solid',
+              borderColor: 'border.default',
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              borderRadius: '50%',
-              '&:focus-visible': {
-                outline: '2px solid',
-                outlineColor: COLORS.brand.primary,
-                outlineOffset: '2px',
-              },
             }}
           >
             <Avatar
@@ -80,89 +139,44 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 flexShrink: 0,
               }}
             />
-          </Button>
-        </ActionMenu.Anchor>
+            <Box>
+              <Text
+                sx={{
+                  fontWeight: 'semibold',
+                  display: 'block',
+                  color: 'fg.default',
+                }}
+              >
+                {githubUser.name || githubUser.login}
+              </Text>
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                @{githubUser.login}
+              </Text>
+            </Box>
+          </Box>
 
-        <ActionMenu.Overlay
-          width="medium"
-          role="menu"
-          aria-labelledby="user-menu-description"
-        >
-          <div
-            id="user-menu-description"
-            style={{
-              position: 'absolute',
-              width: '1px',
-              height: '1px',
-              padding: '0',
-              margin: '-1px',
-              overflow: 'hidden',
-              clip: 'rect(0, 0, 0, 0)',
-              whiteSpace: 'nowrap',
-              border: '0',
-            }}
-          >
-            User account menu with profile information and sign out option
-          </div>
-          <ActionList>
-            <ActionList.Item
-              disabled
-              sx={{ py: 3 }}
-              role="menuitem"
-              aria-label={`Profile information for ${githubUser.name || githubUser.login}`}
-            >
-              <ActionList.LeadingVisual>
-                <Avatar
-                  src={githubUser.avatar_url}
-                  size={24}
-                  alt=""
-                  sx={{
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    flexShrink: 0,
-                  }}
-                />
-              </ActionList.LeadingVisual>
-              <Box>
-                <Text sx={{ fontWeight: 'semibold', display: 'block' }}>
-                  {githubUser.name || githubUser.login}
-                </Text>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                  @{githubUser.login}
-                </Text>
-              </Box>
-            </ActionList.Item>
-
-            <ActionList.Divider />
-
-            <ActionList.Item
-              onSelect={handleLogout}
-              role="menuitem"
-              aria-label="Sign out of your account"
+          <Box sx={{ p: 1 }}>
+            <Button
+              variant="invisible"
+              onClick={handleLogout}
               sx={{
+                width: '100%',
+                justifyContent: 'flex-start',
                 color: 'danger.fg',
+                px: 3,
+                py: 2,
                 '&:hover': {
                   bg: 'canvas.subtle',
                   color: 'danger.fg',
                 },
-                '&:active': {
-                  bg: 'canvas.subtle',
-                },
-                '&:focus-visible': {
-                  outline: '2px solid',
-                  outlineColor: COLORS.brand.primary,
-                  outlineOffset: '-2px',
-                },
               }}
             >
-              <ActionList.LeadingVisual>
-                <SignOutIcon />
-              </ActionList.LeadingVisual>
-              Sign out
-            </ActionList.Item>
-          </ActionList>
-        </ActionMenu.Overlay>
-      </ActionMenu>
+              <SignOutIcon size={16} />
+              <Text sx={{ ml: 2 }}>Sign out</Text>
+            </Button>
+          </Box>
+        </Box>
+      )}
     </Header.Item>
   );
 };

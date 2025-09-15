@@ -1,3 +1,8 @@
+/**
+ * @module renderer/components/environments/Card
+ * @description Environment card component displaying environment details and selection state.
+ */
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
@@ -12,6 +17,16 @@ import TypeLabel from './TypeLabel';
 import Description from './Description';
 import Resources from './Resources';
 
+/**
+ * Environment card component for selecting compute environments.
+ * Displays environment details, icon, type, resources, and selection state.
+ * @component
+ * @param props - Component props
+ * @param props.environment - Environment data to display
+ * @param props.isSelected - Whether this environment is currently selected
+ * @param props.onSelect - Callback when environment is selected
+ * @returns Rendered environment card
+ */
 const Card: React.FC<EnvironmentCardProps> = ({
   environment,
   isSelected,

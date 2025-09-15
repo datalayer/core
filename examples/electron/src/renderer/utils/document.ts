@@ -3,10 +3,21 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/utils/document
+ * @description Document editor utility functions for runtime connectivity and collaboration.
+ */
+
 import { logger } from './logger';
 
 /**
- * Wait for runtime to be ready by testing Jupyter server connectivity
+ * Wait for runtime to be ready by testing Jupyter server connectivity.
+ * Polls the Jupyter server until it responds successfully or timeout occurs.
+ * @param runtimeIngress - The runtime's Jupyter server URL
+ * @param runtimeToken - Authentication token for the runtime
+ * @param maxWaitTime - Maximum time to wait in milliseconds (default: 60000)
+ * @param pollInterval - Interval between polls in milliseconds (default: 5000)
+ * @returns Promise resolving to true when ready or after timeout
  */
 export async function waitForRuntimeReady(
   runtimeIngress: string,
@@ -72,14 +83,21 @@ export async function waitForRuntimeReady(
 }
 
 /**
- * Error handler for Lexical editor
+ * Error handler for Lexical editor.
+ * Logs editor errors to console for debugging.
+ * @param error - The error that occurred in the Lexical editor
  */
 export function onLexicalError(error: Error): void {
   console.error('Lexical error:', error);
 }
 
 /**
- * Build WebSocket URL for collaboration
+ * Build WebSocket URL for collaboration.
+ * Constructs the collaboration WebSocket endpoint URL from base URL and document ID.
+ * @param spacerRunUrl - Base spacer service URL
+ * @param token - Authentication token
+ * @param documentId - Unique document identifier
+ * @returns WebSocket URL string or null if inputs are invalid
  */
 export function buildCollaborationWebSocketUrl(
   spacerRunUrl: string | undefined,

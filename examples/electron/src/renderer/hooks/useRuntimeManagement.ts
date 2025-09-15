@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module useRuntimeManagement
+ * @description React hook for managing Jupyter runtime lifecycle, service managers, and runtime state coordination
+ */
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ServiceManager } from '@jupyterlab/services';
 import {
@@ -22,6 +27,15 @@ import {
   formatErrorMessage,
 } from '../utils/notebook';
 
+/**
+ * React hook that manages the complete lifecycle of Jupyter runtimes and service managers.
+ * Handles runtime creation, termination, caching, and state synchronization with the runtime store.
+ *
+ * @param options - Configuration options for runtime management
+ * @param options.selectedNotebook - Currently selected notebook object
+ * @param options.configuration - Datalayer configuration with service URLs and authentication
+ * @returns Object containing service manager, runtime state, and control functions
+ */
 export const useRuntimeManagement = ({
   selectedNotebook,
   configuration,

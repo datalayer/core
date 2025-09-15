@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module useNotebookContent
+ * @description React hook for fetching and managing notebook content from CDN URLs with validation and error handling
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { INotebookContent } from '@jupyterlab/nbformat';
 import {
@@ -14,6 +19,14 @@ import {
   validateNotebookContent,
 } from '../utils/notebook';
 
+/**
+ * React hook that manages fetching and parsing notebook content from CDN URLs.
+ * Handles loading states, error handling, and content validation.
+ *
+ * @param options - Configuration options for notebook content management
+ * @param options.selectedNotebook - Currently selected notebook object with CDN URL
+ * @returns Object containing notebook content, loading state, error state, and refetch function
+ */
 export const useNotebookContent = ({
   selectedNotebook,
 }: UseNotebookContentOptions): UseNotebookContentReturn => {
@@ -22,6 +35,9 @@ export const useNotebookContent = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetches notebook content from the CDN URL using the proxy API to avoid CORS issues
+   */
   const fetchNotebookContent = useCallback(async () => {
     if (!selectedNotebook?.cdnUrl) {
       setNotebookContent(null);
@@ -92,6 +108,9 @@ export const useNotebookContent = ({
     fetchNotebookContent();
   }, [fetchNotebookContent]);
 
+  /**
+   * Manually refetches the notebook content from the CDN
+   */
   const refetch = useCallback(() => {
     fetchNotebookContent();
   }, [fetchNotebookContent]);

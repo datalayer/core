@@ -3,8 +3,17 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module CollaborationWebSocketAdapter
+ * @description WebSocket adapter for real-time collaboration that bridges between LoroCollaborativePlugin and Electron's IPC-based WebSocket proxy
+ */
+
 import { logger } from '../utils/logger';
 
+/**
+ * Configuration options for CollaborationWebSocketAdapter
+ * @interface
+ */
 interface CollaborationWebSocketOptions {
   docId: string;
   spacerRunUrl: string;
@@ -14,7 +23,8 @@ interface CollaborationWebSocketOptions {
 
 /**
  * WebSocket adapter for collaboration that bridges between LoroCollaborativePlugin
- * and Electron's IPC-based WebSocket proxy system
+ * and Electron's IPC-based WebSocket proxy system. Manages real-time collaborative
+ * editing connections through Electron's proxy API.
  */
 export class CollaborationWebSocketAdapter {
   private docId: string;
@@ -28,6 +38,10 @@ export class CollaborationWebSocketAdapter {
   private closeHandlers: Set<(event: CloseEvent) => void> = new Set();
   private openHandlers: Set<(event: Event) => void> = new Set();
 
+  /**
+   * Creates a new CollaborationWebSocketAdapter instance
+   * @param options - Configuration options for the adapter
+   */
   constructor(options: CollaborationWebSocketOptions) {
     this.docId = options.docId;
     this.token = options.token;

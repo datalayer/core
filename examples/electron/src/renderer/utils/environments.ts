@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/utils/environments
+ * @description Utility functions for environment parsing, icons, and descriptions.
+ */
+
 import {
   Environment,
   EnvironmentType,

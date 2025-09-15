@@ -3,10 +3,17 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/utils/login
+ * @description Login form validation and credential utilities.
+ */
+
 import { LoginFormData } from '../../shared/types';
 
 /**
- * Validates login form data
+ * Validates login form data.
+ * @param data - The login form data to validate
+ * @returns Validation result with success status and error message
  */
 export const validateLoginForm = (formData: LoginFormData): string => {
   if (!formData.runUrl || !formData.token) {

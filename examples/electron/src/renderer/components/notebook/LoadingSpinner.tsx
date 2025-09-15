@@ -3,11 +3,28 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module NotebookLoadingSpinner
+ * @description Loading spinner component for notebook operations with contextual messages and accessibility support
+ */
+
 import React from 'react';
 import { Box, Text, Spinner } from '@primer/react';
 import { COLORS } from '../../../shared/constants/colors';
 import { NotebookLoadingStateProps } from '../../../shared/types';
 
+/**
+ * Loading spinner component that displays contextual loading messages for various notebook operations.
+ * Provides accessibility support and different messages based on the type of loading operation.
+ *
+ * @component
+ * @param props - Component properties
+ * @param props.loading - General loading state
+ * @param props.loadingNotebook - Whether notebook content is being loaded
+ * @param props.isCreatingRuntime - Whether runtime environment is being created
+ * @param props.message - Custom loading message to display
+ * @returns The rendered loading spinner component or null if not loading
+ */
 const LoadingSpinner: React.FC<NotebookLoadingStateProps> = ({
   loading,
   loadingNotebook,
@@ -19,7 +36,10 @@ const LoadingSpinner: React.FC<NotebookLoadingStateProps> = ({
     return null;
   }
 
-  // Determine the appropriate loading message
+  /**
+   * Determines the appropriate loading message based on the current loading state
+   * @returns The loading message to display
+   */
   const getLoadingMessage = (): string => {
     if (message) {
       return message;
@@ -36,6 +56,10 @@ const LoadingSpinner: React.FC<NotebookLoadingStateProps> = ({
     return 'Loading notebook environment...';
   };
 
+  /**
+   * Provides additional context about the current loading operation
+   * @returns The subtext message to display
+   */
   const getLoadingSubtext = (): string => {
     if (loadingNotebook) {
       return 'Fetching notebook content from server';
@@ -81,52 +105,25 @@ const LoadingSpinner: React.FC<NotebookLoadingStateProps> = ({
             color: 'fg.default',
             fontSize: 2,
             fontWeight: 'semibold',
-            mb: 1,
+            display: 'block',
           }}
         >
           {getLoadingMessage()}
         </Text>
-
-        <Text
-          sx={{
-            color: 'fg.muted',
-            fontSize: 1,
-            maxWidth: '400px',
-            lineHeight: 1.4,
-          }}
-        >
-          {getLoadingSubtext()}
-        </Text>
       </Box>
 
-      {isCreatingRuntime && (
-        <Box
-          sx={{
-            bg: 'canvas.subtle',
-            p: 3,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'border.subtle',
-            maxWidth: '500px',
-          }}
-        >
-          <Text
-            sx={{
-              color: 'fg.muted',
-              fontSize: 0,
-              textAlign: 'left',
-              fontFamily: 'mono',
-            }}
-          >
-            • Allocating compute resources
-            <br />
-            • Starting Jupyter server
-            <br />
-            • Configuring kernel environment
-            <br />• Establishing secure connections
-          </Text>
-        </Box>
-      )}
+      <Text
+        sx={{
+          color: 'fg.muted',
+          fontSize: 1,
+          maxWidth: '400px',
+          lineHeight: 1.4,
+          textAlign: 'center',
+          mt: -2,
+        }}
+      >
+        {getLoadingSubtext()}
+      </Text>
 
       {/* Screen reader specific information */}
       <Box

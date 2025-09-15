@@ -3,6 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module renderer/utils/app
+ * @description Application utility functions for user data processing and console filtering.
+ */
+
 import { GitHubUser } from '../../shared/types';
 import { logger } from './logger';
 

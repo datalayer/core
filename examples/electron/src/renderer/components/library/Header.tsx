@@ -3,6 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module Header
+ * @description Library page header component with space selection and refresh functionality.
+ * Includes title, description, space selector dropdown, and refresh button with custom styling.
+ */
+
 import React from 'react';
 import {
   Box,
@@ -16,6 +22,18 @@ import { SyncIcon } from '@primer/octicons-react';
 import { COLORS } from '../../../shared/constants/colors';
 import { HeaderProps } from '../../../shared/types';
 
+/**
+ * @component Header
+ * @description Renders the library page header with space selection and refresh controls
+ * @param {HeaderProps} props - The component props
+ * @param {Object | null} props.selectedSpace - Currently selected space object
+ * @param {Array} props.userSpaces - Array of available user spaces
+ * @param {boolean} props.loading - Whether the page is loading
+ * @param {boolean} props.isRefreshing - Whether a refresh operation is in progress
+ * @param {function} props.onSpaceChange - Handler for space selection changes
+ * @param {function} props.onRefresh - Handler for refresh button clicks
+ * @returns {JSX.Element} The rendered header component
+ */
 const Header: React.FC<HeaderProps> = ({
   selectedSpace,
   userSpaces,
@@ -44,7 +62,26 @@ const Header: React.FC<HeaderProps> = ({
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
-          <Box sx={{ minWidth: '200px' }}>
+          <Box
+            sx={{
+              minWidth: '200px',
+              '& .FormControl-select:focus': {
+                borderColor: '#117964 !important',
+                outline: 'none !important',
+                boxShadow: '0 0 0 3px rgba(17, 121, 100, 0.1) !important',
+              },
+              '& .FormControl-select:focus-visible': {
+                borderColor: '#117964 !important',
+                outline: 'none !important',
+                boxShadow: '0 0 0 3px rgba(17, 121, 100, 0.1) !important',
+              },
+              '& select:focus': {
+                borderColor: '#117964 !important',
+                outline: 'none !important',
+                boxShadow: '0 0 0 3px rgba(17, 121, 100, 0.1) !important',
+              },
+            }}
+          >
             <FormControl>
               <FormControl.Label sx={{ mb: 1, fontSize: 1 }}>
                 Select Space
@@ -53,7 +90,15 @@ const Header: React.FC<HeaderProps> = ({
                 value={selectedSpace?.uid || selectedSpace?.id || ''}
                 onChange={onSpaceChange}
                 disabled={loading}
-                sx={{ minWidth: '200px' }}
+                sx={{
+                  minWidth: '200px',
+                  '&:focus, &:focus-visible, &:focus-within': {
+                    borderColor: '#117964 !important',
+                    outline: '2px solid #117964 !important',
+                    outlineOffset: '-1px !important',
+                    boxShadow: 'none !important',
+                  },
+                }}
               >
                 {userSpaces.length > 0 ? (
                   userSpaces.map(space => (
