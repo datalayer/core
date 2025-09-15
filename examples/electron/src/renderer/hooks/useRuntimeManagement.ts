@@ -192,7 +192,7 @@ export const useRuntimeManagement = ({
 
             // Add cleanup function to prevent disposal conflicts
             if (manager && typeof (manager as any).dispose === 'function') {
-              const originalDispose = (manager as any).dispose.bind(manager);
+              const originalDispose = (manager as any).dispose;
               (manager as any).dispose = () => {
                 console.info(
                   '[useRuntimeManagement] Disposing ServiceManager for runtime:',
@@ -200,7 +200,9 @@ export const useRuntimeManagement = ({
                 );
                 removeCachedServiceManager(currentRuntime.uid);
                 try {
-                  originalDispose();
+                  if (typeof originalDispose === 'function') {
+                    originalDispose.call(manager);
+                  }
                 } catch (e) {
                   console.error(
                     '[useRuntimeManagement] Error in original dispose:',

@@ -31,22 +31,7 @@ export async function loadServiceManager() {
     // @ts-expect-error Dynamic import of JS file - types not available
     const services = await import('../polyfills/jupyterlab-proxy.js');
     console.log('[ServiceManagerLoader] Loaded jupyterlab-services-proxy');
-    console.log('[ServiceManagerLoader] Services type:', typeof services);
-    console.log(
-      '[ServiceManagerLoader] Keys:',
-      services ? Object.keys(services) : 'null'
-    );
-
-    // Log each key individually to avoid conversion issues
-    if (services) {
-      for (const key of Object.keys(services)) {
-        const value = services[key];
-        const valueType = typeof value;
-        console.log(
-          `[ServiceManagerLoader] Export '${key}': type=${valueType}, isFunction=${valueType === 'function'}, constructor=${value?.constructor?.name || 'N/A'}`
-        );
-      }
-    }
+    console.log('[ServiceManagerLoader] Services loaded with', services ? Object.keys(services).length : 0, 'exports');
 
     // Extract ServiceManager and ServerConnection
     realServiceManager = services?.ServiceManager;
@@ -76,26 +61,7 @@ export async function loadServiceManager() {
     }
 
     console.log(
-      '[ServiceManagerLoader] Successfully loaded real ServiceManager'
-    );
-    console.log(
-      '[ServiceManagerLoader] ServiceManager type:',
-      typeof realServiceManager
-    );
-    console.log(
-      '[ServiceManagerLoader] ServiceManager constructor name:',
-      realServiceManager?.constructor?.name || 'N/A'
-    );
-    console.log(
-      '[ServiceManagerLoader] ServiceManager is a constructor?',
-      typeof realServiceManager === 'function'
-    );
-    console.log(
-      '[ServiceManagerLoader] Successfully loaded real ServerConnection'
-    );
-    console.log(
-      '[ServiceManagerLoader] ServerConnection type:',
-      typeof realServerConnection
+      '[ServiceManagerLoader] Successfully loaded ServiceManager and ServerConnection'
     );
 
     return {

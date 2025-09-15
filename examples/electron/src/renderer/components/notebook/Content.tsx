@@ -45,16 +45,43 @@ const Content: React.FC<NotebookContentProps> = ({
   // Track if notebook component is mounted to prevent re-initialization
   const notebookComponentRef = useRef<unknown>(null);
 
+  // Track if service manager is ready
+  const [serviceManagerReady, setServiceManagerReady] = React.useState(false);
+
   // Create extensions for enhanced notebook UI
   const notebookExtensions = useMemo(
     () => [new CellSidebarExtension({ factory: CellSidebarButton })],
     []
   );
 
+  // Wait for service manager to be ready
+  React.useEffect(() => {
+    if (!serviceManager) {
+      setServiceManagerReady(false);
+      return;
+    }
+
+    // Check if service manager is ready
+    if (serviceManager.isReady) {
+      setServiceManagerReady(true);
+    } else {
+      // Wait for service manager to become ready
+      serviceManager.ready
+        .then(() => {
+          setServiceManagerReady(true);
+        })
+        .catch((error: any) => {
+          console.error('[NotebookContent] Service manager failed to become ready:', error);
+          setServiceManagerReady(false);
+        });
+    }
+  }, [serviceManager]);
+
   // Create notebook props with collaboration always enabled
   const notebookProps = useMemo(() => {
     if (
       !serviceManager ||
+      !serviceManagerReady ||
       !notebookContent ||
       !notebookContent.cells ||
       !Array.isArray(notebookContent.cells)
@@ -96,6 +123,7 @@ const Content: React.FC<NotebookContentProps> = ({
   }, [
     stableNotebookKey,
     serviceManager,
+    serviceManagerReady,
     notebookContent,
     collaborationProvider,
     notebookExtensions,
@@ -165,28 +193,10 @@ const Content: React.FC<NotebookContentProps> = ({
     );
   }
 
-  // If notebook props aren't ready, show configuration message
+  // If notebook props aren't ready, don't render anything
+  // The parent component should handle the loading state
   if (!notebookProps) {
-    return (
-      <Box
-        sx={{
-          p: 4,
-          textAlign: 'center',
-          bg: 'canvas.subtle',
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 2,
-          m: 2,
-        }}
-      >
-        <Text sx={{ color: 'fg.muted', mb: 2 }}>
-          Service manager not available.
-        </Text>
-        <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-          Please configure Datalayer credentials to enable notebook execution.
-        </Text>
-      </Box>
-    );
+    return null;
   }
 
   // Render the notebook with error boundary

@@ -103,25 +103,6 @@ const Header: React.FC<NotebookHeaderProps> = ({
                 flexWrap: 'wrap',
               }}
             >
-              {selectedNotebook?.path && (
-                <Text
-                  sx={{
-                    color: 'fg.muted',
-                    fontSize: 0,
-                    fontFamily: 'mono',
-                    bg: 'canvas.subtle',
-                    px: 2,
-                    py: 1,
-                    borderRadius: 1,
-                    border: '1px solid',
-                    borderColor: 'border.subtle',
-                  }}
-                  title={`File path: ${selectedNotebook.path}`}
-                >
-                  {selectedNotebook.path}
-                </Text>
-              )}
-
               {hasCollaboration && (
                 <Text
                   sx={{
@@ -223,26 +204,6 @@ const Header: React.FC<NotebookHeaderProps> = ({
           </Button>
         </Box>
       </Box>
-
-      {!hasServiceManager && (
-        <Box
-          sx={{
-            mt: 2,
-            p: 2,
-            bg: 'attention.subtle',
-            border: '1px solid',
-            borderColor: 'attention.muted',
-            borderRadius: 2,
-          }}
-          role="alert"
-          aria-live="polite"
-        >
-          <Text sx={{ color: 'attention.fg', fontSize: 1 }}>
-            Service manager not available. Please configure Datalayer
-            credentials.
-          </Text>
-        </Box>
-      )}
     </Box>
   );
 };

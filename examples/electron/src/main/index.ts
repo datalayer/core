@@ -262,27 +262,32 @@ function createMenu() {
               // Remove menu from about window
               aboutWindow.setMenu(null);
 
-              // Allow closing with ESC key
-              aboutWindow.webContents.on(
-                'before-input-event',
-                (_event, input) => {
-                  if (input.key === 'Escape') {
-                    aboutWindow.close();
-                  }
+              // Create named handlers for proper cleanup
+              const escapeHandler = (_event: Electron.Event, input: Electron.Input) => {
+                if (input.key === 'Escape') {
+                  aboutWindow.close();
                 }
-              );
+              };
 
-              // Handle close button click from renderer
               const closeHandler = () => {
                 if (aboutWindow && !aboutWindow.isDestroyed()) {
                   aboutWindow.close();
                 }
               };
 
+              // Allow closing with ESC key
+              aboutWindow.webContents.on('before-input-event', escapeHandler);
+
+              // Handle close button click from renderer
               ipcMain.on('close-about-window', closeHandler);
 
-              // Clean up handler when window is closed
+              // Clean up all event listeners when window is closed
               aboutWindow.on('closed', () => {
+                // Remove the before-input-event listener
+                if (aboutWindow.webContents && !aboutWindow.webContents.isDestroyed()) {
+                  aboutWindow.webContents.removeListener('before-input-event', escapeHandler);
+                }
+                // Remove the IPC listener
                 ipcMain.removeListener('close-about-window', closeHandler);
               });
             },
@@ -741,6 +746,28 @@ ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
  * Sets up the dock icon (macOS), creates the main window and menu.
  */
 app.whenReady().then(() => {
+  // Increase max event listeners to prevent warnings
+  require('events').EventEmitter.defaultMaxListeners = 20;
+
+  // Disable system beep sounds
+  if (process.platform === 'darwin') {
+    // Disable beep sound on macOS
+    app.commandLine.appendSwitch('disable-renderer-accessibility');
+
+    // Prevent beeps from console.error in renderer process
+    app.on('web-contents-created', (_event, webContents) => {
+      // Intercept console messages and prevent beeps
+      webContents.on('console-message', (_event, level, message) => {
+        // Prevent default behavior for errors (which causes beeps)
+        if (level === 3) { // 3 is error level
+          // Log to main process console instead
+          log.error('[Renderer]', message);
+          return false; // Prevent default behavior
+        }
+      });
+    });
+  }
+
   // Set the dock icon on macOS
   if (process.platform === 'darwin') {
     const iconPath = join(__dirname, '../../resources/icon.png');

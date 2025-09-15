@@ -82,14 +82,13 @@ const Header: React.FC<HeaderProps> = ({
               },
             }}
           >
-            <FormControl>
+            <FormControl disabled={loading}>
               <FormControl.Label sx={{ mb: 1, fontSize: 1 }}>
                 Select Space
               </FormControl.Label>
               <Select
                 value={selectedSpace?.uid || selectedSpace?.id || ''}
                 onChange={onSpaceChange}
-                disabled={loading}
                 sx={{
                   minWidth: '200px',
                   '&:focus, &:focus-visible, &:focus-within': {
