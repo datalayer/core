@@ -7,10 +7,9 @@ conda update -n base -c conda-forge conda && \
 conda create -n datalayer make python nodejs -y && \
 conda activate datalayer && \
 npm install && \
-make typedoc && \
+npm run typedoc && \
 pip install .[docs] && \
-make pydoc && \
 cd docs && \
 npm install && \
-make build'''
+npm run build'''
 publish = "docs/build"

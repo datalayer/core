@@ -13,7 +13,7 @@ export function useClientStore<T>(storeHook: () => T): T | null {
 
   useEffect(() => {
     setStore(storeHook());
-  }, []);
+  }, [storeHook]);
 
   return store;
 }

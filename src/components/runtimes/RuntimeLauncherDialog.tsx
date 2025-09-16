@@ -135,7 +135,8 @@ export function RuntimeLauncherDialog(
     // TODO when would this component be shown outside of a react-router? navigation is only available within a react-router.
     console.warn(reason);
   }
-  const { jupyterLabAdapter } = useJupyterReactStore();
+  const jupyterReactStore = useJupyterReactStore();
+  const jupyterLabAdapter = (jupyterReactStore as any).jupyterLabAdapter;
   const [selection, setSelection] = useState(
     (kernelSnapshot?.environment || environments[0]?.name) ?? '',
   );
