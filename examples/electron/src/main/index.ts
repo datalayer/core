@@ -263,7 +263,10 @@ function createMenu() {
               aboutWindow.setMenu(null);
 
               // Create named handlers for proper cleanup
-              const escapeHandler = (_event: Electron.Event, input: Electron.Input) => {
+              const escapeHandler = (
+                _event: Electron.Event,
+                input: Electron.Input
+              ) => {
                 if (input.key === 'Escape') {
                   aboutWindow.close();
                 }
@@ -284,8 +287,14 @@ function createMenu() {
               // Clean up all event listeners when window is closed
               aboutWindow.on('closed', () => {
                 // Remove the before-input-event listener
-                if (aboutWindow.webContents && !aboutWindow.webContents.isDestroyed()) {
-                  aboutWindow.webContents.removeListener('before-input-event', escapeHandler);
+                if (
+                  aboutWindow.webContents &&
+                  !aboutWindow.webContents.isDestroyed()
+                ) {
+                  aboutWindow.webContents.removeListener(
+                    'before-input-event',
+                    escapeHandler
+                  );
                 }
                 // Remove the IPC listener
                 ipcMain.removeListener('close-about-window', closeHandler);
@@ -701,9 +710,26 @@ ipcMain.handle(
         headers,
         runtimeId
       );
+
+      // Check if the connection was blocked
+      if ('blocked' in result && result.blocked) {
+        log.debug('[WebSocket Proxy] Connection blocked (runtime terminated)');
+        // Throw error to maintain compatibility with existing error handling
+        throw new Error(result.reason);
+      }
+
       return result;
     } catch (error: unknown) {
-      log.error('[WebSocket Proxy] Failed to open connection:', error);
+      // Only log as error if it's not a terminated runtime error
+      const errorStr = String(error);
+      if (
+        errorStr.includes('terminated') ||
+        errorStr.includes('no new connections allowed')
+      ) {
+        log.debug('[WebSocket Proxy] Connection blocked (runtime terminated)');
+      } else {
+        log.error('[WebSocket Proxy] Failed to open connection:', error);
+      }
       throw error;
     }
   }
@@ -738,6 +764,19 @@ ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
     `[Runtime Cleanup] 🛑 Main process marked runtime ${runtimeId} as terminated`
   );
 
+  // CRITICAL: Close all WebSocket connections for this runtime
+  try {
+    websocketProxy.closeConnectionsForRuntime(runtimeId);
+    log.debug(
+      `[Runtime Cleanup] ✅ Closed all WebSocket connections for runtime ${runtimeId}`
+    );
+  } catch (error) {
+    log.error(
+      `[Runtime Cleanup] ❌ Error closing WebSocket connections for runtime ${runtimeId}:`,
+      error
+    );
+  }
+
   return { success: true };
 });
 
@@ -753,19 +792,6 @@ app.whenReady().then(() => {
   if (process.platform === 'darwin') {
     // Disable beep sound on macOS
     app.commandLine.appendSwitch('disable-renderer-accessibility');
-
-    // Prevent beeps from console.error in renderer process
-    app.on('web-contents-created', (_event, webContents) => {
-      // Intercept console messages and prevent beeps
-      webContents.on('console-message', (_event, level, message) => {
-        // Prevent default behavior for errors (which causes beeps)
-        if (level === 3) { // 3 is error level
-          // Log to main process console instead
-          log.error('[Renderer]', message);
-          return false; // Prevent default behavior
-        }
-      });
-    });
   }
 
   // Set the dock icon on macOS

@@ -412,11 +412,18 @@ const Documents: React.FC<DocumentsListProps> = ({
           content = JSON.stringify(response.body);
         }
 
+        // Determine the file extension based on item type
+        const itemType = item.type || item.type_s || item.item_type || '';
+        const isNotebook = itemType.toLowerCase() === 'notebook';
+        const extension = isNotebook ? '.ipynb' : '.json';
+
         const blob = new Blob([content], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = item.name.includes('.') ? item.name : `${item.name}.json`;
+        a.download = item.name.includes('.')
+          ? item.name
+          : `${item.name}${extension}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

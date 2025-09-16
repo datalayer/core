@@ -55,8 +55,7 @@ class WebSocketProxyService {
    * @param protocol - Optional WebSocket subprotocol
    * @param headers - Optional headers for the connection
    * @param runtimeId - Optional runtime ID to associate with the connection
-   * @returns Object containing the connection ID
-   * @throws Error if runtime has been terminated
+   * @returns Object containing the connection ID or blocked status
    */
   open(
     window: BrowserWindow,
@@ -64,7 +63,7 @@ class WebSocketProxyService {
     protocol?: string,
     headers?: Record<string, string>,
     runtimeId?: string
-  ): { id: string } {
+  ): { id: string } | { id: string; blocked: true; reason: string } {
     // Check if this runtime has been terminated
     if (runtimeId) {
       const cleanupRegistry = (global as any).__datalayerRuntimeCleanup;
@@ -76,9 +75,12 @@ class WebSocketProxyService {
         log.debug(
           `[WebSocket Proxy] 🛑 BLOCKED: Preventing new connection to terminated runtime ${runtimeId}`
         );
-        throw new Error(
-          `Runtime ${runtimeId} has been terminated - no new connections allowed`
-        );
+        // Return a blocked response instead of throwing to avoid IPC error logging
+        return {
+          id: 'blocked-connection',
+          blocked: true,
+          reason: `Runtime ${runtimeId} has been terminated - no new connections allowed`,
+        };
       }
     }
 
@@ -291,7 +293,10 @@ class WebSocketProxyService {
   send(id: string, data: unknown): void {
     const connection = this.connections.get(id);
     if (!connection) {
-      log.error(`[WebSocket Proxy] Connection ${id} not found`);
+      // Use debug level since this is expected when connections are closed during cleanup
+      log.debug(
+        `[WebSocket Proxy] Connection ${id} not found (likely already closed)`
+      );
       return;
     }
 
@@ -334,7 +339,10 @@ class WebSocketProxyService {
   close(id: string, code?: number, reason?: string): void {
     const connection = this.connections.get(id);
     if (!connection) {
-      log.error(`[WebSocket Proxy] Connection ${id} not found`);
+      // Use debug level since this is expected when connections are closed during cleanup
+      log.debug(
+        `[WebSocket Proxy] Connection ${id} not found (likely already closed)`
+      );
       return;
     }
 

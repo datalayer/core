@@ -66,6 +66,24 @@ export class CollaborationWebSocketAdapter {
       return;
     }
 
+    // RACE CONDITION PREVENTION: Check if runtime is terminated before creating WebSocket connection
+    if (this.runtimeId) {
+      const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+      if (
+        cleanupRegistry &&
+        cleanupRegistry.has(this.runtimeId) &&
+        cleanupRegistry.get(this.runtimeId).terminated
+      ) {
+        logger.info(
+          '[CollaborationWebSocketAdapter] 🛑 RACE CONDITION PREVENTION: Blocking WebSocket connection for terminated runtime:',
+          this.runtimeId
+        );
+        throw new Error(
+          `Runtime ${this.runtimeId} has been terminated - no new collaboration connections allowed`
+        );
+      }
+    }
+
     try {
       logger.debug(
         `[CollaborationAdapter] Connecting to collaboration WebSocket for document ${this.docId}`

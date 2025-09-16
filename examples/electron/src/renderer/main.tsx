@@ -179,6 +179,38 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
+// Suppress widget detachment errors that occur during cleanup
+window.addEventListener('error', event => {
+  const errorStr = event.error?.message || String(event.error);
+  if (
+    errorStr.includes('Widget is not attached') ||
+    errorStr.includes('NotebookWindowedLayout') ||
+    errorStr.includes('detachWidget')
+  ) {
+    console.debug(
+      '[Global Error Handler] Suppressing widget detachment error during cleanup'
+    );
+    event.preventDefault();
+    return;
+  }
+});
+
+// Suppress unhandled promise rejections for widget errors
+window.addEventListener('unhandledrejection', event => {
+  const errorStr = event.reason?.message || String(event.reason);
+  if (
+    errorStr.includes('Widget is not attached') ||
+    errorStr.includes('NotebookWindowedLayout') ||
+    errorStr.includes('detachWidget')
+  ) {
+    console.debug(
+      '[Global Error Handler] Suppressing widget promise rejection during cleanup'
+    );
+    event.preventDefault();
+    return;
+  }
+});
+
 /**
  * Note: Electron APIs are only available when running in Electron environment.
  * In browser mode, the app will show "Not in Electron environment" message.

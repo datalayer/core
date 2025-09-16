@@ -31,7 +31,11 @@ export async function loadServiceManager() {
     // @ts-expect-error Dynamic import of JS file - types not available
     const services = await import('../polyfills/jupyterlab-proxy.js');
     console.log('[ServiceManagerLoader] Loaded jupyterlab-services-proxy');
-    console.log('[ServiceManagerLoader] Services loaded with', services ? Object.keys(services).length : 0, 'exports');
+    console.log(
+      '[ServiceManagerLoader] Services loaded with',
+      services ? Object.keys(services).length : 0,
+      'exports'
+    );
 
     // Extract ServiceManager and ServerConnection
     realServiceManager = services?.ServiceManager;

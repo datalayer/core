@@ -62,6 +62,12 @@ class ErrorBoundary extends React.Component<
       console.info(
         '[NotebookErrorBoundary] SessionContext disposal error - likely component lifecycle issue'
       );
+    } else if (error.message.includes('Widget is not attached')) {
+      console.info(
+        '[NotebookErrorBoundary] Widget detachment error - expected during cleanup'
+      );
+      // Don't propagate widget detachment errors as they're expected during cleanup
+      return;
     } else if (error.message.includes('removeChild')) {
       console.info(
         '[NotebookErrorBoundary] DOM manipulation error - component mounting/unmounting conflict'

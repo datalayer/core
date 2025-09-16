@@ -36,7 +36,7 @@ async function proxyFetch(
           cleanupRegistry.has(runtimeId) &&
           cleanupRegistry.get(runtimeId).terminated
         ) {
-          console.info(
+          proxyLogger.debug(
             '🛑 [Request Blocked] Blocking request to terminated runtime:',
             runtimeId,
             url
@@ -173,6 +173,25 @@ export class ProxyWebSocket extends EventTarget {
 
   private async _open(): Promise<void> {
     try {
+      // RACE CONDITION PREVENTION: Check if runtime is terminated before creating WebSocket connection
+      if (this._runtimeId) {
+        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+        if (
+          cleanupRegistry &&
+          cleanupRegistry.has(this._runtimeId) &&
+          cleanupRegistry.get(this._runtimeId).terminated
+        ) {
+          proxyLogger.info(
+            '[ProxyWebSocket] 🛑 RACE CONDITION PREVENTION: Blocking WebSocket connection for terminated runtime:',
+            this._runtimeId
+          );
+          this._readyState = ProxyWebSocket.CLOSED;
+          throw new Error(
+            `Runtime ${this._runtimeId} has been terminated - no new WebSocket connections allowed`
+          );
+        }
+      }
+
       // Open connection through IPC
       const result = await (window as any).proxyAPI.websocketOpen({
         url: this._url,
@@ -305,7 +324,16 @@ export class ProxyWebSocket extends EventTarget {
         (window as any).proxyAPI.removeWebSocketEventListener();
       };
     } catch (error) {
-      proxyLogger.error('Failed to open connection:', error);
+      // Only log as error if it's not a terminated runtime error
+      const errorStr = String(error);
+      if (
+        errorStr.includes('terminated') ||
+        errorStr.includes('no new connections allowed')
+      ) {
+        proxyLogger.debug('Connection blocked (runtime terminated):', error);
+      } else {
+        proxyLogger.error('Failed to open connection:', error);
+      }
       this._readyState = ProxyWebSocket.CLOSED;
 
       const errorEvent = new Event('error');

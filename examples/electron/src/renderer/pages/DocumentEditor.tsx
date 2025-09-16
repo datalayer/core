@@ -348,6 +348,31 @@ const DocumentEditorContent: React.FC<DocumentViewProps> = ({
           runtime.runtime.ingress &&
           runtime.runtime.token
         ) {
+          // RACE CONDITION PREVENTION: Check if runtime is terminated before creating ServiceManager
+          const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+          const runtimeUid = runtime.runtime?.pod_name || runtime.runtime?.uid;
+          if (cleanupRegistry && runtimeUid) {
+            if (
+              cleanupRegistry.has(runtimeUid) &&
+              cleanupRegistry.get(runtimeUid).terminated
+            ) {
+              logger.info(
+                '🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation for terminated runtime:',
+                runtimeUid
+              );
+              return;
+            }
+          }
+
+          // Check if we're currently terminating any runtime
+          const { isTerminatingRuntime } = useRuntimeStore.getState();
+          if (isTerminatingRuntime) {
+            logger.info(
+              '🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation during termination'
+            );
+            return;
+          }
+
           logger.debug('Creating service manager for runtime');
 
           // Override Jupyter config BEFORE creating ServiceManager

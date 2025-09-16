@@ -71,7 +71,10 @@ const Content: React.FC<NotebookContentProps> = ({
           setServiceManagerReady(true);
         })
         .catch((error: any) => {
-          console.error('[NotebookContent] Service manager failed to become ready:', error);
+          console.error(
+            '[NotebookContent] Service manager failed to become ready:',
+            error
+          );
           setServiceManagerReady(false);
         });
     }

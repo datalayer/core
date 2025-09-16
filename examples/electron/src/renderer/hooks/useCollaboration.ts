@@ -14,7 +14,11 @@ import {
   UseCollaborationReturn,
 } from '../../shared/types';
 import { ElectronCollaborationProvider } from '../services/electronCollaborationProvider';
-import { isRuntimeInCleanupRegistry } from '../utils/notebook';
+import {
+  isRuntimeInCleanupRegistry,
+  isRuntimeTerminated,
+} from '../utils/notebook';
+import { useRuntimeStore } from '../stores/runtimeStore';
 
 /**
  * React hook that manages the lifecycle of collaboration providers for real-time notebook collaboration.
@@ -45,8 +49,14 @@ export const useCollaboration = ({
 
   // Create collaboration provider instance when configuration is available
   useEffect(() => {
+    // Don't create collaboration if notebook is null or runtime is terminated
+    if (!selectedNotebook) {
+      console.info('[useCollaboration] Skipping - no selected notebook');
+      return;
+    }
+
     if (configuration?.runUrl && configuration?.token && !runtimeTerminated) {
-      // Additional check: Verify runtime hasn't been marked as terminated in global registry
+      // PRIORITY CHECK: Verify runtime hasn't been marked as terminated in global registry
       if (runtimeId && isRuntimeInCleanupRegistry(runtimeId)) {
         console.info(
           '🛑 [useCollaboration] Blocking collaboration provider creation for terminated runtime:',
@@ -55,15 +65,78 @@ export const useCollaboration = ({
         return;
       }
 
+      // Check if the notebook's runtime was terminated
+      if (selectedNotebook?.id && isRuntimeTerminated(selectedNotebook.id)) {
+        console.info(
+          '🛑 [useCollaboration] Blocking collaboration provider creation - notebook runtime was terminated'
+        );
+        return;
+      }
+
+      // ADDITIONAL CHECK: Check global cleanup registry directly for any runtime
+      const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+      if (cleanupRegistry && runtimeId) {
+        if (
+          cleanupRegistry.has(runtimeId) &&
+          cleanupRegistry.get(runtimeId).terminated
+        ) {
+          console.info(
+            '[useCollaboration] 🛑 RACE CONDITION PREVENTION: Blocking collaboration provider creation for terminated runtime:',
+            runtimeId
+          );
+          return;
+        }
+      }
+
+      // TERMINATING STATE CHECK: Don't create resources if any runtime is currently terminating
+      try {
+        const { isTerminatingRuntime: storeTerminating } =
+          useRuntimeStore.getState();
+        if (storeTerminating) {
+          console.info(
+            '[useCollaboration] 🛑 RACE CONDITION PREVENTION: Blocking collaboration provider creation during termination'
+          );
+          return;
+        }
+      } catch (error) {
+        // If we can't check the store, err on the side of caution
+        console.warn(
+          '[useCollaboration] Could not check terminating state:',
+          error
+        );
+      }
+
       // Dispose existing provider
       if (collaborationProviderRef.current) {
         try {
+          // Clean up Yjs providers before disposal to prevent "Invalid access" errors
+          const provider = collaborationProviderRef.current as any;
+          if (provider.yWebsocketProvider) {
+            try {
+              provider.yWebsocketProvider.destroy();
+            } catch (e) {
+              // Ignore Yjs cleanup errors
+            }
+          }
+          if (provider.awareness) {
+            try {
+              provider.awareness.destroy();
+            } catch (e) {
+              // Ignore awareness cleanup errors
+            }
+          }
           collaborationProviderRef.current.dispose();
         } catch (error) {
-          console.warn(
-            '[useCollaboration] Error disposing existing provider:',
-            error
-          );
+          // Suppress Yjs "Invalid access" errors which are expected during cleanup
+          if (
+            !String(error).includes('Invalid access') &&
+            !String(error).includes('Yjs')
+          ) {
+            console.warn(
+              '[useCollaboration] Error disposing existing provider:',
+              error
+            );
+          }
         }
         collaborationProviderRef.current = null;
         setCollaborationProvider(null);

@@ -8,7 +8,7 @@
  * @description Main notebook editor page that orchestrates notebook content loading, runtime management, and collaboration
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Box } from '@primer/react';
 import { useCoreStore } from '@datalayer/core/state';
 import { NotebookViewProps } from '../../shared/types';
@@ -85,6 +85,64 @@ const NotebookViewer: React.FC<NotebookViewProps> = ({
       selectedNotebook?.name
     );
   }, [selectedNotebook?.id, selectedNotebook?.path, selectedNotebook?.name]);
+
+  // Store refs for cleanup to avoid stale closures
+  const serviceManagerRef = React.useRef(serviceManager);
+  const notebookRef = React.useRef(selectedNotebook);
+
+  React.useEffect(() => {
+    serviceManagerRef.current = serviceManager;
+  }, [serviceManager]);
+
+  React.useEffect(() => {
+    notebookRef.current = selectedNotebook;
+  }, [selectedNotebook]);
+
+  // Clean up sessions and kernels when component unmounts
+  useEffect(() => {
+    return () => {
+      // Only cleanup when component unmounts
+      const manager = serviceManagerRef.current;
+      const notebook = notebookRef.current;
+
+      if (manager && !manager.isDisposed) {
+        console.info(
+          '[NotebookEditor] Component unmounting - scheduling cleanup'
+        );
+
+        // Schedule cleanup after current render cycle to avoid React warning
+        setTimeout(() => {
+          if (!manager.isDisposed) {
+            try {
+              // Stop all active sessions for this notebook
+              const sessions = manager.sessions;
+              if (sessions && notebook) {
+                const runningSessions = Array.from(sessions.running());
+                runningSessions.forEach(session => {
+                  if (
+                    session.path === notebook.path ||
+                    session.name === notebook.name
+                  ) {
+                    console.info(
+                      `[NotebookEditor] Shutting down session: ${session.id}`
+                    );
+                    sessions.shutdown(session.id).catch(err => {
+                      console.warn(
+                        '[NotebookEditor] Error shutting down session:',
+                        err
+                      );
+                    });
+                  }
+                });
+              }
+            } catch (error) {
+              console.warn('[NotebookEditor] Error during cleanup:', error);
+            }
+          }
+        }, 0);
+      }
+    };
+  }, []);
 
   // Handle notebook component errors
   const handleNotebookError = (error: Error) => {

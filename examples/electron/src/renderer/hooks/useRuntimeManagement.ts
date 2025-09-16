@@ -95,6 +95,45 @@ export const useRuntimeManagement = ({
         return;
       }
 
+      // PRIORITY CHECK: Don't create resources if runtime was terminated
+      if (terminated) {
+        console.info(
+          '[useRuntimeManagement] Skipping resource creation - runtime was terminated'
+        );
+        return;
+      }
+
+      // Check if this notebook's runtime was just terminated
+      if (isRuntimeTerminated(selectedNotebook.id)) {
+        console.info(
+          '[useRuntimeManagement] Skipping resource creation - runtime marked as terminated'
+        );
+        return;
+      }
+
+      // ADDITIONAL CHECK: Check global cleanup registry for any existing runtime
+      const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+      if (cleanupRegistry && runtime?.uid) {
+        if (
+          cleanupRegistry.has(runtime.uid) &&
+          cleanupRegistry.get(runtime.uid).terminated
+        ) {
+          console.info(
+            '[useRuntimeManagement] 🛑 RACE CONDITION PREVENTION: Blocking resource creation for terminated runtime:',
+            runtime.uid
+          );
+          return;
+        }
+      }
+
+      // TERMINATING STATE CHECK: Don't create resources if currently terminating
+      if (isTerminatingRuntime) {
+        console.info(
+          '[useRuntimeManagement] 🛑 RACE CONDITION PREVENTION: Blocking resource creation during termination'
+        );
+        return;
+      }
+
       // Check if we already have a runtime with service manager for this notebook
       const existingRuntime = getRuntimeForNotebook(selectedNotebook.id);
       const hasExistingServiceManager =
@@ -192,24 +231,35 @@ export const useRuntimeManagement = ({
 
             // Add cleanup function to prevent disposal conflicts
             if (manager && typeof (manager as any).dispose === 'function') {
-              const originalDispose = (manager as any).dispose;
-              (manager as any).dispose = () => {
+              const originalDispose = (manager as any).dispose.bind(manager);
+              (manager as any).dispose = function () {
                 console.info(
                   '[useRuntimeManagement] Disposing ServiceManager for runtime:',
                   currentRuntime.uid
                 );
                 removeCachedServiceManager(currentRuntime.uid);
                 try {
-                  if (typeof originalDispose === 'function') {
-                    originalDispose.call(manager);
+                  // Check if the manager is still valid and not disposed
+                  if (
+                    manager &&
+                    !(manager as any).isDisposed &&
+                    typeof originalDispose === 'function'
+                  ) {
+                    originalDispose();
                   }
                 } catch (e) {
-                  console.error(
-                    '[useRuntimeManagement] Error in original dispose:',
-                    e
-                  );
+                  // Ignore disposal errors as they're expected during cleanup
+                  if (
+                    !String(e).includes('Poll') &&
+                    !String(e).includes('disposed')
+                  ) {
+                    console.error(
+                      '[useRuntimeManagement] Error in original dispose:',
+                      e
+                    );
+                  }
                 }
-              };
+              }.bind(manager);
             }
           } else {
             console.info(

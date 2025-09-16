@@ -126,11 +126,15 @@ export const setupConsoleFiltering = (): (() => void) => {
 
   console.log = (...args: unknown[]) => {
     const message = args.join(' ');
-    if (message.includes('Created config for Jupyter React') ||
-        // Suppress Primer React FormControl prop warnings
-        message.includes("instead of passing the 'disabled' prop directly to the input component") ||
-        // Suppress misleading Jupyter React config logs (we pass serviceManager with correct URL)
-        message.includes('Returning existing Jupyter React config')) {
+    if (
+      message.includes('Created config for Jupyter React') ||
+      // Suppress Primer React FormControl prop warnings
+      message.includes(
+        "instead of passing the 'disabled' prop directly to the input component"
+      ) ||
+      // Suppress misleading Jupyter React config logs (we pass serviceManager with correct URL)
+      message.includes('Returning existing Jupyter React config')
+    ) {
       return; // Suppress these messages
     }
     originalConsoleLog.apply(console, args);
@@ -139,16 +143,24 @@ export const setupConsoleFiltering = (): (() => void) => {
   console.warn = (...args: unknown[]) => {
     const message = args.join(' ');
     // Suppress various third-party library warnings
-    if (message.includes('use allowUnionTypes to allow union type keyword') ||
-        message.includes('strictTypes') ||
-        // Suppress Lumino defaultProps deprecation warning (from JupyterLab packages)
-        message.includes('Support for defaultProps will be removed from function components') ||
-        // Suppress React unmount timing warning (from Jupyter components)
-        message.includes('Attempted to synchronously unmount a root while React was already rendering') ||
-        // Suppress cell executor warning (expected behavior when using proxy service manager)
-        message.includes('Requesting cell execution without any cell executor defined') ||
-        // Suppress SVG malformed warnings from JupyterLab icons
-        message.includes('SVG HTML was malformed for LabIcon instance')) {
+    if (
+      message.includes('use allowUnionTypes to allow union type keyword') ||
+      message.includes('strictTypes') ||
+      // Suppress Lumino defaultProps deprecation warning (from JupyterLab packages)
+      message.includes(
+        'Support for defaultProps will be removed from function components'
+      ) ||
+      // Suppress React unmount timing warning (from Jupyter components)
+      message.includes(
+        'Attempted to synchronously unmount a root while React was already rendering'
+      ) ||
+      // Suppress cell executor warning (expected behavior when using proxy service manager)
+      message.includes(
+        'Requesting cell execution without any cell executor defined'
+      ) ||
+      // Suppress SVG malformed warnings from JupyterLab icons
+      message.includes('SVG HTML was malformed for LabIcon instance')
+    ) {
       return;
     }
     originalConsoleWarn.apply(console, args);
