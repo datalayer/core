@@ -7,8 +7,9 @@ conda update -n base -c conda-forge conda && \
 conda create -n datalayer make python nodejs -y && \
 conda activate datalayer && \
 npm install && \
-npm run typedoc && \
+make typedoc && \
 pip install .[docs] && \
+make pydoc
 cd docs && \
 npm install && \
 npm run build'''
