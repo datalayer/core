@@ -4,11 +4,11 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
-import { useParams as useParamsRR } from '../navigation/react-router';
+import { useParamsRR } from '../navigation/adapters/react-router';
 import {
-  useParams as useParamsNext,
-  useSearchParams as useSearchParamsNext,
-} from '../navigation/nextjs';
+  useParamsNext,
+  useSearchParamsNext,
+} from '../navigation/adapters/nextjs';
 
 /**
  * Hook to get URL parameters

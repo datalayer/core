@@ -15,15 +15,15 @@ export interface Location {
 
 // Import React Router hooks from our wrapper
 import {
-  useLocation as useLocationRR,
-  useNavigate as useNavigateRR,
-} from '../navigation/react-router';
+  useLocationRR,
+  useNavigateRR,
+} from '../navigation/adapters/react-router';
 // Import Next.js hooks from our wrapper
 // Currently not used but kept for future Next.js support
 // import {
-//   usePathname,
-//   useSearchParams,
-// } from '../navigation/nextjs';
+//   usePathnameNext,
+//   useSearchParamsNext,
+// } from '../navigation/adapters/nextjs';
 
 /**
  * Hook to get current location

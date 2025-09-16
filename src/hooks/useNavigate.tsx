@@ -5,12 +5,12 @@
 
 import { useCallback } from 'react';
 import { useLayoutStore } from '../state';
-import { createNavigate } from '../navigation/native';
+import { createNativeNavigate } from '../navigation/adapters/native';
 // Import React Router hooks from our wrapper
-import { useNavigate as useNavigateRR } from '../navigation/react-router';
+import { useNavigateRR } from '../navigation/adapters/react-router';
 // Import Next.js hooks from our wrapper
 // Currently not used but kept for future Next.js support
-// import { useRouter } from '../navigation/nextjs';
+// import { useRouterNext } from '../navigation/adapters/nextjs';
 
 /**
  * Main navigation hook that provides a universal navigate function
@@ -52,7 +52,7 @@ export const useNavigate = () => {
   }
 
   // Otherwise use native navigation with our custom behavior
-  const baseNavigate = createNavigate();
+  const baseNavigate = createNativeNavigate();
 
   // Wrap with our custom behavior for native navigation
   // eslint-disable-next-line react-hooks/rules-of-hooks

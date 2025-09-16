@@ -3,12 +3,25 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// Navigation module has been restructured for cleaner imports.
-// Please use specific subpath imports:
-//
-// import { useRouterNext } from '@datalayer/core/navigation/nextjs';
-// import { useNavigateRR } from '@datalayer/core/navigation/react-router';
-// import { createNativeAdapter } from '@datalayer/core/navigation/native';
-// import { Link, NavLink } from '@datalayer/core/navigation/components';
-//
-// See MIGRATION_GUIDE.md for more details.
+// Export React Router hook exports for direct use
+export {
+  useParamsRR,
+  useLocationRR,
+  useNavigateRR,
+} from './adapters/react-router';
+
+// Export Next.js hook exports for direct use
+export {
+  useParamsNext,
+  useSearchParamsNext,
+  useRouterNext,
+  usePathnameNext,
+  useRouterNextPages,
+  isNextJsEnvironment,
+} from './adapters/nextjs';
+
+// Native adapter utilities
+export { createNativeAdapter, createNativeNavigate } from './adapters/native';
+
+// Export components if they exist
+export { NavigationLink, Link, NavLink } from './components';
