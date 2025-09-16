@@ -1,12 +1,12 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /**
  * @module renderer/App
  * @description Main React application component for the Datalayer Electron app.
  * Manages authentication, view navigation, and component orchestration.
- */
-
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
  */
 
 import React, {

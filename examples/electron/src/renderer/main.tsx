@@ -1,12 +1,12 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /**
  * @module renderer/main
  * @description Main entry point for the Electron renderer process.
  * Handles polyfills, Prism.js configuration, and React application initialization.
- */
-
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
  */
 
 /**

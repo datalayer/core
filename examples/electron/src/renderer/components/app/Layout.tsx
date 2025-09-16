@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/app/Layout
- * @description Application layout wrapper component providing theme providers.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/app/Layout
+ * @description Application layout wrapper component providing theme providers.
  */
 
 import React from 'react';

@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/app/UserMenu
- * @description User profile dropdown menu component with GitHub user display and logout.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/app/UserMenu
+ * @description User profile dropdown menu component with GitHub user display and logout.
  */
 
 import React, { useEffect } from 'react';

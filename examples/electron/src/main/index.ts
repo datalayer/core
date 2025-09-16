@@ -1,12 +1,12 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /**
  * @module main/index
  * @description Main process entry point for the Datalayer Electron application.
  * Handles window creation, IPC communication, menu setup, and security configurations.
- */
-
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
  */
 
 // Initialize electron-log FIRST, before any other imports

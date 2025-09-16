@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/app/NavigationTabs
- * @description Navigation tabs container component that manages tab visibility and state.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/app/NavigationTabs
+ * @description Navigation tabs container component that manages tab visibility and state.
  */
 
 import React from 'react';

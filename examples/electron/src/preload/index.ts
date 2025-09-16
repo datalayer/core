@@ -1,12 +1,12 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /**
  * @module preload/index
  * @description Preload script that provides a secure bridge between the main and renderer processes.
  * Exposes protected APIs for Electron, Datalayer, and proxy communication.
- */
-
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
  */
 
 import { contextBridge, ipcRenderer } from 'electron';

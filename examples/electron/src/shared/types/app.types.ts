@@ -1,11 +1,11 @@
-/**
- * @module shared/types/app.types
- * @description Type definitions for the main application components.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module shared/types/app.types
+ * @description Type definitions for the main application components.
  */
 
 /**

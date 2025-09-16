@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/environments/Card
- * @description Environment card component displaying environment details and selection state.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/environments/Card
+ * @description Environment card component displaying environment details and selection state.
  */
 
 import React from 'react';

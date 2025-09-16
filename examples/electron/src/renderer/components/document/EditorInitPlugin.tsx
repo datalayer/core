@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/document/EditorInitPlugin
- * @description Lexical editor initialization plugin for document editing.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/document/EditorInitPlugin
+ * @description Lexical editor initialization plugin for document editing.
  */
 
 import { useEffect } from 'react';

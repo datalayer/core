@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/app/Header
- * @description Application header component with navigation and user menu.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/app/Header
+ * @description Application header component with navigation and user menu.
  */
 
 import React, { useState } from 'react';

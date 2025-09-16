@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/app/NavigationTab
- * @description Individual navigation tab component with active state styling.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/app/NavigationTab
+ * @description Individual navigation tab component with active state styling.
  */
 
 import React from 'react';

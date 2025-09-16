@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/environments/Description
- * @description Environment description component with parsing for packages and GPU details.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/environments/Description
+ * @description Environment description component with parsing for packages and GPU details.
  */
 
 import React from 'react';

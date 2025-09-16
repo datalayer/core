@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/document/LoadingSpinner
- * @description Loading spinner component for document editor states.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/document/LoadingSpinner
+ * @description Loading spinner component for document editor states.
  */
 
 import React from 'react';

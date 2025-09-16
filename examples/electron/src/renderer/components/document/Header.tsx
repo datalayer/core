@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/document/Header
- * @description Document editor header component with runtime controls and collaboration status.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/document/Header
+ * @description Document editor header component with runtime controls and collaboration status.
  */
 
 import React from 'react';

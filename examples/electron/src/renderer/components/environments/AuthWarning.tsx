@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/environments/AuthWarning
- * @description Warning component displayed when user is not authenticated.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/environments/AuthWarning
+ * @description Warning component displayed when user is not authenticated.
  */
 
 import React from 'react';

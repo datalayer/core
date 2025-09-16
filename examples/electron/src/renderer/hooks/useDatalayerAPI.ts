@@ -1,12 +1,12 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /**
  * @module renderer/hooks/useDatalayerAPI
  * @description React hook for accessing Datalayer API through secure IPC.
  * All API calls go through the main process for security.
- */
-
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
  */
 
 import { useState, useCallback, useEffect } from 'react';

@@ -1,12 +1,12 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /**
  * @module renderer/stores/runtimeStore
  * @description Zustand store for managing compute runtime state.
  * Handles runtime creation, termination, and lifecycle management.
- */
-
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
  */
 
 import { create } from 'zustand';

@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/document/LexicalEditor
- * @description Rich text editor component with Jupyter integration and collaboration support.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/document/LexicalEditor
+ * @description Rich text editor component with Jupyter integration and collaboration support.
  */
 
 import React, {

@@ -1,11 +1,11 @@
-/**
- * @module renderer/components/app/LoadingScreen
- * @description Full-screen loading indicator component with status messages.
- */
-
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * @module renderer/components/app/LoadingScreen
+ * @description Full-screen loading indicator component with status messages.
  */
 
 import React from 'react';
