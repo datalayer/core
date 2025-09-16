@@ -65,7 +65,17 @@
     "@category"
   ],
   "inlineTags": ["@link", "@linkcode", "@linkplain"],
-  "modifierTags": ["@public", "@private", "@protected", "@readonly", "@override", "@virtual", "@abstract", "@async", "@generator"],
+  "modifierTags": [
+    "@public",
+    "@private",
+    "@protected",
+    "@readonly",
+    "@override",
+    "@virtual",
+    "@abstract",
+    "@async",
+    "@generator"
+  ],
   "lightHighlightTheme": "github-light",
   "darkHighlightTheme": "github-dark"
 }

@@ -26,7 +26,7 @@ import {
   JupyterInputOutputPlugin,
 } from '@datalayer/jupyter-lexical/lib/plugins';
 import { useJupyter } from '@datalayer/jupyter-react';
-import { useCoreStore } from '@datalayer/core/state';
+import { useCoreStore } from '@datalayer/core/lib/state';
 import { CustomLexicalEditorProps } from '../../../shared/types';
 import { buildCollaborationWebSocketUrl } from '../../utils/document';
 import { logger } from '../../utils/logger';

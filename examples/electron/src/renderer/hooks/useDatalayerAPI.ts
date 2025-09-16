@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useCoreStore, useIAMStore } from '@datalayer/core/state';
+import { useCoreStore, useIAMStore } from '@datalayer/core/lib/state';
 
 /**
  * Interface for Datalayer environment configuration.

@@ -39,53 +39,6 @@
     "style/*.css",
     "style/index.js"
   ],
-  "exports": {
-    ".": "./lib/index.js",
-    "./hooks": "./lib/hooks/index.js",
-    "./utils": "./lib/utils/index.js",
-    "./state": "./lib/state/index.js",
-    "./models": "./lib/models/index.js",
-    "./components/*": "./lib/components/*.js",
-    "./api": "./lib/api/index.js",
-    "./api/runtimes": "./lib/api/runtimes/index.js",
-    "./api/runtimes/actions": "./lib/api/runtimes/actions.js",
-    "./collaboration": "./lib/collaboration/index.js",
-    "./services": "./lib/services/index.js",
-    "./navigation": "./lib/navigation/index.js",
-    "./navigation/nextjs": "./lib/navigation/nextjs/index.js",
-    "./navigation/react-router": "./lib/navigation/react-router/index.js",
-    "./navigation/native": "./lib/navigation/native/index.js",
-    "./navigation/components": "./lib/navigation/components/index.js",
-    "./theme": "./lib/theme/index.js",
-    "./config": "./lib/config/index.js",
-    "./i18n": "./lib/i18n/index.js",
-    "./routes": "./lib/routes/index.js",
-    "./mocks": "./lib/mocks/index.js"
-  },
-  "typesVersions": {
-    "*": {
-      "hooks": ["./lib/hooks/index.d.ts"],
-      "utils": ["./lib/utils/index.d.ts"],
-      "state": ["./lib/state/index.d.ts"],
-      "models": ["./lib/models/index.d.ts"],
-      "components/*": ["./lib/components/*.d.ts"],
-      "api": ["./lib/api/index.d.ts"],
-      "api/runtimes": ["./lib/api/runtimes/index.d.ts"],
-      "api/runtimes/actions": ["./lib/api/runtimes/actions.d.ts"],
-      "collaboration": ["./lib/collaboration/index.d.ts"],
-      "services": ["./lib/services/index.d.ts"],
-      "navigation": ["./lib/navigation/index.d.ts"],
-      "navigation/nextjs": ["./lib/navigation/nextjs/index.d.ts"],
-      "navigation/react-router": ["./lib/navigation/react-router/index.d.ts"],
-      "navigation/native": ["./lib/navigation/native/index.d.ts"],
-      "navigation/components": ["./lib/navigation/components/index.d.ts"],
-      "theme": ["./lib/theme/index.d.ts"],
-      "config": ["./lib/config/index.d.ts"],
-      "i18n": ["./lib/i18n/index.d.ts"],
-      "routes": ["./lib/routes/index.d.ts"],
-      "mocks": ["./lib/mocks/index.d.ts"]
-    }
-  },
   "styleModule": "style/index.js",
   "publishConfig": {
     "access": "public"

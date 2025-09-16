@@ -10,7 +10,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Box } from '@primer/react';
-import { useCoreStore } from '@datalayer/core/state';
+import { useCoreStore } from '@datalayer/core/lib/state';
 import { NotebookViewProps } from '../../shared/types';
 import { createStableNotebookKey } from '../utils/notebook';
 

@@ -36,6 +36,7 @@ The packaged app will be in `dist-electron/` directory.
 ## ✨ Features
 
 ### Core Functionality
+
 - **Jupyter Notebook Integration**: Full notebook editing capabilities with kernel management
 - **Lexical Document Editor**: Rich text document editing with Jupyter code execution support
 - **Datalayer Services**: Integration with DatalayerServiceManager for cloud-based compute
@@ -45,6 +46,7 @@ The packaged app will be in `dist-electron/` directory.
 - **Native Desktop Experience**: Menu bar integration, keyboard shortcuts, and native dialogs
 
 ### User Interface
+
 - **Modern Light Theme**: Clean, professional light gray navigation with Datalayer green accents
 - **Responsive Design**: Optimized for desktop with proper scrollbar management
 - **Atomic Component Architecture**: Modular, reusable components following atomic design principles
@@ -52,6 +54,7 @@ The packaged app will be in `dist-electron/` directory.
 - **User Profile Integration**: GitHub user profile with avatar display
 
 ### Security & Performance
+
 - **Production Security**: DevTools disabled in production builds with secure context isolation
 - **Development Flexibility**: DevTools enabled in dev mode, optional in dev-prod builds for testing
 - **WebSocket Cleanup**: Multi-layer cleanup system prevents connection errors after runtime termination
@@ -67,6 +70,7 @@ The packaged app will be in `dist-electron/` directory.
 ## 🛠️ Setup
 
 1. **Install dependencies**:
+
    ```bash
    # From the electron example directory
    cd examples/electron
@@ -74,6 +78,7 @@ The packaged app will be in `dist-electron/` directory.
    ```
 
 2. **Configure environment variables** (optional, for Datalayer cloud features):
+
    ```bash
    # Copy the example environment file
    cp .env.example .env
@@ -99,6 +104,7 @@ npm start  # or npm run dev
 ```
 
 This will:
+
 - Start the Electron app with hot-reload enabled
 - Open developer tools automatically
 - Proxy API requests to Datalayer cloud services
@@ -135,6 +141,7 @@ npm run dist:linux           # Linux production build
 ### Code Quality Tools
 
 The project uses `/run-checks` command to ensure code quality:
+
 - **Prettier**: Automatic code formatting
 - **ESLint**: Code linting with React/TypeScript rules
 - **TypeScript**: Strict type checking
@@ -287,6 +294,7 @@ examples/electron/
 ### Theme & Colors
 
 The application uses Datalayer's brand colors:
+
 - **Primary Green**: `#117964` (accessible, high contrast)
 - **Light Gray Background**: `#F8F9FA` (navigation header)
 - **White Background**: `#FFFFFF` (main content)
@@ -313,18 +321,21 @@ The app follows **Atomic Design Principles**:
 ## 🔧 Key Components
 
 ### NotebookEditor
+
 - Full Jupyter notebook integration with `@datalayer/jupyter-react`
 - Real-time collaboration via `DatalayerCollaborationProvider`
 - Kernel management with runtime-specific credentials
 - Auto-save and runtime termination confirmation
 
 ### DocumentEditor
+
 - Lexical-based rich text editor with `@datalayer/jupyter-lexical`
 - Jupyter code cell execution within documents
 - Runtime auto-creation and readiness polling
 - ServiceManager with correct runtime-specific configuration
 
 ### Library
+
 - Browse notebooks and documents from Datalayer workspace
 - Space-based organization with selector dropdown
 - Auto-refresh with hash-based change detection
@@ -332,6 +343,7 @@ The app follows **Atomic Design Principles**:
 - Download functionality for local backup
 
 ### Environments
+
 - Display available computing environments (Python, R, Julia)
 - Package listings and resource specifications
 - GPU/CPU environment detection
@@ -377,22 +389,26 @@ The app implements a comprehensive WebSocket cleanup system:
 #### macOS (.dmg, .app)
 
 **Universal Binary (Recommended)**
+
 ```bash
 npm run dist:mac-universal  # Works on Intel & Apple Silicon
 ```
 
 **Architecture-Specific**
+
 ```bash
 npm run dist:mac-intel     # Intel-only build
 npm run dist:mac-arm       # Apple Silicon only
 ```
 
 #### Windows (.exe)
+
 ```bash
 npm run dist:win
 ```
 
 #### Linux (.AppImage)
+
 ```bash
 npm run dist:linux
 ```
@@ -411,6 +427,7 @@ npm run dist:linux
 ### Common Issues
 
 1. **App doesn't start**
+
    ```bash
    rm -rf dist dist-electron node_modules/.vite
    npm install

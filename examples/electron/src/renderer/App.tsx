@@ -18,7 +18,7 @@ import React, {
   Suspense,
 } from 'react';
 import { ThemeProvider, BaseStyles, Box } from '@primer/react';
-import { useCoreStore } from '@datalayer/core/state';
+import { useCoreStore } from '@datalayer/core/lib/state';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
 import { useParallelPreload } from './hooks/usePreload';
 import Login from './pages/Login';

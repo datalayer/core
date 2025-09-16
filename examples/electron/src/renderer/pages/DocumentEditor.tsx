@@ -17,7 +17,7 @@ import {
   JupyterInputHighlightNode,
 } from '@datalayer/jupyter-lexical/lib/nodes';
 import { Jupyter, loadJupyterConfig } from '@datalayer/jupyter-react';
-import { useCoreStore } from '@datalayer/core/state';
+import { useCoreStore } from '@datalayer/core/lib/state';
 import { createProxyServiceManager } from '../services/proxyServiceManager';
 import { useRuntimeStore } from '../stores/runtimeStore';
 import { DocumentViewProps, CollaborationStatus } from '../../shared/types';

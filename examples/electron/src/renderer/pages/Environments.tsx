@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Heading, Text } from '@primer/react';
-import { useCoreStore } from '@datalayer/core/state';
+import { useCoreStore } from '@datalayer/core/lib/state';
 import { useEnvironments } from '../stores/environmentStore';
 import { isGPUEnvironment } from '../utils/environments';
 
