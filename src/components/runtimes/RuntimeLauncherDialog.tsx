@@ -337,9 +337,15 @@ export function RuntimeLauncherDialog(
       setHasCustomRuntimeName(true);
     }
   }, []);
+  // TODO title color is enforced for JupyterLab.
+  // This may be fixed in the jupyter-react theme (Primer generates h1 for the dialog title).
   return (
     <Dialog
-      title={dialogTitle || 'Launch a new Runtime'}
+      title={
+        <span style={{ color: 'var(--fgColor-default)' }}>
+          {dialogTitle || 'Launch a new Runtime'}
+        </span>
+      }
       onClose={() => {
         onSubmit(undefined);
       }}

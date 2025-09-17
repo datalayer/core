@@ -4,8 +4,9 @@
  */
 
 import { useState } from 'react';
-import { Box, Button, PageLayout } from '@primer/react';
+import { Button, PageLayout } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
+import { Box } from '@datalayer/primer-addons';
 
 type IDataTableProps = {
   data: Array<any>;

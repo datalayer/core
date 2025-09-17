@@ -212,7 +212,11 @@ export function RuntimeSnapshotMenu(
       </ActionMenu>
       {openLoadDialog && (
         <Dialog
-          title="Choose a runtime snapshot to load"
+          title={
+            <span style={{ color: 'var(--fgColor-default)' }}>
+              Choose a runtime snapshot to load
+            </span>
+          }
           onClose={() => {
             setOpenLoadDialog(false);
           }}

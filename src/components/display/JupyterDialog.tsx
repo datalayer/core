@@ -146,17 +146,19 @@ export class JupyterDialog<T> extends ReactWidget {
   );
 
   protected render(): JSX.Element | null {
+    // TODO title color is enforced for JupyterLab.
+    // This may be fixed in the jupyter-react theme (Primer generates h1 for the dialog title).
     return (
       <JupyterReactTheme>
         <PrimerDialog
-          sx={{
-            color: 'var(--fgColor-default)',
-            backgroundColor: 'var(--bgColor-default)',
-            fontFamily: 'var(--fontStack-system)',
-            fontSize: 'var(--text-body-size-medium)',
-            lineHeight: 'var(--text-body-lineHeight-medium)',
-          }}
+          title={
+            <span style={{ color: 'var(--fgColor-default)' }}>
+              {this.dialogTitle}
+            </span>
+          }
           onClose={this.close}
+          renderBody={this._renderBody}
+          renderFooter={this._renderFooter}
           footerButtons={this.buttons.map((but, idx) => {
             const footerButton: DialogButtonProps = {
               buttonType:
@@ -174,9 +176,6 @@ export class JupyterDialog<T> extends ReactWidget {
             };
             return footerButton;
           })}
-          renderBody={this._renderBody}
-          renderFooter={this._renderFooter}
-          title={this.dialogTitle}
         />
       </JupyterReactTheme>
     );

@@ -373,7 +373,11 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
               </ActionMenu>
               {openDeleteConfirmation && (
                 <Dialog
-                  title="Confirm deletion"
+                  title={
+                    <span style={{ color: 'var(--fgColor-default)' }}>
+                      Confirm deletion
+                    </span>
+                  }
                   onClose={() => {
                     setOpenDeleteConfirmation(false);
                   }}
@@ -397,7 +401,11 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
               )}
               {copyToLocalConfirmation && (
                 <Dialog
-                  title="Confirm copy to local"
+                  title={
+                    <span style={{ color: 'var(--fgColor-default)' }}>
+                      Confirm copy to local
+                    </span>
+                  }
                   onClose={() => {
                     setCopyToLocalConfirmation(false);
                   }}
@@ -417,7 +425,9 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
                       },
                     },
                   ]}
-                >{`Are you sure you want to copy to local ${selectedItem?.path}?`}</Dialog>
+                >
+                  {`Are you sure you want to copy to local ${selectedItem?.path}?`}
+                </Dialog>
               )}
             </>
           ) : (

@@ -94,7 +94,11 @@ export function SnippetDialog(props: ISnippetDialogProps): JSX.Element {
 
   return (
     <Dialog
-      title={'Pick a snippet to inject'}
+      title={
+        <span style={{ color: 'var(--fgColor-default)' }}>
+          Pick a snippet to inject
+        </span>
+      }
       onClose={onClose}
       footerButtons={[
         {

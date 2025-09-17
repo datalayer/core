@@ -127,7 +127,7 @@ export function RuntimeCellVariablesDialog(
   }
   return (
     <Dialog
-      title={title}
+      title={<span style={{ color: 'var(--fgColor-default)' }}>{title}</span>}
       onClose={onClose}
       footerButtons={[
         {
