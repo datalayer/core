@@ -4,13 +4,17 @@
  */
 
 /**
- * Environment Store
- * Manages environment data with caching
+ * @module EnvironmentStore
+ * @description Zustand store for managing environment data with caching, selection state, and API integration
  */
 
 import { create } from 'zustand';
 import { apiLogger } from '../utils/logger';
 
+/**
+ * Environment configuration interface
+ * @interface
+ */
 interface Environment {
   name: string;
   language?: string;
@@ -29,6 +33,10 @@ interface Environment {
   };
 }
 
+/**
+ * State interface for the environment store
+ * @interface
+ */
 interface EnvironmentState {
   // Cache data
   environments: Environment[];

@@ -3,21 +3,43 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module main/services/api-service
+ * @description Service for handling Datalayer API communication in the main process.
+ * Provides secure credential storage and API request methods.
+ */
+
 import { net } from 'electron';
 import FormData from 'form-data';
 import log from 'electron-log/main';
 
+/**
+ * Interface for secure credential storage.
+ * @interface SecureStore
+ */
 interface SecureStore {
+  /** Stored credentials containing API URL and authentication token */
   credentials?: {
+    /** Base URL for Datalayer API */
     runUrl: string;
+    /** Authentication token */
     token: string;
   };
 }
 
-// Store instance will be initialized lazily
+/**
+ * Store instance for secure credential storage.
+ * Initialized lazily to avoid import issues.
+ * @internal
+ */
 let store: import('electron-store').default<SecureStore> | null = null;
 
-// Initialize store asynchronously
+/**
+ * Initialize the electron-store instance asynchronously.
+ * Uses encryption for secure credential storage.
+ * @returns Promise resolving to the store instance
+ * @internal
+ */
 async function getStore() {
   if (!store) {
     const { default: Store } = await import('electron-store');
@@ -29,32 +51,68 @@ async function getStore() {
   return store;
 }
 
-// Whitelist of allowed domains for API requests
+/**
+ * Whitelist of allowed domains for API requests.
+ * Used to prevent requests to unauthorized domains.
+ * @constant
+ */
 const ALLOWED_DOMAINS = [
   'prod1.datalayer.run',
   'localhost', // For development
 ];
 
+/**
+ * Service class for handling Datalayer API communication.
+ * Manages authentication, credential storage, and API requests.
+ * @class DatalayerAPIService
+ */
 class DatalayerAPIService {
+  /** Base URL for API requests */
   private baseUrl: string = 'https://prod1.datalayer.run';
+  /** Authentication token */
   private token: string = '';
+  /** Flag to track if credentials have been loaded from storage */
+  private credentialsLoaded: boolean = false;
 
+  /**
+   * Creates an instance of DatalayerAPIService.
+   * Automatically loads stored credentials on initialization.
+   */
   constructor() {
     // Load stored credentials on startup (async)
     this.loadCredentials();
   }
 
+  /**
+   * Load stored credentials from secure storage.
+   * Only loads once to prevent reloading after logout.
+   * @private
+   * @returns Promise that resolves when credentials are loaded
+   */
   private async loadCredentials() {
+    // Only load once to prevent reloading after logout
+    if (this.credentialsLoaded) {
+      return;
+    }
+
     const storeInstance = await getStore();
     const stored = storeInstance.get('credentials');
     if (stored) {
       this.baseUrl = stored.runUrl;
       this.token = stored.token;
+    } else {
+      // Explicitly clear if no stored credentials
+      this.token = '';
+      this.baseUrl = 'https://prod1.datalayer.run';
     }
+    this.credentialsLoaded = true;
   }
 
   /**
-   * Validate if a URL is allowed based on domain whitelist
+   * Validate if a URL is allowed based on domain whitelist.
+   * @private
+   * @param url - The URL to validate
+   * @returns True if the domain is allowed, false otherwise
    */
   private isAllowedDomain(url: string): boolean {
     try {
@@ -73,7 +131,11 @@ class DatalayerAPIService {
   }
 
   /**
-   * Store credentials securely
+   * Store credentials securely and authenticate with Datalayer.
+   * @param runUrl - The Datalayer API base URL
+   * @param token - The authentication token
+   * @returns Promise resolving to success status and optional message
+   * @throws Error if domain is not allowed
    */
   async login(
     runUrl: string,
@@ -106,27 +168,38 @@ class DatalayerAPIService {
   }
 
   /**
-   * Clear stored credentials
+   * Clear stored credentials and log out the user.
+   * Resets to default API URL and removes stored tokens.
+   * @returns Promise resolving to success status
    */
   async logout(): Promise<{ success: boolean }> {
     this.token = '';
     this.baseUrl = 'https://prod1.datalayer.run';
+    this.credentialsLoaded = true; // Prevent reloading from store
     const storeInstance = await getStore();
     storeInstance.delete('credentials');
     return { success: true };
   }
 
   /**
-   * Check if user is authenticated
+   * Check if user is authenticated.
+   * @returns True if a token is present, false otherwise
    */
   isAuthenticated(): boolean {
     return !!this.token;
   }
 
   /**
-   * Get stored credentials (without exposing token to renderer)
+   * Get stored credentials without exposing the token.
+   * Safe for use in renderer process.
+   * @returns Promise resolving to API URL and authentication status
    */
-  getCredentials(): { runUrl: string; isAuthenticated: boolean } {
+  async getCredentials(): Promise<{
+    runUrl: string;
+    isAuthenticated: boolean;
+  }> {
+    // Ensure credentials are loaded from store before checking
+    await this.loadCredentials();
     return {
       runUrl: this.baseUrl,
       isAuthenticated: this.isAuthenticated(),
@@ -134,22 +207,38 @@ class DatalayerAPIService {
   }
 
   /**
-   * Get credentials with token for collaboration (secure IPC only)
+   * Get credentials including the authentication token.
+   * Should only be used for secure IPC communication.
+   * @returns Promise resolving to API URL, optional token, and authentication status
+   * @internal
    */
-  getCredentialsWithToken(): {
+  async getCredentialsWithToken(): Promise<{
     runUrl: string;
     token?: string;
     isAuthenticated: boolean;
-  } {
+  }> {
+    // Ensure credentials are loaded from store before checking
+    await this.loadCredentials();
+
+    // Validate token actually exists and is not empty
+    const isValid: boolean =
+      this.isAuthenticated() && !!this.token && this.token.length > 0;
+
     return {
       runUrl: this.baseUrl,
-      token: this.token,
-      isAuthenticated: this.isAuthenticated(),
+      token: isValid ? this.token : undefined,
+      isAuthenticated: isValid,
     };
   }
 
   /**
-   * Make a generic API request with FormData using the form-data library
+   * Make a generic API request with FormData using the form-data library.
+   * Used for multipart/form-data requests.
+   * @private
+   * @param endpoint - API endpoint path
+   * @param options - Request options including method, form data, and headers
+   * @returns Promise resolving to response data
+   * @throws Error if domain is not allowed or request fails
    */
   private async requestWithFormData(
     endpoint: string,

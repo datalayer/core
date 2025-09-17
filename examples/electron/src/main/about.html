@@ -7,213 +7,7 @@
 <head>
   <meta charset="UTF-8">
   <title>About Datalayer</title>
-  <style>
-    /* Datalayer Color Palette */
-    :root {
-      --datalayer-green-light: #2ECC71;
-      --datalayer-green-main: #1ABC9C;
-      --datalayer-green-dark: #16A085;
-      --datalayer-gray: #59595C;
-      --datalayer-black: #000000;
-      --datalayer-white: #FFFFFF;
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: linear-gradient(135deg, var(--datalayer-green-dark) 0%, var(--datalayer-green-main) 50%, var(--datalayer-green-light) 100%);
-      color: var(--datalayer-white);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      user-select: none;
-      cursor: default;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-    }
-    
-    .container {
-      text-align: center;
-      padding: 40px;
-      max-width: 400px;
-      animation: fadeIn 0.5s ease-in;
-      position: relative;
-      -webkit-app-region: no-drag;  /* Make content not draggable */
-    }
-    
-    .close-button {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: var(--datalayer-white);
-      font-size: 18px;
-      line-height: 28px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      z-index: 10;
-    }
-    
-    .close-button:hover {
-      background: rgba(255, 255, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.4);
-      transform: scale(1.1);
-    }
-    
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    .logo-container {
-      width: 140px;
-      height: 140px;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      animation: pulse 2s infinite;
-      background: var(--datalayer-white);
-      border-radius: 35px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      padding: 10px;
-    }
-    
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-      }
-      50% {
-        transform: scale(1.05);
-      }
-      100% {
-        transform: scale(1);
-      }
-    }
-    
-    .logo-img {
-      width: 100px;
-      height: 100px;
-      border-radius: 25px;
-      object-fit: cover;
-    }
-    
-    h1 {
-      font-size: 32px;
-      margin-bottom: 10px;
-      font-weight: 600;
-      color: var(--datalayer-white);
-      text-shadow: 0 3px 15px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.8);
-    }
-    
-    .tagline {
-      font-size: 16px;
-      margin-bottom: 30px;
-      font-weight: 300;
-      color: var(--datalayer-white);
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.6);
-    }
-    
-    .version {
-      font-size: 14px;
-      margin-bottom: 12px;
-      margin-top: 8px;
-      color: var(--datalayer-white);
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.6);
-    }
-    
-    .info {
-      font-size: 12px;
-      margin-bottom: 25px;
-      line-height: 1.8;
-      color: var(--datalayer-white);
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.6);
-    }
-    
-    .buttons {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 8px;
-      margin-bottom: 25px;
-    }
-    
-    button {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: var(--datalayer-white);
-      padding: 8px 20px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-      -webkit-app-region: no-drag;  /* Make buttons clickable */
-    }
-    
-    button:hover {
-      background: rgba(255, 255, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.4);
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(22, 160, 133, 0.3);
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
-    }
-    
-    button:active {
-      transform: translateY(0);
-    }
-    
-    .copyright {
-      margin-top: 5px;
-      font-size: 11px;
-      font-weight: 400;
-      color: var(--datalayer-white);
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.8);
-      opacity: 0.95;
-    }
-    
-    .badge {
-      display: inline-block;
-      background: var(--datalayer-green-dark);
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      margin-top: 10px;
-      margin-bottom: 20px;
-      font-weight: 500;
-      color: var(--datalayer-white);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    }
-  </style>
+  <link rel="stylesheet" href="about.css">
 </head>
 <body>
   <div class="container">
@@ -225,7 +19,7 @@
     <h1>Datalayer</h1>
     <div class="tagline">AI-Powered Data Platform</div>
     
-    <div class="badge">Electron Example</div>
+    <div class="badge">Desktop</div>
     
     <div class="version">Version <span id="app-version">1.0.0</span></div>
     <div class="info">
@@ -241,7 +35,8 @@
     </div>
     
     <div class="copyright">
-      © 2025 Datalayer, Inc. All rights reserved.
+      <!-- Copyright year will be dynamically updated by JavaScript -->
+      © <span id="copyright-year">2025</span> Datalayer, Inc. All rights reserved.
     </div>
   </div>
   

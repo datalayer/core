@@ -58,7 +58,6 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 ## Development Tips
 
 - Use npm, not yarn
-- Prefer editing over creating files
 - Run checks after changes: `npm run check:fix`
 - Use playwright MCP servers when you need to check stuff
 - Ensure things always build after changes
@@ -168,7 +167,6 @@ Features:
 ## AI Notes IMPORTANT
 
 - Use npm, not yarn
-- Prefer editing over creating files
 - Run checks after changes:
   - npm run format
   - npm run lint

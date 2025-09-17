@@ -12,6 +12,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Version information is populated by the preload script
 
+  // Update copyright year to current year
+  const currentYear = new Date().getFullYear();
+  const copyrightYearElement = document.getElementById('copyright-year');
+  if (copyrightYearElement) {
+    copyrightYearElement.textContent = currentYear.toString();
+  }
+
   // Add event listeners for buttons
   const websiteBtn = document.querySelector('[data-action="website"]');
   const docsBtn = document.querySelector('[data-action="docs"]');

@@ -1,14 +1,14 @@
+#!/usr/bin/env node
+
 /*
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
 
-#!/usr/bin/env node
-
 /**
  * Post-build script to fix temporal dead zone issues in production bundles
  * This script automatically injects polyfills at the beginning of the main bundle
- * and renames conflicting widget base$1 to widgetBase$1
+ * and ensures Symbol.for is available for React
  */
 
 const fs = require('fs');
@@ -19,16 +19,57 @@ console.log('🔧 Starting post-build bundle fixes...');
 
 // Critical polyfills that must execute before any bundle code
 const CRITICAL_POLYFILLS = `// CRITICAL POLYFILLS - Execute synchronously at bundle start
+
+// SUPER SIMPLE SYMBOL POLYFILL - Just ensure Symbol.for exists
+if (typeof Symbol === 'undefined') {
+  globalThis.Symbol = function Symbol(description) {
+    return '@@Symbol(' + (description || '') + ')_' + Math.random();
+  };
+}
+
+// Ensure Symbol.for exists
+if (!Symbol.for) {
+  var globalSymbolRegistry = {};
+  Symbol.for = function(key) {
+    var stringKey = String(key);
+    if (!globalSymbolRegistry[stringKey]) {
+      globalSymbolRegistry[stringKey] = Symbol(stringKey);
+    }
+    return globalSymbolRegistry[stringKey];
+  };
+}
+
+// Ensure Symbol.keyFor exists
+if (!Symbol.keyFor) {
+  Symbol.keyFor = function(symValue) {
+    for (var key in globalSymbolRegistry) {
+      if (globalSymbolRegistry[key] === symValue) {
+        return key;
+      }
+    }
+    return undefined;
+  };
+}
+
+// Add well-known symbols if missing
+if (!Symbol.iterator) Symbol.iterator = Symbol('Symbol.iterator');
+if (!Symbol.toStringTag) Symbol.toStringTag = Symbol('Symbol.toStringTag');
+
+console.log('[Symbol Polyfill] Symbol:', typeof Symbol);
+console.log('[Symbol Polyfill] Symbol.for:', typeof Symbol.for);
+console.log('[Symbol Polyfill] Testing Symbol.for:', Symbol.for('test'));
+
+// Lodash polyfills
 var base$1 = function(object, source) { return object && source; };
-var base$2 = function(object, source) { return object && source; };
-var base$3 = function(object, source) { return object && source; };
-var base$4 = function(object, source) { return object && source; };
-var base$5 = function(object, source) { return object && source; };
-var base$6 = function(object, source) { return object && source; };
-var base$7 = function(object, source) { return object && source; };
-var base$8 = function(object, source) { return object && source; };
-var base$9 = function(object, source) { return object && source; };
-var base$10 = function(object, source) { return object && source; };
+var base$2 = base$1;
+var base$3 = base$1;
+var base$4 = base$1;
+var base$5 = base$1;
+var base$6 = base$1;
+var base$7 = base$1;
+var base$8 = base$1;
+var base$9 = base$1;
+var base$10 = base$1;
 
 var defineProperty$1 = function(obj, key, descriptor) {
   if (obj && typeof obj === 'object' && key != null) {
@@ -121,7 +162,7 @@ async function fixBundle() {
     // Find the main bundle (largest JS file)
     const distPath = path.join(__dirname, '..', 'dist', 'renderer', 'assets');
     const jsFiles = await glob('index-*.js', { cwd: distPath });
-    
+
     if (jsFiles.length === 0) {
       console.log('❌ No bundle files found');
       return false;
@@ -146,40 +187,58 @@ async function fixBundle() {
     }
 
     const bundlePath = path.join(distPath, largestFile);
-    console.log(`🎯 Fixing bundle: ${largestFile} (${Math.round(largestSize / 1024)}kb)`);
+    console.log(
+      `🎯 Fixing bundle: ${largestFile} (${Math.round(largestSize / 1024)}kb)`
+    );
 
     let content = fs.readFileSync(bundlePath, 'utf8');
 
-    // Step 1: Inject polyfills at the very beginning
-    if (!content.startsWith('// CRITICAL POLYFILLS')) {
+    // Step 1: Check if Symbol polyfill is already injected by Vite
+    if (content.includes('[Vite Symbol] Injected at bundle start')) {
+      console.log('✅ Symbol polyfill already injected by Vite plugin');
+    } else if (!content.startsWith('// CRITICAL POLYFILLS')) {
+      // Only inject if not already present
       content = CRITICAL_POLYFILLS + '\n' + content;
       console.log('✅ Injected critical polyfills at bundle start');
     }
 
-    // Step 2: Rename conflicting widget base$1 to widgetBase$1
+    // Step 2: Fix React's Symbol.for calls in async context
+    // React's minified code uses Symbol.for but Symbol is undefined in async scope
+    // Replace all Symbol.for calls with a safe version that uses the global Symbol
+
+    // First, ensure global Symbol is available in async scope
+    const asyncStartPattern =
+      /let __tla = Promise\.all\(\[[\s\S]*?\]\)\.then\(async \(\)=>{/;
+    content = content.replace(asyncStartPattern, match => {
+      return (
+        match +
+        '\n    // Ensure Symbol is available in async scope\n    if (typeof Symbol === "undefined") { var Symbol = globalThis.Symbol || window.Symbol; }\n'
+      );
+    });
+
+    console.log('✅ Added Symbol reference to async scope');
+
+    // Step 3: Rename conflicting widget base$1 to widgetBase$1
     const originalContent = content;
-    
+
     // Find const base$1 = Object.freeze(Object.defineProperty({
     content = content.replace(
       /const base\$1 = Object\.freeze\(Object\.defineProperty\({/g,
       'const widgetBase$1 = Object.freeze(Object.defineProperty({'
     );
-    
+
     // Update references to widget exports
     content = content.replace(
       /window\.define\('@jupyter-widgets\/base', base\$1\);/g,
       "window.define('@jupyter-widgets/base', widgetBase$1);"
     );
-    
+
     content = content.replace(
       /__vitePreload\(\(\)=>Promise\.resolve\(\)\.then\(\(\)=>base\$1\)/g,
       '__vitePreload(()=>Promise.resolve().then(()=>widgetBase$1)'
     );
-    
-    content = content.replace(
-      /resolve\(base\$1\);/g,
-      'resolve(widgetBase$1);'
-    );
+
+    content = content.replace(/resolve\(base\$1\);/g, 'resolve(widgetBase$1);');
 
     if (content !== originalContent) {
       console.log('✅ Renamed conflicting widget base$1 to widgetBase$1');
@@ -189,7 +248,6 @@ async function fixBundle() {
     fs.writeFileSync(bundlePath, content, 'utf8');
     console.log('🎉 Bundle fixes applied successfully!');
     return true;
-
   } catch (error) {
     console.error('❌ Error fixing bundle:', error);
     return false;

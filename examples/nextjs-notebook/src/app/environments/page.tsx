@@ -7,8 +7,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIAMStore } from '@datalayer/core';
-import { getEnvironments } from '@datalayer/core/lib/api/runtimes/actions';
+import { useIAMStore } from '@datalayer/core/state';
+import { getEnvironments } from '@datalayer/core/api/runtimes/actions';
 import { BeakerIcon } from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
 import { Button, Flash, Heading, Label, Text, Spinner } from '@primer/react';

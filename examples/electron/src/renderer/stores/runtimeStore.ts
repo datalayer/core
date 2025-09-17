@@ -4,8 +4,9 @@
  */
 
 /**
- * Runtime Store
- * Manages the state of compute runtimes
+ * @module renderer/stores/runtimeStore
+ * @description Zustand store for managing compute runtime state.
+ * Handles runtime creation, termination, and lifecycle management.
  */
 
 import { create } from 'zustand';
@@ -21,30 +22,60 @@ declare global {
     | undefined;
 }
 
+/**
+ * Runtime information from Datalayer API.
+ * @interface Runtime
+ */
 interface Runtime {
+  /** Unique identifier for the runtime */
   uid: string;
+  /** Optional display name */
   given_name?: string;
+  /** Kubernetes pod name */
   pod_name: string;
+  /** Ingress URL for accessing the runtime */
   ingress?: string;
+  /** Authentication token for the runtime */
   token?: string;
+  /** Environment name used */
   environment_name?: string;
+  /** Environment display title */
   environment_title?: string;
+  /** Runtime type */
   type?: string;
+  /** Credit burning rate */
   burning_rate?: number;
+  /** Reservation identifier */
   reservation_id?: string;
+  /** Start timestamp */
   started_at?: string;
+  /** Expiration timestamp */
   expired_at?: string;
+  /** Current runtime status */
   status?: string;
+  /** Additional properties */
   [key: string]: unknown;
 }
 
+/**
+ * Associates a notebook with its runtime and service manager.
+ * @interface NotebookRuntime
+ */
 interface NotebookRuntime {
+  /** Unique notebook identifier */
   notebookId: string;
+  /** Optional notebook file path */
   notebookPath?: string;
+  /** Associated runtime instance */
   runtime: Runtime;
+  /** Optional Jupyter service manager */
   serviceManager?: ServiceManager.IManager;
 }
 
+/**
+ * Runtime store state and actions.
+ * @interface RuntimeState
+ */
 interface RuntimeState {
   // Map of notebook IDs to their runtimes
   notebookRuntimes: Map<string, NotebookRuntime>;
@@ -307,253 +338,423 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
 
   // Terminate runtime for a specific notebook
   terminateRuntimeForNotebook: async notebookId => {
-    const { notebookRuntimes, setIsTerminatingRuntime, setRuntimeError } =
-      get();
-    const notebookRuntime = notebookRuntimes.get(notebookId);
+    // Wrap entire function in a Promise to handle all async errors
+    return new Promise<void>((resolve, reject) => {
+      let resolved = false; // Track if promise has been resolved
 
-    if (!notebookRuntime) {
-      console.info(`No runtime to terminate for notebook ${notebookId}`);
-      return;
-    }
+      // Use async IIFE to handle async operations
+      (async () => {
+        const { notebookRuntimes, setIsTerminatingRuntime, setRuntimeError } =
+          get();
+        const notebookRuntime = notebookRuntimes.get(notebookId);
 
-    setIsTerminatingRuntime(true);
-    setRuntimeError(null);
+        if (!notebookRuntime) {
+          console.info(`No runtime to terminate for notebook ${notebookId}`);
+          resolved = true;
+          resolve();
+          return;
+        }
 
-    try {
-      console.info(
-        `Terminating runtime for notebook ${notebookId}:`,
-        notebookRuntime.runtime.uid
-      );
+        setIsTerminatingRuntime(true);
+        setRuntimeError(null);
 
-      // CRITICAL: Clear cached creation promise for this notebook
-      // This ensures new requests create fresh runtimes instead of reusing terminated ones
-      if (globalThis.__runtimeCreationPromises) {
-        if (globalThis.__runtimeCreationPromises.has(notebookId)) {
+        try {
           console.info(
-            `🔄 [Race Condition Protection] Clearing cached promise for terminated runtime ${notebookId}`
+            `Terminating runtime for notebook ${notebookId}:`,
+            notebookRuntime.runtime.uid
           );
-          globalThis.__runtimeCreationPromises.delete(notebookId);
-        }
-      }
 
-      // Close WebSocket connections for this runtime first
-      try {
-        console.info(
-          `🔴 [WebSocket Cleanup] Attempting to close connections for runtime: ${notebookRuntime.runtime.uid}`
-        );
-        const result = await (window as any).proxyAPI.websocketCloseRuntime({
-          runtimeId: notebookRuntime.runtime.uid,
-        });
-        console.info(`🔴 [WebSocket Cleanup] Cleanup result:`, result);
-      } catch (error) {
-        console.error(
-          '🔴 [WebSocket Cleanup] Failed to close WebSocket connections:',
-          error
-        );
-      }
-
-      // Clean up collaboration provider WebSocket connections
-      try {
-        console.info(
-          `🤝 [Collaboration Cleanup] Attempting to clean up collaboration provider for runtime: ${notebookRuntime.runtime.uid}`
-        );
-
-        // Emit a global event that NotebookView components can listen to
-        const collaborationCleanupEvent = new CustomEvent(
-          'runtime-collaboration-cleanup',
-          {
-            detail: {
-              runtimeId: notebookRuntime.runtime.uid,
-              notebookId: notebookId,
-            },
+          // CRITICAL: Clear cached creation promise for this notebook
+          // This ensures new requests create fresh runtimes instead of reusing terminated ones
+          if (globalThis.__runtimeCreationPromises) {
+            if (globalThis.__runtimeCreationPromises.has(notebookId)) {
+              console.info(
+                `🔄 [Race Condition Protection] Clearing cached promise for terminated runtime ${notebookId}`
+              );
+              globalThis.__runtimeCreationPromises.delete(notebookId);
+            }
           }
-        );
-        window.dispatchEvent(collaborationCleanupEvent);
 
-        console.info(
-          `🤝 [Collaboration Cleanup] Cleanup event dispatched for runtime: ${notebookRuntime.runtime.uid}`
-        );
-      } catch (error) {
-        console.error(
-          '🤝 [Collaboration Cleanup] Failed to dispatch cleanup event:',
-          error
-        );
-      }
-
-      // Dispose service manager after WebSocket cleanup
-      if (
-        notebookRuntime.serviceManager &&
-        !notebookRuntime.serviceManager.isDisposed
-      ) {
-        console.info('Disposing service manager...');
-
-        // Aggressive cleanup: Force stop any kernel polling/requests
-        try {
-          const serviceManager = notebookRuntime.serviceManager as any;
-
-          // Stop kernel manager polling if it exists
+          // STEP 1: First shut down all sessions and kernels cleanly
           if (
-            serviceManager.kernels &&
-            typeof serviceManager.kernels.dispose === 'function'
+            notebookRuntime.serviceManager &&
+            !notebookRuntime.serviceManager.isDisposed
           ) {
-            console.info('🛑 [Aggressive Cleanup] Disposing kernel manager');
-            serviceManager.kernels.dispose();
+            console.info('📋 [Step 1] Shutting down sessions and kernels...');
+
+            try {
+              const serviceManager = notebookRuntime.serviceManager;
+
+              // Shut down all sessions for this notebook
+              if (serviceManager.sessions) {
+                await serviceManager.sessions.refreshRunning();
+                const runningSessions = Array.from(
+                  serviceManager.sessions.running()
+                );
+                for (const session of runningSessions) {
+                  try {
+                    console.info(`  Shutting down session: ${session.id}`);
+                    await serviceManager.sessions.shutdown(session.id);
+                  } catch (err) {
+                    console.warn('  Error shutting down session:', err);
+                  }
+                }
+              }
+
+              // Shut down all kernels
+              if (serviceManager.kernels) {
+                await serviceManager.kernels.refreshRunning();
+                const runningKernels = Array.from(
+                  serviceManager.kernels.running()
+                );
+                for (const kernel of runningKernels) {
+                  try {
+                    console.info(`  Shutting down kernel: ${kernel.id}`);
+                    await serviceManager.kernels.shutdown(kernel.id);
+                  } catch (err) {
+                    // Ignore 200 response errors - these are actually successful shutdowns
+                    const errStr = String(err);
+                    if (
+                      errStr.includes('Invalid response: 200') ||
+                      errStr.includes('ResponseError')
+                    ) {
+                      console.info(
+                        `  Kernel ${kernel.id} shutdown completed (200 response)`
+                      );
+                    } else {
+                      console.warn('  Error shutting down kernel:', err);
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.warn('Error during session/kernel shutdown:', error);
+            }
           }
 
-          // Stop session manager polling if it exists
-          if (
-            serviceManager.sessions &&
-            typeof serviceManager.sessions.dispose === 'function'
-          ) {
-            console.info('🛑 [Aggressive Cleanup] Disposing session manager');
-            serviceManager.sessions.dispose();
+          // STEP 2: Clean up collaboration provider
+          try {
+            console.info(
+              `🤝 [Step 2] Cleaning up collaboration provider for runtime: ${notebookRuntime.runtime.uid}`
+            );
+
+            // Emit a global event that NotebookView components can listen to
+            const collaborationCleanupEvent = new CustomEvent(
+              'runtime-collaboration-cleanup',
+              {
+                detail: {
+                  runtimeId: notebookRuntime.runtime.uid,
+                  notebookId: notebookId,
+                },
+              }
+            );
+            window.dispatchEvent(collaborationCleanupEvent);
+
+            console.info(
+              `🤝 Collaboration cleanup event dispatched for runtime: ${notebookRuntime.runtime.uid}`
+            );
+          } catch (error) {
+            console.error(
+              '🤝 Failed to dispatch collaboration cleanup event:',
+              error
+            );
           }
 
-          // Clear any pending timers/intervals
-          if (
-            serviceManager._kernelManager &&
-            serviceManager._kernelManager._models
-          ) {
-            console.info('🛑 [Aggressive Cleanup] Clearing kernel models');
-            serviceManager._kernelManager._models.clear();
+          // STEP 3: Close WebSocket connections for this runtime
+          try {
+            console.info(
+              `🔴 [Step 3] Closing WebSocket connections for runtime: ${notebookRuntime.runtime.uid}`
+            );
+            const result = await (window as any).proxyAPI.websocketCloseRuntime(
+              {
+                runtimeId: notebookRuntime.runtime.uid,
+              }
+            );
+            console.info(`🔴 WebSocket cleanup result:`, result);
+          } catch (error) {
+            console.error('🔴 Failed to close WebSocket connections:', error);
           }
 
+          // STEP 4: Dispose service manager
           if (
-            serviceManager._sessionManager &&
-            serviceManager._sessionManager._models
+            notebookRuntime.serviceManager &&
+            !notebookRuntime.serviceManager.isDisposed
           ) {
-            console.info('🛑 [Aggressive Cleanup] Clearing session models');
-            serviceManager._sessionManager._models.clear();
+            console.info('♻️ [Step 4] Disposing service manager...');
+
+            // Aggressive cleanup: Force stop any kernel polling/requests
+            try {
+              const serviceManager = notebookRuntime.serviceManager as any;
+
+              // Stop kernel manager polling if it exists
+              if (
+                serviceManager.kernels &&
+                typeof serviceManager.kernels.dispose === 'function' &&
+                !serviceManager.kernels.isDisposed
+              ) {
+                console.info(
+                  '🛑 [Aggressive Cleanup] Disposing kernel manager'
+                );
+                try {
+                  const disposeResult = serviceManager.kernels.dispose();
+                  // Handle both sync and async disposal
+                  if (
+                    disposeResult &&
+                    typeof disposeResult.catch === 'function'
+                  ) {
+                    disposeResult.catch((err: any) => {
+                      // Ignore Poll disposal errors - these are expected during cleanup
+                      if (
+                        !String(err).includes('Poll') &&
+                        !String(err).includes('disposed')
+                      ) {
+                        console.warn(
+                          'Error disposing kernel manager (async):',
+                          err
+                        );
+                      }
+                    });
+                  }
+                } catch (err) {
+                  // Ignore Poll disposal errors - these are expected during cleanup
+                  if (
+                    !String(err).includes('Poll') &&
+                    !String(err).includes('disposed')
+                  ) {
+                    console.warn('Error disposing kernel manager (sync):', err);
+                  }
+                }
+              }
+
+              // Stop session manager polling if it exists
+              if (
+                serviceManager.sessions &&
+                typeof serviceManager.sessions.dispose === 'function' &&
+                !serviceManager.sessions.isDisposed
+              ) {
+                console.info(
+                  '🛑 [Aggressive Cleanup] Disposing session manager'
+                );
+                try {
+                  const disposeResult = serviceManager.sessions.dispose();
+                  // Handle both sync and async disposal
+                  if (
+                    disposeResult &&
+                    typeof disposeResult.catch === 'function'
+                  ) {
+                    disposeResult.catch((err: any) => {
+                      // Ignore Poll disposal errors - these are expected during cleanup
+                      if (
+                        !String(err).includes('Poll') &&
+                        !String(err).includes('disposed')
+                      ) {
+                        console.warn(
+                          'Error disposing session manager (async):',
+                          err
+                        );
+                      }
+                    });
+                  }
+                } catch (err) {
+                  // Ignore Poll disposal errors - these are expected during cleanup
+                  if (
+                    !String(err).includes('Poll') &&
+                    !String(err).includes('disposed')
+                  ) {
+                    console.warn(
+                      'Error disposing session manager (sync):',
+                      err
+                    );
+                  }
+                }
+              }
+
+              // Clear any pending timers/intervals
+              if (
+                serviceManager._kernelManager &&
+                serviceManager._kernelManager._models
+              ) {
+                console.info('🛑 [Aggressive Cleanup] Clearing kernel models');
+                serviceManager._kernelManager._models.clear();
+              }
+
+              if (
+                serviceManager._sessionManager &&
+                serviceManager._sessionManager._models
+              ) {
+                console.info('🛑 [Aggressive Cleanup] Clearing session models');
+                serviceManager._sessionManager._models.clear();
+              }
+            } catch (error) {
+              console.warn(
+                '🛑 [Aggressive Cleanup] Error during aggressive cleanup:',
+                error
+              );
+            }
+
+            try {
+              notebookRuntime.serviceManager.dispose();
+            } catch (err) {
+              // Ignore Poll disposal errors - these are expected during cleanup
+              if (
+                !String(err).includes('Poll') &&
+                !String(err).includes('disposed')
+              ) {
+                console.warn('Error disposing service manager:', err);
+              }
+            }
           }
+
+          // Additional cleanup: Stop any kernel/session polling specifically for this runtime
+          try {
+            console.info(
+              '🛑 [Targeted Cleanup] Stopping polling for runtime:',
+              notebookRuntime.runtime.uid
+            );
+
+            // Instead of clearing ALL timers, let's be more targeted
+            // Force abort any pending fetch requests to this specific runtime
+            const runtimeUrl = `${notebookRuntime.runtime.jupyter_server_url}`;
+            console.info(
+              '🛑 [Targeted Cleanup] Runtime URL to clean:',
+              runtimeUrl
+            );
+
+            // Store reference to track and clean up runtime-specific timers
+            // We'll use a global registry for runtime-specific cleanup
+            if (!(window as any).__datalayerRuntimeCleanup) {
+              (window as any).__datalayerRuntimeCleanup = new Map();
+            }
+
+            const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+            const runtimeId = notebookRuntime.runtime.uid;
+
+            // Mark this runtime as terminated to prevent new timers
+            cleanupRegistry.set(runtimeId, { terminated: true });
+
+            console.info(
+              '🛑 [Targeted Cleanup] Marked runtime as terminated:',
+              runtimeId
+            );
+
+            // Notify main process to update its cleanup registry for WebSocket blocking
+            try {
+              (window as any).electronAPI?.notifyRuntimeTerminated?.(runtimeId);
+            } catch (error) {
+              console.warn(
+                '🛑 [Targeted Cleanup] Error notifying main process:',
+                error
+              );
+            }
+          } catch (error) {
+            console.warn(
+              '🛑 [Targeted Cleanup] Error during targeted cleanup:',
+              error
+            );
+          }
+
+          // Clear cached service manager if any
+          const cacheKey = `serviceManager-${notebookRuntime.runtime.uid}`;
+          if ((window as Record<string, any>)[cacheKey]) {
+            delete (window as Record<string, any>)[cacheKey];
+          }
+
+          // Call API to delete runtime on server
+          console.info(
+            `🗑️  Attempting to delete runtime: ${notebookRuntime.runtime.uid}`
+          );
+          console.info(
+            `🗑️  Complete runtime object for deletion:`,
+            JSON.stringify(notebookRuntime.runtime, null, 2)
+          );
+
+          // Use pod_name for deletion (API requires pod name, not UID)
+          const podNameToDelete = notebookRuntime.runtime.pod_name;
+
+          if (!podNameToDelete) {
+            console.error(
+              `🗑️  ERROR: No pod_name found in runtime object! Cannot delete runtime.`
+            );
+            setRuntimeError('Cannot delete runtime - no pod name available');
+            resolved = true;
+            resolve();
+            return;
+          }
+
+          console.info(`🗑️  Using pod name for deletion: ${podNameToDelete}`);
+
+          const deleteResult = await (window as any).datalayerAPI.deleteRuntime(
+            podNameToDelete
+          );
+
+          console.info(`🗑️  Delete API response:`, deleteResult);
+
+          if (!deleteResult.success) {
+            console.error(
+              'Failed to delete runtime on server:',
+              deleteResult.error
+            );
+          } else {
+            console.info(
+              `✅ Successfully deleted runtime: ${notebookRuntime.runtime.uid}`
+            );
+          }
+
+          // Remove from map
+          const newRuntimes = new Map(notebookRuntimes);
+          newRuntimes.delete(notebookId);
+
+          // Clear active notebook if it was this one
+          const { activeNotebookId } = get();
+          if (activeNotebookId === notebookId) {
+            set({
+              notebookRuntimes: newRuntimes,
+              activeNotebookId: null,
+            });
+          } else {
+            set({ notebookRuntimes: newRuntimes });
+          }
+
+          // Update storage
+          get().saveRuntimesToStorage();
+
+          console.info(
+            `Runtime terminated successfully for notebook ${notebookId}`
+          );
+          resolved = true;
+          resolve();
         } catch (error) {
-          console.warn(
-            '🛑 [Aggressive Cleanup] Error during aggressive cleanup:',
-            error
-          );
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : 'Failed to terminate runtime';
+
+          // Filter out expected Poll disposal errors
+          if (
+            String(error).includes('Poll') &&
+            String(error).includes('disposed')
+          ) {
+            console.debug(
+              'Ignoring expected Poll disposal error during cleanup'
+            );
+            resolved = true;
+            resolve(); // Don't treat Poll disposal as a real error
+          } else {
+            console.error('Error terminating runtime:', errorMessage);
+            setRuntimeError(errorMessage);
+            resolved = true;
+            reject(error); // Reject with the error for real failures
+          }
+        } finally {
+          setIsTerminatingRuntime(false);
+          // Ensure promise resolves even if not handled in catch
+          if (!resolved) {
+            resolved = true;
+            resolve();
+          }
         }
-
-        notebookRuntime.serviceManager.dispose();
-      }
-
-      // Additional cleanup: Stop any kernel/session polling specifically for this runtime
-      try {
-        console.info(
-          '🛑 [Targeted Cleanup] Stopping polling for runtime:',
-          notebookRuntime.runtime.uid
-        );
-
-        // Instead of clearing ALL timers, let's be more targeted
-        // Force abort any pending fetch requests to this specific runtime
-        const runtimeUrl = `${notebookRuntime.runtime.jupyter_server_url}`;
-        console.info('🛑 [Targeted Cleanup] Runtime URL to clean:', runtimeUrl);
-
-        // Store reference to track and clean up runtime-specific timers
-        // We'll use a global registry for runtime-specific cleanup
-        if (!(window as any).__datalayerRuntimeCleanup) {
-          (window as any).__datalayerRuntimeCleanup = new Map();
-        }
-
-        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
-        const runtimeId = notebookRuntime.runtime.uid;
-
-        // Mark this runtime as terminated to prevent new timers
-        cleanupRegistry.set(runtimeId, { terminated: true });
-
-        console.info(
-          '🛑 [Targeted Cleanup] Marked runtime as terminated:',
-          runtimeId
-        );
-
-        // Notify main process to update its cleanup registry for WebSocket blocking
-        try {
-          (window as any).electronAPI?.notifyRuntimeTerminated?.(runtimeId);
-        } catch (error) {
-          console.warn(
-            '🛑 [Targeted Cleanup] Error notifying main process:',
-            error
-          );
-        }
-      } catch (error) {
-        console.warn(
-          '🛑 [Targeted Cleanup] Error during targeted cleanup:',
-          error
-        );
-      }
-
-      // Clear cached service manager if any
-      const cacheKey = `serviceManager-${notebookRuntime.runtime.uid}`;
-      if ((window as Record<string, any>)[cacheKey]) {
-        delete (window as Record<string, any>)[cacheKey];
-      }
-
-      // Call API to delete runtime on server
-      console.info(
-        `🗑️  Attempting to delete runtime: ${notebookRuntime.runtime.uid}`
-      );
-      console.info(
-        `🗑️  Complete runtime object for deletion:`,
-        JSON.stringify(notebookRuntime.runtime, null, 2)
-      );
-
-      // Use pod_name for deletion (API requires pod name, not UID)
-      const podNameToDelete = notebookRuntime.runtime.pod_name;
-
-      if (!podNameToDelete) {
-        console.error(
-          `🗑️  ERROR: No pod_name found in runtime object! Cannot delete runtime.`
-        );
-        setRuntimeError('Cannot delete runtime - no pod name available');
-        return;
-      }
-
-      console.info(`🗑️  Using pod name for deletion: ${podNameToDelete}`);
-
-      const deleteResult = await (window as any).datalayerAPI.deleteRuntime(
-        podNameToDelete
-      );
-
-      console.info(`🗑️  Delete API response:`, deleteResult);
-
-      if (!deleteResult.success) {
-        console.error(
-          'Failed to delete runtime on server:',
-          deleteResult.error
-        );
-      } else {
-        console.info(
-          `✅ Successfully deleted runtime: ${notebookRuntime.runtime.uid}`
-        );
-      }
-
-      // Remove from map
-      const newRuntimes = new Map(notebookRuntimes);
-      newRuntimes.delete(notebookId);
-
-      // Clear active notebook if it was this one
-      const { activeNotebookId } = get();
-      if (activeNotebookId === notebookId) {
-        set({
-          notebookRuntimes: newRuntimes,
-          activeNotebookId: null,
-        });
-      } else {
-        set({ notebookRuntimes: newRuntimes });
-      }
-
-      // Update storage
-      get().saveRuntimesToStorage();
-
-      console.info(
-        `Runtime terminated successfully for notebook ${notebookId}`
-      );
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to terminate runtime';
-      console.error('Error terminating runtime:', errorMessage);
-      setRuntimeError(errorMessage);
-    } finally {
-      setIsTerminatingRuntime(false);
-    }
+      })(); // Execute the async IIFE
+    });
   },
 
   // Terminate all runtimes
@@ -745,6 +946,31 @@ export const useRuntimeStore = create<RuntimeState>((set, get) => ({
     _notebookPath: string
   ): Promise<ServiceManager.IManager | null> => {
     try {
+      // RACE CONDITION PREVENTION: Check if runtime is terminated before creating ServiceManager
+      const runtimeUid = runtime.uid as string;
+      const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+      if (cleanupRegistry && runtimeUid) {
+        if (
+          cleanupRegistry.has(runtimeUid) &&
+          cleanupRegistry.get(runtimeUid).terminated
+        ) {
+          console.info(
+            '[RuntimeStore] 🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation for terminated runtime:',
+            runtimeUid
+          );
+          return null;
+        }
+      }
+
+      // Check if we're currently terminating any runtime
+      const { isTerminatingRuntime } = get();
+      if (isTerminatingRuntime) {
+        console.info(
+          '[RuntimeStore] 🛑 RACE CONDITION PREVENTION: Blocking ServiceManager creation during termination'
+        );
+        return null;
+      }
+
       const { createProxyServiceManager } = await import(
         '../services/proxyServiceManager'
       );

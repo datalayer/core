@@ -3,85 +3,63 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { JupyterReactTheme } from '@datalayer/jupyter-react';
-import {
-  ThemeProvider,
-  BaseStyles,
-  Box,
-  Header,
-  Text,
-  Button,
-  Avatar,
-  ActionMenu,
-  ActionList,
-  Spinner,
-} from '@primer/react';
-import {
-  DatabaseIcon,
-  SignOutIcon,
-  BookIcon,
-  PencilIcon,
-} from '@primer/octicons-react';
-import { useCoreStore } from '@datalayer/core';
+/**
+ * @module renderer/App
+ * @description Main React application component for the Datalayer Electron app.
+ * Manages authentication, view navigation, and component orchestration.
+ */
+
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  lazy,
+  Suspense,
+} from 'react';
+import { ThemeProvider, BaseStyles, Box } from '@primer/react';
+import { useCoreStore } from '@datalayer/core/lib/state';
 import { useDatalayerAPI } from './hooks/useDatalayerAPI';
-import LoginView from './components/LoginView';
-import NotebookView from './components/NotebookView';
-import DocumentView from './components/DocumentView';
-import DocumentsList from './components/DocumentsList';
-import EnvironmentsList from './components/EnvironmentsList';
-import { useRuntimeStore } from './stores/runtimeStore';
-import { COLORS } from './constants/colors';
+import { useParallelPreload } from './hooks/usePreload';
+import Login from './pages/Login';
+import Environments from './pages/Environments';
+import LoadingScreen from './components/app/LoadingScreen';
+import AppHeader from './components/app/Header';
+import AppLayout from './components/app/Layout';
+import LoadingSpinner from './components/LoadingSpinner';
+import {
+  ViewType,
+  GitHubUser,
+  NotebookData,
+  DocumentData,
+} from '../shared/types';
+import { processUserData, setupConsoleFiltering } from './utils/app';
 import { logger } from './utils/logger';
 
-type ViewType = 'notebooks' | 'notebook' | 'document' | 'environments';
+/**
+ * Lazy load heavy components that aren't needed on startup.
+ * This improves initial load performance.
+ */
+const NotebookEditor = lazy(() => import('./pages/NotebookEditor'));
+const DocumentEditor = lazy(() => import('./pages/DocumentEditor'));
+const Library = lazy(() => import('./pages/Library'));
 
-interface GitHubUser {
-  login: string;
-  name: string;
-  avatar_url: string;
-  id: number;
-  email?: string;
-  url?: string;
-}
-
-interface NotebookData {
-  id: string;
-  name: string;
-  path: string;
-  cdnUrl?: string;
-  description?: string;
-}
-
-interface DocumentData {
-  id: string;
-  name: string;
-  path: string;
-  cdnUrl?: string;
-  description?: string;
-}
-
+/**
+ * Main application component.
+ * Handles authentication flow, view routing, and global state management.
+ * @component
+ * @returns The rendered application
+ */
 const App: React.FC = () => {
   // Filter out noisy Jupyter React config logging
   useEffect(() => {
-    const originalConsoleLog = console.log;
-    console.log = (...args: unknown[]) => {
-      const message = args.join(' ');
-      if (message.includes('Created config for Jupyter React')) {
-        return; // Suppress this specific message
-      }
-      originalConsoleLog.apply(console, args);
-    };
-
-    return () => {
-      console.log = originalConsoleLog;
-    };
+    const cleanup = setupConsoleFiltering();
+    return cleanup;
   }, []);
 
   const [currentView, setCurrentView] = useState<ViewType>('environments');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isReconnecting, setIsReconnecting] = useState(false);
   const [githubUser, setGithubUser] = useState<GitHubUser | null>(null);
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookData | null>(
     null
@@ -91,157 +69,113 @@ const App: React.FC = () => {
   );
   const [isNotebookEditorActive, setIsNotebookEditorActive] = useState(false);
   const [isDocumentEditorActive, setIsDocumentEditorActive] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [componentsPreloaded, setComponentsPreloaded] = useState(false);
   const { configuration } = useCoreStore();
   const { checkAuth, logout: logoutAPI } = useDatalayerAPI();
-  const { reconnectToExistingRuntimes } = useRuntimeStore();
-
-  // Fetch GitHub user data
-  const fetchGitHubUser = useCallback(async (userId: string) => {
-    try {
-      // Extract GitHub user ID from the handle (e.g., "urn:dla:iam:ext::github:3627835")
-      const match = userId.match(/github:(\d+)/);
-      if (match && match[1]) {
-        const githubId = parseInt(match[1], 10);
-        logger.debug(`Fetching GitHub user data for ID: ${githubId}`);
-
-        // Use IPC bridge to fetch GitHub user data from main process
-        const response = await window.datalayerAPI.getGitHubUser(githubId);
-        if (response.success && response.data) {
-          const userData = response.data as unknown as GitHubUser;
-          setGithubUser(userData);
-          logger.debug('GitHub user data:', userData);
-        } else {
-          console.warn('Failed to fetch GitHub user:', response.error);
-          // Set a default avatar for fallback
-          setGithubUser({
-            login: 'User',
-            name: 'Datalayer User',
-            avatar_url: `https://avatars.githubusercontent.com/u/${githubId}?v=4`,
-            id: githubId,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch GitHub user:', error);
-      // Set a default avatar for fallback
-      setGithubUser({
-        login: 'User',
-        name: 'Datalayer User',
-        avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
-        id: 0,
-      });
-    }
-  }, []);
 
   // Handle user data from login
   const handleUserDataFetched = useCallback(
-    (userData: Record<string, unknown>) => {
-      logger.debug('User data from login:', userData);
-
-      // Extract the GitHub ID from origin_s field
-      const originStr = (userData.origin_s ||
-        userData.origin ||
-        userData.handle ||
-        userData.user_handle) as string;
-      if (originStr && originStr.includes('github:')) {
-        fetchGitHubUser(originStr);
-      } else {
-        logger.warn('Could not find GitHub ID in login user data:', userData);
-        logger.warn('Available fields:', Object.keys(userData));
-        // Don't use a default - let user remain anonymous
-        setGithubUser({
-          login: 'User',
-          name: 'Datalayer User',
-          avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
-          id: 0,
-        });
-      }
+    async (userData: Record<string, unknown>) => {
+      const githubUser = await processUserData(userData);
+      setGithubUser(githubUser);
     },
-    [fetchGitHubUser]
+    []
   );
 
-  useEffect(() => {
-    // Check if already authenticated using secure IPC
-    const checkAuthentication = async () => {
-      setIsCheckingAuth(true);
-      try {
-        const credentials = await checkAuth();
-        if (credentials.isAuthenticated) {
-          setIsAuthenticated(true);
-          if ('runUrl' in credentials) {
-            logger.debug('Authenticated with:', credentials.runUrl);
+  // Preload configurations for parallel loading
+  const preloadConfigs = useMemo(
+    () => [
+      {
+        name: 'login',
+        preloadFn: async () => {
+          // Preload Login component resources
+          // This ensures Login is ready to display instantly
+          await new Promise(resolve => setTimeout(resolve, 50));
+        },
+      },
+      {
+        name: 'environments',
+        preloadFn: async () => {
+          // Skip preloading environments if no token
+          // This prevents "Server Error" when not authenticated
+          if (!configuration?.token) {
+            logger.debug('Skipping environments preload - no token');
+            return;
           }
 
-          // Fetch current user info to get the actual GitHub ID
+          // Preload Environments data in parallel with auth check
+          // This way they're ready instantly when auth succeeds
           try {
-            const userResponse = await window.datalayerAPI.getCurrentUser();
-            if (userResponse.success && userResponse.data) {
-              const userData = userResponse.data;
-              logger.debug('Current user data:', userData);
-
-              // Extract the GitHub ID from origin_s field (e.g., "urn:dla:iam:ext::github:226720")
-              const originStr = (userData.origin_s ||
-                userData.origin ||
-                userData.handle ||
-                userData.user_handle) as string;
-              if (originStr && originStr.includes('github:')) {
-                fetchGitHubUser(originStr);
-              } else {
-                // Try alternate fields
-                const userId = (userData.user_id ||
-                  userData.external_id ||
-                  userData.id) as string;
-                if (userId && userId.includes('github:')) {
-                  fetchGitHubUser(userId);
-                } else {
-                  logger.warn(
-                    'Could not find GitHub ID in user data:',
-                    userData
-                  );
-                  logger.warn('Available fields:', Object.keys(userData));
-                  // Don't use a default - let user remain anonymous
-                  setGithubUser({
-                    login: 'User',
-                    name: 'Datalayer User',
-                    avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
-                    id: 0,
-                  });
-                }
-              }
+            const response = await window.datalayerAPI.getEnvironments();
+            if (response.success) {
+              logger.debug('Environments preloaded:', response.data?.length);
             }
           } catch (error) {
-            logger.error('Failed to fetch current user:', error);
-            // Don't use a default - let user remain anonymous
-            setGithubUser({
-              login: 'User',
-              name: 'Datalayer User',
-              avatar_url: `https://avatars.githubusercontent.com/u/0?v=4`,
-              id: 0,
-            });
+            logger.error('Failed to preload environments:', error);
           }
+        },
+      },
+    ],
+    [configuration?.token]
+  );
 
-          // Try to reconnect to existing runtimes after authentication
-          try {
-            setIsReconnecting(true);
-            await reconnectToExistingRuntimes();
-          } catch (error) {
-            console.error('Failed to reconnect to existing runtimes:', error);
-          } finally {
-            setIsReconnecting(false);
+  const { preloadStates, startAllPreloads, isAllPreloaded } =
+    useParallelPreload(preloadConfigs);
+
+  useEffect(() => {
+    // Start all operations in parallel for faster startup
+    const initializeApp = async () => {
+      setIsCheckingAuth(true);
+
+      // Start preloading components immediately
+      const preloadPromise = startAllPreloads();
+
+      // Check authentication in parallel with preloading
+      const authPromise = (async () => {
+        try {
+          const credentials = await checkAuth();
+          if (credentials.isAuthenticated) {
+            setIsAuthenticated(true);
+            if ('runUrl' in credentials) {
+              // Authentication successful - credentials available
+            }
+
+            // Fetch current user info to get the actual GitHub ID
+            try {
+              const userResponse = await window.datalayerAPI.getCurrentUser();
+              if (userResponse.success && userResponse.data) {
+                const githubUser = await processUserData(userResponse.data);
+                setGithubUser(githubUser);
+              }
+            } catch (error) {
+              logger.error('Failed to fetch current user:', error);
+            }
+
+            // Runtime reconnection removed from startup - will be done lazily when needed
+          } else {
+            // Authentication failed - ensure we show login page
+            setIsAuthenticated(false);
+            setCurrentView('environments'); // Reset to default view
           }
+        } catch (error) {
+          // Auth check failed - show login page
+          logger.error('Auth check failed:', error);
+          setIsAuthenticated(false);
+        } finally {
+          setIsCheckingAuth(false);
         }
-      } finally {
-        setIsCheckingAuth(false);
-      }
+      })();
+
+      // Wait for both auth check and preloading to complete
+      await Promise.allSettled([authPromise, preloadPromise]);
+      setComponentsPreloaded(true);
     };
 
-    checkAuthentication();
+    initializeApp();
 
     // Listen for menu actions
     if (window.electronAPI) {
       window.electronAPI.onMenuAction((action: string) => {
-        logger.debug('Menu action:', action);
         // Handle menu actions here
         switch (action) {
           case 'new-notebook':
@@ -271,27 +205,7 @@ const App: React.FC = () => {
         window.electronAPI.removeMenuActionListener();
       }
     };
-  }, [checkAuth, fetchGitHubUser]);
-
-  // Handle Escape key for user menu
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isUserMenuOpen) {
-        event.preventDefault();
-        event.stopPropagation();
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    if (isUserMenuOpen) {
-      document.addEventListener('keydown', handleEscapeKey, true);
-      return () => {
-        document.removeEventListener('keydown', handleEscapeKey, true);
-      };
-    }
-
-    return undefined;
-  }, [isUserMenuOpen]);
+  }, [checkAuth, startAllPreloads]);
 
   // Monitor configuration changes
   useEffect(() => {
@@ -303,14 +217,12 @@ const App: React.FC = () => {
   // Monitor network connectivity
 
   const handleNotebookEditorDeactivate = useCallback(() => {
-    logger.debug('Deactivating notebook editor');
     setIsNotebookEditorActive(false);
     setCurrentView('notebooks');
     setSelectedNotebook(null);
   }, []);
 
   const handleDocumentEditorDeactivate = useCallback(() => {
-    logger.debug('Deactivating document editor');
     setIsDocumentEditorActive(false);
     setCurrentView('notebooks');
     setSelectedDocument(null);
@@ -328,14 +240,12 @@ const App: React.FC = () => {
   };
 
   const handleNotebookSelect = (notebook: NotebookData) => {
-    logger.debug('Selected notebook:', notebook);
     setSelectedNotebook(notebook);
     setCurrentView('notebook');
     setIsNotebookEditorActive(true);
   };
 
   const handleDocumentSelect = (document: DocumentData) => {
-    logger.debug('Selected document:', document);
     setSelectedDocument(document);
     setCurrentView('document');
     setIsDocumentEditorActive(true);
@@ -345,27 +255,45 @@ const App: React.FC = () => {
     // Handle notebook view with conditional mounting to avoid MathJax conflicts
     if (currentView === 'notebook' && selectedNotebook) {
       return (
-        <NotebookView
-          key={`notebook-${selectedNotebook.id}`}
-          selectedNotebook={selectedNotebook}
-          onClose={() => {
-            setCurrentView('notebooks');
-            setSelectedNotebook(null);
-            setIsNotebookEditorActive(false);
-          }}
-          onRuntimeTerminated={handleNotebookEditorDeactivate}
-        />
+        <Suspense
+          fallback={
+            <LoadingSpinner
+              variant="fullscreen"
+              message="Loading notebook editor..."
+            />
+          }
+        >
+          <NotebookEditor
+            key={`notebook-${selectedNotebook.id}`}
+            selectedNotebook={selectedNotebook}
+            onClose={() => {
+              setCurrentView('notebooks');
+              setSelectedNotebook(null);
+              setIsNotebookEditorActive(false);
+            }}
+            onRuntimeTerminated={handleNotebookEditorDeactivate}
+          />
+        </Suspense>
       );
     }
 
     // Handle document view
     if (currentView === 'document' && selectedDocument) {
       return (
-        <DocumentView
-          key={`document-${selectedDocument.id}`}
-          selectedDocument={selectedDocument}
-          onClose={handleDocumentEditorDeactivate}
-        />
+        <Suspense
+          fallback={
+            <LoadingSpinner
+              variant="inline"
+              message="Loading document editor..."
+            />
+          }
+        >
+          <DocumentEditor
+            key={`document-${selectedDocument.id}`}
+            selectedDocument={selectedDocument}
+            onClose={handleDocumentEditorDeactivate}
+          />
+        </Suspense>
       );
     }
 
@@ -373,345 +301,97 @@ const App: React.FC = () => {
     return (
       <>
         <Box sx={{ display: currentView === 'notebooks' ? 'block' : 'none' }}>
-          <DocumentsList
-            onNotebookSelect={handleNotebookSelect}
-            onDocumentSelect={handleDocumentSelect}
-          />
+          <Suspense
+            fallback={
+              <LoadingSpinner variant="inline" message="Loading library..." />
+            }
+          >
+            <Library
+              onNotebookSelect={handleNotebookSelect}
+              onDocumentSelect={handleDocumentSelect}
+            />
+          </Suspense>
         </Box>
         <Box
           sx={{ display: currentView === 'environments' ? 'block' : 'none' }}
         >
-          <EnvironmentsList />
+          <Environments />
         </Box>
       </>
     );
   };
 
-  // Show loading state while checking authentication or reconnecting
-  if (isCheckingAuth || isReconnecting) {
+  // Show loading state while checking authentication or preloading
+  if (isCheckingAuth || !componentsPreloaded) {
     return (
-      <ThemeProvider>
-        <BaseStyles>
+      <LoadingScreen
+        isCheckingAuth={isCheckingAuth}
+        isReconnecting={false}
+        isPreloading={!isAllPreloaded}
+        preloadStates={preloadStates}
+      />
+    );
+  }
+
+  // Render both login and main app, control visibility based on auth state
+  // This enables instant switching without remounting components
+  const showLogin = !isAuthenticated;
+  const showMainApp = isAuthenticated;
+
+  // App.tsx refactoring completed successfully - clean component composition achieved
+  return (
+    <>
+      {/* Login view - preloaded and visibility controlled */}
+      <Box
+        sx={{
+          display: showLogin ? 'block' : 'none',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: showLogin ? 10 : -1,
+        }}
+      >
+        <ThemeProvider>
+          <BaseStyles>
+            <Login onUserDataFetched={handleUserDataFetched} />
+          </BaseStyles>
+        </ThemeProvider>
+      </Box>
+
+      {/* Main app view - preloaded and visibility controlled */}
+      <Box
+        sx={{
+          display: showMainApp ? 'flex' : 'none',
+          flexDirection: 'column',
+          height: '100vh',
+          visibility: showMainApp ? 'visible' : 'hidden',
+        }}
+      >
+        <AppLayout>
+          <AppHeader
+            currentView={currentView}
+            isNotebookEditorActive={isNotebookEditorActive}
+            isDocumentEditorActive={isDocumentEditorActive}
+            isAuthenticated={isAuthenticated}
+            githubUser={githubUser}
+            onViewChange={setCurrentView}
+            onLogout={handleLogout}
+          />
+
           <Box
             sx={{
-              height: '100vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bg: 'canvas.default',
-              gap: 3,
+              flex: 1,
+              overflow: 'auto',
+              p: currentView === 'notebook' ? 0 : 3,
             }}
           >
-            <Spinner size="large" sx={{ color: COLORS.brand.primary }} />
-            <Text sx={{ color: 'fg.muted' }}>
-              {isCheckingAuth
-                ? 'Checking authentication...'
-                : 'Reconnecting to runtimes...'}
-            </Text>
+            {renderView()}
           </Box>
-        </BaseStyles>
-      </ThemeProvider>
-    );
-  }
-
-  // Show login view if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <ThemeProvider>
-        <BaseStyles>
-          <LoginView onUserDataFetched={handleUserDataFetched} />
-        </BaseStyles>
-      </ThemeProvider>
-    );
-  }
-
-  return (
-    <ThemeProvider>
-      <BaseStyles>
-        <JupyterReactTheme>
-          <Box
-            sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-          >
-            <Header>
-              <Header.Item>
-                <Text
-                  sx={{
-                    fontSize: 3,
-                    fontWeight: 'bold',
-                    color: COLORS.brand.primary,
-                    mr: 4,
-                  }}
-                >
-                  Datalayer Electron Example
-                </Text>
-              </Header.Item>
-              <Header.Item>
-                <Header.Link
-                  href="#"
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault();
-                    setCurrentView('environments');
-                  }}
-                  sx={{
-                    fontWeight: 'normal',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    borderBottom:
-                      currentView === 'environments'
-                        ? `2px solid ${COLORS.brand.primary}`
-                        : '2px solid transparent',
-                    paddingBottom: '4px',
-                    '&:hover': {
-                      textDecoration: 'none',
-                      borderBottom:
-                        currentView === 'environments'
-                          ? `2px solid ${COLORS.brand.primary}`
-                          : '2px solid transparent',
-                    },
-                  }}
-                >
-                  <DatabaseIcon size={16} />
-                  <span>Environments</span>
-                </Header.Link>
-              </Header.Item>
-              <Header.Item>
-                <Header.Link
-                  href="#"
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault();
-                    setCurrentView('notebooks');
-                  }}
-                  sx={{
-                    fontWeight: 'normal',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    borderBottom:
-                      currentView === 'notebooks'
-                        ? `2px solid ${COLORS.brand.primary}`
-                        : '2px solid transparent',
-                    paddingBottom: '4px',
-                    '&:hover': {
-                      textDecoration: 'none',
-                      borderBottom:
-                        currentView === 'notebooks'
-                          ? `2px solid ${COLORS.brand.primary}`
-                          : '2px solid transparent',
-                    },
-                  }}
-                >
-                  <BookIcon size={16} />
-                  <span>Documents</span>
-                </Header.Link>
-              </Header.Item>
-              {isNotebookEditorActive && (
-                <Header.Item>
-                  <Header.Link
-                    href="#"
-                    onClick={(e: React.MouseEvent) => {
-                      e.preventDefault();
-                      setCurrentView('notebook');
-                    }}
-                    sx={{
-                      fontWeight: 'normal',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      borderBottom:
-                        currentView === 'notebook'
-                          ? `2px solid ${COLORS.brand.primary}`
-                          : '2px solid transparent',
-                      paddingBottom: '4px',
-                      '&:hover': {
-                        textDecoration: 'none',
-                        borderBottom:
-                          currentView === 'notebook'
-                            ? `2px solid ${COLORS.brand.primary}`
-                            : '2px solid transparent',
-                      },
-                    }}
-                  >
-                    <PencilIcon size={16} />
-                    <span>Notebook Editor</span>
-                  </Header.Link>
-                </Header.Item>
-              )}
-              {isDocumentEditorActive && (
-                <Header.Item>
-                  <Header.Link
-                    href="#"
-                    onClick={(e: React.MouseEvent) => {
-                      e.preventDefault();
-                      setCurrentView('document');
-                    }}
-                    sx={{
-                      fontWeight: 'normal',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      borderBottom:
-                        currentView === 'document'
-                          ? `2px solid ${COLORS.brand.primary}`
-                          : '2px solid transparent',
-                      paddingBottom: '4px',
-                      '&:hover': {
-                        textDecoration: 'none',
-                        borderBottom:
-                          currentView === 'document'
-                            ? `2px solid ${COLORS.brand.primary}`
-                            : '2px solid transparent',
-                      },
-                    }}
-                  >
-                    <PencilIcon size={16} />
-                    <span>Document Editor</span>
-                  </Header.Link>
-                </Header.Item>
-              )}
-              <Header.Item full />
-              {isAuthenticated && githubUser && (
-                <Header.Item>
-                  <ActionMenu
-                    open={isUserMenuOpen}
-                    onOpenChange={setIsUserMenuOpen}
-                  >
-                    <ActionMenu.Anchor>
-                      <Button
-                        variant="invisible"
-                        aria-label={`User menu for ${githubUser.name || githubUser.login}`}
-                        aria-describedby="user-menu-description"
-                        aria-expanded={isUserMenuOpen}
-                        sx={{
-                          p: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          borderRadius: '50%',
-                          '&:focus-visible': {
-                            outline: '2px solid',
-                            outlineColor: COLORS.brand.primary,
-                            outlineOffset: '2px',
-                          },
-                        }}
-                      >
-                        <Avatar
-                          src={githubUser.avatar_url}
-                          size={32}
-                          alt=""
-                          sx={{
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                            flexShrink: 0,
-                          }}
-                        />
-                      </Button>
-                    </ActionMenu.Anchor>
-
-                    <ActionMenu.Overlay
-                      width="medium"
-                      role="menu"
-                      aria-labelledby="user-menu-description"
-                    >
-                      <div
-                        id="user-menu-description"
-                        style={{
-                          position: 'absolute',
-                          width: '1px',
-                          height: '1px',
-                          padding: '0',
-                          margin: '-1px',
-                          overflow: 'hidden',
-                          clip: 'rect(0, 0, 0, 0)',
-                          whiteSpace: 'nowrap',
-                          border: '0',
-                        }}
-                      >
-                        User account menu with profile information and sign out
-                        option
-                      </div>
-                      <ActionList>
-                        <ActionList.Item
-                          disabled
-                          sx={{ py: 3 }}
-                          role="menuitem"
-                          aria-label={`Profile information for ${githubUser.name || githubUser.login}`}
-                        >
-                          <ActionList.LeadingVisual>
-                            <Avatar
-                              src={githubUser.avatar_url}
-                              size={24}
-                              alt=""
-                              sx={{
-                                borderRadius: '50%',
-                                objectFit: 'cover',
-                                flexShrink: 0,
-                              }}
-                            />
-                          </ActionList.LeadingVisual>
-                          <Box>
-                            <Text
-                              sx={{ fontWeight: 'semibold', display: 'block' }}
-                            >
-                              {githubUser.name || githubUser.login}
-                            </Text>
-                            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                              @{githubUser.login}
-                            </Text>
-                          </Box>
-                        </ActionList.Item>
-
-                        <ActionList.Divider />
-
-                        <ActionList.Item
-                          onSelect={() => {
-                            handleLogout();
-                            setIsUserMenuOpen(false);
-                          }}
-                          role="menuitem"
-                          aria-label="Sign out of your account"
-                          sx={{
-                            color: 'danger.fg',
-                            '&:hover': {
-                              bg: 'canvas.subtle',
-                              color: 'danger.fg',
-                            },
-                            '&:active': {
-                              bg: 'canvas.subtle',
-                            },
-                            '&:focus-visible': {
-                              outline: '2px solid',
-                              outlineColor: COLORS.brand.primary,
-                              outlineOffset: '-2px',
-                            },
-                          }}
-                        >
-                          <ActionList.LeadingVisual>
-                            <SignOutIcon />
-                          </ActionList.LeadingVisual>
-                          Sign out
-                        </ActionList.Item>
-                      </ActionList>
-                    </ActionMenu.Overlay>
-                  </ActionMenu>
-                </Header.Item>
-              )}
-            </Header>
-
-            <Box
-              sx={{
-                flex: 1,
-                overflow: 'auto',
-                p: currentView === 'notebook' ? 0 : 3,
-              }}
-            >
-              {renderView()}
-            </Box>
-          </Box>
-        </JupyterReactTheme>
-      </BaseStyles>
-    </ThemeProvider>
+        </AppLayout>
+      </Box>
+    </>
   );
 };
 

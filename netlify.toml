@@ -9,8 +9,8 @@ conda activate datalayer && \
 npm install && \
 make typedoc && \
 pip install .[docs] && \
-make pydoc && \
+make pydoc
 cd docs && \
 npm install && \
-make build'''
+npm run build'''
 publish = "docs/build"

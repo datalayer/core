@@ -3,6 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * @module main/index
+ * @description Main process entry point for the Datalayer Electron application.
+ * Handles window creation, IPC communication, menu setup, and security configurations.
+ */
+
 // Initialize electron-log FIRST, before any other imports
 import log from 'electron-log/main';
 
@@ -13,11 +19,32 @@ log.transports.file.level = 'info';
 log.transports.console.level =
   process.env.NODE_ENV === 'development' ? 'debug' : false;
 
-// Override console.log to use electron-log to prevent EPIPE errors
+/**
+ * Stores the original console.log function before overriding.
+ * Used for fallback logging when electron-log fails.
+ * @internal
+ */
 const originalConsoleLog = console.log;
+
+/**
+ * Stores the original console.error function before overriding.
+ * Used for fallback logging when electron-log fails.
+ * @internal
+ */
 const originalConsoleError = console.error;
+
+/**
+ * Stores the original console.warn function before overriding.
+ * Used for fallback logging when electron-log fails.
+ * @internal
+ */
 const originalConsoleWarn = console.warn;
 
+/**
+ * Override console.log to use electron-log to prevent EPIPE errors.
+ * EPIPE errors occur when the console output pipe is broken in production.
+ * @param args - Arguments to log
+ */
 console.log = (...args: any[]) => {
   try {
     log.info(...args);
@@ -29,6 +56,10 @@ console.log = (...args: any[]) => {
   }
 };
 
+/**
+ * Override console.error to use electron-log to prevent EPIPE errors.
+ * @param args - Arguments to log as errors
+ */
 console.error = (...args: any[]) => {
   try {
     log.error(...args);
@@ -40,6 +71,10 @@ console.error = (...args: any[]) => {
   }
 };
 
+/**
+ * Override console.warn to use electron-log to prevent EPIPE errors.
+ * @param args - Arguments to log as warnings
+ */
 console.warn = (...args: any[]) => {
   try {
     log.warn(...args);
@@ -56,22 +91,43 @@ import { join } from 'path';
 import { apiService } from './services/api-service';
 import { websocketProxy } from './services/websocket-proxy';
 
-// Environment detection utilities
+/**
+ * Checks if the application is running in development mode.
+ * @returns True if NODE_ENV is 'development', false otherwise
+ */
 function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development';
 }
 
+/**
+ * Determines whether DevTools should be enabled.
+ * Currently always returns true for debugging purposes.
+ * @returns True to enable DevTools
+ */
 function shouldEnableDevTools(): boolean {
   // Always enable DevTools on all builds
   return true;
 }
 
+/**
+ * Determines whether production security features should be enabled.
+ * @returns True if running in production mode
+ */
 function shouldUseProductionSecurity(): boolean {
   return !isDevelopment();
 }
 
+/**
+ * The main application window instance.
+ * Set to null when the window is closed.
+ */
 let mainWindow: BrowserWindow | null = null;
 
+/**
+ * Creates the main application window with security configurations.
+ * Sets up window properties, content security policy, and event handlers.
+ * @returns void
+ */
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -162,7 +218,12 @@ function createWindow() {
   }
 }
 
-// Create app menu
+/**
+ * Creates the application menu bar.
+ * Different menu structures for macOS and non-macOS platforms.
+ * Includes File, Edit, View, Window, and Help menus with appropriate items.
+ * @returns void
+ */
 function createMenu() {
   if (process.platform === 'darwin') {
     // macOS: Create menu with app name, Edit, and Help
@@ -175,7 +236,7 @@ function createMenu() {
             click: () => {
               const aboutWindow = new BrowserWindow({
                 width: 450,
-                height: 550,
+                height: 600,
                 resizable: false,
                 minimizable: false,
                 maximizable: false,
@@ -201,27 +262,41 @@ function createMenu() {
               // Remove menu from about window
               aboutWindow.setMenu(null);
 
-              // Allow closing with ESC key
-              aboutWindow.webContents.on(
-                'before-input-event',
-                (_event, input) => {
-                  if (input.key === 'Escape') {
-                    aboutWindow.close();
-                  }
+              // Create named handlers for proper cleanup
+              const escapeHandler = (
+                _event: Electron.Event,
+                input: Electron.Input
+              ) => {
+                if (input.key === 'Escape') {
+                  aboutWindow.close();
                 }
-              );
+              };
 
-              // Handle close button click from renderer
               const closeHandler = () => {
                 if (aboutWindow && !aboutWindow.isDestroyed()) {
                   aboutWindow.close();
                 }
               };
 
+              // Allow closing with ESC key
+              aboutWindow.webContents.on('before-input-event', escapeHandler);
+
+              // Handle close button click from renderer
               ipcMain.on('close-about-window', closeHandler);
 
-              // Clean up handler when window is closed
+              // Clean up all event listeners when window is closed
               aboutWindow.on('closed', () => {
+                // Remove the before-input-event listener
+                if (
+                  aboutWindow.webContents &&
+                  !aboutWindow.webContents.isDestroyed()
+                ) {
+                  aboutWindow.webContents.removeListener(
+                    'before-input-event',
+                    escapeHandler
+                  );
+                }
+                // Remove the IPC listener
                 ipcMain.removeListener('close-about-window', closeHandler);
               });
             },
@@ -397,12 +472,18 @@ function createMenu() {
   }
 }
 
-// IPC handler for opening external links
+/**
+ * IPC handler for opening external links in the default browser.
+ * @param url - The URL to open externally
+ */
 ipcMain.on('open-external', (_, url) => {
   shell.openExternal(url);
 });
 
-// IPC handlers for renderer communication
+/**
+ * IPC handler to get version information.
+ * @returns Object containing Electron, Node, Chrome, and app versions
+ */
 ipcMain.handle('get-version', () => {
   return {
     electron: process.versions.electron,
@@ -412,6 +493,10 @@ ipcMain.handle('get-version', () => {
   };
 });
 
+/**
+ * IPC handler to get environment variables.
+ * @returns Object containing DATALAYER_RUN_URL and DATALAYER_TOKEN
+ */
 ipcMain.handle('get-env', () => {
   return {
     DATALAYER_RUN_URL: process.env.DATALAYER_RUN_URL || '',
@@ -419,7 +504,12 @@ ipcMain.handle('get-env', () => {
   };
 });
 
-// Datalayer API IPC handlers
+/**
+ * IPC handler for Datalayer login.
+ * @param runUrl - The Datalayer API URL
+ * @param token - Authentication token
+ * @returns Login result from API service
+ */
 ipcMain.handle('datalayer:login', async (_, { runUrl, token }) => {
   return apiService.login(runUrl, token);
 });
@@ -428,8 +518,8 @@ ipcMain.handle('datalayer:logout', async () => {
   return apiService.logout();
 });
 
-ipcMain.handle('datalayer:get-credentials', () => {
-  return apiService.getCredentialsWithToken();
+ipcMain.handle('datalayer:get-credentials', async () => {
+  return await apiService.getCredentialsWithToken();
 });
 
 // About dialog handlers
@@ -620,9 +710,26 @@ ipcMain.handle(
         headers,
         runtimeId
       );
+
+      // Check if the connection was blocked
+      if ('blocked' in result && result.blocked) {
+        log.debug('[WebSocket Proxy] Connection blocked (runtime terminated)');
+        // Throw error to maintain compatibility with existing error handling
+        throw new Error(result.reason);
+      }
+
       return result;
     } catch (error: unknown) {
-      log.error('[WebSocket Proxy] Failed to open connection:', error);
+      // Only log as error if it's not a terminated runtime error
+      const errorStr = String(error);
+      if (
+        errorStr.includes('terminated') ||
+        errorStr.includes('no new connections allowed')
+      ) {
+        log.debug('[WebSocket Proxy] Connection blocked (runtime terminated)');
+      } else {
+        log.error('[WebSocket Proxy] Failed to open connection:', error);
+      }
       throw error;
     }
   }
@@ -657,11 +764,36 @@ ipcMain.handle('runtime-terminated', async (_, { runtimeId }) => {
     `[Runtime Cleanup] 🛑 Main process marked runtime ${runtimeId} as terminated`
   );
 
+  // CRITICAL: Close all WebSocket connections for this runtime
+  try {
+    websocketProxy.closeConnectionsForRuntime(runtimeId);
+    log.debug(
+      `[Runtime Cleanup] ✅ Closed all WebSocket connections for runtime ${runtimeId}`
+    );
+  } catch (error) {
+    log.error(
+      `[Runtime Cleanup] ❌ Error closing WebSocket connections for runtime ${runtimeId}:`,
+      error
+    );
+  }
+
   return { success: true };
 });
 
-// App event handlers
+/**
+ * Application ready event handler.
+ * Sets up the dock icon (macOS), creates the main window and menu.
+ */
 app.whenReady().then(() => {
+  // Increase max event listeners to prevent warnings
+  require('events').EventEmitter.defaultMaxListeners = 20;
+
+  // Disable system beep sounds
+  if (process.platform === 'darwin') {
+    // Disable beep sound on macOS
+    app.commandLine.appendSwitch('disable-renderer-accessibility');
+  }
+
   // Set the dock icon on macOS
   if (process.platform === 'darwin') {
     const iconPath = join(__dirname, '../../resources/icon.png');
@@ -678,13 +810,20 @@ app.whenReady().then(() => {
   });
 });
 
+/**
+ * Window close event handler.
+ * Quits the app on non-macOS platforms when all windows are closed.
+ */
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-// Security: Prevent new window creation
+/**
+ * Security handler to prevent new window creation.
+ * All external links are opened in the default browser instead.
+ */
 app.on('web-contents-created', (_, contents) => {
   contents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);

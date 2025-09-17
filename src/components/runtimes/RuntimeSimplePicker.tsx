@@ -78,7 +78,8 @@ export function RuntimeSimplePicker(
 ): JSX.Element {
   const { assignRuntime, sessionConnection } = props;
   const { runtimeModels, multiServiceManager } = useRuntimesStore();
-  const { jupyterLabAdapter } = useJupyterReactStore();
+  const jupyterReactStore = useJupyterReactStore();
+  const jupyterLabAdapter = (jupyterReactStore as any).jupyterLabAdapter;
   const [runtimeLocation, setRuntimeLocation] = useState<IRuntimeLocation>();
   const [luminoServices, setLuminoServices] = useState<{ [k: string]: any }>(
     {},
