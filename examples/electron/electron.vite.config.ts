@@ -668,12 +668,15 @@ export default defineConfig({
           let modified = code;
 
           // Handle imports from '@jupyterlab/services'
+          // Use forward slashes for all platforms to avoid Windows path issues
+          const proxyPath = resolve(
+            __dirname,
+            'src/renderer/polyfills/jupyterlab-proxy.js'
+          ).replace(/\\/g, '/');
+
           modified = modified.replace(
             /from\s+['"]@jupyterlab\/services['"]/g,
-            `from '${resolve(
-              __dirname,
-              'src/renderer/polyfills/jupyterlab-proxy.js'
-            )}'`
+            `from '${proxyPath}'`
           );
 
           if (modified !== code) {

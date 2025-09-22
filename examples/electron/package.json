@@ -6,9 +6,14 @@
   "author": "Datalayer",
   "license": "BSD-3-Clause",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/datalayer/core.git",
+    "directory": "examples/electron"
+  },
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "npm run type-check && electron-vite build && node scripts/fix-production-bundle.js",
+    "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 electron-vite build && node scripts/fix-production-bundle.js",
     "preview": "electron-vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --quiet",
@@ -93,6 +98,8 @@
     "directories": {
       "output": "dist-electron"
     },
+    "generateUpdatesFilesForAllChannels": false,
+    "publish": null,
     "files": [
       "dist/**/*",
       "resources/**/*",
