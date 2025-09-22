@@ -5,7 +5,7 @@
 
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import { requestDatalayerAPI, type RunResponseError } from '../../api';
+import { requestDatalayerAPI, type RunResponseError } from '../../apiv1';
 import {
   ISurvey,
   asSurvey,

@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { type IRuntimeOptions } from '../../api';
+import { type IRuntimeOptions } from '../../apiv1';
 
 export interface RuntimeTransfer {
   /**

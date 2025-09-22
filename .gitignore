@@ -48,6 +48,11 @@ storybook-static
 # Version file is handled by hatchling
 datalayer_core/_version.py
 
+# Test environment files (contain secrets)
+.env.test
+.env.local
+.env.*.local
+
 datalayer_core/static/*.js
 datalayer_core/static/*.css
 

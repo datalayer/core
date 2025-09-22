@@ -21,8 +21,8 @@ import type {
   IRuntimeOptions,
   IMultiServiceManager,
   IDatalayerSessionContext,
-} from '../../api';
-import { RuntimeSnippetsFacade } from '../../api';
+} from '../../apiv1';
+import { RuntimeSnippetsFacade } from '../../apiv1';
 import { IRuntimeDesc } from '../../models';
 import { ExternalTokenSilentLogin } from '../../components/iam';
 import { useCoreStore, useIAMStore } from '../../state';

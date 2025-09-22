@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { requestJupyterKernelsExtension } from '../api';
+import { requestJupyterKernelsExtension } from '../apiv1';
 
 export const useRuntimes = () => {
   // Folder Mounting ----------------------------------------------------------

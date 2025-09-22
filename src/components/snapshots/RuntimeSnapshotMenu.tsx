@@ -29,7 +29,7 @@ import {
   loadBrowserRuntimeSnapshot,
   loadRuntimeSnapshot,
   IMultiServiceManager,
-} from '../../api';
+} from '../../apiv1';
 import { useRuntimesStore } from '../../state';
 import { createRuntimeSnapshotName } from '../../utils';
 
