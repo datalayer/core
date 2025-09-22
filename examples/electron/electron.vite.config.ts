@@ -227,20 +227,20 @@ export default defineConfig({
             const fixedCode = code.replace(
               /extend: function\(id, redef\) {\s*var lang2 = _\.util\.clone\(_\.languages\[id\]\);\s*for \(var key in redef\) {\s*lang2\[key\] = redef\[key\];\s*}\s*return lang2;\s*}/g,
               `extend: function(id, redef) {
-            console.log('[Prism Fix] Extending language:', id, 'with:', redef);
+            // Extending Prism language definition
             var baseLang = _.languages[id];
             if (!baseLang) {
-              console.warn('[Prism Fix] Base language not found:', id, 'creating empty base');
+              // Base language not found, creating empty base
               baseLang = {};
             }
             var lang2 = _.util.clone(baseLang);
             for (var key in redef) {
               if (redef.hasOwnProperty(key)) {
-                console.log('[Prism Fix] Setting', key, '=', redef[key]);
+                // Setting language property
                 lang2[key] = redef[key];
               }
             }
-            console.log('[Prism Fix] Extended language result:', lang2);
+            // Language extension completed
             return lang2;
           }`
             );
@@ -609,7 +609,7 @@ export default defineConfig({
             `;
 
             // Replace require("path") with inline polyfill
-            let modified = code.replace(
+            const modified = code.replace(
               /const path_1 = require\("path"\);?/g,
               pathPolyfill + '\nconst path_1 = path;'
             );
@@ -668,12 +668,15 @@ export default defineConfig({
           let modified = code;
 
           // Handle imports from '@jupyterlab/services'
+          // Use forward slashes for all platforms to avoid Windows path issues
+          const proxyPath = resolve(
+            __dirname,
+            'src/renderer/polyfills/jupyterlab-proxy.js'
+          ).replace(/\\/g, '/');
+
           modified = modified.replace(
             /from\s+['"]@jupyterlab\/services['"]/g,
-            `from '${resolve(
-              __dirname,
-              'src/renderer/utils/jupyterlab-services-proxy.js'
-            )}'`
+            `from '${proxyPath}'`
           );
 
           if (modified !== code) {
@@ -2169,6 +2172,87 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
         jsxRuntime: 'automatic', // Use automatic JSX runtime to avoid CJS/ESM issues
       }),
       wasm(), // Add WASM support for loro-crdt
+      {
+        name: 'inject-symbol-polyfill-first',
+        enforce: 'post',
+        renderChunk(code, chunk) {
+          // Only inject in the main bundle
+          if (chunk.fileName.includes('index') && code.length > 1000000) {
+            // Find where the async wrapper starts (after the initial const declarations)
+            // We need to inject Symbol BEFORE any async code
+            const asyncPattern = /let __tla = Promise\.all\(/;
+            const match = code.match(asyncPattern);
+
+            if (match) {
+              const insertIndex = match.index;
+
+              // Symbol polyfill that runs SYNCHRONOUSLY before ANY async code
+              const symbolPolyfill = `
+// CRITICAL: Symbol polyfill MUST run before any async code
+(function() {
+  if (typeof Symbol === 'undefined') {
+    globalThis.Symbol = function Symbol(desc) {
+      return '@@Symbol' + (desc || '') + '_' + Math.random();
+    };
+  }
+  if (!Symbol.for) {
+    var reg = {};
+    Symbol.for = function(k) {
+      if (!reg[k]) reg[k] = Symbol(k);
+      return reg[k];
+    };
+    Symbol.keyFor = function(s) {
+      for (var k in reg) if (reg[k] === s) return k;
+    };
+  }
+  if (!Symbol.iterator) Symbol.iterator = Symbol('iterator');
+  if (!Symbol.toStringTag) Symbol.toStringTag = Symbol('toStringTag');
+  console.log('[Vite Symbol] Injected before async wrapper');
+})();
+`;
+
+              // Insert the polyfill RIGHT BEFORE the async wrapper
+              const modifiedCode =
+                code.slice(0, insertIndex) +
+                symbolPolyfill +
+                code.slice(insertIndex);
+
+              return {
+                code: modifiedCode,
+                map: null,
+              };
+            } else {
+              // Fallback: inject at the very beginning if pattern not found
+              const symbolPolyfill = `// Symbol polyfill at start
+(function() {
+  if (typeof Symbol === 'undefined') {
+    globalThis.Symbol = function Symbol(desc) {
+      return '@@Symbol' + (desc || '') + '_' + Math.random();
+    };
+  }
+  if (!Symbol.for) {
+    var reg = {};
+    Symbol.for = function(k) {
+      if (!reg[k]) reg[k] = Symbol(k);
+      return reg[k];
+    };
+    Symbol.keyFor = function(s) {
+      for (var k in reg) if (reg[k] === s) return k;
+    };
+  }
+  if (!Symbol.iterator) Symbol.iterator = Symbol('iterator');
+  if (!Symbol.toStringTag) Symbol.toStringTag = Symbol('toStringTag');
+})();
+`;
+              return {
+                code: symbolPolyfill + code,
+                map: null,
+              };
+            }
+          }
+          return null;
+        },
+      },
       topLevelAwait(), // Add top-level await support
       {
         name: 'fix-require-statements',
@@ -2225,7 +2309,7 @@ console.log('[IMMEDIATE POLYFILLS] ✅ All lodash functions available synchronou
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src/renderer'),
-        '@datalayer/core': resolve(__dirname, '../../lib'),
+        '@datalayer/core': resolve(__dirname, '../..'),
         '@primer/css': resolve(__dirname, '../../node_modules/@primer/css'),
         '@datalayer/jupyter-react': resolve(
           __dirname,

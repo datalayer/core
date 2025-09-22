@@ -94,6 +94,25 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
     this.setStatus(CollaborationStatus.Connecting);
 
     try {
+      // RACE CONDITION PREVENTION: Check if runtime is terminated before creating WebSocket connections
+      const runtimeId = this._config.runtimeId;
+      if (runtimeId) {
+        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+        if (
+          cleanupRegistry &&
+          cleanupRegistry.has(runtimeId) &&
+          cleanupRegistry.get(runtimeId).terminated
+        ) {
+          console.info(
+            '[ElectronCollaborationProvider] 🛑 RACE CONDITION PREVENTION: Blocking collaboration WebSocket for terminated runtime:',
+            runtimeId
+          );
+          throw new Error(
+            `Runtime ${runtimeId} has been terminated - no new collaboration connections allowed`
+          );
+        }
+      }
+
       const runUrl = this._config.runUrl;
       let configToken = this._config.token;
 
@@ -173,7 +192,6 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
       const { ProxyWebSocket } = await import('./proxyServiceManager');
 
       // Create a runtime-aware WebSocket factory with runtime ID
-      const runtimeId = this._config.runtimeId;
       const RuntimeProxyWebSocket = class extends ProxyWebSocket {
         constructor(url: string | URL, protocols?: string | string[]) {
           super(url, protocols, undefined, runtimeId);
@@ -185,6 +203,24 @@ export class ElectronCollaborationProvider implements ICollaborationProvider {
         sessionId,
         ...(configToken && { token: configToken }), // Include real token if available
       };
+
+      // FINAL RACE CONDITION CHECK: Verify runtime is still not terminated before creating WebSocket
+      if (runtimeId) {
+        const cleanupRegistry = (window as any).__datalayerRuntimeCleanup;
+        if (
+          cleanupRegistry &&
+          cleanupRegistry.has(runtimeId) &&
+          cleanupRegistry.get(runtimeId).terminated
+        ) {
+          console.info(
+            '[ElectronCollaborationProvider] 🛑 FINAL CHECK: Runtime terminated during connection setup, aborting:',
+            runtimeId
+          );
+          throw new Error(
+            `Runtime ${runtimeId} has been terminated during collaboration setup - no new connections allowed`
+          );
+        }
+      }
 
       // Create WebSocket provider following original Datalayer pattern
       // Both sessionId and token are passed as params to y-websocket

@@ -48,7 +48,7 @@
     "build": "gulp resources-to-lib && tsc -b && vite build",
     "build:lib": "gulp resources-to-lib && tsc -b",
     "build:nextjs": "npm run build --workspace=nextjs-notebook-example",
-    "build:electron": "npm run build --workspace=@datalayer/electron-example",
+    "build:electron": "npm run build --workspace=@datalayer/desktop",
     "build:examples": "npm run build:nextjs && npm run build:electron",
     "build:all": "npm run build && npm run build:examples",
     "lint": "eslint . --quiet",

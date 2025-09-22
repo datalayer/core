@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // Better for production builds
   reactStrictMode: false, // Required for Jupyter components
   images: {
     remotePatterns: [

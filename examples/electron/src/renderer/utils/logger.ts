@@ -4,8 +4,9 @@
  */
 
 /**
- * Centralized logging utility using electron-log
- * Provides module-specific loggers with configurable levels
+ * @module renderer/utils/logger
+ * @description Centralized logging utility using electron-log.
+ * Provides module-specific loggers with configurable levels.
  */
 
 import log from 'electron-log/renderer';

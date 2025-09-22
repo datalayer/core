@@ -3,37 +3,40 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// CRITICAL: Load critical polyfills FIRST - before anything else to prevent temporal dead zone
-import './utils/critical-polyfills';
+/**
+ * @module renderer/main
+ * @description Main entry point for the Electron renderer process.
+ * Handles polyfills, Prism.js configuration, and React application initialization.
+ */
 
-// CRITICAL: Load bulletproof extend polyfills SECOND - before anything else
-import './utils/lodash-polyfills';
+/**
+ * Load all polyfills in the correct order.
+ * This single import handles Symbol, lodash, Node.js builtins, RequireJS, etc.
+ */
+import './polyfills';
 
-// CRITICAL: Load underscore/lodash SECOND for Backbone
-import './preload-underscore';
-
-// Theme compatibility is now handled by bulletproofExtend in lodash-polyfills.js and Vite config
-import './utils/polyfills';
-import './utils/requirejs-shim';
-
-// Polyfill for global object required by MathJax
-if (typeof global === 'undefined') {
-  (window as any).global = window;
-}
-
-// Import Prism for syntax highlighting and make it globally available
+/**
+ * Import Prism for syntax highlighting and make it globally available.
+ */
 import Prism from 'prismjs';
 
-// Import common language components
+/**
+ * Import common language components for Prism.js.
+ */
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-json';
 
-// Make Prism available globally for Lexical code highlighting
+/**
+ * Make Prism available globally for Lexical code highlighting.
+ */
 (window as any).Prism = Prism;
 
-// CRITICAL: Ensure all Prism instances have the 'c' language to prevent extension errors
-// This must run after Prism is loaded but before any extensions load
+/**
+ * Ensure all Prism instances have the 'c' language to prevent extension errors.
+ * This must run after Prism is loaded but before any extensions load.
+ * @internal
+ */
 function ensureCLanguageInAllPrismInstances() {
   const cLanguageDefinition = {
     comment: [
@@ -67,14 +70,12 @@ function ensureCLanguageInAllPrismInstances() {
     punctuation: /[{}[\];(),.:]/,
   };
 
-  console.log(
-    '[Critical Prism Fix] Ensuring C language exists in all Prism instances'
-  );
+  // Ensuring C language exists in all Prism instances
 
   // Fix the global Prism instance (if exists)
   if (typeof window !== 'undefined' && (window as any).Prism?.languages) {
     if (!(window as any).Prism.languages.c) {
-      console.log('[Prism Fix] Adding C language to global Prism instance');
+      // Adding C language to global Prism instance
       (window as any).Prism.languages.c = cLanguageDefinition;
     }
   }
@@ -99,9 +100,7 @@ function ensureCLanguageInAllPrismInstances() {
           typeof obj.highlight === 'function'
         ) {
           if (!obj.languages.c) {
-            console.log(
-              `[Prism Fix] Found Prism instance at window.${key}, adding C language`
-            );
+            // Found Prism instance, adding C language
             obj.languages.c = cLanguageDefinition;
             foundAndFixed++;
           }
@@ -111,28 +110,30 @@ function ensureCLanguageInAllPrismInstances() {
       }
     }
 
-    console.log(
-      `[Prism Fix] Check ${checkCount}/${maxChecks}: Fixed ${foundAndFixed} Prism instances`
-    );
+    // Prism instance check completed
 
     if (checkCount >= maxChecks) {
-      console.log('[Prism Fix] Completed maximum checks for Prism instances');
+      // Completed maximum checks for Prism instances
       clearInterval(ensureInterval);
     }
   }, 100); // Check every 100ms
 }
 
-// Run the fix after a short delay to ensure Prism is fully loaded
+/**
+ * Run the fix after a short delay to ensure Prism is fully loaded.
+ */
 setTimeout(ensureCLanguageInAllPrismInstances, 500);
 
-// CRITICAL FIX: Add missing Prism.js 'c' language definition
-// This prevents "Cannot set properties of undefined (setting 'className')" error
-// when prism-cpp.js tries to extend the 'c' language
+/**
+ * Add missing Prism.js 'c' language definition.
+ * This prevents "Cannot set properties of undefined (setting 'className')" error
+ * when prism-cpp.js tries to extend the 'c' language.
+ */
 if (Prism && Prism.languages) {
-  console.log('[Prism Fix] Available languages:', Object.keys(Prism.languages));
+  // Available Prism languages loaded
 
   if (!Prism.languages.c) {
-    console.log('[Prism Fix] Adding missing "c" language definition');
+    // Adding missing "c" language definition
 
     // Create a base C language definition without extending anything
     Prism.languages.c = {
@@ -167,12 +168,9 @@ if (Prism && Prism.languages) {
       punctuation: /[{}[\];(),.:]/,
     };
 
-    console.log(
-      '[Prism Fix] C language definition created:',
-      Prism.languages.c
-    );
+    // C language definition created successfully
   } else {
-    console.log('[Prism Fix] C language already exists:', Prism.languages.c);
+    // C language already exists
   }
 }
 
@@ -181,18 +179,58 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Note: Electron APIs are only available when running in Electron environment
-// In browser mode, the app will show "Not in Electron environment" message
+// Suppress widget detachment errors that occur during cleanup
+window.addEventListener('error', event => {
+  const errorStr = event.error?.message || String(event.error);
+  if (
+    errorStr.includes('Widget is not attached') ||
+    errorStr.includes('NotebookWindowedLayout') ||
+    errorStr.includes('detachWidget')
+  ) {
+    console.debug(
+      '[Global Error Handler] Suppressing widget detachment error during cleanup'
+    );
+    event.preventDefault();
+    return;
+  }
+});
 
-// NOTE: We do NOT call loadJupyterConfig() globally here because DocumentView
-// needs to manage its own Jupyter configuration per runtime using ServiceManager props
+// Suppress unhandled promise rejections for widget errors
+window.addEventListener('unhandledrejection', event => {
+  const errorStr = event.reason?.message || String(event.reason);
+  if (
+    errorStr.includes('Widget is not attached') ||
+    errorStr.includes('NotebookWindowedLayout') ||
+    errorStr.includes('detachWidget')
+  ) {
+    console.debug(
+      '[Global Error Handler] Suppressing widget promise rejection during cleanup'
+    );
+    event.preventDefault();
+    return;
+  }
+});
 
-// Get Datalayer configuration from environment
+/**
+ * Note: Electron APIs are only available when running in Electron environment.
+ * In browser mode, the app will show "Not in Electron environment" message.
+ */
+
+/**
+ * NOTE: We do NOT call loadJupyterConfig() globally here because DocumentEditor
+ * needs to manage its own Jupyter configuration per runtime using ServiceManager props.
+ */
+
+/**
+ * Get Datalayer configuration from environment.
+ * Loads configuration from Electron environment variables.
+ * @returns Promise that resolves when configuration is loaded
+ */
 const loadDatalayerConfig = async () => {
   if (window.electronAPI) {
     const env = await window.electronAPI.getEnv();
     if (env.DATALAYER_RUN_URL && env.DATALAYER_TOKEN) {
-      // Store in window for now (in production, use proper state management)
+      /** Store in window for now (in production, use proper state management) */
       (window as any).datalayerConfig = {
         runUrl: env.DATALAYER_RUN_URL,
         token: env.DATALAYER_TOKEN,
@@ -201,7 +239,11 @@ const loadDatalayerConfig = async () => {
   }
 };
 
-// Initialize and render app
+/**
+ * Initialize and render the React application.
+ * Loads configuration and mounts the app to the DOM.
+ * @returns Promise that resolves when app is initialized
+ */
 const init = async () => {
   await loadDatalayerConfig();
 
@@ -216,4 +258,7 @@ const init = async () => {
   );
 };
 
+/**
+ * Start the application initialization process.
+ */
 init();

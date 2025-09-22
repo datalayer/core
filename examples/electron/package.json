@@ -1,14 +1,19 @@
 {
-  "name": "@datalayer/electron-example",
+  "name": "@datalayer/desktop",
   "version": "0.0.1",
-  "description": "Electron example showcasing Datalayer frontend SDK",
+  "description": "Datalayer Desktop - Official desktop application",
   "main": "dist/main/index.js",
   "author": "Datalayer",
   "license": "BSD-3-Clause",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/datalayer/core.git",
+    "directory": "examples/electron"
+  },
   "scripts": {
     "dev": "electron-vite dev",
-    "build": "npm run type-check && electron-vite build && node scripts/fix-production-bundle.js",
+    "build": "npm run type-check && cross-env NODE_OPTIONS=--max-old-space-size=4096 electron-vite build && node scripts/fix-production-bundle.js",
     "preview": "electron-vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --quiet",
@@ -28,6 +33,8 @@
     "dist:linux": "npm run build && electron-builder --linux",
     "dist:dev-prod": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder",
     "dist:dev-prod:mac": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --mac --universal",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch",
     "dist:dev-prod:win": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --win",
     "dist:dev-prod:linux": "cross-env ELECTRON_DEV_PROD=true npm run build && cross-env ELECTRON_DEV_PROD=true electron-builder --linux"
   },
@@ -46,6 +53,7 @@
     "@types/ws": "^8.18.1",
     "electron-log": "^5.4.3",
     "electron-store": "^10.1.0",
+    "fast-deep-equal": "^3.1.3",
     "form-data": "^4.0.4",
     "lexical": "^0.33.1",
     "lodash": "^4.17.21",
@@ -76,6 +84,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "glob": "^11.0.3",
     "patch-package": "^8.0.0",
+    "typedoc": "^0.28.13",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
     "vite-plugin-string": "^1.2.3",
@@ -83,12 +92,14 @@
     "vite-plugin-wasm": "^3.5.0"
   },
   "build": {
-    "appId": "io.datalayer.electron-example",
-    "productName": "Datalayer Electron Example",
+    "appId": "io.datalayer.desktop",
+    "productName": "Datalayer Desktop",
     "electronVersion": "34.5.8",
     "directories": {
       "output": "dist-electron"
     },
+    "generateUpdatesFilesForAllChannels": false,
+    "publish": null,
     "files": [
       "dist/**/*",
       "resources/**/*",

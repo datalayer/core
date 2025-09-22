@@ -3,10 +3,20 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { useCoreStore, useIAMStore } from '@datalayer/core';
+/**
+ * @module renderer/hooks/useDatalayerAPI
+ * @description React hook for accessing Datalayer API through secure IPC.
+ * All API calls go through the main process for security.
+ */
 
-// Define the interface locally since it's not exported from @datalayer/core
+import { useState, useCallback, useEffect } from 'react';
+import { useCoreStore, useIAMStore } from '@datalayer/core/lib/state';
+
+/**
+ * Interface for Datalayer environment configuration.
+ * Defines the structure of compute environments.
+ * @interface IDatalayerEnvironment
+ */
 interface IDatalayerEnvironment {
   name: string;
   display_name?: string;
@@ -27,8 +37,10 @@ interface IDatalayerEnvironment {
 }
 
 /**
- * Hook for accessing Datalayer API through secure IPC
- * All API calls go through the main process for security
+ * Hook for accessing Datalayer API through secure IPC.
+ * Provides methods for authentication, environment management, and API requests.
+ * All API calls go through the main process for security.
+ * @returns Object with API methods and state
  */
 export function useDatalayerAPI() {
   const { setConfiguration } = useCoreStore();
@@ -37,14 +49,19 @@ export function useDatalayerAPI() {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Check if we're in Electron environment
+   * Check if we're in Electron environment.
+   * @returns True if Datalayer API is available
    */
   const isElectron = () => {
     return window.datalayerAPI !== undefined;
   };
 
   /**
-   * Login with credentials
+   * Login with credentials.
+   * Updates core store and IAM store with authentication info.
+   * @param runUrl - The Datalayer API URL
+   * @param token - Authentication token
+   * @returns Promise with success status, message, and user data
    */
   const login = useCallback(
     async (runUrl: string, token: string) => {
