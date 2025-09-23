@@ -121,7 +121,7 @@ export default defineConfig({
           name: 'unit',
           include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
           environment: 'jsdom',
-          setupFiles: ['src/test-setup.ts', 'src/api/__tests__/setup.ts'],
+          setupFiles: ['src/test-setup.ts'],
         },
       },
       // Storybook tests
