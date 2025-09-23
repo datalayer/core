@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { ConsumptionBar } from '../../components/progress';
-import type { IRemoteServicesManager } from '../../apiv1';
+import type { IRemoteServicesManager } from '../../sdk/stateful/runtimes';
 import type { IRuntimeModel } from '../../models';
 
 type ICreditsIndicatorProps = {

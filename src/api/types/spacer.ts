@@ -3,6 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * Represents a workspace or project space in Datalayer
+ * @interface Space
+ */
 export interface Space {
   id: string;
   name: string;
@@ -17,6 +21,10 @@ export interface Space {
   tags?: string[];
 }
 
+/**
+ * Represents a Jupyter notebook document
+ * @interface Notebook
+ */
 export interface Notebook {
   id: string;
   uid: string;
@@ -32,6 +40,10 @@ export interface Notebook {
   metadata?: Record<string, any>;
 }
 
+/**
+ * The content structure of a Jupyter notebook
+ * @interface NotebookContent
+ */
 export interface NotebookContent {
   cells: Cell[];
   metadata: NotebookMetadata;
@@ -39,6 +51,10 @@ export interface NotebookContent {
   nbformat_minor: number;
 }
 
+/**
+ * Represents a single cell in a Jupyter notebook
+ * @interface Cell
+ */
 export interface Cell {
   id: string;
   cell_type: 'code' | 'markdown' | 'raw';
@@ -48,6 +64,10 @@ export interface Cell {
   metadata?: Record<string, any>;
 }
 
+/**
+ * Output from executing a notebook cell
+ * @interface CellOutput
+ */
 export interface CellOutput {
   output_type: 'execute_result' | 'display_data' | 'stream' | 'error';
   data?: Record<string, any>;
@@ -58,6 +78,10 @@ export interface CellOutput {
   traceback?: string[];
 }
 
+/**
+ * Metadata associated with a notebook
+ * @interface NotebookMetadata
+ */
 export interface NotebookMetadata {
   kernelspec?: KernelSpec;
   language_info?: LanguageInfo;
@@ -65,12 +89,20 @@ export interface NotebookMetadata {
   [key: string]: any;
 }
 
+/**
+ * Specification for a Jupyter kernel
+ * @interface KernelSpec
+ */
 export interface KernelSpec {
   display_name: string;
   language: string;
   name: string;
 }
 
+/**
+ * Information about the programming language used in a notebook
+ * @interface LanguageInfo
+ */
 export interface LanguageInfo {
   name: string;
   version?: string;
@@ -78,98 +110,10 @@ export interface LanguageInfo {
   file_extension?: string;
 }
 
-export interface Course {
-  id: string;
-  name: string;
-  title: string;
-  description?: string;
-  space_id: string;
-  instructor_id: string;
-  organization_id?: string;
-  created_at: string;
-  updated_at?: string;
-  start_date?: string;
-  end_date?: string;
-  enrollment_count?: number;
-  items?: CourseItem[];
-}
-
-export interface CourseItem {
-  id: string;
-  course_id: string;
-  type: 'notebook' | 'exercise' | 'assignment' | 'resource';
-  resource_id: string;
-  title: string;
-  description?: string;
-  order: number;
-  is_required: boolean;
-  points?: number;
-  due_date?: string;
-}
-
-export interface Enrollment {
-  id: string;
-  course_id: string;
-  student_id: string;
-  enrolled_at: string;
-  completed_at?: string;
-  grade?: number;
-  progress?: number;
-  status: 'active' | 'completed' | 'dropped';
-}
-
-export interface Assignment {
-  id: string;
-  course_id: string;
-  notebook_id: string;
-  title: string;
-  description?: string;
-  points: number;
-  due_date?: string;
-  created_at: string;
-  updated_at?: string;
-  submissions?: Submission[];
-}
-
-export interface Submission {
-  id: string;
-  assignment_id: string;
-  student_id: string;
-  notebook_id: string;
-  submitted_at: string;
-  graded_at?: string;
-  grade?: number;
-  feedback?: string;
-  status: 'submitted' | 'graded' | 'returned';
-}
-
-export interface Exercise {
-  id: string;
-  notebook_id: string;
-  title: string;
-  description?: string;
-  solution?: NotebookContent;
-  points: number;
-  difficulty?: 'easy' | 'medium' | 'hard';
-  tags?: string[];
-  created_at: string;
-  updated_at?: string;
-}
-
-export interface Dataset {
-  id: string;
-  name: string;
-  description?: string;
-  file_path?: string;
-  url?: string;
-  size?: number;
-  format?: string;
-  space_id: string;
-  created_at: string;
-  updated_at?: string;
-  metadata?: Record<string, any>;
-}
-
+/**
+ * Request payload for creating a new space
+ * @interface CreateSpaceRequest
+ */
 export interface CreateSpaceRequest {
   name: string;
   description?: string;
@@ -178,6 +122,10 @@ export interface CreateSpaceRequest {
   tags?: string[];
 }
 
+/**
+ * Request payload for creating a new notebook
+ * @interface CreateNotebookRequest
+ */
 export interface CreateNotebookRequest {
   name: string;
   path?: string;
@@ -187,62 +135,30 @@ export interface CreateNotebookRequest {
   metadata?: Record<string, any>;
 }
 
+/**
+ * Request payload for updating a notebook
+ * @interface UpdateNotebookRequest
+ */
 export interface UpdateNotebookRequest {
   name?: string;
   content?: NotebookContent;
   metadata?: Record<string, any>;
 }
 
+/**
+ * Request payload for cloning a notebook
+ * @interface CloneNotebookRequest
+ */
 export interface CloneNotebookRequest {
   source_id: string;
   name: string;
   space_id: string;
 }
 
-export interface CreateCourseRequest {
-  name: string;
-  title: string;
-  description?: string;
-  space_id: string;
-  organization_id?: string;
-  start_date?: string;
-  end_date?: string;
-}
-
-export interface CreateAssignmentRequest {
-  course_id: string;
-  notebook_id: string;
-  title: string;
-  description?: string;
-  points: number;
-  due_date?: string;
-}
-
-export interface GradeSubmissionRequest {
-  grade: number;
-  feedback?: string;
-}
-
-export interface CreateExerciseRequest {
-  notebook_id: string;
-  title: string;
-  description?: string;
-  solution?: NotebookContent;
-  points: number;
-  difficulty?: Exercise['difficulty'];
-  tags?: string[];
-}
-
-export interface CreateDatasetRequest {
-  name: string;
-  description?: string;
-  file_path?: string;
-  url?: string;
-  space_id: string;
-  format?: string;
-  metadata?: Record<string, any>;
-}
-
+/**
+ * Query parameters for listing spaces
+ * @interface SpacesListParams
+ */
 export interface SpacesListParams {
   visibility?: Space['visibility'];
   owner_id?: string;
@@ -252,6 +168,10 @@ export interface SpacesListParams {
   search?: string;
 }
 
+/**
+ * Query parameters for listing notebooks
+ * @interface NotebooksListParams
+ */
 export interface NotebooksListParams {
   space_id?: string;
   owner_id?: string;
@@ -260,13 +180,91 @@ export interface NotebooksListParams {
   search?: string;
 }
 
+/**
+ * Represents an item within a space
+ * @interface SpaceItem
+ */
+export interface SpaceItem {
+  id: string;
+  type: 'notebook' | 'lexical' | 'cell';
+  space_id: string;
+  item_id: string;
+  name: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+/**
+ * Represents a Lexical document (rich text editor)
+ * @interface Lexical
+ */
+export interface Lexical {
+  id: string;
+  uid: string;
+  name: string;
+  content?: any;
+  space_id: string;
+  owner_id: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+/**
+ * Request payload for creating a Lexical document
+ * @interface CreateLexicalRequest
+ */
+export interface CreateLexicalRequest {
+  name: string;
+  content?: any;
+  space_id: string;
+}
+
+/**
+ * Request payload for updating a Lexical document
+ * @interface UpdateLexicalRequest
+ */
+export interface UpdateLexicalRequest {
+  name?: string;
+  content?: any;
+}
+
+/**
+ * Request payload for creating a notebook cell
+ * @interface CreateCellRequest
+ */
+export interface CreateCellRequest {
+  cell_type: 'code' | 'markdown' | 'raw';
+  source: string | string[];
+  notebook_id: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Request payload for updating a notebook cell
+ * @interface UpdateCellRequest
+ */
+export interface UpdateCellRequest {
+  source?: string | string[];
+  outputs?: CellOutput[];
+  execution_count?: number | null;
+  metadata?: Record<string, any>;
+}
+
 // API Response types that match actual server responses
+/**
+ * Response from listing spaces
+ * @interface SpacesListResponse
+ */
 export interface SpacesListResponse {
   success: boolean;
   message: string;
   spaces: Space[];
 }
 
+/**
+ * Response from listing notebooks
+ * @interface NotebooksListResponse
+ */
 export interface NotebooksListResponse {
   success: boolean;
   message: string;

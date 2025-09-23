@@ -19,7 +19,10 @@ import {
   ANONYMOUS_USER_TOKEN,
   IIAMResponseType,
 } from '../models';
-import { requestDatalayerAPI, type RunResponseError } from '../apiv1';
+import {
+  requestDatalayerAPI,
+  type RunResponseError,
+} from '../api/DatalayerApi';
 
 export type IAMStateProps = {
   user?: IUser;

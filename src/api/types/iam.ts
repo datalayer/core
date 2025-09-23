@@ -3,206 +3,86 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * Represents a user in the Datalayer platform
+ * @interface User
+ */
 export interface User {
+  /** Unique identifier for the user */
   id: string;
+  /** Alternative unique identifier (UUID format) */
   uid?: string;
+  /** User ID in the authentication system */
   user_id?: string;
+  /** Username for login */
   username?: string;
+  /** User's handle or nickname */
   handle?: string;
+  /** User's email address */
   email: string;
+  /** User's first name */
   first_name?: string;
+  /** User's last name */
   last_name?: string;
+  /** Display name shown in the UI */
   display_name?: string;
+  /** URL to the user's avatar image */
   avatar_url?: string;
+  /** Alternative property name for avatar URL (for backwards compatibility) */
   avatarUrl?: string;
+  /** ISO 8601 timestamp of when the user was created */
   created_at?: string;
+  /** ISO 8601 timestamp of when the user was last updated */
   updated_at?: string;
-  roles?: Role[] | string[];
-  organizations?: Organization[];
+  /** Whether the user account is active */
   is_active?: boolean;
+  /** Whether the user's email has been verified */
   is_verified?: boolean;
+  /** Whether multi-factor authentication is enabled */
   mfa_enabled?: boolean;
 }
 
-export interface Organization {
-  id: string;
-  name: string;
-  display_name: string;
-  description?: string;
-  logo_url?: string;
-  created_at: string;
-  updated_at?: string;
-  owner_id: string;
-  members_count?: number;
-  teams_count?: number;
-}
-
-export interface Team {
-  id: string;
-  name: string;
-  display_name: string;
-  description?: string;
-  organization_id: string;
-  created_at: string;
-  updated_at?: string;
-  members_count?: number;
-}
-
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  permissions: Permission[];
-  created_at: string;
-  updated_at?: string;
-}
-
-export interface Permission {
-  id: string;
-  name: string;
-  resource: string;
-  action: string;
-  description?: string;
-}
-
-export interface Token {
-  id: string;
-  name: string;
-  token?: string;
-  expires_at?: string;
-  created_at: string;
-  last_used_at?: string;
-  scopes?: string[];
-}
-
-export interface Secret {
-  id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at?: string;
-  tags?: Record<string, string>;
-}
-
-export interface Datasource {
-  id: string;
-  name: string;
-  type: 'postgres' | 'mysql' | 'mongodb' | 's3' | 'azure' | 'gcs';
-  connection_url?: string;
-  config?: Record<string, any>;
-  created_at: string;
-  updated_at?: string;
-  is_active: boolean;
-}
-
-export interface Credits {
-  total: number;
-  used: number;
-  remaining: number;
-  reset_at?: string;
-}
-
-export interface Usage {
-  id: string;
-  user_id: string;
-  organization_id?: string;
-  resource_type: string;
-  resource_id: string;
-  credits_used: number;
-  started_at: string;
-  ended_at?: string;
-  metadata?: Record<string, any>;
-}
-
+/**
+ * Request payload for user login
+ * @interface LoginRequest
+ */
 export interface LoginRequest {
+  /** Username for login (alternative to email) */
   username?: string;
+  /** Email address for login (alternative to username) */
   email?: string;
+  /** User's password */
   password: string;
+  /** Multi-factor authentication code if MFA is enabled */
   mfa_code?: string;
 }
 
+/**
+ * Response from a successful login request
+ * @interface LoginResponse
+ */
 export interface LoginResponse {
+  /** JWT access token for API authentication */
   access_token: string;
+  /** JWT refresh token for obtaining new access tokens */
   refresh_token?: string;
+  /** Token type (typically "Bearer") */
   token_type: string;
+  /** Token expiration time in seconds */
   expires_in: number;
+  /** User information for the authenticated user */
   user: User;
 }
 
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-  first_name?: string;
-  last_name?: string;
-  organization_name?: string;
-}
-
-export interface OAuth2Provider {
-  name: 'github' | 'linkedin' | 'okta' | 'google';
-  client_id: string;
-  authorization_url: string;
-  callback_url: string;
-}
-
-export interface CreateOrganizationRequest {
-  name: string;
-  display_name: string;
-  description?: string;
-  logo_url?: string;
-}
-
-export interface AddMemberRequest {
-  user_id?: string;
-  email?: string;
-  role?: string;
-}
-
-export interface CreateTeamRequest {
-  name: string;
-  display_name: string;
-  description?: string;
-  members?: string[];
-}
-
-export interface CreateTokenRequest {
-  name: string;
-  expires_in?: number;
-  scopes?: string[];
-}
-
-export interface CreateSecretRequest {
-  name: string;
-  value: string;
-  description?: string;
-  tags?: Record<string, string>;
-}
-
-export interface CreateDatasourceRequest {
-  name: string;
-  type: Datasource['type'];
-  connection_url?: string;
-  config?: Record<string, any>;
-}
-
-export interface UsageParams {
-  start_date?: string;
-  end_date?: string;
-  resource_type?: string;
-  organization_id?: string;
-  limit?: number;
-  offset?: number;
-}
-
-// API Response types that match actual server responses
+/**
+ * Response from the /me endpoint containing current user information
+ * @interface UserMeResponse
+ */
 export interface UserMeResponse {
+  /** Whether the request was successful */
   success: boolean;
+  /** Response message from the server */
   message: string;
-  me: User;
-}
-
-export interface OrganizationsListResponse {
-  success: boolean;
-  message: string;
-  organizations: Organization[];
+  /** Current user's information */
+  user: User;
 }

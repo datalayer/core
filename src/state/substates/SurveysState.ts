@@ -5,7 +5,10 @@
 
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import { requestDatalayerAPI, type RunResponseError } from '../../apiv1';
+import {
+  requestDatalayerAPI,
+  type RunResponseError,
+} from '../../api/DatalayerApi';
 import {
   ISurvey,
   asSurvey,

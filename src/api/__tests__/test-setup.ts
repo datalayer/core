@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { beforeAll, afterAll, beforeEach } from 'vitest';
-import { DatalayerSDK } from '../index';
+import { beforeAll, afterAll, beforeEach, describe, it } from 'vitest';
+import { DatalayerSDK } from '../../sdk';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -234,11 +234,11 @@ export function setupGlobalHooks() {
 /**
  * Skip tests based on environment
  */
-export const skipIf = (condition: boolean, message?: string) => {
+export const skipIf = (condition: boolean, message?: string): any => {
   return condition ? it.skip : it;
 };
 
-export const skipUnless = (condition: boolean, message?: string) => {
+export const skipUnless = (condition: boolean, message?: string): any => {
   return !condition ? it.skip : it;
 };
 
@@ -249,8 +249,8 @@ export const skipExpensive =
   process.env.DATALAYER_TEST_SKIP_EXPENSIVE === 'true';
 
 // Test decorators
-export const describeAPI = hasToken ? describe : describe.skip;
-export const describeExpensive = skipExpensive ? describe.skip : describe;
+export const describeAPI: any = hasToken ? describe : describe.skip;
+export const describeExpensive: any = skipExpensive ? describe.skip : describe;
 export const testWithRetry = (name: string, fn: () => Promise<void>) => {
   return it(name, () => testUtils.retry(fn));
 };

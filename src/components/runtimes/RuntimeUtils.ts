@@ -6,7 +6,7 @@
 import { PathExt } from '@jupyterlab/coreutils';
 import { SessionContext } from '@jupyterlab/apputils';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
-import { IMultiServiceManager } from '../../apiv1';
+import { IMultiServiceManager } from '../../sdk/stateful/runtimes';
 import { IRuntimeLocation, IRuntimeDesc } from '../../models';
 
 const ASSIGN_NEW_RUNTIME_LABEL = 'Assign a new Runtime';

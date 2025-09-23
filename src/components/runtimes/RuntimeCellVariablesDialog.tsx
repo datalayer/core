@@ -10,7 +10,7 @@ import { CodeCellModel, ICellModel } from '@jupyterlab/cells';
 import { ITranslator, nullTranslator } from '@jupyterlab/translation';
 import { JSONExt } from '@lumino/coreutils';
 import { KernelExecutor } from '@datalayer/jupyter-react';
-import { RuntimeSnippetsFacade } from '../../apiv1';
+import { RuntimeSnippetsFacade } from '../../sdk/stateful/jupyter';
 import { RuntimeCellVariables } from './RuntimeCellVariables';
 
 /**

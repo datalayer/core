@@ -11,9 +11,9 @@
 import AbortController from 'abort-controller';
 
 if (typeof globalThis.AbortController === 'undefined') {
-  globalThis.AbortController = AbortController;
+  globalThis.AbortController = AbortController as any;
 }
 
 if (typeof globalThis.AbortSignal === 'undefined') {
-  globalThis.AbortSignal = AbortController.AbortSignal;
+  globalThis.AbortSignal = (AbortController as any).AbortSignal;
 }
