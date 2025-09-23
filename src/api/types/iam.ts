@@ -182,3 +182,21 @@ export interface WhoAmIResponse {
   /** User profile information */
   profile: WhoAmIProfile;
 }
+
+/**
+ * Response from the health check ping endpoint
+ * @interface HealthzPingResponse
+ */
+export interface HealthzPingResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** Service status information */
+  status: {
+    /** Status indicator (e.g., "OK") */
+    status: string;
+  };
+  /** API version */
+  version: string;
+}

@@ -4,34 +4,96 @@
  */
 
 /**
+ * Code snippet for an environment
+ * @interface EnvironmentSnippet
+ */
+export interface EnvironmentSnippet {
+  /** Title of the snippet */
+  title: string;
+  /** Optional description of the snippet */
+  description?: string;
+  /** Code content of the snippet */
+  code: string;
+}
+
+/**
+ * Content mount configuration for an environment
+ * @interface EnvironmentContent
+ */
+export interface EnvironmentContent {
+  /** Name of the content */
+  name: string;
+  /** Mount path for the content */
+  mount: string;
+}
+
+/**
+ * Resource configuration with requests and limits
+ * @interface ResourceConfig
+ */
+export interface ResourceConfig {
+  /** CPU allocation (e.g., "1", "2", "500m") */
+  cpu?: string;
+  /** Memory allocation (e.g., "2Gi", "4Gi") */
+  memory?: string;
+  /** GPU allocation if applicable */
+  'nvidia.com/gpu'?: string;
+}
+
+/**
+ * Resource ranges configuration
+ * @interface ResourceRanges
+ */
+export interface ResourceRanges {
+  /** Default resource configuration */
+  default?: {
+    /** Requested resources */
+    requests?: ResourceConfig;
+    /** Resource limits */
+    limits?: ResourceConfig;
+  };
+}
+
+/**
  * Represents a computing environment available in the Datalayer platform
  * @interface Environment
  */
 export interface Environment {
-  /** Unique identifier name for the environment */
-  name: string;
   /** Human-readable title for the environment */
   title: string;
   /** Detailed description of the environment */
   description: string;
   /** Docker image used for this environment */
-  image: string;
-  /** Whether this environment supports GPU acceleration */
-  gpu: boolean;
-  /** CPU limit in cores */
-  cpu_limit: number;
-  /** Memory limit (e.g., "4Gi", "8Gi") */
-  memory_limit: string;
-  /** Disk storage limit (e.g., "10Gi", "20Gi") */
-  disk_limit: string;
-  /** Icon identifier or URL for UI display */
-  icon?: string;
-  /** Tags for categorizing the environment */
-  tags?: string[];
+  dockerImage: string;
+  /** Example usage or description */
+  example?: string;
+  /** Code snippets for this environment */
+  snippets?: EnvironmentSnippet[];
+  /** Content mounts for this environment */
+  contents?: EnvironmentContent[];
+  /** Kernel configuration */
+  kernel?: {
+    /** Template for kernel naming */
+    givenNameTemplate?: string;
+  };
+  /** Programming language (e.g., "python", "r") */
+  language: string;
+  /** Resource ranges configuration */
+  resourcesRanges?: ResourceRanges;
   /** Credits consumed per hour when running */
-  burning_rate?: number;
-  /** Additional resource specifications */
-  resources?: any;
+  burning_rate: number;
+  /** Simple resource specification */
+  resources?: ResourceConfig;
+  /** Name identifier for the environment */
+  name?: string;
+  /** Docker registry for the image */
+  dockerRegistry?: string;
+  /** Icon or avatar URL for the environment */
+  icon?: string;
+  /** Whether the environment is enabled */
+  enabled?: boolean;
+  /** Tags associated with the environment */
+  tags?: string[];
 }
 
 /**
@@ -42,7 +104,7 @@ export interface Runtime {
   /** Kubernetes pod name for the runtime instance */
   pod_name: string;
   /** Unique identifier for the runtime */
-  uid?: string;
+  uid: string;
   /** Name of the environment this runtime is based on */
   environment_name: string;
   /** Title of the environment for display */
@@ -51,12 +113,12 @@ export interface Runtime {
   credits?: number;
   /** Current state of the runtime */
   state?: 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
-  /** Type of runtime (deprecated, use runtime_type) */
-  type?: 'notebook' | 'cell';
-  /** Type of runtime - notebook for full notebooks, cell for individual cells */
+  /** Type of runtime - notebook, terminal, or job */
+  type?: 'notebook' | 'terminal' | 'job';
+  /** Type of runtime (deprecated, use type) */
   runtime_type?: 'notebook' | 'cell';
   /** Credits consumed per hour */
-  burning_rate?: number;
+  burning_rate: number;
   /** User-friendly name for the runtime */
   given_name?: string;
   /** Authentication token for accessing the runtime */
@@ -85,6 +147,12 @@ export interface Runtime {
   jupyter_token?: string;
   /** Detailed status information */
   status?: RuntimeStatus;
+  /** Alternative naming from API responses */
+  podName?: string;
+  /** Alternative naming from API responses */
+  createdAt?: string;
+  /** Alternative naming from API responses */
+  environment?: string;
 }
 
 /**
@@ -117,12 +185,16 @@ export interface RuntimeStatus {
 export interface CreateRuntimeRequest {
   /** Name of the environment to use */
   environment_name: string;
+  /** Type of runtime (e.g., 'notebook', 'terminal', 'job') */
+  type?: 'notebook' | 'terminal' | 'job';
+  /** Optional given name for the runtime */
+  given_name?: string;
   /** Maximum credits this runtime can consume */
-  credits_limit: number;
-  /** Optional path to notebook file */
-  notebook_path?: string;
-  /** Optional cell ID for cell-specific runtimes */
-  cell_id?: string;
+  credits_limit?: number;
+  /** Optional capabilities for the runtime */
+  capabilities?: string[];
+  /** Optional source to create runtime from (e.g., snapshot ID) */
+  from?: string;
 }
 
 /**
@@ -131,19 +203,29 @@ export interface CreateRuntimeRequest {
  */
 export interface RuntimeSnapshot {
   /** Unique identifier for the snapshot */
-  id: string;
+  uid: string;
   /** Name of the snapshot */
   name: string;
   /** Optional description of the snapshot */
   description?: string;
-  /** ID of the runtime this snapshot was created from */
-  runtime_id: string;
   /** Name of the environment used by the runtime */
-  environment_name: string;
-  /** ISO 8601 timestamp when the snapshot was created */
-  created_at: string;
+  environment: string;
+  /** Metadata associated with the snapshot */
+  metadata?: {
+    version?: string;
+    language_info?: any;
+    [key: string]: any;
+  };
   /** Size of the snapshot in bytes */
   size?: number;
+  /** Format of the snapshot */
+  format?: string;
+  /** Format version of the snapshot */
+  format_version?: string;
+  /** Status of the snapshot */
+  status?: string;
+  /** ISO 8601 timestamp when the snapshot was last updated */
+  updated_at: string;
   /** List of files included in the snapshot */
   files?: RuntimeSnapshotFile[];
 }
@@ -241,13 +323,35 @@ export interface EnvironmentsListResponse {
  * Response from creating a new runtime
  * @interface RuntimeCreateResponse
  */
-export interface RuntimeCreateResponse {
+export interface CreateRuntimeResponse {
   /** Whether the request was successful */
   success: boolean;
   /** Response message from the server */
   message: string;
   /** The created runtime instance */
   runtime: Runtime;
+}
+
+/**
+ * Error response when environment is not found (404)
+ * @interface EnvironmentNotFoundResponse
+ */
+export interface EnvironmentNotFoundResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Error message */
+  message: string;
+}
+
+/**
+ * Error response when no runtime is available (503)
+ * @interface NoRuntimeAvailableResponse
+ */
+export interface NoRuntimeAvailableResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Error message */
+  message: string;
 }
 
 /**
@@ -267,7 +371,7 @@ export interface RuntimesListResponse {
  * Response from listing runtime snapshots
  * @interface RuntimeSnapshotsListResponse
  */
-export interface RuntimeSnapshotsListResponse {
+export interface SnapshotsListResponse {
   /** Whether the request was successful */
   success: boolean;
   /** Response message from the server */

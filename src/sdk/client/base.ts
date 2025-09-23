@@ -33,13 +33,13 @@ export interface DatalayerSDKConfig {
  */
 export class DatalayerSDKBase {
   /** URL for IAM service */
-  protected readonly iamRunUrl: string;
+  public readonly iamRunUrl: string;
   /** URL for Runtimes service */
-  protected readonly runtimesRunUrl: string;
+  public readonly runtimesRunUrl: string;
   /** URL for Spacer service */
-  protected readonly spacerRunUrl: string;
+  public readonly spacerRunUrl: string;
   /** Authentication token */
-  protected token?: string;
+  public token?: string;
 
   /**
    * Create a DatalayerSDK base instance.
@@ -104,7 +104,7 @@ export class DatalayerSDKBase {
    *
    * @returns The IAM service URL
    */
-  protected getIamRunUrl(): string {
+  public getIamRunUrl(): string {
     return this.iamRunUrl;
   }
 
@@ -113,7 +113,7 @@ export class DatalayerSDKBase {
    *
    * @returns The Runtimes service URL
    */
-  protected getRuntimesRunUrl(): string {
+  public getRuntimesRunUrl(): string {
     return this.runtimesRunUrl;
   }
 
@@ -122,7 +122,7 @@ export class DatalayerSDKBase {
    *
    * @returns The Spacer service URL
    */
-  protected getSpacerRunUrl(): string {
+  public getSpacerRunUrl(): string {
     return this.spacerRunUrl;
   }
 
@@ -131,7 +131,7 @@ export class DatalayerSDKBase {
    *
    * @returns The authentication token
    */
-  protected getToken(): string | undefined {
+  public getToken(): string | undefined {
     return this.token;
   }
 }

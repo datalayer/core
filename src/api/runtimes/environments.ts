@@ -11,40 +11,25 @@
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
-import { API_BASE_PATHS } from '../constants';
-import { Environment, EnvironmentsListResponse } from '../types/runtimes';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
+import { EnvironmentsListResponse } from '../types/runtimes';
+import { validateToken } from '../utils/validation';
 
 /**
  * List all available computing environments.
- * @param baseUrl - Base URL for the API
  * @param token - Authentication token
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
  * @returns Promise resolving to list of available environments
+ * @throws {Error} If authentication token is missing or invalid
  */
 export const list = async (
-  baseUrl: string,
   token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
 ): Promise<EnvironmentsListResponse> => {
+  validateToken(token);
+
   return requestDatalayerAPI<EnvironmentsListResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/environments`,
-    method: 'GET',
-    token,
-  });
-};
-
-/**
- * Get details for a specific computing environment by name.
- * @param baseUrl - Base URL for the API
- * @param token - Authentication token
- * @param name - The environment name (e.g., 'python-base', 'r-4.3')
- * @returns Promise resolving to environment details
- */
-export const get = async (
-  baseUrl: string,
-  token: string,
-  name: string,
-): Promise<Environment> => {
-  return requestDatalayerAPI<Environment>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/environments/${name}`,
     method: 'GET',
     token,
   });

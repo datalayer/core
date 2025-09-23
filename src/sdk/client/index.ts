@@ -31,13 +31,14 @@
  */
 
 import { DatalayerSDKBase, type DatalayerSDKConfig } from './base';
+import { HealthMixin } from './mixins/HealthMixin';
 import { IAMMixin } from './mixins/IAMMixin';
 import { RuntimesMixin } from './mixins/RuntimesMixin';
 import { SpacerMixin } from './mixins/SpacerMixin';
 
 // Apply mixins to the base class
 const DatalayerSDKWithMixins = SpacerMixin(
-  RuntimesMixin(IAMMixin(DatalayerSDKBase)),
+  RuntimesMixin(IAMMixin(HealthMixin(DatalayerSDKBase))),
 );
 
 /**

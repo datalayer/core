@@ -25,3 +25,14 @@ export * as iamApi from './api/iam';
 export * as spacerApi from './api/spacer';
 
 export { DatalayerSDK, type DatalayerSDKConfig } from './sdk/client';
+
+// Export commonly used SDK functions directly for convenience
+export {
+  getEnvironments,
+  createRuntime,
+  getRuntimes,
+  deleteRuntime,
+  snapshotRuntime,
+  getRuntimeSnapshots,
+  loadRuntimeSnapshot,
+} from './sdk/stateful/runtimes/actions';

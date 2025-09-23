@@ -12,7 +12,9 @@
 
 export * as authentication from './authentication';
 export * as profile from './profile';
+export * as healthz from './healthz';
 
 // For backward compatibility, export the old API structure
 export { login, logout, proxyAuth } from './authentication';
 export { me, whoami } from './profile';
+export { ping } from './healthz';

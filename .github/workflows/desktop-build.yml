@@ -5,8 +5,18 @@ on:
     branches: [ main ]
     tags:
       - 'desktop-v*'
+    paths:
+      - 'examples/electron/**'
+      - 'src/**'
+      - 'package.json'
+      - '.github/workflows/desktop-build.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'examples/electron/**'
+      - 'src/**'
+      - 'package.json'
+      - '.github/workflows/desktop-build.yml'
   workflow_dispatch:
     inputs:
       build_type:
@@ -70,6 +80,9 @@ jobs:
 
       - name: Build core library
         run: npm run build:lib
+        env:
+          DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+          DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.DATALAYER_TEST_TOKEN != '' && 'true' || 'false' }}
 
       - name: Install Electron app dependencies
         working-directory: examples/electron

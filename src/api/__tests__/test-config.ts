@@ -30,17 +30,17 @@ export const testConfig = {
   /**
    * Get the Datalayer API token for testing
    * Priority order:
-   * 1. DATALAYER_API_TOKEN environment variable
-   * 2. DATALAYER_TEST_TOKEN from .env.test
+   * 1. DATALAYER_TEST_TOKEN environment variable
+   * 2. DATALAYER_API_TOKEN environment variable
    * 3. Throw error if not found
    */
   getToken(): string {
     const token =
-      process.env.DATALAYER_API_TOKEN || process.env.DATALAYER_TEST_TOKEN;
+      process.env.DATALAYER_TEST_TOKEN || process.env.DATALAYER_API_TOKEN;
 
     if (!token) {
       throw new Error(
-        'No Datalayer API token found. Please set DATALAYER_API_TOKEN environment variable or DATALAYER_TEST_TOKEN in .env.test file',
+        'No Datalayer API token found. Please set DATALAYER_TEST_TOKEN or DATALAYER_API_TOKEN environment variable',
       );
     }
 
@@ -64,6 +64,23 @@ export const testConfig = {
    */
   shouldSkipExpensive(): boolean {
     return process.env.DATALAYER_TEST_SKIP_EXPENSIVE === 'true';
+  },
+
+  /**
+   * Check if expensive tests should be run
+   */
+  shouldRunExpensive(): boolean {
+    return process.env.DATALAYER_TEST_RUN_EXPENSIVE === 'true';
+  },
+
+  /**
+   * Get test environment names for runtime creation
+   */
+  getTestEnvironments(): { python: string; ai: string } {
+    return {
+      python: process.env.DATALAYER_TEST_PYTHON_ENV || 'python-cpu-env',
+      ai: process.env.DATALAYER_TEST_AI_ENV || 'ai-env',
+    };
   },
 
   /**

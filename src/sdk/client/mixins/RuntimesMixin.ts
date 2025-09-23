@@ -81,7 +81,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         throw new Error('Authentication token required');
       }
 
-      const response = await runtimes.create(runtimesRunUrl, token, data);
+      const response = await runtimes.create(token, data, runtimesRunUrl);
       return response.runtime;
     }
 
