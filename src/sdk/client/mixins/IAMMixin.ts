@@ -40,36 +40,42 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
         throw new Error('Authentication token required');
       }
 
-      const response = await profile.me(iamRunUrl, token);
+      const response = await profile.me(token, iamRunUrl);
 
       if (!response.success) {
         throw new Error(response.message || 'Failed to get user profile');
       }
 
-      return response.user;
+      return response.me;
     }
 
     /**
-     * Authenticate a user with email/password credentials.
+     * Authenticate a user with credentials or token.
      *
-     * @param data - Login credentials
+     * @param data - Login credentials (either handle+password or token)
      * @returns Promise resolving to login response with tokens
      *
      * @example
      * ```typescript
+     * // Login with handle and password
      * const loginResponse = await sdk.login({
-     *   email: 'user@example.com',
+     *   handle: 'user@example.com',
      *   password: 'secure-password'
      * });
      *
+     * // Or login with token
+     * const tokenResponse = await sdk.login({
+     *   token: 'existing-auth-token'
+     * });
+     *
      * // Update SDK with new token
-     * sdk.updateToken(loginResponse.access_token);
+     * sdk.updateToken(loginResponse.token);
      * ```
      */
     async login(data: LoginRequest): Promise<LoginResponse> {
       const iamRunUrl = (this as any).getIamRunUrl();
 
-      const response = await authentication.login(iamRunUrl, data);
+      const response = await authentication.login(data, iamRunUrl);
 
       return response;
     }
@@ -94,7 +100,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
         throw new Error('Authentication token required');
       }
 
-      await authentication.logout(iamRunUrl, token);
+      await authentication.logout(token, iamRunUrl);
 
       // Clear the token from the SDK
       (this as any).updateToken('');

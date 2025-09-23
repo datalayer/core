@@ -121,14 +121,19 @@ sdk.updateConfig({
 const user = await sdk.whoami();
 console.log('Logged in as:', user.email);
 
-// Login with credentials
+// Login with handle and password
 const loginResponse = await sdk.login({
-  email: 'user@example.com',
+  handle: 'user@example.com',
   password: 'secure-password',
 });
 
+// Or login with token
+const tokenResponse = await sdk.login({
+  token: 'existing-auth-token',
+});
+
 // Update SDK with new token
-sdk.updateToken(loginResponse.access_token);
+sdk.updateToken(loginResponse.token);
 
 // Logout current user
 await sdk.logout();
@@ -516,7 +521,7 @@ const loginResponse = await sdk.login({
 });
 
 // Update SDK with new token
-sdk.updateToken(loginResponse.access_token);
+sdk.updateToken(loginResponse.token);
 ```
 
 ### Environment Variables

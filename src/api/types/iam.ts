@@ -45,16 +45,20 @@ export interface User {
 /**
  * Request payload for user login
  * @interface LoginRequest
+ *
+ * Must provide either:
+ * - handle + password for credential-based authentication
+ * - token for token-based authentication
+ *
+ * Both methods cannot be used simultaneously.
  */
 export interface LoginRequest {
-  /** Username for login (alternative to email) */
-  username?: string;
-  /** Email address for login (alternative to username) */
-  email?: string;
-  /** User's password */
-  password: string;
-  /** Multi-factor authentication code if MFA is enabled */
-  mfa_code?: string;
+  /** User handle (username/email) for credential-based authentication */
+  handle?: string;
+  /** User's password for credential-based authentication */
+  password?: string;
+  /** Authentication token for token-based authentication */
+  token?: string;
 }
 
 /**
@@ -62,16 +66,64 @@ export interface LoginRequest {
  * @interface LoginResponse
  */
 export interface LoginResponse {
-  /** JWT access token for API authentication */
-  access_token: string;
-  /** JWT refresh token for obtaining new access tokens */
-  refresh_token?: string;
-  /** Token type (typically "Bearer") */
-  token_type: string;
-  /** Token expiration time in seconds */
-  expires_in: number;
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
   /** User information for the authenticated user */
-  user: User;
+  user: {
+    /** ISO 8601 timestamp of when the user was created */
+    creation_ts_dt: string;
+    /** Unique identifier for the user */
+    id: string;
+    /** ISO 8601 timestamp of when the user requested to join */
+    join_request_ts_dt: string;
+    /** ISO 8601 timestamp of when the user joined */
+    join_ts_dt: string;
+    /** ISO 8601 timestamp of when the user was last updated */
+    last_update_ts_dt: string;
+    /** Origin of the user account */
+    origin_s: string;
+    /** Type of the entity */
+    type_s: string;
+    /** Alternative unique identifier (UUID format) */
+    uid: string;
+    /** User's email address */
+    email_s: string;
+    /** User's first name */
+    first_name_t: string;
+    /** User's handle or identifier */
+    handle_s: string;
+    /** User's last name */
+    last_name_t: string;
+    /** Additional fields that may be present in the response */
+    [key: string]: any;
+  };
+  /** JWT token for API authentication */
+  token: string;
+}
+
+/**
+ * User profile information from the /me endpoint
+ * @interface MeUser
+ */
+export interface MeUser {
+  /** Unique identifier (full ID) for the user */
+  id: string;
+  /** Unique identifier (UID) for the user */
+  uid: string;
+  /** User handle (username) */
+  handle: string;
+  /** Email address of the user */
+  email: string;
+  /** First name of the user */
+  firstName: string;
+  /** Last name of the user */
+  lastName: string;
+  /** Avatar URL for the user */
+  avatarUrl: string;
+  /** Array of roles assigned to the user */
+  roles: string[];
 }
 
 /**
@@ -83,6 +135,50 @@ export interface UserMeResponse {
   success: boolean;
   /** Response message from the server */
   message: string;
-  /** Current user's information */
-  user: User;
+  /** Current user's profile information */
+  me: MeUser;
+}
+
+/**
+ * User profile information from the /whoami endpoint
+ * @interface WhoAmIProfile
+ */
+export interface WhoAmIProfile {
+  /** ISO 8601 timestamp of when the user was created */
+  creation_ts_dt: string;
+  /** Unique identifier for the user */
+  id: string;
+  /** ISO 8601 timestamp of when the user requested to join */
+  join_request_ts_dt: string | null;
+  /** ISO 8601 timestamp of when the user joined */
+  join_ts_dt: string;
+  /** ISO 8601 timestamp of last update */
+  last_update_ts_dt: string;
+  /** Origin of the user account */
+  origin_s: string;
+  /** Type of the record */
+  type_s: string;
+  /** User ID */
+  uid: string;
+  /** Email address */
+  email_s: string;
+  /** First name */
+  first_name_t: string;
+  /** User handle */
+  handle_s: string;
+  /** Last name */
+  last_name_t: string;
+}
+
+/**
+ * Response from the /whoami endpoint
+ * @interface WhoAmIResponse
+ */
+export interface WhoAmIResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** User profile information */
+  profile: WhoAmIProfile;
 }

@@ -14,5 +14,5 @@ export * as authentication from './authentication';
 export * as profile from './profile';
 
 // For backward compatibility, export the old API structure
-export { login, logout } from './authentication';
-export { me } from './profile';
+export { login, logout, proxyAuth } from './authentication';
+export { me, whoami } from './profile';
