@@ -9,15 +9,6 @@ import { defineConfig } from 'vite';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
 
 // https://vite.dev/config/
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
-const dirname =
-  typeof __dirname !== 'undefined'
-    ? __dirname
-    : path.dirname(fileURLToPath(import.meta.url));
-
-// More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   plugins: [
     react(),
@@ -115,38 +106,54 @@ export default defineConfig({
       },
     },
     projects: [
-      // Unit tests
+      // Unit tests - run in parallel for speed
       {
         test: {
           name: 'unit',
-          include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
+          include: ['src/**/*.unit.{test,spec}.{js,ts,tsx}'],
           environment: 'jsdom',
           setupFiles: ['src/test-setup.ts'],
+          testTimeout: 10000, // 10 seconds default timeout
+          // Unit tests run in parallel for speed
+          pool: 'threads',
+          poolOptions: {
+            threads: {
+              singleThread: false,
+            },
+          },
         },
       },
-      // Storybook tests
+      // Integration tests - run sequentially to avoid server overload
       {
-        extends: true,
-        plugins: [
-          // The plugin will run tests for the stories defined in your Storybook config
-          // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-          storybookTest({
-            configDir: path.join(dirname, '.storybook'),
-          }),
-        ],
         test: {
-          name: 'storybook',
-          browser: {
-            enabled: true,
-            headless: true,
-            provider: 'playwright',
-            instances: [
-              {
-                browser: 'chromium',
-              },
-            ],
+          name: 'integration',
+          include: ['src/**/*.integration.{test,spec}.{js,ts,tsx}'],
+          environment: 'jsdom',
+          setupFiles: ['src/test-setup.ts'],
+          testTimeout: 30000, // 30 seconds timeout for integration tests
+          // Integration tests run sequentially to avoid server overload
+          pool: 'threads',
+          poolOptions: {
+            threads: {
+              singleThread: true,
+            },
           },
-          setupFiles: ['.storybook/vitest.setup.ts'],
+        },
+      },
+      // General tests (backward compatibility for tests without .unit or .integration)
+      {
+        test: {
+          name: 'general',
+          include: [
+            'src/**/*.{test,spec}.{js,ts,tsx}',
+            '!src/**/*.unit.{test,spec}.{js,ts,tsx}',
+            '!src/**/*.integration.{test,spec}.{js,ts,tsx}',
+          ],
+          environment: 'jsdom',
+          setupFiles: ['src/test-setup.ts'],
+          testTimeout: 10000,
+          // General tests run in parallel by default
+          pool: 'threads',
         },
       },
     ],

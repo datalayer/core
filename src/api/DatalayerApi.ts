@@ -4,7 +4,8 @@
  */
 
 import { URLExt } from '@jupyterlab/coreutils';
-import { sleep } from '../utils';
+import axios, { AxiosRequestConfig } from 'axios';
+import { sleep } from '../utils/Sleep';
 
 /**
  * A wrapped error for a fetch response.
@@ -114,7 +115,7 @@ export interface IRequestDatalayerAPIOptions {
    */
   method?: string;
   /**
-   * JSON-serializable object
+   * JSON-serializable object or FormData
    */
   body?: any;
   /**
@@ -139,68 +140,108 @@ export async function requestDatalayerAPI<T = any>({
   signal,
   headers = {},
 }: IRequestDatalayerAPIOptions): Promise<T> {
-  const headers_ = new Headers(headers);
-  if (!headers_.has('Accept')) {
-    headers_.set('Accept', 'application/json');
+  // Handle FormData differently from JSON
+  const isFormData = body instanceof FormData;
+
+  // Prepare axios config
+  const axiosConfig: AxiosRequestConfig = {
+    url,
+    method: (method ?? 'GET') as any,
+    headers: { ...headers },
+    withCredentials: true, // equivalent to credentials: 'include'
+    signal,
+    // CORS mode is handled automatically by axios
+    // Cache control headers
+  };
+
+  // Add cache control headers only for GET requests (equivalent to cache: 'no-store')
+  if (method === 'GET' || !method) {
+    if (!axiosConfig.headers!['Cache-Control']) {
+      axiosConfig.headers!['Cache-Control'] =
+        'no-store, no-cache, must-revalidate';
+    }
+    if (!axiosConfig.headers!['Pragma']) {
+      axiosConfig.headers!['Pragma'] = 'no-cache';
+    }
   }
-  if (!headers_.has('Content-Type')) {
-    headers_.set('Content-Type', 'application/json');
-  }
+
   if (token) {
-    headers_.set('Authorization', `Bearer ${token}`);
+    axiosConfig.headers!['Authorization'] = `Bearer ${token}`;
   }
-  //  headers_.set('Origin', currentUri());
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method: method ?? 'GET',
-      headers: headers_,
-      body: body ? JSON.stringify(body) : undefined,
-      // credentials: token ? 'include' : 'omit',
-      credentials: 'include',
-      mode: 'cors',
-      cache: 'no-store',
-      signal,
-    });
-  } catch (error) {
-    throw new NetworkError(error as TypeError);
-  }
-  if (response.ok) {
-    response = await wait_for_redirection(response, url, headers_);
-    const content = await response.text();
-    return (content ? JSON.parse(content) : null) as T;
+
+  if (isFormData) {
+    // For FormData: let axios handle Content-Type automatically
+    axiosConfig.data = body;
+    // Don't set Content-Type - axios will set multipart/form-data with boundary
+    if (!axiosConfig.headers!['Accept']) {
+      axiosConfig.headers!['Accept'] = 'application/json';
+    }
   } else {
-    throw await RunResponseError.create(response);
+    // For regular JSON requests
+    if (!axiosConfig.headers!['Accept']) {
+      axiosConfig.headers!['Accept'] = 'application/json';
+    }
+    if (!axiosConfig.headers!['Content-Type']) {
+      axiosConfig.headers!['Content-Type'] = 'application/json';
+    }
+    axiosConfig.data = body;
+  }
+
+  try {
+    const response = await axios(axiosConfig);
+
+    // Handle redirections if needed
+    if (response.status === 202 && response.headers.location) {
+      return await handleAxiosRedirection(response, axiosConfig);
+    }
+
+    return response.data as T;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Convert axios error to our RunResponseError format
+        const mockResponse = {
+          ok: false,
+          status: error.response.status,
+          statusText: error.response.statusText,
+          json: async () => error.response?.data,
+          text: async () => JSON.stringify(error.response?.data),
+        } as Response;
+        throw await RunResponseError.create(mockResponse);
+      }
+      throw new NetworkError(error);
+    }
+    throw error;
   }
 }
 
-async function wait_for_redirection(
-  response: Response,
-  url: string,
-  headers_: Headers,
-) {
-  let redirect = response.headers.get('Location');
+async function handleAxiosRedirection(
+  response: any,
+  originalConfig: AxiosRequestConfig,
+): Promise<any> {
+  let redirect = response.headers.location;
   if (redirect) {
-    const parsedURL = URLExt.parse(url);
+    const parsedURL = URLExt.parse(originalConfig.url!);
     const baseUrl = parsedURL.protocol + '//' + parsedURL.hostname;
     if (!redirect.startsWith(baseUrl)) {
       redirect = URLExt.join(baseUrl, redirect);
     }
   }
+
   let sleepTimeout = 1000;
   while (response.status === 202 && redirect) {
     await sleep(sleepTimeout);
     sleepTimeout *= 2;
-    response = await fetch(redirect, {
+
+    const redirectConfig: AxiosRequestConfig = {
+      ...originalConfig,
+      url: redirect,
       method: 'GET',
-      headers: headers_,
-      credentials: 'include',
-      mode: 'cors',
-      cache: 'no-store',
-    });
-    if (!response.ok) {
-      throw await RunResponseError.create(response);
-    }
+      data: undefined, // Don't send body on redirect
+    };
+
+    response = await axios(redirectConfig);
   }
-  return response;
+
+  return response.data;
 }

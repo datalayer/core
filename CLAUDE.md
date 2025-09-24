@@ -5,6 +5,8 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 ## Project Structure
 
 - **Source code**: `src/` contains the TypeScript/React library code
+- **API Layer**: `src/api/` contains raw API functions for direct service access
+- **SDK Client**: `src/sdk/client/` contains the high-level SDK with models and mixins
 - **Examples**: `src/examples/` contains interactive React examples
 - **Python**: `datalayer_core/` contains the Python SDK
 - **Tests**: `src/__tests__/` for TypeScript, `datalayer_core/tests/` for Python
@@ -14,9 +16,10 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 
 **Python**: `pip install -e .[test]` | `pytest datalayer_core/tests/` | `mypy datalayer_core/`
 **TypeScript Library**: `npm install` | `npm run build:lib` | `npm run lint` | `npm run test`
+**Integration Tests**: `npm run test:integration` (runs all API and SDK integration tests)
 **Examples**: `npm run example` (starts dev server at http://localhost:3000/)
 **Code Quality**: `npm run check` | `npm run check:fix` | `npm run lint` | `npm run format` | `npm run type-check`
-**Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs)
+**Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs) | See `API.md` for comprehensive API/SDK examples
 **Make**: `make build` | `make start` | `make docs`
 
 **CLI Scripts**: `datalayer`/`dla`/`d`, `datalayer-config`, `datalayer-migrate`, `datalayer-server`, `datalayer-troubleshoot`
@@ -164,6 +167,69 @@ Features:
   - `npm run format` / `npm run format:check` - Prettier formatting
   - `npm run type-check` - TypeScript compilation check
 
+## API and SDK Architecture
+
+### Two-Layer Architecture
+
+**1. Raw API Layer** (`src/api/`)
+- Direct access to REST endpoints
+- Organized by service (IAM, Runtimes, Spacer)
+- Returns raw API responses
+- Minimal abstraction, maximum control
+
+**2. SDK Client Layer** (`src/sdk/client/`)
+- High-level, intuitive interface
+- Domain models with rich methods
+- Automatic state management
+- Mixins for organized functionality
+
+### Key Changes and Fixes
+
+**Authentication**:
+- Fixed logout endpoint to use GET method (was incorrectly using POST)
+- Proper error handling for invalid tokens
+
+**Model Lifecycle Management**:
+- Models track deletion state to prevent operations on deleted resources
+- Runtime and Snapshot deletion now marks instances as deleted
+- All model methods check deletion state before operations
+
+**Test Infrastructure**:
+- Consolidated test configuration (removed redundant `shouldRunExpensive()`)
+- Integration tests are self-contained (no inter-test dependencies)
+- Proper cleanup in test teardown
+- Environment variable `DATALAYER_TEST_SKIP_EXPENSIVE=false` enables all tests
+
+**TypeScript Improvements**:
+- Fixed strict null checks in model constructors
+- Proper typing for SDK mixins and models
+- Consistent error handling across all models
+
+### SDK Models
+
+**Runtime Model**:
+- Dynamic state checking (always fetches fresh from API)
+- `waitUntilReady()` method for startup synchronization
+- Direct snapshot creation via `createSnapshot()`
+- Deletion state tracking
+
+**Snapshot Model**:
+- Status and size checking methods
+- Metadata access
+- Relationship with Runtime model
+- Deletion state tracking
+
+**Space Model**:
+- Item listing with proper relationship handling
+- Support for both Notebooks and Lexical documents
+- Lazy loading of properties
+
+**Notebook/Lexical Models**:
+- Content management
+- Update operations
+- Proper serialization to JSON
+- Deletion lifecycle
+
 ## AI Notes IMPORTANT
 
 - Use npm, not yarn
@@ -171,5 +237,8 @@ Features:
   - npm run format
   - npm run lint
   - npm run type-check
+  - npm run build (ensure it builds)
+- Run integration tests: `npm run test:integration`
 - Avoid old-school require imports
 - Use playwright MCP to inspect things directly
+- Check API.md for comprehensive examples of both raw API and SDK usage

@@ -3,8 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './actions';
-export * from './apis';
-export * from './settings';
-export * from './snapshots';
-export * from './utils';
+/**
+ * @module api/runtimes
+ * @description Runtimes API exports.
+ *
+ * Provides organized access to runtime management functionality.
+ */
+
+export * as environments from './environments';
+export * as healthz from './healthz';
+export * as runtimes from './runtimes';
+export * as snapshots from './snapshots';

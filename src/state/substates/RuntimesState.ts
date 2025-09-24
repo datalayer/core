@@ -7,8 +7,8 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { JSONExt } from '@lumino/coreutils';
 import { Poll } from '@lumino/polling';
-import type { IMultiServiceManager } from '../../api';
-import { getRuntimes } from '../../api';
+import type { IMultiServiceManager } from '../../sdk/stateful/runtimes';
+import { getRuntimes } from '../../sdk/stateful/runtimes';
 import type { IRuntimesConfiguration } from '../../config';
 import type {
   IRuntimePod,

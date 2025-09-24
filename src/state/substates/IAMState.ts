@@ -27,7 +27,10 @@ import {
   storeToken,
   storeUser,
 } from '../storage';
-import { requestDatalayerAPI, type RunResponseError } from '../../api';
+import {
+  requestDatalayerAPI,
+  type RunResponseError,
+} from '../../api/DatalayerApi';
 import { getCookie, setCookie, deleteCookie } from '../../utils';
 import { coreStore } from './CoreState';
 

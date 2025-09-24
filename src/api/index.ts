@@ -3,6 +3,35 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './jupyter';
-export * from './runtimes';
-export * from './DatalayerApi';
+/**
+ * @module @datalayer/core/api
+ * @description Minimal API layer for the Datalayer platform providing base HTTP client and functional API methods.
+ *
+ * This module contains the low-level API functionality. For high-level object-oriented
+ * SDK classes, use @datalayer/core/sdk instead.
+ */
+
+// Base client exports
+export {
+  requestDatalayerAPI,
+  RunResponseError,
+  NetworkError,
+} from './DatalayerApi';
+export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
+
+// Type exports
+export * from './types';
+
+// Domain-organized API exports
+export * as iam from './iam';
+export * as runtimes from './runtimes';
+export * as spacer from './spacer';
+
+/**
+ * @deprecated Please import directly from '@datalayer/core/sdk/stateful' instead.
+ * This module provides backward compatibility for the moved apiv1 modules.
+ */
+
+export * from '../sdk/stateful/jupyter';
+export * from '../sdk/stateful/runtimes';
+export * from '../api/DatalayerApi';

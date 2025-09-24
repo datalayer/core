@@ -17,7 +17,7 @@ import type {
   IDatalayerEnvironment,
   IRuntimeType,
   IRuntimeLocation,
-} from '../../models';
+} from '../../../models';
 
 /**
  * Abstract interface for the Datalayer session context.

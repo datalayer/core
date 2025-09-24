@@ -1,12 +1,30 @@
-name: Check typing
+name: Py Type Checking
 
 on:
   push:
     branches:
       - main
+      - develop
+    paths:
+      - 'datalayer_core/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - 'mypy.ini'
+      - '.mypy.ini'
+      - '.github/workflows/py-typing.yml'
   pull_request:
     branches:
       - main
+      - develop
+    paths:
+      - 'datalayer_core/**/*.py'
+      - 'tests/**/*.py'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - 'mypy.ini'
+      - '.mypy.ini'
+      - '.github/workflows/py-typing.yml'
   workflow_dispatch:
 
 concurrency:

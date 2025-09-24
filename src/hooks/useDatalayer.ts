@@ -8,8 +8,11 @@ import { useNavigate } from './useNavigate';
 import { useToast } from './useToast';
 // import { useRuMnock } from './../mocks';
 import { useIAMStore } from '../state';
-import { requestDatalayerAPI } from '../api';
-import type { IRequestDatalayerAPIOptions, RunResponseError } from '../api';
+import { requestDatalayerAPI } from '../api/DatalayerApi';
+import type {
+  IRequestDatalayerAPIOptions,
+  RunResponseError,
+} from '../api/DatalayerApi';
 
 export type IDatalayerRequestProps = {
   /**

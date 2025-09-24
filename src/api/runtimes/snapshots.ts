@@ -3,176 +3,110 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { KernelExecutor } from '@datalayer/jupyter-react';
-import { Kernel } from '@jupyterlab/services';
-import { createRuntimeSnapshotDownloadURL, uploadRuntimeSnapshot } from '.';
+/**
+ * @module api/runtimes/snapshots
+ * @description Runtime snapshots API functions for the Datalayer platform.
+ *
+ * Provides functions for managing runtime snapshots (saved runtime states).
+ */
 
-type Props = {
-  connection: Kernel.IKernelConnection;
-  metadata: {
-    filename: string;
-    [key: string]: string;
-  };
-  onUploadProgress?: (bytesUploaded: number, bytesTotal: number) => void;
+import { requestDatalayerAPI } from '../DatalayerApi';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
+import {
+  CreateRuntimeSnapshotRequest,
+  SnapshotsListResponse,
+  SnapshotGetResponse,
+  SnapshotCreateResponse,
+} from '../types/runtimes';
+import { validateToken, validateRequiredString } from '../utils/validation';
+
+/**
+ * Create a snapshot of a runtime instance.
+ * @param token - Authentication token
+ * @param data - Snapshot creation configuration
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving to the created snapshot response
+ * @throws {Error} If authentication token is missing or invalid
+ */
+export const createSnapshot = async (
+  token: string,
+  data: CreateRuntimeSnapshotRequest,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<SnapshotCreateResponse> => {
+  validateToken(token);
+
+  return requestDatalayerAPI<SnapshotCreateResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
+    method: 'POST',
+    token,
+    body: data,
+  });
 };
 
 /**
- * Snapshot a runtime through the frontend and upload it to the cloud.
- *
- * Note: You should use this only for browser runtimes.
+ * List all runtime snapshots.
+ * @param token - Authentication token
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving to list of snapshots
+ * @throws {Error} If authentication token is missing or invalid
  */
-export async function createRuntimeSnapshot(props: Props): Promise<void> {
-  const { connection, metadata, onUploadProgress } = props;
-  const dump = await new KernelExecutor({ connection }).execute(
-    GET_RUNTIME_SNAPSHOT_SNIPPET,
-    {
-      storeHistory: false,
-    },
-  );
-  const serializedData = (dump.get(0)?.data['application/vnd.jupyter.stdout'] ??
-    '') as string;
-  // Convert the data to blob.
-  const bytes = base64ToBytes(serializedData);
-  const file = new Blob([bytes.buffer]);
-  return uploadRuntimeSnapshot({
-    file,
-    metadata,
-    onProgress: onUploadProgress,
-  });
-}
+export const listSnapshots = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<SnapshotsListResponse> => {
+  validateToken(token);
 
-function base64ToBytes(base64: string) {
-  // Taken from https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa#unicode_strings
-  const binString = atob(base64);
-  // @ts-expect-error TypeScript does not like this
-  return Uint8Array.from(binString, m => m.codePointAt(0));
-}
+  return requestDatalayerAPI<SnapshotsListResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
+    method: 'GET',
+    token,
+  });
+};
 
 /**
- * Load a snapshot within a browser kernel.
- *
- * Note: You should use this only for browser kernels.
+ * Get details for a specific runtime snapshot.
+ * @param token - Authentication token
+ * @param snapshotId - The unique identifier of the snapshot
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving to snapshot details wrapped in response
+ * @throws {Error} If authentication token is missing or invalid
+ * @throws {Error} If snapshot ID is missing or invalid
  */
-export async function loadBrowserRuntimeSnapshot({
-  connection,
-  id,
-}: {
-  connection: Kernel.IKernelConnection;
-  id: string;
-}): Promise<void> {
-  const downloadURL = createRuntimeSnapshotDownloadURL(id);
-  const response = await fetch(downloadURL);
-  const buffer = await response.arrayBuffer();
-  const base64 = bytesToBase64(new Uint8Array(buffer));
-  await new KernelExecutor({
-    connection,
-  }).execute(getLoadRuntimeSnapshotSnippet(base64), {
-    storeHistory: false,
-    silent: true,
+export const getSnapshot = async (
+  token: string,
+  snapshotId: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<SnapshotGetResponse> => {
+  validateToken(token);
+  validateRequiredString(snapshotId, 'Snapshot ID');
+
+  return requestDatalayerAPI<SnapshotGetResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
+    method: 'GET',
+    token,
   });
-}
+};
 
-function bytesToBase64(bytes: Uint8Array): string {
-  // Taken from https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa#unicode_strings
-  const binString = Array.from(bytes, byte => String.fromCodePoint(byte)).join(
-    '',
-  );
-  return btoa(binString);
-}
+/**
+ * Delete a runtime snapshot.
+ * @param token - Authentication token
+ * @param snapshotId - The unique identifier of the snapshot to delete
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving when deletion is complete
+ * @throws {Error} If authentication token is missing or invalid
+ * @throws {Error} If snapshot ID is missing or invalid
+ */
+export const deleteSnapshot = async (
+  token: string,
+  snapshotId: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<void> => {
+  validateToken(token);
+  validateRequiredString(snapshotId, 'Snapshot ID');
 
-const GET_RUNTIME_SNAPSHOT_SNIPPET = `def _create_snapshot():
-    import logging
-    import os
-    import pickle
-    from base64 import encodebytes
-    from tempfile import TemporaryFile
-    from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, MethodWrapperType, ModuleType, TracebackType
-    
-    # print(pickle.DEFAULT_PROTOCOL)
-
-    class NotFound:
-        pass
-
-    missing = NotFound()
-
-    FORBIDDEN_TYPES = [type, BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, MethodWrapperType, ModuleType, TracebackType, NotFound]
-    try:
-        from IPython.core.autocall import ExitAutocall
-        from IPython.core.interactiveshell import InteractiveShell
-        FORBIDDEN_TYPES.extend([ExitAutocall, InteractiveShell])
-    except ImportError:
-        pass
-    exclude = tuple(FORBIDDEN_TYPES)
-
-    all = frozenset(filter(lambda n: not n.startswith("_"), globals()))
-
-    line_separator = bytes(os.linesep, "utf-8")
-    with TemporaryFile() as dump:
-        for _n in all:
-            _v = globals().get(_n, missing)
-            
-            if not (
-                isinstance(_v, exclude) or
-                # Special IPython variables
-                (_n == "In" and isinstance(_v, list)) or
-                (_n == "Out" and isinstance(_v, dict))
-            ):
-                try:
-                    dumped_n = _n.encode("utf-8") + line_separator + pickle.dumps(_v) + line_separator + b"\\x00" + line_separator
-                    dump.write(dumped_n)
-                except BaseException as e:
-                    logging.warning("Failed to dump variable [%s ([%s])].", _n, type(_v).__qualname__, exc_info=e)
-                else:
-                    logging.debug("Variable [%s] dumped", _n)
-
-        dump.seek(0)
-        print(encodebytes(dump.read()).decode("ascii"))
-
-_create_snapshot()
-del _create_snapshot
-`;
-
-function getLoadRuntimeSnapshotSnippet(content: string) {
-  return `async def _load_snapshot():
-    import os
-    import logging
-    import platform
-    import pickle
-    from base64 import decodebytes
-    is_pyodide = platform.node() == "emscripten"
-
-    snapshot = decodebytes("${content}".encode("ascii"))
-    line_sep = bytes(os.linesep, "utf-8")
-    variable_separator = b"\\x00" + line_sep
-    name = b""
-    value = b""
-    for line in snapshot.splitlines():
-        line += line_sep
-        if line == variable_separator:
-            name_s = name.strip().decode("utf-8")
-            try:
-                try:
-                    globals()[name_s] = pickle.loads(value)
-                except ModuleNotFoundError as m:
-                    if is_pyodide:
-                        import micropip
-                        logging.info(f'Installing %s...', m.name)
-                        await micropip.install(m.name)
-                        globals()[name_s] = pickle.loads(value)
-                    else:
-                        raise m
-            except BaseException as e:
-                logging.warning("Failed to load variable [%s].", name_s, exc_info=e)
-            else:
-                logging.debug("Variable [%s] loaded", name_s)
-
-            name = b""
-            value = b""
-        else:
-            if not name:
-                name = line
-            else:
-                value += line
-await _load_snapshot()
-del _load_snapshot`;
-}
+  return requestDatalayerAPI<void>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
+    method: 'DELETE',
+    token,
+  });
+};

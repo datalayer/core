@@ -9,6 +9,8 @@
 // Define webpack globals that are expected by some dependencies
 (global as any).__webpack_public_path__ = '';
 
+// Native FormData and fetch should work in Node.js 20+
+
 // Define other globals that might be needed
 (global as any).global = globalThis;
 
