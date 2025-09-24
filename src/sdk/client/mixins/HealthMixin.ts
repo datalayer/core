@@ -152,7 +152,6 @@ export function HealthMixin<T extends new (...args: any[]) => DatalayerSDKBase>(
       if (iamStatus.status === 'fulfilled') {
         result.iam.healthy = true;
         result.iam.details = iamStatus.value;
-        result.iam.version = iamStatus.value?.version;
       } else {
         result.iam.error = iamStatus.reason?.message || 'Unknown error';
       }
@@ -161,7 +160,6 @@ export function HealthMixin<T extends new (...args: any[]) => DatalayerSDKBase>(
       if (runtimesStatus.status === 'fulfilled') {
         result.runtimes.healthy = true;
         result.runtimes.details = runtimesStatus.value;
-        result.runtimes.version = runtimesStatus.value?.version;
       } else {
         result.runtimes.error =
           runtimesStatus.reason?.message || 'Unknown error';
@@ -171,7 +169,6 @@ export function HealthMixin<T extends new (...args: any[]) => DatalayerSDKBase>(
       if (spacerStatus.status === 'fulfilled') {
         result.spacer.healthy = true;
         result.spacer.details = spacerStatus.value;
-        result.spacer.version = spacerStatus.value?.version;
       } else {
         result.spacer.error = spacerStatus.reason?.message || 'Unknown error';
       }

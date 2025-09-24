@@ -62,15 +62,17 @@ describe('SDK Spacer Integration Tests', () => {
 
       testSpace = firstSpace;
       console.log(`Found ${spaces.length} space(s)`);
+      const spaceName = await firstSpace.getName();
       console.log(
-        `Using space: ${firstSpace.name || firstSpace.id || firstSpace.uid}`,
+        `Using space: ${spaceName || firstSpace.id || firstSpace.uid}`,
       );
     });
 
     it('should test space model methods', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping model test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Testing space model methods...');
@@ -111,14 +113,15 @@ describe('SDK Spacer Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Notebook lifecycle', () => {
     it('should create a notebook', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping notebook creation');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Creating notebook...');
 
       const notebook = await sdk.createNotebook({
-        spaceId: testSpace.id || testSpace.uid,
+        spaceId: testSpace.uid,
         notebookType: 'jupyter',
         name: 'sdk-test-notebook-' + Date.now(),
         description: 'Test notebook from SDK',
@@ -126,35 +129,38 @@ describe('SDK Spacer Integration Tests', () => {
 
       expect(notebook).toBeInstanceOf(Notebook);
       expect(notebook.id).toBeDefined();
-      expect(notebook.spaceId).toBe(testSpace.id || testSpace.uid);
+      expect(notebook.spaceId).toBe(testSpace.uid);
 
       createdNotebook = notebook;
       console.log(`Created notebook: ${notebook.id}`);
-      console.log(`  Name: ${notebook.name}`);
+      console.log(`  Name: ${await notebook.getName()}`);
       console.log(`  Space: ${notebook.spaceId}`);
     });
 
     it('should get notebook details', async () => {
       if (!createdNotebook) {
-        console.log('No notebook created, skipping get test');
-        return;
+        throw new Error(
+          'Test dependency failed: notebook should be created in previous test',
+        );
       }
 
       console.log('Getting notebook details...');
-      const notebook = await sdk.getNotebook(createdNotebook.id);
+      const notebook = await sdk.getNotebook(createdNotebook.uid);
 
       expect(notebook).toBeInstanceOf(Notebook);
       expect(notebook.id).toBe(createdNotebook.id);
       expect(notebook.spaceId).toBe(createdNotebook.spaceId);
 
       console.log(`Retrieved notebook: ${notebook.id}`);
-      console.log(`  Name: ${notebook.name}`);
+      const notebookName = await notebook.getName();
+      console.log(`  Name: ${notebookName}`);
     });
 
     it('should update notebook', async () => {
       if (!createdNotebook) {
-        console.log('No notebook created, skipping update test');
-        return;
+        throw new Error(
+          'Test dependency failed: notebook should be created in previous test',
+        );
       }
 
       console.log('Updating notebook...');
@@ -168,13 +174,15 @@ describe('SDK Spacer Integration Tests', () => {
       expect(updatedNotebook.id).toBe(createdNotebook.id);
 
       console.log(`Updated notebook: ${updatedNotebook.id}`);
-      console.log(`  New name: ${updatedNotebook.name}`);
+      const updatedNotebookName = await updatedNotebook.getName();
+      console.log(`  New name: ${updatedNotebookName}`);
     });
 
     it('should test notebook model methods', async () => {
       if (!createdNotebook) {
-        console.log('No notebook created, skipping model test');
-        return;
+        throw new Error(
+          'Test dependency failed: notebook should be created in previous test',
+        );
       }
 
       console.log('Testing notebook model methods...');
@@ -205,7 +213,8 @@ describe('SDK Spacer Integration Tests', () => {
         name: 'sdk-test-notebook-model-update',
       });
       expect(updated).toBeInstanceOf(Notebook);
-      console.log(`Updated via model: ${updated.name}`);
+      const updatedName = await updated.getName();
+      console.log(`Updated via model: ${updatedName}`);
 
       // Test toJSON method
       const json = await createdNotebook.toJSON();
@@ -221,8 +230,9 @@ describe('SDK Spacer Integration Tests', () => {
 
     it('should delete notebook', async () => {
       if (!createdNotebook) {
-        console.log('No notebook created, skipping delete test');
-        return;
+        throw new Error(
+          'Test dependency failed: notebook should be created in previous test',
+        );
       }
 
       console.log('Deleting notebook...');
@@ -245,14 +255,15 @@ describe('SDK Spacer Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Lexical document lifecycle', () => {
     it('should create a lexical document', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping lexical creation');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Creating lexical document...');
 
       const lexical = await sdk.createLexical({
-        spaceId: testSpace.id || testSpace.uid,
+        spaceId: testSpace.uid,
         name: 'sdk-test-lexical-' + Date.now(),
         description: 'Test lexical from SDK',
         documentType: 'document',
@@ -260,35 +271,38 @@ describe('SDK Spacer Integration Tests', () => {
 
       expect(lexical).toBeInstanceOf(Lexical);
       expect(lexical.id).toBeDefined();
-      expect(lexical.spaceId).toBe(testSpace.id || testSpace.uid);
+      expect(lexical.spaceId).toBe(testSpace.uid);
 
       createdLexical = lexical;
       console.log(`Created lexical: ${lexical.id}`);
-      console.log(`  Name: ${lexical.name}`);
-      console.log(`  Type: ${lexical.documentType}`);
+      const lexicalName = await lexical.getName();
+      console.log(`  Name: ${lexicalName}`);
     });
 
     it('should get lexical details', async () => {
       if (!createdLexical) {
-        console.log('No lexical created, skipping get test');
-        return;
+        throw new Error(
+          'Test dependency failed: lexical should be created in previous test',
+        );
       }
 
       console.log('Getting lexical details...');
-      const lexical = await sdk.getLexical(createdLexical.id);
+      const lexical = await sdk.getLexical(createdLexical.uid);
 
       expect(lexical).toBeInstanceOf(Lexical);
       expect(lexical.id).toBe(createdLexical.id);
       expect(lexical.spaceId).toBe(createdLexical.spaceId);
 
       console.log(`Retrieved lexical: ${lexical.id}`);
-      console.log(`  Name: ${lexical.name}`);
+      const retrievedLexicalName = await lexical.getName();
+      console.log(`  Name: ${retrievedLexicalName}`);
     });
 
     it('should update lexical', async () => {
       if (!createdLexical) {
-        console.log('No lexical created, skipping update test');
-        return;
+        throw new Error(
+          'Test dependency failed: lexical should be created in previous test',
+        );
       }
 
       console.log('Updating lexical...');
@@ -302,13 +316,15 @@ describe('SDK Spacer Integration Tests', () => {
       expect(updatedLexical.id).toBe(createdLexical.id);
 
       console.log(`Updated lexical: ${updatedLexical.id}`);
-      console.log(`  New name: ${updatedLexical.name}`);
+      const updatedLexicalName = await updatedLexical.getName();
+      console.log(`  New name: ${updatedLexicalName}`);
     });
 
     it('should test lexical model methods', async () => {
       if (!createdLexical) {
-        console.log('No lexical created, skipping model test');
-        return;
+        throw new Error(
+          'Test dependency failed: lexical should be created in previous test',
+        );
       }
 
       console.log('Testing lexical model methods...');
@@ -333,7 +349,8 @@ describe('SDK Spacer Integration Tests', () => {
         name: 'sdk-test-lexical-model-update',
       });
       expect(updated).toBeInstanceOf(Lexical);
-      console.log(`Updated via model: ${updated.name}`);
+      const finalUpdatedName = await updated.getName();
+      console.log(`Updated via model: ${finalUpdatedName}`);
 
       // Test toJSON method
       const json = await createdLexical.toJSON();
@@ -349,8 +366,9 @@ describe('SDK Spacer Integration Tests', () => {
 
     it('should delete lexical document', async () => {
       if (!createdLexical) {
-        console.log('No lexical created, skipping delete test');
-        return;
+        throw new Error(
+          'Test dependency failed: lexical should be created in previous test',
+        );
       }
 
       console.log('Deleting lexical...');
@@ -373,12 +391,13 @@ describe('SDK Spacer Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Space items management', () => {
     it('should get space items', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping items test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Getting space items...');
-      const response = await sdk.getSpaceItems(testSpace.id || testSpace.uid);
+      const response = await sdk.getSpaceItems(testSpace.uid);
 
       expect(response).toBeDefined();
       expect(response.items).toBeDefined();

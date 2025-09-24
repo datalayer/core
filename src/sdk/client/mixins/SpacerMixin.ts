@@ -103,13 +103,13 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     _extractNotebookId(notebookIdOrInstance: string | Notebook): string {
       return typeof notebookIdOrInstance === 'string'
         ? notebookIdOrInstance
-        : notebookIdOrInstance.id;
+        : notebookIdOrInstance.uid;
     }
 
     _extractLexicalId(lexicalIdOrInstance: string | Lexical): string {
       return typeof lexicalIdOrInstance === 'string'
         ? lexicalIdOrInstance
-        : lexicalIdOrInstance.id;
+        : lexicalIdOrInstance.uid;
     }
 
     /**

@@ -40,27 +40,32 @@ describe('SDK IAM Integration Tests', () => {
         expect(user.id).toBeDefined();
         expect(user.uid).toBeDefined();
         expect(user.handle).toBeDefined();
-        expect(user.roles).toBeDefined();
-        expect(Array.isArray(user.roles)).toBe(true);
+        expect((user as any).roles).toBeDefined();
+        expect(Array.isArray((user as any).roles)).toBe(true);
 
         console.log('Current user:');
         console.log(`  ID: ${user.id}`);
         console.log(`  UID: ${user.uid}`);
         console.log(`  Handle: ${user.handle}`);
         console.log(`  Email: ${user.email || 'Not provided'}`);
-        console.log(`  Name: ${user.firstName} ${user.lastName}`);
-        console.log(`  Roles: ${user.roles.join(', ')}`);
+        console.log(
+          `  Name: ${(user as any).first_name} ${(user as any).last_name}`,
+        );
+        console.log(`  Roles: ${(user as any).roles.join(', ')}`);
       });
 
       it('should include organization info if available', async () => {
         console.log('Checking organization info...');
         const user = await sdk.whoami();
 
-        if (user.organizationIds && user.organizationIds.length > 0) {
+        if (
+          (user as any).organizationIds &&
+          (user as any).organizationIds.length > 0
+        ) {
           console.log(
-            `User belongs to ${user.organizationIds.length} organization(s)`,
+            `User belongs to ${(user as any).organizationIds.length} organization(s)`,
           );
-          expect(Array.isArray(user.organizationIds)).toBe(true);
+          expect(Array.isArray((user as any).organizationIds)).toBe(true);
         } else {
           console.log('User does not belong to any organizations');
         }
@@ -89,7 +94,7 @@ describe('SDK IAM Integration Tests', () => {
 
         try {
           await sdk.login({
-            email: 'invalid@example.com',
+            handle: 'invalid@example.com',
             password: 'wrong-password',
           });
           // Should not reach here

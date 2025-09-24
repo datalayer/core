@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { runtimes } from '..';
-import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
+import { MOCK_JWT_TOKEN } from '../../../__tests__/shared/test-constants';
 
 describe('Runtimes Unit Tests', () => {
   describe('create parameter validation', () => {

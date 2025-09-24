@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { items } from '..';
 import * as DatalayerApi from '../../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../../constants';
-import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
+import { MOCK_JWT_TOKEN } from '../../../__tests__/shared/test-constants';
 
 // Mock the DatalayerApi module
 vi.mock('../../DatalayerApi', () => ({

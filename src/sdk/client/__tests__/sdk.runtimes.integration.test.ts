@@ -94,8 +94,9 @@ describe('SDK Runtimes Integration Tests', () => {
 
       it('should list runtimes and find created runtime', async () => {
         if (!createdRuntime) {
-          console.log('No runtime created, skipping list test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdRuntime should be available from previous test',
+          );
         }
 
         console.log('Listing runtimes...');
@@ -113,8 +114,9 @@ describe('SDK Runtimes Integration Tests', () => {
 
       it('should get runtime details', async () => {
         if (!createdRuntime) {
-          console.log('No runtime created, skipping get test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdRuntime should be available from previous test',
+          );
         }
 
         console.log('Getting runtime details...');
@@ -131,8 +133,9 @@ describe('SDK Runtimes Integration Tests', () => {
 
       it('should test runtime model methods', async () => {
         if (!createdRuntime) {
-          console.log('No runtime created, skipping model test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdRuntime should be available from previous test',
+          );
         }
 
         console.log('Testing runtime model methods...');
@@ -169,32 +172,33 @@ describe('SDK Runtimes Integration Tests', () => {
     () => {
       it('should create a snapshot from runtime', async () => {
         if (!createdRuntime) {
-          console.log('No runtime created, skipping snapshot creation');
-          return;
+          throw new Error(
+            'Test dependency failed: createdRuntime should be available from previous test',
+          );
         }
 
         console.log('Creating snapshot from runtime...');
 
-        const snapshot = await createdRuntime.createSnapshot({
-          given_name: 'sdk-test-snapshot',
-          description: 'Test snapshot from SDK',
-        });
+        const snapshot = await createdRuntime.createSnapshot(
+          'sdk-test-snapshot',
+          'Test snapshot from SDK',
+        );
 
         expect(snapshot).toBeInstanceOf(Snapshot);
         expect(snapshot.uid).toBeDefined();
-        expect(snapshot.podName).toBe(createdRuntime.podName);
-        expect(snapshot.givenName).toContain('sdk-test-snapshot');
+        expect(snapshot.name).toContain('sdk-test-snapshot');
 
         createdSnapshot = snapshot;
         console.log(`Created snapshot: ${snapshot.uid}`);
-        console.log(`  Given name: ${snapshot.givenName}`);
-        console.log(`  From runtime: ${snapshot.podName}`);
+        console.log(`  Name: ${snapshot.name}`);
+        console.log(`  Description: ${snapshot.description}`);
       });
 
       it('should list snapshots and find created snapshot', async () => {
         if (!createdSnapshot) {
-          console.log('No snapshot created, skipping list test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdSnapshot should be available from previous test',
+          );
         }
 
         console.log('Listing snapshots...');
@@ -212,8 +216,9 @@ describe('SDK Runtimes Integration Tests', () => {
 
       it('should get snapshot details', async () => {
         if (!createdSnapshot) {
-          console.log('No snapshot created, skipping get test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdSnapshot should be available from previous test',
+          );
         }
 
         console.log('Getting snapshot details...');
@@ -221,7 +226,7 @@ describe('SDK Runtimes Integration Tests', () => {
 
         expect(snapshot).toBeInstanceOf(Snapshot);
         expect(snapshot.uid).toBe(createdSnapshot.uid);
-        expect(snapshot.podName).toBe(createdSnapshot.podName);
+        expect(snapshot.environment).toBe(createdSnapshot.environment);
 
         console.log(`Retrieved snapshot: ${snapshot.uid}`);
         const status = await snapshot.getStatus();
@@ -232,8 +237,9 @@ describe('SDK Runtimes Integration Tests', () => {
 
       it('should test snapshot model methods', async () => {
         if (!createdSnapshot) {
-          console.log('No snapshot created, skipping model test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdSnapshot should be available from previous test',
+          );
         }
 
         console.log('Testing snapshot model methods...');
@@ -267,8 +273,9 @@ describe('SDK Runtimes Integration Tests', () => {
 
       it('should delete snapshot', async () => {
         if (!createdSnapshot) {
-          console.log('No snapshot created, skipping delete test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdSnapshot should be available from previous test',
+          );
         }
 
         console.log('Deleting snapshot...');
@@ -294,8 +301,9 @@ describe('SDK Runtimes Integration Tests', () => {
     () => {
       it('should delete runtime', async () => {
         if (!createdRuntime) {
-          console.log('No runtime created, skipping delete test');
-          return;
+          throw new Error(
+            'Test dependency failed: createdRuntime should be available from previous test',
+          );
         }
 
         console.log('Deleting runtime...');

@@ -79,14 +79,14 @@ describe.skipIf(skipTests)(
         if (response.spaces.length > 0) {
           const firstSpace = response.spaces[0];
           testSpaceId = firstSpace.uid || firstSpace.id;
-          const spaceName = firstSpace.name || firstSpace.name_t;
+          const spaceName = firstSpace.name || (firstSpace as any).name_t;
           console.log(`Using space ID: ${testSpaceId} (${spaceName})`);
 
           // Verify space structure - check for either old or new field names
           expect(firstSpace).toHaveProperty('uid');
           expect(firstSpace).toSatisfy(
             (space: any) =>
-              space.name !== undefined || space.name_t !== undefined,
+              space.name !== undefined || (space as any).name_t !== undefined,
           );
         } else {
           console.log('WARNING: No spaces found - some tests may fail');
@@ -272,7 +272,7 @@ describe.skipIf(skipTests)(
             );
             // Handle both name formats that might be returned
             const notebookName =
-              foundNotebook.name || foundNotebook.name_t || '';
+              foundNotebook.name || (foundNotebook as any).name_t || '';
             if (notebookName) {
               expect(notebookName).toContain(testNamePrefix);
             } else {
@@ -287,7 +287,8 @@ describe.skipIf(skipTests)(
               JSON.stringify(foundLexical, null, 2),
             );
             // Handle both name formats that might be returned
-            const lexicalName = foundLexical.name || foundLexical.name_t || '';
+            const lexicalName =
+              foundLexical.name || (foundLexical as any).name_t || '';
             if (lexicalName) {
               expect(lexicalName).toContain(testNamePrefix);
             } else {
@@ -409,7 +410,7 @@ describe.skipIf(skipTests)(
             expect(response).toHaveProperty('notebook');
             expect(response.notebook.uid).toBe(createdNotebookId);
             const nameObj =
-              response.notebook.name_t || response.notebook.name || {};
+              (response.notebook as any).name_t || response.notebook.name || {};
             const notebookName =
               nameObj && typeof nameObj === 'object' && nameObj.set
                 ? nameObj.set
@@ -461,7 +462,7 @@ describe.skipIf(skipTests)(
             expect(response).toHaveProperty('document');
             expect(response.document.uid).toBe(createdLexicalId);
             const nameObj =
-              response.document.name_t || response.document.name || {};
+              (response.document as any).name_t || response.document.name || {};
             const lexicalName =
               nameObj && typeof nameObj === 'object' && nameObj.set
                 ? nameObj.set
@@ -496,7 +497,7 @@ describe.skipIf(skipTests)(
           if (notebookResponse.success && notebookResponse.notebook) {
             const notebookName =
               notebookResponse.notebook.name ||
-              notebookResponse.notebook.name_t ||
+              (notebookResponse.notebook as any).name_t ||
               '';
             expect(notebookName).toContain('updated');
             console.log('✓ Notebook update verified');
@@ -514,7 +515,7 @@ describe.skipIf(skipTests)(
           if (lexicalResponse.success && lexicalResponse.document) {
             const lexicalName =
               lexicalResponse.document.name ||
-              lexicalResponse.document.name_t ||
+              (lexicalResponse.document as any).name_t ||
               '';
             expect(lexicalName).toContain('updated');
             console.log('✓ Lexical update verified');
@@ -641,13 +642,13 @@ describe.skipIf(skipTests)(
 
         if (response.spaces.length > 0) {
           const firstSpace = response.spaces[0];
-          const spaceName = firstSpace.name || firstSpace.name_t;
+          const spaceName = firstSpace.name || (firstSpace as any).name_t;
           console.log('First space:', spaceName);
 
           expect(firstSpace).toHaveProperty('uid');
           expect(firstSpace).toSatisfy(
             (space: any) =>
-              space.name !== undefined || space.name_t !== undefined,
+              space.name !== undefined || (space as any).name_t !== undefined,
           );
         }
       });

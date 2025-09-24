@@ -62,7 +62,7 @@ describe('SDK Models Integration Tests', () => {
 
       // Create a notebook
       const notebook = await sdk.createNotebook({
-        spaceId: testSpace.id || testSpace.uid,
+        spaceId: testSpace.uid,
         notebookType: 'jupyter',
         name: 'model-test-notebook-' + Date.now(),
         description: 'Test notebook for model tests',
@@ -87,15 +87,16 @@ describe('SDK Models Integration Tests', () => {
 
     it('should handle lazy loading of model properties', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping lazy loading test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Testing lazy loading...');
 
       // Create a notebook with minimal data
       testNotebook = await sdk.createNotebook({
-        spaceId: testSpace.id || testSpace.uid,
+        spaceId: testSpace.uid,
         notebookType: 'jupyter',
         name: 'lazy-load-test-' + Date.now(),
         description: 'Test description',
@@ -117,8 +118,9 @@ describe('SDK Models Integration Tests', () => {
 
     it('should refresh data when explicitly requested', async () => {
       if (!testNotebook) {
-        console.log('No notebook available, skipping refresh test');
-        return;
+        throw new Error(
+          'Test dependency failed: testNotebook should be available from previous test',
+        );
       }
 
       console.log('Testing data refresh...');
@@ -142,8 +144,9 @@ describe('SDK Models Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Model relationships', () => {
     it('should handle Space → Notebook relationship', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping relationship test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Testing Space → Notebook relationship...');
@@ -166,17 +169,19 @@ describe('SDK Models Integration Tests', () => {
 
     it('should handle Space → Lexical relationship', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping lexical relationship test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Testing Space → Lexical relationship...');
 
       // Create a lexical document
       testLexical = await sdk.createLexical({
-        spaceId: testSpace.id || testSpace.uid,
+        spaceId: testSpace.uid,
         name: 'relationship-test-lexical-' + Date.now(),
         documentType: 'document',
+        description: 'Test lexical document for relationships',
       });
       expect(testLexical).toBeInstanceOf(Lexical);
 
@@ -185,7 +190,8 @@ describe('SDK Models Integration Tests', () => {
       const foundLexical = items.find(
         item =>
           item.id === testLexical!.id &&
-          (item.type === 'lexical' || item.type === 'document'),
+          ((item as any).type === 'lexical' ||
+            (item as any).type === 'document'),
       );
       expect(foundLexical).toBeDefined();
 
@@ -211,10 +217,10 @@ describe('SDK Models Integration Tests', () => {
         console.log(`Created runtime: ${(testRuntime as any).podName}`);
 
         // Create a snapshot from the runtime
-        testSnapshot = await testRuntime.createSnapshot({
-          given_name: 'model-test-snapshot',
-          description: 'Test snapshot from model test',
-        });
+        testSnapshot = await testRuntime.createSnapshot(
+          'model-test-snapshot',
+          'Test snapshot from model test',
+        );
 
         expect(testSnapshot).toBeInstanceOf(Snapshot);
         expect((testSnapshot as any).podName).toBe(
@@ -226,8 +232,9 @@ describe('SDK Models Integration Tests', () => {
 
       it('should list runtime snapshots', async () => {
         if (!testRuntime || !testSnapshot) {
-          console.log('No runtime/snapshot available, skipping list test');
-          return;
+          throw new Error(
+            'Test dependency failed: testRuntime and testSnapshot should be available from previous test',
+          );
         }
 
         console.log('Testing runtime snapshot listing...');
@@ -247,8 +254,9 @@ describe('SDK Models Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Model serialization', () => {
     it('should serialize Space model to JSON', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping serialization test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Testing Space serialization...');
@@ -267,8 +275,9 @@ describe('SDK Models Integration Tests', () => {
 
     it('should serialize Notebook model to JSON', async () => {
       if (!testNotebook) {
-        console.log('No notebook available, skipping serialization test');
-        return;
+        throw new Error(
+          'Test dependency failed: testNotebook should be available from previous test',
+        );
       }
 
       console.log('Testing Notebook serialization...');
@@ -276,15 +285,18 @@ describe('SDK Models Integration Tests', () => {
       const json = await testNotebook.toJSON();
       expect(json).toBeDefined();
       expect(json.id).toBe(testNotebook.id);
-      expect(json.spaceId).toBe(testNotebook.spaceId);
+      expect((json as any).space_id || (json as any).spaceId).toBe(
+        (testNotebook as any).spaceId,
+      );
 
       console.log('Notebook serialized successfully');
     });
 
     it('should serialize Runtime model to JSON', async () => {
       if (!testRuntime) {
-        console.log('No runtime available, skipping serialization test');
-        return;
+        throw new Error(
+          'Test dependency failed: testRuntime should be available from previous test',
+        );
       }
 
       console.log('Testing Runtime serialization...');
@@ -299,8 +311,9 @@ describe('SDK Models Integration Tests', () => {
 
     it('should serialize Snapshot model to JSON', async () => {
       if (!testSnapshot) {
-        console.log('No snapshot available, skipping serialization test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSnapshot should be available from previous test',
+        );
       }
 
       console.log('Testing Snapshot serialization...');
@@ -319,7 +332,7 @@ describe('SDK Models Integration Tests', () => {
 
       // Create a fake notebook with invalid ID
       const fakeNotebook = new Notebook(
-        { id: 'invalid-id', spaceId: 'invalid-space' },
+        { id: 'invalid-id', space_id: 'invalid-space' } as any,
         sdk as any,
       );
 
@@ -334,8 +347,9 @@ describe('SDK Models Integration Tests', () => {
 
     it('should validate model operations', async () => {
       if (!testNotebook) {
-        console.log('No notebook available, skipping validation test');
-        return;
+        throw new Error(
+          'Test dependency failed: testNotebook should be available from previous test',
+        );
       }
 
       console.log('Testing model validation...');
@@ -352,8 +366,9 @@ describe('SDK Models Integration Tests', () => {
 
     it('should handle concurrent model operations', async () => {
       if (!testNotebook) {
-        console.log('No notebook available, skipping concurrency test');
-        return;
+        throw new Error(
+          'Test dependency failed: testNotebook should be available from previous test',
+        );
       }
 
       console.log('Testing concurrent model operations...');
@@ -378,15 +393,16 @@ describe('SDK Models Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Model lifecycle', () => {
     it('should support full model lifecycle', async () => {
       if (!testSpace) {
-        console.log('No space available, skipping lifecycle test');
-        return;
+        throw new Error(
+          'Test dependency failed: testSpace should be available from previous test',
+        );
       }
 
       console.log('Testing full model lifecycle...');
 
       // 1. Create
       const notebook = await sdk.createNotebook({
-        spaceId: testSpace.id || testSpace.uid,
+        spaceId: testSpace.uid,
         notebookType: 'jupyter',
         name: 'lifecycle-test-' + Date.now(),
         description: 'Lifecycle test notebook',
@@ -395,7 +411,7 @@ describe('SDK Models Integration Tests', () => {
       console.log('1. Created notebook');
 
       // 2. Read
-      const retrieved = await sdk.getNotebook(notebook.id);
+      const retrieved = await sdk.getNotebook(notebook.uid);
       expect(retrieved.id).toBe(notebook.id);
       console.log('2. Retrieved notebook');
 

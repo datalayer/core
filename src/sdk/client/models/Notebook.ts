@@ -48,6 +48,9 @@ export class Notebook {
   protected _data: NotebookData;
   private _sdk: DatalayerSDK;
   private _deleted: boolean = false;
+  private _freshData: NotebookData | null = null;
+  private _lastFetch: number = 0;
+  private _cacheTimeout = 5000; // 5 seconds cache timeout
 
   /**
    * Create a Notebook instance.
@@ -58,6 +61,17 @@ export class Notebook {
   constructor(data: NotebookData, sdk: DatalayerSDK) {
     this._data = data;
     this._sdk = sdk;
+  }
+
+  // ========================================================================
+  // Deletion State
+  // ========================================================================
+
+  /**
+   * Check if this notebook has been deleted.
+   */
+  get isDeleted(): boolean {
+    return this._deleted;
   }
 
   // ========================================================================
@@ -74,6 +88,34 @@ export class Notebook {
         `Notebook ${this._data.id} has been deleted and no longer exists`,
       );
     }
+  }
+
+  /**
+   * Get fresh data from API with caching to avoid redundant calls.
+   * @returns Current NotebookData from API or cache
+   */
+  private async _getFreshData(): Promise<NotebookData> {
+    this._checkDeleted();
+
+    const now = Date.now();
+    if (this._freshData && now - this._lastFetch < this._cacheTimeout) {
+      // Return cached data if recent enough
+      return this._freshData;
+    }
+
+    // Fetch fresh data from API
+    const token = (this._sdk as any).getToken();
+    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+    const response = await notebooks.getNotebook(spacerRunUrl, token, this.uid);
+
+    if (response.notebook) {
+      this._freshData = response.notebook;
+      this._data = response.notebook; // Keep internal data up to date
+      this._lastFetch = now;
+      return this._freshData;
+    }
+
+    return this._data; // Fallback to existing data
   }
 
   // ========================================================================
@@ -109,7 +151,23 @@ export class Notebook {
    */
   get spaceId(): string {
     this._checkDeleted();
-    return this._data.space_id;
+
+    // Try the direct field first (if API provides it)
+    if (this._data.space_id) {
+      return this._data.space_id;
+    }
+
+    // Extract from s3_path_s if available: "datalayer.app/SPACE_ID/nbformat/..."
+    const s3Path = (this._data as any).s3_path_s;
+    if (s3Path && typeof s3Path === 'string') {
+      const match = s3Path.match(/^datalayer\.app\/([^/]+)\//);
+      if (match) {
+        return match[1];
+      }
+    }
+
+    // Fallback to empty string if no space ID can be determined
+    return '';
   }
 
   /**
@@ -151,21 +209,15 @@ export class Notebook {
   /**
    * Get the current name of the notebook.
    *
-   * This method always fetches fresh data from the API and updates
+   * This method fetches fresh data from the API (with caching) and updates
    * the internal data to keep everything in sync.
    *
    * @returns Promise resolving to current notebook name
    * @throws Error if the notebook has been deleted
    */
   async getName(): Promise<string> {
-    this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await notebooks.getNotebook(spacerRunUrl, token, this.id);
-    if (response.notebook) {
-      this._data = response.notebook;
-    }
-    return this._data.name;
+    const freshData = await this._getFreshData();
+    return (freshData as any).name_t || '';
   }
 
   /**
@@ -174,14 +226,8 @@ export class Notebook {
    * @returns Promise resolving to notebook content
    */
   async getContent(): Promise<any> {
-    this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await notebooks.getNotebook(spacerRunUrl, token, this.id);
-    if (response.notebook) {
-      this._data = response.notebook;
-    }
-    return this._data.content;
+    const freshData = await this._getFreshData();
+    return freshData.content;
   }
 
   /**
@@ -190,14 +236,8 @@ export class Notebook {
    * @returns Promise resolving to kernel spec
    */
   async getKernelSpec(): Promise<any> {
-    this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await notebooks.getNotebook(spacerRunUrl, token, this.id);
-    if (response.notebook) {
-      this._data = response.notebook;
-    }
-    return this._data.kernel_spec;
+    const freshData = await this._getFreshData();
+    return freshData.kernel_spec;
   }
 
   /**
@@ -206,14 +246,8 @@ export class Notebook {
    * @returns Promise resolving to last update time
    */
   async getUpdatedAt(): Promise<Date> {
-    this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await notebooks.getNotebook(spacerRunUrl, token, this.id);
-    if (response.notebook) {
-      this._data = response.notebook;
-    }
-    return new Date(this._data.updated_at || this._data.created_at);
+    const freshData = await this._getFreshData();
+    return new Date(freshData.updated_at || freshData.created_at);
   }
 
   // ========================================================================
@@ -241,7 +275,7 @@ export class Notebook {
     const response = await notebooks.updateNotebook(
       spacerRunUrl,
       token,
-      this.id,
+      this.uid,
       data,
     );
     return new Notebook(response.notebook, this._sdk);
@@ -263,7 +297,7 @@ export class Notebook {
   async delete(): Promise<void> {
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    await items.deleteItem(spacerRunUrl, token, this.id);
+    await items.deleteItem(spacerRunUrl, token, this.uid);
     this._deleted = true;
   }
 
@@ -298,7 +332,8 @@ export class Notebook {
    */
   toString(): string {
     this._checkDeleted();
-    return `Notebook(${this.id}, ${this._data.name})`;
+    const name = (this._data as any).name_t || 'Unnamed';
+    return `Notebook(${this.id}, ${name})`;
   }
 }
 

@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notebooks } from '..';
 import * as DatalayerApi from '../../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../../constants';
-import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
+import { MOCK_JWT_TOKEN } from '../../../__tests__/shared/test-constants';
 
 // Mock the DatalayerApi module
 vi.mock('../../DatalayerApi', () => ({
@@ -40,16 +40,17 @@ describe('Spacer Notebooks Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockCreateResponse);
 
-      const formData = new FormData();
-      formData.append('spaceId', 'space-456');
-      formData.append('notebookType', 'jupyter');
-      formData.append('name', 'Test Notebook');
-      formData.append('description', 'A test notebook');
+      const notebookData = {
+        spaceId: 'space-456',
+        notebookType: 'jupyter',
+        name: 'Test Notebook',
+        description: 'A test notebook',
+      };
 
       const result = await notebooks.createNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
-        formData,
+        notebookData,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -57,7 +58,7 @@ describe('Spacer Notebooks Unit Tests', () => {
         url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks`,
         method: 'POST',
         token: MOCK_JWT_TOKEN,
-        body: formData,
+        body: notebookData,
       });
 
       expect(result).toEqual(mockCreateResponse);
@@ -73,29 +74,24 @@ describe('Spacer Notebooks Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockCreateResponse);
 
-      const formData = new FormData();
-      formData.append('spaceId', 'space-456');
-      formData.append('notebookType', 'jupyter');
-      formData.append('name', 'Test Notebook');
-      formData.append('description', 'A test notebook');
-
-      // Create a mock file
-      const mockFile = new File(['notebook content'], 'notebook.ipynb', {
-        type: 'application/x-ipynb+json',
-      });
-      formData.append('file', mockFile);
+      const notebookData = {
+        spaceId: 'space-456',
+        notebookType: 'jupyter',
+        name: 'Test Notebook',
+        description: 'A test notebook',
+      };
 
       await notebooks.createNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
-        formData,
+        notebookData,
       );
 
       expect(mockedRequest).toHaveBeenCalledWith({
         url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks`,
         method: 'POST',
         token: MOCK_JWT_TOKEN,
-        body: formData,
+        body: notebookData,
       });
 
       console.log('Notebook with file created successfully');
@@ -117,7 +113,7 @@ describe('Spacer Notebooks Unit Tests', () => {
         notebooks.createNotebook(
           DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
-          formData,
+          formData as any,
         ),
       ).rejects.toThrow('API Error');
 

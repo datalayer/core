@@ -9,7 +9,7 @@ import { requestDatalayerAPI } from '../../DatalayerApi';
 import {
   MOCK_JWT_TOKEN,
   MOCK_ENVIRONMENTS_RESPONSE,
-} from '../../__tests__/test-constants';
+} from '../../../__tests__/shared/test-constants';
 
 // Mock the DatalayerAPI module
 vi.mock('../../DatalayerApi');
