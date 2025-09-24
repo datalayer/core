@@ -11,15 +11,21 @@
  * and content that are mixed into the main DatalayerSDK class.
  */
 
-import { spaces, notebooks, cells } from '../../../api/spacer';
+import { spaces, notebooks, users, lexicals, items } from '../../../api/spacer';
 import type {
   Space,
-  Notebook,
-  Cell,
   CreateSpaceRequest,
-  CreateNotebookRequest,
+  CreateSpaceResponse,
+  CreateNotebookResponse,
+  GetNotebookResponse,
   UpdateNotebookRequest,
-  CloneNotebookRequest,
+  UpdateNotebookResponse,
+  CreateLexicalResponse,
+  GetLexicalResponse,
+  UpdateLexicalRequest,
+  UpdateLexicalResponse,
+  GetSpaceItemsResponse,
+  DeleteSpaceItemResponse,
 } from '../../../api/types/spacer';
 import type { Constructor } from '../utils/mixins';
 
@@ -32,6 +38,31 @@ import type { Constructor } from '../utils/mixins';
 export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     // ========================================================================
+    // User
+    // ========================================================================
+
+    /**
+     * Get all workspaces for the authenticated user.
+     *
+     * @returns Promise resolving to user's spaces
+     *
+     * @example
+     * ```typescript
+     * const mySpaces = await sdk.getMySpaces();
+     * console.log('My spaces:', mySpaces.length);
+     * mySpaces.forEach(space => {
+     *   console.log(`- ${space.name} (${space.visibility})`);
+     * });
+     * ```
+     */
+    async getMySpaces(): Promise<Space[]> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await users.getMySpaces(token, spacerRunUrl);
+      return response.spaces;
+    }
+
+    // ========================================================================
     // Spaces
     // ========================================================================
 
@@ -39,94 +70,26 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Create a new workspace.
      *
      * @param data - Space creation parameters
-     * @returns Promise resolving to created space
+     * @returns Promise resolving to created space response
      *
      * @example
      * ```typescript
-     * const space = await sdk.createSpace({
+     * const response = await sdk.createSpace({
      *   name: 'My Research Project',
-     *   description: 'Data analysis workspace'
+     *   description: 'Data analysis workspace',
+     *   variant: 'default',
+     *   spaceHandle: 'research-project',
+     *   organizationId: 'org-123',
+     *   seedSpaceId: 'seed-456',
+     *   public: false
      * });
-     * console.log('Space created:', space.name);
+     * console.log('Space created:', response.space.name);
      * ```
      */
-    async createSpace(data: CreateSpaceRequest): Promise<Space> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
+    async createSpace(data: CreateSpaceRequest): Promise<CreateSpaceResponse> {
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await spaces.create(spacerRunUrl, token, data);
-    }
-
-    /**
-     * List all available workspaces.
-     *
-     * @returns Promise resolving to array of spaces
-     *
-     * @example
-     * ```typescript
-     * const allSpaces = await sdk.listSpaces();
-     * console.log('Available spaces:', allSpaces.length);
-     * ```
-     */
-    async listSpaces(): Promise<Space[]> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      const response = await spaces.list(spacerRunUrl, token);
-      return response.spaces;
-    }
-
-    /**
-     * Get details for a specific workspace.
-     *
-     * @param spaceId - Space ID
-     * @returns Promise resolving to space details
-     *
-     * @example
-     * ```typescript
-     * const space = await sdk.getSpace('space-123');
-     * console.log('Space:', space.name);
-     * ```
-     */
-    async getSpace(spaceId: string): Promise<Space> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await spaces.get(spacerRunUrl, token, spaceId);
-    }
-
-    /**
-     * Delete a workspace permanently.
-     *
-     * @param spaceId - Space ID
-     *
-     * @example
-     * ```typescript
-     * await sdk.deleteSpace('space-123');
-     * console.log('Space deleted');
-     * ```
-     */
-    async deleteSpace(spaceId: string): Promise<void> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      await spaces.remove(spacerRunUrl, token, spaceId);
+      return await spaces.createSpace(token, data, spacerRunUrl);
     }
 
     // ========================================================================
@@ -137,306 +100,193 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Create a new notebook.
      *
      * @param data - Notebook creation parameters
-     * @returns Promise resolving to created notebook
+     * @returns Promise resolving to created notebook response
      *
      * @example
      * ```typescript
-     * const notebook = await sdk.createNotebook({
-     *   space_id: 'space-123',
-     *   name: 'Data Analysis',
-     *   content: { cells: [] }
-     * });
-     * console.log('Notebook created:', notebook.name);
+     * const formData = new FormData();
+     * formData.append('spaceId', 'space-123');
+     * formData.append('notebookType', 'jupyter');
+     * formData.append('name', 'Data Analysis');
+     * formData.append('description', 'Analysis notebook');
+     * // Optionally add file
+     * formData.append('file', notebookFile);
+     *
+     * const response = await sdk.createNotebook(formData);
+     * console.log('Notebook created:', response.notebook.name);
      * ```
      */
-    async createNotebook(data: CreateNotebookRequest): Promise<Notebook> {
+    async createNotebook(data: FormData): Promise<CreateNotebookResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
       return await notebooks.create(spacerRunUrl, token, data);
     }
 
     /**
-     * List all notebooks.
-     *
-     * @param spaceId - Optional space ID to filter notebooks
-     * @returns Promise resolving to array of notebooks
-     *
-     * @example
-     * ```typescript
-     * const allNotebooks = await sdk.listNotebooks();
-     * const spaceNotebooks = await sdk.listNotebooks('space-123');
-     * ```
-     */
-    async listNotebooks(spaceId?: string): Promise<Notebook[]> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      const params = spaceId ? { space_id: spaceId } : undefined;
-      const response = await notebooks.list(spacerRunUrl, token, params);
-      return response.notebooks;
-    }
-
-    /**
-     * Get details for a specific notebook.
+     * Get a notebook by ID.
      *
      * @param notebookId - Notebook ID
-     * @returns Promise resolving to notebook details
+     * @returns Promise resolving to notebook details or undefined if not found
      *
      * @example
      * ```typescript
-     * const notebook = await sdk.getNotebook('notebook-123');
-     * console.log('Notebook:', notebook.name);
+     * const response = await sdk.getNotebook('notebook-123');
+     * if (response.notebook) {
+     *   console.log('Notebook:', response.notebook.name);
+     * } else {
+     *   console.log('Notebook not found:', response.message);
+     * }
      * ```
      */
-    async getNotebook(notebookId: string): Promise<Notebook> {
+    async getNotebook(notebookId: string): Promise<GetNotebookResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
       return await notebooks.get(spacerRunUrl, token, notebookId);
     }
 
     /**
-     * Get a notebook by its UID.
-     *
-     * @param uid - Notebook UID
-     * @returns Promise resolving to notebook details
-     *
-     * @example
-     * ```typescript
-     * const notebook = await sdk.getNotebookByUid('notebook-uid-123');
-     * console.log('Notebook:', notebook.name);
-     * ```
-     */
-    async getNotebookByUid(uid: string): Promise<Notebook> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await notebooks.getByUid(spacerRunUrl, token, uid);
-    }
-
-    /**
-     * Update notebook details.
+     * Update a notebook.
      *
      * @param notebookId - Notebook ID
-     * @param data - Update parameters
-     * @returns Promise resolving to updated notebook
+     * @param data - Update data with optional name and/or description
+     * @returns Promise resolving to updated notebook response
      *
      * @example
      * ```typescript
-     * const notebook = await sdk.updateNotebook('notebook-123', {
-     *   name: 'Updated Analysis'
+     * const response = await sdk.updateNotebook('notebook-123', {
+     *   name: 'Updated Analysis',
+     *   description: 'Updated description'
      * });
-     * console.log('Notebook updated:', notebook.name);
+     * console.log('Notebook updated:', response.notebook.name);
      * ```
      */
     async updateNotebook(
       notebookId: string,
       data: UpdateNotebookRequest,
-    ): Promise<Notebook> {
+    ): Promise<UpdateNotebookResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
       return await notebooks.update(spacerRunUrl, token, notebookId, data);
     }
 
-    /**
-     * Clone an existing notebook.
-     *
-     * @param data - Clone parameters
-     * @returns Promise resolving to cloned notebook
-     *
-     * @example
-     * ```typescript
-     * const cloned = await sdk.cloneNotebook({
-     *   source_notebook_id: 'notebook-123',
-     *   name: 'Cloned Analysis'
-     * });
-     * console.log('Notebook cloned:', cloned.name);
-     * ```
-     */
-    async cloneNotebook(data: CloneNotebookRequest): Promise<Notebook> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await notebooks.clone(spacerRunUrl, token, data);
-    }
-
-    /**
-     * Get the content of a notebook.
-     *
-     * @param notebookId - Notebook ID
-     * @returns Promise resolving to notebook content
-     *
-     * @example
-     * ```typescript
-     * const content = await sdk.getNotebookContent('notebook-123');
-     * console.log('Cells:', content.cells.length);
-     * ```
-     */
-    async getNotebookContent(notebookId: string): Promise<any> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await notebooks.getContent(spacerRunUrl, token, notebookId);
-    }
-
-    /**
-     * Update the content of a notebook.
-     *
-     * @param notebookId - Notebook ID
-     * @param content - New notebook content
-     *
-     * @example
-     * ```typescript
-     * await sdk.updateNotebookContent('notebook-123', {
-     *   cells: [
-     *     { cell_type: 'code', source: 'print("Hello, World!")' }
-     *   ]
-     * });
-     * console.log('Notebook content updated');
-     * ```
-     */
-    async updateNotebookContent(
-      notebookId: string,
-      content: any,
-    ): Promise<void> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      await notebooks.updateContent(spacerRunUrl, token, notebookId, content);
-    }
-
-    /**
-     * Delete a notebook permanently.
-     *
-     * @param notebookId - Notebook ID
-     *
-     * @example
-     * ```typescript
-     * await sdk.deleteNotebook('notebook-123');
-     * console.log('Notebook deleted');
-     * ```
-     */
-    async deleteNotebook(notebookId: string): Promise<void> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      await notebooks.remove(spacerRunUrl, token, notebookId);
-    }
-
     // ========================================================================
-    // Cells
+    // Lexicals
     // ========================================================================
 
     /**
-     * Create a new cell in a notebook.
+     * Create a new lexical document.
      *
-     * @param notebookId - Notebook ID
-     * @param cell - Cell data
-     * @returns Promise resolving to created cell
+     * @param data - Document creation parameters as FormData
+     * @returns Promise resolving to created document response
      *
      * @example
      * ```typescript
-     * const cell = await sdk.createCell('notebook-123', {
-     *   cell_type: 'code',
-     *   source: 'print("New cell")'
+     * const formData = new FormData();
+     * formData.append('spaceId', 'space-123');
+     * formData.append('documentType', 'lexical');
+     * formData.append('name', 'Project Documentation');
+     * formData.append('description', 'Main project docs');
+     * // Optionally add file
+     * formData.append('file', documentFile);
+     *
+     * const response = await sdk.createLexical(formData);
+     * console.log('Document created:', response.document.name);
+     * ```
+     */
+    async createLexical(data: FormData): Promise<CreateLexicalResponse> {
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const token = (this as any).getToken();
+      return await lexicals.createLexical(spacerRunUrl, token, data);
+    }
+
+    /**
+     * Get a lexical document by ID.
+     *
+     * @param lexicalId - Document ID
+     * @returns Promise resolving to document details or undefined if not found
+     *
+     * @example
+     * ```typescript
+     * const response = await sdk.getLexical('lexical-123');
+     * if (response.document) {
+     *   console.log('Document:', response.document.name);
+     * } else {
+     *   console.log('Document not found:', response.message);
+     * }
+     * ```
+     */
+    async getLexical(lexicalId: string): Promise<GetLexicalResponse> {
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const token = (this as any).getToken();
+      return await lexicals.getLexical(spacerRunUrl, token, lexicalId);
+    }
+
+    /**
+     * Update a lexical document.
+     *
+     * @param lexicalId - Document ID
+     * @param data - Update data with optional name and/or description
+     * @returns Promise resolving to updated document response
+     *
+     * @example
+     * ```typescript
+     * const response = await sdk.updateLexical('lexical-123', {
+     *   name: 'Updated Documentation',
+     *   description: 'Updated description'
      * });
-     * console.log('Cell created:', cell.id);
+     * console.log('Document updated:', response.document.name);
      * ```
      */
-    async createCell(notebookId: string, cell: Cell): Promise<Cell> {
+    async updateLexical(
+      lexicalId: string,
+      data: UpdateLexicalRequest,
+    ): Promise<UpdateLexicalResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await cells.create(spacerRunUrl, token, notebookId, cell);
+      return await lexicals.updateLexical(spacerRunUrl, token, lexicalId, data);
     }
 
+    // ========================================================================
+    // Items
+    // ========================================================================
+
     /**
-     * Get a specific cell from a notebook.
+     * Get the items of a space.
      *
-     * @param notebookId - Notebook ID
-     * @param cellId - Cell ID
-     * @returns Promise resolving to cell details
+     * @param spaceId - Space ID
+     * @returns Promise resolving to space items
      *
      * @example
      * ```typescript
-     * const cell = await sdk.getCell('notebook-123', 'cell-456');
-     * console.log('Cell type:', cell.cell_type);
+     * const response = await sdk.getSpaceItems('space-123');
+     * console.log('Space items:', response.items.length);
+     * response.items.forEach(item => {
+     *   console.log(`- ${item.name} (${item.type})`);
+     * });
      * ```
      */
-    async getCell(notebookId: string, cellId: string): Promise<Cell> {
+    async getSpaceItems(spaceId: string): Promise<GetSpaceItemsResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await cells.get(spacerRunUrl, token, notebookId, cellId);
+      return await items.getSpaceItems(spacerRunUrl, token, spaceId);
     }
 
     /**
-     * Delete a cell from a notebook.
+     * Delete an item from a space.
      *
-     * @param notebookId - Notebook ID
-     * @param cellId - Cell ID
+     * @param itemId - Item ID to delete
+     * @returns Promise resolving when deletion is complete
      *
      * @example
      * ```typescript
-     * await sdk.deleteCell('notebook-123', 'cell-456');
-     * console.log('Cell deleted');
+     * const response = await sdk.deleteSpaceItem('item-123');
+     * console.log('Item deleted:', response.message);
      * ```
      */
-    async deleteCell(notebookId: string, cellId: string): Promise<void> {
+    async deleteSpaceItem(itemId: string): Promise<DeleteSpaceItemResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      await cells.remove(spacerRunUrl, token, notebookId, cellId);
+      return await items.deleteItem(spacerRunUrl, token, itemId);
     }
   };
 }

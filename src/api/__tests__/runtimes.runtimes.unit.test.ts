@@ -22,7 +22,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        runtimes.create(undefined, mockData, mockBaseUrl),
+        runtimes.createRuntime(undefined, mockData, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected create with missing token');
@@ -42,7 +42,7 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing create with whitespace token...');
 
       await expect(
-        runtimes.create('   ', mockData, mockBaseUrl),
+        runtimes.createRuntime('   ', mockData, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected create with whitespace token');
@@ -57,7 +57,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        runtimes.list(undefined, mockBaseUrl),
+        runtimes.listRuntimes(undefined, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected list with missing token');
@@ -68,7 +68,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing null token
-        runtimes.list(null, mockBaseUrl),
+        runtimes.listRuntimes(null, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected list with null token');
@@ -77,7 +77,7 @@ describe('Runtimes Unit Tests', () => {
     it('should fail when token is empty', async () => {
       console.log('Testing list with empty token...');
 
-      await expect(runtimes.list('', mockBaseUrl)).rejects.toThrow(
+      await expect(runtimes.listRuntimes('', mockBaseUrl)).rejects.toThrow(
         'Authentication token is required',
       );
 
@@ -87,7 +87,7 @@ describe('Runtimes Unit Tests', () => {
     it('should fail when token is only whitespace', async () => {
       console.log('Testing list with whitespace token...');
 
-      await expect(runtimes.list('   ', mockBaseUrl)).rejects.toThrow(
+      await expect(runtimes.listRuntimes('   ', mockBaseUrl)).rejects.toThrow(
         'Authentication token is required',
       );
 
@@ -103,7 +103,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        runtimes.get(undefined, 'pod-123', mockBaseUrl),
+        runtimes.getRuntime(undefined, 'pod-123', mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected get with missing token');
@@ -114,7 +114,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined pod name
-        runtimes.get(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
+        runtimes.getRuntime(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected get with missing pod name');
@@ -124,7 +124,7 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing get with empty pod name...');
 
       await expect(
-        runtimes.get(MOCK_JWT_TOKEN, '', mockBaseUrl),
+        runtimes.getRuntime(MOCK_JWT_TOKEN, '', mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected get with empty pod name');
@@ -134,7 +134,7 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing get with whitespace pod name...');
 
       await expect(
-        runtimes.get(MOCK_JWT_TOKEN, '   ', mockBaseUrl),
+        runtimes.getRuntime(MOCK_JWT_TOKEN, '   ', mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected get with whitespace pod name');
@@ -149,7 +149,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        runtimes.remove(undefined, 'pod-123', mockBaseUrl),
+        runtimes.deleteRuntime(undefined, 'pod-123', mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected remove with missing token');
@@ -160,7 +160,7 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined pod name
-        runtimes.remove(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
+        runtimes.deleteRuntime(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected remove with missing pod name');
@@ -170,7 +170,7 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing remove with empty pod name...');
 
       await expect(
-        runtimes.remove(MOCK_JWT_TOKEN, '', mockBaseUrl),
+        runtimes.deleteRuntime(MOCK_JWT_TOKEN, '', mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected remove with empty pod name');
@@ -180,7 +180,7 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing remove with whitespace pod name...');
 
       await expect(
-        runtimes.remove(MOCK_JWT_TOKEN, '   ', mockBaseUrl),
+        runtimes.deleteRuntime(MOCK_JWT_TOKEN, '   ', mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected remove with whitespace pod name');
@@ -195,7 +195,12 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        runtimes.put(undefined, 'pod-123', 'snapshot-123', mockBaseUrl),
+        runtimes.updateRuntime(
+          undefined,
+          'pod-123',
+          'snapshot-123',
+          mockBaseUrl,
+        ),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected put with missing token');
@@ -206,7 +211,12 @@ describe('Runtimes Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined pod name
-        runtimes.put(MOCK_JWT_TOKEN, undefined, 'snapshot-123', mockBaseUrl),
+        runtimes.updateRuntime(
+          MOCK_JWT_TOKEN,
+          undefined,
+          'snapshot-123',
+          mockBaseUrl,
+        ),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected put with missing pod name');
@@ -216,7 +226,7 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing put with empty pod name...');
 
       await expect(
-        runtimes.put(MOCK_JWT_TOKEN, '', 'snapshot-123', mockBaseUrl),
+        runtimes.updateRuntime(MOCK_JWT_TOKEN, '', 'snapshot-123', mockBaseUrl),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected put with empty pod name');
@@ -226,7 +236,12 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing put with whitespace pod name...');
 
       await expect(
-        runtimes.put(MOCK_JWT_TOKEN, '   ', 'snapshot-123', mockBaseUrl),
+        runtimes.updateRuntime(
+          MOCK_JWT_TOKEN,
+          '   ',
+          'snapshot-123',
+          mockBaseUrl,
+        ),
       ).rejects.toThrow('Pod name is required');
 
       console.log('Correctly rejected put with whitespace pod name');

@@ -28,7 +28,7 @@ import { validateToken, validateRequiredString } from '../utils/validation';
  * @returns Promise resolving to the created snapshot response
  * @throws {Error} If authentication token is missing or invalid
  */
-export const create = async (
+export const createSnapshot = async (
   token: string,
   data: CreateRuntimeSnapshotRequest,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -50,7 +50,7 @@ export const create = async (
  * @returns Promise resolving to list of snapshots
  * @throws {Error} If authentication token is missing or invalid
  */
-export const list = async (
+export const listSnapshots = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
 ): Promise<SnapshotsListResponse> => {
@@ -72,7 +72,7 @@ export const list = async (
  * @throws {Error} If authentication token is missing or invalid
  * @throws {Error} If snapshot ID is missing or invalid
  */
-export const get = async (
+export const getSnapshot = async (
   token: string,
   snapshotId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -96,7 +96,7 @@ export const get = async (
  * @throws {Error} If authentication token is missing or invalid
  * @throws {Error} If snapshot ID is missing or invalid
  */
-export const remove = async (
+export const deleteSnapshot = async (
   token: string,
   snapshotId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,

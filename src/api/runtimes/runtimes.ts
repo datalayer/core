@@ -30,7 +30,7 @@ import { validateToken, validateRequiredString } from '../utils/validation';
  * @throws {Error} With status 404 if the environment is not found
  * @throws {Error} With status 503 if no runtime is available
  */
-export const create = async (
+export const createRuntime = async (
   token: string,
   data: CreateRuntimeRequest,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -75,7 +75,7 @@ export const create = async (
  * @returns Promise resolving to list of runtime instances
  * @throws {Error} If authentication token is missing or invalid
  */
-export const list = async (
+export const listRuntimes = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
 ): Promise<RuntimesListResponse> => {
@@ -98,7 +98,7 @@ export const list = async (
  * @throws {Error} If pod name is missing or invalid
  * @throws {Error} With status 404 if the runtime is not found
  */
-export const get = async (
+export const getRuntime = async (
   token: string,
   podName: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -149,7 +149,7 @@ export const get = async (
  * @throws {Error} If pod name is missing or invalid
  * @throws {Error} With status 404 if the runtime is not found
  */
-export const remove = async (
+export const deleteRuntime = async (
   token: string,
   podName: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -188,7 +188,7 @@ export const remove = async (
  * @throws {Error} If pod name is missing or invalid
  * @throws {Error} With status 404 if the runtime is not found
  */
-export const put = async (
+export const updateRuntime = async (
   token: string,
   podName: string,
   from: string,

@@ -16,13 +16,13 @@ describe('Runtimes Environments Unit Tests', () => {
     vi.clearAllMocks();
   });
 
-  describe('list', () => {
+  describe('listEnvironments', () => {
     it('should list environments with valid token', async () => {
       vi.mocked(requestDatalayerAPI).mockResolvedValueOnce(
         MOCK_ENVIRONMENTS_RESPONSE,
       );
 
-      const result = await environments.list(MOCK_JWT_TOKEN);
+      const result = await environments.listEnvironments(MOCK_JWT_TOKEN);
 
       expect(result).toEqual(MOCK_ENVIRONMENTS_RESPONSE);
       expect(requestDatalayerAPI).toHaveBeenCalledWith({
@@ -41,7 +41,10 @@ describe('Runtimes Environments Unit Tests', () => {
       const customUrl = 'https://staging.datalayer.run';
       vi.mocked(requestDatalayerAPI).mockResolvedValueOnce(mockResponse);
 
-      const result = await environments.list(MOCK_JWT_TOKEN, customUrl);
+      const result = await environments.listEnvironments(
+        MOCK_JWT_TOKEN,
+        customUrl,
+      );
 
       expect(result).toEqual(mockResponse);
       expect(requestDatalayerAPI).toHaveBeenCalledWith({
@@ -52,7 +55,7 @@ describe('Runtimes Environments Unit Tests', () => {
     });
 
     it('should throw error when token is missing', async () => {
-      await expect(environments.list('')).rejects.toThrow(
+      await expect(environments.listEnvironments('')).rejects.toThrow(
         'Authentication token is required',
       );
       expect(requestDatalayerAPI).not.toHaveBeenCalled();
@@ -60,7 +63,7 @@ describe('Runtimes Environments Unit Tests', () => {
 
     it('should throw error when token is null', async () => {
       // @ts-expect-error Testing null token
-      await expect(environments.list(null)).rejects.toThrow(
+      await expect(environments.listEnvironments(null)).rejects.toThrow(
         'Authentication token is required',
       );
       expect(requestDatalayerAPI).not.toHaveBeenCalled();
@@ -68,14 +71,14 @@ describe('Runtimes Environments Unit Tests', () => {
 
     it('should throw error when token is undefined', async () => {
       // @ts-expect-error Testing undefined token
-      await expect(environments.list(undefined)).rejects.toThrow(
+      await expect(environments.listEnvironments(undefined)).rejects.toThrow(
         'Authentication token is required',
       );
       expect(requestDatalayerAPI).not.toHaveBeenCalled();
     });
 
     it('should throw error when token is only whitespace', async () => {
-      await expect(environments.list('   ')).rejects.toThrow(
+      await expect(environments.listEnvironments('   ')).rejects.toThrow(
         'Authentication token is required',
       );
       expect(requestDatalayerAPI).not.toHaveBeenCalled();

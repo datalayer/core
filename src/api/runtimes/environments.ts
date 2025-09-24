@@ -22,7 +22,7 @@ import { validateToken } from '../utils/validation';
  * @returns Promise resolving to list of available environments
  * @throws {Error} If authentication token is missing or invalid
  */
-export const list = async (
+export const listEnvironments = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
 ): Promise<EnvironmentsListResponse> => {

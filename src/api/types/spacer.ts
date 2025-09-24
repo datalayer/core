@@ -8,17 +8,25 @@
  * @interface Space
  */
 export interface Space {
-  id: string;
-  name: string;
+  id?: string; // Optional for backward compatibility
+  uid: string;
+  name?: string; // Optional for backward compatibility
+  name_t?: string; // New field from API
+  handle_s?: string; // New field from API
+  variant_s?: string; // New field from API
   description?: string;
-  visibility: 'public' | 'private' | 'organization';
-  owner_id: string;
+  description_t?: string; // New field from API
+  visibility?: 'public' | 'private' | 'organization';
+  owner_id?: string;
   organization_id?: string;
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
   notebooks_count?: number;
   members_count?: number;
   tags?: string[];
+  tags_ss?: string[]; // New field from API
+  items?: any[]; // New field from API
+  members?: any[]; // New field from API
 }
 
 /**
@@ -30,25 +38,14 @@ export interface Notebook {
   uid: string;
   name: string;
   path: string;
-  content?: NotebookContent;
+  content?: any; // Simplified - NotebookContent type removed
   space_id: string;
   owner_id: string;
   created_at: string;
   updated_at?: string;
   version?: number;
-  kernel_spec?: KernelSpec;
+  kernel_spec?: any; // Simplified - KernelSpec type removed
   metadata?: Record<string, any>;
-}
-
-/**
- * The content structure of a Jupyter notebook
- * @interface NotebookContent
- */
-export interface NotebookContent {
-  cells: Cell[];
-  metadata: NotebookMetadata;
-  nbformat: number;
-  nbformat_minor: number;
 }
 
 /**
@@ -59,55 +56,9 @@ export interface Cell {
   id: string;
   cell_type: 'code' | 'markdown' | 'raw';
   source: string | string[];
-  outputs?: CellOutput[];
+  outputs?: any[]; // Simplified - CellOutput type removed
   execution_count?: number | null;
   metadata?: Record<string, any>;
-}
-
-/**
- * Output from executing a notebook cell
- * @interface CellOutput
- */
-export interface CellOutput {
-  output_type: 'execute_result' | 'display_data' | 'stream' | 'error';
-  data?: Record<string, any>;
-  text?: string | string[];
-  name?: string;
-  ename?: string;
-  evalue?: string;
-  traceback?: string[];
-}
-
-/**
- * Metadata associated with a notebook
- * @interface NotebookMetadata
- */
-export interface NotebookMetadata {
-  kernelspec?: KernelSpec;
-  language_info?: LanguageInfo;
-  orig_nbformat?: number;
-  [key: string]: any;
-}
-
-/**
- * Specification for a Jupyter kernel
- * @interface KernelSpec
- */
-export interface KernelSpec {
-  display_name: string;
-  language: string;
-  name: string;
-}
-
-/**
- * Information about the programming language used in a notebook
- * @interface LanguageInfo
- */
-export interface LanguageInfo {
-  name: string;
-  version?: string;
-  mimetype?: string;
-  file_extension?: string;
 }
 
 /**
@@ -116,23 +67,54 @@ export interface LanguageInfo {
  */
 export interface CreateSpaceRequest {
   name: string;
-  description?: string;
-  visibility?: Space['visibility'];
-  organization_id?: string;
-  tags?: string[];
+  description: string;
+  variant: string;
+  spaceHandle: string;
+  organizationId: string;
+  seedSpaceId: string;
+  public: boolean;
 }
 
 /**
- * Request payload for creating a new notebook
+ * Response from creating a space
+ * @interface CreateSpaceResponse
+ */
+export interface CreateSpaceResponse {
+  success: boolean;
+  message: string;
+  space: Space;
+}
+
+/**
+ * Request payload for creating a new notebook (multipart/form-data)
  * @interface CreateNotebookRequest
  */
 export interface CreateNotebookRequest {
+  spaceId: string;
+  notebookType: string;
   name: string;
-  path?: string;
-  content?: NotebookContent;
-  space_id: string;
-  kernel_spec?: KernelSpec;
-  metadata?: Record<string, any>;
+  description: string;
+  file?: File | Blob; // Optional file for notebook content
+}
+
+/**
+ * Response from creating a notebook
+ * @interface CreateNotebookResponse
+ */
+export interface CreateNotebookResponse {
+  success: boolean;
+  message: string;
+  notebook: Notebook;
+}
+
+/**
+ * Response from getting a notebook
+ * @interface GetNotebookResponse
+ */
+export interface GetNotebookResponse {
+  success: boolean;
+  message: string;
+  notebook?: Notebook; // Optional - not present in 404 response
 }
 
 /**
@@ -141,43 +123,17 @@ export interface CreateNotebookRequest {
  */
 export interface UpdateNotebookRequest {
   name?: string;
-  content?: NotebookContent;
-  metadata?: Record<string, any>;
+  description?: string;
 }
 
 /**
- * Request payload for cloning a notebook
- * @interface CloneNotebookRequest
+ * Response from updating a notebook
+ * @interface UpdateNotebookResponse
  */
-export interface CloneNotebookRequest {
-  source_id: string;
-  name: string;
-  space_id: string;
-}
-
-/**
- * Query parameters for listing spaces
- * @interface SpacesListParams
- */
-export interface SpacesListParams {
-  visibility?: Space['visibility'];
-  owner_id?: string;
-  organization_id?: string;
-  limit?: number;
-  offset?: number;
-  search?: string;
-}
-
-/**
- * Query parameters for listing notebooks
- * @interface NotebooksListParams
- */
-export interface NotebooksListParams {
-  space_id?: string;
-  owner_id?: string;
-  limit?: number;
-  offset?: number;
-  search?: string;
+export interface UpdateNotebookResponse {
+  success: boolean;
+  message: string;
+  notebook: Notebook;
 }
 
 /**
@@ -210,13 +166,35 @@ export interface Lexical {
 }
 
 /**
- * Request payload for creating a Lexical document
+ * Request payload for creating a Lexical document (multipart/form-data)
  * @interface CreateLexicalRequest
  */
 export interface CreateLexicalRequest {
+  spaceId: string;
+  documentType: string;
   name: string;
-  content?: any;
-  space_id: string;
+  description: string;
+  file?: File | Blob; // Optional file for document content
+}
+
+/**
+ * Response from creating a Lexical document
+ * @interface CreateLexicalResponse
+ */
+export interface CreateLexicalResponse {
+  success: boolean;
+  message: string;
+  document: Lexical;
+}
+
+/**
+ * Response from getting a Lexical document
+ * @interface GetLexicalResponse
+ */
+export interface GetLexicalResponse {
+  success: boolean;
+  message: string;
+  document?: Lexical; // Optional - not present in 404 response
 }
 
 /**
@@ -225,48 +203,45 @@ export interface CreateLexicalRequest {
  */
 export interface UpdateLexicalRequest {
   name?: string;
-  content?: any;
+  description?: string;
 }
 
 /**
- * Request payload for creating a notebook cell
- * @interface CreateCellRequest
+ * Response from updating a Lexical document
+ * @interface UpdateLexicalResponse
  */
-export interface CreateCellRequest {
-  cell_type: 'code' | 'markdown' | 'raw';
-  source: string | string[];
-  notebook_id: string;
-  metadata?: Record<string, any>;
+export interface UpdateLexicalResponse {
+  success: boolean;
+  message: string;
+  document: Lexical;
 }
 
 /**
- * Request payload for updating a notebook cell
- * @interface UpdateCellRequest
+ * Response from getting space items
+ * @interface GetSpaceItemsResponse
  */
-export interface UpdateCellRequest {
-  source?: string | string[];
-  outputs?: CellOutput[];
-  execution_count?: number | null;
-  metadata?: Record<string, any>;
+export interface GetSpaceItemsResponse {
+  success: boolean;
+  message: string;
+  items: SpaceItem[];
+}
+
+/**
+ * Response from deleting a space item
+ * @interface DeleteSpaceItemResponse
+ */
+export interface DeleteSpaceItemResponse {
+  success: boolean;
+  message: string;
 }
 
 // API Response types that match actual server responses
 /**
- * Response from listing spaces
- * @interface SpacesListResponse
+ * Response from getting spaces for a user
+ * @interface SpacesForUserResponse
  */
-export interface SpacesListResponse {
+export interface SpacesForUserResponse {
   success: boolean;
   message: string;
   spaces: Space[];
-}
-
-/**
- * Response from listing notebooks
- * @interface NotebooksListResponse
- */
-export interface NotebooksListResponse {
-  success: boolean;
-  message: string;
-  notebooks: Notebook[];
 }

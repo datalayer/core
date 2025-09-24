@@ -104,29 +104,6 @@ export interface LoginResponse {
 }
 
 /**
- * User profile information from the /me endpoint
- * @interface MeUser
- */
-export interface MeUser {
-  /** Unique identifier (full ID) for the user */
-  id: string;
-  /** Unique identifier (UID) for the user */
-  uid: string;
-  /** User handle (username) */
-  handle: string;
-  /** Email address of the user */
-  email: string;
-  /** First name of the user */
-  firstName: string;
-  /** Last name of the user */
-  lastName: string;
-  /** Avatar URL for the user */
-  avatarUrl: string;
-  /** Array of roles assigned to the user */
-  roles: string[];
-}
-
-/**
  * Response from the /me endpoint containing current user information
  * @interface UserMeResponse
  */
@@ -136,38 +113,24 @@ export interface UserMeResponse {
   /** Response message from the server */
   message: string;
   /** Current user's profile information */
-  me: MeUser;
-}
-
-/**
- * User profile information from the /whoami endpoint
- * @interface WhoAmIProfile
- */
-export interface WhoAmIProfile {
-  /** ISO 8601 timestamp of when the user was created */
-  creation_ts_dt: string;
-  /** Unique identifier for the user */
-  id: string;
-  /** ISO 8601 timestamp of when the user requested to join */
-  join_request_ts_dt: string | null;
-  /** ISO 8601 timestamp of when the user joined */
-  join_ts_dt: string;
-  /** ISO 8601 timestamp of last update */
-  last_update_ts_dt: string;
-  /** Origin of the user account */
-  origin_s: string;
-  /** Type of the record */
-  type_s: string;
-  /** User ID */
-  uid: string;
-  /** Email address */
-  email_s: string;
-  /** First name */
-  first_name_t: string;
-  /** User handle */
-  handle_s: string;
-  /** Last name */
-  last_name_t: string;
+  me: {
+    /** Unique identifier (full ID) for the user */
+    id: string;
+    /** Unique identifier (UID) for the user */
+    uid: string;
+    /** User handle (username) */
+    handle: string;
+    /** Email address of the user */
+    email: string;
+    /** First name of the user */
+    firstName: string;
+    /** Last name of the user */
+    lastName: string;
+    /** Avatar URL for the user */
+    avatarUrl: string;
+    /** Array of roles assigned to the user */
+    roles: string[];
+  };
 }
 
 /**
@@ -180,7 +143,32 @@ export interface WhoAmIResponse {
   /** Response message from the server */
   message: string;
   /** User profile information */
-  profile: WhoAmIProfile;
+  profile: {
+    /** ISO 8601 timestamp of when the user was created */
+    creation_ts_dt: string;
+    /** Unique identifier for the user */
+    id: string;
+    /** ISO 8601 timestamp of when the user requested to join */
+    join_request_ts_dt: string | null;
+    /** ISO 8601 timestamp of when the user joined */
+    join_ts_dt: string;
+    /** ISO 8601 timestamp of last update */
+    last_update_ts_dt: string;
+    /** Origin of the user account */
+    origin_s: string;
+    /** Type of the record */
+    type_s: string;
+    /** User ID */
+    uid: string;
+    /** Email address */
+    email_s: string;
+    /** First name */
+    first_name_t: string;
+    /** User handle */
+    handle_s: string;
+    /** Last name */
+    last_name_t: string;
+  };
 }
 
 /**

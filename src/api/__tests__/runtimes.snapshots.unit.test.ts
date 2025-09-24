@@ -22,7 +22,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        snapshots.create(undefined, mockData, mockBaseUrl),
+        snapshots.createSnapshot(undefined, mockData, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected create with missing token');
@@ -31,9 +31,9 @@ describe('Runtimes Snapshots Unit Tests', () => {
     it('should fail when token is empty', async () => {
       console.log('Testing create with empty token...');
 
-      await expect(snapshots.create('', mockData, mockBaseUrl)).rejects.toThrow(
-        'Authentication token is required',
-      );
+      await expect(
+        snapshots.createSnapshot('', mockData, mockBaseUrl),
+      ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected create with empty token');
     });
@@ -42,7 +42,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
       console.log('Testing create with whitespace token...');
 
       await expect(
-        snapshots.create('   ', mockData, mockBaseUrl),
+        snapshots.createSnapshot('   ', mockData, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected create with whitespace token');
@@ -57,7 +57,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        snapshots.list(undefined, mockBaseUrl),
+        snapshots.listSnapshots(undefined, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected list with missing token');
@@ -68,7 +68,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing null token
-        snapshots.list(null, mockBaseUrl),
+        snapshots.listSnapshots(null, mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected list with null token');
@@ -83,7 +83,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        snapshots.get(undefined, 'snapshot-123', mockBaseUrl),
+        snapshots.getSnapshot(undefined, 'snapshot-123', mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected get with missing token');
@@ -94,7 +94,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined snapshot ID
-        snapshots.get(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
+        snapshots.getSnapshot(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
       ).rejects.toThrow('Snapshot ID is required');
 
       console.log('Correctly rejected get with missing snapshot ID');
@@ -104,7 +104,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
       console.log('Testing get with empty snapshot ID...');
 
       await expect(
-        snapshots.get(MOCK_JWT_TOKEN, '', mockBaseUrl),
+        snapshots.getSnapshot(MOCK_JWT_TOKEN, '', mockBaseUrl),
       ).rejects.toThrow('Snapshot ID is required');
 
       console.log('Correctly rejected get with empty snapshot ID');
@@ -114,7 +114,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
       console.log('Testing get with whitespace snapshot ID...');
 
       await expect(
-        snapshots.get(MOCK_JWT_TOKEN, '   ', mockBaseUrl),
+        snapshots.getSnapshot(MOCK_JWT_TOKEN, '   ', mockBaseUrl),
       ).rejects.toThrow('Snapshot ID is required');
 
       console.log('Correctly rejected get with whitespace snapshot ID');
@@ -129,7 +129,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined token
-        snapshots.remove(undefined, 'snapshot-123', mockBaseUrl),
+        snapshots.deleteSnapshot(undefined, 'snapshot-123', mockBaseUrl),
       ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected remove with missing token');
@@ -140,7 +140,7 @@ describe('Runtimes Snapshots Unit Tests', () => {
 
       await expect(
         // @ts-expect-error Testing undefined snapshot ID
-        snapshots.remove(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
+        snapshots.deleteSnapshot(MOCK_JWT_TOKEN, undefined, mockBaseUrl),
       ).rejects.toThrow('Snapshot ID is required');
 
       console.log('Correctly rejected remove with missing snapshot ID');

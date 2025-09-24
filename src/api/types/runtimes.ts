@@ -4,57 +4,6 @@
  */
 
 /**
- * Code snippet for an environment
- * @interface EnvironmentSnippet
- */
-export interface EnvironmentSnippet {
-  /** Title of the snippet */
-  title: string;
-  /** Optional description of the snippet */
-  description?: string;
-  /** Code content of the snippet */
-  code: string;
-}
-
-/**
- * Content mount configuration for an environment
- * @interface EnvironmentContent
- */
-export interface EnvironmentContent {
-  /** Name of the content */
-  name: string;
-  /** Mount path for the content */
-  mount: string;
-}
-
-/**
- * Resource configuration with requests and limits
- * @interface ResourceConfig
- */
-export interface ResourceConfig {
-  /** CPU allocation (e.g., "1", "2", "500m") */
-  cpu?: string;
-  /** Memory allocation (e.g., "2Gi", "4Gi") */
-  memory?: string;
-  /** GPU allocation if applicable */
-  'nvidia.com/gpu'?: string;
-}
-
-/**
- * Resource ranges configuration
- * @interface ResourceRanges
- */
-export interface ResourceRanges {
-  /** Default resource configuration */
-  default?: {
-    /** Requested resources */
-    requests?: ResourceConfig;
-    /** Resource limits */
-    limits?: ResourceConfig;
-  };
-}
-
-/**
  * Represents a computing environment available in the Datalayer platform
  * @interface Environment
  */
@@ -68,9 +17,9 @@ export interface Environment {
   /** Example usage or description */
   example?: string;
   /** Code snippets for this environment */
-  snippets?: EnvironmentSnippet[];
+  snippets?: any[]; // Simplified - EnvironmentSnippet type removed
   /** Content mounts for this environment */
-  contents?: EnvironmentContent[];
+  contents?: any[]; // Simplified - EnvironmentContent type removed
   /** Kernel configuration */
   kernel?: {
     /** Template for kernel naming */
@@ -79,11 +28,11 @@ export interface Environment {
   /** Programming language (e.g., "python", "r") */
   language: string;
   /** Resource ranges configuration */
-  resourcesRanges?: ResourceRanges;
+  resourcesRanges?: any; // Simplified - ResourceRanges type removed
   /** Credits consumed per hour when running */
   burning_rate: number;
   /** Simple resource specification */
-  resources?: ResourceConfig;
+  resources?: any; // Simplified - ResourceConfig type removed
   /** Name identifier for the environment */
   name?: string;
   /** Docker registry for the image */
@@ -146,36 +95,13 @@ export interface Runtime {
   /** Token for Jupyter server authentication */
   jupyter_token?: string;
   /** Detailed status information */
-  status?: RuntimeStatus;
+  status?: any; // Simplified - RuntimeStatus type removed
   /** Alternative naming from API responses */
   podName?: string;
   /** Alternative naming from API responses */
   createdAt?: string;
   /** Alternative naming from API responses */
   environment?: string;
-}
-
-/**
- * Detailed status information for a runtime
- * @interface RuntimeStatus
- */
-export interface RuntimeStatus {
-  /** Current phase of the runtime pod */
-  phase: string;
-  /** Array of runtime conditions */
-  conditions?: Array<{
-    type: string;
-    status: string;
-    reason?: string;
-    message?: string;
-  }>;
-  /** Array of container status information */
-  container_statuses?: Array<{
-    name: string;
-    state: Record<string, any>;
-    ready: boolean;
-    restart_count: number;
-  }>;
 }
 
 /**
@@ -227,22 +153,7 @@ export interface RuntimeSnapshot {
   /** ISO 8601 timestamp when the snapshot was last updated */
   updated_at: string;
   /** List of files included in the snapshot */
-  files?: RuntimeSnapshotFile[];
-}
-
-/**
- * Represents a file within a runtime snapshot
- * @interface RuntimeSnapshotFile
- */
-export interface RuntimeSnapshotFile {
-  /** File path relative to the runtime root */
-  path: string;
-  /** File size in bytes */
-  size: number;
-  /** ISO 8601 timestamp of last modification */
-  modified: string;
-  /** File content (for text files) */
-  content?: string;
+  files?: any[]; // Simplified - RuntimeSnapshotFile type removed
 }
 
 /**
@@ -286,38 +197,6 @@ export interface SnapshotCreateResponse {
   snapshot: RuntimeSnapshot;
 }
 
-/**
- * Query parameters for listing runtimes
- * @interface RuntimesListParams
- */
-export interface RuntimesListParams {
-  /** Filter by environment name */
-  environment_name?: string;
-  /** Filter by runtime state */
-  state?: Runtime['state'];
-  /** Filter by runtime type */
-  runtime_type?: Runtime['runtime_type'];
-  /** Maximum number of results to return */
-  limit?: number;
-  /** Number of results to skip for pagination */
-  offset?: number;
-}
-
-/**
- * Query parameters for listing runtime snapshots
- * @interface RuntimeSnapshotsListParams
- */
-export interface RuntimeSnapshotsListParams {
-  /** Filter snapshots by runtime ID */
-  runtime_id?: string;
-  /** Filter by environment name */
-  environment_name?: string;
-  /** Maximum number of results to return */
-  limit?: number;
-  /** Number of results to skip for pagination */
-  offset?: number;
-}
-
 // API Response types that match actual server responses
 /**
  * Response from listing available environments
@@ -343,28 +222,6 @@ export interface CreateRuntimeResponse {
   message: string;
   /** The created runtime instance */
   runtime: Runtime;
-}
-
-/**
- * Error response when environment is not found (404)
- * @interface EnvironmentNotFoundResponse
- */
-export interface EnvironmentNotFoundResponse {
-  /** Whether the request was successful */
-  success: boolean;
-  /** Error message */
-  message: string;
-}
-
-/**
- * Error response when no runtime is available (503)
- * @interface NoRuntimeAvailableResponse
- */
-export interface NoRuntimeAvailableResponse {
-  /** Whether the request was successful */
-  success: boolean;
-  /** Error message */
-  message: string;
 }
 
 /**

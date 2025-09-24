@@ -43,14 +43,12 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async listEnvironments(): Promise<Environment[]> {
-      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      const response = await environments.list(runtimesRunUrl, token);
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      const response = await environments.listEnvironments(
+        token,
+        runtimesRunUrl,
+      );
       return response.environments;
     }
 
@@ -74,14 +72,13 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async createRuntime(data: CreateRuntimeRequest): Promise<Runtime> {
-      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      const response = await runtimes.create(token, data, runtimesRunUrl);
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      const response = await runtimes.createRuntime(
+        token,
+        data,
+        runtimesRunUrl,
+      );
       return response.runtime;
     }
 
@@ -97,14 +94,9 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async listRuntimes(): Promise<Runtime[]> {
-      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      const response = await runtimes.list(runtimesRunUrl, token);
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      const response = await runtimes.listRuntimes(token, runtimesRunUrl);
       return response.runtimes;
     }
 
@@ -121,14 +113,9 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async getRuntime(podName: string): Promise<Runtime> {
-      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      return await runtimes.get(runtimesRunUrl, token, podName);
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      return await runtimes.getRuntime(token, podName, runtimesRunUrl);
     }
 
     /**
@@ -143,14 +130,9 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async deleteRuntime(podName: string): Promise<void> {
-      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
-      await runtimes.remove(runtimesRunUrl, token, podName);
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      await runtimes.deleteRuntime(token, podName, runtimesRunUrl);
     }
   };
 }

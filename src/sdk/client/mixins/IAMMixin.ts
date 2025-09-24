@@ -33,19 +33,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async whoami(): Promise<User> {
-      const iamRunUrl = (this as any).getIamRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
+      const iamRunUrl = (this as any).getIamRunUrl();
       const response = await profile.me(token, iamRunUrl);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to get user profile');
-      }
-
       return response.me;
     }
 
@@ -74,10 +64,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async login(data: LoginRequest): Promise<LoginResponse> {
       const iamRunUrl = (this as any).getIamRunUrl();
-
-      const response = await authentication.login(data, iamRunUrl);
-
-      return response;
+      return await authentication.login(data, iamRunUrl);
     }
 
     /**
@@ -93,15 +80,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      * ```
      */
     async logout(): Promise<void> {
-      const iamRunUrl = (this as any).getIamRunUrl();
       const token = (this as any).getToken();
-
-      if (!token) {
-        throw new Error('Authentication token required');
-      }
-
+      const iamRunUrl = (this as any).getIamRunUrl();
       await authentication.logout(token, iamRunUrl);
-
       // Clear the token from the SDK
       (this as any).updateToken('');
     }
