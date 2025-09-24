@@ -68,7 +68,7 @@ describe('SDK Runtimes Integration Tests', () => {
     });
   });
 
-  describe.skipIf(!testConfig.hasToken() || !testConfig.shouldRunExpensive())(
+  describe.skipIf(!testConfig.hasToken() || testConfig.shouldSkipExpensive())(
     'Runtime lifecycle',
     () => {
       it('should create a runtime', async () => {
@@ -167,7 +167,7 @@ describe('SDK Runtimes Integration Tests', () => {
     },
   );
 
-  describe.skipIf(!testConfig.hasToken() || !testConfig.shouldRunExpensive())(
+  describe.skipIf(!testConfig.hasToken() || testConfig.shouldSkipExpensive())(
     'Snapshot lifecycle',
     () => {
       it('should create a snapshot from runtime', async () => {
@@ -279,8 +279,9 @@ describe('SDK Runtimes Integration Tests', () => {
         }
 
         console.log('Deleting snapshot...');
+        const snapshotUid = createdSnapshot.uid; // Get uid before deletion
         await sdk.deleteSnapshot(createdSnapshot);
-        console.log(`Snapshot ${createdSnapshot.uid} deleted`);
+        console.log(`Snapshot ${snapshotUid} deleted`);
 
         // Verify deletion
         try {
@@ -296,7 +297,7 @@ describe('SDK Runtimes Integration Tests', () => {
     },
   );
 
-  describe.skipIf(!testConfig.hasToken() || !testConfig.shouldRunExpensive())(
+  describe.skipIf(!testConfig.hasToken() || testConfig.shouldSkipExpensive())(
     'Runtime deletion',
     () => {
       it('should delete runtime', async () => {
@@ -307,8 +308,9 @@ describe('SDK Runtimes Integration Tests', () => {
         }
 
         console.log('Deleting runtime...');
+        const podName = createdRuntime.podName; // Get podName before deletion
         await sdk.deleteRuntime(createdRuntime);
-        console.log(`Runtime ${createdRuntime.podName} deleted`);
+        console.log(`Runtime ${podName} deleted`);
 
         // Verify deletion
         try {

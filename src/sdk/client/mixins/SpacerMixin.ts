@@ -132,9 +132,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await notebooks.createNotebook(
-        spacerRunUrl,
         token,
         data,
+        spacerRunUrl,
       );
       return new Notebook(response.notebook, this as any);
     }
@@ -156,9 +156,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await notebooks.getNotebook(
-        spacerRunUrl,
         token,
         notebookId,
+        spacerRunUrl,
       );
 
       if (!response.notebook) {
@@ -195,10 +195,10 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await notebooks.updateNotebook(
-        spacerRunUrl,
         token,
         notebookId,
         data,
+        spacerRunUrl,
       );
       return new Notebook(response.notebook, this as any);
     }
@@ -226,7 +226,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     async createLexical(data: CreateLexicalRequest): Promise<Lexical> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      const response = await lexicals.createLexical(spacerRunUrl, token, data);
+      const response = await lexicals.createLexical(token, data, spacerRunUrl);
       return new Lexical(response.document, this as any);
     }
 
@@ -247,9 +247,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await lexicals.getLexical(
-        spacerRunUrl,
         token,
         lexicalId,
+        spacerRunUrl,
       );
 
       if (!response.document) {
@@ -286,10 +286,10 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await lexicals.updateLexical(
-        spacerRunUrl,
         token,
         lexicalId,
         data,
+        spacerRunUrl,
       );
       return new Lexical(response.document, this as any);
     }
@@ -316,7 +316,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     async getSpaceItems(spaceId: string): Promise<GetSpaceItemsResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await items.getSpaceItems(spacerRunUrl, token, spaceId);
+      return await items.getSpaceItems(token, spaceId, spacerRunUrl);
     }
 
     /**
@@ -334,7 +334,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     async deleteSpaceItem(itemId: string): Promise<DeleteSpaceItemResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await items.deleteItem(spacerRunUrl, token, itemId);
+      return await items.deleteItem(token, itemId, spacerRunUrl);
     }
   };
 }

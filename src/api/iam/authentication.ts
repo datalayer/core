@@ -104,7 +104,7 @@ export const logout = async (
 
   return requestDatalayerAPI<void>({
     url: `${baseUrl}${API_BASE_PATHS.IAM}/logout`,
-    method: 'POST',
+    method: 'GET',
     token,
   });
 };

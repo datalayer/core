@@ -106,7 +106,7 @@ export class Lexical {
     // Fetch fresh data from API
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await lexicals.getLexical(spacerRunUrl, token, this.uid);
+    const response = await lexicals.getLexical(token, this.uid, spacerRunUrl);
 
     if (response.document) {
       this._freshData = response.document;
@@ -167,7 +167,7 @@ export class Lexical {
    */
   get ownerId(): string {
     this._checkDeleted();
-    return this._data.owner_id;
+    return this._data.owner_id || this._data.creator_uid || '';
   }
 
   /**
@@ -175,7 +175,11 @@ export class Lexical {
    */
   get createdAt(): Date {
     this._checkDeleted();
-    return new Date(this._data.created_at);
+    const dateStr = this._data.creation_ts_dt || this._data.created_at;
+    if (!dateStr) {
+      throw new Error('No creation timestamp available for lexical document');
+    }
+    return new Date(dateStr);
   }
 
   // ========================================================================
@@ -193,7 +197,7 @@ export class Lexical {
    */
   async getName(): Promise<string> {
     const freshData = await this._getFreshData();
-    return (freshData as any).name_t || '';
+    return freshData.name_t || freshData.name || '';
   }
 
   /**
@@ -203,6 +207,15 @@ export class Lexical {
    */
   async getContent(): Promise<any> {
     const freshData = await this._getFreshData();
+    // Try to parse model_s if content is not available
+    if (!freshData.content && freshData.model_s) {
+      try {
+        return JSON.parse(freshData.model_s);
+      } catch {
+        // Fall back to raw model_s if parsing fails
+        return freshData.model_s;
+      }
+    }
     return freshData.content;
   }
 
@@ -213,7 +226,15 @@ export class Lexical {
    */
   async getUpdatedAt(): Promise<Date> {
     const freshData = await this._getFreshData();
-    return new Date(freshData.updated_at || freshData.created_at);
+    const dateStr =
+      freshData.last_update_ts_dt ||
+      freshData.updated_at ||
+      freshData.creation_ts_dt ||
+      freshData.created_at;
+    if (!dateStr) {
+      throw new Error('No timestamp available for lexical document');
+    }
+    return new Date(dateStr);
   }
 
   // ========================================================================
@@ -239,10 +260,10 @@ export class Lexical {
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
     const response = await lexicals.updateLexical(
-      spacerRunUrl,
       token,
       this.uid,
       data,
+      spacerRunUrl,
     );
     return new Lexical(response.document, this._sdk);
   }
@@ -264,7 +285,7 @@ export class Lexical {
     this._checkDeleted();
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    await items.deleteItem(spacerRunUrl, token, this.uid);
+    await items.deleteItem(token, this.uid, spacerRunUrl);
     this._deleted = true;
   }
 
@@ -299,7 +320,7 @@ export class Lexical {
    */
   toString(): string {
     this._checkDeleted();
-    const name = (this._data as any).name_t || 'Unnamed';
+    const name = this._data.name_t || this._data.name || 'Unnamed';
     return `Lexical(${this.id}, ${name})`;
   }
 }

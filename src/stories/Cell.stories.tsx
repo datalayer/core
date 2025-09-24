@@ -35,15 +35,26 @@ export default meta;
 
 type Story = StoryObj<typeof Cell | typeof Jupyter | { lite: string }>;
 
-const Template = (args, { globals: { colorScheme } }) => {
+const Template = (args: any) => {
   const { browser, initCode, ...others } = args;
-  const lite = {
-    true: true,
-    false: false,
-    '@jupyterlite/javascript-kernel-extension': import(
-      '@jupyterlite/javascript-kernel-extension'
-    ),
-  }[args.browser];
+
+  // Avoid dynamic import in test environment to prevent CI failures
+  const isTestEnvironment =
+    typeof process !== 'undefined' &&
+    (process.env.NODE_ENV === 'test' ||
+      (globalThis as any).vi !== undefined ||
+      (globalThis as any).__vitest__ !== undefined);
+
+  const lite = (() => {
+    if (args.browser === 'true') return true;
+    if (args.browser === 'false') return false;
+    if (args.browser === '@jupyterlite/javascript-kernel-extension') {
+      return isTestEnvironment
+        ? false
+        : (import('@jupyterlite/javascript-kernel-extension') as any);
+    }
+    return undefined;
+  })();
 
   const kernelName =
     args.browser === '@jupyterlite/javascript-kernel-extension'

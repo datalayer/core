@@ -11,7 +11,7 @@
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
-import { API_BASE_PATHS } from '../constants';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
   DeleteSpaceItemResponse,
   GetSpaceItemsResponse,
@@ -19,15 +19,15 @@ import {
 
 /**
  * Get the items of a space.
- * @param baseUrl - Base URL for the API
  * @param token - Authentication token
  * @param spaceId - The space ID
+ * @param baseUrl - Base URL for the API (defaults to production)
  * @returns Promise resolving to the items response
  */
 export const getSpaceItems = async (
-  baseUrl: string,
   token: string,
   spaceId: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
 ): Promise<GetSpaceItemsResponse> => {
   return requestDatalayerAPI<GetSpaceItemsResponse>({
     url: `${baseUrl}${API_BASE_PATHS.SPACER}/spaces/${spaceId}/items`,
@@ -38,15 +38,15 @@ export const getSpaceItems = async (
 
 /**
  * Delete an item from a space.
- * @param baseUrl - Base URL for the API
  * @param token - Authentication token
  * @param id - The item ID to delete
+ * @param baseUrl - Base URL for the API (defaults to production)
  * @returns Promise resolving when deletion is complete
  */
 export const deleteItem = async (
-  baseUrl: string,
   token: string,
   id: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
 ): Promise<DeleteSpaceItemResponse> => {
   return requestDatalayerAPI<DeleteSpaceItemResponse>({
     url: `${baseUrl}${API_BASE_PATHS.SPACER}/spaces/items/${id}`,

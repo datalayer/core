@@ -21,6 +21,8 @@ export interface Space {
   organization_id?: string;
   created_at?: string;
   updated_at?: string;
+  creation_ts_dt?: string; // Creation timestamp from API
+  last_update_ts_dt?: string; // Last update timestamp from API
   notebooks_count?: number;
   members_count?: number;
   tags?: string[];
@@ -36,16 +38,35 @@ export interface Space {
 export interface Notebook {
   id: string;
   uid: string;
-  name: string;
-  path: string;
+  name?: string; // May not be present in API response
+  name_t?: string; // Text field for name
+  path?: string; // May not be present in API response
   content?: any; // Simplified - NotebookContent type removed
-  space_id: string;
-  owner_id: string;
-  created_at: string;
-  updated_at?: string;
+  space_id?: string; // May not be present, extracted from s3_path_s
+  owner_id?: string; // May not be present
+  creator_uid?: string; // Creator UID from API
+  creator_handle_s?: string; // Creator handle from API
+  created_at?: string; // May not be present
+  creation_ts_dt?: string; // Creation timestamp from API
+  updated_at?: string; // May not be present
+  last_update_ts_dt?: string; // Last update timestamp from API
   version?: number;
   kernel_spec?: any; // Simplified - KernelSpec type removed
   metadata?: Record<string, any>;
+  // Additional fields from actual API response
+  type_s?: string;
+  public_b?: boolean;
+  description_t?: string;
+  notebook_name_s?: string;
+  notebook_extension_s?: string;
+  notebook_format_s?: string;
+  content_length_i?: number;
+  content_type_s?: string;
+  mime_type_s?: string;
+  s3_path_s?: string;
+  s3_url_s?: string;
+  cdn_url_s?: string;
+  model_s?: string;
 }
 
 /**
@@ -169,12 +190,31 @@ export interface SpaceItem {
 export interface Lexical {
   id: string;
   uid: string;
-  name: string;
+  name?: string; // May not be present in API response
+  name_t?: string; // Text field for name
   content?: any;
-  space_id: string;
-  owner_id: string;
-  created_at: string;
-  updated_at?: string;
+  space_id?: string; // May not be present, extracted from s3_path_s
+  owner_id?: string; // May not be present
+  creator_uid?: string; // Creator UID from API
+  creator_handle_s?: string; // Creator handle from API
+  created_at?: string; // May not be present
+  creation_ts_dt?: string; // Creation timestamp from API
+  updated_at?: string; // May not be present
+  last_update_ts_dt?: string; // Last update timestamp from API
+  // Additional fields from actual API response
+  type_s?: string;
+  public_b?: boolean;
+  description_t?: string;
+  document_name_s?: string;
+  document_extension_s?: string;
+  document_format_s?: string;
+  content_length_i?: number;
+  content_type_s?: string;
+  mime_type_s?: string;
+  s3_path_s?: string;
+  s3_url_s?: string;
+  cdn_url_s?: string;
+  model_s?: string;
 }
 
 /**

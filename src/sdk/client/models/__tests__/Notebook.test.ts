@@ -128,9 +128,9 @@ describe('Notebook Model', () => {
       const name = await notebook.getName();
       expect(name).toBe('Updated Name');
       expect(notebooks.getNotebook).toHaveBeenCalledWith(
-        'https://api.example.com',
         'mock-token',
-        'notebook-123',
+        'notebook-uid-456', // Use uid, not id
+        'https://api.example.com',
       );
     });
 
@@ -143,9 +143,9 @@ describe('Notebook Model', () => {
       const content = await notebook.getContent();
       expect(content).toEqual(updatedContent);
       expect(notebooks.getNotebook).toHaveBeenCalledWith(
-        'https://api.example.com',
         'mock-token',
-        'notebook-123',
+        'notebook-uid-456', // Use uid, not id
+        'https://api.example.com',
       );
     });
 
@@ -178,7 +178,7 @@ describe('Notebook Model', () => {
       });
 
       const updatedAt = await notebook.getUpdatedAt();
-      expect(updatedAt).toEqual(new Date(mockNotebookData.created_at));
+      expect(updatedAt).toEqual(new Date(mockNotebookData.created_at!));
     });
 
     it('should update internal data when fetching dynamic properties', async () => {
@@ -210,10 +210,10 @@ describe('Notebook Model', () => {
       const updatedNotebook = await notebook.update(updateData);
 
       expect(notebooks.updateNotebook).toHaveBeenCalledWith(
-        'https://api.example.com',
         'mock-token',
-        'notebook-123',
+        'notebook-uid-456', // Use uid, not id
         updateData,
+        'https://api.example.com',
       );
       expect(updatedNotebook).toBeInstanceOf(Notebook);
       expect(updatedNotebook.id).toBe('notebook-123');
@@ -226,9 +226,9 @@ describe('Notebook Model', () => {
       await notebook.delete();
 
       expect(items.deleteItem).toHaveBeenCalledWith(
-        'https://api.example.com',
         'mock-token',
-        'notebook-123',
+        'notebook-uid-456', // Use uid, not id
+        'https://api.example.com',
       );
     });
   });

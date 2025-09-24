@@ -157,6 +157,14 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       await runtimes.deleteRuntime(token, podName, runtimesRunUrl);
+
+      // If a Runtime instance was passed, mark it as deleted
+      if (
+        typeof podNameOrRuntime !== 'string' &&
+        podNameOrRuntime instanceof Runtime
+      ) {
+        (podNameOrRuntime as any)._deleted = true;
+      }
     }
 
     // ========================================================================
@@ -249,6 +257,14 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       await snapshots.deleteSnapshot(token, snapshotId, runtimesRunUrl);
+
+      // If a Snapshot instance was passed, mark it as deleted
+      if (
+        typeof idOrSnapshot !== 'string' &&
+        idOrSnapshot instanceof Snapshot
+      ) {
+        (idOrSnapshot as any)._deleted = true;
+      }
     }
   };
 }

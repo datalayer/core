@@ -48,18 +48,21 @@ describe('Spacer Notebooks Unit Tests', () => {
       };
 
       const result = await notebooks.createNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         notebookData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
-      expect(mockedRequest).toHaveBeenCalledWith({
-        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks`,
-        method: 'POST',
-        token: MOCK_JWT_TOKEN,
-        body: notebookData,
-      });
+
+      // Check that FormData was passed as the body
+      const callArgs = mockedRequest.mock.calls[0][0];
+      expect(callArgs.url).toBe(
+        `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks`,
+      );
+      expect(callArgs.method).toBe('POST');
+      expect(callArgs.token).toBe(MOCK_JWT_TOKEN);
+      expect(callArgs.body).toBeInstanceOf(FormData);
 
       expect(result).toEqual(mockCreateResponse);
       expect(result.success).toBe(true);
@@ -74,25 +77,30 @@ describe('Spacer Notebooks Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockCreateResponse);
 
+      const file = new File(['notebook content'], 'test.ipynb', {
+        type: 'application/json',
+      });
       const notebookData = {
         spaceId: 'space-456',
         notebookType: 'jupyter',
         name: 'Test Notebook',
         description: 'A test notebook',
+        file,
       };
 
       await notebooks.createNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         notebookData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
-      expect(mockedRequest).toHaveBeenCalledWith({
-        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks`,
-        method: 'POST',
-        token: MOCK_JWT_TOKEN,
-        body: notebookData,
-      });
+      const callArgs = mockedRequest.mock.calls[0][0];
+      expect(callArgs.url).toBe(
+        `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks`,
+      );
+      expect(callArgs.method).toBe('POST');
+      expect(callArgs.token).toBe(MOCK_JWT_TOKEN);
+      expect(callArgs.body).toBeInstanceOf(FormData);
 
       console.log('Notebook with file created successfully');
     });
@@ -111,9 +119,9 @@ describe('Spacer Notebooks Unit Tests', () => {
 
       await expect(
         notebooks.createNotebook(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           formData as any,
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('API Error');
 
@@ -144,9 +152,9 @@ describe('Spacer Notebooks Unit Tests', () => {
       mockedRequest.mockResolvedValue(mockGetResponse);
 
       const result = await notebooks.getNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -175,9 +183,9 @@ describe('Spacer Notebooks Unit Tests', () => {
       mockedRequest.mockResolvedValue(notFoundResponse);
 
       const result = await notebooks.getNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'nonexistent-notebook',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(result).toEqual(notFoundResponse);
@@ -195,9 +203,9 @@ describe('Spacer Notebooks Unit Tests', () => {
 
       await expect(
         notebooks.getNotebook(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'notebook-123',
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('Network error');
 
@@ -232,10 +240,10 @@ describe('Spacer Notebooks Unit Tests', () => {
       };
 
       const result = await notebooks.updateNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
         updateData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -264,10 +272,10 @@ describe('Spacer Notebooks Unit Tests', () => {
       };
 
       const result = await notebooks.updateNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
         updateData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledWith({
@@ -294,10 +302,10 @@ describe('Spacer Notebooks Unit Tests', () => {
       };
 
       const result = await notebooks.updateNotebook(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
         updateData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledWith({
@@ -324,10 +332,10 @@ describe('Spacer Notebooks Unit Tests', () => {
 
       await expect(
         notebooks.updateNotebook(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'notebook-123',
           updateData,
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('Update failed');
 

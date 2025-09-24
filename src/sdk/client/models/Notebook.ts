@@ -106,7 +106,7 @@ export class Notebook {
     // Fetch fresh data from API
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await notebooks.getNotebook(spacerRunUrl, token, this.uid);
+    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
 
     if (response.notebook) {
       this._freshData = response.notebook;
@@ -143,7 +143,7 @@ export class Notebook {
    */
   get path(): string {
     this._checkDeleted();
-    return this._data.path;
+    return this._data.path || '';
   }
 
   /**
@@ -175,7 +175,7 @@ export class Notebook {
    */
   get ownerId(): string {
     this._checkDeleted();
-    return this._data.owner_id;
+    return this._data.owner_id || this._data.creator_uid || '';
   }
 
   /**
@@ -183,7 +183,11 @@ export class Notebook {
    */
   get createdAt(): Date {
     this._checkDeleted();
-    return new Date(this._data.created_at);
+    const dateStr = this._data.creation_ts_dt || this._data.created_at;
+    if (!dateStr) {
+      throw new Error('No creation timestamp available for notebook');
+    }
+    return new Date(dateStr);
   }
 
   /**
@@ -217,7 +221,12 @@ export class Notebook {
    */
   async getName(): Promise<string> {
     const freshData = await this._getFreshData();
-    return (freshData as any).name_t || '';
+    return (
+      freshData.name_t ||
+      (freshData as any).notebook_name_s ||
+      freshData.name ||
+      ''
+    );
   }
 
   /**
@@ -227,6 +236,15 @@ export class Notebook {
    */
   async getContent(): Promise<any> {
     const freshData = await this._getFreshData();
+    // Try to parse model_s if content is not available
+    if (!freshData.content && freshData.model_s) {
+      try {
+        return JSON.parse(freshData.model_s);
+      } catch {
+        // Fall back to raw model_s if parsing fails
+        return freshData.model_s;
+      }
+    }
     return freshData.content;
   }
 
@@ -247,7 +265,15 @@ export class Notebook {
    */
   async getUpdatedAt(): Promise<Date> {
     const freshData = await this._getFreshData();
-    return new Date(freshData.updated_at || freshData.created_at);
+    const dateStr =
+      freshData.last_update_ts_dt ||
+      freshData.updated_at ||
+      freshData.creation_ts_dt ||
+      freshData.created_at;
+    if (!dateStr) {
+      throw new Error('No timestamp available for notebook');
+    }
+    return new Date(dateStr);
   }
 
   // ========================================================================
@@ -273,10 +299,10 @@ export class Notebook {
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
     const response = await notebooks.updateNotebook(
-      spacerRunUrl,
       token,
       this.uid,
       data,
+      spacerRunUrl,
     );
     return new Notebook(response.notebook, this._sdk);
   }
@@ -295,9 +321,10 @@ export class Notebook {
    * ```
    */
   async delete(): Promise<void> {
+    this._checkDeleted(); // Add check to prevent double deletion
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    await items.deleteItem(spacerRunUrl, token, this.uid);
+    await items.deleteItem(token, this.uid, spacerRunUrl);
     this._deleted = true;
   }
 
@@ -332,7 +359,11 @@ export class Notebook {
    */
   toString(): string {
     this._checkDeleted();
-    const name = (this._data as any).name_t || 'Unnamed';
+    const name =
+      this._data.name_t ||
+      (this._data as any).notebook_name_s ||
+      this._data.name ||
+      'Unnamed';
     return `Notebook(${this.id}, ${name})`;
   }
 }

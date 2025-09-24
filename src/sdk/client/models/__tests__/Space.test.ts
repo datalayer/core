@@ -85,7 +85,8 @@ describe('Space Model', () => {
     });
 
     it('should return correct created date', () => {
-      expect(space.createdAt).toEqual(new Date('2023-01-01T10:00:00Z'));
+      const createdAt = space.createdAt;
+      expect(createdAt).toEqual(new Date('2023-01-01T10:00:00Z'));
     });
 
     it('should return correct visibility', () => {
@@ -111,6 +112,7 @@ describe('Space Model', () => {
       expect(minimalSpace.organizationId).toBe('');
       expect(minimalSpace.handle).toBe('');
       expect(minimalSpace.variant).toBe('');
+      expect(minimalSpace.createdAt).toBeNull();
     });
   });
 
@@ -213,9 +215,9 @@ describe('Space Model', () => {
       const spaceItems = await space.getItems();
 
       expect(items.getSpaceItems).toHaveBeenCalledWith(
-        'https://spacer.example.com',
         'mock-token',
         'space-uid-123',
+        'https://spacer.example.com',
       );
       expect(spaceItems).toEqual(mockItems);
     });
@@ -454,9 +456,9 @@ describe('Space Model', () => {
         ],
       });
 
+      // Should return null when no timestamps are available
       const updatedAt = await space.getUpdatedAt();
-      expect(updatedAt).toBeInstanceOf(Date);
-      expect(updatedAt.toString()).toContain('Invalid Date');
+      expect(updatedAt).toBeNull();
     });
 
     it('should handle empty items response', async () => {

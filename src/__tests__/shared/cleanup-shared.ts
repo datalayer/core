@@ -105,7 +105,7 @@ async function cleanupTestSnapshots(
 ) {
   try {
     console.log(
-      `Cleaning up test snapshots${phaseLabel === 'POST-TEST' ? ' created during tests' : ''}...`,
+      `Cleaning up ALL snapshots${phaseLabel === 'POST-TEST' ? ' created during tests' : ''}...`,
     );
     const snapshotsResponse = await snapshots.listSnapshots(token, baseUrl);
 
@@ -117,35 +117,35 @@ async function cleanupTestSnapshots(
       return;
     }
 
-    // Filter for test snapshots (ones that start with "test-" or "test_")
-    const testSnapshots = snapshotsResponse.snapshots.filter(
-      s =>
-        (s.name?.startsWith('test-') || s.name?.startsWith('test_')) &&
-        s.status !== 'deleted',
+    // Filter out already deleted snapshots
+    const allSnapshots = snapshotsResponse.snapshots.filter(
+      s => s.status !== 'deleted',
     );
 
-    if (testSnapshots.length === 0) {
-      const totalSnapshots = snapshotsResponse.snapshots.length;
-      if (totalSnapshots > 0) {
+    if (allSnapshots.length === 0) {
+      const deletedCount = snapshotsResponse.snapshots.filter(
+        s => s.status === 'deleted',
+      ).length;
+      if (deletedCount > 0) {
         console.log(
-          `Found ${totalSnapshots} snapshot(s), but none are test snapshots`,
+          `Found ${deletedCount} already deleted snapshot(s), skipping`,
         );
       }
-      console.log('✓ No test snapshots to clean up');
+      console.log('✓ No active snapshots to clean up');
       return;
     }
 
-    console.log(`Found ${testSnapshots.length} test snapshot(s) to clean up`);
-    console.log(
-      `(Out of ${snapshotsResponse.snapshots.length} total snapshots)`,
-    );
+    console.log(`Found ${allSnapshots.length} active snapshot(s) to clean up`);
 
     let removedCount = 0;
     let skippedCount = 0;
     let failedCount = 0;
 
-    for (const snapshot of testSnapshots) {
+    for (const snapshot of allSnapshots) {
       try {
+        console.log(
+          `  Attempting to delete: ${snapshot.name} (uid: ${snapshot.uid}, status: ${snapshot.status})`,
+        );
         await snapshots.deleteSnapshot(token, snapshot.uid, baseUrl);
         console.log(`  ✓ Removed snapshot: ${snapshot.name}`);
         removedCount++;
@@ -169,6 +169,25 @@ async function cleanupTestSnapshots(
       console.log(
         `Snapshot cleanup summary: ${removedCount} removed, ${skippedCount} skipped, ${failedCount} failed`,
       );
+
+      // Verify snapshots are actually deleted
+      console.log('Verifying snapshot deletion...');
+      const verifyResponse = await snapshots.listSnapshots(token, baseUrl);
+      const remainingCount = verifyResponse.snapshots?.length || 0;
+      console.log(`  Remaining snapshots after cleanup: ${remainingCount}`);
+      if (remainingCount > 0 && verifyResponse.snapshots) {
+        console.log('  Still present:');
+        for (const snap of verifyResponse.snapshots.slice(0, 5)) {
+          console.log(
+            `    - ${snap.name} (uid: ${snap.uid}, status: ${snap.status})`,
+          );
+        }
+        if (verifyResponse.snapshots.length > 5) {
+          console.log(
+            `    ... and ${verifyResponse.snapshots.length - 5} more`,
+          );
+        }
+      }
     }
   } catch (error: any) {
     console.error('Error cleaning up snapshots:', error.message);
@@ -202,9 +221,9 @@ async function cleanupSpacerItems(
     for (const space of spacesResponse.spaces) {
       try {
         const itemsResponse = await items.getSpaceItems(
-          baseUrl,
           token,
           space.uid,
+          baseUrl,
         );
 
         if (!itemsResponse.items || itemsResponse.items.length === 0) {
@@ -220,7 +239,7 @@ async function cleanupSpacerItems(
         for (const item of itemsResponse.items) {
           try {
             // API returns uid field but TypeScript interface doesn't include it
-            await items.deleteItem(baseUrl, token, (item as any).uid);
+            await items.deleteItem(token, (item as any).uid, baseUrl);
             console.log(
               `    ✓ Removed item: ${(item as any).name || (item as any).name_t}`,
             );
@@ -264,10 +283,8 @@ async function verifyFinalState(
     );
 
     const remainingRuntimes = finalRuntimes.runtimes?.length || 0;
-    const remainingTestSnapshots = (finalSnapshots.snapshots || []).filter(
-      s =>
-        (s.name?.startsWith('test-') || s.name?.startsWith('test_')) &&
-        s.status !== 'deleted',
+    const remainingSnapshots = (finalSnapshots.snapshots || []).filter(
+      s => s.status !== 'deleted',
     ).length;
 
     // Count spacer test items
@@ -278,9 +295,9 @@ async function verifyFinalState(
         for (const space of spacesResponse.spaces) {
           try {
             const itemsResponse = await items.getSpaceItems(
-              spacerBaseUrl,
               token,
               space.uid,
+              spacerBaseUrl,
             );
             if (itemsResponse.items) {
               remainingTestItems += itemsResponse.items.length;
@@ -297,9 +314,7 @@ async function verifyFinalState(
     console.log('-'.repeat(60));
     console.log('Final state after all tests:');
     console.log(`  - Remaining runtimes: ${remainingRuntimes}`);
-    console.log(
-      `  - Remaining active test snapshots: ${remainingTestSnapshots}`,
-    );
+    console.log(`  - Remaining active snapshots: ${remainingSnapshots}`);
     console.log(
       `  - Total snapshots: ${finalSnapshots.snapshots?.length || 0}`,
     );
@@ -311,9 +326,9 @@ async function verifyFinalState(
       );
     }
 
-    if (remainingTestSnapshots > 0) {
+    if (remainingSnapshots > 0) {
       console.log(
-        `\nNOTE: ${remainingTestSnapshots} test snapshot(s) still active. These may require manual cleanup.`,
+        `\nNOTE: ${remainingSnapshots} snapshot(s) still active. These may require manual cleanup.`,
       );
     }
 

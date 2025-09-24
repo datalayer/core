@@ -48,18 +48,21 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       const result = await lexicals.createLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         lexicalData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
-      expect(mockedRequest).toHaveBeenCalledWith({
-        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals`,
-        method: 'POST',
-        token: MOCK_JWT_TOKEN,
-        body: lexicalData,
-      });
+
+      // Check that FormData was passed as the body
+      const callArgs = mockedRequest.mock.calls[0][0];
+      expect(callArgs.url).toBe(
+        `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals`,
+      );
+      expect(callArgs.method).toBe('POST');
+      expect(callArgs.token).toBe(MOCK_JWT_TOKEN);
+      expect(callArgs.body).toBeInstanceOf(FormData);
 
       expect(result).toEqual(mockCreateResponse);
       expect(result.success).toBe(true);
@@ -74,25 +77,30 @@ describe('Spacer Lexicals Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockCreateResponse);
 
+      const file = new File(['test content'], 'test.txt', {
+        type: 'text/plain',
+      });
       const lexicalData = {
         spaceId: 'space-456',
         documentType: 'lexical',
         name: 'Test Document',
         description: 'A test document with file',
+        file,
       };
 
       await lexicals.createLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         lexicalData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
-      expect(mockedRequest).toHaveBeenCalledWith({
-        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals`,
-        method: 'POST',
-        token: MOCK_JWT_TOKEN,
-        body: lexicalData,
-      });
+      const callArgs = mockedRequest.mock.calls[0][0];
+      expect(callArgs.url).toBe(
+        `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals`,
+      );
+      expect(callArgs.method).toBe('POST');
+      expect(callArgs.token).toBe(MOCK_JWT_TOKEN);
+      expect(callArgs.body).toBeInstanceOf(FormData);
 
       console.log('Document with file created successfully');
     });
@@ -111,17 +119,18 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       await lexicals.createLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         lexicalData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
-      expect(mockedRequest).toHaveBeenCalledWith({
-        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals`,
-        method: 'POST',
-        token: MOCK_JWT_TOKEN,
-        body: lexicalData,
-      });
+      const callArgs = mockedRequest.mock.calls[0][0];
+      expect(callArgs.url).toBe(
+        `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals`,
+      );
+      expect(callArgs.method).toBe('POST');
+      expect(callArgs.token).toBe(MOCK_JWT_TOKEN);
+      expect(callArgs.body).toBeInstanceOf(FormData);
 
       console.log('Document with different type created successfully');
     });
@@ -141,9 +150,9 @@ describe('Spacer Lexicals Unit Tests', () => {
 
       await expect(
         lexicals.createLexical(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           lexicalData,
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('API Error');
 
@@ -164,14 +173,15 @@ describe('Spacer Lexicals Unit Tests', () => {
         description: 'A test document',
       };
 
-      await lexicals.createLexical(customUrl, MOCK_JWT_TOKEN, lexicalData);
+      await lexicals.createLexical(MOCK_JWT_TOKEN, lexicalData, customUrl);
 
-      expect(mockedRequest).toHaveBeenCalledWith({
-        url: `${customUrl}${API_BASE_PATHS.SPACER}/lexicals`,
-        method: 'POST',
-        token: MOCK_JWT_TOKEN,
-        body: lexicalData,
-      });
+      const callArgs = mockedRequest.mock.calls[0][0];
+      expect(callArgs.url).toBe(
+        `${customUrl}${API_BASE_PATHS.SPACER}/lexicals`,
+      );
+      expect(callArgs.method).toBe('POST');
+      expect(callArgs.token).toBe(MOCK_JWT_TOKEN);
+      expect(callArgs.body).toBeInstanceOf(FormData);
 
       console.log('Custom base URL used correctly');
     });
@@ -196,9 +206,9 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       const result = await lexicals.createLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         lexicalData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(result).toEqual(validationErrorResponse);
@@ -242,9 +252,9 @@ describe('Spacer Lexicals Unit Tests', () => {
       mockedRequest.mockResolvedValue(mockGetResponse);
 
       const result = await lexicals.getLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -273,9 +283,9 @@ describe('Spacer Lexicals Unit Tests', () => {
       mockedRequest.mockResolvedValue(notFoundResponse);
 
       const result = await lexicals.getLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'nonexistent-document',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(result).toEqual(notFoundResponse);
@@ -293,9 +303,9 @@ describe('Spacer Lexicals Unit Tests', () => {
 
       await expect(
         lexicals.getLexical(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'lexical-123',
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('Network error');
 
@@ -309,7 +319,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockGetResponse);
 
-      await lexicals.getLexical(customUrl, MOCK_JWT_TOKEN, 'lexical-123');
+      await lexicals.getLexical(MOCK_JWT_TOKEN, 'lexical-123', customUrl);
 
       expect(mockedRequest).toHaveBeenCalledWith({
         url: `${customUrl}${API_BASE_PATHS.SPACER}/lexicals/lexical-123`,
@@ -348,10 +358,10 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       const result = await lexicals.updateLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
         updateData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -380,10 +390,10 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       const result = await lexicals.updateLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
         updateData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledWith({
@@ -410,10 +420,10 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       const result = await lexicals.updateLexical(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
         updateData,
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledWith({
@@ -440,10 +450,10 @@ describe('Spacer Lexicals Unit Tests', () => {
 
       await expect(
         lexicals.updateLexical(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'lexical-123',
           updateData,
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('Update failed');
 
@@ -462,10 +472,10 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       await lexicals.updateLexical(
-        customUrl,
         MOCK_JWT_TOKEN,
         'lexical-123',
         updateData,
+        customUrl,
       );
 
       expect(mockedRequest).toHaveBeenCalledWith({

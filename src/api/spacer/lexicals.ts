@@ -11,7 +11,7 @@
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
-import { API_BASE_PATHS } from '../constants';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
   CreateLexicalRequest,
   CreateLexicalResponse,
@@ -22,15 +22,15 @@ import {
 
 /**
  * Create a new lexical document.
- * @param baseUrl - Base URL for the API
  * @param token - Authentication token
  * @param data - Document creation configuration
+ * @param baseUrl - Base URL for the API (defaults to production)
  * @returns Promise resolving to the created document response
  */
 export const createLexical = async (
-  baseUrl: string,
   token: string,
   data: CreateLexicalRequest,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
 ): Promise<CreateLexicalResponse> => {
   // Create FormData for multipart/form-data request (like the working example)
   const formData = new FormData();
@@ -60,15 +60,15 @@ export const createLexical = async (
 
 /**
  * Get a lexical document by ID.
- * @param baseUrl - Base URL for the API
  * @param token - Authentication token
  * @param id - The document ID
+ * @param baseUrl - Base URL for the API (defaults to production)
  * @returns Promise resolving to the document response
  */
 export const getLexical = async (
-  baseUrl: string,
   token: string,
   id: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
 ): Promise<GetLexicalResponse> => {
   return requestDatalayerAPI<GetLexicalResponse>({
     url: `${baseUrl}${API_BASE_PATHS.SPACER}/lexicals/${id}`,
@@ -79,17 +79,17 @@ export const getLexical = async (
 
 /**
  * Update a lexical document.
- * @param baseUrl - Base URL for the API
  * @param token - Authentication token
  * @param id - The document ID
  * @param data - Update data containing name and/or description
+ * @param baseUrl - Base URL for the API (defaults to production)
  * @returns Promise resolving to the updated document response
  */
 export const updateLexical = async (
-  baseUrl: string,
   token: string,
   id: string,
   data: UpdateLexicalRequest,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
 ): Promise<UpdateLexicalResponse> => {
   return requestDatalayerAPI<UpdateLexicalResponse>({
     url: `${baseUrl}${API_BASE_PATHS.SPACER}/lexicals/${id}`,

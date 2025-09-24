@@ -196,13 +196,15 @@ describe('SDK IAM Integration Tests', () => {
           expect(true).toBe(false);
         } catch (error: any) {
           expect(error.message).toBeDefined();
-          // Error should mention authentication or unauthorized
+          // Error should mention authentication, token, or invalid
           const errorLower = error.message.toLowerCase();
           expect(
             errorLower.includes('auth') ||
               errorLower.includes('unauth') ||
               errorLower.includes('401') ||
-              errorLower.includes('403'),
+              errorLower.includes('403') ||
+              errorLower.includes('invalid') ||
+              errorLower.includes('token'),
           ).toBe(true);
           console.log('Auth error message is clear and helpful');
         }

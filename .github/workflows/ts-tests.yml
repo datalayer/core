@@ -35,7 +35,7 @@ jobs:
       run-lint: false
       run-type-check: false
       run-tests: true
-      test-command: 'npm test && npm run test:coverage && npm run build:lib'
+      test-command: 'npm run test:all && npm run test:coverage && npm run build:lib'
     secrets:
       DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
 
@@ -50,7 +50,7 @@ jobs:
       run-lint: false
       run-type-check: false
       run-tests: true
-      test-command: 'npm test && npm run test:coverage && npm run build:lib'
+      test-command: 'npm run test:all && npm run test:coverage && npm run build:lib'
     secrets:
       DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
 
@@ -65,6 +65,6 @@ jobs:
       run-lint: false
       run-type-check: false
       run-tests: true
-      test-command: 'npm test && npm run test:coverage && npm run build:lib'
+      test-command: 'npm run test:all && npm run test:coverage && npm run build:lib'
     secrets:
       DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}

@@ -293,7 +293,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
       console.log('Logout successful with default URL');
     });
 
-    it('should handle logout with invalid token (expecting 405 error)', async () => {
+    it('should handle logout with invalid token', async () => {
       console.log('Testing logout with invalid token...');
 
       const invalidToken =
@@ -306,8 +306,8 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
         console.log('Logout failed:', error.message);
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
-        // Currently the API returns 405 Method Not Allowed
-        expect(error.message).toContain('405');
+        // Should get a server error for invalid token
+        expect(error.message).toContain('Server Error');
       }
     });
 

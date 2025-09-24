@@ -48,7 +48,7 @@ afterAll(async () => {
 
   // Post-test cleanup
   await performCleanup('teardown');
-});
+}, 30000); // 30 second timeout
 
 describe.skipIf(skipTests)(
   'Runtimes & Snapshots Lifecycle Integration Tests',
@@ -57,7 +57,7 @@ describe.skipIf(skipTests)(
     // These tests create real resources and incur costs.
     // Run with DATALAYER_TEST_RUN_EXPENSIVE=true to enable
     describe
-      .skipIf(!testConfig.shouldRunExpensive())
+      .skipIf(testConfig.shouldSkipExpensive())
       .sequential('complete runtime and snapshot lifecycle', () => {
         let pythonRuntimePodName: string | null = null;
         let aiRuntimePodName: string | null = null;

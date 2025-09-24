@@ -130,12 +130,13 @@ export class Space {
 
   /**
    * When the space was created.
+   * Note: May not be available for all spaces depending on API response.
    */
-  get createdAt(): Date {
+  get createdAt(): Date | null {
     this._checkDeleted();
-    const dateStr = this._data.created_at;
+    const dateStr = (this._data as any).creation_ts_dt || this._data.created_at;
     if (!dateStr) {
-      return new Date(); // Return current date if no date available
+      return null; // Some spaces don't have timestamps
     }
     return new Date(dateStr);
   }
@@ -199,12 +200,16 @@ export class Space {
    *
    * @returns Promise resolving to last update time
    */
-  async getUpdatedAt(): Promise<Date> {
+  async getUpdatedAt(): Promise<Date | null> {
     this._checkDeleted();
     await this._refreshData();
-    const dateStr = this._data.updated_at || this._data.created_at;
+    const dateStr =
+      (this._data as any).last_update_ts_dt ||
+      this._data.updated_at ||
+      (this._data as any).creation_ts_dt ||
+      this._data.created_at;
     if (!dateStr) {
-      return new Date(); // Return current date if no date available
+      return null; // Some spaces don't have timestamps
     }
     return new Date(dateStr);
   }
@@ -231,9 +236,9 @@ export class Space {
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
     const response: GetSpaceItemsResponse = await items.getSpaceItems(
-      spacerRunUrl,
       token,
       this.uid,
+      spacerRunUrl,
     );
     return response.items;
   }

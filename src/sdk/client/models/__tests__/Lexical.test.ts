@@ -29,7 +29,7 @@ describe('Lexical Model', () => {
   const mockLexicalData: LexicalData = {
     id: 'lexical-123',
     uid: 'lexical-uid-456',
-    name: 'Project Documentation',
+    name: 'Project Documentation', // API uses name field
     content: {
       type: 'doc',
       content: [
@@ -112,9 +112,9 @@ describe('Lexical Model', () => {
       const name = await lexical.getName();
       expect(name).toBe('Updated Documentation');
       expect(lexicals.getLexical).toHaveBeenCalledWith(
-        'https://spacer.example.com',
         'mock-token',
-        'lexical-123',
+        'lexical-uid-456', // Use uid, not id
+        'https://spacer.example.com',
       );
     });
 
@@ -141,9 +141,9 @@ describe('Lexical Model', () => {
       const content = await lexical.getContent();
       expect(content).toEqual(updatedContent);
       expect(lexicals.getLexical).toHaveBeenCalledWith(
-        'https://spacer.example.com',
         'mock-token',
-        'lexical-123',
+        'lexical-uid-456', // Use uid, not id
+        'https://spacer.example.com',
       );
     });
 
@@ -165,7 +165,7 @@ describe('Lexical Model', () => {
       });
 
       const updatedAt = await lexical.getUpdatedAt();
-      expect(updatedAt).toEqual(new Date(mockLexicalData.created_at));
+      expect(updatedAt).toEqual(new Date(mockLexicalData.created_at!));
     });
 
     it('should handle missing content gracefully', async () => {
@@ -215,10 +215,10 @@ describe('Lexical Model', () => {
       });
 
       expect(lexicals.updateLexical).toHaveBeenCalledWith(
-        'https://spacer.example.com',
         'mock-token',
-        'lexical-123',
+        'lexical-uid-456', // Use uid, not id
         { name: 'New Documentation Title', description: 'Updated description' },
+        'https://spacer.example.com',
       );
       expect(updated).toBeInstanceOf(Lexical);
       expect(updated.toString()).toBe(
@@ -232,9 +232,9 @@ describe('Lexical Model', () => {
       await lexical.delete();
 
       expect(items.deleteItem).toHaveBeenCalledWith(
-        'https://spacer.example.com',
         'mock-token',
-        'lexical-123',
+        'lexical-uid-456', // Use uid, not id
+        'https://spacer.example.com',
       );
 
       // After deletion, accessing properties should throw error
@@ -383,10 +383,10 @@ describe('Lexical Model', () => {
       const updated = await lexical.update(partialUpdate);
 
       expect(lexicals.updateLexical).toHaveBeenCalledWith(
-        'https://spacer.example.com',
         'mock-token',
-        'lexical-123',
+        'lexical-uid-456', // Use uid, not id
         partialUpdate,
+        'https://spacer.example.com',
       );
       expect(updated.toString()).toBe(
         'Lexical(lexical-123, Only Name Updated)',

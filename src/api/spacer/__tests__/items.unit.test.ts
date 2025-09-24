@@ -52,9 +52,9 @@ describe('Spacer Items Unit Tests', () => {
       mockedRequest.mockResolvedValue(mockGetItemsResponse);
 
       const result = await items.getSpaceItems(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'space-123',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -86,9 +86,9 @@ describe('Spacer Items Unit Tests', () => {
       mockedRequest.mockResolvedValue(emptyResponse);
 
       const result = await items.getSpaceItems(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'empty-space',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(result).toEqual(emptyResponse);
@@ -104,7 +104,7 @@ describe('Spacer Items Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockGetItemsResponse);
 
-      await items.getSpaceItems(customUrl, MOCK_JWT_TOKEN, 'space-123');
+      await items.getSpaceItems(MOCK_JWT_TOKEN, 'space-123', customUrl);
 
       expect(mockedRequest).toHaveBeenCalledWith({
         url: `${customUrl}${API_BASE_PATHS.SPACER}/spaces/space-123/items`,
@@ -123,9 +123,9 @@ describe('Spacer Items Unit Tests', () => {
 
       await expect(
         items.getSpaceItems(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'space-123',
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('Network error');
 
@@ -146,9 +146,9 @@ describe('Spacer Items Unit Tests', () => {
       mockedRequest.mockResolvedValue(mockDeleteResponse);
 
       const result = await items.deleteItem(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'item-123',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(mockedRequest).toHaveBeenCalledTimes(1);
@@ -177,9 +177,9 @@ describe('Spacer Items Unit Tests', () => {
       mockedRequest.mockResolvedValue(notFoundResponse);
 
       const result = await items.deleteItem(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'non-existent-item',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(result).toEqual(notFoundResponse);
@@ -195,7 +195,7 @@ describe('Spacer Items Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockDeleteResponse);
 
-      await items.deleteItem(customUrl, MOCK_JWT_TOKEN, 'item-123');
+      await items.deleteItem(MOCK_JWT_TOKEN, 'item-123', customUrl);
 
       expect(mockedRequest).toHaveBeenCalledWith({
         url: `${customUrl}${API_BASE_PATHS.SPACER}/spaces/items/item-123`,
@@ -214,9 +214,9 @@ describe('Spacer Items Unit Tests', () => {
 
       await expect(
         items.deleteItem(
-          DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'item-123',
+          DEFAULT_SERVICE_URLS.SPACER,
         ),
       ).rejects.toThrow('Network error');
 
@@ -236,9 +236,9 @@ describe('Spacer Items Unit Tests', () => {
       mockedRequest.mockResolvedValue(permissionDeniedResponse);
 
       const result = await items.deleteItem(
-        DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'protected-item',
+        DEFAULT_SERVICE_URLS.SPACER,
       );
 
       expect(result).toEqual(permissionDeniedResponse);

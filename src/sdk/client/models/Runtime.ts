@@ -321,8 +321,8 @@ export class Runtime {
       stop: stop || false,
     };
 
-    const response = await (this._sdk as any).createSnapshot(request);
-    return new Snapshot(response.snapshot, this._sdk);
+    // The SDK's createSnapshot already returns a Snapshot instance
+    return await (this._sdk as any).createSnapshot(request);
   }
 
   /**
