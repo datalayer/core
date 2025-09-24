@@ -250,27 +250,40 @@ export interface RuntimeSnapshotFile {
  * @interface CreateRuntimeSnapshotRequest
  */
 export interface CreateRuntimeSnapshotRequest {
-  /** ID of the runtime to snapshot */
-  runtime_id: string;
+  /** Pod name of the runtime to snapshot */
+  pod_name: string;
   /** Name for the snapshot */
   name: string;
-  /** Optional description of the snapshot */
-  description?: string;
-  /** Optional list of file paths to include */
-  files?: string[];
+  /** Description of the snapshot */
+  description: string;
+  /** Whether to stop the runtime after creating snapshot */
+  stop: boolean;
 }
 
 /**
- * Request payload for loading a runtime snapshot
- * @interface LoadRuntimeSnapshotRequest
+ * Response for getting a specific runtime snapshot
+ * @interface SnapshotGetResponse
  */
-export interface LoadRuntimeSnapshotRequest {
-  /** ID of the snapshot to load */
-  snapshot_id: string;
-  /** ID of the runtime to load the snapshot into */
-  runtime_id: string;
-  /** Whether to overwrite existing files */
-  overwrite?: boolean;
+export interface SnapshotGetResponse {
+  /** Indicates if the request was successful */
+  success: boolean;
+  /** Response message */
+  message: string;
+  /** The snapshot details */
+  snapshot: RuntimeSnapshot;
+}
+
+/**
+ * Response for creating a runtime snapshot
+ * @interface SnapshotCreateResponse
+ */
+export interface SnapshotCreateResponse {
+  /** Indicates if the request was successful */
+  success: boolean;
+  /** Response message */
+  message: string;
+  /** The created snapshot details */
+  snapshot: RuntimeSnapshot;
 }
 
 /**

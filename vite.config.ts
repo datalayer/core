@@ -122,6 +122,8 @@ export default defineConfig({
           include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
           environment: 'jsdom',
           setupFiles: ['src/test-setup.ts'],
+          globalSetup: ['src/api/__tests__/global-setup.ts'],
+          globalTeardown: ['src/api/__tests__/global-teardown.ts'],
         },
       },
       // Storybook tests

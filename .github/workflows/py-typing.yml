@@ -1,4 +1,4 @@
-name: Python Type Checking
+name: Py Type Checking
 
 on:
   push:

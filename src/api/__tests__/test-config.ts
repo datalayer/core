@@ -28,19 +28,33 @@ loadTestConfig();
  */
 export const testConfig = {
   /**
+   * Check if we have a token available
+   */
+  hasToken(): boolean {
+    return !!(
+      process.env.DATALAYER_TEST_TOKEN ||
+      process.env.DATALAYER_API_TOKEN ||
+      process.env.VITE_DATALAYER_API_TOKEN
+    );
+  },
+
+  /**
    * Get the Datalayer API token for testing
    * Priority order:
    * 1. DATALAYER_TEST_TOKEN environment variable
    * 2. DATALAYER_API_TOKEN environment variable
-   * 3. Throw error if not found
+   * 3. VITE_DATALAYER_API_TOKEN environment variable
+   * 4. Throw error if not found
    */
   getToken(): string {
     const token =
-      process.env.DATALAYER_TEST_TOKEN || process.env.DATALAYER_API_TOKEN;
+      process.env.DATALAYER_TEST_TOKEN ||
+      process.env.DATALAYER_API_TOKEN ||
+      process.env.VITE_DATALAYER_API_TOKEN;
 
     if (!token) {
       throw new Error(
-        'No Datalayer API token found. Please set DATALAYER_TEST_TOKEN or DATALAYER_API_TOKEN environment variable',
+        'No Datalayer API token found. Please set DATALAYER_TEST_TOKEN, DATALAYER_API_TOKEN, or VITE_DATALAYER_API_TOKEN environment variable',
       );
     }
 

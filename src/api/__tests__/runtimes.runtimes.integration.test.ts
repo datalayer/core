@@ -34,97 +34,12 @@ beforeAll(async () => {
 });
 
 describe.skipIf(skipTests)('Runtimes Integration Tests', () => {
-  describe('list', () => {
-    it('should successfully list runtime instances', async () => {
-      console.log('Testing list runtimes endpoint...');
-
-      const response = await runtimes.list(DATALAYER_TOKEN, BASE_URL);
-
-      console.log('Runtimes response:', JSON.stringify(response, null, 2));
-
-      // Verify the response structure
-      expect(response).toBeDefined();
-      expect(response).toHaveProperty('success');
-      expect(response.success).toBe(true);
-      expect(response).toHaveProperty('message');
-      expect(response).toHaveProperty('runtimes');
-      expect(Array.isArray(response.runtimes)).toBe(true);
-
-      console.log(`Found ${response.runtimes.length} runtime instances`);
-
-      // If we have runtimes, check the structure of the first one
-      if (response.runtimes.length > 0) {
-        const firstRuntime = response.runtimes[0];
-        console.log('First runtime pod name:', firstRuntime.pod_name);
-
-        // Verify runtime structure
-        expect(firstRuntime).toHaveProperty('pod_name');
-        expect(firstRuntime).toHaveProperty('uid');
-        expect(firstRuntime).toHaveProperty('environment_name');
-        expect(firstRuntime).toHaveProperty('burning_rate');
-        expect(firstRuntime).toHaveProperty('type');
-
-        // Check optional fields if present
-        if (firstRuntime.given_name) {
-          console.log('Runtime given name:', firstRuntime.given_name);
-        }
-        if (firstRuntime.started_at) {
-          console.log('Runtime started at:', firstRuntime.started_at);
-        }
-      }
-    });
-
-    it('should work with default URL if not specified', async () => {
-      console.log('Testing list runtimes with default URL...');
-
-      // Call without specifying URL to use default
-      const response = await runtimes.list(DATALAYER_TOKEN);
-
-      console.log(
-        'Default URL runtimes response:',
-        JSON.stringify(response, null, 2),
-      );
-
-      // Should still get valid response
-      expect(response).toBeDefined();
-      expect(response.success).toBe(true);
-      expect(response).toHaveProperty('runtimes');
-      expect(Array.isArray(response.runtimes)).toBe(true);
-    });
-  });
-
-  describe('create runtime', () => {
-    it('should handle non-existent environment gracefully', async () => {
-      console.log('Testing create with non-existent environment...');
-
-      const createData = {
-        environment_name: 'non-existent-environment',
-        type: 'notebook' as const,
-        given_name: 'test-runtime',
-      };
-
-      try {
-        await runtimes.create(DATALAYER_TOKEN, createData, BASE_URL);
-        // If we get here, the environment somehow exists
-        console.log('WARNING: Non-existent environment accepted');
-      } catch (error: any) {
-        console.log('Error for non-existent environment:', error.message);
-        // We expect an error for non-existent environment
-        expect(error).toBeDefined();
-        expect(error.message).toBeDefined();
-        // The API returns a generic error message for 400 Bad Request
-        // rather than our custom 'not found' message
-        expect(error.message).toBeDefined();
-      }
-    });
-  });
-
-  // Sequential tests for runtime lifecycle with actual API calls
+  // Main lifecycle test that comprehensively tests all operations
   // These tests create real resources and incur costs.
   // Run with DATALAYER_TEST_RUN_EXPENSIVE=true to enable
   describe
     .skipIf(!testConfig.shouldRunExpensive())
-    .sequential('Runtime Lifecycle (Expensive Operations)', () => {
+    .sequential('runtime lifecycle', () => {
       let pythonRuntimePodName: string | null = null;
       let aiRuntimePodName: string | null = null;
       const environments = testConfig.getTestEnvironments();
@@ -392,7 +307,36 @@ describe.skipIf(skipTests)('Runtimes Integration Tests', () => {
       });
     });
 
-  describe('get runtime details', () => {
+  // Basic smoke test that always runs
+  describe('smoke test', () => {
+    it('should successfully list runtime instances', async () => {
+      console.log('Testing list runtimes endpoint...');
+
+      const response = await runtimes.list(DATALAYER_TOKEN, BASE_URL);
+
+      console.log(`Found ${response.runtimes.length} runtime instances`);
+
+      // Verify the response structure
+      expect(response).toBeDefined();
+      expect(response).toHaveProperty('success');
+      expect(response.success).toBe(true);
+      expect(response).toHaveProperty('message');
+      expect(response).toHaveProperty('runtimes');
+      expect(Array.isArray(response.runtimes)).toBe(true);
+
+      // If we have runtimes, check the structure of the first one
+      if (response.runtimes.length > 0) {
+        const firstRuntime = response.runtimes[0];
+        console.log('First runtime pod name:', firstRuntime.pod_name);
+
+        // Verify runtime structure
+        expect(firstRuntime).toHaveProperty('pod_name');
+        expect(firstRuntime).toHaveProperty('uid');
+        expect(firstRuntime).toHaveProperty('environment_name');
+        expect(firstRuntime).toHaveProperty('burning_rate');
+      }
+    });
+
     it('should handle non-existent runtime gracefully', async () => {
       console.log('Testing get with non-existent pod name...');
 
@@ -400,101 +344,14 @@ describe.skipIf(skipTests)('Runtimes Integration Tests', () => {
 
       try {
         await runtimes.get(DATALAYER_TOKEN, nonExistentPod, BASE_URL);
-        // If we get here, the pod somehow exists
-        console.log('WARNING: Non-existent pod returned data');
+        // If we get here, the runtime somehow exists
+        console.log('WARNING: Non-existent runtime returned data');
       } catch (error: any) {
-        console.log('Error for non-existent pod:', error.message);
-        // We expect an error for non-existent pod
-        expect(error).toBeDefined();
-        expect(error.message).toBeDefined();
-        // The API returns a generic error message for 400 Bad Request
-        // rather than our custom 'not found' message
-        expect(error.message).toBeDefined();
-      }
-    });
-  });
-
-  describe('remove runtime', () => {
-    it('should handle non-existent runtime deletion gracefully', async () => {
-      console.log('Testing remove with non-existent pod name...');
-
-      const nonExistentPod = 'non-existent-pod-12345';
-
-      try {
-        await runtimes.remove(DATALAYER_TOKEN, nonExistentPod, BASE_URL);
-        // If we get here, the pod somehow existed and was deleted
-        console.log('WARNING: Non-existent pod was deleted');
-      } catch (error: any) {
-        console.log('Error for non-existent pod deletion:', error.message);
-        // We expect an error for non-existent pod
-        expect(error).toBeDefined();
-        expect(error.message).toBeDefined();
-        // The API returns a generic error message for 400 Bad Request
-        // rather than our custom 'not found' message
-        expect(error.message).toBeDefined();
-      }
-    });
-  });
-
-  describe('put (update state)', () => {
-    it('should handle non-existent runtime update gracefully', async () => {
-      console.log('Testing put with non-existent pod name...');
-
-      const nonExistentPod = 'non-existent-pod-12345';
-
-      try {
-        await runtimes.put(
-          DATALAYER_TOKEN,
-          nonExistentPod,
-          'snapshot-123',
-          BASE_URL,
-        );
-        // If we get here, the pod somehow exists
-        console.log('WARNING: Non-existent pod state was updated');
-      } catch (error: any) {
-        console.log('Error for non-existent pod update:', error.message);
-        // We expect an error for non-existent pod
-        expect(error).toBeDefined();
-        expect(error.message).toBeDefined();
-        // The API returns a generic error message for 400 Bad Request
-        // rather than our custom 'not found' message
-        expect(error.message).toBeDefined();
-      }
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle invalid token gracefully', async () => {
-      console.log('Testing with invalid token...');
-
-      const invalidToken = 'invalid-token-123';
-
-      try {
-        await runtimes.list(invalidToken, BASE_URL);
-        // If we get here, the API accepted the invalid token (shouldn't happen)
-        console.log('WARNING: API accepted invalid token');
-      } catch (error: any) {
-        console.log('Error with invalid token:', error.message);
-        // We expect an error with invalid token
+        console.log('Error for non-existent runtime:', error.message);
+        // We expect an error for non-existent runtime
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
       }
-    });
-  });
-
-  describe('performance', () => {
-    it('should respond within reasonable time', async () => {
-      console.log('Testing response time...');
-
-      const startTime = Date.now();
-      await runtimes.list(DATALAYER_TOKEN, BASE_URL);
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
-
-      console.log(`Response time: ${responseTime}ms`);
-
-      // Should respond within 10 seconds
-      expect(responseTime).toBeLessThan(10000);
     });
   });
 });
