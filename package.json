@@ -69,7 +69,7 @@
     "preview": "vite preview",
     "start": "vite",
     "clean": "rimraf lib tsconfig.tsbuildinfo",
-    "test": "vitest run --project=unit",
+    "test": "vitest run",
     "test:watch": "vitest --project=unit",
     "test:ui": "vitest --ui --project=unit",
     "test:coverage": "vitest run --coverage --project=unit",
