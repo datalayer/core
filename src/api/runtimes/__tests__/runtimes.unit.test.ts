@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { runtimes } from '../runtimes';
-import { MOCK_JWT_TOKEN } from './test-constants';
+import { runtimes } from '..';
+import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
 
 describe('Runtimes Unit Tests', () => {
   describe('create parameter validation', () => {
@@ -31,9 +31,9 @@ describe('Runtimes Unit Tests', () => {
     it('should fail when token is empty', async () => {
       console.log('Testing create with empty token...');
 
-      await expect(runtimes.create('', mockData, mockBaseUrl)).rejects.toThrow(
-        'Authentication token is required',
-      );
+      await expect(
+        runtimes.createRuntime('', mockData, mockBaseUrl),
+      ).rejects.toThrow('Authentication token is required');
 
       console.log('Correctly rejected create with empty token');
     });
@@ -194,9 +194,8 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing put with missing token...');
 
       await expect(
-        // @ts-expect-error Testing undefined token
         runtimes.updateRuntime(
-          undefined,
+          undefined as any,
           'pod-123',
           'snapshot-123',
           mockBaseUrl,
@@ -210,10 +209,9 @@ describe('Runtimes Unit Tests', () => {
       console.log('Testing put with missing pod name...');
 
       await expect(
-        // @ts-expect-error Testing undefined pod name
         runtimes.updateRuntime(
           MOCK_JWT_TOKEN,
-          undefined,
+          undefined as any,
           'snapshot-123',
           mockBaseUrl,
         ),

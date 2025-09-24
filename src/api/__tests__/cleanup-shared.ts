@@ -4,6 +4,7 @@
  */
 
 import { snapshots, runtimes } from '../runtimes';
+import { users, items } from '../spacer';
 import { testConfig } from './test-config';
 
 /**
@@ -27,17 +28,21 @@ export async function performCleanup(phase: 'setup' | 'teardown') {
   }
 
   const DATALAYER_TOKEN = testConfig.getToken();
-  const BASE_URL = testConfig.getBaseUrl('RUNTIMES');
+  const RUNTIMES_BASE_URL = testConfig.getBaseUrl('RUNTIMES');
+  const SPACER_BASE_URL = testConfig.getBaseUrl('SPACER');
 
   // Clean up runtimes
-  await cleanupRuntimes(DATALAYER_TOKEN, BASE_URL, phaseLabel);
+  await cleanupRuntimes(DATALAYER_TOKEN, RUNTIMES_BASE_URL, phaseLabel);
 
   // Clean up test snapshots
-  await cleanupTestSnapshots(DATALAYER_TOKEN, BASE_URL, phaseLabel);
+  await cleanupTestSnapshots(DATALAYER_TOKEN, RUNTIMES_BASE_URL, phaseLabel);
+
+  // Clean up spacer items (notebooks, lexicals, etc.)
+  await cleanupSpacerItems(DATALAYER_TOKEN, SPACER_BASE_URL, phaseLabel);
 
   // Final verification (only for teardown)
   if (phase === 'teardown') {
-    await verifyFinalState(DATALAYER_TOKEN, BASE_URL);
+    await verifyFinalState(DATALAYER_TOKEN, RUNTIMES_BASE_URL, SPACER_BASE_URL);
   }
 
   console.log('='.repeat(60));
@@ -56,7 +61,7 @@ async function cleanupRuntimes(
     console.log(
       `Cleaning up ${phaseLabel === 'PRE-TEST' ? 'existing' : 'test'} runtimes...`,
     );
-    const runtimesResponse = await runtimes.list(token, baseUrl);
+    const runtimesResponse = await runtimes.listRuntimes(token, baseUrl);
 
     if (!runtimesResponse.runtimes || runtimesResponse.runtimes.length === 0) {
       console.log('✓ No runtimes to clean up');
@@ -72,7 +77,7 @@ async function cleanupRuntimes(
 
     for (const runtime of runtimesResponse.runtimes) {
       try {
-        await runtimes.remove(token, runtime.pod_name, baseUrl);
+        await runtimes.deleteRuntime(token, runtime.pod_name, baseUrl);
         console.log(`  ✓ Removed runtime: ${runtime.pod_name}`);
         removedCount++;
       } catch (error: any) {
@@ -102,7 +107,7 @@ async function cleanupTestSnapshots(
     console.log(
       `Cleaning up test snapshots${phaseLabel === 'POST-TEST' ? ' created during tests' : ''}...`,
     );
-    const snapshotsResponse = await snapshots.list(token, baseUrl);
+    const snapshotsResponse = await snapshots.listSnapshots(token, baseUrl);
 
     if (
       !snapshotsResponse.snapshots ||
@@ -141,7 +146,7 @@ async function cleanupTestSnapshots(
 
     for (const snapshot of testSnapshots) {
       try {
-        await snapshots.remove(token, snapshot.uid, baseUrl);
+        await snapshots.deleteSnapshot(token, snapshot.uid, baseUrl);
         console.log(`  ✓ Removed snapshot: ${snapshot.name}`);
         removedCount++;
       } catch (error: any) {
@@ -170,10 +175,99 @@ async function cleanupTestSnapshots(
   }
 }
 
-async function verifyFinalState(token: string, baseUrl: string) {
+async function cleanupSpacerItems(
+  token: string,
+  baseUrl: string,
+  phaseLabel: string,
+) {
   try {
-    const finalRuntimes = await runtimes.list(token, baseUrl);
-    const finalSnapshots = await snapshots.list(token, baseUrl);
+    console.log(
+      `Cleaning up test spacer items${phaseLabel === 'POST-TEST' ? ' created during tests' : ''}...`,
+    );
+
+    // Get user spaces
+    const spacesResponse = await users.getMySpaces(token, baseUrl);
+
+    if (!spacesResponse.spaces || spacesResponse.spaces.length === 0) {
+      console.log('✓ No spaces found');
+      return;
+    }
+
+    console.log(`Found ${spacesResponse.spaces.length} space(s)`);
+
+    let totalRemovedCount = 0;
+    let totalFailedCount = 0;
+
+    // Go through each space and clean up test items
+    for (const space of spacesResponse.spaces) {
+      try {
+        const itemsResponse = await items.getSpaceItems(
+          baseUrl,
+          token,
+          space.id || space.uid,
+        );
+
+        if (!itemsResponse.items || itemsResponse.items.length === 0) {
+          continue;
+        }
+
+        // Filter for test items (ones that start with "test-" or "test_" or "Test ")
+        const testItems = itemsResponse.items.filter(
+          (item: any) =>
+            item.name?.startsWith('test-') ||
+            item.name?.startsWith('test_') ||
+            item.name?.startsWith('Test ') ||
+            item.name?.includes('-test-'),
+        );
+
+        if (testItems.length === 0) {
+          continue;
+        }
+
+        console.log(
+          `  Space "${space.name}": Found ${testItems.length} test item(s)`,
+        );
+
+        for (const item of testItems) {
+          try {
+            await items.deleteItem(baseUrl, token, item.id);
+            console.log(`    ✓ Removed item: ${item.name}`);
+            totalRemovedCount++;
+          } catch (error: any) {
+            console.log(
+              `    ✗ Failed to remove item ${item.name}: ${error.message}`,
+            );
+            totalFailedCount++;
+          }
+        }
+      } catch (error: any) {
+        console.log(`  Error processing space ${space.name}: ${error.message}`);
+      }
+    }
+
+    if (totalRemovedCount > 0 || totalFailedCount > 0) {
+      console.log(
+        `Spacer items cleanup summary: ${totalRemovedCount} removed, ${totalFailedCount} failed`,
+      );
+    } else {
+      console.log('✓ No test spacer items to clean up');
+    }
+  } catch (error: any) {
+    console.error('Error cleaning up spacer items:', error.message);
+  }
+}
+
+async function verifyFinalState(
+  token: string,
+  runtimesBaseUrl: string,
+  spacerBaseUrl: string,
+) {
+  try {
+    const finalRuntimes = await runtimes.listRuntimes(token, runtimesBaseUrl);
+    const finalSnapshots = await snapshots.listSnapshots(
+      token,
+      runtimesBaseUrl,
+    );
 
     const remainingRuntimes = finalRuntimes.runtimes?.length || 0;
     const remainingTestSnapshots = (finalSnapshots.snapshots || []).filter(
@@ -181,6 +275,37 @@ async function verifyFinalState(token: string, baseUrl: string) {
         (s.name?.startsWith('test-') || s.name?.startsWith('test_')) &&
         s.status !== 'deleted',
     ).length;
+
+    // Count spacer test items
+    let remainingTestItems = 0;
+    try {
+      const spacesResponse = await users.getMySpaces(token, spacerBaseUrl);
+      if (spacesResponse.spaces) {
+        for (const space of spacesResponse.spaces) {
+          try {
+            const itemsResponse = await items.getSpaceItems(
+              spacerBaseUrl,
+              token,
+              space.id || space.uid,
+            );
+            if (itemsResponse.items) {
+              const testItems = itemsResponse.items.filter(
+                (item: any) =>
+                  item.name?.startsWith('test-') ||
+                  item.name?.startsWith('test_') ||
+                  item.name?.startsWith('Test ') ||
+                  item.name?.includes('-test-'),
+              );
+              remainingTestItems += testItems.length;
+            }
+          } catch (error) {
+            // Ignore errors for individual spaces
+          }
+        }
+      }
+    } catch (error) {
+      // Ignore errors
+    }
 
     console.log('-'.repeat(60));
     console.log('Final state after all tests:');
@@ -191,6 +316,7 @@ async function verifyFinalState(token: string, baseUrl: string) {
     console.log(
       `  - Total snapshots: ${finalSnapshots.snapshots?.length || 0}`,
     );
+    console.log(`  - Remaining test spacer items: ${remainingTestItems}`);
 
     if (remainingRuntimes > 0) {
       console.log(
@@ -201,6 +327,12 @@ async function verifyFinalState(token: string, baseUrl: string) {
     if (remainingTestSnapshots > 0) {
       console.log(
         `\nNOTE: ${remainingTestSnapshots} test snapshot(s) still active. These may require manual cleanup.`,
+      );
+    }
+
+    if (remainingTestItems > 0) {
+      console.log(
+        `\nNOTE: ${remainingTestItems} test spacer item(s) still active. These may require manual cleanup.`,
       );
     }
   } catch (error: any) {

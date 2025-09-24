@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { authentication } from '../iam';
+import { authentication } from '..';
 
 describe('IAM Authentication Unit Tests', () => {
   describe('login parameter validation', () => {

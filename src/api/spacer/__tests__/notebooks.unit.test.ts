@@ -4,13 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { notebooks } from '../spacer';
-import * as DatalayerApi from '../DatalayerApi';
-import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { MOCK_JWT_TOKEN } from './test-constants';
+import { notebooks } from '..';
+import * as DatalayerApi from '../../DatalayerApi';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../../constants';
+import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
 
 // Mock the DatalayerApi module
-vi.mock('../DatalayerApi', () => ({
+vi.mock('../../DatalayerApi', () => ({
   requestDatalayerAPI: vi.fn(),
 }));
 
@@ -46,7 +46,7 @@ describe('Spacer Notebooks Unit Tests', () => {
       formData.append('name', 'Test Notebook');
       formData.append('description', 'A test notebook');
 
-      const result = await notebooks.create(
+      const result = await notebooks.createNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         formData,
@@ -85,7 +85,7 @@ describe('Spacer Notebooks Unit Tests', () => {
       });
       formData.append('file', mockFile);
 
-      await notebooks.create(
+      await notebooks.createNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         formData,
@@ -114,7 +114,11 @@ describe('Spacer Notebooks Unit Tests', () => {
       formData.append('description', 'A test notebook');
 
       await expect(
-        notebooks.create(DEFAULT_SERVICE_URLS.SPACER, MOCK_JWT_TOKEN, formData),
+        notebooks.createNotebook(
+          DEFAULT_SERVICE_URLS.SPACER,
+          MOCK_JWT_TOKEN,
+          formData,
+        ),
       ).rejects.toThrow('API Error');
 
       console.log('API error handled correctly');
@@ -143,7 +147,7 @@ describe('Spacer Notebooks Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockGetResponse);
 
-      const result = await notebooks.get(
+      const result = await notebooks.getNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
@@ -174,7 +178,7 @@ describe('Spacer Notebooks Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(notFoundResponse);
 
-      const result = await notebooks.get(
+      const result = await notebooks.getNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'nonexistent-notebook',
@@ -194,7 +198,7 @@ describe('Spacer Notebooks Unit Tests', () => {
       mockedRequest.mockRejectedValue(new Error('Network error'));
 
       await expect(
-        notebooks.get(
+        notebooks.getNotebook(
           DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'notebook-123',
@@ -231,7 +235,7 @@ describe('Spacer Notebooks Unit Tests', () => {
         name: 'Updated Notebook',
       };
 
-      const result = await notebooks.update(
+      const result = await notebooks.updateNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
@@ -263,7 +267,7 @@ describe('Spacer Notebooks Unit Tests', () => {
         description: 'Updated description',
       };
 
-      const result = await notebooks.update(
+      const result = await notebooks.updateNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
@@ -293,7 +297,7 @@ describe('Spacer Notebooks Unit Tests', () => {
         description: 'Updated description',
       };
 
-      const result = await notebooks.update(
+      const result = await notebooks.updateNotebook(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'notebook-123',
@@ -323,7 +327,7 @@ describe('Spacer Notebooks Unit Tests', () => {
       };
 
       await expect(
-        notebooks.update(
+        notebooks.updateNotebook(
           DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'notebook-123',

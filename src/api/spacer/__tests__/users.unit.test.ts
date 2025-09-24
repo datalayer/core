@@ -4,13 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { users } from '../spacer';
-import * as DatalayerApi from '../DatalayerApi';
-import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { MOCK_JWT_TOKEN } from './test-constants';
+import { users } from '..';
+import * as DatalayerApi from '../../DatalayerApi';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../../constants';
+import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
 
 // Mock the DatalayerApi module
-vi.mock('../DatalayerApi', () => ({
+vi.mock('../../DatalayerApi', () => ({
   requestDatalayerAPI: vi.fn(),
 }));
 

@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { snapshots } from '../runtimes';
-import { MOCK_JWT_TOKEN } from './test-constants';
+import { snapshots } from '..';
+import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
 
 describe('Runtimes Snapshots Unit Tests', () => {
   describe('create parameter validation', () => {

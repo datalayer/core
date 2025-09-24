@@ -13,21 +13,16 @@
 
 import { spaces, notebooks, users, lexicals, items } from '../../../api/spacer';
 import type {
-  Space,
   CreateSpaceRequest,
-  CreateSpaceResponse,
-  CreateNotebookResponse,
-  GetNotebookResponse,
   UpdateNotebookRequest,
-  UpdateNotebookResponse,
-  CreateLexicalResponse,
-  GetLexicalResponse,
   UpdateLexicalRequest,
-  UpdateLexicalResponse,
   GetSpaceItemsResponse,
   DeleteSpaceItemResponse,
 } from '../../../api/types/spacer';
 import type { Constructor } from '../utils/mixins';
+import { Notebook } from '../models/Notebook';
+import { Lexical } from '../models/Lexical';
+import { Space } from '../models/Space';
 
 /**
  * Spacer mixin that provides workspace and content management.
@@ -44,22 +39,23 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     /**
      * Get all workspaces for the authenticated user.
      *
-     * @returns Promise resolving to user's spaces
+     * @returns Promise resolving to array of Space instances
      *
      * @example
      * ```typescript
      * const mySpaces = await sdk.getMySpaces();
      * console.log('My spaces:', mySpaces.length);
-     * mySpaces.forEach(space => {
-     *   console.log(`- ${space.name} (${space.visibility})`);
-     * });
+     * for (const space of mySpaces) {
+     *   const name = await space.getName();
+     *   console.log(`- ${name} (${space.visibility})`);
+     * }
      * ```
      */
     async getMySpaces(): Promise<Space[]> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const response = await users.getMySpaces(token, spacerRunUrl);
-      return response.spaces;
+      return response.spaces.map(s => new Space(s, this as any));
     }
 
     // ========================================================================
@@ -70,11 +66,11 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Create a new workspace.
      *
      * @param data - Space creation parameters
-     * @returns Promise resolving to created space response
+     * @returns Promise resolving to created Space instance
      *
      * @example
      * ```typescript
-     * const response = await sdk.createSpace({
+     * const space = await sdk.createSpace({
      *   name: 'My Research Project',
      *   description: 'Data analysis workspace',
      *   variant: 'default',
@@ -83,24 +79,42 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      *   seedSpaceId: 'seed-456',
      *   public: false
      * });
-     * console.log('Space created:', response.space.name);
+     * const name = await space.getName();
+     * console.log('Space created:', name);
      * ```
      */
-    async createSpace(data: CreateSpaceRequest): Promise<CreateSpaceResponse> {
+    async createSpace(data: CreateSpaceRequest): Promise<Space> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
-      return await spaces.createSpace(token, data, spacerRunUrl);
+      const response = await spaces.createSpace(token, data, spacerRunUrl);
+      return new Space(response.space, this as any);
     }
 
     // ========================================================================
     // Notebooks
     // ========================================================================
 
+    // ========================================================================
+    // Helper Functions
+    // ========================================================================
+
+    _extractNotebookId(notebookIdOrInstance: string | Notebook): string {
+      return typeof notebookIdOrInstance === 'string'
+        ? notebookIdOrInstance
+        : notebookIdOrInstance.id;
+    }
+
+    _extractLexicalId(lexicalIdOrInstance: string | Lexical): string {
+      return typeof lexicalIdOrInstance === 'string'
+        ? lexicalIdOrInstance
+        : lexicalIdOrInstance.id;
+    }
+
     /**
      * Create a new notebook.
      *
      * @param data - Notebook creation parameters
-     * @returns Promise resolving to created notebook response
+     * @returns Promise resolving to created Notebook instance
      *
      * @example
      * ```typescript
@@ -112,61 +126,83 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * // Optionally add file
      * formData.append('file', notebookFile);
      *
-     * const response = await sdk.createNotebook(formData);
-     * console.log('Notebook created:', response.notebook.name);
+     * const notebook = await sdk.createNotebook(formData);
+     * console.log('Notebook created:', notebook.name);
      * ```
      */
-    async createNotebook(data: FormData): Promise<CreateNotebookResponse> {
+    async createNotebook(data: FormData): Promise<Notebook> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await notebooks.create(spacerRunUrl, token, data);
+      const response = await notebooks.createNotebook(
+        spacerRunUrl,
+        token,
+        data,
+      );
+      return new Notebook(response.notebook, this as any);
     }
 
     /**
-     * Get a notebook by ID.
+     * Get a notebook by ID or Notebook instance.
      *
-     * @param notebookId - Notebook ID
-     * @returns Promise resolving to notebook details or undefined if not found
+     * @param idOrNotebook - Notebook ID (string) or Notebook instance
+     * @returns Promise resolving to Notebook instance
      *
      * @example
      * ```typescript
-     * const response = await sdk.getNotebook('notebook-123');
-     * if (response.notebook) {
-     *   console.log('Notebook:', response.notebook.name);
-     * } else {
-     *   console.log('Notebook not found:', response.message);
-     * }
+     * const notebook = await sdk.getNotebook('notebook-123');
+     * const refreshed = await sdk.getNotebook(notebook);
      * ```
      */
-    async getNotebook(notebookId: string): Promise<GetNotebookResponse> {
+    async getNotebook(idOrNotebook: string | Notebook): Promise<Notebook> {
+      const notebookId = this._extractNotebookId(idOrNotebook);
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await notebooks.get(spacerRunUrl, token, notebookId);
+      const response = await notebooks.getNotebook(
+        spacerRunUrl,
+        token,
+        notebookId,
+      );
+
+      if (!response.notebook) {
+        throw new Error(`Notebook with ID '${notebookId}' not found`);
+      }
+
+      return new Notebook(response.notebook, this as any);
     }
 
     /**
      * Update a notebook.
      *
-     * @param notebookId - Notebook ID
+     * @param idOrNotebook - Notebook ID (string) or Notebook instance
      * @param data - Update data with optional name and/or description
-     * @returns Promise resolving to updated notebook response
+     * @returns Promise resolving to updated Notebook instance
      *
      * @example
      * ```typescript
-     * const response = await sdk.updateNotebook('notebook-123', {
+     * const updated = await sdk.updateNotebook('notebook-123', {
      *   name: 'Updated Analysis',
      *   description: 'Updated description'
      * });
-     * console.log('Notebook updated:', response.notebook.name);
+     * const updated2 = await sdk.updateNotebook(notebook, {
+     *   name: 'Updated Analysis',
+     *   description: 'Updated description'
+     * });
      * ```
      */
     async updateNotebook(
-      notebookId: string,
+      idOrNotebook: string | Notebook,
       data: UpdateNotebookRequest,
-    ): Promise<UpdateNotebookResponse> {
+    ): Promise<Notebook> {
+      const notebookId = this._extractNotebookId(idOrNotebook);
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await notebooks.update(spacerRunUrl, token, notebookId, data);
+      const response = await notebooks.updateNotebook(
+        spacerRunUrl,
+        token,
+        notebookId,
+        data,
+      );
+      return new Notebook(response.notebook, this as any);
     }
 
     // ========================================================================
@@ -177,7 +213,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Create a new lexical document.
      *
      * @param data - Document creation parameters as FormData
-     * @returns Promise resolving to created document response
+     * @returns Promise resolving to created Lexical instance
      *
      * @example
      * ```typescript
@@ -189,61 +225,79 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * // Optionally add file
      * formData.append('file', documentFile);
      *
-     * const response = await sdk.createLexical(formData);
-     * console.log('Document created:', response.document.name);
+     * const lexical = await sdk.createLexical(formData);
+     * console.log('Document created:', lexical.name);
      * ```
      */
-    async createLexical(data: FormData): Promise<CreateLexicalResponse> {
+    async createLexical(data: FormData): Promise<Lexical> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await lexicals.createLexical(spacerRunUrl, token, data);
+      const response = await lexicals.createLexical(spacerRunUrl, token, data);
+      return new Lexical(response.document, this as any);
     }
 
     /**
-     * Get a lexical document by ID.
+     * Get a lexical document by ID or Lexical instance.
      *
-     * @param lexicalId - Document ID
-     * @returns Promise resolving to document details or undefined if not found
+     * @param idOrLexical - Document ID (string) or Lexical instance
+     * @returns Promise resolving to Lexical instance
      *
      * @example
      * ```typescript
-     * const response = await sdk.getLexical('lexical-123');
-     * if (response.document) {
-     *   console.log('Document:', response.document.name);
-     * } else {
-     *   console.log('Document not found:', response.message);
-     * }
+     * const lexical = await sdk.getLexical('lexical-123');
+     * const refreshed = await sdk.getLexical(lexical);
      * ```
      */
-    async getLexical(lexicalId: string): Promise<GetLexicalResponse> {
+    async getLexical(idOrLexical: string | Lexical): Promise<Lexical> {
+      const lexicalId = this._extractLexicalId(idOrLexical);
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await lexicals.getLexical(spacerRunUrl, token, lexicalId);
+      const response = await lexicals.getLexical(
+        spacerRunUrl,
+        token,
+        lexicalId,
+      );
+
+      if (!response.document) {
+        throw new Error(`Lexical document with ID '${lexicalId}' not found`);
+      }
+
+      return new Lexical(response.document, this as any);
     }
 
     /**
      * Update a lexical document.
      *
-     * @param lexicalId - Document ID
+     * @param idOrLexical - Document ID (string) or Lexical instance
      * @param data - Update data with optional name and/or description
-     * @returns Promise resolving to updated document response
+     * @returns Promise resolving to updated Lexical instance
      *
      * @example
      * ```typescript
-     * const response = await sdk.updateLexical('lexical-123', {
+     * const updated = await sdk.updateLexical('lexical-123', {
      *   name: 'Updated Documentation',
      *   description: 'Updated description'
      * });
-     * console.log('Document updated:', response.document.name);
+     * const updated2 = await sdk.updateLexical(lexical, {
+     *   name: 'Updated Documentation',
+     *   description: 'Updated description'
+     * });
      * ```
      */
     async updateLexical(
-      lexicalId: string,
+      idOrLexical: string | Lexical,
       data: UpdateLexicalRequest,
-    ): Promise<UpdateLexicalResponse> {
+    ): Promise<Lexical> {
+      const lexicalId = this._extractLexicalId(idOrLexical);
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await lexicals.updateLexical(spacerRunUrl, token, lexicalId, data);
+      const response = await lexicals.updateLexical(
+        spacerRunUrl,
+        token,
+        lexicalId,
+        data,
+      );
+      return new Lexical(response.document, this as any);
     }
 
     // ========================================================================

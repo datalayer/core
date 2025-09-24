@@ -4,13 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { healthz } from '../spacer';
-import { requestDatalayerAPI } from '../DatalayerApi';
+import { healthz } from '..';
+import { requestDatalayerAPI } from '../../DatalayerApi';
 
 // Mock the DatalayerAPI module
-vi.mock('../DatalayerApi');
+vi.mock('../../DatalayerApi');
 
-describe('Spacer Healthz Unit Tests', () => {
+describe('Runtimes Healthz Unit Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -19,7 +19,7 @@ describe('Spacer Healthz Unit Tests', () => {
     it('should successfully ping the service', async () => {
       const mockResponse = {
         success: true,
-        message: 'Spacer service is healthy',
+        message: 'Runtimes service is healthy',
         status: {
           status: 'OK',
         },
@@ -32,7 +32,7 @@ describe('Spacer Healthz Unit Tests', () => {
 
       expect(result).toEqual(mockResponse);
       expect(requestDatalayerAPI).toHaveBeenCalledWith({
-        url: 'https://test.datalayer.run/api/spacer/v1/ping',
+        url: 'https://test.datalayer.run/api/runtimes/v1/ping',
         method: 'GET',
       });
     });
@@ -49,7 +49,7 @@ describe('Spacer Healthz Unit Tests', () => {
 
       expect(result).toEqual(mockResponse);
       expect(requestDatalayerAPI).toHaveBeenCalledWith({
-        url: 'https://prod1.datalayer.run/api/spacer/v1/ping',
+        url: 'https://prod1.datalayer.run/api/runtimes/v1/ping',
         method: 'GET',
       });
     });

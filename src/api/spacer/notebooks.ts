@@ -13,7 +13,6 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS } from '../constants';
 import {
-  CreateNotebookRequest,
   CreateNotebookResponse,
   GetNotebookResponse,
   UpdateNotebookRequest,
@@ -27,7 +26,7 @@ import {
  * @param data - Notebook creation configuration as FormData
  * @returns Promise resolving to the created notebook response
  */
-export const create = async (
+export const createNotebook = async (
   baseUrl: string,
   token: string,
   data: FormData,
@@ -48,7 +47,7 @@ export const create = async (
  * @param id - The notebook ID
  * @returns Promise resolving to the notebook response
  */
-export const get = async (
+export const getNotebook = async (
   baseUrl: string,
   token: string,
   id: string,
@@ -68,7 +67,7 @@ export const get = async (
  * @param data - Update data containing name and/or description
  * @returns Promise resolving to the updated notebook response
  */
-export const update = async (
+export const updateNotebook = async (
   baseUrl: string,
   token: string,
   id: string,

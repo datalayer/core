@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ping } from '../iam/healthz';
-import { requestDatalayerAPI } from '../DatalayerApi';
+import { ping } from '../healthz';
+import { requestDatalayerAPI } from '../../DatalayerApi';
 
 // Mock the DatalayerAPI module
-vi.mock('../DatalayerApi');
+vi.mock('../../DatalayerApi');
 
 describe('IAM Healthz Unit Tests', () => {
   beforeEach(() => {

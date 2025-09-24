@@ -1,4 +1,4 @@
-name: TS Core Tests
+name: TS Tests
 
 on:
   push:

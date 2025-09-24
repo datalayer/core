@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { profile } from '../iam';
+import { profile } from '..';
 
 describe('IAM Profile Unit Tests', () => {
   describe('parameter validation', () => {

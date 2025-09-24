@@ -4,13 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { lexicals } from '../spacer';
-import * as DatalayerApi from '../DatalayerApi';
-import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { MOCK_JWT_TOKEN } from './test-constants';
+import { lexicals } from '..';
+import * as DatalayerApi from '../../DatalayerApi';
+import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../../constants';
+import { MOCK_JWT_TOKEN } from '../../__tests__/test-constants';
 
 // Mock the DatalayerApi module
-vi.mock('../DatalayerApi', () => ({
+vi.mock('../../DatalayerApi', () => ({
   requestDatalayerAPI: vi.fn(),
 }));
 
@@ -46,7 +46,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       formData.append('name', 'Test Document');
       formData.append('description', 'A test document');
 
-      const result = await lexicals.create(
+      const result = await lexicals.createLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         formData,
@@ -89,7 +89,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       );
       formData.append('file', mockFile);
 
-      await lexicals.create(
+      await lexicals.createLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         formData,
@@ -117,7 +117,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       formData.append('name', 'Markdown Document');
       formData.append('description', 'A markdown document');
 
-      await lexicals.create(
+      await lexicals.createLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         formData,
@@ -146,7 +146,11 @@ describe('Spacer Lexicals Unit Tests', () => {
       formData.append('description', 'A test document');
 
       await expect(
-        lexicals.create(DEFAULT_SERVICE_URLS.SPACER, MOCK_JWT_TOKEN, formData),
+        lexicals.createLexical(
+          DEFAULT_SERVICE_URLS.SPACER,
+          MOCK_JWT_TOKEN,
+          formData,
+        ),
       ).rejects.toThrow('API Error');
 
       console.log('API error handled correctly');
@@ -165,7 +169,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       formData.append('name', 'Test Document');
       formData.append('description', 'A test document');
 
-      await lexicals.create(customUrl, MOCK_JWT_TOKEN, formData);
+      await lexicals.createLexical(customUrl, MOCK_JWT_TOKEN, formData);
 
       expect(mockedRequest).toHaveBeenCalledWith({
         url: `${customUrl}${API_BASE_PATHS.SPACER}/lexicals`,
@@ -195,7 +199,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       formData.append('name', 'Test Document');
       formData.append('description', 'A test document');
 
-      const result = await lexicals.create(
+      const result = await lexicals.createLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         formData,
@@ -241,7 +245,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockGetResponse);
 
-      const result = await lexicals.get(
+      const result = await lexicals.getLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
@@ -272,7 +276,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(notFoundResponse);
 
-      const result = await lexicals.get(
+      const result = await lexicals.getLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'nonexistent-document',
@@ -292,7 +296,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       mockedRequest.mockRejectedValue(new Error('Network error'));
 
       await expect(
-        lexicals.get(
+        lexicals.getLexical(
           DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'lexical-123',
@@ -309,7 +313,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       const mockedRequest = vi.mocked(DatalayerApi.requestDatalayerAPI);
       mockedRequest.mockResolvedValue(mockGetResponse);
 
-      await lexicals.get(customUrl, MOCK_JWT_TOKEN, 'lexical-123');
+      await lexicals.getLexical(customUrl, MOCK_JWT_TOKEN, 'lexical-123');
 
       expect(mockedRequest).toHaveBeenCalledWith({
         url: `${customUrl}${API_BASE_PATHS.SPACER}/lexicals/lexical-123`,
@@ -347,7 +351,7 @@ describe('Spacer Lexicals Unit Tests', () => {
         name: 'Updated Document',
       };
 
-      const result = await lexicals.update(
+      const result = await lexicals.updateLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
@@ -379,7 +383,7 @@ describe('Spacer Lexicals Unit Tests', () => {
         description: 'Updated description',
       };
 
-      const result = await lexicals.update(
+      const result = await lexicals.updateLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
@@ -409,7 +413,7 @@ describe('Spacer Lexicals Unit Tests', () => {
         description: 'Updated description',
       };
 
-      const result = await lexicals.update(
+      const result = await lexicals.updateLexical(
         DEFAULT_SERVICE_URLS.SPACER,
         MOCK_JWT_TOKEN,
         'lexical-123',
@@ -439,7 +443,7 @@ describe('Spacer Lexicals Unit Tests', () => {
       };
 
       await expect(
-        lexicals.update(
+        lexicals.updateLexical(
           DEFAULT_SERVICE_URLS.SPACER,
           MOCK_JWT_TOKEN,
           'lexical-123',
@@ -461,7 +465,7 @@ describe('Spacer Lexicals Unit Tests', () => {
         name: 'Updated Document',
       };
 
-      await lexicals.update(
+      await lexicals.updateLexical(
         customUrl,
         MOCK_JWT_TOKEN,
         'lexical-123',

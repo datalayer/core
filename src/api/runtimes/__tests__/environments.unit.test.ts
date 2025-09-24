@@ -4,12 +4,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { environments } from '../runtimes';
-import { requestDatalayerAPI } from '../DatalayerApi';
-import { MOCK_JWT_TOKEN, MOCK_ENVIRONMENTS_RESPONSE } from './test-constants';
+import { environments } from '..';
+import { requestDatalayerAPI } from '../../DatalayerApi';
+import {
+  MOCK_JWT_TOKEN,
+  MOCK_ENVIRONMENTS_RESPONSE,
+} from '../../__tests__/test-constants';
 
 // Mock the DatalayerAPI module
-vi.mock('../DatalayerApi');
+vi.mock('../../DatalayerApi');
 
 describe('Runtimes Environments Unit Tests', () => {
   beforeEach(() => {
@@ -88,9 +91,9 @@ describe('Runtimes Environments Unit Tests', () => {
       const mockError = new Error('Network error');
       vi.mocked(requestDatalayerAPI).mockRejectedValueOnce(mockError);
 
-      await expect(environments.list(MOCK_JWT_TOKEN)).rejects.toThrow(
-        'Network error',
-      );
+      await expect(
+        environments.listEnvironments(MOCK_JWT_TOKEN),
+      ).rejects.toThrow('Network error');
     });
 
     it('should handle empty environments list', async () => {
@@ -101,7 +104,7 @@ describe('Runtimes Environments Unit Tests', () => {
       };
       vi.mocked(requestDatalayerAPI).mockResolvedValueOnce(mockResponse);
 
-      const result = await environments.list(MOCK_JWT_TOKEN);
+      const result = await environments.listEnvironments(MOCK_JWT_TOKEN);
 
       expect(result).toEqual(mockResponse);
       expect(result.environments).toHaveLength(0);

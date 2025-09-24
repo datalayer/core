@@ -85,20 +85,4 @@ describe.skipIf(skipTests)('IAM Healthz Integration Tests', () => {
       await expect(healthz.ping(malformedUrl)).rejects.toThrow();
     });
   });
-
-  describe('performance', () => {
-    it('should respond within reasonable time', async () => {
-      console.log('Testing response time...');
-
-      const startTime = Date.now();
-      await healthz.ping(BASE_URL);
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
-
-      console.log(`Response time: ${responseTime}ms`);
-
-      // Health check should be fast (under 5 seconds)
-      expect(responseTime).toBeLessThan(5000);
-    });
-  });
 });

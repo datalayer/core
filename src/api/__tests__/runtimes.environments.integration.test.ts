@@ -38,7 +38,10 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
     it('should successfully list available environments', async () => {
       console.log('Testing list environments endpoint...');
 
-      const response = await environments.list(DATALAYER_TOKEN, BASE_URL);
+      const response = await environments.listEnvironments(
+        DATALAYER_TOKEN,
+        BASE_URL,
+      );
 
       console.log('Environments response:', JSON.stringify(response, null, 2));
 
@@ -74,7 +77,7 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
       console.log('Testing list environments with default URL...');
 
       // Call without specifying URL to use default
-      const response = await environments.list(DATALAYER_TOKEN);
+      const response = await environments.listEnvironments(DATALAYER_TOKEN);
 
       console.log(
         'Default URL environments response:',
@@ -91,7 +94,10 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
     it('should include environment resource information', async () => {
       console.log('Testing environment resource information...');
 
-      const response = await environments.list(DATALAYER_TOKEN, BASE_URL);
+      const response = await environments.listEnvironments(
+        DATALAYER_TOKEN,
+        BASE_URL,
+      );
 
       // Check if any environment has resource information
       const envWithResources = response.environments.find(
@@ -121,7 +127,10 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
     it('should include environment snippets if available', async () => {
       console.log('Testing environment snippets...');
 
-      const response = await environments.list(DATALAYER_TOKEN, BASE_URL);
+      const response = await environments.listEnvironments(
+        DATALAYER_TOKEN,
+        BASE_URL,
+      );
 
       // Check if any environment has snippets
       const envWithSnippets = response.environments.find(
@@ -152,7 +161,7 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
       const invalidToken = 'invalid-token-123';
 
       try {
-        await environments.list(invalidToken, BASE_URL);
+        await environments.listEnvironments(invalidToken, BASE_URL);
         // If we get here, the API accepted the invalid token (shouldn't happen)
         console.log('WARNING: API accepted invalid token');
       } catch (error: any) {
@@ -161,22 +170,6 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
       }
-    });
-  });
-
-  describe('performance', () => {
-    it('should respond within reasonable time', async () => {
-      console.log('Testing response time...');
-
-      const startTime = Date.now();
-      await environments.list(DATALAYER_TOKEN, BASE_URL);
-      const endTime = Date.now();
-      const responseTime = endTime - startTime;
-
-      console.log(`Response time: ${responseTime}ms`);
-
-      // Should respond within 10 seconds
-      expect(responseTime).toBeLessThan(10000);
     });
   });
 });

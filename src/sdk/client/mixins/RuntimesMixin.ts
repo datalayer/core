@@ -11,13 +11,15 @@
  * runtimes, and snapshots that are mixed into the main DatalayerSDK class.
  */
 
-import { environments, runtimes } from '../../../api/runtimes';
+import { environments, runtimes, snapshots } from '../../../api/runtimes';
 import type {
   Environment,
-  Runtime,
   CreateRuntimeRequest,
+  CreateRuntimeSnapshotRequest,
 } from '../../../api/types/runtimes';
 import type { Constructor } from '../utils/mixins';
+import { Runtime } from '../models/Runtime';
+import { Snapshot } from '../models/Snapshot';
 
 /**
  * Runtimes mixin that provides computational environment and runtime management.
@@ -27,6 +29,21 @@ import type { Constructor } from '../utils/mixins';
  */
 export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
+    // ========================================================================
+    // Helper Functions
+    // ========================================================================
+
+    _extractRuntimePodName(runtimePodNameOrInstance: string | Runtime): string {
+      return typeof runtimePodNameOrInstance === 'string'
+        ? runtimePodNameOrInstance
+        : runtimePodNameOrInstance.podName;
+    }
+
+    _extractSnapshotId(snapshotIdOrInstance: string | Snapshot): string {
+      return typeof snapshotIdOrInstance === 'string'
+        ? snapshotIdOrInstance
+        : snapshotIdOrInstance.uid;
+    }
     // ========================================================================
     // Environments
     // ========================================================================
@@ -68,7 +85,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      *   environment_name: 'python-cpu-env',
      *   credits_limit: 100
      * });
-     * console.log('Runtime created:', runtime.pod_name);
+     * console.log('Runtime created:', runtime.podName);
      * ```
      */
     async createRuntime(data: CreateRuntimeRequest): Promise<Runtime> {
@@ -79,7 +96,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         data,
         runtimesRunUrl,
       );
-      return response.runtime;
+      return new Runtime(response.runtime, this as any);
     }
 
     /**
@@ -97,42 +114,141 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const response = await runtimes.listRuntimes(token, runtimesRunUrl);
-      return response.runtimes;
+      return response.runtimes.map(r => new Runtime(r, this as any));
     }
 
     /**
-     * Get details for a specific runtime by pod name.
+     * Get details for a specific runtime by pod name or Runtime instance.
      *
-     * @param podName - Runtime pod name
+     * @param podNameOrRuntime - Runtime pod name (string) or Runtime instance
      * @returns Promise resolving to runtime details
      *
      * @example
      * ```typescript
      * const runtime = await sdk.getRuntime('runtime-abc123');
-     * console.log('Runtime state:', runtime.state);
+     * const refreshed = await sdk.getRuntime(runtime);
      * ```
      */
-    async getRuntime(podName: string): Promise<Runtime> {
+    async getRuntime(podNameOrRuntime: string | Runtime): Promise<Runtime> {
+      const podName = this._extractRuntimePodName(podNameOrRuntime);
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
-      return await runtimes.getRuntime(token, podName, runtimesRunUrl);
+      const runtimeData = await runtimes.getRuntime(
+        token,
+        podName,
+        runtimesRunUrl,
+      );
+      return new Runtime(runtimeData, this as any);
     }
 
     /**
      * Delete a runtime permanently.
      *
-     * @param podName - Runtime pod name
+     * @param podNameOrRuntime - Runtime pod name (string) or Runtime instance
      *
      * @example
      * ```typescript
      * await sdk.deleteRuntime('runtime-abc123');
-     * console.log('Runtime deleted');
+     * await sdk.deleteRuntime(runtime);
      * ```
      */
-    async deleteRuntime(podName: string): Promise<void> {
+    async deleteRuntime(podNameOrRuntime: string | Runtime): Promise<void> {
+      const podName = this._extractRuntimePodName(podNameOrRuntime);
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       await runtimes.deleteRuntime(token, podName, runtimesRunUrl);
+    }
+
+    // ========================================================================
+    // Snapshots
+    // ========================================================================
+
+    /**
+     * Create a snapshot of a runtime.
+     *
+     * @param data - Snapshot creation parameters
+     * @returns Promise resolving to created snapshot
+     *
+     * @example
+     * ```typescript
+     * const snapshot = await sdk.createSnapshot({
+     *   pod_name: 'runtime-abc123',
+     *   name: 'my-checkpoint',
+     *   description: 'Before major changes'
+     * });
+     * ```
+     */
+    async createSnapshot(
+      data: CreateRuntimeSnapshotRequest,
+    ): Promise<Snapshot> {
+      const token = (this as any).getToken();
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      const response = await snapshots.createSnapshot(
+        token,
+        data,
+        runtimesRunUrl,
+      );
+      return new Snapshot(response.snapshot, this as any);
+    }
+
+    /**
+     * List all runtime snapshots.
+     *
+     * @returns Promise resolving to array of snapshots
+     *
+     * @example
+     * ```typescript
+     * const allSnapshots = await sdk.listSnapshots();
+     * console.log('Total snapshots:', allSnapshots.length);
+     * ```
+     */
+    async listSnapshots(): Promise<Snapshot[]> {
+      const token = (this as any).getToken();
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      const response = await snapshots.listSnapshots(token, runtimesRunUrl);
+      return response.snapshots.map(s => new Snapshot(s, this as any));
+    }
+
+    /**
+     * Get details for a specific snapshot by ID or Snapshot instance.
+     *
+     * @param idOrSnapshot - Snapshot ID (string) or Snapshot instance
+     * @returns Promise resolving to snapshot details
+     *
+     * @example
+     * ```typescript
+     * const snapshot = await sdk.getSnapshot('snapshot-abc123');
+     * const refreshed = await sdk.getSnapshot(snapshot);
+     * ```
+     */
+    async getSnapshot(idOrSnapshot: string | Snapshot): Promise<Snapshot> {
+      const snapshotId = this._extractSnapshotId(idOrSnapshot);
+      const token = (this as any).getToken();
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      const response = await snapshots.getSnapshot(
+        token,
+        snapshotId,
+        runtimesRunUrl,
+      );
+      return new Snapshot(response.snapshot, this as any);
+    }
+
+    /**
+     * Delete a snapshot permanently.
+     *
+     * @param idOrSnapshot - Snapshot ID (string) or Snapshot instance
+     *
+     * @example
+     * ```typescript
+     * await sdk.deleteSnapshot('snapshot-abc123');
+     * await sdk.deleteSnapshot(snapshot);
+     * ```
+     */
+    async deleteSnapshot(idOrSnapshot: string | Snapshot): Promise<void> {
+      const snapshotId = this._extractSnapshotId(idOrSnapshot);
+      const token = (this as any).getToken();
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      await snapshots.deleteSnapshot(token, snapshotId, runtimesRunUrl);
     }
   };
 }
