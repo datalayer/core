@@ -13,6 +13,7 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS } from '../constants';
 import {
+  CreateNotebookRequest,
   CreateNotebookResponse,
   GetNotebookResponse,
   UpdateNotebookRequest,
@@ -23,20 +24,37 @@ import {
  * Create a new Jupyter notebook.
  * @param baseUrl - Base URL for the API
  * @param token - Authentication token
- * @param data - Notebook creation configuration as FormData
+ * @param data - Notebook creation configuration
  * @returns Promise resolving to the created notebook response
  */
 export const createNotebook = async (
   baseUrl: string,
   token: string,
-  data: FormData,
+  data: CreateNotebookRequest,
 ): Promise<CreateNotebookResponse> => {
+  // Create FormData for multipart/form-data request (like the working example)
+  const formData = new FormData();
+  formData.append('spaceId', data.spaceId);
+  formData.append('name', data.name);
+  formData.append('notebookType', data.notebookType || 'jupyter'); // Required field
+  formData.append('description', data.description || ''); // Required field - can be empty
+
+  // Add file if provided
+  if (data.file) {
+    if (data.file instanceof File) {
+      formData.append('file', data.file, data.file.name);
+    } else {
+      // Handle Blob case
+      formData.append('file', data.file, `${data.name}.ipynb`);
+    }
+  }
+
+  const url = `${baseUrl}${API_BASE_PATHS.SPACER}/notebooks`;
   return requestDatalayerAPI<CreateNotebookResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.SPACER}/notebooks`,
+    url,
     method: 'POST',
     token,
-    body: data,
-    // FormData automatically sets the correct Content-Type with boundary
+    body: formData,
   });
 };
 

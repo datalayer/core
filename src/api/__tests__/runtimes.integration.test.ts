@@ -3,9 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { describe, it, expect, beforeAll, test } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, test } from 'vitest';
 import { runtimes, snapshots } from '../runtimes';
-import { testConfig, debugLog, skipIfNoToken } from './test-config';
+import {
+  testConfig,
+  debugLog,
+  skipIfNoToken,
+} from '../../__tests__/shared/test-config';
+import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 let DATALAYER_TOKEN: string;
 let BASE_URL: string;
@@ -31,6 +36,18 @@ beforeAll(async () => {
   debugLog('Test configuration loaded');
   debugLog('Base URL:', BASE_URL);
   debugLog('Token available:', !!DATALAYER_TOKEN);
+
+  // Pre-test cleanup
+  await performCleanup('setup');
+});
+
+afterAll(async () => {
+  if (skipTests) {
+    return;
+  }
+
+  // Post-test cleanup
+  await performCleanup('teardown');
 });
 
 describe.skipIf(skipTests)(

@@ -5,7 +5,11 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { healthz } from '../iam';
-import { testConfig, debugLog, skipIfNoToken } from './test-config';
+import {
+  testConfig,
+  debugLog,
+  skipIfNoToken,
+} from '../../__tests__/shared/test-config';
 
 let BASE_URL: string;
 

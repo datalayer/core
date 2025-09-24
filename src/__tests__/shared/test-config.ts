@@ -5,7 +5,7 @@
 
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { DEFAULT_SERVICE_URLS } from '../constants';
+import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 
 /**
  * Load test environment configuration

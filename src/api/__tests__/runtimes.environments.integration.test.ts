@@ -5,7 +5,11 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { environments } from '../runtimes';
-import { testConfig, debugLog, skipIfNoToken } from './test-config';
+import {
+  testConfig,
+  debugLog,
+  skipIfNoToken,
+} from '../../__tests__/shared/test-config';
 
 let DATALAYER_TOKEN: string;
 let BASE_URL: string;

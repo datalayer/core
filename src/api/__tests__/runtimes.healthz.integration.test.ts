@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { healthz } from '../runtimes';
-import { testConfig, skipIfNoToken } from './test-config';
+import { testConfig, skipIfNoToken } from '../../__tests__/shared/test-config';
 
 /**
  * Integration tests for Runtimes health check API

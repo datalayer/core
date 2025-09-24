@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { healthz } from '../spacer';
-import { testConfig, skipIfNoToken } from './test-config';
+import { testConfig, skipIfNoToken } from '../../__tests__/shared/test-config';
 
 /**
  * Integration tests for Spacer health check API

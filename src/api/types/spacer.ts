@@ -118,6 +118,18 @@ export interface GetNotebookResponse {
 }
 
 /**
+ * Request payload for creating a notebook
+ * @interface CreateNotebookRequest
+ */
+export interface CreateNotebookRequest {
+  spaceId: string;
+  notebookType: string;
+  name: string;
+  description: string;
+  file?: File | Blob;
+}
+
+/**
  * Request payload for updating a notebook
  * @interface UpdateNotebookRequest
  */
@@ -166,7 +178,7 @@ export interface Lexical {
 }
 
 /**
- * Request payload for creating a Lexical document (multipart/form-data)
+ * Request payload for creating a Lexical document
  * @interface CreateLexicalRequest
  */
 export interface CreateLexicalRequest {
@@ -174,7 +186,7 @@ export interface CreateLexicalRequest {
   documentType: string;
   name: string;
   description: string;
-  file?: File | Blob; // Optional file for document content
+  file?: File | Blob;
 }
 
 /**

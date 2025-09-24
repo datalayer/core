@@ -133,7 +133,11 @@ export class Space {
    */
   get createdAt(): Date {
     this._checkDeleted();
-    return new Date(this._data.created_at || '');
+    const dateStr = this._data.created_at;
+    if (!dateStr) {
+      return new Date(); // Return current date if no date available
+    }
+    return new Date(dateStr);
   }
 
   /**
@@ -198,7 +202,11 @@ export class Space {
   async getUpdatedAt(): Promise<Date> {
     this._checkDeleted();
     await this._refreshData();
-    return new Date(this._data.updated_at || this._data.created_at || '');
+    const dateStr = this._data.updated_at || this._data.created_at;
+    if (!dateStr) {
+      return new Date(); // Return current date if no date available
+    }
+    return new Date(dateStr);
   }
 
   // ========================================================================

@@ -14,7 +14,9 @@
 import { spaces, notebooks, users, lexicals, items } from '../../../api/spacer';
 import type {
   CreateSpaceRequest,
+  CreateNotebookRequest,
   UpdateNotebookRequest,
+  CreateLexicalRequest,
   UpdateLexicalRequest,
   GetSpaceItemsResponse,
   DeleteSpaceItemResponse,
@@ -118,19 +120,15 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      *
      * @example
      * ```typescript
-     * const formData = new FormData();
-     * formData.append('spaceId', 'space-123');
-     * formData.append('notebookType', 'jupyter');
-     * formData.append('name', 'Data Analysis');
-     * formData.append('description', 'Analysis notebook');
-     * // Optionally add file
-     * formData.append('file', notebookFile);
-     *
-     * const notebook = await sdk.createNotebook(formData);
-     * console.log('Notebook created:', notebook.name);
+     * const notebook = await sdk.createNotebook({
+     *   spaceId: 'space-123',
+     *   name: 'Data Analysis',
+     *   description: 'Analysis notebook',
+     *   notebookType: 'jupyter',
+     * });
      * ```
      */
-    async createNotebook(data: FormData): Promise<Notebook> {
+    async createNotebook(data: CreateNotebookRequest): Promise<Notebook> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await notebooks.createNotebook(
@@ -212,24 +210,20 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     /**
      * Create a new lexical document.
      *
-     * @param data - Document creation parameters as FormData
+     * @param data - Document creation parameters
      * @returns Promise resolving to created Lexical instance
      *
      * @example
      * ```typescript
-     * const formData = new FormData();
-     * formData.append('spaceId', 'space-123');
-     * formData.append('documentType', 'lexical');
-     * formData.append('name', 'Project Documentation');
-     * formData.append('description', 'Main project docs');
-     * // Optionally add file
-     * formData.append('file', documentFile);
-     *
-     * const lexical = await sdk.createLexical(formData);
-     * console.log('Document created:', lexical.name);
+     * const lexical = await sdk.createLexical({
+     *   spaceId: 'space-123',
+     *   name: 'Project Documentation',
+     *   description: 'Main project docs',
+     *   documentType: 'document',
+     * });
      * ```
      */
-    async createLexical(data: FormData): Promise<Lexical> {
+    async createLexical(data: CreateLexicalRequest): Promise<Lexical> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await lexicals.createLexical(spacerRunUrl, token, data);

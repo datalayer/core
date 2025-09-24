@@ -3,8 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { snapshots, runtimes } from '../runtimes';
-import { users, items } from '../spacer';
+import { snapshots, runtimes } from '../../api/runtimes';
+import { users, items } from '../../api/spacer';
 import { testConfig } from './test-config';
 
 /**
@@ -37,7 +37,7 @@ export async function performCleanup(phase: 'setup' | 'teardown') {
   // Clean up test snapshots
   await cleanupTestSnapshots(DATALAYER_TOKEN, RUNTIMES_BASE_URL, phaseLabel);
 
-  // Clean up spacer items (notebooks, lexicals, etc.)
+  // Clean up ALL spacer items (notebooks, lexicals, etc.)
   await cleanupSpacerItems(DATALAYER_TOKEN, SPACER_BASE_URL, phaseLabel);
 
   // Final verification (only for teardown)
@@ -182,7 +182,7 @@ async function cleanupSpacerItems(
 ) {
   try {
     console.log(
-      `Cleaning up test spacer items${phaseLabel === 'POST-TEST' ? ' created during tests' : ''}...`,
+      `Cleaning up ALL spacer items${phaseLabel === 'POST-TEST' ? ' (complete cleanup)' : ''}...`,
     );
 
     // Get user spaces
@@ -204,44 +204,38 @@ async function cleanupSpacerItems(
         const itemsResponse = await items.getSpaceItems(
           baseUrl,
           token,
-          space.id || space.uid,
+          space.uid,
         );
 
         if (!itemsResponse.items || itemsResponse.items.length === 0) {
           continue;
         }
 
-        // Filter for test items (ones that start with "test-" or "test_" or "Test ")
-        const testItems = itemsResponse.items.filter(
-          (item: any) =>
-            item.name?.startsWith('test-') ||
-            item.name?.startsWith('test_') ||
-            item.name?.startsWith('Test ') ||
-            item.name?.includes('-test-'),
-        );
-
-        if (testItems.length === 0) {
-          continue;
-        }
-
+        const spaceName =
+          (space as any).name || (space as any).name_t || 'Unknown Space';
         console.log(
-          `  Space "${space.name}": Found ${testItems.length} test item(s)`,
+          `  Space "${spaceName}": Found ${itemsResponse.items.length} item(s) to clean up`,
         );
 
-        for (const item of testItems) {
+        for (const item of itemsResponse.items) {
           try {
-            await items.deleteItem(baseUrl, token, item.id);
-            console.log(`    ✓ Removed item: ${item.name}`);
+            // API returns uid field but TypeScript interface doesn't include it
+            await items.deleteItem(baseUrl, token, (item as any).uid);
+            console.log(
+              `    ✓ Removed item: ${(item as any).name || (item as any).name_t}`,
+            );
             totalRemovedCount++;
           } catch (error: any) {
             console.log(
-              `    ✗ Failed to remove item ${item.name}: ${error.message}`,
+              `    ✗ Failed to remove item ${(item as any).name || (item as any).name_t}: ${error.message}`,
             );
             totalFailedCount++;
           }
         }
       } catch (error: any) {
-        console.log(`  Error processing space ${space.name}: ${error.message}`);
+        const spaceName =
+          (space as any).name || (space as any).name_t || 'Unknown Space';
+        console.log(`  Error processing space ${spaceName}: ${error.message}`);
       }
     }
 
@@ -250,7 +244,7 @@ async function cleanupSpacerItems(
         `Spacer items cleanup summary: ${totalRemovedCount} removed, ${totalFailedCount} failed`,
       );
     } else {
-      console.log('✓ No test spacer items to clean up');
+      console.log('✓ No spacer items to clean up');
     }
   } catch (error: any) {
     console.error('Error cleaning up spacer items:', error.message);
@@ -286,17 +280,10 @@ async function verifyFinalState(
             const itemsResponse = await items.getSpaceItems(
               spacerBaseUrl,
               token,
-              space.id || space.uid,
+              space.uid,
             );
             if (itemsResponse.items) {
-              const testItems = itemsResponse.items.filter(
-                (item: any) =>
-                  item.name?.startsWith('test-') ||
-                  item.name?.startsWith('test_') ||
-                  item.name?.startsWith('Test ') ||
-                  item.name?.includes('-test-'),
-              );
-              remainingTestItems += testItems.length;
+              remainingTestItems += itemsResponse.items.length;
             }
           } catch (error) {
             // Ignore errors for individual spaces
@@ -316,7 +303,7 @@ async function verifyFinalState(
     console.log(
       `  - Total snapshots: ${finalSnapshots.snapshots?.length || 0}`,
     );
-    console.log(`  - Remaining test spacer items: ${remainingTestItems}`);
+    console.log(`  - Remaining spacer items: ${remainingTestItems}`);
 
     if (remainingRuntimes > 0) {
       console.log(
@@ -332,7 +319,7 @@ async function verifyFinalState(
 
     if (remainingTestItems > 0) {
       console.log(
-        `\nNOTE: ${remainingTestItems} test spacer item(s) still active. These may require manual cleanup.`,
+        `\nNOTE: ${remainingTestItems} spacer item(s) still active. These may require manual cleanup.`,
       );
     }
   } catch (error: any) {
