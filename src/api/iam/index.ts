@@ -7,14 +7,26 @@
  * @module api/iam
  * @description IAM (Identity and Access Management) API exports.
  *
- * Provides organized access to authentication and user profile functionality.
+ * Provides organized access to authentication, OAuth2, and user profile functionality.
  */
 
 export * as authentication from './authentication';
+export * as oauth2 from './oauth2';
 export * as profile from './profile';
 export * as healthz from './healthz';
 
 // For backward compatibility, export the old API structure
-export { login, logout, proxyAuth } from './authentication';
+export { login, logout, checkAuth } from './authentication';
+export {
+  getOAuth2AuthzUrl,
+  getOAuth2AuthzUrlForLink,
+  handleGitHubOAuth2Callback,
+  handleLinkedInOAuth2Callback,
+  handleOktaOAuth2Callback,
+  type OAuth2Provider,
+  type OAuth2AuthzUrlResponse,
+  type OAuth2CallbackParams,
+  type OAuth2CallbackResponse,
+} from './oauth2';
 export { me, whoami } from './profile';
 export { ping } from './healthz';

@@ -110,21 +110,20 @@ export const logout = async (
 };
 
 /**
- * Validate authentication through proxy
+ * Check authentication status
  * @param token - Authentication token (required)
  * @param baseUrl - Base URL for the API (defaults to production IAM URL)
- * @returns Promise that resolves if authenticated (200), rejects if unauthorized (401) or forbidden (403)
+ * @returns Promise that resolves if authenticated (200), rejects if unauthorized (401)
  * @throws {Error} If authentication token is missing or invalid
  *
  * @description
- * This endpoint validates authentication status through a proxy.
+ * This endpoint checks authentication status, useful for reverse proxy validation.
  *
  * Expected status codes:
  * - 200: Authenticated successfully
  * - 401: Unauthorized - invalid or missing credentials
- * - 403: Forbidden - valid credentials but access denied
  */
-export const proxyAuth = async (
+export const checkAuth = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
 ): Promise<void> => {
@@ -132,7 +131,7 @@ export const proxyAuth = async (
 
   try {
     const response = await requestDatalayerAPI<void>({
-      url: `${baseUrl}${API_BASE_PATHS.IAM}/proxy-auth`,
+      url: `${baseUrl}${API_BASE_PATHS.IAM}/auth`,
       method: 'GET',
       token,
     });
@@ -148,16 +147,13 @@ export const proxyAuth = async (
       // Expected errors
       if (status === 401) {
         throw new Error(
-          `Proxy authentication failed: Unauthorized (${status})`,
+          `Authentication check failed: Unauthorized (${status})`,
         );
-      }
-      if (status === 403) {
-        throw new Error(`Proxy authentication failed: Forbidden (${status})`);
       }
 
       // Unexpected status codes
       throw new Error(
-        `Proxy authentication failed: Unexpected status code ${status} - ${error.message}`,
+        `Authentication check failed: Unexpected status code ${status} - ${error.message}`,
       );
     }
 
