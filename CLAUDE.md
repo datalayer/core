@@ -183,27 +183,45 @@ Features:
 - Automatic state management
 - Mixins for organized functionality
 
+**SDK Client Structure**:
+- `storage/`: Platform-agnostic storage implementations (Browser, Node, Electron)
+- `state/`: Service-specific state managers with TTL caching
+- `models/`: Rich domain models (User, Runtime, Space, Notebook, Lexical, Snapshot)
+- `mixins/`: Service mixins (IAMMixin, RuntimesMixin, SpacerMixin, HealthMixin)
+- `base.ts`: SDK base class composition
+
 ### Key Changes and Fixes
 
 **Authentication**:
 - Fixed logout endpoint to use GET method (was incorrectly using POST)
 - Proper error handling for invalid tokens
+- OAuth support limited to GitHub and LinkedIn only (removed Google/Microsoft)
 
 **Model Lifecycle Management**:
 - Models track deletion state to prevent operations on deleted resources
 - Runtime and Snapshot deletion now marks instances as deleted
 - All model methods check deletion state before operations
 
+**Platform Abstraction Layer** (January 2025):
+- Implemented PlatformStorage interface with 3 implementations (Browser, Node, Electron)
+- State managers with TTL-based caching (IAMState, RuntimesState, SpacerState)
+- RuntimesState tracks runtime keys for proper getCachedRuntimes() implementation
+- All storage implementations support encryption
+
 **Test Infrastructure**:
+- 100% test pass rate achieved (247 tests passing)
 - Consolidated test configuration (removed redundant `shouldRunExpensive()`)
 - Integration tests are self-contained (no inter-test dependencies)
 - Proper cleanup in test teardown
 - Environment variable `DATALAYER_TEST_SKIP_EXPENSIVE=false` enables all tests
+- Fixed empty string handling in BrowserStorage
+- Fixed OAuth provider recognition in User model tests
 
 **TypeScript Improvements**:
 - Fixed strict null checks in model constructors
 - Proper typing for SDK mixins and models
 - Consistent error handling across all models
+- Fixed unused variable warnings in test files
 
 ### SDK Models
 

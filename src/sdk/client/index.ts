@@ -135,3 +135,10 @@ export class DatalayerSDK extends DatalayerSDKWithMixins {
 // Export configuration interface and base for extensibility
 export type { DatalayerSDKConfig };
 export { DatalayerSDKBase };
+
+// Export models for use by consumers
+export { User, GitHubUser } from './models/User';
+export type { AuthProvider, GitHubUserData } from './models/User';
+
+// Export mixin types
+export type { OAuthConfig } from './mixins/IAMMixin';
