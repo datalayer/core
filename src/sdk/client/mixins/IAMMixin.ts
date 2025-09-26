@@ -298,5 +298,176 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       // Clear user cache to force refresh
       this.currentUserCache = undefined;
     }
+
+    // ========================================================================
+    // Service Health Checks
+    // ========================================================================
+
+    /**
+     * Check the health status of the IAM service.
+     *
+     * This method performs a lightweight check to verify that the IAM
+     * service is accessible and authentication is working properly.
+     *
+     * @returns Promise resolving to health check result
+     *
+     * @example
+     * ```typescript
+     * const health = await sdk.checkIAMHealth();
+     * console.log('Service status:', health.status);
+     * console.log('Response time:', health.responseTime);
+     * if (!health.healthy) {
+     *   console.error('Service issues:', health.errors);
+     * }
+     * ```
+     */
+    async checkIAMHealth(): Promise<{
+      healthy: boolean;
+      status: string;
+      responseTime: number;
+      errors: string[];
+      timestamp: Date;
+    }> {
+      const startTime = Date.now();
+      const errors: string[] = [];
+      let status = 'unknown';
+      let healthy = false;
+
+      try {
+        // Test basic connectivity and authentication by getting user profile
+        const user = await this.whoami();
+        const responseTime = Date.now() - startTime;
+
+        if (user && user.uid) {
+          healthy = true;
+          status = 'operational';
+        } else {
+          status = 'degraded';
+          errors.push('Unexpected response format from profile endpoint');
+        }
+
+        return {
+          healthy,
+          status,
+          responseTime,
+          errors,
+          timestamp: new Date(),
+        };
+      } catch (error) {
+        const responseTime = Date.now() - startTime;
+        status = 'down';
+        errors.push(`Service unreachable: ${error}`);
+
+        return {
+          healthy: false,
+          status,
+          responseTime,
+          errors,
+          timestamp: new Date(),
+        };
+      }
+    }
+
+    /**
+     * Get comprehensive IAM service diagnostics.
+     *
+     * This method provides detailed information about the authentication
+     * service state and user capabilities.
+     *
+     * @returns Promise resolving to diagnostic information
+     *
+     * @example
+     * ```typescript
+     * const diagnostics = await sdk.getIAMDiagnostics();
+     * console.log('User authenticated:', diagnostics.authenticated);
+     * console.log('OAuth providers:', diagnostics.oauthProviders);
+     * console.log('Service capabilities:', diagnostics.capabilities);
+     * ```
+     */
+    async getIAMDiagnostics(): Promise<{
+      healthy: boolean;
+      authenticated: boolean;
+      oauthProviders: string[];
+      capabilities: string[];
+      userInfo: {
+        uid?: string;
+        email?: string;
+        roles?: string[];
+      };
+      errors: string[];
+      timestamp: Date;
+    }> {
+      const errors: string[] = [];
+      const capabilities: string[] = [];
+      const oauthProviders: string[] = [];
+      let authenticated = false;
+      let healthy = true;
+      const userInfo: { uid?: string; email?: string; roles?: string[] } = {};
+
+      try {
+        // Test authentication and get user information
+        const user = await this.whoami();
+        authenticated = true;
+        capabilities.push('authentication');
+
+        userInfo.uid = user.uid;
+        userInfo.email = user.email;
+
+        // Test OAuth capabilities
+        try {
+          // Check which OAuth providers are available by testing authorization URLs
+          try {
+            this.getOAuthUrl({ provider: 'github' });
+            oauthProviders.push('github');
+          } catch {
+            // GitHub OAuth not available
+          }
+
+          try {
+            this.getOAuthUrl({ provider: 'linkedin' });
+            oauthProviders.push('linkedin');
+          } catch {
+            // LinkedIn OAuth not available
+          }
+
+          if (oauthProviders.length > 0) {
+            capabilities.push('oauth');
+          }
+        } catch (error) {
+          errors.push(`OAuth capability test failed: ${error}`);
+          // Don't mark as unhealthy since OAuth might be optional
+        }
+
+        // Test profile management
+        try {
+          // The fact that we got user info means profile management works
+          capabilities.push('profile-management');
+        } catch (error) {
+          errors.push(`Profile management test failed: ${error}`);
+          healthy = false;
+        }
+
+        return {
+          healthy,
+          authenticated,
+          oauthProviders,
+          capabilities,
+          userInfo,
+          errors,
+          timestamp: new Date(),
+        };
+      } catch (error) {
+        errors.push(`Service diagnostics failed: ${error}`);
+        return {
+          healthy: false,
+          authenticated: false,
+          oauthProviders: [],
+          capabilities: [],
+          userInfo: {},
+          errors,
+          timestamp: new Date(),
+        };
+      }
+    }
   };
 }

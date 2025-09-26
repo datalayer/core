@@ -48,7 +48,8 @@ import { Snapshot } from './Snapshot';
  * ```
  */
 export class Runtime {
-  protected _data: RuntimeData;
+  /** @internal */
+  _data: RuntimeData;
   private _sdk: DatalayerSDK;
   private _deleted: boolean = false;
 
