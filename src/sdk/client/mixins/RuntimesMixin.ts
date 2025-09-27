@@ -11,7 +11,9 @@
  * runtimes, and snapshots that are mixed into the main DatalayerSDK class.
  */
 
-import { environments, runtimes, snapshots } from '../../../api/runtimes';
+import * as environments from '../../../api/runtimes/environments';
+import * as runtimes from '../../../api/runtimes/runtimes';
+import * as snapshots from '../../../api/runtimes/snapshots';
 import type {
   Environment,
   CreateRuntimeRequest,

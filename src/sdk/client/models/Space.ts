@@ -13,13 +13,14 @@
 
 import type {
   Space as SpaceData,
-  SpaceItem,
   GetSpaceItemsResponse,
 } from '../../../api/types/spacer';
-import { users, items } from '../../../api/spacer';
+import * as users from '../../../api/spacer/users';
+import * as items from '../../../api/spacer/items';
 import type { DatalayerSDK } from '../index';
 import { Notebook } from './Notebook';
 import { Lexical } from './Lexical';
+import { Cell } from './Cell';
 
 /**
  * Space domain model that wraps API responses with convenient methods.
@@ -185,6 +186,18 @@ export class Space {
   }
 
   /**
+   * Get the cached name of the space (synchronous).
+   *
+   * Returns the name from cached data without making an API call.
+   *
+   * @returns Cached space name
+   */
+  get name(): string {
+    this._checkDeleted();
+    return this._data.name || this._data.name_t || '';
+  }
+
+  /**
    * Get the current description of the space.
    *
    * @returns Promise resolving to space description
@@ -192,6 +205,18 @@ export class Space {
   async getDescription(): Promise<string> {
     this._checkDeleted();
     await this._refreshData();
+    return this._data.description || this._data.description_t || '';
+  }
+
+  /**
+   * Get the cached description of the space (synchronous).
+   *
+   * Returns the description from cached data without making an API call.
+   *
+   * @returns Cached space description
+   */
+  get description(): string {
+    this._checkDeleted();
     return this._data.description || this._data.description_t || '';
   }
 
@@ -214,24 +239,53 @@ export class Space {
     return new Date(dateStr);
   }
 
+  /**
+   * Get the cached update time (synchronous).
+   *
+   * Returns the update time from cached data without making an API call.
+   *
+   * @returns Cached update time or null
+   */
+  get updatedAt(): Date | null {
+    this._checkDeleted();
+    const dateStr =
+      (this._data as any).last_update_ts_dt ||
+      this._data.updated_at ||
+      (this._data as any).creation_ts_dt ||
+      this._data.created_at;
+    if (!dateStr) {
+      return null;
+    }
+    return new Date(dateStr);
+  }
+
   // ========================================================================
   // Space-specific Methods
   // ========================================================================
 
   /**
-   * Get all items in this space.
+   * Get all items in this space as model instances.
    *
-   * @returns Promise resolving to array of space items
+   * @returns Promise resolving to array of Notebook, Lexical, and Cell model instances
    *
    * @example
    * ```typescript
    * const items = await space.getItems();
-   * items.forEach(item => {
-   *   console.log(`${item.name} (${item.type})`);
-   * });
+   * for (const item of items) {
+   *   if (item instanceof Notebook) {
+   *     console.log('Notebook:', item.name);
+   *     const content = await item.getContent();
+   *   } else if (item instanceof Lexical) {
+   *     console.log('Document:', item.name);
+   *     const content = await item.getContent();
+   *   } else if (item instanceof Cell) {
+   *     console.log('Cell:', item.name, item.cellType);
+   *     const content = await item.getContent();
+   *   }
+   * }
    * ```
    */
-  async getItems(): Promise<SpaceItem[]> {
+  async getItems(): Promise<(Notebook | Lexical | Cell)[]> {
     this._checkDeleted();
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
@@ -240,7 +294,21 @@ export class Space {
       this.uid,
       spacerRunUrl,
     );
-    return response.items;
+
+    // Convert raw items to model instances
+    const modelItems: (Notebook | Lexical | Cell)[] = [];
+    for (const item of response.items) {
+      if (item.type === 'notebook') {
+        modelItems.push(new Notebook(item as any, this._sdk));
+      } else if (item.type === 'lexical') {
+        modelItems.push(new Lexical(item as any, this._sdk));
+      } else if (item.type === 'cell') {
+        modelItems.push(new Cell(item as any, this._sdk));
+      }
+      // Skip unknown types
+    }
+
+    return modelItems;
   }
 
   /**
@@ -298,22 +366,23 @@ export class Space {
   // ========================================================================
 
   /**
-   * Get raw space data object with latest information.
+   * Get raw space data object.
    *
-   * This method ensures the returned data includes the most recent information
-   * by refreshing from the API before returning.
+   * Note: This returns the current cached data without refreshing.
+   * Use refresh() method if you need to update the data first.
    *
-   * @returns Promise resolving to raw space data
+   * @returns Raw space data object
    *
    * @example
    * ```typescript
-   * const latestData = await space.toJSON();
-   * console.log('Current name:', latestData.name);
+   * const data = space.toJSON();
+   * console.log('Cached name:', data.name);
    * ```
    */
-  async toJSON(): Promise<SpaceData> {
+  toJSON(): SpaceData {
     this._checkDeleted();
-    await this._refreshData();
+    // Don't refresh here as this method is called by JSON.stringify
+    // and could cause issues with circular references or async operations
     return this._data;
   }
 

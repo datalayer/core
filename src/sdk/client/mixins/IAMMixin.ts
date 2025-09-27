@@ -11,8 +11,13 @@
  * that are mixed into the main DatalayerSDK class.
  */
 
-import { authentication, profile } from '../../../api/iam';
-import type { LoginRequest, LoginResponse } from '../../../api/types/iam';
+import * as authentication from '../../../api/iam/authentication';
+import * as profile from '../../../api/iam/profile';
+import type {
+  LoginRequest,
+  LoginResponse,
+  User as ApiUser,
+} from '../../../api/types/iam';
 import type { Constructor } from '../utils/mixins';
 import { User, GitHubUser, type GitHubUserData } from '../models/User';
 
@@ -52,13 +57,66 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
     async whoami(): Promise<User> {
       const token = (this as any).getToken();
       const iamRunUrl = (this as any).getIamRunUrl();
-      const response = await profile.me(token, iamRunUrl);
+
+      console.log(
+        '[IAMMixin] whoami called with token:',
+        token ? 'present' : 'missing',
+      );
+      console.log('[IAMMixin] IAM URL:', iamRunUrl);
+
+      let response;
+      try {
+        response = await profile.whoami(token, iamRunUrl);
+        console.log('[IAMMixin] API raw response:', response);
+        console.log('[IAMMixin] Response type:', typeof response);
+        console.log(
+          '[IAMMixin] Response keys:',
+          response ? Object.keys(response) : 'null',
+        );
+      } catch (error) {
+        console.error('[IAMMixin] API call failed:', error);
+        throw error;
+      }
+
+      // Handle the whoami response format
+      let userData: ApiUser;
+
+      if (!response) {
+        console.error('[IAMMixin] No response received from API');
+        throw new Error(`No response from profile.whoami API`);
+      }
+
+      // Check if response has the expected wrapper structure with profile
+      if (response.profile) {
+        console.log(
+          '[IAMMixin] Response has wrapper structure with .profile property',
+        );
+        // Transform the API response to match the User interface
+        // Note: whoami returns fields with suffixes like _s, _t
+        userData = {
+          id: response.profile.id,
+          uid: response.profile.uid,
+          email: response.profile.email_s,
+          handle: response.profile.handle_s,
+          first_name: response.profile.first_name_t,
+          last_name: response.profile.last_name_t,
+          // whoami doesn't return avatar_url, so we leave it undefined
+          avatar_url: undefined,
+        };
+      }
+      // Fallback for unexpected format
+      else {
+        console.error('[IAMMixin] Unexpected response format:', response);
+        throw new Error(
+          `Unexpected response format from profile.whoami API: ${JSON.stringify(response)}`,
+        );
+      }
 
       // Create or update cached User instance
       if (this.currentUserCache) {
-        this.currentUserCache.update(response.me);
+        this.currentUserCache.update(userData);
       } else {
-        this.currentUserCache = new User(response.me, this as any);
+        this.currentUserCache = new User(userData, this as any);
       }
 
       return this.currentUserCache;

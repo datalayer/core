@@ -2,6 +2,48 @@
 
 Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python/TypeScript codebase with server-side Python and client-side React components.
 
+## ⚠️ CRITICAL: Import/Export Pattern Issue (January 2025)
+
+**NEVER use destructured imports from `src/api/spacer`!**
+
+### The Problem
+The spacer API exports use namespace pattern in `src/api/spacer/index.js`:
+```javascript
+export * as items from './items';
+export * as users from './users';
+export * as notebooks from './notebooks';
+export * as lexicals from './lexicals';
+export * as cells from './cells';
+```
+
+This creates a structure like `spacerAPI.items`, NOT direct named exports.
+
+### ❌ WRONG - Destructured Import (causes runtime errors):
+```javascript
+import { items, users, notebooks } from '../../../api/spacer';
+const response = await items.getSpaceItems(...);  // ❌ items is undefined
+```
+
+### ✅ CORRECT - Namespace Import:
+```javascript
+import * as spacerAPI from '../../../api/spacer';
+const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correctly
+```
+
+### Why This Happens
+- Webpack bundling works fine (no build errors)
+- Runtime fails because destructured import `{ items }` expects named export
+- Namespace export `export * as items` creates nested structure instead
+- Result: `items` becomes `undefined` at runtime, causing "Cannot read properties of undefined"
+
+### Files Fixed (January 2025)
+- `lib/sdk/client/models/Space.js`
+- `lib/sdk/client/models/Notebook.js`
+- `lib/sdk/client/models/Lexical.js`
+- `lib/sdk/client/models/Item.js`
+
+**Always use namespace imports for spacer API!**
+
 ## Project Structure
 
 - **Source code**: `src/` contains the TypeScript/React library code
@@ -255,8 +297,52 @@ Features:
   - npm run format
   - npm run lint
   - npm run type-check
-  - npm run build (ensure it builds)
+  - npm run build:lib (ensure it builds with fresh output)
 - Run integration tests: `npm run test:integration`
 - Avoid old-school require imports
 - Use playwright MCP to inspect things directly
 - Check API.md for comprehensive examples of both raw API and SDK usage
+
+## Critical Lessons Learned (January 2025)
+
+### Module Import/Export Issues
+**Problem**: Webpack couldn't resolve namespace exports when destructured in consuming code.
+**Symptom**: Runtime error "Cannot read properties of undefined (reading 'getSpaceItems')"
+**Root Cause**: Using `export * as items from './items'` in index files, then importing as `import * as spacerAPI` and accessing `spacerAPI.items.getSpaceItems()`
+**Solution**: Use direct module imports instead:
+```typescript
+// BAD - webpack can't resolve this properly
+import * as spacerAPI from '../../../api/spacer';
+await spacerAPI.items.getSpaceItems(...);
+
+// GOOD - direct imports work
+import * as items from '../../../api/spacer/items';
+await items.getSpaceItems(...);
+```
+
+### Code Deduplication with Abstract Base Classes
+**Achievement**: Reduced code duplication by 45-47% across models
+**Pattern**: Created `Item<TData, TUpdateRequest>` abstract base class for Notebook, Lexical, and Cell models
+**Benefits**:
+- Single source of truth for common functionality
+- Consistent deletion state tracking
+- Unified error handling
+
+### Build System Improvements
+**Issue**: Stale build artifacts causing confusion
+**Solution**: Added clean scripts to all build commands
+- `build:lib` now runs `npm run clean:lib` first
+- Removes `lib/`, `dist/`, `build/`, and `tsconfig.tsbuildinfo`
+- Ensures fresh builds every time
+
+### TypeScript Module Resolution
+**Issue**: Node.js ESM requires explicit file extensions in imports
+**Context**: Only matters for direct Node.js execution, not webpack bundles
+**Note**: TypeScript source files don't need .js extensions - only needed if running compiled JS directly with Node
+
+### Debugging Approach
+**Key Learning**: When fixing runtime errors in webpack bundles:
+1. Check the actual TypeScript source files, not compiled JavaScript
+2. Webpack module resolution differs from Node.js ESM
+3. Clean rebuild (`rm -rf dist lib node_modules`) can resolve mysterious issues
+4. Always verify fixes actually work in the runtime environment

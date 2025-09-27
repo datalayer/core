@@ -11,7 +11,11 @@
  * and content that are mixed into the main DatalayerSDK class.
  */
 
-import { spaces, notebooks, users, lexicals, items } from '../../../api/spacer';
+import * as spaces from '../../../api/spacer/spaces';
+import * as notebooks from '../../../api/spacer/notebooks';
+import * as users from '../../../api/spacer/users';
+import * as lexicals from '../../../api/spacer/lexicals';
+import * as items from '../../../api/spacer/items';
 import type {
   CreateSpaceRequest,
   CreateNotebookRequest,

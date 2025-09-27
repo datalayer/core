@@ -24,7 +24,11 @@ export * as runtimesApi from './api/runtimes';
 export * as iamApi from './api/iam';
 export * as spacerApi from './api/spacer';
 
-export { DatalayerSDK, type DatalayerSDKConfig } from './sdk/client';
+export {
+  DatalayerSDK,
+  type DatalayerSDKConfig,
+  type SDKHandlers,
+} from './sdk/client';
 
 // Export commonly used SDK functions directly for convenience
 export {

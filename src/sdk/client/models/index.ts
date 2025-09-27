@@ -25,10 +25,12 @@
  */
 
 // Export domain model classes
+export { Item } from './Item';
 export { Runtime } from './Runtime';
 export { Snapshot } from './Snapshot';
 export { Notebook } from './Notebook';
 export { Lexical } from './Lexical';
+export { Cell } from './Cell';
 export { Space } from './Space';
 
 // Export associated types for convenience

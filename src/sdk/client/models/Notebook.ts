@@ -8,22 +8,22 @@
  * @description Notebook domain model for the Datalayer SDK.
  *
  * This model provides a rich, object-oriented interface for working with
- * Jupyter notebooks, including content management and lifecycle operations.
+ * Jupyter notebooks, extending the base Item class with notebook-specific functionality.
  */
 
 import type {
   Notebook as NotebookData,
   UpdateNotebookRequest,
 } from '../../../api/types/spacer';
-import { notebooks } from '../../../api/spacer';
-import { items } from '../../../api/spacer';
+import * as notebooks from '../../../api/spacer/notebooks';
 import type { DatalayerSDK } from '../index';
+import { Item } from './Item';
 
 /**
- * Notebook domain model that wraps API responses with convenient methods.
+ * Notebook domain model that extends the base Item class.
  *
- * Provides a rich, object-oriented interface for managing Jupyter notebooks
- * with automatic data refresh and lifecycle operations.
+ * Provides notebook-specific functionality for managing Jupyter notebooks
+ * including kernel specifications and notebook metadata.
  *
  * @example
  * ```typescript
@@ -32,26 +32,23 @@ import type { DatalayerSDK } from '../index';
  * formData.append('name', 'Data Analysis');
  * const notebook = await sdk.createNotebook(formData);
  *
- * // Static properties - instant access
+ * // Inherited properties
  * console.log(notebook.id);
  * console.log(notebook.spaceId);
  *
- * // Dynamic data - always fresh from API
+ * // Notebook-specific properties
+ * console.log(notebook.path);
+ * console.log(notebook.version);
+ *
+ * // Inherited methods
  * const currentName = await notebook.getName();
  * const content = await notebook.getContent();
  *
- * // Update notebook
- * const updated = await notebook.update({ name: 'New Analysis' });
+ * // Notebook-specific methods
+ * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
-export class Notebook {
-  protected _data: NotebookData;
-  private _sdk: DatalayerSDK;
-  private _deleted: boolean = false;
-  private _freshData: NotebookData | null = null;
-  private _lastFetch: number = 0;
-  private _cacheTimeout = 5000; // 5 seconds cache timeout
-
+export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   /**
    * Create a Notebook instance.
    *
@@ -59,84 +56,148 @@ export class Notebook {
    * @param sdk - DatalayerSDK instance for making API calls
    */
   constructor(data: NotebookData, sdk: DatalayerSDK) {
-    this._data = data;
-    this._sdk = sdk;
+    super(data, sdk);
   }
 
   // ========================================================================
-  // Deletion State
+  // Abstract Method Implementations
   // ========================================================================
 
   /**
-   * Check if this notebook has been deleted.
+   * Document type identifier.
    */
-  get isDeleted(): boolean {
-    return this._deleted;
-  }
-
-  // ========================================================================
-  // Helper Methods
-  // ========================================================================
-
-  /**
-   * Check if this notebook has been deleted and throw error if so.
-   * @throws Error if the notebook has been deleted
-   */
-  private _checkDeleted(): void {
-    if (this._deleted) {
-      throw new Error(
-        `Notebook ${this._data.id} has been deleted and no longer exists`,
-      );
-    }
-  }
-
-  /**
-   * Get fresh data from API with caching to avoid redundant calls.
-   * @returns Current NotebookData from API or cache
-   */
-  private async _getFreshData(): Promise<NotebookData> {
+  get type(): string {
     this._checkDeleted();
+    return 'notebook';
+  }
 
-    const now = Date.now();
-    if (this._freshData && now - this._lastFetch < this._cacheTimeout) {
-      // Return cached data if recent enough
-      return this._freshData;
-    }
+  /**
+   * Get the cached name of the notebook (synchronous).
+   */
+  get name(): string {
+    this._checkDeleted();
+    return (
+      this._data.name_t ||
+      (this._data as any).notebook_name_s ||
+      this._data.name ||
+      ''
+    );
+  }
 
-    // Fetch fresh data from API
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+  /**
+   * Get the current name of the notebook from API.
+   */
+  async getName(): Promise<string> {
+    this._checkDeleted();
+    const token = this._getToken();
+    const spacerRunUrl = this._getSpacerRunUrl();
     const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
 
     if (response.notebook) {
-      this._freshData = response.notebook;
-      this._data = response.notebook; // Keep internal data up to date
-      this._lastFetch = now;
-      return this._freshData;
+      this._updateData(response.notebook);
+      return (
+        response.notebook.name_t ||
+        (response.notebook as any).notebook_name_s ||
+        response.notebook.name ||
+        ''
+      );
     }
 
-    return this._data; // Fallback to existing data
-  }
-
-  // ========================================================================
-  // Static Properties (set at creation, never change)
-  // ========================================================================
-
-  /**
-   * Notebook ID.
-   */
-  get id(): string {
-    this._checkDeleted();
-    return this._data.id;
+    return this.name;
   }
 
   /**
-   * Unique identifier for the notebook.
+   * Get the cached content (synchronous).
    */
-  get uid(): string {
+  get content(): any {
     this._checkDeleted();
-    return this._data.uid;
+    if (!this._data.content && this._data.model_s) {
+      try {
+        return JSON.parse(this._data.model_s);
+      } catch {
+        return this._data.model_s;
+      }
+    }
+    return this._data.content;
   }
+
+  /**
+   * Get the notebook content from API.
+   */
+  async getContent(): Promise<any> {
+    this._checkDeleted();
+    const token = this._getToken();
+    const spacerRunUrl = this._getSpacerRunUrl();
+    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
+
+    if (response.notebook) {
+      this._updateData(response.notebook);
+      if (!response.notebook.content && response.notebook.model_s) {
+        try {
+          return JSON.parse(response.notebook.model_s);
+        } catch {
+          return response.notebook.model_s;
+        }
+      }
+      return response.notebook.content;
+    }
+
+    return this.content;
+  }
+
+  /**
+   * Get when the notebook was last updated from API.
+   */
+  async getUpdatedAt(): Promise<Date> {
+    this._checkDeleted();
+    const token = this._getToken();
+    const spacerRunUrl = this._getSpacerRunUrl();
+    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
+
+    if (response.notebook) {
+      this._updateData(response.notebook);
+      const dateStr =
+        response.notebook.last_update_ts_dt ||
+        response.notebook.updated_at ||
+        response.notebook.creation_ts_dt ||
+        response.notebook.created_at;
+      if (!dateStr) {
+        throw new Error('No timestamp available for notebook');
+      }
+      return new Date(dateStr);
+    }
+
+    const dateStr =
+      this._data.last_update_ts_dt ||
+      this._data.updated_at ||
+      this._data.creation_ts_dt ||
+      this._data.created_at;
+    if (!dateStr) {
+      throw new Error('No timestamp available for notebook');
+    }
+    return new Date(dateStr);
+  }
+
+  /**
+   * Update the notebook.
+   */
+  async update(data: UpdateNotebookRequest): Promise<this> {
+    this._checkDeleted();
+    const token = this._getToken();
+    const spacerRunUrl = this._getSpacerRunUrl();
+    const response = await notebooks.updateNotebook(
+      token,
+      this.uid,
+      data,
+      spacerRunUrl,
+    );
+    this._updateData(response.notebook);
+    return this;
+  }
+
+  // ========================================================================
+  // Notebook-specific Properties
+  // ========================================================================
 
   /**
    * File path within the space.
@@ -144,50 +205,6 @@ export class Notebook {
   get path(): string {
     this._checkDeleted();
     return this._data.path || '';
-  }
-
-  /**
-   * Parent space ID.
-   */
-  get spaceId(): string {
-    this._checkDeleted();
-
-    // Try the direct field first (if API provides it)
-    if (this._data.space_id) {
-      return this._data.space_id;
-    }
-
-    // Extract from s3_path_s if available: "datalayer.app/SPACE_ID/nbformat/..."
-    const s3Path = (this._data as any).s3_path_s;
-    if (s3Path && typeof s3Path === 'string') {
-      const match = s3Path.match(/^datalayer\.app\/([^/]+)\//);
-      if (match) {
-        return match[1];
-      }
-    }
-
-    // Fallback to empty string if no space ID can be determined
-    return '';
-  }
-
-  /**
-   * Owner user ID.
-   */
-  get ownerId(): string {
-    this._checkDeleted();
-    return this._data.owner_id || this._data.creator_uid || '';
-  }
-
-  /**
-   * When the notebook was created.
-   */
-  get createdAt(): Date {
-    this._checkDeleted();
-    const dateStr = this._data.creation_ts_dt || this._data.created_at;
-    if (!dateStr) {
-      throw new Error('No creation timestamp available for notebook');
-    }
-    return new Date(dateStr);
   }
 
   /**
@@ -207,164 +224,24 @@ export class Notebook {
   }
 
   // ========================================================================
-  // Dynamic Methods (always fetch fresh data and update internal state)
+  // Notebook-specific Methods
   // ========================================================================
-
-  /**
-   * Get the current name of the notebook.
-   *
-   * This method fetches fresh data from the API (with caching) and updates
-   * the internal data to keep everything in sync.
-   *
-   * @returns Promise resolving to current notebook name
-   * @throws Error if the notebook has been deleted
-   */
-  async getName(): Promise<string> {
-    const freshData = await this._getFreshData();
-    return (
-      freshData.name_t ||
-      (freshData as any).notebook_name_s ||
-      freshData.name ||
-      ''
-    );
-  }
-
-  /**
-   * Get the notebook content (cells, etc.).
-   *
-   * @returns Promise resolving to notebook content
-   */
-  async getContent(): Promise<any> {
-    const freshData = await this._getFreshData();
-    // Try to parse model_s if content is not available
-    if (!freshData.content && freshData.model_s) {
-      try {
-        return JSON.parse(freshData.model_s);
-      } catch {
-        // Fall back to raw model_s if parsing fails
-        return freshData.model_s;
-      }
-    }
-    return freshData.content;
-  }
 
   /**
    * Get the kernel specification.
-   *
-   * @returns Promise resolving to kernel spec
    */
   async getKernelSpec(): Promise<any> {
-    const freshData = await this._getFreshData();
-    return freshData.kernel_spec;
-  }
+    this._checkDeleted();
+    const token = this._getToken();
+    const spacerRunUrl = this._getSpacerRunUrl();
+    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
 
-  /**
-   * Get when the notebook was last updated.
-   *
-   * @returns Promise resolving to last update time
-   */
-  async getUpdatedAt(): Promise<Date> {
-    const freshData = await this._getFreshData();
-    const dateStr =
-      freshData.last_update_ts_dt ||
-      freshData.updated_at ||
-      freshData.creation_ts_dt ||
-      freshData.created_at;
-    if (!dateStr) {
-      throw new Error('No timestamp available for notebook');
+    if (response.notebook) {
+      this._updateData(response.notebook);
+      return response.notebook.kernel_spec;
     }
-    return new Date(dateStr);
-  }
 
-  // ========================================================================
-  // Action Methods
-  // ========================================================================
-
-  /**
-   * Update the notebook name and/or description.
-   *
-   * @param data - Update data containing name and/or description
-   * @returns Promise resolving to updated Notebook instance
-   *
-   * @example
-   * ```typescript
-   * const updated = await notebook.update({
-   *   name: 'Advanced Analysis',
-   *   description: 'Updated analysis notebook'
-   * });
-   * ```
-   */
-  async update(data: UpdateNotebookRequest): Promise<Notebook> {
-    this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    const response = await notebooks.updateNotebook(
-      token,
-      this.uid,
-      data,
-      spacerRunUrl,
-    );
-    return new Notebook(response.notebook, this._sdk);
-  }
-
-  /**
-   * Delete this notebook permanently.
-   *
-   * After deletion, this object will be marked as deleted and subsequent
-   * calls to dynamic methods will throw errors.
-   *
-   * @example
-   * ```typescript
-   * await notebook.delete();
-   * console.log('Notebook deleted');
-   * // notebook.getName() will now throw an error
-   * ```
-   */
-  async delete(): Promise<void> {
-    this._checkDeleted(); // Add check to prevent double deletion
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
-    await items.deleteItem(token, this.uid, spacerRunUrl);
-    this._deleted = true;
-  }
-
-  // ========================================================================
-  // Utility Methods
-  // ========================================================================
-
-  /**
-   * Get raw notebook data object with latest information.
-   *
-   * This method ensures the returned data includes the most recent information
-   * by refreshing from the API before returning.
-   *
-   * @returns Promise resolving to raw notebook data
-   *
-   * @example
-   * ```typescript
-   * const latestData = await notebook.toJSON();
-   * console.log('Current name:', latestData.name);
-   * ```
-   */
-  async toJSON(): Promise<NotebookData> {
-    this._checkDeleted();
-    await this.getName(); // This updates internal data
-    return this._data;
-  }
-
-  /**
-   * String representation of the notebook.
-   *
-   * @returns String representation for logging/debugging
-   */
-  toString(): string {
-    this._checkDeleted();
-    const name =
-      this._data.name_t ||
-      (this._data as any).notebook_name_s ||
-      this._data.name ||
-      'Unnamed';
-    return `Notebook(${this.id}, ${name})`;
+    return this._data.kernel_spec;
   }
 }
 
