@@ -14,7 +14,7 @@ from jupyter_kernel_client import KernelClient
 
 from datalayer_core.cli0.runtimes import RuntimesMixin
 from datalayer_core.cli0.runtimes.exec.execapp import _get_cells
-from datalayer_core.sdk.auth import DatalayerClientAuthMixin
+from datalayer_core.sdk.authn import DatalayerClientAuthnMixin
 from datalayer_core.sdk.response import Response
 from datalayer_core.sdk.snapshots import (
     RuntimeSnapshot,
@@ -32,7 +32,7 @@ from datalayer_core.sdk.utils import (
 from datalayer_core.cli0.snapshots import SnapshotsMixin
 
 
-class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):
+class Runtime(DatalayerClientAuthnMixin, RuntimesMixin, SnapshotsMixin):
     """
     Represents a Datalayer runtime (kernel) for code execution.
 

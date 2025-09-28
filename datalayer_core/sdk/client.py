@@ -15,7 +15,7 @@ from typing import Any, Optional, Union
 from datalayer_core.cli0.authn import WhoamiAppMixin
 from datalayer_core.cli0.environments import EnvironmentsMixin
 from datalayer_core.cli0.runtimes import RuntimesMixin
-from datalayer_core.sdk.auth import DatalayerClientAuthMixin
+from datalayer_core.sdk.authn import DatalayerClientAuthnMixin
 from datalayer_core.sdk.environments import Environment
 from datalayer_core.sdk.profile import Profile
 from datalayer_core.sdk.runtimes import Runtime
@@ -38,7 +38,7 @@ from datalayer_core.cli0.tokens import TokensMixin
 
 
 class DatalayerClient(
-    DatalayerClientAuthMixin,
+    DatalayerClientAuthnMixin,
     RuntimesMixin,
     EnvironmentsMixin,
     SecretsMixin,
