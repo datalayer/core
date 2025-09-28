@@ -7,7 +7,7 @@ import sys
 from typing import Any
 
 from datalayer_core.cli0.base import DatalayerCLIBaseApp
-from datalayer_core.cli0.runtimes.utils import display_runtimes
+from datalayer_core.utils.utils import display_runtimes
 
 
 class RuntimesListMixin:

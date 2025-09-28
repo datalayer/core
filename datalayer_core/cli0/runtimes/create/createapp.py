@@ -9,7 +9,7 @@ from typing import Any, Optional
 from traitlets import Dict, Float, Unicode
 
 from datalayer_core.cli0.base import DatalayerCLIBaseApp, datalayer_aliases
-from datalayer_core.cli0.runtimes.utils import display_runtimes, get_default_credits_limit
+from datalayer_core.utils.utils import display_runtimes, get_default_credits_limit
 
 create_alias = dict(datalayer_aliases)
 create_alias["given-name"] = "RuntimesCreateApp.kernel_given_name"

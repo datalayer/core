@@ -5,7 +5,6 @@
 
 from pathlib import Path
 
-from datalayer_core.cli0.about.aboutapp import DatalayerAboutApp
 from datalayer_core.application import NoStart
 from datalayer_core.cli0.authn.loginapp import DatalayerLoginApp
 from datalayer_core.cli0.authn.logoutapp import DatalayerLogoutApp
@@ -33,7 +32,6 @@ class DatalayerCLI(DatalayerCLIBaseApp):
     _requires_auth = False
 
     subcommands = {
-        "about": (DatalayerAboutApp, DatalayerAboutApp.description.splitlines()[0]),
         "benchmarks": (BenchmarksApp, BenchmarksApp.description.splitlines()[0]),
         "console": (RuntimesConsoleApp, RuntimesConsoleApp.description.splitlines()[0]),
         "envs": (EnvironmentsApp, EnvironmentsApp.description.splitlines()[0]),

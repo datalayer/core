@@ -26,7 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-# TODO Fix https://github.com/datalayer/core/issues/36
+# TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",

@@ -12,12 +12,12 @@ from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
 from rich import print_json
 
-from datalayer_core.cli0.runtimes.utils import (
+from datalayer_core.utils.utils import (
     _timestamp_to_local_date,
+    fetch,
     display_runtimes,
     get_default_credits_limit,
 )
-from datalayer_core.utils.utils import fetch
 
 HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 
@@ -179,7 +179,8 @@ class RuntimeManager(KernelHttpManager):
                     f"{self.run_url}/api/runtimes/v1/runtimes",
                     token=self.run_token,
                 )
-                runtimes = response.json().get("runtimes", [])
+                res = response.json()
+                runtimes = res.get("runtimes", [])
 
             runtime = runtimes[0]
             runtime_name = runtime.get("pod_name", "")
