@@ -12,8 +12,8 @@ from typing import Any, Optional, Union
 
 from jupyter_kernel_client import KernelClient
 
-from datalayer_core.runtimes import RuntimesMixin
-from datalayer_core.runtimes.exec.execapp import _get_cells
+from datalayer_core.cli0.runtimes import RuntimesMixin
+from datalayer_core.cli0.runtimes.exec.execapp import _get_cells
 from datalayer_core.sdk.auth import DatalayerClientAuthMixin
 from datalayer_core.sdk.response import Response
 from datalayer_core.sdk.snapshots import (
@@ -29,7 +29,7 @@ from datalayer_core.sdk.utils import (
     Minutes,
     Seconds,
 )
-from datalayer_core.snapshots import SnapshotsMixin
+from datalayer_core.cli0.snapshots import SnapshotsMixin
 
 
 class Runtime(DatalayerClientAuthMixin, RuntimesMixin, SnapshotsMixin):

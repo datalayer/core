@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Web application main entry point for the Datalayer Core CLI."""
+"""Web application for runtime management."""
 
 import sys
 
@@ -9,11 +9,11 @@ from datalayer_core.cli0.base import DatalayerCLIBaseApp
 from datalayer_core.serverapplication import launch_new_instance
 
 
-class DatalayerWebApp(DatalayerCLIBaseApp):
-    """An application to run the webapp."""
+class RuntimesWebApp(DatalayerCLIBaseApp):
+    """An application to show the kernels webapp."""
 
     description = """
-      An application to run the webapp.
+      An application to show the kernels webapp.
     """
 
     _requires_auth = False
@@ -28,7 +28,7 @@ class DatalayerWebApp(DatalayerCLIBaseApp):
         sys.argv = [
             "",
             "--ServerApp.disable_check_xsrf=True",
-            "--DatalayerExtensionApp.webapp=True",
+            "--DatalayerExtensionApp.kernels=True",
             f"--DatalayerExtensionApp.run_url={self.run_url}",
         ]
         launch_new_instance()

@@ -12,9 +12,9 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from datalayer_core.authn import WhoamiAppMixin
-from datalayer_core.environments import EnvironmentsMixin
-from datalayer_core.runtimes import RuntimesMixin
+from datalayer_core.cli0.authn import WhoamiAppMixin
+from datalayer_core.cli0.environments import EnvironmentsMixin
+from datalayer_core.cli0.runtimes import RuntimesMixin
 from datalayer_core.sdk.auth import DatalayerClientAuthMixin
 from datalayer_core.sdk.environments import Environment
 from datalayer_core.sdk.profile import Profile
@@ -32,9 +32,9 @@ from datalayer_core.sdk.utils import (
     DEFAULT_TIME_RESERVATION,
     Minutes,
 )
-from datalayer_core.secrets import SecretsMixin, SecretType
-from datalayer_core.snapshots import SnapshotsMixin
-from datalayer_core.tokens import TokensMixin
+from datalayer_core.cli0.secrets import SecretsMixin, SecretType
+from datalayer_core.cli0.snapshots import SnapshotsMixin
+from datalayer_core.cli0.tokens import TokensMixin
 
 
 class DatalayerClient(

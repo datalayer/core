@@ -26,16 +26,18 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
+# TODO Fix https://github.com/datalayer/core/issues/36
 dependencies = [
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",
     "jupyter-console",
     "jupyter_server>=2.10,<3",
-    "keyring==23.0.1", # TODO Fix https://github.com/datalayer/core/issues/36
+    "keyring==23.0.1",
     "questionary",
     "requests",
     "rich",
     "traitlets",
+    "typer",
 ]
 dynamic = ["version"]
 
@@ -74,9 +76,10 @@ examples = [
 ]
 
 [project.scripts]
-d = "datalayer_core.cli.datalayer:main"
-dla = "datalayer_core.cli.datalayer:main"
-datalayer = "datalayer_core.cli.datalayer:main"
+d = "datalayer_core.cli.__main__:main"
+dla = "datalayer_core.cli.__main__:main"
+datalayer = "datalayer_core.cli.__main__:main"
+d0 = "datalayer_core.cli0.datalayer:main"
 datalayer-config = "datalayer_core.config:main"
 datalayer-migrate = "datalayer_core.migrate:main"
 datalayer-server = "datalayer_core.serverapplication:main"

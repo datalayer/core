@@ -7,7 +7,7 @@ Token classes for the Datalayer SDK.
 
 from typing import Union
 
-from datalayer_core.tokens import TokenType
+from datalayer_core.cli0.tokens import TokenType
 
 
 class Token:

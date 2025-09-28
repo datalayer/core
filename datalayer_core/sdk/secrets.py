@@ -7,7 +7,7 @@ Secret classes for the Datalayer SDK.
 
 from typing import Union
 
-from datalayer_core.secrets import SecretType
+from datalayer_core.cli0.secrets import SecretType
 
 
 class Secret:
