@@ -4,36 +4,30 @@
  */
 
 /**
- * @module sdk/client/models
- * @description Domain model classes for the Datalayer SDK.
+ * Domain model classes for the Datalayer SDK.
+ * These models wrap API responses with convenient methods and state management.
  *
- * These models provide rich, object-oriented interfaces for working with
- * Datalayer platform resources, wrapping API responses with convenient
- * methods and automatic state management.
+ * @module sdk/client/models
  *
  * @example
  * ```typescript
- * import { Runtime, Snapshot, Notebook, Lexical, Space } from '@datalayer/core/sdk/client/models';
- *
- * // Models are typically created by SDK methods
  * const runtime = await sdk.createRuntime(config);
  * const snapshot = await runtime.createSnapshot('checkpoint');
- * const notebook = await sdk.createNotebook(formData);
- * const lexical = await sdk.createLexical(formData);
- * const space = await sdk.createSpace(config);
  * ```
  */
 
 // Export domain model classes
+export { Environment } from './Environment';
 export { Item } from './Item';
 export { Runtime } from './Runtime';
 export { Snapshot } from './Snapshot';
 export { Notebook } from './Notebook';
 export { Lexical } from './Lexical';
-export { Cell } from './Cell';
 export { Space } from './Space';
+export { Credits } from './Credits';
 
 // Export associated types for convenience
+export type { EnvironmentData } from './Environment';
 export type { RuntimeData } from './Runtime';
 export type { RuntimeSnapshot } from './Snapshot';
 export type { NotebookData } from './Notebook';

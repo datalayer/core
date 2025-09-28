@@ -312,11 +312,6 @@ describe('SDK Lifecycle', () => {
       expect(typeof sdk.whoami).toBe('function');
       expect(typeof sdk.login).toBe('function');
       expect(typeof sdk.logout).toBe('function');
-      expect(typeof sdk.getGitHubUser).toBe('function');
-      expect(typeof sdk.getOAuthUrl).toBe('function');
-      expect(typeof sdk.exchangeOAuthCode).toBe('function');
-      expect(typeof sdk.linkProvider).toBe('function');
-      expect(typeof sdk.unlinkProvider).toBe('function');
 
       // Spacer methods
       expect(typeof sdk.getMySpaces).toBe('function');

@@ -6,9 +6,6 @@
 /**
  * @module sdk/client/storage/NodeStorage
  * @description Node.js storage implementation for VS Code and CLI environments.
- *
- * Uses file system for general storage and optional keytar for secure credentials.
- * This implementation is designed for Node.js environments like VS Code extensions.
  */
 
 import * as fs from 'fs/promises';
@@ -62,28 +59,6 @@ interface Keytar {
 
 /**
  * Node.js storage implementation using file system and optional keytar.
- *
- * Features:
- * - File-based storage for general data
- * - Optional keytar integration for secure credentials
- * - Atomic writes to prevent corruption
- * - Automatic directory creation
- *
- * @example
- * ```typescript
- * // Basic usage
- * const storage = new NodeStorage();
- *
- * // Custom storage path
- * const storage = new NodeStorage({
- *   storagePath: '/custom/path'
- * });
- *
- * // Disable keytar
- * const storage = new NodeStorage({
- *   useKeytar: false
- * });
- * ```
  */
 export class NodeStorage implements PlatformStorage {
   private storagePath: string;
@@ -305,7 +280,6 @@ export class NodeStorage implements PlatformStorage {
 
 /**
  * Simple file-based storage without keytar dependency.
- * Useful for environments where keytar is not available.
  */
 export class SimpleNodeStorage extends NodeStorage {
   constructor(options: NodeStorageOptions = {}) {

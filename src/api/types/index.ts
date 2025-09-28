@@ -33,6 +33,7 @@
  * ```
  */
 
+export * from './common';
 export * from './runtimes';
 export * from './iam';
 export * from './spacer';

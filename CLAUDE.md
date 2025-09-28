@@ -302,6 +302,8 @@ Features:
 - Avoid old-school require imports
 - Use playwright MCP to inspect things directly
 - Check API.md for comprehensive examples of both raw API and SDK usage
+- **SDK Usage**: Always use the handlers pattern for cross-cutting concerns instead of wrapping SDK methods
+- **VS Code Extension**: Use `(sdk as any)` casting when TypeScript definitions are incomplete
 
 ## Critical Lessons Learned (January 2025)
 
@@ -346,3 +348,71 @@ await items.getSpaceItems(...);
 2. Webpack module resolution differs from Node.js ESM
 3. Clean rebuild (`rm -rf dist lib node_modules`) can resolve mysterious issues
 4. Always verify fixes actually work in the runtime environment
+
+## SDK Handlers Pattern (January 2025)
+
+### Problem Solved
+Eliminated massive code duplication where consuming applications (VS Code extension, React apps) were wrapping every SDK method 1:1 just to add logging, error handling, or platform-specific behavior.
+
+### Solution: Handlers Pattern
+The SDK now supports lifecycle handlers that can be injected at initialization:
+
+```typescript
+const sdk = new DatalayerSDK({
+  token: 'your-token',
+  iamRunUrl: 'https://prod1.datalayer.run',
+  handlers: {
+    beforeCall: async (methodName, args) => {
+      console.log(`[SDK] Calling ${methodName}`, args);
+    },
+    afterCall: async (methodName, result) => {
+      console.log(`[SDK] ${methodName} completed`, result);
+    },
+    onError: async (methodName, error) => {
+      console.error(`[SDK] ${methodName} failed`, error);
+      // Platform-specific error handling
+      if (error.message.includes('Not authenticated')) {
+        // Show platform-specific auth prompt
+      }
+    }
+  }
+});
+```
+
+### Key Implementation Details
+
+**Automatic Method Wrapping**: The SDK automatically wraps all mixin methods with handlers:
+- Located in `src/sdk/client/base.ts`
+- Smart detection: Only wraps mixin methods, not base class infrastructure
+- No hardcoded method lists - automatically detects based on prototype chain
+
+**Clean Mixin Composition**: Uses helper function for readable mixin composition:
+```typescript
+const DatalayerSDKWithMixins = composeMixins(
+  IAMMixin,
+  RuntimesMixin,
+  SpacerMixin,
+);
+```
+
+**TypeScript Support**: Proper interface declaration for mixin methods:
+```typescript
+export interface DatalayerSDK {
+  // All mixin methods declared here for TypeScript
+  whoami(): Promise<any>;
+  createRuntime(config: any): Promise<any>;
+  // ... etc
+}
+```
+
+### Benefits
+- **Zero code duplication**: No more wrapper services
+- **Platform agnostic**: Same SDK works everywhere
+- **Clean separation**: Business logic in SDK, platform behavior in handlers
+- **Type safe**: Full TypeScript support
+- **Maintainable**: Add new SDK methods without updating consumers
+
+### Removed Components
+- Deleted `HealthMixin` (unnecessary complexity)
+- VS Code extension: Removed `spacerService.ts` and `runtimeService.ts`
+- All wrapper services replaced with direct SDK usage + handlers

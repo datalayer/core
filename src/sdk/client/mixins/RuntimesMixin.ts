@@ -4,28 +4,23 @@
  */
 
 /**
+ * Runtimes mixin for managing computational environments and runtime instances.
  * @module sdk/client/mixins/RuntimesMixin
- * @description Runtimes mixin for the Datalayer SDK.
- *
- * This mixin provides intuitive methods for managing computational environments,
- * runtimes, and snapshots that are mixed into the main DatalayerSDK class.
  */
 
 import * as environments from '../../../api/runtimes/environments';
 import * as runtimes from '../../../api/runtimes/runtimes';
 import * as snapshots from '../../../api/runtimes/snapshots';
 import type {
-  Environment,
   CreateRuntimeRequest,
   CreateRuntimeSnapshotRequest,
 } from '../../../api/types/runtimes';
 import type { Constructor } from '../utils/mixins';
+import { Environment } from '../models/Environment';
 import { Runtime } from '../models/Runtime';
 import { Snapshot } from '../models/Snapshot';
 
-/**
- * Options for ensuring a runtime is available.
- */
+/** Options for ensuring a runtime is available. */
 export interface EnsureRuntimeOptions {
   /** Name of the environment to use */
   environmentName?: string;
@@ -41,12 +36,7 @@ export interface EnsureRuntimeOptions {
   snapshotId?: string;
 }
 
-/**
- * Runtimes mixin that provides computational environment and runtime management.
- *
- * This mixin is applied to the DatalayerSDK class to provide clean, intuitive
- * methods for managing environments and runtimes.
- */
+/** Runtimes mixin providing computational environment and runtime management. */
 export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     // ========================================================================
@@ -70,14 +60,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * List all available computational environments.
-     *
-     * @returns Promise resolving to array of environments
-     *
-     * @example
-     * ```typescript
-     * const environments = await sdk.listEnvironments();
-     * console.log('Available environments:', environments.length);
-     * ```
+     * @returns Array of Environment model instances
      */
     async listEnvironments(): Promise<Environment[]> {
       const token = (this as any).getToken();
@@ -86,7 +69,9 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         token,
         runtimesRunUrl,
       );
-      return response.environments;
+      return response.environments.map(
+        env => new Environment(env, this as any),
+      );
     }
 
     // ========================================================================
@@ -95,31 +80,8 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Ensure a runtime is available, either by reusing existing or creating new.
-     *
-     * This is the primary method for runtime management, providing intelligent
-     * runtime selection and creation with various options.
-     *
      * @param options - Options for runtime selection/creation
-     * @returns Promise resolving to runtime instance
-     *
-     * @example
-     * ```typescript
-     * // Get or create a runtime with default settings
-     * const runtime = await sdk.ensureRuntime();
-     *
-     * // Create from a specific snapshot
-     * const runtime = await sdk.ensureRuntime({
-     *   snapshotId: 'snapshot-abc123',
-     *   waitForReady: true
-     * });
-     *
-     * // Ensure runtime with specific environment
-     * const runtime = await sdk.ensureRuntime({
-     *   environmentName: 'python-gpu-env',
-     *   creditsLimit: 200,
-     *   reuseExisting: true
-     * });
-     * ```
+     * @returns Runtime instance
      */
     async ensureRuntime(options: EnsureRuntimeOptions = {}): Promise<Runtime> {
       const {
@@ -234,18 +196,8 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new computational runtime.
-     *
      * @param data - Runtime creation parameters
-     * @returns Promise resolving to created runtime
-     *
-     * @example
-     * ```typescript
-     * const runtime = await sdk.createRuntime({
-     *   environment_name: 'python-cpu-env',
-     *   credits_limit: 100
-     * });
-     * console.log('Runtime created:', runtime.podName);
-     * ```
+     * @returns Created runtime
      */
     async createRuntime(data: CreateRuntimeRequest): Promise<Runtime> {
       const token = (this as any).getToken();
@@ -260,14 +212,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * List all runtimes.
-     *
-     * @returns Promise resolving to array of runtimes
-     *
-     * @example
-     * ```typescript
-     * const allRuntimes = await sdk.listRuntimes();
-     * console.log('Total runtimes:', allRuntimes.length);
-     * ```
+     * @returns Array of runtimes
      */
     async listRuntimes(): Promise<Runtime[]> {
       const token = (this as any).getToken();
@@ -278,15 +223,8 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get details for a specific runtime by pod name or Runtime instance.
-     *
-     * @param podNameOrRuntime - Runtime pod name (string) or Runtime instance
-     * @returns Promise resolving to runtime details
-     *
-     * @example
-     * ```typescript
-     * const runtime = await sdk.getRuntime('runtime-abc123');
-     * const refreshed = await sdk.getRuntime(runtime);
-     * ```
+     * @param podNameOrRuntime - Runtime pod name or Runtime instance
+     * @returns Runtime details
      */
     async getRuntime(podNameOrRuntime: string | Runtime): Promise<Runtime> {
       const podName = this._extractRuntimePodName(podNameOrRuntime);
@@ -302,14 +240,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Delete a runtime permanently.
-     *
-     * @param podNameOrRuntime - Runtime pod name (string) or Runtime instance
-     *
-     * @example
-     * ```typescript
-     * await sdk.deleteRuntime('runtime-abc123');
-     * await sdk.deleteRuntime(runtime);
-     * ```
+     * @param podNameOrRuntime - Runtime pod name or Runtime instance
      */
     async deleteRuntime(podNameOrRuntime: string | Runtime): Promise<void> {
       const podName = this._extractRuntimePodName(podNameOrRuntime);
@@ -332,18 +263,8 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a snapshot of a runtime.
-     *
      * @param data - Snapshot creation parameters
-     * @returns Promise resolving to created snapshot
-     *
-     * @example
-     * ```typescript
-     * const snapshot = await sdk.createSnapshot({
-     *   pod_name: 'runtime-abc123',
-     *   name: 'my-checkpoint',
-     *   description: 'Before major changes'
-     * });
-     * ```
+     * @returns Created snapshot
      */
     async createSnapshot(
       data: CreateRuntimeSnapshotRequest,
@@ -360,14 +281,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * List all runtime snapshots.
-     *
-     * @returns Promise resolving to array of snapshots
-     *
-     * @example
-     * ```typescript
-     * const allSnapshots = await sdk.listSnapshots();
-     * console.log('Total snapshots:', allSnapshots.length);
-     * ```
+     * @returns Array of snapshots
      */
     async listSnapshots(): Promise<Snapshot[]> {
       const token = (this as any).getToken();
@@ -378,15 +292,8 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get details for a specific snapshot by ID or Snapshot instance.
-     *
-     * @param idOrSnapshot - Snapshot ID (string) or Snapshot instance
-     * @returns Promise resolving to snapshot details
-     *
-     * @example
-     * ```typescript
-     * const snapshot = await sdk.getSnapshot('snapshot-abc123');
-     * const refreshed = await sdk.getSnapshot(snapshot);
-     * ```
+     * @param idOrSnapshot - Snapshot ID or Snapshot instance
+     * @returns Snapshot details
      */
     async getSnapshot(idOrSnapshot: string | Snapshot): Promise<Snapshot> {
       const snapshotId = this._extractSnapshotId(idOrSnapshot);
@@ -402,14 +309,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Delete a snapshot permanently.
-     *
-     * @param idOrSnapshot - Snapshot ID (string) or Snapshot instance
-     *
-     * @example
-     * ```typescript
-     * await sdk.deleteSnapshot('snapshot-abc123');
-     * await sdk.deleteSnapshot(snapshot);
-     * ```
+     * @param idOrSnapshot - Snapshot ID or Snapshot instance
      */
     async deleteSnapshot(idOrSnapshot: string | Snapshot): Promise<void> {
       const snapshotId = this._extractSnapshotId(idOrSnapshot);
@@ -432,21 +332,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Check the health status of the Runtimes service.
-     *
-     * This method performs a lightweight check to verify that the Runtimes
-     * service is accessible and responding properly.
-     *
-     * @returns Promise resolving to health check result
-     *
-     * @example
-     * ```typescript
-     * const health = await sdk.checkRuntimesHealth();
-     * console.log('Service status:', health.status);
-     * console.log('Response time:', health.responseTime);
-     * if (!health.healthy) {
-     *   console.error('Service issues:', health.errors);
-     * }
-     * ```
+     * @returns Health check result with status and response time
      */
     async checkRuntimesHealth(): Promise<{
       healthy: boolean;
@@ -489,85 +375,6 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
           healthy: false,
           status,
           responseTime,
-          errors,
-          timestamp: new Date(),
-        };
-      }
-    }
-
-    /**
-     * Get comprehensive runtime service diagnostics.
-     *
-     * This method provides detailed information about the service state,
-     * including environment availability and runtime statistics.
-     *
-     * @returns Promise resolving to diagnostic information
-     *
-     * @example
-     * ```typescript
-     * const diagnostics = await sdk.getRuntimesDiagnostics();
-     * console.log('Available environments:', diagnostics.environmentCount);
-     * console.log('Active runtimes:', diagnostics.activeRuntimeCount);
-     * console.log('Service capabilities:', diagnostics.capabilities);
-     * ```
-     */
-    async getRuntimesDiagnostics(): Promise<{
-      healthy: boolean;
-      environmentCount: number;
-      activeRuntimeCount: number;
-      capabilities: string[];
-      serviceVersion?: string;
-      errors: string[];
-      timestamp: Date;
-    }> {
-      const errors: string[] = [];
-      let environmentCount = 0;
-      let activeRuntimeCount = 0;
-      const capabilities: string[] = [];
-      let healthy = true;
-
-      try {
-        // Get environment count
-        const environments = await this.listEnvironments();
-        environmentCount = Array.isArray(environments)
-          ? environments.length
-          : 0;
-        capabilities.push('environments');
-
-        // Get runtime count
-        try {
-          const runtimes = await this.listRuntimes();
-          activeRuntimeCount = Array.isArray(runtimes) ? runtimes.length : 0;
-          capabilities.push('runtimes');
-        } catch (error) {
-          errors.push(`Failed to list runtimes: ${error}`);
-          healthy = false;
-        }
-
-        // Check snapshot capability
-        try {
-          await this.listSnapshots();
-          capabilities.push('snapshots');
-        } catch (error) {
-          errors.push(`Failed to list snapshots: ${error}`);
-          // Don't mark as unhealthy since snapshots might be optional
-        }
-
-        return {
-          healthy,
-          environmentCount,
-          activeRuntimeCount,
-          capabilities,
-          errors,
-          timestamp: new Date(),
-        };
-      } catch (error) {
-        errors.push(`Service diagnostics failed: ${error}`);
-        return {
-          healthy: false,
-          environmentCount: 0,
-          activeRuntimeCount: 0,
-          capabilities: [],
           errors,
           timestamp: new Date(),
         };

@@ -4,11 +4,9 @@
  */
 
 /**
- * @module sdk/client/models/Runtime
- * @description Runtime domain model for the Datalayer SDK.
+ * Runtime domain model for the Datalayer SDK.
  *
- * This model provides a rich, object-oriented interface for working with
- * computational runtimes, including state management and lifecycle operations.
+ * @module sdk/client/models/Runtime
  */
 
 import { updateRuntime } from '../../../api/runtimes/runtimes';
@@ -21,30 +19,12 @@ import { Snapshot } from './Snapshot';
 
 /**
  * Runtime domain model that wraps API responses with convenient methods.
- *
- * Provides a rich, object-oriented interface for managing computational runtimes
- * with automatic state refresh and lifecycle operations.
+ * Provides state management and lifecycle operations for computational runtimes.
  *
  * @example
  * ```typescript
- * const runtime = await sdk.createRuntime({
- *   environment_name: 'python-cpu'
- * });
- *
- * // Static properties - instant access
- * console.log(runtime.podName);
- * console.log(runtime.jupyterUrl);
- *
- * // Dynamic state - always fresh from API
- * if (await runtime.isRunning()) {
- *   console.log('Runtime is ready!');
- * }
- *
- * // Wait for runtime to be ready
+ * const runtime = await sdk.createRuntime({ environment_name: 'python-cpu' });
  * await runtime.waitUntilReady();
- *
- * // Create snapshot
- * const snapshot = await runtime.createSnapshot('my-snapshot');
  * ```
  */
 export class Runtime {
@@ -56,8 +36,8 @@ export class Runtime {
   /**
    * Create a Runtime instance.
    *
-   * @param data - Raw runtime data from API
-   * @param sdk - DatalayerSDK instance for making API calls
+   * @param data - Runtime data from API
+   * @param sdk - SDK instance
    */
   constructor(data: RuntimeData, sdk: DatalayerSDK) {
     this._data = data;
@@ -70,7 +50,7 @@ export class Runtime {
 
   /**
    * Check if this runtime has been deleted and throw error if so.
-   * @throws Error if the runtime has been deleted
+   * @throws Error if deleted
    */
   private _checkDeleted(): void {
     if (this._deleted) {
@@ -84,89 +64,79 @@ export class Runtime {
   // Static Properties (set at creation, never change)
   // ========================================================================
 
-  /**
-   * Kubernetes pod name for the runtime instance.
-   */
+  /** Kubernetes pod name for the runtime instance. */
   get podName(): string {
     this._checkDeleted();
     return this._data.pod_name;
   }
 
-  /**
-   * Unique identifier for the runtime.
-   */
+  /** Unique identifier for the runtime. */
   get uid(): string {
     this._checkDeleted();
     return this._data.uid;
   }
 
-  /**
-   * Name of the environment this runtime is based on.
-   */
+  /** Name of the environment this runtime is based on. */
   get environmentName(): string {
     this._checkDeleted();
     return this._data.environment_name;
   }
 
-  /**
-   * URL for accessing Jupyter server.
-   */
+  /** URL for accessing Jupyter server. */
   get jupyterUrl(): string {
     this._checkDeleted();
     return this._data.jupyter_url || '';
   }
 
-  /**
-   * Token for Jupyter server authentication.
-   */
+  /** Token for Jupyter server authentication. */
   get jupyterToken(): string {
     this._checkDeleted();
     return this._data.jupyter_token || '';
   }
 
-  /**
-   * Credits consumed per hour.
-   */
+  /** Ingress URL for accessing the runtime. */
+  get ingress(): string {
+    this._checkDeleted();
+    return this._data.ingress || '';
+  }
+
+  /** Authentication token for accessing the runtime. */
+  get token(): string {
+    this._checkDeleted();
+    return this._data.token || '';
+  }
+
+  /** Credits consumed per hour. */
   get burningRate(): number {
     this._checkDeleted();
     return this._data.burning_rate;
   }
 
-  /**
-   * User-friendly name for the runtime.
-   */
+  /** User-friendly name for the runtime. */
   get givenName(): string {
     this._checkDeleted();
     return this._data.given_name || '';
   }
 
-  /**
-   * Type of runtime (notebook, terminal, or job).
-   */
+  /** Type of runtime (notebook, terminal, or job). */
   get type(): string {
     this._checkDeleted();
     return this._data.type || 'notebook';
   }
 
-  /**
-   * When the runtime was created.
-   */
+  /** When the runtime was created. */
   get createdAt(): Date {
     this._checkDeleted();
     return new Date(this._data.created_at || '');
   }
 
-  /**
-   * When the runtime started.
-   */
+  /** When the runtime started. */
   get startedAt(): Date {
     this._checkDeleted();
     return new Date(this._data.started_at || '');
   }
 
-  /**
-   * When the runtime will expire.
-   */
+  /** When the runtime will expire. */
   get expiredAt(): Date {
     this._checkDeleted();
     return new Date(this._data.expired_at || '');
@@ -178,12 +148,10 @@ export class Runtime {
 
   /**
    * Get the current state of the runtime.
+   * Always fetches fresh data from the API.
    *
-   * This method always fetches fresh data from the API and updates
-   * the internal data to keep everything in sync.
-   *
-   * @returns Promise resolving to current runtime state
-   * @throws Error if the runtime has been deleted
+   * @returns Current runtime state
+   * @throws Error if deleted
    */
   async getState(): Promise<string> {
     this._checkDeleted();
@@ -200,14 +168,7 @@ export class Runtime {
   /**
    * Check if runtime is in running state.
    *
-   * @returns Promise resolving to true if runtime is running
-   *
-   * @example
-   * ```typescript
-   * if (await runtime.isRunning()) {
-   *   console.log('Runtime is ready for use');
-   * }
-   * ```
+   * @returns True if runtime is running
    */
   async isRunning(): Promise<boolean> {
     return (await this.getState()) === 'running';
@@ -216,7 +177,7 @@ export class Runtime {
   /**
    * Check if runtime is in starting state.
    *
-   * @returns Promise resolving to true if runtime is starting
+   * @returns True if runtime is starting
    */
   async isStarting(): Promise<boolean> {
     return (await this.getState()) === 'starting';
@@ -225,7 +186,7 @@ export class Runtime {
   /**
    * Check if runtime is in stopping state.
    *
-   * @returns Promise resolving to true if runtime is stopping
+   * @returns True if runtime is stopping
    */
   async isStopping(): Promise<boolean> {
     return (await this.getState()) === 'stopping';
@@ -234,7 +195,7 @@ export class Runtime {
   /**
    * Check if runtime is in stopped state.
    *
-   * @returns Promise resolving to true if runtime is stopped
+   * @returns True if runtime is stopped
    */
   async isStopped(): Promise<boolean> {
     return (await this.getState()) === 'stopped';
@@ -243,7 +204,7 @@ export class Runtime {
   /**
    * Check if runtime is in error state.
    *
-   * @returns Promise resolving to true if runtime has error
+   * @returns True if runtime has error
    */
   async hasError(): Promise<boolean> {
     return (await this.getState()) === 'error';
@@ -255,16 +216,7 @@ export class Runtime {
 
   /**
    * Delete this runtime permanently.
-   *
-   * After deletion, this object will be marked as deleted and subsequent
-   * calls to dynamic methods will throw errors.
-   *
-   * @example
-   * ```typescript
-   * await runtime.delete();
-   * console.log('Runtime deleted');
-   * // runtime.getState() will now throw an error
-   * ```
+   * After deletion, subsequent calls to dynamic methods will throw errors.
    */
   async delete(): Promise<void> {
     await this._sdk.deleteRuntime(this.podName);
@@ -275,12 +227,7 @@ export class Runtime {
    * Update runtime from a snapshot.
    *
    * @param from - Snapshot identifier to restore from
-   * @returns Promise resolving to updated Runtime instance
-   *
-   * @example
-   * ```typescript
-   * const updatedRuntime = await runtime.update('snapshot-uid');
-   * ```
+   * @returns Updated Runtime instance
    */
   async update(from: string): Promise<Runtime> {
     this._checkDeleted();
@@ -297,17 +244,9 @@ export class Runtime {
    * Create a snapshot of this runtime.
    *
    * @param name - Name for the snapshot
-   * @param description - Optional description for the snapshot
-   * @param stop - Whether to stop the runtime after snapshotting
-   * @returns Promise resolving to created Snapshot instance
-   *
-   * @example
-   * ```typescript
-   * const snapshot = await runtime.createSnapshot(
-   *   'my-checkpoint',
-   *   'Before major changes'
-   * );
-   * ```
+   * @param description - Optional description
+   * @param stop - Whether to stop runtime after snapshotting
+   * @returns Created Snapshot instance
    */
   async createSnapshot(
     name: string,
@@ -328,19 +267,11 @@ export class Runtime {
 
   /**
    * Wait for runtime to reach running state.
+   * Polls until 'running' state or throws on error/timeout.
    *
-   * Polls the runtime state until it becomes 'running' or throws on error/timeout.
-   *
-   * @param timeoutMs - Maximum time to wait in milliseconds (default: 60000)
-   * @returns Promise resolving to this Runtime instance when ready
-   * @throws Error if runtime enters error state or timeout is reached
-   *
-   * @example
-   * ```typescript
-   * const runtime = await sdk.createRuntime(config);
-   * await runtime.waitUntilReady();
-   * console.log('Runtime is ready to use!');
-   * ```
+   * @param timeoutMs - Maximum wait time in milliseconds (default: 60000)
+   * @returns This Runtime instance when ready
+   * @throws Error if enters error state or timeout reached
    */
   async waitUntilReady(timeoutMs = 60000): Promise<Runtime> {
     this._checkDeleted();
@@ -368,17 +299,9 @@ export class Runtime {
 
   /**
    * Get raw runtime data object with latest state.
+   * Refreshes from API before returning.
    *
-   * This method ensures the returned data includes the most recent state
-   * by refreshing from the API before returning.
-   *
-   * @returns Promise resolving to raw runtime data
-   *
-   * @example
-   * ```typescript
-   * const latestData = await runtime.toJSON();
-   * console.log('Current state:', latestData.state);
-   * ```
+   * @returns Raw runtime data
    */
   async toJSON(): Promise<RuntimeData> {
     this._checkDeleted();
@@ -386,11 +309,7 @@ export class Runtime {
     return this._data;
   }
 
-  /**
-   * String representation of the runtime.
-   *
-   * @returns String representation for logging/debugging
-   */
+  /** String representation of the runtime. */
   toString(): string {
     this._checkDeleted();
     return `Runtime(${this.podName}, ${this.environmentName})`;

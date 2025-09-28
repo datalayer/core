@@ -34,24 +34,6 @@ export interface BrowserStorageOptions {
 
 /**
  * Browser storage implementation using localStorage/sessionStorage.
- *
- * Features:
- * - Automatic fallback to sessionStorage if localStorage unavailable
- * - Namespaced keys to avoid collisions
- * - Graceful handling of storage quota errors
- * - Optional encryption for sensitive data
- *
- * @example
- * ```typescript
- * // Use localStorage (default)
- * const storage = new BrowserStorage();
- *
- * // Use sessionStorage
- * const storage = new BrowserStorage({ useSessionStorage: true });
- *
- * // Custom prefix
- * const storage = new BrowserStorage({ prefix: 'myapp' });
- * ```
  */
 export class BrowserStorage implements PlatformStorage {
   private storage: Storage;

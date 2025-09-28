@@ -12,11 +12,6 @@ export interface IRuntimeSnippets {
   /**
    * Code snippet to change the current working directory.
    *
-   * The code snippet has no returned value.
-   *
-   * The path is relative to the home directory and use
-   * the separator `/`.
-   *
    * @param path New current directory
    * @returns The code snippet
    */
@@ -25,21 +20,12 @@ export interface IRuntimeSnippets {
   /**
    * Code snippet to list the transferable kernel variables.
    *
-   * The code snippet must return a serialized-JSON
-   * dictionary (<variable name>, <variable type>)
-   *
    * @returns The code snippet
    */
   listVariables(): string;
 
   /**
    * Code snippet to load kernel variables.
-   *
-   * The code snippet must return a serialized-JSON list
-   * with successfully loaded variables.
-   *
-   * The format used to store the variable value is up to the kernel.
-   * It should JSON-serializable and will be passed from {@link saveVariables}.
    *
    * @param variables Serialized-JSON dictionary (<variable name>, <variable value blob>)
    * @returns The code snippet
@@ -48,13 +34,6 @@ export interface IRuntimeSnippets {
 
   /**
    * Code snippet to save kernel variables.
-   *
-   * The code snippet must return a serialized-JSON dictionary
-   * (<variable name>, <variable value blob>).
-   *
-   * The format used to store the variable value is up to the kernel.
-   * It should JSON-serializable and will be passed to {@link loadVariables}
-   * without modification.
    *
    * @param variables Variable names.
    * @returns The code snippet
@@ -98,10 +77,7 @@ export class RuntimeSnippetsFacade {
   private _language: string;
 
   /**
-   * Create a kernel snippet generator for a given kernel
-   * language.
-   *
-   * It will raise if the language is not available.
+   * Create a kernel snippet generator for a given kernel language.
    *
    * @param language Kernel language
    */
@@ -136,9 +112,6 @@ export class RuntimeSnippetsFacade {
   /**
    * Code snippet to list the transferable kernel variables.
    *
-   * The code snippet must return a serialized-JSON
-   * dictionary (<variable name>, <variable type>)
-   *
    * @returns The code snippet
    */
   listVariables(): string {
@@ -147,12 +120,6 @@ export class RuntimeSnippetsFacade {
 
   /**
    * Code snippet to load kernel variables.
-   *
-   * The code snippet must return a serialized-JSON list
-   * with successfully loaded variables.
-   *
-   * The format used to store the variable value is up to the kernel.
-   * It should JSON-serializable and will be passed from {@link saveVariables}.
    *
    * @param variables Serialized-JSON dictionary (<variable name>, <variable value blob>)
    * @returns The code snippet
@@ -165,13 +132,6 @@ export class RuntimeSnippetsFacade {
 
   /**
    * Code snippet to save kernel variables.
-   *
-   * The code snippet must return a serialized-JSON dictionary
-   * (<variable name>, <variable value blob>).
-   *
-   * The format used to store the variable value is up to the kernel.
-   * It should JSON-serializable and will be passed to {@link loadVariables}
-   * without modification.
    *
    * @param variables Variable names.
    * @returns The code snippet

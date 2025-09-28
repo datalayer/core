@@ -4,10 +4,8 @@
  */
 
 /**
+ * IAM state management with caching and persistence.
  * @module sdk/client/state/IAMState
- * @description IAM state management with caching and persistence.
- *
- * Handles authentication state including tokens, user data, and OAuth providers.
  */
 
 import {
@@ -16,11 +14,9 @@ import {
   parseStoredData,
   stringifyForStorage,
 } from '../storage';
-import type { User, GitHubUser, GitHubUserData } from '../models/User';
+import type { User } from '../models/User';
 
-/**
- * Stored user data structure.
- */
+/** Stored user data structure. */
 interface StoredUser {
   uid: string;
   email: string;
@@ -38,30 +34,7 @@ interface StoredUser {
   linkedinId?: string;
 }
 
-/**
- * IAM state manager for authentication and user data.
- *
- * Features:
- * - Token management with optional refresh tokens
- * - User profile caching
- * - GitHub user caching with TTL
- * - OAuth provider state
- * - Service URL persistence
- *
- * @example
- * ```typescript
- * const storage = new BrowserStorage();
- * const iamState = new IAMState(storage);
- *
- * // Store authentication
- * await iamState.setToken('my-token');
- * await iamState.setUser(userModel);
- *
- * // Retrieve cached data
- * const token = await iamState.getToken();
- * const user = await iamState.getUser();
- * ```
- */
+/** IAM state manager for authentication and user data. */
 export class IAMState {
   constructor(private storage: PlatformStorage) {}
 
@@ -69,37 +42,27 @@ export class IAMState {
   // Authentication
   // ========================================================================
 
-  /**
-   * Get stored authentication token.
-   */
+  /** Get stored authentication token. */
   async getToken(): Promise<string | null> {
     return await this.storage.get(StorageKeys.TOKEN);
   }
 
-  /**
-   * Store authentication token.
-   */
+  /** Store authentication token. */
   async setToken(token: string): Promise<void> {
     await this.storage.set(StorageKeys.TOKEN, token);
   }
 
-  /**
-   * Get stored refresh token.
-   */
+  /** Get stored refresh token. */
   async getRefreshToken(): Promise<string | null> {
     return await this.storage.get(StorageKeys.REFRESH_TOKEN);
   }
 
-  /**
-   * Store refresh token.
-   */
+  /** Store refresh token. */
   async setRefreshToken(token: string): Promise<void> {
     await this.storage.set(StorageKeys.REFRESH_TOKEN, token);
   }
 
-  /**
-   * Clear authentication tokens.
-   */
+  /** Clear authentication tokens. */
   async clearTokens(): Promise<void> {
     await this.storage.remove(StorageKeys.TOKEN);
     await this.storage.remove(StorageKeys.REFRESH_TOKEN);
@@ -111,9 +74,7 @@ export class IAMState {
 
   /**
    * Get cached user data.
-   *
-   * Note: Returns raw data, not User model instance.
-   * The SDK will reconstruct the User model.
+   * Returns raw data, not User model instance.
    */
   async getUser(): Promise<StoredUser | null> {
     const data = await this.storage.get(StorageKeys.USER);
@@ -123,7 +84,7 @@ export class IAMState {
   /**
    * Cache user data.
    *
-   * @param user - User model or raw user data
+   * @param user User model or raw data
    */
   async setUser(user: User | StoredUser): Promise<void> {
     // Extract relevant data from User model if needed
@@ -148,90 +109,21 @@ export class IAMState {
     await this.storage.set(StorageKeys.USER, stringifyForStorage(userData));
   }
 
-  /**
-   * Clear cached user data.
-   */
+  /** Clear cached user data. */
   async clearUser(): Promise<void> {
     await this.storage.remove(StorageKeys.USER);
-  }
-
-  // ========================================================================
-  // GitHub User Caching
-  // ========================================================================
-
-  /**
-   * Get cached GitHub user data.
-   *
-   * @param username - GitHub username
-   * @returns GitHub user data or null if not cached/expired
-   */
-  async getCachedGitHubUser(username: string): Promise<GitHubUserData | null> {
-    const key = `${StorageKeys.GITHUB_USER_PREFIX}${username}`;
-    const data = await this.storage.get(key);
-    if (!data) return null;
-
-    const cached = parseStoredData<{
-      user: GitHubUserData;
-      timestamp: number;
-    }>(data);
-
-    if (!cached) return null;
-
-    // Check if cache is expired (24 hours)
-    const now = Date.now();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-    if (now - cached.timestamp > maxAge) {
-      await this.storage.remove(key);
-      return null;
-    }
-
-    return cached.user;
-  }
-
-  /**
-   * Cache GitHub user data.
-   *
-   * @param username - GitHub username
-   * @param user - GitHub user data or model
-   */
-  async cacheGitHubUser(
-    username: string,
-    user: GitHubUser | GitHubUserData,
-  ): Promise<void> {
-    const key = `${StorageKeys.GITHUB_USER_PREFIX}${username}`;
-    const userData: GitHubUserData = 'toJSON' in user ? user.toJSON() : user;
-
-    const cacheData = {
-      user: userData,
-      timestamp: Date.now(),
-    };
-
-    await this.storage.set(key, stringifyForStorage(cacheData));
-  }
-
-  /**
-   * Clear all cached GitHub users.
-   */
-  async clearGitHubUserCache(): Promise<void> {
-    // This would need to iterate through storage keys
-    // For now, we'll just document that clear() will handle it
-    // In a real implementation, we'd track cached keys
   }
 
   // ========================================================================
   // Service URLs
   // ========================================================================
 
-  /**
-   * Get stored IAM service URL.
-   */
+  /** Get stored IAM service URL. */
   async getIamUrl(): Promise<string | null> {
     return await this.storage.get(StorageKeys.IAM_URL);
   }
 
-  /**
-   * Store IAM service URL.
-   */
+  /** Store IAM service URL. */
   async setIamUrl(url: string): Promise<void> {
     await this.storage.set(StorageKeys.IAM_URL, url);
   }
@@ -242,8 +134,6 @@ export class IAMState {
 
   /**
    * Clear all IAM-related state.
-   *
-   * This includes tokens, user data, and caches.
    */
   async clear(): Promise<void> {
     await this.clearTokens();
@@ -255,7 +145,7 @@ export class IAMState {
   /**
    * Check if user is authenticated.
    *
-   * @returns True if a token exists
+   * @returns True if token exists
    */
   async isAuthenticated(): Promise<boolean> {
     const token = await this.getToken();
@@ -265,7 +155,7 @@ export class IAMState {
   /**
    * Get authentication headers.
    *
-   * @returns Headers object with authorization if authenticated
+   * @returns Headers with authorization if authenticated
    */
   async getAuthHeaders(): Promise<Record<string, string>> {
     const token = await this.getToken();

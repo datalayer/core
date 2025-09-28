@@ -4,11 +4,9 @@
  */
 
 /**
- * @module sdk/client/models/Lexical
- * @description Lexical domain model for the Datalayer SDK.
+ * Lexical domain model for the Datalayer SDK.
  *
- * This model provides a rich, object-oriented interface for working with
- * Lexical documents, extending the base Item class with lexical-specific functionality.
+ * @module sdk/client/models/Lexical
  */
 
 import type {
@@ -21,35 +19,20 @@ import { Item } from './Item';
 
 /**
  * Lexical domain model that extends the base Item class.
- *
- * Provides lexical document functionality for managing rich text documents
- * with automatic data refresh and lifecycle operations.
+ * Provides lexical document functionality for managing rich text documents.
  *
  * @example
  * ```typescript
- * const formData = new FormData();
- * formData.append('spaceId', 'space-123');
- * formData.append('name', 'Project Documentation');
  * const lexical = await sdk.createLexical(formData);
- *
- * // Inherited properties
- * console.log(lexical.id);
- * console.log(lexical.spaceId);
- *
- * // Inherited methods
- * const currentName = await lexical.getName();
- * const content = await lexical.getContent();
- *
- * // Update document
- * const updated = await lexical.update({ name: 'Updated Documentation' });
+ * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
 export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
   /**
    * Create a Lexical instance.
    *
-   * @param data - Raw lexical data from API
-   * @param sdk - DatalayerSDK instance for making API calls
+   * @param data - Lexical data from API
+   * @param sdk - SDK instance
    */
   constructor(data: LexicalData, sdk: DatalayerSDK) {
     super(data, sdk);
@@ -59,25 +42,19 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
   // Abstract Method Implementations
   // ========================================================================
 
-  /**
-   * Document type identifier.
-   */
+  /** Document type identifier. */
   get type(): string {
     this._checkDeleted();
     return this._data.type_s || 'lexical';
   }
 
-  /**
-   * Get the cached name of the document (synchronous).
-   */
+  /** The cached name of the document. */
   get name(): string {
     this._checkDeleted();
     return this._data.name_t || this._data.name || '';
   }
 
-  /**
-   * Get the current name of the document from API.
-   */
+  /** Get the current name of the document from API. */
   async getName(): Promise<string> {
     this._checkDeleted();
     const token = this._getToken();
@@ -92,9 +69,7 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
     return this.name;
   }
 
-  /**
-   * Get the cached content (synchronous).
-   */
+  /** The cached content. */
   get content(): any {
     this._checkDeleted();
     if (!this._data.content && this._data.model_s) {
@@ -107,9 +82,7 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
     return this._data.content;
   }
 
-  /**
-   * Get the document content from API.
-   */
+  /** Get the document content from API. */
   async getContent(): Promise<any> {
     this._checkDeleted();
     const token = this._getToken();
@@ -131,9 +104,7 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
     return this.content;
   }
 
-  /**
-   * Get when the document was last updated from API.
-   */
+  /** Get when the document was last updated from API. */
   async getUpdatedAt(): Promise<Date> {
     this._checkDeleted();
     const token = this._getToken();
@@ -164,9 +135,7 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
     return new Date(dateStr);
   }
 
-  /**
-   * Update the document.
-   */
+  /** Update the document. */
   async update(data: UpdateLexicalRequest): Promise<this> {
     this._checkDeleted();
     const token = this._getToken();

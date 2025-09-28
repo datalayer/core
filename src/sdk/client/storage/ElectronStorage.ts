@@ -6,9 +6,6 @@
 /**
  * @module sdk/client/storage/ElectronStorage
  * @description Electron storage implementation for Desktop applications.
- *
- * Uses electron-store for persistent storage with encryption support.
- * Designed for Electron main and renderer processes.
  */
 
 import { PlatformStorage, STORAGE_NAMESPACE } from './PlatformStorage';
@@ -75,30 +72,6 @@ interface ElectronStore {
 
 /**
  * Electron storage implementation using electron-store.
- *
- * Features:
- * - Persistent JSON storage with atomicity
- * - Optional encryption for sensitive data
- * - Schema validation support
- * - Watch for external changes
- * - Works in both main and renderer processes
- *
- * @example
- * ```typescript
- * // Basic usage
- * const storage = new ElectronStorage();
- *
- * // With encryption
- * const storage = new ElectronStorage({
- *   encryptionKey: 'my-secret-key'
- * });
- *
- * // Custom storage location
- * const storage = new ElectronStorage({
- *   name: 'myapp-storage',
- *   cwd: '/custom/path'
- * });
- * ```
  */
 export class ElectronStorage implements PlatformStorage {
   private store?: ElectronStore;

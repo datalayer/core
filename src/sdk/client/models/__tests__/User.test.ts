@@ -4,44 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { User, GitHubUser } from '../User';
+import { User } from '../User';
 import type { User as ApiUser } from '../../../../api/types/iam';
 
 // Mock SDK Base
-class MockSDKBase {
-  githubUserCache = new Map<string, GitHubUser>();
-
-  async getGitHubUser(username: string): Promise<any> {
-    // Check cache first
-    if (this.githubUserCache.has(username)) {
-      return this.githubUserCache.get(username);
-    }
-
-    // Mock GitHub API response
-    if (username === 'octocat') {
-      const data = {
-        id: 583231,
-        login: 'octocat',
-        name: 'The Octocat',
-        email: 'octocat@github.com',
-        avatar_url: 'https://avatars.githubusercontent.com/u/583231?v=4',
-        bio: 'GitHub mascot',
-        company: '@github',
-        location: 'San Francisco',
-        blog: 'https://github.blog',
-        public_repos: 8,
-        followers: 3938,
-        following: 9,
-        created_at: '2011-01-25T18:44:36Z',
-        html_url: 'https://github.com/octocat',
-      };
-      const githubUser = new GitHubUser(data, this as any);
-      this.githubUserCache.set(username, githubUser);
-      return data;
-    }
-    return undefined;
-  }
-}
+class MockSDKBase {}
 
 describe('User Model', () => {
   let mockSDK: MockSDKBase;
@@ -299,67 +266,19 @@ describe('User Model', () => {
     });
   });
 
-  describe('GitHub User Integration', () => {
-    it('should fetch GitHub user data', async () => {
-      const userData: any = {
-        id: 'user-123',
-        email: 'test@example.com',
-        github_id: 'gh-123', // Need github_id for provider to be recognized
-        github_username: 'octocat',
-      };
-
-      const user = new User(userData, mockSDK as any);
-      const githubUser = await user.getGitHubUser();
-
-      expect(githubUser).not.toBeUndefined();
-      expect(githubUser?.login).toBe('octocat');
-      expect(githubUser?.name).toBe('The Octocat');
-    });
-
-    it('should cache GitHub user data', async () => {
-      const userData: any = {
-        id: 'user-123',
-        email: 'test@example.com',
-        github_id: 'gh-123', // Need github_id for provider to be recognized
-        github_username: 'octocat',
-      };
-
-      const user = new User(userData, mockSDK as any);
-
-      // First call
-      const githubUser1 = await user.getGitHubUser();
-      // Second call should use cache
-      const githubUser2 = await user.getGitHubUser();
-
-      expect(githubUser1).toBe(githubUser2); // Same instance
-    });
-
-    it('should return undefined if no GitHub provider', async () => {
-      const userData: any = {
-        id: 'user-123',
-        email: 'test@example.com',
-      };
-
-      const user = new User(userData, mockSDK as any);
-      const githubUser = await user.getGitHubUser();
-
-      expect(githubUser).toBeUndefined();
-    });
-  });
-
   describe('Avatar URL', () => {
-    it('should use GitHub avatar if available', async () => {
+    it('should use provider avatar URL if available', async () => {
       const userData: any = {
         id: 'user-123',
         email: 'test@example.com',
-        github_id: 'gh-123', // Need github_id for provider to be recognized
-        github_username: 'octocat',
+        github_id: 'gh-123',
+        github_avatar_url: 'https://avatars.github.com/u/123',
       };
 
       const user = new User(userData, mockSDK as any);
       const avatarUrl = await user.getAvatarUrl();
 
-      expect(avatarUrl).toContain('githubusercontent.com');
+      expect(avatarUrl).toBe('https://avatars.github.com/u/123');
     });
 
     it('should use provider avatar URL', async () => {
@@ -467,9 +386,6 @@ describe('User Model', () => {
 
       const user = new User(userData, mockSDK as any);
 
-      // Cache GitHub user
-      await user.getGitHubUser();
-
       // Update should clear cache but preserve github_id
       user.update({ username: 'newuser' } as any);
 
@@ -504,85 +420,6 @@ describe('User Model', () => {
 
       expect(user.hasCredits(50)).toBe(true);
       expect(user.hasCredits(150)).toBe(false);
-    });
-  });
-});
-
-describe('GitHubUser Model', () => {
-  let mockSDK: MockSDKBase;
-
-  beforeEach(() => {
-    mockSDK = new MockSDKBase();
-  });
-
-  describe('Properties', () => {
-    const githubData = {
-      id: 583231,
-      login: 'octocat',
-      name: 'The Octocat',
-      email: 'octocat@github.com',
-      avatar_url: 'https://avatars.githubusercontent.com/u/583231?v=4',
-      bio: 'GitHub mascot',
-      company: '@github',
-      location: 'San Francisco',
-      html_url: 'https://github.com/octocat',
-    };
-
-    it('should expose all GitHub properties', () => {
-      const githubUser = new GitHubUser(githubData, mockSDK as any);
-
-      expect(githubUser.id).toBe(583231);
-      expect(githubUser.login).toBe('octocat');
-      expect(githubUser.name).toBe('The Octocat');
-      expect(githubUser.email).toBe('octocat@github.com');
-      expect(githubUser.avatarUrl).toContain('avatars.githubusercontent.com');
-      expect(githubUser.bio).toBe('GitHub mascot');
-      expect(githubUser.company).toBe('@github');
-      expect(githubUser.location).toBe('San Francisco');
-      expect(githubUser.profileUrl).toBe('https://github.com/octocat');
-    });
-
-    it('should get display name with fallback', () => {
-      const user1 = new GitHubUser(githubData, mockSDK as any);
-      expect(user1.getDisplayName()).toBe('The Octocat');
-
-      const user2 = new GitHubUser(
-        { ...githubData, name: undefined },
-        mockSDK as any,
-      );
-      expect(user2.getDisplayName()).toBe('octocat');
-    });
-
-    it('should check organization membership', () => {
-      const user = new GitHubUser(githubData, mockSDK as any);
-
-      expect(user.isFromOrganization('github')).toBe(true);
-      expect(user.isFromOrganization('GitHub')).toBe(true); // Case insensitive
-      expect(user.isFromOrganization('microsoft')).toBe(false);
-    });
-
-    it('should get avatar URL with size', () => {
-      const user = new GitHubUser(githubData, mockSDK as any);
-
-      expect(user.getAvatarUrl()).toContain('s=200');
-      expect(user.getAvatarUrl(100)).toContain('s=100');
-      expect(user.getAvatarUrl(400)).toContain('s=400');
-    });
-
-    it('should handle missing avatar URL', () => {
-      const user = new GitHubUser(
-        { ...githubData, avatar_url: undefined },
-        mockSDK as any,
-      );
-
-      expect(user.getAvatarUrl()).toBe('');
-    });
-
-    it('should convert to JSON', () => {
-      const user = new GitHubUser(githubData, mockSDK as any);
-      const json = user.toJSON();
-
-      expect(json).toEqual(githubData);
     });
   });
 });

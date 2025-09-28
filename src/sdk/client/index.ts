@@ -4,29 +4,19 @@
  */
 
 /**
- * @module sdk/client
- * @description Main Datalayer SDK client with intuitive mixin-based API.
+ * Main Datalayer SDK client with intuitive mixin-based API.
+ * Provides unified, flat API for all Datalayer platform services through TypeScript mixins.
  *
- * The DatalayerSDK class provides a unified, flat API for all Datalayer platform
- * services through TypeScript mixins. This design offers the best discoverability
- * and ease of use compared to nested service objects.
+ * @module sdk/client
  *
  * @example
  * ```typescript
- * import { DatalayerSDK } from '@datalayer/core/sdk';
- *
- * // Initialize SDK
  * const sdk = new DatalayerSDK({
- *   token: 'your-api-token',
- *   baseUrl: 'https://prod1.datalayer.run'
+ *   token: 'your-api-token'
  * });
  *
- * // Flat, intuitive API
  * const user = await sdk.whoami();
- * const environments = await sdk.listEnvironments();
- * const notebook = await sdk.createNotebook(data);
  * const runtime = await sdk.createRuntime(config);
- * await sdk.startRuntime(podName);
  * ```
  */
 
@@ -59,162 +49,19 @@ const DatalayerSDKWithMixins = composeMixins(
 
 /**
  * Main Datalayer SDK client providing unified access to all platform services.
- *
- * This class uses TypeScript mixins to provide a flat, discoverable API where
- * all methods are directly accessible on the SDK instance. This design offers
- * superior developer experience compared to nested service objects.
- *
- * **Key Features:**
- * - **Flat API**: All methods directly on `sdk.` (e.g., `sdk.createNotebook()`)
- * - **Intuitive naming**: Descriptive method names (e.g., `whoami()` vs `iam.users.me()`)
- * - **Perfect discoverability**: IDE shows all available methods immediately
- * - **Type safety**: Full TypeScript support with comprehensive interfaces
- *
- * **Authentication Methods:**
- * - `whoami()` - Get current user profile
- * - `login(credentials)` - Authenticate with credentials
- * - `logout()` - Log out current user
- *
- * **Environment Methods:**
- * - `listEnvironments()` - List available compute environments
- *
- * **Runtime Methods:**
- * - `createRuntime(config)` - Create new computational runtime
- * - `listRuntimes()` - List all runtimes
- * - `getRuntime(podName)` - Get runtime details
- * - `deleteRuntime(podName)` - Delete runtime
- *
- * **Workspace Methods:**
- * - `createSpace(data)` - Create new workspace
- * - `listSpaces()` - List all workspaces
- * - `getSpace(spaceId)` - Get workspace details
- * - `deleteSpace(spaceId)` - Delete workspace
- *
- * **Notebook Methods:**
- * - `createNotebook(data)` - Create new notebook
- * - `listNotebooks(spaceId?)` - List notebooks
- * - `getNotebook(notebookId)` - Get notebook details
- * - `getNotebookByUid(uid)` - Get notebook by UID
- * - `updateNotebook(notebookId, data)` - Update notebook
- * - `cloneNotebook(data)` - Clone existing notebook
- * - `getNotebookContent(notebookId)` - Get notebook content
- * - `updateNotebookContent(notebookId, content)` - Update notebook content
- * - `deleteNotebook(notebookId)` - Delete notebook
- *
- * **Cell Methods:**
- * - `createCell(notebookId, cell)` - Create new cell
- * - `getCell(notebookId, cellId)` - Get cell details
- * - `deleteCell(notebookId, cellId)` - Delete cell
+ * Uses TypeScript mixins to provide a flat, discoverable API.
  *
  * @example
  * ```typescript
- * // Initialize SDK
  * const sdk = new DatalayerSDK({
- *   token: 'your-token',
- *   baseUrl: 'https://prod1.datalayer.run'
+ *   token: 'your-token'
  * });
  *
- * // Authentication
  * const user = await sdk.whoami();
- * console.log('Logged in as:', user.email);
- *
- * // Create workspace and notebook
- * const space = await sdk.createSpace({
- *   name: 'My Project'
- * });
- *
- * const notebook = await sdk.createNotebook({
- *   space_id: space.id,
- *   name: 'Analysis'
- * });
- *
- * // Create and start runtime
  * const runtime = await sdk.createRuntime({
  *   environment_name: 'python-cpu-env',
  *   credits_limit: 100
  * });
- *
- * console.log('Setup complete!');
- * ```
- */
-/**
- * Main Datalayer SDK client providing unified access to all platform services.
- *
- * This class uses TypeScript mixins to provide a flat, discoverable API where
- * all methods are directly accessible on the SDK instance. This design offers
- * superior developer experience compared to nested service objects.
- *
- * **Key Features:**
- * - **Flat API**: All methods directly on `sdk.` (e.g., `sdk.createNotebook()`)
- * - **Intuitive naming**: Descriptive method names (e.g., `whoami()` vs `iam.users.me()`)
- * - **Perfect discoverability**: IDE shows all available methods immediately
- * - **Type safety**: Full TypeScript support with comprehensive interfaces
- *
- * **Authentication Methods:**
- * - `whoami()` - Get current user profile
- * - `login(credentials)` - Authenticate with credentials
- * - `logout()` - Log out current user
- *
- * **Environment Methods:**
- * - `listEnvironments()` - List available compute environments
- *
- * **Runtime Methods:**
- * - `createRuntime(config)` - Create new computational runtime
- * - `listRuntimes()` - List all runtimes
- * - `getRuntime(podName)` - Get runtime details
- * - `deleteRuntime(podName)` - Delete runtime
- *
- * **Workspace Methods:**
- * - `createSpace(data)` - Create new workspace
- * - `listSpaces()` - List all workspaces
- * - `getSpace(spaceId)` - Get workspace details
- * - `deleteSpace(spaceId)` - Delete workspace
- *
- * **Notebook Methods:**
- * - `createNotebook(data)` - Create new notebook
- * - `listNotebooks(spaceId?)` - List notebooks
- * - `getNotebook(notebookId)` - Get notebook details
- * - `getNotebookByUid(uid)` - Get notebook by UID
- * - `updateNotebook(notebookId, data)` - Update notebook
- * - `cloneNotebook(data)` - Clone existing notebook
- * - `getNotebookContent(notebookId)` - Get notebook content
- * - `updateNotebookContent(notebookId, content)` - Update notebook content
- * - `deleteNotebook(notebookId)` - Delete notebook
- *
- * **Cell Methods:**
- * - `createCell(notebookId, cell)` - Create new cell
- * - `getCell(notebookId, cellId)` - Get cell details
- * - `deleteCell(notebookId, cellId)` - Delete cell
- *
- * @example
- * ```typescript
- * // Initialize SDK
- * const sdk = new DatalayerSDK({
- *   token: 'your-token',
- *   baseUrl: 'https://prod1.datalayer.run'
- * });
- *
- * // Authentication
- * const user = await sdk.whoami();
- * console.log('Logged in as:', user.email);
- *
- * // Create workspace and notebook
- * const space = await sdk.createSpace({
- *   name: 'My Project'
- * });
- *
- * const notebook = await sdk.createNotebook({
- *   space_id: space.id,
- *   name: 'Analysis'
- * });
- *
- * // Create and start runtime
- * const runtime = await sdk.createRuntime({
- *   environment_name: 'python-cpu-env',
- *   credits_limit: 100
- * });
- *
- * console.log('Setup complete!');
  * ```
  */
 export class DatalayerSDK extends DatalayerSDKWithMixins {
@@ -236,11 +83,8 @@ export type { DatalayerSDKConfig, SDKHandlers };
 export { DatalayerSDKBase };
 
 // Export models for use by consumers
-export { User, GitHubUser } from './models/User';
-export type { AuthProvider, GitHubUserData } from './models/User';
-
-// Export mixin types
-export type { OAuthConfig } from './mixins/IAMMixin';
+export { User } from './models/User';
+export type { AuthProvider } from './models/User';
 
 // Interface declaration for TypeScript to recognize mixin methods
 export interface DatalayerSDK {
@@ -248,50 +92,55 @@ export interface DatalayerSDK {
   whoami(): Promise<any>;
   login(credentials: any): Promise<any>;
   logout(): Promise<void>;
-  getGitHubUser(username: string): Promise<any>;
-  getOAuthUrl(config: OAuthConfig): Promise<string>;
-  exchangeOAuthCode(
-    provider: string,
-    code: string,
-    state?: string,
-  ): Promise<any>;
-  linkProvider(provider: string): Promise<any>;
-  unlinkProvider(provider: string): Promise<any>;
+  getCredits(): Promise<any>;
+  checkIAMHealth(): Promise<any>;
 
   // Runtime Methods
   listEnvironments(): Promise<any[]>;
+  ensureRuntime(options?: any): Promise<any>;
   createRuntime(config: any): Promise<any>;
   listRuntimes(): Promise<any[]>;
-  getRuntime(podName: string): Promise<any>;
-  deleteRuntime(podName: string): Promise<void>;
-  snapshotRuntime(podName: string, data?: any): Promise<any>;
-  createSnapshot(podName: string, data?: any): Promise<any>;
-  getRuntimeSnapshots(podName: string): Promise<any[]>;
-  loadRuntimeSnapshot(podName: string, snapshotId: string): Promise<any>;
-  ensureRuntime(config?: any): Promise<any>;
+  getRuntime(podNameOrRuntime: string | any): Promise<any>;
+  deleteRuntime(podNameOrRuntime: string | any): Promise<void>;
+  createSnapshot(data: any): Promise<any>;
+  listSnapshots(): Promise<any[]>;
+  getSnapshot(idOrSnapshot: string | any): Promise<any>;
+  deleteSnapshot(idOrSnapshot: string | any): Promise<void>;
+  checkRuntimesHealth(): Promise<any>;
 
   // Spacer Methods
   getMySpaces(): Promise<any[]>;
   createSpace(data: any): Promise<any>;
-  getSpace(spaceId: string): Promise<any>;
-  updateSpace(spaceId: string, data: any): Promise<any>;
-  deleteSpace(spaceId: string): Promise<void>;
   createNotebook(data: any): Promise<any>;
-  getNotebook(notebookId: string): Promise<any>;
-  getNotebookByUid(uid: string): Promise<any>;
-  updateNotebook(notebookId: string, data: any): Promise<any>;
-  cloneNotebook(data: any): Promise<any>;
-  getNotebookContent(notebookId: string): Promise<any>;
-  updateNotebookContent(notebookId: string, content: any): Promise<any>;
-  deleteNotebook(notebookId: string): Promise<void>;
+  getNotebook(idOrNotebook: string | any): Promise<any>;
+  updateNotebook(idOrNotebook: string | any, data: any): Promise<any>;
   createLexical(data: any): Promise<any>;
-  getLexical(lexicalId: string): Promise<any>;
-  updateLexical(lexicalId: string, data: any): Promise<any>;
-  deleteLexical(lexicalId: string): Promise<void>;
-  createCell(notebookId: string, cell: any): Promise<any>;
-  getCell(notebookId: string, cellId: string): Promise<any>;
-  deleteCell(notebookId: string, cellId: string): Promise<void>;
-  getSpaceItems(spaceId: string): Promise<any[]>;
-  deleteSpaceItem(itemId: string): Promise<void>;
-  getLexicalCollaborationSessionId(lexicalId: string): Promise<any>;
+  getLexical(idOrLexical: string | any): Promise<any>;
+  updateLexical(idOrLexical: string | any, data: any): Promise<any>;
+  getSpaceItems(spaceId: string): Promise<any>;
+  deleteSpaceItem(itemId: string): Promise<any>;
+  getNotebookContent(
+    notebookIdOrInstance: string | any,
+    options?: any,
+  ): Promise<any>;
+  getLexicalContent(
+    lexicalIdOrInstance: string | any,
+    options?: any,
+  ): Promise<any>;
+  prefetchContent(
+    itemIds: string[],
+    itemType?: 'notebook' | 'lexical',
+  ): Promise<void>;
+  clearContentCache(
+    itemId?: string,
+    itemType?: 'notebook' | 'lexical',
+  ): Promise<void>;
+  createNotebooks(requests: any[]): Promise<any[]>;
+  getNotebooks(notebookIds: string[]): Promise<any[]>;
+  updateNotebooks(updates: any[]): Promise<any[]>;
+  deleteSpaceItems(itemIds: string[]): Promise<void>;
+  createLexicals(requests: any[]): Promise<any[]>;
+  getLexicals(lexicalIds: string[]): Promise<any[]>;
+  updateLexicals(updates: any[]): Promise<any[]>;
+  checkSpacerHealth(): Promise<any>;
 }

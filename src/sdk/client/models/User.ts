@@ -24,115 +24,17 @@ export interface AuthProvider {
   raw?: any;
 }
 
-export interface GitHubUserData {
-  id: number;
-  login: string;
-  name?: string;
-  email?: string;
-  avatar_url?: string;
-  bio?: string;
-  company?: string;
-  location?: string;
-  blog?: string;
-  twitter_username?: string;
-  public_repos?: number;
-  followers?: number;
-  following?: number;
-  created_at?: string;
-  updated_at?: string;
-  html_url?: string;
-}
-
-/**
- * GitHub user model with helper methods.
- */
-export class GitHubUser {
-  constructor(
-    public readonly data: GitHubUserData,
-    // SDK instance for future use (API calls, etc)
-    // @ts-ignore - Will be used for future API calls
-    private readonly sdk: DatalayerSDKBase,
-  ) {}
-
-  get id(): number {
-    return this.data.id;
-  }
-
-  get login(): string {
-    return this.data.login;
-  }
-
-  get name(): string | undefined {
-    return this.data.name;
-  }
-
-  get email(): string | undefined {
-    return this.data.email;
-  }
-
-  get avatarUrl(): string | undefined {
-    return this.data.avatar_url;
-  }
-
-  get bio(): string | undefined {
-    return this.data.bio;
-  }
-
-  get company(): string | undefined {
-    return this.data.company;
-  }
-
-  get location(): string | undefined {
-    return this.data.location;
-  }
-
-  get profileUrl(): string | undefined {
-    return this.data.html_url;
-  }
-
-  /**
-   * Get display name with fallback to login.
-   */
-  getDisplayName(): string {
-    return this.data.name || this.data.login;
-  }
-
-  /**
-   * Check if user is from a specific organization.
-   */
-  isFromOrganization(org: string): boolean {
-    return (
-      this.data.company?.toLowerCase().includes(org.toLowerCase()) || false
-    );
-  }
-
-  /**
-   * Get avatar URL with size parameter.
-   */
-  getAvatarUrl(size = 200): string {
-    if (!this.data.avatar_url) return '';
-    return `${this.data.avatar_url}${this.data.avatar_url.includes('?') ? '&' : '?'}s=${size}`;
-  }
-
-  /**
-   * Convert to plain JSON object.
-   */
-  toJSON(): GitHubUserData {
-    return { ...this.data };
-  }
-}
-
 /**
  * User model representing a Datalayer platform user.
  * Provides rich functionality for accessing user data and authentication providers.
  */
 export class User {
   private _providers?: AuthProvider[];
-  private _githubUser?: GitHubUser;
-  private _githubUserPromise?: Promise<GitHubUser | undefined>;
 
   constructor(
     private data: ApiUser,
+    // SDK instance kept for potential future use
+    // @ts-ignore - Will be used for future API calls
     private readonly sdk: DatalayerSDKBase,
   ) {}
 
@@ -321,60 +223,10 @@ export class User {
   }
 
   /**
-   * Get GitHub user data if available.
-   * Fetches from GitHub API if not cached.
-   */
-  async getGitHubUser(): Promise<GitHubUser | undefined> {
-    // Return cached if available
-    if (this._githubUser) return this._githubUser;
-
-    // Return existing promise if fetch is in progress
-    if (this._githubUserPromise) return this._githubUserPromise;
-
-    // Start fetching
-    this._githubUserPromise = this.fetchGitHubUser();
-    const result = await this._githubUserPromise;
-    this._githubUserPromise = undefined;
-
-    return result;
-  }
-
-  /**
-   * Internal method to fetch GitHub user data.
-   */
-  private async fetchGitHubUser(): Promise<GitHubUser | undefined> {
-    const githubProvider = this.getProvider('github');
-    if (!githubProvider || !githubProvider.username) {
-      return undefined;
-    }
-
-    try {
-      // This would use the IAMMixin's getGitHubUser method
-      const githubData = await (this.sdk as any).getGitHubUser(
-        githubProvider.username,
-      );
-      if (githubData) {
-        this._githubUser = new GitHubUser(githubData, this.sdk);
-        return this._githubUser;
-      }
-    } catch (error) {
-      console.error('Failed to fetch GitHub user:', error);
-    }
-
-    return undefined;
-  }
-
-  /**
    * Get avatar URL with smart fallbacks.
    */
   async getAvatarUrl(): Promise<string> {
-    // Try GitHub avatar first
-    const githubUser = await this.getGitHubUser();
-    if (githubUser?.avatarUrl) {
-      return githubUser.getAvatarUrl();
-    }
-
-    // Try other providers
+    // Try providers
     for (const provider of this.parseProviders()) {
       if (provider.avatarUrl) {
         return provider.avatarUrl;
@@ -422,12 +274,9 @@ export class User {
     this.data = { ...this.data, ...data };
     // Clear caches
     this._providers = undefined;
-    this._githubUser = undefined;
   }
 
-  /**
-   * Convert to plain JSON object.
-   */
+  /** Convert to plain JSON object. */
   toJSON(): ApiUser {
     return { ...this.data };
   }

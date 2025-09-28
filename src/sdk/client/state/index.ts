@@ -4,8 +4,9 @@
  */
 
 /**
+ * State management exports for the Datalayer SDK.
+ *
  * @module sdk/client/state
- * @description State management exports for the Datalayer SDK.
  */
 
 export { IAMState } from './IAMState';

@@ -105,40 +105,6 @@ describe('State Managers', () => {
       });
     });
 
-    describe('GitHub User Caching', () => {
-      const githubUser = {
-        id: 12345,
-        login: 'octocat',
-        name: 'The Octocat',
-        avatar_url: 'https://github.com/octocat.png',
-      };
-
-      it('should cache GitHub user data', async () => {
-        await iamState.cacheGitHubUser('octocat', githubUser as any);
-        const cached = await iamState.getCachedGitHubUser('octocat');
-
-        expect(cached).not.toBeNull();
-        expect(cached?.login).toBe('octocat');
-      });
-
-      it('should expire cached GitHub user after 24 hours', async () => {
-        await iamState.cacheGitHubUser('octocat', githubUser as any);
-
-        // Check immediately - should exist
-        expect(await iamState.getCachedGitHubUser('octocat')).not.toBeNull();
-
-        // Advance time by 25 hours
-        vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
-
-        // Should be expired
-        expect(await iamState.getCachedGitHubUser('octocat')).toBeNull();
-      });
-
-      it('should return null for non-cached users', async () => {
-        expect(await iamState.getCachedGitHubUser('non-existent')).toBeNull();
-      });
-    });
-
     describe('Authentication State', () => {
       it('should check authentication status', async () => {
         expect(await iamState.isAuthenticated()).toBe(false);

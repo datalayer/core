@@ -4,10 +4,8 @@
  */
 
 /**
+ * Runtimes state management with caching and persistence.
  * @module sdk/client/state/RuntimesState
- * @description Runtimes state management with caching and persistence.
- *
- * Handles runtime instances, environments, and compute resource state.
  */
 
 import {
@@ -17,9 +15,7 @@ import {
   stringifyForStorage,
 } from '../storage';
 
-/**
- * Runtime status enumeration.
- */
+/** Runtime status enumeration. */
 export enum RuntimeStatus {
   PENDING = 'pending',
   RUNNING = 'running',
@@ -29,9 +25,7 @@ export enum RuntimeStatus {
   UNKNOWN = 'unknown',
 }
 
-/**
- * Stored runtime data structure.
- */
+/** Stored runtime data structure. */
 export interface StoredRuntime {
   pod_name: string;
   status: RuntimeStatus;
@@ -47,9 +41,7 @@ export interface StoredRuntime {
   cached_at?: number;
 }
 
-/**
- * Stored environment data structure.
- */
+/** Stored environment data structure. */
 export interface StoredEnvironment {
   name: string;
   display_name?: string;
@@ -64,9 +56,7 @@ export interface StoredEnvironment {
   cached_at?: number;
 }
 
-/**
- * Stored snapshot data structure.
- */
+/** Stored snapshot data structure. */
 export interface StoredSnapshot {
   id: string;
   name: string;
@@ -79,31 +69,7 @@ export interface StoredSnapshot {
   cached_at?: number;
 }
 
-/**
- * Runtimes state manager for compute resources.
- *
- * Features:
- * - Runtime instance caching with TTL
- * - Environment configuration caching
- * - Snapshot management
- * - Active runtime tracking
- * - Resource usage tracking
- *
- * @example
- * ```typescript
- * const storage = new BrowserStorage();
- * const runtimesState = new RuntimesState(storage);
- *
- * // Cache runtime data
- * await runtimesState.cacheRuntime(runtimeData);
- *
- * // Get cached runtimes
- * const runtimes = await runtimesState.getCachedRuntimes();
- *
- * // Track active runtime
- * await runtimesState.setActiveRuntime('pod-123');
- * ```
- */
+/** Runtimes state manager for compute resources. */
 export class RuntimesState {
   constructor(private storage: PlatformStorage) {}
 
@@ -113,7 +79,6 @@ export class RuntimesState {
 
   /**
    * Get all cached runtimes.
-   *
    * @param includeExpired - Include expired cache entries
    * @returns Array of cached runtimes
    */
@@ -148,7 +113,7 @@ export class RuntimesState {
   /**
    * Get a specific cached runtime.
    *
-   * @param podName - Runtime pod name
+   * @param podName Runtime pod name
    * @returns Runtime data or null if not cached/expired
    */
   async getCachedRuntime(podName: string): Promise<StoredRuntime | null> {
@@ -175,7 +140,7 @@ export class RuntimesState {
   /**
    * Cache runtime data.
    *
-   * @param runtime - Runtime data to cache
+   * @param runtime Runtime data to cache
    */
   async cacheRuntime(runtime: StoredRuntime): Promise<void> {
     const key = `${StorageKeys.RUNTIME_PREFIX}${runtime.pod_name}`;
@@ -200,7 +165,7 @@ export class RuntimesState {
   /**
    * Remove cached runtime.
    *
-   * @param podName - Runtime pod name
+   * @param podName Runtime pod name
    */
   async removeCachedRuntime(podName: string): Promise<void> {
     const key = `${StorageKeys.RUNTIME_PREFIX}${podName}`;
@@ -219,8 +184,6 @@ export class RuntimesState {
 
   /**
    * Get active runtime.
-   *
-   * Tracks the currently selected/active runtime.
    */
   async getActiveRuntime(): Promise<string | null> {
     return await this.storage.get('active_runtime');
@@ -229,7 +192,7 @@ export class RuntimesState {
   /**
    * Set active runtime.
    *
-   * @param podName - Runtime pod name to set as active
+   * @param podName Runtime pod name to set as active
    */
   async setActiveRuntime(podName: string): Promise<void> {
     await this.storage.set('active_runtime', podName);
@@ -276,7 +239,7 @@ export class RuntimesState {
   /**
    * Cache environments list.
    *
-   * @param environments - Environments to cache
+   * @param environments Environments to cache
    */
   async cacheEnvironments(environments: StoredEnvironment[]): Promise<void> {
     const cacheData = {
@@ -289,7 +252,7 @@ export class RuntimesState {
   /**
    * Get a specific cached environment.
    *
-   * @param name - Environment name
+   * @param name Environment name
    * @returns Environment data or null
    */
   async getCachedEnvironment(name: string): Promise<StoredEnvironment | null> {
@@ -304,7 +267,7 @@ export class RuntimesState {
   /**
    * Get cached snapshots for a runtime.
    *
-   * @param runtimeId - Runtime ID/pod name
+   * @param runtimeId Runtime ID/pod name
    * @returns Array of cached snapshots
    */
   async getCachedSnapshots(runtimeId?: string): Promise<StoredSnapshot[]> {
@@ -316,7 +279,7 @@ export class RuntimesState {
   /**
    * Cache snapshot data.
    *
-   * @param snapshot - Snapshot data to cache
+   * @param snapshot Snapshot data to cache
    */
   async cacheSnapshot(snapshot: StoredSnapshot): Promise<void> {
     const key = `snapshot:${snapshot.id}`;
@@ -330,7 +293,7 @@ export class RuntimesState {
   /**
    * Remove cached snapshot.
    *
-   * @param snapshotId - Snapshot ID
+   * @param snapshotId Snapshot ID
    */
   async removeCachedSnapshot(snapshotId: string): Promise<void> {
     const key = `snapshot:${snapshotId}`;

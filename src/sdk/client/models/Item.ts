@@ -4,11 +4,9 @@
  */
 
 /**
- * @module sdk/client/models/Item
- * @description Abstract base class for all Datalayer content items.
+ * Abstract base class for all Datalayer content items.
  *
- * This class provides shared functionality for Notebook, Lexical, and Cell models,
- * eliminating code duplication and ensuring consistent behavior across all content types.
+ * @module sdk/client/models/Item
  */
 
 import * as items from '../../../api/spacer/items';
@@ -16,25 +14,10 @@ import type { DatalayerSDK } from '../index';
 
 /**
  * Abstract base class for all Datalayer content items.
+ * Provides common functionality for content management including lifecycle tracking.
  *
- * Provides common functionality for content management including lifecycle tracking,
- * property access, and CRUD operations. Specialized models extend this class and
- * implement item-specific behavior.
- *
- * @template TData - The raw data type from API responses
- * @template TUpdateRequest - The update request type for API calls
- *
- * @example
- * ```typescript
- * class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
- *   get type() { return 'notebook'; }
- *   async getName() {
- *     // Notebook-specific API call
- *     const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
- *     return response.notebook.name_t || '';
- *   }
- * }
- * ```
+ * @template TData - Raw data type from API
+ * @template TUpdateRequest - Update request type for API
  */
 export abstract class Item<TData, TUpdateRequest> {
   protected _data: TData;
@@ -43,9 +26,8 @@ export abstract class Item<TData, TUpdateRequest> {
 
   /**
    * Create an Item instance.
-   *
-   * @param data - Raw item data from API
-   * @param sdk - DatalayerSDK instance for making API calls
+   * @param data - Item data from API
+   * @param sdk - SDK instance
    */
   constructor(data: TData, sdk: DatalayerSDK) {
     this._data = data;
@@ -56,16 +38,14 @@ export abstract class Item<TData, TUpdateRequest> {
   // Deletion State Management
   // ========================================================================
 
-  /**
-   * Check if this item has been deleted.
-   */
+  /** Check if this item has been deleted. */
   get isDeleted(): boolean {
     return this._deleted;
   }
 
   /**
    * Check if this item has been deleted and throw error if so.
-   * @throws Error if the item has been deleted
+   * @throws Error if deleted
    */
   protected _checkDeleted(): void {
     if (this._deleted) {
@@ -79,26 +59,19 @@ export abstract class Item<TData, TUpdateRequest> {
   // Static Properties (set at creation, never change)
   // ========================================================================
 
-  /**
-   * Item ID.
-   */
+  /** Item ID. */
   get id(): string {
     this._checkDeleted();
     return (this._data as any).id;
   }
 
-  /**
-   * Unique identifier for the item.
-   */
+  /** Unique identifier for the item. */
   get uid(): string {
     this._checkDeleted();
     return (this._data as any).uid;
   }
 
-  /**
-   * Parent space ID.
-   * Intelligently extracts space ID from direct field or s3_path_s.
-   */
+  /** Parent space ID. */
   get spaceId(): string {
     this._checkDeleted();
 
@@ -120,9 +93,7 @@ export abstract class Item<TData, TUpdateRequest> {
     return '';
   }
 
-  /**
-   * Owner user ID.
-   */
+  /** Owner user ID. */
   get ownerId(): string {
     this._checkDeleted();
     return (
@@ -130,9 +101,7 @@ export abstract class Item<TData, TUpdateRequest> {
     );
   }
 
-  /**
-   * When the item was created.
-   */
+  /** When the item was created. */
   get createdAt(): Date {
     this._checkDeleted();
     const dateStr =
@@ -145,9 +114,7 @@ export abstract class Item<TData, TUpdateRequest> {
     return new Date(dateStr);
   }
 
-  /**
-   * Get the cached update time (synchronous).
-   */
+  /** The cached update time. */
   get updatedAt(): Date | null {
     this._checkDeleted();
     const dateStr =
@@ -165,39 +132,25 @@ export abstract class Item<TData, TUpdateRequest> {
   // Abstract Methods (must be implemented by subclasses)
   // ========================================================================
 
-  /**
-   * Get the item type identifier.
-   */
+  /** Get the item type identifier. */
   abstract get type(): string;
 
-  /**
-   * Get the cached name (synchronous).
-   */
+  /** The cached name. */
   abstract get name(): string;
 
-  /**
-   * Get the current name from API (async).
-   */
+  /** Get the current name from API. */
   abstract getName(): Promise<string>;
 
-  /**
-   * Get the cached content (synchronous).
-   */
+  /** The cached content. */
   abstract get content(): any;
 
-  /**
-   * Get the current content from API (async).
-   */
+  /** Get the current content from API. */
   abstract getContent(): Promise<any>;
 
-  /**
-   * Get when the item was last updated from API (async).
-   */
+  /** Get when the item was last updated from API. */
   abstract getUpdatedAt(): Promise<Date>;
 
-  /**
-   * Update the item.
-   */
+  /** Update the item. */
   abstract update(data: TUpdateRequest): Promise<this>;
 
   // ========================================================================
@@ -206,9 +159,7 @@ export abstract class Item<TData, TUpdateRequest> {
 
   /**
    * Delete this item permanently.
-   *
-   * After deletion, this object will be marked as deleted and subsequent
-   * calls to methods will throw errors.
+   * After deletion, all subsequent method calls will throw errors.
    */
   async delete(): Promise<void> {
     this._checkDeleted();
@@ -222,17 +173,13 @@ export abstract class Item<TData, TUpdateRequest> {
   // Utility Methods
   // ========================================================================
 
-  /**
-   * Get raw item data object.
-   */
+  /** Get raw item data object. */
   toJSON(): TData {
     this._checkDeleted();
     return this._data;
   }
 
-  /**
-   * String representation of the item.
-   */
+  /** String representation of the item. */
   toString(): string {
     this._checkDeleted();
     const name = this.name || 'Unnamed';
@@ -243,23 +190,17 @@ export abstract class Item<TData, TUpdateRequest> {
   // Protected Helper Methods
   // ========================================================================
 
-  /**
-   * Get SDK token for API calls.
-   */
+  /** Get SDK token for API calls. */
   protected _getToken(): string {
     return (this._sdk as any).getToken();
   }
 
-  /**
-   * Get spacer API URL for API calls.
-   */
+  /** Get spacer API URL for API calls. */
   protected _getSpacerRunUrl(): string {
     return (this._sdk as any).getSpacerRunUrl();
   }
 
-  /**
-   * Update internal data after API call.
-   */
+  /** Update internal data after API call. */
   protected _updateData(newData: TData): void {
     this._data = newData;
   }

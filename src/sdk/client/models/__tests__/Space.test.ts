@@ -233,15 +233,20 @@ describe('Space Model', () => {
       );
       (mockSDK.createNotebook as any).mockResolvedValue(mockNotebook);
 
-      const formData = new FormData();
-      formData.append('name', 'New Notebook');
-      formData.append('notebookType', 'jupyter');
+      const notebookData = {
+        name: 'New Notebook',
+        notebookType: 'jupyter',
+      };
 
-      const notebook = await space.createNotebook(formData);
+      const notebook = await space.createNotebook(notebookData);
 
-      // Should automatically set spaceId
-      expect(formData.get('spaceId')).toBe('space-uid-123');
-      expect(mockSDK.createNotebook).toHaveBeenCalledWith(formData);
+      // Should automatically add spaceId
+      expect(mockSDK.createNotebook).toHaveBeenCalledWith({
+        spaceId: 'space-uid-123',
+        name: 'New Notebook',
+        description: '',
+        file: undefined,
+      });
       expect(notebook).toBe(mockNotebook);
     });
 
@@ -256,15 +261,20 @@ describe('Space Model', () => {
       );
       (mockSDK.createLexical as any).mockResolvedValue(mockLexical);
 
-      const formData = new FormData();
-      formData.append('name', 'New Document');
-      formData.append('documentType', 'lexical');
+      const lexicalData = {
+        name: 'New Document',
+        documentType: 'lexical',
+      };
 
-      const lexical = await space.createLexical(formData);
+      const lexical = await space.createLexical(lexicalData);
 
-      // Should automatically set spaceId
-      expect(formData.get('spaceId')).toBe('space-uid-123');
-      expect(mockSDK.createLexical).toHaveBeenCalledWith(formData);
+      // Should automatically add spaceId
+      expect(mockSDK.createLexical).toHaveBeenCalledWith({
+        spaceId: 'space-uid-123',
+        name: 'New Document',
+        description: '',
+        file: undefined,
+      });
       expect(lexical).toBe(mockLexical);
     });
 
@@ -279,14 +289,19 @@ describe('Space Model', () => {
       );
       (mockSDK.createNotebook as any).mockResolvedValue(mockNotebook);
 
-      const formData = new FormData();
-      formData.append('spaceId', 'wrong-space-id'); // Wrong space ID
-      formData.append('name', 'New Notebook');
+      const notebookData = {
+        name: 'New Notebook',
+      };
 
-      await space.createNotebook(formData);
+      await space.createNotebook(notebookData);
 
-      // Should override with correct spaceId
-      expect(formData.get('spaceId')).toBe('space-uid-123');
+      // Should use correct spaceId
+      expect(mockSDK.createNotebook).toHaveBeenCalledWith({
+        spaceId: 'space-uid-123',
+        name: 'New Notebook',
+        description: '',
+        file: undefined,
+      });
     });
   });
 
@@ -383,10 +398,10 @@ describe('Space Model', () => {
       await expect(space.getItems()).rejects.toThrow(
         'Space space-uid-123 has been deleted and no longer exists',
       );
-      await expect(space.createNotebook(new FormData())).rejects.toThrow(
+      await expect(space.createNotebook({ name: 'Test' })).rejects.toThrow(
         'Space space-uid-123 has been deleted and no longer exists',
       );
-      await expect(space.createLexical(new FormData())).rejects.toThrow(
+      await expect(space.createLexical({ name: 'Test' })).rejects.toThrow(
         'Space space-uid-123 has been deleted and no longer exists',
       );
     });
@@ -421,7 +436,7 @@ describe('Space Model', () => {
         new Error('Creation failed'),
       );
 
-      await expect(space.createNotebook(new FormData())).rejects.toThrow(
+      await expect(space.createNotebook({ name: 'Test' })).rejects.toThrow(
         'Creation failed',
       );
     });
@@ -431,7 +446,7 @@ describe('Space Model', () => {
         new Error('Creation failed'),
       );
 
-      await expect(space.createLexical(new FormData())).rejects.toThrow(
+      await expect(space.createLexical({ name: 'Test' })).rejects.toThrow(
         'Creation failed',
       );
     });

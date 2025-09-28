@@ -12,18 +12,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-
-/**
- * Health check response from the Runtimes service
- */
-export interface RuntimesHealthzPingResponse {
-  success: boolean;
-  message: string;
-  status?: {
-    status: string;
-  };
-  version?: string;
-}
+import type { HealthzPingResponse } from '../types/common';
 
 /**
  * Health check ping endpoint for Runtimes service
@@ -40,9 +29,9 @@ export interface RuntimesHealthzPingResponse {
  */
 export const ping = async (
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<RuntimesHealthzPingResponse> => {
+): Promise<HealthzPingResponse> => {
   try {
-    const response = await requestDatalayerAPI<RuntimesHealthzPingResponse>({
+    const response = await requestDatalayerAPI<HealthzPingResponse>({
       url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/ping`,
       method: 'GET',
     });

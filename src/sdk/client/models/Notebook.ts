@@ -4,11 +4,9 @@
  */
 
 /**
- * @module sdk/client/models/Notebook
- * @description Notebook domain model for the Datalayer SDK.
+ * Notebook domain model for the Datalayer SDK.
  *
- * This model provides a rich, object-oriented interface for working with
- * Jupyter notebooks, extending the base Item class with notebook-specific functionality.
+ * @module sdk/client/models/Notebook
  */
 
 import type {
@@ -21,30 +19,11 @@ import { Item } from './Item';
 
 /**
  * Notebook domain model that extends the base Item class.
- *
- * Provides notebook-specific functionality for managing Jupyter notebooks
- * including kernel specifications and notebook metadata.
+ * Provides notebook-specific functionality for managing Jupyter notebooks.
  *
  * @example
  * ```typescript
- * const formData = new FormData();
- * formData.append('spaceId', 'space-123');
- * formData.append('name', 'Data Analysis');
  * const notebook = await sdk.createNotebook(formData);
- *
- * // Inherited properties
- * console.log(notebook.id);
- * console.log(notebook.spaceId);
- *
- * // Notebook-specific properties
- * console.log(notebook.path);
- * console.log(notebook.version);
- *
- * // Inherited methods
- * const currentName = await notebook.getName();
- * const content = await notebook.getContent();
- *
- * // Notebook-specific methods
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
@@ -52,8 +31,8 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   /**
    * Create a Notebook instance.
    *
-   * @param data - Raw notebook data from API
-   * @param sdk - DatalayerSDK instance for making API calls
+   * @param data - Notebook data from API
+   * @param sdk - SDK instance
    */
   constructor(data: NotebookData, sdk: DatalayerSDK) {
     super(data, sdk);
@@ -63,17 +42,13 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   // Abstract Method Implementations
   // ========================================================================
 
-  /**
-   * Document type identifier.
-   */
+  /** Document type identifier. */
   get type(): string {
     this._checkDeleted();
     return 'notebook';
   }
 
-  /**
-   * Get the cached name of the notebook (synchronous).
-   */
+  /** The cached name of the notebook. */
   get name(): string {
     this._checkDeleted();
     return (
@@ -84,9 +59,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
     );
   }
 
-  /**
-   * Get the current name of the notebook from API.
-   */
+  /** Get the current name of the notebook from API. */
   async getName(): Promise<string> {
     this._checkDeleted();
     const token = this._getToken();
@@ -106,9 +79,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
     return this.name;
   }
 
-  /**
-   * Get the cached content (synchronous).
-   */
+  /** The cached content. */
   get content(): any {
     this._checkDeleted();
     if (!this._data.content && this._data.model_s) {
@@ -121,9 +92,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
     return this._data.content;
   }
 
-  /**
-   * Get the notebook content from API.
-   */
+  /** Get the notebook content from API. */
   async getContent(): Promise<any> {
     this._checkDeleted();
     const token = this._getToken();
@@ -145,9 +114,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
     return this.content;
   }
 
-  /**
-   * Get when the notebook was last updated from API.
-   */
+  /** Get when the notebook was last updated from API. */
   async getUpdatedAt(): Promise<Date> {
     this._checkDeleted();
     const token = this._getToken();
@@ -178,9 +145,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
     return new Date(dateStr);
   }
 
-  /**
-   * Update the notebook.
-   */
+  /** Update the notebook. */
   async update(data: UpdateNotebookRequest): Promise<this> {
     this._checkDeleted();
     const token = this._getToken();
@@ -199,25 +164,19 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   // Notebook-specific Properties
   // ========================================================================
 
-  /**
-   * File path within the space.
-   */
+  /** File path within the space. */
   get path(): string {
     this._checkDeleted();
     return this._data.path || '';
   }
 
-  /**
-   * Version number.
-   */
+  /** Version number. */
   get version(): number {
     this._checkDeleted();
     return this._data.version || 0;
   }
 
-  /**
-   * Notebook metadata.
-   */
+  /** Notebook metadata. */
   get metadata(): Record<string, any> {
     this._checkDeleted();
     return this._data.metadata || {};
@@ -227,9 +186,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   // Notebook-specific Methods
   // ========================================================================
 
-  /**
-   * Get the kernel specification.
-   */
+  /** Get the kernel specification. */
   async getKernelSpec(): Promise<any> {
     this._checkDeleted();
     const token = this._getToken();

@@ -4,10 +4,8 @@
  */
 
 /**
+ * Spacer state management with caching and persistence.
  * @module sdk/client/state/SpacerState
- * @description Spacer state management with caching and persistence.
- *
- * Handles workspaces, notebooks, lexical documents, and content state.
  */
 
 import {
@@ -17,18 +15,14 @@ import {
   stringifyForStorage,
 } from '../storage';
 
-/**
- * Space visibility options.
- */
+/** Space visibility options. */
 export enum SpaceVisibility {
   PUBLIC = 'public',
   PRIVATE = 'private',
   ORGANIZATION = 'organization',
 }
 
-/**
- * Stored space data structure.
- */
+/** Stored space data structure. */
 export interface StoredSpace {
   id: string;
   uid: string;
@@ -45,9 +39,7 @@ export interface StoredSpace {
   item_count?: number;
 }
 
-/**
- * Stored notebook data structure.
- */
+/** Stored notebook data structure. */
 export interface StoredNotebook {
   id: string;
   uid: string;
@@ -59,7 +51,6 @@ export interface StoredNotebook {
   created_at?: string;
   updated_at?: string;
   // Content metadata
-  cell_count?: number;
   size_bytes?: number;
   last_executed?: string;
   // Cache metadata
@@ -67,9 +58,7 @@ export interface StoredNotebook {
   content_cached?: boolean;
 }
 
-/**
- * Stored lexical document data structure.
- */
+/** Stored lexical document data structure. */
 export interface StoredLexical {
   id: string;
   uid: string;
@@ -87,9 +76,7 @@ export interface StoredLexical {
   content_cached?: boolean;
 }
 
-/**
- * Notebook content cache.
- */
+/** Notebook content cache. */
 export interface CachedNotebookContent {
   notebook_id: string;
   content: any; // Jupyter notebook JSON
@@ -109,28 +96,6 @@ export interface CachedLexicalContent {
 
 /**
  * Spacer state manager for workspace and content.
- *
- * Features:
- * - Space/workspace caching
- * - Notebook metadata and content caching
- * - Lexical document caching
- * - Recent items tracking
- * - Content versioning with ETags
- *
- * @example
- * ```typescript
- * const storage = new BrowserStorage();
- * const spacerState = new SpacerState(storage);
- *
- * // Cache space data
- * await spacerState.cacheSpace(spaceData);
- *
- * // Get cached notebooks for a space
- * const notebooks = await spacerState.getCachedNotebooks('space-123');
- *
- * // Cache notebook content
- * await spacerState.cacheNotebookContent('notebook-456', content);
- * ```
  */
 export class SpacerState {
   constructor(private storage: PlatformStorage) {}
@@ -169,7 +134,7 @@ export class SpacerState {
   /**
    * Cache spaces list.
    *
-   * @param spaces - Spaces to cache
+   * @param spaces Spaces to cache
    */
   async cacheSpaces(spaces: StoredSpace[]): Promise<void> {
     const cacheData = {
@@ -182,7 +147,7 @@ export class SpacerState {
   /**
    * Get a specific cached space.
    *
-   * @param spaceId - Space ID
+   * @param spaceId Space ID
    * @returns Space data or null
    */
   async getCachedSpace(spaceId: string): Promise<StoredSpace | null> {
@@ -194,7 +159,7 @@ export class SpacerState {
   /**
    * Cache space data.
    *
-   * @param space - Space data to cache
+   * @param space Space data to cache
    */
   async cacheSpace(space: StoredSpace): Promise<void> {
     const key = `${StorageKeys.SPACE_PREFIX}${space.id}`;
@@ -216,7 +181,7 @@ export class SpacerState {
   /**
    * Remove cached space.
    *
-   * @param spaceId - Space ID
+   * @param spaceId Space ID
    */
   async removeCachedSpace(spaceId: string): Promise<void> {
     const key = `${StorageKeys.SPACE_PREFIX}${spaceId}`;
@@ -237,7 +202,7 @@ export class SpacerState {
   /**
    * Get cached notebooks for a space.
    *
-   * @param spaceId - Optional space ID filter
+   * @param spaceId Optional space ID filter
    * @returns Array of cached notebooks
    */
   async getCachedNotebooks(spaceId?: string): Promise<StoredNotebook[]> {
@@ -266,8 +231,8 @@ export class SpacerState {
   /**
    * Cache notebooks list.
    *
-   * @param notebooks - Notebooks to cache
-   * @param spaceId - Optional space ID for scoped caching
+   * @param notebooks Notebooks to cache
+   * @param spaceId Optional space ID for scoped caching
    */
   async cacheNotebooks(
     notebooks: StoredNotebook[],
@@ -284,7 +249,7 @@ export class SpacerState {
   /**
    * Get a specific cached notebook.
    *
-   * @param notebookId - Notebook ID
+   * @param notebookId Notebook ID
    * @returns Notebook data or null
    */
   async getCachedNotebook(notebookId: string): Promise<StoredNotebook | null> {
@@ -296,7 +261,7 @@ export class SpacerState {
   /**
    * Cache notebook data.
    *
-   * @param notebook - Notebook data to cache
+   * @param notebook Notebook data to cache
    */
   async cacheNotebook(notebook: StoredNotebook): Promise<void> {
     const key = `${StorageKeys.NOTEBOOK_PREFIX}${notebook.id}`;
@@ -310,7 +275,7 @@ export class SpacerState {
   /**
    * Get cached notebook content.
    *
-   * @param notebookId - Notebook ID
+   * @param notebookId Notebook ID
    * @returns Notebook content or null
    */
   async getCachedNotebookContent(
@@ -337,9 +302,9 @@ export class SpacerState {
   /**
    * Cache notebook content.
    *
-   * @param notebookId - Notebook ID
-   * @param content - Notebook content
-   * @param etag - Optional ETag for versioning
+   * @param notebookId Notebook ID
+   * @param content Notebook content
+   * @param etag Optional ETag for versioning
    */
   async cacheNotebookContent(
     notebookId: string,
@@ -370,7 +335,7 @@ export class SpacerState {
   /**
    * Get cached lexical documents for a space.
    *
-   * @param spaceId - Optional space ID filter
+   * @param spaceId Optional space ID filter
    * @returns Array of cached lexical documents
    */
   async getCachedLexicals(spaceId?: string): Promise<StoredLexical[]> {
@@ -399,8 +364,8 @@ export class SpacerState {
   /**
    * Cache lexical documents list.
    *
-   * @param lexicals - Lexical documents to cache
-   * @param spaceId - Optional space ID for scoped caching
+   * @param lexicals Lexical documents to cache
+   * @param spaceId Optional space ID for scoped caching
    */
   async cacheLexicals(
     lexicals: StoredLexical[],
@@ -417,7 +382,7 @@ export class SpacerState {
   /**
    * Get a specific cached lexical document.
    *
-   * @param lexicalId - Lexical document ID
+   * @param lexicalId Lexical document ID
    * @returns Lexical data or null
    */
   async getCachedLexical(lexicalId: string): Promise<StoredLexical | null> {
@@ -429,7 +394,7 @@ export class SpacerState {
   /**
    * Cache lexical document data.
    *
-   * @param lexical - Lexical document data to cache
+   * @param lexical Lexical document data to cache
    */
   async cacheLexical(lexical: StoredLexical): Promise<void> {
     const key = `${StorageKeys.LEXICAL_PREFIX}${lexical.id}`;
@@ -485,9 +450,9 @@ export class SpacerState {
   /**
    * Add item to recent list.
    *
-   * @param type - Item type
-   * @param id - Item ID
-   * @param name - Optional item name
+   * @param type Item type
+   * @param id Item ID
+   * @param name Optional item name
    */
   async addRecentItem(
     type: 'space' | 'notebook' | 'lexical',

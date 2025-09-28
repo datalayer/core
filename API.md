@@ -305,13 +305,20 @@ await items.deleteItem(
 
 The SDK client provides a high-level, object-oriented interface for interacting with Datalayer services.
 
+### Key Features
+
+- **Flat API**: All methods directly on `sdk.` (e.g., `sdk.createNotebook()`)
+- **Handlers Pattern**: Inject platform-specific behavior without wrapping SDK methods
+- **Rich Models**: Returns model instances with methods, not just plain objects
+- **Type Safety**: Full TypeScript support with proper interfaces
+
 ### Initialization
 
 ```typescript
 import { DatalayerSDK } from '@datalayer/core/sdk';
 import { DEFAULT_SERVICE_URLS } from '@datalayer/core/api/constants';
 
-// Initialize with token
+// Basic initialization with token
 const sdk = new DatalayerSDK({
   token: 'bearer-token-123',
   iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
@@ -319,12 +326,44 @@ const sdk = new DatalayerSDK({
   spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER
 });
 
-// Initialize with external token
-const sdkWithExternal = new DatalayerSDK({
-  externalToken: 'github-token-123',
-  iamRunUrl: 'https://id.datalayer.run',
-  runtimesRunUrl: 'https://runtimes.datalayer.run',
-  spacerRunUrl: 'https://spacer.datalayer.run'
+// Initialize with lifecycle handlers for cross-cutting concerns
+const sdkWithHandlers = new DatalayerSDK({
+  token: 'bearer-token-123',
+  iamRunUrl: 'https://prod1.datalayer.run',
+  handlers: {
+    // Called before every SDK method
+    beforeCall: async (methodName, args) => {
+      console.log(`[SDK] Calling ${methodName}`, args);
+    },
+    // Called after successful method execution
+    afterCall: async (methodName, result) => {
+      console.log(`[SDK] ${methodName} completed`);
+      // Track analytics, update UI, etc.
+    },
+    // Called when a method throws an error
+    onError: async (methodName, error) => {
+      console.error(`[SDK] ${methodName} failed:`, error);
+
+      // Platform-specific error handling
+      if (error.message.includes('Not authenticated')) {
+        // Show login prompt in your platform's UI
+        // e.g., vscode.window.showErrorMessage(...)
+        // or showAuthModal() in React
+      }
+    }
+  }
+});
+
+// Initialize for VS Code extension with platform-specific handlers
+const vscodeSDK = new DatalayerSDK({
+  token: 'bearer-token-123',
+  handlers: {
+    onError: async (methodName, error) => {
+      // VS Code specific error handling
+      const vscode = require('vscode');
+      vscode.window.showErrorMessage(`Datalayer: ${error.message}`);
+    }
+  }
 });
 ```
 

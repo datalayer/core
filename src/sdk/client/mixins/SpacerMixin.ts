@@ -4,11 +4,8 @@
  */
 
 /**
+ * Spacer mixin for managing workspaces, notebooks, and content.
  * @module sdk/client/mixins/SpacerMixin
- * @description Spacer mixin for the Datalayer SDK.
- *
- * This mixin provides intuitive methods for managing workspaces, notebooks,
- * and content that are mixed into the main DatalayerSDK class.
  */
 
 import * as spaces from '../../../api/spacer/spaces';
@@ -30,9 +27,7 @@ import { Notebook } from '../models/Notebook';
 import { Lexical } from '../models/Lexical';
 import { Space } from '../models/Space';
 
-/**
- * Options for content loading with CDN support.
- */
+/** Options for content loading with CDN support. */
 export interface ContentLoadingOptions {
   /** Whether to try CDN first before API (default: true) */
   preferCDN?: boolean;
@@ -42,12 +37,7 @@ export interface ContentLoadingOptions {
   cdnBaseUrl?: string;
 }
 
-/**
- * Spacer mixin that provides workspace and content management.
- *
- * This mixin is applied to the DatalayerSDK class to provide clean, intuitive
- * methods for managing spaces, notebooks, and cells.
- */
+/** Spacer mixin providing workspace and content management. */
 export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     // ========================================================================
@@ -56,18 +46,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get all workspaces for the authenticated user.
-     *
-     * @returns Promise resolving to array of Space instances
-     *
-     * @example
-     * ```typescript
-     * const mySpaces = await sdk.getMySpaces();
-     * console.log('My spaces:', mySpaces.length);
-     * for (const space of mySpaces) {
-     *   const name = await space.getName();
-     *   console.log(`- ${name} (${space.visibility})`);
-     * }
-     * ```
+     * @returns Array of Space instances
      */
     async getMySpaces(): Promise<Space[]> {
       const token = (this as any).getToken();
@@ -82,24 +61,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new workspace.
-     *
      * @param data - Space creation parameters
-     * @returns Promise resolving to created Space instance
-     *
-     * @example
-     * ```typescript
-     * const space = await sdk.createSpace({
-     *   name: 'My Research Project',
-     *   description: 'Data analysis workspace',
-     *   variant: 'default',
-     *   spaceHandle: 'research-project',
-     *   organizationId: 'org-123',
-     *   seedSpaceId: 'seed-456',
-     *   public: false
-     * });
-     * const name = await space.getName();
-     * console.log('Space created:', name);
-     * ```
+     * @returns Created Space instance
      */
     async createSpace(data: CreateSpaceRequest): Promise<Space> {
       const token = (this as any).getToken();
@@ -130,19 +93,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new notebook.
-     *
      * @param data - Notebook creation parameters
-     * @returns Promise resolving to created Notebook instance
-     *
-     * @example
-     * ```typescript
-     * const notebook = await sdk.createNotebook({
-     *   spaceId: 'space-123',
-     *   name: 'Data Analysis',
-     *   description: 'Analysis notebook',
-     *   notebookType: 'jupyter',
-     * });
-     * ```
+     * @returns Created Notebook instance
      */
     async createNotebook(data: CreateNotebookRequest): Promise<Notebook> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
@@ -157,15 +109,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get a notebook by ID or Notebook instance.
-     *
-     * @param idOrNotebook - Notebook ID (string) or Notebook instance
-     * @returns Promise resolving to Notebook instance
-     *
-     * @example
-     * ```typescript
-     * const notebook = await sdk.getNotebook('notebook-123');
-     * const refreshed = await sdk.getNotebook(notebook);
-     * ```
+     * @param idOrNotebook - Notebook ID or Notebook instance
+     * @returns Notebook instance
      */
     async getNotebook(idOrNotebook: string | Notebook): Promise<Notebook> {
       const notebookId = this._extractNotebookId(idOrNotebook);
@@ -186,22 +131,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Update a notebook.
-     *
-     * @param idOrNotebook - Notebook ID (string) or Notebook instance
+     * @param idOrNotebook - Notebook ID or Notebook instance
      * @param data - Update data with optional name and/or description
-     * @returns Promise resolving to updated Notebook instance
-     *
-     * @example
-     * ```typescript
-     * const updated = await sdk.updateNotebook('notebook-123', {
-     *   name: 'Updated Analysis',
-     *   description: 'Updated description'
-     * });
-     * const updated2 = await sdk.updateNotebook(notebook, {
-     *   name: 'Updated Analysis',
-     *   description: 'Updated description'
-     * });
-     * ```
+     * @returns Updated Notebook instance
      */
     async updateNotebook(
       idOrNotebook: string | Notebook,
@@ -225,19 +157,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new lexical document.
-     *
      * @param data - Document creation parameters
-     * @returns Promise resolving to created Lexical instance
-     *
-     * @example
-     * ```typescript
-     * const lexical = await sdk.createLexical({
-     *   spaceId: 'space-123',
-     *   name: 'Project Documentation',
-     *   description: 'Main project docs',
-     *   documentType: 'document',
-     * });
-     * ```
+     * @returns Created Lexical instance
      */
     async createLexical(data: CreateLexicalRequest): Promise<Lexical> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
@@ -248,15 +169,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get a lexical document by ID or Lexical instance.
-     *
-     * @param idOrLexical - Document ID (string) or Lexical instance
-     * @returns Promise resolving to Lexical instance
-     *
-     * @example
-     * ```typescript
-     * const lexical = await sdk.getLexical('lexical-123');
-     * const refreshed = await sdk.getLexical(lexical);
-     * ```
+     * @param idOrLexical - Document ID or Lexical instance
+     * @returns Lexical instance
      */
     async getLexical(idOrLexical: string | Lexical): Promise<Lexical> {
       const lexicalId = this._extractLexicalId(idOrLexical);
@@ -277,22 +191,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Update a lexical document.
-     *
-     * @param idOrLexical - Document ID (string) or Lexical instance
+     * @param idOrLexical - Document ID or Lexical instance
      * @param data - Update data with optional name and/or description
-     * @returns Promise resolving to updated Lexical instance
-     *
-     * @example
-     * ```typescript
-     * const updated = await sdk.updateLexical('lexical-123', {
-     *   name: 'Updated Documentation',
-     *   description: 'Updated description'
-     * });
-     * const updated2 = await sdk.updateLexical(lexical, {
-     *   name: 'Updated Documentation',
-     *   description: 'Updated description'
-     * });
-     * ```
+     * @returns Updated Lexical instance
      */
     async updateLexical(
       idOrLexical: string | Lexical,
@@ -316,18 +217,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get the items of a space.
-     *
      * @param spaceId - Space ID
-     * @returns Promise resolving to space items
-     *
-     * @example
-     * ```typescript
-     * const response = await sdk.getSpaceItems('space-123');
-     * console.log('Space items:', response.items.length);
-     * response.items.forEach(item => {
-     *   console.log(`- ${item.name} (${item.type})`);
-     * });
-     * ```
+     * @returns Space items
      */
     async getSpaceItems(spaceId: string): Promise<GetSpaceItemsResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
@@ -337,15 +228,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Delete an item from a space.
-     *
      * @param itemId - Item ID to delete
-     * @returns Promise resolving when deletion is complete
-     *
-     * @example
-     * ```typescript
-     * const response = await sdk.deleteSpaceItem('item-123');
-     * console.log('Item deleted:', response.message);
-     * ```
+     * @returns Deletion response
      */
     async deleteSpaceItem(itemId: string): Promise<DeleteSpaceItemResponse> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
@@ -359,31 +243,11 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get notebook content with CDN-first loading strategy and API fallback.
+     * Tries CDN first for speed, falls back to API if needed, optionally caches locally.
      *
-     * This method implements optimized content loading that:
-     * 1. Tries CDN first for public notebooks (faster, cached)
-     * 2. Falls back to API if CDN fails or for private content
-     * 3. Optionally caches content locally for offline access
-     *
-     * @param notebookIdOrInstance - Notebook ID (string) or Notebook instance
+     * @param notebookIdOrInstance - Notebook ID or Notebook instance
      * @param options - Content loading options
-     * @returns Promise resolving to notebook content
-     *
-     * @example
-     * ```typescript
-     * // Default CDN-first loading
-     * const content = await sdk.getNotebookContent('notebook-123');
-     *
-     * // Force API loading (skip CDN)
-     * const content = await sdk.getNotebookContent('notebook-123', {
-     *   preferCDN: false
-     * });
-     *
-     * // Enable local caching for offline access
-     * const content = await sdk.getNotebookContent(notebook, {
-     *   cacheLocally: true
-     * });
-     * ```
+     * @returns Notebook content
      */
     async getNotebookContent(
       notebookIdOrInstance: string | Notebook,
@@ -490,17 +354,11 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Get lexical document content with CDN-first loading strategy.
-     *
      * Similar to getNotebookContent but for lexical documents.
      *
-     * @param lexicalIdOrInstance - Lexical ID (string) or Lexical instance
+     * @param lexicalIdOrInstance - Lexical ID or Lexical instance
      * @param options - Content loading options
-     * @returns Promise resolving to lexical content
-     *
-     * @example
-     * ```typescript
-     * const content = await sdk.getLexicalContent('lexical-123');
-     * ```
+     * @returns Lexical content
      */
     async getLexicalContent(
       lexicalIdOrInstance: string | Lexical,
@@ -607,22 +465,10 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Prefetch content for multiple notebooks/lexicals for offline access.
-     *
-     * This method loads content for multiple items in parallel and caches them
-     * locally for offline access.
+     * Loads content in parallel and caches locally.
      *
      * @param itemIds - Array of notebook or lexical IDs to prefetch
      * @param itemType - Type of items ('notebook' or 'lexical')
-     * @returns Promise resolving when all items are prefetched
-     *
-     * @example
-     * ```typescript
-     * // Prefetch multiple notebooks for offline access
-     * await sdk.prefetchContent(['nb-1', 'nb-2', 'nb-3'], 'notebook');
-     *
-     * // Prefetch lexical documents
-     * await sdk.prefetchContent(['lex-1', 'lex-2'], 'lexical');
-     * ```
      */
     async prefetchContent(
       itemIds: string[],
@@ -659,16 +505,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      *
      * @param itemId - Optional ID of specific item to clear cache for
      * @param itemType - Type of item ('notebook' or 'lexical')
-     * @returns Promise resolving when cache is cleared
-     *
-     * @example
-     * ```typescript
-     * // Clear cache for a specific notebook
-     * await sdk.clearContentCache('notebook-123', 'notebook');
-     *
-     * // Clear all cached notebooks
-     * await sdk.clearContentCache(undefined, 'notebook');
-     * ```
      */
     async clearContentCache(
       itemId?: string,
@@ -696,31 +532,10 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create multiple notebooks in parallel for a space.
-     *
-     * This method efficiently creates multiple notebooks by running operations
-     * in parallel, providing better performance than sequential creation.
+     * Better performance than sequential creation.
      *
      * @param requests - Array of notebook creation requests
-     * @returns Promise resolving to array of created Notebook instances
-     *
-     * @example
-     * ```typescript
-     * const notebooks = await sdk.createNotebooks([
-     *   {
-     *     spaceId: 'space-123',
-     *     name: 'Analysis Part 1',
-     *     description: 'Data preprocessing',
-     *     notebookType: 'jupyter'
-     *   },
-     *   {
-     *     spaceId: 'space-123',
-     *     name: 'Analysis Part 2',
-     *     description: 'Model training',
-     *     notebookType: 'jupyter'
-     *   }
-     * ]);
-     * console.log(`Created ${notebooks.length} notebooks`);
-     * ```
+     * @returns Array of created Notebook instances
      */
     async createNotebooks(
       requests: CreateNotebookRequest[],
@@ -755,13 +570,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Get multiple notebooks in parallel.
      *
      * @param notebookIds - Array of notebook IDs to retrieve
-     * @returns Promise resolving to array of Notebook instances
-     *
-     * @example
-     * ```typescript
-     * const notebooks = await sdk.getNotebooks(['nb-1', 'nb-2', 'nb-3']);
-     * console.log(`Retrieved ${notebooks.length} notebooks`);
-     * ```
+     * @returns Array of Notebook instances
      */
     async getNotebooks(notebookIds: string[]): Promise<Notebook[]> {
       if (notebookIds.length === 0) {
@@ -791,17 +600,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     /**
      * Update multiple notebooks in parallel.
      *
-     * @param updates - Array of update operations, each containing the notebook ID and update data
-     * @returns Promise resolving to array of updated Notebook instances
-     *
-     * @example
-     * ```typescript
-     * const updates = [
-     *   { id: 'nb-1', data: { name: 'Updated Analysis 1' } },
-     *   { id: 'nb-2', data: { name: 'Updated Analysis 2' } }
-     * ];
-     * const updated = await sdk.updateNotebooks(updates);
-     * ```
+     * @param updates - Array of update operations with notebook ID and update data
+     * @returns Array of updated Notebook instances
      */
     async updateNotebooks(
       updates: Array<{ id: string; data: UpdateNotebookRequest }>,
@@ -832,13 +632,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Delete multiple space items in parallel.
      *
      * @param itemIds - Array of item IDs to delete
-     * @returns Promise resolving when all deletions are complete
-     *
-     * @example
-     * ```typescript
-     * await sdk.deleteSpaceItems(['item-1', 'item-2', 'item-3']);
-     * console.log('All items deleted');
-     * ```
      */
     async deleteSpaceItems(itemIds: string[]): Promise<void> {
       if (itemIds.length === 0) {
@@ -865,25 +658,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Create multiple lexical documents in parallel for a space.
      *
      * @param requests - Array of lexical creation requests
-     * @returns Promise resolving to array of created Lexical instances
-     *
-     * @example
-     * ```typescript
-     * const lexicals = await sdk.createLexicals([
-     *   {
-     *     spaceId: 'space-123',
-     *     name: 'Project Overview',
-     *     description: 'Main project documentation',
-     *     documentType: 'document'
-     *   },
-     *   {
-     *     spaceId: 'space-123',
-     *     name: 'API Reference',
-     *     description: 'API documentation',
-     *     documentType: 'document'
-     *   }
-     * ]);
-     * ```
+     * @returns Array of created Lexical instances
      */
     async createLexicals(requests: CreateLexicalRequest[]): Promise<Lexical[]> {
       if (requests.length === 0) {
@@ -914,13 +689,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Get multiple lexical documents in parallel.
      *
      * @param lexicalIds - Array of lexical IDs to retrieve
-     * @returns Promise resolving to array of Lexical instances
-     *
-     * @example
-     * ```typescript
-     * const lexicals = await sdk.getLexicals(['lex-1', 'lex-2', 'lex-3']);
-     * console.log(`Retrieved ${lexicals.length} lexical documents`);
-     * ```
+     * @returns Array of Lexical instances
      */
     async getLexicals(lexicalIds: string[]): Promise<Lexical[]> {
       if (lexicalIds.length === 0) {
@@ -952,17 +721,8 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     /**
      * Update multiple lexical documents in parallel.
      *
-     * @param updates - Array of update operations, each containing the lexical ID and update data
-     * @returns Promise resolving to array of updated Lexical instances
-     *
-     * @example
-     * ```typescript
-     * const updates = [
-     *   { id: 'lex-1', data: { name: 'Updated Overview' } },
-     *   { id: 'lex-2', data: { name: 'Updated API Docs' } }
-     * ];
-     * const updated = await sdk.updateLexicals(updates);
-     * ```
+     * @param updates - Array of update operations with lexical ID and update data
+     * @returns Array of updated Lexical instances
      */
     async updateLexicals(
       updates: Array<{ id: string; data: UpdateLexicalRequest }>,
@@ -995,21 +755,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Check the health status of the Spacer service.
+     * Performs a lightweight check to verify service accessibility.
      *
-     * This method performs a lightweight check to verify that the Spacer
-     * service is accessible and responding properly.
-     *
-     * @returns Promise resolving to health check result
-     *
-     * @example
-     * ```typescript
-     * const health = await sdk.checkSpacerHealth();
-     * console.log('Service status:', health.status);
-     * console.log('Response time:', health.responseTime);
-     * if (!health.healthy) {
-     *   console.error('Service issues:', health.errors);
-     * }
-     * ```
+     * @returns Health check result with status and response time
      */
     async checkSpacerHealth(): Promise<{
       healthy: boolean;
@@ -1052,79 +800,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
           healthy: false,
           status,
           responseTime,
-          errors,
-          timestamp: new Date(),
-        };
-      }
-    }
-
-    /**
-     * Get comprehensive spacer service diagnostics.
-     *
-     * This method provides detailed information about the service state,
-     * including workspace and content statistics.
-     *
-     * @returns Promise resolving to diagnostic information
-     *
-     * @example
-     * ```typescript
-     * const diagnostics = await sdk.getSpacerDiagnostics();
-     * console.log('Available spaces:', diagnostics.spaceCount);
-     * console.log('Service capabilities:', diagnostics.capabilities);
-     * ```
-     */
-    async getSpacerDiagnostics(): Promise<{
-      healthy: boolean;
-      spaceCount: number;
-      capabilities: string[];
-      serviceVersion?: string;
-      errors: string[];
-      timestamp: Date;
-    }> {
-      const errors: string[] = [];
-      let spaceCount = 0;
-      const capabilities: string[] = [];
-      const healthy = true;
-
-      try {
-        // Get space count
-        const spaces = await this.getMySpaces();
-        spaceCount = Array.isArray(spaces) ? spaces.length : 0;
-        capabilities.push('spaces');
-
-        // Test content loading capability
-        try {
-          // This is a lightweight test - we don't actually load content
-          capabilities.push('content-loading');
-        } catch (error) {
-          errors.push(`Content loading test failed: ${error}`);
-          // Don't mark as unhealthy since this is optional
-        }
-
-        // Test batch operations capability
-        try {
-          // Test with empty arrays to verify the methods exist and work
-          await this.createNotebooks([]);
-          await this.createLexicals([]);
-          capabilities.push('batch-operations');
-        } catch (error) {
-          errors.push(`Batch operations test failed: ${error}`);
-          // Don't mark as unhealthy since this is optional
-        }
-
-        return {
-          healthy,
-          spaceCount,
-          capabilities,
-          errors,
-          timestamp: new Date(),
-        };
-      } catch (error) {
-        errors.push(`Service diagnostics failed: ${error}`);
-        return {
-          healthy: false,
-          spaceCount: 0,
-          capabilities: [],
           errors,
           timestamp: new Date(),
         };

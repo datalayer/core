@@ -4,8 +4,8 @@
  */
 
 /**
+ * Base SDK class providing core configuration and token management.
  * @module sdk/client/base
- * @description Base SDK class providing core configuration and token management.
  */
 
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
@@ -14,10 +14,7 @@ import { IAMState } from './state/IAMState';
 import { RuntimesState } from './state/RuntimesState';
 import { SpacerState } from './state/SpacerState';
 
-/**
- * Handlers for SDK method lifecycle events.
- * Allows intercepting method calls for logging, error handling, etc.
- */
+/** Handlers for SDK method lifecycle events. */
 export interface SDKHandlers {
   /** Called before any SDK method execution */
   beforeCall?: (methodName: string, args: any[]) => void | Promise<void>;
@@ -27,25 +24,23 @@ export interface SDKHandlers {
   onError?: (methodName: string, error: any) => void | Promise<void>;
 }
 
-/**
- * Configuration options for the Datalayer SDK.
- */
+/** Configuration options for the Datalayer SDK. */
 export interface DatalayerSDKConfig {
-  /** Authentication token for API requests. */
+  /** Authentication token for API requests */
   token?: string;
-  /** URL for the IAM (Identity and Access Management) service. */
+  /** URL for the IAM service */
   iamRunUrl?: string;
-  /** URL for the Runtimes service. */
+  /** URL for the Runtimes service */
   runtimesRunUrl?: string;
-  /** URL for the Spacer (workspaces and collaboration) service. */
+  /** URL for the Spacer service */
   spacerRunUrl?: string;
 
   // Platform abstractions
-  /** Platform-specific storage implementation. */
+  /** Platform-specific storage implementation */
   storage?: PlatformStorage;
-  /** Enable caching for API responses. */
+  /** Enable caching for API responses */
   cacheEnabled?: boolean;
-  /** Enable offline mode (use cached data when possible). */
+  /** Enable offline mode */
   offlineMode?: boolean;
 
   // Method lifecycle handlers
@@ -53,13 +48,7 @@ export interface DatalayerSDKConfig {
   handlers?: SDKHandlers;
 }
 
-/**
- * Base SDK class that provides core configuration and token management.
- *
- * This class serves as the foundation for the DatalayerSDK, handling
- * authentication tokens, service URL configuration, and other common
- * SDK functionality that all mixins can access.
- */
+/** Base SDK class providing core configuration and token management. */
 export class DatalayerSDKBase {
   /** URL for IAM service */
   public readonly iamRunUrl: string;
@@ -88,7 +77,6 @@ export class DatalayerSDKBase {
 
   /**
    * Create a DatalayerSDK base instance.
-   *
    * @param config - SDK configuration options
    */
   constructor(config: DatalayerSDKConfig) {
@@ -113,9 +101,7 @@ export class DatalayerSDKBase {
     this.initializeState();
   }
 
-  /**
-   * Initialize state with configuration.
-   */
+  /** Initialize state with configuration. */
   public async initializeState(): Promise<void> {
     // Store service URLs
     await this.iamState.setIamUrl(this.iamRunUrl);
@@ -136,18 +122,7 @@ export class DatalayerSDKBase {
 
   /**
    * Update the authentication token for all API requests.
-   *
-   * This method updates the token that will be used for all subsequent
-   * API calls made through the SDK.
-   *
    * @param token - New authentication token
-   *
-   * @example
-   * ```typescript
-   * // After login, update the SDK with the new token
-   * const loginResponse = await sdk.login(credentials);
-   * sdk.updateToken(loginResponse.access_token);
-   * ```
    */
   async updateToken(token: string): Promise<void> {
     this.token = token;
@@ -157,8 +132,7 @@ export class DatalayerSDKBase {
 
   /**
    * Get the current configuration including service URLs and token.
-   *
-   * @returns The current configuration
+   * @returns Current configuration
    */
   getConfig(): DatalayerSDKConfig {
     return {
@@ -171,7 +145,6 @@ export class DatalayerSDKBase {
 
   /**
    * Update the configuration for API requests.
-   *
    * @param config - Configuration updates
    */
   async updateConfig(config: Partial<DatalayerSDKConfig>): Promise<void> {
@@ -181,38 +154,22 @@ export class DatalayerSDKBase {
     // Note: service URLs cannot be changed after initialization
   }
 
-  /**
-   * Get the IAM service URL for API requests.
-   *
-   * @returns The IAM service URL
-   */
+  /** Get the IAM service URL. */
   public getIamRunUrl(): string {
     return this.iamRunUrl;
   }
 
-  /**
-   * Get the Runtimes service URL for API requests.
-   *
-   * @returns The Runtimes service URL
-   */
+  /** Get the Runtimes service URL. */
   public getRuntimesRunUrl(): string {
     return this.runtimesRunUrl;
   }
 
-  /**
-   * Get the Spacer service URL for API requests.
-   *
-   * @returns The Spacer service URL
-   */
+  /** Get the Spacer service URL. */
   public getSpacerRunUrl(): string {
     return this.spacerRunUrl;
   }
 
-  /**
-   * Get the current authentication token.
-   *
-   * @returns The authentication token
-   */
+  /** Get the current authentication token. */
   public getToken(): string | undefined {
     return this.token;
   }
@@ -264,7 +221,7 @@ export class DatalayerSDKBase {
 
   /**
    * Wrap all SDK methods with handlers for cross-cutting concerns.
-   * This is called automatically by the DatalayerSDK constructor.
+   * Called automatically by the DatalayerSDK constructor.
    *
    * @internal
    */
@@ -312,42 +269,42 @@ export class DatalayerSDKBase {
   }
 
   /**
-   * Get all method names from the prototype chain.
-   * Excludes constructor, private methods, and base object methods.
-   *
-   * @returns Array of method names
+   * Get all method names from mixins only.
+   * @returns Array of mixin method names to wrap
    * @internal
    */
   private getAllMethodNames(): string[] {
     const methodNames = new Set<string>();
+
+    // First, collect all base class methods to exclude
+    const baseClassMethods = new Set<string>();
+    const basePrototype = DatalayerSDKBase.prototype;
+    Object.getOwnPropertyNames(basePrototype).forEach(name => {
+      baseClassMethods.add(name);
+    });
+
+    // Also exclude methods from the concrete SDK class itself
+    const sdkPrototype = Object.getPrototypeOf(this).constructor.prototype;
+    Object.getOwnPropertyNames(sdkPrototype).forEach(name => {
+      baseClassMethods.add(name);
+    });
+
+    // Now walk the prototype chain and only include mixin methods
     let obj = Object.getPrototypeOf(this);
 
-    // Walk the prototype chain
     while (obj && obj !== Object.prototype) {
-      // Get all property names from this level
       const names = Object.getOwnPropertyNames(obj);
 
-      // Filter to only include public methods from mixins
       names.forEach(name => {
-        // Skip constructor, private methods, and internal SDK methods
+        // Only include if:
+        // 1. Not a constructor
+        // 2. Not a private method (starts with _)
+        // 3. Not a base class method
+        // 4. Is actually a function
         if (
           name !== 'constructor' &&
           !name.startsWith('_') &&
-          !name.startsWith('getAllMethodNames') &&
-          !name.startsWith('wrapAllMethods') &&
-          !name.startsWith('initializeState') &&
-          !name.startsWith('updateToken') &&
-          !name.startsWith('updateConfig') &&
-          !name.startsWith('getConfig') &&
-          !name.startsWith('getIamRunUrl') &&
-          !name.startsWith('getRuntimesRunUrl') &&
-          !name.startsWith('getSpacerRunUrl') &&
-          !name.startsWith('getToken') &&
-          !name.startsWith('getStorage') &&
-          !name.startsWith('getIAMState') &&
-          !name.startsWith('getRuntimesState') &&
-          !name.startsWith('getSpacerState') &&
-          !name.startsWith('clearCache')
+          !baseClassMethods.has(name)
         ) {
           const descriptor = Object.getOwnPropertyDescriptor(obj, name);
           if (descriptor && typeof descriptor.value === 'function') {
@@ -356,7 +313,6 @@ export class DatalayerSDKBase {
         }
       });
 
-      // Move up the prototype chain
       obj = Object.getPrototypeOf(obj);
     }
 
