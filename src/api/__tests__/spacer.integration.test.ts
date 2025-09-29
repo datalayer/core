@@ -24,7 +24,7 @@ beforeAll(async () => {
       'WARNING: Skipping Spacer Lifecycle integration tests: No Datalayer API token configured',
     );
     console.log(
-      '         Set DATALAYER_API_TOKEN env var or DATALAYER_TEST_TOKEN in .env.test',
+      '         Set DATALAYER_API_TOKEN env var or DATALAYER_TEST_API_KEY in .env.test',
     );
     return;
   }

@@ -32,7 +32,7 @@ export const testConfig = {
    */
   hasToken(): boolean {
     return !!(
-      process.env.DATALAYER_TEST_TOKEN ||
+      process.env.DATALAYER_TEST_API_KEY ||
       process.env.DATALAYER_API_TOKEN ||
       process.env.VITE_DATALAYER_API_TOKEN
     );
@@ -41,20 +41,20 @@ export const testConfig = {
   /**
    * Get the Datalayer API token for testing
    * Priority order:
-   * 1. DATALAYER_TEST_TOKEN environment variable
+   * 1. DATALAYER_TEST_API_KEY environment variable
    * 2. DATALAYER_API_TOKEN environment variable
    * 3. VITE_DATALAYER_API_TOKEN environment variable
    * 4. Throw error if not found
    */
   getToken(): string {
     const token =
-      process.env.DATALAYER_TEST_TOKEN ||
+      process.env.DATALAYER_TEST_API_KEY ||
       process.env.DATALAYER_API_TOKEN ||
       process.env.VITE_DATALAYER_API_TOKEN;
 
     if (!token) {
       throw new Error(
-        'No Datalayer API token found. Please set DATALAYER_TEST_TOKEN, DATALAYER_API_TOKEN, or VITE_DATALAYER_API_TOKEN environment variable',
+        'No Datalayer API token found. Please set DATALAYER_TEST_API_KEY, DATALAYER_API_TOKEN, or VITE_DATALAYER_API_TOKEN environment variable',
       );
     }
 

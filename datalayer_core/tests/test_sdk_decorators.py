@@ -14,7 +14,7 @@ from datalayer_core.decorators.datalayer import datalayer
 load_dotenv()
 
 
-DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
+DATALAYER_TEST_API_KEY = os.environ.get("DATALAYER_TEST_API_KEY")
 
 
 def sum_test(x: float, y: float, z: float = 1) -> float:
@@ -48,8 +48,8 @@ def sum_test(x: float, y: float, z: float = 1) -> float:
     ],
 )
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_decorator(args, expected_output, decorator):  # type: ignore
     """

@@ -15,19 +15,19 @@ from datalayer_core import DatalayerClient
 load_dotenv()
 
 
-DATALAYER_TEST_TOKEN = os.environ.get("DATALAYER_TEST_TOKEN")
+DATALAYER_TEST_API_KEY = os.environ.get("DATALAYER_TEST_API_KEY")
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_secrets_creation_list_delete() -> None:
     """
     Test the creation and deletion of secrets.
     """
     # Create a secret
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     secret_name = f"test_secret-{uuid.uuid4()}"
     created_secret = client.create_secret(
         name=secret_name,
@@ -58,14 +58,14 @@ def test_secrets_creation_list_delete() -> None:
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_secrets_delete_non_existent() -> None:
     """
     Test the creation and deletion of secrets.
     """
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
 
     # Delete the secret
     response = client.delete_secret(str(uuid.uuid4()))
@@ -73,8 +73,8 @@ def test_secrets_delete_non_existent() -> None:
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_runtime_create_execute_and_list() -> None:
     """
@@ -82,7 +82,7 @@ def test_runtime_create_execute_and_list() -> None:
     """
     time.sleep(10)
     # Create a secret
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     runtime_name = f"test_runtime-{uuid.uuid4()}"
     with client.create_runtime(name=runtime_name) as runtime:
         assert runtime.name == runtime_name
@@ -97,15 +97,15 @@ def test_runtime_create_execute_and_list() -> None:
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_runtime_snapshot_create_and_delete() -> None:
     """
     Test the creation and deletion of runtime.
     """
     time.sleep(10)
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     runtime_name = f"test_runtime-{uuid.uuid4()}"
     snapshot_name = f"test_snapshot-{uuid.uuid4()}"
     snapshot_name_2 = f"test_snapshot-{uuid.uuid4()}"
@@ -131,44 +131,44 @@ def test_runtime_snapshot_create_and_delete() -> None:
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_environments_list() -> None:
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     envs = client.list_environments()
     assert len(envs) == 2
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_authenticate() -> None:
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     print(client._log_in())
     assert client.authenticate()
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_profile() -> None:
     """
     Test the profile
     """
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     assert client.get_profile()
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_TOKEN),
-    reason="DATALAYER_TEST_TOKEN is not set, skipping secret tests.",
+    not bool(DATALAYER_TEST_API_KEY),
+    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
 )
 def test_tokens_list() -> None:
     """
     Test the listing of tokens
     """
-    client = DatalayerClient(token=DATALAYER_TEST_TOKEN)
+    client = DatalayerClient(token=DATALAYER_TEST_API_KEY)
     assert client.list_tokens()
