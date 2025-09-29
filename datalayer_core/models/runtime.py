@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
-    DEFAULT_RUN_URL,
+    DEFAULT_DATALAYER_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
 from datalayer_core.utils.types import (
@@ -40,7 +40,7 @@ class RuntimeModel(BaseModel):
         description="Time reservation in minutes for the runtime",
     )
     run_url: str = Field(
-        default=DEFAULT_RUN_URL,
+        default=DEFAULT_DATALAYER_RUN_URL,
         description="Datalayer server URL",
     )
     token: Optional[str] = Field(

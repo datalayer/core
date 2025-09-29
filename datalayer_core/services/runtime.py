@@ -24,7 +24,7 @@ from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
-    DEFAULT_RUN_URL,
+    DEFAULT_DATALAYER_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
 from datalayer_core.utils.notebook import get_cells
@@ -54,7 +54,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         name: str,
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
-        run_url: str = DEFAULT_RUN_URL,
+        run_url: str = DEFAULT_DATALAYER_RUN_URL,
         token: Optional[str] = None,
         pod_name: Optional[str] = None,
         ingress: Optional[str] = None,

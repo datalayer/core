@@ -7,9 +7,9 @@ from datalayer_core.utils.types import Minutes
 
 DEFAULT_ENVIRONMENT = "python-cpu-env"
 
-DEFAULT_RUN_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_RUN_URL = "https://prod1.datalayer.run"
 
-DEFAULT_IAM_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_IAM_URL = "https://prod1.datalayer.run"
 
 DEFAULT_TIME_RESERVATION: Minutes = 10.0
 

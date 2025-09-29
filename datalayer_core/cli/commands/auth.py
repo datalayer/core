@@ -16,7 +16,7 @@ from rich.console import Console
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.me import display_me
 from datalayer_core.services.authn.http_server import get_token
-from datalayer_core.utils.defaults import DEFAULT_RUN_URL
+from datalayer_core.utils.defaults import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.network import fetch, find_http_port
 
 # Create a Typer app for auth commands
@@ -46,7 +46,7 @@ def login(
     """Log into a Datalayer server."""
     try:
         # Use provided values or defaults
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
+        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
         access_token = token or os.environ.get("DATALAYER_API_KEY")
 
         if access_token:
@@ -283,7 +283,7 @@ def logout(
 ) -> None:
     """Log out of Datalayer server."""
     try:
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
+        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
 
         # Clear environment variables if they exist
         tokens_cleared = []
@@ -340,7 +340,7 @@ def whoami(
 ) -> None:
     """Display current authentication status."""
     try:
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
+        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
 
         # Check for tokens from various sources
         token = None
@@ -444,7 +444,7 @@ def logout(
 ) -> None:
     """Log out of Datalayer server."""
     try:
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
+        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
 
         # Clear environment variables if they exist
         tokens_cleared = []

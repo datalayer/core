@@ -11,7 +11,7 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-from datalayer_core.utils.defaults import DEFAULT_IAM_URL, DEFAULT_RUN_URL
+from datalayer_core.utils.defaults import DEFAULT_DATALAYER_IAM_URL, DEFAULT_DATALAYER_RUN_URL
 
 
 @dataclass
@@ -58,12 +58,12 @@ class DatalayerURLs:
         """
         # Determine run_url with priority: parameter > env var > default
         resolved_run_url = (
-            run_url or os.environ.get("DATALAYER_RUN_URL") or DEFAULT_RUN_URL
+            run_url or os.environ.get("DATALAYER_RUN_URL") or DEFAULT_DATALAYER_RUN_URL
         )
 
         # Determine iam_url with priority: parameter > env var > default
         resolved_iam_url = (
-            iam_url or os.environ.get("DATALAYER_IAM_URL") or DEFAULT_IAM_URL
+            iam_url or os.environ.get("DATALAYER_IAM_URL") or DEFAULT_DATALAYER_IAM_URL
         )
 
         # Strip trailing slashes for consistency
