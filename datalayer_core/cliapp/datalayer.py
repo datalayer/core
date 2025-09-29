@@ -5,7 +5,7 @@
 
 from pathlib import Path
 
-from datalayer_core.app.application import NoStart
+from datalayer_core.base.application import NoStart
 from datalayer_core.cliapp.authn.loginapp import DatalayerLoginApp
 from datalayer_core.cliapp.authn.logoutapp import DatalayerLogoutApp
 from datalayer_core.cliapp.authn.whoamiapp import WhoamiApp

@@ -5,7 +5,7 @@
 Secrets CLI application.
 """
 
-from datalayer_core.app.application import NoStart
+from datalayer_core.base.application import NoStart
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.cliapp.secrets.create.createapp import SecretsCreateApp
 from datalayer_core.cliapp.secrets.delete.deleteapp import SecretsDeleteApp

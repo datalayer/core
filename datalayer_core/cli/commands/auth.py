@@ -14,7 +14,7 @@ import typer
 from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.display.me import display_me
+from datalayer_core.displays.me import display_me
 from datalayer_core.services.authn.http_server import get_token
 from datalayer_core.utils.defaults import DEFAULT_RUN_URL
 from datalayer_core.utils.network import fetch, find_http_port
@@ -290,7 +290,7 @@ def logout(
         else:
             console.print("ℹ️  No authentication tokens found to clear")
             
-        console.print(f"� Logged out from [green]{server_url}[/green]")
+        console.print(f"👋 Logged out from [green]{server_url}[/green]")
         
     except Exception as e:
         console.print(f"[red]Logout failed: {e}[/red]")
@@ -352,10 +352,24 @@ def whoami(
                     payload_b64 += '=' * (4 - len(payload_b64) % 4)
                     payload = json.loads(base64.b64decode(payload_b64))
                     
+                    # Extract user info from the JWT payload
                     if 'sub' in payload:
-                        console.print(f"   - User ID: {payload['sub']}")
-                    if 'email' in payload:
-                        console.print(f"   - Email: {payload['email']}")
+                        user_info = payload['sub']
+                        if isinstance(user_info, dict):
+                            # User info is embedded in the sub field
+                            if 'handle' in user_info:
+                                console.print(f"   - Handle: {user_info['handle']}")
+                            if 'email' in user_info:
+                                console.print(f"   - Email: {user_info['email']}")
+                            if 'firstName' in user_info and 'lastName' in user_info:
+                                console.print(f"   - Name: {user_info['firstName']} {user_info['lastName']}")
+                            if 'uid' in user_info:
+                                console.print(f"   - UID: {user_info['uid']}")
+                            if 'roles' in user_info and isinstance(user_info['roles'], list):
+                                console.print(f"   - Roles: {', '.join(user_info['roles'])}")
+                        else:
+                            console.print(f"   - User ID: {user_info}")
+                    
                     if 'exp' in payload:
                         import datetime
                         exp_date = datetime.datetime.fromtimestamp(payload['exp'])
@@ -376,53 +390,54 @@ def whoami(
 
 
 @app.command()
-def whoami(
+def logout(
     run_url: Optional[str] = typer.Option(
         None,
         "--run-url", 
         help="Datalayer server URL",
     ),
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="User access token",
-    ),
 ) -> None:
-    """Display current authenticated user profile."""
+    """Log out of Datalayer server."""
     try:
-        # Use provided values or defaults
         server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
-        access_token = token or os.environ.get("DATALAYER_TOKEN")
         
-        if not access_token:
-            console.print("[red]Error: No authentication token found.[/red]")
-            console.print("[yellow]Please login first using: dla auth login[/yellow]")
-            raise typer.Exit(1)
+        # Clear environment variables if they exist
+        tokens_cleared = []
+        
+        if "DATALAYER_TOKEN" in os.environ:
+            del os.environ["DATALAYER_TOKEN"]
+            tokens_cleared.append("DATALAYER_TOKEN")
             
-        # Create client and get profile
-        client = DatalayerClient(run_url=server_url, token=access_token)
-        
+        if "DATALAYER_EXTERNAL_TOKEN" in os.environ:
+            del os.environ["DATALAYER_EXTERNAL_TOKEN"]
+            tokens_cleared.append("DATALAYER_EXTERNAL_TOKEN")
+            
+        # Clear stored tokens from keyring
+        keyring_cleared = False
         try:
-            response = client._get_profile()
-            profile = response.get("profile", {})
-            
-            if not profile:
-                console.print("[red]Error: Could not retrieve user profile.[/red]")
-                raise typer.Exit(1)
-                
-            # Display profile using the existing display function
-            infos = {"run_url": server_url}
-            display_me(profile, infos)
-            
+            import keyring
+            if keyring.get_password(server_url, "access_token"):
+                keyring.delete_password(server_url, "access_token")
+                keyring_cleared = True
+        except ImportError:
+            pass
         except Exception as e:
-            console.print(f"[red]Failed to get user profile: {e}[/red]")
-            console.print("[yellow]Please check your authentication token and try logging in again.[/yellow]")
-            raise typer.Exit(1)
+            console.print(f"[yellow]Warning: Could not clear keyring token: {e}[/yellow]")
             
-    except typer.Exit:
-        raise
+        # Show logout status
+        if tokens_cleared or keyring_cleared:
+            console.print("✅ Successfully logged out")
+            if tokens_cleared:
+                console.print(f"   - Cleared environment variables: {', '.join(tokens_cleared)}")
+            if keyring_cleared:
+                console.print(f"   - Cleared stored token for {server_url}")
+        else:
+            console.print("ℹ️  No authentication tokens found to clear")
+            
+        console.print(f"👋 Logged out from [green]{server_url}[/green]")
+        
     except Exception as e:
-        console.print(f"[red]Command failed: {e}[/red]")
+        console.print(f"[red]Logout failed: {e}[/red]")
         raise typer.Exit(1)
 
 

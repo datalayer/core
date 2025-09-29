@@ -5,7 +5,7 @@
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.secrets import SecretsListMixin
-from datalayer_core.display.secrets import display_secrets
+from datalayer_core.displays.secrets import display_secrets
 
 class SecretsListApp(DatalayerCLIBaseApp, SecretsListMixin):
     """An application to list secrets."""

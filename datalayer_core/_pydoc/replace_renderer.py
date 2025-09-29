@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 REG_PATTERN = re.compile("<(?!.*span).*")
 
 SKIP_MODULES = [
-    "datalayer_core.pydoc",
+    "datalayer_core._pydoc",
 ]
 
 

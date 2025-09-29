@@ -3,8 +3,8 @@
 
 """Python documentation processing utilities for the Datalayer Core application."""
 
-from datalayer_corereplace_processor import ReplaceProcessor
-from datalayer_corereplace_renderer import MyDocusaurusRenderer
+from datalayer_core._pydoc.replace_processor import ReplaceProcessor
+from datalayer_core._pydoc.replace_renderer import MyDocusaurusRenderer
 
 __all__ = [
     "ReplaceProcessor",

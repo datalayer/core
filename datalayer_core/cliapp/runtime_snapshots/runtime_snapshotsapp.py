@@ -3,7 +3,7 @@
 
 """Snapshots CLI application for managing snapshots."""
 
-from datalayer_core.app.application import NoStart
+from datalayer_core.base.application import NoStart
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.cliapp.runtime_snapshots.create.createapp import RuntimeSnapshotsCreateApp
 from datalayer_core.cliapp.runtime_snapshots.delete.deleteapp import RuntimeSnapshotsDeleteApp

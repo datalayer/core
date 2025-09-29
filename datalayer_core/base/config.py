@@ -9,7 +9,7 @@ from pathlib import Path
 
 import tomllib
 
-from datalayer_core.app.application import DatalayerApp
+from datalayer_core.base.application import DatalayerApp
 
 
 class DatalayerConfig(DatalayerApp):

@@ -7,7 +7,7 @@ import sys
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsListMixin
-from datalayer_core.display.snapshots import display_snapshots
+from datalayer_core.displays.snapshots import display_snapshots
 
 
 class RuntimeSnapshotsListApp(DatalayerCLIBaseApp, RuntimeSnapshotsListMixin):

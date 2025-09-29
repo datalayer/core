@@ -5,14 +5,8 @@
 
 from __future__ import annotations
 
-import json
-
-from typing import Any
-
 from rich.console import Console
 from rich.table import Table
-
-from datalayer_core.utils.date import timestamp_to_local_date
 
 
 def display_me(me: dict[str, str], infos: dict[str, str]) -> None:

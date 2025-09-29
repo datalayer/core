@@ -5,7 +5,7 @@
 The Datalayer environments management application.
 """
 
-from datalayer_core.app.application import NoStart
+from datalayer_core.base.application import NoStart
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.cliapp.environments.list.listapp import EnvironmentsListApp
 

@@ -5,7 +5,7 @@
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.environment import EnvironmentsListMixin
-from datalayer_core.display.environments import display_environments
+from datalayer_core.displays.environments import display_environments
 
 
 class EnvironmentsListApp(DatalayerCLIBaseApp, EnvironmentsListMixin):

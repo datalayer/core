@@ -5,14 +5,10 @@
 
 from __future__ import annotations
 
-import json
-
 from typing import Any
 
 from rich.console import Console
 from rich.table import Table
-
-from datalayer_core.utils.date import timestamp_to_local_date
 
 
 def _new_snapshots_table(title: str = "Snapshots") -> Table:

@@ -3,7 +3,7 @@
 
 """Benchmarks application for Datalayer Core."""
 
-from datalayer_core.app.application import NoStart
+from datalayer_core.base.application import NoStart
 from datalayer_core.cliapp.benchmarks.web.webapp import BenchmarksWebApp
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 

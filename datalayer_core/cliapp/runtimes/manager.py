@@ -15,7 +15,7 @@ from rich import print_json
 from datalayer_core.utils.date import timestamp_to_local_date
 from datalayer_core.utils.network import fetch
 from datalayer_core.utils.defaults import get_default_credits_limit
-from datalayer_core.display.runtimes import display_runtimes
+from datalayer_core.displays.runtimes import display_runtimes
 
 
 HTTP_PROTOCOL_REGEXP = re.compile(r"^http")

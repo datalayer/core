@@ -8,7 +8,7 @@ An application to create a Snapshot.
 from rich import print_json
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.display.snapshots import display_snapshots
+from datalayer_core.displays.snapshots import display_snapshots
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsCreateMixin
 
 

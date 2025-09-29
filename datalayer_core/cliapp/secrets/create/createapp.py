@@ -9,7 +9,7 @@ from traitlets import Unicode
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.secrets import SecretsCreateMixin
-from datalayer_core.display.secrets import display_secrets
+from datalayer_core.displays.secrets import display_secrets
 
 
 class SecretsCreateApp(DatalayerCLIBaseApp, SecretsCreateMixin):

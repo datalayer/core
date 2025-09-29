@@ -150,11 +150,11 @@ processors = [
     { type = "filter", skip_empty_modules = false },
     { type = "smart" },
     { type = "crossref" },
-    { type = "datalayer_core.pydoc.ReplaceProcessor" }
+    { type = "datalayer_core._pydoc.ReplaceProcessor" }
 ]
 
 [tool.pydoc-markdown.renderer]
-type = "datalayer_core.pydoc.MyDocusaurusRenderer"
+type = "datalayer_core._pydoc.MyDocusaurusRenderer"
 docs_base_path = "docs/docs"
 relative_output_path = "python_api"
 relative_sidebar_path = "sidebar.json"

@@ -9,7 +9,7 @@ from traitlets import Unicode
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.tokens import TokensCreateMixin
-from datalayer_core.display.tokens import display_tokens
+from datalayer_core.displays.tokens import display_tokens
 
 
 class TokensCreateApp(DatalayerCLIBaseApp, TokensCreateMixin):
