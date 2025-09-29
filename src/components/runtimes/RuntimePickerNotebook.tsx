@@ -21,8 +21,8 @@ import type {
   IRuntimeOptions,
   IMultiServiceManager,
   IDatalayerSessionContext,
-} from '../../sdk/stateful/runtimes';
-import { RuntimeSnippetsFacade } from '../../sdk/stateful/jupyter';
+} from '../../stateful/runtimes';
+import { RuntimeSnippetsFacade } from '../../stateful/jupyter';
 import { IRuntimeDesc } from '../../models';
 import { ExternalTokenSilentLogin } from '../../components/iam';
 import { useCoreStore, useIAMStore } from '../../state';

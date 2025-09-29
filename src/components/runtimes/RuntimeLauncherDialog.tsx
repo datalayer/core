@@ -24,7 +24,7 @@ import { useJupyterReactStore } from '@datalayer/jupyter-react';
 import { USAGE_ROUTE } from '../../routes';
 import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
-import type { IRemoteServicesManager } from '../../sdk/stateful/runtimes';
+import type { IRemoteServicesManager } from '../../stateful/runtimes';
 import type { RunResponseError } from '../../api/DatalayerApi';
 import type { IRuntimeSnapshot, IRuntimeDesc } from '../../models';
 import { iamStore, useCoreStore, useIAMStore } from '../../state';

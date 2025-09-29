@@ -28,8 +28,8 @@
  * ```
  */
 
-// Export the main SDK class with flat API
-export { DatalayerSDK, type DatalayerSDKConfig } from './client';
+// Export the main Client class with flat API
+export { DatalayerClient, type DatalayerClientConfig } from '../client';
 
 // Export stateful modules for advanced use cases
-export * from './stateful';
+export * from '../stateful';
