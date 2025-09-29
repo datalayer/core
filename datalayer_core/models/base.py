@@ -29,11 +29,48 @@ class BaseResponse(BaseModel):
 
 class DataResponse(BaseResponse, Generic[T]):
     """
-    Generic response model that includes data payload.
-    Used when returning structured data from API endpoints.
+    Generic response model that includes data payload flattened at top level.
+    This dynamically adds fields from the data dict to the model instance.
     """
 
-    data: Optional[T] = Field(None, description="Response data payload")
+    def __init__(self, success: bool, message: Optional[str] = None, data=None, key: Optional[str] = None, **kwargs):
+        # Start with base fields
+        fields = {"success": success, "message": message}
+        
+        if data is not None:
+            # If key is provided, nest data under that key
+            if key:
+                if isinstance(data, dict):
+                    fields[key] = data
+                elif hasattr(data, 'model_dump'):
+                    # Handle Pydantic models by converting to dict first
+                    fields[key] = data.model_dump()
+                elif hasattr(data, 'dict'):
+                    # Handle older Pydantic models
+                    fields[key] = data.dict()
+                else:
+                    fields[key] = data
+            else:
+                # No key provided, flatten data to top level (existing behavior)
+                if isinstance(data, dict):
+                    fields.update(data)
+                elif hasattr(data, 'model_dump'):
+                    # Handle Pydantic models by converting to dict first
+                    fields.update(data.model_dump())
+                elif hasattr(data, 'dict'):
+                    # Handle older Pydantic models
+                    fields.update(data.dict())
+                else:
+                    fields["data"] = data
+            
+        # Add any additional kwargs
+        fields.update(kwargs)
+        
+        # Initialize with fields
+        super().__init__(**fields)
+    
+    class Config:
+        extra = "allow"  # Allow additional fields dynamically
 
 
 class ListResponse(BaseResponse, Generic[T]):

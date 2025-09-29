@@ -397,54 +397,165 @@ def whoami(
                 profile = response.get("profile", {})
                 
                 console.print("✅ [green]Authenticated[/green]")
+                console.print()
+                
+                # Server Information
+                console.print("🌐 [bold]Server Configuration[/bold]")
                 console.print(f"   - RUN Server: [blue]{server_url}[/blue]")
                 console.print(f"   - IAM Server: [blue]{urls.iam_url}[/blue]")
                 console.print(f"   - Token source: {token_source}")
+                console.print()
                 
                 # Display server-verified user information
-                if "handle_s" in profile:
-                    console.print(f"   - Handle: [cyan]{profile['handle_s']}[/cyan]")
-                if "email_s" in profile:
-                    console.print(f"   - Email: {profile['email_s']}")
-                if "firstName_s" in profile and "lastName_s" in profile:
-                    console.print(f"   - Name: {profile['firstName_s']} {profile['lastName_s']}")
-                if "uid_s" in profile:
-                    console.print(f"   - UID: {profile['uid_s']}")
-                if "roles_ss" in profile and isinstance(profile["roles_ss"], list):
-                    console.print("   - Roles:")
-                    for role in profile["roles_ss"]:
-                        console.print(f"     • [cyan]{role}[/cyan]")
+                console.print("👤 [bold]User Profile[/bold]")
+                
+                # Handle - check both camelCase and snake_case formats
+                handle = profile.get("handle") or profile.get("handle_s")
+                if handle:
+                    console.print(f"   - Handle: [cyan]{handle}[/cyan]")
+                
+                # UID - check both formats
+                uid = profile.get("uid") or profile.get("uid_s")
+                if uid:
+                    console.print(f"   - User ID: {uid}")
+                
+                # Email - check both formats  
+                email = profile.get("email") or profile.get("email_s")
+                if email:
+                    console.print(f"   - Email: {email}")
+                    
+                # First Name - check both formats
+                first_name = profile.get("firstName") or profile.get("firstName_s") or profile.get("first_name_t")
+                if first_name:
+                    console.print(f"   - First Name: {first_name}")
+                
+                # Last Name - check both formats
+                last_name = profile.get("lastName") or profile.get("lastName_s") or profile.get("last_name_t")
+                if last_name:
+                    console.print(f"   - Last Name: {last_name}")
+                    
+                # Check for display name in various possible fields
+                display_name = None
+                for field in ["displayName", "displayName_s", "display_name_s", "display_name"]:
+                    if field in profile and profile[field]:
+                        display_name = profile[field]
+                        break
+                        
+                if display_name:
+                    console.print(f"   - Display Name: [bold]{display_name}[/bold]")
+                elif first_name and last_name:
+                    # Fallback to combined name if no display name
+                    console.print(f"   - Full Name: {first_name} {last_name}")
+                
+                # Internal ID
+                if "id" in profile:
+                    console.print(f"   - Internal ID: {profile['id']}")
+                    
+                # User type - check both formats
+                user_type = profile.get("type") or profile.get("type_s")
+                if user_type:
+                    console.print(f"   - User Type: [magenta]{user_type}[/magenta]")
+                    
+                # Origin - check both formats
+                origin = profile.get("origin") or profile.get("origin_s")
+                if origin:
+                    console.print(f"   - Origin: {origin}")
+                    
+                # Timestamps
+                timestamp_fields = [
+                    ("creation_ts_dt", "Account Created"),
+                    ("join_request_ts_dt", "Join Requested"), 
+                    ("join_ts_dt", "Joined"),
+                    ("last_update_ts_dt", "Last Updated")
+                ]
+                for field, label in timestamp_fields:
+                    if field in profile and profile[field]:
+                        console.print(f"   - {label}: {profile[field]}")
+                
+                console.print()
+                
+                # Roles and Permissions - check both formats
+                roles = profile.get("roles") or profile.get("roles_ss") or []
+                if isinstance(roles, list):
+                    console.print("🔐 [bold]Roles & Permissions[/bold]")
+                    if roles:
+                        for role in roles:
+                            console.print(f"   • [cyan]{role}[/cyan]")
+                    else:
+                        console.print("   - No roles assigned")
+                    console.print()
 
-                # Also decode JWT token to show expiration (local information)
+                # Also decode JWT token to show expiration and additional info
                 try:
                     import base64
                     import json
+                    import datetime
 
                     # JWT tokens have 3 parts separated by dots
                     parts = token.split(".")
-                    if len(parts) >= 2:
+                    if len(parts) >= 3:
+                        console.print("🔑 [bold]Token Information[/bold]")
+                        
+                        # Decode the header (first part)
+                        header_b64 = parts[0]
+                        header_b64 += "=" * (4 - len(header_b64) % 4)
+                        header = json.loads(base64.b64decode(header_b64))
+                        
+                        if "typ" in header:
+                            console.print(f"   - Token Type: {header['typ']}")
+                        if "alg" in header:
+                            console.print(f"   - Algorithm: {header['alg']}")
+                            
                         # Decode the payload (second part)
                         payload_b64 = parts[1]
-                        # Add padding if needed
                         payload_b64 += "=" * (4 - len(payload_b64) % 4)
                         payload = json.loads(base64.b64decode(payload_b64))
 
+                        if "iss" in payload:
+                            console.print(f"   - Issued by: {payload['iss']}")
+                        if "aud" in payload:
+                            audience = payload['aud']
+                            if isinstance(audience, list):
+                                console.print(f"   - Audience: {', '.join(audience)}")
+                            else:
+                                console.print(f"   - Audience: {audience}")
+                        if "iat" in payload:
+                            issued_date = datetime.datetime.fromtimestamp(payload["iat"])
+                            console.print(f"   - Issued at: {issued_date}")
                         if "exp" in payload:
-                            import datetime
                             exp_date = datetime.datetime.fromtimestamp(payload["exp"])
-                            console.print(f"   - Expires: {exp_date}")
+                            now = datetime.datetime.now()
+                            if exp_date > now:
+                                time_left = exp_date - now
+                                console.print(f"   - Expires: {exp_date} ([green]in {time_left}[/green])")
+                            else:
+                                console.print(f"   - Expires: {exp_date} ([red]EXPIRED[/red])")
+                        if "jti" in payload:
+                            console.print(f"   - Token ID: {payload['jti']}")
+                        
+                        # Show token scope if available
+                        if "scope" in payload:
+                            scopes = payload["scope"]
+                            if isinstance(scopes, str):
+                                scopes = scopes.split()
+                            console.print(f"   - Scopes: {', '.join(scopes)}")
+                        
+                        console.print()
 
                 except Exception:
-                    # JWT decoding failed, skip expiration info
+                    # JWT decoding failed, skip detailed token info
                     pass
                 
             except Exception as api_error:
                 # Token exists but API call failed - show token info but indicate validation failure
                 console.print("⚠️  [yellow]Token found but validation failed[/yellow]")
+                console.print()
+                console.print("🌐 [bold]Server Configuration[/bold]")
                 console.print(f"   - Server: [blue]{server_url}[/blue]")
                 console.print(f"   - IAM Server: [blue]{urls.iam_url}[/blue]")
                 console.print(f"   - Token source: {token_source}")
                 console.print(f"   - Validation error: [red]{str(api_error)}[/red]")
+                console.print()
                 
                 # Still try to decode JWT token for local information
                 try:
@@ -498,9 +609,19 @@ def whoami(
                     )
         else:
             console.print("❌ [red]Not authenticated[/red]")
-            console.print(f"   - Server: [blue]{server_url}[/blue]")
-            console.print(f"   - No tokens found in environment or keyring")
-            console.print(f"💡 Run 'datalayer login' to authenticate")
+            console.print()
+            console.print("🌐 [bold]Server Configuration[/bold]")
+            console.print(f"   - RUN Server: [blue]{server_url}[/blue]")
+            console.print(f"   - IAM Server: [blue]{urls.iam_url}[/blue]")
+            console.print()
+            console.print("🔍 [bold]Token Search Results[/bold]")
+            console.print("   - DATALAYER_API_KEY: Not found")
+            console.print("   - DATALAYER_EXTERNAL_TOKEN: Not found")
+            console.print(f"   - Keyring ({server_url}): Not found")
+            console.print()
+            console.print("💡 [bold yellow]Next Steps[/bold yellow]")
+            console.print("   Run 'datalayer login' to authenticate")
+            console.print("   Or set DATALAYER_API_KEY environment variable")
 
     except Exception as e:
         console.print(f"[red]Failed to check authentication status: {e}[/red]")
