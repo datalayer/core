@@ -12,8 +12,8 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from datalayer_core.services.runtime import RuntimeService
-from datalayer_core.services.runtime_snapshot import (
+from datalayer_core.services.runtimes.runtimes import RuntimeService
+from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     RuntimeSnapshotService,
     create_snapshot,
     as_runtime_snapshots,

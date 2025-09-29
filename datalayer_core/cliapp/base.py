@@ -20,7 +20,7 @@ from traitlets.config import LoggingConfigurable
 
 from datalayer_core.__version__ import __version__
 from datalayer_core.app.application import DatalayerApp, base_aliases, base_flags
-from datalayer_core.authn.http_server import USE_JUPYTER_SERVER_FOR_LOGIN, get_token
+from datalayer_core.services.authn.http_server import USE_JUPYTER_SERVER_FOR_LOGIN, get_token
 from datalayer_core.utils.network import fetch, find_http_port
 
 REQUEST_TIMEOUT = 5

@@ -18,7 +18,7 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.models.response import Response
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.services.runtime_snapshot import (
+from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     RuntimeSnapshotService,
     create_snapshot,
     as_runtime_snapshots,
