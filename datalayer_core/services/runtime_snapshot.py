@@ -154,7 +154,7 @@ def create_snapshot(
     return name, description
 
 
-def list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotService"]:
+def as_runtime_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotService"]:
     """
     Parse API response and create RuntimeSnapshot objects.
 

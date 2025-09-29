@@ -2,46 +2,24 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Response classes for handling code execution results in Datalayer SDK.
+Response models for handling code execution results in Datalayer SDK.
 """
 
-from typing import Any
+from typing import Any, Dict, List
+
+from pydantic import BaseModel, Field, computed_field
 
 
-class Response:
+class Response(BaseModel):
     """
-    Represents the response from code execution in a runtime.
-
-    Parameters
-    ----------
-    execute_response : list[dict[str, Any]]
-        The response from the code execution.
+    Pydantic model representing the response from code execution in a runtime.
     """
 
-    def __init__(self, execute_response: list[dict[str, Any]]):
-        """
-        Initialize a response object.
+    execute_response: List[Dict[str, Any]] = Field(
+        ..., description="The response from the code execution"
+    )
 
-        Parameters
-        ----------
-        execute_response : list[dict[str, Any]]
-            The response from the code execution.
-        """
-        stdout = []
-        stderr = []
-        for item in execute_response:
-            if item and item.get("output_type") == "stream":
-                stdout.append(item["text"])
-            elif item and item.get("output_type") == "error":
-                stderr.append(item["ename"])
-                stderr.append(item["evalue"])
-
-        self._stdout = "\n".join(stdout)
-        self._stderr = "\n".join(stderr)
-
-    def __repr__(self) -> str:
-        return f"Response({self._stdout}, {self._stderr})"
-
+    @computed_field
     @property
     def stdout(self) -> str:
         """
@@ -52,8 +30,13 @@ class Response:
         str
             The standard output as a string.
         """
-        return self._stdout
+        stdout_lines = []
+        for item in self.execute_response:
+            if item and item.get("output_type") == "stream":
+                stdout_lines.append(item["text"])
+        return "\n".join(stdout_lines)
 
+    @computed_field
     @property
     def stderr(self) -> str:
         """
@@ -64,4 +47,12 @@ class Response:
         str
             The standard error as a string.
         """
-        return self._stderr
+        stderr_lines = []
+        for item in self.execute_response:
+            if item and item.get("output_type") == "error":
+                stderr_lines.append(item["ename"])
+                stderr_lines.append(item["evalue"])
+        return "\n".join(stderr_lines)
+
+    def __repr__(self) -> str:
+        return f"Response({self.stdout}, {self.stderr})"

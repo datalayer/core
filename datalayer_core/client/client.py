@@ -12,6 +12,18 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
+from datalayer_core.services.runtime import RuntimeService
+from datalayer_core.services.runtime_snapshot import (
+    RuntimeSnapshotService,
+    create_snapshot,
+    as_runtime_snapshots,
+)
+
+from datalayer_core.models.secret import SecretModel, SecretType
+from datalayer_core.models.environment import EnvironmentModel
+from datalayer_core.models.profile import ProfileModel
+from datalayer_core.models.token import TokenModel, TokenType
+
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environment import EnvironmentsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
@@ -20,24 +32,12 @@ from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 
-from datalayer_core.services.runtime import RuntimeService
-
-from datalayer_core.models.secret import SecretModel, SecretType
-from datalayer_core.models.environment import EnvironmentModel
-from datalayer_core.models.profile import ProfileModel
-from datalayer_core.models.token import TokenModel, TokenType
-
-from datalayer_core.services.runtime_snapshot import (
-    RuntimeSnapshotService,
-    create_snapshot,
-    list_snapshots,
-)
-from datalayer_core.utils.types import Minutes
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.types import Minutes
 
 
 class DatalayerClient(
@@ -441,7 +441,7 @@ class DatalayerClient(
             A list of snapshots associated with the user.
         """
         response = self._list_snapshots()
-        snapshot_objects = list_snapshots(response)
+        snapshot_objects = as_runtime_snapshots(response)
         return snapshot_objects
 
     def delete_snapshot(self, snapshot: Union[str, RuntimeSnapshotService]) -> dict[str, str]:

@@ -21,7 +21,7 @@ from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshot import (
     RuntimeSnapshotService,
     create_snapshot,
-    list_snapshots,
+    as_runtime_snapshots,
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
@@ -529,7 +529,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                 pass
 
         response = self._list_snapshots()
-        snapshot_objects = list_snapshots(response)
+        snapshot_objects = as_runtime_snapshots(response)
         for snapshot in snapshot_objects:
             if snapshot.name == name:
                 break
