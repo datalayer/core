@@ -9,10 +9,10 @@ import typer
 from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.snapshots import display_snapshots
+from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
 
 # Create a Typer app for snapshot commands
-app = typer.Typer(name="snapshots", help="Snapshot management commands")
+app = typer.Typer(name="runtime-snapshots", help="Runtime snapshots management commands")
 
 console = Console()
 
@@ -35,7 +35,7 @@ def list_snapshots() -> None:
                 'metadata': snapshot.metadata,
             })
         
-        display_snapshots(snapshot_dicts)
+        display_runtime_snapshots(snapshot_dicts)
         
     except Exception as e:
         console.print(f"[red]Error listing snapshots: {e}[/red]")
@@ -91,7 +91,7 @@ def create_snapshot(
             'metadata': snapshot.metadata,
         }
         
-        display_snapshots([snapshot_dict])
+        display_runtime_snapshots([snapshot_dict])
         console.print(f"[green]Snapshot '{snapshot.name}' created successfully![/green]")
         
     except Exception as e:

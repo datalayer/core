@@ -83,24 +83,9 @@ def create_runtime(
             time_reservation=time_reservation,
         )
         
-        # Start the runtime to get full details
-        with runtime:
-            # Convert to dict format for display_runtimes
-            runtime_dict = {
-                'given_name': runtime.name,
-                'environment_name': runtime.environment,
-                'pod_name': runtime.pod_name,
-                'ingress': runtime.ingress,
-                'reservation_id': runtime.reservation_id,
-                'uid': runtime.uid,
-                'burning_rate': runtime.burning_rate,
-                'token': runtime.kernel_token,
-                'started_at': runtime.started_at,
-                'expired_at': runtime.expired_at,
-            }
-            
-            display_runtimes([runtime_dict])
-            console.print(f"[green]Runtime '{runtime.name}' created successfully![/green]")
+        console.print(f"Runtime will use credits limit: {runtime.burning_rate * 60.0 * time_reservation:.2f}")
+        console.print(f"Runtime created successfully: {runtime.name}")
+        console.print(f"[green]Runtime '{runtime.name}' created successfully![/green]")
         
     except Exception as e:
         console.print(f"[red]Error creating runtime: {e}[/red]")

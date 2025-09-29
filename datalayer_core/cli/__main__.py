@@ -15,7 +15,7 @@ from datalayer_core.cli.commands.auth import (
 from datalayer_core.cli.commands.envs import app as envs_app, envs_list, envs_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app, runtimes_list, runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app, secrets_list, secrets_ls
-from datalayer_core.cli.commands.snapshots import app as snapshots_app, snapshots_list, snapshots_ls
+from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app, snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app, tokens_list, tokens_ls
 
 # Create the main Typer app

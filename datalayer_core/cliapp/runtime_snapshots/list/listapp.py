@@ -7,7 +7,7 @@ import sys
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsListMixin
-from datalayer_core.displays.snapshots import display_snapshots
+from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
 
 
 class RuntimeSnapshotsListApp(DatalayerCLIBaseApp, RuntimeSnapshotsListMixin):
@@ -29,7 +29,7 @@ class RuntimeSnapshotsListApp(DatalayerCLIBaseApp, RuntimeSnapshotsListMixin):
 
         response = self._list_snapshots()
         if response["success"]:
-            display_snapshots(response["snapshots"])
+            display_runtime_snapshots(response["snapshots"])
             sys.exit(0)
         else:
             self.log.warning(response["message"])

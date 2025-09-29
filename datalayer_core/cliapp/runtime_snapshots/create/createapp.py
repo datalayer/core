@@ -8,7 +8,7 @@ An application to create a Snapshot.
 from rich import print_json
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.displays.snapshots import display_snapshots
+from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsCreateMixin
 
 
@@ -46,7 +46,7 @@ class RuntimeSnapshotsCreateApp(DatalayerCLIBaseApp, RuntimeSnapshotsCreateMixin
         )
         if response["success"]:
             snapshot = response["snapshot"]
-            display_snapshots([snapshot])
+            display_runtime_snapshots([snapshot])
             self.exit(0)
         else:
             print_json(data=response)

@@ -303,6 +303,18 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         return self.model.name
 
     @property
+    def environment(self) -> str:
+        """
+        Get the runtime environment.
+
+        Returns
+        -------
+        str
+            The environment name of this runtime.
+        """
+        return self.model.environment
+
+    @property
     def uid(self) -> Optional[str]:
         """
         Get the runtime unique identifier.
@@ -325,6 +337,78 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             The pod name of this runtime, or None if not set.
         """
         return self.model.pod_name
+
+    @property
+    def ingress(self) -> Optional[str]:
+        """
+        Get the runtime ingress URL.
+
+        Returns
+        -------
+        Optional[str]
+            The ingress URL of this runtime, or None if not set.
+        """
+        return self.model.ingress
+
+    @property
+    def reservation_id(self) -> Optional[str]:
+        """
+        Get the runtime reservation ID.
+
+        Returns
+        -------
+        Optional[str]
+            The reservation ID of this runtime, or None if not set.
+        """
+        return self.model.reservation_id
+
+    @property
+    def burning_rate(self) -> Optional[float]:
+        """
+        Get the runtime burning rate.
+
+        Returns
+        -------
+        Optional[float]
+            The burning rate of this runtime, or None if not set.
+        """
+        return self.model.burning_rate
+
+    @property
+    def kernel_token(self) -> Optional[str]:
+        """
+        Get the runtime kernel token.
+
+        Returns
+        -------
+        Optional[str]
+            The kernel token of this runtime, or None if not set.
+        """
+        return self.model.kernel_token
+
+    @property
+    def started_at(self) -> Optional[str]:
+        """
+        Get the runtime start time.
+
+        Returns
+        -------
+        Optional[str]
+            The start time of this runtime, or None if not set.
+        """
+        return self.model.started_at
+
+    @property
+    def expired_at(self) -> Optional[str]:
+        """
+        Get the runtime expiration time.
+
+        Returns
+        -------
+        Optional[str]
+            The expiration time of this runtime, or None if not set.
+        """
+        return self.model.expired_at
 
     def get_variable(self, name: str) -> Any:
         """
