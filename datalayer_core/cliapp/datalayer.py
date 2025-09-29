@@ -6,17 +6,9 @@
 from pathlib import Path
 
 from datalayer_core.base.application import NoStart
-from datalayer_core.cliapp.authn.loginapp import DatalayerLoginApp
-from datalayer_core.cliapp.authn.logoutapp import DatalayerLogoutApp
-from datalayer_core.cliapp.authn.whoamiapp import WhoamiApp
 from datalayer_core.cliapp.benchmarks.benchmarksapp import BenchmarksApp
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.cliapp.environments.environmentsapp import EnvironmentsApp
 from datalayer_core.cliapp.runtimes.console.consoleapp import RuntimesConsoleApp
-from datalayer_core.cliapp.runtimes.runtimesapp import JupyterRuntimesApp
-from datalayer_core.cliapp.secrets.secretsapp import SecretsApp
-from datalayer_core.cliapp.runtime_snapshots.runtime_snapshotsapp import RuntimeSnapshotsApp
-from datalayer_core.cliapp.tokens.tokensapp import TokensApp
 from datalayer_core.web.webapp import DatalayerWebApp
 
 HERE = Path(__file__).parent
@@ -34,20 +26,7 @@ class DatalayerCLI(DatalayerCLIBaseApp):
     subcommands = {
         "benchmarks": (BenchmarksApp, BenchmarksApp.description.splitlines()[0]),
         "console": (RuntimesConsoleApp, RuntimesConsoleApp.description.splitlines()[0]),
-        "envs": (EnvironmentsApp, EnvironmentsApp.description.splitlines()[0]),
-        "run": (JupyterRuntimesApp, JupyterRuntimesApp.description.splitlines()[0]),
-        "runtimes": (
-            JupyterRuntimesApp,
-            JupyterRuntimesApp.description.splitlines()[0],
-        ),
-        "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),
-        "logout": (DatalayerLogoutApp, DatalayerLogoutApp.description.splitlines()[0]),
-        "secrets": (SecretsApp, SecretsApp.description.splitlines()[0]),
-        "snapshots": (RuntimeSnapshotsApp, RuntimeSnapshotsApp.description.splitlines()[0]),
-        "tokens": (TokensApp, TokensApp.description.splitlines()[0]),
         "web": (DatalayerWebApp, DatalayerWebApp.description.splitlines()[0]),
-        "who": (WhoamiApp, WhoamiApp.description.splitlines()[0]),
-        "whoami": (WhoamiApp, WhoamiApp.description.splitlines()[0]),
     }
 
     def start(self) -> None:
