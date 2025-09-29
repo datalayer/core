@@ -18,6 +18,7 @@ from datalayer_core.displays.me import display_me
 from datalayer_core.services.authn.http_server import get_token
 from datalayer_core.utils.defaults import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.network import fetch, find_http_port
+from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for auth commands
 app = typer.Typer(name="auth", help="Authentication commands")
@@ -32,6 +33,11 @@ def login(
         "--run-url",
         help="Datalayer server URL",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     token: Optional[str] = typer.Option(
         None,
         "--token",
@@ -45,8 +51,9 @@ def login(
 ) -> None:
     """Log into a Datalayer server."""
     try:
-        # Use provided values or defaults
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
+        # Use DatalayerURLs for proper URL configuration
+        urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        server_url = urls.run_url
         access_token = token or os.environ.get("DATALAYER_API_KEY")
 
         if access_token:
@@ -280,10 +287,17 @@ def logout(
         "--run-url",
         help="Datalayer server URL",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Log out of Datalayer server."""
     try:
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
+        # Use DatalayerURLs for proper URL configuration
+        urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        server_url = urls.run_url
 
         # Clear environment variables if they exist
         tokens_cleared = []
@@ -337,10 +351,17 @@ def whoami(
         "--run-url",
         help="Datalayer server URL",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url", 
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Display current authentication status."""
     try:
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
+        # Use DatalayerURLs for proper URL configuration
+        urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        server_url = urls.run_url
 
         # Check for tokens from various sources
         token = None
@@ -368,61 +389,113 @@ def whoami(
                 pass
 
         if token:
-            console.print("✅ [green]Authenticated[/green]")
-            console.print(f"   - Server: [blue]{server_url}[/blue]")
-            console.print(f"   - Token source: {token_source}")
-
-            # Try to decode JWT token to show user info (basic decode, no verification)
+            # Validate token by making an API call to the server
             try:
-                import base64
-                import json
+                client = DatalayerClient(urls=urls, token=token)
+                console.print("🔍 Validating token with server...")
+                response = client._get_profile()
+                profile = response.get("profile", {})
+                
+                console.print("✅ [green]Authenticated[/green]")
+                console.print(f"   - RUN Server: [blue]{server_url}[/blue]")
+                console.print(f"   - IAM Server: [blue]{urls.iam_url}[/blue]")
+                console.print(f"   - Token source: {token_source}")
+                
+                # Display server-verified user information
+                if "handle_s" in profile:
+                    console.print(f"   - Handle: [cyan]{profile['handle_s']}[/cyan]")
+                if "email_s" in profile:
+                    console.print(f"   - Email: {profile['email_s']}")
+                if "firstName_s" in profile and "lastName_s" in profile:
+                    console.print(f"   - Name: {profile['firstName_s']} {profile['lastName_s']}")
+                if "uid_s" in profile:
+                    console.print(f"   - UID: {profile['uid_s']}")
+                if "roles_ss" in profile and isinstance(profile["roles_ss"], list):
+                    console.print("   - Roles:")
+                    for role in profile["roles_ss"]:
+                        console.print(f"     • [cyan]{role}[/cyan]")
 
-                # JWT tokens have 3 parts separated by dots
-                parts = token.split(".")
-                if len(parts) >= 2:
-                    # Decode the payload (second part)
-                    payload_b64 = parts[1]
-                    # Add padding if needed
-                    payload_b64 += "=" * (4 - len(payload_b64) % 4)
-                    payload = json.loads(base64.b64decode(payload_b64))
+                # Also decode JWT token to show expiration (local information)
+                try:
+                    import base64
+                    import json
 
-                    # Extract user info from the JWT payload
-                    if "sub" in payload:
-                        user_info = payload["sub"]
-                        if isinstance(user_info, dict):
-                            # User info is embedded in the sub field
-                            if "handle" in user_info:
-                                console.print(f"   - Handle: {user_info['handle']}")
-                            if "email" in user_info:
-                                console.print(f"   - Email: {user_info['email']}")
-                            if "firstName" in user_info and "lastName" in user_info:
-                                console.print(
-                                    f"   - Name: {user_info['firstName']} {user_info['lastName']}"
-                                )
-                            if "uid" in user_info:
-                                console.print(f"   - UID: {user_info['uid']}")
-                            if "roles" in user_info and isinstance(
-                                user_info["roles"], list
-                            ):
-                                console.print("   - Roles:")
-                                for role in user_info["roles"]:
-                                    console.print(f"     • [cyan]{role}[/cyan]")
-                        else:
-                            console.print(f"   - User ID: {user_info}")
+                    # JWT tokens have 3 parts separated by dots
+                    parts = token.split(".")
+                    if len(parts) >= 2:
+                        # Decode the payload (second part)
+                        payload_b64 = parts[1]
+                        # Add padding if needed
+                        payload_b64 += "=" * (4 - len(payload_b64) % 4)
+                        payload = json.loads(base64.b64decode(payload_b64))
 
-                    if "exp" in payload:
-                        import datetime
+                        if "exp" in payload:
+                            import datetime
+                            exp_date = datetime.datetime.fromtimestamp(payload["exp"])
+                            console.print(f"   - Expires: {exp_date}")
 
-                        exp_date = datetime.datetime.fromtimestamp(payload["exp"])
-                        console.print(f"   - Expires: {exp_date}")
+                except Exception:
+                    # JWT decoding failed, skip expiration info
+                    pass
+                
+            except Exception as api_error:
+                # Token exists but API call failed - show token info but indicate validation failure
+                console.print("⚠️  [yellow]Token found but validation failed[/yellow]")
+                console.print(f"   - Server: [blue]{server_url}[/blue]")
+                console.print(f"   - IAM Server: [blue]{urls.iam_url}[/blue]")
+                console.print(f"   - Token source: {token_source}")
+                console.print(f"   - Validation error: [red]{str(api_error)}[/red]")
+                
+                # Still try to decode JWT token for local information
+                try:
+                    import base64
+                    import json
 
-            except Exception:
-                # Token might not be JWT or might be malformed
-                console.print(
-                    f"   - Token: {token[:20]}..."
-                    if len(token) > 20
-                    else f"   - Token: {token}"
-                )
+                    # JWT tokens have 3 parts separated by dots
+                    parts = token.split(".")
+                    if len(parts) >= 2:
+                        # Decode the payload (second part)
+                        payload_b64 = parts[1]
+                        # Add padding if needed
+                        payload_b64 += "=" * (4 - len(payload_b64) % 4)
+                        payload = json.loads(base64.b64decode(payload_b64))
+
+                        # Extract user info from the JWT payload
+                        if "sub" in payload:
+                            user_info = payload["sub"]
+                            if isinstance(user_info, dict):
+                                # User info is embedded in the sub field
+                                if "handle" in user_info:
+                                    console.print(f"   - Handle (from token): {user_info['handle']}")
+                                if "email" in user_info:
+                                    console.print(f"   - Email (from token): {user_info['email']}")
+                                if "firstName" in user_info and "lastName" in user_info:
+                                    console.print(
+                                        f"   - Name (from token): {user_info['firstName']} {user_info['lastName']}"
+                                    )
+                                if "uid" in user_info:
+                                    console.print(f"   - UID (from token): {user_info['uid']}")
+                                if "roles" in user_info and isinstance(
+                                    user_info["roles"], list
+                                ):
+                                    console.print("   - Roles (from token):")
+                                    for role in user_info["roles"]:
+                                        console.print(f"     • [cyan]{role}[/cyan]")
+                            else:
+                                console.print(f"   - User ID (from token): {user_info}")
+
+                        if "exp" in payload:
+                            import datetime
+                            exp_date = datetime.datetime.fromtimestamp(payload["exp"])
+                            console.print(f"   - Expires (from token): {exp_date}")
+
+                except Exception:
+                    # Token might not be JWT or might be malformed
+                    console.print(
+                        f"   - Token: {token[:20]}..."
+                        if len(token) > 20
+                        else f"   - Token: {token}"
+                    )
         else:
             console.print("❌ [red]Not authenticated[/red]")
             console.print(f"   - Server: [blue]{server_url}[/blue]")
@@ -434,69 +507,17 @@ def whoami(
         raise typer.Exit(1)
 
 
-@app.command()
-def logout(
-    run_url: Optional[str] = typer.Option(
-        None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-) -> None:
-    """Log out of Datalayer server."""
-    try:
-        server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_DATALAYER_RUN_URL)
-
-        # Clear environment variables if they exist
-        tokens_cleared = []
-
-        if "DATALAYER_API_KEY" in os.environ:
-            del os.environ["DATALAYER_API_KEY"]
-            tokens_cleared.append("DATALAYER_API_KEY")
-
-        if "DATALAYER_EXTERNAL_TOKEN" in os.environ:
-            del os.environ["DATALAYER_EXTERNAL_TOKEN"]
-            tokens_cleared.append("DATALAYER_EXTERNAL_TOKEN")
-
-        # Clear stored tokens from keyring
-        keyring_cleared = False
-        try:
-            import keyring
-
-            if keyring.get_password(server_url, "access_token"):
-                keyring.delete_password(server_url, "access_token")
-                keyring_cleared = True
-        except ImportError:
-            pass
-        except Exception as e:
-            console.print(
-                f"[yellow]Warning: Could not clear keyring token: {e}[/yellow]"
-            )
-
-        # Show logout status
-        if tokens_cleared or keyring_cleared:
-            console.print("✅ Successfully logged out")
-            if tokens_cleared:
-                console.print(
-                    f"   - Cleared environment variables: {', '.join(tokens_cleared)}"
-                )
-            if keyring_cleared:
-                console.print(f"   - Cleared stored token for {server_url}")
-        else:
-            console.print("ℹ️  No authentication tokens found to clear")
-
-        console.print(f"👋 Logged out from [green]{server_url}[/green]")
-
-    except Exception as e:
-        console.print(f"[red]Logout failed: {e}[/red]")
-        raise typer.Exit(1)
-
-
 # Add individual commands at the root level for backward compatibility
 def login_root(
     run_url: Optional[str] = typer.Option(
         None,
         "--run-url",
         help="Datalayer server URL",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
     ),
     token: Optional[str] = typer.Option(
         None,
@@ -510,7 +531,7 @@ def login_root(
     ),
 ) -> None:
     """Log into a Datalayer server."""
-    login(run_url=run_url, token=token, no_browser=no_browser)
+    login(run_url=run_url, iam_url=iam_url, token=token, no_browser=no_browser)
 
 
 def logout_root(
@@ -519,9 +540,14 @@ def logout_root(
         "--run-url",
         help="Datalayer server URL",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Log out of Datalayer server."""
-    logout(run_url=run_url)
+    logout(run_url=run_url, iam_url=iam_url)
 
 
 def whoami_root(
@@ -530,6 +556,11 @@ def whoami_root(
         "--run-url",
         help="Datalayer server URL",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL", 
+    ),
 ) -> None:
     """Display current authenticated user profile."""
-    whoami(run_url=run_url)
+    whoami(run_url=run_url, iam_url=iam_url)

@@ -6,10 +6,10 @@
 import typer
 
 from datalayer_core.cli.commands.about import app as about_app
-from datalayer_core.cli.commands.auth import (
+from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
-from datalayer_core.cli.commands.auth import (
+from datalayer_core.cli.commands.authn import (
     login_root,
     logout_root,
     whoami_root,
