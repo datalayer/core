@@ -108,32 +108,16 @@ Features:
 - The app communicates directly with `https://prod1.datalayer.run` API endpoints
 - Built with Next.js 14, TypeScript, and GitHub Primer components
 
-**Electron Example:**
+**Desktop Example:**
 
-Located in `examples/electron/`, a desktop application with Jupyter integration:
-
-```bash
-cd examples/electron
-npm install
-npm start  # Uses dev mode to handle CJS/ESM issues
-```
+For a native desktop application with Jupyter integration, see the separate Datalayer Desktop repository:
+https://github.com/datalayer/desktop
 
 Features:
-
 - Native desktop app with Electron
 - Full Jupyter notebook integration
 - Real-time collaboration support
 - WebSocket proxy for kernel communication
-- Custom Vite config for CJS/ESM module resolution
-
-**Important Electron Configuration Notes:**
-
-- Uses automatic JSX runtime to avoid React import issues
-- Includes @rollup/plugin-commonjs for mixed module formats
-- Custom resolver for @jupyterlab/services deep imports
-- Safe console logging to prevent EPIPE errors in main process
-- Development mode (`npm start`) handles module resolution better than production builds
-- See `examples/electron/CLAUDE.md` for detailed troubleshooting
 
 ## TypeScript/React Services
 

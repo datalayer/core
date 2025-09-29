@@ -20,13 +20,14 @@ Comprehensive examples demonstrating the `@datalayer` decorator for seamless rem
 
 ## 🖥️ Desktop Applications
 
-### ⚡ [Electron Desktop App](./electron/README.md)
+### ⚡ [Datalayer Desktop App](https://github.com/datalayer/desktop)
 
 A native desktop application showcasing the Datalayer frontend SDK with Jupyter notebook integration.
 
 - **Use Case**: Desktop-based data science environment with cloud compute
 - **Technologies**: Electron, React, TypeScript, Datalayer SDK
 - **Features**: Jupyter notebooks, runtime management, environment selection, real-time collaboration
+- **Repository**: https://github.com/datalayer/desktop
 
 ## 🚀 Web Frameworks & APIs
 
