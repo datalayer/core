@@ -105,7 +105,3 @@ class ExecutionResponse(BaseResponse):
 
     def __repr__(self) -> str:
         return f"ExecutionResponse({self.stdout}, {self.stderr})"
-
-
-# Legacy aliases for backward compatibility
-Response = ExecutionResponse

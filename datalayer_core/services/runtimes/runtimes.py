@@ -16,7 +16,7 @@ from datalayer_core.cliapp.runtimes import RuntimesMixin
 from datalayer_core.cliapp.runtimes.exec.execapp import _get_cells
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
-from datalayer_core.models.base import Response
+from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     RuntimeSnapshotsService,
@@ -330,7 +330,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         output: Optional[str] = None,
         debug: bool = False,
         timeout: Seconds = 10.0,
-    ) -> Response:
+    ) -> ExecutionResponse:
         """
         Execute a Python file in the runtime.
 
@@ -367,7 +367,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     )
                     # print(reply)
                     outputs.append(reply.get("outputs", []))
-                response = Response(outputs)
+                response = ExecutionResponse(execute_response=outputs)
                 if debug:
                     print(response.stdout)
                     print(response.stderr)
@@ -376,7 +376,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     return self.get_variable(output)
 
                 return response
-        return Response([])
+        return ExecutionResponse(execute_response=[])
 
     def execute_code(
         self,
@@ -385,7 +385,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         output: Optional[str] = None,
         debug: bool = False,
         timeout: Seconds = 10.0,
-    ) -> Union[Response, Any]:
+    ) -> Union[ExecutionResponse, Any]:
         """
         Execute code in the runtime.
 
@@ -413,7 +413,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     self.set_variables(variables)
                 reply = self._kernel_client.execute(code, timeout=timeout)
 
-                response = Response(reply.get("outputs", {}))
+                response = ExecutionResponse(execute_response=reply.get("outputs", {}))
                 if debug:
                     print(response.stdout)
                     print(response.stderr)
@@ -427,7 +427,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
             return response
 
-        return Response([])
+        return ExecutionResponse(execute_response=[])
 
     def execute(
         self,
@@ -436,7 +436,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         output: Optional[str] = None,
         debug: bool = False,
         timeout: Seconds = 10.0,
-    ) -> Union[Response, Any]:
+    ) -> Union[ExecutionResponse, Any]:
         """
         Execute code in the runtime.
 
