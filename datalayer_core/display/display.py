@@ -8,10 +8,11 @@ from __future__ import annotations
 import json
 
 from typing import Any
-from datetime import datetime, timezone
 
 from rich.console import Console
 from rich.table import Table
+
+from datalayer_core.utils.date import timestamp_to_local_date
 
 
 def display_me(me: dict[str, str], infos: dict[str, str]) -> None:
@@ -40,25 +41,6 @@ def display_me(me: dict[str, str], infos: dict[str, str]) -> None:
     )
     console = Console()
     console.print(table)
-
-
-def _timestamp_to_local_date(timestamp: str) -> str:
-    """
-    Convert a timestamp to local date format.
-
-    Parameters
-    ----------
-    timestamp : str
-        Timestamp string to convert.
-
-    Returns
-    -------
-    str
-        Local date in ISO format.
-    """
-    return (
-        datetime.fromtimestamp(float(timestamp), timezone.utc).astimezone().isoformat()
-    )
 
 
 def _new_runtime_table(title: str = "Runtimes") -> Table:
@@ -99,7 +81,7 @@ def _add_runtime_to_table(table: Table, kernel: dict[str, Any]) -> None:
         kernel["pod_name"],
         kernel["given_name"],
         kernel["environment_name"],
-        "Never" if expired_at is None else _timestamp_to_local_date(expired_at),
+        "Never" if expired_at is None else timestamp_to_local_date(expired_at),
     )
 
 

@@ -12,13 +12,10 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from datalayer_core.cliapp.secrets import SecretsMixin
-from datalayer_core.cliapp.snapshots import SnapshotsMixin
-from datalayer_core.cliapp.tokens import TokensMixin
-
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environment import EnvironmentsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
+from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 
 from datalayer_core.services.runtimes import Runtime

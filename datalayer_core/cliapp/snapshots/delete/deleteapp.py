@@ -7,41 +7,7 @@ import sys
 from typing import Any
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-
-
-class SnapshotsDeleteMixin:
-    """
-    Mixin class that provides snapshot deletion functionality.
-    """
-
-    def _delete_snapshot(self, snapshot_uid: str) -> dict[str, Any]:
-        """
-        Delete snapshots of the current runtime.
-
-        Parameters
-        ----------
-        snapshot_uid : str
-            The unique identifier of the snapshot to delete.
-
-        Returns
-        -------
-        dict[str, Any]
-            Dictionary containing success status and message.
-        """
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots/{}".format(
-                    self.run_url,  # type: ignore
-                    snapshot_uid,
-                ),
-                method="DELETE",
-            )
-            return {
-                "success": response.status_code == 204,
-                "message": "Snapshot deleted successfully.",
-            }
-        except RuntimeError as e:
-            return {"sucess": False, "message": str(e)}
+from datalayer_core.mixins.snapshots import SnapshotsDeleteMixin
 
 
 class SnapshotsDeleteApp(DatalayerCLIBaseApp, SnapshotsDeleteMixin):

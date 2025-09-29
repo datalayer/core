@@ -4,7 +4,7 @@
 """Who Am I application for Datalayer Core authentication."""
 
 from datalayer_core.mixins.whoami import WhoamiAppMixin
-from datalayer_core.utils.display import display_me
+from datalayer_core.display.display import display_me
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 
 

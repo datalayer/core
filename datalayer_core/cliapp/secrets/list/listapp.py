@@ -3,33 +3,9 @@
 
 """Secrets list application for Datalayer Core."""
 
-from typing import Any
-
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.utils.display import display_secrets
-
-
-class SecretsListMixin:
-    """Mixin class for listing secrets."""
-
-    def _list_secrets(self) -> dict[str, Any]:
-        """
-        List all secrets in the Datalayer environment.
-
-        Returns
-        -------
-        dict[str, Any]
-            Dictionary containing secrets information.
-        """
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/secrets".format(self.run_url),  # type: ignore
-                method="GET",
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"sucess": False, "error": str(e)}
-
+from datalayer_core.mixins.secrets import SecretsListMixin
+from datalayer_core.display.display import display_secrets
 
 class SecretsListApp(DatalayerCLIBaseApp, SecretsListMixin):
     """An application to list secrets."""

@@ -7,30 +7,8 @@ import sys
 from typing import Any
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.utils.display import display_snapshots
-
-
-class SnapshotsListMixin:
-    """
-    Mixin class to provide functionality for listing snapshots.
-    """
-
-    def _list_snapshots(self) -> dict[str, Any]:
-        """
-        List all available snapshots.
-
-        Returns
-        -------
-        dict[str, Any]
-            Dictionary containing snapshot information or error details.
-        """
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),  # type: ignore
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"sucess": False, "message": str(e)}
+from datalayer_core.display.display import display_snapshots
+from datalayer_core.mixins.snapshots import SnapshotsListMixin
 
 
 class SnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):

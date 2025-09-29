@@ -3,36 +3,8 @@
 
 """Application for deleting Tokens in Datalayer."""
 
-from typing import Any
-
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-
-
-class TokensDeleteMixin:
-    """Mixin for deleting tokens in Datalayer."""
-
-    def _delete_token(self, token_uid: str) -> dict[str, Any]:
-        """
-        Delete a token by its unique identifier.
-
-        Parameters
-        ----------
-        token_uid : str
-            Unique identifier of the token to delete.
-
-        Returns
-        -------
-        dict[str, Any]
-            A dictionary containing the result of the deletion operation.
-        """
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens/{}".format(self.run_url, token_uid),  # type: ignore
-                method="DELETE",
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"success": False, "message": str(e)}
+from datalayer_core.mixins.tokens import TokensDeleteMixin
 
 
 class TokensDeleteApp(DatalayerCLIBaseApp, TokensDeleteMixin):

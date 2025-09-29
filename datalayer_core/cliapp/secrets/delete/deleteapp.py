@@ -3,36 +3,8 @@
 
 """Application for deleting secrets in Datalayer."""
 
-from typing import Any
-
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-
-
-class SecretsDeleteMixin:
-    """Mixin for deleting secrets in Datalayer."""
-
-    def _delete_secret(self, secret_uid: str) -> dict[str, Any]:
-        """
-        Delete a secret by its unique identifier.
-
-        Parameters
-        ----------
-        secret_uid : str
-            Unique identifier of the secret to delete.
-
-        Returns
-        -------
-        dict[str, Any]
-            A dictionary containing the result of the deletion operation.
-        """
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/secrets/{}".format(self.run_url, secret_uid),  # type: ignore
-                method="DELETE",
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"success": False, "message": str(e)}
+from datalayer_core.mixins.secrets import SecretsDeleteMixin
 
 
 class SecretsDeleteApp(DatalayerCLIBaseApp, SecretsDeleteMixin):

@@ -10,55 +10,8 @@ from typing import Any
 from traitlets import Unicode
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.models.secrets import SecretType
-from datalayer_core.utils.display import display_secrets
-from datalayer_core.utils import btoa
-
-
-class SecretsCreateMixin:
-    """Mixin for creating secrets in Datalayer."""
-
-    def _create_secret(
-        self,
-        name: str,
-        description: str,
-        value: str,
-        secret_type: str = SecretType.GENERIC,
-    ) -> dict[str, Any]:
-        """
-        Create a Secret with the given parameters.
-
-        Parameters
-        ----------
-        name : str
-            Name of the secret.
-        description : str
-            Description of the secret.
-        value : str
-            Value of the secret.
-        secret_type : str
-            Type of the secret (e.g., "generic", "password", "key", "token").
-
-        Returns
-        -------
-        dict
-            A dictionary containing the created secret and its details.
-        """
-        body = {
-            "name": name,
-            "description": description,
-            "variant": secret_type,
-            "value": btoa(value),
-        }
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/secrets".format(self.run_url),  # type: ignore
-                method="POST",
-                json=body,
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"success": False, "message": str(e)}
+from datalayer_core.mixins.secrets import SecretsCreateMixin
+from datalayer_core.display.display import display_secrets
 
 
 class SecretsCreateApp(DatalayerCLIBaseApp, SecretsCreateMixin):

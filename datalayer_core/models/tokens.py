@@ -5,9 +5,14 @@
 Token classes for the Datalayer SDK.
 """
 
+from enum import Enum
 from typing import Union
 
-from datalayer_core.cliapp.tokens import TokenType
+
+class TokenType(str, Enum):
+    """Enum for secret variants."""
+
+    USER = "user_token"
 
 
 class Token:

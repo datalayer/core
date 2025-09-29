@@ -6,29 +6,8 @@
 from typing import Any
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.utils.display import display_tokens
-
-
-class TokensListMixin:
-    """Mixin class for listing tokens."""
-
-    def _list_tokens(self) -> dict[str, Any]:
-        """
-        List all tokens in the Datalayer environment.
-
-        Returns
-        -------
-        dict[str, Any]
-            Dictionary containing tokens information.
-        """
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens".format(self.run_url),  # type: ignore
-                method="GET",
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"sucess": False, "error": str(e)}
+from datalayer_core.display.display import display_tokens
+from datalayer_core.mixins.tokens import TokensListMixin
 
 
 class TokensListApp(DatalayerCLIBaseApp, TokensListMixin):

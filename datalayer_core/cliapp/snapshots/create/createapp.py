@@ -10,49 +10,8 @@ from typing import Any
 from rich import print_json
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.utils.display import display_snapshots
-
-
-class SnapshotsCreateMixin:
-    """Mixin class for creating snapshots."""
-
-    def _create_snapshot(
-        self, pod_name: str, name: str, description: str, stop: bool = True
-    ) -> dict[str, Any]:
-        """
-        Create a snapshot from a runtime.
-
-        Parameters
-        ----------
-        pod_name : str
-            The pod name of the runtime to snapshot.
-        name : str
-            Name for the snapshot.
-        description : str
-            Description for the snapshot.
-        stop : bool
-            Whether to stop the runtime after creating snapshot.
-
-        Returns
-        -------
-        dict[str, Any]
-            Response containing snapshot creation details.
-        """
-        body = {
-            "pod_name": pod_name,
-            "name": name,
-            "description": description,
-            "stop": stop,
-        }
-        try:
-            response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.run_url),  # type: ignore
-                method="POST",
-                json=body,
-            )
-            return response.json()
-        except RuntimeError as e:
-            return {"success": False, "message": str(e)}
+from datalayer_core.display.display import display_snapshots
+from datalayer_core.mixins.snapshots import SnapshotsCreateMixin
 
 
 class SnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):

@@ -12,12 +12,10 @@ from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
 from rich import print_json
 
+from datalayer_core.utils.date import timestamp_to_local_date
 from datalayer_core.utils.network import fetch
 from datalayer_core.utils.defaults import get_default_credits_limit
-from datalayer_core.utils.display import (
-    _timestamp_to_local_date,
-    display_runtimes,
-)
+from datalayer_core.display.display import display_runtimes
 
 
 HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
@@ -201,7 +199,7 @@ class RuntimeManager(KernelHttpManager):
         msg = f"RuntimeManager using existing jupyter kernel {runtime_name}"
         expired_at = runtime.get("expired_at")
         if expired_at is not None:
-            msg += f" expiring at {_timestamp_to_local_date(expired_at)}"
+            msg += f" expiring at {timestamp_to_local_date(expired_at)}"
         self.log.info(msg)
 
         return kernel_model
