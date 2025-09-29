@@ -49,8 +49,7 @@
     "build:lib": "gulp resources-to-lib && tsc -b",
     "build:types": "tsc -b",
     "build:nextjs": "npm run build --workspace=nextjs-notebook-example",
-    "build:electron": "npm run build --workspace=@datalayer/desktop",
-    "build:examples": "npm run build:nextjs && npm run build:electron",
+    "build:examples": "npm run build:nextjs",
     "build:all": "npm run build && npm run build:examples",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
@@ -85,7 +84,6 @@
     "type-check:watch": "tsc -b -w --noEmit",
     "example": "vite --config vite.examples.config.ts",
     "example:nextjs": "npm run dev --workspace=nextjs-notebook-example",
-    "example:electron": "cd examples/electron && npm run dev",
     "prepare": "husky"
   },
   "dependencies": {
