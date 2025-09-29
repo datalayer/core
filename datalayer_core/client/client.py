@@ -21,7 +21,7 @@ from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
 
 from datalayer_core.models.secret import SecretModel, SecretType
 from datalayer_core.models.environment import EnvironmentModel
-from datalayer_core.models.profile import ProfileModel
+from datalayer_core.models import ProfileModel
 from datalayer_core.models.token import TokenModel, TokenType
 
 from datalayer_core.mixins.authn import AuthnMixin
@@ -128,7 +128,7 @@ class DatalayerClient(
         """
         response = self._get_profile()
         if response["success"]:
-            return ProfileModel(response["profile"])
+            return ProfileModel.from_data(response["profile"])
         raise RuntimeError("Failed to get profile information")
 
     @lru_cache

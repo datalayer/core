@@ -35,7 +35,7 @@ dependencies = [
     "keyring==23.0.1",
     "questionary",
     "requests",
-    "pydantic",
+    "pydantic[email]",
     "rich",
     "traitlets",
     "typer",

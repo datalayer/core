@@ -16,7 +16,7 @@ from datalayer_core.cliapp.runtimes import RuntimesMixin
 from datalayer_core.cliapp.runtimes.exec.execapp import _get_cells
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
-from datalayer_core.models._response import Response
+from datalayer_core.models.base import Response
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     RuntimeSnapshotsService,
