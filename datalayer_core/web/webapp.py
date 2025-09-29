@@ -5,8 +5,8 @@
 
 import sys
 
-from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.base.serverapplication import launch_new_instance
+from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 
 
 class DatalayerWebApp(DatalayerCLIBaseApp):

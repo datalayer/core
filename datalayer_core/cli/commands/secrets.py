@@ -10,7 +10,7 @@ from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.secrets import display_secrets
-from datalayer_core.models.secret import SecretType
+from datalayer_core.models.secret import SecretVariant
 
 # Create a Typer app for secret commands
 app = typer.Typer(name="secrets", help="Secret management commands")
@@ -24,19 +24,21 @@ def list_secrets() -> None:
     try:
         client = DatalayerClient()
         secrets = client.list_secrets()
-        
+
         # Convert to dict format for display_secrets
         secret_dicts = []
         for secret in secrets:
-            secret_dicts.append({
-                'uid': secret.uid,
-                'name_s': secret.name,
-                'description_t': secret.description,
-                'variant_s': secret.secret_type,
-            })
-        
+            secret_dicts.append(
+                {
+                    "uid": secret.uid,
+                    "name_s": secret.name,
+                    "description_t": secret.description,
+                    "variant_s": secret.secret_type,
+                }
+            )
+
         display_secrets(secret_dicts)
-        
+
     except Exception as e:
         console.print(f"[red]Error listing secrets: {e}[/red]")
         raise typer.Exit(1)
@@ -54,7 +56,7 @@ def create_secret(
     description: str = typer.Argument(..., help="Description of the secret"),
     value: str = typer.Argument(..., help="Value of the secret"),
     variant: str = typer.Option(
-        SecretType.GENERIC,
+        SecretVariant.GENERIC,
         "--variant",
         help="Type/variant of the secret (generic, password, key, token)",
     ),
@@ -62,25 +64,25 @@ def create_secret(
     """Create a new secret."""
     try:
         client = DatalayerClient()
-        
+
         secret = client.create_secret(
             name=name,
             description=description,
             value=value,
             secret_type=variant,
         )
-        
+
         # Convert to dict format for display_secrets
         secret_dict = {
-            'uid': secret.uid,
-            'name_s': secret.name,
-            'description_t': secret.description,
-            'variant_s': secret.secret_type,
+            "uid": secret.uid,
+            "name_s": secret.name,
+            "description_t": secret.description,
+            "variant_s": secret.secret_type,
         }
-        
+
         display_secrets([secret_dict])
         console.print(f"[green]Secret '{name}' created successfully![/green]")
-        
+
     except Exception as e:
         console.print(f"[red]Error creating secret: {e}[/red]")
         raise typer.Exit(1)
@@ -88,20 +90,22 @@ def create_secret(
 
 @app.command(name="delete")
 def delete_secret(
-    uid: str = typer.Argument(..., help="UID of the secret to delete")
+    uid: str = typer.Argument(..., help="UID of the secret to delete"),
 ) -> None:
     """Delete a secret."""
     try:
         client = DatalayerClient()
-        
+
         result = client.delete_secret(uid)
-        
+
         if result.get("success", False):
             console.print(f"[green]Secret '{uid}' deleted successfully![/green]")
         else:
-            console.print(f"[red]Failed to delete secret '{uid}': {result.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Failed to delete secret '{uid}': {result.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
-        
+
     except Exception as e:
         console.print(f"[red]Error deleting secret: {e}[/red]")
         raise typer.Exit(1)

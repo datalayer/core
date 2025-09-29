@@ -12,7 +12,9 @@ from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
 
 # Create a Typer app for snapshot commands
-app = typer.Typer(name="runtime-snapshots", help="Runtime snapshots management commands")
+app = typer.Typer(
+    name="runtime-snapshots", help="Runtime snapshots management commands"
+)
 
 console = Console()
 
@@ -23,20 +25,22 @@ def list_snapshots() -> None:
     try:
         client = DatalayerClient()
         snapshots = client.list_snapshots()
-        
+
         # Convert to dict format for display_snapshots
         snapshot_dicts = []
         for snapshot in snapshots:
-            snapshot_dicts.append({
-                'uid': snapshot.uid,
-                'name': snapshot.name,
-                'description': snapshot.description,
-                'environment': snapshot.environment,
-                'metadata': snapshot.metadata,
-            })
-        
+            snapshot_dicts.append(
+                {
+                    "uid": snapshot.uid,
+                    "name": snapshot.name,
+                    "description": snapshot.description,
+                    "environment": snapshot.environment,
+                    "metadata": snapshot.metadata,
+                }
+            )
+
         display_runtime_snapshots(snapshot_dicts)
-        
+
     except Exception as e:
         console.print(f"[red]Error listing snapshots: {e}[/red]")
         raise typer.Exit(1)
@@ -74,26 +78,28 @@ def create_snapshot(
     """Create a snapshot from a running runtime."""
     try:
         client = DatalayerClient()
-        
+
         snapshot = client.create_snapshot(
             pod_name=pod_name,
             name=name,
             description=description,
             stop=stop,
         )
-        
+
         # Convert to dict format for display_snapshots
         snapshot_dict = {
-            'uid': snapshot.uid,
-            'name': snapshot.name,
-            'description': snapshot.description,
-            'environment': snapshot.environment,
-            'metadata': snapshot.metadata,
+            "uid": snapshot.uid,
+            "name": snapshot.name,
+            "description": snapshot.description,
+            "environment": snapshot.environment,
+            "metadata": snapshot.metadata,
         }
-        
+
         display_runtime_snapshots([snapshot_dict])
-        console.print(f"[green]Snapshot '{snapshot.name}' created successfully![/green]")
-        
+        console.print(
+            f"[green]Snapshot '{snapshot.name}' created successfully![/green]"
+        )
+
     except Exception as e:
         console.print(f"[red]Error creating snapshot: {e}[/red]")
         raise typer.Exit(1)
@@ -101,20 +107,22 @@ def create_snapshot(
 
 @app.command(name="delete")
 def delete_snapshot(
-    uid: str = typer.Argument(..., help="UID of the snapshot to delete")
+    uid: str = typer.Argument(..., help="UID of the snapshot to delete"),
 ) -> None:
     """Delete a snapshot."""
     try:
         client = DatalayerClient()
-        
+
         result = client.delete_snapshot(uid)
-        
+
         if result.get("success", False):
             console.print(f"[green]Snapshot '{uid}' deleted successfully![/green]")
         else:
-            console.print(f"[red]Failed to delete snapshot '{uid}': {result.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Failed to delete snapshot '{uid}': {result.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
-        
+
     except Exception as e:
         console.print(f"[red]Error deleting snapshot: {e}[/red]")
         raise typer.Exit(1)

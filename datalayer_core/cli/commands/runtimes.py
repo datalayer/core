@@ -23,25 +23,27 @@ def list_runtimes() -> None:
     try:
         client = DatalayerClient()
         runtimes = client.list_runtimes()
-        
+
         # Convert to dict format for display_runtimes
         runtime_dicts = []
         for runtime in runtimes:
-            runtime_dicts.append({
-                'given_name': runtime.name,
-                'environment_name': runtime.environment,
-                'pod_name': runtime.pod_name,
-                'ingress': runtime.ingress,
-                'reservation_id': runtime.reservation_id,
-                'uid': runtime.uid,
-                'burning_rate': runtime.burning_rate,
-                'token': runtime.kernel_token,
-                'started_at': runtime.started_at,
-                'expired_at': runtime.expired_at,
-            })
-        
+            runtime_dicts.append(
+                {
+                    "given_name": runtime.name,
+                    "environment_name": runtime.environment,
+                    "pod_name": runtime.pod_name,
+                    "ingress": runtime.ingress,
+                    "reservation_id": runtime.reservation_id,
+                    "uid": runtime.uid,
+                    "burning_rate": runtime.burning_rate,
+                    "token": runtime.kernel_token,
+                    "started_at": runtime.started_at,
+                    "expired_at": runtime.expired_at,
+                }
+            )
+
         display_runtimes(runtime_dicts)
-        
+
     except Exception as e:
         console.print(f"[red]Error listing runtimes: {e}[/red]")
         raise typer.Exit(1)
@@ -75,18 +77,20 @@ def create_runtime(
     """Create a new runtime."""
     try:
         client = DatalayerClient()
-        
+
         # Create runtime
         runtime = client.create_runtime(
             name=given_name,
             environment=environment,
             time_reservation=time_reservation,
         )
-        
-        console.print(f"Runtime will use credits limit: {runtime.burning_rate * 60.0 * time_reservation:.2f}")
+
+        console.print(
+            f"Runtime will use credits limit: {runtime.burning_rate * 60.0 * time_reservation:.2f}"
+        )
         console.print(f"Runtime created successfully: {runtime.name}")
         console.print(f"[green]Runtime '{runtime.name}' created successfully![/green]")
-        
+
     except Exception as e:
         console.print(f"[red]Error creating runtime: {e}[/red]")
         raise typer.Exit(1)
@@ -94,20 +98,22 @@ def create_runtime(
 
 @app.command(name="terminate")
 def terminate_runtime(
-    pod_name: str = typer.Argument(..., help="Pod name of the runtime to terminate")
+    pod_name: str = typer.Argument(..., help="Pod name of the runtime to terminate"),
 ) -> None:
     """Terminate a running runtime."""
     try:
         client = DatalayerClient()
-        
+
         success = client.terminate_runtime(pod_name)
-        
+
         if success:
-            console.print(f"[green]Runtime '{pod_name}' terminated successfully![/green]")
+            console.print(
+                f"[green]Runtime '{pod_name}' terminated successfully![/green]"
+            )
         else:
             console.print(f"[red]Failed to terminate runtime '{pod_name}'[/red]")
             raise typer.Exit(1)
-        
+
     except Exception as e:
         console.print(f"[red]Error terminating runtime: {e}[/red]")
         raise typer.Exit(1)

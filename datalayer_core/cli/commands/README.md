@@ -30,7 +30,7 @@ dla exec script.py --runtime my-runtime
 # Execute a Jupyter notebook with verbose output
 dla exec notebook.ipynb --runtime my-runtime --verbose
 
-# Execute with timeout and stop on errors  
+# Execute with timeout and stop on errors
 dla exec script.py --runtime my-runtime --timeout 30 --raise
 ```
 
@@ -46,7 +46,7 @@ The exec module supports:
 The exec module uses the modern `DatalayerClient` and `RuntimeManager` to:
 
 1. Connect to the specified runtime
-2. Start a kernel session  
+2. Start a kernel session
 3. Execute cells sequentially
 4. Handle interrupts (Ctrl+C) gracefully
 5. Clean up resources after execution

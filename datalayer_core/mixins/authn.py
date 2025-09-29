@@ -18,7 +18,7 @@ class AuthnMixin:
     Mixin class for Datalayer client authentication.
 
     Provides methods to authenticate and fetch resources from the Datalayer server.
-    
+
     This mixin expects the implementing class to provide:
     - run_url property: for keyring storage
     - iam_url property: for IAM API calls
@@ -30,13 +30,13 @@ class AuthnMixin:
     def _get_token(self) -> Optional[str]:
         """
         Get authentication token with fallback mechanisms.
-        
+
         Tries in this order:
         1. Instance token (_token)
         2. Environment variable DATALAYER_API_KEY
         3. External token environment variable
         4. Keyring stored token
-        
+
         Returns
         -------
         Optional[str]
@@ -45,22 +45,23 @@ class AuthnMixin:
         # 1. Check instance token
         if self._token:
             return self._token
-            
+
         # 2. Check environment variable
         env_token = os.environ.get("DATALAYER_API_KEY")
         if env_token:
             self._token = env_token
             return self._token
-            
+
         # 3. Check external token environment variable
         external_token = os.environ.get("DATALAYER_EXTERNAL_TOKEN")
         if external_token:
             self._external_token = external_token
             return external_token
-            
+
         # 4. Try to get token from keyring
         try:
             import keyring
+
             stored_token = keyring.get_password(self.run_url, "access_token")
             if stored_token:
                 self._token = stored_token
@@ -71,7 +72,7 @@ class AuthnMixin:
         except Exception:
             # keyring access failed
             pass
-            
+
         return None
 
     def _fetch(self, request: str, **kwargs: Any) -> requests.Response:
@@ -98,7 +99,7 @@ class AuthnMixin:
         try:
             # Get token using fallback mechanisms
             token = self._get_token()
-            
+
             return fetch(
                 request,
                 token=token,
@@ -126,7 +127,7 @@ class AuthnMixin:
         token = self._get_token()
         if not token:
             return {"success": False, "message": "No authentication token available"}
-            
+
         body = {
             "token": token,
         }

@@ -14,7 +14,6 @@ from typing_extensions import TypeAlias
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.utils.defaults import DEFAULT_ENVIRONMENT
 
-
 # TODO:
 # - inputs are different from args and kwargs (rename)
 # - inputs cannot be kewyword args of the function
@@ -156,7 +155,7 @@ def datalayer(
                     args_str.append(f"'{arg_value}'")
                 else:
                     args_str.append(str(arg_value))
-            
+
             for kwarg, kwarg_value in kwargs.items():
                 if isinstance(kwarg_value, str):
                     args_str.append(f"{kwarg}='{kwarg_value}'")

@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Runtime services for the Datalayer SDK.
+Runtime services for Datalayer.
 
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
@@ -20,8 +20,8 @@ from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     RuntimeSnapshotsService,
-    create_snapshot,
     as_runtime_snapshots,
+    create_snapshot,
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
@@ -122,7 +122,9 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         self._token = token
         self._external_token = None
         self._run_url = run_url
-        self._iam_url = iam_url or run_url  # Use run_url as fallback if iam_url not provided
+        self._iam_url = (
+            iam_url or run_url
+        )  # Use run_url as fallback if iam_url not provided
 
         # Service-specific state
         self._runtime: dict[str, str] = {}
@@ -153,7 +155,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         -------
         RuntimesService
             The runtime instance.
-        
+
         Raises
         ------
         RuntimeError
@@ -194,41 +196,59 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         if self._kernel_client is None:
             self._runtime = self._create_runtime(self.model.environment)
-            
+
             # Check if runtime creation was successful
             if not self._runtime.get("success", True):
-                error_msg = self._runtime.get("message", "Unknown error during runtime creation")
+                error_msg = self._runtime.get(
+                    "message", "Unknown error during runtime creation"
+                )
                 raise RuntimeError(f"Failed to create runtime: {error_msg}")
-            
+
             # Check if runtime data is present
             if "runtime" not in self._runtime:
-                raise RuntimeError("Runtime creation succeeded but runtime data is missing from response")
-            
+                raise RuntimeError(
+                    "Runtime creation succeeded but runtime data is missing from response"
+                )
+
             runtime: dict[str, str] = self._runtime["runtime"]  # type: ignore
-            
+
             # Validate required runtime fields
-            required_fields = ["ingress", "token", "pod_name", "uid", "reservation_id", 
-                             "burning_rate", "started_at", "expired_at"]
-            missing_fields = [field for field in required_fields if field not in runtime]
-            
+            required_fields = [
+                "ingress",
+                "token",
+                "pod_name",
+                "uid",
+                "reservation_id",
+                "burning_rate",
+                "started_at",
+                "expired_at",
+            ]
+            missing_fields = [
+                field for field in required_fields if field not in runtime
+            ]
+
             if missing_fields:
-                raise RuntimeError(f"Runtime data is missing required fields: {', '.join(missing_fields)}")
-            
+                raise RuntimeError(
+                    f"Runtime data is missing required fields: {', '.join(missing_fields)}"
+                )
+
             # print("runtime", runtime)
             self.model.ingress = runtime["ingress"]
             self.model.kernel_token = runtime["token"]
             self.model.pod_name = runtime["pod_name"]
             self.model.uid = runtime["uid"]
             self.model.reservation_id = runtime["reservation_id"]
-            
+
             try:
                 self.model.burning_rate = float(runtime["burning_rate"])
             except (ValueError, TypeError) as e:
-                raise RuntimeError(f"Invalid burning_rate value: {runtime['burning_rate']} - {str(e)}")
-            
+                raise RuntimeError(
+                    f"Invalid burning_rate value: {runtime['burning_rate']} - {str(e)}"
+                )
+
             self.model.started_at = runtime["started_at"]
             self.model.expired_at = runtime["expired_at"]
-            
+
             # Create and start kernel client
             try:
                 self._kernel_client = KernelClient(
@@ -520,7 +540,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                 response = ExecutionResponse(
                     success=True,
                     message="Code execution completed",
-                    execute_response=outputs
+                    execute_response=outputs,
                 )
                 if debug:
                     print(response.stdout)
@@ -533,7 +553,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         return ExecutionResponse(
             success=False,
             message="No execution response available",
-            execute_response=[]
+            execute_response=[],
         )
 
     def execute_code(
@@ -574,7 +594,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                 response = ExecutionResponse(
                     success=True,
                     message="Code executed successfully",
-                    execute_response=reply.get("outputs", {})
+                    execute_response=reply.get("outputs", {}),
                 )
                 if debug:
                     print(response.stdout)
@@ -592,7 +612,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         return ExecutionResponse(
             success=False,
             message="Execution failed or no response",
-            execute_response=[]
+            execute_response=[],
         )
 
     def execute(

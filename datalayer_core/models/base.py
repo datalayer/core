@@ -5,12 +5,12 @@
 Unified response models for all Datalayer services.
 """
 
-from typing import Any, Dict, List, Optional, Generic, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, Field, computed_field
 
 # Generic type for response data
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BaseResponse(BaseModel):
@@ -22,7 +22,7 @@ class BaseResponse(BaseModel):
     - AI-inference service
     - Core SDK
     """
-    
+
     success: bool = Field(..., description="Whether the operation was successful")
     message: Optional[str] = Field(None, description="Human-readable response message")
 
@@ -32,7 +32,7 @@ class DataResponse(BaseResponse, Generic[T]):
     Generic response model that includes data payload.
     Used when returning structured data from API endpoints.
     """
-    
+
     data: Optional[T] = Field(None, description="Response data payload")
 
 
@@ -40,7 +40,7 @@ class ListResponse(BaseResponse, Generic[T]):
     """
     Response model for endpoints that return lists of items.
     """
-    
+
     items: List[T] = Field(default_factory=list, description="List of items")
     count: Optional[int] = Field(None, description="Total number of items")
     page: Optional[int] = Field(None, description="Current page number")
@@ -51,11 +51,15 @@ class ErrorResponse(BaseResponse):
     """
     Response model for error cases.
     """
-    
+
     success: bool = Field(default=False, description="Always False for error responses")
-    errors: List[str] = Field(default_factory=list, description="List of error messages")
+    errors: List[str] = Field(
+        default_factory=list, description="List of error messages"
+    )
     error_code: Optional[str] = Field(None, description="Machine-readable error code")
-    exception: Optional[str] = Field(None, description="Exception details for debugging")
+    exception: Optional[str] = Field(
+        None, description="Exception details for debugging"
+    )
 
 
 class ExecutionResponse(BaseResponse):

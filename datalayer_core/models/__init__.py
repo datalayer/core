@@ -4,52 +4,100 @@
 """
 Datalayer Core Models.
 
-This package contains data models used throughout the Datalayer SDK.
+This package contains data models used throughout Datalayer.
 All models are now implemented using Pydantic for better validation,
 serialization, and type safety.
 """
 
 from .ai_inference import (
-    ChatMessage, ChatRequest, CompletionRequest, ChatResponseData, 
-    CompletionResponseData, ModelsResponseData, HealthResponseData,
-    EmbeddingRequest, EmbeddingData, EmbeddingResponseData
+    ChatMessage,
+    ChatRequest,
+    ChatResponseData,
+    CompletionRequest,
+    CompletionResponseData,
+    EmbeddingData,
+    EmbeddingRequest,
+    EmbeddingResponseData,
+    HealthResponseData,
+    ModelsResponseData,
+)
+from .base import (
+    BaseResponse,
+    DataResponse,
+    ErrorResponse,
+    ExecutionResponse,
+    ListResponse,
 )
 from .environment import EnvironmentModel
 from .growth import (
-    User, Contact, WaitingListRequest, InviteRequest, InviteRequestPublic,
-    SurveyRequest, ContactRequest, ContactSearchRequest, ContactsUploadRequest,
-    OutboundRequest, OutboundBulkRequest, InviteData
+    Contact,
+    ContactRequest,
+    ContactSearchRequest,
+    ContactsUploadRequest,
+    InviteData,
+    InviteRequest,
+    InviteRequestPublic,
+    OutboundBulkRequest,
+    OutboundRequest,
+    SurveyRequest,
+    User,
+    WaitingListRequest,
 )
 from .iam import (
-    LoginRequest, ProxyRequest, JoinRequest, JoinWithInviteRequest,
-    PasswordResetRequest, PasswordResetConfirm, EmailUpdateRequest, EmailUpdateConfirm,
-    UserData, UserProfile, UserOnboarding, UserSettings, UserSearchRequest,
-    OrganizationMember, OrganizationData, OrganizationRequest,
-    TeamMember, TeamData, TeamRequest,
-    ResourceRequirements, CreditsData, ReservationData, UsageData,
-    CreditsUpdateRequest, QuotaUpdateRequest, ReservationRequest,
-    CheckoutPortalRequest, CheckoutPortalData,
-    SecretData, TokenData, DatasourceData,
-    LoginResponseData, UserListResponseData, OrganizationListResponseData,
-    TeamListResponseData, ReservationListResponseData, ProfileModel
+    CheckoutPortalData,
+    CheckoutPortalRequest,
+    CreditsData,
+    CreditsUpdateRequest,
+    DatasourceData,
+    EmailUpdateConfirm,
+    EmailUpdateRequest,
+    JoinRequest,
+    JoinWithInviteRequest,
+    LoginRequest,
+    LoginResponseData,
+    OrganizationData,
+    OrganizationListResponseData,
+    OrganizationMember,
+    OrganizationRequest,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    ProfileModel,
+    ProxyRequest,
+    QuotaUpdateRequest,
+    ReservationData,
+    ReservationListResponseData,
+    ReservationRequest,
+    ResourceRequirements,
+    SecretData,
+    TeamData,
+    TeamListResponseData,
+    TeamMember,
+    TeamRequest,
+    TokenData,
+    UsageData,
+    UserData,
+    UserListResponseData,
+    UserOnboarding,
+    UserProfile,
+    UserSearchRequest,
+    UserSettings,
 )
-from .base import BaseResponse, DataResponse, ListResponse, ErrorResponse, ExecutionResponse
 from .runtime import RuntimeModel
 from .runtime_snapshot import RuntimeSnapshotModel
-from .secret import SecretModel, SecretType
+from .secret import SecretModel, SecretVariant
 from .token import TokenModel, TokenType
 
 __all__ = [
     "BaseResponse",
     "ChatMessage",
-    "ChatRequest", 
+    "ChatRequest",
     "ChatResponseData",
     "CheckoutPortalData",
     "CheckoutPortalRequest",
     "CompletionRequest",
     "CompletionResponseData",
     "Contact",
-    "ContactRequest", 
+    "ContactRequest",
     "ContactSearchRequest",
     "ContactsUploadRequest",
     "CreditsData",
@@ -94,7 +142,7 @@ __all__ = [
     "RuntimeSnapshotModel",
     "SecretData",
     "SecretModel",
-    "SecretType",
+    "SecretVariant",
     "SurveyRequest",
     "TeamData",
     "TeamListResponseData",

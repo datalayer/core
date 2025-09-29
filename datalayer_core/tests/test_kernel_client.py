@@ -7,37 +7,42 @@ Test script to debug kernel client variable operations
 """
 
 from dotenv import load_dotenv
+
 from datalayer_core.client.client import DatalayerClient
 
 load_dotenv()
 
+
 def test_kernel_client():
     """Test kernel client variable operations"""
     print("Testing kernel client variable operations...")
-    
+
     client = DatalayerClient()
-    with client.create_runtime(name="test-kernel-vars", environment="ai-env") as runtime:
+    with client.create_runtime(
+        name="test-kernel-vars", environment="ai-env"
+    ) as runtime:
         print(f"Runtime created: {runtime.uid}")
-        
+
         # Test kernel info
         if runtime._kernel_client:
             try:
                 kernel_info = runtime._kernel_client.kernel_info
                 print(f"Kernel info: {kernel_info}")
-                
+
                 if kernel_info:
                     language_info = kernel_info.get("language_info", {})
                     print(f"Language info: {language_info}")
                     language_name = language_info.get("name")
                     print(f"Language name: {language_name}")
-                
+
             except Exception as e:
                 print(f"Failed to get kernel info: {e}")
-        
+
         # Test if jupyter_mimetypes is available in the kernel
         print("\n--- Testing jupyter_mimetypes availability ---")
         try:
-            result = runtime.execute_code("""
+            result = runtime.execute_code(
+                """
 try:
     from jupyter_mimetypes import get_variable, set_variable
     print("jupyter_mimetypes is available")
@@ -47,19 +52,23 @@ except ImportError as e:
     print(f"jupyter_mimetypes is NOT available: {e}")
 except Exception as e:
     print(f"Other error: {e}")
-""", debug=True)
+""",
+                debug=True,
+            )
             print(f"Mimetypes test result: {result}")
         except Exception as e:
             print(f"Mimetypes test failed: {e}")
-        
+
         # Test simple code execution first
         print("\n--- Testing simple code execution ---")
         try:
-            result = runtime.execute_code("test_var = 42\nprint(f'Variable set: {test_var}')", debug=True)
+            result = runtime.execute_code(
+                "test_var = 42\nprint(f'Variable set: {test_var}')", debug=True
+            )
             print(f"Execution result: {result}")
         except Exception as e:
             print(f"Code execution failed: {e}")
-        
+
         # Test variable setting
         print("\n--- Testing variable setting ---")
         try:
@@ -67,16 +76,17 @@ except Exception as e:
             print("Variable set successfully")
         except Exception as e:
             print(f"Variable setting failed: {e}")
-        
+
         # Test variable getting with debug
         print("\n--- Testing variable getting with debug ---")
         try:
             # First set a variable using direct code execution
             runtime.execute_code("debug_var = 'hello_world'")
             print("Set debug_var = 'hello_world' via code execution")
-            
+
             # Now try to get it using get_variable with debug output
-            result = runtime.execute_code("""
+            result = runtime.execute_code(
+                """
 # Debug the get_variable snippet directly
 import pickle
 import base64
@@ -109,33 +119,38 @@ if name in globals():
         display({"text/plain": str(var)}, raw=True)
 else:
     print(f"Variable '{name}' not found in globals")
-""", debug=True)
-            
+""",
+                debug=True,
+            )
+
             # Test the actual get_variable method and inspect results
             print("\n--- Testing get_variable execution details ---")
-            kernel_language = runtime._kernel_client.kernel_info.get("language_info", {}).get("name")
+            kernel_language = runtime._kernel_client.kernel_info.get(
+                "language_info", {}
+            ).get("name")
             print(f"Kernel language: {kernel_language}")
-            
+
             from jupyter_kernel_client.snippets import SNIPPETS_REGISTRY
+
             snippet = SNIPPETS_REGISTRY.get_get_variable(kernel_language)
             formatted_snippet = snippet.format(name="debug_var")
             print(f"Get variable snippet:\n{formatted_snippet}")
-            
+
             # Execute the snippet and inspect the full results
             results = runtime._kernel_client.execute(formatted_snippet, silent=True)
             print(f"Get variable results: {results}")
             print(f"Results status: {results['status']}")
             print(f"Results outputs: {results['outputs']}")
-            for i, output in enumerate(results['outputs']):
+            for i, output in enumerate(results["outputs"]):
                 print(f"Output {i}: {output}")
-                if 'data' in output:
+                if "data" in output:
                     print(f"  Data keys: {output['data'].keys()}")
 
             value = runtime.get_variable("debug_var")
             print(f"Retrieved debug_var using get_variable: {value}")
         except Exception as e:
             print(f"Variable getting debug failed: {e}")
-        
+
         # Test variable getting
         print("\n--- Testing variable getting ---")
         try:
@@ -143,12 +158,13 @@ else:
             print(f"Retrieved test_var: {value}")
         except Exception as e:
             print(f"Variable getting failed: {e}")
-            
+
         try:
             value = runtime.get_variable("my_test_var")  # From set_variable above
             print(f"Retrieved my_test_var: {value}")
         except Exception as e:
             print(f"Variable getting failed: {e}")
+
 
 if __name__ == "__main__":
     test_kernel_client()

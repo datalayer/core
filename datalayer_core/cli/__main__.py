@@ -8,19 +8,26 @@ import typer
 from datalayer_core.cli.commands.about import app as about_app
 from datalayer_core.cli.commands.auth import (
     app as auth_app,
+)
+from datalayer_core.cli.commands.auth import (
     login_root,
-    logout_root, 
+    logout_root,
     whoami_root,
 )
 from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
 from datalayer_core.cli.commands.console import app as console_app
-from datalayer_core.cli.commands.envs import app as envs_app, envs_list, envs_ls
-from datalayer_core.cli.commands.runtimes import app as runtimes_app, runtimes_list, runtimes_ls
-from datalayer_core.cli.commands.secrets import app as secrets_app, secrets_list, secrets_ls
-from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app, snapshots_list, snapshots_ls
-from datalayer_core.cli.commands.tokens import app as tokens_app, tokens_list, tokens_ls
-from datalayer_core.cli.commands.web import app as web_app
+from datalayer_core.cli.commands.envs import app as envs_app
+from datalayer_core.cli.commands.envs import envs_list, envs_ls
 from datalayer_core.cli.commands.exec import main as exec_main
+from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app
+from datalayer_core.cli.commands.runtime_snapshots import snapshots_list, snapshots_ls
+from datalayer_core.cli.commands.runtimes import app as runtimes_app
+from datalayer_core.cli.commands.runtimes import runtimes_list, runtimes_ls
+from datalayer_core.cli.commands.secrets import app as secrets_app
+from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
+from datalayer_core.cli.commands.tokens import app as tokens_app
+from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
+from datalayer_core.cli.commands.web import app as web_app
 
 # Create the main Typer app
 app = typer.Typer(
@@ -60,6 +67,7 @@ app.command(name="snapshots-list")(snapshots_list)
 app.command(name="snapshots-ls")(snapshots_ls)
 app.command(name="tokens-list")(tokens_list)
 app.command(name="tokens-ls")(tokens_ls)
+
 
 def main():
     """Main entry point for the Datalayer Typer CLI."""

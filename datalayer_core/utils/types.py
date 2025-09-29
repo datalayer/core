@@ -2,11 +2,10 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Utility functions and constants for the Datalayer SDK.
+Utility functions and constants for Datalayer.
 """
 
 from typing_extensions import TypeAlias
-
 
 Seconds: TypeAlias = float
 

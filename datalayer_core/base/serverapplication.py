@@ -11,12 +11,11 @@ from traitlets import Bool, CInt, Instance, Unicode, default
 from traitlets.config import Configurable
 
 from datalayer_core.__version__ import __version__
-from datalayer_core.services.authn.state import get_server_port
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
-
+from datalayer_core.services.authn.state import get_server_port
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
 

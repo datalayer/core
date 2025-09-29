@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Runtime services for the Datalayer SDK.
+Runtime services for Datalayer.
 
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
@@ -19,8 +19,8 @@ from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     RuntimeSnapshotsService,
-    create_snapshot,
     as_runtime_snapshots,
+    create_snapshot,
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,

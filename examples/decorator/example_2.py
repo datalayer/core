@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 
 from datalayer_core.decorators.datalayer import datalayer
 
-
 load_dotenv()
 
 
 HERE = Path(__file__).parent
+
 
 # Example 2: Function with inputs and output variables
 @datalayer(
@@ -51,7 +51,6 @@ def process_data(data: list[float]) -> dict:
     print(f"Statistics: {processed_result}")
 
     return processed_result
-
 
 
 if __name__ == "__main__":

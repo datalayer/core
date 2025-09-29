@@ -12,9 +12,8 @@ from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.utils.date import timestamp_to_local_date
 from datalayer_core.displays.runtimes import display_runtimes
-
+from datalayer_core.utils.date import timestamp_to_local_date
 
 HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 
@@ -58,7 +57,7 @@ class RuntimeManager(KernelHttpManager):
         self.run_url = run_url
         self.run_token = token
         self.username = username
-        
+
         # Initialize DatalayerClient for modern API access
         self._client = DatalayerClient(run_url=run_url, token=token)
 
@@ -110,7 +109,7 @@ class RuntimeManager(KernelHttpManager):
 
         runtime_name = name
         runtime = None
-        
+
         # Use DatalayerClient to get runtime information
         if runtime_name:
             # Get specific runtime by name
@@ -135,13 +134,17 @@ class RuntimeManager(KernelHttpManager):
             if not runtimes:
                 environments = self._client.list_environments()
                 if not environments:
-                    raise RuntimeError("No environments available to create a runtime from.")
-                    
+                    raise RuntimeError(
+                        "No environments available to create a runtime from."
+                    )
+
                 first_environment = environments[0]
                 first_environment_name = first_environment.name
 
                 # Calculate credits limit based on environment
-                credits_limit = first_environment.burning_rate * 60.0 * 10.0  # 10 minutes default
+                credits_limit = (
+                    first_environment.burning_rate * 60.0 * 10.0
+                )  # 10 minutes default
 
                 user_input = (
                     input(
@@ -158,31 +161,31 @@ class RuntimeManager(KernelHttpManager):
                 new_runtime = self._client.create_runtime(
                     name=f"console-runtime-{first_environment_name}",
                     environment=first_environment_name,
-                    time_reservation=10.0  # 10 minutes default
+                    time_reservation=10.0,  # 10 minutes default
                 )
-                
+
                 # Start the runtime to get connection details
                 new_runtime._start()
-                
+
                 runtime = {
                     "pod_name": new_runtime.pod_name,
                     "ingress": new_runtime.ingress,
                     "token": new_runtime.kernel_token,
                     "expired_at": new_runtime.expired_at,
                 }
-                
+
                 # Display the created runtime
                 runtime_dict = {
-                    'given_name': new_runtime.name,
-                    'environment_name': new_runtime.environment,
-                    'pod_name': new_runtime.pod_name,
-                    'ingress': new_runtime.ingress,
-                    'reservation_id': getattr(new_runtime, 'reservation_id', ''),
-                    'uid': new_runtime.uid,
-                    'burning_rate': getattr(new_runtime, 'burning_rate', 0.0),
-                    'token': new_runtime.kernel_token,
-                    'started_at': getattr(new_runtime, 'started_at', ''),
-                    'expired_at': new_runtime.expired_at,
+                    "given_name": new_runtime.name,
+                    "environment_name": new_runtime.environment,
+                    "pod_name": new_runtime.pod_name,
+                    "ingress": new_runtime.ingress,
+                    "reservation_id": getattr(new_runtime, "reservation_id", ""),
+                    "uid": new_runtime.uid,
+                    "burning_rate": getattr(new_runtime, "burning_rate", 0.0),
+                    "token": new_runtime.kernel_token,
+                    "started_at": getattr(new_runtime, "started_at", ""),
+                    "expired_at": new_runtime.expired_at,
                 }
                 display_runtimes([runtime_dict])
 
@@ -208,6 +211,7 @@ class RuntimeManager(KernelHttpManager):
 
         # Get runtime information.
         from datalayer_core.utils.network import fetch
+
         response = fetch(f"{self.server_url}/api/kernels", token=self.token)
         kernels = response.json()
         if kernels:

@@ -1,9 +1,9 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
- 
+
 from typing import Any
 
-from datalayer_core.models.secret import SecretType
+from datalayer_core.models.secret import SecretVariant
 from datalayer_core.utils import btoa
 
 
@@ -15,7 +15,7 @@ class SecretsCreateMixin:
         name: str,
         description: str,
         value: str,
-        secret_type: str = SecretType.GENERIC,
+        secret_type: str = SecretVariant.GENERIC,
     ) -> dict[str, Any]:
         """
         Create a Secret with the given parameters.

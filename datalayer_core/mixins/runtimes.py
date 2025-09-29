@@ -71,13 +71,14 @@ class RuntimesCreateMixin:
                     return {"success": False, "message": error_msg}
 
                 credits_limit = get_default_credits_limit(
-                    raw_credits.get("reservations", []), 
-                    raw_credits.get("credits", 0)
+                    raw_credits.get("reservations", []), raw_credits.get("credits", 0)
                 )
                 print(f"Runtime will use credits limit: {credits_limit:.2f}")
 
             if credits_limit < sys.float_info.epsilon:
-                error_msg = "Credits reservation is not positive. Cannot create runtime."
+                error_msg = (
+                    "Credits reservation is not positive. Cannot create runtime."
+                )
                 print(f"Error: {error_msg}")
                 return {"success": False, "message": error_msg}
 
@@ -91,7 +92,7 @@ class RuntimesCreateMixin:
                 method="POST",
                 json=body,
             )
-            
+
             if response.status_code not in [200, 201]:
                 error_msg = f"Failed to create runtime: HTTP {response.status_code}"
                 print(f"Error: {error_msg}")
@@ -110,8 +111,10 @@ class RuntimesCreateMixin:
                     error_msg = f"Runtime creation failed: {result.get('message', 'Unknown error')}"
                     print(f"Error: {error_msg}")
                     return {"success": False, "message": error_msg}
-                
-                print(f"Runtime created successfully: {result.get('runtime', {}).get('uid', 'N/A')}")
+
+                print(
+                    f"Runtime created successfully: {result.get('runtime', {}).get('uid', 'N/A')}"
+                )
                 return result
             except Exception as e:
                 error_msg = f"Failed to parse runtime creation response: {str(e)}"
@@ -122,7 +125,6 @@ class RuntimesCreateMixin:
             error_msg = f"Unexpected error during runtime creation: {str(e)}"
             print(f"Error: {error_msg}")
             return {"success": False, "message": error_msg}
-
 
 
 class RuntimesListMixin:
@@ -141,25 +143,25 @@ class RuntimesListMixin:
             response = self._fetch(  # type: ignore
                 "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore
             )
-            
+
             if response.status_code != 200:
                 error_msg = f"Failed to list runtimes: HTTP {response.status_code}"
                 print(f"Error: {error_msg}")
                 return {"success": False, "message": error_msg}
-            
+
             try:
                 result = response.json()
                 if "success" in result and not result["success"]:
                     error_msg = f"List runtimes failed: {result.get('message', 'Unknown error')}"
                     print(f"Error: {error_msg}")
                     return {"success": False, "message": error_msg}
-                
+
                 return result
             except Exception as e:
                 error_msg = f"Failed to parse runtimes list response: {str(e)}"
                 print(f"Error: {error_msg}")
                 return {"success": False, "message": error_msg}
-                
+
         except Exception as e:
             error_msg = f"Unexpected error listing runtimes: {str(e)}"
             print(f"Error: {error_msg}")
@@ -190,7 +192,7 @@ class RuntimesTerminateMixin:
                 "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, pod_name),  # type: ignore
                 method="DELETE",
             )
-            
+
             if response.status_code in [200, 204]:
                 print(f"Runtime {pod_name} terminated successfully")
                 return {

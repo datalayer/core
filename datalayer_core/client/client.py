@@ -11,32 +11,29 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from datalayer_core.services.runtimes.runtimes import RuntimesService
-from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
-    RuntimeSnapshotsService,
-    create_snapshot,
-    as_runtime_snapshots,
-)
-
-from datalayer_core.models.environment import EnvironmentModel
-from datalayer_core.models import ProfileModel
-from datalayer_core.models.secret import SecretModel, SecretType
-from datalayer_core.models.token import TokenModel, TokenType
-
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
+from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
-from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
-
+from datalayer_core.models import ProfileModel
+from datalayer_core.models.environment import EnvironmentModel
+from datalayer_core.models.secret import SecretModel, SecretVariant
+from datalayer_core.models.token import TokenModel, TokenType
+from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
+    RuntimeSnapshotsService,
+    as_runtime_snapshots,
+    create_snapshot,
+)
+from datalayer_core.services.runtimes.runtimes import RuntimesService
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_TIME_RESERVATION,
 )
-from datalayer_core.utils.urls import DatalayerURLs
 from datalayer_core.utils.types import Minutes
+from datalayer_core.utils.urls import DatalayerURLs
 
 
 class DatalayerClient(
@@ -70,7 +67,7 @@ class DatalayerClient(
         urls: Optional[DatalayerURLs] = None,
     ):
         """
-        Initialize the Datalayer SDK.
+        Initialize Datalayer.
 
         Parameters
         ----------
@@ -84,13 +81,15 @@ class DatalayerClient(
             Pre-configured URLs object. If provided, run_url and iam_url parameters are ignored.
         """
         # TODO: Check user and password login
-        
+
         # Use provided urls or create from parameters/environment
         if urls is not None:
             self._urls = urls
         else:
-            self._urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
-        
+            self._urls = DatalayerURLs.from_environment(
+                run_url=run_url, iam_url=iam_url
+            )
+
         self._token = token  # Store the explicitly passed token
         self._external_token = None
         self._user_handle = None
@@ -251,10 +250,12 @@ class DatalayerClient(
                 if snapshot.name == snapshot_name:
                     snapshot_uid = snapshot.uid
                     break
-            
+
             if snapshot_uid is None:
-                raise ValueError(f"Snapshot '{snapshot_name}' not found. Available snapshots: {[s.name for s in snapshots]}")
-            
+                raise ValueError(
+                    f"Snapshot '{snapshot_name}' not found. Available snapshots: {[s.name for s in snapshots]}"
+                )
+
             response = self._create_runtime(
                 given_name=name,
                 environment_name=environment,
@@ -268,11 +269,13 @@ class DatalayerClient(
                 environment_name=environment,
                 credits_limit=credits_limit,
             )
-        
+
         # Process the response and create RuntimesService object
         if not response.get("success", True):
-            raise RuntimeError(f"Runtime creation failed: {response.get('message', 'Unknown error')}")
-        
+            raise RuntimeError(
+                f"Runtime creation failed: {response.get('message', 'Unknown error')}"
+            )
+
         runtime_data = response["runtime"]
         runtime = RuntimesService(
             name=runtime_data["given_name"],
@@ -374,7 +377,7 @@ class DatalayerClient(
         name: str,
         description: str,
         value: str,
-        secret_type: str = SecretType.GENERIC,
+        secret_type: str = SecretVariant.GENERIC,
     ) -> "SecretModel":
         """
         Create a new secret.
@@ -496,7 +499,9 @@ class DatalayerClient(
         snapshot_objects = as_runtime_snapshots(response)
         return snapshot_objects
 
-    def delete_snapshot(self, snapshot: Union[str, RuntimeSnapshotsService]) -> dict[str, str]:
+    def delete_snapshot(
+        self, snapshot: Union[str, RuntimeSnapshotsService]
+    ) -> dict[str, str]:
         """
         Delete a specific snapshot.
 

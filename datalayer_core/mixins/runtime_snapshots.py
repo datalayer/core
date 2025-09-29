@@ -1,6 +1,6 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
- 
+
 from typing import Any
 
 
@@ -44,7 +44,6 @@ class RuntimeSnapshotsCreateMixin:
             return response.json()
         except RuntimeError as e:
             return {"success": False, "message": str(e)}
-
 
 
 class RuntimeSnapshotsDeleteMixin:
@@ -105,7 +104,9 @@ class RuntimeSnapshotsListMixin:
             return {"sucess": False, "message": str(e)}
 
 
-class RuntimeSnapshotsMixin(RuntimeSnapshotsCreateMixin, RuntimeSnapshotsDeleteMixin, RuntimeSnapshotsListMixin):
+class RuntimeSnapshotsMixin(
+    RuntimeSnapshotsCreateMixin, RuntimeSnapshotsDeleteMixin, RuntimeSnapshotsListMixin
+):
     """
     Mixin class that provides snapshot management functionality.
     """

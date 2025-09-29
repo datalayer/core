@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 from datalayer_core import DatalayerClient
 
-
 load_dotenv()
 
 

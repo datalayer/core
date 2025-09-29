@@ -20,12 +20,18 @@ from pathlib import Path
 from socketserver import BaseRequestHandler
 
 from datalayer_core.__version__ import __version__
-from datalayer_core.services.authn.keys import DATALAYER_IAM_TOKEN_KEY, DATALAYER_IAM_USER_KEY
-from datalayer_core.services.authn.pages import AUTH_SUCCESS_PAGE, LANDING_PAGE, OAUTH_ERROR_PAGE
-from datalayer_core.services.authn.state import set_server_port
 from datalayer_core.base.serverapplication import launch_new_instance
+from datalayer_core.services.authn.keys import (
+    DATALAYER_IAM_TOKEN_KEY,
+    DATALAYER_IAM_USER_KEY,
+)
+from datalayer_core.services.authn.pages import (
+    AUTH_SUCCESS_PAGE,
+    LANDING_PAGE,
+    OAUTH_ERROR_PAGE,
+)
+from datalayer_core.services.authn.state import set_server_port
 from datalayer_core.utils.network import find_http_port
-
 
 HERE = Path(__file__).parent
 

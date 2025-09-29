@@ -21,28 +21,32 @@ def list_environments() -> None:
     try:
         client = DatalayerClient()
         environments = client.list_environments()
-        
+
         # Convert to dict format for display_environments
         env_dicts = []
         for env in environments:
-            env_dicts.append({
-                'name': env.name,
-                'title': env.title,
-                'burning_rate': env.burning_rate,
-                'language': env.language,
-                'owner': env.owner,
-                'visibility': env.visibility,
-                **env.metadata
-            })
-        
+            env_dicts.append(
+                {
+                    "name": env.name,
+                    "title": env.title,
+                    "burning_rate": env.burning_rate,
+                    "language": env.language,
+                    "owner": env.owner,
+                    "visibility": env.visibility,
+                    **env.metadata,
+                }
+            )
+
         display_environments(env_dicts)
-        
+
         if len(env_dicts) > 0:
             console.print("\n[dim]Create a Runtime with e.g.[/dim]")
             for env in env_dicts:
-                console.print(f"[dim]datalayer runtimes create --given-name my-runtime --credits-limit 3 {env['name']}[/dim]")
+                console.print(
+                    f"[dim]datalayer runtimes create --given-name my-runtime --credits-limit 3 {env['name']}[/dim]"
+                )
             console.print()
-            
+
     except Exception as e:
         console.print(f"[red]Error listing environments: {e}[/red]")
         raise typer.Exit(1)

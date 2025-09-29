@@ -4,7 +4,7 @@
 """Console commands for Datalayer CLI."""
 
 import sys
-from typing import Optional, List
+from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -52,7 +52,7 @@ def console_connect(
     ),
     kernel_path: Optional[str] = typer.Option(
         None,
-        "--kernel-path", 
+        "--kernel-path",
         help="The path where the kernel should be started",
     ),
     existing: Optional[str] = typer.Option(
@@ -61,24 +61,23 @@ def console_connect(
         help="Connect to an existing kernel instead of starting a new one",
     ),
     extra_args: Optional[List[str]] = typer.Argument(
-        None,
-        help="Additional arguments to pass to the console application"
+        None, help="Additional arguments to pass to the console application"
     ),
 ) -> None:
     """Connect to a Datalayer runtime console."""
     try:
         # Get URLs configuration
         urls = DatalayerURLs.from_environment(run_url=run_url)
-        
+
         console.print("[green]Starting Datalayer runtime console...[/green]")
         console.print(f"Run URL: {urls.run_url}")
         if runtime_name:
             console.print(f"Runtime: {runtime_name}")
         console.print("[yellow]Press Ctrl+D or Ctrl+C to exit the console[/yellow]")
-        
+
         # Prepare sys.argv for the RuntimesConsoleApp
         args = []
-        
+
         if runtime_name:
             args.extend(["--runtime", runtime_name])
         if urls.run_url:
@@ -95,15 +94,15 @@ def console_connect(
             args.extend(["--kernel-path", kernel_path])
         if existing:
             args.extend(["--existing", existing])
-        
+
         # Add any extra arguments
         if extra_args:
             args.extend(extra_args)
-        
+
         # Modify sys.argv to pass arguments to RuntimesConsoleApp
         original_argv = sys.argv.copy()
         sys.argv = ["datalayer-console"] + args
-        
+
         try:
             # Launch the RuntimesConsoleApp
             app_instance = RuntimesConsoleApp()
@@ -112,7 +111,7 @@ def console_connect(
         finally:
             # Restore original sys.argv
             sys.argv = original_argv
-        
+
     except KeyboardInterrupt:
         console.print("\n[yellow]Console session ended.[/yellow]")
     except Exception as e:
@@ -156,7 +155,7 @@ def console_callback(
     ),
     kernel_path: Optional[str] = typer.Option(
         None,
-        "--kernel-path", 
+        "--kernel-path",
         help="The path where the kernel should be started",
     ),
     existing: Optional[str] = typer.Option(
@@ -169,10 +168,10 @@ def console_callback(
     if ctx.invoked_subcommand is None:
         # Get any remaining arguments that weren't parsed
         extra_args = []
-        if hasattr(ctx, 'params') and ctx.params:
+        if hasattr(ctx, "params") and ctx.params:
             # Add any extra arguments from context
             pass
-            
+
         # Call console_connect with the parameters
         console_connect(
             runtime_name=runtime_name,
@@ -183,7 +182,7 @@ def console_callback(
             kernel_name=kernel_name,
             kernel_path=kernel_path,
             existing=existing,
-            extra_args=extra_args
+            extra_args=extra_args,
         )
 
 

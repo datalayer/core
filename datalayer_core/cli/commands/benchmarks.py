@@ -35,7 +35,7 @@ def benchmarks_web(
     try:
         # Get URLs configuration
         urls = DatalayerURLs.from_environment(run_url=run_url)
-        
+
         # Prepare arguments for Jupyter server
         sys.argv = [
             "",
@@ -43,14 +43,14 @@ def benchmarks_web(
             "--DatalayerExtensionApp.benchmarks=True",
             f"--DatalayerExtensionApp.run_url={urls.run_url}",
         ]
-        
+
         console.print("[green]Starting benchmarks web application...[/green]")
         console.print(f"Run URL: {urls.run_url}")
         console.print("[yellow]Press Ctrl+C to stop the server[/yellow]")
-        
+
         # Launch the Jupyter server
         launch_new_instance()
-        
+
     except KeyboardInterrupt:
         console.print("\n[yellow]Benchmarks web application stopped.[/yellow]")
     except Exception as e:

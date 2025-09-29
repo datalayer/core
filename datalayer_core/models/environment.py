@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Environment models for the Datalayer SDK.
+Environment models for Datalayer.
 
 Provides data structures for environment management in Datalayer environments.
 """

@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Runtime model for the Datalayer SDK.
+Runtime model for Datalayer.
 
 Provides data structures for runtime management in Datalayer environments.
 """

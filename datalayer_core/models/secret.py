@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Secret models for the Datalayer SDK.
+Secret models for Datalayer.
 
 Provides data structures for secret management in Datalayer environments.
 """
@@ -13,7 +13,7 @@ from typing import Any, Dict, Union
 from pydantic import BaseModel, Field
 
 
-class SecretType(str, Enum):
+class SecretVariant(str, Enum):
     """Enum for secret variants."""
 
     GENERIC = "generic"
@@ -30,8 +30,8 @@ class SecretModel(BaseModel):
     uid: str = Field(..., description="Unique identifier for the secret")
     name: str = Field(..., description="Name of the secret")
     description: str = Field(..., description="Description of the secret")
-    secret_type: Union[str, SecretType] = Field(
-        default=SecretType.GENERIC,
+    secret_type: Union[str, SecretVariant] = Field(
+        default=SecretVariant.GENERIC,
         description='Type of the secret (e.g., "generic", "password", "key", "token")',
     )
     kwargs: Dict[str, Any] = Field(

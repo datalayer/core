@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 
 from datalayer_core.decorators.datalayer import datalayer
 
-
 load_dotenv()
 
 

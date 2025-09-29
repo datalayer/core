@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Token models for the Datalayer SDK.
+Token models for Datalayer.
 
 Provides data structures for token management in Datalayer environments.
 """

@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Runtime snapshot model for the Datalayer SDK.
+Runtime snapshot model for Datalayer.
 
 Provides data structures for runtime snapshot management in Datalayer environments.
 """
@@ -23,8 +23,12 @@ class RuntimeSnapshotModel(BaseModel):
     uid: str = Field(..., description="Unique identifier for the snapshot")
     name: str = Field(..., description="Name of the snapshot")
     description: str = Field(..., description="Description of the snapshot")
-    environment: str = Field(..., description="Environment associated with the snapshot")
-    metadata: Dict[str, Any] = Field(..., description="Metadata related to the snapshot")
+    environment: str = Field(
+        ..., description="Environment associated with the snapshot"
+    )
+    metadata: Dict[str, Any] = Field(
+        ..., description="Metadata related to the snapshot"
+    )
 
     def __repr__(self) -> str:
         return (

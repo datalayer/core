@@ -4,6 +4,7 @@
 """About command for Datalayer CLI."""
 
 from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
@@ -11,13 +12,14 @@ from rich.markdown import Markdown
 # Create a Typer app for the about command
 app = typer.Typer()
 
+
 @app.command()
 def about():
     """Display information about Datalayer."""
     HERE = Path(__file__).parent
     console = Console()
     about_file_path = HERE / ".." / ".." / "assets" / "about.md"
-    
+
     try:
         with open(about_file_path) as readme:
             markdown = Markdown(readme.read())

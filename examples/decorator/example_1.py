@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 
 from datalayer_core.decorators.datalayer import datalayer
 
-
 load_dotenv()
 
 
@@ -37,7 +36,6 @@ def simple_computation(x: int, y: int) -> int:
     result = x * y + 10
     print(f"Computing {x} * {y} + 10 = {result}")
     return result
-
 
 
 if __name__ == "__main__":

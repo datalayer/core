@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Snapshot services for the Datalayer SDK.
+Snapshot services for Datalayer.
 
 Provides runtime snapshot management and operations in Datalayer environments.
 """
@@ -126,9 +126,7 @@ class RuntimeSnapshotsService:
         return self.model.metadata
 
 
-def create_snapshot(
-    name: Optional[str], description: Optional[str]
-) -> Tuple[str, str]:
+def create_snapshot(name: Optional[str], description: Optional[str]) -> Tuple[str, str]:
     """
     Create snapshot name and description with defaults.
 

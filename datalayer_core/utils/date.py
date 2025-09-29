@@ -21,4 +21,3 @@ def timestamp_to_local_date(timestamp: str) -> str:
     return (
         datetime.fromtimestamp(float(timestamp), timezone.utc).astimezone().isoformat()
     )
-

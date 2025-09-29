@@ -15,7 +15,7 @@ from jupyter_kernel_client.konsoleapp import (
 from jupyter_kernel_client.konsoleapp import (
     flags as base_flags,
 )
-from traitlets import Dict, Unicode, default
+from traitlets import Bool, Dict, Unicode, default
 from traitlets.config import catch_config_error
 
 from datalayer_core.__version__ import __version__
@@ -24,15 +24,15 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.utils.urls import DatalayerURLs
 
 datalayer_aliases = dict(base_aliases)
-datalayer_aliases["run-url"] = "AuthnMixin.run_url"
-datalayer_aliases["token"] = "AuthnMixin.token"
-datalayer_aliases["external-token"] = "AuthnMixin.external_token"
+datalayer_aliases["run-url"] = "RuntimesConsoleApp.run_url"
+datalayer_aliases["token"] = "RuntimesConsoleApp.token"
+datalayer_aliases["external-token"] = "RuntimesConsoleApp.external_token"
 
 datalayer_flags = dict(base_flags)
 datalayer_flags.update(
     {
         "no-browser": (
-            {"AuthnMixin": {"no_browser": True}},
+            {"RuntimesConsoleApp": {"no_browser": True}},
             "Will prompt for user and password on the CLI.",
         )
     }
@@ -61,26 +61,34 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
     )
 
     # Additional attributes required by the app
-    user_handle = Unicode(
-        "", config=True, help="""Username for authentication."""
+    user_handle = Unicode("", config=True, help="""Username for authentication.""")
+
+    # URL configuration attributes
+    run_url = Unicode("", config=True, help="""Datalayer server URL.""")
+
+    iam_url = Unicode("", config=True, help="""Datalayer IAM server URL.""")
+
+    # Token attributes for authentication
+    token = Unicode("", config=True, help="""Authentication token.""")
+
+    external_token = Unicode("", config=True, help="""External authentication token.""")
+
+    # Authentication configuration
+    no_browser = Bool(
+        False, config=True, help="""Will prompt for user and password on the CLI."""
     )
 
-    # URL properties required by AuthnMixin
-    _urls = None
+    @default("run_url")
+    def _run_url_default(self) -> str:
+        """Get the default run URL from environment."""
+        urls = DatalayerURLs.from_environment()
+        return urls.run_url
 
-    @property
-    def run_url(self) -> str:
-        """Get the Datalayer server URL."""
-        if self._urls is None:
-            self._urls = DatalayerURLs.from_environment()
-        return self._urls.run_url
-
-    @property
-    def iam_url(self) -> str:
-        """Get the Datalayer IAM server URL."""
-        if self._urls is None:
-            self._urls = DatalayerURLs.from_environment()
-        return self._urls.iam_url
+    @default("iam_url")
+    def _iam_url_default(self) -> str:
+        """Get the default IAM URL from environment."""
+        urls = DatalayerURLs.from_environment()
+        return urls.iam_url
 
     @default("kernel_manager_class")
     def _kernel_manager_class_default(self) -> type:
