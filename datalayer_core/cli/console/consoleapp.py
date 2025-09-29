@@ -19,8 +19,8 @@ from traitlets import Dict, Unicode, default
 from traitlets.config import catch_config_error
 
 from datalayer_core.__version__ import __version__
-from datalayer_core.cliapp.base import DatalayerAuthMixin
-from datalayer_core.cliapp.runtimes.manager import RuntimeManager
+from datalayer_core.cli.console.manager import RuntimeManager
+from datalayer_core.mixins.authn import AuthnMixin
 
 datalayer_aliases = dict(base_aliases)
 datalayer_aliases["run-url"] = "DatalayerAuthMixin.run_url"
@@ -45,7 +45,7 @@ aliases.update(
 )
 
 
-class RuntimesConsoleApp(DatalayerAuthMixin, KonsoleApp):
+class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
     """Console for Datalayer remote kernels."""
 
     name = "datalayer-console"
