@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Runtime classes for the Datalayer SDK.
+Runtime services for the Datalayer SDK.
 
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
@@ -15,7 +15,9 @@ from jupyter_kernel_client import KernelClient
 from datalayer_core.cliapp.runtimes import RuntimesMixin
 from datalayer_core.cliapp.runtimes.exec.execapp import _get_cells
 from datalayer_core.mixins.authn import AuthnMixin
+from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.models.response import Response
+from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshot import (
     RuntimeSnapshotService,
     create_snapshot,
@@ -31,41 +33,20 @@ from datalayer_core.utils.types import (
     Minutes,
     Seconds,
 )
-from datalayer_core.mixins.snapshots import SnapshotsMixin
 
 
-class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
+class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
     """
-    Represents a Datalayer runtime (kernel) for code execution.
+    Service for managing Datalayer runtime (kernel) operations.
+
+    This service handles runtime lifecycle operations such as starting, stopping,
+    code execution, and variable management. The runtime data is managed through
+    the RuntimeModel.
 
     Parameters
     ----------
-    name : str
-        Name of the runtime (kernel).
-    environment : str
-        Environment type (e.g., "python-cpu-env").
-    time_reservation : Minutes
-        Time reservation in minutes for the runtime.
-    run_url : str
-        Datalayer server URL.
-    token : Optional[str]
-        Authentication token (can also be set via DATALAYER_TOKEN env var).
-    pod_name : Optional[str]
-        Pod name for existing runtime.
-    ingress : Optional[str]
-        Ingress URL for the runtime.
-    reservation_id : Optional[str]
-        Reservation ID for the runtime.
-    uid : Optional[str]
-        Unique identifier for the runtime.
-    burning_rate : Optional[str]
-        Cost rate for the runtime.
-    kernel_token : Optional[str]
-        Kernel authentication token.
-    started_at : Optional[str]
-        Runtime start timestamp.
-    expired_at : Optional[str]
-        Runtime expiration timestamp.
+    runtime_model : RuntimeModel
+        The runtime model containing all configuration and state data.
     """
 
     def __init__(
@@ -85,7 +66,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         expired_at: Optional[str] = None,
     ):
         """
-        Initialize a runtime.
+        Initialize a runtime service.
 
         Parameters
         ----------
@@ -116,30 +97,28 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         expired_at : Optional[str]
             Expiration time for the runtime.
         """
-        self._environment_name = environment
-        self._pod_name = pod_name
-        self._run_url = run_url
-        self._name = name
-        self._ingress = ingress
-        self._time_reservation = time_reservation
-        self._token = token
-        self._reservation_id = reservation_id
-        self._kernel_token = kernel_token
-        self._uid = uid
+        # Initialize the runtime model with all the data fields
+        self.model = RuntimeModel(
+            name=name,
+            environment=environment,
+            time_reservation=time_reservation,
+            run_url=run_url,
+            token=token,
+            pod_name=pod_name,
+            ingress=ingress,
+            reservation_id=reservation_id,
+            uid=uid,
+            burning_rate=burning_rate,
+            kernel_token=kernel_token,
+            started_at=started_at,
+            expired_at=expired_at,
+        )
+
+        # Service-specific state
         self._runtime: dict[str, str] = {}
         self._kernel_client: Optional[KernelClient] = None
         self._kernel_id: Optional[str] = None
-        self._burning_rate = burning_rate
-        self._started_at = started_at
-        self._expired_at = expired_at
-        self._credits_limit = (
-            burning_rate * 60.0 * time_reservation if burning_rate else None
-        )
-
         self._executing = False
-        # if kernel_token is not None and ingress is not None:
-        #     self._kernel_client = KernelClient(server_url=ingress, token=kernel_token)
-        #     self._kernel_client.start()
 
     def __del__(self) -> None:
         """Clean up resources when the runtime object is deleted."""
@@ -174,31 +153,31 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         self._stop()
 
     def __repr__(self) -> str:
-        return f"Runtime(uid='{self.uid}', name='{self.name}')"
+        return f"RuntimeService(uid='{self.model.uid}', name='{self.model.name}')"
 
     def _start(self) -> None:
         """Start the runtime."""
-        if self._ingress is not None and self._kernel_token is not None:
+        if self.model.ingress is not None and self.model.kernel_token is not None:
             self._kernel_client = KernelClient(
-                server_url=self._ingress, token=self._kernel_token
+                server_url=self.model.ingress, token=self.model.kernel_token
             )
             self._kernel_client.start()
 
         if self._kernel_client is None:
-            self._runtime = self._create_runtime(self._environment_name)
+            self._runtime = self._create_runtime(self.model.environment)
             # print(self._runtime)
             runtime: dict[str, str] = self._runtime["runtime"]  # type: ignore
             # print("runtime", runtime)
-            self._ingress = runtime["ingress"]
-            self._kernel_token = runtime["token"]
-            self._pod_name = runtime["pod_name"]
-            self._uid = runtime["uid"]
-            self._reservation_id = runtime["reservation_id"]
-            self._burning_rate = float(runtime["burning_rate"])
-            self._started_at = runtime["started_at"]
-            self._expired_at = runtime["expired_at"]
+            self.model.ingress = runtime["ingress"]
+            self.model.kernel_token = runtime["token"]
+            self.model.pod_name = runtime["pod_name"]
+            self.model.uid = runtime["uid"]
+            self.model.reservation_id = runtime["reservation_id"]
+            self.model.burning_rate = float(runtime["burning_rate"])
+            self.model.started_at = runtime["started_at"]
+            self.model.expired_at = runtime["expired_at"]
             self._kernel_client = KernelClient(
-                server_url=self._ingress, token=self._kernel_token
+                server_url=self.model.ingress, token=self.model.kernel_token
             )
             self._kernel_client.start()
 
@@ -215,8 +194,8 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
             self._kernel_client.stop()
             self._kernel_client = None
             self._kernel_id = None
-            if self._pod_name:
-                return self._terminate_runtime(self._pod_name)["success"]
+            if self.model.pod_name:
+                return self._terminate_runtime(self.model.pod_name)["success"]
         return False
 
     def _check_file(self, path: Union[str, Path]) -> bool:
@@ -251,7 +230,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         str
             The Datalayer server URL for this runtime.
         """
-        return self._run_url
+        return self.model.run_url
 
     @property
     def name(self) -> str:
@@ -263,7 +242,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         str
             The name of this runtime.
         """
-        return self._name
+        return self.model.name
 
     @property
     def uid(self) -> Optional[str]:
@@ -275,7 +254,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         Optional[str]
             The unique identifier of this runtime, or None if not set.
         """
-        return self._uid
+        return self.model.uid
 
     @property
     def pod_name(self) -> Optional[str]:
@@ -287,7 +266,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         Optional[str]
             The pod name of this runtime, or None if not set.
         """
-        return self._pod_name
+        return self.model.pod_name
 
     def get_variable(self, name: str) -> Any:
         """
@@ -530,12 +509,12 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         RuntimeSnapshot
             A new snapshot object.
         """
-        if self._pod_name is None:
+        if self.model.pod_name is None:
             raise RuntimeError("Runtime not started!")
 
         name, description = create_snapshot(name=name, description=description)
         response = self._create_snapshot(
-            pod_name=self._pod_name,
+            pod_name=self.model.pod_name,
             name=name,
             description=description,
             stop=stop,
@@ -544,8 +523,8 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
             self._kernel_client = None
             self._kernel_id = None
             try:
-                if self._pod_name:
-                    self._terminate_runtime(self._pod_name)
+                if self.model.pod_name:
+                    self._terminate_runtime(self.model.pod_name)
             except Exception:
                 pass
 

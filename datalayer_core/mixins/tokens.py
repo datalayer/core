@@ -3,7 +3,7 @@
  
 from typing import Any, Union
 
-from datalayer_core.models.tokens import TokenType
+from datalayer_core.models.token import TokenType
 from datalayer_core.utils import btoa
 
 

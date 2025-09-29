@@ -3,7 +3,7 @@
  
 from typing import Any
 
-from datalayer_core.models.secrets import SecretType
+from datalayer_core.models.secret import SecretType
 from datalayer_core.utils import btoa
 
 

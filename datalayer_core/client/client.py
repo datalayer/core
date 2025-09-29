@@ -16,16 +16,16 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environment import EnvironmentsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
-from datalayer_core.mixins.snapshots import SnapshotsMixin
+from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 
 from datalayer_core.services.runtime import RuntimeService
 
-from datalayer_core.models.secrets import SecretModel, SecretType
-from datalayer_core.models.environments import EnvironmentModel
+from datalayer_core.models.secret import SecretModel, SecretType
+from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.profile import ProfileModel
-from datalayer_core.models.tokens import TokenModel, TokenType
+from datalayer_core.models.token import TokenModel, TokenType
 
 from datalayer_core.services.runtime_snapshot import (
     RuntimeSnapshotService,
@@ -45,7 +45,7 @@ class DatalayerClient(
     RuntimesMixin,
     EnvironmentsMixin,
     SecretsMixin,
-    SnapshotsMixin,
+    RuntimeSnapshotsMixin,
     TokensMixin,
     WhoamiAppMixin,
 ):

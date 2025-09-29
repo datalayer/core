@@ -6,11 +6,11 @@
 import sys
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.mixins.snapshots import SnapshotsListMixin
+from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsListMixin
 from datalayer_core.display.snapshots import display_snapshots
 
 
-class RuntimeSnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
+class RuntimeSnapshotsListApp(DatalayerCLIBaseApp, RuntimeSnapshotsListMixin):
     """An application to list the Snapshots."""
 
     description = """

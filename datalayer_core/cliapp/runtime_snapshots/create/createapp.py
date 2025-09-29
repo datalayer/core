@@ -9,10 +9,10 @@ from rich import print_json
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.display.snapshots import display_snapshots
-from datalayer_core.mixins.snapshots import SnapshotsCreateMixin
+from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsCreateMixin
 
 
-class RuntimeSnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):
+class RuntimeSnapshotsCreateApp(DatalayerCLIBaseApp, RuntimeSnapshotsCreateMixin):
     """An application to create a Snapshot."""
 
     description = """
