@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (c) 2023-2025 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 """
 Test script to debug kernel client variable operations
 """
