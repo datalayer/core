@@ -47,7 +47,7 @@ def login(
     try:
         # Use provided values or defaults
         server_url = run_url or os.environ.get("DATALAYER_RUN_URL", DEFAULT_RUN_URL)
-        access_token = token or os.environ.get("DATALAYER_TOKEN")
+        access_token = token or os.environ.get("DATALAYER_API_KEY")
         
         if access_token:
             # Token provided, validate it
@@ -260,9 +260,9 @@ def logout(
         # Clear environment variables if they exist
         tokens_cleared = []
         
-        if "DATALAYER_TOKEN" in os.environ:
-            del os.environ["DATALAYER_TOKEN"]
-            tokens_cleared.append("DATALAYER_TOKEN")
+        if "DATALAYER_API_KEY" in os.environ:
+            del os.environ["DATALAYER_API_KEY"]
+            tokens_cleared.append("DATALAYER_API_KEY")
             
         if "DATALAYER_EXTERNAL_TOKEN" in os.environ:
             del os.environ["DATALAYER_EXTERNAL_TOKEN"]
@@ -314,9 +314,9 @@ def whoami(
         token_source = None
         
         # Check environment variables
-        if os.environ.get("DATALAYER_TOKEN"):
-            token = os.environ["DATALAYER_TOKEN"]
-            token_source = "DATALAYER_TOKEN environment variable"
+        if os.environ.get("DATALAYER_API_KEY"):
+            token = os.environ["DATALAYER_API_KEY"]
+            token_source = "DATALAYER_API_KEY environment variable"
         elif os.environ.get("DATALAYER_EXTERNAL_TOKEN"):
             token = os.environ["DATALAYER_EXTERNAL_TOKEN"]
             token_source = "DATALAYER_EXTERNAL_TOKEN environment variable"
@@ -366,7 +366,9 @@ def whoami(
                             if 'uid' in user_info:
                                 console.print(f"   - UID: {user_info['uid']}")
                             if 'roles' in user_info and isinstance(user_info['roles'], list):
-                                console.print(f"   - Roles: {', '.join(user_info['roles'])}")
+                                console.print("   - Roles:")
+                                for role in user_info['roles']:
+                                    console.print(f"     • [cyan]{role}[/cyan]")
                         else:
                             console.print(f"   - User ID: {user_info}")
                     
@@ -404,9 +406,9 @@ def logout(
         # Clear environment variables if they exist
         tokens_cleared = []
         
-        if "DATALAYER_TOKEN" in os.environ:
-            del os.environ["DATALAYER_TOKEN"]
-            tokens_cleared.append("DATALAYER_TOKEN")
+        if "DATALAYER_API_KEY" in os.environ:
+            del os.environ["DATALAYER_API_KEY"]
+            tokens_cleared.append("DATALAYER_API_KEY")
             
         if "DATALAYER_EXTERNAL_TOKEN" in os.environ:
             del os.environ["DATALAYER_EXTERNAL_TOKEN"]

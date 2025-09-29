@@ -81,7 +81,7 @@ npm install
 Set your Datalayer token as an environment variable:
 
 ```bash
-export DATALAYER_TOKEN="your-token-here"
+export DATALAYER_API_KEY="your-api-key"
 ```
 
 Or pass it directly to the SDK:

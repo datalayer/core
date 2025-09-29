@@ -44,7 +44,7 @@ Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python
 
 ## Configuration
 
-- Environment variables: `DATALAYER_TOKEN`, `DATALAYER_RUN_URL`
+- Environment variables: `DATALAYER_API_KEY`, `DATALAYER_RUN_URL`
 - Traitlets configuration with custom Datalayer paths
 - Dev setup in `dev/`, examples in `examples/`
 

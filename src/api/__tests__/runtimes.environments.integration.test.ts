@@ -11,7 +11,7 @@ import {
   skipIfNoToken,
 } from '../../__tests__/shared/test-config';
 
-let DATALAYER_TOKEN: string;
+let DATALAYER_API_KEY: string;
 let BASE_URL: string;
 
 // Skip all tests if no token is available
@@ -29,12 +29,12 @@ beforeAll(async () => {
   }
 
   // Get token and base URL from test config
-  DATALAYER_TOKEN = testConfig.getToken();
+  DATALAYER_API_KEY = testConfig.getToken();
   BASE_URL = testConfig.getBaseUrl('RUNTIMES');
 
   debugLog('Test configuration loaded');
   debugLog('Base URL:', BASE_URL);
-  debugLog('Token available:', !!DATALAYER_TOKEN);
+  debugLog('Token available:', !!DATALAYER_API_KEY);
 });
 
 describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
@@ -43,7 +43,7 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
       console.log('Testing list environments endpoint...');
 
       const response = await environments.listEnvironments(
-        DATALAYER_TOKEN,
+        DATALAYER_API_KEY,
         BASE_URL,
       );
 
@@ -81,7 +81,7 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
       console.log('Testing list environments with default URL...');
 
       // Call without specifying URL to use default
-      const response = await environments.listEnvironments(DATALAYER_TOKEN);
+      const response = await environments.listEnvironments(DATALAYER_API_KEY);
 
       console.log(
         'Default URL environments response:',
@@ -99,7 +99,7 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
       console.log('Testing environment resource information...');
 
       const response = await environments.listEnvironments(
-        DATALAYER_TOKEN,
+        DATALAYER_API_KEY,
         BASE_URL,
       );
 
@@ -132,7 +132,7 @@ describe.skipIf(skipTests)('Runtimes Environments Integration Tests', () => {
       console.log('Testing environment snippets...');
 
       const response = await environments.listEnvironments(
-        DATALAYER_TOKEN,
+        DATALAYER_API_KEY,
         BASE_URL,
       );
 

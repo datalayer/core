@@ -79,7 +79,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         run_url : str
             Datalayer server URL.
         token : Optional[str]
-            Authentication token (can also be set via DATALAYER_TOKEN env var).
+            Authentication token (can also be set via DATALAYER_API_KEY env var).
         pod_name : Optional[str]
             Name of the pod running the runtime.
         ingress : Optional[str]

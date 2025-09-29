@@ -45,7 +45,7 @@ class RuntimeModel(BaseModel):
     )
     token: Optional[str] = Field(
         default=None,
-        description="Authentication token (can also be set via DATALAYER_TOKEN env var)",
+        description="Authentication token (can also be set via DATALAYER_API_KEY env var)",
     )
     pod_name: Optional[str] = Field(
         default=None,

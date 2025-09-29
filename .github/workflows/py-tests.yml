@@ -62,6 +62,6 @@ jobs:
       - name: Run basic tests
         env:
           DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
-          DATALAYER_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+          DATALAYER_API_KEY: ${{ secrets.DATALAYER_TEST_TOKEN }}
         run: |
           pytest datalayer_core/tests/ --cov=datalayer_core --cov-report term-missing

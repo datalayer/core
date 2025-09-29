@@ -12,7 +12,7 @@ import {
 } from '../../__tests__/shared/test-config';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
-let DATALAYER_TOKEN: string;
+let DATALAYER_API_KEY: string;
 let BASE_URL: string;
 
 // Skip all tests if no token is available
@@ -30,12 +30,12 @@ beforeAll(async () => {
   }
 
   // Get token and base URL from test config
-  DATALAYER_TOKEN = testConfig.getToken();
+  DATALAYER_API_KEY = testConfig.getToken();
   BASE_URL = testConfig.getBaseUrl('RUNTIMES');
 
   debugLog('Test configuration loaded');
   debugLog('Base URL:', BASE_URL);
-  debugLog('Token available:', !!DATALAYER_TOKEN);
+  debugLog('Token available:', !!DATALAYER_API_KEY);
 
   // Pre-test cleanup
   await performCleanup('setup');
@@ -85,7 +85,7 @@ describe.skipIf(skipTests)(
             };
 
             const pythonResponse = await runtimes.createRuntime(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               pythonCreateData,
               BASE_URL,
             );
@@ -116,7 +116,7 @@ describe.skipIf(skipTests)(
             };
 
             const aiResponse = await runtimes.createRuntime(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               aiCreateData,
               BASE_URL,
             );
@@ -144,7 +144,7 @@ describe.skipIf(skipTests)(
           console.log('Listing all runtimes...');
 
           const response = await runtimes.listRuntimes(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             BASE_URL,
           );
 
@@ -191,7 +191,7 @@ describe.skipIf(skipTests)(
 
             try {
               const pythonSnapshotResponse = await snapshots.createSnapshot(
-                DATALAYER_TOKEN,
+                DATALAYER_API_KEY,
                 pythonSnapshotData,
                 BASE_URL,
               );
@@ -228,7 +228,7 @@ describe.skipIf(skipTests)(
 
             try {
               const aiSnapshotResponse = await snapshots.createSnapshot(
-                DATALAYER_TOKEN,
+                DATALAYER_API_KEY,
                 aiSnapshotData,
                 BASE_URL,
               );
@@ -262,7 +262,7 @@ describe.skipIf(skipTests)(
 
           console.log('Listing snapshots to verify creation...');
           const listResponse = await snapshots.listSnapshots(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             BASE_URL,
           );
 
@@ -301,7 +301,7 @@ describe.skipIf(skipTests)(
 
           if (pythonSnapshotUid) {
             const pythonGetResponse = await snapshots.getSnapshot(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               pythonSnapshotUid,
               BASE_URL,
             );
@@ -316,7 +316,7 @@ describe.skipIf(skipTests)(
 
           if (aiSnapshotUid) {
             const aiGetResponse = await snapshots.getSnapshot(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               aiSnapshotUid,
               BASE_URL,
             );
@@ -344,7 +344,7 @@ describe.skipIf(skipTests)(
           // which should be the snapshot UID for restoration
           try {
             const restoreResponse = await runtimes.updateRuntime(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               pythonRuntimePodName!,
               pythonSnapshotUid,
               BASE_URL,
@@ -371,7 +371,7 @@ describe.skipIf(skipTests)(
 
           if (pythonSnapshotUid) {
             await snapshots.deleteSnapshot(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               pythonSnapshotUid,
               BASE_URL,
             );
@@ -380,7 +380,7 @@ describe.skipIf(skipTests)(
             // Verify deletion
             try {
               await snapshots.getSnapshot(
-                DATALAYER_TOKEN,
+                DATALAYER_API_KEY,
                 pythonSnapshotUid,
                 BASE_URL,
               );
@@ -398,7 +398,7 @@ describe.skipIf(skipTests)(
 
           if (aiSnapshotUid) {
             await snapshots.deleteSnapshot(
-              DATALAYER_TOKEN,
+              DATALAYER_API_KEY,
               aiSnapshotUid,
               BASE_URL,
             );
@@ -407,7 +407,7 @@ describe.skipIf(skipTests)(
             // Verify deletion
             try {
               await snapshots.getSnapshot(
-                DATALAYER_TOKEN,
+                DATALAYER_API_KEY,
                 aiSnapshotUid,
                 BASE_URL,
               );
@@ -426,7 +426,7 @@ describe.skipIf(skipTests)(
           console.log(`Deleting Python runtime: ${pythonRuntimePodName}`);
 
           await runtimes.deleteRuntime(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             pythonRuntimePodName!,
             BASE_URL,
           );
@@ -439,7 +439,7 @@ describe.skipIf(skipTests)(
 
           // Verify it's gone
           try {
-            await runtimes.getRuntime(DATALAYER_TOKEN, deletedPod!, BASE_URL);
+            await runtimes.getRuntime(DATALAYER_API_KEY, deletedPod!, BASE_URL);
             throw new Error('Python runtime should have been deleted');
           } catch (error: any) {
             expect(error.message).toBeDefined();
@@ -451,7 +451,7 @@ describe.skipIf(skipTests)(
           console.log('Verifying runtime states...');
 
           const response = await runtimes.listRuntimes(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             BASE_URL,
           );
 
@@ -477,7 +477,7 @@ describe.skipIf(skipTests)(
           console.log(`Deleting AI runtime: ${aiRuntimePodName}`);
 
           await runtimes.deleteRuntime(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             aiRuntimePodName!,
             BASE_URL,
           );
@@ -490,7 +490,7 @@ describe.skipIf(skipTests)(
 
           // Verify it's gone
           try {
-            await runtimes.getRuntime(DATALAYER_TOKEN, deletedPod!, BASE_URL);
+            await runtimes.getRuntime(DATALAYER_API_KEY, deletedPod!, BASE_URL);
             throw new Error('AI runtime should have been deleted');
           } catch (error: any) {
             expect(error.message).toBeDefined();
@@ -504,7 +504,7 @@ describe.skipIf(skipTests)(
           );
 
           const response = await runtimes.listRuntimes(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             BASE_URL,
           );
 
@@ -529,7 +529,10 @@ describe.skipIf(skipTests)(
       it('should successfully list runtime instances', async () => {
         console.log('Testing list runtimes endpoint...');
 
-        const response = await runtimes.listRuntimes(DATALAYER_TOKEN, BASE_URL);
+        const response = await runtimes.listRuntimes(
+          DATALAYER_API_KEY,
+          BASE_URL,
+        );
 
         console.log(`Found ${response.runtimes.length} runtime instances`);
 
@@ -554,7 +557,7 @@ describe.skipIf(skipTests)(
         console.log('Testing list snapshots endpoint...');
 
         const response = await snapshots.listSnapshots(
-          DATALAYER_TOKEN,
+          DATALAYER_API_KEY,
           BASE_URL,
         );
 
@@ -583,7 +586,11 @@ describe.skipIf(skipTests)(
         const nonExistentPod = 'non-existent-pod-12345';
 
         try {
-          await runtimes.getRuntime(DATALAYER_TOKEN, nonExistentPod, BASE_URL);
+          await runtimes.getRuntime(
+            DATALAYER_API_KEY,
+            nonExistentPod,
+            BASE_URL,
+          );
           console.log('WARNING: Non-existent runtime returned data');
         } catch (error: any) {
           console.log('Error for non-existent runtime:', error.message);

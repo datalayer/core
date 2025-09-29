@@ -27,22 +27,26 @@ export async function performCleanup(phase: 'setup' | 'teardown') {
     return;
   }
 
-  const DATALAYER_TOKEN = testConfig.getToken();
+  const DATALAYER_API_KEY = testConfig.getToken();
   const RUNTIMES_BASE_URL = testConfig.getBaseUrl('RUNTIMES');
   const SPACER_BASE_URL = testConfig.getBaseUrl('SPACER');
 
   // Clean up runtimes
-  await cleanupRuntimes(DATALAYER_TOKEN, RUNTIMES_BASE_URL, phaseLabel);
+  await cleanupRuntimes(DATALAYER_API_KEY, RUNTIMES_BASE_URL, phaseLabel);
 
   // Clean up test snapshots
-  await cleanupTestSnapshots(DATALAYER_TOKEN, RUNTIMES_BASE_URL, phaseLabel);
+  await cleanupTestSnapshots(DATALAYER_API_KEY, RUNTIMES_BASE_URL, phaseLabel);
 
   // Clean up ALL spacer items (notebooks, lexicals, etc.)
-  await cleanupSpacerItems(DATALAYER_TOKEN, SPACER_BASE_URL, phaseLabel);
+  await cleanupSpacerItems(DATALAYER_API_KEY, SPACER_BASE_URL, phaseLabel);
 
   // Final verification (only for teardown)
   if (phase === 'teardown') {
-    await verifyFinalState(DATALAYER_TOKEN, RUNTIMES_BASE_URL, SPACER_BASE_URL);
+    await verifyFinalState(
+      DATALAYER_API_KEY,
+      RUNTIMES_BASE_URL,
+      SPACER_BASE_URL,
+    );
   }
 
   console.log('='.repeat(60));

@@ -676,7 +676,7 @@ try {
 7. **Use environment variables for configuration**:
    ```typescript
    const sdk = new DatalayerSDK({
-     token: process.env.DATALAYER_TOKEN,
+     token: process.env.DATALAYER_API_KEY,
      iamRunUrl: process.env.DATALAYER_IAM_URL || DEFAULT_SERVICE_URLS.IAM,
      runtimesRunUrl: process.env.DATALAYER_RUNTIMES_URL || DEFAULT_SERVICE_URLS.RUNTIMES,
      spacerRunUrl: process.env.DATALAYER_SPACER_URL || DEFAULT_SERVICE_URLS.SPACER

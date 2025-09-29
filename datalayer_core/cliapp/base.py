@@ -71,9 +71,9 @@ class DatalayerAuthMixin(LoggingConfigurable):
         Returns
         -------
         Optional[str]
-            The default token from DATALAYER_TOKEN environment variable.
+            The default token from DATALAYER_API_KEY environment variable.
         """
-        return os.environ.get("DATALAYER_TOKEN", None)
+        return os.environ.get("DATALAYER_API_KEY", None)
 
     external_token = Unicode(None, allow_none=True, config=True, help="External token.")
 

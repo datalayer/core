@@ -12,7 +12,7 @@ import {
 } from '../../__tests__/shared/test-config';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
-let DATALAYER_TOKEN: string;
+let DATALAYER_API_KEY: string;
 let BASE_URL: string;
 
 // Skip all tests if no token is available
@@ -30,12 +30,12 @@ beforeAll(async () => {
   }
 
   // Get token and base URL from test config
-  DATALAYER_TOKEN = testConfig.getToken();
+  DATALAYER_API_KEY = testConfig.getToken();
   BASE_URL = testConfig.getBaseUrl('SPACER');
 
   debugLog('Test configuration loaded');
   debugLog('Base URL:', BASE_URL);
-  debugLog('Token available:', !!DATALAYER_TOKEN);
+  debugLog('Token available:', !!DATALAYER_API_KEY);
 
   // Pre-test cleanup
   await performCleanup('setup');
@@ -66,7 +66,7 @@ describe.skipIf(skipTests)(
       test('1. should get user spaces to find a valid space ID', async () => {
         console.log('Getting user spaces...');
 
-        const response = await users.getMySpaces(DATALAYER_TOKEN, BASE_URL);
+        const response = await users.getMySpaces(DATALAYER_API_KEY, BASE_URL);
 
         expect(response).toBeDefined();
         expect(response).toHaveProperty('success');
@@ -140,7 +140,7 @@ describe.skipIf(skipTests)(
 
         try {
           const response = await notebooks.createNotebook(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             {
               spaceId: testSpaceId,
               notebookType: 'jupyter',
@@ -212,7 +212,7 @@ describe.skipIf(skipTests)(
 
         try {
           const response = await lexicals.createLexical(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             {
               spaceId: testSpaceId,
               documentType: 'lexical',
@@ -248,7 +248,7 @@ describe.skipIf(skipTests)(
         console.log('Listing items in space...');
 
         const response = await items.getSpaceItems(
-          DATALAYER_TOKEN,
+          DATALAYER_API_KEY,
           testSpaceId,
           BASE_URL,
         );
@@ -317,7 +317,7 @@ describe.skipIf(skipTests)(
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           const response = await notebooks.getNotebook(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdNotebookId,
             BASE_URL,
           );
@@ -355,7 +355,7 @@ describe.skipIf(skipTests)(
           await new Promise(resolve => setTimeout(resolve, 1000));
 
           const response = await lexicals.getLexical(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdLexicalId,
             BASE_URL,
           );
@@ -398,7 +398,7 @@ describe.skipIf(skipTests)(
           await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay for bulk test runs
 
           const response = await notebooks.updateNotebook(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdNotebookId,
             updateData,
             BASE_URL,
@@ -450,7 +450,7 @@ describe.skipIf(skipTests)(
           await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay for bulk test runs
 
           const response = await lexicals.updateLexical(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdLexicalId,
             updateData,
             BASE_URL,
@@ -495,7 +495,7 @@ describe.skipIf(skipTests)(
         // Get notebook to verify update
         if (createdNotebookId) {
           const notebookResponse = await notebooks.getNotebook(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdNotebookId,
             BASE_URL,
           );
@@ -513,7 +513,7 @@ describe.skipIf(skipTests)(
         // Get lexical to verify update
         if (createdLexicalId) {
           const lexicalResponse = await lexicals.getLexical(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdLexicalId,
             BASE_URL,
           );
@@ -538,12 +538,16 @@ describe.skipIf(skipTests)(
         console.log('Deleting notebook...');
 
         try {
-          await items.deleteItem(DATALAYER_TOKEN, createdNotebookId, BASE_URL);
+          await items.deleteItem(
+            DATALAYER_API_KEY,
+            createdNotebookId,
+            BASE_URL,
+          );
           console.log('Notebook deletion request sent');
 
           // Verify deletion
           const getResponse = await notebooks.getNotebook(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdNotebookId,
             BASE_URL,
           );
@@ -573,12 +577,12 @@ describe.skipIf(skipTests)(
         console.log('Deleting lexical...');
 
         try {
-          await items.deleteItem(DATALAYER_TOKEN, createdLexicalId, BASE_URL);
+          await items.deleteItem(DATALAYER_API_KEY, createdLexicalId, BASE_URL);
           console.log('Lexical deletion request sent');
 
           // Verify deletion
           const getResponse = await lexicals.getLexical(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             createdLexicalId,
             BASE_URL,
           );
@@ -606,7 +610,7 @@ describe.skipIf(skipTests)(
         console.log('Final verification...');
 
         const response = await items.getSpaceItems(
-          DATALAYER_TOKEN,
+          DATALAYER_API_KEY,
           testSpaceId,
           BASE_URL,
         );
@@ -636,7 +640,7 @@ describe.skipIf(skipTests)(
       it('should successfully get user spaces', async () => {
         console.log('Testing get user spaces endpoint...');
 
-        const response = await users.getMySpaces(DATALAYER_TOKEN, BASE_URL);
+        const response = await users.getMySpaces(DATALAYER_API_KEY, BASE_URL);
 
         console.log(`Found ${response.spaces.length} space(s)`);
 
@@ -664,7 +668,7 @@ describe.skipIf(skipTests)(
 
         try {
           const response = await notebooks.getNotebook(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             'non-existent-notebook-id-123456789',
             BASE_URL,
           );
@@ -698,7 +702,7 @@ describe.skipIf(skipTests)(
 
         try {
           const response = await lexicals.getLexical(
-            DATALAYER_TOKEN,
+            DATALAYER_API_KEY,
             'non-existent-lexical-id-123456789',
             BASE_URL,
           );

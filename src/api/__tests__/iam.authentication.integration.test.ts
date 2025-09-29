@@ -11,7 +11,7 @@ import {
   skipIfNoToken,
 } from '../../__tests__/shared/test-config';
 
-let DATALAYER_TOKEN: string;
+let DATALAYER_API_KEY: string;
 let SESSION_TOKEN: string;
 let BASE_URL: string;
 
@@ -30,18 +30,18 @@ beforeAll(async () => {
   }
 
   // Get token and base URL from test config
-  DATALAYER_TOKEN = testConfig.getToken();
+  DATALAYER_API_KEY = testConfig.getToken();
   BASE_URL = testConfig.getBaseUrl('IAM');
 
   debugLog('Test configuration loaded');
   debugLog('Base URL:', BASE_URL);
-  debugLog('Token available:', !!DATALAYER_TOKEN);
+  debugLog('Token available:', !!DATALAYER_API_KEY);
 
   // Login to get a session token for testing
   try {
     const loginResponse = await authentication.login(
       {
-        token: DATALAYER_TOKEN,
+        token: DATALAYER_API_KEY,
       },
       BASE_URL,
     );
@@ -49,8 +49,8 @@ beforeAll(async () => {
     debugLog('Got session token for testing');
   } catch (error) {
     console.error('Failed to get session token:', error);
-    // Fall back to using the DATALAYER_TOKEN
-    SESSION_TOKEN = DATALAYER_TOKEN;
+    // Fall back to using the DATALAYER_API_KEY
+    SESSION_TOKEN = DATALAYER_API_KEY;
   }
 });
 
@@ -62,7 +62,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
       // The API should return 201 Created for successful login
       const response = await authentication.login(
         {
-          token: DATALAYER_TOKEN,
+          token: DATALAYER_API_KEY,
         },
         BASE_URL,
       );
@@ -96,7 +96,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
       console.log('Testing login with valid token using default URL...');
 
       const response = await authentication.login({
-        token: DATALAYER_TOKEN,
+        token: DATALAYER_API_KEY,
       });
 
       console.log(
@@ -258,7 +258,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
 
       // First login to get a fresh token
       const loginResponse = await authentication.login({
-        token: DATALAYER_TOKEN,
+        token: DATALAYER_API_KEY,
       });
 
       expect(loginResponse.success).toBe(true);
@@ -278,7 +278,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
 
       // First login to get a fresh token
       const loginResponse = await authentication.login({
-        token: DATALAYER_TOKEN,
+        token: DATALAYER_API_KEY,
       });
 
       expect(loginResponse.success).toBe(true);

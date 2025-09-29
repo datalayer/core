@@ -60,7 +60,7 @@ class DatalayerClient(
     run_url : str
         Datalayer server URL. Defaults to "https://prod1.datalayer.run".
     token : Optional[str]
-        Authentication token (can also be set via DATALAYER_TOKEN env var).
+        Authentication token (can also be set via DATALAYER_API_KEY env var).
     """
 
     def __init__(
@@ -76,20 +76,20 @@ class DatalayerClient(
         run_url : str
             Datalayer server URL. Defaults to "https://prod1.datalayer.run".
         token : Optional[str]
-            Authentication token (can also be set via DATALAYER_TOKEN env var).
+            Authentication token (can also be set via DATALAYER_API_KEY env var).
         """
         # TODO: Check user and password login
         self._run_url = run_url.rstrip("/") or os.environ.get(
             "DATALAYER_RUN_URL", DEFAULT_RUN_URL
         )
-        self._token = token or os.environ.get("DATALAYER_TOKEN", None)
+        self._token = token or os.environ.get("DATALAYER_API_KEY", None)
         self._user_handle = None
         self._kernel_client = None
         self._notebook_client = None
 
         if not self._token:
             raise ValueError(
-                "Token is required. Set it via parameter or `DATALAYER_TOKEN` environment variable"
+                "Token is required. Set it via parameter or `DATALAYER_API_KEY` environment variable"
             )
 
     @property

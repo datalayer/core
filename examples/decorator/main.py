@@ -9,9 +9,11 @@ from pathlib import Path
 import numpy as np
 from dotenv import load_dotenv
 
-from datalayer_core.decorators.decorators import datalayer
+from datalayer_core.decorators.datalayer import datalayer
+
 
 load_dotenv()
+
 
 HERE = Path(__file__).parent
 
