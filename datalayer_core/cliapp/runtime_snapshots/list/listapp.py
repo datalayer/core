@@ -10,7 +10,7 @@ from datalayer_core.mixins.snapshots import SnapshotsListMixin
 from datalayer_core.display.snapshots import display_snapshots
 
 
-class SnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
+class RuntimeSnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
     """An application to list the Snapshots."""
 
     description = """

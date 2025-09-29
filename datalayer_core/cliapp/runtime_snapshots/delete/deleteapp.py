@@ -10,7 +10,7 @@ from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.mixins.snapshots import SnapshotsDeleteMixin
 
 
-class SnapshotsDeleteApp(DatalayerCLIBaseApp, SnapshotsDeleteMixin):
+class RuntimeSnapshotsDeleteApp(DatalayerCLIBaseApp, SnapshotsDeleteMixin):
     """An application to delete snapshots."""
 
     description = """

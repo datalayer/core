@@ -16,10 +16,10 @@ from datalayer_core.cliapp.runtimes import RuntimesMixin
 from datalayer_core.cliapp.runtimes.exec.execapp import _get_cells
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.models.response import Response
-from datalayer_core.services.snapshots import (
-    RuntimeSnapshot,
-    _create_snapshot,
-    _list_snapshots,
+from datalayer_core.services.runtime_snapshots import (
+    RuntimeSnapshotService,
+    create_snapshot,
+    list_snapshots,
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
@@ -34,7 +34,7 @@ from datalayer_core.utils.types import (
 from datalayer_core.mixins.snapshots import SnapshotsMixin
 
 
-class Runtime(AuthnMixin, RuntimesMixin, SnapshotsMixin):
+class RuntimeService(AuthnMixin, RuntimesMixin, SnapshotsMixin):
     """
     Represents a Datalayer runtime (kernel) for code execution.
 
@@ -146,7 +146,7 @@ class Runtime(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         # self.stop()
         pass
 
-    def __enter__(self) -> "Runtime":
+    def __enter__(self) -> "RuntimeService":
         """
         Context manager entry.
 
@@ -512,7 +512,7 @@ class Runtime(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshot":
+    ) -> "RuntimeSnapshotService":
         """
         Create a new snapshot from the current state.
 
@@ -533,7 +533,7 @@ class Runtime(AuthnMixin, RuntimesMixin, SnapshotsMixin):
         if self._pod_name is None:
             raise RuntimeError("Runtime not started!")
 
-        name, description = _create_snapshot(name=name, description=description)
+        name, description = create_snapshot(name=name, description=description)
         response = self._create_snapshot(
             pod_name=self._pod_name,
             name=name,
@@ -550,11 +550,11 @@ class Runtime(AuthnMixin, RuntimesMixin, SnapshotsMixin):
                 pass
 
         response = self._list_snapshots()
-        snapshot_objects = _list_snapshots(response)
+        snapshot_objects = list_snapshots(response)
         for snapshot in snapshot_objects:
             if snapshot.name == name:
                 break
-        return RuntimeSnapshot(
+        return RuntimeSnapshotService(
             uid=snapshot.uid,
             name=name,
             description=description,

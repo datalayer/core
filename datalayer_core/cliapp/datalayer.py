@@ -15,7 +15,7 @@ from datalayer_core.cliapp.environments.environmentsapp import EnvironmentsApp
 from datalayer_core.cliapp.runtimes.console.consoleapp import RuntimesConsoleApp
 from datalayer_core.cliapp.runtimes.runtimesapp import JupyterRuntimesApp
 from datalayer_core.cliapp.secrets.secretsapp import SecretsApp
-from datalayer_core.cliapp.snapshots.snapshotsapp import SnapshotsApp
+from datalayer_core.cliapp.runtime_snapshots.runtime_snapshotsapp import RuntimeSnapshotsApp
 from datalayer_core.cliapp.tokens.tokensapp import TokensApp
 from datalayer_core.web.webapp import DatalayerWebApp
 
@@ -43,7 +43,7 @@ class DatalayerCLI(DatalayerCLIBaseApp):
         "login": (DatalayerLoginApp, DatalayerLoginApp.description.splitlines()[0]),
         "logout": (DatalayerLogoutApp, DatalayerLogoutApp.description.splitlines()[0]),
         "secrets": (SecretsApp, SecretsApp.description.splitlines()[0]),
-        "snapshots": (SnapshotsApp, SnapshotsApp.description.splitlines()[0]),
+        "snapshots": (RuntimeSnapshotsApp, RuntimeSnapshotsApp.description.splitlines()[0]),
         "tokens": (TokensApp, TokensApp.description.splitlines()[0]),
         "web": (DatalayerWebApp, DatalayerWebApp.description.splitlines()[0]),
         "who": (WhoamiApp, WhoamiApp.description.splitlines()[0]),

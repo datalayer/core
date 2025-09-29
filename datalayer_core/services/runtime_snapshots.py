@@ -9,7 +9,7 @@ import uuid
 from typing import Any, List, Optional, Tuple
 
 
-class RuntimeSnapshot:
+class RuntimeSnapshotService:
     """
     Represents a snapshot of a Datalayer runtime state.
 
@@ -100,7 +100,7 @@ class RuntimeSnapshot:
         return self._metadata
 
 
-def _create_snapshot(
+def create_snapshot(
     name: Optional[str], description: Optional[str]
 ) -> Tuple[str, str]:
     """
@@ -128,7 +128,7 @@ def _create_snapshot(
     return name, description
 
 
-def _list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshot"]:
+def list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotService"]:
     """
     Parse API response and create RuntimeSnapshot objects.
 
@@ -147,7 +147,7 @@ def _list_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshot"]:
         snapshots = response["snapshots"]
         for snapshot in snapshots:
             snapshot_objects.append(
-                RuntimeSnapshot(
+                RuntimeSnapshotService(
                     uid=snapshot["uid"],
                     name=snapshot["name"],
                     description=snapshot["description"],

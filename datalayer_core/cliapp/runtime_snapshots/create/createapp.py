@@ -12,7 +12,7 @@ from datalayer_core.display.snapshots import display_snapshots
 from datalayer_core.mixins.snapshots import SnapshotsCreateMixin
 
 
-class SnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):
+class RuntimeSnapshotsCreateApp(DatalayerCLIBaseApp, SnapshotsCreateMixin):
     """An application to create a Snapshot."""
 
     description = """
