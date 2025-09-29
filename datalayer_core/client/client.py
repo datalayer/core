@@ -262,6 +262,7 @@ class DatalayerClient(
                         name=runtime_data["given_name"],
                         environment=runtime_data["environment_name"],
                         run_url=self.run_url,
+                        iam_url=self.iam_url,
                         token=self._token,
                         ingress=runtime_data["ingress"],
                         kernel_token=runtime_data["token"],
@@ -273,6 +274,7 @@ class DatalayerClient(
                 environment=environment,
                 time_reservation=time_reservation,
                 run_url=self.run_url,
+                iam_url=self.iam_url,
                 token=self._token,
                 burning_rate=burning_rate,
             )

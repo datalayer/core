@@ -56,6 +56,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         run_url: str = DEFAULT_RUN_URL,
+        iam_url: Optional[str] = None,
         token: Optional[str] = None,
         pod_name: Optional[str] = None,
         ingress: Optional[str] = None,
@@ -79,6 +80,8 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             Time reservation in minutes for the runtime. Defaults to 10 minutes.
         run_url : str
             Datalayer server URL.
+        iam_url : Optional[str]
+            Datalayer IAM server URL. If not provided, defaults to run_url.
         token : Optional[str]
             Authentication token (can also be set via DATALAYER_API_KEY env var).
         pod_name : Optional[str]
@@ -119,12 +122,23 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         self._token = token
         self._external_token = None
         self._run_url = run_url
+        self._iam_url = iam_url or run_url  # Use run_url as fallback if iam_url not provided
 
         # Service-specific state
         self._runtime: dict[str, str] = {}
         self._kernel_client: Optional[KernelClient] = None
         self._kernel_id: Optional[str] = None
         self._executing = False
+
+    @property
+    def run_url(self) -> str:
+        """Get the runtime server URL."""
+        return self._run_url
+
+    @property
+    def iam_url(self) -> str:
+        """Get the IAM server URL."""
+        return self._iam_url
 
     def __del__(self) -> None:
         """Clean up resources when the runtime object is deleted."""
