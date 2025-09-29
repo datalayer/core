@@ -12,11 +12,14 @@ from datalayer_core.cli.commands.auth import (
     logout_root, 
     whoami_root,
 )
+from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
+from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app, envs_list, envs_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app, runtimes_list, runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app, secrets_list, secrets_ls
 from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app, snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app, tokens_list, tokens_ls
+from datalayer_core.cli.commands.web import app as web_app
 
 # Create the main Typer app
 app = typer.Typer(
@@ -28,11 +31,14 @@ app = typer.Typer(
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)
 app.add_typer(auth_app)
+app.add_typer(benchmarks_app)
+app.add_typer(console_app)
 app.add_typer(envs_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
 app.add_typer(tokens_app)
+app.add_typer(web_app)
 
 # Add individual auth commands at root level for convenience
 app.command(name="login")(login_root)

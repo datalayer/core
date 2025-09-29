@@ -34,8 +34,6 @@ from datalayer_core.mixins.whoami import WhoamiAppMixin
 
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
-    DEFAULT_RUN_URL,
-    DEFAULT_IAM_URL,
     DEFAULT_TIME_RESERVATION,
 )
 from datalayer_core.utils.urls import DatalayerURLs

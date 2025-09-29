@@ -13,10 +13,9 @@ from typing import Any, Optional, Union
 
 from jupyter_kernel_client import KernelClient
 
-from datalayer_core.cliapp.runtimes import RuntimesMixin
-from datalayer_core.cliapp.runtimes.exec.execapp import _get_cells
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
+from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
@@ -29,6 +28,7 @@ from datalayer_core.utils.defaults import (
     DEFAULT_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.notebook import get_cells
 from datalayer_core.utils.types import (
     CreditsPerSecond,
     Minutes,
@@ -509,7 +509,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
             if self._kernel_client:
                 outputs = []
-                for _id, cell in _get_cells(fname):
+                for _id, cell in get_cells(fname):
                     reply = self._kernel_client.execute_interactive(
                         cell,
                         silent=False,

@@ -80,7 +80,6 @@ examples = [
 d = "datalayer_core.cli.__main__:main"
 dla = "datalayer_core.cli.__main__:main"
 datalayer = "datalayer_core.cli.__main__:main"
-d0 = "datalayer_core.cliapp.datalayer:main"
 datalayer-config = "datalayer_core.config:main"
 datalayer-migrate = "datalayer_core.migrate:main"
 datalayer-server = "datalayer_core.serverapplication:main"

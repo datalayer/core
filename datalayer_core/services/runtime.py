@@ -12,14 +12,13 @@ from typing import Any, Optional, Union
 
 from jupyter_kernel_client import KernelClient
 
-from datalayer_core.cliapp.runtimes import RuntimesMixin
-from datalayer_core.cliapp.runtimes.exec.execapp import _get_cells
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
-from datalayer_core.models import BaseResponse, ExecutionResponse
+from datalayer_core.mixins.runtimes import RuntimesMixin
+from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.services.runtime_snapshot import (
-    RuntimeSnapshotService,
+from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
+    RuntimeSnapshotsService,
     create_snapshot,
     as_runtime_snapshots,
 )
@@ -28,6 +27,7 @@ from datalayer_core.utils.defaults import (
     DEFAULT_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.notebook import get_cells
 from datalayer_core.utils.types import (
     CreditsPerSecond,
     Minutes,
@@ -367,7 +367,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
             if self._kernel_client:
                 outputs = []
-                for _id, cell in _get_cells(fname):
+                for _id, cell in get_cells(fname):
                     reply = self._kernel_client.execute_interactive(
                         cell,
                         silent=False,
@@ -412,7 +412,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         Returns
         -------
-        Union[Response, Any]
+        Union[ExecutionResponse, Any]
             The result of the code execution.
         """
         if not self._check_file(code):
@@ -444,7 +444,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         output: Optional[str] = None,
         debug: bool = False,
         timeout: Seconds = 10.0,
-    ) -> Union[Response, Any]:
+    ) -> Union[ExecutionResponse, Any]:
         """
         Execute code in the runtime.
 
@@ -463,7 +463,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         Returns
         -------
-        Union[Response, Any]
+        Union[ExecutionResponse, Any]
             The result of the code execution.
         """
         if self._check_file(code_or_path):
@@ -499,7 +499,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotService":
+    ) -> "RuntimeSnapshotsService":
         """
         Create a new snapshot from the current state.
 
@@ -541,7 +541,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         for snapshot in snapshot_objects:
             if snapshot.name == name:
                 break
-        return RuntimeSnapshotService(
+        return RuntimeSnapshotsService(
             uid=snapshot.uid,
             name=name,
             description=description,
