@@ -18,9 +18,9 @@ from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
     as_runtime_snapshots,
 )
 
-from datalayer_core.models.secret import SecretModel, SecretType
 from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models import ProfileModel
+from datalayer_core.models.secret import SecretModel, SecretType
 from datalayer_core.models.token import TokenModel, TokenType
 
 from datalayer_core.mixins.authn import AuthnMixin

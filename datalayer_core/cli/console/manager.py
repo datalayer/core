@@ -206,7 +206,7 @@ class RuntimeManager(KernelHttpManager):
         self.server_url = runtime["ingress"]
         self.token = runtime.get("token", "")
 
-        # Get kernel information from the runtime's Jupyter server
+        # Get runtime information.
         from datalayer_core.utils.network import fetch
         response = fetch(f"{self.server_url}/api/kernels", token=self.token)
         kernels = response.json()
@@ -214,7 +214,7 @@ class RuntimeManager(KernelHttpManager):
             self._kernel_id = kernels[0]["id"]
 
         kernel_model = self.refresh_model()
-        msg = f"RuntimeManager using existing jupyter kernel {runtime_name}"
+        msg = f"RuntimeManager using existing runtime {runtime_name}"
         expired_at = runtime.get("expired_at")
         if expired_at is not None:
             msg += f" expiring at {timestamp_to_local_date(expired_at)}"

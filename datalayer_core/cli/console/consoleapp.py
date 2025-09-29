@@ -60,6 +60,11 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
         "", config=True, help="""The name of the Runtime to connect to."""
     )
 
+    # Additional attributes required by the app
+    user_handle = Unicode(
+        "", config=True, help="""Username for authentication."""
+    )
+
     # URL properties required by AuthnMixin
     _urls = None
 
