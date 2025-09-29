@@ -10,7 +10,6 @@ from typing import Any, Optional
 
 import requests
 
-from datalayer_core.utils.defaults import DEFAULT_RUN_URL
 from datalayer_core.utils.network import fetch
 
 
@@ -19,11 +18,14 @@ class AuthnMixin:
     Mixin class for Datalayer client authentication.
 
     Provides methods to authenticate and fetch resources from the Datalayer server.
+    
+    This mixin expects the implementing class to provide:
+    - run_url property: for keyring storage
+    - iam_url property: for IAM API calls
     """
 
     _token: Optional[str] = None
     _external_token: Optional[str] = None
-    _run_url: str = DEFAULT_RUN_URL
 
     def _get_token(self) -> Optional[str]:
         """
@@ -59,7 +61,7 @@ class AuthnMixin:
         # 4. Try to get token from keyring
         try:
             import keyring
-            stored_token = keyring.get_password(self._run_url, "access_token")
+            stored_token = keyring.get_password(self.run_url, "access_token")
             if stored_token:
                 self._token = stored_token
                 return self._token
@@ -130,7 +132,7 @@ class AuthnMixin:
         }
         try:
             response = self._fetch(
-                "{}/api/iam/v1/login".format(self._run_url),
+                "{}/api/iam/v1/login".format(self.iam_url),
                 method="POST",
                 json=body,
             )

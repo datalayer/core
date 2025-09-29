@@ -35,8 +35,10 @@ from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_RUN_URL,
+    DEFAULT_IAM_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.urls import DatalayerURLs
 from datalayer_core.utils.types import Minutes
 
 
@@ -65,23 +67,33 @@ class DatalayerClient(
 
     def __init__(
         self,
-        run_url: str = DEFAULT_RUN_URL,
+        run_url: Optional[str] = None,
+        iam_url: Optional[str] = None,
         token: Optional[str] = None,
+        urls: Optional[DatalayerURLs] = None,
     ):
         """
         Initialize the Datalayer SDK.
 
         Parameters
         ----------
-        run_url : str
-            Datalayer server URL. Defaults to "https://prod1.datalayer.run".
+        run_url : Optional[str]
+            Datalayer server URL. If not provided, will use DATALAYER_RUN_URL env var or default.
+        iam_url : Optional[str]
+            Datalayer IAM URL. If not provided, will use DATALAYER_IAM_URL env var or default.
         token : Optional[str]
             Authentication token (can also be set via DATALAYER_API_KEY env var).
+        urls : Optional[DatalayerURLs]
+            Pre-configured URLs object. If provided, run_url and iam_url parameters are ignored.
         """
         # TODO: Check user and password login
-        self._run_url = run_url.rstrip("/") or os.environ.get(
-            "DATALAYER_RUN_URL", DEFAULT_RUN_URL
-        )
+        
+        # Use provided urls or create from parameters/environment
+        if urls is not None:
+            self._urls = urls
+        else:
+            self._urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        
         self._token = token  # Store the explicitly passed token
         self._external_token = None
         self._user_handle = None
@@ -105,7 +117,31 @@ class DatalayerClient(
         str
             The configured Datalayer server URL.
         """
-        return self._run_url
+        return self._urls.run_url
+
+    @property
+    def iam_url(self) -> str:
+        """
+        Get the Datalayer IAM server URL.
+
+        Returns
+        -------
+        str
+            The configured Datalayer IAM server URL.
+        """
+        return self._urls.iam_url
+
+    @property
+    def urls(self) -> DatalayerURLs:
+        """
+        Get the configured URLs object.
+
+        Returns
+        -------
+        DatalayerURLs
+            The URLs configuration object.
+        """
+        return self._urls
 
     def authenticate(self) -> bool:
         """
@@ -265,7 +301,7 @@ class DatalayerClient(
                     uid=runtime["uid"],
                     burning_rate=runtime["burning_rate"],
                     kernel_token=runtime["token"],
-                    run_url=self._run_url,
+                    run_url=self.run_url,
                     started_at=runtime["started_at"],
                     expired_at=runtime["expired_at"],
                 )

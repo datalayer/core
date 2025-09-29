@@ -49,7 +49,7 @@ class RuntimesCreateMixin:
         try:
             if credits_limit is None:
                 response = self._fetch(  # type: ignore
-                    "{}/api/iam/v1/usage/credits".format(self.run_url),  # type: ignore
+                    "{}/api/iam/v1/usage/credits".format(self.iam_url),  # type: ignore
                     method="GET",
                 )
 

@@ -18,7 +18,7 @@ class WhoamiAppMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/whoami".format(self.run_url),  # type: ignore
+                "{}/api/iam/v1/whoami".format(self.iam_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:

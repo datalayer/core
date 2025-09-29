@@ -44,7 +44,7 @@ class SecretsCreateMixin:
         }
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/secrets".format(self.run_url),  # type: ignore
+                "{}/api/iam/v1/secrets".format(self.iam_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -72,7 +72,7 @@ class SecretsDeleteMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/secrets/{}".format(self.run_url, secret_uid),  # type: ignore
+                "{}/api/iam/v1/secrets/{}".format(self.iam_url, secret_uid),  # type: ignore
                 method="DELETE",
             )
             return response.json()
@@ -94,7 +94,7 @@ class SecretsListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/secrets".format(self.run_url),  # type: ignore
+                "{}/api/iam/v1/secrets".format(self.iam_url),  # type: ignore
                 method="GET",
             )
             return response.json()
