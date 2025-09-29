@@ -2,29 +2,28 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Snapshot classes for the Datalayer SDK.
+Snapshot services for the Datalayer SDK.
+
+Provides runtime snapshot management and operations in Datalayer environments.
 """
 
 import uuid
 from typing import Any, List, Optional, Tuple
 
+from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
+
 
 class RuntimeSnapshotService:
     """
-    Represents a snapshot of a Datalayer runtime state.
+    Service for managing Datalayer runtime snapshot operations.
+
+    This service handles runtime snapshot operations while the snapshot data
+    is managed through the RuntimeSnapshotModel.
 
     Parameters
     ----------
-    uid : str
-        Unique identifier for the snapshot.
-    name : str
-        Name of the snapshot.
-    description : str
-        Description of the snapshot.
-    environment : str
-        Environment associated with the snapshot.
-    metadata : dict[str, Any]
-        Metadata related to the snapshot.
+    snapshot_model : RuntimeSnapshotModel
+        The snapshot model containing all configuration and state data.
     """
 
     def __init__(
@@ -36,7 +35,7 @@ class RuntimeSnapshotService:
         metadata: dict[str, Any],
     ):
         """
-        Initialize a runtime snapshot.
+        Initialize a runtime snapshot service.
 
         Parameters
         ----------
@@ -51,16 +50,19 @@ class RuntimeSnapshotService:
         metadata : dict[str, Any]
             Metadata related to the snapshot.
         """
-        self._uid = uid
-        self.name = name
-        self.description = description
-        self._environment = environment
-        self._metadata = metadata
+        # Initialize the snapshot model with all the data fields
+        self.model = RuntimeSnapshotModel(
+            uid=uid,
+            name=name,
+            description=description,
+            environment=environment,
+            metadata=metadata,
+        )
 
     def __repr__(self) -> str:
         return (
-            f"RuntimeSnapshot(uid='{self._uid}', name='{self.name}', "
-            f"description='{self.description}', environment='{self._environment}')"
+            f"RuntimeSnapshotService(uid='{self.model.uid}', name='{self.model.name}', "
+            f"description='{self.model.description}', environment='{self.model.environment}')"
         )
 
     @property
@@ -73,7 +75,7 @@ class RuntimeSnapshotService:
         str
             The environment associated with the snapshot.
         """
-        return self._environment
+        return self.model.environment
 
     @property
     def uid(self) -> str:
@@ -85,7 +87,31 @@ class RuntimeSnapshotService:
         str
             The unique identifier of the snapshot.
         """
-        return self._uid
+        return self.model.uid
+
+    @property
+    def name(self) -> str:
+        """
+        Get the name of the snapshot.
+
+        Returns
+        -------
+        str
+            The name of the snapshot.
+        """
+        return self.model.name
+
+    @property
+    def description(self) -> str:
+        """
+        Get the description of the snapshot.
+
+        Returns
+        -------
+        str
+            The description of the snapshot.
+        """
+        return self.model.description
 
     @property
     def metadata(self) -> dict[str, Any]:
@@ -97,7 +123,7 @@ class RuntimeSnapshotService:
         dict[str, Any]
             The metadata associated with the snapshot.
         """
-        return self._metadata
+        return self.model.metadata
 
 
 def create_snapshot(
