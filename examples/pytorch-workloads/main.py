@@ -6,7 +6,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from datalayer_core.sdk.decorators import DatalayerClient
+from datalayer_core.decorators.decorators import DatalayerClient
 
 load_dotenv()
 

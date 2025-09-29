@@ -18,7 +18,7 @@ from traitlets import Bool, List, Unicode, observe
 from traitlets.config.application import Application, catch_config_error
 from traitlets.config.loader import ConfigFileNotFound
 
-from .paths import (
+from datalayer_core.paths import (
     allow_insecure_writes,
     datalayer_config_dir,
     datalayer_config_path,
@@ -27,7 +27,8 @@ from .paths import (
     datalayer_runtime_dir,
     issue_insecure_write_warning,
 )
-from .utils import ensure_dir_exists
+from datalayer_core.utils import ensure_dir_exists
+
 
 # aliases and flags
 
@@ -247,7 +248,7 @@ class DatalayerApp(Application):
             f_marker.close()
             return  # so we must have already migrated -> bail out
 
-        from .migrate import get_ipython_dir, migrate
+        from datalayer_coremigrate import get_ipython_dir, migrate
 
         # No IPython dir, nothing to migrate
         if not os.path.exists(get_ipython_dir()):

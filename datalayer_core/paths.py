@@ -23,7 +23,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import platformdirs
 
-from .utils import deprecation
+from datalayer_core.utils import deprecation
 
 pjoin = os.path.join
 

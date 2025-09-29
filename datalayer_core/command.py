@@ -22,8 +22,8 @@ from shutil import which
 from subprocess import Popen
 from typing import Any, List
 
-from . import paths
-from .__version__ import __version__
+from datalayer_core import paths
+from datalayer_core.__version__ import __version__
 
 
 class DatalayerParser(argparse.ArgumentParser):

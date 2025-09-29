@@ -35,9 +35,9 @@ from typing import Any, Optional
 from traitlets.config.loader import JSONFileConfigLoader, PyFileConfigLoader
 from traitlets.log import get_logger
 
-from .application import DatalayerApp
-from .paths import datalayer_config_dir, datalayer_data_dir
-from .utils import ensure_dir_exists
+from datalayer_coreapplication import DatalayerApp
+from datalayer_corepaths import datalayer_config_dir, datalayer_data_dir
+from datalayer_coreutils import ensure_dir_exists
 
 pjoin = os.path.join
 
@@ -339,7 +339,7 @@ class DatalayerMigrate(DatalayerApp):
 
     name = "datalayer-migrate"
     description = """
-    Migrate configuration and data from .ipython prior to 4.0 to Datalayer locations.
+    Migrate configuration and data from datalayer_coreipython prior to 4.0 to Datalayer locations.
 
     This migrates:
 

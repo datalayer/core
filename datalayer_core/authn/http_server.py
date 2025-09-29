@@ -24,7 +24,8 @@ from datalayer_core.authn.keys import DATALAYER_IAM_TOKEN_KEY, DATALAYER_IAM_USE
 from datalayer_core.authn.pages import AUTH_SUCCESS_PAGE, LANDING_PAGE, OAUTH_ERROR_PAGE
 from datalayer_core.authn.state import set_server_port
 from datalayer_core.serverapplication import launch_new_instance
-from datalayer_core.utils.utils import find_http_port
+from datalayer_core.utils.network import find_http_port
+
 
 HERE = Path(__file__).parent
 

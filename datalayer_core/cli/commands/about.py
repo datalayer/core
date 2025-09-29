@@ -16,7 +16,7 @@ def about():
     """Display information about Datalayer."""
     HERE = Path(__file__).parent
     console = Console()
-    about_file_path = HERE / ".." / ".." / "about.md"
+    about_file_path = HERE / ".." / ".." / "assets" / "about.md"
     
     try:
         with open(about_file_path) as readme:

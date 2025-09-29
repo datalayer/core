@@ -17,6 +17,7 @@ from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 
+
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
 
 DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./templates")

@@ -5,7 +5,7 @@
 
 import sys
 
-from datalayer_core.cli0.base import DatalayerCLIBaseApp
+from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.serverapplication import launch_new_instance
 
 

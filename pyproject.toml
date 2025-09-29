@@ -79,7 +79,7 @@ examples = [
 d = "datalayer_core.cli.__main__:main"
 dla = "datalayer_core.cli.__main__:main"
 datalayer = "datalayer_core.cli.__main__:main"
-d0 = "datalayer_core.cli0.datalayer:main"
+d0 = "datalayer_core.cliapp.datalayer:main"
 datalayer-config = "datalayer_core.config:main"
 datalayer-migrate = "datalayer_core.migrate:main"
 datalayer-server = "datalayer_core.serverapplication:main"
@@ -90,13 +90,13 @@ path = "datalayer_core/__version__.py"
 
 [tool.hatch.build.targets.sdist]
 artifacts = [
-    "datalayer_core/about/about.md",
+    "datalayer_core/assets/about.md",
 ]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
-    "datalayer_core/about/about.md",
+    "datalayer_core/assets/about.md",
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]

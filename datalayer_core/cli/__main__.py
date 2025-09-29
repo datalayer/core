@@ -5,7 +5,7 @@
 
 import typer
 
-from .commands.about import app as about_app
+from datalayer_core.cli.commands.about import app as about_app
 
 # Create the main Typer app
 app = typer.Typer(
