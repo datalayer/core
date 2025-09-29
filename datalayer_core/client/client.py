@@ -16,6 +16,8 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environment import EnvironmentsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
+from datalayer_core.mixins.snapshots import SnapshotsMixin
+from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 
 from datalayer_core.services.runtimes import Runtime

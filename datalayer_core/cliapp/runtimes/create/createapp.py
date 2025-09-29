@@ -7,7 +7,7 @@ from traitlets import Dict, Float, Unicode
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp, datalayer_aliases
 from datalayer_core.mixins.runtimes import RuntimesCreateMixin
-from datalayer_core.display.display import display_runtimes
+from datalayer_core.display.runtimes import display_runtimes
 
 create_alias = dict(datalayer_aliases)
 create_alias["given-name"] = "RuntimesCreateApp.kernel_given_name"

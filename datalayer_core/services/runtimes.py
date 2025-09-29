@@ -31,7 +31,7 @@ from datalayer_core.utils.types import (
     Minutes,
     Seconds,
 )
-from datalayer_core.cliapp.snapshots import SnapshotsMixin
+from datalayer_core.mixins.snapshots import SnapshotsMixin
 
 
 class Runtime(AuthnMixin, RuntimesMixin, SnapshotsMixin):

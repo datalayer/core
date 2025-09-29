@@ -3,11 +3,9 @@
 
 """Tokens list application for Datalayer Core."""
 
-from typing import Any
-
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.display.display import display_tokens
 from datalayer_core.mixins.tokens import TokensListMixin
+from datalayer_core.display.tokens import display_tokens
 
 
 class TokensListApp(DatalayerCLIBaseApp, TokensListMixin):

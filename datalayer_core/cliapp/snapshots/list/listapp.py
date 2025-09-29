@@ -4,11 +4,10 @@
 """Snapshots list application for Datalayer Core."""
 
 import sys
-from typing import Any
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.display.display import display_snapshots
 from datalayer_core.mixins.snapshots import SnapshotsListMixin
+from datalayer_core.display.snapshots import display_snapshots
 
 
 class SnapshotsListApp(DatalayerCLIBaseApp, SnapshotsListMixin):
