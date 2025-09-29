@@ -19,7 +19,7 @@ from traitlets import Dict, Unicode, default
 from traitlets.config import catch_config_error
 
 from datalayer_core.__version__ import __version__
-from datalayer_core.cli.console.manager import RuntimeManager
+from datalayer_core.console.manager import RuntimeManager
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.utils.urls import DatalayerURLs
 

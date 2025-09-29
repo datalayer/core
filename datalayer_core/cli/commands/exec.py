@@ -9,13 +9,13 @@ import signal
 import sys
 import json
 from pathlib import Path
-from typing import Optional, Iterator, Tuple
+from typing import Optional
 
 import typer
 from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.cli.console.manager import RuntimeManager
+from datalayer_core.console.manager import RuntimeManager
 from datalayer_core.utils.notebook import get_cells
 
 # Create the main Typer app for exec functionality

@@ -20,7 +20,7 @@ from datalayer_core.cli.commands.secrets import app as secrets_app, secrets_list
 from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app, snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app, tokens_list, tokens_ls
 from datalayer_core.cli.commands.web import app as web_app
-from datalayer_core.cli.exec.exec import main as exec_main
+from datalayer_core.cli.commands.exec import main as exec_main
 
 # Create the main Typer app
 app = typer.Typer(
