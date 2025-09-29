@@ -6,7 +6,7 @@
 import sys
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.serverapplication import launch_new_instance
+from datalayer_core.app.serverapplication import launch_new_instance
 
 
 class BenchmarksWebApp(DatalayerCLIBaseApp):

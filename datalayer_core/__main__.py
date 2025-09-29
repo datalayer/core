@@ -3,7 +3,7 @@
 
 """The main for Datalayer."""
 
-from datalayer_core.serverapplication import main
+from datalayer_core.app.serverapplication import main
 
 if __name__ == "__main__":
     main()

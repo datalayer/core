@@ -3,7 +3,7 @@
 
 """Main application for runtime management commands."""
 
-from datalayer_core.application import NoStart
+from datalayer_core.app.application import NoStart
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 from datalayer_core.cliapp.runtimes.console.consoleapp import RuntimesConsoleApp
 from datalayer_core.cliapp.runtimes.create.createapp import RuntimesCreateApp

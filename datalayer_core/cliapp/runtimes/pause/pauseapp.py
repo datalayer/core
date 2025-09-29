@@ -6,7 +6,7 @@
 import sys
 from typing import Any
 
-from datalayer_core.application import NoStart
+from datalayer_core.app.application import NoStart
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 
 

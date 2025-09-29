@@ -18,7 +18,7 @@ from traitlets import Bool, List, Unicode, observe
 from traitlets.config.application import Application, catch_config_error
 from traitlets.config.loader import ConfigFileNotFound
 
-from datalayer_core.paths import (
+from datalayer_core.app.paths import (
     allow_insecure_writes,
     datalayer_config_dir,
     datalayer_config_path,
