@@ -25,7 +25,7 @@ from datalayer_core.models.profile import ProfileModel
 from datalayer_core.models.token import TokenModel, TokenType
 
 from datalayer_core.mixins.authn import AuthnMixin
-from datalayer_core.mixins.environment import EnvironmentsMixin
+from datalayer_core.mixins.environments import EnvironmentsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin

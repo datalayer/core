@@ -4,7 +4,7 @@
 """Environment listing functionality."""
 
 from datalayer_core.cliapp.base import DatalayerCLIBaseApp
-from datalayer_core.mixins.environment import EnvironmentsListMixin
+from datalayer_core.mixins.environments import EnvironmentsListMixin
 from datalayer_core.displays.environments import display_environments
 
 
