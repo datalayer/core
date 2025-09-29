@@ -193,7 +193,7 @@ describe('Lexical Model', () => {
       await lexical.getName();
       const json = await lexical.toJSON();
       expect(json.name).toBe('Fresh Name');
-      expect(json.updated_at).toBe('2023-01-04T10:00:00Z');
+      expect(json.updatedAt).toBe('2023-01-04T10:00:00Z');
     });
   });
 
@@ -209,10 +209,10 @@ describe('Lexical Model', () => {
         document: updatedDocument,
       });
 
-      const updated = await lexical.update({
-        name: 'New Documentation Title',
-        description: 'Updated description',
-      });
+      const updated = await lexical.update(
+        'New Documentation Title',
+        'Updated description',
+      );
 
       expect(lexicals.updateLexical).toHaveBeenCalledWith(
         'mock-token',
@@ -301,7 +301,7 @@ describe('Lexical Model', () => {
     });
 
     it('should throw error when calling action methods after deletion', async () => {
-      await expect(lexical.update({ name: 'New Name' })).rejects.toThrow(
+      await expect(lexical.update('New Name')).rejects.toThrow(
         'Lexical lexical-123 has been deleted and no longer exists',
       );
     });
@@ -340,9 +340,7 @@ describe('Lexical Model', () => {
         new Error('Update failed'),
       );
 
-      await expect(lexical.update({ name: 'New Name' })).rejects.toThrow(
-        'Update failed',
-      );
+      await expect(lexical.update('New Name')).rejects.toThrow('Update failed');
     });
 
     it('should handle API errors in delete method', async () => {
@@ -374,18 +372,17 @@ describe('Lexical Model', () => {
     });
 
     it('should handle partial update requests', async () => {
-      const partialUpdate = { name: 'Only Name Updated' };
       (lexicals.updateLexical as any).mockResolvedValue({
         success: true,
         document: { ...mockLexicalData, name: 'Only Name Updated' },
       });
 
-      const updated = await lexical.update(partialUpdate);
+      const updated = await lexical.update('Only Name Updated');
 
       expect(lexicals.updateLexical).toHaveBeenCalledWith(
         'mock-token',
         'lexical-uid-456', // Use uid, not id
-        partialUpdate,
+        { name: 'Only Name Updated' },
         'https://spacer.example.com',
       );
       expect(updated.toString()).toBe(

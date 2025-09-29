@@ -16,6 +16,29 @@ import type {
 import * as lexicals from '../../../api/spacer/lexicals';
 import type { DatalayerSDK } from '../index';
 import { Item } from './Item';
+import { ItemTypes } from '../constants';
+
+/**
+ * Stable public interface for Lexical data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
+ */
+export interface LexicalJSON {
+  /** Unique identifier for the lexical document */
+  id: string;
+  /** Name of the lexical document */
+  name: string;
+  /** Description of the lexical document */
+  description?: string;
+  /** Type of lexical document */
+  type: string;
+  /** File extension of the lexical document */
+  extension: string;
+  /** ISO 8601 timestamp when the document was created */
+  createdAt?: string;
+  /** ISO 8601 timestamp when the document was last updated */
+  updatedAt?: string;
+}
 
 /**
  * Lexical domain model that extends the base Item class.
@@ -27,7 +50,7 @@ import { Item } from './Item';
  * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
-export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
+export class Lexical extends Item<LexicalData> {
   /**
    * Create a Lexical instance.
    *
@@ -45,7 +68,7 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
   /** Document type identifier. */
   get type(): string {
     this._checkDeleted();
-    return this._data.type_s || 'lexical';
+    return ItemTypes.LEXICAL;
   }
 
   /** The cached name of the document. */
@@ -80,6 +103,19 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
       }
     }
     return this._data.content;
+  }
+
+  /** Description of the lexical document. */
+  get description(): string {
+    this._checkDeleted();
+    return this._data.description_t || '';
+  }
+
+  /** Get the document extension. */
+  get extension(): string {
+    this._checkDeleted();
+    const ext = this._data.document_extension_s;
+    return ext ? (ext.startsWith('.') ? ext : `.${ext}`) : '.lexical';
   }
 
   /** Get the document content from API. */
@@ -136,20 +172,53 @@ export class Lexical extends Item<LexicalData, UpdateLexicalRequest> {
   }
 
   /** Update the document. */
-  async update(data: UpdateLexicalRequest): Promise<this> {
+  async update(name?: string, description?: string): Promise<this> {
+    // FIXME: check if both are needed, and use the existing values if only one provided
     this._checkDeleted();
     const token = this._getToken();
     const spacerRunUrl = this._getSpacerRunUrl();
+    const updateData: UpdateLexicalRequest = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+
     const response = await lexicals.updateLexical(
       token,
       this.uid,
-      data,
+      updateData,
       spacerRunUrl,
     );
     this._updateData(response.document);
     return this;
   }
-}
 
-// Re-export the LexicalData type for convenience
-export type { LexicalData };
+  /**
+   * Get lexical document data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
+   *
+   * @returns Core lexical data with camelCase properties
+   */
+  toJSON(): LexicalJSON {
+    this._checkDeleted();
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description || undefined,
+      type: this.type,
+      extension: this.extension,
+      createdAt: this._data.created_at,
+      updatedAt: this._data.updated_at,
+    };
+  }
+
+  /**
+   * Get the raw lexical data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   *
+   * @returns Raw lexical data from API
+   */
+  rawData(): LexicalData {
+    this._checkDeleted();
+    return this._data;
+  }
+}

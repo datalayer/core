@@ -14,7 +14,7 @@ export * as authentication from './authentication';
 export * as oauth2 from './oauth2';
 export * as profile from './profile';
 export * as healthz from './healthz';
-export * as credits from './credits';
+export * as usage from './usage';
 
 // For backward compatibility, export the old API structure
 export { login, logout, checkAuth } from './authentication';
@@ -36,4 +36,4 @@ export {
   type CreditsInfo,
   type CreditReservation,
   type CreditsResponse,
-} from './credits';
+} from './usage';

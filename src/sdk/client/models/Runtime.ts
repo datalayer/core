@@ -18,6 +18,38 @@ import type { DatalayerSDK } from '../index';
 import { Snapshot } from './Snapshot';
 
 /**
+ * Stable public interface for Runtime data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
+ */
+export interface RuntimeJSON {
+  /** Unique identifier for the runtime */
+  uid: string;
+  /** Kubernetes pod name for the runtime instance */
+  podName: string;
+  /** User-friendly name for the runtime */
+  givenName?: string;
+  /** Name of the environment this runtime is based on */
+  environmentName: string;
+  /** Title of the environment for display */
+  environmentTitle?: string;
+  /** Current state of the runtime */
+  state?: 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
+  /** Type of runtime - notebook, terminal, or job */
+  type?: 'notebook' | 'terminal' | 'job';
+  /** Credits consumed per hour */
+  burningRate: number;
+  /** Ingress URL for accessing the runtime */
+  ingress?: string;
+  /** Authentication token for accessing the runtime */
+  token?: string;
+  /** URL for accessing Jupyter server */
+  jupyterUrl?: string;
+  /** Token for Jupyter server authentication */
+  jupyterToken?: string;
+}
+
+/**
  * Runtime domain model that wraps API responses with convenient methods.
  * Provides state management and lifecycle operations for computational runtimes.
  *
@@ -140,6 +172,18 @@ export class Runtime {
   get expiredAt(): Date {
     this._checkDeleted();
     return new Date(this._data.expired_at || '');
+  }
+
+  /** Current state of the runtime (cached). */
+  get state(): string {
+    this._checkDeleted();
+    return this._data.state || 'unknown';
+  }
+
+  /** Environment title for display. */
+  get environmentTitle(): string {
+    this._checkDeleted();
+    return this._data.environment_title || '';
   }
 
   // ========================================================================
@@ -298,14 +342,50 @@ export class Runtime {
   // ========================================================================
 
   /**
-   * Get raw runtime data object with latest state.
-   * Refreshes from API before returning.
+   * Get runtime data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
+   * Returns the current cached state - call getState() first if you need fresh data.
    *
-   * @returns Raw runtime data
+   * @returns Core runtime data with camelCase properties
    */
-  async toJSON(): Promise<RuntimeData> {
+  toJSON(): RuntimeJSON {
     this._checkDeleted();
-    await this.getState(); // This updates internal data
+
+    return {
+      // Core identifiers
+      uid: this._data.uid,
+      podName: this._data.pod_name,
+      givenName: this._data.given_name,
+
+      // Environment info
+      environmentName: this._data.environment_name,
+      environmentTitle: this._data.environment_title,
+
+      // State and type
+      state: this._data.state,
+      type: this._data.type,
+
+      // Credits and burning
+      burningRate: this._data.burning_rate,
+
+      // URLs and tokens
+      ingress: this._data.ingress,
+      token: this._data.token,
+      jupyterUrl: this._data.jupyter_url,
+      jupyterToken: this._data.jupyter_token,
+    };
+  }
+
+  /**
+   * Get the raw runtime data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   * Returns the current cached state - call getState() first if you need fresh data.
+   *
+   * @returns Raw runtime data from API
+   */
+  rawData(): RuntimeData {
+    this._checkDeleted();
     return this._data;
   }
 
@@ -315,6 +395,3 @@ export class Runtime {
     return `Runtime(${this.podName}, ${this.environmentName})`;
   }
 }
-
-// Re-export the RuntimeData type for convenience
-export type { RuntimeData };

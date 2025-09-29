@@ -10,13 +10,9 @@
 
 import * as authentication from '../../../api/iam/authentication';
 import * as profile from '../../../api/iam/profile';
-import * as credits from '../../../api/iam/credits';
-import type {
-  LoginRequest,
-  LoginResponse,
-  User as ApiUser,
-} from '../../../api/types/iam';
-import type { CreditsResponse } from '../../../api/iam/credits';
+import * as usage from '../../../api/iam/usage';
+import type { User as ApiUser } from '../../../api/types/iam';
+import type { CreditsResponse } from '../../../api/iam/usage';
 import type { Constructor } from '../utils/mixins';
 import { User } from '../models/User';
 import { Credits } from '../models/Credits';
@@ -100,13 +96,25 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
     }
 
     /**
-     * Authenticate a user with credentials or token.
-     * @param data - Login credentials
-     * @returns Login response with tokens
+     * Authenticate the user with a token.
+     * @param token - Authentication token
+     * @returns Login response
      */
-    async login(data: LoginRequest): Promise<LoginResponse> {
-      const iamRunUrl = (this as any).getIamRunUrl();
-      return await authentication.login(data, iamRunUrl);
+    async login(token: string): Promise<any> {
+      // For token-based login, we simply set the token and verify it works
+      (this as any).setToken(token);
+
+      // Verify the token by calling whoami
+      try {
+        const user = await this.whoami();
+        return { success: true, user };
+      } catch (error) {
+        // Clear the invalid token
+        (this as any).setToken(null);
+        throw new Error(
+          `Invalid token: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
     }
 
     /** Log out the current user. */
@@ -127,7 +135,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       const token = (this as any).getToken();
       const iamRunUrl = (this as any).getIamRunUrl();
 
-      const response: CreditsResponse = await credits.getCredits(
+      const response: CreditsResponse = await usage.getCredits(
         token,
         iamRunUrl,
       );
@@ -153,7 +161,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       availableCredits: number,
       burningRate: number,
     ): number {
-      if (burningRate <= 0) return 0;
+      if (!burningRate || burningRate <= 0) return 0;
       const burningRatePerMinute = burningRate * 60;
       return Math.floor(availableCredits / burningRatePerMinute);
     }
@@ -165,7 +173,8 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      * @returns Credits required (rounded up to nearest integer)
      */
     calculateCreditsRequired(minutes: number, burningRate: number): number {
-      if (burningRate <= 0 || minutes <= 0) return 0;
+      if (!burningRate || burningRate <= 0 || !minutes || minutes <= 0)
+        return 0;
       const burningRatePerMinute = burningRate * 60;
       return Math.ceil(minutes * burningRatePerMinute);
     }

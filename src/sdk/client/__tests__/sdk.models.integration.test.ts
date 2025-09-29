@@ -301,7 +301,7 @@ describe('SDK Models Integration Tests', () => {
 
       const json = await testSpace.toJSON();
       expect(json).toBeDefined();
-      expect(json.id || json.uid).toBeDefined();
+      expect(json.uid).toBeDefined();
 
       // JSON should include fetched properties
       if ((testSpace as any).name) {
@@ -360,10 +360,8 @@ describe('SDK Models Integration Tests', () => {
 
         const json = await testRuntime.toJSON();
         expect(json).toBeDefined();
-        expect(json.pod_name).toBe((testRuntime as any).podName);
-        expect(json.environment_name).toBe(
-          (testRuntime as any).environmentName,
-        );
+        expect(json.podName).toBe((testRuntime as any).podName);
+        expect(json.environmentName).toBe((testRuntime as any).environmentName);
 
         console.log('Runtime serialized successfully');
       },

@@ -13,6 +13,22 @@ import type { Environment as EnvironmentData } from '../../../api/types/runtimes
 import type { DatalayerSDK } from '../index';
 
 /**
+ * Stable public interface for Environment data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
+ */
+export interface EnvironmentJSON {
+  /** Human-readable title for the environment */
+  title: string;
+  /** Unique name identifier for the environment */
+  name: string;
+  /** Credits consumed per hour for this environment */
+  burningRate: number;
+  /** Rich description of the environment (contains HTML markup) */
+  description: string;
+}
+
+/**
  * Environment domain model that wraps API responses with convenient methods.
  * Provides information about available computational environments.
  *
@@ -73,11 +89,28 @@ export class Environment {
   // ========================================================================
 
   /**
-   * Get raw environment data object.
+   * Get environment data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
    *
-   * @returns Raw environment data
+   * @returns Core environment data with camelCase properties
    */
-  toJSON(): EnvironmentData {
+  toJSON(): EnvironmentJSON {
+    return {
+      title: this._data.title,
+      name: this._data.name || '',
+      burningRate: this._data.burning_rate,
+      description: this._data.description,
+    };
+  }
+
+  /**
+   * Get the raw environment data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   *
+   * @returns Raw environment data from API
+   */
+  rawData(): EnvironmentData {
     return this._data;
   }
 
@@ -86,6 +119,3 @@ export class Environment {
     return `Environment(${this.name}, ${this.title})`;
   }
 }
-
-// Re-export the EnvironmentData type for convenience
-export type { EnvironmentData };

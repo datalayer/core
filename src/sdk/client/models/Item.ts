@@ -19,7 +19,7 @@ import type { DatalayerSDK } from '../index';
  * @template TData - Raw data type from API
  * @template TUpdateRequest - Update request type for API
  */
-export abstract class Item<TData, TUpdateRequest> {
+export abstract class Item<TData> {
   protected _data: TData;
   private _sdk: DatalayerSDK;
   private _deleted: boolean = false;
@@ -151,7 +151,7 @@ export abstract class Item<TData, TUpdateRequest> {
   abstract getUpdatedAt(): Promise<Date>;
 
   /** Update the item. */
-  abstract update(data: TUpdateRequest): Promise<this>;
+  abstract update(...args: any[]): Promise<this>;
 
   // ========================================================================
   // Action Methods
@@ -174,10 +174,13 @@ export abstract class Item<TData, TUpdateRequest> {
   // ========================================================================
 
   /** Get raw item data object. */
-  toJSON(): TData {
+  rawData(): TData {
     this._checkDeleted();
     return this._data;
   }
+
+  /** Convert to JSON representation - must be implemented by subclasses. */
+  abstract toJSON(): any;
 
   /** String representation of the item. */
   toString(): string {

@@ -15,9 +15,7 @@ import * as lexicals from '../../../api/spacer/lexicals';
 import * as items from '../../../api/spacer/items';
 import type {
   CreateSpaceRequest,
-  CreateNotebookRequest,
   UpdateNotebookRequest,
-  CreateLexicalRequest,
   UpdateLexicalRequest,
   GetSpaceItemsResponse,
   DeleteSpaceItemResponse,
@@ -61,12 +59,37 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new workspace.
-     * @param data - Space creation parameters
+     * @param name - Space name
+     * @param description - Space description
+     * @param variant - Space variant type
+     * @param spaceHandle - Unique handle for the space
+     * @param organizationId - Organization ID
+     * @param seedSpaceId - Seed space ID for initialization
+     * @param isPublic - Whether the space is public
      * @returns Created Space instance
      */
-    async createSpace(data: CreateSpaceRequest): Promise<Space> {
+    async createSpace(
+      name: string,
+      description: string,
+      variant: string,
+      spaceHandle: string,
+      organizationId: string,
+      seedSpaceId: string,
+      isPublic: boolean,
+    ): Promise<Space> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
+
+      const data: CreateSpaceRequest = {
+        name,
+        description,
+        variant,
+        spaceHandle,
+        organizationId,
+        seedSpaceId,
+        public: isPublic,
+      };
+
       const response = await spaces.createSpace(token, data, spacerRunUrl);
       return new Space(response.space, this as any);
     }
@@ -75,55 +98,48 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     // Notebooks
     // ========================================================================
 
-    // ========================================================================
-    // Helper Functions
-    // ========================================================================
-
-    _extractNotebookId(notebookIdOrInstance: string | Notebook): string {
-      return typeof notebookIdOrInstance === 'string'
-        ? notebookIdOrInstance
-        : notebookIdOrInstance.uid;
-    }
-
-    _extractLexicalId(lexicalIdOrInstance: string | Lexical): string {
-      return typeof lexicalIdOrInstance === 'string'
-        ? lexicalIdOrInstance
-        : lexicalIdOrInstance.uid;
-    }
-
     /**
      * Create a new notebook.
-     * @param data - Notebook creation parameters
+     * @param spaceId - ID of the space to create the notebook in
+     * @param name - Name of the notebook
+     * @param description - Description of the notebook
+     * @param file - Optional file for notebook content
      * @returns Created Notebook instance
      */
-    async createNotebook(data: CreateNotebookRequest): Promise<Notebook> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-      const response = await notebooks.createNotebook(
-        token,
-        data,
-        spacerRunUrl,
-      );
-      return new Notebook(response.notebook, this as any);
+    async createNotebook(
+      spaceId: string,
+      name: string,
+      description: string,
+      file?: File | Blob,
+    ): Promise<Notebook> {
+      // Get the Space model instance
+      const spaces = await this.getMySpaces();
+      const spaceModel = spaces.find((s: any) => s.uid === spaceId);
+
+      if (!spaceModel) {
+        throw new Error(`Space with ID '${spaceId}' not found`);
+      }
+
+      // Use the Space model's createNotebook method
+      return await spaceModel.createNotebook({
+        name,
+        description,
+        file,
+      });
     }
 
     /**
-     * Get a notebook by ID or Notebook instance.
-     * @param idOrNotebook - Notebook ID or Notebook instance
+     * Get a notebook by ID.
+     * @param id - Notebook ID
      * @returns Notebook instance
      */
-    async getNotebook(idOrNotebook: string | Notebook): Promise<Notebook> {
-      const notebookId = this._extractNotebookId(idOrNotebook);
+    async getNotebook(id: string): Promise<Notebook> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      const response = await notebooks.getNotebook(
-        token,
-        notebookId,
-        spacerRunUrl,
-      );
+      const response = await notebooks.getNotebook(token, id, spacerRunUrl);
 
       if (!response.notebook) {
-        throw new Error(`Notebook with ID '${notebookId}' not found`);
+        throw new Error(`Notebook with ID '${id}' not found`);
       }
 
       return new Notebook(response.notebook, this as any);
@@ -131,20 +147,26 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Update a notebook.
-     * @param idOrNotebook - Notebook ID or Notebook instance
-     * @param data - Update data with optional name and/or description
+     * @param id - Notebook ID
+     * @param name - Optional new name for the notebook
+     * @param description - Optional new description for the notebook
      * @returns Updated Notebook instance
      */
     async updateNotebook(
-      idOrNotebook: string | Notebook,
-      data: UpdateNotebookRequest,
+      id: string,
+      name?: string,
+      description?: string,
     ): Promise<Notebook> {
-      const notebookId = this._extractNotebookId(idOrNotebook);
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
+
+      const data: UpdateNotebookRequest = {};
+      if (name !== undefined) data.name = name;
+      if (description !== undefined) data.description = description;
+
       const response = await notebooks.updateNotebook(
         token,
-        notebookId,
+        id,
         data,
         spacerRunUrl,
       );
@@ -157,33 +179,46 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new lexical document.
-     * @param data - Document creation parameters
+     * @param spaceId - ID of the space to create the lexical document in
+     * @param name - Name of the lexical document
+     * @param description - Description of the lexical document
+     * @param file - Optional file for document content
      * @returns Created Lexical instance
      */
-    async createLexical(data: CreateLexicalRequest): Promise<Lexical> {
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const token = (this as any).getToken();
-      const response = await lexicals.createLexical(token, data, spacerRunUrl);
-      return new Lexical(response.document, this as any);
+    async createLexical(
+      spaceId: string,
+      name: string,
+      description: string,
+      file?: File | Blob,
+    ): Promise<Lexical> {
+      // Get the Space model instance
+      const spaces = await this.getMySpaces();
+      const spaceModel = spaces.find((s: any) => s.uid === spaceId);
+
+      if (!spaceModel) {
+        throw new Error(`Space with ID '${spaceId}' not found`);
+      }
+
+      // Use the Space model's createLexical method
+      return await spaceModel.createLexical({
+        name,
+        description,
+        file,
+      });
     }
 
     /**
-     * Get a lexical document by ID or Lexical instance.
-     * @param idOrLexical - Document ID or Lexical instance
+     * Get a lexical document by ID.
+     * @param id - Document ID
      * @returns Lexical instance
      */
-    async getLexical(idOrLexical: string | Lexical): Promise<Lexical> {
-      const lexicalId = this._extractLexicalId(idOrLexical);
+    async getLexical(id: string): Promise<Lexical> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      const response = await lexicals.getLexical(
-        token,
-        lexicalId,
-        spacerRunUrl,
-      );
+      const response = await lexicals.getLexical(token, id, spacerRunUrl);
 
       if (!response.document) {
-        throw new Error(`Lexical document with ID '${lexicalId}' not found`);
+        throw new Error(`Lexical document with ID '${id}' not found`);
       }
 
       return new Lexical(response.document, this as any);
@@ -191,20 +226,26 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Update a lexical document.
-     * @param idOrLexical - Document ID or Lexical instance
-     * @param data - Update data with optional name and/or description
+     * @param id - Document ID
+     * @param name - Optional new name for the lexical document
+     * @param description - Optional new description for the lexical document
      * @returns Updated Lexical instance
      */
     async updateLexical(
-      idOrLexical: string | Lexical,
-      data: UpdateLexicalRequest,
+      id: string,
+      name?: string,
+      description?: string,
     ): Promise<Lexical> {
-      const lexicalId = this._extractLexicalId(idOrLexical);
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
+
+      const data: UpdateLexicalRequest = {};
+      if (name !== undefined) data.name = name;
+      if (description !== undefined) data.description = description;
+
       const response = await lexicals.updateLexical(
         token,
-        lexicalId,
+        id,
         data,
         spacerRunUrl,
       );
@@ -250,7 +291,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * @returns Notebook content
      */
     async getNotebookContent(
-      notebookIdOrInstance: string | Notebook,
+      notebookId: string,
       options: ContentLoadingOptions = {},
     ): Promise<any> {
       const {
@@ -258,8 +299,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         cacheLocally = false,
         cdnBaseUrl = 'https://cdn.datalayer.run',
       } = options;
-
-      const notebookId = this._extractNotebookId(notebookIdOrInstance);
 
       // Check local cache first if enabled
       if (cacheLocally) {
@@ -356,12 +395,12 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Get lexical document content with CDN-first loading strategy.
      * Similar to getNotebookContent but for lexical documents.
      *
-     * @param lexicalIdOrInstance - Lexical ID or Lexical instance
+     * @param lexicalId - Lexical ID
      * @param options - Content loading options
      * @returns Lexical content
      */
     async getLexicalContent(
-      lexicalIdOrInstance: string | Lexical,
+      lexicalId: string,
       options: ContentLoadingOptions = {},
     ): Promise<any> {
       const {
@@ -369,8 +408,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         cacheLocally = false,
         cdnBaseUrl = 'https://cdn.datalayer.run',
       } = options;
-
-      const lexicalId = this._extractLexicalId(lexicalIdOrInstance);
 
       // Check local cache first if enabled
       if (cacheLocally) {
@@ -524,229 +561,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         // In practice, you might need to maintain a list of cached keys
         console.log(`Cleared all cached ${itemType}s`);
       }
-    }
-
-    // ========================================================================
-    // Batch Operations
-    // ========================================================================
-
-    /**
-     * Create multiple notebooks in parallel for a space.
-     * Better performance than sequential creation.
-     *
-     * @param requests - Array of notebook creation requests
-     * @returns Array of created Notebook instances
-     */
-    async createNotebooks(
-      requests: CreateNotebookRequest[],
-    ): Promise<Notebook[]> {
-      if (requests.length === 0) {
-        return [];
-      }
-
-      console.log(`Creating ${requests.length} notebooks in parallel`);
-
-      const createPromises = requests.map(async (request, index) => {
-        try {
-          const notebook = await this.createNotebook(request);
-          console.log(
-            `Created notebook ${index + 1}/${requests.length}: ${request.name}`,
-          );
-          return notebook;
-        } catch (error) {
-          console.error(`Failed to create notebook ${request.name}:`, error);
-          throw new Error(
-            `Failed to create notebook ${request.name}: ${error}`,
-          );
-        }
-      });
-
-      const results = await Promise.all(createPromises);
-      console.log(`Successfully created ${results.length} notebooks`);
-      return results;
-    }
-
-    /**
-     * Get multiple notebooks in parallel.
-     *
-     * @param notebookIds - Array of notebook IDs to retrieve
-     * @returns Array of Notebook instances
-     */
-    async getNotebooks(notebookIds: string[]): Promise<Notebook[]> {
-      if (notebookIds.length === 0) {
-        return [];
-      }
-
-      console.log(`Retrieving ${notebookIds.length} notebooks in parallel`);
-
-      const getPromises = notebookIds.map(async (id, index) => {
-        try {
-          const notebook = await this.getNotebook(id);
-          console.log(
-            `Retrieved notebook ${index + 1}/${notebookIds.length}: ${id}`,
-          );
-          return notebook;
-        } catch (error) {
-          console.error(`Failed to retrieve notebook ${id}:`, error);
-          throw new Error(`Failed to retrieve notebook ${id}: ${error}`);
-        }
-      });
-
-      const results = await Promise.all(getPromises);
-      console.log(`Successfully retrieved ${results.length} notebooks`);
-      return results;
-    }
-
-    /**
-     * Update multiple notebooks in parallel.
-     *
-     * @param updates - Array of update operations with notebook ID and update data
-     * @returns Array of updated Notebook instances
-     */
-    async updateNotebooks(
-      updates: Array<{ id: string; data: UpdateNotebookRequest }>,
-    ): Promise<Notebook[]> {
-      if (updates.length === 0) {
-        return [];
-      }
-
-      console.log(`Updating ${updates.length} notebooks in parallel`);
-
-      const updatePromises = updates.map(async ({ id, data }, index) => {
-        try {
-          const notebook = await this.updateNotebook(id, data);
-          console.log(`Updated notebook ${index + 1}/${updates.length}: ${id}`);
-          return notebook;
-        } catch (error) {
-          console.error(`Failed to update notebook ${id}:`, error);
-          throw new Error(`Failed to update notebook ${id}: ${error}`);
-        }
-      });
-
-      const results = await Promise.all(updatePromises);
-      console.log(`Successfully updated ${results.length} notebooks`);
-      return results;
-    }
-
-    /**
-     * Delete multiple space items in parallel.
-     *
-     * @param itemIds - Array of item IDs to delete
-     */
-    async deleteSpaceItems(itemIds: string[]): Promise<void> {
-      if (itemIds.length === 0) {
-        return;
-      }
-
-      console.log(`Deleting ${itemIds.length} items in parallel`);
-
-      const deletePromises = itemIds.map(async (id, index) => {
-        try {
-          await this.deleteSpaceItem(id);
-          console.log(`Deleted item ${index + 1}/${itemIds.length}: ${id}`);
-        } catch (error) {
-          console.error(`Failed to delete item ${id}:`, error);
-          throw new Error(`Failed to delete item ${id}: ${error}`);
-        }
-      });
-
-      await Promise.all(deletePromises);
-      console.log(`Successfully deleted ${itemIds.length} items`);
-    }
-
-    /**
-     * Create multiple lexical documents in parallel for a space.
-     *
-     * @param requests - Array of lexical creation requests
-     * @returns Array of created Lexical instances
-     */
-    async createLexicals(requests: CreateLexicalRequest[]): Promise<Lexical[]> {
-      if (requests.length === 0) {
-        return [];
-      }
-
-      console.log(`Creating ${requests.length} lexical documents in parallel`);
-
-      const createPromises = requests.map(async (request, index) => {
-        try {
-          const lexical = await this.createLexical(request);
-          console.log(
-            `Created lexical ${index + 1}/${requests.length}: ${request.name}`,
-          );
-          return lexical;
-        } catch (error) {
-          console.error(`Failed to create lexical ${request.name}:`, error);
-          throw new Error(`Failed to create lexical ${request.name}: ${error}`);
-        }
-      });
-
-      const results = await Promise.all(createPromises);
-      console.log(`Successfully created ${results.length} lexical documents`);
-      return results;
-    }
-
-    /**
-     * Get multiple lexical documents in parallel.
-     *
-     * @param lexicalIds - Array of lexical IDs to retrieve
-     * @returns Array of Lexical instances
-     */
-    async getLexicals(lexicalIds: string[]): Promise<Lexical[]> {
-      if (lexicalIds.length === 0) {
-        return [];
-      }
-
-      console.log(
-        `Retrieving ${lexicalIds.length} lexical documents in parallel`,
-      );
-
-      const getPromises = lexicalIds.map(async (id, index) => {
-        try {
-          const lexical = await this.getLexical(id);
-          console.log(
-            `Retrieved lexical ${index + 1}/${lexicalIds.length}: ${id}`,
-          );
-          return lexical;
-        } catch (error) {
-          console.error(`Failed to retrieve lexical ${id}:`, error);
-          throw new Error(`Failed to retrieve lexical ${id}: ${error}`);
-        }
-      });
-
-      const results = await Promise.all(getPromises);
-      console.log(`Successfully retrieved ${results.length} lexical documents`);
-      return results;
-    }
-
-    /**
-     * Update multiple lexical documents in parallel.
-     *
-     * @param updates - Array of update operations with lexical ID and update data
-     * @returns Array of updated Lexical instances
-     */
-    async updateLexicals(
-      updates: Array<{ id: string; data: UpdateLexicalRequest }>,
-    ): Promise<Lexical[]> {
-      if (updates.length === 0) {
-        return [];
-      }
-
-      console.log(`Updating ${updates.length} lexical documents in parallel`);
-
-      const updatePromises = updates.map(async ({ id, data }, index) => {
-        try {
-          const lexical = await this.updateLexical(id, data);
-          console.log(`Updated lexical ${index + 1}/${updates.length}: ${id}`);
-          return lexical;
-        } catch (error) {
-          console.error(`Failed to update lexical ${id}:`, error);
-          throw new Error(`Failed to update lexical ${id}: ${error}`);
-        }
-      });
-
-      const results = await Promise.all(updatePromises);
-      console.log(`Successfully updated ${results.length} lexical documents`);
-      return results;
     }
 
     // ========================================================================

@@ -156,7 +156,7 @@ describe('SDK Runtimes Integration Tests', () => {
         // Test JSON export
         const json = await createdRuntime.toJSON();
         expect(json).toBeDefined();
-        expect(json.pod_name).toBe(createdRuntime.podName);
+        expect(json.podName).toBe(createdRuntime.podName);
 
         // Test toString
         const str = createdRuntime.toString();

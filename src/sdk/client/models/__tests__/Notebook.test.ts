@@ -194,25 +194,26 @@ describe('Notebook Model', () => {
       await notebook.getName();
       const json = await notebook.toJSON();
       expect(json.name).toBe('Fresh Name');
-      expect(json.version).toBe(2);
     });
   });
 
   describe('Action Methods', () => {
     it('should update notebook and return new instance', async () => {
-      const updateData = { name: 'New Name', description: 'New Description' };
       const updatedNotebookData = { ...mockNotebookData, name: 'New Name' };
 
       (notebooks.updateNotebook as any).mockResolvedValue({
         notebook: updatedNotebookData,
       });
 
-      const updatedNotebook = await notebook.update(updateData);
+      const updatedNotebook = await notebook.update(
+        'New Name',
+        'New Description',
+      );
 
       expect(notebooks.updateNotebook).toHaveBeenCalledWith(
         'mock-token',
         'notebook-uid-456', // Use uid, not id
-        updateData,
+        { name: 'New Name', description: 'New Description' },
         'https://api.example.com',
       );
       expect(updatedNotebook).toBeInstanceOf(Notebook);

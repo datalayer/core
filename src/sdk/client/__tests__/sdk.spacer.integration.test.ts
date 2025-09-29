@@ -103,7 +103,7 @@ describe('SDK Spacer Integration Tests', () => {
       // Test toJSON method
       const json = await testSpace.toJSON();
       expect(json).toBeDefined();
-      expect(json.id || json.uid).toBeDefined();
+      expect(json.uid).toBeDefined();
 
       // Test toString
       const str = testSpace.toString();

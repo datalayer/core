@@ -14,6 +14,7 @@ export interface Space {
   name_t?: string; // New field from API
   handle_s?: string; // New field from API
   variant_s?: string; // New field from API
+  type?: string; // Space type field
   description?: string;
   description_t?: string; // New field from API
   visibility?: 'public' | 'private' | 'organization';
@@ -58,7 +59,7 @@ export interface Notebook {
   public_b?: boolean;
   description_t?: string;
   notebook_name_s?: string;
-  notebook_extension_s?: string;
+  notebook_extension_s: string;
   notebook_format_s?: string;
   content_length_i?: number;
   content_type_s?: string;
@@ -175,7 +176,7 @@ export interface UpdateNotebookResponse {
  */
 export interface SpaceItem {
   id: string;
-  type: 'notebook' | 'lexical' | 'cell';
+  type_s: 'notebook' | 'lexical' | 'cell';
   space_id: string;
   item_id: string;
   name: string;
@@ -206,7 +207,7 @@ export interface Lexical {
   public_b?: boolean;
   description_t?: string;
   document_name_s?: string;
-  document_extension_s?: string;
+  document_extension_s: string;
   document_format_s?: string;
   content_length_i?: number;
   content_type_s?: string;

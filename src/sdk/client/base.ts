@@ -240,31 +240,83 @@ export class DatalayerSDKBase {
         return;
       }
 
-      // Create wrapped version
-      (this as any)[methodName] = async (...args: any[]) => {
-        // Call beforeCall handler if defined
-        if (this.handlers?.beforeCall) {
-          await Promise.resolve(this.handlers.beforeCall(methodName, args));
-        }
+      // Detect if the original method is async by checking if it's an AsyncFunction
+      const isAsync = original.constructor.name === 'AsyncFunction';
+      console.log(
+        `[SDK Debug v3.0] Method ${methodName} is ${isAsync ? 'async' : 'sync'}`,
+      );
 
-        try {
-          // Call the original method
-          const result = await original.apply(this, args);
-
-          // Call afterCall handler if defined
-          if (this.handlers?.afterCall) {
-            await Promise.resolve(this.handlers.afterCall(methodName, result));
+      if (isAsync) {
+        // Create async wrapped version for originally async methods
+        (this as any)[methodName] = async (...args: any[]) => {
+          // Call beforeCall handler if defined
+          if (this.handlers?.beforeCall) {
+            await Promise.resolve(this.handlers.beforeCall(methodName, args));
           }
 
-          return result;
-        } catch (error) {
-          // Call onError handler if defined
-          if (this.handlers?.onError) {
-            await Promise.resolve(this.handlers.onError(methodName, error));
+          try {
+            // Call the original async method
+            const result = await original.apply(this, args);
+
+            // Call afterCall handler if defined
+            if (this.handlers?.afterCall) {
+              await Promise.resolve(
+                this.handlers.afterCall(methodName, result),
+              );
+            }
+
+            return result;
+          } catch (error) {
+            // Call onError handler if defined
+            if (this.handlers?.onError) {
+              await Promise.resolve(this.handlers.onError(methodName, error));
+            }
+            throw error;
           }
-          throw error;
-        }
-      };
+        };
+      } else {
+        // Create sync wrapped version for originally sync methods
+        (this as any)[methodName] = (...args: any[]) => {
+          // Call beforeCall handler if defined (sync version)
+          if (this.handlers?.beforeCall) {
+            const beforeResult = this.handlers.beforeCall(methodName, args);
+            // If beforeCall returns a Promise, we can't await it in sync context
+            if (beforeResult instanceof Promise) {
+              console.warn(
+                `[SDK] beforeCall handler for sync method ${methodName} returned a Promise. This will be ignored.`,
+              );
+            }
+          }
+
+          try {
+            // Call the original sync method
+            const result = original.apply(this, args);
+
+            // Call afterCall handler if defined (sync version)
+            if (this.handlers?.afterCall) {
+              const afterResult = this.handlers.afterCall(methodName, result);
+              if (afterResult instanceof Promise) {
+                console.warn(
+                  `[SDK] afterCall handler for sync method ${methodName} returned a Promise. This will be ignored.`,
+                );
+              }
+            }
+
+            return result;
+          } catch (error) {
+            // Call onError handler if defined (sync version)
+            if (this.handlers?.onError) {
+              const errorResult = this.handlers.onError(methodName, error);
+              if (errorResult instanceof Promise) {
+                console.warn(
+                  `[SDK] onError handler for sync method ${methodName} returned a Promise. This will be ignored.`,
+                );
+              }
+            }
+            throw error;
+          }
+        };
+      }
     });
   }
 

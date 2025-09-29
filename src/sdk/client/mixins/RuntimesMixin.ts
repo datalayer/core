@@ -80,19 +80,22 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Ensure a runtime is available, either by reusing existing or creating new.
-     * @param options - Options for runtime selection/creation
+     * @param environmentName - Optional name of the environment to use
+     * @param creditsLimit - Optional maximum credits to allocate
+     * @param waitForReady - Whether to wait for runtime to be ready (defaults to true)
+     * @param maxWaitTime - Maximum time to wait for ready state in ms (defaults to 60000)
+     * @param reuseExisting - Whether to reuse existing suitable runtime (defaults to true)
+     * @param snapshotId - Optional snapshot ID to create runtime from
      * @returns Runtime instance
      */
-    async ensureRuntime(options: EnsureRuntimeOptions = {}): Promise<Runtime> {
-      const {
-        environmentName,
-        creditsLimit,
-        waitForReady = true,
-        maxWaitTime = 60000, // 60 seconds default
-        reuseExisting = true,
-        snapshotId,
-      } = options;
-
+    async ensureRuntime(
+      environmentName?: string,
+      creditsLimit?: number,
+      waitForReady: boolean = true,
+      maxWaitTime: number = 60000,
+      reuseExisting: boolean = true,
+      snapshotId?: string,
+    ): Promise<Runtime> {
       // 1. Check for existing suitable runtime if reuseExisting is true
       if (reuseExisting) {
         const existingRuntimes = await this.listRuntimes();
@@ -149,11 +152,12 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         console.log(`Creating runtime from snapshot: ${snapshotId}`);
         // Note: snapshot_id is not part of CreateRuntimeRequest
         // We may need to use a different approach or extend the API
-        const runtime = await this.createRuntime({
-          environment_name: environmentName || snapshot.environment,
-          credits_limit: creditsLimit,
-          // TODO: Add snapshot support when API supports it
-        });
+        const runtime = await this.createRuntime(
+          environmentName || snapshot.environment,
+          'notebook', // type
+          `Runtime from ${snapshotId}`, // givenName
+          creditsLimit || 10, // default credits limit
+        );
 
         if (waitForReady) {
           await runtime.waitUntilReady(maxWaitTime);
@@ -180,10 +184,12 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         }
       }
 
-      const runtime = await this.createRuntime({
-        environment_name: targetEnvironment,
-        credits_limit: creditsLimit,
-      });
+      const runtime = await this.createRuntime(
+        targetEnvironment,
+        'notebook', // type
+        `Runtime for ${targetEnvironment}`, // givenName
+        creditsLimit || 10, // default credits limit
+      );
 
       // 4. Wait for ready state if requested
       if (waitForReady) {
@@ -196,12 +202,28 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a new computational runtime.
-     * @param data - Runtime creation parameters
+     * @param environmentName - Name of the environment to use
+     * @param type - Type of runtime
+     * @param givenName - User-friendly name for the runtime
+     * @param creditsLimit - Credits limit
      * @returns Created runtime
      */
-    async createRuntime(data: CreateRuntimeRequest): Promise<Runtime> {
+    async createRuntime(
+      environmentName: string,
+      type: 'notebook' | 'terminal' | 'job',
+      givenName: string,
+      creditsLimit: number,
+    ): Promise<Runtime> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+
+      const data: CreateRuntimeRequest = {
+        environment_name: environmentName,
+        type,
+        given_name: givenName,
+        credits_limit: creditsLimit,
+      };
+
       const response = await runtimes.createRuntime(
         token,
         data,
@@ -222,12 +244,11 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
     }
 
     /**
-     * Get details for a specific runtime by pod name or Runtime instance.
-     * @param podNameOrRuntime - Runtime pod name or Runtime instance
+     * Get details for a specific runtime by pod name.
+     * @param podName - Runtime pod name
      * @returns Runtime details
      */
-    async getRuntime(podNameOrRuntime: string | Runtime): Promise<Runtime> {
-      const podName = this._extractRuntimePodName(podNameOrRuntime);
+    async getRuntime(podName: string): Promise<Runtime> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const runtimeData = await runtimes.getRuntime(
@@ -240,21 +261,12 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Delete a runtime permanently.
-     * @param podNameOrRuntime - Runtime pod name or Runtime instance
+     * @param podName - Runtime pod name
      */
-    async deleteRuntime(podNameOrRuntime: string | Runtime): Promise<void> {
-      const podName = this._extractRuntimePodName(podNameOrRuntime);
+    async deleteRuntime(podName: string): Promise<void> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       await runtimes.deleteRuntime(token, podName, runtimesRunUrl);
-
-      // If a Runtime instance was passed, mark it as deleted
-      if (
-        typeof podNameOrRuntime !== 'string' &&
-        podNameOrRuntime instanceof Runtime
-      ) {
-        (podNameOrRuntime as any)._deleted = true;
-      }
     }
 
     // ========================================================================
@@ -263,14 +275,28 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Create a snapshot of a runtime.
-     * @param data - Snapshot creation parameters
+     * @param podName - Pod name of the runtime to snapshot
+     * @param name - Name for the snapshot
+     * @param description - Description of the snapshot
+     * @param stop - Whether to stop the runtime after creating snapshot (defaults to false)
      * @returns Created snapshot
      */
     async createSnapshot(
-      data: CreateRuntimeSnapshotRequest,
+      podName: string,
+      name: string,
+      description: string,
+      stop: boolean = false,
     ): Promise<Snapshot> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+
+      const data: CreateRuntimeSnapshotRequest = {
+        pod_name: podName,
+        name,
+        description,
+        stop,
+      };
+
       const response = await snapshots.createSnapshot(
         token,
         data,
@@ -291,39 +317,25 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
     }
 
     /**
-     * Get details for a specific snapshot by ID or Snapshot instance.
-     * @param idOrSnapshot - Snapshot ID or Snapshot instance
+     * Get details for a specific snapshot by ID.
+     * @param id - Snapshot ID
      * @returns Snapshot details
      */
-    async getSnapshot(idOrSnapshot: string | Snapshot): Promise<Snapshot> {
-      const snapshotId = this._extractSnapshotId(idOrSnapshot);
+    async getSnapshot(id: string): Promise<Snapshot> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
-      const response = await snapshots.getSnapshot(
-        token,
-        snapshotId,
-        runtimesRunUrl,
-      );
+      const response = await snapshots.getSnapshot(token, id, runtimesRunUrl);
       return new Snapshot(response.snapshot, this as any);
     }
 
     /**
      * Delete a snapshot permanently.
-     * @param idOrSnapshot - Snapshot ID or Snapshot instance
+     * @param id - Snapshot ID
      */
-    async deleteSnapshot(idOrSnapshot: string | Snapshot): Promise<void> {
-      const snapshotId = this._extractSnapshotId(idOrSnapshot);
+    async deleteSnapshot(id: string): Promise<void> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
-      await snapshots.deleteSnapshot(token, snapshotId, runtimesRunUrl);
-
-      // If a Snapshot instance was passed, mark it as deleted
-      if (
-        typeof idOrSnapshot !== 'string' &&
-        idOrSnapshot instanceof Snapshot
-      ) {
-        (idOrSnapshot as any)._deleted = true;
-      }
+      await snapshots.deleteSnapshot(token, id, runtimesRunUrl);
     }
 
     // ========================================================================

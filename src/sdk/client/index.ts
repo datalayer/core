@@ -85,48 +85,91 @@ export { DatalayerSDKBase };
 // Export models for use by consumers
 export { User } from './models/User';
 export type { AuthProvider } from './models/User';
+export { Runtime } from './models/Runtime';
+export type { RuntimeJSON } from './models/Runtime';
+export { Environment } from './models/Environment';
+export type { EnvironmentJSON } from './models/Environment';
+export { Snapshot } from './models/Snapshot';
+export { Space } from './models/Space';
+export { Notebook } from './models/Notebook';
+export { Lexical } from './models/Lexical';
+export { Credits } from './models/Credits';
+export { Item } from './models/Item';
+
+// Export constants
+export { ItemTypes } from './constants';
+export type { ItemType } from './constants';
 
 // Interface declaration for TypeScript to recognize mixin methods
 export interface DatalayerSDK {
   // IAM Methods
   whoami(): Promise<any>;
-  login(credentials: any): Promise<any>;
+  login(token: string): Promise<any>;
   logout(): Promise<void>;
   getCredits(): Promise<any>;
   checkIAMHealth(): Promise<any>;
 
   // Runtime Methods
   listEnvironments(): Promise<any[]>;
-  ensureRuntime(options?: any): Promise<any>;
-  createRuntime(config: any): Promise<any>;
+  ensureRuntime(
+    environmentName?: string,
+    creditsLimit?: number,
+    waitForReady?: boolean,
+    maxWaitTime?: number,
+    reuseExisting?: boolean,
+    snapshotId?: string,
+  ): Promise<any>;
+  createRuntime(
+    environmentName: string,
+    type: 'notebook' | 'terminal' | 'job',
+    givenName: string,
+    creditsLimit: number,
+  ): Promise<any>;
   listRuntimes(): Promise<any[]>;
-  getRuntime(podNameOrRuntime: string | any): Promise<any>;
-  deleteRuntime(podNameOrRuntime: string | any): Promise<void>;
-  createSnapshot(data: any): Promise<any>;
+  getRuntime(podName: string): Promise<any>;
+  deleteRuntime(podName: string): Promise<void>;
+  createSnapshot(
+    podName: string,
+    name: string,
+    description: string,
+    stop?: boolean,
+  ): Promise<any>;
   listSnapshots(): Promise<any[]>;
-  getSnapshot(idOrSnapshot: string | any): Promise<any>;
-  deleteSnapshot(idOrSnapshot: string | any): Promise<void>;
+  getSnapshot(id: string): Promise<any>;
+  deleteSnapshot(id: string): Promise<void>;
   checkRuntimesHealth(): Promise<any>;
 
   // Spacer Methods
   getMySpaces(): Promise<any[]>;
-  createSpace(data: any): Promise<any>;
-  createNotebook(data: any): Promise<any>;
-  getNotebook(idOrNotebook: string | any): Promise<any>;
-  updateNotebook(idOrNotebook: string | any, data: any): Promise<any>;
-  createLexical(data: any): Promise<any>;
-  getLexical(idOrLexical: string | any): Promise<any>;
-  updateLexical(idOrLexical: string | any, data: any): Promise<any>;
+  createSpace(
+    name: string,
+    description: string,
+    variant: string,
+    spaceHandle: string,
+    organizationId: string,
+    seedSpaceId: string,
+    isPublic: boolean,
+  ): Promise<any>;
+  createNotebook(
+    spaceId: string,
+    name: string,
+    description: string,
+    file?: File | Blob,
+  ): Promise<any>;
+  getNotebook(id: string): Promise<any>;
+  updateNotebook(id: string, name?: string, description?: string): Promise<any>;
+  createLexical(
+    spaceId: string,
+    name: string,
+    description: string,
+    file?: File | Blob,
+  ): Promise<any>;
+  getLexical(id: string): Promise<any>;
+  updateLexical(id: string, name?: string, description?: string): Promise<any>;
   getSpaceItems(spaceId: string): Promise<any>;
   deleteSpaceItem(itemId: string): Promise<any>;
-  getNotebookContent(
-    notebookIdOrInstance: string | any,
-    options?: any,
-  ): Promise<any>;
-  getLexicalContent(
-    lexicalIdOrInstance: string | any,
-    options?: any,
-  ): Promise<any>;
+  getNotebookContent(notebookId: string, options?: any): Promise<any>;
+  getLexicalContent(lexicalId: string, options?: any): Promise<any>;
   prefetchContent(
     itemIds: string[],
     itemType?: 'notebook' | 'lexical',
@@ -135,12 +178,5 @@ export interface DatalayerSDK {
     itemId?: string,
     itemType?: 'notebook' | 'lexical',
   ): Promise<void>;
-  createNotebooks(requests: any[]): Promise<any[]>;
-  getNotebooks(notebookIds: string[]): Promise<any[]>;
-  updateNotebooks(updates: any[]): Promise<any[]>;
-  deleteSpaceItems(itemIds: string[]): Promise<void>;
-  createLexicals(requests: any[]): Promise<any[]>;
-  getLexicals(lexicalIds: string[]): Promise<any[]>;
-  updateLexicals(updates: any[]): Promise<any[]>;
   checkSpacerHealth(): Promise<any>;
 }

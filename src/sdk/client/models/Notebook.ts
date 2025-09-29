@@ -16,6 +16,31 @@ import type {
 import * as notebooks from '../../../api/spacer/notebooks';
 import type { DatalayerSDK } from '../index';
 import { Item } from './Item';
+import { ItemTypes } from '../constants';
+
+/**
+ * Stable public interface for Notebook data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
+ */
+export interface NotebookJSON {
+  /** Unique identifier for the notebook */
+  id: string;
+  /** Name of the notebook */
+  name: string;
+  /** Description of the notebook */
+  description?: string;
+  /** Type of notebook */
+  type: string;
+  /** File extension of the notebook */
+  extension: string;
+  /** Kernel specification name */
+  kernelSpec?: string;
+  /** ISO 8601 timestamp when the notebook was created */
+  createdAt?: string;
+  /** ISO 8601 timestamp when the notebook was last updated */
+  updatedAt?: string;
+}
 
 /**
  * Notebook domain model that extends the base Item class.
@@ -27,7 +52,7 @@ import { Item } from './Item';
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
-export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
+export class Notebook extends Item<NotebookData> {
   /**
    * Create a Notebook instance.
    *
@@ -45,7 +70,7 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   /** Document type identifier. */
   get type(): string {
     this._checkDeleted();
-    return 'notebook';
+    return ItemTypes.NOTEBOOK;
   }
 
   /** The cached name of the notebook. */
@@ -146,14 +171,19 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
   }
 
   /** Update the notebook. */
-  async update(data: UpdateNotebookRequest): Promise<this> {
+  async update(name?: string, description?: string): Promise<this> {
+    // FIXME: check if both are needed, and use the existing values if only one provided
     this._checkDeleted();
     const token = this._getToken();
     const spacerRunUrl = this._getSpacerRunUrl();
+    const updateData: UpdateNotebookRequest = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+
     const response = await notebooks.updateNotebook(
       token,
       this.uid,
-      data,
+      updateData,
       spacerRunUrl,
     );
     this._updateData(response.notebook);
@@ -182,6 +212,18 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
     return this._data.metadata || {};
   }
 
+  /** Kernel specification (cached). */
+  get kernelSpec(): any {
+    this._checkDeleted();
+    return this._data.kernel_spec;
+  }
+
+  /** Description of the notebook. */
+  get description(): string {
+    this._checkDeleted();
+    return this._data.description_t || '';
+  }
+
   // ========================================================================
   // Notebook-specific Methods
   // ========================================================================
@@ -200,7 +242,43 @@ export class Notebook extends Item<NotebookData, UpdateNotebookRequest> {
 
     return this._data.kernel_spec;
   }
-}
 
-// Re-export the NotebookData type for convenience
-export type { NotebookData };
+  /** Get the notebook extension. */
+  get extension(): string {
+    this._checkDeleted();
+    const ext = this._data.notebook_extension_s;
+    return ext ? (ext.startsWith('.') ? ext : `.${ext}`) : '.ipynb';
+  }
+
+  /**
+   * Get notebook data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
+   *
+   * @returns Core notebook data with camelCase properties
+   */
+  toJSON(): NotebookJSON {
+    this._checkDeleted();
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description || undefined,
+      type: this.type,
+      extension: this.extension,
+      kernelSpec: this.kernelSpec || undefined,
+      createdAt: this._data.created_at,
+      updatedAt: this._data.updated_at,
+    };
+  }
+
+  /**
+   * Get the raw notebook data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   *
+   * @returns Raw notebook data from API
+   */
+  rawData(): NotebookData {
+    this._checkDeleted();
+    return this._data;
+  }
+}

@@ -26,10 +26,10 @@ export { Lexical } from './Lexical';
 export { Space } from './Space';
 export { Credits } from './Credits';
 
-// Export associated types for convenience
-export type { EnvironmentData } from './Environment';
-export type { RuntimeData } from './Runtime';
-export type { RuntimeSnapshot } from './Snapshot';
-export type { NotebookData } from './Notebook';
-export type { LexicalData } from './Lexical';
-export type { SpaceData } from './Space';
+// Export only the stable interfaces, not raw API types
+export type { EnvironmentJSON } from './Environment';
+export type { RuntimeJSON } from './Runtime';
+export type { SnapshotJSON } from './Snapshot';
+export type { SpaceJSON } from './Space';
+export type { NotebookJSON } from './Notebook';
+export type { LexicalJSON } from './Lexical';

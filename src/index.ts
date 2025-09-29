@@ -28,6 +28,20 @@ export {
   DatalayerSDK,
   type DatalayerSDKConfig,
   type SDKHandlers,
+  // Export SDK models
+  User,
+  Runtime,
+  Environment,
+  Snapshot,
+  Space,
+  Notebook,
+  Lexical,
+  Credits,
+  Item,
+  // Export typed interfaces for stable contracts
+  type RuntimeJSON,
+  type EnvironmentJSON,
+  type AuthProvider,
 } from './sdk/client';
 
 // Export commonly used SDK functions directly for convenience

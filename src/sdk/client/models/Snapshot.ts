@@ -14,6 +14,28 @@ import type { DatalayerSDK } from '../index';
 import { snapshots } from '../../../api/runtimes';
 
 /**
+ * Stable public interface for Snapshot data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
+ */
+export interface SnapshotJSON {
+  /** Unique identifier for the snapshot */
+  uid: string;
+  /** Name of the snapshot */
+  name: string;
+  /** Optional description of the snapshot */
+  description?: string;
+  /** Name of the environment used by the runtime */
+  environment: string;
+  /** Size of the snapshot in bytes */
+  size?: number;
+  /** Status of the snapshot */
+  status?: string;
+  /** ISO 8601 timestamp when the snapshot was last updated */
+  updatedAt: string;
+}
+
+/**
  * Snapshot domain model that wraps API responses with convenient methods.
  * Provides runtime snapshot management with data refresh and lifecycle operations.
  *
@@ -209,14 +231,34 @@ export class Snapshot {
   // ========================================================================
 
   /**
-   * Get raw snapshot data object with latest information.
-   * Refreshes from API before returning.
+   * Get snapshot data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
+   * Note: Returns current cached state - call getStatus() first if you need fresh data.
    *
-   * @returns Raw snapshot data
+   * @returns Core snapshot data with camelCase properties
    */
-  async toJSON(): Promise<RuntimeSnapshot> {
+  toJSON(): SnapshotJSON {
     this._checkDeleted();
-    await this.getStatus(); // This updates internal data
+    return {
+      uid: this._data.uid,
+      name: this._data.name,
+      description: this._data.description,
+      environment: this._data.environment,
+      size: this._data.size,
+      status: this._data.status,
+      updatedAt: this._data.updated_at,
+    };
+  }
+
+  /**
+   * Get the raw snapshot data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   *
+   * @returns Raw snapshot data from API
+   */
+  rawData(): RuntimeSnapshot {
+    this._checkDeleted();
     return this._data;
   }
 
@@ -226,6 +268,3 @@ export class Snapshot {
     return `Snapshot(${this.uid}, ${this.name})`;
   }
 }
-
-// Re-export the RuntimeSnapshot type for convenience
-export type { RuntimeSnapshot };

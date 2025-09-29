@@ -15,9 +15,34 @@ import type {
 } from '../../../api/types/spacer';
 import * as users from '../../../api/spacer/users';
 import * as items from '../../../api/spacer/items';
+import * as notebooks from '../../../api/spacer/notebooks';
+import * as lexicals from '../../../api/spacer/lexicals';
 import type { DatalayerSDK } from '../index';
 import { Notebook } from './Notebook';
 import { Lexical } from './Lexical';
+import { ItemTypes } from '../constants';
+
+/**
+ * Stable public interface for Space data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
+ */
+export interface SpaceJSON {
+  /** Unique identifier for the space */
+  uid: string;
+  /** Name of the space */
+  name: string;
+  /** Description of the space */
+  description?: string;
+  /** Type of space */
+  type?: string;
+  /** Number of items in the space */
+  itemCount?: number;
+  /** ISO 8601 timestamp when the space was created */
+  createdAt?: string;
+  /** ISO 8601 timestamp when the space was last updated */
+  updatedAt?: string;
+}
 
 /**
  * Space domain model that wraps API responses with convenient methods.
@@ -135,6 +160,12 @@ export class Space {
     return this._data.variant_s || '';
   }
 
+  /** Space type. */
+  get type(): string {
+    this._checkDeleted();
+    return this._data.type || '';
+  }
+
   // ========================================================================
   // Dynamic Methods (always fetch fresh data and update internal state)
   // ========================================================================
@@ -237,21 +268,39 @@ export class Space {
   ): Promise<T> {
     this._checkDeleted();
 
-    // Build request with spaceId
-    const request = {
-      spaceId: this.uid,
-      name: data.name,
-      description: data.description || '',
-      file: data.file,
-    };
+    // Get necessary configuration from SDK
+    const token = (this._sdk as any).getToken();
+    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
 
-    // Add type-specific field
+    // Call API directly to avoid recursion
     if (itemType === 'notebook') {
-      (request as any).notebookType = data.type || 'jupyter';
-      return await (this._sdk as any).createNotebook(request);
+      const requestData = {
+        spaceId: this.uid,
+        name: data.name,
+        description: data.description || '',
+        notebookType: data.type || 'jupyter',
+        file: data.file,
+      };
+      const response = await notebooks.createNotebook(
+        token,
+        requestData,
+        spacerRunUrl,
+      );
+      return new Notebook(response.notebook, this._sdk) as T;
     } else {
-      (request as any).documentType = data.type || 'lexical';
-      return await (this._sdk as any).createLexical(request);
+      const requestData = {
+        spaceId: this.uid,
+        name: data.name,
+        description: data.description || '',
+        documentType: data.type || 'lexical',
+        file: data.file,
+      };
+      const response = await lexicals.createLexical(
+        token,
+        requestData,
+        spacerRunUrl,
+      );
+      return new Lexical(response.document, this._sdk) as T;
     }
   }
 
@@ -275,30 +324,31 @@ export class Space {
     const modelItems: (Notebook | Lexical)[] = [];
     for (const item of response.items) {
       // Check various possible type fields
-      const itemType =
-        item.type || (item as any).type_s || (item as any).item_type_s;
+      const itemType: string = (item as any).type_s;
 
-      // Check if it's a notebook - look for notebook-specific fields
-      const hasNotebookFields =
-        (item as any).notebook_name_s || (item as any).kernel_name_s;
-      const hasLexicalFields =
-        (item as any).lexical_name_s || (item as any).lexical_content_s;
+      // Debug logging to understand what types we're getting
+      console.log('[SDK Space] Item from API:', {
+        name: (item as any).name || (item as any).name_t,
+        type: itemType,
+        actualTypeValue: itemType,
+        isNotebook: itemType === ItemTypes.NOTEBOOK,
+        isLexical: itemType === ItemTypes.LEXICAL,
+        ItemTypesNOTEBOOK: ItemTypes.NOTEBOOK,
+        ItemTypesLEXICAL: ItemTypes.LEXICAL,
+        typeEqualsStringNotebook: itemType === 'notebook',
+        typeEqualsStringLexical: itemType === 'document',
+        hasType: !!item.type_s,
+        hasTypeS: !!(item as any).type_s,
+        hasItemTypeS: !!(item as any).item_type_s,
+      });
 
-      if (itemType === 'notebook' || hasNotebookFields) {
+      // Only include notebooks and lexicals
+      if (itemType === ItemTypes.NOTEBOOK) {
         modelItems.push(new Notebook(item as any, this._sdk));
-      } else if (itemType === 'lexical' || hasLexicalFields) {
+      } else if (itemType === ItemTypes.LEXICAL) {
         modelItems.push(new Lexical(item as any, this._sdk));
-      } else {
-        // If we can't determine the type but it has a name, assume it's a notebook
-        if (
-          (item as any).name ||
-          (item as any).name_t ||
-          (item as any).notebook_name_s
-        ) {
-          modelItems.push(new Notebook(item as any, this._sdk));
-        }
-        // Skip unknown items
       }
+      // Skip everything else (exercises, cells, etc.)
     }
 
     return modelItems;
@@ -312,13 +362,12 @@ export class Space {
    */
   async createNotebook(data: {
     name: string;
-    notebookType?: string;
     description?: string;
     file?: File | Blob;
   }): Promise<Notebook> {
     return this._createItem('notebook', {
       name: data.name,
-      type: data.notebookType,
+      type: ItemTypes.NOTEBOOK,
       description: data.description,
       file: data.file,
     });
@@ -332,13 +381,12 @@ export class Space {
    */
   async createLexical(data: {
     name: string;
-    documentType?: string;
     description?: string;
     file?: File | Blob;
   }): Promise<Lexical> {
     return this._createItem('lexical', {
       name: data.name,
-      type: data.documentType,
+      type: ItemTypes.LEXICAL,
       description: data.description,
       file: data.file,
     });
@@ -354,10 +402,34 @@ export class Space {
    *
    * @returns Raw space data object
    */
-  toJSON(): SpaceData {
+  /**
+   * Get space data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
+   *
+   * @returns Core space data with camelCase properties
+   */
+  toJSON(): SpaceJSON {
     this._checkDeleted();
-    // Don't refresh here as this method is called by JSON.stringify
-    // and could cause issues with circular references or async operations
+    return {
+      uid: this._data.uid,
+      name: this._data.name || this._data.name_t || '',
+      description: this._data.description,
+      type: this._data.type || undefined,
+      itemCount: (this._data as any).item_count || undefined,
+      createdAt: this._data.created_at || (this._data as any).creation_ts_dt,
+      updatedAt: this._data.updated_at || (this._data as any).last_update_ts_dt,
+    };
+  }
+
+  /**
+   * Get the raw space data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   *
+   * @returns Raw space data from API
+   */
+  rawData(): SpaceData {
+    this._checkDeleted();
     return this._data;
   }
 
@@ -368,6 +440,3 @@ export class Space {
     return `Space(${this.uid}, ${name})`;
   }
 }
-
-// Re-export the SpaceData type for convenience
-export type { SpaceData };

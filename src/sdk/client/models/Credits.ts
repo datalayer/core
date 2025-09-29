@@ -8,7 +8,7 @@
  * @description Credits model for the Datalayer SDK.
  */
 
-import type { CreditsInfo, CreditReservation } from '../../../api/iam/credits';
+import type { CreditsInfo, CreditReservation } from '../../../api/iam/usage';
 
 /**
  * Credits model representing user's available credits and usage.

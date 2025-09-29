@@ -76,7 +76,7 @@ export async function getCredits(
   iamUrl: string = DEFAULT_SERVICE_URLS.IAM,
 ): Promise<CreditsResponse> {
   return requestDatalayerAPI<CreditsResponse>({
-    url: `${iamUrl}${API_BASE_PATHS.IAM}/credits`,
+    url: `${iamUrl}${API_BASE_PATHS.IAM}usage/credits`,
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
