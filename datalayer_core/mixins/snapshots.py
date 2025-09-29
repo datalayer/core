@@ -4,7 +4,6 @@
 from typing import Any
 
 
-
 class SnapshotsCreateMixin:
     """Mixin class for creating snapshots."""
 

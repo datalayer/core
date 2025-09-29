@@ -20,14 +20,14 @@ from datalayer_core.mixins.snapshots import SnapshotsMixin
 from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 
-from datalayer_core.services.runtimes import RuntimeService
+from datalayer_core.services.runtime import RuntimeService
 
-from datalayer_core.models.secrets import Secret, SecretType
-from datalayer_core.models.environments import Environment
-from datalayer_core.models.profile import Profile
-from datalayer_core.models.tokens import Token, TokenType
+from datalayer_core.models.secrets import SecretModel, SecretType
+from datalayer_core.models.environments import EnvironmentModel
+from datalayer_core.models.profile import ProfileModel
+from datalayer_core.models.tokens import TokenModel, TokenType
 
-from datalayer_core.services.runtime_snapshots import (
+from datalayer_core.services.runtime_snapshot import (
     RuntimeSnapshotService,
     create_snapshot,
     list_snapshots,
@@ -117,7 +117,7 @@ class DatalayerClient(
         # print(response)
         return response["success"]
 
-    def get_profile(self) -> Profile:
+    def get_profile(self) -> ProfileModel:
         """
         Get the user's profile information.
 
@@ -128,11 +128,11 @@ class DatalayerClient(
         """
         response = self._get_profile()
         if response["success"]:
-            return Profile(response["profile"])
+            return ProfileModel(response["profile"])
         raise RuntimeError("Failed to get profile information")
 
     @lru_cache
-    def list_environments(self) -> list[Environment]:
+    def list_environments(self) -> list[EnvironmentModel]:
         """
         List all available environments.
 
@@ -147,7 +147,7 @@ class DatalayerClient(
         for env in self._available_environments:
             self._available_environments_names.append(env.get("name"))
             env_objs.append(
-                Environment(
+                EnvironmentModel(
                     name=env.pop("name"),
                     title=env.pop("title"),
                     burning_rate=env.pop("burning_rate", 0.0),
@@ -289,7 +289,7 @@ class DatalayerClient(
         else:
             return False
 
-    def list_secrets(self) -> list[Secret]:
+    def list_secrets(self) -> list[SecretModel]:
         """
         List all secrets available in the Datalayer environment.
 
@@ -307,7 +307,7 @@ class DatalayerClient(
             description = secret.pop("description_t")
             variant = secret.pop("variant_s")
             res.append(
-                Secret(
+                SecretModel(
                     uid=uid,
                     name=name,
                     description=description,
@@ -323,7 +323,7 @@ class DatalayerClient(
         description: str,
         value: str,
         secret_type: str = SecretType.GENERIC,
-    ) -> "Secret":
+    ) -> "SecretModel":
         """
         Create a new secret.
 
@@ -347,14 +347,14 @@ class DatalayerClient(
             name=name, description=description, value=value, secret_type=secret_type
         )
         secret_data = response.get("secret", {})
-        return Secret(
+        return SecretModel(
             uid=secret_data.get("uid"),
             name=secret_data.get("name_s"),
             description=secret_data.get("description_t"),
             secret_type=secret_data.get("variant_s"),
         )
 
-    def delete_secret(self, secret: Union[str, Secret]) -> dict[str, str]:
+    def delete_secret(self, secret: Union[str, SecretModel]) -> dict[str, str]:
         """
         Delete a secret by its unique identifier.
 
@@ -368,7 +368,7 @@ class DatalayerClient(
         dict[str, str]
             Response dictionary with deletion status.
         """
-        uid = secret.uid if isinstance(secret, Secret) else secret
+        uid = secret.uid if isinstance(secret, SecretModel) else secret
         return self._delete_secret(uid)
 
     def create_snapshot(
@@ -496,7 +496,7 @@ class DatalayerClient(
             token_type=token_type,
         )
 
-    def list_tokens(self) -> list[Token]:
+    def list_tokens(self) -> list[TokenModel]:
         """
         List all tokens.
 
@@ -509,7 +509,7 @@ class DatalayerClient(
         if response.get("success") and "tokens" in response:
             token_objects = []
             for token_data in response["tokens"]:
-                token = Token(
+                token = TokenModel(
                     uid=token_data["uid"],
                     name=token_data.get("name_s", ""),
                     description=token_data.get("description_t", ""),
@@ -519,7 +519,7 @@ class DatalayerClient(
             return token_objects
         return []
 
-    def delete_token(self, token: Union[str, Token]) -> bool:
+    def delete_token(self, token: Union[str, TokenModel]) -> bool:
         """
         Delete a specific token.
 
@@ -533,6 +533,6 @@ class DatalayerClient(
         bool
             The result of the deletion operation.
         """
-        token_uid = token.uid if isinstance(token, Token) else token
+        token_uid = token.uid if isinstance(token, TokenModel) else token
         response = self._delete_token(token_uid)
         return response.get("success", False)

@@ -3,6 +3,7 @@
  
 from typing import Any
 
+
 class WhoamiAppMixin:
     """Mixin for Who Am I application."""
 

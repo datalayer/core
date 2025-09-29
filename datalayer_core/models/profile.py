@@ -6,7 +6,7 @@
 from typing import Any
 
 
-class Profile:
+class ProfileModel:
     """
     Represents a user profile in the DataLayer SDK.
 

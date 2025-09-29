@@ -18,7 +18,7 @@ class SecretType(str, Enum):
     TOKEN = "token"
 
 
-class Secret:
+class SecretModel:
     """
     Represents a secret in Datalayer.
 

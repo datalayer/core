@@ -6,6 +6,7 @@ from typing import Any, Union
 from datalayer_core.models.tokens import TokenType
 from datalayer_core.utils import btoa
 
+
 class TokensCreateMixin:
     """Mixin for creating tokens in Datalayer."""
 

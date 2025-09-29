@@ -10,7 +10,7 @@ from typing import Any, Optional
 from datalayer_core.utils.types import CreditsPerSecond
 
 
-class Environment:
+class EnvironmentModel:
     """
     Represents a Datalayer environment.
 

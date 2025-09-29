@@ -15,7 +15,7 @@ class TokenType(str, Enum):
     USER = "user_token"
 
 
-class Token:
+class TokenModel:
     """
     Represents a token in Datalayer.
 

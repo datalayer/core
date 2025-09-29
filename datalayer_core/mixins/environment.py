@@ -1,9 +1,10 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Datalayer environments management."""
+
 from typing import Any
 
-"""Datalayer environments management."""
 
 class EnvironmentsListMixin:
     """Mixin class that provides environment listing functionality."""
