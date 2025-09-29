@@ -13,7 +13,7 @@ from datalayer_core.sdk.utils import DEFAULT_RUN_URL
 from datalayer_core.utils.utils import fetch
 
 
-class DatalayerClientAuthnMixin:
+class AuthnMixin:
     """
     Mixin class for Datalayer client authentication.
 

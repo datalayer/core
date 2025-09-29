@@ -7,7 +7,7 @@ import sys
 from typing import Any
 
 from datalayer_core.cli0.base import DatalayerCLIBaseApp
-from datalayer_core.cli0.snapshots.utils import display_snapshots
+from datalayer_core.utils.utils import display_snapshots
 
 
 class SnapshotsListMixin:

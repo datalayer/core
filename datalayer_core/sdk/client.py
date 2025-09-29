@@ -15,17 +15,17 @@ from typing import Any, Optional, Union
 from datalayer_core.cli0.authn import WhoamiAppMixin
 from datalayer_core.cli0.environments import EnvironmentsMixin
 from datalayer_core.cli0.runtimes import RuntimesMixin
-from datalayer_core.sdk.authn import DatalayerClientAuthnMixin
-from datalayer_core.sdk.environments import Environment
-from datalayer_core.sdk.profile import Profile
-from datalayer_core.sdk.runtimes import Runtime
-from datalayer_core.sdk.secrets import Secret
-from datalayer_core.sdk.snapshots import (
+from datalayer_core.sdk.mixins.authn import AuthnMixin
+from datalayer_core.sdk.mixins.environments import Environment
+from datalayer_core.sdk.mixins.profile import Profile
+from datalayer_core.sdk.mixins.runtimes import Runtime
+from datalayer_core.sdk.mixins.secrets import Secret
+from datalayer_core.sdk.mixins.snapshots import (
     RuntimeSnapshot,
     _create_snapshot,
     _list_snapshots,
 )
-from datalayer_core.sdk.tokens import Token, TokenType
+from datalayer_core.sdk.mixins.tokens import Token, TokenType
 from datalayer_core.sdk.utils import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_RUN_URL,
@@ -38,7 +38,7 @@ from datalayer_core.cli0.tokens import TokensMixin
 
 
 class DatalayerClient(
-    DatalayerClientAuthnMixin,
+    AuthnMixin,
     RuntimesMixin,
     EnvironmentsMixin,
     SecretsMixin,

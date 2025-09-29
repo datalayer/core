@@ -63,7 +63,7 @@ This example showcases:
 
 Access the localhost and test the app!
 
-![streamlit](https://raw.githubusercontent.com/datalayer/core/refs/heads/main/examples/images/streamlit.gif)
+![streamlit](https://raw.githubusercontent.com/datalayer/core/refs/heads/main/docs/static/img/streamlit.gif)
 
 ## Project Structure
 

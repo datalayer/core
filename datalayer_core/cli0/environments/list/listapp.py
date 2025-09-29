@@ -6,7 +6,7 @@
 from typing import Any
 
 from datalayer_core.cli0.base import DatalayerCLIBaseApp
-from datalayer_core.cli0.environments.utils import display_environments
+from datalayer_core.utils.utils import display_environments
 
 
 class EnvironmentsListMixin:

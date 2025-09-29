@@ -6,7 +6,7 @@
 from typing import Any
 
 from datalayer_core.cli0.base import DatalayerCLIBaseApp
-from datalayer_core.cli0.secrets.utils import display_secrets
+from datalayer_core.utils.utils import display_secrets
 
 
 class SecretsListMixin:

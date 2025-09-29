@@ -6,7 +6,7 @@
 from typing import Any
 
 from datalayer_core.cli0.base import DatalayerCLIBaseApp
-from datalayer_core.cli0.tokens.utils import display_tokens
+from datalayer_core.utils.utils import display_tokens
 
 
 class TokensListMixin:
