@@ -13,7 +13,7 @@ from typing import Any, List, Optional, Tuple
 from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 
 
-class RuntimeSnapshotService:
+class RuntimeSnapshotsService:
     """
     Service for managing Datalayer runtime snapshot operations.
 
@@ -154,7 +154,7 @@ def create_snapshot(
     return name, description
 
 
-def as_runtime_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotService"]:
+def as_runtime_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotsService"]:
     """
     Parse API response and create RuntimeSnapshot objects.
 
@@ -173,7 +173,7 @@ def as_runtime_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotServi
         snapshots = response["snapshots"]
         for snapshot in snapshots:
             snapshot_objects.append(
-                RuntimeSnapshotService(
+                RuntimeSnapshotsService(
                     uid=snapshot["uid"],
                     name=snapshot["name"],
                     description=snapshot["description"],

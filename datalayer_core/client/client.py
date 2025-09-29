@@ -12,9 +12,9 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from datalayer_core.services.runtimes.runtimes import RuntimeService
+from datalayer_core.services.runtimes.runtimes import RuntimesService
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
-    RuntimeSnapshotService,
+    RuntimeSnapshotsService,
     create_snapshot,
     as_runtime_snapshots,
 )
@@ -165,7 +165,7 @@ class DatalayerClient(
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         snapshot_name: Optional[str] = None,
-    ) -> RuntimeService:
+    ) -> RuntimesService:
         """
         Create a new runtime (kernel) for code execution.
 
@@ -219,7 +219,7 @@ class DatalayerClient(
                         credits_limit=credits_limit,
                     )
                     runtime_data = response["runtime"]
-                    runtime = RuntimeService(
+                    runtime = RuntimesService(
                         name=runtime_data["given_name"],
                         environment=runtime_data["environment_name"],
                         run_url=self.run_url,
@@ -229,7 +229,7 @@ class DatalayerClient(
                         pod_name=runtime_data["pod_name"],
                     )
         else:
-            runtime = RuntimeService(
+            runtime = RuntimesService(
                 name,
                 environment=environment,
                 time_reservation=time_reservation,
@@ -239,7 +239,7 @@ class DatalayerClient(
             )
         return runtime
 
-    def list_runtimes(self) -> list[RuntimeService]:
+    def list_runtimes(self) -> list[RuntimesService]:
         """
         List all running runtimes.
 
@@ -252,7 +252,7 @@ class DatalayerClient(
         runtime_objects = []
         for runtime in runtimes:
             runtime_objects.append(
-                RuntimeService(
+                RuntimesService(
                     name=runtime["given_name"],
                     environment=runtime["environment_name"],
                     pod_name=runtime["pod_name"],
@@ -269,7 +269,7 @@ class DatalayerClient(
             )
         return runtime_objects
 
-    def terminate_runtime(self, runtime: Union[RuntimeService, str]) -> bool:
+    def terminate_runtime(self, runtime: Union[RuntimesService, str]) -> bool:
         """
         Terminate a running Runtime.
 
@@ -283,7 +283,7 @@ class DatalayerClient(
         bool
             True if termination was successful, False otherwise.
         """
-        pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
+        pod_name = runtime.pod_name if isinstance(runtime, RuntimesService) else runtime
         if pod_name is not None:
             return self._terminate_runtime(pod_name)["success"]
         else:
@@ -373,12 +373,12 @@ class DatalayerClient(
 
     def create_snapshot(
         self,
-        runtime: Optional["RuntimeService"] = None,
+        runtime: Optional["RuntimesService"] = None,
         pod_name: Optional[str] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotService":
+    ) -> "RuntimeSnapshotsService":
         """
         Create a snapshot of the current runtime state.
 
@@ -423,7 +423,7 @@ class DatalayerClient(
         for snapshot in snapshots_objects:
             if snapshot.name == name:
                 break
-        return RuntimeSnapshotService(
+        return RuntimeSnapshotsService(
             uid=snapshot.uid,
             name=name,
             description=description,
@@ -431,7 +431,7 @@ class DatalayerClient(
             metadata=response,
         )
 
-    def list_snapshots(self) -> list[RuntimeSnapshotService]:
+    def list_snapshots(self) -> list[RuntimeSnapshotsService]:
         """
         List all snapshots.
 
@@ -444,7 +444,7 @@ class DatalayerClient(
         snapshot_objects = as_runtime_snapshots(response)
         return snapshot_objects
 
-    def delete_snapshot(self, snapshot: Union[str, RuntimeSnapshotService]) -> dict[str, str]:
+    def delete_snapshot(self, snapshot: Union[str, RuntimeSnapshotsService]) -> dict[str, str]:
         """
         Delete a specific snapshot.
 
@@ -459,7 +459,7 @@ class DatalayerClient(
             The result of the deletion operation.
         """
         snapshot_uid = (
-            snapshot.uid if isinstance(snapshot, RuntimeSnapshotService) else snapshot
+            snapshot.uid if isinstance(snapshot, RuntimeSnapshotsService) else snapshot
         )
         return self._delete_snapshot(snapshot_uid)
 
