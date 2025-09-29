@@ -6,15 +6,14 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Optional
 
 from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
 from rich import print_json
 
+from datalayer_core.client.client import DatalayerClient
 from datalayer_core.utils.date import timestamp_to_local_date
-from datalayer_core.utils.network import fetch
-from datalayer_core.utils.defaults import get_default_credits_limit
 from datalayer_core.displays.runtimes import display_runtimes
 
 
@@ -60,6 +59,9 @@ class RuntimeManager(KernelHttpManager):
         self.run_url = run_url
         self.run_token = token
         self.username = username
+        
+        # Initialize DatalayerClient for modern API access
+        self._client = DatalayerClient(run_url=run_url, token=token)
 
     @property
     def kernel_url(self) -> str | None:
@@ -109,41 +111,38 @@ class RuntimeManager(KernelHttpManager):
 
         runtime_name = name
         runtime = None
+        
+        # Use DatalayerClient to get runtime information
         if runtime_name:
-            response = fetch(
-                "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, runtime_name),
-                token=self.run_token,
-            )
-            runtime = response.json().get("runtime")
+            # Get specific runtime by name
+            runtimes = self._client.list_runtimes()
+            for r in runtimes:
+                if r.name == runtime_name:
+                    runtime = {
+                        "pod_name": r.pod_name,
+                        "ingress": r.ingress,
+                        "token": r.kernel_token,
+                        "expired_at": r.expired_at,
+                    }
+                    break
         else:
             self.log.debug(
                 "No Runtime name provided. Picking the first available Runtime…"
             )
-            response = fetch(
-                "{}/api/runtimes/v1/runtimes".format(self.run_url),
-                token=self.run_token,
-            )
-            runtimes = response.json().get("runtimes", [])
+            # Get list of available runtimes
+            runtimes = self._client.list_runtimes()
 
             # If no runtime is running, let the user decide to start one from the first environment
             if not runtimes:
-                response_environments = fetch(
-                    f"{self.run_url}/api/runtimes/v1/environments",
-                    token=self.run_token,
-                )
-                environments = response_environments.json().get("environments", [])
+                environments = self._client.list_environments()
+                if not environments:
+                    raise RuntimeError("No environments available to create a runtime from.")
+                    
                 first_environment = environments[0]
-                first_environment_name = first_environment.get("name")
+                first_environment_name = first_environment.name
 
-                response_credits = fetch(
-                    f"{self.run_url}/api/iam/v1/usage/credits",
-                    method="GET",
-                    token=self.run_token,
-                )
-                raw_credits = response_credits.json()
-                credits_limit = get_default_credits_limit(
-                    raw_credits["reservations"], raw_credits["credits"]
-                )
+                # Calculate credits limit based on environment
+                credits_limit = first_environment.burning_rate * 60.0 * 10.0  # 10 minutes default
 
                 user_input = (
                     input(
@@ -156,33 +155,51 @@ class RuntimeManager(KernelHttpManager):
                         "No Runtime running. Please start one Runtime using `datalayer runtimes create <ENV_ID>`."
                     )
 
-                body = {
-                    "type": "notebook",
-                    "credits_limit": credits_limit,
-                    "environment_name": first_environment_name,
+                # Create new runtime using the client
+                new_runtime = self._client.create_runtime(
+                    name=f"console-runtime-{first_environment_name}",
+                    environment=first_environment_name,
+                    time_reservation=10.0  # 10 minutes default
+                )
+                
+                # Start the runtime to get connection details
+                new_runtime._start()
+                
+                runtime = {
+                    "pod_name": new_runtime.pod_name,
+                    "ingress": new_runtime.ingress,
+                    "token": new_runtime.kernel_token,
+                    "expired_at": new_runtime.expired_at,
                 }
-                response = fetch(
-                    f"{self.run_url}/api/runtimes/v1/runtimes",
-                    method="POST",
-                    token=self.run_token,
-                    json=body,
-                )
+                
+                # Display the created runtime
+                runtime_dict = {
+                    'given_name': new_runtime.name,
+                    'environment_name': new_runtime.environment,
+                    'pod_name': new_runtime.pod_name,
+                    'ingress': new_runtime.ingress,
+                    'reservation_id': getattr(new_runtime, 'reservation_id', ''),
+                    'uid': new_runtime.uid,
+                    'burning_rate': getattr(new_runtime, 'burning_rate', 0.0),
+                    'token': new_runtime.kernel_token,
+                    'started_at': getattr(new_runtime, 'started_at', ''),
+                    'expired_at': new_runtime.expired_at,
+                }
+                display_runtimes([runtime_dict])
 
-                runtime = response.json().get("runtime")
-                if runtime:
-                    display_runtimes([runtime])
-                else:
-                    print_json(data=response.json())
+                # Refresh runtime list
+                runtimes = self._client.list_runtimes()
 
-                response = fetch(
-                    f"{self.run_url}/api/runtimes/v1/runtimes",
-                    token=self.run_token,
-                )
-                res = response.json()
-                runtimes = res.get("runtimes", [])
-
-            runtime = runtimes[0]
-            runtime_name = runtime.get("pod_name", "")
+            # Use the first available runtime
+            if runtimes:
+                r = runtimes[0]
+                runtime = {
+                    "pod_name": r.pod_name,
+                    "ingress": r.ingress,
+                    "token": r.kernel_token,
+                    "expired_at": r.expired_at,
+                }
+                runtime_name = r.pod_name or ""
 
         if runtime is None:
             raise RuntimeError("Unable to find a Runtime.")
@@ -190,10 +207,12 @@ class RuntimeManager(KernelHttpManager):
         self.server_url = runtime["ingress"]
         self.token = runtime.get("token", "")
 
-        # Trick to set the kernel_url without the ability to set self.__kernel
+        # Get kernel information from the runtime's Jupyter server
+        from datalayer_core.utils.network import fetch
         response = fetch(f"{self.server_url}/api/kernels", token=self.token)
-        runtimes = response.json()
-        self._kernel_id = runtimes[0]["id"]
+        kernels = response.json()
+        if kernels:
+            self._kernel_id = kernels[0]["id"]
 
         kernel_model = self.refresh_model()
         msg = f"RuntimeManager using existing jupyter kernel {runtime_name}"

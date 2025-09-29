@@ -23,15 +23,15 @@ from datalayer_core.cli.console.manager import RuntimeManager
 from datalayer_core.mixins.authn import AuthnMixin
 
 datalayer_aliases = dict(base_aliases)
-datalayer_aliases["run-url"] = "DatalayerAuthMixin.run_url"
-datalayer_aliases["token"] = "DatalayerAuthMixin.token"
-datalayer_aliases["external-token"] = "DatalayerAuthMixin.external_token"
+datalayer_aliases["run-url"] = "AuthnMixin.run_url"
+datalayer_aliases["token"] = "AuthnMixin.token"
+datalayer_aliases["external-token"] = "AuthnMixin.external_token"
 
 datalayer_flags = dict(base_flags)
 datalayer_flags.update(
     {
         "no-browser": (
-            {"DatalayerAuthMixin": {"no_browser": True}},
+            {"AuthnMixin": {"no_browser": True}},
             "Will prompt for user and password on the CLI.",
         )
     }

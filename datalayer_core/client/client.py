@@ -247,35 +247,49 @@ class DatalayerClient(
 
         if snapshot_name is not None:
             snapshots = self.list_snapshots()
+            snapshot_uid = None
             for snapshot in snapshots:
                 if snapshot.name == snapshot_name:
-                    response = self._create_runtime(
-                        given_name=snapshot.name,
-                        environment_name=environment,
-                        from_snapshot_uid=snapshot.uid,
-                        credits_limit=credits_limit,
-                    )
-                    runtime_data = response["runtime"]
-                    runtime = RuntimesService(
-                        name=runtime_data["given_name"],
-                        environment=runtime_data["environment_name"],
-                        run_url=self.run_url,
-                        iam_url=self.iam_url,
-                        token=self._token,
-                        ingress=runtime_data["ingress"],
-                        kernel_token=runtime_data["token"],
-                        pod_name=runtime_data["pod_name"],
-                    )
-        else:
-            runtime = RuntimesService(
-                name,
-                environment=environment,
-                time_reservation=time_reservation,
-                run_url=self.run_url,
-                iam_url=self.iam_url,
-                token=self._token,
-                burning_rate=burning_rate,
+                    snapshot_uid = snapshot.uid
+                    break
+            
+            if snapshot_uid is None:
+                raise ValueError(f"Snapshot '{snapshot_name}' not found. Available snapshots: {[s.name for s in snapshots]}")
+            
+            response = self._create_runtime(
+                given_name=name,
+                environment_name=environment,
+                from_snapshot_uid=snapshot_uid,
+                credits_limit=credits_limit,
             )
+        else:
+            # Create runtime without snapshot
+            response = self._create_runtime(
+                given_name=name,
+                environment_name=environment,
+                credits_limit=credits_limit,
+            )
+        
+        # Process the response and create RuntimesService object
+        if not response.get("success", True):
+            raise RuntimeError(f"Runtime creation failed: {response.get('message', 'Unknown error')}")
+        
+        runtime_data = response["runtime"]
+        runtime = RuntimesService(
+            name=runtime_data["given_name"],
+            environment=runtime_data["environment_name"],
+            run_url=self.run_url,
+            iam_url=self.iam_url,
+            token=self._token,
+            ingress=runtime_data["ingress"],
+            kernel_token=runtime_data["token"],
+            pod_name=runtime_data["pod_name"],
+            uid=runtime_data.get("uid"),
+            reservation_id=runtime_data.get("reservation_id"),
+            burning_rate=runtime_data.get("burning_rate"),
+            started_at=runtime_data.get("started_at"),
+            expired_at=runtime_data.get("expired_at"),
+        )
         return runtime
 
     def list_runtimes(self) -> list[RuntimesService]:

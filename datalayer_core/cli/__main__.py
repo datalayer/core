@@ -20,6 +20,7 @@ from datalayer_core.cli.commands.secrets import app as secrets_app, secrets_list
 from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app, snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app, tokens_list, tokens_ls
 from datalayer_core.cli.commands.web import app as web_app
+from datalayer_core.cli.exec.exec import main as exec_main
 
 # Create the main Typer app
 app = typer.Typer(
@@ -39,6 +40,9 @@ app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
 app.add_typer(tokens_app)
 app.add_typer(web_app)
+
+# Add exec command directly to root level
+app.command(name="exec")(exec_main)
 
 # Add individual auth commands at root level for convenience
 app.command(name="login")(login_root)
