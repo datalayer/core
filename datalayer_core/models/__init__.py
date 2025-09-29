@@ -11,7 +11,7 @@ serialization, and type safety.
 
 from .environment import EnvironmentModel
 from .profile import ProfileModel
-from .response import Response
+from ._response import Response
 from .runtime import RuntimeModel
 from .runtime_snapshot import RuntimeSnapshotModel
 from .secret import SecretModel, SecretType

@@ -18,8 +18,8 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.models._response import Response
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
-    RuntimeSnapshotsService,
+from datalayer_core.services.runtime_snapshot import (
+    RuntimeSnapshotService,
     create_snapshot,
     as_runtime_snapshots,
 )
@@ -35,7 +35,7 @@ from datalayer_core.utils.types import (
 )
 
 
-class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
+class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
     """
     Service for managing Datalayer runtime (kernel) operations.
 
@@ -125,7 +125,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         # self.stop()
         pass
 
-    def __enter__(self) -> "RuntimesService":
+    def __enter__(self) -> "RuntimeService":
         """
         Context manager entry.
 
@@ -491,7 +491,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotsService":
+    ) -> "RuntimeSnapshotService":
         """
         Create a new snapshot from the current state.
 
@@ -533,7 +533,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         for snapshot in snapshot_objects:
             if snapshot.name == name:
                 break
-        return RuntimeSnapshotsService(
+        return RuntimeSnapshotService(
             uid=snapshot.uid,
             name=name,
             description=description,
