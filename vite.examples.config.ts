@@ -65,8 +65,8 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml(html) {
           // Replace environment variables in HTML
           return html.replace(
-            /%VITE_DATALAYER_API_TOKEN%/g,
-            env.VITE_DATALAYER_API_TOKEN || '',
+            /%VITE_DATALAYER_API_KEY%/g,
+            env.VITE_DATALAYER_API_KEY || '',
           );
         },
       },

@@ -153,7 +153,7 @@ Run the interactive examples locally:
 npm install
 
 # Set your Datalayer API token in .env
-echo "VITE_DATALAYER_API_TOKEN=your-token-here" > .env
+echo "VITE_DATALAYER_API_KEY=your-token-here" > .env
 
 # Start the examples server
 npm run example

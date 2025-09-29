@@ -16,7 +16,7 @@ from datalayer_core import DatalayerClient
 load_dotenv()
 
 
-DATALAYER_TEST_API_KEY = os.environ.get("DATALAYER_TEST_API_KEY")
+TEST_DATALAYER_API_KEY = os.environ.get("TEST_DATALAYER_API_KEY")
 
 
 def _delete_all_runtimes(secs: int = 5) -> None:
@@ -61,27 +61,27 @@ def test_cli(args: List[str], expected_output: str) -> None:
     "args,expected_output",
     [
         (
-            ["login", "--token", DATALAYER_TEST_API_KEY],
+            ["login", "--token", TEST_DATALAYER_API_KEY],
             "Connected as urn:dla:iam:ext::github:226720",
         ),
-        (["envs", "list", "--token", DATALAYER_TEST_API_KEY], "Environments"),
-        (["envs", "ls", "--token", DATALAYER_TEST_API_KEY], "Environments"),
-        (["runtimes", "list", "--token", DATALAYER_TEST_API_KEY], "Runtimes"),
-        (["runtimes", "ls", "--token", DATALAYER_TEST_API_KEY], "Runtimes"),
-        (["secrets", "list", "--token", DATALAYER_TEST_API_KEY], "Secrets"),
-        (["secrets", "ls", "--token", DATALAYER_TEST_API_KEY], "Secrets"),
-        (["snapshots", "list", "--token", DATALAYER_TEST_API_KEY], "Snapshots"),
-        (["snapshots", "ls", "--token", DATALAYER_TEST_API_KEY], "Snapshots"),
-        (["tokens", "list", "--token", DATALAYER_TEST_API_KEY], "Tokens"),
-        (["tokens", "ls", "--token", DATALAYER_TEST_API_KEY], "Tokens"),
-        (["who", "--token", DATALAYER_TEST_API_KEY], "Profile"),
-        (["whoami", "--token", DATALAYER_TEST_API_KEY], "Profile"),
+        (["envs", "list", "--token", TEST_DATALAYER_API_KEY], "Environments"),
+        (["envs", "ls", "--token", TEST_DATALAYER_API_KEY], "Environments"),
+        (["runtimes", "list", "--token", TEST_DATALAYER_API_KEY], "Runtimes"),
+        (["runtimes", "ls", "--token", TEST_DATALAYER_API_KEY], "Runtimes"),
+        (["secrets", "list", "--token", TEST_DATALAYER_API_KEY], "Secrets"),
+        (["secrets", "ls", "--token", TEST_DATALAYER_API_KEY], "Secrets"),
+        (["snapshots", "list", "--token", TEST_DATALAYER_API_KEY], "Snapshots"),
+        (["snapshots", "ls", "--token", TEST_DATALAYER_API_KEY], "Snapshots"),
+        (["tokens", "list", "--token", TEST_DATALAYER_API_KEY], "Tokens"),
+        (["tokens", "ls", "--token", TEST_DATALAYER_API_KEY], "Tokens"),
+        (["who", "--token", TEST_DATALAYER_API_KEY], "Profile"),
+        (["whoami", "--token", TEST_DATALAYER_API_KEY], "Profile"),
         (["logout"], "\nDatalayer - Version"),
     ],
 )
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_API_KEY),
-    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
+    not bool(TEST_DATALAYER_API_KEY),
+    reason="TEST_DATALAYER_API_KEY is not set, skipping secret tests.",
 )
 def test_cli_authenticated(args: List[str], expected_output: str) -> None:
     """
@@ -97,8 +97,8 @@ def test_cli_authenticated(args: List[str], expected_output: str) -> None:
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_API_KEY),
-    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
+    not bool(TEST_DATALAYER_API_KEY),
+    reason="TEST_DATALAYER_API_KEY is not set, skipping secret tests.",
 )
 def test_console() -> None:
     """
@@ -121,8 +121,8 @@ def test_console() -> None:
 
 
 @pytest.mark.skipif(
-    not bool(DATALAYER_TEST_API_KEY),
-    reason="DATALAYER_TEST_API_KEY is not set, skipping secret tests.",
+    not bool(TEST_DATALAYER_API_KEY),
+    reason="TEST_DATALAYER_API_KEY is not set, skipping secret tests.",
 )
 def test_runtimes_exec(tmp_path: Any) -> None:
     """

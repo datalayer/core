@@ -23,7 +23,7 @@ beforeAll(async () => {
       'WARNING: Skipping Runtimes Environments integration tests: No Datalayer API token configured',
     );
     console.log(
-      '         Set DATALAYER_API_TOKEN env var or DATALAYER_TEST_API_KEY in .env.test',
+      '         Set DATALAYER_API_TOKEN env var or TEST_DATALAYER_API_KEY in .env.test',
     );
     return;
   }
