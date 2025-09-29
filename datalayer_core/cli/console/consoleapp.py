@@ -21,6 +21,7 @@ from traitlets.config import catch_config_error
 from datalayer_core.__version__ import __version__
 from datalayer_core.cli.console.manager import RuntimeManager
 from datalayer_core.mixins.authn import AuthnMixin
+from datalayer_core.utils.urls import DatalayerURLs
 
 datalayer_aliases = dict(base_aliases)
 datalayer_aliases["run-url"] = "AuthnMixin.run_url"
@@ -58,6 +59,23 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
     runtime_name = Unicode(
         "", config=True, help="""The name of the Runtime to connect to."""
     )
+
+    # URL properties required by AuthnMixin
+    _urls = None
+
+    @property
+    def run_url(self) -> str:
+        """Get the Datalayer server URL."""
+        if self._urls is None:
+            self._urls = DatalayerURLs.from_environment()
+        return self._urls.run_url
+
+    @property
+    def iam_url(self) -> str:
+        """Get the Datalayer IAM server URL."""
+        if self._urls is None:
+            self._urls = DatalayerURLs.from_environment()
+        return self._urls.iam_url
 
     @default("kernel_manager_class")
     def _kernel_manager_class_default(self) -> type:

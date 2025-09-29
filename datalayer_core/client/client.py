@@ -2,12 +2,11 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Datalayer AI SDK - A simple SDK for AI engineers to work with Datalayer.
+Datalayer Client - A simple Python Client for AI engineers to work with Datalayer.
 
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
-import os
 import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union

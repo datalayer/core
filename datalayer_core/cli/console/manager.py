@@ -6,11 +6,10 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
-from rich import print_json
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.utils.date import timestamp_to_local_date
