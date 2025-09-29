@@ -32,6 +32,7 @@ from datalayer_core.services.authn.pages import (
 )
 from datalayer_core.services.authn.state import set_server_port
 from datalayer_core.utils.network import find_http_port
+from datalayer_core.utils.urls import DatalayerURLs
 
 HERE = Path(__file__).parent
 
@@ -113,7 +114,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
                 config=json.dumps(
                     {
                         "runUrl": self.server.run_url,  # type: ignore
-                        "iamRunUrl": self.server.run_url,  # type: ignore
+                        "iamRunUrl": self.server.iam_url,  # type: ignore
                         "whiteLabel": False,
                     }
                 )
@@ -210,7 +211,10 @@ class DualStackServer(HTTPServer):
             import sys
 
             sys.exit(-1)
-        self.run_url = run_url
+        # Use DatalayerURLs for proper URL configuration
+        self._urls = DatalayerURLs.from_environment(run_url=run_url)
+        self.run_url = self._urls.run_url
+        self.iam_url = self._urls.iam_url
         self.user_handle = None
         self.token = None
         super().__init__(server_address, RequestHandlerClass, bind_and_activate)
