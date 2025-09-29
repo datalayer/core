@@ -283,7 +283,12 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             Value of the variable, or None if not found or runtime not started.
         """
         if self._kernel_client:
-            return self._kernel_client.get_variable(name)
+            try:
+                # The kernel client get_variable method should return the deserialized value
+                return self._kernel_client.get_variable(name)
+            except Exception as e:
+                print(f"Warning: Failed to get variable '{name}': {e}")
+                return None
         return None
 
     def set_variable(self, name: str, value: Any) -> None:
@@ -318,10 +323,13 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         Response
             Response object containing execution results.
         """
-        if self._kernel_client:
-            if variables is not None:
-                for name, value in variables.items():
+        if self._kernel_client and variables is not None:
+            for name, value in variables.items():
+                try:
                     self._kernel_client.set_variable(name, value)
+                except Exception as e:
+                    print(f"Warning: Failed to set variable '{name}': {e}")
+                    # Continue with other variables instead of failing completely
 
     def execute_file(
         self,

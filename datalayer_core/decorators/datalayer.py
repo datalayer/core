@@ -145,13 +145,27 @@ def datalayer(
             for kwarg, kwarg_value in kwargs.items():
                 variables[mapping[kwarg]] = kwarg_value
 
-            for idx, (arg_value) in enumerate(args):
+            for idx, arg_value in enumerate(args):
                 kwarg = (inputs_decorated or inputs)[idx]
                 variables[kwarg] = arg_value
 
+            # Instead of relying on setting variables, construct function call with actual values
+            args_str = []
+            for idx, arg_value in enumerate(args):
+                if isinstance(arg_value, str):
+                    args_str.append(f"'{arg_value}'")
+                else:
+                    args_str.append(str(arg_value))
+            
+            for kwarg, kwarg_value in kwargs.items():
+                if isinstance(kwarg_value, str):
+                    args_str.append(f"{kwarg}='{kwarg_value}'")
+                else:
+                    args_str.append(f"{kwarg}={kwarg_value}")
+
             function_call = (
                 f"{output_decorated or output} = {func.__name__}("
-                + ", ".join(inputs_decorated or inputs)
+                + ", ".join(args_str)
                 + ")"
             )
 
@@ -164,8 +178,8 @@ def datalayer(
 
             # print("inputs", inputs_decorated or inputs)
             # print("variables", variables)
-            # print([function_source])
-            # print([function_call])
+            # print("function_source:", function_source)
+            # print("function_call:", function_call)
 
             client = DatalayerClient()
             with client.create_runtime(
@@ -180,7 +194,7 @@ def datalayer(
                 )
                 return runtime.execute(
                     function_call,
-                    variables=variables,
+                    variables=None,  # Don't try to set variables since we're using actual values
                     output=output_decorated or output,
                     debug=debug,
                     timeout=timeout,
