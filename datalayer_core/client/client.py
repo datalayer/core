@@ -50,7 +50,7 @@ class DatalayerClient(
     WhoamiAppMixin,
 ):
     """
-    SDK for Datalayer AI platform.
+    Client for Datalayer AI platform.
 
     Provides a unified interface for authentication, runtime creation,
     and code execution in Datalayer environments.
@@ -82,14 +82,17 @@ class DatalayerClient(
         self._run_url = run_url.rstrip("/") or os.environ.get(
             "DATALAYER_RUN_URL", DEFAULT_RUN_URL
         )
-        self._token = token or os.environ.get("DATALAYER_API_KEY", None)
+        self._token = token  # Store the explicitly passed token
+        self._external_token = None
         self._user_handle = None
         self._kernel_client = None
         self._notebook_client = None
 
-        if not self._token:
+        # Use the AuthnMixin token management to get token with fallbacks
+        resolved_token = self._get_token()
+        if not resolved_token:
             raise ValueError(
-                "Token is required. Set it via parameter or `DATALAYER_API_KEY` environment variable"
+                "Token is required. Set it via parameter, `DATALAYER_API_KEY` environment variable, or authenticate with `datalayer login`"
             )
 
     @property

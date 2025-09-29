@@ -7,6 +7,7 @@ Runtime services for the Datalayer SDK.
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
 
+import os
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -37,7 +38,7 @@ from datalayer_core.utils.types import (
 
 class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
     """
-    Service for managing Datalayer runtime (kernel) operations.
+    Service for managing Datalayer runtime operations.
 
     This service handles runtime lifecycle operations such as starting, stopping,
     code execution, and variable management. The runtime data is managed through
@@ -114,6 +115,11 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             expired_at=expired_at,
         )
 
+        # Initialize AuthnMixin attributes
+        self._token = token
+        self._external_token = None
+        self._run_url = run_url
+
         # Service-specific state
         self._runtime: dict[str, str] = {}
         self._kernel_client: Optional[KernelClient] = None
@@ -131,11 +137,20 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         Returns
         -------
-        Runtime
+        RuntimesService
             The runtime instance.
+        
+        Raises
+        ------
+        RuntimeError
+            If runtime startup fails.
         """
-        self._start()
-        return self
+        try:
+            self._start()
+            return self
+        except Exception as e:
+            print(f"Failed to start runtime: {str(e)}")
+            raise
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """
@@ -165,21 +180,50 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         if self._kernel_client is None:
             self._runtime = self._create_runtime(self.model.environment)
-            # print(self._runtime)
+            
+            # Check if runtime creation was successful
+            if not self._runtime.get("success", True):
+                error_msg = self._runtime.get("message", "Unknown error during runtime creation")
+                raise RuntimeError(f"Failed to create runtime: {error_msg}")
+            
+            # Check if runtime data is present
+            if "runtime" not in self._runtime:
+                raise RuntimeError("Runtime creation succeeded but runtime data is missing from response")
+            
             runtime: dict[str, str] = self._runtime["runtime"]  # type: ignore
+            
+            # Validate required runtime fields
+            required_fields = ["ingress", "token", "pod_name", "uid", "reservation_id", 
+                             "burning_rate", "started_at", "expired_at"]
+            missing_fields = [field for field in required_fields if field not in runtime]
+            
+            if missing_fields:
+                raise RuntimeError(f"Runtime data is missing required fields: {', '.join(missing_fields)}")
+            
             # print("runtime", runtime)
             self.model.ingress = runtime["ingress"]
             self.model.kernel_token = runtime["token"]
             self.model.pod_name = runtime["pod_name"]
             self.model.uid = runtime["uid"]
             self.model.reservation_id = runtime["reservation_id"]
-            self.model.burning_rate = float(runtime["burning_rate"])
+            
+            try:
+                self.model.burning_rate = float(runtime["burning_rate"])
+            except (ValueError, TypeError) as e:
+                raise RuntimeError(f"Invalid burning_rate value: {runtime['burning_rate']} - {str(e)}")
+            
             self.model.started_at = runtime["started_at"]
             self.model.expired_at = runtime["expired_at"]
-            self._kernel_client = KernelClient(
-                server_url=self.model.ingress, token=self.model.kernel_token
-            )
-            self._kernel_client.start()
+            
+            # Create and start kernel client
+            try:
+                self._kernel_client = KernelClient(
+                    server_url=self.model.ingress, token=self.model.kernel_token
+                )
+                self._kernel_client.start()
+                print(f"Runtime started successfully: {self.model.uid}")
+            except Exception as e:
+                raise RuntimeError(f"Failed to start kernel client: {str(e)}")
 
     def _stop(self) -> bool:
         """
@@ -367,7 +411,11 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     )
                     # print(reply)
                     outputs.append(reply.get("outputs", []))
-                response = ExecutionResponse(execute_response=outputs)
+                response = ExecutionResponse(
+                    success=True,
+                    message="Code execution completed",
+                    execute_response=outputs
+                )
                 if debug:
                     print(response.stdout)
                     print(response.stderr)
@@ -376,7 +424,11 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     return self.get_variable(output)
 
                 return response
-        return ExecutionResponse(execute_response=[])
+        return ExecutionResponse(
+            success=False,
+            message="No execution response available",
+            execute_response=[]
+        )
 
     def execute_code(
         self,
@@ -413,7 +465,11 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     self.set_variables(variables)
                 reply = self._kernel_client.execute(code, timeout=timeout)
 
-                response = ExecutionResponse(execute_response=reply.get("outputs", {}))
+                response = ExecutionResponse(
+                    success=True,
+                    message="Code executed successfully",
+                    execute_response=reply.get("outputs", {})
+                )
                 if debug:
                     print(response.stdout)
                     print(response.stderr)

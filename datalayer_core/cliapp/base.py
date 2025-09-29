@@ -114,10 +114,11 @@ class DatalayerAuthMixin(LoggingConfigurable):
                 request, token=self.token, external_token=self.external_token, **kwargs
             )
         except requests.exceptions.Timeout as e:
+            self.log.error(e)
             raise e
         except requests.exceptions.HTTPError as e:
+            self.log.error(e)
             raw = e.response.json()
-            self.log.debug(raw)
             raise RuntimeError(
                 f"Failed to request the URL {request if isinstance(request, str) else request.url!s}"
             ) from e
