@@ -8,28 +8,14 @@
  * @interface Space
  */
 export interface Space {
-  id?: string; // Optional for backward compatibility
   uid: string;
-  name?: string; // Optional for backward compatibility
-  name_t?: string; // New field from API
-  handle_s?: string; // New field from API
-  variant_s?: string; // New field from API
-  type?: string; // Space type field
-  description?: string;
-  description_t?: string; // New field from API
-  visibility?: 'public' | 'private' | 'organization';
-  owner_id?: string;
-  organization_id?: string;
-  created_at?: string;
-  updated_at?: string;
-  creation_ts_dt?: string; // Creation timestamp from API
-  last_update_ts_dt?: string; // Last update timestamp from API
-  notebooks_count?: number;
-  members_count?: number;
-  tags?: string[];
-  tags_ss?: string[]; // New field from API
-  items?: any[]; // New field from API
-  members?: any[]; // New field from API
+  name_t: string;
+  handle_s: string;
+  variant_s: string;
+  description_t: string;
+  tags_ss?: string[];
+  members?: any[];
+  items?: any[];
 }
 
 /**
@@ -39,48 +25,13 @@ export interface Space {
 export interface Notebook {
   id: string;
   uid: string;
-  name?: string; // May not be present in API response
-  name_t?: string; // Text field for name
-  path?: string; // May not be present in API response
-  content?: any; // Simplified - NotebookContent type removed
-  space_id?: string; // May not be present, extracted from s3_path_s
-  owner_id?: string; // May not be present
-  creator_uid?: string; // Creator UID from API
-  creator_handle_s?: string; // Creator handle from API
-  created_at?: string; // May not be present
-  creation_ts_dt?: string; // Creation timestamp from API
-  updated_at?: string; // May not be present
-  last_update_ts_dt?: string; // Last update timestamp from API
-  version?: number;
-  kernel_spec?: any; // Simplified - KernelSpec type removed
-  metadata?: Record<string, any>;
-  // Additional fields from actual API response
-  type_s?: string;
-  public_b?: boolean;
-  description_t?: string;
-  notebook_name_s?: string;
+  name_t: string;
+  description_t: string;
+  type_s: string;
   notebook_extension_s: string;
-  notebook_format_s?: string;
-  content_length_i?: number;
-  content_type_s?: string;
-  mime_type_s?: string;
-  s3_path_s?: string;
-  s3_url_s?: string;
-  cdn_url_s?: string;
-  model_s?: string;
-}
-
-/**
- * Represents a single cell in a Jupyter notebook
- * @interface Cell
- */
-export interface Cell {
-  id: string;
-  cell_type: 'code' | 'markdown' | 'raw';
-  source: string | string[];
-  outputs?: any[]; // Simplified - CellOutput type removed
-  execution_count?: number | null;
-  metadata?: Record<string, any>;
+  s3_path_s: string;
+  s3_url_s: string;
+  cdn_url_s: string;
 }
 
 /**
@@ -98,13 +49,23 @@ export interface CreateSpaceRequest {
 }
 
 /**
+ * Response from getting a collaboration session ID
+ * @interface CollaborationSessionResponse
+ */
+export interface CollaborationSessionResponse {
+  success: boolean;
+  sessionId?: string;
+  error?: string;
+}
+
+/**
  * Response from creating a space
  * @interface CreateSpaceResponse
  */
 export interface CreateSpaceResponse {
   success: boolean;
   message: string;
-  space: Space;
+  space?: Space;
 }
 
 /**
@@ -126,7 +87,7 @@ export interface CreateNotebookRequest {
 export interface CreateNotebookResponse {
   success: boolean;
   message: string;
-  notebook: Notebook;
+  notebook?: Notebook;
 }
 
 /**
@@ -167,7 +128,7 @@ export interface UpdateNotebookRequest {
 export interface UpdateNotebookResponse {
   success: boolean;
   message: string;
-  notebook: Notebook;
+  notebook?: Notebook;
 }
 
 /**
@@ -176,7 +137,7 @@ export interface UpdateNotebookResponse {
  */
 export interface SpaceItem {
   id: string;
-  type_s: 'notebook' | 'lexical' | 'cell';
+  type_s: 'notebook' | 'lexical';
   space_id: string;
   item_id: string;
   name: string;
@@ -202,6 +163,7 @@ export interface Lexical {
   creation_ts_dt?: string; // Creation timestamp from API
   updated_at?: string; // May not be present
   last_update_ts_dt?: string; // Last update timestamp from API
+  cdn_url_s: string;
   // Additional fields from actual API response
   type_s?: string;
   public_b?: boolean;
@@ -214,7 +176,6 @@ export interface Lexical {
   mime_type_s?: string;
   s3_path_s?: string;
   s3_url_s?: string;
-  cdn_url_s?: string;
   model_s?: string;
 }
 
@@ -237,7 +198,7 @@ export interface CreateLexicalRequest {
 export interface CreateLexicalResponse {
   success: boolean;
   message: string;
-  document: Lexical;
+  document?: Lexical;
 }
 
 /**
@@ -286,6 +247,16 @@ export interface GetSpaceItemsResponse {
 export interface DeleteSpaceItemResponse {
   success: boolean;
   message: string;
+}
+
+/**
+ * Response from getting a single space item
+ * @interface GetSpaceItemResponse
+ */
+export interface GetSpaceItemResponse {
+  success: boolean;
+  message: string;
+  item?: any; // Item data when found (various types: notebook, lexical, etc.)
 }
 
 // API Response types that match actual server responses

@@ -4,9 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { DatalayerSDK } from '../../index';
+import { DatalayerClient } from '../../index';
 import { Runtime } from '../../models/Runtime';
-import { BrowserStorage } from '../../storage/BrowserStorage';
 import type {
   Runtime as RuntimeData,
   Environment,
@@ -28,7 +27,7 @@ vi.mock('../../../../api/runtimes', () => ({
 }));
 
 describe('ensureRuntime', () => {
-  let sdk: DatalayerSDK;
+  let sdk: DatalayerClient;
   const mockToken = 'test-token-123';
 
   const mockEnvironments: Environment[] = [
@@ -98,11 +97,10 @@ describe('ensureRuntime', () => {
       ),
     } as Storage;
 
-    sdk = new DatalayerSDK({
+    sdk = new DatalayerClient({
       iamRunUrl: 'https://example.com/api/iam/v1',
       runtimesRunUrl: 'https://example.com/api/runtimes/v1',
       spacerRunUrl: 'https://example.com/api/spacer/v1',
-      storage: new BrowserStorage(),
       token: mockToken,
     });
   });

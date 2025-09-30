@@ -41,7 +41,7 @@ export {
   // Export typed interfaces for stable contracts
   type RuntimeJSON,
   type EnvironmentJSON,
-  type AuthProvider,
+  type UserJSON,
 } from './client';
 
 // Export commonly used SDK functions directly for convenience

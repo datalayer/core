@@ -18,9 +18,10 @@ import * as items from '../../api/spacer/items';
 import * as notebooks from '../../api/spacer/notebooks';
 import * as lexicals from '../../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
-import { Notebook } from './Notebook';
-import { Lexical } from './Lexical';
+import { Notebook, type NotebookJSON } from './Notebook';
+import { Lexical, type LexicalJSON } from './Lexical';
 import { ItemTypes } from '../constants';
+import { convertSpaceItemsToModels } from '../utils/spacerUtils';
 
 /**
  * Stable public interface for Space data.
@@ -28,20 +29,18 @@ import { ItemTypes } from '../constants';
  * The raw API may change, but this interface remains stable.
  */
 export interface SpaceJSON {
-  /** Unique identifier for the space */
+  /** ulid for the space */
   uid: string;
   /** Name of the space */
   name: string;
+  /** Handle for the space */
+  handle: string;
+  /** Variant of the space */
+  variant: string;
   /** Description of the space */
-  description?: string;
-  /** Type of space */
-  type?: string;
-  /** Number of items in the space */
-  itemCount?: number;
-  /** ISO 8601 timestamp when the space was created */
-  createdAt?: string;
-  /** ISO 8601 timestamp when the space was last updated */
-  updatedAt?: string;
+  description: string;
+  /** Items contained in the space (as JSON) */
+  items: Array<NotebookJSON | LexicalJSON>;
 }
 
 /**
@@ -58,6 +57,7 @@ export interface SpaceJSON {
 export class Space {
   protected _data: SpaceData;
   private _sdk: DatalayerClient;
+  private _items: (Notebook | Lexical)[] | null = null;
   private _deleted: boolean = false;
 
   /**
@@ -90,11 +90,10 @@ export class Space {
   /**
    * Refresh space data from the API by fetching user's spaces.
    */
-  private async _refreshData(): Promise<void> {
+  async refresh(): Promise<void> {
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
     const response = await users.getMySpaces(token, spacerRunUrl);
-
     const freshSpace = response.spaces.find(s => s.uid === this.uid);
     if (freshSpace) {
       this._data = freshSpace;
@@ -111,138 +110,30 @@ export class Space {
     return this._data.uid;
   }
 
-  /** Space ID (optional for backward compatibility). */
-  get id(): string {
-    this._checkDeleted();
-    return this._data.id || this._data.uid;
-  }
-
-  /** Owner user ID. */
-  get ownerId(): string {
-    this._checkDeleted();
-    return this._data.owner_id || '';
-  }
-
-  /** Organization ID. */
-  get organizationId(): string {
-    this._checkDeleted();
-    return this._data.organization_id || '';
-  }
-
-  /**
-   * When the space was created.
-   * May not be available for all spaces.
-   */
-  get createdAt(): Date | null {
-    this._checkDeleted();
-    const dateStr = (this._data as any).creation_ts_dt || this._data.created_at;
-    if (!dateStr) {
-      return null; // Some spaces don't have timestamps
-    }
-    return new Date(dateStr);
-  }
-
-  /** Space visibility setting. */
-  get visibility(): string {
-    this._checkDeleted();
-    return this._data.visibility || 'private';
-  }
-
   /** URL-friendly handle for the space. */
   get handle(): string {
     this._checkDeleted();
-    return this._data.handle_s || '';
+    return this._data.handle_s;
   }
 
   /** Space variant type. */
   get variant(): string {
     this._checkDeleted();
-    return this._data.variant_s || '';
-  }
-
-  /** Space type. */
-  get type(): string {
-    this._checkDeleted();
-    return this._data.type || '';
-  }
-
-  // ========================================================================
-  // Dynamic Methods (always fetch fresh data and update internal state)
-  // ========================================================================
-
-  /**
-   * Get the current name of the space.
-   * Always fetches fresh data from API.
-   *
-   * @returns Current space name
-   * @throws Error if deleted
-   */
-  async getName(): Promise<string> {
-    this._checkDeleted();
-    await this._refreshData();
-    return this._data.name || this._data.name_t || '';
+    return this._data.variant_s;
   }
 
   /**
-   * The cached name of the space.
+   * The name of the space.
    */
   get name(): string {
-    this._checkDeleted();
-    return this._data.name || this._data.name_t || '';
+    return this._data.name_t;
   }
 
   /**
-   * Get the current description of the space.
-   *
-   * @returns Space description
-   */
-  async getDescription(): Promise<string> {
-    this._checkDeleted();
-    await this._refreshData();
-    return this._data.description || this._data.description_t || '';
-  }
-
-  /**
-   * The cached description of the space.
+   * The description of the space.
    */
   get description(): string {
-    this._checkDeleted();
-    return this._data.description || this._data.description_t || '';
-  }
-
-  /**
-   * Get when the space was last updated.
-   *
-   * @returns Last update time
-   */
-  async getUpdatedAt(): Promise<Date | null> {
-    this._checkDeleted();
-    await this._refreshData();
-    const dateStr =
-      (this._data as any).last_update_ts_dt ||
-      this._data.updated_at ||
-      (this._data as any).creation_ts_dt ||
-      this._data.created_at;
-    if (!dateStr) {
-      return null; // Some spaces don't have timestamps
-    }
-    return new Date(dateStr);
-  }
-
-  /**
-   * The cached update time.
-   */
-  get updatedAt(): Date | null {
-    this._checkDeleted();
-    const dateStr =
-      (this._data as any).last_update_ts_dt ||
-      this._data.updated_at ||
-      (this._data as any).creation_ts_dt ||
-      this._data.created_at;
-    if (!dateStr) {
-      return null;
-    }
-    return new Date(dateStr);
+    return this._data.description_t;
   }
 
   // ========================================================================
@@ -257,28 +148,24 @@ export class Space {
    * @returns Created model instance
    * @internal
    */
-  private async _createItem<T extends Notebook | Lexical>(
-    itemType: 'notebook' | 'lexical',
-    data: {
-      name: string;
-      type?: string;
-      description?: string;
-      file?: File | Blob;
-    },
-  ): Promise<T> {
+  private async _createItem<T extends Notebook | Lexical>(data: {
+    name: string;
+    type: string;
+    description: string;
+    file?: File | Blob;
+  }): Promise<T> {
     this._checkDeleted();
 
     // Get necessary configuration from SDK
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
 
-    // Call API directly to avoid recursion
-    if (itemType === 'notebook') {
+    if (data.type === ItemTypes.NOTEBOOK) {
       const requestData = {
         spaceId: this.uid,
         name: data.name,
-        description: data.description || '',
-        notebookType: data.type || 'jupyter',
+        description: data.description,
+        notebookType: data.type,
         file: data.file,
       };
       const response = await notebooks.createNotebook(
@@ -286,13 +173,17 @@ export class Space {
         requestData,
         spacerRunUrl,
       );
-      return new Notebook(response.notebook, this._sdk) as T;
-    } else {
+      if (!response.notebook) {
+        throw new Error('Failed to create notebook: No notebook returned');
+      } else {
+        return new Notebook(response.notebook, this._sdk) as T;
+      }
+    } else if (data.type === ItemTypes.LEXICAL) {
       const requestData = {
         spaceId: this.uid,
         name: data.name,
-        description: data.description || '',
-        documentType: data.type || 'lexical',
+        description: data.description,
+        documentType: data.type,
         file: data.file,
       };
       const response = await lexicals.createLexical(
@@ -300,7 +191,15 @@ export class Space {
         requestData,
         spacerRunUrl,
       );
-      return new Lexical(response.document, this._sdk) as T;
+      if (!response.document) {
+        throw new Error(
+          'Failed to create lexical document: No document returned',
+        );
+      } else {
+        return new Lexical(response.document, this._sdk) as T;
+      }
+    } else {
+      throw new Error(`Unsupported item type: ${data.type}`);
     }
   }
 
@@ -320,38 +219,9 @@ export class Space {
       spacerRunUrl,
     );
 
-    // Convert raw items to model instances
-    const modelItems: (Notebook | Lexical)[] = [];
-    for (const item of response.items) {
-      // Check various possible type fields
-      const itemType: string = (item as any).type_s;
-
-      // Debug logging to understand what types we're getting
-      console.log('[SDK Space] Item from API:', {
-        name: (item as any).name || (item as any).name_t,
-        type: itemType,
-        actualTypeValue: itemType,
-        isNotebook: itemType === ItemTypes.NOTEBOOK,
-        isLexical: itemType === ItemTypes.LEXICAL,
-        ItemTypesNOTEBOOK: ItemTypes.NOTEBOOK,
-        ItemTypesLEXICAL: ItemTypes.LEXICAL,
-        typeEqualsStringNotebook: itemType === 'notebook',
-        typeEqualsStringLexical: itemType === 'document',
-        hasType: !!item.type_s,
-        hasTypeS: !!(item as any).type_s,
-        hasItemTypeS: !!(item as any).item_type_s,
-      });
-
-      // Only include notebooks and lexicals
-      if (itemType === ItemTypes.NOTEBOOK) {
-        modelItems.push(new Notebook(item as any, this._sdk));
-      } else if (itemType === ItemTypes.LEXICAL) {
-        modelItems.push(new Lexical(item as any, this._sdk));
-      }
-      // Skip everything else (exercises, cells, etc.)
-    }
-
-    return modelItems;
+    // Use shared utility function to convert items to model instances
+    this._items = convertSpaceItemsToModels(response.items || [], this._sdk);
+    return this._items;
   }
 
   /**
@@ -362,10 +232,10 @@ export class Space {
    */
   async createNotebook(data: {
     name: string;
-    description?: string;
+    description: string;
     file?: File | Blob;
   }): Promise<Notebook> {
-    return this._createItem('notebook', {
+    return this._createItem({
       name: data.name,
       type: ItemTypes.NOTEBOOK,
       description: data.description,
@@ -381,10 +251,10 @@ export class Space {
    */
   async createLexical(data: {
     name: string;
-    description?: string;
+    description: string;
     file?: File | Blob;
   }): Promise<Lexical> {
-    return this._createItem('lexical', {
+    return this._createItem({
       name: data.name,
       type: ItemTypes.LEXICAL,
       description: data.description,
@@ -412,13 +282,16 @@ export class Space {
   toJSON(): SpaceJSON {
     this._checkDeleted();
     return {
-      uid: this._data.uid,
-      name: this._data.name || this._data.name_t || '',
-      description: this._data.description,
-      type: this._data.type || undefined,
-      itemCount: (this._data as any).item_count || undefined,
-      createdAt: this._data.created_at || (this._data as any).creation_ts_dt,
-      updatedAt: this._data.updated_at || (this._data as any).last_update_ts_dt,
+      uid: this.uid,
+      name: this.name,
+      description: this.description,
+      variant: this.variant,
+      handle: this.handle,
+      items: this._data.items
+        ? convertSpaceItemsToModels(this._data.items, this._sdk).map(item =>
+            item.toJSON(),
+          )
+        : [],
     };
   }
 
@@ -436,7 +309,6 @@ export class Space {
   /** String representation of the space. */
   toString(): string {
     this._checkDeleted();
-    const name = this._data.name || this._data.name_t || 'Unnamed';
-    return `Space(${this.uid}, ${name})`;
+    return `Space(${this.uid}, ${this.name})`;
   }
 }

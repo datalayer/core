@@ -25,19 +25,23 @@ import { ItemTypes } from '../constants';
  */
 export interface LexicalJSON {
   /** Unique identifier for the lexical document */
+  uid: string;
+  /** Unique identifier for the lexical document */
   id: string;
   /** Name of the lexical document */
   name: string;
   /** Description of the lexical document */
-  description?: string;
+  description: string;
   /** Type of lexical document */
   type: string;
   /** File extension of the lexical document */
   extension: string;
   /** ISO 8601 timestamp when the document was created */
-  createdAt?: string;
+  createdAt: string;
   /** ISO 8601 timestamp when the document was last updated */
-  updatedAt?: string;
+  updatedAt: string;
+  /** CDN URL for accessing the document */
+  cdnUrl: string;
 }
 
 /**
@@ -118,28 +122,6 @@ export class Lexical extends Item<LexicalData> {
     return ext ? (ext.startsWith('.') ? ext : `.${ext}`) : '.lexical';
   }
 
-  /** Get the document content from API. */
-  async getContent(): Promise<any> {
-    this._checkDeleted();
-    const token = this._getToken();
-    const spacerRunUrl = this._getSpacerRunUrl();
-    const response = await lexicals.getLexical(token, this.uid, spacerRunUrl);
-
-    if (response.document) {
-      this._updateData(response.document);
-      if (!response.document.content && response.document.model_s) {
-        try {
-          return JSON.parse(response.document.model_s);
-        } catch {
-          return response.document.model_s;
-        }
-      }
-      return response.document.content;
-    }
-
-    return this.content;
-  }
-
   /** Get when the document was last updated from API. */
   async getUpdatedAt(): Promise<Date> {
     this._checkDeleted();
@@ -201,13 +183,15 @@ export class Lexical extends Item<LexicalData> {
   toJSON(): LexicalJSON {
     this._checkDeleted();
     return {
+      uid: this.uid,
       id: this.id,
       name: this.name,
-      description: this.description || undefined,
+      description: this.description,
       type: this.type,
       extension: this.extension,
-      createdAt: this._data.created_at,
-      updatedAt: this._data.updated_at,
+      createdAt: this.createdAt.toDateString(),
+      updatedAt: this.updatedAt.toDateString(),
+      cdnUrl: this._data.cdn_url_s,
     };
   }
 

@@ -24,22 +24,24 @@ import { ItemTypes } from '../constants';
  * The raw API may change, but this interface remains stable.
  */
 export interface NotebookJSON {
-  /** Unique identifier for the notebook */
+  /** uuid of the notebook */
   id: string;
+  /** ulid for of the notebook */
+  uid: string;
   /** Name of the notebook */
   name: string;
   /** Description of the notebook */
-  description?: string;
+  description: string;
   /** Type of notebook */
   type: string;
   /** File extension of the notebook */
   extension: string;
-  /** Kernel specification name */
-  kernelSpec?: string;
   /** ISO 8601 timestamp when the notebook was created */
   createdAt?: string;
   /** ISO 8601 timestamp when the notebook was last updated */
   updatedAt?: string;
+  /** CDN URL for accessing the notebook */
+  cdnUrl: string;
 }
 
 /**
@@ -79,93 +81,38 @@ export class Notebook extends Item<NotebookData> {
     return (
       this._data.name_t ||
       (this._data as any).notebook_name_s ||
-      this._data.name ||
+      (this._data as any).name ||
       ''
     );
-  }
-
-  /** Get the current name of the notebook from API. */
-  async getName(): Promise<string> {
-    this._checkDeleted();
-    const token = this._getToken();
-    const spacerRunUrl = this._getSpacerRunUrl();
-    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
-
-    if (response.notebook) {
-      this._updateData(response.notebook);
-      return (
-        response.notebook.name_t ||
-        (response.notebook as any).notebook_name_s ||
-        response.notebook.name ||
-        ''
-      );
-    }
-
-    return this.name;
   }
 
   /** The cached content. */
   get content(): any {
     this._checkDeleted();
-    if (!this._data.content && this._data.model_s) {
+    if (!(this._data as any).content && (this._data as any).model_s) {
       try {
-        return JSON.parse(this._data.model_s);
+        return JSON.parse((this._data as any).model_s);
       } catch {
-        return this._data.model_s;
+        return (this._data as any).model_s;
       }
     }
-    return this._data.content;
+    return (this._data as any).content;
   }
 
-  /** Get the notebook content from API. */
-  async getContent(): Promise<any> {
+  /** Get the current name from API. */
+  async getName(): Promise<string> {
     this._checkDeleted();
-    const token = this._getToken();
-    const spacerRunUrl = this._getSpacerRunUrl();
-    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
-
-    if (response.notebook) {
-      this._updateData(response.notebook);
-      if (!response.notebook.content && response.notebook.model_s) {
-        try {
-          return JSON.parse(response.notebook.model_s);
-        } catch {
-          return response.notebook.model_s;
-        }
-      }
-      return response.notebook.content;
-    }
-
-    return this.content;
+    // For now, return cached value - implement API call if needed
+    return this.name;
   }
 
   /** Get when the notebook was last updated from API. */
   async getUpdatedAt(): Promise<Date> {
     this._checkDeleted();
-    const token = this._getToken();
-    const spacerRunUrl = this._getSpacerRunUrl();
-    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
-
-    if (response.notebook) {
-      this._updateData(response.notebook);
-      const dateStr =
-        response.notebook.last_update_ts_dt ||
-        response.notebook.updated_at ||
-        response.notebook.creation_ts_dt ||
-        response.notebook.created_at;
-      if (!dateStr) {
-        throw new Error('No timestamp available for notebook');
-      }
-      return new Date(dateStr);
-    }
-
     const dateStr =
-      this._data.last_update_ts_dt ||
-      this._data.updated_at ||
-      this._data.creation_ts_dt ||
-      this._data.created_at;
+      (this._data as any).updated_at || (this._data as any).update_ts_dt;
     if (!dateStr) {
-      throw new Error('No timestamp available for notebook');
+      throw new Error('No update timestamp available for notebook');
     }
     return new Date(dateStr);
   }
@@ -174,19 +121,14 @@ export class Notebook extends Item<NotebookData> {
   async update(name?: string, description?: string): Promise<this> {
     // FIXME: check if both are needed, and use the existing values if only one provided
     this._checkDeleted();
-    const token = this._getToken();
-    const spacerRunUrl = this._getSpacerRunUrl();
+    const token = (this as any)._sdk.getToken();
+    const spacerRunUrl = (this as any)._sdk.getSpacerRunUrl();
     const updateData: UpdateNotebookRequest = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;
 
-    const response = await notebooks.updateNotebook(
-      token,
-      this.uid,
-      updateData,
-      spacerRunUrl,
-    );
-    this._updateData(response.notebook);
+    await notebooks.updateNotebook(token, this.uid, updateData, spacerRunUrl);
+    // FIXME: handle partial updates
     return this;
   }
 
@@ -197,50 +139,31 @@ export class Notebook extends Item<NotebookData> {
   /** File path within the space. */
   get path(): string {
     this._checkDeleted();
-    return this._data.path || '';
+    return (this._data as any).path || '';
   }
 
   /** Version number. */
   get version(): number {
     this._checkDeleted();
-    return this._data.version || 0;
+    return (this._data as any).version || 0;
   }
 
   /** Notebook metadata. */
   get metadata(): Record<string, any> {
     this._checkDeleted();
-    return this._data.metadata || {};
+    return (this._data as any).metadata || {};
   }
 
   /** Kernel specification (cached). */
   get kernelSpec(): any {
     this._checkDeleted();
-    return this._data.kernel_spec;
+    return (this._data as any).kernel_spec;
   }
 
   /** Description of the notebook. */
   get description(): string {
     this._checkDeleted();
     return this._data.description_t || '';
-  }
-
-  // ========================================================================
-  // Notebook-specific Methods
-  // ========================================================================
-
-  /** Get the kernel specification. */
-  async getKernelSpec(): Promise<any> {
-    this._checkDeleted();
-    const token = this._getToken();
-    const spacerRunUrl = this._getSpacerRunUrl();
-    const response = await notebooks.getNotebook(token, this.uid, spacerRunUrl);
-
-    if (response.notebook) {
-      this._updateData(response.notebook);
-      return response.notebook.kernel_spec;
-    }
-
-    return this._data.kernel_spec;
   }
 
   /** Get the notebook extension. */
@@ -261,13 +184,14 @@ export class Notebook extends Item<NotebookData> {
     this._checkDeleted();
     return {
       id: this.id,
+      uid: this.uid,
       name: this.name,
-      description: this.description || undefined,
+      description: this.description,
       type: this.type,
       extension: this.extension,
-      kernelSpec: this.kernelSpec || undefined,
-      createdAt: this._data.created_at,
-      updatedAt: this._data.updated_at,
+      createdAt: (this._data as any).created_at,
+      updatedAt: (this._data as any).updated_at,
+      cdnUrl: (this._data as any).cdn_url_s,
     };
   }
 

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { DatalayerSDK } from '..';
+import { DatalayerClient } from '..';
 import { Runtime } from '../models/Runtime';
 import { Snapshot } from '../models/Snapshot';
 import { Space } from '../models/Space';
@@ -21,7 +21,7 @@ import { performCleanup } from '../../../__tests__/shared/cleanup-shared';
  * using the SDK client and model classes.
  */
 describe('SDK Models Integration Tests', () => {
-  let sdk: DatalayerSDK;
+  let sdk: DatalayerClient;
   let testSpace: Space | null = null;
   let testNotebook: Notebook | null = null;
   let testLexical: Lexical | null = null;
@@ -35,7 +35,7 @@ describe('SDK Models Integration Tests', () => {
 
     await performCleanup('setup');
 
-    sdk = new DatalayerSDK({
+    sdk = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -243,12 +243,12 @@ describe('SDK Models Integration Tests', () => {
         console.log('Testing Runtime → Snapshot relationship...');
 
         // Create a runtime
-        testRuntime = await sdk.createRuntime({
-          environment_name: 'python-cpu-env',
-          type: 'notebook',
-          given_name: 'model-test-runtime',
-          credits_limit: 10,
-        });
+        testRuntime = await sdk.createRuntime(
+          'python-cpu-env',
+          'notebook',
+          'model-test-runtime',
+          10,
+        );
 
         expect(testRuntime).toBeInstanceOf(Runtime);
         console.log(`Created runtime: ${(testRuntime as any).podName}`);

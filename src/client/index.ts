@@ -29,6 +29,17 @@ import { IAMMixin } from './mixins/IAMMixin';
 import { RuntimesMixin } from './mixins/RuntimesMixin';
 import { SpacerMixin } from './mixins/SpacerMixin';
 
+// Import model types for interface declaration
+import type { User } from './models/User';
+import type { Credits } from './models/Credits';
+import type { Environment } from './models/Environment';
+import type { Runtime } from './models/Runtime';
+import type { Snapshot } from './models/Snapshot';
+import type { Space } from './models/Space';
+import type { Notebook } from './models/Notebook';
+import type { Lexical } from './models/Lexical';
+import type { HealthCheck } from './models/HealthCheck';
+
 /**
  * Helper function to compose mixins in a more readable way.
  * Applies mixins in the order provided.
@@ -84,7 +95,7 @@ export { DatalayerClientBase };
 
 // Export models for use by consumers
 export { User } from './models/User';
-export type { AuthProvider } from './models/User';
+export type { UserJSON } from './models/User';
 export { Runtime } from './models/Runtime';
 export type { RuntimeJSON } from './models/Runtime';
 export { Environment } from './models/Environment';
@@ -95,6 +106,8 @@ export { Notebook } from './models/Notebook';
 export { Lexical } from './models/Lexical';
 export { Credits } from './models/Credits';
 export { Item } from './models/Item';
+export { HealthCheck } from './models/HealthCheck';
+export type { HealthCheckJSON } from './models/HealthCheck';
 
 // Export constants
 export { ItemTypes } from './constants';
@@ -102,15 +115,24 @@ export type { ItemType } from './constants';
 
 // Interface declaration for TypeScript to recognize mixin methods
 export interface DatalayerClient {
+  // Base Methods
+  getToken(): string | undefined;
+  setToken(token: string): Promise<void>;
+
   // IAM Methods
-  whoami(): Promise<any>;
-  login(token: string): Promise<any>;
+  whoami(): Promise<User>;
+  login(token: string): Promise<User>;
   logout(): Promise<void>;
-  getCredits(): Promise<any>;
-  checkIAMHealth(): Promise<any>;
+  getCredits(): Promise<Credits>;
+  calculateMaxRuntimeMinutes(
+    availableCredits: number,
+    burningRate: number,
+  ): number;
+  calculateCreditsRequired(minutes: number, burningRate: number): number;
+  checkIAMHealth(): Promise<HealthCheck>;
 
   // Runtime Methods
-  listEnvironments(): Promise<any[]>;
+  listEnvironments(): Promise<Environment[]>;
   ensureRuntime(
     environmentName?: string,
     creditsLimit?: number,
@@ -118,29 +140,30 @@ export interface DatalayerClient {
     maxWaitTime?: number,
     reuseExisting?: boolean,
     snapshotId?: string,
-  ): Promise<any>;
+  ): Promise<Runtime>;
   createRuntime(
     environmentName: string,
     type: 'notebook' | 'terminal' | 'job',
     givenName: string,
-    creditsLimit: number,
-  ): Promise<any>;
-  listRuntimes(): Promise<any[]>;
-  getRuntime(podName: string): Promise<any>;
+    minutesLimit: number,
+    fromSnapshotId?: string,
+  ): Promise<Runtime>;
+  listRuntimes(): Promise<Runtime[]>;
+  getRuntime(podName: string): Promise<Runtime>;
   deleteRuntime(podName: string): Promise<void>;
   createSnapshot(
     podName: string,
     name: string,
     description: string,
     stop?: boolean,
-  ): Promise<any>;
-  listSnapshots(): Promise<any[]>;
-  getSnapshot(id: string): Promise<any>;
+  ): Promise<Snapshot>;
+  listSnapshots(): Promise<Snapshot[]>;
+  getSnapshot(id: string): Promise<Snapshot>;
   deleteSnapshot(id: string): Promise<void>;
-  checkRuntimesHealth(): Promise<any>;
+  checkRuntimesHealth(): Promise<HealthCheck>;
 
   // Spacer Methods
-  getMySpaces(): Promise<any[]>;
+  getMySpaces(): Promise<Space[]>;
   createSpace(
     name: string,
     description: string,
@@ -149,34 +172,37 @@ export interface DatalayerClient {
     organizationId: string,
     seedSpaceId: string,
     isPublic: boolean,
-  ): Promise<any>;
+  ): Promise<Space>;
   createNotebook(
     spaceId: string,
     name: string,
     description: string,
     file?: File | Blob,
-  ): Promise<any>;
-  getNotebook(id: string): Promise<any>;
-  updateNotebook(id: string, name?: string, description?: string): Promise<any>;
+  ): Promise<Notebook>;
+  getNotebook(id: string): Promise<Notebook>;
+  updateNotebook(
+    id: string,
+    name?: string,
+    description?: string,
+  ): Promise<Notebook>;
   createLexical(
     spaceId: string,
     name: string,
     description: string,
     file?: File | Blob,
-  ): Promise<any>;
-  getLexical(id: string): Promise<any>;
-  updateLexical(id: string, name?: string, description?: string): Promise<any>;
-  getSpaceItems(spaceId: string): Promise<any>;
-  deleteSpaceItem(itemId: string): Promise<any>;
-  getNotebookContent(notebookId: string, options?: any): Promise<any>;
-  getLexicalContent(lexicalId: string, options?: any): Promise<any>;
-  prefetchContent(
-    itemIds: string[],
-    itemType?: 'notebook' | 'lexical',
-  ): Promise<void>;
-  clearContentCache(
-    itemId?: string,
-    itemType?: 'notebook' | 'lexical',
-  ): Promise<void>;
-  checkSpacerHealth(): Promise<any>;
+  ): Promise<Lexical>;
+  getLexical(id: string): Promise<Lexical>;
+  updateLexical(
+    id: string,
+    name?: string,
+    description?: string,
+  ): Promise<Lexical>;
+  getSpaceItems(spaceId: string): Promise<(Notebook | Lexical)[]>;
+  getSpaceItem(itemId: string): Promise<Notebook | Lexical>;
+  deleteSpaceItem(itemId: string): Promise<void>;
+  getCollaborationSessionId(documentId: string): Promise<string>;
+  getContent(itemId: string): Promise<any>;
+  checkSpacerHealth(): Promise<HealthCheck>;
+  // Utility Methods
+  calculateCreditsFromMinutes(minutes: number, burningRate: number): number;
 }

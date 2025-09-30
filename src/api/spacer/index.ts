@@ -11,6 +11,7 @@
  * spaces, notebooks, cells, and lexical documents.
  */
 
+export * as documents from './documents';
 export * as healthz from './healthz';
 export * as items from './items';
 export * as lexicals from './lexicals';

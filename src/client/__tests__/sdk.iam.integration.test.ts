@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { DatalayerSDK } from '..';
+import { DatalayerClient } from '..';
 import { testConfig } from '../../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../../api/constants';
 
@@ -15,14 +15,14 @@ import { DEFAULT_SERVICE_URLS } from '../../../api/constants';
  * using the SDK client.
  */
 describe('SDK IAM Integration Tests', () => {
-  let sdk: DatalayerSDK;
+  let sdk: DatalayerClient;
 
   beforeAll(() => {
     if (!testConfig.hasToken()) {
       return;
     }
 
-    sdk = new DatalayerSDK({
+    sdk = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,

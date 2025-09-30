@@ -24,8 +24,10 @@ export interface EnvironmentJSON {
   name: string;
   /** Credits consumed per hour for this environment */
   burningRate: number;
-  /** Rich description of the environment (contains HTML markup) */
+  /** Description of the environment (contains HTML markup) */
   description: string;
+  /** Rich description of the environment (contains HTML markup) */
+  richDescription: string;
 }
 
 /**
@@ -65,7 +67,7 @@ export class Environment {
 
   /** Unique name identifier for the environment (e.g., 'ai-env', 'python-cpu-env'). */
   get name(): string {
-    return this._data.name || '';
+    return this._data.name;
   }
 
   /** Credits consumed per hour for this environment. */
@@ -97,10 +99,11 @@ export class Environment {
    */
   toJSON(): EnvironmentJSON {
     return {
-      title: this._data.title,
-      name: this._data.name || '',
-      burningRate: this._data.burning_rate,
-      description: this._data.description,
+      title: this.title,
+      name: this.name,
+      burningRate: this.burningRate,
+      description: this.description,
+      richDescription: this.richDescription,
     };
   }
 

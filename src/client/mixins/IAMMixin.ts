@@ -16,6 +16,7 @@ import type { CreditsResponse } from '../../api/iam/usage';
 import type { Constructor } from '../utils/mixins';
 import { User } from '../models/User';
 import { Credits } from '../models/Credits';
+import { HealthCheck } from '../models/HealthCheck';
 
 /** IAM mixin providing authentication and user management. */
 export function IAMMixin<TBase extends Constructor>(Base: TBase) {
@@ -28,69 +29,48 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      * @returns User model instance
      */
     async whoami(): Promise<User> {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const token = (this as any).getToken();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const iamRunUrl = (this as any).getIamRunUrl();
 
-      console.log(
-        '[IAMMixin] whoami called with token:',
-        token ? 'present' : 'missing',
-      );
-      console.log('[IAMMixin] IAM URL:', iamRunUrl);
-
-      let response;
-      try {
-        response = await profile.whoami(token, iamRunUrl);
-        console.log('[IAMMixin] API raw response:', response);
-        console.log('[IAMMixin] Response type:', typeof response);
-        console.log(
-          '[IAMMixin] Response keys:',
-          response ? Object.keys(response) : 'null',
-        );
-      } catch (error) {
-        console.error('[IAMMixin] API call failed:', error);
-        throw error;
-      }
+      const response = await profile.whoami(token, iamRunUrl);
 
       // Handle the whoami response format
       let userData: ApiUser;
 
       if (!response) {
-        console.error('[IAMMixin] No response received from API');
         throw new Error(`No response from profile.whoami API`);
       }
 
       // Check if response has the expected wrapper structure with profile
       if (response.profile) {
-        console.log(
-          '[IAMMixin] Response has wrapper structure with .profile property',
-        );
-        // Transform the API response to match the User interface
+        // Transform the API response to match the User model's expected data structure
         // Note: whoami returns fields with suffixes like _s, _t
         userData = {
           id: response.profile.id,
           uid: response.profile.uid,
-          email: response.profile.email_s,
-          handle: response.profile.handle_s,
-          first_name: response.profile.first_name_t,
-          last_name: response.profile.last_name_t,
-          // whoami doesn't return avatar_url, so we leave it undefined
-          avatar_url: undefined,
+          // User model expects fields with suffixes from API types
+          handle_s: response.profile.handle_s || response.profile.handle,
+          email_s: response.profile.email_s || response.profile.email,
+          first_name_t:
+            response.profile.first_name_t || response.profile.first_name || '',
+          last_name_t:
+            response.profile.last_name_t || response.profile.last_name || '',
+          // Use avatar_url_s if available, otherwise leave undefined for fallback
+          avatar_url_s:
+            response.profile.avatar_url_s || response.profile.avatar_url,
         };
       }
       // Fallback for unexpected format
       else {
-        console.error('[IAMMixin] Unexpected response format:', response);
         throw new Error(
           `Unexpected response format from profile.whoami API: ${JSON.stringify(response)}`,
         );
       }
 
-      // Create or update cached User instance
-      if (this.currentUserCache) {
-        this.currentUserCache.update(userData);
-      } else {
-        this.currentUserCache = new User(userData, this as any);
-      }
+      // Create new User instance (User model is immutable, no update method)
+      this.currentUserCache = new User(userData, this as any);
 
       return this.currentUserCache;
     }
@@ -98,19 +78,20 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
     /**
      * Authenticate the user with a token.
      * @param token - Authentication token
-     * @returns Login response
+     * @returns User object on successful login
+     * @throws Error if token is invalid
      */
-    async login(token: string): Promise<any> {
+    async login(token: string): Promise<User> {
       // For token-based login, we simply set the token and verify it works
-      (this as any).setToken(token);
+      await (this as any).setToken(token);
 
       // Verify the token by calling whoami
       try {
         const user = await this.whoami();
-        return { success: true, user };
+        return user;
       } catch (error) {
         // Clear the invalid token
-        (this as any).setToken(null);
+        await (this as any).setToken('');
         throw new Error(
           `Invalid token: ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
@@ -123,7 +104,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       const iamRunUrl = (this as any).getIamRunUrl();
       await authentication.logout(token, iamRunUrl);
       // Clear the token from the SDK and cached user
-      (this as any).updateToken('');
+      (this as any).setToken('');
       this.currentUserCache = undefined;
     }
 
@@ -175,8 +156,10 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
     calculateCreditsRequired(minutes: number, burningRate: number): number {
       if (!burningRate || burningRate <= 0 || !minutes || minutes <= 0)
         return 0;
-      const burningRatePerMinute = burningRate * 60;
-      return Math.ceil(minutes * burningRatePerMinute);
+
+      return Math.ceil(
+        minutes * this.calculateBurningRatePerMinute(burningRate),
+      );
     }
 
     /**
@@ -194,15 +177,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
 
     /**
      * Check the health status of the IAM service.
-     * @returns Health check result with status and response time
+     * @returns Health check model instance
      */
-    async checkIAMHealth(): Promise<{
-      healthy: boolean;
-      status: string;
-      responseTime: number;
-      errors: string[];
-      timestamp: Date;
-    }> {
+    async checkIAMHealth(): Promise<HealthCheck> {
       const startTime = Date.now();
       const errors: string[] = [];
       let status = 'unknown';
@@ -221,25 +198,31 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
           errors.push('Unexpected response format from profile endpoint');
         }
 
-        return {
-          healthy,
-          status,
-          responseTime,
-          errors,
-          timestamp: new Date(),
-        };
+        return new HealthCheck(
+          {
+            healthy,
+            status,
+            responseTime,
+            errors,
+            timestamp: new Date(),
+          },
+          this as any,
+        );
       } catch (error) {
         const responseTime = Date.now() - startTime;
         status = 'down';
         errors.push(`Service unreachable: ${error}`);
 
-        return {
-          healthy: false,
-          status,
-          responseTime,
-          errors,
-          timestamp: new Date(),
-        };
+        return new HealthCheck(
+          {
+            healthy: false,
+            status,
+            responseTime,
+            errors,
+            timestamp: new Date(),
+          },
+          this as any,
+        );
       }
     }
   };

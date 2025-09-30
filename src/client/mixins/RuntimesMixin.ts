@@ -19,6 +19,7 @@ import type { Constructor } from '../utils/mixins';
 import { Environment } from '../models/Environment';
 import { Runtime } from '../models/Runtime';
 import { Snapshot } from '../models/Snapshot';
+import { HealthCheck } from '../models/HealthCheck';
 
 /** Options for ensuring a runtime is available. */
 export interface EnsureRuntimeOptions {
@@ -69,136 +70,16 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         token,
         runtimesRunUrl,
       );
-      return response.environments.map(
+      // Save for later use after first call
+      (this as any).environments = response.environments.map(
         env => new Environment(env, this as any),
       );
+      return (this as any).environments;
     }
 
     // ========================================================================
     // Runtimes
     // ========================================================================
-
-    /**
-     * Ensure a runtime is available, either by reusing existing or creating new.
-     * @param environmentName - Optional name of the environment to use
-     * @param creditsLimit - Optional maximum credits to allocate
-     * @param waitForReady - Whether to wait for runtime to be ready (defaults to true)
-     * @param maxWaitTime - Maximum time to wait for ready state in ms (defaults to 60000)
-     * @param reuseExisting - Whether to reuse existing suitable runtime (defaults to true)
-     * @param snapshotId - Optional snapshot ID to create runtime from
-     * @returns Runtime instance
-     */
-    async ensureRuntime(
-      environmentName?: string,
-      creditsLimit?: number,
-      waitForReady: boolean = true,
-      maxWaitTime: number = 60000,
-      reuseExisting: boolean = true,
-      snapshotId?: string,
-    ): Promise<Runtime> {
-      // 1. Check for existing suitable runtime if reuseExisting is true
-      if (reuseExisting) {
-        const existingRuntimes = await this.listRuntimes();
-
-        // Find a suitable runtime that:
-        // - Is in 'running' state (check the internal data)
-        // - Matches the environment if specified
-        // - Has sufficient credits remaining if limit specified
-        const suitableRuntime = existingRuntimes.find(runtime => {
-          // Access the internal data directly for state checking
-          if (runtime._data.state !== 'running') return false;
-
-          if (
-            environmentName &&
-            runtime._data.environment_name !== environmentName
-          ) {
-            return false;
-          }
-
-          if (
-            creditsLimit !== undefined &&
-            runtime._data.credits !== undefined
-          ) {
-            // Calculate remaining credits (total credits - used)
-            const creditsUsed = runtime._data.credits || 0;
-            const creditsRemaining = creditsLimit - creditsUsed;
-            // Ensure at least 20% of requested credits remain
-            if (creditsRemaining < creditsLimit * 0.2) return false;
-          }
-
-          return true;
-        });
-
-        if (suitableRuntime) {
-          console.log(`Reusing existing runtime: ${suitableRuntime.podName}`);
-          return suitableRuntime;
-        }
-      }
-
-      // 2. Create from snapshot if provided
-      if (snapshotId) {
-        let snapshot: Snapshot | null = null;
-        try {
-          snapshot = await this.getSnapshot(snapshotId);
-        } catch (error) {
-          // If snapshot fetch fails, it doesn't exist
-          throw new Error(`Snapshot '${snapshotId}' not found`);
-        }
-
-        if (!snapshot) {
-          throw new Error(`Snapshot '${snapshotId}' not found`);
-        }
-
-        console.log(`Creating runtime from snapshot: ${snapshotId}`);
-        // Note: snapshot_id is not part of CreateRuntimeRequest
-        // We may need to use a different approach or extend the API
-        const runtime = await this.createRuntime(
-          environmentName || snapshot.environment,
-          'notebook', // type
-          `Runtime from ${snapshotId}`, // givenName
-          creditsLimit || 10, // default credits limit
-        );
-
-        if (waitForReady) {
-          await runtime.waitUntilReady(maxWaitTime);
-        }
-
-        return runtime;
-      }
-
-      // 3. Create new runtime
-      console.log('Creating new runtime...');
-
-      // If no environment specified, get the default one
-      let targetEnvironment = environmentName;
-      if (!targetEnvironment) {
-        const environments = await this.listEnvironments();
-        const defaultEnv = environments.find(env => {
-          const envName = env.name || '';
-          return envName.includes('default') || envName.includes('python');
-        });
-        targetEnvironment = defaultEnv?.name || environments[0]?.name;
-
-        if (!targetEnvironment) {
-          throw new Error('No environments available');
-        }
-      }
-
-      const runtime = await this.createRuntime(
-        targetEnvironment,
-        'notebook', // type
-        `Runtime for ${targetEnvironment}`, // givenName
-        creditsLimit || 10, // default credits limit
-      );
-
-      // 4. Wait for ready state if requested
-      if (waitForReady) {
-        await runtime.waitUntilReady(maxWaitTime);
-      }
-
-      // 5. Return Runtime model instance
-      return runtime;
-    }
 
     /**
      * Create a new computational runtime.
@@ -212,24 +93,47 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       environmentName: string,
       type: 'notebook' | 'terminal' | 'job',
       givenName: string,
-      creditsLimit: number,
+      minutesLimit: number,
+      fromSnapshotId?: string,
     ): Promise<Runtime> {
-      const token = (this as any).getToken();
-      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+      if (!(this as any).environments) {
+        await this.listEnvironments();
+      }
 
-      const data: CreateRuntimeRequest = {
-        environment_name: environmentName,
-        type,
-        given_name: givenName,
-        credits_limit: creditsLimit,
-      };
+      if ((this as any).environments) {
+        const env = (this as any).environments.find(
+          (e: Environment) => e.name === environmentName,
+        );
+        if (!env) {
+          throw new Error(
+            `Environment "${environmentName}" not found. Available environments: ${(this as any).environments.map((e: Environment) => e.name).join(', ')}`,
+          );
+        } else {
+          const token = (this as any).getToken();
+          const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+          const creditsLimit = (this as any).calculateCreditsFromMinutes(
+            minutesLimit,
+            env.burningRate,
+          );
 
-      const response = await runtimes.createRuntime(
-        token,
-        data,
-        runtimesRunUrl,
-      );
-      return new Runtime(response.runtime, this as any);
+          const data: CreateRuntimeRequest = {
+            environment_name: environmentName,
+            type,
+            given_name: givenName,
+            credits_limit: creditsLimit,
+            from: fromSnapshotId,
+          };
+
+          const response = await runtimes.createRuntime(
+            token,
+            data,
+            runtimesRunUrl,
+          );
+          return new Runtime(response.runtime, this as any);
+        }
+      } else {
+        throw new Error('Environments not loaded');
+      }
     }
 
     /**
@@ -346,13 +250,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * Check the health status of the Runtimes service.
      * @returns Health check result with status and response time
      */
-    async checkRuntimesHealth(): Promise<{
-      healthy: boolean;
-      status: string;
-      responseTime: number;
-      errors: string[];
-      timestamp: Date;
-    }> {
+    async checkRuntimesHealth(): Promise<HealthCheck> {
       const startTime = Date.now();
       const errors: string[] = [];
       let status = 'unknown';
@@ -371,25 +269,31 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
           errors.push('Unexpected response format from environments endpoint');
         }
 
-        return {
-          healthy,
-          status,
-          responseTime,
-          errors,
-          timestamp: new Date(),
-        };
+        return new HealthCheck(
+          {
+            healthy,
+            status,
+            responseTime,
+            errors,
+            timestamp: new Date(),
+          },
+          this as any,
+        );
       } catch (error) {
         const responseTime = Date.now() - startTime;
         status = 'down';
         errors.push(`Service unreachable: ${error}`);
 
-        return {
-          healthy: false,
-          status,
-          responseTime,
-          errors,
-          timestamp: new Date(),
-        };
+        return new HealthCheck(
+          {
+            healthy: false,
+            status,
+            responseTime,
+            errors,
+            timestamp: new Date(),
+          },
+          this as any,
+        );
       }
     }
   };

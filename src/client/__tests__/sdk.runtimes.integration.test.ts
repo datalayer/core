@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { DatalayerSDK } from '..';
+import { DatalayerClient } from '..';
 import { Runtime } from '../models/Runtime';
 import { Snapshot } from '../models/Snapshot';
 import { testConfig } from '../../../__tests__/shared/test-config';
@@ -18,7 +18,7 @@ import { performCleanup } from '../../../__tests__/shared/cleanup-shared';
  * using the SDK client and model classes.
  */
 describe('SDK Runtimes Integration Tests', () => {
-  let sdk: DatalayerSDK;
+  let sdk: DatalayerClient;
   let createdRuntime: Runtime | null = null;
   let createdSnapshot: Snapshot | null = null;
 
@@ -29,7 +29,7 @@ describe('SDK Runtimes Integration Tests', () => {
 
     await performCleanup('setup');
 
-    sdk = new DatalayerSDK({
+    sdk = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -74,12 +74,12 @@ describe('SDK Runtimes Integration Tests', () => {
       it('should create a runtime', async () => {
         console.log('Creating runtime...');
 
-        const runtime = await sdk.createRuntime({
-          environment_name: 'python-cpu-env',
-          type: 'notebook',
-          given_name: 'sdk-test-runtime',
-          credits_limit: 10,
-        });
+        const runtime = await sdk.createRuntime(
+          'python-cpu-env',
+          'notebook',
+          'sdk-test-runtime',
+          10,
+        );
 
         expect(runtime).toBeInstanceOf(Runtime);
         expect(runtime.podName).toBeDefined();
@@ -355,10 +355,12 @@ describe('SDK Runtimes Integration Tests', () => {
       console.log('Testing invalid runtime creation...');
 
       try {
-        await sdk.createRuntime({
-          environment_name: '', // Invalid
-          type: 'notebook',
-        } as any);
+        await sdk.createRuntime(
+          '', // Invalid environment name
+          'notebook',
+          'Invalid test runtime',
+          10,
+        );
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
         expect(error).toBeDefined();

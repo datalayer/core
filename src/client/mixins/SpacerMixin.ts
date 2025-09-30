@@ -12,25 +12,25 @@ import * as spaces from '../../api/spacer/spaces';
 import * as notebooks from '../../api/spacer/notebooks';
 import * as users from '../../api/spacer/users';
 import * as lexicals from '../../api/spacer/lexicals';
+import * as documents from '../../api/spacer/documents';
 import * as items from '../../api/spacer/items';
 import type {
   CreateSpaceRequest,
   UpdateNotebookRequest,
   UpdateLexicalRequest,
   GetSpaceItemsResponse,
-  DeleteSpaceItemResponse,
 } from '../../api/types/spacer';
 import type { Constructor } from '../utils/mixins';
 import { Notebook } from '../models/Notebook';
 import { Lexical } from '../models/Lexical';
 import { Space } from '../models/Space';
+import { HealthCheck } from '../models/HealthCheck';
+import { convertSpaceItemsToModels } from '../utils/spacerUtils';
 
 /** Options for content loading with CDN support. */
 export interface ContentLoadingOptions {
   /** Whether to try CDN first before API (default: true) */
   preferCDN?: boolean;
-  /** Whether to cache content locally for offline access (default: false) */
-  cacheLocally?: boolean;
   /** CDN base URL (default: https://cdn.datalayer.run) */
   cdnBaseUrl?: string;
 }
@@ -91,6 +91,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       };
 
       const response = await spaces.createSpace(token, data, spacerRunUrl);
+      if (!response.space) {
+        throw new Error('Failed to create space: no space returned');
+      }
       return new Space(response.space, this as any);
     }
 
@@ -170,6 +173,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         data,
         spacerRunUrl,
       );
+      if (!response.notebook) {
+        throw new Error('Failed to update notebook: no notebook returned');
+      }
       return new Notebook(response.notebook, this as any);
     }
 
@@ -257,310 +263,123 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     // ========================================================================
 
     /**
-     * Get the items of a space.
+     * Get the items of a space as model instances.
      * @param spaceId - Space ID
-     * @returns Space items
+     * @returns Array of Notebook and Lexical model instances
      */
-    async getSpaceItems(spaceId: string): Promise<GetSpaceItemsResponse> {
+    async getSpaceItems(spaceId: string): Promise<(Notebook | Lexical)[]> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await items.getSpaceItems(token, spaceId, spacerRunUrl);
+
+      const response: GetSpaceItemsResponse = await items.getSpaceItems(
+        token,
+        spaceId,
+        spacerRunUrl,
+      );
+
+      // Use shared utility function to convert items to model instances
+      return convertSpaceItemsToModels(response.items, this as any);
+    }
+
+    /**
+     * Get a single item from a space.
+     * @param itemId - Item ID to retrieve
+     * @returns Notebook or Lexical model instance
+     * @throws Error if item not found
+     */
+    async getSpaceItem(itemId: string): Promise<Notebook | Lexical> {
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const token = (this as any).getToken();
+
+      const response = await items.getItem(token, itemId, spacerRunUrl);
+      if (!response.success || !response.item) {
+        throw new Error(`Space item '${itemId}' not found`);
+      }
+
+      // Determine item type and create appropriate model
+      const item = response.item;
+      if (item.type_s === 'notebook' || item.notebook_name_s !== undefined) {
+        return new Notebook(item, this as any);
+      } else if (
+        item.type_s === 'lexical' ||
+        item.document_name_s !== undefined
+      ) {
+        return new Lexical(item, this as any);
+      } else {
+        throw new Error(`Unknown item type for item '${itemId}'`);
+      }
     }
 
     /**
      * Delete an item from a space.
      * @param itemId - Item ID to delete
-     * @returns Deletion response
+     * @throws Error if deletion fails
      */
-    async deleteSpaceItem(itemId: string): Promise<DeleteSpaceItemResponse> {
+    async deleteSpaceItem(itemId: string): Promise<void> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
-      return await items.deleteItem(token, itemId, spacerRunUrl);
+
+      // First, check if the item exists
+      try {
+        const getResponse = await items.getItem(token, itemId, spacerRunUrl);
+        if (!getResponse.success || !getResponse.item) {
+          throw new Error(`Space item '${itemId}' not found`);
+        }
+      } catch (error: any) {
+        // If getItem throws (e.g., 404), wrap in descriptive error
+        if (
+          error.message?.includes('404') ||
+          error.message?.includes('not found')
+        ) {
+          throw new Error(
+            `Failed to delete space item '${itemId}': Item not found`,
+          );
+        }
+        throw new Error(
+          `Failed to delete space item '${itemId}': ${error.message}`,
+        );
+      }
+
+      // Item exists, proceed with deletion
+      const response = await items.deleteItem(token, itemId, spacerRunUrl);
+
+      if (!response.success) {
+        throw new Error(
+          `Failed to delete space item '${itemId}': ${response.message}`,
+        );
+      }
+
+      // Success - return void
     }
 
     // ========================================================================
     // Content Loading with CDN Support
     // ========================================================================
+    async getContent(itemId: string): Promise<any> {
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const token = (this as any).getToken();
 
-    /**
-     * Get notebook content with CDN-first loading strategy and API fallback.
-     * Tries CDN first for speed, falls back to API if needed, optionally caches locally.
-     *
-     * @param notebookIdOrInstance - Notebook ID or Notebook instance
-     * @param options - Content loading options
-     * @returns Notebook content
-     */
-    async getNotebookContent(
-      notebookId: string,
-      options: ContentLoadingOptions = {},
-    ): Promise<any> {
-      const {
-        preferCDN = true,
-        cacheLocally = false,
-        cdnBaseUrl = 'https://cdn.datalayer.run',
-      } = options;
+      // First, get the item to check for CDN URL
+      const response = await items.getItem(token, itemId, spacerRunUrl);
+      if (!response.success || !response.item) {
+        throw new Error(`Space item '${itemId}' not found`);
+      }
+      const item = response.item;
+      const cdnUrl = item.cdn_url_s;
 
-      // Check local cache first if enabled
-      if (cacheLocally) {
-        const storage = (this as any).getStorage();
-        const cacheKey = `notebook-content:${notebookId}`;
-        const cached = await storage.getItem(cacheKey);
-        if (cached) {
-          try {
-            const cachedData = JSON.parse(cached);
-            // Check if cache is still valid (24 hours)
-            if (Date.now() - cachedData.timestamp < 24 * 60 * 60 * 1000) {
-              console.log(`Loaded notebook ${notebookId} from local cache`);
-              return cachedData.content;
-            }
-          } catch (error) {
-            console.warn('Failed to parse cached notebook content:', error);
-          }
+      if (cdnUrl) {
+        // Load content from CDN
+        const cdnResponse = await fetch(cdnUrl);
+        if (!cdnResponse.ok) {
+          throw new Error(
+            `Failed to load content from CDN: ${cdnResponse.statusText}`,
+          );
         }
+        return await cdnResponse.json();
       }
 
-      let content: any = null;
-      let loadedFromCDN = false;
-
-      // Try CDN first if preferred
-      if (preferCDN) {
-        try {
-          const cdnUrl = `${cdnBaseUrl}/notebooks/${notebookId}.ipynb`;
-          console.log(`Attempting to load notebook from CDN: ${cdnUrl}`);
-
-          const response = await fetch(cdnUrl, {
-            method: 'GET',
-            headers: {
-              Accept: 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            content = await response.json();
-            loadedFromCDN = true;
-            console.log(`Successfully loaded notebook ${notebookId} from CDN`);
-          } else if (response.status === 404) {
-            console.log(
-              `Notebook ${notebookId} not found on CDN, falling back to API`,
-            );
-          } else {
-            console.warn(
-              `CDN returned status ${response.status}, falling back to API`,
-            );
-          }
-        } catch (error) {
-          console.warn('Failed to load from CDN, falling back to API:', error);
-        }
-      }
-
-      // Fall back to API if CDN failed or was skipped
-      if (!content) {
-        try {
-          console.log(`Loading notebook ${notebookId} from API`);
-          const notebook = await this.getNotebook(notebookId);
-          content = await notebook.getContent();
-
-          if (!content) {
-            throw new Error(`No content available for notebook ${notebookId}`);
-          }
-
-          console.log(`Successfully loaded notebook ${notebookId} from API`);
-        } catch (error) {
-          console.error(`Failed to load notebook ${notebookId}:`, error);
-          throw error;
-        }
-      }
-
-      // Cache locally if enabled
-      if (cacheLocally && content) {
-        try {
-          const storage = (this as any).getStorage();
-          const cacheKey = `notebook-content:${notebookId}`;
-          const cacheData = {
-            content,
-            timestamp: Date.now(),
-            source: loadedFromCDN ? 'cdn' : 'api',
-          };
-          await storage.setItem(cacheKey, JSON.stringify(cacheData));
-          console.log(`Cached notebook ${notebookId} locally`);
-        } catch (error) {
-          console.warn('Failed to cache notebook content:', error);
-        }
-      }
-
-      return content;
-    }
-
-    /**
-     * Get lexical document content with CDN-first loading strategy.
-     * Similar to getNotebookContent but for lexical documents.
-     *
-     * @param lexicalId - Lexical ID
-     * @param options - Content loading options
-     * @returns Lexical content
-     */
-    async getLexicalContent(
-      lexicalId: string,
-      options: ContentLoadingOptions = {},
-    ): Promise<any> {
-      const {
-        preferCDN = true,
-        cacheLocally = false,
-        cdnBaseUrl = 'https://cdn.datalayer.run',
-      } = options;
-
-      // Check local cache first if enabled
-      if (cacheLocally) {
-        const storage = (this as any).getStorage();
-        const cacheKey = `lexical-content:${lexicalId}`;
-        const cached = await storage.getItem(cacheKey);
-        if (cached) {
-          try {
-            const cachedData = JSON.parse(cached);
-            // Check if cache is still valid (24 hours)
-            if (Date.now() - cachedData.timestamp < 24 * 60 * 60 * 1000) {
-              console.log(`Loaded lexical ${lexicalId} from local cache`);
-              return cachedData.content;
-            }
-          } catch (error) {
-            console.warn('Failed to parse cached lexical content:', error);
-          }
-        }
-      }
-
-      let content: any = null;
-      let loadedFromCDN = false;
-
-      // Try CDN first if preferred
-      if (preferCDN) {
-        try {
-          const cdnUrl = `${cdnBaseUrl}/lexicals/${lexicalId}.json`;
-          console.log(`Attempting to load lexical from CDN: ${cdnUrl}`);
-
-          const response = await fetch(cdnUrl, {
-            method: 'GET',
-            headers: {
-              Accept: 'application/json',
-            },
-          });
-
-          if (response.ok) {
-            content = await response.json();
-            loadedFromCDN = true;
-            console.log(`Successfully loaded lexical ${lexicalId} from CDN`);
-          } else if (response.status === 404) {
-            console.log(
-              `Lexical ${lexicalId} not found on CDN, falling back to API`,
-            );
-          } else {
-            console.warn(
-              `CDN returned status ${response.status}, falling back to API`,
-            );
-          }
-        } catch (error) {
-          console.warn('Failed to load from CDN, falling back to API:', error);
-        }
-      }
-
-      // Fall back to API if CDN failed or was skipped
-      if (!content) {
-        try {
-          console.log(`Loading lexical ${lexicalId} from API`);
-          const lexical = await this.getLexical(lexicalId);
-          content = await lexical.getContent();
-
-          if (!content) {
-            throw new Error(`No content available for lexical ${lexicalId}`);
-          }
-
-          console.log(`Successfully loaded lexical ${lexicalId} from API`);
-        } catch (error) {
-          console.error(`Failed to load lexical ${lexicalId}:`, error);
-          throw error;
-        }
-      }
-
-      // Cache locally if enabled
-      if (cacheLocally && content) {
-        try {
-          const storage = (this as any).getStorage();
-          const cacheKey = `lexical-content:${lexicalId}`;
-          const cacheData = {
-            content,
-            timestamp: Date.now(),
-            source: loadedFromCDN ? 'cdn' : 'api',
-          };
-          await storage.setItem(cacheKey, JSON.stringify(cacheData));
-          console.log(`Cached lexical ${lexicalId} locally`);
-        } catch (error) {
-          console.warn('Failed to cache lexical content:', error);
-        }
-      }
-
-      return content;
-    }
-
-    /**
-     * Prefetch content for multiple notebooks/lexicals for offline access.
-     * Loads content in parallel and caches locally.
-     *
-     * @param itemIds - Array of notebook or lexical IDs to prefetch
-     * @param itemType - Type of items ('notebook' or 'lexical')
-     */
-    async prefetchContent(
-      itemIds: string[],
-      itemType: 'notebook' | 'lexical' = 'notebook',
-    ): Promise<void> {
-      console.log(
-        `Prefetching ${itemIds.length} ${itemType}s for offline access`,
-      );
-
-      const loadPromises = itemIds.map(async id => {
-        try {
-          if (itemType === 'notebook') {
-            await this.getNotebookContent(id, {
-              preferCDN: true,
-              cacheLocally: true,
-            });
-          } else {
-            await this.getLexicalContent(id, {
-              preferCDN: true,
-              cacheLocally: true,
-            });
-          }
-        } catch (error) {
-          console.warn(`Failed to prefetch ${itemType} ${id}:`, error);
-        }
-      });
-
-      await Promise.all(loadPromises);
-      console.log(`Prefetch complete for ${itemIds.length} ${itemType}s`);
-    }
-
-    /**
-     * Clear cached content for a specific item or all items.
-     *
-     * @param itemId - Optional ID of specific item to clear cache for
-     * @param itemType - Type of item ('notebook' or 'lexical')
-     */
-    async clearContentCache(
-      itemId?: string,
-      itemType: 'notebook' | 'lexical' = 'notebook',
-    ): Promise<void> {
-      const storage = (this as any).getStorage();
-      const prefix = `${itemType}-content:`;
-
-      if (itemId) {
-        // Clear specific item
-        const cacheKey = `${prefix}${itemId}`;
-        await storage.removeItem(cacheKey);
-        console.log(`Cleared cache for ${itemType} ${itemId}`);
-      } else {
-        // Clear all items of this type
-        // Note: This is a simplified implementation that assumes we can iterate storage keys
-        // In practice, you might need to maintain a list of cached keys
-        console.log(`Cleared all cached ${itemType}s`);
-      }
+      // No CDN URL, return content from item
+      return item.content;
     }
 
     // ========================================================================
@@ -573,13 +392,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      *
      * @returns Health check result with status and response time
      */
-    async checkSpacerHealth(): Promise<{
-      healthy: boolean;
-      status: string;
-      responseTime: number;
-      errors: string[];
-      timestamp: Date;
-    }> {
+    async checkSpacerHealth(): Promise<HealthCheck> {
       const startTime = Date.now();
       const errors: string[] = [];
       let status = 'unknown';
@@ -598,26 +411,50 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
           errors.push('Unexpected response format from spaces endpoint');
         }
 
-        return {
-          healthy,
-          status,
-          responseTime,
-          errors,
-          timestamp: new Date(),
-        };
+        return new HealthCheck(
+          {
+            healthy,
+            status,
+            responseTime,
+            errors,
+            timestamp: new Date(),
+          },
+          this as any,
+        );
       } catch (error) {
         const responseTime = Date.now() - startTime;
         status = 'down';
         errors.push(`Service unreachable: ${error}`);
 
-        return {
-          healthy: false,
-          status,
-          responseTime,
-          errors,
-          timestamp: new Date(),
-        };
+        return new HealthCheck(
+          {
+            healthy: false,
+            status,
+            responseTime,
+            errors,
+            timestamp: new Date(),
+          },
+          this as any,
+        );
       }
+    }
+    /**
+     * Get collaboration session ID for a document
+     */
+    async getCollaborationSessionId(documentId: string): Promise<string> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await documents.getCollaborationSessionId(
+        token,
+        documentId,
+        spacerRunUrl,
+      );
+      if (!response.success || !response.sessionId) {
+        throw new Error(
+          `Failed to get collaboration session ID for document '${documentId}': ${response.error || 'Unknown error'}`,
+        );
+      }
+      return response.sessionId;
     }
   };
 }

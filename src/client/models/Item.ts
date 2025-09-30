@@ -115,7 +115,7 @@ export abstract class Item<TData> {
   }
 
   /** The cached update time. */
-  get updatedAt(): Date | null {
+  get updatedAt(): Date {
     this._checkDeleted();
     const dateStr =
       (this._data as any).last_update_ts_dt ||
@@ -123,7 +123,9 @@ export abstract class Item<TData> {
       (this._data as any).creation_ts_dt ||
       (this._data as any).created_at;
     if (!dateStr) {
-      return null;
+      throw new Error(
+        `No update timestamp available for ${this.constructor.name.toLowerCase()}`,
+      );
     }
     return new Date(dateStr);
   }
@@ -143,9 +145,6 @@ export abstract class Item<TData> {
 
   /** The cached content. */
   abstract get content(): any;
-
-  /** Get the current content from API. */
-  abstract getContent(): Promise<any>;
 
   /** Get when the item was last updated from API. */
   abstract getUpdatedAt(): Promise<Date>;
@@ -167,6 +166,25 @@ export abstract class Item<TData> {
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
     await items.deleteItem(token, this.uid, spacerRunUrl);
     this._deleted = true;
+  }
+
+  /** Get the document content from API. */
+  async getContent(): Promise<any> {
+    this._checkDeleted();
+    const cdnUrl = (this._data as any).cdn_url_s;
+    if (cdnUrl) {
+      try {
+        const response = await fetch(cdnUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch content');
+        }
+        const data = await response.json();
+        return data.content;
+      } catch (error) {
+        console.error('Error fetching content:', error);
+      }
+    }
+    return this.content;
   }
 
   // ========================================================================

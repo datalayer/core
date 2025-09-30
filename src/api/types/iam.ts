@@ -7,39 +7,22 @@
  * Represents a user in the Datalayer platform
  * @interface User
  */
+
 export interface User {
-  /** Unique identifier for the user */
+  /** uuid for the user */
   id: string;
-  /** Alternative unique identifier (UUID format) */
-  uid?: string;
-  /** User ID in the authentication system */
-  user_id?: string;
-  /** Username for login */
-  username?: string;
+  /** ulid for the user */
+  uid: string;
   /** User's handle or nickname */
-  handle?: string;
+  handle_s: string;
   /** User's email address */
-  email: string;
+  email_s: string;
   /** User's first name */
-  first_name?: string;
+  first_name_t: string;
   /** User's last name */
-  last_name?: string;
+  last_name_t: string;
   /** Display name shown in the UI */
-  display_name?: string;
-  /** URL to the user's avatar image */
-  avatar_url?: string;
-  /** Alternative property name for avatar URL (for backwards compatibility) */
-  avatarUrl?: string;
-  /** ISO 8601 timestamp of when the user was created */
-  created_at?: string;
-  /** ISO 8601 timestamp of when the user was last updated */
-  updated_at?: string;
-  /** Whether the user account is active */
-  is_active?: boolean;
-  /** Whether the user's email has been verified */
-  is_verified?: boolean;
-  /** Whether multi-factor authentication is enabled */
-  mfa_enabled?: boolean;
+  avatar_url_s: string;
   /** Additional fields that may be present in the response */
   [key: string]: any;
 }

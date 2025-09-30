@@ -4,7 +4,7 @@
  */
 
 /**
- * TypeScript mixin utilities for composing the DatalayerSDK class.
+ * TypeScript mixin utilities for composing the DatalayerClient class.
  * @module client/utils/mixins
  */
 

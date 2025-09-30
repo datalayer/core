@@ -315,9 +315,13 @@ await client.clearContentCache(notebook.id, 'notebook');
 await client.clearContentCache(); // clear all cache
 
 // Delete items
-await client.deleteSpaceItem(notebook.id);
-await client.deleteSpaceItem(document.id);
-console.log('Items deleted');
+try {
+  await client.deleteSpaceItem(notebook.id);
+  await client.deleteSpaceItem(document.id);
+  console.log('Items deleted successfully');
+} catch (error) {
+  console.error('Failed to delete items:', error.message);
+}
 
 // Check spacer service health
 const spacerHealth = await client.checkSpacerHealth();

@@ -134,6 +134,7 @@ export class Credits {
    * Convert to JSON representation.
    */
   toJSON(): CreditsInfo & { reservations: CreditReservation[] } {
+    // FIXME
     return {
       ...this._data,
       reservations: this._reservations,

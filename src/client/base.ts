@@ -9,10 +9,7 @@
  */
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
-import { PlatformStorage, BrowserStorage } from './storage';
-import { IAMState } from './state/IAMState';
-import { RuntimesState } from './state/RuntimesState';
-import { SpacerState } from './state/SpacerState';
+import { Environment } from './models/Environment';
 
 /** Handlers for SDK method lifecycle events. */
 export interface SDKHandlers {
@@ -34,16 +31,6 @@ export interface DatalayerClientConfig {
   runtimesRunUrl?: string;
   /** URL for the Spacer service */
   spacerRunUrl?: string;
-
-  // Platform abstractions
-  /** Platform-specific storage implementation */
-  storage?: PlatformStorage;
-  /** Enable caching for API responses */
-  cacheEnabled?: boolean;
-  /** Enable offline mode */
-  offlineMode?: boolean;
-
-  // Method lifecycle handlers
   /** Handlers for intercepting SDK method calls */
   handlers?: SDKHandlers;
 }
@@ -58,20 +45,8 @@ export class DatalayerClientBase {
   public readonly spacerRunUrl: string;
   /** Authentication token */
   public token?: string;
-
-  // Platform abstractions
-  /** Platform storage implementation */
-  public readonly storage: PlatformStorage;
-  /** IAM state manager */
-  public readonly iamState: IAMState;
-  /** Runtimes state manager */
-  public readonly runtimesState: RuntimesState;
-  /** Spacer state manager */
-  public readonly spacerState: SpacerState;
-  /** Cache enabled flag */
-  public readonly cacheEnabled: boolean;
-  /** Offline mode flag */
-  public readonly offlineMode: boolean;
+  /** Environments */
+  public readonly environments: Environment[] = [];
   /** Method lifecycle handlers */
   public readonly handlers?: SDKHandlers;
 
@@ -85,49 +60,7 @@ export class DatalayerClientBase {
       config.runtimesRunUrl || DEFAULT_SERVICE_URLS.RUNTIMES;
     this.spacerRunUrl = config.spacerRunUrl || DEFAULT_SERVICE_URLS.SPACER;
     this.token = config.token;
-
-    // Initialize platform abstractions
-    this.storage = config.storage || new BrowserStorage();
-    this.cacheEnabled = config.cacheEnabled !== false;
-    this.offlineMode = config.offlineMode || false;
     this.handlers = config.handlers;
-
-    // Initialize state managers
-    this.iamState = new IAMState(this.storage);
-    this.runtimesState = new RuntimesState(this.storage);
-    this.spacerState = new SpacerState(this.storage);
-
-    // Store service URLs in state
-    this.initializeState();
-  }
-
-  /** Initialize state with configuration. */
-  public async initializeState(): Promise<void> {
-    // Store service URLs
-    await this.iamState.setIamUrl(this.iamRunUrl);
-    await this.runtimesState.setRuntimesUrl(this.runtimesRunUrl);
-    await this.spacerState.setSpacerUrl(this.spacerRunUrl);
-
-    // Store token if provided
-    if (this.token) {
-      await this.iamState.setToken(this.token);
-    } else {
-      // Try to load token from storage
-      const storedToken = await this.iamState.getToken();
-      if (storedToken) {
-        this.token = storedToken;
-      }
-    }
-  }
-
-  /**
-   * Update the authentication token for all API requests.
-   * @param token - New authentication token
-   */
-  async updateToken(token: string): Promise<void> {
-    this.token = token;
-    // Also persist to storage
-    await this.iamState.setToken(token);
   }
 
   /**
@@ -141,17 +74,6 @@ export class DatalayerClientBase {
       spacerRunUrl: this.spacerRunUrl,
       token: this.token,
     };
-  }
-
-  /**
-   * Update the configuration for API requests.
-   * @param config - Configuration updates
-   */
-  async updateConfig(config: Partial<DatalayerClientConfig>): Promise<void> {
-    if (config.token !== undefined) {
-      await this.updateToken(config.token);
-    }
-    // Note: service URLs cannot be changed after initialization
   }
 
   /** Get the IAM service URL. */
@@ -175,53 +97,16 @@ export class DatalayerClientBase {
   }
 
   /**
-   * Get the platform storage implementation.
-   *
-   * @returns The storage implementation
+   * set the authentication token for all API requests.
+   * @param token - New authentication token
    */
-  public getStorage(): PlatformStorage {
-    return this.storage;
-  }
-
-  /**
-   * Get the IAM state manager.
-   *
-   * @returns The IAM state manager
-   */
-  public getIAMState(): IAMState {
-    return this.iamState;
-  }
-
-  /**
-   * Get the Runtimes state manager.
-   *
-   * @returns The Runtimes state manager
-   */
-  public getRuntimesState(): RuntimesState {
-    return this.runtimesState;
-  }
-
-  /**
-   * Get the Spacer state manager.
-   *
-   * @returns The Spacer state manager
-   */
-  public getSpacerState(): SpacerState {
-    return this.spacerState;
-  }
-
-  /**
-   * Clear all cached data.
-   */
-  public async clearCache(): Promise<void> {
-    await this.iamState.clear();
-    await this.runtimesState.clear();
-    await this.spacerState.clear();
+  async setToken(token: string): Promise<void> {
+    this.token = token;
   }
 
   /**
    * Wrap all SDK methods with handlers for cross-cutting concerns.
-   * Called automatically by the DatalayerSDK constructor.
+   * Called automatically by the DatalayerClient constructor.
    *
    * @internal
    */
@@ -242,9 +127,6 @@ export class DatalayerClientBase {
 
       // Detect if the original method is async by checking if it's an AsyncFunction
       const isAsync = original.constructor.name === 'AsyncFunction';
-      console.log(
-        `[SDK Debug v3.0] Method ${methodName} is ${isAsync ? 'async' : 'sync'}`,
-      );
 
       if (isAsync) {
         // Create async wrapped version for originally async methods
@@ -282,9 +164,7 @@ export class DatalayerClientBase {
             const beforeResult = this.handlers.beforeCall(methodName, args);
             // If beforeCall returns a Promise, we can't await it in sync context
             if (beforeResult instanceof Promise) {
-              console.warn(
-                `[SDK] beforeCall handler for sync method ${methodName} returned a Promise. This will be ignored.`,
-              );
+              // Promise ignored in sync context
             }
           }
 
@@ -296,9 +176,7 @@ export class DatalayerClientBase {
             if (this.handlers?.afterCall) {
               const afterResult = this.handlers.afterCall(methodName, result);
               if (afterResult instanceof Promise) {
-                console.warn(
-                  `[SDK] afterCall handler for sync method ${methodName} returned a Promise. This will be ignored.`,
-                );
+                // Promise ignored in sync context
               }
             }
 
@@ -308,9 +186,7 @@ export class DatalayerClientBase {
             if (this.handlers?.onError) {
               const errorResult = this.handlers.onError(methodName, error);
               if (errorResult instanceof Promise) {
-                console.warn(
-                  `[SDK] onError handler for sync method ${methodName} returned a Promise. This will be ignored.`,
-                );
+                // Promise ignored in sync context
               }
             }
             throw error;
@@ -369,5 +245,11 @@ export class DatalayerClientBase {
     }
 
     return Array.from(methodNames);
+  }
+
+  // Utility Methods
+  calculateCreditsFromMinutes(minutes: number, burningRate: number): number {
+    const burningRatePerMinute = burningRate * 60;
+    return Math.ceil(minutes * burningRatePerMinute);
   }
 }

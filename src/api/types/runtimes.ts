@@ -34,7 +34,7 @@ export interface Environment {
   /** Simple resource specification */
   resources?: any; // Simplified - ResourceConfig type removed
   /** Name identifier for the environment */
-  name?: string;
+  name: string;
   /** Docker registry for the image */
   dockerRegistry?: string;
   /** Icon or avatar URL for the environment */
@@ -57,51 +57,21 @@ export interface Runtime {
   /** Name of the environment this runtime is based on */
   environment_name: string;
   /** Title of the environment for display */
-  environment_title?: string;
-  /** Credits allocated to this runtime */
-  credits?: number;
-  /** Current state of the runtime */
-  state?: 'starting' | 'running' | 'stopping' | 'stopped' | 'error';
+  environment_title: string;
   /** Type of runtime - notebook, terminal, or job */
-  type?: 'notebook' | 'terminal' | 'job';
-  /** Type of runtime (deprecated, use type) */
-  runtime_type?: 'notebook' | 'cell';
-  /** Credits consumed per hour */
+  type: string;
+  /** Credits consumed per second */
   burning_rate: number;
   /** User-friendly name for the runtime */
-  given_name?: string;
+  given_name: string;
   /** Authentication token for accessing the runtime */
-  token?: string;
+  token: string;
   /** Ingress URL for accessing the runtime */
-  ingress?: string;
-  /** Reservation ID if runtime is reserved */
-  reservation_id?: string;
+  ingress: string;
   /** ISO 8601 timestamp of when the runtime started */
-  started_at?: string;
+  started_at: string;
   /** ISO 8601 timestamp of when the runtime will expire */
-  expired_at?: string;
-  /** ISO 8601 timestamp of when the runtime was created */
-  created_at?: string;
-  /** ISO 8601 timestamp of last update */
-  updated_at?: string;
-  /** Jupyter kernel ID if applicable */
-  kernel_id?: string;
-  /** Path to the notebook file if runtime is for a notebook */
-  notebook_path?: string;
-  /** Cell ID if runtime is for a specific cell */
-  cell_id?: string;
-  /** URL for accessing Jupyter server */
-  jupyter_url?: string;
-  /** Token for Jupyter server authentication */
-  jupyter_token?: string;
-  /** Detailed status information */
-  status?: any; // Simplified - RuntimeStatus type removed
-  /** Alternative naming from API responses */
-  podName?: string;
-  /** Alternative naming from API responses */
-  createdAt?: string;
-  /** Alternative naming from API responses */
-  environment?: string;
+  expired_at: string;
 }
 
 /**
