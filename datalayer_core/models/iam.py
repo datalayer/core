@@ -116,7 +116,7 @@ class UserModel(BaseModel):
     unsubscribed_from_outbounds_b: Optional[bool] = Field(None, description="Unsubscribed from outbound emails")
     email_token_s: Optional[str] = Field(None, description="Email verification token")
     email_update_s: Optional[str] = Field(None, description="Email update request")
-    events: Optional[Dict[str, Any]] = Field(None, description="User events")
+    events: Optional[List[Dict[str, Any]]] = Field(None, description="User events")
     settings: Optional[Dict[str, Any]] = Field(None, description="User settings")
 
     @property
