@@ -4,26 +4,16 @@
  */
 
 /**
- * @module api/runtimes/healthz
- * @description Health check API functions for the Datalayer Runtimes service.
+ * Health check API functions for the Datalayer Runtimes service.
  *
  * Provides functions for checking the health status of the Runtimes service.
+ *
+ * @module api/runtimes/healthz
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-
-/**
- * Health check response from the Runtimes service
- */
-export interface RuntimesHealthzPingResponse {
-  success: boolean;
-  message: string;
-  status?: {
-    status: string;
-  };
-  version?: string;
-}
+import type { HealthzPingResponse } from '../types/common';
 
 /**
  * Health check ping endpoint for Runtimes service
@@ -31,7 +21,7 @@ export interface RuntimesHealthzPingResponse {
  * @returns Health check response
  * @throws {Error} If the health check fails
  *
- * @description
+ * @remarks
  * This endpoint provides a basic health check for the Runtimes service.
  * It returns the current status of the service.
  *
@@ -40,9 +30,9 @@ export interface RuntimesHealthzPingResponse {
  */
 export const ping = async (
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<RuntimesHealthzPingResponse> => {
+): Promise<HealthzPingResponse> => {
   try {
-    const response = await requestDatalayerAPI<RuntimesHealthzPingResponse>({
+    const response = await requestDatalayerAPI<HealthzPingResponse>({
       url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/ping`,
       method: 'GET',
     });

@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/lexicals
- * @description Lexical documents API functions for the Datalayer platform.
+ * Lexical documents API functions for the Datalayer platform.
  *
  * Provides functions for creating, retrieving, and updating lexical (rich text) documents.
+ *
+ * @module api/spacer/lexicals
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

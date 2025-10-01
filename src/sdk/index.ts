@@ -4,8 +4,7 @@
  */
 
 /**
- * @module sdk
- * @description Main SDK entry point for the Datalayer platform.
+ * Main SDK entry point for the Datalayer platform.
  *
  * This module provides the unified DatalayerSDK class with a flat, intuitive API
  * for all Datalayer platform services. The SDK uses TypeScript mixins to provide
@@ -26,10 +25,12 @@
  * const runtime = await sdk.createRuntime(config);
  * const notebook = await sdk.createNotebook(data);
  * ```
+ *
+ * @module sdk
  */
 
-// Export the main SDK class with flat API
-export { DatalayerSDK, type DatalayerSDKConfig } from './client';
+// Export the main Client class with flat API
+export { DatalayerClient, type DatalayerClientConfig } from '../client';
 
 // Export stateful modules for advanced use cases
-export * from './stateful';
+export * from '../stateful';

@@ -24,7 +24,25 @@ export * as runtimesApi from './api/runtimes';
 export * as iamApi from './api/iam';
 export * as spacerApi from './api/spacer';
 
-export { DatalayerSDK, type DatalayerSDKConfig } from './sdk/client';
+export {
+  DatalayerClient,
+  type DatalayerClientConfig,
+  type SDKHandlers,
+  // Export SDK models
+  User,
+  Runtime,
+  Environment,
+  Snapshot,
+  Space,
+  Notebook,
+  Lexical,
+  Credits,
+  Item,
+  // Export typed interfaces for stable contracts
+  type RuntimeJSON,
+  type EnvironmentJSON,
+  type UserJSON,
+} from './client';
 
 // Export commonly used SDK functions directly for convenience
 export {
@@ -35,4 +53,4 @@ export {
   snapshotRuntime,
   getRuntimeSnapshots,
   loadRuntimeSnapshot,
-} from './sdk/stateful/runtimes/actions';
+} from './stateful/runtimes/actions';

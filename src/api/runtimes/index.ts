@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/runtimes
- * @description Runtimes API exports.
+ * Runtimes API exports.
  *
  * Provides organized access to runtime management functionality.
+ *
+ * @module api/runtimes
  */
 
 export * as environments from './environments';

@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/users
- * @description User-related Spacer API functions for the Datalayer platform.
+ * User-related Spacer API functions for the Datalayer platform.
  *
  * Provides functions for user-specific operations in the Spacer service.
+ *
+ * @module api/spacer/users
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

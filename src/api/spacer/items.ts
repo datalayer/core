@@ -4,16 +4,18 @@
  */
 
 /**
- * @module api/spacer/items
- * @description Items API functions for the Datalayer platform.
+ * Items API functions for the Datalayer platform.
  *
  * Provides functions for managing items in spaces.
+ *
+ * @module api/spacer/items
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
   DeleteSpaceItemResponse,
+  GetSpaceItemResponse,
   GetSpaceItemsResponse,
 } from '../types/spacer';
 
@@ -31,6 +33,25 @@ export const getSpaceItems = async (
 ): Promise<GetSpaceItemsResponse> => {
   return requestDatalayerAPI<GetSpaceItemsResponse>({
     url: `${baseUrl}${API_BASE_PATHS.SPACER}/spaces/${spaceId}/items`,
+    method: 'GET',
+    token,
+  });
+};
+
+/**
+ * Get a single item from a space.
+ * @param token - Authentication token
+ * @param id - The item ID to retrieve
+ * @param baseUrl - Base URL for the API (defaults to production)
+ * @returns Promise resolving to the item response
+ */
+export const getItem = async (
+  token: string,
+  id: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
+): Promise<GetSpaceItemResponse> => {
+  return requestDatalayerAPI<GetSpaceItemResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.SPACER}/spaces/items/${id}`,
     method: 'GET',
     token,
   });

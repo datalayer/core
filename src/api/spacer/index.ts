@@ -4,13 +4,15 @@
  */
 
 /**
- * @module api/spacer
- * @description Spacer API exports.
+ * Spacer API exports.
  *
  * Provides organized access to spacer functionality including
  * spaces, notebooks, cells, and lexical documents.
+ *
+ * @module api/spacer
  */
 
+export * as documents from './documents';
 export * as healthz from './healthz';
 export * as items from './items';
 export * as lexicals from './lexicals';

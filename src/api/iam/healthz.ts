@@ -4,23 +4,25 @@
  */
 
 /**
- * @module api/iam/healthz
- * @description Health check API functions for the Datalayer IAM service.
+ * Health check API functions for the Datalayer IAM service.
  *
  * Provides functions for checking the health status of the IAM service.
+ *
+ * @module api/iam/healthz
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { HealthzPingResponse } from '../types/iam';
+import type { HealthzPingResponse } from '../types/common';
 
 /**
  * Health check ping endpoint
+ *
  * @param baseUrl - Base URL for the API (defaults to production IAM URL)
  * @returns Health check response with user count
  * @throws {Error} If the health check fails
  *
- * @description
+ * @remarks
  * This endpoint provides a basic health check for the IAM service.
  * It returns the current user count in the system.
  *

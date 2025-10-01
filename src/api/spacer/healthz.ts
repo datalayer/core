@@ -4,26 +4,16 @@
  */
 
 /**
- * @module api/spacer/healthz
- * @description Health check API functions for the Datalayer Spacer service.
+ * Health check API functions for the Datalayer Spacer service.
  *
  * Provides functions for checking the health status of the Spacer service.
+ *
+ * @module api/spacer/healthz
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-
-/**
- * Health check response from the Spacer service
- */
-export interface SpacerHealthzPingResponse {
-  success: boolean;
-  message: string;
-  status?: {
-    status: string;
-  };
-  version?: string;
-}
+import type { HealthzPingResponse } from '../types/common';
 
 /**
  * Health check ping endpoint for Spacer service
@@ -31,7 +21,7 @@ export interface SpacerHealthzPingResponse {
  * @returns Health check response
  * @throws {Error} If the health check fails
  *
- * @description
+ * @remarks
  * This endpoint provides a basic health check for the Spacer service.
  * It returns the current status of the service.
  *
@@ -40,9 +30,9 @@ export interface SpacerHealthzPingResponse {
  */
 export const ping = async (
   baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
-): Promise<SpacerHealthzPingResponse> => {
+): Promise<HealthzPingResponse> => {
   try {
-    const response = await requestDatalayerAPI<SpacerHealthzPingResponse>({
+    const response = await requestDatalayerAPI<HealthzPingResponse>({
       url: `${baseUrl}${API_BASE_PATHS.SPACER}/ping`,
       method: 'GET',
     });
