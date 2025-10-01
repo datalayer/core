@@ -65,6 +65,6 @@ export * from './URN';
 export * from './Usage';
 export * from './User';
 export * from './UserEvent';
-export * from './UserOnboarding';
-export * from './UserSettings';
+export * from './UserOnboardingModel';
+export * from './UserSettingsModel';
 export * from './WaitingListFormData';

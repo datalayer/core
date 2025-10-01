@@ -38,8 +38,8 @@ import {
   ITeam,
   IUsage,
   IUser,
-  IUserOnboarding,
-  IUserSettings,
+  IUserOnboardingModel,
+  IUserSettingsModel,
   LinkedInUser,
   WaitingListFormData,
   asContact,
@@ -619,7 +619,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Onboarding ---------------------------------------------------------------
 
-  const updateUserOnboarding = (onboarding: IUserOnboarding) => {
+  const updateUserOnboardingModel = (onboarding: IUserOnboardingModel) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/onboardings`,
       method: 'PUT',
@@ -631,7 +631,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Settings -----------------------------------------------------------------
 
-  const updateUserSettings = (userId: string, settings: IUserSettings) => {
+  const updateUserSettingsModel = (
+    userId: string,
+    settings: IUserSettingsModel,
+  ) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/settings`,
       method: 'PUT',
@@ -3768,8 +3771,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     updateToken,
     updateUserCredits,
     updateUserCreditsQuota,
-    updateUserOnboarding,
-    updateUserSettings,
+    updateUserOnboardingModel,
+    updateUserSettingsModel,
     validateUserMFACode,
     whoami,
     notebookUploadLoading,

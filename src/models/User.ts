@@ -6,8 +6,11 @@
 import { asDisplayName, namesAsInitials } from '../utils';
 import { IInvite } from './Invite';
 import { asIAMProviderLinked, IIAMProviderLinked } from './IAMProviderLinked';
-import { BOOTSTRAP_USER_ONBOARDING, IUserOnboarding } from './UserOnboarding';
-import { IUserSettings, UserSettings } from './UserSettings';
+import {
+  BOOTSTRAP_USER_ONBOARDING,
+  IUserOnboardingModel,
+} from './UserOnboardingModel';
+import { IUserSettingsModel, UserSettingsModel } from './UserSettingsModel';
 import { asUserEvent, IUserEvent } from './UserEvent';
 
 export const ANONYMOUS_USER = undefined;
@@ -51,10 +54,10 @@ export class User implements IUser {
   origin?: string;
   invites?: Array<IInvite>;
   iamProviders: Array<IIAMProviderLinked>;
-  settings: IUserSettings;
+  settings: IUserSettingsModel;
   unsubscribedFromOutbounds: boolean;
   mfaUrl?: string;
-  onboarding: IUserOnboarding;
+  onboarding: IUserOnboardingModel;
   linkedContactId?: string;
   events: Array<IUserEvent>;
 
@@ -82,7 +85,7 @@ export class User implements IUser {
       // no-op for backwards compatibility.
     }
     this.iamProviders = iamProviders;
-    this.settings = new UserSettings(u.settings ?? {});
+    this.settings = new UserSettingsModel(u.settings ?? {});
     this.unsubscribedFromOutbounds = u.unsubscribed_from_outbounds_b ?? false;
     this.mfaUrl = u.mfa_url_s;
     this.onboarding = u.onboarding_s
@@ -132,10 +135,10 @@ export type IUser = IBaseUser & {
   origin?: string;
   invites?: Array<IInvite>;
   iamProviders: Array<IIAMProviderLinked>;
-  settings: IUserSettings;
+  settings: IUserSettingsModel;
   unsubscribedFromOutbounds: boolean;
   mfaUrl?: string;
-  onboarding: IUserOnboarding;
+  onboarding: IUserOnboardingModel;
   linkedContactId?: string;
   events: Array<IUserEvent>;
 };

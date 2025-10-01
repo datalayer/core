@@ -52,7 +52,7 @@ npm run build
 #### Avatars
 
 ```tsx
-import { BoringAvatar, UserProfileAvatar } from '@datalayer/core';
+import { BoringAvatar, UserProfileModelAvatar } from '@datalayer/core';
 
 // Generate unique avatars
 <BoringAvatar
@@ -63,7 +63,7 @@ import { BoringAvatar, UserProfileAvatar } from '@datalayer/core';
 />
 
 // User profile avatar with fallback
-<UserProfileAvatar
+<UserProfileModelAvatar
   user={{ name: "John Doe", avatarUrl: "https://..." }}
   size="large"
 />
@@ -354,7 +354,7 @@ import { ContentsBrowser, ContentsItems } from '@datalayer/core';
 ```tsx
 import { useUser, useIAM, useAuthorization } from '@datalayer/core';
 
-function UserProfile() {
+function UserProfileModel() {
   const { user, loading, error } = useUser();
   const { isAuthenticated, login, logout } = useIAM();
   const { hasPermission } = useAuthorization();
@@ -984,7 +984,7 @@ The package exports components, hooks, utilities, and types:
 import {
   // Components
   DatalayerBox,
-  UserProfileAvatar,
+  UserProfileModelAvatar,
   JupyterNotebook,
 
   // Hooks

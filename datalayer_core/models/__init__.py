@@ -75,12 +75,12 @@ from .iam import (
     TeamRequest,
     TokenData,
     UsageData,
-    UserData,
+    UserModel,
     UserListResponseData,
-    UserOnboarding,
-    UserProfile,
+    UserOnboardingModel,
+    UserProfileModel,
     UserSearchRequest,
-    UserSettings,
+    UserSettingsModel,
 )
 from .runtime import RuntimeModel
 from .runtime_snapshot import RuntimeSnapshotModel
@@ -153,11 +153,11 @@ __all__ = [
     "TokenType",
     "UsageData",
     "User",
-    "UserData",
+    "UserModel",
     "UserListResponseData",
-    "UserOnboarding",
-    "UserProfile",
+    "UserOnboardingModel",
+    "UserProfileModel",
     "UserSearchRequest",
-    "UserSettings",
+    "UserSettingsModel",
     "WaitingListRequest",
 ]

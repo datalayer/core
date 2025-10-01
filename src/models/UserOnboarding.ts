@@ -5,7 +5,7 @@
 
 export const WELCOME_RUNTIME_TOUR_NAME = 'welcome-runtime';
 
-export const BOOTSTRAP_USER_ONBOARDING: IUserOnboarding = {
+export const BOOTSTRAP_USER_ONBOARDING: IUserOnboardingModel = {
   clients: {
     Platform: 0,
     JupyterLab: 0,
@@ -40,7 +40,7 @@ export type IOnboardingTours = Record<string, ITour>;
 
 export type IClient = 'Platform' | 'JupyterLab' | 'CLI' | 'VSCode';
 
-export type IUserOnboarding = {
+export type IUserOnboardingModel = {
   clients: Record<IClient, number>;
   position: IOnboardingPosition;
   tours: IOnboardingTours;

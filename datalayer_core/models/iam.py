@@ -83,7 +83,7 @@ class EmailUpdateConfirm(BaseModel):
 
 
 # User Models
-class UserData(BaseModel):
+class UserModel(BaseModel):
     """
     User data model that combines IAM user information with profile functionality.
     This model serves as both the IAM user representation and user profile.
@@ -97,17 +97,27 @@ class UserData(BaseModel):
     last_name_t: str = Field(..., description="User last name")
     type_s: str = Field(..., description="User type")
     origin_s: Optional[str] = Field(None, description="User origin")
-    creation_ts_dt: Optional[datetime] = Field(None, description="Creation timestamp")
-    join_request_ts_dt: Optional[datetime] = Field(
+    creation_ts_dt: Optional[Union[str, datetime]] = Field(None, description="Creation timestamp")
+    join_request_ts_dt: Optional[Union[str, datetime]] = Field(
         None, description="Join request timestamp"
     )
-    join_ts_dt: Optional[datetime] = Field(None, description="Join timestamp")
-    last_update_ts_dt: Optional[datetime] = Field(
+    join_ts_dt: Optional[Union[str, datetime]] = Field(None, description="Join timestamp")
+    last_update_ts_dt: Optional[Union[str, datetime]] = Field(
         None, description="Last update timestamp"
     )
     roles_ss: Optional[List[str]] = Field(
         default_factory=list, description="User roles"
     )
+    avatar_url_s: Optional[str] = Field(None, description="User avatar URL")
+    linked_contact_uid: Optional[str] = Field(None, description="Linked contact UID")
+    onboarding_s: Optional[str] = Field(None, description="User onboarding data")
+    mfa_secret_s: Optional[str] = Field(None, description="MFA secret")
+    mfa_url_s: Optional[str] = Field(None, description="MFA URL")
+    unsubscribed_from_outbounds_b: Optional[bool] = Field(None, description="Unsubscribed from outbound emails")
+    email_token_s: Optional[str] = Field(None, description="Email verification token")
+    email_update_s: Optional[str] = Field(None, description="Email update request")
+    events: Optional[Dict[str, Any]] = Field(None, description="User events")
+    settings: Optional[Dict[str, Any]] = Field(None, description="User settings")
 
     @property
     def handle(self) -> str:
@@ -140,7 +150,7 @@ class UserData(BaseModel):
         return self.roles_ss or []
 
     @classmethod
-    def from_data(cls, data: Dict[str, Any]) -> "UserData":
+    def from_data(cls, data: Dict[str, Any]) -> "UserModel":
         """
         Create a UserData instance from raw data dictionary.
         Provides backward compatibility with ProfileModel.from_data().
@@ -159,6 +169,16 @@ class UserData(BaseModel):
             join_ts_dt=data.get("join_ts_dt"),
             last_update_ts_dt=data.get("last_update_ts_dt"),
             roles_ss=data.get("roles_ss", []),
+            avatar_url_s=data.get("avatar_url_s"),
+            linked_contact_uid=data.get("linked_contact_uid"),
+            onboarding_s=data.get("onboarding_s"),
+            mfa_secret_s=data.get("mfa_secret_s"),
+            mfa_url_s=data.get("mfa_url_s"),
+            unsubscribed_from_outbounds_b=data.get("unsubscribed_from_outbounds_b"),
+            email_token_s=data.get("email_token_s"),
+            email_update_s=data.get("email_update_s"),
+            events=data.get("events"),
+            settings=data.get("settings"),
         )
 
     def __repr__(self) -> str:
@@ -169,7 +189,7 @@ class UserData(BaseModel):
         )
 
 
-class UserProfile(BaseModel):
+class UserProfileModel(BaseModel):
     """User profile update model."""
 
     first_name: Optional[str] = Field(
@@ -181,7 +201,7 @@ class UserProfile(BaseModel):
     display_name: Optional[str] = Field(None, description="Display name")
 
 
-class UserOnboarding(BaseModel):
+class UserOnboardingModel(BaseModel):
     """User onboarding data model."""
 
     completed_steps: List[str] = Field(
@@ -193,7 +213,7 @@ class UserOnboarding(BaseModel):
     )
 
 
-class UserSettings(BaseModel):
+class UserSettingsModel(BaseModel):
     """User settings model."""
 
     preferences: Optional[Dict[str, Any]] = Field(
@@ -308,8 +328,8 @@ class CreditsData(BaseModel):
     """Credits data model."""
 
     credits: float = Field(..., description="Available credits")
-    quota: float = Field(..., description="Credits quota")
-    last_update: datetime = Field(..., description="Last update timestamp")
+    quota: Optional[float] = Field(None, description="Credits quota")
+    last_update: Union[str, datetime] = Field(..., description="Last update timestamp")
 
 
 class ReservationData(BaseModel):
@@ -431,14 +451,14 @@ class DatasourceData(BaseModel):
 class LoginResponseData(BaseModel):
     """Login response data model."""
 
-    user: UserData = Field(..., description="User data")
+    user: UserModel = Field(..., description="User data")
     token: str = Field(..., description="Authentication token")
 
 
 class UserListResponseData(BaseModel):
     """User list response data model."""
 
-    users: List[UserData] = Field(..., description="List of users")
+    users: List[UserModel] = Field(..., description="List of users")
     total: int = Field(..., description="Total number of users")
 
 
@@ -466,4 +486,4 @@ class ReservationListResponseData(BaseModel):
 
 
 # Profile compatibility alias
-ProfileModel = UserData  # ProfileModel is now an alias for UserData
+ProfileModel = UserModel  # ProfileModel is now an alias for UserData

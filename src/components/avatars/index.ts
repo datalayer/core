@@ -4,4 +4,4 @@
  */
 
 export * from './BoringAvatar';
-export * from './UserProfileAvatar';
+export * from './UserProfileModelAvatar';
