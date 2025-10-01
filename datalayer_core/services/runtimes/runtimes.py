@@ -18,7 +18,7 @@ from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
+from datalayer_core.services.runtimes.runtime_snapshots import (
     RuntimeSnapshotModel,
     as_runtime_snapshots,
     create_snapshot,
@@ -107,7 +107,9 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             environment=environment,
             time_reservation=time_reservation,
             run_url=run_url,
+            iam_url=iam_url or run_url,
             token=token,
+            external_token=None,
             pod_name=pod_name,
             ingress=ingress,
             reservation_id=reservation_id,
@@ -116,31 +118,42 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             kernel_token=kernel_token,
             started_at=started_at,
             expired_at=expired_at,
+            runtime={},
+            kernel_client=None,
+            kernel_id=None,
+            executing=False,
         )
 
-        # Initialize AuthnMixin attributes
-        self._token = token
-        self._external_token = None
-        self._run_url = run_url
-        self._iam_url = (
-            iam_url or run_url
-        )  # Use run_url as fallback if iam_url not provided
-
-        # Service-specific state
-        self._runtime: dict[str, str] = {}
-        self._kernel_client: Optional[KernelClient] = None
-        self._kernel_id: Optional[str] = None
-        self._executing = False
+    # Properties for AuthnMixin compatibility
+    @property 
+    def _token(self) -> Optional[str]:
+        """Get the authentication token."""
+        return self.model.token
+    
+    @_token.setter
+    def _token(self, value: Optional[str]) -> None:
+        """Set the authentication token."""
+        self.model.token = value
+    
+    @property
+    def _external_token(self) -> Optional[str]:
+        """Get the external authentication token."""
+        return self.model.external_token
+    
+    @_external_token.setter
+    def _external_token(self, value: Optional[str]) -> None:
+        """Set the external authentication token."""
+        self.model.external_token = value
 
     @property
     def run_url(self) -> str:
         """Get the runtime server URL."""
-        return self._run_url
+        return self.model.run_url
 
     @property
     def iam_url(self) -> str:
         """Get the IAM server URL."""
-        return self._iam_url
+        return self.model.iam_url or self.model.run_url
 
     def __del__(self) -> None:
         """Clean up resources when the runtime object is deleted."""
@@ -189,28 +202,28 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
     def _start(self) -> None:
         """Start the runtime."""
         if self.model.ingress is not None and self.model.kernel_token is not None:
-            self._kernel_client = KernelClient(
+            self.model.kernel_client = KernelClient(
                 server_url=self.model.ingress, token=self.model.kernel_token
             )
-            self._kernel_client.start()
+            self.model.kernel_client.start()
 
-        if self._kernel_client is None:
-            self._runtime = self._create_runtime(self.model.environment)
+        if self.model.kernel_client is None:
+            self.model.runtime = self._create_runtime(self.model.environment)
 
             # Check if runtime creation was successful
-            if not self._runtime.get("success", True):
-                error_msg = self._runtime.get(
+            if not self.model.runtime.get("success", True):
+                error_msg = self.model.runtime.get(
                     "message", "Unknown error during runtime creation"
                 )
                 raise RuntimeError(f"Failed to create runtime: {error_msg}")
 
             # Check if runtime data is present
-            if "runtime" not in self._runtime:
+            if "runtime" not in self.model.runtime:
                 raise RuntimeError(
                     "Runtime creation succeeded but runtime data is missing from response"
                 )
 
-            runtime: dict[str, str] = self._runtime["runtime"]  # type: ignore
+            runtime: dict[str, str] = self.model.runtime["runtime"]  # type: ignore
 
             # Validate required runtime fields
             required_fields = [
@@ -251,10 +264,10 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
             # Create and start kernel client
             try:
-                self._kernel_client = KernelClient(
+                self.model.kernel_client = KernelClient(
                     server_url=self.model.ingress, token=self.model.kernel_token
                 )
-                self._kernel_client.start()
+                self.model.kernel_client.start()
                 print(f"Runtime started successfully: {self.model.uid}")
             except Exception as e:
                 raise RuntimeError(f"Failed to start kernel client: {str(e)}")
@@ -268,10 +281,10 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         bool
             True if runtime was successfully stopped, False otherwise.
         """
-        if self._kernel_client:
-            self._kernel_client.stop()
-            self._kernel_client = None
-            self._kernel_id = None
+        if self.model.kernel_client:
+            self.model.kernel_client.stop()
+            self.model.kernel_client = None
+            self.model.kernel_id = None
             if self.model.pod_name:
                 return self._terminate_runtime(self.model.pod_name)["success"]
         return False
@@ -444,10 +457,10 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         Any
             Value of the variable, or None if not found or runtime not started.
         """
-        if self._kernel_client:
+        if self.model.kernel_client:
             try:
                 # The kernel client get_variable method should return the deserialized value
-                return self._kernel_client.get_variable(name)
+                return self.model.kernel_client.get_variable(name)
             except Exception as e:
                 print(f"Warning: Failed to get variable '{name}': {e}")
                 return None
@@ -485,10 +498,10 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         Response
             Response object containing execution results.
         """
-        if self._kernel_client and variables is not None:
+        if self.model.kernel_client and variables is not None:
             for name, value in variables.items():
                 try:
-                    self._kernel_client.set_variable(name, value)
+                    self.model.kernel_client.set_variable(name, value)
                 except Exception as e:
                     print(f"Warning: Failed to set variable '{name}': {e}")
                     # Continue with other variables instead of failing completely
@@ -527,10 +540,10 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             if variables:
                 self.set_variables(variables)
 
-            if self._kernel_client:
+            if self.model.kernel_client:
                 outputs = []
                 for _id, cell in get_cells(fname):
-                    reply = self._kernel_client.execute_interactive(
+                    reply = self.model.kernel_client.execute_interactive(
                         cell,
                         silent=False,
                         timeout=timeout,
@@ -586,10 +599,10 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             The result of the code execution.
         """
         if not self._check_file(code):
-            if self._kernel_client is not None:
+            if self.model.kernel_client is not None:
                 if variables:
                     self.set_variables(variables)
-                reply = self._kernel_client.execute(code, timeout=timeout)
+                reply = self.model.kernel_client.execute(code, timeout=timeout)
 
                 response = ExecutionResponse(
                     success=True,
@@ -706,8 +719,8 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             stop=stop,
         )
         if stop:
-            self._kernel_client = None
-            self._kernel_id = None
+            self.model.kernel_client = None
+            self.model.kernel_id = None
             try:
                 if self.model.pod_name:
                     self._terminate_runtime(self.model.pod_name)

@@ -23,7 +23,7 @@ from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
-from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
+from datalayer_core.services.runtimes.runtime_snapshots import (
     as_runtime_snapshots,
     create_snapshot,
 )
@@ -304,9 +304,9 @@ class DatalayerClient(
             List of Runtime objects representing active runtimes.
         """
         runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
-        runtime_objects = []
+        runtime_services = []
         for runtime in runtimes:
-            runtime_objects.append(
+            runtime_services.append(
                 RuntimesService(
                     name=runtime["given_name"],
                     environment=runtime["environment_name"],
@@ -322,7 +322,7 @@ class DatalayerClient(
                     expired_at=runtime["expired_at"],
                 )
             )
-        return runtime_objects
+        return runtime_services
 
     def terminate_runtime(self, runtime: Union[RuntimesService, str]) -> bool:
         """

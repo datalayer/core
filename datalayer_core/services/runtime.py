@@ -17,7 +17,7 @@ from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
+from datalayer_core.services.runtimes.runtime_snapshots import (
     RuntimeSnapshot,
     as_runtime_snapshots,
     create_snapshot,
