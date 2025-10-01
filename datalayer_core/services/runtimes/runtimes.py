@@ -173,6 +173,56 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         """Get the IAM server URL."""
         return self._model.iam_url or self._model.run_url
 
+    @property
+    def pod_name(self) -> Optional[str]:
+        """Get the pod name."""
+        return self._model.pod_name
+
+    @property
+    def name(self) -> str:
+        """Get the runtime name."""
+        return self._model.name
+
+    @property
+    def ingress(self) -> Optional[str]:
+        """Get the ingress URL."""
+        return self._model.ingress
+
+    @property
+    def kernel_token(self) -> Optional[str]:
+        """Get the kernel token."""
+        return self._model.kernel_token
+
+    @property
+    def expired_at(self) -> Optional[str]:
+        """Get the expiration time."""
+        return self._model.expired_at
+
+    @property
+    def environment(self) -> str:
+        """Get the environment name."""
+        return self._model.environment
+
+    @property
+    def reservation_id(self) -> Optional[str]:
+        """Get the reservation ID."""
+        return self._model.reservation_id
+
+    @property
+    def uid(self) -> Optional[str]:
+        """Get the runtime UID."""
+        return self._model.uid
+
+    @property
+    def burning_rate(self) -> Optional[float]:
+        """Get the burning rate."""
+        return self._model.burning_rate
+
+    @property
+    def started_at(self) -> Optional[str]:
+        """Get the start time."""
+        return self._model.started_at
+
     def __del__(self) -> None:
         """Clean up resources when the runtime object is deleted."""
         # self.stop()

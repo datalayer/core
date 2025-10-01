@@ -14,6 +14,7 @@ from jupyter_server.utils import url_path_join
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.runtimes import display_runtimes
 from datalayer_core.utils.date import timestamp_to_local_date
+from datalayer_core.utils.urls import DatalayerURLs
 
 HTTP_PROTOCOL_REGEXP = re.compile(r"^http")
 
@@ -59,7 +60,8 @@ class RuntimeManager(KernelHttpManager):
         self.username = username
 
         # Initialize DatalayerClient for modern API access
-        self._client = DatalayerClient(run_url=run_url, token=token)
+        urls = DatalayerURLs.from_environment(run_url=run_url)
+        self._client = DatalayerClient(urls=urls, token=token)
 
     @property
     def kernel_url(self) -> str | None:
