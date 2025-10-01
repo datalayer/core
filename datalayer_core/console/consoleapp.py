@@ -11,8 +11,6 @@ from jupyter_kernel_client.konsoleapp import (
 )
 from jupyter_kernel_client.konsoleapp import (
     aliases as base_aliases,
-)
-from jupyter_kernel_client.konsoleapp import (
     flags as base_flags,
 )
 from traitlets import Bool, Dict, Unicode, default
@@ -47,9 +45,10 @@ aliases.update(
 
 
 class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
-    """Console for Datalayer remote kernels."""
+    """Console for Datalayer runtimes."""
 
     name = "datalayer-console"
+
     version = __version__
 
     aliases = Dict(aliases)
