@@ -16,7 +16,7 @@ from rich.console import Console
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.me import display_me
 from datalayer_core.services.authn.http_server import get_token
-from datalayer_core.utils.defaults import DEFAULT_DATALAYER_RUN_URL
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.network import fetch, find_http_port
 from datalayer_core.utils.urls import DatalayerURLs
 
@@ -58,7 +58,7 @@ def login(
 
         if access_token:
             # Token provided, validate it
-            client = DatalayerClient(run_url=server_url, token=access_token)
+            client = DatalayerClient(urls=urls, token=access_token)
             try:
                 response = client._get_profile()
                 profile = response.get("profile", {})
@@ -91,7 +91,7 @@ def login(
             stored_token = keyring.get_password(server_url, "access_token")
             if stored_token:
                 console.print("🔑 Found stored token, validating...")
-                client = DatalayerClient(run_url=server_url, token=stored_token)
+                client = DatalayerClient(urls=urls, token=stored_token)
                 try:
                     response = client._get_profile()
                     profile = response.get("profile", {})

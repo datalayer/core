@@ -53,42 +53,34 @@ class DatalayerClient(
 
     Parameters
     ----------
-    run_url : str
-        Datalayer server URL. Defaults to "https://prod1.datalayer.run".
+    urls : Optional[DatalayerURLs]
+        Pre-configured URLs object for all Datalayer services.
     token : Optional[str]
         Authentication token (can also be set via DATALAYER_API_KEY env var).
     """
 
     def __init__(
         self,
-        run_url: Optional[str] = None,
-        iam_url: Optional[str] = None,
-        token: Optional[str] = None,
         urls: Optional[DatalayerURLs] = None,
+        token: Optional[str] = None,
     ):
         """
         Initialize Datalayer.
 
         Parameters
         ----------
-        run_url : Optional[str]
-            Datalayer server URL. If not provided, will use DATALAYER_RUN_URL env var or default.
-        iam_url : Optional[str]
-            Datalayer IAM URL. If not provided, will use DATALAYER_IAM_URL env var or default.
+        urls : Optional[DatalayerURLs]
+            Pre-configured URLs object. If not provided, will use environment variables or defaults.
         token : Optional[str]
             Authentication token (can also be set via DATALAYER_API_KEY env var).
-        urls : Optional[DatalayerURLs]
-            Pre-configured URLs object. If provided, run_url and iam_url parameters are ignored.
         """
         # TODO: Check user and password login
 
-        # Use provided urls or create from parameters/environment
+        # Use provided urls or create from environment
         if urls is not None:
             self._urls = urls
         else:
-            self._urls = DatalayerURLs.from_environment(
-                run_url=run_url, iam_url=iam_url
-            )
+            self._urls = DatalayerURLs.from_environment()
 
         self._token = token  # Store the explicitly passed token
         self._external_token = None
@@ -280,8 +272,8 @@ class DatalayerClient(
         runtime = RuntimesService(
             name=runtime_data["given_name"],
             environment=runtime_data["environment_name"],
-            run_url=self.run_url,
-            iam_url=self.iam_url,
+            run_url=self._urls.run_url,
+            iam_url=self._urls.iam_url,
             token=self._token,
             ingress=runtime_data["ingress"],
             kernel_token=runtime_data["token"],
@@ -317,7 +309,8 @@ class DatalayerClient(
                     uid=runtime["uid"],
                     burning_rate=runtime["burning_rate"],
                     kernel_token=runtime["token"],
-                    run_url=self.run_url,
+                    run_url=self._urls.run_url,
+                    iam_url=self._urls.iam_url,
                     started_at=runtime["started_at"],
                     expired_at=runtime["expired_at"],
                 )

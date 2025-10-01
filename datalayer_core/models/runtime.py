@@ -13,9 +13,9 @@ from pydantic import BaseModel, Field
 
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
-    DEFAULT_DATALAYER_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.types import (
     CreditsPerSecond,
     Minutes,

@@ -25,9 +25,9 @@ from datalayer_core.services.runtimes.runtime_snapshots import (
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
-    DEFAULT_DATALAYER_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.notebook import get_cells
 from datalayer_core.utils.types import (
     CreditsPerSecond,

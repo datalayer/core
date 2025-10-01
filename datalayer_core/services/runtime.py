@@ -17,16 +17,16 @@ from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
+from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.services.runtimes.runtime_snapshots import (
-    RuntimeSnapshot,
     as_runtime_snapshots,
     create_snapshot,
 )
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
-    DEFAULT_DATALAYER_RUN_URL,
     DEFAULT_TIME_RESERVATION,
 )
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.notebook import get_cells
 from datalayer_core.utils.types import (
     CreditsPerSecond,
@@ -499,7 +499,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshot":
+    ) -> "RuntimeSnapshotModel":
         """
         Create a new snapshot from the current state.
 
@@ -541,7 +541,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         for snapshot in snapshot_objects:
             if snapshot.name == name:
                 break
-        return RuntimeSnapshot(
+        return RuntimeSnapshotModel(
             uid=snapshot.uid,
             name=name,
             description=description,
