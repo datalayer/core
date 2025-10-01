@@ -23,11 +23,11 @@ from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
-from datalayer_core.services.runtimes.runtime_snapshots import (
+from datalayer_core.services.runtimes.runtime_snapshot import (
     as_runtime_snapshots,
     create_snapshot,
 )
-from datalayer_core.services.runtimes.runtimes import RuntimesService
+from datalayer_core.services.runtimes.runtime import RuntimeService
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_TIME_RESERVATION,
@@ -94,30 +94,6 @@ class DatalayerClient(
             raise ValueError(
                 "Token is required. Set it via parameter, `DATALAYER_API_KEY` environment variable, or authenticate with `datalayer login`"
             )
-
-    @property
-    def run_url(self) -> str:
-        """
-        Get the Datalayer server URL.
-
-        Returns
-        -------
-        str
-            The configured Datalayer server URL.
-        """
-        return self._urls.run_url
-
-    @property
-    def iam_url(self) -> str:
-        """
-        Get the Datalayer IAM server URL.
-
-        Returns
-        -------
-        str
-            The configured Datalayer IAM server URL.
-        """
-        return self._urls.iam_url
 
     @property
     def urls(self) -> DatalayerURLs:
@@ -192,7 +168,7 @@ class DatalayerClient(
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         snapshot_name: Optional[str] = None,
-    ) -> RuntimesService:
+    ) -> RuntimeService:
         """
         Create a new runtime (kernel) for code execution.
 
@@ -269,14 +245,14 @@ class DatalayerClient(
             )
 
         runtime_data = response["runtime"]
-        runtime = RuntimesService(
+        runtime = RuntimeService(
             name=runtime_data["given_name"],
             environment=runtime_data["environment_name"],
             run_url=self._urls.run_url,
             iam_url=self._urls.iam_url,
             token=self._token,
             ingress=runtime_data["ingress"],
-            kernel_token=runtime_data["token"],
+            jupyter_token=runtime_data["token"],
             pod_name=runtime_data["pod_name"],
             uid=runtime_data.get("uid"),
             reservation_id=runtime_data.get("reservation_id"),
@@ -286,7 +262,7 @@ class DatalayerClient(
         )
         return runtime
 
-    def list_runtimes(self) -> list[RuntimesService]:
+    def list_runtimes(self) -> list[RuntimeService]:
         """
         List all running runtimes.
 
@@ -299,7 +275,7 @@ class DatalayerClient(
         runtime_services = []
         for runtime in runtimes:
             runtime_services.append(
-                RuntimesService(
+                RuntimeService(
                     name=runtime["given_name"],
                     environment=runtime["environment_name"],
                     pod_name=runtime["pod_name"],
@@ -308,7 +284,7 @@ class DatalayerClient(
                     reservation_id=runtime["reservation_id"],
                     uid=runtime["uid"],
                     burning_rate=runtime["burning_rate"],
-                    kernel_token=runtime["token"],
+                    jupyter_token=runtime["token"],
                     run_url=self._urls.run_url,
                     iam_url=self._urls.iam_url,
                     started_at=runtime["started_at"],
@@ -317,7 +293,7 @@ class DatalayerClient(
             )
         return runtime_services
 
-    def terminate_runtime(self, runtime: Union[RuntimesService, str]) -> bool:
+    def terminate_runtime(self, runtime: Union[RuntimeService, str]) -> bool:
         """
         Terminate a running Runtime.
 
@@ -331,7 +307,7 @@ class DatalayerClient(
         bool
             True if termination was successful, False otherwise.
         """
-        pod_name = runtime.pod_name if isinstance(runtime, RuntimesService) else runtime
+        pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
         if pod_name is not None:
             return self._terminate_runtime(pod_name)["success"]
         else:
@@ -421,7 +397,7 @@ class DatalayerClient(
 
     def create_snapshot(
         self,
-        runtime: Optional["RuntimesService"] = None,
+        runtime: Optional["RuntimeService"] = None,
         pod_name: Optional[str] = None,
         name: Optional[str] = None,
         description: Optional[str] = None,

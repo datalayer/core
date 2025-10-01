@@ -36,7 +36,7 @@ def list_runtimes() -> None:
                     "reservation_id": runtime.reservation_id,
                     "uid": runtime.uid,
                     "burning_rate": runtime.burning_rate,
-                    "token": runtime.kernel_token,
+                    "token": runtime.jupyter_token,
                     "started_at": runtime.started_at,
                     "expired_at": runtime.expired_at,
                 }

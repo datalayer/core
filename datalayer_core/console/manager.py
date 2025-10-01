@@ -121,7 +121,7 @@ class RuntimeManager(KernelHttpManager):
                     runtime = {
                         "pod_name": r.pod_name,
                         "ingress": r.ingress,
-                        "token": r.kernel_token,
+                        "token": r.jupyter_token,
                         "expired_at": r.expired_at,
                     }
                     break
@@ -172,7 +172,7 @@ class RuntimeManager(KernelHttpManager):
                 runtime = {
                     "pod_name": new_runtime.pod_name,
                     "ingress": new_runtime.ingress,
-                    "token": new_runtime.kernel_token,
+                    "token": new_runtime.jupyter_token,
                     "expired_at": new_runtime.expired_at,
                 }
 
@@ -185,7 +185,7 @@ class RuntimeManager(KernelHttpManager):
                     "reservation_id": getattr(new_runtime, "reservation_id", ""),
                     "uid": new_runtime.uid,
                     "burning_rate": getattr(new_runtime, "burning_rate", 0.0),
-                    "token": new_runtime.kernel_token,
+                    "token": new_runtime.jupyter_token,
                     "started_at": getattr(new_runtime, "started_at", ""),
                     "expired_at": new_runtime.expired_at,
                 }
@@ -200,7 +200,7 @@ class RuntimeManager(KernelHttpManager):
                 runtime = {
                     "pod_name": r.pod_name,
                     "ingress": r.ingress,
-                    "token": r.kernel_token,
+                    "token": r.jupyter_token,
                     "expired_at": r.expired_at,
                 }
                 runtime_name = r.pod_name or ""

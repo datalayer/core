@@ -90,6 +90,33 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
         urls = DatalayerURLs.from_environment()
         return urls.iam_url
 
+    @property
+    def urls(self) -> DatalayerURLs:
+        """
+        Get a DatalayerURLs object with the configured URLs.
+        
+        Returns
+        -------
+        DatalayerURLs
+            URLs object with run_url and iam_url from the app configuration.
+        """
+        from datalayer_core.utils.urls import DatalayerURLs
+        return DatalayerURLs(
+            run_url=self.run_url,
+            iam_url=self.iam_url,
+            # Use defaults for other URLs
+            runtimes_url="",
+            spacer_url="",
+            library_url="",
+            manager_url="",
+            ai_agents_url="",
+            ai_inference_url="",
+            growth_url="",
+            success_url="",
+            status_url="",
+            support_url=""
+        )
+
     @default("kernel_manager_class")
     def _kernel_manager_class_default(self) -> type:
         """

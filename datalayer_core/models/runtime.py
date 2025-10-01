@@ -85,7 +85,7 @@ class RuntimeModel(BaseModel):
         default=None,
         description="Burning rate for the runtime"
     )
-    kernel_token: Optional[str] = Field(
+    jupyter_token: Optional[str] = Field(
         default=None,
         description="Token for the kernel client"
     )

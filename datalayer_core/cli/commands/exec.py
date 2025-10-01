@@ -70,7 +70,7 @@ class RuntimesExecService:
 
             # Create a RuntimeManager with proper credentials
             self.kernel_manager = RuntimeManager(
-                run_url=self._client.run_url,
+                run_url=self._client.urls.run_url,
                 token=token or "",
                 username="",  # Username is not required for token-based auth
             )

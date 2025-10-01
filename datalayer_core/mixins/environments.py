@@ -20,7 +20,7 @@ class EnvironmentsListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/environments".format(self.run_url),  # type: ignore
+                "{}/api/runtimes/v1/environments".format(self.urls.run_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:

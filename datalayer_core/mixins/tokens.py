@@ -47,7 +47,7 @@ class TokensCreateMixin:
         }
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens".format(self.iam_url),  # type: ignore
+                "{}/api/iam/v1/tokens".format(self.urls.iam_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -75,7 +75,7 @@ class TokensDeleteMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens/{}".format(self.iam_url, token_uid),  # type: ignore
+                "{}/api/iam/v1/tokens/{}".format(self.urls.iam_url, token_uid),  # type: ignore
                 method="DELETE",
             )
             return response.json()
@@ -97,7 +97,7 @@ class TokensListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens".format(self.iam_url),  # type: ignore
+                "{}/api/iam/v1/tokens".format(self.urls.iam_url),  # type: ignore
                 method="GET",
             )
             return response.json()

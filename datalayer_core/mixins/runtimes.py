@@ -49,7 +49,7 @@ class RuntimesCreateMixin:
         try:
             if credits_limit is None:
                 response = self._fetch(  # type: ignore
-                    "{}/api/iam/v1/usage/credits".format(self.iam_url),  # type: ignore
+                    "{}/api/iam/v1/usage/credits".format(self.urls.iam_url),  # type: ignore
                     method="GET",
                 )
 
@@ -88,7 +88,7 @@ class RuntimesCreateMixin:
                 body["from"] = from_snapshot_uid
 
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore
+                "{}/api/runtimes/v1/runtimes".format(self.urls.run_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -141,7 +141,7 @@ class RuntimesListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes".format(self.run_url),  # type: ignore
+                "{}/api/runtimes/v1/runtimes".format(self.urls.run_url),  # type: ignore
             )
 
             if response.status_code != 200:
@@ -189,7 +189,7 @@ class RuntimesTerminateMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes/{}".format(self.run_url, pod_name),  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}".format(self.urls.run_url, pod_name),  # type: ignore
                 method="DELETE",
             )
 

@@ -62,7 +62,7 @@ class AuthnMixin:
         try:
             import keyring
 
-            stored_token = keyring.get_password(self.run_url, "access_token")
+            stored_token = keyring.get_password(self.urls.run_url, "access_token")
             if stored_token:
                 self._token = stored_token
                 return self._token
@@ -133,7 +133,7 @@ class AuthnMixin:
         }
         try:
             response = self._fetch(
-                "{}/api/iam/v1/login".format(self.iam_url),
+                "{}/api/iam/v1/login".format(self.urls.iam_url),
                 method="POST",
                 json=body,
             )
