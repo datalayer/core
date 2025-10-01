@@ -189,12 +189,12 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
     });
   });
 
-  describe('proxyAuth', () => {
+  describe('checkAuth', () => {
     it('should successfully validate authentication with valid token', async () => {
-      console.log('Testing /proxy-auth endpoint with valid token...');
+      console.log('Testing /auth endpoint with valid token...');
 
       try {
-        await authentication.proxyAuth(SESSION_TOKEN, BASE_URL);
+        await authentication.checkAuth(SESSION_TOKEN, BASE_URL);
         console.log('Successfully validated authentication through proxy');
       } catch (error: any) {
         console.log('Proxy auth validation result:', error.message);
@@ -215,7 +215,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
       const invalidToken = 'invalid.token.here';
 
       try {
-        await authentication.proxyAuth(invalidToken, BASE_URL);
+        await authentication.checkAuth(invalidToken, BASE_URL);
         // If we reach here, the endpoint accepted invalid token (shouldn't happen)
         throw new Error('Expected proxy auth to reject invalid token');
       } catch (error: any) {
@@ -238,8 +238,7 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
       console.log('Testing /proxy-auth endpoint without token...');
 
       try {
-        // @ts-expect-error Testing missing required parameter
-        await authentication.proxyAuth();
+        await authentication.checkAuth('');
         throw new Error('Expected function to throw for missing token');
       } catch (error: any) {
         console.log('Correctly rejected request without token:', error.message);

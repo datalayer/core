@@ -25,10 +25,7 @@ import { CpuIcon } from '@primer/octicons-react';
 import { BrowserIcon, LaptopSimpleIcon } from '@datalayer/icons-react';
 import { CreditsIndicator } from '../../components/progress';
 import { IRuntimeDesc } from '../../models';
-import {
-  isRuntimeRemote,
-  IMultiServiceManager,
-} from '../../sdk/stateful/runtimes';
+import { isRuntimeRemote, IMultiServiceManager } from '../../stateful/runtimes';
 import { getGroupedRuntimeDescs, IDatalayerRuntimeDesc } from './RuntimeUtils';
 
 /**

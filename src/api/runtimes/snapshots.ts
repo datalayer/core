@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/runtimes/snapshots
- * @description Runtime snapshots API functions for the Datalayer platform.
+ * Runtime snapshots API functions for the Datalayer platform.
  *
  * Provides functions for managing runtime snapshots (saved runtime states).
+ *
+ * @module api/runtimes/snapshots
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

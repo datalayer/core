@@ -4,8 +4,9 @@
  */
 
 /**
+ * Utility functions for API parameter validation
+ *
  * @module api/utils/validation
- * @description Utility functions for API parameter validation
  */
 
 /**

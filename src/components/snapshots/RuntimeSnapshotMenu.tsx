@@ -29,7 +29,7 @@ import {
   loadBrowserRuntimeSnapshot,
   loadRuntimeSnapshot,
   IMultiServiceManager,
-} from '../../sdk/stateful/runtimes';
+} from '../../stateful/runtimes';
 import { useRuntimesStore } from '../../state';
 import { createRuntimeSnapshotName } from '../../utils';
 

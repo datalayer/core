@@ -7,39 +7,24 @@
  * Represents a user in the Datalayer platform
  * @interface User
  */
+
 export interface User {
-  /** Unique identifier for the user */
+  /** uuid for the user */
   id: string;
-  /** Alternative unique identifier (UUID format) */
-  uid?: string;
-  /** User ID in the authentication system */
-  user_id?: string;
-  /** Username for login */
-  username?: string;
+  /** ulid for the user */
+  uid: string;
   /** User's handle or nickname */
-  handle?: string;
+  handle_s: string;
   /** User's email address */
-  email: string;
+  email_s: string;
   /** User's first name */
-  first_name?: string;
+  first_name_t: string;
   /** User's last name */
-  last_name?: string;
+  last_name_t: string;
   /** Display name shown in the UI */
-  display_name?: string;
-  /** URL to the user's avatar image */
-  avatar_url?: string;
-  /** Alternative property name for avatar URL (for backwards compatibility) */
-  avatarUrl?: string;
-  /** ISO 8601 timestamp of when the user was created */
-  created_at?: string;
-  /** ISO 8601 timestamp of when the user was last updated */
-  updated_at?: string;
-  /** Whether the user account is active */
-  is_active?: boolean;
-  /** Whether the user's email has been verified */
-  is_verified?: boolean;
-  /** Whether multi-factor authentication is enabled */
-  mfa_enabled?: boolean;
+  avatar_url_s: string;
+  /** Additional fields that may be present in the response */
+  [key: string]: any;
 }
 
 /**
@@ -120,16 +105,18 @@ export interface UserMeResponse {
     uid: string;
     /** User handle (username) */
     handle: string;
-    /** Email address of the user */
+    /** Email address of the user (may be empty string) */
     email: string;
-    /** First name of the user */
+    /** First name of the user (may be empty string) */
     firstName: string;
-    /** Last name of the user */
+    /** Last name of the user (may be empty string) */
     lastName: string;
-    /** Avatar URL for the user */
+    /** Avatar URL for the user (may be empty string) */
     avatarUrl: string;
     /** Array of roles assigned to the user */
     roles: string[];
+    /** Allow additional fields that may come from the server */
+    [key: string]: any;
   };
 }
 
@@ -168,23 +155,39 @@ export interface WhoAmIResponse {
     handle_s: string;
     /** Last name */
     last_name_t: string;
+    /** User roles array */
+    roles_ss?: string[];
+    /** Avatar URL */
+    avatar_url_s?: string;
+    /** Onboarding state as JSON string */
+    onboarding_s?: string;
+    /** New password request timestamp */
+    new_password_request_ts_dt?: string | null;
+    /** New password confirmation timestamp */
+    new_password_confirmation_ts_dt?: string | null;
+    /** Customer UID */
+    customer_uid?: string | null;
+    /** Credits customer UID for billing */
+    credits_customer_uid?: string | null;
+    /** Email unsubscription status */
+    unsubscribed_from_outbounds_b?: boolean;
+    /** Linked contact UID */
+    linked_contact_uid?: string | null;
+    /** MFA URL */
+    mfa_url_s?: string | null;
+    /** MFA secret */
+    mfa_secret_s?: string | null;
+    /** Email verification token */
+    email_token_s?: string | null;
+    /** Pending email update */
+    email_update_s?: string | null;
+    /** IAM providers (nested structure - not typed in detail) */
+    iam_providers?: any[];
+    /** User settings (nested structure - not typed in detail) */
+    settings?: any;
+    /** User events (nested structure - not typed in detail) */
+    events?: any[];
+    /** Allow additional fields that may come from the server */
+    [key: string]: any;
   };
-}
-
-/**
- * Response from the health check ping endpoint
- * @interface HealthzPingResponse
- */
-export interface HealthzPingResponse {
-  /** Whether the request was successful */
-  success: boolean;
-  /** Response message from the server */
-  message: string;
-  /** Service status information */
-  status: {
-    /** Status indicator (e.g., "OK") */
-    status: string;
-  };
-  /** API version */
-  version: string;
 }

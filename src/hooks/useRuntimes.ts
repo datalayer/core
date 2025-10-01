@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { requestJupyterKernelsExtension } from '../sdk/stateful/jupyter/kernelsHandler';
+import { requestJupyterKernelsExtension } from '../stateful/jupyter/kernelsHandler';
 
 export const useRuntimes = () => {
   // Folder Mounting ----------------------------------------------------------
