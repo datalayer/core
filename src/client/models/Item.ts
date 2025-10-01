@@ -171,20 +171,51 @@ export abstract class Item<TData> {
   /** Get the document content from API. */
   async getContent(): Promise<any> {
     this._checkDeleted();
+
+    // First try: CDN URL (fastest)
     const cdnUrl = (this._data as any).cdn_url_s;
     if (cdnUrl) {
       try {
         const response = await fetch(cdnUrl);
         if (!response.ok) {
-          throw new Error('Failed to fetch content');
+          throw new Error('Failed to fetch content from CDN');
         }
         const data = await response.json();
-        return data.content;
+        if (data.content !== undefined && data.content !== null) {
+          return data.content;
+        }
       } catch (error) {
-        console.error('Error fetching content:', error);
+        console.error('Error fetching content from CDN:', error);
       }
     }
-    return this.content;
+
+    // Second try: Check if content is already loaded
+    const cachedContent = this.content;
+    if (cachedContent !== undefined && cachedContent !== null) {
+      return cachedContent;
+    }
+
+    // Third try: Fetch full item details from API
+    try {
+      const token = (this._sdk as any).getToken();
+      const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+      const response = await items.getItem(token, this.uid, spacerRunUrl);
+
+      // Update internal data with full item details
+      if (response.success && response.item) {
+        this._data = response.item as any;
+        const freshContent = this.content;
+        if (freshContent !== undefined && freshContent !== null) {
+          return freshContent;
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching full item details:', error);
+    }
+
+    throw new Error(
+      `Content is not available for item ${this.uid}. The item may not have been fully loaded or the content is not yet available.`,
+    );
   }
 
   // ========================================================================
