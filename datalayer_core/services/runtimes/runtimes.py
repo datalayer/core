@@ -102,7 +102,7 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             Expiration time for the runtime.
         """
         # Initialize the runtime model with all the data fields
-        self.model = RuntimeModel(
+        self._model = RuntimeModel(
             name=name,
             environment=environment,
             time_reservation=time_reservation,
@@ -124,36 +124,54 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             executing=False,
         )
 
+    @property
+    def model(self) -> RuntimeModel:
+        """
+        Get the runtime model containing all configuration and state data.
+        
+        Provides access to all runtime properties including:
+        - Configuration: name, environment, run_url, iam_url
+        - Authentication: token, external_token  
+        - Runtime state: kernel_client, kernel_id, executing
+        - Infrastructure: pod_name, ingress, uid, reservation_id
+        
+        Returns
+        -------
+        RuntimeModel
+            The runtime model with all runtime data and configuration.
+        """
+        return self._model
+
     # Properties for AuthnMixin compatibility
     @property 
     def _token(self) -> Optional[str]:
         """Get the authentication token."""
-        return self.model.token
+        return self._model.token
     
     @_token.setter
     def _token(self, value: Optional[str]) -> None:
         """Set the authentication token."""
-        self.model.token = value
+        self._model.token = value
     
     @property
     def _external_token(self) -> Optional[str]:
         """Get the external authentication token."""
-        return self.model.external_token
+        return self._model.external_token
     
     @_external_token.setter
     def _external_token(self, value: Optional[str]) -> None:
         """Set the external authentication token."""
-        self.model.external_token = value
+        self._model.external_token = value
 
     @property
     def run_url(self) -> str:
         """Get the runtime server URL."""
-        return self.model.run_url
+        return self._model.run_url
 
     @property
     def iam_url(self) -> str:
         """Get the IAM server URL."""
-        return self.model.iam_url or self.model.run_url
+        return self._model.iam_url or self._model.run_url
 
     def __del__(self) -> None:
         """Clean up resources when the runtime object is deleted."""
@@ -312,136 +330,16 @@ class RuntimesService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             return False
 
     @property
-    def run_url(self) -> str:
+    def model(self) -> RuntimeModel:
         """
-        Get the runtime server URL.
-
+        Get the runtime model containing all configuration and state data.
+        
         Returns
         -------
-        str
-            The Datalayer server URL for this runtime.
+        RuntimeModel
+            The runtime model with all runtime data and configuration.
         """
-        return self.model.run_url
-
-    @property
-    def name(self) -> str:
-        """
-        Get the runtime name.
-
-        Returns
-        -------
-        str
-            The name of this runtime.
-        """
-        return self.model.name
-
-    @property
-    def environment(self) -> str:
-        """
-        Get the runtime environment.
-
-        Returns
-        -------
-        str
-            The environment name of this runtime.
-        """
-        return self.model.environment
-
-    @property
-    def uid(self) -> Optional[str]:
-        """
-        Get the runtime unique identifier.
-
-        Returns
-        -------
-        Optional[str]
-            The unique identifier of this runtime, or None if not set.
-        """
-        return self.model.uid
-
-    @property
-    def pod_name(self) -> Optional[str]:
-        """
-        Get the runtime pod name.
-
-        Returns
-        -------
-        Optional[str]
-            The pod name of this runtime, or None if not set.
-        """
-        return self.model.pod_name
-
-    @property
-    def ingress(self) -> Optional[str]:
-        """
-        Get the runtime ingress URL.
-
-        Returns
-        -------
-        Optional[str]
-            The ingress URL of this runtime, or None if not set.
-        """
-        return self.model.ingress
-
-    @property
-    def reservation_id(self) -> Optional[str]:
-        """
-        Get the runtime reservation ID.
-
-        Returns
-        -------
-        Optional[str]
-            The reservation ID of this runtime, or None if not set.
-        """
-        return self.model.reservation_id
-
-    @property
-    def burning_rate(self) -> Optional[float]:
-        """
-        Get the runtime burning rate.
-
-        Returns
-        -------
-        Optional[float]
-            The burning rate of this runtime, or None if not set.
-        """
-        return self.model.burning_rate
-
-    @property
-    def kernel_token(self) -> Optional[str]:
-        """
-        Get the runtime kernel token.
-
-        Returns
-        -------
-        Optional[str]
-            The kernel token of this runtime, or None if not set.
-        """
-        return self.model.kernel_token
-
-    @property
-    def started_at(self) -> Optional[str]:
-        """
-        Get the runtime start time.
-
-        Returns
-        -------
-        Optional[str]
-            The start time of this runtime, or None if not set.
-        """
-        return self.model.started_at
-
-    @property
-    def expired_at(self) -> Optional[str]:
-        """
-        Get the runtime expiration time.
-
-        Returns
-        -------
-        Optional[str]
-            The expiration time of this runtime, or None if not set.
-        """
-        return self.model.expired_at
+        return self._model
 
     def get_variable(self, name: str) -> Any:
         """
