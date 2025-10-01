@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/spaces
- * @description Workspace spaces API functions for the Datalayer platform.
+ * Workspace spaces API functions for the Datalayer platform.
  *
  * Provides function for creating workspace spaces.
+ *
+ * @module api/spacer/spaces
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

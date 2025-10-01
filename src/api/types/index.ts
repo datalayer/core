@@ -4,8 +4,7 @@
  */
 
 /**
- * @module types
- * @description TypeScript type definitions for all Datalayer API services.
+ * TypeScript type definitions for all Datalayer API services.
  *
  * This module consolidates all type definitions used by the SDK, providing
  * comprehensive TypeScript support for requests, responses, and data models
@@ -31,6 +30,8 @@
  *   // Implementation
  * }
  * ```
+ *
+ * @module types
  */
 
 export * from './common';

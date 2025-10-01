@@ -10,9 +10,9 @@ import { Snapshot } from '../models/Snapshot';
 import { Space } from '../models/Space';
 import { Notebook } from '../models/Notebook';
 import { Lexical } from '../models/Lexical';
-import { testConfig } from '../../../__tests__/shared/test-config';
-import { DEFAULT_SERVICE_URLS } from '../../../api/constants';
-import { performCleanup } from '../../../__tests__/shared/cleanup-shared';
+import { testConfig } from '../../__tests__/shared/test-config';
+import { DEFAULT_SERVICE_URLS } from '../../api/constants';
+import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 /**
  * SDK Models Integration Tests

@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/iam/oauth2
- * @description OAuth2 API functions for the Datalayer platform.
+ * OAuth2 API functions for the Datalayer platform.
  *
  * Provides functions for OAuth2 authorization flows with various providers.
+ *
+ * @module api/iam/oauth2
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
@@ -52,7 +53,7 @@ export type OAuth2CallbackResponse = string;
  * @returns OAuth2 authorization URL response
  * @throws {Error} If required parameters are missing or invalid
  *
- * @description
+ * @remarks
  * This endpoint generates the OAuth2 authorization URL for the specified provider.
  * Users should be redirected to the returned loginURL to begin the OAuth2 flow.
  *
@@ -126,7 +127,7 @@ export const getOAuth2AuthzUrl = async (
  * @returns OAuth2 authorization URL response
  * @throws {Error} If required parameters are missing or invalid
  *
- * @description
+ * @remarks
  * This endpoint generates the OAuth2 authorization URL for linking a provider to an existing account.
  * Users should be redirected to the returned loginURL to begin the OAuth2 linking flow.
  * This is different from the regular OAuth2 login flow as it links the provider to an existing account.
@@ -196,7 +197,7 @@ export const getOAuth2AuthzUrlForLink = async (
  * @throws {Error} If state parameter is missing
  * @throws {Error} If the callback fails
  *
- * @description
+ * @remarks
  * This endpoint handles the callback from GitHub after the user authorizes the application.
  * It returns HTML content that typically includes JavaScript to handle the OAuth flow completion.
  *
@@ -271,7 +272,7 @@ export const handleGitHubOAuth2Callback = async (
  * @throws {Error} If state parameter is missing
  * @throws {Error} If the callback fails
  *
- * @description
+ * @remarks
  * This endpoint handles the callback from LinkedIn after the user authorizes the application.
  * It returns HTML content that typically includes JavaScript to handle the OAuth flow completion.
  *
@@ -346,7 +347,7 @@ export const handleLinkedInOAuth2Callback = async (
  * @throws {Error} If state parameter is missing
  * @throws {Error} If the callback fails
  *
- * @description
+ * @remarks
  * This endpoint handles the callback from Okta after the user authorizes the application.
  * It returns HTML content that typically includes JavaScript to handle the OAuth flow completion.
  *

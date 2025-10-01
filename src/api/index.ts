@@ -4,11 +4,12 @@
  */
 
 /**
- * @module @datalayer/core/api
- * @description Minimal API layer for the Datalayer platform providing base HTTP client and functional API methods.
+ * Minimal API layer for the Datalayer platform providing base HTTP client and functional API methods.
  *
  * This module contains the low-level API functionality. For high-level object-oriented
  * SDK classes, use @datalayer/core/sdk instead.
+ *
+ * @module @datalayer/core/api
  */
 
 // Base client exports

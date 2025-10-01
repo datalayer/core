@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/healthz
- * @description Health check API functions for the Datalayer Spacer service.
+ * Health check API functions for the Datalayer Spacer service.
  *
  * Provides functions for checking the health status of the Spacer service.
+ *
+ * @module api/spacer/healthz
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
@@ -20,7 +21,7 @@ import type { HealthzPingResponse } from '../types/common';
  * @returns Health check response
  * @throws {Error} If the health check fails
  *
- * @description
+ * @remarks
  * This endpoint provides a basic health check for the Spacer service.
  * It returns the current status of the service.
  *

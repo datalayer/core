@@ -4,8 +4,9 @@
  */
 
 /**
+ * Credits model for the Datalayer SDK.
+ *
  * @module client/models/Credits
- * @description Credits model for the Datalayer SDK.
  */
 
 import type { CreditsInfo, CreditReservation } from '../../api/iam/usage';

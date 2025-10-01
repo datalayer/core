@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/runtimes/environments
- * @description Computing environments API functions for the Datalayer platform.
+ * Computing environments API functions for the Datalayer platform.
  *
  * Provides functions for managing computing environment configurations.
+ *
+ * @module api/runtimes/environments
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

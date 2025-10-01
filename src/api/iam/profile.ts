@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/iam/profile
- * @description User profile management API functions for the Datalayer platform.
+ * User profile management API functions for the Datalayer platform.
  *
  * Provides functions for retrieving and managing user profile information.
+ *
+ * @module api/iam/profile
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

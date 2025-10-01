@@ -4,8 +4,9 @@
  */
 
 /**
+ * Common types shared across all Datalayer API services.
+ *
  * @module api/types/common
- * @description Common types shared across all Datalayer API services.
  */
 
 /**

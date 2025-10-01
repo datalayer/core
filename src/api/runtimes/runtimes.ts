@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/runtimes/runtimes
- * @description Runtime instances API functions for the Datalayer platform.
+ * Runtime instances API functions for the Datalayer platform.
  *
  * Provides functions for managing runtime instances (active compute containers).
+ *
+ * @module api/runtimes/runtimes
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/iam
- * @description IAM (Identity and Access Management) API exports.
+ * IAM (Identity and Access Management) API exports.
  *
  * Provides organized access to authentication, OAuth2, and user profile functionality.
+ *
+ * @module api/iam
  */
 
 export * as authentication from './authentication';

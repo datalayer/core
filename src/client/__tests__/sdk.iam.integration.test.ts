@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { DatalayerClient } from '..';
-import { testConfig } from '../../../__tests__/shared/test-config';
-import { DEFAULT_SERVICE_URLS } from '../../../api/constants';
+import { testConfig } from '../../__tests__/shared/test-config';
+import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 
 /**
  * SDK IAM Integration Tests

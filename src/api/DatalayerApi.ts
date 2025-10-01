@@ -3,21 +3,28 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/**
+ * Core HTTP client for Datalayer API requests.
+ * Handles authentication, error handling, and async redirects.
+ *
+ * @module api/DatalayerApi
+ */
+
 import { URLExt } from '@jupyterlab/coreutils';
 import axios, { AxiosRequestConfig } from 'axios';
 import { sleep } from '../utils/Sleep';
 
 /**
- * A wrapped error for a fetch response.
+ * Error wrapper for failed HTTP responses.
+ * Includes response details, warnings, errors, and tracebacks.
  */
 export class RunResponseError extends Error {
   /**
-   * Create a RunResponseError from a response,
-   * handling the traceback and message as appropriate.
+   * Creates a RunResponseError from a Response object.
+   * Extracts error details from response JSON.
    *
-   * @param response The response object.
-   *
-   * @returns A promise that resolves with a `RunResponseError` object.
+   * @param response - The failed HTTP response
+   * @returns Promise resolving to RunResponseError instance
    */
   static async create(response: Response): Promise<RunResponseError> {
     try {
@@ -92,11 +99,14 @@ export class RunResponseError extends Error {
 }
 
 /**
- * A wrapped error for a network error.
+ * Error wrapper for network failures.
+ * Thrown when HTTP request fails due to connectivity issues.
  */
 export class NetworkError extends TypeError {
   /**
-   * Create a new network error.
+   * Creates a NetworkError from the original TypeError.
+   *
+   * @param original - The original network error
    */
   constructor(original: TypeError) {
     super(original.message);
@@ -105,33 +115,42 @@ export class NetworkError extends TypeError {
   }
 }
 
+/**
+ * Options for Datalayer API requests.
+ */
 export interface IRequestDatalayerAPIOptions {
-  /**
-   * URL to request
-   */
+  /** Target URL for the request */
   url: string;
-  /**
-   * HTTP method
-   */
+  /** HTTP method (GET, POST, PUT, DELETE, etc.) */
   method?: string;
-  /**
-   * JSON-serializable object or FormData
-   */
+  /** Request body (JSON object or FormData) */
   body?: any;
-  /**
-   * Headers
-   */
+  /** Custom HTTP headers */
   headers?: Record<string, string>;
-  /**
-   * Authorization bearer token
-   */
+  /** JWT bearer token for authentication */
   token?: string;
-  /**
-   * Request abort signal.
-   */
+  /** AbortSignal for request cancellation */
   signal?: AbortSignal;
 }
 
+/**
+ * Makes authenticated HTTP requests to Datalayer APIs.
+ * Handles JSON and FormData, includes auth headers, and manages redirects.
+ *
+ * @param options - Request configuration
+ * @returns Promise resolving to response data
+ * @throws {NetworkError} On network failures
+ * @throws {RunResponseError} On HTTP error responses
+ *
+ * @example
+ * ```typescript
+ * const data = await requestDatalayerAPI({
+ *   url: 'https://api.datalayer.run/users',
+ *   method: 'GET',
+ *   token: 'eyJhbGc...'
+ * });
+ * ```
+ */
 export async function requestDatalayerAPI<T = any>({
   url,
   method,

@@ -7,9 +7,9 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
 import { Runtime } from '../models/Runtime';
 import { Snapshot } from '../models/Snapshot';
-import { testConfig } from '../../../__tests__/shared/test-config';
-import { DEFAULT_SERVICE_URLS } from '../../../api/constants';
-import { performCleanup } from '../../../__tests__/shared/cleanup-shared';
+import { testConfig } from '../../__tests__/shared/test-config';
+import { DEFAULT_SERVICE_URLS } from '../../api/constants';
+import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 /**
  * SDK Runtimes Integration Tests

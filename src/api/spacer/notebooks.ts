@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/notebooks
- * @description Jupyter notebooks API functions for the Datalayer platform.
+ * Jupyter notebooks API functions for the Datalayer platform.
  *
  * Provides functions for creating and retrieving Jupyter notebooks within workspaces.
+ *
+ * @module api/spacer/notebooks
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

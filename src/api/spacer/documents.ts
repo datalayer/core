@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/documents
- * @description Documents API functions for the Datalayer platform.
+ * Documents API functions for the Datalayer platform.
  *
  * Provides functions for document operations including collaboration session management.
+ *
+ * @module api/spacer/documents
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

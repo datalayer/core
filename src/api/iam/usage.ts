@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/iam/credits
- * @description Credits and usage API for managing user credits.
+ * Credits and usage API for managing user credits.
  *
  * Provides functionality to retrieve user's available credits, quota, and reservations.
+ *
+ * @module api/iam/credits
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';

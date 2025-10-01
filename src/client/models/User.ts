@@ -4,8 +4,9 @@
  */
 
 /**
+ * User model for the Datalayer SDK with rich functionality.
+ *
  * @module client/models/User
- * @description User model for the Datalayer SDK with rich functionality.
  */
 
 import type { User as UserData } from '../../api/types/iam';

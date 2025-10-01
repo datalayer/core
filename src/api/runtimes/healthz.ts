@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/runtimes/healthz
- * @description Health check API functions for the Datalayer Runtimes service.
+ * Health check API functions for the Datalayer Runtimes service.
  *
  * Provides functions for checking the health status of the Runtimes service.
+ *
+ * @module api/runtimes/healthz
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
@@ -20,7 +21,7 @@ import type { HealthzPingResponse } from '../types/common';
  * @returns Health check response
  * @throws {Error} If the health check fails
  *
- * @description
+ * @remarks
  * This endpoint provides a basic health check for the Runtimes service.
  * It returns the current status of the service.
  *

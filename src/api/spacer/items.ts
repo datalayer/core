@@ -4,10 +4,11 @@
  */
 
 /**
- * @module api/spacer/items
- * @description Items API functions for the Datalayer platform.
+ * Items API functions for the Datalayer platform.
  *
  * Provides functions for managing items in spaces.
+ *
+ * @module api/spacer/items
  */
 
 import { requestDatalayerAPI } from '../DatalayerApi';
