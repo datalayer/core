@@ -11,7 +11,30 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-from datalayer_core.utils.defaults import DEFAULT_DATALAYER_IAM_URL, DEFAULT_DATALAYER_RUN_URL
+
+DEFAULT_DATALAYER_RUN_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_IAM_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_RUNTIMES_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_SPACER_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_LIBRARY_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_MANAGER_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_AI_AGENTS_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_AI_INFERENCE_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_GROWTH_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_SUCCESS_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_STATUS_URL = "https://prod1.datalayer.run"
+
+DEFAULT_DATALAYER_SUPPORT_URL = "https://prod1.datalayer.run"
 
 
 @dataclass
