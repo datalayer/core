@@ -13,17 +13,17 @@ from typing import Any, Optional, Union
 
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
-from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
+from datalayer_core.mixins.runtime_snapshots import  RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import ProfileModel
 from datalayer_core.models.environment import EnvironmentModel
+from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
 from datalayer_core.services.runtime_snapshots.runtime_snapshots import (
-    RuntimeSnapshotsService,
     as_runtime_snapshots,
     create_snapshot,
 )
@@ -433,7 +433,7 @@ class DatalayerClient(
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotsService":
+    ) -> "RuntimeSnapshotModel":
         """
         Create a snapshot of the current runtime state.
 
@@ -452,7 +452,7 @@ class DatalayerClient(
 
         Returns
         -------
-        RuntimeSnapshot
+        RuntimeSnapshotModel
             The created snapshot object.
         """
         if pod_name is None and runtime is None:
@@ -478,7 +478,7 @@ class DatalayerClient(
         for snapshot in snapshots_objects:
             if snapshot.name == name:
                 break
-        return RuntimeSnapshotsService(
+        return RuntimeSnapshotModel(
             uid=snapshot.uid,
             name=name,
             description=description,
@@ -486,13 +486,13 @@ class DatalayerClient(
             metadata=response,
         )
 
-    def list_snapshots(self) -> list[RuntimeSnapshotsService]:
+    def list_snapshots(self) -> list[RuntimeSnapshotModel]:
         """
         List all snapshots.
 
         Returns
         -------
-        list[RuntimeSnapshot]
+        list[RuntimeSnapshotModel]
             A list of snapshots associated with the user.
         """
         response = self._list_snapshots()
@@ -500,14 +500,14 @@ class DatalayerClient(
         return snapshot_objects
 
     def delete_snapshot(
-        self, snapshot: Union[str, RuntimeSnapshotsService]
+        self, snapshot: Union[str, RuntimeSnapshotModel]
     ) -> dict[str, str]:
         """
         Delete a specific snapshot.
 
         Parameters
         ----------
-        snapshot : Union[str, RuntimeSnapshot]
+        snapshot : Union[str, RuntimeSnapshotModel]
             Snapshot object or UID string to delete.
 
         Returns
@@ -516,7 +516,7 @@ class DatalayerClient(
             The result of the deletion operation.
         """
         snapshot_uid = (
-            snapshot.uid if isinstance(snapshot, RuntimeSnapshotsService) else snapshot
+            snapshot.uid if isinstance(snapshot, RuntimeSnapshotModel) else snapshot
         )
         return self._delete_snapshot(snapshot_uid)
 
