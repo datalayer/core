@@ -28,12 +28,14 @@ jobs:
           installer-url: https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-Linux-x86_64.sh
           auto-update-conda: true
           activate-environment: datalayer
+          python-version: 3.11
 
       - name: Install dependencies
         shell: bash -el {0}
         run: |
           conda install boto3 python make nodejs 
           pip install .[docs]
+          pip install alabaster babel
           pip list
           npm install
 

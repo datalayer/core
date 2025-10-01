@@ -54,3 +54,8 @@ repos:
     hooks:
       - id: interrogate
         args: [--config=pyproject.toml]
+  # See https://github.com/rohaquinlop/complexipy
+  - repo: https://github.com/rohaquinlop/complexipy-pre-commit
+    rev: v3.0.0 # Use the latest version
+    hooks:
+      - id: complexipy

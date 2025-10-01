@@ -23,6 +23,53 @@ Seconds: TypeAlias = float
 CallableOrOptionalString: TypeAlias = Union[Callable[..., Any], Optional[str]]
 
 
+def _process_args_kwargs_mapping(
+    func: Callable[..., Any],
+    args: tuple,
+    kwargs: dict,
+    inputs: list[str],
+    variables: dict[str, Any],
+) -> dict[str, Any]:
+    sig = inspect.signature(func)
+    mapping = {}
+
+    for idx, (name, _param) in enumerate(sig.parameters.items()):
+        mapping[name] = inputs[idx]
+
+    for kwarg, kwarg_value in kwargs.items():
+        variables[mapping[kwarg]] = kwarg_value
+
+    for idx, (arg_value) in enumerate(args):
+        kwarg = inputs[idx]
+        variables[kwarg] = arg_value
+
+    return variables
+
+
+def _process_inputs(
+    func: Callable[..., Any],
+    inputs_decorated: Optional[list[str]],
+) -> tuple[dict[str, Any], list[str]]:
+    variables = {}
+    sig = inspect.signature(func)
+    if inputs_decorated is None:
+        inputs = []
+        for name, _param in sig.parameters.items():
+            inputs.append(name)
+            variables[name] = (
+                _param.default
+                if _param.default is not inspect.Parameter.empty
+                else None
+            )
+    else:
+        if len(sig.parameters) != len(inputs_decorated):
+            raise ValueError(
+                f"Function {func.__name__} has {len(sig.parameters)} parameters, "
+                f"but {len(inputs_decorated)} inputs were provided."
+            )
+    return variables, inputs
+
+
 def datalayer(
     runtime_name: CallableOrOptionalString = None,
     environment: str = DEFAULT_ENVIRONMENT,
@@ -70,7 +117,6 @@ def datalayer(
     ... def example(x: float, y: float) -> float:
     ...     return x + y
     """
-    variables = {}
     inputs_decorated = inputs
     output_decorated = output
     snapshot_name_decorated = snapshot_name
@@ -99,22 +145,9 @@ def datalayer(
         if output_decorated is None:
             output = f"DATALAYER_RUNTIME_OUTPUT_{func.__name__}".upper()
 
-        sig = inspect.signature(func)
-        if inputs_decorated is None:
-            inputs = []
-            for name, _param in sig.parameters.items():
-                inputs.append(name)
-                variables[name] = (
-                    _param.default
-                    if _param.default is not inspect.Parameter.empty
-                    else None
-                )
-        else:
-            if len(sig.parameters) != len(inputs_decorated):
-                raise ValueError(
-                    f"Function {func.__name__} has {len(sig.parameters)} parameters, "
-                    f"but {len(inputs_decorated)} inputs were provided."
-                )
+        variables, inputs = _process_inputs(
+            func=func, inputs_decorated=inputs_decorated,
+        )
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -147,6 +180,14 @@ def datalayer(
                 kwarg = (inputs_decorated or inputs)[idx]
                 variables[kwarg] = arg_value
 
+            # Process args and kwargs to map to inputs
+            variables = _process_args_kwargs_mapping(
+                func=func,
+                args=args,
+                kwargs=kwargs,
+                inputs=(inputs_decorated or inputs),
+                variables=variables,
+            )
             function_call = (
                 f"{output_decorated or output} = {func.__name__}("
                 + ", ".join(inputs_decorated or inputs)
