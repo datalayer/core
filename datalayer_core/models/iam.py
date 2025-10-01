@@ -92,7 +92,7 @@ class UserData(BaseModel):
     id: str = Field(..., description="User ID")
     uid: str = Field(..., description="User UID")
     handle_s: str = Field(..., description="User handle")
-    email_s: EmailStr = Field(..., description="User email address")
+    email_s: Optional[EmailStr] = Field(None, description="User email address")
     first_name_t: str = Field(..., description="User first name")
     last_name_t: str = Field(..., description="User last name")
     type_s: str = Field(..., description="User type")
@@ -208,7 +208,7 @@ class UserSettings(BaseModel):
 class UserSearchRequest(BaseModel):
     """User search request model."""
 
-    query: Optional[str] = Field(None, description="Search query")
+    query: Optional[str] = Field(None, alias="namingPattern", description="Search query")
     email: Optional[EmailStr] = Field(None, description="Filter by email")
     handle: Optional[str] = Field(None, description="Filter by handle")
     roles: Optional[List[str]] = Field(None, description="Filter by roles")
