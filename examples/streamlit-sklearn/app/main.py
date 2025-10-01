@@ -10,7 +10,7 @@ from sklearn.datasets import load_iris
 
 from datalayer_core import DatalayerClient
 
-from .models import Iris
+from models import Iris
 
 try:
     from dotenv import load_dotenv

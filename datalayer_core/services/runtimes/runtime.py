@@ -27,7 +27,7 @@ from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_TIME_RESERVATION,
 )
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
 from datalayer_core.utils.notebook import get_cells
 from datalayer_core.utils.types import (
     CreditsPerSecond,
@@ -164,14 +164,31 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         self._model.external_token = value
 
     @property
-    def run_url(self) -> str:
-        """Get the runtime server URL."""
-        return self._model.run_url
-
-    @property
-    def iam_url(self) -> str:
-        """Get the IAM server URL."""
-        return self._model.iam_url or self._model.run_url
+    def urls(self) -> DatalayerURLs:
+        """
+        Get a DatalayerURLs object with the configured URLs.
+        
+        Returns
+        -------
+        DatalayerURLs
+            URLs object with run_url and iam_url from the runtime configuration.
+        """
+        from datalayer_core.utils.urls import DatalayerURLs
+        return DatalayerURLs(
+            run_url=self._model.run_url,
+            iam_url=self._model.iam_url or self._model.run_url,
+            # Use defaults for other URLs
+            runtimes_url="",
+            spacer_url="",
+            library_url="",
+            manager_url="",
+            ai_agents_url="",
+            ai_inference_url="",
+            growth_url="",
+            success_url="",
+            status_url="",
+            support_url=""
+        )
 
     @property
     def pod_name(self) -> Optional[str]:
