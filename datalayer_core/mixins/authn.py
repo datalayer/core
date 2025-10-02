@@ -20,9 +20,13 @@ class AuthnMixin:
     Provides methods to authenticate and fetch resources from the Datalayer server.
 
     This mixin expects the implementing class to provide:
-    - run_url property: for keyring storage
-    - iam_url property: for IAM API calls
+    - urls property: DatalayerURLs instance with run_url and iam_url
     """
+    
+    @property
+    def urls(self) -> Any:
+        """URLs property that must be implemented by the inheriting class."""
+        raise NotImplementedError("Implementing class must provide urls property")
 
     _token: Optional[str] = None
     _external_token: Optional[str] = None

@@ -178,7 +178,7 @@ Processing result: {'count': 13, 'mean': 8.846153846153847, 'median': 7, 'stdev'
 ------------------------------
 
 
-Model trained with R� score: 0.993
+Model trained with R2 score: 0.993
 Mean Squared Error: 22.504
 
 

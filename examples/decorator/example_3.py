@@ -72,7 +72,7 @@ def train_simple_model(features: list[float], labels: list[float]) -> dict:
         "test_size": len(X_test),
     }
 
-    print(f"Model trained with R� score: {model_metrics['r2']:.3f}")
+    print(f"Model trained with R2 score: {model_metrics['r2']:.3f}")
     print(f"Mean Squared Error: {model_metrics['mse']:.3f}")
 
     return model_metrics

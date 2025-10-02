@@ -3,6 +3,7 @@
 
 """Environment commands for Datalayer CLI."""
 
+from typing import Any, Dict
 import typer
 from rich.console import Console
 
@@ -23,7 +24,7 @@ def list_environments() -> None:
         environments = client.list_environments()
 
         # Convert to dict format for display_environments
-        env_dicts = []
+        env_dicts: list[Dict[str, Any]] = []
         for env in environments:
             env_dicts.append(
                 {
@@ -41,9 +42,9 @@ def list_environments() -> None:
 
         if len(env_dicts) > 0:
             console.print("\n[dim]Create a Runtime with e.g.[/dim]")
-            for env in env_dicts:
+            for env_dict in env_dicts:
                 console.print(
-                    f"[dim]datalayer runtimes create --given-name my-runtime --credits-limit 3 {env['name']}[/dim]"
+                    f"[dim]datalayer runtimes create --given-name my-runtime --credits-limit 3 {env_dict['name']}[/dim]"
                 )
             console.print()
 
