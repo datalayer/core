@@ -148,6 +148,11 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         """Get the authentication token."""
         return self._model.token
     
+    @property
+    def _kernel_client(self) -> Optional[Any]:
+        """Get the kernel client for backward compatibility."""
+        return self._model.kernel_client
+    
     @_token.setter
     def _token(self, value: Optional[str]) -> None:
         """Set the authentication token."""

@@ -5,6 +5,8 @@
 
 import typer
 
+from datalayer_core.__version__ import __version__
+
 from datalayer_core.cli.commands.about import app as about_app
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
@@ -29,12 +31,34 @@ from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.web import app as web_app
 
+
+def version_callback(value: bool):
+    """Display version information and exit."""
+    if value:
+        typer.echo(f"datalayer_core: {__version__}")
+        raise typer.Exit()
+
+
 # Create the main Typer app
 app = typer.Typer(
     name="dla",
-    help="Datalayer CLI - A command line tool for managing Datalayer resources.",
+    help="The Datalayer CLI application",
     no_args_is_help=True,
 )
+
+# Add version option
+@app.callback()
+def main_callback(
+    version: bool = typer.Option(
+        False, 
+        "--version", 
+        callback=version_callback, 
+        is_eager=True,
+        help="Show version and exit"
+    )
+):
+    """Main callback to handle global options."""
+    pass
 
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)

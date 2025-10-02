@@ -399,7 +399,7 @@ class CheckoutPortalRequest(BaseModel):
     return_url: str = Field(..., description="Return URL after checkout")
 
 
-class CheckoutPortalData(BaseModel):
+class CheckoutPortalModel(BaseModel):
     """Checkout portal response data."""
 
     url: str = Field(..., description="Checkout portal URL")
@@ -411,7 +411,7 @@ class CheckoutPortalData(BaseModel):
 
 
 # Secret and Token Models
-class SecretData(BaseModel):
+class SecretModel(BaseModel):
     """Secret data model."""
 
     id: str = Field(..., description="Secret ID")
@@ -422,7 +422,7 @@ class SecretData(BaseModel):
     value_s: str = Field(..., description="Secret value")
 
 
-class TokenData(BaseModel):
+class TokenModel(BaseModel):
     """Token data model."""
 
     id: str = Field(..., description="Token ID")
@@ -435,7 +435,7 @@ class TokenData(BaseModel):
     )
 
 
-class DatasourceData(BaseModel):
+class DatasourceModel(BaseModel):
     """Datasource data model."""
 
     id: str = Field(..., description="Datasource ID")
