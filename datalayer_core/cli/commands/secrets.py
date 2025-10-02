@@ -19,10 +19,16 @@ console = Console()
 
 
 @app.command(name="list")
-def list_secrets() -> None:
+def list_secrets(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all secrets."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
         secrets = client.list_secrets()
 
         # Convert to dict format for display_secrets
@@ -45,9 +51,15 @@ def list_secrets() -> None:
 
 
 @app.command(name="ls")
-def list_secrets_alias() -> None:
+def list_secrets_alias(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all secrets (alias for list)."""
-    list_secrets()
+    list_secrets(token=token)
 
 
 @app.command(name="create")
@@ -60,10 +72,15 @@ def create_secret(
         "--variant",
         help="Type/variant of the secret (generic, password, key, token)",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Create a new secret."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         secret = client.create_secret(
             name=name,
@@ -91,10 +108,15 @@ def create_secret(
 @app.command(name="delete")
 def delete_secret(
     uid: str = typer.Argument(..., help="UID of the secret to delete"),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Delete a secret."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         result = client.delete_secret(uid)
 
@@ -112,11 +134,23 @@ def delete_secret(
 
 
 # Root level commands for convenience
-def secrets_list() -> None:
+def secrets_list(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all secrets (root command)."""
-    list_secrets()
+    list_secrets(token=token)
 
 
-def secrets_ls() -> None:
+def secrets_ls(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all secrets (root command alias)."""
-    list_secrets()
+    list_secrets(token=token)

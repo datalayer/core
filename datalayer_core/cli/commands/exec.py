@@ -27,12 +27,12 @@ console = Console()
 class RuntimesExecService:
     """Service for executing files on Datalayer runtimes."""
 
-    def __init__(self) -> None:
+    def __init__(self, token: Optional[str] = None) -> None:
         """Initialize the exec service."""
         self.kernel_manager: Optional[RuntimeManager] = None
         self.kernel_client = None
         self._executing = False
-        self._client = DatalayerClient()
+        self._client = DatalayerClient(token=token)
 
     def handle_sigint(self, *args: Any) -> None:
         """Handle SIGINT signal during kernel execution."""
@@ -227,6 +227,11 @@ def main(
     raise_exceptions: bool = typer.Option(
         False, "--raise", help="Stop executing if an exception occurs"
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Execute a Python file or Jupyter notebook on a Datalayer runtime."""
 
@@ -260,10 +265,10 @@ def main(
     # Determine which runtime to use
     selected_runtime = runtime
     if selected_runtime is None:
-        selected_runtime = _select_runtime()
+        selected_runtime = _select_runtime(token=token)
 
     # Create exec service and execute
-    exec_service = RuntimesExecService()
+    exec_service = RuntimesExecService(token=token)
 
     try:
         # Initialize connection to runtime
@@ -282,11 +287,16 @@ def main(
         exec_service.cleanup()
 
 
-def _select_runtime() -> str:
+def _select_runtime(token: Optional[str] = None) -> str:
     """
     Select a runtime to use for execution.
 
     Returns the first available runtime, or prompts to create one if none exist.
+
+    Parameters
+    ----------
+    token : Optional[str]
+        Authentication token for API requests.
 
     Returns
     -------
@@ -294,7 +304,7 @@ def _select_runtime() -> str:
         The name/ID of the runtime to use.
     """
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
         runtimes = client.list_runtimes()
 
         if not runtimes:

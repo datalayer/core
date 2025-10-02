@@ -355,6 +355,11 @@ def whoami(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Display current authentication status."""
     try:
@@ -363,34 +368,37 @@ def whoami(
         server_url = urls.run_url
 
         # Check for tokens from various sources
-        token = None
+        resolved_token = token  # Start with explicitly provided token
         token_source = None
 
-        # Check environment variables
-        if os.environ.get("DATALAYER_API_KEY"):
-            token = os.environ["DATALAYER_API_KEY"]
-            token_source = "DATALAYER_API_KEY environment variable"
-        elif os.environ.get("DATALAYER_EXTERNAL_TOKEN"):
-            token = os.environ["DATALAYER_EXTERNAL_TOKEN"]
-            token_source = "DATALAYER_EXTERNAL_TOKEN environment variable"
+        if resolved_token:
+            token_source = "--token option"
         else:
-            # Check keyring
-            try:
-                import keyring
+            # Check environment variables
+            if os.environ.get("DATALAYER_API_KEY"):
+                resolved_token = os.environ["DATALAYER_API_KEY"]
+                token_source = "DATALAYER_API_KEY environment variable"
+            elif os.environ.get("DATALAYER_EXTERNAL_TOKEN"):
+                resolved_token = os.environ["DATALAYER_EXTERNAL_TOKEN"]
+                token_source = "DATALAYER_EXTERNAL_TOKEN environment variable"
+            else:
+                # Check keyring
+                try:
+                    import keyring
 
-                stored_token = keyring.get_password(server_url, "access_token")
-                if stored_token:
-                    token = stored_token
-                    token_source = f"Stored token for {server_url}"
-            except ImportError:
-                pass
-            except Exception:
-                pass
+                    stored_token = keyring.get_password(server_url, "access_token")
+                    if stored_token:
+                        resolved_token = stored_token
+                        token_source = f"Stored token for {server_url}"
+                except ImportError:
+                    pass
+                except Exception:
+                    pass
 
-        if token:
+        if resolved_token:
             # Validate token by making an API call to the server
             try:
-                client = DatalayerClient(urls=urls, token=token)
+                client = DatalayerClient(urls=urls, token=resolved_token)
                 console.print("🔍 Validating token with server...")
                 response = client._get_profile()
                 profile = response.get("profile", {})
@@ -504,7 +512,7 @@ def whoami(
                     import json
 
                     # JWT tokens have 3 parts separated by dots
-                    parts = token.split(".")
+                    parts = resolved_token.split(".")
                     if len(parts) >= 3:
                         console.print("🔑 [bold]Token Information[/bold]")
 
@@ -581,7 +589,7 @@ def whoami(
                     import json
 
                     # JWT tokens have 3 parts separated by dots
-                    parts = token.split(".")
+                    parts = resolved_token.split(".")
                     if len(parts) >= 2:
                         # Decode the payload (second part)
                         payload_b64 = parts[1]
@@ -707,6 +715,11 @@ def whoami_root(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Display current authenticated user profile."""
-    whoami(run_url=run_url, iam_url=iam_url)
+    whoami(run_url=run_url, iam_url=iam_url, token=token)

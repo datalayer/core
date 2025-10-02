@@ -18,10 +18,16 @@ console = Console()
 
 
 @app.command(name="list")
-def list_runtimes() -> None:
+def list_runtimes(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List running runtimes."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
         runtimes = client.list_runtimes()
 
         # Convert to dict format for display_runtimes
@@ -50,9 +56,15 @@ def list_runtimes() -> None:
 
 
 @app.command(name="ls")
-def list_runtimes_alias() -> None:
+def list_runtimes_alias(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List running runtimes (alias for list)."""
-    list_runtimes()
+    list_runtimes(token=token)
 
 
 @app.command(name="create")
@@ -73,10 +85,15 @@ def create_runtime(
         "--time-reservation",
         help="Time reservation in minutes for the runtime",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Create a new runtime."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         # Create runtime
         final_time_reservation = time_reservation or 10.0
@@ -100,10 +117,15 @@ def create_runtime(
 @app.command(name="terminate")
 def terminate_runtime(
     pod_name: str = typer.Argument(..., help="Pod name of the runtime to terminate"),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Terminate a running runtime."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         success = client.terminate_runtime(pod_name)
 
@@ -121,11 +143,23 @@ def terminate_runtime(
 
 
 # Root level commands for convenience
-def runtimes_list() -> None:
+def runtimes_list(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List running runtimes (root command)."""
-    list_runtimes()
+    list_runtimes(token=token)
 
 
-def runtimes_ls() -> None:
+def runtimes_ls(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List running runtimes (root command alias)."""
-    list_runtimes()
+    list_runtimes(token=token)

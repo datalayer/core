@@ -19,10 +19,16 @@ console = Console()
 
 
 @app.command(name="list")
-def list_tokens() -> None:
+def list_tokens(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all tokens."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
         tokens = client.list_tokens()
 
         # Convert to dict format for display_tokens
@@ -45,9 +51,15 @@ def list_tokens() -> None:
 
 
 @app.command(name="ls")
-def list_tokens_alias() -> None:
+def list_tokens_alias(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all tokens (alias for list)."""
-    list_tokens()
+    list_tokens(token=token)
 
 
 @app.command(name="create")
@@ -64,10 +76,15 @@ def create_token(
         "--token-type",
         help="Type of the token (user, admin)",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Create a new token."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         result = client.create_token(
             name=name,
@@ -114,10 +131,15 @@ def create_token(
 @app.command(name="delete")
 def delete_token(
     uid: str = typer.Argument(..., help="UID of the token to delete"),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Delete a token."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         success = client.delete_token(uid)
 
@@ -133,11 +155,23 @@ def delete_token(
 
 
 # Root level commands for convenience
-def tokens_list() -> None:
+def tokens_list(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all tokens (root command)."""
-    list_tokens()
+    list_tokens(token=token)
 
 
-def tokens_ls() -> None:
+def tokens_ls(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all tokens (root command alias)."""
-    list_tokens()
+    list_tokens(token=token)

@@ -20,10 +20,16 @@ console = Console()
 
 
 @app.command(name="list")
-def list_snapshots() -> None:
+def list_snapshots(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all snapshots."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
         snapshots = client.list_snapshots()
 
         # Convert to dict format for display_snapshots
@@ -47,9 +53,15 @@ def list_snapshots() -> None:
 
 
 @app.command(name="ls")
-def list_snapshots_alias() -> None:
+def list_snapshots_alias(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all snapshots (alias for list)."""
-    list_snapshots()
+    list_snapshots(token=token)
 
 
 @app.command(name="create")
@@ -74,10 +86,15 @@ def create_snapshot(
         "--stop/--no-stop",
         help="Whether to stop the runtime after creating snapshot",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Create a snapshot from a running runtime."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         snapshot = client.create_snapshot(
             pod_name=pod_name,
@@ -108,10 +125,15 @@ def create_snapshot(
 @app.command(name="delete")
 def delete_snapshot(
     uid: str = typer.Argument(..., help="UID of the snapshot to delete"),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
 ) -> None:
     """Delete a snapshot."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
 
         result = client.delete_snapshot(uid)
 
@@ -129,11 +151,23 @@ def delete_snapshot(
 
 
 # Root level commands for convenience
-def snapshots_list() -> None:
+def snapshots_list(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all snapshots (root command)."""
-    list_snapshots()
+    list_snapshots(token=token)
 
 
-def snapshots_ls() -> None:
+def snapshots_ls(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List all snapshots (root command alias)."""
-    list_snapshots()
+    list_snapshots(token=token)

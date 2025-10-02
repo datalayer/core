@@ -3,7 +3,7 @@
 
 """Environment commands for Datalayer CLI."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import typer
 from rich.console import Console
@@ -18,10 +18,16 @@ console = Console()
 
 
 @app.command(name="list")
-def list_environments() -> None:
+def list_environments(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List available environments."""
     try:
-        client = DatalayerClient()
+        client = DatalayerClient(token=token)
         environments = client.list_environments()
 
         # Convert to dict format for display_environments
@@ -55,17 +61,35 @@ def list_environments() -> None:
 
 
 @app.command(name="ls")
-def list_environments_alias() -> None:
+def list_environments_alias(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List available environments (alias for list)."""
-    list_environments()
+    list_environments(token=token)
 
 
 # Root level commands for convenience
-def envs_list() -> None:
+def envs_list(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List available environments (root command)."""
-    list_environments()
+    list_environments(token=token)
 
 
-def envs_ls() -> None:
+def envs_ls(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+) -> None:
     """List available environments (root command alias)."""
-    list_environments()
+    list_environments(token=token)
