@@ -9,8 +9,8 @@ import { asIAMProviderLinked, IIAMProviderLinked } from './IAMProviderLinked';
 import {
   BOOTSTRAP_USER_ONBOARDING,
   IUserOnboardingModel,
-} from './UserOnboardingModel';
-import { IUserSettingsModel, UserSettingsModel } from './UserSettingsModel';
+} from './UserOnboarding';
+import { IUserSettings, UserSettings } from './UserSettings';
 import { asUserEvent, IUserEvent } from './UserEvent';
 
 export const ANONYMOUS_USER = undefined;
@@ -54,7 +54,7 @@ export class User implements IUser {
   origin?: string;
   invites?: Array<IInvite>;
   iamProviders: Array<IIAMProviderLinked>;
-  settings: IUserSettingsModel;
+  settings: IUserSettings;
   unsubscribedFromOutbounds: boolean;
   mfaUrl?: string;
   onboarding: IUserOnboardingModel;
@@ -85,7 +85,7 @@ export class User implements IUser {
       // no-op for backwards compatibility.
     }
     this.iamProviders = iamProviders;
-    this.settings = new UserSettingsModel(u.settings ?? {});
+    this.settings = new UserSettings(u.settings ?? {});
     this.unsubscribedFromOutbounds = u.unsubscribed_from_outbounds_b ?? false;
     this.mfaUrl = u.mfa_url_s;
     this.onboarding = u.onboarding_s
@@ -135,7 +135,7 @@ export type IUser = IBaseUser & {
   origin?: string;
   invites?: Array<IInvite>;
   iamProviders: Array<IIAMProviderLinked>;
-  settings: IUserSettingsModel;
+  settings: IUserSettings;
   unsubscribedFromOutbounds: boolean;
   mfaUrl?: string;
   onboarding: IUserOnboardingModel;

@@ -6,12 +6,12 @@
 export const AI_AGENTS_URL_KEY = 'aiagents_url_s';
 export const CAN_INVITE_URL_KEY = 'can_invite_b';
 
-export type IUserSettingsModel = {
+export type IUserSettings = {
   aiAgentsUrl?: string;
   canInvite?: boolean;
 };
 
-export class UserSettingsModel implements IUserSettingsModel {
+export class UserSettings implements IUserSettings {
   private _aiAgentsUrl?: string;
   private _canInvite?: boolean;
 
@@ -37,4 +37,4 @@ export class UserSettingsModel implements IUserSettingsModel {
   }
 }
 
-export default UserSettingsModel;
+export default UserSettings;

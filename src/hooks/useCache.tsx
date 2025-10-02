@@ -39,7 +39,7 @@ import {
   IUsage,
   IUser,
   IUserOnboardingModel,
-  IUserSettingsModel,
+  IUserSettings,
   LinkedInUser,
   WaitingListFormData,
   asContact,
@@ -631,10 +631,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Settings -----------------------------------------------------------------
 
-  const updateUserSettingsModel = (
-    userId: string,
-    settings: IUserSettingsModel,
-  ) => {
+  const updateUserSettingsModel = (userId: string, settings: IUserSettings) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/settings`,
       method: 'PUT',

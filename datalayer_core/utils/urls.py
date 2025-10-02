@@ -28,6 +28,8 @@ DEFAULT_DATALAYER_AI_AGENTS_URL = "https://prod1.datalayer.run"
 
 DEFAULT_DATALAYER_AI_INFERENCE_URL = "https://prod1.datalayer.run"
 
+DEFAULT_DATALAYER_MCP_SERVERS_URL = "https://prod1.datalayer.run"
+
 DEFAULT_DATALAYER_GROWTH_URL = "https://prod1.datalayer.run"
 
 DEFAULT_DATALAYER_SUCCESS_URL = "https://prod1.datalayer.run"
@@ -71,6 +73,8 @@ class DatalayerURLs:
         The Datalayer status service URL
     support_url : str
         The Datalayer support service URL
+    mcp_server_url : str
+        The Datalayer MCP server service URL
     """
 
     run_url: str
@@ -85,6 +89,7 @@ class DatalayerURLs:
     success_url: str
     status_url: str
     support_url: str
+    mcp_server_url: str
 
     @classmethod
     def from_environment(
@@ -101,6 +106,7 @@ class DatalayerURLs:
         success_url: Optional[str] = None,
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
+        mcp_server_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
         Create DatalayerURLs instance from environment variables and parameters.
@@ -227,6 +233,12 @@ class DatalayerURLs:
             base_url_for_services or 
             DEFAULT_DATALAYER_SUPPORT_URL
         )
+        resolved_mcp_server_url = (
+            mcp_server_url or 
+            os.environ.get("DATALAYER_MCP_SERVER_URL") or 
+            base_url_for_services or 
+            DEFAULT_DATALAYER_MCP_SERVERS_URL
+        )
 
         # Strip trailing slashes for consistency
         resolved_run_url = resolved_run_url.rstrip("/")
@@ -241,6 +253,7 @@ class DatalayerURLs:
         resolved_success_url = resolved_success_url.rstrip("/")
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
+        resolved_mcp_server_url = resolved_mcp_server_url.rstrip("/")
 
         return cls(
             run_url=resolved_run_url,
@@ -255,6 +268,7 @@ class DatalayerURLs:
             success_url=resolved_success_url,
             status_url=resolved_status_url,
             support_url=resolved_support_url,
+            mcp_server_url=resolved_mcp_server_url,
         )
 
     def __post_init__(self):
@@ -271,3 +285,4 @@ class DatalayerURLs:
         self.success_url = self.success_url.rstrip("/")
         self.status_url = self.status_url.rstrip("/")
         self.support_url = self.support_url.rstrip("/")
+        self.mcp_server_url = self.mcp_server_url.rstrip("/")
