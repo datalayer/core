@@ -117,7 +117,7 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
 
       // Build URLs.
       const documentURL = URLExt.join(runUrl, '/api/spacer/v1/documents');
-      const wsUrl = URLExt.join(runUrl, '/api/spacer/v1/documents_ws').replace(
+      const wsUrl = URLExt.join(runUrl, '/api/spacer/v1/documents/ws').replace(
         /^http/,
         'ws',
       );
