@@ -631,7 +631,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Settings -----------------------------------------------------------------
 
-  const updateUserSettingsModel = (userId: string, settings: IUserSettings) => {
+  const updateUserSettings = (userId: string, settings: IUserSettings) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/settings`,
       method: 'PUT',
@@ -3769,7 +3769,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     updateUserCredits,
     updateUserCreditsQuota,
     updateUserOnboardingModel,
-    updateUserSettingsModel,
+    updateUserSettings,
     validateUserMFACode,
     whoami,
     notebookUploadLoading,
