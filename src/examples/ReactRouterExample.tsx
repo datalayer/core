@@ -412,7 +412,7 @@ const ProductReviews: React.FC = () => {
   );
 };
 
-const UserProfileModel: React.FC = () => {
+const UserProfile: React.FC = () => {
   const params = useParams();
   return (
     <Box>
@@ -537,7 +537,7 @@ export const ReactRouterAdvancedExample: React.FC = () => {
             <Route path="products/:id/reviews" element={<ProductReviews />} />
             <Route path="products/:id" element={<ProductDetail />} />
             <Route path="products" element={<ProductList />} />
-            <Route path="users/:username" element={<UserProfileModel />} />
+            <Route path="users/:username" element={<UserProfile />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="docs" element={<DocsPage />} />
             <Route

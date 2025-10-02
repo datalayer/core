@@ -38,7 +38,7 @@ import {
   ITeam,
   IUsage,
   IUser,
-  IUserOnboardingModel,
+  IUserOnboarding,
   IUserSettings,
   LinkedInUser,
   WaitingListFormData,
@@ -619,7 +619,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Onboarding ---------------------------------------------------------------
 
-  const updateUserOnboardingModel = (onboarding: IUserOnboardingModel) => {
+  const updateUserOnboarding = (onboarding: IUserOnboarding) => {
     return requestDatalayer({
       url: `${configuration.iamRunUrl}/api/iam/v1/onboardings`,
       method: 'PUT',
@@ -3768,7 +3768,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     updateToken,
     updateUserCredits,
     updateUserCreditsQuota,
-    updateUserOnboardingModel,
+    updateUserOnboarding,
     updateUserSettings,
     validateUserMFACode,
     whoami,

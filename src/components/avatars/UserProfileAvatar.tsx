@@ -9,13 +9,13 @@ import { IUser } from '../../models';
 import { AvatarSkeleton } from '../../components/display';
 import { getAvatarURL } from '../../utils';
 
-type IUserProfileModelAvatarProps = {
+type IUserProfileAvatarProps = {
   user?: IUser;
   size?: number;
   onClick?: React.MouseEventHandler<any>;
 };
 
-const Profile = (props: IUserProfileModelAvatarProps) => {
+const Profile = (props: IUserProfileAvatarProps) => {
   const { user, size, onClick } = props;
   return (
     <Box style={{ width: size }}>
@@ -29,7 +29,7 @@ const Profile = (props: IUserProfileModelAvatarProps) => {
   );
 };
 
-export const UserProfileModelAvatar = (props: IUserProfileModelAvatarProps) => {
+export const UserProfileAvatar = (props: IUserProfileAvatarProps) => {
   const { onClick, user, size } = props;
   return user ? (
     onClick ? (
@@ -44,8 +44,8 @@ export const UserProfileModelAvatar = (props: IUserProfileModelAvatarProps) => {
   );
 };
 
-UserProfileModelAvatar.defaultProps = {
+UserProfileAvatar.defaultProps = {
   size: 100,
 };
 
-export default UserProfileModelAvatar;
+export default UserProfileAvatar;

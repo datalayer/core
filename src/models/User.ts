@@ -8,7 +8,7 @@ import { IInvite } from './Invite';
 import { asIAMProviderLinked, IIAMProviderLinked } from './IAMProviderLinked';
 import {
   BOOTSTRAP_USER_ONBOARDING,
-  IUserOnboardingModel,
+  IUserOnboarding,
 } from './UserOnboarding';
 import { IUserSettings, UserSettings } from './UserSettings';
 import { asUserEvent, IUserEvent } from './UserEvent';
@@ -57,7 +57,7 @@ export class User implements IUser {
   settings: IUserSettings;
   unsubscribedFromOutbounds: boolean;
   mfaUrl?: string;
-  onboarding: IUserOnboardingModel;
+  onboarding: IUserOnboarding;
   linkedContactId?: string;
   events: Array<IUserEvent>;
 
@@ -138,7 +138,7 @@ export type IUser = IBaseUser & {
   settings: IUserSettings;
   unsubscribedFromOutbounds: boolean;
   mfaUrl?: string;
-  onboarding: IUserOnboardingModel;
+  onboarding: IUserOnboarding;
   linkedContactId?: string;
   events: Array<IUserEvent>;
 };
