@@ -13,7 +13,7 @@ from datalayer_core.client.client import DatalayerClient
 load_dotenv()
 
 
-def test_kernel_client():
+def test_kernel_client() -> None:
     """Test kernel client variable operations"""
     print("Testing kernel client variable operations...")
 
@@ -125,6 +125,8 @@ else:
 
             # Test the actual get_variable method and inspect results
             print("\n--- Testing get_variable execution details ---")
+            if runtime._kernel_client is None:
+                raise RuntimeError("Kernel client is None")
             kernel_language = runtime._kernel_client.kernel_info.get(
                 "language_info", {}
             ).get("name")
@@ -137,6 +139,8 @@ else:
             print(f"Get variable snippet:\n{formatted_snippet}")
 
             # Execute the snippet and inspect the full results
+            if runtime._kernel_client is None:
+                raise RuntimeError("Kernel client is None")
             results = runtime._kernel_client.execute(formatted_snippet, silent=True)
             print(f"Get variable results: {results}")
             print(f"Results status: {results['status']}")

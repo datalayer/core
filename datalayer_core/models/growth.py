@@ -6,7 +6,7 @@ Pydantic models for Growth service.
 These models are used for user growth, invitations, contacts, and outbound messaging.
 """
 
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -79,7 +79,7 @@ class SurveyRequest(BaseModel):
     """Survey request model."""
 
     survey_id: str = Field(..., description="Survey identifier")
-    responses: dict = Field(default_factory=dict, description="Survey responses")
+    responses: Dict[str, Any] = Field(default_factory=dict, description="Survey responses")
     user_id: Optional[str] = Field(None, description="User identifier")
     contact_id: Optional[str] = Field(None, description="Contact identifier")
 
@@ -92,7 +92,7 @@ class ContactRequest(BaseModel):
     last_name: Optional[str] = Field(None, description="Contact last name")
     affiliation: Optional[str] = Field(None, description="Contact organization")
     tags: Optional[List[str]] = Field(default_factory=list, description="Contact tags")
-    metadata: Optional[dict] = Field(
+    metadata: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
@@ -124,7 +124,7 @@ class OutboundRequest(BaseModel):
 
     contact_id: str = Field(..., description="Target contact identifier")
     template_id: str = Field(..., description="Message template identifier")
-    variables: Optional[dict] = Field(
+    variables: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Template variables"
     )
     scheduled_at: Optional[str] = Field(None, description="Scheduled send time")
@@ -136,10 +136,10 @@ class OutboundBulkRequest(BaseModel):
 
     contact_ids: List[str] = Field(..., description="Target contact identifiers")
     template_id: str = Field(..., description="Message template identifier")
-    variables: Optional[dict] = Field(
+    variables: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Global template variables"
     )
-    contact_variables: Optional[dict] = Field(
+    contact_variables: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Per-contact variables"
     )
     scheduled_at: Optional[str] = Field(None, description="Scheduled send time")

@@ -167,7 +167,7 @@ def console_callback(
     """Connect to a Datalayer runtime console (default behavior)."""
     if ctx.invoked_subcommand is None:
         # Get any remaining arguments that weren't parsed
-        extra_args = []
+        extra_args: list[str] = []
         if hasattr(ctx, "params") and ctx.params:
             # Add any extra arguments from context
             pass

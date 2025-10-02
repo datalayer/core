@@ -32,7 +32,7 @@ from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.web import app as web_app
 
 
-def version_callback(value: bool):
+def version_callback(value: bool) -> None:
     """Display version information and exit."""
     if value:
         typer.echo(f"datalayer_core: {__version__}")
@@ -56,7 +56,7 @@ def main_callback(
         is_eager=True,
         help="Show version and exit"
     )
-):
+) -> None:
     """Main callback to handle global options."""
     pass
 
@@ -93,6 +93,6 @@ app.command(name="tokens-list")(tokens_list)
 app.command(name="tokens-ls")(tokens_ls)
 
 
-def main():
+def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
     app()

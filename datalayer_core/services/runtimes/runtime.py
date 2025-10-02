@@ -148,15 +148,15 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         """Get the authentication token."""
         return self._model.token
     
-    @property
-    def _kernel_client(self) -> Optional[Any]:
-        """Get the kernel client for backward compatibility."""
-        return self._model.kernel_client
-    
     @_token.setter
     def _token(self, value: Optional[str]) -> None:
         """Set the authentication token."""
         self._model.token = value
+    
+    @property
+    def _kernel_client(self) -> Optional[Any]:
+        """Get the kernel client for backward compatibility."""
+        return self._model.kernel_client
     
     @property
     def _external_token(self) -> Optional[str]:
@@ -192,7 +192,8 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             growth_url="",
             success_url="",
             status_url="",
-            support_url=""
+            support_url="",
+            mcp_server_url=""
         )
 
     @property
@@ -313,7 +314,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                     "Runtime creation succeeded but runtime data is missing from response"
                 )
 
-            runtime: dict[str, str] = self.model.runtime["runtime"]  # type: ignore
+            runtime: dict[str, str] = self.model.runtime["runtime"]
 
             # Validate required runtime fields
             required_fields = [
@@ -400,18 +401,6 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             return Path(path).exists()
         except Exception:
             return False
-
-    @property
-    def model(self) -> RuntimeModel:
-        """
-        Get the runtime model containing all configuration and state data.
-        
-        Returns
-        -------
-        RuntimeModel
-            The runtime model with all runtime data and configuration.
-        """
-        return self._model
 
     def get_variable(self, name: str) -> Any:
         """

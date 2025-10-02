@@ -72,7 +72,7 @@ def create_token(
         result = client.create_token(
             name=name,
             description=description,
-            expiration_date=expiration_date,
+            expiration_date=expiration_date or 0,
             token_type=token_type,
         )
 

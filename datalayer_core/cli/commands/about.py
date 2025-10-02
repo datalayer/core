@@ -14,7 +14,7 @@ app = typer.Typer()
 
 
 @app.command()
-def about():
+def about() -> None:
     """Display information about Datalayer."""
     HERE = Path(__file__).parent
     console = Console()

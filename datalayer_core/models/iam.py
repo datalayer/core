@@ -125,9 +125,9 @@ class UserModel(BaseModel):
         return self.handle_s
 
     @property
-    def email(self) -> str:
+    def email(self) -> Optional[str]:
         """Get user email for profile compatibility."""
-        return self.email_s
+        return str(self.email_s) if self.email_s else None
 
     @property
     def first_name(self) -> str:

@@ -79,14 +79,15 @@ def create_runtime(
         client = DatalayerClient()
 
         # Create runtime
+        final_time_reservation = time_reservation or 10.0
         runtime = client.create_runtime(
             name=given_name,
             environment=environment,
-            time_reservation=time_reservation,
+            time_reservation=final_time_reservation,
         )
 
         console.print(
-            f"Runtime will use credits limit: {runtime.burning_rate * 60.0 * time_reservation:.2f}"
+            f"Runtime will use credits limit: {(runtime.burning_rate or 0.0) * 60.0 * final_time_reservation:.2f}"
         )
         console.print(f"Runtime created successfully: {runtime.name}")
         console.print(f"[green]Runtime '{runtime.name}' created successfully![/green]")

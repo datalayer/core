@@ -9,7 +9,7 @@ import json
 import signal
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -27,14 +27,14 @@ console = Console()
 class RuntimesExecService:
     """Service for executing files on Datalayer runtimes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the exec service."""
         self.kernel_manager: Optional[RuntimeManager] = None
         self.kernel_client = None
         self._executing = False
         self._client = DatalayerClient()
 
-    def handle_sigint(self, *args) -> None:
+    def handle_sigint(self, *args: Any) -> None:
         """Handle SIGINT signal during kernel execution."""
         if self._executing:
             if self.kernel_manager:
@@ -311,7 +311,7 @@ def _select_runtime() -> str:
         console.print(
             f"[blue]No runtime specified, using: {selected.name} ({selected.uid})[/blue]"
         )
-        return selected.name or selected.uid
+        return selected.name or selected.uid or ""
 
     except typer.Exit:
         # Re-raise typer.Exit without modification

@@ -33,7 +33,7 @@ def list_environments() -> None:
                     "language": env.language,
                     "owner": env.owner,
                     "visibility": env.visibility,
-                    **env.metadata,
+                    **(env.metadata or {}),
                 }
             )
 

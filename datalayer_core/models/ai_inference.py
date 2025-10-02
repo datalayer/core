@@ -63,7 +63,7 @@ class ChatRequest(BaseModel):
 
     @field_validator("messages")
     @classmethod
-    def validate_messages(cls, v):
+    def validate_messages(cls, v: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if not v:
             raise ValueError("Messages list cannot be empty")
         return v

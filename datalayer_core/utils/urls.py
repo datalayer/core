@@ -271,7 +271,7 @@ class DatalayerURLs:
             mcp_server_url=resolved_mcp_server_url,
         )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Ensure URLs don't have trailing slashes."""
         self.run_url = self.run_url.rstrip("/")
         self.iam_url = self.iam_url.rstrip("/")

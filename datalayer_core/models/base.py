@@ -33,9 +33,9 @@ class DataResponse(BaseResponse, Generic[T]):
     This dynamically adds fields from the data dict to the model instance.
     """
 
-    def __init__(self, success: bool, message: Optional[str] = None, data=None, key: Optional[str] = None, **kwargs):
+    def __init__(self, success: bool, message: Optional[str] = None, data: Any = None, key: Optional[str] = None, **kwargs: Any) -> None:
         # Start with base fields
-        fields = {"success": success, "message": message}
+        fields: Dict[str, Any] = {"success": success, "message": message}
         
         if data is not None:
             # If key is provided, nest data under that key
@@ -110,7 +110,6 @@ class ExecutionResponse(BaseResponse):
     )
 
     @computed_field
-    @property
     def stdout(self) -> str:
         """
         Get the standard output of the code execution.
@@ -127,7 +126,6 @@ class ExecutionResponse(BaseResponse):
         return "\n".join(stdout_lines)
 
     @computed_field
-    @property
     def stderr(self) -> str:
         """
         Get the standard error of the code execution.
