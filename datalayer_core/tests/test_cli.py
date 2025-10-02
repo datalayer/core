@@ -138,7 +138,7 @@ def test_runtimes_exec(tmp_path: Any) -> None:
         encoding="utf-8",
     )
     p = Popen(
-        ["datalayer", "runtimes", "exec", str(pypath)],
+        ["datalayer", "exec", str(pypath)],
         stderr=PIPE,
         stdout=PIPE,
         stdin=PIPE,
