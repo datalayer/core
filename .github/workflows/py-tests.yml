@@ -37,7 +37,7 @@ jobs:
         run: |
           sudo apt install libdbus-1-3 libdbus-1-dev libglib2.0-dev
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
