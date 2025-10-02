@@ -11,6 +11,8 @@ from jupyter_kernel_client.konsoleapp import (
 )
 from jupyter_kernel_client.konsoleapp import (
     aliases as base_aliases,
+)
+from jupyter_kernel_client.konsoleapp import (
     flags as base_flags,
 )
 from traitlets import Bool, Dict, Unicode, default
@@ -93,13 +95,14 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
     def urls(self) -> DatalayerURLs:
         """
         Get a DatalayerURLs object with the configured URLs.
-        
+
         Returns
         -------
         DatalayerURLs
             URLs object with run_url and iam_url from the app configuration.
         """
         from datalayer_core.utils.urls import DatalayerURLs
+
         return DatalayerURLs(
             run_url=self.run_url,
             iam_url=self.iam_url,
@@ -114,7 +117,7 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
             success_url="",
             status_url="",
             support_url="",
-            mcp_server_url=""
+            mcp_server_url="",
         )
 
     @default("kernel_manager_class")

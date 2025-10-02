@@ -1,10 +1,11 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
+"""Default values and constants for Datalayer Core."""
+
 from typing import Any
 
 from datalayer_core.utils.types import Minutes
-
 
 DEFAULT_ENVIRONMENT = "python-cpu-env"
 

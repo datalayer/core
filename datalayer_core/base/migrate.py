@@ -32,11 +32,12 @@ import shutil
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from datalayer_coreapplication import DatalayerApp
-from datalayer_corepaths import datalayer_config_dir, datalayer_data_dir
-from datalayer_coreutils import ensure_dir_exists
 from traitlets.config.loader import JSONFileConfigLoader, PyFileConfigLoader
 from traitlets.log import get_logger
+
+from datalayer_core.base.application import DatalayerApp
+from datalayer_core.base.paths import datalayer_config_dir, datalayer_data_dir
+from datalayer_core.utils import ensure_dir_exists
 
 pjoin = os.path.join
 

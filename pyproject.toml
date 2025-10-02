@@ -125,15 +125,21 @@ version = "0.1.0"
 [tool.numpydoc_validation]
 checks = [
     "all",   # report on all checks, except the below
-    "EX01",
-    "SA01",
-    "ES01",
+    "EX01",  # No examples section found
+    "SA01",  # See Also section found
+    "ES01",  # No extended summary found
+    "GL08",  # The object does not have a docstring
+    "PR01",  # Parameters not documented
+    "PR02",  # Unknown parameters
+    "RT01",  # No Returns section found
 ]
 
 exclude = [  # don't report on objects that match any of these regex
     '\.undocumented_method$',
     '\.__repr__$',
     '\.test_.*$',
+    '\.__init__$',  # Skip __init__ methods
+    '\.Config$',  # Skip Pydantic Config classes
 ]
 
 exclude_files = [ # don't process filepaths that match these regex

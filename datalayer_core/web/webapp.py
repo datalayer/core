@@ -5,11 +5,11 @@
 
 import sys
 
+from datalayer_core.base.application import DatalayerApp
 from datalayer_core.base.serverapplication import launch_new_instance
-from datalayer_core.cliapp.base import DatalayerCLIBaseApp
 
 
-class DatalayerWebApp(DatalayerCLIBaseApp):
+class DatalayerWebApp(DatalayerApp):
     """An application to run the webapp."""
 
     description = """

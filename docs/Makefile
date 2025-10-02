@@ -62,4 +62,4 @@ deploy: build ## deploy
 	  aws cloudfront create-invalidation \
 		--distribution-id E8559WINZGBIN \
 		--paths "/*" )
-	echo open ✨  https://core.datalayer.tech )
+	echo open ✨  https://core.datalayer.tech

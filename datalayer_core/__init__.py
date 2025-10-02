@@ -6,6 +6,7 @@
 from typing import Any, Dict, List
 
 from datalayer_core.__version__ import __version__
+from datalayer_core.base import paths
 from datalayer_core.base.serverapplication import DatalayerExtensionApp
 from datalayer_core.client import DatalayerClient
 
@@ -29,5 +30,6 @@ def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
 
 __all__ = [
     "__version__",
+    "paths",
     "DatalayerClient",
 ]

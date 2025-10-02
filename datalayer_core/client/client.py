@@ -13,7 +13,7 @@ from typing import Any, Optional, Union
 
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
-from datalayer_core.mixins.runtime_snapshots import  RuntimeSnapshotsMixin
+from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.tokens import TokensMixin
@@ -23,11 +23,11 @@ from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
+from datalayer_core.services.runtimes.runtime import RuntimeService
 from datalayer_core.services.runtimes.runtime_snapshot import (
     as_runtime_snapshots,
     create_snapshot,
 )
-from datalayer_core.services.runtimes.runtime import RuntimeService
 from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_TIME_RESERVATION,

@@ -1,10 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""
-Pydantic models for IAM (Identity and Access Management) service.
-These models are used for authentication, users, organizations, teams, credits, and reservations.
-"""
+"""Pydantic models for IAM (Identity and Access Management) service."""
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
@@ -84,10 +81,7 @@ class EmailUpdateConfirm(BaseModel):
 
 # User Models
 class UserModel(BaseModel):
-    """
-    User data model that combines IAM user information with profile functionality.
-    This model serves as both the IAM user representation and user profile.
-    """
+    """User data model that combines IAM user information with profile functionality."""
 
     id: str = Field(..., description="User ID")
     uid: str = Field(..., description="User UID")
@@ -97,11 +91,15 @@ class UserModel(BaseModel):
     last_name_t: str = Field(..., description="User last name")
     type_s: str = Field(..., description="User type")
     origin_s: Optional[str] = Field(None, description="User origin")
-    creation_ts_dt: Optional[Union[str, datetime]] = Field(None, description="Creation timestamp")
+    creation_ts_dt: Optional[Union[str, datetime]] = Field(
+        None, description="Creation timestamp"
+    )
     join_request_ts_dt: Optional[Union[str, datetime]] = Field(
         None, description="Join request timestamp"
     )
-    join_ts_dt: Optional[Union[str, datetime]] = Field(None, description="Join timestamp")
+    join_ts_dt: Optional[Union[str, datetime]] = Field(
+        None, description="Join timestamp"
+    )
     last_update_ts_dt: Optional[Union[str, datetime]] = Field(
         None, description="Last update timestamp"
     )
@@ -113,7 +111,9 @@ class UserModel(BaseModel):
     onboarding_s: Optional[str] = Field(None, description="User onboarding data")
     mfa_secret_s: Optional[str] = Field(None, description="MFA secret")
     mfa_url_s: Optional[str] = Field(None, description="MFA URL")
-    unsubscribed_from_outbounds_b: Optional[bool] = Field(None, description="Unsubscribed from outbound emails")
+    unsubscribed_from_outbounds_b: Optional[bool] = Field(
+        None, description="Unsubscribed from outbound emails"
+    )
     email_token_s: Optional[str] = Field(None, description="Email verification token")
     email_update_s: Optional[str] = Field(None, description="Email update request")
     events: Optional[List[Dict[str, Any]]] = Field(None, description="User events")
@@ -121,39 +121,90 @@ class UserModel(BaseModel):
 
     @property
     def handle(self) -> str:
-        """Get user handle for profile compatibility."""
+        """
+        Get user handle for profile compatibility.
+
+        Returns
+        -------
+        str
+            The user's handle.
+        """
         return self.handle_s
 
     @property
     def email(self) -> Optional[str]:
-        """Get user email for profile compatibility."""
+        """
+        Get user email for profile compatibility.
+
+        Returns
+        -------
+        Optional[str]
+            The user's email address or None if not set.
+        """
         return str(self.email_s) if self.email_s else None
 
     @property
     def first_name(self) -> str:
-        """Get user first name for profile compatibility."""
+        """
+        Get user first name for profile compatibility.
+
+        Returns
+        -------
+        str
+            The user's first name.
+        """
         return self.first_name_t
 
     @property
     def last_name(self) -> str:
-        """Get user last name for profile compatibility."""
+        """
+        Get user last name for profile compatibility.
+
+        Returns
+        -------
+        str
+            The user's last name.
+        """
         return self.last_name_t
 
     @property
     def display_name(self) -> str:
-        """Get display name (defaults to handle)."""
+        """
+        Get display name (defaults to handle).
+
+        Returns
+        -------
+        str
+            The user's display name.
+        """
         return self.handle_s
 
     @property
     def roles(self) -> List[str]:
-        """Get user roles for profile compatibility."""
+        """
+        Get user roles for profile compatibility.
+
+        Returns
+        -------
+        List[str]
+            List of user roles.
+        """
         return self.roles_ss or []
 
     @classmethod
     def from_data(cls, data: Dict[str, Any]) -> "UserModel":
         """
         Create a UserData instance from raw data dictionary.
-        Provides backward compatibility with ProfileModel.from_data().
+
+        Parameters
+        ----------
+        data : Dict[str, Any]
+            Raw data dictionary containing user information.
+
+        Returns
+        -------
+        UserModel
+            A UserModel instance created from the provided data.
         """
         return cls(
             id=data["id"],
@@ -228,7 +279,9 @@ class UserSettingsModel(BaseModel):
 class UserSearchRequest(BaseModel):
     """User search request model."""
 
-    query: Optional[str] = Field(None, alias="namingPattern", description="Search query")
+    query: Optional[str] = Field(
+        None, alias="namingPattern", description="Search query"
+    )
     email: Optional[EmailStr] = Field(None, description="Filter by email")
     handle: Optional[str] = Field(None, description="Filter by handle")
     roles: Optional[List[str]] = Field(None, description="Filter by roles")

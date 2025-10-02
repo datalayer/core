@@ -11,7 +11,6 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-
 DEFAULT_DATALAYER_RUN_URL = "https://prod1.datalayer.run"
 
 DEFAULT_DATALAYER_IAM_URL = "https://prod1.datalayer.run"
@@ -149,16 +148,19 @@ class DatalayerURLs:
         support_url : Optional[str]
             Override for the support URL. If None, will check DATALAYER_SUPPORT_URL env var
             then fallback to DEFAULT_DATALAYER_SUPPORT_URL.
-
-        Notes
-        -----
-        When iam_url is provided, all other service URLs will be derived from the iam_url
-        unless explicitly overridden. This allows setting a single base URL for all services.
+        mcp_server_url : Optional[str]
+            Override for the MCP server URL. If None, will check DATALAYER_MCP_SERVER_URL env var
+            then fallback to DEFAULT_DATALAYER_MCP_SERVER_URL.
 
         Returns
         -------
         DatalayerURLs
             Configured URLs instance.
+
+        Notes
+        -----
+        When iam_url is provided, all other service URLs will be derived from the iam_url
+        unless explicitly overridden. This allows setting a single base URL for all services.
         """
         # Determine base URLs first
         resolved_run_url = (
@@ -167,77 +169,81 @@ class DatalayerURLs:
         resolved_iam_url = (
             iam_url or os.environ.get("DATALAYER_IAM_URL") or DEFAULT_DATALAYER_IAM_URL
         )
-        
+
         # If iam_url is provided (either as parameter or env var),
         # use the iam_url as the base for all other services unless explicitly overridden
-        base_url_for_services = resolved_iam_url if (iam_url or os.environ.get("DATALAYER_IAM_URL")) else None
-        
+        base_url_for_services = (
+            resolved_iam_url
+            if (iam_url or os.environ.get("DATALAYER_IAM_URL"))
+            else None
+        )
+
         # Determine service URLs with priority: parameter > env var > base_url_for_services > default
         resolved_runtimes_url = (
-            runtimes_url or 
-            os.environ.get("DATALAYER_RUNTIMES_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_RUNTIMES_URL
+            runtimes_url
+            or os.environ.get("DATALAYER_RUNTIMES_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_RUNTIMES_URL
         )
         resolved_spacer_url = (
-            spacer_url or 
-            os.environ.get("DATALAYER_SPACER_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_SPACER_URL
+            spacer_url
+            or os.environ.get("DATALAYER_SPACER_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_SPACER_URL
         )
         resolved_library_url = (
-            library_url or 
-            os.environ.get("DATALAYER_LIBRARY_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_LIBRARY_URL
+            library_url
+            or os.environ.get("DATALAYER_LIBRARY_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_LIBRARY_URL
         )
         resolved_manager_url = (
-            manager_url or 
-            os.environ.get("DATALAYER_MANAGER_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_MANAGER_URL
+            manager_url
+            or os.environ.get("DATALAYER_MANAGER_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_MANAGER_URL
         )
         resolved_ai_agents_url = (
-            ai_agents_url or 
-            os.environ.get("DATALAYER_AI_AGENTS_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_AI_AGENTS_URL
+            ai_agents_url
+            or os.environ.get("DATALAYER_AI_AGENTS_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_AI_AGENTS_URL
         )
         resolved_ai_inference_url = (
-            ai_inference_url or 
-            os.environ.get("DATALAYER_AI_INFERENCE_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_AI_INFERENCE_URL
+            ai_inference_url
+            or os.environ.get("DATALAYER_AI_INFERENCE_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_AI_INFERENCE_URL
         )
         resolved_growth_url = (
-            growth_url or 
-            os.environ.get("DATALAYER_GROWTH_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_GROWTH_URL
+            growth_url
+            or os.environ.get("DATALAYER_GROWTH_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_GROWTH_URL
         )
         resolved_success_url = (
-            success_url or 
-            os.environ.get("DATALAYER_SUCCESS_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_SUCCESS_URL
+            success_url
+            or os.environ.get("DATALAYER_SUCCESS_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_SUCCESS_URL
         )
         resolved_status_url = (
-            status_url or 
-            os.environ.get("DATALAYER_STATUS_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_STATUS_URL
+            status_url
+            or os.environ.get("DATALAYER_STATUS_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_STATUS_URL
         )
         resolved_support_url = (
-            support_url or 
-            os.environ.get("DATALAYER_SUPPORT_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_SUPPORT_URL
+            support_url
+            or os.environ.get("DATALAYER_SUPPORT_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_SUPPORT_URL
         )
         resolved_mcp_server_url = (
-            mcp_server_url or 
-            os.environ.get("DATALAYER_MCP_SERVER_URL") or 
-            base_url_for_services or 
-            DEFAULT_DATALAYER_MCP_SERVERS_URL
+            mcp_server_url
+            or os.environ.get("DATALAYER_MCP_SERVER_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_MCP_SERVERS_URL
         )
 
         # Strip trailing slashes for consistency

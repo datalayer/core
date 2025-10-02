@@ -16,9 +16,8 @@ from rich.console import Console
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.me import display_me
 from datalayer_core.services.authn.http_server import get_token
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
 from datalayer_core.utils.network import fetch, find_http_port
-from datalayer_core.utils.urls import DatalayerURLs
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
 
 # Create a Typer app for auth commands
 app = typer.Typer(name="auth", help="Authentication commands")
@@ -353,7 +352,7 @@ def whoami(
     ),
     iam_url: Optional[str] = typer.Option(
         None,
-        "--iam-url", 
+        "--iam-url",
         help="Datalayer IAM server URL",
     ),
 ) -> None:
@@ -395,85 +394,98 @@ def whoami(
                 console.print("🔍 Validating token with server...")
                 response = client._get_profile()
                 profile = response.get("profile", {})
-                
+
                 console.print("✅ [green]Authenticated[/green]")
                 console.print()
-                
+
                 # Server Information
                 console.print("🌐 [bold]Server Configuration[/bold]")
                 console.print(f"   - RUN Server: [blue]{server_url}[/blue]")
                 console.print(f"   - IAM Server: [blue]{urls.iam_url}[/blue]")
                 console.print(f"   - Token source: {token_source}")
                 console.print()
-                
+
                 # Display server-verified user information
                 console.print("👤 [bold]User Profile[/bold]")
-                
+
                 # Handle - check both camelCase and snake_case formats
                 handle = profile.get("handle") or profile.get("handle_s")
                 if handle:
                     console.print(f"   - Handle: [cyan]{handle}[/cyan]")
-                
+
                 # UID - check both formats
                 uid = profile.get("uid") or profile.get("uid_s")
                 if uid:
                     console.print(f"   - User ID: {uid}")
-                
-                # Email - check both formats  
+
+                # Email - check both formats
                 email = profile.get("email") or profile.get("email_s")
                 if email:
                     console.print(f"   - Email: {email}")
-                    
+
                 # First Name - check both formats
-                first_name = profile.get("firstName") or profile.get("firstName_s") or profile.get("first_name_t")
+                first_name = (
+                    profile.get("firstName")
+                    or profile.get("firstName_s")
+                    or profile.get("first_name_t")
+                )
                 if first_name:
                     console.print(f"   - First Name: {first_name}")
-                
+
                 # Last Name - check both formats
-                last_name = profile.get("lastName") or profile.get("lastName_s") or profile.get("last_name_t")
+                last_name = (
+                    profile.get("lastName")
+                    or profile.get("lastName_s")
+                    or profile.get("last_name_t")
+                )
                 if last_name:
                     console.print(f"   - Last Name: {last_name}")
-                    
+
                 # Check for display name in various possible fields
                 display_name = None
-                for field in ["displayName", "displayName_s", "display_name_s", "display_name"]:
+                for field in [
+                    "displayName",
+                    "displayName_s",
+                    "display_name_s",
+                    "display_name",
+                ]:
                     if field in profile and profile[field]:
                         display_name = profile[field]
                         break
-                        
+
                 if display_name:
                     console.print(f"   - Display Name: [bold]{display_name}[/bold]")
                 elif first_name and last_name:
                     # Fallback to combined name if no display name
                     console.print(f"   - Full Name: {first_name} {last_name}")
-                
+
                 # Internal ID
                 if "id" in profile:
                     console.print(f"   - Internal ID: {profile['id']}")
-                    
+
                 # User type - check both formats
                 user_type = profile.get("type") or profile.get("type_s")
                 if user_type:
                     console.print(f"   - User Type: [magenta]{user_type}[/magenta]")
-                    
+
                 # Origin - check both formats
                 origin = profile.get("origin") or profile.get("origin_s")
                 if origin:
                     console.print(f"   - Origin: {origin}")
-                    
+
                 # Timestamps
                 timestamp_fields = [
                     ("creation_ts_dt", "Account Created"),
-                    ("join_request_ts_dt", "Join Requested"), 
+                    ("join_request_ts_dt", "Join Requested"),
                     ("join_ts_dt", "Joined"),
-                    ("last_update_ts_dt", "Last Updated")
+                    ("last_update_ts_dt", "Last Updated"),
                 ]
                 for field, label in timestamp_fields:
                     if field in profile and profile[field]:
                         console.print(f"   - {label}: {profile[field]}")
-                
+
                 console.print()
-                
+
                 # Roles and Permissions - check both formats
                 roles = profile.get("roles") or profile.get("roles_ss") or []
                 if isinstance(roles, list):
@@ -488,24 +500,24 @@ def whoami(
                 # Also decode JWT token to show expiration and additional info
                 try:
                     import base64
-                    import json
                     import datetime
+                    import json
 
                     # JWT tokens have 3 parts separated by dots
                     parts = token.split(".")
                     if len(parts) >= 3:
                         console.print("🔑 [bold]Token Information[/bold]")
-                        
+
                         # Decode the header (first part)
                         header_b64 = parts[0]
                         header_b64 += "=" * (4 - len(header_b64) % 4)
                         header = json.loads(base64.b64decode(header_b64))
-                        
+
                         if "typ" in header:
                             console.print(f"   - Token Type: {header['typ']}")
                         if "alg" in header:
                             console.print(f"   - Algorithm: {header['alg']}")
-                            
+
                         # Decode the payload (second part)
                         payload_b64 = parts[1]
                         payload_b64 += "=" * (4 - len(payload_b64) % 4)
@@ -514,38 +526,44 @@ def whoami(
                         if "iss" in payload:
                             console.print(f"   - Issued by: {payload['iss']}")
                         if "aud" in payload:
-                            audience = payload['aud']
+                            audience = payload["aud"]
                             if isinstance(audience, list):
                                 console.print(f"   - Audience: {', '.join(audience)}")
                             else:
                                 console.print(f"   - Audience: {audience}")
                         if "iat" in payload:
-                            issued_date = datetime.datetime.fromtimestamp(payload["iat"])
+                            issued_date = datetime.datetime.fromtimestamp(
+                                payload["iat"]
+                            )
                             console.print(f"   - Issued at: {issued_date}")
                         if "exp" in payload:
                             exp_date = datetime.datetime.fromtimestamp(payload["exp"])
                             now = datetime.datetime.now()
                             if exp_date > now:
                                 time_left = exp_date - now
-                                console.print(f"   - Expires: {exp_date} ([green]in {time_left}[/green])")
+                                console.print(
+                                    f"   - Expires: {exp_date} ([green]in {time_left}[/green])"
+                                )
                             else:
-                                console.print(f"   - Expires: {exp_date} ([red]EXPIRED[/red])")
+                                console.print(
+                                    f"   - Expires: {exp_date} ([red]EXPIRED[/red])"
+                                )
                         if "jti" in payload:
                             console.print(f"   - Token ID: {payload['jti']}")
-                        
+
                         # Show token scope if available
                         if "scope" in payload:
                             scopes = payload["scope"]
                             if isinstance(scopes, str):
                                 scopes = scopes.split()
                             console.print(f"   - Scopes: {', '.join(scopes)}")
-                        
+
                         console.print()
 
                 except Exception:
                     # JWT decoding failed, skip detailed token info
                     pass
-                
+
             except Exception as api_error:
                 # Token exists but API call failed - show token info but indicate validation failure
                 console.print("⚠️  [yellow]Token found but validation failed[/yellow]")
@@ -556,7 +574,7 @@ def whoami(
                 console.print(f"   - Token source: {token_source}")
                 console.print(f"   - Validation error: [red]{str(api_error)}[/red]")
                 console.print()
-                
+
                 # Still try to decode JWT token for local information
                 try:
                     import base64
@@ -577,15 +595,21 @@ def whoami(
                             if isinstance(user_info, dict):
                                 # User info is embedded in the sub field
                                 if "handle" in user_info:
-                                    console.print(f"   - Handle (from token): {user_info['handle']}")
+                                    console.print(
+                                        f"   - Handle (from token): {user_info['handle']}"
+                                    )
                                 if "email" in user_info:
-                                    console.print(f"   - Email (from token): {user_info['email']}")
+                                    console.print(
+                                        f"   - Email (from token): {user_info['email']}"
+                                    )
                                 if "firstName" in user_info and "lastName" in user_info:
                                     console.print(
                                         f"   - Name (from token): {user_info['firstName']} {user_info['lastName']}"
                                     )
                                 if "uid" in user_info:
-                                    console.print(f"   - UID (from token): {user_info['uid']}")
+                                    console.print(
+                                        f"   - UID (from token): {user_info['uid']}"
+                                    )
                                 if "roles" in user_info and isinstance(
                                     user_info["roles"], list
                                 ):
@@ -597,6 +621,7 @@ def whoami(
 
                         if "exp" in payload:
                             import datetime
+
                             exp_date = datetime.datetime.fromtimestamp(payload["exp"])
                             console.print(f"   - Expires (from token): {exp_date}")
 
@@ -680,7 +705,7 @@ def whoami_root(
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
-        help="Datalayer IAM server URL", 
+        help="Datalayer IAM server URL",
     ),
 ) -> None:
     """Display current authenticated user profile."""

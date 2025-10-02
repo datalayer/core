@@ -4,6 +4,7 @@
 """Environment commands for Datalayer CLI."""
 
 from typing import Any, Dict
+
 import typer
 from rich.console import Console
 

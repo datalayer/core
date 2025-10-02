@@ -119,13 +119,13 @@ class RuntimesExecService:
         Parameters
         ----------
         filepath : Path
-            Path to the file to execute
+            Path to the file to execute.
         silent : bool
-            Whether to suppress cell output
+            Whether to suppress cell output.
         timeout : Optional[float]
-            Execution timeout for each cell
+            Execution timeout for each cell.
         raise_exceptions : bool
-            Whether to stop on exceptions
+            Whether to stop on exceptions.
         """
         if not self.kernel_client:
             raise RuntimeError("Kernel client not initialized")

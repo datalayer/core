@@ -62,7 +62,7 @@ def test_cli(args: List[str], expected_output: str) -> None:
     [
         (
             ["login", "--token", TEST_DATALAYER_API_KEY],
-            "Connected as urn:dla:iam:ext::github:226720",
+            "🎉 Successfully authenticated as urn:dla:iam:ext::github:226720 on \nhttps://prod1.datalayer.run\n✅ Token saved to keyring for future use\n",
         ),
         (["envs", "list", "--token", TEST_DATALAYER_API_KEY], "Environments"),
         (["envs", "ls", "--token", TEST_DATALAYER_API_KEY], "Environments"),

@@ -1,10 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""
-Pydantic models for Growth service.
-These models are used for user growth, invitations, contacts, and outbound messaging.
-"""
+"""Pydantic models for Growth service."""
 
 from typing import Any, Dict, List, Optional
 
@@ -79,7 +76,9 @@ class SurveyRequest(BaseModel):
     """Survey request model."""
 
     survey_id: str = Field(..., description="Survey identifier")
-    responses: Dict[str, Any] = Field(default_factory=dict, description="Survey responses")
+    responses: Dict[str, Any] = Field(
+        default_factory=dict, description="Survey responses"
+    )
     user_id: Optional[str] = Field(None, description="User identifier")
     contact_id: Optional[str] = Field(None, description="Contact identifier")
 

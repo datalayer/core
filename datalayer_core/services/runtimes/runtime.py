@@ -27,13 +27,13 @@ from datalayer_core.utils.defaults import (
     DEFAULT_ENVIRONMENT,
     DEFAULT_TIME_RESERVATION,
 )
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
 from datalayer_core.utils.notebook import get_cells
 from datalayer_core.utils.types import (
     CreditsPerSecond,
     Minutes,
     Seconds,
 )
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
 
 
 class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
@@ -128,13 +128,13 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
     def model(self) -> RuntimeModel:
         """
         Get the runtime model containing all configuration and state data.
-        
+
         Provides access to all runtime properties including:
         - Configuration: name, environment, run_url, iam_url
-        - Authentication: token, external_token  
+        - Authentication: token, external_token
         - Runtime state: kernel_client, kernel_id, executing
         - Infrastructure: pod_name, ingress, uid, reservation_id
-        
+
         Returns
         -------
         RuntimeModel
@@ -143,26 +143,26 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         return self._model
 
     # Properties for AuthnMixin compatibility
-    @property 
+    @property
     def _token(self) -> Optional[str]:
         """Get the authentication token."""
         return self._model.token
-    
+
     @_token.setter
     def _token(self, value: Optional[str]) -> None:
         """Set the authentication token."""
         self._model.token = value
-    
+
     @property
     def _kernel_client(self) -> Optional[Any]:
         """Get the kernel client for backward compatibility."""
         return self._model.kernel_client
-    
+
     @property
     def _external_token(self) -> Optional[str]:
         """Get the external authentication token."""
         return self._model.external_token
-    
+
     @_external_token.setter
     def _external_token(self, value: Optional[str]) -> None:
         """Set the external authentication token."""
@@ -172,13 +172,14 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
     def urls(self) -> DatalayerURLs:
         """
         Get a DatalayerURLs object with the configured URLs.
-        
+
         Returns
         -------
         DatalayerURLs
             URLs object with run_url and iam_url from the runtime configuration.
         """
         from datalayer_core.utils.urls import DatalayerURLs
+
         return DatalayerURLs(
             run_url=self._model.run_url,
             iam_url=self._model.iam_url or self._model.run_url,
@@ -193,7 +194,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             success_url="",
             status_url="",
             support_url="",
-            mcp_server_url=""
+            mcp_server_url="",
         )
 
     @property

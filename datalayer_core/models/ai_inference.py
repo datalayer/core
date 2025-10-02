@@ -1,10 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""
-Pydantic models for AI Inference service.
-These models are used for chat completions, text completions, and AI model management.
-"""
+"""Pydantic models for AI Inference service for chat completions, text completions, and AI model management."""
 
 from typing import Any, Dict, List, Optional, Union
 

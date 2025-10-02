@@ -14,38 +14,51 @@ T = TypeVar("T")
 
 
 class BaseResponse(BaseModel):
-    """
-    Unified base response model for all Datalayer services.
-    This model provides the standard response structure used across:
-    - IAM service
-    - Growth service
-    - AI-inference service
-    - Core SDK
-    """
+    """Unified base response model for all Datalayer services."""
 
     success: bool = Field(..., description="Whether the operation was successful")
     message: Optional[str] = Field(None, description="Human-readable response message")
 
 
 class DataResponse(BaseResponse, Generic[T]):
-    """
-    Generic response model that includes data payload flattened at top level.
-    This dynamically adds fields from the data dict to the model instance.
-    """
+    """Generic response model that includes data payload flattened at top level."""
 
-    def __init__(self, success: bool, message: Optional[str] = None, data: Any = None, key: Optional[str] = None, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        success: bool,
+        message: Optional[str] = None,
+        data: Any = None,
+        key: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialize DataResponse with optional data flattening.
+
+        Parameters
+        ----------
+        success : bool
+            Whether the operation was successful.
+        message : Optional[str], optional
+            Human-readable response message.
+        data : Any, optional
+            Data payload to include in response.
+        key : Optional[str], optional
+            Key under which to nest the data.
+        **kwargs : Any
+            Additional fields to include in the response.
+        """
         # Start with base fields
         fields: Dict[str, Any] = {"success": success, "message": message}
-        
+
         if data is not None:
             # If key is provided, nest data under that key
             if key:
                 if isinstance(data, dict):
                     fields[key] = data
-                elif hasattr(data, 'model_dump'):
+                elif hasattr(data, "model_dump"):
                     # Handle Pydantic models by converting to dict first
                     fields[key] = data.model_dump()
-                elif hasattr(data, 'dict'):
+                elif hasattr(data, "dict"):
                     # Handle older Pydantic models
                     fields[key] = data.dict()
                 else:
@@ -54,22 +67,24 @@ class DataResponse(BaseResponse, Generic[T]):
                 # No key provided, flatten data to top level (existing behavior)
                 if isinstance(data, dict):
                     fields.update(data)
-                elif hasattr(data, 'model_dump'):
+                elif hasattr(data, "model_dump"):
                     # Handle Pydantic models by converting to dict first
                     fields.update(data.model_dump())
-                elif hasattr(data, 'dict'):
+                elif hasattr(data, "dict"):
                     # Handle older Pydantic models
                     fields.update(data.dict())
                 else:
                     fields["data"] = data
-            
+
         # Add any additional kwargs
         fields.update(kwargs)
-        
+
         # Initialize with fields
         super().__init__(**fields)
-    
+
     class Config:
+        """Pydantic configuration for DataResponse."""
+
         extra = "allow"  # Allow additional fields dynamically
 
 
@@ -100,10 +115,7 @@ class ErrorResponse(BaseResponse):
 
 
 class ExecutionResponse(BaseResponse):
-    """
-    Response model for code execution results (legacy compatibility).
-    Used by the Core SDK for runtime code execution.
-    """
+    """Response model for code execution results (legacy compatibility)."""
 
     execute_response: List[Dict[str, Any]] = Field(
         default_factory=list, description="The response from the code execution"

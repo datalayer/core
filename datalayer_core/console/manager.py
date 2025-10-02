@@ -85,7 +85,10 @@ class RuntimeManager(KernelHttpManager):
     # Runtime management
     # --------------------------------------------------------------------------
     def start_kernel(
-        self, name: str = "", path: Optional[str] = None, timeout: float = REQUEST_TIMEOUT
+        self,
+        name: str = "",
+        path: Optional[str] = None,
+        timeout: float = REQUEST_TIMEOUT,
     ) -> Optional[dict[str, Any]]:
         """
         Start a kernel on Datalayer cloud.

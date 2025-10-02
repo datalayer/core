@@ -50,7 +50,7 @@ module.exports = {
         },
         {
           type: 'doc',
-          docId: 'python_api/application',
+          docId: 'python_api/client/client',
           position: 'left',
           label: 'Python API',
         },

@@ -6,7 +6,6 @@
 import typer
 
 from datalayer_core.__version__ import __version__
-
 from datalayer_core.cli.commands.about import app as about_app
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
@@ -46,19 +45,21 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+
 # Add version option
 @app.callback()
 def main_callback(
     version: bool = typer.Option(
-        False, 
-        "--version", 
-        callback=version_callback, 
+        False,
+        "--version",
+        callback=version_callback,
         is_eager=True,
-        help="Show version and exit"
-    )
+        help="Show version and exit",
+    ),
 ) -> None:
     """Main callback to handle global options."""
     pass
+
 
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)

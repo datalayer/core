@@ -15,17 +15,15 @@ from datalayer_core.utils.network import fetch
 
 class AuthnMixin:
     """
-    Mixin class for Datalayer client authentication.
-
-    Provides methods to authenticate and fetch resources from the Datalayer server.
+    Provide authentication methods for Datalayer client.
 
     This mixin expects the implementing class to provide:
     - urls property: DatalayerURLs instance with run_url and iam_url
     """
-    
+
     @property
     def urls(self) -> Any:
-        """URLs property that must be implemented by the inheriting class."""
+        """Return URLs property that must be implemented by the inheriting class."""
         raise NotImplementedError("Implementing class must provide urls property")
 
     _token: Optional[str] = None

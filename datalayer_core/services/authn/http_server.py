@@ -18,7 +18,7 @@ from http import HTTPStatus
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from socketserver import BaseRequestHandler
-from typing import Union, Optional
+from typing import Optional, Union
 
 from datalayer_core.__version__ import __version__
 from datalayer_core.base.serverapplication import launch_new_instance
