@@ -25,6 +25,8 @@ let initialConfiguration: IDatalayerCoreConfig = {
   libraryRunUrl: 'https://prod1.datalayer.run',
   spacerRunUrl: 'https://prod1.datalayer.run',
   aiagentsRunUrl: 'https://prod1.datalayer.run',
+  aiinferenceRunUrl: 'https://prod1.datalayer.run',
+  mcpserversRunUrl: 'https://prod1.datalayer.run',
   growthRunUrl: 'https://prod1.datalayer.run',
   inboundsRunUrl: 'https://prod1.datalayer.run',
   successRunUrl: 'https://prod1.datalayer.run',

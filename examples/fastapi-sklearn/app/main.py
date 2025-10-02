@@ -15,9 +15,13 @@ from .models import Iris
 
 load_dotenv()
 
+
 HERE = Path(__file__).parent
+
 SNAPSHOT_NAME = "snapshot-iris-model"
+
 IRIS_NAMES = load_iris().target_names
+
 app = FastAPI()
 
 

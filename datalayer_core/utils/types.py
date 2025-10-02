@@ -1,0 +1,14 @@
+# Copyright (c) 2023-2025 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
+"""
+Utility functions and constants for Datalayer.
+"""
+
+from typing_extensions import TypeAlias
+
+Seconds: TypeAlias = float
+
+Minutes: TypeAlias = float
+
+CreditsPerSecond: TypeAlias = float

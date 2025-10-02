@@ -37,7 +37,7 @@ jobs:
       run-tests: true
       test-command: 'npm run test:all && npm run test:coverage && npm run build:lib'
     secrets:
-      DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+      TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}
 
   test-22x:
     needs: test-20x  # Run sequentially
@@ -52,7 +52,7 @@ jobs:
       run-tests: true
       test-command: 'npm run test:all && npm run test:coverage && npm run build:lib'
     secrets:
-      DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+      TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}
 
   test-24x:
     needs: test-22x  # Run sequentially
@@ -67,4 +67,4 @@ jobs:
       run-tests: true
       test-command: 'npm run test:all && npm run test:coverage && npm run build:lib'
     secrets:
-      DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+      TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}

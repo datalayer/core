@@ -26,16 +26,19 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
+# TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",
     "jupyter-console",
     "jupyter_server>=2.10,<3",
-    "keyring==23.0.1", # TODO Fix https://github.com/datalayer/core/issues/36
+    "keyring==23.0.1",
     "questionary",
     "requests",
+    "pydantic[email]",
     "rich",
     "traitlets",
+    "typer",
 ]
 dynamic = ["version"]
 
@@ -74,9 +77,9 @@ examples = [
 ]
 
 [project.scripts]
-d = "datalayer_core.cli.datalayer:main"
-dla = "datalayer_core.cli.datalayer:main"
-datalayer = "datalayer_core.cli.datalayer:main"
+d = "datalayer_core.cli.__main__:main"
+dla = "datalayer_core.cli.__main__:main"
+datalayer = "datalayer_core.cli.__main__:main"
 datalayer-config = "datalayer_core.config:main"
 datalayer-migrate = "datalayer_core.migrate:main"
 datalayer-server = "datalayer_core.serverapplication:main"
@@ -87,13 +90,13 @@ path = "datalayer_core/__version__.py"
 
 [tool.hatch.build.targets.sdist]
 artifacts = [
-    "datalayer_core/about/about.md",
+    "datalayer_core/assets/about.md",
 ]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
-    "datalayer_core/about/about.md",
+    "datalayer_core/assets/about.md",
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]
@@ -122,15 +125,21 @@ version = "0.1.0"
 [tool.numpydoc_validation]
 checks = [
     "all",   # report on all checks, except the below
-    "EX01",
-    "SA01",
-    "ES01",
+    "EX01",  # No examples section found
+    "SA01",  # See Also section found
+    "ES01",  # No extended summary found
+    "GL08",  # The object does not have a docstring
+    "PR01",  # Parameters not documented
+    "PR02",  # Unknown parameters
+    "RT01",  # No Returns section found
 ]
 
 exclude = [  # don't report on objects that match any of these regex
     '\.undocumented_method$',
     '\.__repr__$',
     '\.test_.*$',
+    '\.__init__$',  # Skip __init__ methods
+    '\.Config$',  # Skip Pydantic Config classes
 ]
 
 exclude_files = [ # don't process filepaths that match these regex
@@ -146,11 +155,11 @@ processors = [
     { type = "filter", skip_empty_modules = false },
     { type = "smart" },
     { type = "crossref" },
-    { type = "datalayer_core.pydoc.ReplaceProcessor" }
+    { type = "datalayer_core._pydoc.ReplaceProcessor" }
 ]
 
 [tool.pydoc-markdown.renderer]
-type = "datalayer_core.pydoc.MyDocusaurusRenderer"
+type = "datalayer_core._pydoc.MyDocusaurusRenderer"
 docs_base_path = "docs/docs"
 relative_output_path = "python_api"
 relative_sidebar_path = "sidebar.json"

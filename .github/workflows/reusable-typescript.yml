@@ -49,7 +49,7 @@ on:
         type: string
         default: '.'
     secrets:
-      DATALAYER_TEST_TOKEN:
+      TEST_DATALAYER_API_KEY:
         description: 'Datalayer API token for running expensive tests'
         required: false
 
@@ -78,8 +78,8 @@ jobs:
       run: ${{ inputs.build-command }}
       working-directory: ${{ inputs.working-directory }}
       env:
-        DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
-        DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.DATALAYER_TEST_TOKEN != '' && 'true' || 'false' }}
+        TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}
+        DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.TEST_DATALAYER_API_KEY != '' && 'true' || 'false' }}
 
     - name: Check code formatting
       if: inputs.run-format-check
@@ -117,5 +117,5 @@ jobs:
       run: ${{ inputs.test-command }}
       working-directory: ${{ inputs.working-directory }}
       env:
-        DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
-        DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.DATALAYER_TEST_TOKEN != '' && 'true' || 'false' }}
+        TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}
+        DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.TEST_DATALAYER_API_KEY != '' && 'true' || 'false' }}

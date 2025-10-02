@@ -77,6 +77,14 @@ export type IDatalayerCoreConfig = {
    */
   aiagentsRunUrl: string;
   /**
+   * AI Inference API URL.
+   */
+  aiinferenceRunUrl: string;
+  /**
+   * MCP Servers API URL.
+   */
+  mcpserversRunUrl: string;
+  /**
    * Growth API URL.
    */
   growthRunUrl: string;

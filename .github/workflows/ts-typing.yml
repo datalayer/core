@@ -32,7 +32,7 @@ jobs:
       run-type-check: true
       run-tests: false
     secrets:
-      DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
+      TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}
 
   strict-mode-check:
     runs-on: ubuntu-latest
@@ -52,8 +52,8 @@ jobs:
     - name: Build project
       run: npm run build
       env:
-        DATALAYER_TEST_TOKEN: ${{ secrets.DATALAYER_TEST_TOKEN }}
-        DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.DATALAYER_TEST_TOKEN != '' && 'true' || 'false' }}
+        TEST_DATALAYER_API_KEY: ${{ secrets.TEST_DATALAYER_API_KEY }}
+        DATALAYER_TEST_RUN_EXPENSIVE: ${{ secrets.TEST_DATALAYER_API_KEY != '' && 'true' || 'false' }}
 
     - name: Check TypeScript strict mode compliance
       run: npx tsc --noEmit --strict

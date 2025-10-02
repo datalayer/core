@@ -6,9 +6,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from datalayer_core.sdk.decorators import DatalayerClient
+from datalayer_core import DatalayerClient
 
 load_dotenv()
+
 
 HERE = Path(__file__).parent
 

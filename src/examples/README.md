@@ -22,7 +22,7 @@ npm install
 
 ```bash
 # Create .env file with your token
-echo "VITE_DATALAYER_API_TOKEN=your-token-here" > .env
+echo "VITE_DATALAYER_API_KEY=your-token-here" > .env
 ```
 
 3. Start the examples server:
@@ -92,7 +92,7 @@ const EXAMPLE =
 
 The examples support these environment variables:
 
-- `VITE_DATALAYER_API_TOKEN`: Your Datalayer authentication token (required for full functionality)
+- `VITE_DATALAYER_API_KEY`: Your Datalayer authentication token (required for full functionality)
 - `EXAMPLE`: Override the selected example via command line
 
 ### Vite Configuration
@@ -159,7 +159,7 @@ proxy: {
 
 If you see "Datalayer configuration is missing" warning:
 
-1. Check your `.env` file has `VITE_DATALAYER_API_TOKEN` set
+1. Check your `.env` file has `VITE_DATALAYER_API_KEY` set
 2. Restart the dev server after adding the token
 3. Verify the token is valid at [Datalayer Platform](https://datalayer.app/)
 

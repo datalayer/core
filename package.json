@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "type": "module",
   "workspaces": [
     ".",
@@ -82,7 +82,7 @@
     "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api",
     "watch:lib": "run-p 'watch:lib:*'",
     "watch:lib:res": "gulp resources-to-lib-watch",
-    "watch:lib:src": "echo 'Type checking moved to separate command. Use npm run type-check:watch'",
+    "watch:lib:src": "tsc -b -w",
     "type-check:watch": "tsc -b -w --noEmit",
     "example": "vite --config vite.examples.config.ts",
     "example:nextjs": "npm run dev --workspace=nextjs-notebook-example",

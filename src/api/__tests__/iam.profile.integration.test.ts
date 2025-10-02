@@ -11,7 +11,7 @@ import {
   skipIfNoToken,
 } from '../../__tests__/shared/test-config';
 
-let DATALAYER_TOKEN: string;
+let DATALAYER_API_KEY: string;
 let SESSION_TOKEN: string;
 let BASE_URL: string;
 
@@ -24,23 +24,23 @@ beforeAll(async () => {
       'WARNING: Skipping profile integration tests: No Datalayer API token configured',
     );
     console.log(
-      '         Set DATALAYER_API_TOKEN env var or DATALAYER_TEST_TOKEN in .env.test',
+      '         Set DATALAYER_API_TOKEN env var or TEST_DATALAYER_API_KEY in .env.test',
     );
     return;
   }
 
   // Get token and base URL from test config
-  DATALAYER_TOKEN = testConfig.getToken();
+  DATALAYER_API_KEY = testConfig.getToken();
   BASE_URL = testConfig.getBaseUrl('IAM');
 
   debugLog('Test configuration loaded');
   debugLog('Base URL:', BASE_URL);
-  debugLog('Token available:', !!DATALAYER_TOKEN);
+  debugLog('Token available:', !!DATALAYER_API_KEY);
 
   // Login to get a session token for profile tests
   try {
     const loginResponse = await authentication.login({
-      token: DATALAYER_TOKEN,
+      token: DATALAYER_API_KEY,
     });
     SESSION_TOKEN = loginResponse.token;
     debugLog('Successfully logged in, got session token');

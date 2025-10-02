@@ -604,8 +604,13 @@ const client = new DatalayerClient({
 
 7. **Use environment variables for configuration**:
    ```typescript
+<<<<<<< HEAD
+   const sdk = new DatalayerSDK({
+     token: process.env.DATALAYER_API_KEY,
+=======
    const client = new DatalayerClient({
      token: process.env.DATALAYER_TOKEN,
+>>>>>>> main
      iamRunUrl: process.env.DATALAYER_IAM_URL || DEFAULT_SERVICE_URLS.IAM,
      runtimesRunUrl: process.env.DATALAYER_RUNTIMES_URL || DEFAULT_SERVICE_URLS.RUNTIMES,
      spacerRunUrl: process.env.DATALAYER_SPACER_URL || DEFAULT_SERVICE_URLS.SPACER
