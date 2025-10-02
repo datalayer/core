@@ -636,9 +636,9 @@ def whoami(
                 except Exception:
                     # Token might not be JWT or might be malformed
                     console.print(
-                        f"   - Token: {token[:20]}..."
-                        if len(token) > 20
-                        else f"   - Token: {token}"
+                        f"   - Token: {resolved_token[:20]}..."
+                        if resolved_token and len(resolved_token) > 20
+                        else f"   - Token: {resolved_token}"
                     )
         else:
             console.print("❌ [red]Not authenticated[/red]")
