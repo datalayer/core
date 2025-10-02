@@ -7,14 +7,15 @@ from __future__ import annotations
 
 import socket
 import typing as t
+from typing import Optional
 
 import requests
 
 
 def fetch(
     request: str,
-    token: str | None = None,
-    external_token: str | None = None,
+    token: Optional[str] = None,
+    external_token: Optional[str] = None,
     **kwargs: t.Any,
 ) -> requests.Response:
     """

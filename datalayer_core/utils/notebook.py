@@ -5,9 +5,10 @@
 
 import typing as t
 from pathlib import Path
+from typing import Optional
 
 
-def get_cells(filepath: Path) -> t.Iterator[tuple[str | None, str]]:
+def get_cells(filepath: Path) -> t.Iterator[tuple[Optional[str], str]]:
     """
     Extract cells from a Python file or Jupyter notebook.
 
@@ -18,7 +19,7 @@ def get_cells(filepath: Path) -> t.Iterator[tuple[str | None, str]]:
 
     Yields
     ------
-    Iterator[tuple[str | None, str]]
+    Iterator[tuple[Optional[str], str]]
         Iterator yielding (cell_id, cell_source) tuples.
         For Python files, cell_id will be None.
         For Jupyter notebooks, cell_id will be the cell's ID.

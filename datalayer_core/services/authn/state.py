@@ -7,11 +7,11 @@ from __future__ import annotations
 
 from typing import Optional
 
-SERVER_PORT: int | None = None
+SERVER_PORT: Optional[int] = None
 
-USER_HANDLE: str | None = None
+USER_HANDLE: Optional[str] = None
 
-USER_TOKEN: str | None = None
+USER_TOKEN: Optional[str] = None
 
 
 def set_server_port(server_port: int) -> None:

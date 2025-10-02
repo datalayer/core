@@ -18,6 +18,7 @@ from http import HTTPStatus
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from socketserver import BaseRequestHandler
+from typing import Union, Optional
 
 from datalayer_core.__version__ import __version__
 from datalayer_core.base.serverapplication import launch_new_instance
@@ -170,7 +171,7 @@ class DualStackServer(HTTPServer):
 
     Parameters
     ----------
-    server_address : tuple[str | bytes | bytearray, int]
+    server_address : tuple[Union[str, bytes, bytearray], int]
         The server address and port.
     RequestHandlerClass : Callable
         The request handler class.
@@ -182,7 +183,7 @@ class DualStackServer(HTTPServer):
 
     def __init__(
         self,
-        server_address: tuple[str | bytes | bytearray, int],
+        server_address: tuple[Union[str, bytes, bytearray], int],
         RequestHandlerClass: t.Callable[[t.Any, t.Any, t.Self], BaseRequestHandler],
         run_url: str,
         bind_and_activate: bool = True,
@@ -192,7 +193,7 @@ class DualStackServer(HTTPServer):
 
         Parameters
         ----------
-        server_address : tuple[str | bytes | bytearray, int]
+        server_address : tuple[Union[str, bytes, bytearray], int]
             The server address and port.
         RequestHandlerClass : Callable
             The request handler class.
@@ -256,8 +257,8 @@ class DualStackServer(HTTPServer):
 
 
 def get_token(
-    run_url: str, port: int | None = None, logger: logging.Logger = logger
-) -> tuple[str, str] | None:
+    run_url: str, port: Optional[int] = None, logger: logging.Logger = logger
+) -> Optional[tuple[str, str]]:
     """
     Get the user handle and token.
 

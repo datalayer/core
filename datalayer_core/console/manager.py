@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Optional, Union
 
 from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
@@ -64,13 +64,13 @@ class RuntimeManager(KernelHttpManager):
         self._client = DatalayerClient(urls=urls, token=token)
 
     @property
-    def kernel_url(self) -> str | None:
+    def kernel_url(self) -> Optional[str]:
         """
         Get the kernel URL.
 
         Returns
         -------
-        str or None
+        Optional[str]
             The kernel URL if available, None otherwise.
         """
         if self.kernel:
@@ -85,8 +85,8 @@ class RuntimeManager(KernelHttpManager):
     # Runtime management
     # --------------------------------------------------------------------------
     def start_kernel(
-        self, name: str = "", path: str | None = None, timeout: float = REQUEST_TIMEOUT
-    ) -> dict[str, Any] | None:
+        self, name: str = "", path: Optional[str] = None, timeout: float = REQUEST_TIMEOUT
+    ) -> Optional[dict[str, Any]]:
         """
         Start a kernel on Datalayer cloud.
 
