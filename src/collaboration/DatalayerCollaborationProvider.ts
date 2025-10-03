@@ -115,9 +115,12 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
 
       const { ydoc, awareness } = sharedModel;
 
-      // Build WebSocket URL
+      // Build URLs.
       const documentURL = URLExt.join(runUrl, '/api/spacer/v1/documents');
-      const wsUrl = documentURL.replace(/^http/, 'ws');
+      const wsUrl = URLExt.join(runUrl, '/api/spacer/v1/documents/ws').replace(
+        /^http/,
+        'ws',
+      );
 
       // Request collaboration session from Datalayer
       const sessionId = await requestDatalayerCollaborationSessionId({
