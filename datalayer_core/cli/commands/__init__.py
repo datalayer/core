@@ -6,6 +6,7 @@
 from .about import app as about_app
 from .authn import app as auth_app
 from .authn import login_root, logout_root, whoami_root
+from .users import app as users_app
 
 __all__ = [
     "about_app",
@@ -13,4 +14,5 @@ __all__ = [
     "login_root",
     "logout_root",
     "whoami_root",
+    "users_app",
 ]

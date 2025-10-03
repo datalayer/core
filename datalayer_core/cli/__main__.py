@@ -28,6 +28,7 @@ from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
+from datalayer_core.cli.commands.users import app as users_app
 from datalayer_core.cli.commands.web import app as web_app
 
 
@@ -71,6 +72,7 @@ app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
 app.add_typer(tokens_app)
+app.add_typer(users_app)
 app.add_typer(web_app)
 
 # Add exec command directly to root level
