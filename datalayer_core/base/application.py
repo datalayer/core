@@ -247,7 +247,7 @@ class DatalayerApp(Application):
             f_marker.close()
             return  # so we must have already migrated -> bail out
 
-        from datalayer_coremigrate import get_ipython_dir, migrate
+        from datalayer_core.base.migrate import get_ipython_dir, migrate
 
         # No IPython dir, nothing to migrate
         if not os.path.exists(get_ipython_dir()):
