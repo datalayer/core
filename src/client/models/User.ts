@@ -11,6 +11,7 @@
 
 import type { User as UserData } from '../../api/types/iam';
 import type { DatalayerClient } from '../index';
+import { validateJSON } from '../../api/utils/validation';
 
 export interface UserJSON {
   /** uuid for the user */
@@ -93,7 +94,7 @@ export class User {
    * @returns Core user data with camelCase properties
    */
   toJSON(): UserJSON {
-    return {
+    const obj = {
       id: this.id,
       uid: this.uid,
       firstName: this.firstName,
@@ -103,6 +104,8 @@ export class User {
       handle: this.handle,
       avatarUrl: this.avatarUrl,
     };
+    validateJSON(obj, 'User');
+    return obj;
   }
 
   /**

@@ -13,6 +13,7 @@ import { updateRuntime } from '../../api/runtimes/runtimes';
 import type { Runtime as RuntimeData } from '../../api/types/runtimes';
 import type { DatalayerClient } from '../index';
 import { Snapshot } from './Snapshot';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Runtime data.
@@ -223,7 +224,7 @@ export class Runtime {
    */
   toJSON(): RuntimeJSON {
     this._checkDeleted();
-    return {
+    const obj = {
       // Core identifiers
       uid: this.uid,
       podName: this.podName,
@@ -248,6 +249,8 @@ export class Runtime {
       startedAt: this.startedAt.toISOString(),
       expiredAt: this.expiredAt.toISOString(),
     };
+    validateJSON(obj, 'Runtime');
+    return obj;
   }
 
   /**

@@ -17,6 +17,7 @@ import * as lexicals from '../../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
 import { Item } from './Item';
 import { ItemTypes } from '../constants';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Lexical data.
@@ -182,7 +183,7 @@ export class Lexical extends Item<LexicalData> {
    */
   toJSON(): LexicalJSON {
     this._checkDeleted();
-    return {
+    const obj = {
       uid: this.uid,
       id: this.id,
       name: this.name,
@@ -193,6 +194,8 @@ export class Lexical extends Item<LexicalData> {
       updatedAt: this.updatedAt.toDateString(),
       cdnUrl: this._data.cdn_url_s,
     };
+    validateJSON(obj, 'Lexical');
+    return obj;
   }
 
   /**

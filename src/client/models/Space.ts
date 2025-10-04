@@ -22,6 +22,7 @@ import { Notebook, type NotebookJSON } from './Notebook';
 import { Lexical, type LexicalJSON } from './Lexical';
 import { ItemTypes } from '../constants';
 import { convertSpaceItemsToModels } from '../utils/spacerUtils';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Space data.
@@ -281,7 +282,7 @@ export class Space {
    */
   toJSON(): SpaceJSON {
     this._checkDeleted();
-    return {
+    const obj = {
       uid: this.uid,
       name: this.name,
       description: this.description,
@@ -293,6 +294,8 @@ export class Space {
           )
         : [],
     };
+    validateJSON(obj, 'Space');
+    return obj;
   }
 
   /**
