@@ -79,7 +79,6 @@ class EmailUpdateConfirm(BaseModel):
     confirmation_token: str = Field(..., description="Email confirmation token")
 
 
-# User Models
 class UserModel(BaseModel):
     """User data model that combines IAM user information with profile functionality."""
 
@@ -240,7 +239,7 @@ class UserModel(BaseModel):
         )
 
 
-class UserProfileModel(BaseModel):
+class ProfileRequest(BaseModel):
     """User profile update model."""
 
     first_name: Optional[str] = Field(
@@ -536,7 +535,3 @@ class ReservationListResponseData(BaseModel):
 
     reservations: List[ReservationData] = Field(..., description="List of reservations")
     total: int = Field(..., description="Total number of reservations")
-
-
-# Profile compatibility alias
-ProfileModel = UserModel  # ProfileModel is now an alias for UserData
