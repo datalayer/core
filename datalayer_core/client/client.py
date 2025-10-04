@@ -18,7 +18,7 @@ from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.tokens import TokensMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
-from datalayer_core.models import ProfileModel
+from datalayer_core.models import UserModel
 from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
@@ -120,7 +120,7 @@ class DatalayerClient(
         # print(response)
         return response["success"]
 
-    def get_profile(self) -> ProfileModel:
+    def get_profile(self) -> UserModel:
         """
         Get the user's profile information.
 
@@ -131,7 +131,7 @@ class DatalayerClient(
         """
         response = self._get_profile()
         if response["success"]:
-            return ProfileModel.from_data(response["profile"])
+            return UserModel.from_data(response["profile"])
         raise RuntimeError("Failed to get profile information")
 
     @lru_cache

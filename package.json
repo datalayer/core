@@ -101,7 +101,7 @@
     "@primer/octicons-react": "^19.15.1",
     "@primer/primitives": "^10.5.0",
     "@primer/react": "^37.19.0",
-    "@primer/react-brand": "^0.51.0",
+    "@primer/react-brand": "^0.58.0",
     "@stripe/react-stripe-js": "^2.7.1",
     "axios": "^1.7.7",
     "boring-avatars": "^2.0.1",

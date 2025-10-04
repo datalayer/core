@@ -112,7 +112,7 @@ function createContent(
 }
 
 export const useToast = () => {
-  // This CANNOT use React hooks as it is used outside React context.
+  // This CANNOT use Jupyter React hooks as it may be used outside Jupyter React context.
   const insideJupyterLab = isInsideJupyterLab();
   const enqueueToast = (
     message: string,

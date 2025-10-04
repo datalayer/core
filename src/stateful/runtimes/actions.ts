@@ -167,7 +167,7 @@ export async function snapshotRuntime(options: {
    */
   description?: string;
   /**
-   * Whether to stop the kernel after the snapshot completion or not.
+   * Whether to stop the runtime after the snapshot completion or not.
    */
   stop?: boolean;
 }): Promise<IRuntimeSnapshot> {
@@ -191,7 +191,7 @@ export async function snapshotRuntime(options: {
   });
   if (!data.success || !data.snapshot) {
     throw new Error(
-      `Failed to pause the kernel snapshot ${options.id} - ${data}`,
+      `Failed to take the runtime snapshot ${options.id} - ${data}`,
     );
   }
   return asRuntimeSnapshot(data.snapshot);
@@ -213,14 +213,14 @@ export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
     token: iamStore.getState().token,
   });
   if (!data.success) {
-    console.error('Failed to fetch kernel snapshots.', data);
+    console.error('Failed to fetch runtime snapshots.', data);
     return [];
   }
   return (data.snapshots ?? []).map(asRuntimeSnapshot);
 }
 
 /**
- * Load a Runtime Snapshot within a kernel.
+ * Load a Runtime Snapshot within a Runtime.
  */
 export async function loadRuntimeSnapshot(options: {
   /**
@@ -249,7 +249,7 @@ export async function loadRuntimeSnapshot(options: {
   });
 
   if (!data.success) {
-    throw new Error(`Failed to load the kernel snapshot; ${data.message}`);
+    throw new Error(`Failed to load the runtime snapshot; ${data.message}`);
   }
 }
 
@@ -304,7 +304,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
     token: iamStore.getState().token,
   });
 
-  // Poll Runtime Snapshot state up-to its deletion
+  // Poll Runtime Snapshot state up-to its deletion.
   try {
     let sleepTimeout = 1000;
     while (true) {

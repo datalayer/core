@@ -207,16 +207,16 @@ export interface IRemoteRuntimesManager extends IDisposable {
   refreshKernels(): Promise<void>;
 
   /**
-   * Snapshot a remote kernel
+   * Snapshot a runtime
    *
-   * The remote kernel may be given by its `id` or `podName`.
+   * The runtime may be given by its `id` or `podName`.
    * A custom description for the snapshot can be provided.
    *
    * @returns The snapshot description
    */
-  snapshot(options: {
+  snapshotRuntime(options: {
     /**
-     * The kernel id to snapshot
+     * The runtime id to snapshot
      */
     id?: string;
     /**
@@ -238,11 +238,11 @@ export interface IRemoteRuntimesManager extends IDisposable {
   }): Promise<IRuntimeSnapshot | undefined>;
 
   /**
-   * Load a snapshot within a remote kernel
+   * Load a snapshot within a runtim
    *
-   * The remote kernel may be given by its `id` or `podName`.
+   * The runtime may be given by its `id` or `podName`.
    */
-  loadSnapshot(options: {
+  loadRuntimeSnapshot(options: {
     /**
      * The kernel id
      */
