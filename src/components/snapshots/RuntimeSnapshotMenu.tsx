@@ -131,7 +131,7 @@ export function RuntimeSnapshotMenu(
       let snapshotName = '';
       if (podName && multiServiceManager?.remote) {
         snapshotName = createRuntimeSnapshotName('cloud');
-        task = multiServiceManager.remote.runtimesManager.snapshot({
+        task = multiServiceManager.remote.runtimesManager.snapshotRuntime({
           podName,
           name: snapshotName,
           description: snapshotName,
