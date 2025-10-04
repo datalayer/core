@@ -82,11 +82,15 @@ export const listRuntimes = async (
 ): Promise<RuntimesListResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<RuntimesListResponse>({
+  const response = await requestDatalayerAPI<any>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes`,
     method: 'GET',
     token,
   });
+
+  // The API returns { success: true, message: string, runtimes: Runtime[] }
+  // The response already has the correct structure, just return it
+  return response as RuntimesListResponse;
 };
 
 /**

@@ -17,6 +17,7 @@ import * as notebooks from '../../api/spacer/notebooks';
 import type { DatalayerClient } from '../index';
 import { Item } from './Item';
 import { ItemTypes } from '../constants';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Notebook data.
@@ -182,7 +183,7 @@ export class Notebook extends Item<NotebookData> {
    */
   toJSON(): NotebookJSON {
     this._checkDeleted();
-    return {
+    const obj = {
       id: this.id,
       uid: this.uid,
       name: this.name,
@@ -193,6 +194,8 @@ export class Notebook extends Item<NotebookData> {
       updatedAt: (this._data as any).updated_at,
       cdnUrl: (this._data as any).cdn_url_s,
     };
+    validateJSON(obj, 'Notebook');
+    return obj;
   }
 
   /**

@@ -175,3 +175,80 @@ export const validateRequiredString = (
     throw new Error(`${paramName} is required`);
   }
 };
+
+/**
+ * Validates that all properties in an object are defined (not undefined).
+ * Recursively checks nested objects and arrays to ensure complete data integrity.
+ * This is used to validate model toJSON() outputs and ensure SDK contract compliance.
+ *
+ * @param obj - The object to validate
+ * @param modelName - Name of the model class for error messages (e.g., 'Runtime')
+ * @param path - Current property path for recursive validation (internal use)
+ * @throws {Error} If any property value is undefined, with full path to the undefined property
+ *
+ * @example
+ * ```typescript
+ * const runtimeData = {
+ *   uid: 'abc123',
+ *   podName: 'my-pod',
+ *   environmentName: undefined  // This will throw
+ * };
+ * validateJSON(runtimeData, 'Runtime');
+ * // Error: Runtime.toJSON(): Property 'environmentName' is undefined
+ * ```
+ */
+export const validateJSON = (
+  obj: Record<string, any>,
+  modelName: string,
+  path: string = '',
+): void => {
+  // Iterate over all enumerable properties
+  for (const key in obj) {
+    if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+      continue;
+    }
+
+    const value = obj[key];
+    const currentPath = path ? `${path}.${key}` : key;
+
+    // Check if value is undefined - this is the error case
+    if (value === undefined) {
+      throw new Error(
+        `${modelName}.toJSON(): Property '${currentPath}' is undefined`,
+      );
+    }
+
+    // Skip null, functions, and symbols - these are valid
+    if (
+      value === null ||
+      typeof value === 'function' ||
+      typeof value === 'symbol'
+    ) {
+      continue;
+    }
+
+    // Recursively validate arrays
+    if (Array.isArray(value)) {
+      value.forEach((item, index) => {
+        if (item === undefined) {
+          throw new Error(
+            `${modelName}.toJSON(): Array element at '${currentPath}[${index}]' is undefined`,
+          );
+        }
+        // If array element is an object, recurse into it
+        if (item !== null && typeof item === 'object') {
+          validateJSON(item, modelName, `${currentPath}[${index}]`);
+        }
+      });
+      continue;
+    }
+
+    // Recursively validate nested objects
+    // Note: typeof null === 'object', but we already checked for null above
+    if (typeof value === 'object') {
+      validateJSON(value, modelName, currentPath);
+    }
+
+    // Primitives (string, number, boolean) are valid - no further checks needed
+  }
+};
