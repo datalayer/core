@@ -14,13 +14,13 @@ import { Kernel } from '@jupyterlab/services';
 import {
   ActionList,
   ActionMenu,
-  Box,
   Flash,
   FormControl,
   Select,
   Spinner,
 } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
+import { Box } from '@datalayer/primer-addons';
 import { useToast } from '../../hooks';
 import { type IRuntimeSnapshot } from '../../models';
 import {
@@ -73,10 +73,10 @@ export function RuntimeSnapshotMenu(
     runtimeSnapshots,
     setRuntimeSnapshots,
   } = useRuntimesStore();
-  const { trackAsyncTask } = useToast();
+  const { enqueueToast, trackAsyncTask } = useToast();
   const [openLoadDialog, setOpenLoadDialog] = useState(false);
-  const [loadingKernelSnapshot, setLoadingKernelSnapshot] = useState(false);
-  const [takingKernelSnapshot, setTakingSnapshot] = useState(false);
+  const [loadingRuntimeSnapshot, setLoadingRuntimeSnapshot] = useState(false);
+  const [takingRuntimeSnapshot, setTakingRuntimeSnapshot] = useState(false);
   const [selection, setSelection] = useState(runtimeSnapshots[0]?.id ?? '');
   const [error, setError] = useState<string>();
   useEffect(() => {
@@ -91,14 +91,14 @@ export function RuntimeSnapshotMenu(
         console.error(`Failed to fetch remote kernel snapshots; ${reason}`);
       });
   }, [runtimesRunUrl]);
-  const onLoadKernelSnapshot = useCallback(() => {
+  const onLoadRuntimeSnapshot = useCallback(() => {
     setError(undefined);
     setOpenLoadDialog(true);
   }, []);
-  const onKerenelSnapshotChanged = useCallback(event => {
+  const onRuntimeSnapshotChanged = useCallback(event => {
     setSelection(event.target.value);
   }, []);
-  const onLoadKernelSnapshotSubmit = useCallback(
+  const onLoadRuntimeSnapshotSubmit = useCallback(
     async ({
       id,
       connection,
@@ -110,15 +110,21 @@ export function RuntimeSnapshotMenu(
     }) => {
       if (podName) {
         await loadRuntimeSnapshot({ id: podName, from: id });
+        enqueueToast(`Runtime snapshot ${podName} is loaded.`, {
+          variant: 'success',
+        });
       } else if (connection) {
         await loadBrowserRuntimeSnapshot({ connection, id });
+        enqueueToast(`Runtime snapshot ${id} is loaded.`, {
+          variant: 'success',
+        });
       }
     },
     [],
   );
-  const onTakeKernelSnapshot = useCallback(async () => {
+  const onTakeRuntimeSnapshot = useCallback(async () => {
     try {
-      setTakingSnapshot(true);
+      setTakingRuntimeSnapshot(true);
       let snapshot: IRuntimeSnapshot | undefined;
       let task: Promise<any> | undefined;
       let ref = '';
@@ -163,7 +169,7 @@ export function RuntimeSnapshotMenu(
               const msg =
                 reason === 'Empty snapshot'
                   ? `Runtime ${ref} will not be snapshotted as it does not contain any serializable state.`
-                  : `Failed to pause runtime ${ref} - ${reason}`;
+                  : `Failed to snapshot runtime ${ref} - ${reason}`;
               return msg;
             },
           },
@@ -179,7 +185,7 @@ export function RuntimeSnapshotMenu(
         }
       }
     } finally {
-      setTakingSnapshot(false);
+      setTakingRuntimeSnapshot(false);
     }
   }, [connection, podName, multiServiceManager]);
   return (
@@ -189,21 +195,21 @@ export function RuntimeSnapshotMenu(
           leadingVisual={CameraIcon}
           variant="invisible"
           size="small"
-          disabled={loadingKernelSnapshot || takingKernelSnapshot || disabled}
+          disabled={loadingRuntimeSnapshot || takingRuntimeSnapshot || disabled}
         >
           {children}
         </ActionMenu.Button>
         <ActionMenu.Overlay>
           <ActionList>
             <ActionList.Item
-              onSelect={onLoadKernelSnapshot}
-              disabled={loadingKernelSnapshot || runtimeSnapshots.length === 0}
+              onSelect={onLoadRuntimeSnapshot}
+              disabled={loadingRuntimeSnapshot || runtimeSnapshots.length === 0}
             >
               Load a runtime snapshot…
             </ActionList.Item>
             <ActionList.Item
-              onSelect={onTakeKernelSnapshot}
-              disabled={takingKernelSnapshot}
+              onSelect={onTakeRuntimeSnapshot}
+              disabled={takingRuntimeSnapshot}
             >
               Take a runtime snapshot
             </ActionList.Item>
@@ -233,23 +239,23 @@ export function RuntimeSnapshotMenu(
             },
             {
               buttonType: 'primary',
-              content: loadingKernelSnapshot ? (
+              content: loadingRuntimeSnapshot ? (
                 <Spinner size="small" />
               ) : (
                 'Load'
               ),
-              disabled: loadingKernelSnapshot,
+              disabled: loadingRuntimeSnapshot,
               onClick: async event => {
                 if (!event.defaultPrevented) {
                   event.preventDefault();
-                  setLoadingKernelSnapshot(true);
+                  setLoadingRuntimeSnapshot(true);
                   try {
                     setError(undefined);
                     const snapshot = runtimeSnapshots.find(
                       s => s.id === selection,
                     );
                     if (snapshot && (connection || podName)) {
-                      await onLoadKernelSnapshotSubmit({
+                      await onLoadRuntimeSnapshotSubmit({
                         connection,
                         id: snapshot.id,
                         podName,
@@ -258,7 +264,7 @@ export function RuntimeSnapshotMenu(
                       setError('No runtime snapshot found.');
                     }
                   } finally {
-                    setLoadingKernelSnapshot(false);
+                    setLoadingRuntimeSnapshot(false);
                     setOpenLoadDialog(false);
                   }
                 }
@@ -273,7 +279,7 @@ export function RuntimeSnapshotMenu(
               <Select
                 name="snapshot"
                 value={selection}
-                onChange={onKerenelSnapshotChanged}
+                onChange={onRuntimeSnapshotChanged}
                 block
               >
                 {runtimeSnapshots.map(s => (
