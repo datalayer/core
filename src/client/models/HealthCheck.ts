@@ -3,6 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { validateJSON } from '../../api/utils/validation';
+
 /**
  * Represents a health check response from a Datalayer service.
  * Provides standardized health status information across all services.
@@ -95,13 +97,15 @@ export class HealthCheck {
    * @returns Plain object representation
    */
   async toJSON(): Promise<HealthCheckJSON> {
-    return {
+    const obj = {
       healthy: this.healthy,
       status: this.status,
       responseTime: this.responseTime,
       errors: this.errors,
       timestamp: this.timestamp.toISOString(),
     };
+    validateJSON(obj, 'HealthCheck');
+    return obj;
   }
 
   /**

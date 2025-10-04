@@ -11,6 +11,7 @@
 
 import type { Environment as EnvironmentData } from '../../api/types/runtimes';
 import type { DatalayerClient } from '../index';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Environment data.
@@ -98,13 +99,15 @@ export class Environment {
    * @returns Core environment data with camelCase properties
    */
   toJSON(): EnvironmentJSON {
-    return {
+    const obj = {
       title: this.title,
       name: this.name,
       burningRate: this.burningRate,
       description: this.description,
       richDescription: this.richDescription,
     };
+    validateJSON(obj, 'Environment');
+    return obj;
   }
 
   /**
