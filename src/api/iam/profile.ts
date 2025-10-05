@@ -13,7 +13,11 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { UserMeResponse, WhoAmIResponse } from '../types/iam';
+import {
+  MembershipsResponse,
+  UserMeResponse,
+  WhoAmIResponse,
+} from '../types/iam';
 import { validateToken } from '../utils/validation';
 
 /**
@@ -49,6 +53,25 @@ export const whoami = async (
 
   return requestDatalayerAPI<WhoAmIResponse>({
     url: `${baseUrl}${API_BASE_PATHS.IAM}/whoami`,
+    method: 'GET',
+    token,
+  });
+};
+
+/**
+ * Get current user identity information
+ * @param token - Authentication token (required)
+ * @param baseUrl - Base URL for the API (defaults to production IAM URL)
+ * @returns Current user identity and profile information
+ */
+export const memberships = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
+): Promise<MembershipsResponse> => {
+  validateToken(token);
+
+  return requestDatalayerAPI<MembershipsResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.IAM}/memberships`,
     method: 'GET',
     token,
   });
