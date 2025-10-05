@@ -67,7 +67,7 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
         if ((error as RunResponseError).name === 'RunResponseError') {
           const responseError = error as RunResponseError;
           if (responseError.response.status === 401) {
-            console.log('Datalayer RUN sent a 401 return code.');
+            console.log('Datalayer sent a 401 return code.');
             if (location.pathname !== loginRoute_) {
               iamStore.logout();
               navigate(loginRoute_);

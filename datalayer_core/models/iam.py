@@ -79,7 +79,6 @@ class EmailUpdateConfirm(BaseModel):
     confirmation_token: str = Field(..., description="Email confirmation token")
 
 
-# User Models
 class UserModel(BaseModel):
     """User data model that combines IAM user information with profile functionality."""
 
@@ -240,7 +239,7 @@ class UserModel(BaseModel):
         )
 
 
-class UserProfileModel(BaseModel):
+class ProfileRequest(BaseModel):
     """User profile update model."""
 
     first_name: Optional[str] = Field(
@@ -305,8 +304,8 @@ class OrganizationMember(BaseModel):
     )
 
 
-class OrganizationData(BaseModel):
-    """Organization data model."""
+class OrganizationModel(BaseModel):
+    """Organization model."""
 
     id: str = Field(..., description="Organization ID")
     uid: str = Field(..., description="Organization UID")
@@ -331,7 +330,7 @@ class OrganizationRequest(BaseModel):
 
 
 # Team Models
-class TeamMember(BaseModel):
+class TeamMemberModel(BaseModel):
     """Team member model."""
 
     id: str = Field(..., description="Member ID")
@@ -346,7 +345,7 @@ class TeamMember(BaseModel):
     )
 
 
-class TeamData(BaseModel):
+class TeamModel(BaseModel):
     """Team data model."""
 
     id: str = Field(..., description="Team ID")
@@ -354,7 +353,9 @@ class TeamData(BaseModel):
     handle_s: str = Field(..., description="Team handle")
     name_t: str = Field(..., description="Team name")
     description_t: Optional[str] = Field(None, description="Team description")
-    members: List[TeamMember] = Field(default_factory=list, description="Team members")
+    members: List[TeamMemberModel] = Field(
+        default_factory=list, description="Team members"
+    )
 
 
 class TeamRequest(BaseModel):
@@ -363,7 +364,75 @@ class TeamRequest(BaseModel):
     handle: str = Field(..., description="Team handle")
     name: str = Field(..., description="Team name")
     description: Optional[str] = Field(None, description="Team description")
-    organization_id: str = Field(..., description="Parent organization ID")
+    organization_id: str = Field(
+        ..., alias="organizationId", description="Parent organization ID"
+    )
+
+    class Config:
+        populate_by_name = True  # Allow both organizationId and organization_id
+
+
+# Memberships Models
+class MembershipModel(BaseModel):
+    """Single membership model - either organization or team."""
+
+    type: str = Field(..., description="Membership type: 'organization' or 'team'")
+    id: str = Field(..., description="Membership ID")
+    uid: str = Field(..., description="Membership UID")
+    handle: str = Field(..., description="Membership handle")
+    name: str = Field(..., description="Membership name")
+    description: Optional[str] = Field(None, description="Membership description")
+    organization_uid: Optional[str] = Field(
+        None, description="Parent organization UID (for teams)"
+    )
+    public: Optional[bool] = Field(
+        None, description="Whether membership is public (for organizations)"
+    )
+    members: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Members (if included)"
+    )
+
+    @classmethod
+    def from_solr(cls, solr_doc: Dict[str, Any]) -> "MembershipModel":
+        """Create MembershipModel from Solr document."""
+        # Handle members field - can be dict, list, or None
+        members_data = solr_doc.get("members")
+        members = None
+        if members_data is not None:
+            if isinstance(members_data, dict):
+                # If it's a dict, wrap it in a list
+                members = [members_data]
+            elif isinstance(members_data, list):
+                members = members_data
+
+        return cls(
+            type=solr_doc.get("type_s", ""),
+            id=solr_doc.get("id", ""),
+            uid=solr_doc.get("uid", ""),
+            handle=solr_doc.get("handle_s", ""),
+            name=solr_doc.get("name_t", ""),
+            description=solr_doc.get("description_t"),
+            organization_uid=solr_doc.get("organization_uid"),
+            public=solr_doc.get("public_b"),
+            members=members,
+        )
+
+
+class MembershipsModel(BaseModel):
+    """Collection of memberships (organizations and teams) for a user."""
+
+    memberships: List[MembershipModel] = Field(
+        default_factory=list,
+        description="List of organizations and teams the user belongs to",
+    )
+
+    @classmethod
+    def from_solr_results(
+        cls, solr_results: List[Dict[str, Any]]
+    ) -> "MembershipsModel":
+        """Create MembershipsModel from Solr search results."""
+        memberships = [MembershipModel.from_solr(doc) for doc in solr_results]
+        return cls(memberships=memberships)
 
 
 # Credits and Reservations Models
@@ -518,7 +587,7 @@ class UserListResponseData(BaseModel):
 class OrganizationListResponseData(BaseModel):
     """Organization list response data model."""
 
-    organizations: List[OrganizationData] = Field(
+    organizations: List[OrganizationModel] = Field(
         ..., description="List of organizations"
     )
     total: int = Field(..., description="Total number of organizations")
@@ -527,7 +596,7 @@ class OrganizationListResponseData(BaseModel):
 class TeamListResponseData(BaseModel):
     """Team list response data model."""
 
-    teams: List[TeamData] = Field(..., description="List of teams")
+    teams: List[TeamModel] = Field(..., description="List of teams")
     total: int = Field(..., description="Total number of teams")
 
 
@@ -536,7 +605,3 @@ class ReservationListResponseData(BaseModel):
 
     reservations: List[ReservationData] = Field(..., description="List of reservations")
     total: int = Field(..., description="Total number of reservations")
-
-
-# Profile compatibility alias
-ProfileModel = UserModel  # ProfileModel is now an alias for UserData
