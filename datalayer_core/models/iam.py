@@ -353,7 +353,9 @@ class TeamModel(BaseModel):
     handle_s: str = Field(..., description="Team handle")
     name_t: str = Field(..., description="Team name")
     description_t: Optional[str] = Field(None, description="Team description")
-    members: List[TeamMemberModel] = Field(default_factory=list, description="Team members")
+    members: List[TeamMemberModel] = Field(
+        default_factory=list, description="Team members"
+    )
 
 
 class TeamRequest(BaseModel):
@@ -362,7 +364,9 @@ class TeamRequest(BaseModel):
     handle: str = Field(..., description="Team handle")
     name: str = Field(..., description="Team name")
     description: Optional[str] = Field(None, description="Team description")
-    organization_id: str = Field(..., alias="organizationId", description="Parent organization ID")
+    organization_id: str = Field(
+        ..., alias="organizationId", description="Parent organization ID"
+    )
 
     class Config:
         populate_by_name = True  # Allow both organizationId and organization_id
@@ -371,17 +375,23 @@ class TeamRequest(BaseModel):
 # Memberships Models
 class MembershipModel(BaseModel):
     """Single membership model - either organization or team."""
-    
+
     type: str = Field(..., description="Membership type: 'organization' or 'team'")
     id: str = Field(..., description="Membership ID")
     uid: str = Field(..., description="Membership UID")
     handle: str = Field(..., description="Membership handle")
     name: str = Field(..., description="Membership name")
     description: Optional[str] = Field(None, description="Membership description")
-    organization_uid: Optional[str] = Field(None, description="Parent organization UID (for teams)")
-    public: Optional[bool] = Field(None, description="Whether membership is public (for organizations)")
-    members: Optional[List[Dict[str, Any]]] = Field(None, description="Members (if included)")
-    
+    organization_uid: Optional[str] = Field(
+        None, description="Parent organization UID (for teams)"
+    )
+    public: Optional[bool] = Field(
+        None, description="Whether membership is public (for organizations)"
+    )
+    members: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Members (if included)"
+    )
+
     @classmethod
     def from_solr(cls, solr_doc: Dict[str, Any]) -> "MembershipModel":
         """Create MembershipModel from Solr document."""
@@ -394,7 +404,7 @@ class MembershipModel(BaseModel):
                 members = [members_data]
             elif isinstance(members_data, list):
                 members = members_data
-        
+
         return cls(
             type=solr_doc.get("type_s", ""),
             id=solr_doc.get("id", ""),
@@ -404,20 +414,22 @@ class MembershipModel(BaseModel):
             description=solr_doc.get("description_t"),
             organization_uid=solr_doc.get("organization_uid"),
             public=solr_doc.get("public_b"),
-            members=members
+            members=members,
         )
 
 
 class MembershipsModel(BaseModel):
     """Collection of memberships (organizations and teams) for a user."""
-    
+
     memberships: List[MembershipModel] = Field(
-        default_factory=list, 
-        description="List of organizations and teams the user belongs to"
+        default_factory=list,
+        description="List of organizations and teams the user belongs to",
     )
-    
+
     @classmethod
-    def from_solr_results(cls, solr_results: List[Dict[str, Any]]) -> "MembershipsModel":
+    def from_solr_results(
+        cls, solr_results: List[Dict[str, Any]]
+    ) -> "MembershipsModel":
         """Create MembershipsModel from Solr search results."""
         memberships = [MembershipModel.from_solr(doc) for doc in solr_results]
         return cls(memberships=memberships)
