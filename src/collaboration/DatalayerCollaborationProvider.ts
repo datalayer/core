@@ -34,6 +34,11 @@ export interface IDatalayerCollaborationConfig {
    * Authentication token (optional, uses config from store if not provided)
    */
   token?: string;
+  /**
+   * Custom fetch function to use for HTTP requests.
+   * Useful for proxying requests in environments with CORS restrictions (e.g., VS Code webviews).
+   */
+  fetchFn?: typeof fetch;
 }
 
 /**
@@ -126,6 +131,7 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
       const sessionId = await requestDatalayerCollaborationSessionId({
         url: URLExt.join(documentURL, documentId),
         token,
+        fetchFn: this._config.fetchFn,
       });
 
       // Create WebSocket provider

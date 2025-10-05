@@ -6,6 +6,11 @@
 type IFetchSessionId = {
   url: string;
   token?: string;
+  /**
+   * Custom fetch function to use instead of global fetch.
+   * Useful for proxying requests in environments with CORS restrictions (e.g., VS Code webviews).
+   */
+  fetchFn?: typeof fetch;
 };
 
 /**
@@ -14,6 +19,7 @@ type IFetchSessionId = {
 export async function requestDatalayerCollaborationSessionId({
   url,
   token,
+  fetchFn = fetch,
 }: IFetchSessionId): Promise<string> {
   const headers: HeadersInit = {
     Accept: 'application/json',
@@ -21,7 +27,7 @@ export async function requestDatalayerCollaborationSessionId({
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  const response = await fetch(url, {
+  const response = await fetchFn(url, {
     method: 'GET',
     headers,
     credentials: token ? 'include' : 'omit',
