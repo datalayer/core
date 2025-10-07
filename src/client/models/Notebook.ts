@@ -37,10 +37,6 @@ export interface NotebookJSON {
   type: string;
   /** File extension of the notebook */
   extension: string;
-  /** ISO 8601 timestamp when the notebook was created */
-  createdAt?: string;
-  /** ISO 8601 timestamp when the notebook was last updated */
-  updatedAt?: string;
   /** CDN URL for accessing the notebook */
   cdnUrl: string;
 }
@@ -190,8 +186,6 @@ export class Notebook extends Item<NotebookData> {
       description: this.description,
       type: this.type,
       extension: this.extension,
-      createdAt: (this._data as any).created_at,
-      updatedAt: (this._data as any).updated_at,
       cdnUrl: (this._data as any).cdn_url_s,
     };
     validateJSON(obj, 'Notebook');

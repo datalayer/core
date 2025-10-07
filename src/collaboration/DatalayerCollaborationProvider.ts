@@ -20,7 +20,6 @@ enum CollaborationStatus {
   Error = 'error',
 }
 import { requestDatalayerCollaborationSessionId } from './DatalayerCollaboration';
-import { coreStore } from '../state/substates/CoreState';
 
 /**
  * Configuration for Datalayer collaboration provider
@@ -106,16 +105,21 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
     this.setStatus(CollaborationStatus.Connecting);
 
     try {
-      // Get configuration from store or use provided config
-      const { configuration } = coreStore.getState();
-      const runUrl = this._config.runUrl ?? configuration?.runUrl;
-      const token = this._config.token ?? configuration?.token;
+      // Use ONLY explicitly provided configuration
+      // NO fallback to coreStore - if config is wrong, we want to fail fast
+      // This is critical for VS Code extension where config must come from settings
+      const runUrl = this._config.runUrl;
+      const token = this._config.token;
 
       if (!runUrl) {
-        throw new Error('Datalayer runUrl is not configured');
+        throw new Error(
+          'Datalayer runUrl is not configured - must be explicitly provided in DatalayerCollaborationProvider config',
+        );
       }
       if (!token) {
-        throw new Error('Datalayer token is not configured');
+        throw new Error(
+          'Datalayer token is not configured - must be explicitly provided in DatalayerCollaborationProvider config',
+        );
       }
 
       const { ydoc, awareness } = sharedModel;

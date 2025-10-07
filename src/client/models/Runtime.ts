@@ -224,6 +224,18 @@ export class Runtime {
    */
   toJSON(): RuntimeJSON {
     this._checkDeleted();
+
+    // Safely convert dates to ISO strings, handling invalid dates
+    const safeToISO = (date: Date): string => {
+      try {
+        const iso = date.toISOString();
+        return iso;
+      } catch {
+        // If date is invalid, return empty string or current time
+        return new Date().toISOString();
+      }
+    };
+
     const obj = {
       // Core identifiers
       uid: this.uid,
@@ -246,8 +258,8 @@ export class Runtime {
       token: this.token,
 
       // Timing
-      startedAt: this.startedAt.toISOString(),
-      expiredAt: this.expiredAt.toISOString(),
+      startedAt: safeToISO(this.startedAt),
+      expiredAt: safeToISO(this.expiredAt),
     };
     validateJSON(obj, 'Runtime');
     return obj;
