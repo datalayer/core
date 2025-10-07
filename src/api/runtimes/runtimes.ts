@@ -82,11 +82,15 @@ export const listRuntimes = async (
 ): Promise<RuntimesListResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<RuntimesListResponse>({
+  const response = await requestDatalayerAPI<any>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes`,
     method: 'GET',
     token,
   });
+
+  // The API returns { success: true, message: string, runtimes: Runtime[] }
+  // The response already has the correct structure, just return it
+  return response as RuntimesListResponse;
 };
 
 /**
@@ -114,10 +118,19 @@ export const getRuntime = async (
       token,
     });
 
-    // The API returns { success: true, message: string, kernel: Runtime }
-    // We need to return just the runtime data
+    // The API returns { success: true, message: string, runtime: Runtime }
+    // (Previously used 'kernel' field, now uses 'runtime')
+
+    // Try 'runtime' field first (current API)
+    if (response.runtime) {
+      return {
+        ...response.runtime,
+        pod_name: response.runtime.pod_name || podName,
+      } as Runtime;
+    }
+
+    // Fallback to 'kernel' field (old API)
     if (response.kernel) {
-      // Map kernel fields to Runtime fields
       return {
         ...response.kernel,
         pod_name: response.kernel.pod_name || podName,

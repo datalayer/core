@@ -13,6 +13,7 @@ import { updateRuntime } from '../../api/runtimes/runtimes';
 import type { Runtime as RuntimeData } from '../../api/types/runtimes';
 import type { DatalayerClient } from '../index';
 import { Snapshot } from './Snapshot';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Runtime data.
@@ -223,7 +224,19 @@ export class Runtime {
    */
   toJSON(): RuntimeJSON {
     this._checkDeleted();
-    return {
+
+    // Safely convert dates to ISO strings, handling invalid dates
+    const safeToISO = (date: Date): string => {
+      try {
+        const iso = date.toISOString();
+        return iso;
+      } catch {
+        // If date is invalid, return empty string or current time
+        return new Date().toISOString();
+      }
+    };
+
+    const obj = {
       // Core identifiers
       uid: this.uid,
       podName: this.podName,
@@ -245,9 +258,11 @@ export class Runtime {
       token: this.token,
 
       // Timing
-      startedAt: this.startedAt.toISOString(),
-      expiredAt: this.expiredAt.toISOString(),
+      startedAt: safeToISO(this.startedAt),
+      expiredAt: safeToISO(this.expiredAt),
     };
+    validateJSON(obj, 'Runtime');
+    return obj;
   }
 
   /**

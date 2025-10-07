@@ -173,6 +173,26 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       await runtimes.deleteRuntime(token, podName, runtimesRunUrl);
     }
 
+    /**
+     * Terminate all runtimes.
+     * Lists all runtimes and deletes them in parallel.
+     * @returns Array of results for each deletion (fulfilled or rejected)
+     */
+    async terminateAllRuntimes(): Promise<PromiseSettledResult<void>[]> {
+      const token = (this as any).getToken();
+      const runtimesRunUrl = (this as any).getRuntimesRunUrl();
+
+      // List all runtimes
+      const response = await runtimes.listRuntimes(token, runtimesRunUrl);
+
+      // Delete all runtimes in parallel
+      const deletePromises = response.runtimes.map(runtime =>
+        runtimes.deleteRuntime(token, runtime.pod_name, runtimesRunUrl),
+      );
+
+      return Promise.allSettled(deletePromises);
+    }
+
     // ========================================================================
     // Snapshots
     // ========================================================================

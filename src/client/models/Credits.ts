@@ -10,6 +10,7 @@
  */
 
 import type { CreditsInfo, CreditReservation } from '../../api/iam/usage';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Credits model representing user's available credits and usage.
@@ -136,10 +137,12 @@ export class Credits {
    */
   toJSON(): CreditsInfo & { reservations: CreditReservation[] } {
     // FIXME
-    return {
+    const obj = {
       ...this._data,
       reservations: this._reservations,
     };
+    validateJSON(obj, 'Credits');
+    return obj;
   }
 
   /**

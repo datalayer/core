@@ -151,6 +151,7 @@ export interface DatalayerClient {
   listRuntimes(): Promise<Runtime[]>;
   getRuntime(podName: string): Promise<Runtime>;
   deleteRuntime(podName: string): Promise<void>;
+  terminateAllRuntimes(): Promise<PromiseSettledResult<void>[]>;
   createSnapshot(
     podName: string,
     name: string,

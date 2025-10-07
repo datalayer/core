@@ -13,6 +13,7 @@ import type { RuntimeSnapshot as RuntimeSnapshotData } from '../../api/types/run
 import type { DatalayerClient } from '../index';
 import { snapshots } from '../../api/runtimes';
 import { Runtime } from './Runtime';
+import { validateJSON } from '../../api/utils/validation';
 
 /**
  * Stable public interface for Snapshot data.
@@ -155,13 +156,15 @@ export class Snapshot {
    */
   toJSON(): SnapshotJSON {
     this._checkDeleted();
-    return {
+    const obj = {
       uid: this.uid,
       name: this.name,
       description: this.description,
       environment: this.environment,
       updatedAt: this.updatedAt.toISOString(),
     };
+    validateJSON(obj, 'Snapshot');
+    return obj;
   }
 
   /**
