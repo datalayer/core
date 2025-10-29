@@ -209,9 +209,20 @@ export async function requestDatalayerAPI<T = any>({
   try {
     const response = await axios(axiosConfig);
 
-    // Handle redirections if needed
-    if (response.status === 202 && response.headers.location) {
-      return await handleAxiosRedirection(response, axiosConfig);
+    if (response.status < 300) {
+      // Handle redirections if needed.
+      if (response.status === 202 && response.headers.location) {
+        return await handleAxiosRedirection(response, axiosConfig);
+      }
+    } else {
+      const adaptedResponse = {
+        ok: false,
+        status: response.status,
+        statusText: response.statusText,
+        json: async () => response?.data,
+        text: async () => JSON.stringify(response?.data),
+      } as Response;
+      throw await RunResponseError.create(adaptedResponse);
     }
 
     return response.data as T;
@@ -219,14 +230,14 @@ export async function requestDatalayerAPI<T = any>({
     if (axios.isAxiosError(error)) {
       if (error.response) {
         // Convert axios error to our RunResponseError format
-        const mockResponse = {
+        const adaptedResponse = {
           ok: false,
           status: error.response.status,
           statusText: error.response.statusText,
           json: async () => error.response?.data,
           text: async () => JSON.stringify(error.response?.data),
         } as Response;
-        throw await RunResponseError.create(mockResponse);
+        throw await RunResponseError.create(adaptedResponse);
       }
       throw new NetworkError(error);
     }
