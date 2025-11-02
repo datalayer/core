@@ -4,8 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { User } from '../../client/models/User';
-import type { User as UserData } from '../IAM';
+import { UserDTO, UserData } from '../../models/UserDTO';
 
 describe('User Model', () => {
   const mockUserData: UserData = {
@@ -18,10 +17,10 @@ describe('User Model', () => {
     avatar_url_s: 'https://example.com/avatar.png',
   };
 
-  let user: User;
+  let user: UserDTO;
 
   beforeEach(() => {
-    user = new User(mockUserData);
+    user = new UserDTO(mockUserData);
   });
 
   describe('Properties', () => {
@@ -67,7 +66,7 @@ describe('User Model', () => {
         last_name_t: '',
         avatar_url_s: '',
       };
-      const minimalUser = new User(minimalData);
+      const minimalUser = new UserDTO(minimalData);
 
       expect(minimalUser.displayName).toBe('');
       expect(minimalUser.avatarUrl).toBe('');

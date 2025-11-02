@@ -4,16 +4,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Space } from '../../client/models/Space';
-import type { Space as SpaceData } from '../SpaceDTO';
+import { SpaceDTO, SpaceData } from '../../models/SpaceDTO';
 import type { DatalayerClient } from '../../client/index';
 import * as users from '../../api/spacer/users';
 import * as items from '../../api/spacer/items';
 
-vi.mock('../../../api/spacer/users');
-vi.mock('../../../api/spacer/items');
-vi.mock('../../../api/spacer/notebooks');
-vi.mock('../../../api/spacer/lexicals');
+vi.mock('../../api/spacer/users');
+vi.mock('../../api/spacer/items');
+vi.mock('../../api/spacer/notebooks');
+vi.mock('../../api/spacer/lexicals');
 
 describe('Space Model', () => {
   const mockSpaceData: SpaceData = {
@@ -22,11 +21,11 @@ describe('Space Model', () => {
     handle_s: 'research-workspace',
     variant_s: 'default',
     description_t: 'Data analysis workspace',
-    visibility: 'private',
+    //    visibility: 'private',
   };
 
   let mockSDK: Partial<DatalayerClient>;
-  let space: Space;
+  let space: SpaceDTO;
 
   beforeEach(() => {
     mockSDK = {
@@ -35,7 +34,7 @@ describe('Space Model', () => {
       createNotebook: vi.fn(),
       createLexical: vi.fn(),
     } as any;
-    space = new Space(mockSpaceData, mockSDK as DatalayerClient);
+    space = new SpaceDTO(mockSpaceData, mockSDK as DatalayerClient);
     vi.clearAllMocks();
   });
 

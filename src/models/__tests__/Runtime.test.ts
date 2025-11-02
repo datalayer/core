@@ -4,22 +4,26 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Runtime } from '../../client/models/Runtime';
-import type { RuntimeInstance } from '../../../api/types/runtimes';
+import { RuntimeDTO, RuntimeData } from '../../models/RuntimeDTO';
 import type { DatalayerClient } from '../../client/index';
 
 describe('Runtime Model', () => {
-  const mockRuntimeData: RuntimeInstance = {
+  const mockRuntimeData: RuntimeData = {
     uid: 'runtime-123',
     pod_name: 'jupyter-pod-123',
     given_name: 'My Runtime',
     environment_name: 'python-cpu',
     type: 'notebook',
     burning_rate: 10,
+    environment_title: '',
+    token: '',
+    ingress: '',
+    started_at: '',
+    expired_at: '',
   };
 
   let mockSDK: Partial<DatalayerClient>;
-  let runtime: Runtime;
+  let runtime: RuntimeDTO;
 
   beforeEach(() => {
     mockSDK = {
@@ -30,7 +34,7 @@ describe('Runtime Model', () => {
       deleteRuntime: vi.fn().mockResolvedValue(undefined),
       createSnapshot: vi.fn(),
     } as any;
-    runtime = new Runtime(mockRuntimeData, mockSDK as DatalayerClient);
+    runtime = new RuntimeDTO(mockRuntimeData, mockSDK as DatalayerClient);
     vi.clearAllMocks();
   });
 
