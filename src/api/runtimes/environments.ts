@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { EnvironmentsListResponse } from '../types/runtimes';
+import { EnvironmentsListResponse } from '../../models/Runtime2';
 import { validateToken } from '../utils/validation';
 
 /**

@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { CollaborationSessionResponse } from '../types/spacer';
+import { CollaborationSessionResponse } from '../../models/Space2';
 
 /**
  * Get collaboration session ID for a document.

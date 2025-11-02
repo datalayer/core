@@ -11,24 +11,24 @@
 import * as authentication from '../../api/iam/authentication';
 import * as profile from '../../api/iam/profile';
 import * as usage from '../../api/iam/usage';
-import type { User as ApiUser } from '../../api/types/iam';
-import type { CreditsResponse } from '../../api/iam/usage';
+import type { User2 as ApiUser } from '../../models/IAM';
+import type { CreditsResponse } from '../../models/Credits2';
 import type { Constructor } from '../utils/mixins';
-import { User } from '../models/User';
-import { Credits } from '../models/Credits';
-import { HealthCheck } from '../models/HealthCheck';
+import { User3 } from '../../models/User3';
+import { Credits2 } from '../../models/Credits2';
+import { HealthCheck } from '../../models/HealthCheck';
 
 /** IAM mixin providing authentication and user management. */
 export function IAMMixin<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     // Cache for current user
-    public currentUserCache?: User;
+    public currentUserCache?: User3;
 
     /**
      * Get the current user's profile information.
      * @returns User model instance
      */
-    async whoami(): Promise<User> {
+    async whoami(): Promise<User3> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const token = (this as any).getToken();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,7 +70,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       }
 
       // Create new User instance (User model is immutable, no update method)
-      this.currentUserCache = new User(userData, this as any);
+      this.currentUserCache = new User3(userData, this as any);
 
       return this.currentUserCache;
     }
@@ -81,7 +81,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      * @returns User object on successful login
      * @throws Error if token is invalid
      */
-    async login(token: string): Promise<User> {
+    async login(token: string): Promise<User3> {
       // For token-based login, we simply set the token and verify it works
       await (this as any).setToken(token);
 
@@ -112,7 +112,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      * Get the current user's available credits and usage information.
      * @returns Credits model instance
      */
-    async getCredits(): Promise<Credits> {
+    async getCredits(): Promise<Credits2> {
       const token = (this as any).getToken();
       const iamRunUrl = (this as any).getIamRunUrl();
 
@@ -125,7 +125,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
         throw new Error('Invalid response from credits API');
       }
 
-      return new Credits(response.credits, response.reservations || []);
+      return new Credits2(response.credits, response.reservations || []);
     }
 
     // ========================================================================

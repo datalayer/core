@@ -9,7 +9,7 @@
  */
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
-import { Environment } from './models/Environment';
+import { Environment2 } from '../models/Environment2';
 
 /** Handlers for SDK method lifecycle events. */
 export interface SDKHandlers {
@@ -46,7 +46,7 @@ export class DatalayerClientBase {
   /** Authentication token */
   public token?: string;
   /** Environments */
-  public readonly environments: Environment[] = [];
+  public readonly environments: Environment2[] = [];
   /** Method lifecycle handlers */
   public readonly handlers?: SDKHandlers;
 

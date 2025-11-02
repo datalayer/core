@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Lexical } from '../Lexical';
-import type { Lexical as LexicalData } from '../../../api/types/spacer';
-import type { DatalayerClient } from '../../index';
-import * as items from '../../../api/spacer/items';
-import * as lexicals from '../../../api/spacer/lexicals';
+import { Lexical } from '../../client/models/Lexical';
+import type { Lexical as LexicalData } from '../Space2';
+import type { DatalayerClient } from '../../client/index';
+import * as items from '../../api/spacer/items';
+import * as lexicals from '../../api/spacer/lexicals';
 
 vi.mock('../../../api/spacer/items');
 vi.mock('../../../api/spacer/lexicals');

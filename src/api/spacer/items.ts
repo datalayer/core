@@ -17,7 +17,7 @@ import {
   DeleteSpaceItemResponse,
   GetSpaceItemResponse,
   GetSpaceItemsResponse,
-} from '../types/spacer';
+} from '../../models/Space2';
 
 /**
  * Get the items of a space.

@@ -6,18 +6,15 @@
 /**
  * Lexical domain model for the Datalayer SDK.
  *
- * @module client/models/Lexical
+ * @module models/Lexical
  */
 
-import type {
-  Lexical as LexicalData,
-  UpdateLexicalRequest,
-} from '../../api/types/spacer';
-import * as lexicals from '../../api/spacer/lexicals';
+import type { Lexical as LexicalData, UpdateLexicalRequest } from './Space2';
+import * as lexicals from '../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
-import { Item } from './Item';
-import { ItemTypes } from '../constants';
-import { validateJSON } from '../../api/utils/validation';
+import { Item } from './Item2';
+import { validateJSON } from '../api/utils/validation';
+import { ItemTypes } from '../client';
 
 /**
  * Stable public interface for Lexical data.
@@ -55,7 +52,7 @@ export interface LexicalJSON {
  * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
-export class Lexical extends Item<LexicalData> {
+export class Lexical2 extends Item<LexicalData> {
   /**
    * Create a Lexical instance.
    *

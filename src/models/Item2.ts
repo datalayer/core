@@ -6,11 +6,11 @@
 /**
  * Abstract base class for all Datalayer content items.
  *
- * @module client/models/Item
+ * @module models/Item
  */
 
-import * as items from '../../api/spacer/items';
 import type { DatalayerClient } from '../index';
+import * as items from '../api/spacer/items';
 
 /**
  * Abstract base class for all Datalayer content items.

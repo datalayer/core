@@ -7,7 +7,7 @@
  * Represents a user in the Datalayer platform
  * @interface User
  */
-export interface User {
+export interface User2 {
   /** uuid for the user */
   id: string;
   /** ulid for the user */
@@ -31,7 +31,7 @@ export interface User {
  * @interface Profile
  */
 
-interface Profile {
+interface Profile2 {
   /** ISO 8601 timestamp of when the user was created */
   creation_ts_dt: string;
   /** Unique identifier for the user */
@@ -195,7 +195,7 @@ export interface WhoAmIResponse {
   /** Response message from the server */
   message: string;
   /** User profile information */
-  profile: Profile;
+  profile: Profile2;
 }
 
 /**
@@ -208,7 +208,7 @@ export interface MembershipsResponse {
   /** Response message from the server */
   message: string;
   /** User profile information */
-  profile: Profile;
+  profile: Profile2;
   /** Memberships information */
   memberships: any[];
 }

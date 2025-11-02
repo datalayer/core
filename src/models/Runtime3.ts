@@ -6,14 +6,14 @@
 /**
  * Runtime domain model for the Datalayer SDK.
  *
- * @module client/models/Runtime
+ * @module models/Runtime
  */
 
-import { updateRuntime } from '../../api/runtimes/runtimes';
-import type { Runtime as RuntimeData } from '../../api/types/runtimes';
+import { updateRuntime } from '../api/runtimes/runtimes';
+import type { Runtime as RuntimeData } from '../models/Runtime2';
 import type { DatalayerClient } from '../index';
-import { Snapshot } from './Snapshot';
-import { validateJSON } from '../../api/utils/validation';
+import { RuntimeSnapshot2 } from './RuntimeSnapshot2';
+import { validateJSON } from '../api/utils/validation';
 
 /**
  * Stable public interface for Runtime data.
@@ -55,7 +55,7 @@ export interface RuntimeJSON {
  * await runtime.waitUntilReady();
  * ```
  */
-export class Runtime {
+export class Runtime3 {
   /** @internal */
   _data: RuntimeData;
   private _sdk: DatalayerClient;
@@ -177,7 +177,7 @@ export class Runtime {
    * @param from - Snapshot identifier to restore from
    * @returns Updated Runtime instance
    */
-  async update(from: string): Promise<Runtime> {
+  async update(from: string): Promise<Runtime3> {
     this._checkDeleted();
     const updated = await updateRuntime(
       (this._sdk as any).getToken(),
@@ -185,7 +185,7 @@ export class Runtime {
       from,
       (this._sdk as any).getRuntimesRunUrl(),
     );
-    return new Runtime(updated, this._sdk);
+    return new Runtime3(updated, this._sdk);
   }
 
   /**
@@ -200,7 +200,7 @@ export class Runtime {
     name: string,
     description?: string,
     stop?: boolean,
-  ): Promise<Snapshot> {
+  ): Promise<RuntimeSnapshot2> {
     this._checkDeleted();
     return await (this._sdk as any).createSnapshot(
       this.podName,

@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { LoginRequest, LoginResponse } from '../types/iam';
+import { LoginRequest, LoginResponse } from '../../models/IAM';
 import { validateToken } from '../utils/validation';
 
 /**

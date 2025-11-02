@@ -6,18 +6,15 @@
 /**
  * Notebook domain model for the Datalayer SDK.
  *
- * @module client/models/Notebook
+ * @module models/Notebook
  */
 
-import type {
-  Notebook as NotebookData,
-  UpdateNotebookRequest,
-} from '../../api/types/spacer';
-import * as notebooks from '../../api/spacer/notebooks';
+import type { Notebook as NotebookData, UpdateNotebookRequest } from './Space2';
+import * as notebooks from '../api/spacer/notebooks';
 import type { DatalayerClient } from '../index';
-import { Item } from './Item';
-import { ItemTypes } from '../constants';
-import { validateJSON } from '../../api/utils/validation';
+import { Item } from './Item2';
+import { ItemTypes } from '../client/constants';
+import { validateJSON } from '../api/utils/validation';
 
 /**
  * Stable public interface for Notebook data.
@@ -51,7 +48,7 @@ export interface NotebookJSON {
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
-export class Notebook extends Item<NotebookData> {
+export class Notebook2 extends Item<NotebookData> {
   /**
    * Create a Notebook instance.
    *

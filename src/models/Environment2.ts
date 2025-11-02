@@ -6,12 +6,12 @@
 /**
  * Environment domain model for the Datalayer SDK.
  *
- * @module client/models/Environment
+ * @module models/Environment
  */
 
-import type { Environment as EnvironmentData } from '../../api/types/runtimes';
+import type { Environment as EnvironmentData } from './Runtime2';
 import type { DatalayerClient } from '../index';
-import { validateJSON } from '../../api/utils/validation';
+import { validateJSON } from '../api/utils/validation';
 
 /**
  * Stable public interface for Environment data.
@@ -42,7 +42,7 @@ export interface EnvironmentJSON {
  * console.log(aiEnv.title); // "AI Environment"
  * ```
  */
-export class Environment {
+export class Environment2 {
   /** @internal */
   _data: EnvironmentData;
 

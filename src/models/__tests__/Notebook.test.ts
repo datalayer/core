@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Notebook } from '../Notebook';
-import type { Notebook as NotebookData } from '../../../api/types/spacer';
-import type { DatalayerClient } from '../../index';
-import * as items from '../../../api/spacer/items';
-import * as notebooks from '../../../api/spacer/notebooks';
+import { Notebook } from '../../client/models/Notebook';
+import type { Notebook as NotebookData } from '../Space2';
+import type { DatalayerClient } from '../../client/index';
+import * as items from '../../api/spacer/items';
+import * as notebooks from '../../api/spacer/notebooks';
 
 vi.mock('../../../api/spacer/items');
 vi.mock('../../../api/spacer/notebooks');

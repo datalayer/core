@@ -4,9 +4,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Runtime } from '../Runtime';
+import { Runtime } from '../../client/models/Runtime';
 import type { RuntimeInstance } from '../../../api/types/runtimes';
-import type { DatalayerClient } from '../../index';
+import type { DatalayerClient } from '../../client/index';
 
 describe('Runtime Model', () => {
   const mockRuntimeData: RuntimeInstance = {

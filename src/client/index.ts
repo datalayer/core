@@ -30,15 +30,15 @@ import { RuntimesMixin } from './mixins/RuntimesMixin';
 import { SpacerMixin } from './mixins/SpacerMixin';
 
 // Import model types for interface declaration
-import type { User } from './models/User';
-import type { Credits } from './models/Credits';
-import type { Environment } from './models/Environment';
-import type { Runtime } from './models/Runtime';
-import type { Snapshot } from './models/Snapshot';
-import type { Space } from './models/Space';
-import type { Notebook } from './models/Notebook';
-import type { Lexical } from './models/Lexical';
-import type { HealthCheck } from './models/HealthCheck';
+import type { User3 } from './../models/User3';
+import type { Credits2 } from '../models/Credits2';
+import type { Environment2 } from '../models/Environment2';
+import type { Runtime3 } from '../models/Runtime3';
+import type { RuntimeSnapshot2 } from '../models/RuntimeSnapshot2';
+import type { Space3 } from '../models/Space3';
+import type { Notebook2 } from '../models/Notebook2';
+import type { Lexical2 } from '../models/Lexical2';
+import type { HealthCheck } from '../models/HealthCheck';
 
 /**
  * Helper function to compose mixins in a more readable way.
@@ -94,20 +94,20 @@ export type { DatalayerClientConfig, SDKHandlers };
 export { DatalayerClientBase };
 
 // Export models for use by consumers
-export { User } from './models/User';
-export type { UserJSON } from './models/User';
-export { Runtime } from './models/Runtime';
-export type { RuntimeJSON } from './models/Runtime';
-export { Environment } from './models/Environment';
-export type { EnvironmentJSON } from './models/Environment';
-export { Snapshot } from './models/Snapshot';
-export { Space } from './models/Space';
-export { Notebook } from './models/Notebook';
-export { Lexical } from './models/Lexical';
-export { Credits } from './models/Credits';
-export { Item } from './models/Item';
-export { HealthCheck } from './models/HealthCheck';
-export type { HealthCheckJSON } from './models/HealthCheck';
+export { User3 as User } from './../models/User3';
+export type { UserJSON } from './../models/User3';
+export { Runtime3 as Runtime } from '../models/Runtime3';
+export type { RuntimeJSON } from '../models/Runtime3';
+export { Environment2 as Environment } from '../models/Environment2';
+export type { EnvironmentJSON } from '../models/Environment2';
+export { RuntimeSnapshot2 as Snapshot } from '../models/RuntimeSnapshot2';
+export { Space3 as Space } from '../models/Space3';
+export { Notebook2 as Notebook } from '../models/Notebook2';
+export { Lexical2 } from '../models/Lexical2';
+export { Credits2 as Credits } from '../models/Credits2';
+export { Item } from '../models/Item2';
+export { HealthCheck } from '../models/HealthCheck';
+export type { HealthCheckJSON } from '../models/HealthCheck';
 
 // Export constants
 export { ItemTypes } from './constants';
@@ -120,10 +120,10 @@ export interface DatalayerClient {
   setToken(token: string): Promise<void>;
 
   // IAM Methods
-  whoami(): Promise<User>;
-  login(token: string): Promise<User>;
+  whoami(): Promise<User3>;
+  login(token: string): Promise<User3>;
   logout(): Promise<void>;
-  getCredits(): Promise<Credits>;
+  getCredits(): Promise<Credits2>;
   calculateMaxRuntimeMinutes(
     availableCredits: number,
     burningRate: number,
@@ -132,7 +132,7 @@ export interface DatalayerClient {
   checkIAMHealth(): Promise<HealthCheck>;
 
   // Runtime Methods
-  listEnvironments(): Promise<Environment[]>;
+  listEnvironments(): Promise<Environment2[]>;
   ensureRuntime(
     environmentName?: string,
     creditsLimit?: number,
@@ -140,16 +140,16 @@ export interface DatalayerClient {
     maxWaitTime?: number,
     reuseExisting?: boolean,
     snapshotId?: string,
-  ): Promise<Runtime>;
+  ): Promise<Runtime3>;
   createRuntime(
     environmentName: string,
     type: 'notebook' | 'terminal' | 'job',
     givenName: string,
     minutesLimit: number,
     fromSnapshotId?: string,
-  ): Promise<Runtime>;
-  listRuntimes(): Promise<Runtime[]>;
-  getRuntime(podName: string): Promise<Runtime>;
+  ): Promise<Runtime3>;
+  listRuntimes(): Promise<Runtime3[]>;
+  getRuntime(podName: string): Promise<Runtime3>;
   deleteRuntime(podName: string): Promise<void>;
   terminateAllRuntimes(): Promise<PromiseSettledResult<void>[]>;
   createSnapshot(
@@ -157,14 +157,14 @@ export interface DatalayerClient {
     name: string,
     description: string,
     stop?: boolean,
-  ): Promise<Snapshot>;
-  listSnapshots(): Promise<Snapshot[]>;
-  getSnapshot(id: string): Promise<Snapshot>;
+  ): Promise<RuntimeSnapshot2>;
+  listSnapshots(): Promise<RuntimeSnapshot2[]>;
+  getSnapshot(id: string): Promise<RuntimeSnapshot2>;
   deleteSnapshot(id: string): Promise<void>;
   checkRuntimesHealth(): Promise<HealthCheck>;
 
   // Spacer Methods
-  getMySpaces(): Promise<Space[]>;
+  getMySpaces(): Promise<Space3[]>;
   createSpace(
     name: string,
     description: string,
@@ -173,33 +173,33 @@ export interface DatalayerClient {
     organizationId: string,
     seedSpaceId: string,
     isPublic: boolean,
-  ): Promise<Space>;
+  ): Promise<Space3>;
   createNotebook(
     spaceId: string,
     name: string,
     description: string,
     file?: File | Blob,
-  ): Promise<Notebook>;
-  getNotebook(id: string): Promise<Notebook>;
+  ): Promise<Notebook2>;
+  getNotebook(id: string): Promise<Notebook2>;
   updateNotebook(
     id: string,
     name?: string,
     description?: string,
-  ): Promise<Notebook>;
+  ): Promise<Notebook2>;
   createLexical(
     spaceId: string,
     name: string,
     description: string,
     file?: File | Blob,
-  ): Promise<Lexical>;
-  getLexical(id: string): Promise<Lexical>;
+  ): Promise<Lexical2>;
+  getLexical(id: string): Promise<Lexical2>;
   updateLexical(
     id: string,
     name?: string,
     description?: string,
-  ): Promise<Lexical>;
-  getSpaceItems(spaceId: string): Promise<(Notebook | Lexical)[]>;
-  getSpaceItem(itemId: string): Promise<Notebook | Lexical>;
+  ): Promise<Lexical2>;
+  getSpaceItems(spaceId: string): Promise<(Notebook2 | Lexical2)[]>;
+  getSpaceItem(itemId: string): Promise<Notebook2 | Lexical2>;
   deleteSpaceItem(itemId: string): Promise<void>;
   getCollaborationSessionId(documentId: string): Promise<string>;
   getContent(itemId: string): Promise<any>;

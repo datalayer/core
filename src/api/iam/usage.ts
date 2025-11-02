@@ -13,48 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-
-/**
- * Credit information for a user.
- */
-export interface CreditsInfo {
-  /** Available credits */
-  credits: number;
-  /** Credit quota (null if unlimited) */
-  quota: number | null;
-  /** Last update timestamp */
-  last_update: string;
-}
-
-/**
- * Credit reservation information.
- */
-export interface CreditReservation {
-  /** Reservation ID */
-  id: string;
-  /** Reserved credits */
-  credits: number;
-  /** Resource ID (e.g., runtime ID) */
-  resource: string;
-  /** Last update timestamp */
-  last_update: string;
-  /** Burning rate (credits per hour) for this reservation */
-  burning_rate: number;
-  /** Start date of the reservation */
-  start_date: string;
-}
-
-/**
- * Response from the credits endpoint.
- */
-export interface CreditsResponse {
-  /** Operation success status */
-  success: boolean;
-  /** Credit information */
-  credits: CreditsInfo;
-  /** Active credit reservations */
-  reservations: CreditReservation[];
-}
+import { CreditsResponse } from '../../models/Credits2';
 
 /**
  * Get the current user's available credits and usage information.

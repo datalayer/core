@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Space } from '../Space';
-import type { Space as SpaceData } from '../../../api/types/spacer';
-import type { DatalayerClient } from '../../index';
-import * as users from '../../../api/spacer/users';
-import * as items from '../../../api/spacer/items';
+import { Space } from '../../client/models/Space';
+import type { Space as SpaceData } from '../Space2';
+import type { DatalayerClient } from '../../client/index';
+import * as users from '../../api/spacer/users';
+import * as items from '../../api/spacer/items';
 
 vi.mock('../../../api/spacer/users');
 vi.mock('../../../api/spacer/items');

@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { User } from '../User';
-import type { User as UserData } from '../../../api/types/iam';
+import { User } from '../../client/models/User';
+import type { User as UserData } from '../IAM';
 
 describe('User Model', () => {
   const mockUserData: UserData = {

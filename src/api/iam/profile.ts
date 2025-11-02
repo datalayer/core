@@ -17,7 +17,7 @@ import {
   MembershipsResponse,
   UserMeResponse,
   WhoAmIResponse,
-} from '../types/iam';
+} from '../../models/IAM';
 import { validateToken } from '../utils/validation';
 
 /**

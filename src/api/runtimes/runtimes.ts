@@ -18,7 +18,7 @@ import {
   CreateRuntimeRequest,
   CreateRuntimeResponse,
   RuntimesListResponse,
-} from '../types/runtimes';
+} from '../../models/Runtime2';
 import { validateToken, validateRequiredString } from '../utils/validation';
 
 /**

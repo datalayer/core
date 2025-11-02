@@ -6,12 +6,12 @@
 /**
  * User model for the Datalayer SDK with rich functionality.
  *
- * @module client/models/User
+ * @module models/User
  */
 
-import type { User as UserData } from '../../api/types/iam';
+import type { User2 as UserData } from './IAM';
 import type { DatalayerClient } from '../index';
-import { validateJSON } from '../../api/utils/validation';
+import { validateJSON } from '../api/utils/validation';
 
 export interface UserJSON {
   /** uuid for the user */
@@ -36,7 +36,7 @@ export interface UserJSON {
  * User model representing a Datalayer platform user.
  * Provides rich functionality for accessing user data and authentication providers.
  */
-export class User {
+export class User3 {
   protected _data: UserData;
 
   /**

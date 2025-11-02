@@ -4,10 +4,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Snapshot } from '../Snapshot';
-import type { RuntimeSnapshot } from '../../../api/types/runtimes';
-import type { DatalayerClient } from '../../index';
-import { snapshots } from '../../../api/runtimes';
+import { Snapshot } from '../../client/models/Snapshot';
+import type { RuntimeSnapshot } from '../Runtime2';
+import type { DatalayerClient } from '../../client/index';
+import { snapshots } from '../../api/runtimes';
 
 vi.mock('../../../api/runtimes', () => ({
   snapshots: {

@@ -6,21 +6,21 @@
 /**
  * Snapshot domain model for the Datalayer SDK.
  *
- * @module client/models/Snapshot
+ * @module models/Snapshot
  */
 
-import type { RuntimeSnapshot as RuntimeSnapshotData } from '../../api/types/runtimes';
+import type { RuntimeSnapshot as RuntimeSnapshotData } from './Runtime2';
 import type { DatalayerClient } from '../index';
-import { snapshots } from '../../api/runtimes';
-import { Runtime } from './Runtime';
-import { validateJSON } from '../../api/utils/validation';
+import { snapshots } from '../api/runtimes';
+import { Runtime3 } from './Runtime3';
+import { validateJSON } from '../api/utils/validation';
 
 /**
  * Stable public interface for Snapshot data.
  * This is the contract that SDK consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
-export interface SnapshotJSON {
+export interface RuntimeSnapshotJSON {
   /** Unique identifier for the snapshot */
   uid: string;
   /** Name of the snapshot */
@@ -43,7 +43,7 @@ export interface SnapshotJSON {
  * const runtime = await snapshot.restore();
  * ```
  */
-export class Snapshot {
+export class RuntimeSnapshot2 {
   protected _data: RuntimeSnapshotData;
   private _sdk: DatalayerClient;
   private _deleted: boolean = false;
@@ -131,7 +131,7 @@ export class Snapshot {
    * @param config - Optional runtime configuration to override defaults
    * @returns Created Runtime instance
    */
-  async restore(minutesLimit: number): Promise<Runtime> {
+  async restore(minutesLimit: number): Promise<Runtime3> {
     this._checkDeleted();
     return await (this._sdk as any).createRuntime({
       environmentName: this.environment,
@@ -154,7 +154,7 @@ export class Snapshot {
    *
    * @returns Core snapshot data with camelCase properties
    */
-  toJSON(): SnapshotJSON {
+  toJSON(): RuntimeSnapshotJSON {
     this._checkDeleted();
     const obj = {
       uid: this.uid,
