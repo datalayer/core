@@ -14,7 +14,7 @@ import * as snapshots from '../../api/runtimes/snapshots';
 import type { CreateRuntimeRequest } from '../../models/RuntimeDTO';
 import type { CreateRuntimeSnapshotRequest } from '../../models/RuntimeSnapshotDTO';
 import type { Constructor } from '../utils/mixins';
-import { Environment2 } from '../../models/EnvironmentDTO';
+import { EnvironmentDTO } from '../../models/EnvironmentDTO';
 import { RuntimeDTO } from '../../models/RuntimeDTO';
 import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
 import { HealthCheck } from '../../models/HealthCheck';
@@ -65,7 +65,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * List all available computational environments.
      * @returns Array of Environment model instances
      */
-    async listEnvironments(): Promise<Environment2[]> {
+    async listEnvironments(): Promise<EnvironmentDTO[]> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const response = await environments.listEnvironments(
@@ -74,7 +74,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       );
       // Save for later use after first call
       (this as any).environments = response.environments.map(
-        env => new Environment2(env, this as any),
+        env => new EnvironmentDTO(env, this as any),
       );
       return (this as any).environments;
     }
@@ -104,11 +104,11 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
 
       if ((this as any).environments) {
         const env = (this as any).environments.find(
-          (e: Environment2) => e.name === environmentName,
+          (e: EnvironmentDTO) => e.name === environmentName,
         );
         if (!env) {
           throw new Error(
-            `Environment "${environmentName}" not found. Available environments: ${(this as any).environments.map((e: Environment2) => e.name).join(', ')}`,
+            `Environment "${environmentName}" not found. Available environments: ${(this as any).environments.map((e: EnvironmentDTO) => e.name).join(', ')}`,
           );
         } else {
           const token = (this as any).getToken();

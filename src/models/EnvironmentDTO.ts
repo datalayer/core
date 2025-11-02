@@ -6,7 +6,7 @@
 /**
  * Environment domain model for the Datalayer SDK.
  *
- * @module models/Environment
+ * @module models/EnvironmentDTO
  */
 
 import type { DatalayerClient } from '../index';
@@ -97,7 +97,7 @@ export interface ListEnvironmentsResponse {
  * console.log(aiEnv.title); // "AI Environment"
  * ```
  */
-export class Environment2 {
+export class EnvironmentDTO {
   /** @internal */
   _data: EnvironmentData;
 

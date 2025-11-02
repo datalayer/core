@@ -6,7 +6,7 @@
 /**
  * User model for the Datalayer SDK with rich functionality.
  *
- * @module models/User
+ * @module models/UserDTO
  */
 
 import type { DatalayerClient } from '../index';

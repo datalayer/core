@@ -32,7 +32,7 @@ import { SpacerMixin } from './mixins/SpacerMixin';
 // Import model types for interface declaration
 import type { UserDTO } from './../models/UserDTO';
 import type { CreditsDTO } from '../models/CreditsDTO';
-import type { Environment2 } from '../models/EnvironmentDTO';
+import type { EnvironmentDTO } from '../models/EnvironmentDTO';
 import type { RuntimeDTO } from '../models/RuntimeDTO';
 import type { RuntimeSnapshotDTO } from '../models/RuntimeSnapshotDTO';
 import type { SpaceDTO } from '../models/SpaceDTO';
@@ -98,7 +98,7 @@ export { UserDTO as User } from './../models/UserDTO';
 export type { UserJSON } from './../models/UserDTO';
 export { RuntimeDTO as Runtime } from '../models/RuntimeDTO';
 export type { RuntimeJSON } from '../models/RuntimeDTO';
-export { Environment2 as Environment } from '../models/EnvironmentDTO';
+export { EnvironmentDTO as Environment } from '../models/EnvironmentDTO';
 export type { EnvironmentJSON } from '../models/EnvironmentDTO';
 export { RuntimeSnapshotDTO as Snapshot } from '../models/RuntimeSnapshotDTO';
 export { SpaceDTO as Space } from '../models/SpaceDTO';
@@ -132,7 +132,7 @@ export interface DatalayerClient {
   checkIAMHealth(): Promise<HealthCheck>;
 
   // Runtime Methods
-  listEnvironments(): Promise<Environment2[]>;
+  listEnvironments(): Promise<EnvironmentDTO[]>;
   ensureRuntime(
     environmentName?: string,
     creditsLimit?: number,
