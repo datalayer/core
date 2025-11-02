@@ -7,7 +7,7 @@
  * Represents a workspace or project space in Datalayer
  * @interface Space
  */
-export interface Space {
+export interface Space2 {
   uid: string;
   name_t: string;
   handle_s: string;
@@ -65,7 +65,7 @@ export interface CollaborationSessionResponse {
 export interface CreateSpaceResponse {
   success: boolean;
   message: string;
-  space?: Space;
+  space?: Space2;
 }
 
 /**
@@ -267,5 +267,5 @@ export interface GetSpaceItemResponse {
 export interface SpacesForUserResponse {
   success: boolean;
   message: string;
-  spaces: Space[];
+  spaces: Space2[];
 }

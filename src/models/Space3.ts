@@ -9,7 +9,7 @@
  * @module models/Space
  */
 
-import type { Space as SpaceData, GetSpaceItemsResponse } from './Space2';
+import type { Space2 as SpaceData, GetSpaceItemsResponse } from './Space2';
 import * as users from '../api/spacer/users';
 import * as items from '../api/spacer/items';
 import * as notebooks from '../api/spacer/notebooks';

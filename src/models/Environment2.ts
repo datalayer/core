@@ -9,7 +9,7 @@
  * @module models/Environment
  */
 
-import type { Environment as EnvironmentData } from './Runtime2';
+import type { EnvironmentData as EnvironmentData } from './Runtime2';
 import type { DatalayerClient } from '../index';
 import { validateJSON } from '../api/utils/validation';
 

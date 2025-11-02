@@ -7,7 +7,7 @@
  * Represents a computing environment available in the Datalayer platform
  * @interface Environment
  */
-export interface Environment {
+export interface EnvironmentData {
   /** Human-readable title for the environment */
   title: string;
   /** Detailed description of the environment */
@@ -49,7 +49,7 @@ export interface Environment {
  * Represents a running instance of a computing environment
  * @interface Runtime
  */
-export interface Runtime {
+export interface RuntimeData {
   /** Kubernetes pod name for the runtime instance */
   pod_name: string;
   /** Unique identifier for the runtime */
@@ -178,7 +178,7 @@ export interface EnvironmentsListResponse {
   /** Response message from the server */
   message: string;
   /** Array of available environments */
-  environments: Environment[];
+  environments: EnvironmentData[];
 }
 
 /**
@@ -191,7 +191,7 @@ export interface CreateRuntimeResponse {
   /** Response message from the server */
   message: string;
   /** The created runtime instance */
-  runtime: Runtime;
+  runtime: RuntimeData;
 }
 
 /**
@@ -204,7 +204,7 @@ export interface RuntimesListResponse {
   /** Response message from the server */
   message: string;
   /** Array of runtime instances */
-  runtimes: Runtime[];
+  runtimes: RuntimeData[];
 }
 
 /**

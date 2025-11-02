@@ -97,6 +97,7 @@ export * from './Lexical2';
 export * from './Notebook2';
 export * from './Runtime3';
 export * from './RuntimeSnapshot2';
+export * from './Space2';
 export * from './Space3';
 export * from './SpaceMember';
 export * from './Student';

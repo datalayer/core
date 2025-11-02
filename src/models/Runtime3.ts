@@ -10,7 +10,7 @@
  */
 
 import { updateRuntime } from '../api/runtimes/runtimes';
-import type { Runtime as RuntimeData } from '../models/Runtime2';
+import type { RuntimeData as RuntimeData } from '../models/Runtime2';
 import type { DatalayerClient } from '../index';
 import { RuntimeSnapshot2 } from './RuntimeSnapshot2';
 import { validateJSON } from '../api/utils/validation';
