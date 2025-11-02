@@ -115,7 +115,7 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
   const setSelectedRuntimeDesc = useCallback(
     (kernel?: IRuntimeDesc): void => {
       const datalayerMeta = model.getMetadata('datalayer') ?? {
-        kernel: undefined,
+        runtime: undefined,
       };
       if (!kernel) {
         delete datalayerMeta.kernel;

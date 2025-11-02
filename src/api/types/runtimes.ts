@@ -21,7 +21,7 @@ export interface Environment {
   /** Content mounts for this environment */
   contents?: any[]; // Simplified - EnvironmentContent type removed
   /** Kernel configuration */
-  kernel?: {
+  runtime?: {
     /** Template for kernel naming */
     givenNameTemplate?: string;
   };

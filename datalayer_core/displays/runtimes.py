@@ -35,7 +35,7 @@ def _new_runtime_table(title: str = "Runtimes") -> Table:
     return table
 
 
-def _add_runtime_to_table(table: Table, kernel: dict[str, Any]) -> None:
+def _add_runtime_to_table(table: Table, runtime: dict[str, Any]) -> None:
     """
     Add a runtime row to the display table.
 
@@ -46,11 +46,11 @@ def _add_runtime_to_table(table: Table, kernel: dict[str, Any]) -> None:
     kernel : dict[str, Any]
         Runtime/kernel data dictionary to add as a row.
     """
-    expired_at = kernel.get("expired_at")
+    expired_at = runtime.get("expired_at")
     table.add_row(
-        kernel["pod_name"],
-        kernel["given_name"],
-        kernel["environment_name"],
+        runtime["pod_name"],
+        runtime["given_name"],
+        runtime["environment_name"],
         "Never" if expired_at is None else timestamp_to_local_date(expired_at),
     )
 

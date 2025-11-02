@@ -202,7 +202,7 @@ export function RuntimePickerNotebook(
     setValue(
       creditsLimit !== 0
         ? {
-            kernel: selectedRuntimeDesc
+            runtime: selectedRuntimeDesc
               ? ({
                   environmentName: ['browser', 'remote'].includes(
                     selectedRuntimeDesc.location,

@@ -145,7 +145,7 @@ export function RuntimeLauncherDialog(
     Math.min(credits?.available ?? 0, 10),
   );
   const [runtimeName, setRuntimeName] = useState(
-    environments[0]?.kernel?.givenNameTemplate || environments[0]?.title || '',
+    environments[0]?.runtime?.givenNameTemplate || environments[0]?.title || '',
   );
   // Whether the runtim name has been changed by the user or not
   const [hasCustomRuntimeName, setHasCustomRuntimeName] = useState(false);
@@ -176,7 +176,7 @@ export function RuntimeLauncherDialog(
       setSelection(selection);
       if (!hasCustomRuntimeName) {
         const spec = environments.find(env => env.name === selection);
-        setRuntimeName(spec?.kernel?.givenNameTemplate || spec?.title || '');
+        setRuntimeName(spec?.runtime?.givenNameTemplate || spec?.title || '');
       }
     },
     [setSelection, hasCustomRuntimeName],
