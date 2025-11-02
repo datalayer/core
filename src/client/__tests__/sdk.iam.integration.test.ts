@@ -3,6 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect, beforeAll } from 'vitest';
 import { DatalayerClient } from '..';
 import { testConfig } from '../../__tests__/shared/test-config';
@@ -15,14 +17,14 @@ import { DEFAULT_SERVICE_URLS } from '../../api/constants';
  * using the SDK client.
  */
 describe('SDK IAM Integration Tests', () => {
-  let sdk: DatalayerClient;
+  let client: DatalayerClient;
 
   beforeAll(() => {
     if (!testConfig.hasToken()) {
       return;
     }
 
-    sdk = new DatalayerClient({
+    client = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -34,7 +36,7 @@ describe('SDK IAM Integration Tests', () => {
     describe('whoami', () => {
       it('should get current user profile', async () => {
         console.log('Testing whoami...');
-        const user = await sdk.whoami();
+        const user = await client.whoami();
 
         expect(user).toBeDefined();
         expect(user.id).toBeDefined();
@@ -56,7 +58,7 @@ describe('SDK IAM Integration Tests', () => {
 
       it('should include organization info if available', async () => {
         console.log('Checking organization info...');
-        const user = await sdk.whoami();
+        const user = await client.whoami();
 
         if (
           (user as any).organizationIds &&
@@ -75,11 +77,11 @@ describe('SDK IAM Integration Tests', () => {
         console.log('Testing user profile caching...');
 
         const start1 = Date.now();
-        const user1 = await sdk.whoami();
+        const user1 = await client.whoami();
         const time1 = Date.now() - start1;
 
         const start2 = Date.now();
-        const user2 = await sdk.whoami();
+        const user2 = await client.whoami();
         const time2 = Date.now() - start2;
 
         // Second call should be same or faster (cached)
@@ -93,7 +95,7 @@ describe('SDK IAM Integration Tests', () => {
         console.log('Testing login with invalid credentials...');
 
         try {
-          await sdk.login({
+          await client.login({
             handle: 'invalid@example.com',
             password: 'wrong-password',
           });
@@ -110,7 +112,7 @@ describe('SDK IAM Integration Tests', () => {
 
         try {
           // Missing required fields
-          await sdk.login({} as any);
+          await client.login({} as any);
           expect(true).toBe(false);
         } catch (error: any) {
           expect(error).toBeDefined();
@@ -124,11 +126,11 @@ describe('SDK IAM Integration Tests', () => {
         console.log('Verifying token is included in requests...');
 
         // Make a request and verify it succeeds (which means token was included)
-        const user = await sdk.whoami();
+        const user = await client.whoami();
         expect(user).toBeDefined();
 
         // Verify token is stored in SDK
-        const token = (sdk as any).getToken();
+        const token = (client as any).getToken();
         expect(token).toBe(testConfig.getToken());
 
         console.log('Token management verified');
@@ -137,7 +139,7 @@ describe('SDK IAM Integration Tests', () => {
       it('should handle expired tokens gracefully', async () => {
         console.log('Testing expired token handling...');
 
-        const expiredSdk = new DatalayerSDK({
+        const expiredSdk = new DatalayerClient({
           token: 'expired.invalid.token',
           iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
           runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -159,7 +161,7 @@ describe('SDK IAM Integration Tests', () => {
         console.log('Testing logout...');
 
         // Create a separate SDK instance for logout test
-        const logoutSdk = new DatalayerSDK({
+        const logoutSdk = new DatalayerClient({
           token: testConfig.getToken(),
           iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
           runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -184,7 +186,7 @@ describe('SDK IAM Integration Tests', () => {
       it('should provide clear error messages for auth failures', async () => {
         console.log('Testing auth error messages...');
 
-        const invalidSdk = new DatalayerSDK({
+        const invalidSdk = new DatalayerClient({
           token: 'invalid-token',
           iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
           runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,

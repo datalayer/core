@@ -3,15 +3,17 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
-import { Runtime } from '../models/Runtime';
-import { Snapshot } from '../models/Snapshot';
-import { Space } from '../models/Space';
-import { Notebook } from '../models/Notebook';
-import { Lexical } from '../models/Lexical';
-import { testConfig } from '../../__tests__/shared/test-config';
+import { RuntimeDTO } from '../../models/RuntimeDTO';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
+import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
+import { SpaceDTO } from '../../models/SpaceDTO';
+import { NotebookDTO } from '../../models/NotebookDTO';
+import { LexicalDTO } from '../../models/LexicalDTO';
+import { testConfig } from '../../__tests__/shared/test-config';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 /**
@@ -21,12 +23,12 @@ import { performCleanup } from '../../__tests__/shared/cleanup-shared';
  * using the SDK client and model classes.
  */
 describe('SDK Models Integration Tests', () => {
-  let sdk: DatalayerClient;
-  let testSpace: Space | null = null;
-  let testNotebook: Notebook | null = null;
-  let testLexical: Lexical | null = null;
-  let testRuntime: Runtime | null = null;
-  let testSnapshot: Snapshot | null = null;
+  let client: DatalayerClient;
+  let testSpace: SpaceDTO | null = null;
+  let testNotebook: NotebookDTO | null = null;
+  let testLexical: LexicalDTO | null = null;
+  let testRuntime: RuntimeDTO | null = null;
+  let testSnapshot: RuntimeSnapshotDTO | null = null;
 
   beforeAll(async () => {
     if (!testConfig.hasToken()) {
@@ -35,7 +37,7 @@ describe('SDK Models Integration Tests', () => {
 
     await performCleanup('setup');
 
-    sdk = new DatalayerClient({
+    client = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -56,18 +58,17 @@ describe('SDK Models Integration Tests', () => {
       console.log('Testing model deletion state...');
 
       // Get a space to work with
-      const spaces = await sdk.getMySpaces();
+      const spaces = await client.getMySpaces();
       expect(spaces.length).toBeGreaterThan(0);
       testSpace = spaces[0];
 
       // Create a notebook
-      const notebook = await sdk.createNotebook({
-        spaceId: testSpace.uid,
-        notebookType: 'jupyter',
-        name: 'model-test-notebook-' + Date.now(),
-        description: 'Test notebook for model tests',
-      });
-      expect(notebook).toBeInstanceOf(Notebook);
+      const notebook = await client.createNotebook(
+        testSpace.uid,
+        `model-test-notebook-${Date.now()}`,
+        'Test notebook for model tests',
+      );
+      expect(notebook).toBeInstanceOf(NotebookDTO);
 
       // Delete it
       await notebook.delete();
@@ -95,12 +96,11 @@ describe('SDK Models Integration Tests', () => {
       console.log('Testing lazy loading...');
 
       // Create a notebook with minimal data
-      testNotebook = await sdk.createNotebook({
-        spaceId: testSpace.uid,
-        notebookType: 'jupyter',
-        name: 'lazy-load-test-' + Date.now(),
-        description: 'Test description',
-      });
+      testNotebook = await client.createNotebook(
+        testSpace.uid,
+        `lazy-load-test-${Date.now()}`,
+        'Test description',
+      );
 
       // First call should fetch from API
       const name1 = await testNotebook.getName();
@@ -119,19 +119,18 @@ describe('SDK Models Integration Tests', () => {
     it('should refresh data when explicitly requested', async () => {
       // Ensure we have a space to work with
       if (!testSpace) {
-        const spaces = await sdk.getMySpaces();
+        const spaces = await client.getMySpaces();
         expect(spaces.length).toBeGreaterThan(0);
         testSpace = spaces[0];
       }
 
       // Create a notebook if we don't have one
       if (!testNotebook) {
-        testNotebook = await sdk.createNotebook({
-          spaceId: testSpace.uid,
-          notebookType: 'jupyter',
-          name: 'refresh-test-' + Date.now(),
-          description: 'Test description',
-        });
+        testNotebook = await client.createNotebook(
+          testSpace.uid,
+          `refresh-test-${Date.now()}`,
+          'Test description',
+        );
       }
 
       console.log('Testing data refresh...');
@@ -158,19 +157,23 @@ describe('SDK Models Integration Tests', () => {
     it('should handle Space → Notebook relationship', async () => {
       // Ensure we have a space
       if (!testSpace) {
-        const spaces = await sdk.getMySpaces();
+        const spaces = await client.getMySpaces();
         expect(spaces.length).toBeGreaterThan(0);
         testSpace = spaces[0];
       }
 
       // Ensure we have a notebook
       if (!testNotebook) {
-        testNotebook = await sdk.createNotebook({
-          spaceId: testSpace.uid,
-          notebookType: 'jupyter',
-          name: 'relationship-test-' + Date.now(),
-          description: 'Test notebook for relationships',
-        });
+        testNotebook = await client.createNotebook(
+          testSpace.uid,
+          `relationship-test-notebook-${Date.now()}`,
+          'Test notebook for relationships',
+        );
+      }
+
+      const notebookRef = testNotebook;
+      if (!notebookRef) {
+        throw new Error('Failed to create notebook for relationship test');
       }
 
       console.log('Testing Space → Notebook relationship...');
@@ -180,7 +183,7 @@ describe('SDK Models Integration Tests', () => {
       expect(Array.isArray(items)).toBe(true);
 
       console.log(`Space has ${items.length} items`);
-      console.log('Looking for notebook with id:', testNotebook!.id);
+      console.log('Looking for notebook with id:', notebookRef.id);
       console.log(
         'Items in space:',
         items.map(item => ({
@@ -195,12 +198,11 @@ describe('SDK Models Integration Tests', () => {
       // Note: Space items may not have a 'type' property
       const foundNotebook = items.find(
         item =>
-          item.id === testNotebook!.id ||
-          (item as any).uid === testNotebook!.uid,
+          item.id === notebookRef.id || (item as any).uid === notebookRef.uid,
       );
 
       expect(foundNotebook).toBeDefined();
-      console.log(`Found notebook ${testNotebook.id} in space items`);
+      console.log(`Found notebook ${notebookRef.id} in space items`);
 
       console.log(`Space contains ${items.length} items`);
     });
@@ -208,7 +210,7 @@ describe('SDK Models Integration Tests', () => {
     it('should handle Space → Lexical relationship', async () => {
       // Ensure we have a space
       if (!testSpace) {
-        const spaces = await sdk.getMySpaces();
+        const spaces = await client.getMySpaces();
         expect(spaces.length).toBeGreaterThan(0);
         testSpace = spaces[0];
       }
@@ -216,19 +218,25 @@ describe('SDK Models Integration Tests', () => {
       console.log('Testing Space → Lexical relationship...');
 
       // Create a lexical document
-      testLexical = await sdk.createLexical({
-        spaceId: testSpace.uid,
-        name: 'relationship-test-lexical-' + Date.now(),
-        documentType: 'document',
-        description: 'Test lexical document for relationships',
-      });
-      expect(testLexical).toBeInstanceOf(Lexical);
+      testLexical = await client.createLexical(
+        testSpace.uid,
+        `relationship-test-lexical-${Date.now()}`,
+        'Test lexical document for relationships',
+      );
+      expect(testLexical).toBeInstanceOf(LexicalDTO);
 
       // Verify it appears in space items
       const items = await testSpace.getItems();
+      const lexicalRef = testLexical;
+      if (!lexicalRef) {
+        throw new Error(
+          'Failed to create lexical document for relationship test',
+        );
+      }
+
       const foundLexical = items.find(
         item =>
-          item.id === testLexical!.id || (item as any).uid === testLexical!.uid,
+          item.id === lexicalRef.id || (item as any).uid === lexicalRef.uid,
       );
       expect(foundLexical).toBeDefined();
 
@@ -243,14 +251,14 @@ describe('SDK Models Integration Tests', () => {
         console.log('Testing Runtime → Snapshot relationship...');
 
         // Create a runtime
-        testRuntime = await sdk.createRuntime(
+        testRuntime = await client.createRuntime(
           'python-cpu-env',
           'notebook',
           'model-test-runtime',
           10,
         );
 
-        expect(testRuntime).toBeInstanceOf(Runtime);
+        expect(testRuntime).toBeInstanceOf(RuntimeDTO);
         console.log(`Created runtime: ${(testRuntime as any).podName}`);
 
         // Create a snapshot from the runtime
@@ -259,7 +267,7 @@ describe('SDK Models Integration Tests', () => {
           'Test snapshot from model test',
         );
 
-        expect(testSnapshot).toBeInstanceOf(Snapshot);
+        expect(testSnapshot).toBeInstanceOf(RuntimeSnapshotDTO);
         // Snapshots don't have a podName property
         // Instead, check that the snapshot was created successfully
         expect(testSnapshot.uid).toBeDefined();
@@ -278,10 +286,15 @@ describe('SDK Models Integration Tests', () => {
         console.log('Testing runtime snapshot listing...');
 
         // List all snapshots
-        const snapshots = await sdk.listSnapshots();
+        const snapshots = await client.listSnapshots();
 
         // Find our test snapshot
-        const found = snapshots.find(s => s.uid === testSnapshot!.uid);
+        const snapshotRef = testSnapshot;
+        if (!snapshotRef) {
+          throw new Error('Failed to create snapshot for relationship test');
+        }
+
+        const found = snapshots.find(s => s.uid === snapshotRef.uid);
         expect(found).toBeDefined();
 
         console.log(`Found ${snapshots.length} snapshots total`);
@@ -315,17 +328,16 @@ describe('SDK Models Integration Tests', () => {
       // Always create a fresh notebook for this test to avoid state issues
       // Ensure we have a space first
       if (!testSpace) {
-        const spaces = await sdk.getMySpaces();
+        const spaces = await client.getMySpaces();
         expect(spaces.length).toBeGreaterThan(0);
         testSpace = spaces[0];
       }
 
-      const freshNotebook = await sdk.createNotebook({
-        spaceId: testSpace.uid,
-        notebookType: 'jupyter',
-        name: 'serialization-test-' + Date.now(),
-        description: 'Test notebook for serialization',
-      });
+      const freshNotebook = await client.createNotebook(
+        testSpace.uid,
+        `serialization-test-${Date.now()}`,
+        'Test notebook for serialization',
+      );
 
       console.log('Testing Notebook serialization...');
       console.log('Notebook created with id:', freshNotebook.id);
@@ -338,8 +350,7 @@ describe('SDK Models Integration Tests', () => {
       console.log('Notebook JSON:', JSON.stringify(json, null, 2));
 
       // The notebook should have its basic properties
-      // The name might be in name, name_t, or notebook_name_s
-      const name = json.name || json.name_t || json.notebook_name_s;
+      const name = json.name;
       expect(name).toBeDefined();
       expect(json.id).toBeDefined();
       expect(json.uid).toBeDefined();
@@ -392,9 +403,9 @@ describe('SDK Models Integration Tests', () => {
       console.log('Testing model error handling...');
 
       // Create a fake notebook with invalid ID
-      const fakeNotebook = new Notebook(
+      const fakeNotebook = new NotebookDTO(
         { id: 'invalid-id', space_id: 'invalid-space' } as any,
-        sdk as any,
+        client as any,
       );
 
       try {
@@ -455,7 +466,7 @@ describe('SDK Models Integration Tests', () => {
     it('should support full model lifecycle', async () => {
       // Ensure we have a space
       if (!testSpace) {
-        const spaces = await sdk.getMySpaces();
+        const spaces = await client.getMySpaces();
         expect(spaces.length).toBeGreaterThan(0);
         testSpace = spaces[0];
       }
@@ -463,17 +474,16 @@ describe('SDK Models Integration Tests', () => {
       console.log('Testing full model lifecycle...');
 
       // 1. Create
-      const notebook = await sdk.createNotebook({
-        spaceId: testSpace.uid,
-        notebookType: 'jupyter',
-        name: 'lifecycle-test-' + Date.now(),
-        description: 'Lifecycle test notebook',
-      });
-      expect(notebook).toBeInstanceOf(Notebook);
+      const notebook = await client.createNotebook(
+        testSpace.uid,
+        `lifecycle-test-${Date.now()}`,
+        'Lifecycle test notebook',
+      );
+      expect(notebook).toBeInstanceOf(NotebookDTO);
       console.log('1. Created notebook');
 
       // 2. Read
-      const retrieved = await sdk.getNotebook(notebook.uid);
+      const retrieved = await client.getNotebook(notebook.uid);
       expect(retrieved.id).toBe(notebook.id);
       console.log('2. Retrieved notebook');
 
