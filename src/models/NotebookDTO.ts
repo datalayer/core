@@ -9,15 +9,28 @@
  * @module models/Notebook
  */
 
-import type {
-  Notebook as NotebookData,
-  UpdateNotebookRequest,
-} from './SpaceDTO';
+import type { UpdateNotebookRequest } from './SpaceDTO';
 import * as notebooks from '../api/spacer/notebooks';
 import type { DatalayerClient } from '../index';
-import { Item } from './ItemDTO';
+import { ItemDTO } from './ItemDTO';
 import { ItemTypes } from '../client/constants';
 import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a Jupyter notebook document
+ * @interface NotebookData
+ */
+export interface NotebookData {
+  id: string;
+  uid: string;
+  name_t: string;
+  description_t: string;
+  type_s: string;
+  notebook_extension_s: string;
+  s3_path_s: string;
+  s3_url_s: string;
+  cdn_url_s: string;
+}
 
 /**
  * Stable public interface for Notebook data.
@@ -51,7 +64,7 @@ export interface NotebookJSON {
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
-export class NotebookDTO extends Item<NotebookData> {
+export class NotebookDTO extends ItemDTO<NotebookData> {
   /**
    * Create a Notebook instance.
    *

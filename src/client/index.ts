@@ -30,12 +30,12 @@ import { RuntimesMixin } from './mixins/RuntimesMixin';
 import { SpacerMixin } from './mixins/SpacerMixin';
 
 // Import model types for interface declaration
-import type { User3 } from './../models/User3';
-import type { Credits2 } from '../models/Credits2';
+import type { UserDTO } from './../models/UserDTO';
+import type { CreditsDTO } from '../models/CreditsDTO';
 import type { Environment2 } from '../models/EnvironmentDTO';
-import type { Runtime3 } from '../models/RuntimeDTO';
+import type { RuntimeDTO } from '../models/RuntimeDTO';
 import type { RuntimeSnapshotDTO } from '../models/RuntimeSnapshotDTO';
-import type { Space3 } from '../models/Space3';
+import type { SpaceDTO } from '../models/SpaceDTO';
 import type { NotebookDTO } from '../models/NotebookDTO';
 import type { LexicalDTO } from '../models/LexicalDTO';
 import type { HealthCheck } from '../models/HealthCheck';
@@ -94,18 +94,18 @@ export type { DatalayerClientConfig, SDKHandlers };
 export { DatalayerClientBase };
 
 // Export models for use by consumers
-export { User3 as User } from './../models/User3';
-export type { UserJSON } from './../models/User3';
-export { Runtime3 as Runtime } from '../models/RuntimeDTO';
+export { UserDTO as User } from './../models/UserDTO';
+export type { UserJSON } from './../models/UserDTO';
+export { RuntimeDTO as Runtime } from '../models/RuntimeDTO';
 export type { RuntimeJSON } from '../models/RuntimeDTO';
 export { Environment2 as Environment } from '../models/EnvironmentDTO';
 export type { EnvironmentJSON } from '../models/EnvironmentDTO';
 export { RuntimeSnapshotDTO as Snapshot } from '../models/RuntimeSnapshotDTO';
-export { Space3 as Space } from '../models/Space3';
+export { SpaceDTO as Space } from '../models/SpaceDTO';
 export { NotebookDTO as Notebook } from '../models/NotebookDTO';
 export { LexicalDTO } from '../models/LexicalDTO';
-export { Credits2 as Credits } from '../models/Credits2';
-export { Item } from '../models/ItemDTO';
+export { CreditsDTO as Credits } from '../models/CreditsDTO';
+export { ItemDTO as Item } from '../models/ItemDTO';
 export { HealthCheck } from '../models/HealthCheck';
 export type { HealthCheckJSON } from '../models/HealthCheck';
 
@@ -120,10 +120,10 @@ export interface DatalayerClient {
   setToken(token: string): Promise<void>;
 
   // IAM Methods
-  whoami(): Promise<User3>;
-  login(token: string): Promise<User3>;
+  whoami(): Promise<UserDTO>;
+  login(token: string): Promise<UserDTO>;
   logout(): Promise<void>;
-  getCredits(): Promise<Credits2>;
+  getCredits(): Promise<CreditsDTO>;
   calculateMaxRuntimeMinutes(
     availableCredits: number,
     burningRate: number,
@@ -140,16 +140,16 @@ export interface DatalayerClient {
     maxWaitTime?: number,
     reuseExisting?: boolean,
     snapshotId?: string,
-  ): Promise<Runtime3>;
+  ): Promise<RuntimeDTO>;
   createRuntime(
     environmentName: string,
     type: 'notebook' | 'terminal' | 'job',
     givenName: string,
     minutesLimit: number,
     fromSnapshotId?: string,
-  ): Promise<Runtime3>;
-  listRuntimes(): Promise<Runtime3[]>;
-  getRuntime(podName: string): Promise<Runtime3>;
+  ): Promise<RuntimeDTO>;
+  listRuntimes(): Promise<RuntimeDTO[]>;
+  getRuntime(podName: string): Promise<RuntimeDTO>;
   deleteRuntime(podName: string): Promise<void>;
   terminateAllRuntimes(): Promise<PromiseSettledResult<void>[]>;
   createSnapshot(
@@ -164,7 +164,7 @@ export interface DatalayerClient {
   checkRuntimesHealth(): Promise<HealthCheck>;
 
   // Spacer Methods
-  getMySpaces(): Promise<Space3[]>;
+  getMySpaces(): Promise<SpaceDTO[]>;
   createSpace(
     name: string,
     description: string,
@@ -173,7 +173,7 @@ export interface DatalayerClient {
     organizationId: string,
     seedSpaceId: string,
     isPublic: boolean,
-  ): Promise<Space3>;
+  ): Promise<SpaceDTO>;
   createNotebook(
     spaceId: string,
     name: string,

@@ -4,10 +4,28 @@
  */
 
 /**
- * Represents a workspace or project space in Datalayer
- * @interface Space
+ * Space domain model for the Datalayer SDK.
+ *
+ * @module models/SpaceDTO
  */
-export interface SpaceDTO {
+
+import * as users from '../api/spacer/users';
+import * as items from '../api/spacer/items';
+import * as notebooks from '../api/spacer/notebooks';
+import * as lexicals from '../api/spacer/lexicals';
+import type { DatalayerClient } from '../index';
+import { NotebookDTO, type NotebookJSON } from './NotebookDTO';
+import { NotebookData } from './NotebookDTO';
+import { LexicalDTO, type LexicalJSON } from './LexicalDTO';
+import { ItemTypes } from '../client/constants';
+import { convertSpaceItemsToModels } from '../client/utils/spacerUtils';
+import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a workspace or project space in Datalayer
+ * @interface SpaceData
+ */
+export interface SpaceData {
   uid: string;
   name_t: string;
   handle_s: string;
@@ -19,19 +37,295 @@ export interface SpaceDTO {
 }
 
 /**
- * Represents a Jupyter notebook document
- * @interface Notebook
+ * Stable public interface for Space data.
+ * This is the contract that SDK consumers can rely on.
+ * The raw API may change, but this interface remains stable.
  */
-export interface Notebook {
-  id: string;
+export interface SpaceJSON {
+  /** ulid for the space */
   uid: string;
-  name_t: string;
-  description_t: string;
-  type_s: string;
-  notebook_extension_s: string;
-  s3_path_s: string;
-  s3_url_s: string;
-  cdn_url_s: string;
+  /** Name of the space */
+  name: string;
+  /** Handle for the space */
+  handle: string;
+  /** Variant of the space */
+  variant: string;
+  /** Description of the space */
+  description: string;
+  /** Items contained in the space (as JSON) */
+  items: Array<NotebookJSON | LexicalJSON>;
+}
+
+/**
+ * Space domain model that wraps API responses with convenient methods.
+ * Provides workspace management with data refresh and content creation operations.
+ *
+ * @example
+ * ```typescript
+ * const space = spaces[0];
+ * const items = await space.getItems();
+ * const notebook = await space.createNotebook({ name: 'Analysis' });
+ * ```
+ */
+export class SpaceDTO {
+  protected _data: SpaceData;
+  private _sdk: DatalayerClient;
+  private _items: (NotebookDTO | LexicalDTO)[] | null = null;
+  private _deleted: boolean = false;
+
+  /**
+   * Create a Space instance.
+   *
+   * @param data - Space data from API
+   * @param sdk - SDK instance
+   */
+  constructor(data: SpaceData, sdk: DatalayerClient) {
+    this._data = data;
+    this._sdk = sdk;
+  }
+
+  // ========================================================================
+  // Helper Methods
+  // ========================================================================
+
+  /**
+   * Check if this space has been deleted and throw error if so.
+   * @throws Error if deleted
+   */
+  private _checkDeleted(): void {
+    if (this._deleted) {
+      throw new Error(
+        `Space ${this._data.uid} has been deleted and no longer exists`,
+      );
+    }
+  }
+
+  /**
+   * Refresh space data from the API by fetching user's spaces.
+   */
+  async refresh(): Promise<void> {
+    const token = (this._sdk as any).getToken();
+    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+    const response = await users.getMySpaces(token, spacerRunUrl);
+    const freshSpace = response.spaces.find(s => s.uid === this.uid);
+    if (freshSpace) {
+      this._data = freshSpace;
+    }
+  }
+
+  // ========================================================================
+  // Static Properties (set at creation, never change)
+  // ========================================================================
+
+  /** Unique identifier for the space. */
+  get uid(): string {
+    this._checkDeleted();
+    return this._data.uid;
+  }
+
+  /** URL-friendly handle for the space. */
+  get handle(): string {
+    this._checkDeleted();
+    return this._data.handle_s;
+  }
+
+  /** Space variant type. */
+  get variant(): string {
+    this._checkDeleted();
+    return this._data.variant_s;
+  }
+
+  /**
+   * The name of the space.
+   */
+  get name(): string {
+    return this._data.name_t;
+  }
+
+  /**
+   * The description of the space.
+   */
+  get description(): string {
+    return this._data.description_t;
+  }
+
+  // ========================================================================
+  // Space-specific Methods
+  // ========================================================================
+
+  /**
+   * Helper method to create items in this space.
+   *
+   * @param itemType - Type of item to create
+   * @param data - Creation configuration
+   * @returns Created model instance
+   * @internal
+   */
+  private async _createItem<T extends NotebookDTO | LexicalDTO>(data: {
+    name: string;
+    type: string;
+    description: string;
+    file?: File | Blob;
+  }): Promise<T> {
+    this._checkDeleted();
+
+    // Get necessary configuration from SDK
+    const token = (this._sdk as any).getToken();
+    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+
+    if (data.type === ItemTypes.NOTEBOOK) {
+      const requestData = {
+        spaceId: this.uid,
+        name: data.name,
+        description: data.description,
+        notebookType: data.type,
+        file: data.file,
+      };
+      const response = await notebooks.createNotebook(
+        token,
+        requestData,
+        spacerRunUrl,
+      );
+      if (!response.notebook) {
+        throw new Error('Failed to create notebook: No notebook returned');
+      } else {
+        return new NotebookDTO(response.notebook, this._sdk) as T;
+      }
+    } else if (data.type === ItemTypes.LEXICAL) {
+      const requestData = {
+        spaceId: this.uid,
+        name: data.name,
+        description: data.description,
+        documentType: data.type,
+        file: data.file,
+      };
+      const response = await lexicals.createLexical(
+        token,
+        requestData,
+        spacerRunUrl,
+      );
+      if (!response.document) {
+        throw new Error(
+          'Failed to create lexical document: No document returned',
+        );
+      } else {
+        return new LexicalDTO(response.document, this._sdk) as T;
+      }
+    } else {
+      throw new Error(`Unsupported item type: ${data.type}`);
+    }
+  }
+
+  /**
+   * Get all items in this space as model instances.
+   *
+   * @returns Array of Notebook and Lexical model instances
+   */
+  async getItems(): Promise<(NotebookDTO | LexicalDTO)[]> {
+    this._checkDeleted();
+    const token = (this._sdk as any).getToken();
+    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+
+    const response: GetSpaceItemsResponse = await items.getSpaceItems(
+      token,
+      this.uid,
+      spacerRunUrl,
+    );
+
+    // Use shared utility function to convert items to model instances
+    this._items = convertSpaceItemsToModels(response.items || [], this._sdk);
+    return this._items;
+  }
+
+  /**
+   * Create a new notebook in this space.
+   *
+   * @param data - Notebook creation configuration
+   * @returns Created Notebook instance
+   */
+  async createNotebook(data: {
+    name: string;
+    description: string;
+    file?: File | Blob;
+  }): Promise<NotebookDTO> {
+    return this._createItem({
+      name: data.name,
+      type: ItemTypes.NOTEBOOK,
+      description: data.description,
+      file: data.file,
+    });
+  }
+
+  /**
+   * Create a new lexical document in this space.
+   *
+   * @param data - Lexical creation configuration
+   * @returns Created Lexical instance
+   */
+  async createLexical(data: {
+    name: string;
+    description: string;
+    file?: File | Blob;
+  }): Promise<LexicalDTO> {
+    return this._createItem({
+      name: data.name,
+      type: ItemTypes.LEXICAL,
+      description: data.description,
+      file: data.file,
+    });
+  }
+
+  // ========================================================================
+  // Utility Methods
+  // ========================================================================
+
+  /**
+   * Get raw space data object.
+   * Returns cached data without refreshing.
+   *
+   * @returns Raw space data object
+   */
+  /**
+   * Get space data in camelCase format.
+   * Returns only the core fields that consumers need.
+   * This provides a stable interface regardless of API changes.
+   *
+   * @returns Core space data with camelCase properties
+   */
+  toJSON(): SpaceJSON {
+    this._checkDeleted();
+    const obj = {
+      uid: this.uid,
+      name: this.name,
+      description: this.description,
+      variant: this.variant,
+      handle: this.handle,
+      items: this._data.items
+        ? convertSpaceItemsToModels(this._data.items, this._sdk).map(item =>
+            item.toJSON(),
+          )
+        : [],
+    };
+    validateJSON(obj, 'Space');
+    return obj;
+  }
+
+  /**
+   * Get the raw space data exactly as received from the API.
+   * This preserves the original snake_case naming from the API response.
+   *
+   * @returns Raw space data from API
+   */
+  rawData(): SpaceData {
+    this._checkDeleted();
+    return this._data;
+  }
+
+  /** String representation of the space. */
+  toString(): string {
+    this._checkDeleted();
+    return `Space(${this.uid}, ${this.name})`;
+  }
 }
 
 /**
@@ -65,7 +359,7 @@ export interface CollaborationSessionResponse {
 export interface CreateSpaceResponse {
   success: boolean;
   message: string;
-  space?: SpaceDTO;
+  space?: SpaceData;
 }
 
 /**
@@ -87,7 +381,7 @@ export interface CreateNotebookRequest {
 export interface CreateNotebookResponse {
   success: boolean;
   message: string;
-  notebook?: Notebook;
+  notebook?: NotebookData;
 }
 
 /**
@@ -97,7 +391,7 @@ export interface CreateNotebookResponse {
 export interface GetNotebookResponse {
   success: boolean;
   message: string;
-  notebook?: Notebook; // Optional - not present in 404 response
+  notebook?: NotebookData; // Optional - not present in 404 response
 }
 
 /**
@@ -128,7 +422,7 @@ export interface UpdateNotebookRequest {
 export interface UpdateNotebookResponse {
   success: boolean;
   message: string;
-  notebook?: Notebook;
+  notebook?: NotebookData;
 }
 
 /**
@@ -143,91 +437,6 @@ export interface SpaceItem {
   name: string;
   created_at: string;
   updated_at?: string;
-}
-
-/**
- * Represents a Lexical document (rich text editor)
- * @interface Lexical
- */
-export interface Lexical {
-  id: string;
-  uid: string;
-  name?: string; // May not be present in API response
-  name_t?: string; // Text field for name
-  content?: any;
-  space_id?: string; // May not be present, extracted from s3_path_s
-  owner_id?: string; // May not be present
-  creator_uid?: string; // Creator UID from API
-  creator_handle_s?: string; // Creator handle from API
-  created_at?: string; // May not be present
-  creation_ts_dt?: string; // Creation timestamp from API
-  updated_at?: string; // May not be present
-  last_update_ts_dt?: string; // Last update timestamp from API
-  cdn_url_s: string;
-  // Additional fields from actual API response
-  type_s?: string;
-  public_b?: boolean;
-  description_t?: string;
-  document_name_s?: string;
-  document_extension_s: string;
-  document_format_s?: string;
-  content_length_i?: number;
-  content_type_s?: string;
-  mime_type_s?: string;
-  s3_path_s?: string;
-  s3_url_s?: string;
-  model_s?: string;
-}
-
-/**
- * Request payload for creating a Lexical document
- * @interface CreateLexicalRequest
- */
-export interface CreateLexicalRequest {
-  spaceId: string;
-  documentType: string;
-  name: string;
-  description: string;
-  file?: File | Blob;
-}
-
-/**
- * Response from creating a Lexical document
- * @interface CreateLexicalResponse
- */
-export interface CreateLexicalResponse {
-  success: boolean;
-  message: string;
-  document?: Lexical;
-}
-
-/**
- * Response from getting a Lexical document
- * @interface GetLexicalResponse
- */
-export interface GetLexicalResponse {
-  success: boolean;
-  message: string;
-  document?: Lexical; // Optional - not present in 404 response
-}
-
-/**
- * Request payload for updating a Lexical document
- * @interface UpdateLexicalRequest
- */
-export interface UpdateLexicalRequest {
-  name?: string;
-  description?: string;
-}
-
-/**
- * Response from updating a Lexical document
- * @interface UpdateLexicalResponse
- */
-export interface UpdateLexicalResponse {
-  success: boolean;
-  message: string;
-  document: Lexical;
 }
 
 /**
@@ -267,5 +476,5 @@ export interface GetSpaceItemResponse {
 export interface SpacesForUserResponse {
   success: boolean;
   message: string;
-  spaces: SpaceDTO[];
+  spaces: SpaceData[];
 }

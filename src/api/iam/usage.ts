@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { CreditsResponse } from '../../models/Credits2';
+import { CreditsResponse } from '../../models/CreditsDTO';
 
 /**
  * Get the current user's available credits and usage information.

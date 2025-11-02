@@ -6,7 +6,7 @@
 /**
  * Runtime domain model for the Datalayer SDK.
  *
- * @module models/Runtime3
+ * @module models/RuntimeDTO
  */
 
 import { updateRuntime } from '../api/runtimes/runtimes';
@@ -128,7 +128,7 @@ export interface ListRuntimesResponse {
  * await runtime.waitUntilReady();
  * ```
  */
-export class Runtime3 {
+export class RuntimeDTO {
   /** @internal */
   _data: RuntimeData;
   private _sdk: DatalayerClient;
@@ -250,7 +250,7 @@ export class Runtime3 {
    * @param from - Snapshot identifier to restore from
    * @returns Updated Runtime instance
    */
-  async update(from: string): Promise<Runtime3> {
+  async update(from: string): Promise<RuntimeDTO> {
     this._checkDeleted();
     const updated = await updateRuntime(
       (this._sdk as any).getToken(),
@@ -258,7 +258,7 @@ export class Runtime3 {
       from,
       (this._sdk as any).getRuntimesRunUrl(),
     );
-    return new Runtime3(updated, this._sdk);
+    return new RuntimeDTO(updated, this._sdk);
   }
 
   /**

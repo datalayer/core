@@ -6,7 +6,7 @@
 /**
  * Abstract base class for all Datalayer content items.
  *
- * @module models/Item
+ * @module models/ItemDTO
  */
 
 import type { DatalayerClient } from '../index';
@@ -19,7 +19,7 @@ import * as items from '../api/spacer/items';
  * @template TData - Raw data type from API
  * @template TUpdateRequest - Update request type for API
  */
-export abstract class Item<TData> {
+export abstract class ItemDTO<TData> {
   protected _data: TData;
   private _sdk: DatalayerClient;
   private _deleted: boolean = false;

@@ -6,11 +6,11 @@
 /**
  * Snapshot domain model for the Datalayer SDK.
  *
- * @module models/Snapshot
+ * @module models/RuntimeSnapshotDTO
  */
 
 import type { DatalayerClient } from '../index';
-import { Runtime3 } from './RuntimeDTO';
+import { RuntimeDTO } from './RuntimeDTO';
 import { snapshots } from '../api/runtimes';
 import { validateJSON } from '../api/utils/validation';
 
@@ -217,7 +217,7 @@ export class RuntimeSnapshotDTO {
    * @param config - Optional runtime configuration to override defaults
    * @returns Created Runtime instance
    */
-  async restore(minutesLimit: number): Promise<Runtime3> {
+  async restore(minutesLimit: number): Promise<RuntimeDTO> {
     this._checkDeleted();
     return await (this._sdk as any).createRuntime({
       environmentName: this.environment,

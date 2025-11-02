@@ -17,13 +17,13 @@ import * as items from '../../api/spacer/items';
 import type {
   CreateSpaceRequest,
   UpdateNotebookRequest,
-  UpdateLexicalRequest,
   GetSpaceItemsResponse,
 } from '../../models/SpaceDTO';
+import { UpdateLexicalRequest } from '../../models/LexicalDTO';
 import type { Constructor } from '../utils/mixins';
 import { NotebookDTO } from '../../models/NotebookDTO';
 import { LexicalDTO } from '../../models/LexicalDTO';
-import { Space3 } from '../../models/Space3';
+import { SpaceDTO } from '../../models/SpaceDTO';
 import { HealthCheck } from '../../models/HealthCheck';
 import { convertSpaceItemsToModels } from '../utils/spacerUtils';
 
@@ -46,11 +46,11 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Get all workspaces for the authenticated user.
      * @returns Array of Space instances
      */
-    async getMySpaces(): Promise<Space3[]> {
+    async getMySpaces(): Promise<SpaceDTO[]> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const response = await users.getMySpaces(token, spacerRunUrl);
-      return response.spaces.map(s => new Space3(s, this as any));
+      return response.spaces.map(s => new SpaceDTO(s, this as any));
     }
 
     // ========================================================================
@@ -76,7 +76,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       organizationId: string,
       seedSpaceId: string,
       isPublic: boolean,
-    ): Promise<Space3> {
+    ): Promise<SpaceDTO> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
 
@@ -94,7 +94,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       if (!response.space) {
         throw new Error('Failed to create space: no space returned');
       }
-      return new Space3(response.space, this as any);
+      return new SpaceDTO(response.space, this as any);
     }
 
     // ========================================================================

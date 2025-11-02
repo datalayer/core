@@ -6,7 +6,7 @@
 /**
  * Credits model for the Datalayer SDK.
  *
- * @module models/Credits
+ * @module models/CreditsDTO
  */
 
 import { validateJSON } from '../api/utils/validation';
@@ -66,7 +66,7 @@ export interface CreditsResponse {
  * const maxMinutes = credits.calculateMaxRuntimeMinutes(environment.burningRate);
  * ```
  */
-export class Credits2 {
+export class CreditsDTO {
   /** @internal */
   _data: CreditsInfo;
 
