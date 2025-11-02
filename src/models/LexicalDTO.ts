@@ -9,10 +9,10 @@
  * @module models/Lexical
  */
 
-import type { Lexical as LexicalData, UpdateLexicalRequest } from './Space2';
+import type { Lexical as LexicalData, UpdateLexicalRequest } from './SpaceDTO';
 import * as lexicals from '../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
-import { Item } from './Item2';
+import { Item } from './ItemDTO';
 import { validateJSON } from '../api/utils/validation';
 import { ItemTypes } from '../client';
 
@@ -52,7 +52,7 @@ export interface LexicalJSON {
  * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
-export class Lexical2 extends Item<LexicalData> {
+export class LexicalDTO extends Item<LexicalData> {
   /**
    * Create a Lexical instance.
    *

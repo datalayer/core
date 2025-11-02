@@ -32,12 +32,12 @@ import { SpacerMixin } from './mixins/SpacerMixin';
 // Import model types for interface declaration
 import type { User3 } from './../models/User3';
 import type { Credits2 } from '../models/Credits2';
-import type { Environment2 } from '../models/Environment2';
-import type { Runtime3 } from '../models/Runtime3';
-import type { RuntimeSnapshot2 } from '../models/RuntimeSnapshot2';
+import type { Environment2 } from '../models/EnvironmentDTO';
+import type { Runtime3 } from '../models/RuntimeDTO';
+import type { RuntimeSnapshotDTO } from '../models/RuntimeSnapshotDTO';
 import type { Space3 } from '../models/Space3';
-import type { Notebook2 } from '../models/Notebook2';
-import type { Lexical2 } from '../models/Lexical2';
+import type { NotebookDTO } from '../models/NotebookDTO';
+import type { LexicalDTO } from '../models/LexicalDTO';
 import type { HealthCheck } from '../models/HealthCheck';
 
 /**
@@ -96,16 +96,16 @@ export { DatalayerClientBase };
 // Export models for use by consumers
 export { User3 as User } from './../models/User3';
 export type { UserJSON } from './../models/User3';
-export { Runtime3 as Runtime } from '../models/Runtime3';
-export type { RuntimeJSON } from '../models/Runtime3';
-export { Environment2 as Environment } from '../models/Environment2';
-export type { EnvironmentJSON } from '../models/Environment2';
-export { RuntimeSnapshot2 as Snapshot } from '../models/RuntimeSnapshot2';
+export { Runtime3 as Runtime } from '../models/RuntimeDTO';
+export type { RuntimeJSON } from '../models/RuntimeDTO';
+export { Environment2 as Environment } from '../models/EnvironmentDTO';
+export type { EnvironmentJSON } from '../models/EnvironmentDTO';
+export { RuntimeSnapshotDTO as Snapshot } from '../models/RuntimeSnapshotDTO';
 export { Space3 as Space } from '../models/Space3';
-export { Notebook2 as Notebook } from '../models/Notebook2';
-export { Lexical2 } from '../models/Lexical2';
+export { NotebookDTO as Notebook } from '../models/NotebookDTO';
+export { LexicalDTO } from '../models/LexicalDTO';
 export { Credits2 as Credits } from '../models/Credits2';
-export { Item } from '../models/Item2';
+export { Item } from '../models/ItemDTO';
 export { HealthCheck } from '../models/HealthCheck';
 export type { HealthCheckJSON } from '../models/HealthCheck';
 
@@ -157,9 +157,9 @@ export interface DatalayerClient {
     name: string,
     description: string,
     stop?: boolean,
-  ): Promise<RuntimeSnapshot2>;
-  listSnapshots(): Promise<RuntimeSnapshot2[]>;
-  getSnapshot(id: string): Promise<RuntimeSnapshot2>;
+  ): Promise<RuntimeSnapshotDTO>;
+  listSnapshots(): Promise<RuntimeSnapshotDTO[]>;
+  getSnapshot(id: string): Promise<RuntimeSnapshotDTO>;
   deleteSnapshot(id: string): Promise<void>;
   checkRuntimesHealth(): Promise<HealthCheck>;
 
@@ -179,27 +179,27 @@ export interface DatalayerClient {
     name: string,
     description: string,
     file?: File | Blob,
-  ): Promise<Notebook2>;
-  getNotebook(id: string): Promise<Notebook2>;
+  ): Promise<NotebookDTO>;
+  getNotebook(id: string): Promise<NotebookDTO>;
   updateNotebook(
     id: string,
     name?: string,
     description?: string,
-  ): Promise<Notebook2>;
+  ): Promise<NotebookDTO>;
   createLexical(
     spaceId: string,
     name: string,
     description: string,
     file?: File | Blob,
-  ): Promise<Lexical2>;
-  getLexical(id: string): Promise<Lexical2>;
+  ): Promise<LexicalDTO>;
+  getLexical(id: string): Promise<LexicalDTO>;
   updateLexical(
     id: string,
     name?: string,
     description?: string,
-  ): Promise<Lexical2>;
-  getSpaceItems(spaceId: string): Promise<(Notebook2 | Lexical2)[]>;
-  getSpaceItem(itemId: string): Promise<Notebook2 | Lexical2>;
+  ): Promise<LexicalDTO>;
+  getSpaceItems(spaceId: string): Promise<(NotebookDTO | LexicalDTO)[]>;
+  getSpaceItem(itemId: string): Promise<NotebookDTO | LexicalDTO>;
   deleteSpaceItem(itemId: string): Promise<void>;
   getCollaborationSessionId(documentId: string): Promise<string>;
   getContent(itemId: string): Promise<any>;

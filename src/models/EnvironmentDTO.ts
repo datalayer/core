@@ -9,9 +9,50 @@
  * @module models/Environment
  */
 
-import type { EnvironmentData as EnvironmentData } from './Runtime2';
 import type { DatalayerClient } from '../index';
 import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a computing environment available in the Datalayer platform.
+ * @interface EnvironmentData
+ */
+export interface EnvironmentData {
+  /** Human-readable title for the environment */
+  title: string;
+  /** Detailed description of the environment */
+  description: string;
+  /** Docker image used for this environment */
+  dockerImage: string;
+  /** Example usage or description */
+  example?: string;
+  /** Code snippets for this environment */
+  snippets?: any[]; // Simplified - EnvironmentSnippet type removed
+  /** Content mounts for this environment */
+  contents?: any[]; // Simplified - EnvironmentContent type removed
+  /** Kernel configuration */
+  runtime?: {
+    /** Template for kernel naming */
+    givenNameTemplate?: string;
+  };
+  /** Programming language (e.g., "python", "r") */
+  language: string;
+  /** Resource ranges configuration */
+  resourcesRanges?: any; // Simplified - ResourceRanges type removed
+  /** Credits consumed per hour when running */
+  burning_rate: number;
+  /** Simple resource specification */
+  resources?: any; // Simplified - ResourceConfig type removed
+  /** Name identifier for the environment */
+  name: string;
+  /** Docker registry for the image */
+  dockerRegistry?: string;
+  /** Icon or avatar URL for the environment */
+  icon?: string;
+  /** Whether the environment is enabled */
+  enabled?: boolean;
+  /** Tags associated with the environment */
+  tags?: string[];
+}
 
 /**
  * Stable public interface for Environment data.
@@ -29,6 +70,20 @@ export interface EnvironmentJSON {
   description: string;
   /** Rich description of the environment (contains HTML markup) */
   richDescription: string;
+}
+
+// API Response types that match actual server responses
+/**
+ * Response from listing available environments
+ * @interface ListEnvironmentsResponse
+ */
+export interface ListEnvironmentsResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** Array of available environments */
+  environments: EnvironmentData[];
 }
 
 /**

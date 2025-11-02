@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Lexical } from '../../client/models/Lexical';
-import type { Lexical as LexicalData } from '../Space2';
+import type { Lexical as LexicalData } from '../SpaceDTO';
 import type { DatalayerClient } from '../../client/index';
 import * as items from '../../api/spacer/items';
 import * as lexicals from '../../api/spacer/lexicals';

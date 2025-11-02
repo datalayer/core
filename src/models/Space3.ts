@@ -9,14 +9,14 @@
  * @module models/Space
  */
 
-import type { Space2 as SpaceData, GetSpaceItemsResponse } from './Space2';
+import type { SpaceDTO as SpaceData, GetSpaceItemsResponse } from './SpaceDTO';
 import * as users from '../api/spacer/users';
 import * as items from '../api/spacer/items';
 import * as notebooks from '../api/spacer/notebooks';
 import * as lexicals from '../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
-import { Notebook2, type NotebookJSON } from './Notebook2';
-import { Lexical2, type LexicalJSON } from './Lexical2';
+import { NotebookDTO, type NotebookJSON } from './NotebookDTO';
+import { LexicalDTO, type LexicalJSON } from './LexicalDTO';
 import { ItemTypes } from '../client/constants';
 import { convertSpaceItemsToModels } from '../client/utils/spacerUtils';
 import { validateJSON } from '../api/utils/validation';
@@ -55,7 +55,7 @@ export interface SpaceJSON {
 export class Space3 {
   protected _data: SpaceData;
   private _sdk: DatalayerClient;
-  private _items: (Notebook2 | Lexical2)[] | null = null;
+  private _items: (NotebookDTO | LexicalDTO)[] | null = null;
   private _deleted: boolean = false;
 
   /**
@@ -146,7 +146,7 @@ export class Space3 {
    * @returns Created model instance
    * @internal
    */
-  private async _createItem<T extends Notebook2 | Lexical2>(data: {
+  private async _createItem<T extends NotebookDTO | LexicalDTO>(data: {
     name: string;
     type: string;
     description: string;
@@ -174,7 +174,7 @@ export class Space3 {
       if (!response.notebook) {
         throw new Error('Failed to create notebook: No notebook returned');
       } else {
-        return new Notebook2(response.notebook, this._sdk) as T;
+        return new NotebookDTO(response.notebook, this._sdk) as T;
       }
     } else if (data.type === ItemTypes.LEXICAL) {
       const requestData = {
@@ -194,7 +194,7 @@ export class Space3 {
           'Failed to create lexical document: No document returned',
         );
       } else {
-        return new Lexical2(response.document, this._sdk) as T;
+        return new LexicalDTO(response.document, this._sdk) as T;
       }
     } else {
       throw new Error(`Unsupported item type: ${data.type}`);
@@ -206,7 +206,7 @@ export class Space3 {
    *
    * @returns Array of Notebook and Lexical model instances
    */
-  async getItems(): Promise<(Notebook2 | Lexical2)[]> {
+  async getItems(): Promise<(NotebookDTO | LexicalDTO)[]> {
     this._checkDeleted();
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
@@ -232,7 +232,7 @@ export class Space3 {
     name: string;
     description: string;
     file?: File | Blob;
-  }): Promise<Notebook2> {
+  }): Promise<NotebookDTO> {
     return this._createItem({
       name: data.name,
       type: ItemTypes.NOTEBOOK,
@@ -251,7 +251,7 @@ export class Space3 {
     name: string;
     description: string;
     file?: File | Blob;
-  }): Promise<Lexical2> {
+  }): Promise<LexicalDTO> {
     return this._createItem({
       name: data.name,
       type: ItemTypes.LEXICAL,

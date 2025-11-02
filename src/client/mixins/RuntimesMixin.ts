@@ -11,14 +11,12 @@
 import * as environments from '../../api/runtimes/environments';
 import * as runtimes from '../../api/runtimes/runtimes';
 import * as snapshots from '../../api/runtimes/snapshots';
-import type {
-  CreateRuntimeRequest,
-  CreateRuntimeSnapshotRequest,
-} from '../../models/Runtime2';
+import type { CreateRuntimeRequest } from '../../models/RuntimeDTO';
+import type { CreateRuntimeSnapshotRequest } from '../../models/RuntimeSnapshotDTO';
 import type { Constructor } from '../utils/mixins';
-import { Environment2 } from '../../models/Environment2';
-import { Runtime3 } from '../../models/Runtime3';
-import { RuntimeSnapshot2 } from '../../models/RuntimeSnapshot2';
+import { Environment2 } from '../../models/EnvironmentDTO';
+import { Runtime3 } from '../../models/RuntimeDTO';
+import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
 import { HealthCheck } from '../../models/HealthCheck';
 
 /** Options for ensuring a runtime is available. */
@@ -53,7 +51,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
     }
 
     _extractSnapshotId(
-      snapshotIdOrInstance: string | RuntimeSnapshot2,
+      snapshotIdOrInstance: string | RuntimeSnapshotDTO,
     ): string {
       return typeof snapshotIdOrInstance === 'string'
         ? snapshotIdOrInstance
@@ -214,7 +212,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       name: string,
       description: string,
       stop: boolean = false,
-    ): Promise<RuntimeSnapshot2> {
+    ): Promise<RuntimeSnapshotDTO> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
 
@@ -230,18 +228,20 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         data,
         runtimesRunUrl,
       );
-      return new RuntimeSnapshot2(response.snapshot, this as any);
+      return new RuntimeSnapshotDTO(response.snapshot, this as any);
     }
 
     /**
      * List all runtime snapshots.
      * @returns Array of snapshots
      */
-    async listSnapshots(): Promise<RuntimeSnapshot2[]> {
+    async listSnapshots(): Promise<RuntimeSnapshotDTO[]> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const response = await snapshots.listSnapshots(token, runtimesRunUrl);
-      return response.snapshots.map(s => new RuntimeSnapshot2(s, this as any));
+      return response.snapshots.map(
+        s => new RuntimeSnapshotDTO(s, this as any),
+      );
     }
 
     /**
@@ -249,11 +249,11 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * @param id - Snapshot ID
      * @returns Snapshot details
      */
-    async getSnapshot(id: string): Promise<RuntimeSnapshot2> {
+    async getSnapshot(id: string): Promise<RuntimeSnapshotDTO> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const response = await snapshots.getSnapshot(token, id, runtimesRunUrl);
-      return new RuntimeSnapshot2(response.snapshot, this as any);
+      return new RuntimeSnapshotDTO(response.snapshot, this as any);
     }
 
     /**

@@ -34,7 +34,7 @@ export {
   Snapshot,
   Space,
   Notebook,
-  Lexical2,
+  LexicalDTO,
   Credits,
   Item,
   // Export typed interfaces for stable contracts

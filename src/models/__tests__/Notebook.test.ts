@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Notebook } from '../../client/models/Notebook';
-import type { Notebook as NotebookData } from '../Space2';
+import type { Notebook as NotebookData } from '../SpaceDTO';
 import type { DatalayerClient } from '../../client/index';
 import * as items from '../../api/spacer/items';
 import * as notebooks from '../../api/spacer/notebooks';

@@ -9,10 +9,13 @@
  * @module models/Notebook
  */
 
-import type { Notebook as NotebookData, UpdateNotebookRequest } from './Space2';
+import type {
+  Notebook as NotebookData,
+  UpdateNotebookRequest,
+} from './SpaceDTO';
 import * as notebooks from '../api/spacer/notebooks';
 import type { DatalayerClient } from '../index';
-import { Item } from './Item2';
+import { Item } from './ItemDTO';
 import { ItemTypes } from '../client/constants';
 import { validateJSON } from '../api/utils/validation';
 
@@ -48,7 +51,7 @@ export interface NotebookJSON {
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
-export class Notebook2 extends Item<NotebookData> {
+export class NotebookDTO extends Item<NotebookData> {
   /**
    * Create a Notebook instance.
    *

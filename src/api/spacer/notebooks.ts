@@ -19,7 +19,7 @@ import {
   GetNotebookResponse,
   UpdateNotebookRequest,
   UpdateNotebookResponse,
-} from '../../models/Space2';
+} from '../../models/SpaceDTO';
 
 /**
  * Create a new Jupyter notebook.

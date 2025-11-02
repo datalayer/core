@@ -14,7 +14,7 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import { validateToken } from '../utils/validation';
-import { CreateSpaceRequest, CreateSpaceResponse } from '../../models/Space2';
+import { CreateSpaceRequest, CreateSpaceResponse } from '../../models/SpaceDTO';
 
 /**
  * Create a new workspace space.

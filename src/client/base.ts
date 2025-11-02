@@ -9,7 +9,7 @@
  */
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
-import { Environment2 } from '../models/Environment2';
+import { Environment2 } from '../models/EnvironmentDTO';
 
 /** Handlers for SDK method lifecycle events. */
 export interface SDKHandlers {

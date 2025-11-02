@@ -11,7 +11,7 @@
 import * as authentication from '../../api/iam/authentication';
 import * as profile from '../../api/iam/profile';
 import * as usage from '../../api/iam/usage';
-import type { User2 as ApiUser } from '../../models/IAM';
+import type { UserDTO as ApiUser } from '../../models/UserDTO';
 import type { CreditsResponse } from '../../models/Credits2';
 import type { Constructor } from '../utils/mixins';
 import { User3 } from '../../models/User3';

@@ -19,7 +19,7 @@ import {
   GetLexicalResponse,
   UpdateLexicalRequest,
   UpdateLexicalResponse,
-} from '../../models/Space2';
+} from '../../models/SpaceDTO';
 
 /**
  * Create a new lexical document.

@@ -17,8 +17,8 @@ import {
   RuntimeData,
   CreateRuntimeRequest,
   CreateRuntimeResponse,
-  RuntimesListResponse,
-} from '../../models/Runtime2';
+  ListRuntimesResponse,
+} from '../../models/RuntimeDTO';
 import { validateToken, validateRequiredString } from '../utils/validation';
 
 /**
@@ -79,7 +79,7 @@ export const createRuntime = async (
 export const listRuntimes = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<RuntimesListResponse> => {
+): Promise<ListRuntimesResponse> => {
   validateToken(token);
 
   const response = await requestDatalayerAPI<any>({
@@ -90,7 +90,7 @@ export const listRuntimes = async (
 
   // The API returns { success: true, message: string, runtimes: Runtime[] }
   // The response already has the correct structure, just return it
-  return response as RuntimesListResponse;
+  return response as ListRuntimesResponse;
 };
 
 /**

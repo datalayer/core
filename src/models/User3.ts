@@ -9,7 +9,7 @@
  * @module models/User
  */
 
-import type { User2 as UserData } from './IAM';
+import type { UserDTO as UserData } from './UserDTO';
 import type { DatalayerClient } from '../index';
 import { validateJSON } from '../api/utils/validation';
 

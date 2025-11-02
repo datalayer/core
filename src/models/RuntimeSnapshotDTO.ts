@@ -9,11 +9,43 @@
  * @module models/Snapshot
  */
 
-import type { RuntimeSnapshot as RuntimeSnapshotData } from './Runtime2';
 import type { DatalayerClient } from '../index';
+import { Runtime3 } from './RuntimeDTO';
 import { snapshots } from '../api/runtimes';
-import { Runtime3 } from './Runtime3';
 import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a runthime snapshot of a runtime's state and files.
+ * @interface RuntimeSnapshotData
+ */
+export interface RuntimeSnapshotData {
+  /** Unique identifier for the snapshot */
+  uid: string;
+  /** Name of the snapshot */
+  name: string;
+  /** Optional description of the snapshot */
+  description?: string;
+  /** Name of the environment used by the runtime */
+  environment: string;
+  /** Metadata associated with the snapshot */
+  metadata?: {
+    version?: string;
+    language_info?: any;
+    [key: string]: any;
+  };
+  /** Size of the snapshot in bytes */
+  size?: number;
+  /** Format of the snapshot */
+  format?: string;
+  /** Format version of the snapshot */
+  format_version?: string;
+  /** Status of the snapshot */
+  status?: string;
+  /** ISO 8601 timestamp when the snapshot was last updated */
+  updated_at: string;
+  /** List of files included in the snapshot */
+  files?: any[]; // Simplified - RuntimeSnapshotFile type removed
+}
 
 /**
  * Stable public interface for Snapshot data.
@@ -34,6 +66,60 @@ export interface RuntimeSnapshotJSON {
 }
 
 /**
+ * Request payload for creating a runtime snapshot
+ * @interface CreateRuntimeSnapshotRequest
+ */
+export interface CreateRuntimeSnapshotRequest {
+  /** Pod name of the runtime to snapshot */
+  pod_name: string;
+  /** Name for the snapshot */
+  name: string;
+  /** Description of the snapshot */
+  description: string;
+  /** Whether to stop the runtime after creating snapshot */
+  stop: boolean;
+}
+
+/**
+ * Response for getting a specific runtime snapshot
+ * @interface GetRuntimeSnapshotResponse
+ */
+export interface GetRuntimeSnapshotResponse {
+  /** Indicates if the request was successful */
+  success: boolean;
+  /** Response message */
+  message: string;
+  /** The snapshot details */
+  snapshot: RuntimeSnapshotData;
+}
+
+/**
+ * Response for creating a runtime snapshot
+ * @interface CreateRuntimeSnapshotResponse
+ */
+export interface CreateRuntimeSnapshotResponse {
+  /** Indicates if the request was successful */
+  success: boolean;
+  /** Response message */
+  message: string;
+  /** The created snapshot details */
+  snapshot: RuntimeSnapshotData;
+}
+
+/**
+ * Response from listing runtime snapshots
+ * @interface RuntimeSnapshotsListResponse
+ */
+export interface ListRuntimeSnapshotsResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** Array of runtime snapshots */
+  snapshots: RuntimeSnapshotData[];
+}
+
+/**
  * Snapshot domain model that wraps API responses with convenient methods.
  * Provides runtime snapshot management with data refresh and lifecycle operations.
  *
@@ -43,13 +129,13 @@ export interface RuntimeSnapshotJSON {
  * const runtime = await snapshot.restore();
  * ```
  */
-export class RuntimeSnapshot2 {
+export class RuntimeSnapshotDTO {
   protected _data: RuntimeSnapshotData;
   private _sdk: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
-   * Create a Snapshot instance.
+   * Create a Runtime Snapshot instance.
    *
    * @param data - Snapshot data from API
    * @param sdk - SDK instance

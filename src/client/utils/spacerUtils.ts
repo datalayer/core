@@ -8,10 +8,10 @@
  * @module client/utils/spacerUtils
  */
 
-import type { GetSpaceItemsResponse } from '../../models/Space2';
+import type { GetSpaceItemsResponse } from '../../models/SpaceDTO';
 import type { DatalayerClient } from '../index';
-import { Notebook2 } from '../../models/Notebook2';
-import { Lexical2 } from '../../models/Lexical2';
+import { NotebookDTO } from '../../models/NotebookDTO';
+import { LexicalDTO } from '../../models/LexicalDTO';
 import { ItemTypes } from '../constants';
 
 /**
@@ -26,8 +26,8 @@ import { ItemTypes } from '../constants';
 export function convertSpaceItemsToModels(
   items: GetSpaceItemsResponse['items'],
   sdk: DatalayerClient,
-): (Notebook2 | Lexical2)[] {
-  const modelItems: (Notebook2 | Lexical2)[] = [];
+): (NotebookDTO | LexicalDTO)[] {
+  const modelItems: (NotebookDTO | LexicalDTO)[] = [];
 
   for (const item of items) {
     // Check various possible type fields
@@ -35,9 +35,9 @@ export function convertSpaceItemsToModels(
 
     // Only include notebooks and lexicals
     if (itemType === ItemTypes.NOTEBOOK) {
-      modelItems.push(new Notebook2(item as any, sdk));
+      modelItems.push(new NotebookDTO(item as any, sdk));
     } else if (itemType === ItemTypes.LEXICAL) {
-      modelItems.push(new Lexical2(item as any, sdk));
+      modelItems.push(new LexicalDTO(item as any, sdk));
     }
     // Skip everything else (exercises, cells, etc.)
   }

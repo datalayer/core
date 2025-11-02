@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Space } from '../../client/models/Space';
-import type { Space as SpaceData } from '../Space2';
+import type { Space as SpaceData } from '../SpaceDTO';
 import type { DatalayerClient } from '../../client/index';
 import * as users from '../../api/spacer/users';
 import * as items from '../../api/spacer/items';

@@ -6,14 +6,42 @@
 /**
  * Runtime domain model for the Datalayer SDK.
  *
- * @module models/Runtime
+ * @module models/Runtime3
  */
 
 import { updateRuntime } from '../api/runtimes/runtimes';
-import type { RuntimeData as RuntimeData } from '../models/Runtime2';
 import type { DatalayerClient } from '../index';
-import { RuntimeSnapshot2 } from './RuntimeSnapshot2';
+import { RuntimeSnapshotDTO } from './RuntimeSnapshotDTO';
 import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a running instance of a computing environment.
+ * @interface RuntimeData
+ */
+export interface RuntimeData {
+  /** Kubernetes pod name for the runtime instance */
+  pod_name: string;
+  /** Unique identifier for the runtime */
+  uid: string;
+  /** Name of the environment this runtime is based on */
+  environment_name: string;
+  /** Title of the environment for display */
+  environment_title: string;
+  /** Type of runtime - notebook, terminal, or job */
+  type: string;
+  /** Credits consumed per second */
+  burning_rate: number;
+  /** User-friendly name for the runtime */
+  given_name: string;
+  /** Authentication token for accessing the runtime */
+  token: string;
+  /** Ingress URL for accessing the runtime */
+  ingress: string;
+  /** ISO 8601 timestamp of when the runtime started */
+  started_at: string;
+  /** ISO 8601 timestamp of when the runtime will expire */
+  expired_at: string;
+}
 
 /**
  * Stable public interface for Runtime data.
@@ -43,6 +71,51 @@ export interface RuntimeJSON {
   startedAt: string;
   /** When the runtime will expire */
   expiredAt: string;
+}
+
+/**
+ * Request payload for creating a new runtime
+ * @interface CreateRuntimeRequest
+ */
+export interface CreateRuntimeRequest {
+  /** Name of the environment to use */
+  environment_name: string;
+  /** Type of runtime (e.g., 'notebook', 'terminal', 'job') */
+  type?: 'notebook' | 'terminal' | 'job';
+  /** Optional given name for the runtime */
+  given_name?: string;
+  /** Maximum credits this runtime can consume */
+  credits_limit?: number;
+  /** Optional capabilities for the runtime */
+  capabilities?: string[];
+  /** Optional source to create runtime from (e.g., snapshot ID) */
+  from?: string;
+}
+
+/**
+ * Response from creating a new runtime
+ * @interface CreateRuntimeResponse
+ */
+export interface CreateRuntimeResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** The created runtime instance */
+  runtime: RuntimeData;
+}
+
+/**
+ * Response from listing runtimes
+ * @interface ListRuntimesResponse
+ */
+export interface ListRuntimesResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** Array of runtime instances */
+  runtimes: RuntimeData[];
 }
 
 /**
@@ -200,7 +273,7 @@ export class Runtime3 {
     name: string,
     description?: string,
     stop?: boolean,
-  ): Promise<RuntimeSnapshot2> {
+  ): Promise<RuntimeSnapshotDTO> {
     this._checkDeleted();
     return await (this._sdk as any).createSnapshot(
       this.podName,
