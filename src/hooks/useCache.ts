@@ -448,7 +448,7 @@ export const queryKeys = {
  *
  * @returns Object containing all query and mutation hook factories
  */
-export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
+export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const coreStore = useCoreStore();
   const { configuration } = coreStore;
   const { user } = useIAMStore();
@@ -7462,4 +7462,4 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 };
 
-export default useCache2;
+export default useCache;

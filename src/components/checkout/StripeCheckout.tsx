@@ -9,7 +9,6 @@ import { Box } from '@datalayer/primer-addons';
 import type { Stripe } from '@stripe/stripe-js';
 import { useCache } from '../../hooks';
 import type { ICheckoutPortal } from '../../models';
-import { useIAMStore } from '../../state';
 
 /**
  * Price item interface
@@ -45,28 +44,26 @@ export function StripeCheckout({
 }: {
   checkoutPortal: ICheckoutPortal | null;
 }) {
-  const { iamRunUrl } = useIAMStore();
   const { createCheckoutSession, refreshStripePrices } = useCache();
   const [stripe, setStripe] = useState<Promise<Stripe | null> | null>(null);
   const [components, setComponents] = useState<any>(null);
   const [items, setItems] = useState<IPrice[] | null>(null);
   const [product, setProduct] = useState<IPrice | null>(null);
   const [checkout, setCheckout] = useState<boolean>(false);
-  // Refresh Stripe items.
+
+  // Get Stripe prices using TanStack Query hook
+  const { data: pricesData } = refreshStripePrices();
+
+  // Update items when prices data changes
   useEffect(() => {
-    refreshStripePrices()
-      .then(response => {
-        if (response.success) {
-          setItems(response.prices);
-        } else {
-          setItems([]);
-        }
-      })
-      .catch(error => {
-        console.error('Failed to fetch product items.', error);
-        setItems([]);
-      });
-  }, []);
+    if (pricesData) {
+      setItems((pricesData as any).prices || []);
+    }
+  }, [pricesData]);
+
+  // Get checkout session mutation
+  const checkoutSessionMutation = createCheckoutSession();
+
   // Load stripe components.
   useEffect(() => {
     import('@stripe/react-stripe-js').then(module => {
@@ -77,15 +74,20 @@ export function StripeCheckout({
   useEffect(() => {
     if (checkoutPortal?.metadata?.stripe_key) {
       import('@stripe/stripe-js').then(module => {
-        setStripe(module.loadStripe(checkoutPortal.metadata!.stripe_key));
+        setStripe(module.loadStripe(checkoutPortal.metadata?.stripe_key ?? ''));
       });
     }
   }, [checkoutPortal?.metadata?.stripe_key]);
-  const fetchClientSecret = useCallback(() => {
+
+  const fetchClientSecret = useCallback(async () => {
     const location = document.location;
-    // Create a Checkout Session.
-    return createCheckoutSession(product, location);
-  }, [iamRunUrl, location, product?.id]);
+    // Create a Checkout Session using TanStack Query mutation
+    const result = await checkoutSessionMutation.mutateAsync({
+      product,
+      location,
+    });
+    return result;
+  }, [checkoutSessionMutation, product]);
   const options = { fetchClientSecret };
   let view = (
     <Box sx={{ minHeight: '40px' }}>

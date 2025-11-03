@@ -3,11 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { ChangeEvent, useCallback, useEffect } from 'react';
 import { Select } from '@primer/react';
 import { useCache, useUser } from './../../hooks';
 import { useLayoutStore } from '../../state';
-import { IAnyOrganization } from '../../models';
 
 const NO_ORGANIZATION_SELECTED_VALUE = 'NO_ORGANIZATION_SELECTED_VALUE';
 
@@ -16,29 +15,25 @@ export const OrganizationSelect = () => {
   const { organization, updateLayoutOrganization, updateLayoutSpace } =
     useLayoutStore();
   const { refreshUserOrganizations, getUserOrganizations } = useCache();
-  const [organizations, setOrganizations] = useState(getUserOrganizations());
-  const [_, setSelection] = useState<IAnyOrganization | undefined>(
-    organization,
-  );
+  const { mutate: refreshUserOrganizationsMutate } = refreshUserOrganizations();
+  const { data: organizations = [] } = getUserOrganizations();
+
   useEffect(() => {
-    refreshUserOrganizations(user).then(resp => {
-      if (resp.success) {
-        setOrganizations(getUserOrganizations());
-      }
-    });
-  }, [user]);
+    if (user) {
+      refreshUserOrganizationsMutate();
+    }
+  }, [user, refreshUserOrganizationsMutate]);
   const onSelectionChange = useCallback(
-    (e: any) => {
-      const selectedOrganization = (e.target as HTMLSelectElement).value;
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      const selectedOrganization = event.target.value;
       const org =
         selectedOrganization === NO_ORGANIZATION_SELECTED_VALUE
           ? undefined
           : organizations[parseInt(selectedOrganization, 10)];
-      setSelection(org);
       updateLayoutOrganization(org);
       updateLayoutSpace(undefined);
     },
-    [setSelection, organizations],
+    [organizations, updateLayoutOrganization, updateLayoutSpace],
   );
   return (
     <>
@@ -51,6 +46,7 @@ export const OrganizationSelect = () => {
         </Select.Option>
         {organizations.map((org, index) => (
           <Select.Option
+            key={org.id}
             value={`${index}`}
             selected={org.id === organization?.id}
           >

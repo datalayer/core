@@ -139,7 +139,7 @@ const DEFAULT_SEARCH_OPTS = {
  * you must set the options `loginRoute` to `null` (raise an error _Unauthorized_
  * instead of redirecting to the login page).
  */
-export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
+export const useCache0 = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const coreStore = useCoreStore();
   const { configuration } = coreStore;
   const { user } = useIAMStore();
@@ -3837,4 +3837,4 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 };
 
-export default useCache;
+export default useCache0;

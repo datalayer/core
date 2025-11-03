@@ -8,7 +8,6 @@ export * from './useAuthorization';
 export * from './useBackdrop';
 export * from './useBackdropJupyterLab';
 export * from './useCache';
-export * from './useCache2';
 export * from './useContainsFocus';
 export * from './useDatalayer';
 // export * from "./useCellOutputshot"; // Do not export html2canvas
