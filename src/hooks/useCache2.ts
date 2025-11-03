@@ -61,12 +61,10 @@ import {
   IEnvironment,
   IExercise,
   IIAMToken,
-  IInbound,
   ILesson,
   INotebook,
   IOrganization,
   IOrganizationMember,
-  IOutbound,
   IPage,
   ISchool,
   ISecret,
@@ -78,10 +76,8 @@ import {
   IUserSettings,
   asContact,
   asDatasource,
-  asInbound,
   asInvite,
   asOrganization,
-  asOutbound,
   asPage,
   asSecret,
   asSpace,
@@ -405,7 +401,9 @@ export const queryKeys = {
   // Layout
   layout: {
     byAccount: (accountHandle: string, spaceHandle?: string) =>
-      ['layout', accountHandle, spaceHandle].filter(Boolean) as const,
+      spaceHandle
+        ? (['layout', accountHandle, spaceHandle] as const)
+        : (['layout', accountHandle] as const),
   },
 
   // Usages
@@ -697,7 +695,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const owner = newUserMock();
     let studentItem: IStudentItem | undefined = undefined;
     if (raw_assignment.student_items) {
-      raw_assignment.student_items.forEach((student_item: unknown) => {
+      raw_assignment.student_items.forEach((student_item: any) => {
         studentItem = {
           id: student_item.uid,
           type: 'student_item',
@@ -759,7 +757,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
-  const toItem: unknown = (item: unknown) => {
+  const toItem = (item: any): any => {
     if (!item.type_s) {
       console.error('No type_s found on item', item);
       return {};
@@ -822,10 +820,10 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     let students: Map<string, IUser> | undefined = undefined;
     if (raw_course.students) {
       students = new Map<string, IUser>();
-      raw_course.students.forEach((raw_stud: unknown) => {
+      raw_course.students.forEach((raw_stud: any) => {
         const student = toUser(raw_stud);
-        if (student) {
-          students!.set(student.id, student);
+        if (student && students) {
+          students.set(student.id, student);
         }
       });
     }
@@ -839,7 +837,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
     const items = new Array<ISpaceItem>();
     if (raw_course.items) {
-      raw_course.items.forEach((item: unknown) => {
+      raw_course.items.forEach((item: any) => {
         const i = toItem(item);
         items.push(i);
       });
@@ -1042,7 +1040,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { namingPattern: handle },
         });
         if (resp.success && resp.users) {
-          const users = resp.users.map((u: unknown) => toUser(u));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const users = resp.users.map((u: any) => toUser(u));
           const user = users.find((u: IUser) => u.handle === handle);
           if (user) {
             // Populate ID cache
@@ -1206,7 +1205,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.organizations) {
-          const orgs = resp.organizations.map((org: unknown) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const orgs = resp.organizations.map((org: any) => {
             const organization = toOrganization(org);
             // Pre-populate caches
             queryClient.setQueryData(
@@ -1292,7 +1292,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         // Optimistically update
         queryClient.setQueryData(
           queryKeys.organizations.detail(orgId),
-          (old: unknown) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (old: any) => ({
             ...old,
             name: organization.name,
             description: organization.description,
@@ -3355,14 +3356,15 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.orgs) {
-          const schools: ISchool[] = resp.orgs.map((s: unknown) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const schools: ISchool[] = resp.orgs.map((s: any) => ({
             id: s.uid,
             type: 'school' as const,
             handle: s.handle_s,
             name: s.name_t,
             description: s.description_t,
             dean: undefined,
-            members: [],
+            members: [] as IOrganizationMember[],
             students: [],
             courses: [],
             public: s.public_b,
@@ -3443,7 +3445,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           });
         }
         queryClient.invalidateQueries({
-          queryKey: queryKeys.organizations.userOrganizations(),
+          queryKey: queryKeys.organizations.userOrgs(),
         });
       },
     });
@@ -3795,7 +3797,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return asArray(resp.items).map((itm: unknown) => toItem(itm));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return asArray(resp.items).map((itm: any) => toItem(itm));
         }
         return [];
       },
@@ -3988,7 +3991,9 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           if (cell?.space) {
             queryClient.invalidateQueries({
               queryKey: queryKeys.cells.bySpace(
-                typeof cell.space === 'string' ? cell.space : cell.space.id,
+                typeof cell.space === 'string'
+                  ? cell.space
+                  : (cell.space.id ?? ''),
               ),
             });
           }
@@ -4171,7 +4176,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
               queryKey: queryKeys.lessons.bySpace(
                 typeof lesson.space === 'string'
                   ? lesson.space
-                  : lesson.space.id,
+                  : (lesson.space.id ?? ''),
               ),
             });
           }
@@ -4292,7 +4297,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
               queryKey: queryKeys.exercises.bySpace(
                 typeof exercise.space === 'string'
                   ? exercise.space
-                  : exercise.space.id,
+                  : (exercise.space.id ?? ''),
               ),
             });
           }
@@ -4362,7 +4367,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
               queryKey: queryKeys.assignments.bySpace(
                 typeof assignment.space === 'string'
                   ? assignment.space
-                  : assignment.space.id,
+                  : (assignment.space.id ?? ''),
               ),
             });
           }
@@ -5023,7 +5028,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         product,
         location,
       }: {
-        product: unknown;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        product: any;
         location: Location;
       }) => {
         const resp = await requestDatalayer({
@@ -5227,7 +5233,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         formValues,
         token,
       }: {
-        formValues: unknown;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        formValues: any;
         token: string;
       }) => {
         return requestDatalayer({
@@ -6060,10 +6067,10 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (data, variables) => {
         // Invalidate user spaces queries
         queryClient.invalidateQueries({
-          queryKey: queryKeys.spaces.userSpaces(variables.userId),
+          queryKey: queryKeys.spaces.userSpaces(),
         });
         queryClient.invalidateQueries({
-          queryKey: queryKeys.spaces.userSpace(variables.spaceId),
+          queryKey: queryKeys.spaces.detail(variables.spaceId),
         });
       },
       ...options,
@@ -6439,7 +6446,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.schools.list() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.schools.all() });
       },
       ...options,
     });
@@ -6772,7 +6779,11 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.assignments.forStudent(variables.assignmentId),
+          queryKey: queryKeys.assignments.forStudent(
+            variables.assignmentId,
+            variables.courseId,
+            variables.userId,
+          ),
         });
       },
       ...options,
