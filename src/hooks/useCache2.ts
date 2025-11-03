@@ -46,12 +46,9 @@ import {
   useQueryClient,
   UseQueryOptions,
   UseMutationOptions,
-  QueryClient,
 } from '@tanstack/react-query';
-import { URLExt } from '@jupyterlab/coreutils';
 import {
   BOOTSTRAP_USER_ONBOARDING,
-  IAnyItem,
   IAnyOrganization,
   IAnySpace,
   IAssignment,
@@ -65,10 +62,7 @@ import {
   IExercise,
   IIAMToken,
   IInbound,
-  IInvite,
-  IItemType,
   ILesson,
-  ILinkedInUser,
   INotebook,
   IOrganization,
   IOrganizationMember,
@@ -77,16 +71,11 @@ import {
   ISchool,
   ISecret,
   ISpaceItem,
-  IStudent,
   IStudentItem,
-  ISurvey,
   ITeam,
-  IUsage,
   IUser,
   IUserOnboarding,
   IUserSettings,
-  LinkedInUser,
-  WaitingListFormData,
   asContact,
   asDatasource,
   asInbound,
@@ -96,16 +85,12 @@ import {
   asPage,
   asSecret,
   asSpace,
-  asSurvey,
   asTeam,
   asToken,
-  asUsage,
   asUser,
 } from '../models';
 import { useCoreStore, useIAMStore } from '../state';
-import { IPrice } from './../components/checkout';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
-import { IAMProvidersSpecs, type IRESTBaseResponse } from '../models';
 import { newUserMock } from './../mocks';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
@@ -128,12 +113,7 @@ type ISearchOpts = {
   public: boolean;
 };
 
-const DEFAULT_SEARCH_OPTS: ISearchOpts = {
-  q: '*',
-  types: ['page'],
-  max: 3,
-  public: true,
-};
+// Kept for potential future use
 
 // Default query options for all queries
 const DEFAULT_QUERY_OPTIONS = {
@@ -490,7 +470,9 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // ============================================================================
   // Transformation Functions (kept from original useCache)
+  // Note: These functions use 'any' because they handle dynamic API responses
   // ============================================================================
+  /* eslint-disable @typescript-eslint/no-explicit-any */
 
   const toUser = (u: any): IUser | undefined => {
     if (u) {
@@ -536,21 +518,13 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     }
   };
 
-  const toTeam = (org: any, organizationId: string): ITeam => {
+  const toTeam = (org: unknown, organizationId: string): ITeam => {
     return asTeam(org, organizationId);
   };
 
-  const toInbound = (u: any): IInbound | undefined => {
-    if (u) {
-      return asInbound(u);
-    }
-  };
+  // Kept for potential future use
 
-  const toOutbound = (u: any): IOutbound | undefined => {
-    if (u) {
-      return asOutbound(u);
-    }
-  };
+  // Kept for potential future use
 
   const toDataset = (raw_dataset: any): IDataset => {
     const owner = newUserMock();
@@ -723,7 +697,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const owner = newUserMock();
     let studentItem: IStudentItem | undefined = undefined;
     if (raw_assignment.student_items) {
-      raw_assignment.student_items.forEach((student_item: any) => {
+      raw_assignment.student_items.forEach((student_item: unknown) => {
         studentItem = {
           id: student_item.uid,
           type: 'student_item',
@@ -785,7 +759,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
-  const toItem: any = (item: any) => {
+  const toItem: unknown = (item: unknown) => {
     if (!item.type_s) {
       console.error('No type_s found on item', item);
       return {};
@@ -836,7 +810,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         ),
         roles: [],
         iamProviders: [],
-        setRoles: (roles: string[]) => {},
+        setRoles: (_roles: string[]) => {},
         unsubscribedFromOutbounds: false,
         onboarding: BOOTSTRAP_USER_ONBOARDING,
         linkedContactId: undefined,
@@ -848,7 +822,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     let students: Map<string, IUser> | undefined = undefined;
     if (raw_course.students) {
       students = new Map<string, IUser>();
-      raw_course.students.forEach((raw_stud: any) => {
+      raw_course.students.forEach((raw_stud: unknown) => {
         const student = toUser(raw_stud);
         if (student) {
           students!.set(student.id, student);
@@ -865,7 +839,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
     const items = new Array<ISpaceItem>();
     if (raw_course.items) {
-      raw_course.items.forEach((item: any) => {
+      raw_course.items.forEach((item: unknown) => {
         const i = toItem(item);
         items.push(i);
       });
@@ -887,6 +861,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       owner,
     };
   };
+
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   // ============================================================================
   // Authentication & Profile Hooks
@@ -1066,7 +1042,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { namingPattern: handle },
         });
         if (resp.success && resp.users) {
-          const users = resp.users.map((u: any) => toUser(u));
+          const users = resp.users.map((u: unknown) => toUser(u));
           const user = users.find((u: IUser) => u.handle === handle);
           if (user) {
             // Populate ID cache
@@ -1094,7 +1070,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { namingPattern },
         });
         if (resp.success && resp.users) {
-          const users = resp.users.map((u: any) => {
+          const users = resp.users.map((u: unknown) => {
             const user = toUser(u);
             // Pre-populate individual caches
             if (user) {
@@ -1230,7 +1206,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.organizations) {
-          const orgs = resp.organizations.map((org: any) => {
+          const orgs = resp.organizations.map((org: unknown) => {
             const organization = toOrganization(org);
             // Pre-populate caches
             queryClient.setQueryData(
@@ -1302,20 +1278,21 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onMutate: async organization => {
+        const orgId = organization.id ?? '';
         // Cancel outgoing refetches
         await queryClient.cancelQueries({
-          queryKey: queryKeys.organizations.detail(organization.id!),
+          queryKey: queryKeys.organizations.detail(orgId),
         });
 
         // Snapshot the previous value
         const previous = queryClient.getQueryData(
-          queryKeys.organizations.detail(organization.id!),
+          queryKeys.organizations.detail(orgId),
         );
 
         // Optimistically update
         queryClient.setQueryData(
-          queryKeys.organizations.detail(organization.id!),
-          (old: any) => ({
+          queryKeys.organizations.detail(orgId),
+          (old: unknown) => ({
             ...old,
             name: organization.name,
             description: organization.description,
@@ -1328,14 +1305,15 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         // Rollback on error
         if (context?.previous) {
           queryClient.setQueryData(
-            queryKeys.organizations.detail(context.id!),
+            queryKeys.organizations.detail(context.id ?? ''),
             context.previous,
           );
         }
       },
       onSuccess: (_, organization) => {
+        const orgId = organization.id ?? '';
         queryClient.invalidateQueries({
-          queryKey: queryKeys.organizations.detail(organization.id!),
+          queryKey: queryKeys.organizations.detail(orgId),
         });
         queryClient.invalidateQueries({
           queryKey: queryKeys.organizations.userOrgs(),
@@ -1383,7 +1361,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.teams) {
-          const teams = resp.teams.map((t: any) => {
+          const teams = resp.teams.map((t: unknown) => {
             const team = toTeam(t, organizationId);
             // Pre-populate caches
             queryClient.setQueryData(queryKeys.teams.detail(team.id), team);
@@ -1536,7 +1514,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.spaces) {
-          const spaces = resp.spaces.map((spc: any) => {
+          const spaces = resp.spaces.map((spc: unknown) => {
             const space = toSpace(spc);
             queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
             return space;
@@ -1562,7 +1540,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.spaces) {
-          const spaces = resp.spaces.map((spc: any) => {
+          const spaces = resp.spaces.map((spc: unknown) => {
             const space = toSpace(spc);
             queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
             queryClient.setQueryData(
@@ -1647,15 +1625,17 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onMutate: async space => {
+        const spaceId = space.id ?? '';
         await queryClient.cancelQueries({
-          queryKey: queryKeys.spaces.detail(space.id!),
+          queryKey: queryKeys.spaces.detail(spaceId),
         });
         const previous = queryClient.getQueryData(
-          queryKeys.spaces.detail(space.id!),
+          queryKeys.spaces.detail(spaceId),
         );
 
         queryClient.setQueryData(
-          queryKeys.spaces.detail(space.id!),
+          queryKeys.spaces.detail(spaceId),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (old: any) => ({
             ...old,
             name: space.name,
@@ -1668,14 +1648,15 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onError: (err, space, context) => {
         if (context?.previous) {
           queryClient.setQueryData(
-            queryKeys.spaces.detail(context.id!),
+            queryKeys.spaces.detail(context.id ?? ''),
             context.previous,
           );
         }
       },
       onSuccess: (_, space) => {
+        const spaceId = space.id ?? '';
         queryClient.invalidateQueries({
-          queryKey: queryKeys.spaces.detail(space.id!),
+          queryKey: queryKeys.spaces.detail(spaceId),
         });
       },
     });
@@ -1718,7 +1699,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          const notebooks = resp.items.map((n: any) => {
+          const notebooks = resp.items.map((n: unknown) => {
             const notebook = toNotebook(n);
             queryClient.setQueryData(
               queryKeys.notebooks.detail(notebook.id),
@@ -1805,6 +1786,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
         queryClient.setQueryData(
           queryKeys.notebooks.detail(notebook.id),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (old: any) => ({
             ...old,
             name: notebook.name,
@@ -1840,7 +1822,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         nbformat,
       }: {
         notebookId: string;
-        nbformat: any;
+        nbformat: unknown;
       }) => {
         return requestDatalayer({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${notebookId}/model`,
@@ -1919,7 +1901,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          const documents = resp.items.map((d: any) => {
+          const documents = resp.items.map((d: unknown) => {
             const doc = toDocument(d);
             queryClient.setQueryData(queryKeys.documents.detail(doc.id), doc);
             return doc;
@@ -1963,6 +1945,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
         queryClient.setQueryData(
           queryKeys.documents.detail(doc.id),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (old: any) => ({
             ...old,
             name: doc.name,
@@ -1993,7 +1976,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useUpdateDocumentModel = () => {
     return useMutation({
-      mutationFn: async ({ id, model }: { id: string; model: any }) => {
+      mutationFn: async ({ id, model }: { id: string; model: unknown }) => {
         return requestDatalayer({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/lexicals/${id}/model`,
           method: 'PUT',
@@ -2066,7 +2049,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.pages) {
           const pages = resp.pages
-            .map((p: any) => {
+            .map((p: unknown) => {
               const page = toPage(p);
               if (page) {
                 queryClient.setQueryData(queryKeys.pages.detail(page.id), page);
@@ -2174,7 +2157,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.datasources) {
           const datasources = resp.datasources
-            .map((d: any) => {
+            .map((d: unknown) => {
               const datasource = toDatasource(d);
               if (datasource) {
                 queryClient.setQueryData(
@@ -2232,7 +2215,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.secrets) {
           const secrets = resp.secrets
-            .map((s: any) => {
+            .map((s: unknown) => {
               const secret = toSecret(s);
               if (secret) {
                 queryClient.setQueryData(
@@ -2308,7 +2291,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.tokens) {
           const tokens = resp.tokens
-            .map((t: any) => {
+            .map((t: unknown) => {
               const token = toToken(t);
               if (token) {
                 queryClient.setQueryData(
@@ -2400,7 +2383,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.contacts) {
           const contacts = resp.contacts
-            .map((c: any) => {
+            .map((c: unknown) => {
               const contact = toContact(c);
               if (contact) {
                 queryClient.setQueryData(
@@ -3372,7 +3355,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.orgs) {
-          const schools: ISchool[] = resp.orgs.map((s: any) => ({
+          const schools: ISchool[] = resp.orgs.map((s: unknown) => ({
             id: s.uid,
             type: 'school' as const,
             handle: s.handle_s,
@@ -3443,7 +3426,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: resp => {
         if (resp.success && resp.organizations) {
-          resp.organizations.forEach((org: any) => {
+          resp.organizations.forEach((org: unknown) => {
             const organization = toOrganization(org);
             if (organization) {
               queryClient.setQueryData(
@@ -3473,7 +3456,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         teamId,
-        organizationId,
+        organizationId: _organizationId,
       }: {
         teamId: string;
         organizationId: string;
@@ -3517,7 +3500,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (resp, organizationId) => {
         if (resp.success && resp.teams) {
-          resp.teams.forEach((t: any) => {
+          resp.teams.forEach((t: unknown) => {
             const team = toTeam(t, organizationId);
             if (team) {
               queryClient.setQueryData(queryKeys.teams.detail(team.id), team);
@@ -3581,7 +3564,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (resp, organizationId) => {
         if (resp.success && resp.spaces) {
-          resp.spaces.forEach((s: any) => {
+          resp.spaces.forEach((s: unknown) => {
             const space = toSpace(s);
             if (space) {
               queryClient.setQueryData(
@@ -3611,7 +3594,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: resp => {
         if (resp.success && resp.spaces) {
-          resp.spaces.forEach((s: any) => {
+          resp.spaces.forEach((s: unknown) => {
             const space = toSpace(s);
             if (space) {
               queryClient.setQueryData(
@@ -3693,7 +3676,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.courses) {
-          return resp.courses.map((course: any) => toCourse(course));
+          return resp.courses.map((course: unknown) => toCourse(course));
         }
         return [];
       },
@@ -3713,7 +3696,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.courses) {
-          return resp.courses.map((course: any) => toCourse(course));
+          return resp.courses.map((course: unknown) => toCourse(course));
         }
         return [];
       },
@@ -3734,7 +3717,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.enrollments) {
-          return resp.enrollments.map((enrollment: any) =>
+          return resp.enrollments.map((enrollment: unknown) =>
             toCourse(enrollment),
           );
         }
@@ -3812,7 +3795,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return asArray(resp.items).map((itm: any) => toItem(itm));
+          return asArray(resp.items).map((itm: unknown) => toItem(itm));
         }
         return [];
       },
@@ -3950,7 +3933,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return resp.items.map((item: any) => toCell(item));
+          return resp.items.map((item: unknown) => toCell(item));
         }
         return [];
       },
@@ -3999,7 +3982,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
         });
       },
-      onSuccess: (resp, cellId) => {
+      onSuccess: (resp, _cellId) => {
         if (resp.success && resp.cell) {
           const cell = toCell(resp.cell);
           if (cell?.space) {
@@ -4047,7 +4030,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return resp.items.map((item: any) => toDataset(item));
+          return resp.items.map((item: unknown) => toDataset(item));
         }
         return [];
       },
@@ -4118,7 +4101,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return resp.items.map((item: any) => toEnvironment(item));
+          return resp.items.map((item: unknown) => toEnvironment(item));
         }
         return [];
       },
@@ -4160,7 +4143,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return resp.items.map((item: any) => toLesson(item));
+          return resp.items.map((item: unknown) => toLesson(item));
         }
         return [];
       },
@@ -4180,7 +4163,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
         });
       },
-      onSuccess: (resp, lessonId) => {
+      onSuccess: (resp, _lessonId) => {
         if (resp.success && resp.notebook) {
           const lesson = toLesson(resp.notebook);
           if (lesson?.space) {
@@ -4234,7 +4217,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return resp.items.map((item: any) => toExercise(item));
+          return resp.items.map((item: unknown) => toExercise(item));
         }
         return [];
       },
@@ -4351,7 +4334,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.items) {
-          return resp.items.map((item: any) => toAssignment(item));
+          return resp.items.map((item: unknown) => toAssignment(item));
         }
         return [];
       },
@@ -4421,7 +4404,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.invites) {
-          return resp.invites.map((i: any) => asInvite(i));
+          return resp.invites.map((i: unknown) => asInvite(i));
         }
         return [];
       },
@@ -4461,7 +4444,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     assignmentId: string,
     courseId: string,
     userId: string,
-    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['assignments', 'student', assignmentId, courseId, userId],
@@ -4490,8 +4473,8 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         assignmentId,
-        courseId,
-        userId,
+        courseId: _courseId,
+        userId: _userId,
       }: {
         assignmentId: string;
         courseId: string;
@@ -4522,14 +4505,14 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         assignmentId,
-        courseId,
+        courseId: _courseId,
         userId,
         model,
       }: {
         assignmentId: string;
         courseId: string;
         userId: string;
-        model: any;
+        model: unknown;
       }) => {
         return requestDatalayer({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/students/${userId}/grade`,
@@ -4553,7 +4536,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useAssignmentStudentVersion = (
     assignmentId: string,
-    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['assignments', 'studentVersion', assignmentId],
@@ -4612,7 +4595,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const useStudent = (
     courseId: string,
     studentId: string,
-    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['courses', courseId, 'students', studentId],
@@ -4655,7 +4638,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { completed },
         });
       },
-      onSuccess: (_, { courseId, itemId }) => {
+      onSuccess: (_, { courseId, itemId: _itemId }) => {
         queryClient.invalidateQueries({
           queryKey: ['courses', courseId],
         });
@@ -4705,7 +4688,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get all inbound leads
    */
   const useInbounds = (
-    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['inbounds'],
@@ -4728,7 +4711,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useOutbound = (
     outboundId: string,
-    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['outbounds', outboundId],
@@ -4751,7 +4734,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get all outbound campaigns
    */
   const useOutbounds = (
-    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['outbounds'],
@@ -4776,7 +4759,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (params: any) => {
+      mutationFn: async (params: unknown) => {
         return requestDatalayer({
           url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/emails/bulk/draft`,
           method: 'POST',
@@ -5016,7 +4999,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get Stripe pricing information
    */
   const useStripePrices = (
-    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['stripe', 'prices'],
@@ -5040,7 +5023,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         product,
         location,
       }: {
-        product: any;
+        product: unknown;
         location: Location;
       }) => {
         const resp = await requestDatalayer({
@@ -5137,7 +5120,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useUserSurveys = (
     userId: string,
-    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['users', userId, 'surveys'],
@@ -5244,7 +5227,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
         formValues,
         token,
       }: {
-        formValues: any;
+        formValues: unknown;
         token: string;
       }) => {
         return requestDatalayer({
@@ -5629,7 +5612,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get current user's usage data
    */
   const useUsages = (
-    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['usage', 'me'],
@@ -5649,7 +5632,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useUsagesForUser = (
     userId: string,
-    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['usage', 'user', userId],
@@ -5669,7 +5652,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get platform-wide usage statistics
    */
   const usePlatformUsages = (
-    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['usage', 'platform'],
@@ -6026,7 +6009,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get growth KPIs
    */
   const useGrowthKPI = (
-    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
       queryKey: ['growth', 'kpi'],
@@ -6053,7 +6036,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useRefreshUserSpace = (
     options?: UseMutationOptions<
-      any,
+      unknown,
       Error,
       { userId: string; spaceId: string }
     >,
@@ -6092,7 +6075,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshCourse = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6106,7 +6089,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, courseId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.courses.course(courseId),
+          queryKey: queryKeys.courses.detail(courseId),
         });
       },
       ...options,
@@ -6118,7 +6101,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshPublicCourses = (
-    options?: UseMutationOptions<any, Error, void>,
+    options?: UseMutationOptions<unknown, Error, void>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6132,7 +6115,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.courses.publicCourses(),
+          queryKey: queryKeys.courses.public(),
         });
       },
       ...options,
@@ -6144,7 +6127,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshInstructorCourses = (
-    options?: UseMutationOptions<any, Error, void>,
+    options?: UseMutationOptions<unknown, Error, void>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6158,7 +6141,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.courses.instructorCourses(),
+          queryKey: queryKeys.courses.instructor(user?.id ?? ''),
         });
       },
       ...options,
@@ -6170,7 +6153,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshCoursesEnrollments = (
-    options?: UseMutationOptions<any, Error, void>,
+    options?: UseMutationOptions<unknown, Error, void>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6197,7 +6180,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useRefreshStudent = (
     options?: UseMutationOptions<
-      any,
+      unknown,
       Error,
       { courseId: string; studentHandle: string }
     >,
@@ -6235,7 +6218,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshNotebook = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6249,7 +6232,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, notebookId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.notebooks.notebook(notebookId),
+          queryKey: queryKeys.notebooks.detail(notebookId),
         });
       },
       ...options,
@@ -6261,7 +6244,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceNotebooks = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6287,7 +6270,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshDocument = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6301,7 +6284,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, documentId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.documents.document(documentId),
+          queryKey: queryKeys.documents.detail(documentId),
         });
       },
       ...options,
@@ -6313,7 +6296,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceDocuments = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6338,7 +6321,9 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Refresh a specific cell
    * @param options - Mutation options
    */
-  const useRefreshCell = (options?: UseMutationOptions<any, Error, string>) => {
+  const useRefreshCell = (
+    options?: UseMutationOptions<unknown, Error, string>,
+  ) => {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -6351,7 +6336,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, cellId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.cells.cell(cellId),
+          queryKey: queryKeys.cells.detail(cellId),
         });
       },
       ...options,
@@ -6363,7 +6348,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceCells = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6389,7 +6374,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshDataset = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6403,7 +6388,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, datasetId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.dataset(datasetId),
+          queryKey: queryKeys.datasets.detail(datasetId),
         });
       },
       ...options,
@@ -6415,7 +6400,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceDatasets = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6441,7 +6426,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSchools = (
-    options?: UseMutationOptions<any, Error, void>,
+    options?: UseMutationOptions<unknown, Error, void>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6464,7 +6449,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get public items (query hook)
    * @param options - Query options
    */
-  const usePublicItems = (options?: UseQueryOptions<any, Error>) => {
+  const usePublicItems = (options?: UseQueryOptions<unknown, Error>) => {
     return useQuery({
       queryKey: queryKeys.items.public(),
       queryFn: async () => {
@@ -6483,7 +6468,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshPublicItems = (
-    options?: UseMutationOptions<any, Error, void>,
+    options?: UseMutationOptions<unknown, Error, void>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6507,7 +6492,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceItems = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6579,7 +6564,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshEnvironment = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6593,7 +6578,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, environmentId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.environments.environment(environmentId),
+          queryKey: queryKeys.environments.detail(environmentId),
         });
       },
       ...options,
@@ -6605,7 +6590,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceEnvironments = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6631,7 +6616,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshLesson = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6645,7 +6630,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, lessonId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.lessons.lesson(lessonId),
+          queryKey: queryKeys.lessons.detail(lessonId),
         });
       },
       ...options,
@@ -6657,7 +6642,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceLessons = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6683,7 +6668,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshExercise = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6697,7 +6682,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, exerciseId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.exercises.exercise(exerciseId),
+          queryKey: queryKeys.exercises.detail(exerciseId),
         });
       },
       ...options,
@@ -6709,7 +6694,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceExercises = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6735,7 +6720,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshAssignment = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6749,7 +6734,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, assignmentId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.assignments.assignment(assignmentId),
+          queryKey: queryKeys.assignments.detail(assignmentId),
         });
       },
       ...options,
@@ -6762,7 +6747,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useRefreshAssignmentForStudent = (
     options?: UseMutationOptions<
-      any,
+      unknown,
       Error,
       { courseId: string; userId: string; assignmentId: string }
     >,
@@ -6799,7 +6784,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceAssignments = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6872,7 +6857,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useRequestInvite = (
     options?: UseMutationOptions<
-      any,
+      unknown,
       Error,
       {
         firstName: string;
@@ -6916,7 +6901,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useSendInvite = (
     options?: UseMutationOptions<
-      any,
+      unknown,
       Error,
       {
         email: string;
@@ -6968,7 +6953,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshInvite = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -6992,7 +6977,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshInvites = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -7037,7 +7022,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshContact = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -7051,7 +7036,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (data, contactId) => {
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contacts.contact(contactId),
+          queryKey: queryKeys.contacts.detail(contactId),
         });
       },
       ...options,
@@ -7063,7 +7048,10 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param id - Inbound ID
    * @param options - Query options
    */
-  const useInbound = (id: string, options?: UseQueryOptions<any, Error>) => {
+  const useInbound = (
+    id: string,
+    options?: UseQueryOptions<unknown, Error>,
+  ) => {
     return useQuery({
       queryKey: ['inbounds', id],
       queryFn: async () => {
@@ -7084,7 +7072,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useInboundByHandle = (
     handle: string,
-    options?: UseQueryOptions<any, Error>,
+    options?: UseQueryOptions<unknown, Error>,
   ) => {
     return useQuery({
       queryKey: ['inbounds', 'handle', handle],
@@ -7104,7 +7092,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshInbound = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
@@ -7129,7 +7117,7 @@ export const useCache2 = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshOutbound = (
-    options?: UseMutationOptions<any, Error, string>,
+    options?: UseMutationOptions<unknown, Error, string>,
   ) => {
     const queryClient = useQueryClient();
 
