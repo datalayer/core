@@ -4,19 +4,21 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Snapshot } from '../Snapshot';
-import type { RuntimeSnapshot } from '../../../api/types/runtimes';
-import type { DatalayerClient } from '../../index';
-import { snapshots } from '../../../api/runtimes';
+import {
+  RuntimeSnapshotDTO,
+  RuntimeSnapshotData,
+} from '../../models/RuntimeSnapshotDTO';
+import type { DatalayerClient } from '../../client/index';
+import { snapshots } from '../../api/runtimes';
 
-vi.mock('../../../api/runtimes', () => ({
+vi.mock('../../api/runtimes', () => ({
   snapshots: {
     deleteSnapshot: vi.fn(),
   },
 }));
 
 describe('Snapshot Model', () => {
-  const mockSnapshotData: RuntimeSnapshot = {
+  const mockSnapshotData: RuntimeSnapshotData = {
     uid: 'snapshot-123',
     name: 'Test Snapshot',
     description: 'Test snapshot description',
@@ -25,7 +27,7 @@ describe('Snapshot Model', () => {
   };
 
   let mockSDK: Partial<DatalayerClient>;
-  let snapshot: Snapshot;
+  let snapshot: RuntimeSnapshotDTO;
 
   beforeEach(() => {
     mockSDK = {
@@ -35,7 +37,10 @@ describe('Snapshot Model', () => {
         .mockReturnValue('https://runtimes.example.com'),
       createRuntime: vi.fn(),
     } as any;
-    snapshot = new Snapshot(mockSnapshotData, mockSDK as DatalayerClient);
+    snapshot = new RuntimeSnapshotDTO(
+      mockSnapshotData,
+      mockSDK as DatalayerClient,
+    );
     vi.clearAllMocks();
   });
 
@@ -61,13 +66,13 @@ describe('Snapshot Model', () => {
     });
 
     it('should handle missing optional fields', () => {
-      const minimalData: RuntimeSnapshot = {
+      const minimalData: RuntimeSnapshotData = {
         uid: 'snapshot-456',
         name: 'Minimal',
         environment: 'python-gpu',
         updated_at: '2023-01-01T10:00:00Z',
       };
-      const minimalSnapshot = new Snapshot(
+      const minimalSnapshot = new RuntimeSnapshotDTO(
         minimalData,
         mockSDK as DatalayerClient,
       );

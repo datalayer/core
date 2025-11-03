@@ -6,12 +6,34 @@
 /**
  * User model for the Datalayer SDK with rich functionality.
  *
- * @module client/models/User
+ * @module models/UserDTO
  */
 
-import type { User as UserData } from '../../api/types/iam';
 import type { DatalayerClient } from '../index';
-import { validateJSON } from '../../api/utils/validation';
+import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a user in the Datalayer platform
+ * @interface UserData
+ */
+export interface UserData {
+  /** uuid for the user */
+  id: string;
+  /** ulid for the user */
+  uid: string;
+  /** User's handle or nickname */
+  handle_s: string;
+  /** User's email address */
+  email_s: string;
+  /** User's first name */
+  first_name_t: string;
+  /** User's last name */
+  last_name_t: string;
+  /** Display name shown in the UI */
+  avatar_url_s: string;
+  /** Additional fields that may be present in the response */
+  [key: string]: any;
+}
 
 export interface UserJSON {
   /** uuid for the user */
@@ -36,7 +58,7 @@ export interface UserJSON {
  * User model representing a Datalayer platform user.
  * Provides rich functionality for accessing user data and authentication providers.
  */
-export class User {
+export class UserDTO {
   protected _data: UserData;
 
   /**
@@ -123,3 +145,5 @@ export class User {
     return `User(${this.uid}, ${this.displayName})`;
   }
 }
+
+export default UserDTO;

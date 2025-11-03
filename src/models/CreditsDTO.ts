@@ -6,11 +6,52 @@
 /**
  * Credits model for the Datalayer SDK.
  *
- * @module client/models/Credits
+ * @module models/CreditsDTO
  */
 
-import type { CreditsInfo, CreditReservation } from '../../api/iam/usage';
-import { validateJSON } from '../../api/utils/validation';
+import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Credit information for a user.
+ */
+export interface CreditsInfo {
+  /** Available credits */
+  credits: number;
+  /** Credit quota (null if unlimited) */
+  quota: number | null;
+  /** Last update timestamp */
+  last_update: string;
+}
+
+/**
+ * Credit reservation information.
+ */
+export interface CreditReservation {
+  /** Reservation ID */
+  id: string;
+  /** Reserved credits */
+  credits: number;
+  /** Resource ID (e.g., runtime ID) */
+  resource: string;
+  /** Last update timestamp */
+  last_update: string;
+  /** Burning rate (credits per hour) for this reservation */
+  burning_rate: number;
+  /** Start date of the reservation */
+  start_date: string;
+}
+
+/**
+ * Response from the credits endpoint.
+ */
+export interface CreditsResponse {
+  /** Operation success status */
+  success: boolean;
+  /** Credit information */
+  credits: CreditsInfo;
+  /** Active credit reservations */
+  reservations: CreditReservation[];
+}
 
 /**
  * Credits model representing user's available credits and usage.
@@ -25,7 +66,7 @@ import { validateJSON } from '../../api/utils/validation';
  * const maxMinutes = credits.calculateMaxRuntimeMinutes(environment.burningRate);
  * ```
  */
-export class Credits {
+export class CreditsDTO {
   /** @internal */
   _data: CreditsInfo;
 

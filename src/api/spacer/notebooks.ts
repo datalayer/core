@@ -19,7 +19,7 @@ import {
   GetNotebookResponse,
   UpdateNotebookRequest,
   UpdateNotebookResponse,
-} from '../types/spacer';
+} from '../../models/SpaceDTO';
 
 /**
  * Create a new Jupyter notebook.

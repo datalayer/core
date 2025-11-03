@@ -9,7 +9,7 @@ export interface RuntimeTransfer {
   /**
    * Selected Kernel.
    */
-  kernel: Partial<Omit<IRuntimeOptions, 'kernelType'> & { id: string }> | null;
+  runtime: Partial<Omit<IRuntimeOptions, 'kernelType'> & { id: string }> | null;
   /**
    * List of selected variables
    *

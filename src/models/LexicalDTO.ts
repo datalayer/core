@@ -6,18 +6,99 @@
 /**
  * Lexical domain model for the Datalayer SDK.
  *
- * @module client/models/Lexical
+ * @module models/LexicalDTO
  */
 
-import type {
-  Lexical as LexicalData,
-  UpdateLexicalRequest,
-} from '../../api/types/spacer';
-import * as lexicals from '../../api/spacer/lexicals';
+import * as lexicals from '../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
-import { Item } from './Item';
-import { ItemTypes } from '../constants';
-import { validateJSON } from '../../api/utils/validation';
+import { ItemTypes } from '../client';
+import { ItemDTO } from './ItemDTO';
+import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a Lexical document (rich text editor)
+ * @interface Lexical
+ */
+export interface LexicalData {
+  id: string;
+  uid: string;
+  name?: string; // May not be present in API response
+  name_t?: string; // Text field for name
+  content?: any;
+  space_id?: string; // May not be present, extracted from s3_path_s
+  owner_id?: string; // May not be present
+  creator_uid?: string; // Creator UID from API
+  creator_handle_s?: string; // Creator handle from API
+  created_at?: string; // May not be present
+  creation_ts_dt?: string; // Creation timestamp from API
+  updated_at?: string; // May not be present
+  last_update_ts_dt?: string; // Last update timestamp from API
+  cdn_url_s: string;
+  // Additional fields from actual API response
+  type_s?: string;
+  public_b?: boolean;
+  description_t?: string;
+  document_name_s?: string;
+  document_extension_s: string;
+  document_format_s?: string;
+  content_length_i?: number;
+  content_type_s?: string;
+  mime_type_s?: string;
+  s3_path_s?: string;
+  s3_url_s?: string;
+  model_s?: string;
+}
+
+/**
+ * Request payload for creating a Lexical document
+ * @interface CreateLexicalRequest
+ */
+export interface CreateLexicalRequest {
+  spaceId: string;
+  documentType: string;
+  name: string;
+  description: string;
+  file?: File | Blob;
+}
+
+/**
+ * Response from creating a Lexical document
+ * @interface CreateLexicalResponse
+ */
+export interface CreateLexicalResponse {
+  success: boolean;
+  message: string;
+  document?: LexicalData;
+}
+
+/**
+ * Response from getting a Lexical document
+ * @interface GetLexicalResponse
+ */
+export interface GetLexicalResponse {
+  success: boolean;
+  message: string;
+  document?: LexicalData; // Optional - not present in 404 response
+}
+
+/**
+ * Request payload for updating a Lexical document
+ * @interface UpdateLexicalRequest
+ */
+export interface UpdateLexicalRequest {
+  name?: string;
+  description?: string;
+}
+
+/**
+ * Response from updating a Lexical document
+ * @interface UpdateLexicalResponse
+ */
+export interface UpdateLexicalResponse {
+  success: boolean;
+  message: string;
+  document: LexicalData;
+}
 
 /**
  * Stable public interface for Lexical data.
@@ -55,7 +136,7 @@ export interface LexicalJSON {
  * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
-export class Lexical extends Item<LexicalData> {
+export class LexicalDTO extends ItemDTO<LexicalData> {
   /**
    * Create a Lexical instance.
    *

@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { validateJSON } from '../../api/utils/validation';
+import { validateJSON } from '../api/utils/validation';
 
 /**
  * Represents a health check response from a Datalayer service.

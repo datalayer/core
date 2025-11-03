@@ -32,9 +32,4 @@ export {
 } from './oauth2';
 export { me, whoami } from './profile';
 export { ping } from './healthz';
-export {
-  getCredits,
-  type CreditsInfo,
-  type CreditReservation,
-  type CreditsResponse,
-} from './usage';
+export { getCredits } from './usage';

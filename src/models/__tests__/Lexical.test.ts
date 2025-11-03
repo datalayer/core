@@ -4,14 +4,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Lexical } from '../Lexical';
-import type { Lexical as LexicalData } from '../../../api/types/spacer';
-import type { DatalayerClient } from '../../index';
-import * as items from '../../../api/spacer/items';
-import * as lexicals from '../../../api/spacer/lexicals';
+import { LexicalDTO, LexicalData } from '../../models/LexicalDTO';
+import type { DatalayerClient } from '../../client/index';
+import * as items from '../../api/spacer/items';
+import * as lexicals from '../../api/spacer/lexicals';
 
-vi.mock('../../../api/spacer/items');
-vi.mock('../../../api/spacer/lexicals');
+vi.mock('../../api/spacer/items');
+vi.mock('../../api/spacer/lexicals');
 
 describe('Lexical Model', () => {
   const mockLexicalData: LexicalData = {
@@ -21,17 +20,19 @@ describe('Lexical Model', () => {
     space_id: 'space-456',
     owner_id: 'user-789',
     created_at: '2023-01-01T00:00:00Z',
+    cdn_url_s: '',
+    document_extension_s: '',
   };
 
   let mockSDK: Partial<DatalayerClient>;
-  let lexical: Lexical;
+  let lexical: LexicalDTO;
 
   beforeEach(() => {
     mockSDK = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
     } as any;
-    lexical = new Lexical(mockLexicalData, mockSDK as DatalayerClient);
+    lexical = new LexicalDTO(mockLexicalData, mockSDK as DatalayerClient);
     vi.clearAllMocks();
   });
 

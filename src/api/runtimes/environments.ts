@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { EnvironmentsListResponse } from '../types/runtimes';
+import { ListEnvironmentsResponse } from '../../models/EnvironmentDTO';
 import { validateToken } from '../utils/validation';
 
 /**
@@ -26,10 +26,10 @@ import { validateToken } from '../utils/validation';
 export const listEnvironments = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<EnvironmentsListResponse> => {
+): Promise<ListEnvironmentsResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<EnvironmentsListResponse>({
+  return requestDatalayerAPI<ListEnvironmentsResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/environments`,
     method: 'GET',
     token,

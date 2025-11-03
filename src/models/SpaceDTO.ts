@@ -6,23 +6,35 @@
 /**
  * Space domain model for the Datalayer SDK.
  *
- * @module client/models/Space
+ * @module models/SpaceDTO
  */
 
-import type {
-  Space as SpaceData,
-  GetSpaceItemsResponse,
-} from '../../api/types/spacer';
-import * as users from '../../api/spacer/users';
-import * as items from '../../api/spacer/items';
-import * as notebooks from '../../api/spacer/notebooks';
-import * as lexicals from '../../api/spacer/lexicals';
+import * as users from '../api/spacer/users';
+import * as items from '../api/spacer/items';
+import * as notebooks from '../api/spacer/notebooks';
+import * as lexicals from '../api/spacer/lexicals';
 import type { DatalayerClient } from '../index';
-import { Notebook, type NotebookJSON } from './Notebook';
-import { Lexical, type LexicalJSON } from './Lexical';
-import { ItemTypes } from '../constants';
-import { convertSpaceItemsToModels } from '../utils/spacerUtils';
-import { validateJSON } from '../../api/utils/validation';
+import { NotebookDTO, type NotebookJSON } from './NotebookDTO';
+import { NotebookData } from './NotebookDTO';
+import { LexicalDTO, type LexicalJSON } from './LexicalDTO';
+import { ItemTypes } from '../client/constants';
+import { convertSpaceItemsToModels } from '../client/utils/spacerUtils';
+import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a workspace or project space in Datalayer
+ * @interface SpaceData
+ */
+export interface SpaceData {
+  uid: string;
+  name_t: string;
+  handle_s: string;
+  variant_s: string;
+  description_t: string;
+  tags_ss?: string[];
+  members?: any[];
+  items?: any[];
+}
 
 /**
  * Stable public interface for Space data.
@@ -55,10 +67,10 @@ export interface SpaceJSON {
  * const notebook = await space.createNotebook({ name: 'Analysis' });
  * ```
  */
-export class Space {
+export class SpaceDTO {
   protected _data: SpaceData;
   private _sdk: DatalayerClient;
-  private _items: (Notebook | Lexical)[] | null = null;
+  private _items: (NotebookDTO | LexicalDTO)[] | null = null;
   private _deleted: boolean = false;
 
   /**
@@ -149,7 +161,7 @@ export class Space {
    * @returns Created model instance
    * @internal
    */
-  private async _createItem<T extends Notebook | Lexical>(data: {
+  private async _createItem<T extends NotebookDTO | LexicalDTO>(data: {
     name: string;
     type: string;
     description: string;
@@ -177,7 +189,7 @@ export class Space {
       if (!response.notebook) {
         throw new Error('Failed to create notebook: No notebook returned');
       } else {
-        return new Notebook(response.notebook, this._sdk) as T;
+        return new NotebookDTO(response.notebook, this._sdk) as T;
       }
     } else if (data.type === ItemTypes.LEXICAL) {
       const requestData = {
@@ -197,7 +209,7 @@ export class Space {
           'Failed to create lexical document: No document returned',
         );
       } else {
-        return new Lexical(response.document, this._sdk) as T;
+        return new LexicalDTO(response.document, this._sdk) as T;
       }
     } else {
       throw new Error(`Unsupported item type: ${data.type}`);
@@ -209,7 +221,7 @@ export class Space {
    *
    * @returns Array of Notebook and Lexical model instances
    */
-  async getItems(): Promise<(Notebook | Lexical)[]> {
+  async getItems(): Promise<(NotebookDTO | LexicalDTO)[]> {
     this._checkDeleted();
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
@@ -235,7 +247,7 @@ export class Space {
     name: string;
     description: string;
     file?: File | Blob;
-  }): Promise<Notebook> {
+  }): Promise<NotebookDTO> {
     return this._createItem({
       name: data.name,
       type: ItemTypes.NOTEBOOK,
@@ -254,7 +266,7 @@ export class Space {
     name: string;
     description: string;
     file?: File | Blob;
-  }): Promise<Lexical> {
+  }): Promise<LexicalDTO> {
     return this._createItem({
       name: data.name,
       type: ItemTypes.LEXICAL,
@@ -314,4 +326,155 @@ export class Space {
     this._checkDeleted();
     return `Space(${this.uid}, ${this.name})`;
   }
+}
+
+/**
+ * Request payload for creating a new space
+ * @interface CreateSpaceRequest
+ */
+export interface CreateSpaceRequest {
+  name: string;
+  description: string;
+  variant: string;
+  spaceHandle: string;
+  organizationId: string;
+  seedSpaceId: string;
+  public: boolean;
+}
+
+/**
+ * Response from getting a collaboration session ID
+ * @interface CollaborationSessionResponse
+ */
+export interface CollaborationSessionResponse {
+  success: boolean;
+  sessionId?: string;
+  error?: string;
+}
+
+/**
+ * Response from creating a space
+ * @interface CreateSpaceResponse
+ */
+export interface CreateSpaceResponse {
+  success: boolean;
+  message: string;
+  space?: SpaceData;
+}
+
+/**
+ * Request payload for creating a new notebook (multipart/form-data)
+ * @interface CreateNotebookRequest
+ */
+export interface CreateNotebookRequest {
+  spaceId: string;
+  notebookType: string;
+  name: string;
+  description: string;
+  file?: File | Blob; // Optional file for notebook content
+}
+
+/**
+ * Response from creating a notebook
+ * @interface CreateNotebookResponse
+ */
+export interface CreateNotebookResponse {
+  success: boolean;
+  message: string;
+  notebook?: NotebookData;
+}
+
+/**
+ * Response from getting a notebook
+ * @interface GetNotebookResponse
+ */
+export interface GetNotebookResponse {
+  success: boolean;
+  message: string;
+  notebook?: NotebookData; // Optional - not present in 404 response
+}
+
+/**
+ * Request payload for creating a notebook
+ * @interface CreateNotebookRequest
+ */
+export interface CreateNotebookRequest {
+  spaceId: string;
+  notebookType: string;
+  name: string;
+  description: string;
+  file?: File | Blob;
+}
+
+/**
+ * Request payload for updating a notebook
+ * @interface UpdateNotebookRequest
+ */
+export interface UpdateNotebookRequest {
+  name?: string;
+  description?: string;
+}
+
+/**
+ * Response from updating a notebook
+ * @interface UpdateNotebookResponse
+ */
+export interface UpdateNotebookResponse {
+  success: boolean;
+  message: string;
+  notebook?: NotebookData;
+}
+
+/**
+ * Represents an item within a space
+ * @interface SpaceItem
+ */
+export interface SpaceItem {
+  id: string;
+  type_s: 'notebook' | 'lexical';
+  space_id: string;
+  item_id: string;
+  name: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+/**
+ * Response from getting space items
+ * @interface GetSpaceItemsResponse
+ */
+export interface GetSpaceItemsResponse {
+  success: boolean;
+  message: string;
+  items: SpaceItem[];
+}
+
+/**
+ * Response from deleting a space item
+ * @interface DeleteSpaceItemResponse
+ */
+export interface DeleteSpaceItemResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Response from getting a single space item
+ * @interface GetSpaceItemResponse
+ */
+export interface GetSpaceItemResponse {
+  success: boolean;
+  message: string;
+  item?: any; // Item data when found (various types: notebook, lexical, etc.)
+}
+
+// API Response types that match actual server responses
+/**
+ * Response from getting spaces for a user
+ * @interface SpacesForUserResponse
+ */
+export interface SpacesForUserResponse {
+  success: boolean;
+  message: string;
+  spaces: SpaceData[];
 }

@@ -19,7 +19,7 @@ import {
   GetLexicalResponse,
   UpdateLexicalRequest,
   UpdateLexicalResponse,
-} from '../types/spacer';
+} from '../../models/LexicalDTO';
 
 /**
  * Create a new lexical document.

@@ -17,14 +17,14 @@ import * as items from '../../api/spacer/items';
 import type {
   CreateSpaceRequest,
   UpdateNotebookRequest,
-  UpdateLexicalRequest,
   GetSpaceItemsResponse,
-} from '../../api/types/spacer';
+} from '../../models/SpaceDTO';
+import { UpdateLexicalRequest } from '../../models/LexicalDTO';
 import type { Constructor } from '../utils/mixins';
-import { Notebook } from '../models/Notebook';
-import { Lexical } from '../models/Lexical';
-import { Space } from '../models/Space';
-import { HealthCheck } from '../models/HealthCheck';
+import { NotebookDTO } from '../../models/NotebookDTO';
+import { LexicalDTO } from '../../models/LexicalDTO';
+import { SpaceDTO } from '../../models/SpaceDTO';
+import { HealthCheck } from '../../models/HealthCheck';
 import { convertSpaceItemsToModels } from '../utils/spacerUtils';
 
 /** Options for content loading with CDN support. */
@@ -46,11 +46,11 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * Get all workspaces for the authenticated user.
      * @returns Array of Space instances
      */
-    async getMySpaces(): Promise<Space[]> {
+    async getMySpaces(): Promise<SpaceDTO[]> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const response = await users.getMySpaces(token, spacerRunUrl);
-      return response.spaces.map(s => new Space(s, this as any));
+      return response.spaces.map(s => new SpaceDTO(s, this as any));
     }
 
     // ========================================================================
@@ -76,7 +76,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       organizationId: string,
       seedSpaceId: string,
       isPublic: boolean,
-    ): Promise<Space> {
+    ): Promise<SpaceDTO> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
 
@@ -94,7 +94,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       if (!response.space) {
         throw new Error('Failed to create space: no space returned');
       }
-      return new Space(response.space, this as any);
+      return new SpaceDTO(response.space, this as any);
     }
 
     // ========================================================================
@@ -114,7 +114,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       name: string,
       description: string,
       file?: File | Blob,
-    ): Promise<Notebook> {
+    ): Promise<NotebookDTO> {
       // Get the Space model instance
       const spaces = await this.getMySpaces();
       const spaceModel = spaces.find((s: any) => s.uid === spaceId);
@@ -136,7 +136,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * @param id - Notebook ID
      * @returns Notebook instance
      */
-    async getNotebook(id: string): Promise<Notebook> {
+    async getNotebook(id: string): Promise<NotebookDTO> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await notebooks.getNotebook(token, id, spacerRunUrl);
@@ -145,7 +145,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         throw new Error(`Notebook with ID '${id}' not found`);
       }
 
-      return new Notebook(response.notebook, this as any);
+      return new NotebookDTO(response.notebook, this as any);
     }
 
     /**
@@ -159,7 +159,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       id: string,
       name?: string,
       description?: string,
-    ): Promise<Notebook> {
+    ): Promise<NotebookDTO> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
 
@@ -176,7 +176,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       if (!response.notebook) {
         throw new Error('Failed to update notebook: no notebook returned');
       }
-      return new Notebook(response.notebook, this as any);
+      return new NotebookDTO(response.notebook, this as any);
     }
 
     // ========================================================================
@@ -196,7 +196,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       name: string,
       description: string,
       file?: File | Blob,
-    ): Promise<Lexical> {
+    ): Promise<LexicalDTO> {
       // Get the Space model instance
       const spaces = await this.getMySpaces();
       const spaceModel = spaces.find((s: any) => s.uid === spaceId);
@@ -218,7 +218,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * @param id - Document ID
      * @returns Lexical instance
      */
-    async getLexical(id: string): Promise<Lexical> {
+    async getLexical(id: string): Promise<LexicalDTO> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
       const response = await lexicals.getLexical(token, id, spacerRunUrl);
@@ -227,7 +227,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         throw new Error(`Lexical document with ID '${id}' not found`);
       }
 
-      return new Lexical(response.document, this as any);
+      return new LexicalDTO(response.document, this as any);
     }
 
     /**
@@ -241,7 +241,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       id: string,
       name?: string,
       description?: string,
-    ): Promise<Lexical> {
+    ): Promise<LexicalDTO> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
 
@@ -255,7 +255,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         data,
         spacerRunUrl,
       );
-      return new Lexical(response.document, this as any);
+      return new LexicalDTO(response.document, this as any);
     }
 
     // ========================================================================
@@ -267,7 +267,9 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * @param spaceId - Space ID
      * @returns Array of Notebook and Lexical model instances
      */
-    async getSpaceItems(spaceId: string): Promise<(Notebook | Lexical)[]> {
+    async getSpaceItems(
+      spaceId: string,
+    ): Promise<(NotebookDTO | LexicalDTO)[]> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
 
@@ -287,7 +289,7 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * @returns Notebook or Lexical model instance
      * @throws Error if item not found
      */
-    async getSpaceItem(itemId: string): Promise<Notebook | Lexical> {
+    async getSpaceItem(itemId: string): Promise<NotebookDTO | LexicalDTO> {
       const spacerRunUrl = (this as any).getSpacerRunUrl();
       const token = (this as any).getToken();
 
@@ -299,12 +301,12 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       // Determine item type and create appropriate model
       const item = response.item;
       if (item.type_s === 'notebook' || item.notebook_name_s !== undefined) {
-        return new Notebook(item, this as any);
+        return new NotebookDTO(item, this as any);
       } else if (
         item.type_s === 'lexical' ||
         item.document_name_s !== undefined
       ) {
-        return new Lexical(item, this as any);
+        return new LexicalDTO(item, this as any);
       } else {
         throw new Error(`Unknown item type for item '${itemId}'`);
       }

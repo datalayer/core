@@ -3,10 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
-import { Runtime } from '../models/Runtime';
-import { Snapshot } from '../models/Snapshot';
+import { RuntimeDTO } from '../../models/RuntimeDTO';
+import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
 import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
@@ -18,9 +20,9 @@ import { performCleanup } from '../../__tests__/shared/cleanup-shared';
  * using the SDK client and model classes.
  */
 describe('SDK Runtimes Integration Tests', () => {
-  let sdk: DatalayerClient;
-  let createdRuntime: Runtime | null = null;
-  let createdSnapshot: Snapshot | null = null;
+  let client: DatalayerClient;
+  let createdRuntime: RuntimeDTO | null = null;
+  let createdSnapshot: RuntimeSnapshotDTO | null = null;
 
   beforeAll(async () => {
     if (!testConfig.hasToken()) {
@@ -29,7 +31,7 @@ describe('SDK Runtimes Integration Tests', () => {
 
     await performCleanup('setup');
 
-    sdk = new DatalayerClient({
+    client = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -48,7 +50,7 @@ describe('SDK Runtimes Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Environment management', () => {
     it('should list available environments', async () => {
       console.log('Testing list environments...');
-      const environments = await sdk.listEnvironments();
+      const environments = await client.listEnvironments();
 
       expect(environments).toBeDefined();
       expect(Array.isArray(environments)).toBe(true);
@@ -74,17 +76,17 @@ describe('SDK Runtimes Integration Tests', () => {
       it('should create a runtime', async () => {
         console.log('Creating runtime...');
 
-        const runtime = await sdk.createRuntime(
+        const runtime = await client.createRuntime(
           'python-cpu-env',
           'notebook',
-          'sdk-test-runtime',
+          'client-test-runtime',
           10,
         );
 
-        expect(runtime).toBeInstanceOf(Runtime);
+        expect(runtime).toBeInstanceOf(RuntimeDTO);
         expect(runtime.podName).toBeDefined();
         expect(runtime.environmentName).toBe('python-cpu-env');
-        expect(runtime.givenName).toContain('sdk-test-runtime');
+        expect(runtime.givenName).toContain('client-test-runtime');
 
         createdRuntime = runtime;
         console.log(`Created runtime: ${runtime.podName}`);
@@ -100,7 +102,7 @@ describe('SDK Runtimes Integration Tests', () => {
         }
 
         console.log('Listing runtimes...');
-        const runtimes = await sdk.listRuntimes();
+        const runtimes = await client.listRuntimes();
 
         expect(Array.isArray(runtimes)).toBe(true);
 
@@ -120,7 +122,7 @@ describe('SDK Runtimes Integration Tests', () => {
         }
 
         console.log('Getting runtime details...');
-        const runtime = await sdk.getRuntime(createdRuntime.podName);
+        const runtime = await client.getRuntime(createdRuntime.podName);
 
         expect(runtime).toBeInstanceOf(Runtime);
         expect(runtime.podName).toBe(createdRuntime.podName);
@@ -180,13 +182,13 @@ describe('SDK Runtimes Integration Tests', () => {
         console.log('Creating snapshot from runtime...');
 
         const snapshot = await createdRuntime.createSnapshot(
-          'sdk-test-snapshot',
+          'client-test-snapshot',
           'Test snapshot from SDK',
         );
 
         expect(snapshot).toBeInstanceOf(Snapshot);
         expect(snapshot.uid).toBeDefined();
-        expect(snapshot.name).toContain('sdk-test-snapshot');
+        expect(snapshot.name).toContain('client-test-snapshot');
 
         createdSnapshot = snapshot;
         console.log(`Created snapshot: ${snapshot.uid}`);
@@ -202,7 +204,7 @@ describe('SDK Runtimes Integration Tests', () => {
         }
 
         console.log('Listing snapshots...');
-        const snapshots = await sdk.listSnapshots();
+        const snapshots = await client.listSnapshots();
 
         expect(Array.isArray(snapshots)).toBe(true);
 
@@ -222,9 +224,9 @@ describe('SDK Runtimes Integration Tests', () => {
         }
 
         console.log('Getting snapshot details...');
-        const snapshot = await sdk.getSnapshot(createdSnapshot.uid);
+        const snapshot = await client.getSnapshot(createdSnapshot.uid);
 
-        expect(snapshot).toBeInstanceOf(Snapshot);
+        expect(snapshot).toBeInstanceOf(RuntimeSnapshotDTO);
         expect(snapshot.uid).toBe(createdSnapshot.uid);
         expect(snapshot.environment).toBe(createdSnapshot.environment);
 
@@ -280,7 +282,7 @@ describe('SDK Runtimes Integration Tests', () => {
 
         console.log('Deleting snapshot...');
         const snapshotUid = createdSnapshot.uid; // Get uid before deletion
-        await sdk.deleteSnapshot(createdSnapshot);
+        await client.deleteSnapshot(createdSnapshot);
         console.log(`Snapshot ${snapshotUid} deleted`);
 
         // Verify deletion
@@ -309,7 +311,7 @@ describe('SDK Runtimes Integration Tests', () => {
 
         console.log('Deleting runtime...');
         const podName = createdRuntime.podName; // Get podName before deletion
-        await sdk.deleteRuntime(createdRuntime);
+        await client.deleteRuntime(createdRuntime);
         console.log(`Runtime ${podName} deleted`);
 
         // Verify deletion
@@ -331,7 +333,7 @@ describe('SDK Runtimes Integration Tests', () => {
       console.log('Testing non-existent runtime...');
 
       try {
-        await sdk.getRuntime('non-existent-pod-name');
+        await client.getRuntime('non-existent-pod-name');
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
         expect(error).toBeDefined();
@@ -343,7 +345,7 @@ describe('SDK Runtimes Integration Tests', () => {
       console.log('Testing non-existent snapshot...');
 
       try {
-        await sdk.getSnapshot('non-existent-snapshot-uid');
+        await client.getSnapshot('non-existent-snapshot-uid');
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
         expect(error).toBeDefined();
@@ -355,7 +357,7 @@ describe('SDK Runtimes Integration Tests', () => {
       console.log('Testing invalid runtime creation...');
 
       try {
-        await sdk.createRuntime(
+        await client.createRuntime(
           '', // Invalid environment name
           'notebook',
           'Invalid test runtime',

@@ -5,9 +5,9 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
-import { Space } from '../models/Space';
-import { Notebook } from '../models/Notebook';
-import { Lexical } from '../models/Lexical';
+import { SpaceDTO } from '../../models/SpaceDTO';
+import { NotebookDTO } from '../../models/NotebookDTO';
+import { LexicalDTO } from '../../models/LexicalDTO';
 import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
@@ -19,10 +19,10 @@ import { performCleanup } from '../../__tests__/shared/cleanup-shared';
  * using the SDK client and model classes.
  */
 describe('SDK Spacer Integration Tests', () => {
-  let sdk: DatalayerClient;
-  let testSpace: Space | null = null;
-  let createdNotebook: Notebook | null = null;
-  let createdLexical: Lexical | null = null;
+  let client: DatalayerClient;
+  let testSpace: SpaceDTO | null = null;
+  let createdNotebook: NotebookDTO | null = null;
+  let createdLexical: LexicalDTO | null = null;
 
   beforeAll(async () => {
     if (!testConfig.hasToken()) {
@@ -31,7 +31,7 @@ describe('SDK Spacer Integration Tests', () => {
 
     await performCleanup('setup');
 
-    sdk = new DatalayerClient({
+    client = new DatalayerClient({
       token: testConfig.getToken(),
       iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
       runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
@@ -50,7 +50,7 @@ describe('SDK Spacer Integration Tests', () => {
   describe.skipIf(!testConfig.hasToken())('Space management', () => {
     it('should get user spaces', async () => {
       console.log('Getting user spaces...');
-      const spaces = await sdk.getMySpaces();
+      const spaces = await client.getMySpaces();
 
       expect(spaces).toBeDefined();
       expect(Array.isArray(spaces)).toBe(true);
@@ -124,10 +124,10 @@ describe('SDK Spacer Integration Tests', () => {
 
       console.log('Creating notebook...');
 
-      const notebook = await sdk.createNotebook({
+      const notebook = await client.createNotebook({
         spaceId: testSpace.uid,
         notebookType: 'jupyter',
-        name: 'sdk-test-notebook-' + Date.now(),
+        name: 'client-test-notebook-' + Date.now(),
         description: 'Test notebook from SDK',
       });
 
@@ -149,7 +149,7 @@ describe('SDK Spacer Integration Tests', () => {
       }
 
       console.log('Getting notebook details...');
-      const notebook = await sdk.getNotebook(createdNotebook.uid);
+      const notebook = await client.getNotebook(createdNotebook.uid);
 
       expect(notebook).toBeInstanceOf(Notebook);
       expect(notebook.id).toBe(createdNotebook.id);
@@ -169,8 +169,8 @@ describe('SDK Spacer Integration Tests', () => {
 
       console.log('Updating notebook...');
 
-      const updatedNotebook = await sdk.updateNotebook(createdNotebook, {
-        name: 'sdk-test-notebook-updated',
+      const updatedNotebook = await client.updateNotebook(createdNotebook, {
+        name: 'client-test-notebook-updated',
         description: 'Updated description from SDK test',
       });
 
@@ -265,14 +265,14 @@ describe('SDK Spacer Integration Tests', () => {
 
       console.log('Creating lexical document...');
 
-      const lexical = await sdk.createLexical({
+      const lexical = await client.createLexical({
         spaceId: testSpace.uid,
-        name: 'sdk-test-lexical-' + Date.now(),
+        name: 'client-test-lexical-' + Date.now(),
         description: 'Test lexical from SDK',
         documentType: 'document',
       });
 
-      expect(lexical).toBeInstanceOf(Lexical);
+      expect(lexical).toBeInstanceOf(LexicalDTO);
       expect(lexical.id).toBeDefined();
       expect(lexical.spaceId).toBe(testSpace.uid);
 
@@ -290,7 +290,7 @@ describe('SDK Spacer Integration Tests', () => {
       }
 
       console.log('Getting lexical details...');
-      const lexical = await sdk.getLexical(createdLexical.uid);
+      const lexical = await client.getLexical(createdLexical.uid);
 
       expect(lexical).toBeInstanceOf(Lexical);
       expect(lexical.id).toBe(createdLexical.id);
@@ -310,8 +310,8 @@ describe('SDK Spacer Integration Tests', () => {
 
       console.log('Updating lexical...');
 
-      const updatedLexical = await sdk.updateLexical(createdLexical, {
-        name: 'sdk-test-lexical-updated',
+      const updatedLexical = await client.updateLexical(createdLexical, {
+        name: 'client-test-lexical-updated',
         description: 'Updated description from SDK test',
       });
 
@@ -399,7 +399,7 @@ describe('SDK Spacer Integration Tests', () => {
       }
 
       console.log('Getting space items...');
-      const response = await sdk.getSpaceItems(testSpace.uid);
+      const response = await client.getSpaceItems(testSpace.uid);
 
       expect(response).toBeDefined();
       expect(response.items).toBeDefined();
@@ -416,8 +416,8 @@ describe('SDK Spacer Integration Tests', () => {
       console.log('Testing space item deletion method...');
 
       // Verify the method exists and has correct signature
-      expect(sdk.deleteSpaceItem).toBeDefined();
-      expect(typeof sdk.deleteSpaceItem).toBe('function');
+      expect(client.deleteSpaceItem).toBeDefined();
+      expect(typeof client.deleteSpaceItem).toBe('function');
       console.log('Space item deletion method verified');
 
       // Test would normally create and delete an actual item
@@ -431,7 +431,7 @@ describe('SDK Spacer Integration Tests', () => {
       const invalidItemId = 'non-existent-item-id-12345';
 
       try {
-        await sdk.deleteSpaceItem(invalidItemId);
+        await client.deleteSpaceItem(invalidItemId);
         // If we get here without throwing, that's a test failure
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
@@ -456,7 +456,7 @@ describe('SDK Spacer Integration Tests', () => {
       console.log('Testing non-existent notebook...');
 
       try {
-        await sdk.getNotebook('non-existent-notebook-id');
+        await client.getNotebook('non-existent-notebook-id');
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
         expect(error).toBeDefined();
@@ -468,7 +468,7 @@ describe('SDK Spacer Integration Tests', () => {
       console.log('Testing non-existent lexical...');
 
       try {
-        await sdk.getLexical('non-existent-lexical-id');
+        await client.getLexical('non-existent-lexical-id');
         expect(true).toBe(false); // Should not reach here
       } catch (error: any) {
         expect(error).toBeDefined();
@@ -481,7 +481,7 @@ describe('SDK Spacer Integration Tests', () => {
 
       try {
         // Missing required fields
-        await sdk.createNotebook({
+        await client.createNotebook({
           spaceId: '', // Invalid empty spaceId
           notebookType: 'jupyter',
           name: 'test',

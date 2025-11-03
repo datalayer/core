@@ -14,11 +14,11 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
-  Runtime,
+  RuntimeData,
   CreateRuntimeRequest,
   CreateRuntimeResponse,
-  RuntimesListResponse,
-} from '../types/runtimes';
+  ListRuntimesResponse,
+} from '../../models/RuntimeDTO';
 import { validateToken, validateRequiredString } from '../utils/validation';
 
 /**
@@ -79,7 +79,7 @@ export const createRuntime = async (
 export const listRuntimes = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<RuntimesListResponse> => {
+): Promise<ListRuntimesResponse> => {
   validateToken(token);
 
   const response = await requestDatalayerAPI<any>({
@@ -90,7 +90,7 @@ export const listRuntimes = async (
 
   // The API returns { success: true, message: string, runtimes: Runtime[] }
   // The response already has the correct structure, just return it
-  return response as RuntimesListResponse;
+  return response as ListRuntimesResponse;
 };
 
 /**
@@ -107,7 +107,7 @@ export const getRuntime = async (
   token: string,
   podName: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<Runtime> => {
+): Promise<RuntimeData> => {
   validateToken(token);
   validateRequiredString(podName, 'Pod name');
 
@@ -126,7 +126,7 @@ export const getRuntime = async (
       return {
         ...response.runtime,
         pod_name: response.runtime.pod_name || podName,
-      } as Runtime;
+      } as RuntimeData;
     }
 
     // Fallback to 'kernel' field (old API)
@@ -134,11 +134,11 @@ export const getRuntime = async (
       return {
         ...response.kernel,
         pod_name: response.kernel.pod_name || podName,
-      } as Runtime;
+      } as RuntimeData;
     }
 
     // Fallback if response structure is different
-    return response as Runtime;
+    return response as RuntimeData;
   } catch (error: any) {
     // Handle specific error cases
     if (error.response && error.response.status === 404) {
@@ -207,12 +207,12 @@ export const updateRuntime = async (
   podName: string,
   from: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<Runtime> => {
+): Promise<RuntimeData> => {
   validateToken(token);
   validateRequiredString(podName, 'Pod name');
 
   try {
-    return await requestDatalayerAPI<Runtime>({
+    return await requestDatalayerAPI<RuntimeData>({
       url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${podName}`,
       method: 'PUT',
       token,

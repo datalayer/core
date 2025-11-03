@@ -20,9 +20,6 @@ export {
 } from './DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
 
-// Type exports
-export * from './types';
-
 // Domain-organized API exports
 export * as iam from './iam';
 export * as runtimes from './runtimes';

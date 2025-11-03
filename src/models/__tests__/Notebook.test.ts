@@ -4,35 +4,42 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Notebook } from '../Notebook';
-import type { Notebook as NotebookData } from '../../../api/types/spacer';
-import type { DatalayerClient } from '../../index';
-import * as items from '../../../api/spacer/items';
-import * as notebooks from '../../../api/spacer/notebooks';
+import { NotebookDTO, NotebookData } from '../../models/NotebookDTO';
+import {
+  DeleteSpaceItemResponse,
+  UpdateNotebookResponse,
+} from '../../models/SpaceDTO';
+import type { DatalayerClient } from '../../client/index';
+import * as items from '../../api/spacer/items';
+import * as notebooks from '../../api/spacer/notebooks';
 
-vi.mock('../../../api/spacer/items');
-vi.mock('../../../api/spacer/notebooks');
+vi.mock('../../api/spacer/items');
+vi.mock('../../api/spacer/notebooks');
 
 describe('Notebook Model', () => {
-  const mockNotebookData: NotebookData = {
+  const mockNotebookData: NotebookData & { path: string; space_id: string } = {
     id: 'notebook-123',
     uid: 'notebook-uid-123',
-    name: 'Test Notebook',
+    name_t: 'Test Notebook',
+    description_t: 'A test notebook description',
+    type_s: '',
+    notebook_extension_s: '',
+    s3_path_s: 'datalayer.app/space-456/notebooks/test-notebook.ipynb',
+    s3_url_s: '',
+    cdn_url_s: '',
     path: '/notebooks/test',
     space_id: 'space-456',
-    owner_id: 'user-789',
-    created_at: '2023-01-01T00:00:00Z',
   };
 
   let mockSDK: Partial<DatalayerClient>;
-  let notebook: Notebook;
+  let notebook: NotebookDTO;
 
   beforeEach(() => {
     mockSDK = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
-    } as any;
-    notebook = new Notebook(mockNotebookData, mockSDK as DatalayerClient);
+    } satisfies Partial<DatalayerClient>;
+    notebook = new NotebookDTO(mockNotebookData, mockSDK as DatalayerClient);
     vi.clearAllMocks();
   });
 
@@ -58,8 +65,9 @@ describe('Notebook Model', () => {
     it('should update notebook', async () => {
       vi.mocked(notebooks.updateNotebook).mockResolvedValue({
         success: true,
-        notebook: { ...mockNotebookData, name: 'New Name' },
-      } as any);
+        message: 'Notebook updated',
+        notebook: { ...mockNotebookData, name_t: 'New Name' },
+      } satisfies UpdateNotebookResponse);
 
       const updated = await notebook.update('New Name');
       expect(updated).toBe(notebook);
@@ -68,7 +76,8 @@ describe('Notebook Model', () => {
     it('should delete notebook', async () => {
       vi.mocked(items.deleteItem).mockResolvedValue({
         success: true,
-      } as any);
+        message: 'Deleted',
+      } satisfies DeleteSpaceItemResponse);
 
       await notebook.delete();
 

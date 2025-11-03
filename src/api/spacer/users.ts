@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { SpacesForUserResponse } from '../types/spacer';
+import { SpacesForUserResponse } from '../../models/SpaceDTO';
 import { validateToken } from '../utils/validation';
 
 /**

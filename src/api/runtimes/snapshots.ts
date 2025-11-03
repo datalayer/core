@@ -15,10 +15,10 @@ import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
   CreateRuntimeSnapshotRequest,
-  SnapshotsListResponse,
-  SnapshotGetResponse,
-  SnapshotCreateResponse,
-} from '../types/runtimes';
+  ListRuntimeSnapshotsResponse,
+  GetRuntimeSnapshotResponse,
+  CreateRuntimeSnapshotResponse,
+} from '../../models/RuntimeSnapshotDTO';
 import { validateToken, validateRequiredString } from '../utils/validation';
 
 /**
@@ -33,10 +33,10 @@ export const createSnapshot = async (
   token: string,
   data: CreateRuntimeSnapshotRequest,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<SnapshotCreateResponse> => {
+): Promise<CreateRuntimeSnapshotResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<SnapshotCreateResponse>({
+  return requestDatalayerAPI<CreateRuntimeSnapshotResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
     method: 'POST',
     token,
@@ -54,10 +54,10 @@ export const createSnapshot = async (
 export const listSnapshots = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<SnapshotsListResponse> => {
+): Promise<ListRuntimeSnapshotsResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<SnapshotsListResponse>({
+  return requestDatalayerAPI<ListRuntimeSnapshotsResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
     method: 'GET',
     token,
@@ -77,11 +77,11 @@ export const getSnapshot = async (
   token: string,
   snapshotId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<SnapshotGetResponse> => {
+): Promise<GetRuntimeSnapshotResponse> => {
   validateToken(token);
   validateRequiredString(snapshotId, 'Snapshot ID');
 
-  return requestDatalayerAPI<SnapshotGetResponse>({
+  return requestDatalayerAPI<GetRuntimeSnapshotResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
     method: 'GET',
     token,

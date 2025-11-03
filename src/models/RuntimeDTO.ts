@@ -6,14 +6,42 @@
 /**
  * Runtime domain model for the Datalayer SDK.
  *
- * @module client/models/Runtime
+ * @module models/RuntimeDTO
  */
 
-import { updateRuntime } from '../../api/runtimes/runtimes';
-import type { Runtime as RuntimeData } from '../../api/types/runtimes';
+import { updateRuntime } from '../api/runtimes/runtimes';
 import type { DatalayerClient } from '../index';
-import { Snapshot } from './Snapshot';
-import { validateJSON } from '../../api/utils/validation';
+import { RuntimeSnapshotDTO } from './RuntimeSnapshotDTO';
+import { validateJSON } from '../api/utils/validation';
+
+/**
+ * Represents a running instance of a computing environment.
+ * @interface RuntimeData
+ */
+export interface RuntimeData {
+  /** Kubernetes pod name for the runtime instance */
+  pod_name: string;
+  /** Unique identifier for the runtime */
+  uid: string;
+  /** Name of the environment this runtime is based on */
+  environment_name: string;
+  /** Title of the environment for display */
+  environment_title: string;
+  /** Type of runtime - notebook, terminal, or job */
+  type: string;
+  /** Credits consumed per second */
+  burning_rate: number;
+  /** User-friendly name for the runtime */
+  given_name: string;
+  /** Authentication token for accessing the runtime */
+  token: string;
+  /** Ingress URL for accessing the runtime */
+  ingress: string;
+  /** ISO 8601 timestamp of when the runtime started */
+  started_at: string;
+  /** ISO 8601 timestamp of when the runtime will expire */
+  expired_at: string;
+}
 
 /**
  * Stable public interface for Runtime data.
@@ -46,6 +74,51 @@ export interface RuntimeJSON {
 }
 
 /**
+ * Request payload for creating a new runtime
+ * @interface CreateRuntimeRequest
+ */
+export interface CreateRuntimeRequest {
+  /** Name of the environment to use */
+  environment_name: string;
+  /** Type of runtime (e.g., 'notebook', 'terminal', 'job') */
+  type?: 'notebook' | 'terminal' | 'job';
+  /** Optional given name for the runtime */
+  given_name?: string;
+  /** Maximum credits this runtime can consume */
+  credits_limit?: number;
+  /** Optional capabilities for the runtime */
+  capabilities?: string[];
+  /** Optional source to create runtime from (e.g., snapshot ID) */
+  from?: string;
+}
+
+/**
+ * Response from creating a new runtime
+ * @interface CreateRuntimeResponse
+ */
+export interface CreateRuntimeResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** The created runtime instance */
+  runtime: RuntimeData;
+}
+
+/**
+ * Response from listing runtimes
+ * @interface ListRuntimesResponse
+ */
+export interface ListRuntimesResponse {
+  /** Whether the request was successful */
+  success: boolean;
+  /** Response message from the server */
+  message: string;
+  /** Array of runtime instances */
+  runtimes: RuntimeData[];
+}
+
+/**
  * Runtime domain model that wraps API responses with convenient methods.
  * Provides state management and lifecycle operations for computational runtimes.
  *
@@ -55,7 +128,7 @@ export interface RuntimeJSON {
  * await runtime.waitUntilReady();
  * ```
  */
-export class Runtime {
+export class RuntimeDTO {
   /** @internal */
   _data: RuntimeData;
   private _sdk: DatalayerClient;
@@ -177,7 +250,7 @@ export class Runtime {
    * @param from - Snapshot identifier to restore from
    * @returns Updated Runtime instance
    */
-  async update(from: string): Promise<Runtime> {
+  async update(from: string): Promise<RuntimeDTO> {
     this._checkDeleted();
     const updated = await updateRuntime(
       (this._sdk as any).getToken(),
@@ -185,7 +258,7 @@ export class Runtime {
       from,
       (this._sdk as any).getRuntimesRunUrl(),
     );
-    return new Runtime(updated, this._sdk);
+    return new RuntimeDTO(updated, this._sdk);
   }
 
   /**
@@ -200,7 +273,7 @@ export class Runtime {
     name: string,
     description?: string,
     stop?: boolean,
-  ): Promise<Snapshot> {
+  ): Promise<RuntimeSnapshotDTO> {
     this._checkDeleted();
     return await (this._sdk as any).createSnapshot(
       this.podName,

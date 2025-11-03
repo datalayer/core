@@ -13,7 +13,7 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import type { HealthzPingResponse } from '../types/common';
+import type { HealthzPingResponse } from '../../models/Common';
 
 /**
  * Health check ping endpoint

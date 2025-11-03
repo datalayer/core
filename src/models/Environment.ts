@@ -69,7 +69,7 @@ export interface IDatalayerEnvironment {
   /**
    * Associate kernel attributes
    */
-  kernel?: {
+  runtime?: {
     /**
      * Proposed display name
      */
