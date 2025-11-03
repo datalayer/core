@@ -32,6 +32,56 @@ export type IRuntimeLocation = 'browser' | 'local' | string;
 export interface IRuntimeModel extends IRuntimePod, Kernel.IModel {}
 
 /**
+ * Runtime pod.
+ */
+export interface IRuntimePod {
+  /**
+   * Environment display name
+   */
+  environment_title: string;
+  /**
+   * Environment name
+   */
+  environment_name: string;
+  /**
+   * Runtime name
+   */
+  pod_name: string;
+  /**
+   * Runtime ingress URL
+   */
+  ingress: string;
+  /**
+   * Runtime user given name
+   */
+  given_name: string;
+  /**
+   * Runtime type
+   */
+  type: IRuntimeType;
+  /**
+   * Server authentication token
+   */
+  token: string;
+  /**
+   * Credits burning rate per second
+   */
+  burning_rate: number;
+  /**
+   * Kernel reservation ID
+   */
+  reservation_id?: string;
+  /**
+   * Runtime usage starting timestamp
+   */
+  started_at: string;
+  /**
+   * Runtime credits reservation expiration timestamp
+   */
+  expired_at?: string;
+}
+
+/**
  * Runtime description.
  */
 export interface IRuntimeDesc {
@@ -84,53 +134,3 @@ export type IRuntimeType = 'notebook' | 'cell';
  * Runtime optional capabilities.
  */
 export type IRuntimeCapabilities = 'user_storage';
-
-/**
- * Runtime pod.
- */
-export interface IRuntimePod {
-  /**
-   * Environment display name
-   */
-  environment_title: string;
-  /**
-   * Environment name
-   */
-  environment_name: string;
-  /**
-   * Runtime name
-   */
-  pod_name: string;
-  /**
-   * Runtime ingress URL
-   */
-  ingress: string;
-  /**
-   * Runtime user given name
-   */
-  given_name: string;
-  /**
-   * Runtime type
-   */
-  type: IRuntimeType;
-  /**
-   * Server authentication token
-   */
-  token: string;
-  /**
-   * Credits burning rate per second
-   */
-  burning_rate: number;
-  /**
-   * Kernel reservation ID
-   */
-  reservation_id?: string;
-  /**
-   * Runtime usage starting timestamp
-   */
-  started_at: string;
-  /**
-   * Runtime credits reservation expiration timestamp
-   */
-  expired_at?: string;
-}
