@@ -7217,311 +7217,297 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   return {
     // Authentication & Profile
-    login: useLogin, // ✅ Available in useCache
-    logout: useLogout, // ✅ Available in useCache
-    getMe: useMe, // ✅ Available in useCache
-    updateMe: useUpdateMe, // ✅ Available in useCache
-    whoami: useWhoami, // ✅ Available in useCache
-    changePassword: useChangePassword, // ✅ Available in useCache [BATCH 3]
-    requestEmailUpdate: useRequestEmailUpdate, // ✅ Available in useCache [BATCH 3]
-    confirmEmailUpdate: useConfirmEmailUpdate, // ✅ Available in useCache [BATCH 3]
-    requestJoin: useRequestJoin, // ✅ Available in useCache [BATCH 9]
-    requestJoinToken: useRequestJoinToken, // ✅ Available in useCache [BATCH 9]
-    joinWithInvite: useJoinWithInvite, // ✅ Available in useCache [BATCH 9]
-    confirmJoinWithToken: useConfirmJoinWithToken, // ✅ Available in useCache [BATCH 9]
-    createTokenForPasswordChange: useCreateTokenForPasswordChange, // ✅ Available in useCache [BATCH 9]
-    confirmPassworkWithToken: useConfirmPasswordWithToken, // ✅ Available in useCache [BATCH 9]
-    getOAuth2AuthorizationURL: useOAuth2AuthorizationURL, // ✅ Available in useCache [BATCH 9]
-    getOAuth2AuthorizationLinkURL: useOAuth2AuthorizationLinkURL, // ✅ Available in useCache [BATCH 9]
-    getGitHubProfile: useGetGitHubProfile, // ✅ Available in useCache [BATCH 10]
-    getLinkedinProfile: useGetLinkedinProfile, // ✅ Available in useCache [BATCH 10]
-    postLinkedinShare: usePostLinkedinShare, // ✅ Available in useCache [BATCH 10]
-    postLinkedinShareWithUpload: usePostLinkedinShareWithUpload, // ✅ Available in useCache [BATCH 10]
-    registerToWaitingList: useRegisterToWaitingList, // ✅ Available in useCache [BATCH 10]
+    useLogin,
+    useLogout,
+    useMe,
+    useUpdateMe,
+    useWhoami,
+    useChangePassword,
+    useRequestEmailUpdate,
+    useConfirmEmailUpdate,
+    useRequestJoin,
+    useRequestJoinToken,
+    useJoinWithInvite,
+    useConfirmJoinWithToken,
+    useCreateTokenForPasswordChange,
+    useConfirmPasswordWithToken,
+    useOAuth2AuthorizationURL,
+    useOAuth2AuthorizationLinkURL,
+    useGetGitHubProfile,
+    useGetLinkedinProfile,
+    usePostLinkedinShare,
+    usePostLinkedinShareWithUpload,
+    useRegisterToWaitingList,
 
     // Proxy
-    proxyGET: useProxyGET, // ✅ Available in useCache [BATCH 10]
-    proxyPOST: useProxyPOST, // ✅ Available in useCache [BATCH 10]
-    proxyPUT: useProxyPUT, // ✅ Available in useCache [BATCH 10]
+    useProxyGET,
+    useProxyPOST,
+    useProxyPUT,
 
     // Users
-    getUser: useUser, // ✅ Available in useCache
-    getUserByHandle: useUserByHandle, // ✅ Available in useCache
-    searchUsers: useSearchUsers, // ✅ Available in useCache
-    updateUserOnboarding: useUpdateUserOnboarding, // ✅ Available in useCache
-    updateUserSettings: useUpdateUserSettings, // ✅ Available in useCache
-    refreshUser: useRefreshUser, // ✅ Available in useCache [BATCH 2]
-    getUserCredits: useUserCredits, // ✅ Available in useCache [BATCH 2]
-    updateUserCredits: useUpdateUserCredits, // ✅ Available in useCache [BATCH 2]
-    assignRoleToUser: useAssignRoleToUser, // ✅ Available in useCache [BATCH 3]
-    unassignRoleFromUser: useUnassignRoleFromUser, // ✅ Available in useCache [BATCH 3]
-    updateUserCreditsQuota: useUpdateUserCreditsQuota, // ✅ Available in useCache [BATCH 9]
-    getUsages: useUsages, // ✅ Available in useCache [BATCH 9]
-    getUsagesForUser: useUsagesForUser, // ✅ Available in useCache [BATCH 9]
-    getPlatformUsages: usePlatformUsages, // ✅ Available in useCache [BATCH 10]
+    useUser,
+    useUserByHandle,
+    useSearchUsers,
+    useUpdateUserOnboarding,
+    useUpdateUserSettings,
+    useRefreshUser,
+    useUserCredits,
+    useUpdateUserCredits,
+    useAssignRoleToUser,
+    useUnassignRoleFromUser,
+    useUpdateUserCreditsQuota,
+    useUsages,
+    useUsagesForUser,
+    usePlatformUsages,
 
     // Organizations
-    getOrganizationById: useOrganization, // ✅ Available in useCache
-    getOrganizationByHandle: useOrganizationByHandle, // ✅ Available in useCache
-    getUserOrganizations: useUserOrganizations, // ✅ Available in useCache
-    createOrganization: useCreateOrganization, // ✅ Available in useCache
-    updateOrganization: useUpdateOrganization, // ✅ Available in useCache
-    addMemberToOrganization: useAddMemberToOrganization, // ✅ Available in useCache [BATCH 2]
-    removeMemberFromOrganization: useRemoveMemberFromOrganization, // ✅ Available in useCache [BATCH 2]
-    addRoleToOrganizationMember: useAddRoleToOrganizationMember, // ✅ Available in useCache [BATCH 2]
-    removeRoleFromOrganizationMember: useRemoveRoleFromOrganizationMember, // ✅ Available in useCache [BATCH 2]
-    refreshOrganization: useRefreshOrganization, // ✅ Available in useCache [BATCH 3]
-    refreshUserOrganizations: useRefreshUserOrganizations, // ✅ Available in useCache [BATCH 3]
-    getUserOrganizationById: useUserOrganizationById, // ✅ Available in useCache [BATCH 4]
-    clearCachedOrganizations: useClearCachedOrganizations, // ✅ Available in useCache [BATCH 11]
+    useOrganization,
+    useOrganizationByHandle,
+    useUserOrganizations,
+    useCreateOrganization,
+    useUpdateOrganization,
+    useAddMemberToOrganization,
+    useRemoveMemberFromOrganization,
+    useAddRoleToOrganizationMember,
+    useRemoveRoleFromOrganizationMember,
+    useRefreshOrganization,
+    useRefreshUserOrganizations,
+    useUserOrganizationById,
+    useClearCachedOrganizations,
 
     // Teams
-    getTeamById: useTeam, // ✅ Available in useCache
-    getTeamByHandle: useTeamByHandle, // ✅ Available in useCache [BATCH 1]
-    getTeamsByOrganizationId: useTeamsByOrganization, // ✅ Available in useCache
-    createTeam: useCreateTeam, // ✅ Available in useCache
-    updateTeam: useUpdateTeam, // ✅ Available in useCache
-    addMemberToTeam: useAddMemberToTeam, // ✅ Available in useCache [BATCH 2]
-    removeMemberFromTeam: useRemoveMemberFromTeam, // ✅ Available in useCache [BATCH 2]
-    addRoleToTeamMember: useAddRoleToTeamMember, // ✅ Available in useCache [BATCH 2]
-    removeRoleFromTeamMember: useRemoveRoleFromTeamMember, // ✅ Available in useCache [BATCH 2]
-    refreshTeam: useRefreshTeam, // ✅ Available in useCache [BATCH 3]
-    refreshTeams: useRefreshTeams, // ✅ Available in useCache [BATCH 3]
-    clearCachedTeams: useClearCachedTeams, // ✅ Available in useCache [BATCH 11]
+    useTeam,
+    useTeamByHandle,
+    useTeamsByOrganization,
+    useCreateTeam,
+    useUpdateTeam,
+    useAddMemberToTeam,
+    useRemoveMemberFromTeam,
+    useAddRoleToTeamMember,
+    useRemoveRoleFromTeamMember,
+    useRefreshTeam,
+    useRefreshTeams,
+    useClearCachedTeams,
 
     // Schools
-    getSchools: useSchools, // ✅ Available in useCache [BATCH 3]
-    refreshSchools: useRefreshSchools, // ✅ Available in useCache [BATCH 11]
+    useSchools,
+    useRefreshSchools,
 
     // Spaces
-    getOrganizationSpace: useSpace, // ✅ Available in useCache
-    getOrganizationSpaceWithOrg: useOrganizationSpace, // ✅ Available in useCache (as getOrganizationSpace)
-    getOrganizationSpaceByHandle: useOrganizationSpaceByHandle, // ✅ Available in useCache [BATCH 1]
-    getOrganizationSpaces: useOrganizationSpaces, // ✅ Available in useCache
-    getUserSpace: useUserSpace, // ✅ Available in useCache [BATCH 1]
-    getUserSpaceByHandle: useUserSpaceByHandle, // ✅ Available in useCache [BATCH 1]
-    getUserSpaces: useUserSpaces, // ✅ Available in useCache
-    createSpace: useCreateSpace, // ✅ Available in useCache
-    updateSpace: useUpdateSpace, // ✅ Available in useCache
-    updateOrganizationSpace: useUpdateOrganizationSpace, // ✅ Available in useCache [BATCH 1]
-    addMemberToOrganizationSpace: useAddMemberToOrganizationSpace, // ✅ Available in useCache [BATCH 2]
-    removeMemberFromOrganizationSpace: useRemoveMemberFromOrganizationSpace, // ✅ Available in useCache [BATCH 2]
-    makeSpacePublic: useMakeSpacePublic, // ✅ Available in useCache [BATCH 2]
-    makeSpacePrivate: useMakeSpacePrivate, // ✅ Available in useCache [BATCH 2]
-    refreshOrganizationSpace: useRefreshOrganizationSpace, // ✅ Available in useCache [BATCH 3]
-    refreshOrganizationSpaces: useRefreshOrganizationSpaces, // ✅ Available in useCache [BATCH 3]
-    refreshUserSpaces: useRefreshUserSpaces, // ✅ Available in useCache [BATCH 3]
-    refreshUserSpace: useRefreshUserSpace, // ✅ Available in useCache [BATCH 11]
-    refreshLayout: useRefreshLayout, // ✅ Available in useCache [BATCH 4]
-    exportSpace: useExportSpace, // ✅ Available in useCache [BATCH 4]
+    useSpace,
+    useOrganizationSpace,
+    useOrganizationSpaceByHandle,
+    useOrganizationSpaces,
+    useUserSpace,
+    useUserSpaceByHandle,
+    useUserSpaces,
+    useCreateSpace,
+    useUpdateSpace,
+    useUpdateOrganizationSpace,
+    useAddMemberToOrganizationSpace,
+    useRemoveMemberFromOrganizationSpace,
+    useMakeSpacePublic,
+    useMakeSpacePrivate,
+    useRefreshOrganizationSpace,
+    useRefreshOrganizationSpaces,
+    useRefreshUserSpaces,
+    useRefreshUserSpace,
+    useRefreshLayout,
+    useExportSpace,
 
     // Courses
-    getCourse: useCourse, // ✅ Available in useCache [BATCH 4]
-    updateCourse: useUpdateCourse, // ✅ Available in useCache [BATCH 4]
-    getPublicCourses: usePublicCourses, // ✅ Available in useCache [BATCH 4]
-    getInstructorCourses: useInstructorCourses, // ✅ Available in useCache [BATCH 4]
-    getCoursesEnrollments: useCourseEnrollments, // ✅ Available in useCache [BATCH 4]
-    enrollStudentToCourse: useEnrollStudentToCourse, // ✅ Available in useCache [BATCH 4]
-    removeStudentFromCourse: useRemoveStudentFromCourse, // ✅ Available in useCache [BATCH 4]
-    getStudent: useStudent, // ✅ Available in useCache [BATCH 7]
-    confirmCourseItemCompletion: useConfirmCourseItemCompletion, // ✅ Available in useCache [BATCH 7]
-    setCourseItems: useSetCourseItems, // ✅ Available in useCache [BATCH 7]
-    refreshCourse: useRefreshCourse, // ✅ Available in useCache [BATCH 11]
-    refreshPublicCourses: useRefreshPublicCourses, // ✅ Available in useCache [BATCH 11]
-    refreshInstructorCourses: useRefreshInstructorCourses, // ✅ Available in useCache [BATCH 11]
-    refreshCoursesEnrollments: useRefreshCoursesEnrollments, // ✅ Available in useCache [BATCH 11]
-    refreshStudent: useRefreshStudent, // ✅ Available in useCache [BATCH 11]
+    useCourse,
+    useUpdateCourse,
+    usePublicCourses,
+    useInstructorCourses,
+    useCourseEnrollments,
+    useEnrollStudentToCourse,
+    useRemoveStudentFromCourse,
+    useStudent,
+    useConfirmCourseItemCompletion,
+    useSetCourseItems,
+    useRefreshCourse,
+    useRefreshPublicCourses,
+    useRefreshInstructorCourses,
+    useRefreshCoursesEnrollments,
+    useRefreshStudent,
 
     // Notebooks
-    getNotebook: useNotebook, // ✅ Available in useCache (as getNotebook)
-    getSpaceNotebooks: useNotebooksBySpace, // ✅ Available in useCache
-    createNotebook: useCreateNotebook, // ✅ Available in useCache
-    updateNotebook: useUpdateNotebook, // ✅ Available in useCache
-    updateNotebookModel: useUpdateNotebookModel, // ✅ Available in useCache
-    cloneNotebook: useCloneNotebook, // ✅ Available in useCache
-    refreshNotebook: useRefreshNotebook, // ✅ Available in useCache [BATCH 11]
-    refreshSpaceNotebooks: useRefreshSpaceNotebooks, // ✅ Available in useCache [BATCH 11]
-    // Note: getSpaceNotebook is a duplicate of getNotebook - use getNotebook instead
+    useNotebook,
+    useNotebooksBySpace,
+    useCreateNotebook,
+    useUpdateNotebook,
+    useUpdateNotebookModel,
+    useCloneNotebook,
+    useRefreshNotebook,
+    useRefreshSpaceNotebooks,
 
     // Documents
-    getDocument: useDocument, // ✅ Available in useCache
-    getSpaceDocuments: useDocumentsBySpace, // ✅ Available in useCache
-    updateDocument: useUpdateDocument, // ✅ Available in useCache
-    updateDocumentModel: useUpdateDocumentModel, // ✅ Available in useCache
-    cloneDocument: useCloneDocument, // ✅ Available in useCache
-    refreshDocument: useRefreshDocument, // ✅ Available in useCache [BATCH 11]
-    refreshSpaceDocuments: useRefreshSpaceDocuments, // ✅ Available in useCache [BATCH 11]
-    // Note: getSpaceDocument is a duplicate of getDocument - use getDocument instead
+    useDocument,
+    useDocumentsBySpace,
+    useUpdateDocument,
+    useUpdateDocumentModel,
+    useCloneDocument,
+    useRefreshDocument,
+    useRefreshSpaceDocuments,
 
     // Cells
-    getCell: useCell, // ✅ Available in useCache [BATCH 5]
-    getSpaceCells: useCellsBySpace, // ✅ Available in useCache [BATCH 5]
-    updateCell: useUpdateCell, // ✅ Available in useCache [BATCH 5]
-    cloneCell: useCloneCell, // ✅ Available in useCache [BATCH 5]
-    refreshCell: useRefreshCell, // ✅ Available in useCache [BATCH 11]
-    refreshSpaceCells: useRefreshSpaceCells, // ✅ Available in useCache [BATCH 11]
+    useCell,
+    useCellsBySpace,
+    useUpdateCell,
+    useCloneCell,
+    useRefreshCell,
+    useRefreshSpaceCells,
 
     // Datasets
-    getDataset: useDataset, // ✅ Available in useCache [BATCH 5]
-    getSpaceDatasets: useDatasetsBySpace, // ✅ Available in useCache [BATCH 5]
-    updateDataset: useUpdateDataset, // ✅ Available in useCache [BATCH 5]
-    refreshDataset: useRefreshDataset, // ✅ Available in useCache [BATCH 11]
-    refreshSpaceDatasets: useRefreshSpaceDatasets, // ✅ Available in useCache [BATCH 11]
+    useDataset,
+    useDatasetsBySpace,
+    useUpdateDataset,
+    useRefreshDataset,
+    useRefreshSpaceDatasets,
 
     // Environments
-    getEnvironment: useEnvironment, // ✅ Available in useCache [BATCH 5]
-    getSpaceEnvironments: useEnvironmentsBySpace, // ✅ Available in useCache [BATCH 5]
-    refreshEnvironment: useRefreshEnvironment, // ✅ Available in useCache [BATCH 12]
-    refreshSpaceEnvironments: useRefreshSpaceEnvironments, // ✅ Available in useCache [BATCH 12]
+    useEnvironment,
+    useEnvironmentsBySpace,
+    useRefreshEnvironment,
+    useRefreshSpaceEnvironments,
 
     // Lessons
-    getLesson: useLesson, // ✅ Available in useCache [BATCH 5]
-    getSpaceLessons: useLessonsBySpace, // ✅ Available in useCache [BATCH 5]
-    cloneLesson: useCloneLesson, // ✅ Available in useCache [BATCH 5]
-    refreshLesson: useRefreshLesson, // ✅ Available in useCache [BATCH 12]
-    refreshSpaceLessons: useRefreshSpaceLessons, // ✅ Available in useCache [BATCH 12]
-    // Note: getSpaceLesson is a duplicate of getLesson - use getLesson instead
+    useLesson,
+    useLessonsBySpace,
+    useCloneLesson,
+    useRefreshLesson,
+    useRefreshSpaceLessons,
 
     // Exercises
-    getExercise: useExercise, // ✅ Available in useCache [BATCH 6]
-    getSpaceExercises: useExercisesBySpace, // ✅ Available in useCache [BATCH 6]
-    updateExercise: useUpdateExercise, // ✅ Available in useCache [BATCH 6]
-    cloneExercise: useCloneExercise, // ✅ Available in useCache [BATCH 6]
-    updateExercisePoints: useUpdateExercisePoints, // ✅ Available in useCache [BATCH 7]
-    refreshExercise: useRefreshExercise, // ✅ Available in useCache [BATCH 12]
-    refreshSpaceExercises: useRefreshSpaceExercises, // ✅ Available in useCache [BATCH 12]
+    useExercise,
+    useExercisesBySpace,
+    useUpdateExercise,
+    useCloneExercise,
+    useUpdateExercisePoints,
+    useRefreshExercise,
+    useRefreshSpaceExercises,
 
     // Assignments
-    getAssignment: useAssignment, // ✅ Available in useCache [BATCH 6]
-    getSpaceAssignments: useAssignmentsBySpace, // ✅ Available in useCache [BATCH 6]
-    cloneAssignment: useCloneAssignment, // ✅ Available in useCache [BATCH 6]
-    getAssignmentForStudent: useAssignmentForStudent, // ✅ Available in useCache [BATCH 7]
-    getAssignmentStudentVersion: useAssignmentStudentVersion, // ✅ Available in useCache [BATCH 7]
-    gradeAssignmentForStudent: useGradeAssignmentForStudent, // ✅ Available in useCache [BATCH 7]
-    resetAssignmentForStudent: useResetAssignmentForStudent, // ✅ Available in useCache [BATCH 7]
-    refreshAssignment: useRefreshAssignment, // ✅ Available in useCache [BATCH 12]
-    refreshAssignmentForStudent: useRefreshAssignmentForStudent, // ✅ Available in useCache [BATCH 12]
-    refreshSpaceAssignments: useRefreshSpaceAssignments, // ✅ Available in useCache [BATCH 12]
-    // Note: getSpaceAssignment is a duplicate of getAssignment - use getAssignment instead
+    useAssignment,
+    useAssignmentsBySpace,
+    useCloneAssignment,
+    useAssignmentForStudent,
+    useAssignmentStudentVersion,
+    useGradeAssignmentForStudent,
+    useResetAssignmentForStudent,
+    useRefreshAssignment,
+    useRefreshAssignmentForStudent,
+    useRefreshSpaceAssignments,
 
     // Items (Generic)
-    deleteItem: useDeleteItem, // ✅ Available in useCache
-    getSpaceItems: useSpaceItems, // ✅ Available in useCache [BATCH 4]
-    makeItemPublic: useMakeItemPublic, // ✅ Available in useCache [BATCH 4]
-    makeItemPrivate: useMakeItemPrivate, // ✅ Available in useCache [BATCH 4]
-    searchPublicItems: useSearchPublicItems, // ✅ Available in useCache [BATCH 10]
-    getPublicItems: usePublicItems, // ✅ Available in useCache [BATCH 11]
-    refreshPublicItems: useRefreshPublicItems, // ✅ Available in useCache [BATCH 11]
-    refreshSpaceItems: useRefreshSpaceItems, // ✅ Available in useCache [BATCH 11]
-    clearCachedPublicItems: useClearCachedPublicItems, // ✅ Available in useCache [BATCH 12]
-    clearCachedItems: useClearCachedItems, // ✅ Available in useCache [BATCH 12]
+    useDeleteItem,
+    useSpaceItems,
+    useMakeItemPublic,
+    useMakeItemPrivate,
+    useSearchPublicItems,
+    usePublicItems,
+    useRefreshPublicItems,
+    useRefreshSpaceItems,
+    useClearCachedPublicItems,
+    useClearCachedItems,
 
     // Pages
-    getPage: usePage, // ✅ Available in useCache [BATCH 1 - enhanced with useQuery]
-    getPages: usePages, // ✅ Available in useCache
-    createPage: useCreatePage, // ✅ Available in useCache
-    updatePage: useUpdatePage, // ✅ Available in useCache
-    deletePage: useDeletePage, // ✅ Available in useCache
-    // Note: refreshPage, refreshPages, clearCachedPages - use TanStack Query refetch/invalidation instead
+    usePage,
+    usePages,
+    useCreatePage,
+    useUpdatePage,
+    useDeletePage,
 
     // Datasources
-    getDatasource: useDatasource, // ✅ Available in useCache [BATCH 1]
-    getDatasources: useDatasources, // ✅ Available in useCache
-    createDatasource: useCreateDatasource, // ✅ Available in useCache
-    updateDatasource: useUpdateDatasource, // ✅ Available in useCache [BATCH 1]
-    // Note: refreshDatasource, refreshDatasources, clearCachedDatasources - use TanStack Query refetch/invalidation instead
+    useDatasource,
+    useDatasources,
+    useCreateDatasource,
+    useUpdateDatasource,
 
     // Secrets
-    getSecret: useSecret, // ✅ Available in useCache [BATCH 1]
-    getSecrets: useSecrets, // ✅ Available in useCache
-    createSecret: useCreateSecret, // ✅ Available in useCache
-    updateSecret: useUpdateSecret, // ✅ Available in useCache [BATCH 1]
-    deleteSecret: useDeleteSecret, // ✅ Available in useCache
-    // Note: refreshSecret, refreshSecrets, clearCachedSecrets - use TanStack Query refetch/invalidation instead
+    useSecret,
+    useSecrets,
+    useCreateSecret,
+    useUpdateSecret,
+    useDeleteSecret,
 
     // Tokens
-    getToken: useToken, // ✅ Available in useCache [BATCH 1]
-    getTokens: useTokens, // ✅ Available in useCache
-    createToken: useCreateToken, // ✅ Available in useCache
-    updateToken: useUpdateToken, // ✅ Available in useCache [BATCH 1]
-    // Note: refreshToken, refreshTokens, clearCachedTokens - use TanStack Query refetch/invalidation instead
+    useToken,
+    useTokens,
+    useCreateToken,
+    useUpdateToken,
 
     // Invites
-    getInvite: useInvite, // ✅ Available in useCache [BATCH 6]
-    getInvites: useInvitesByUser, // ✅ Available in useCache [BATCH 6]
-    putInvite: usePutInvite, // ✅ Available in useCache [BATCH 6]
-    requestInvite: useRequestInvite, // ✅ Available in useCache [BATCH 13]
-    sendInvite: useSendInvite, // ✅ Available in useCache [BATCH 13]
-    refreshInvite: useRefreshInvite, // ✅ Available in useCache [BATCH 13]
-    refreshInvites: useRefreshInvites, // ✅ Available in useCache [BATCH 13]
-    clearCachedInvites: useClearCachedInvites, // ✅ Available in useCache [BATCH 13]
-    // Note: refreshAccount was not found in original useCache.tsx
+    useInvite,
+    useInvitesByUser,
+    usePutInvite,
+    useRequestInvite,
+    useSendInvite,
+    useRefreshInvite,
+    useRefreshInvites,
+    useClearCachedInvites,
 
     // Contacts
-    getContactById: useContact, // ✅ Available in useCache
-    getContactByHandle: useContactByHandle, // ✅ Available in useCache [BATCH 1]
-    searchContacts: useSearchContacts, // ✅ Available in useCache
-    createContact: useCreateContact, // ✅ Available in useCache
-    updateContact: useUpdateContact, // ✅ Available in useCache
-    deleteContact: useDeleteContact, // ✅ Available in useCache
-    assignTagToContact: useAssignTagToContact, // ✅ Available in useCache [BATCH 9]
-    unassignTagFromContact: useUnassignTagFromContact, // ✅ Available in useCache [BATCH 9]
-    sendInviteToContact: useSendInviteToContact, // ✅ Available in useCache [BATCH 9]
-    enrichContactEmail: useEnrichContactEmail, // ✅ Available in useCache [BATCH 9]
-    enrichContactLinkedin: useEnrichContactLinkedin, // ✅ Available in useCache [BATCH 9]
-    sendLinkedinConnectionRequest: useSendLinkedinConnectionRequest, // ✅ Available in useCache [BATCH 9]
-    linkUserWithContact: useLinkUserWithContact, // ✅ Available in useCache [BATCH 9]
-    unlinkUserFromContact: useUnlinkUserFromContact, // ✅ Available in useCache [BATCH 9]
-    refreshContact: useRefreshContact, // ✅ Available in useCache [BATCH 13]
+    useContact,
+    useContactByHandle,
+    useSearchContacts,
+    useCreateContact,
+    useUpdateContact,
+    useDeleteContact,
+    useAssignTagToContact,
+    useUnassignTagFromContact,
+    useSendInviteToContact,
+    useEnrichContactEmail,
+    useEnrichContactLinkedin,
+    useSendLinkedinConnectionRequest,
+    useLinkUserWithContact,
+    useUnlinkUserFromContact,
+    useRefreshContact,
 
     // Inbounds
-    getInbounds: useInbounds, // ✅ Available in useCache [BATCH 7]
-    getInbound: useInbound, // ✅ Available in useCache [BATCH 13]
-    getInboundByHandle: useInboundByHandle, // ✅ Available in useCache [BATCH 13]
-    refreshInbound: useRefreshInbound, // ✅ Available in useCache [BATCH 13]
-    // Note: toInbound was an internal transformation helper, not needed with TanStack Query
+    useInbounds,
+    useInbound,
+    useInboundByHandle,
+    useRefreshInbound,
 
     // Outbounds
-    getOutbound: useOutbound, // ✅ Available in useCache [BATCH 7]
-    getOutbounds: useOutbounds, // ✅ Available in useCache [BATCH 7]
-    draftBulkEmailsOutbounds: useDraftBulkEmailsOutbounds, // ✅ Available in useCache [BATCH 7]
-    tryBulkEmailsOutbounds: useTryBulkEmailsOutbounds, // ✅ Available in useCache [BATCH 8]
-    launchBulkEmailsOutbounds: useLaunchBulkEmailsOutbounds, // ✅ Available in useCache [BATCH 8]
-    sendOutboundEmailToUser: useSendOutboundEmailToUser, // ✅ Available in useCache [BATCH 8]
-    deleteOutbound: useDeleteOutbound, // ✅ Available in useCache [BATCH 8]
-    subscribeUserToOutbounds: useSubscribeUserToOutbounds, // ✅ Available in useCache [BATCH 8]
-    unsubscribeUserFromOutbounds: useUnsubscribeUserFromOutbounds, // ✅ Available in useCache [BATCH 8]
-    unsubscribeContactFromOutbounds: useUnsubscribeContactFromOutbounds, // ✅ Available in useCache [BATCH 8]
-    unsubscribeInviteeFromOutbounds: useUnsubscribeInviteeFromOutbounds, // ✅ Available in useCache [BATCH 8]
-    refreshOutbound: useRefreshOutbound, // ✅ Available in useCache [BATCH 13]
-    // Note: toOutbound was an internal transformation helper, not needed with TanStack Query
+    useOutbound,
+    useOutbounds,
+    useDraftBulkEmailsOutbounds,
+    useTryBulkEmailsOutbounds,
+    useLaunchBulkEmailsOutbounds,
+    useSendOutboundEmailToUser,
+    useDeleteOutbound,
+    useSubscribeUserToOutbounds,
+    useUnsubscribeUserFromOutbounds,
+    useUnsubscribeContactFromOutbounds,
+    useUnsubscribeInviteeFromOutbounds,
+    useRefreshOutbound,
 
     // MFA
-    enableUserMFA: useEnableUserMFA, // ✅ Available in useCache [BATCH 8]
-    disableUserMFA: useDisableUserMFA, // ✅ Available in useCache [BATCH 8]
-    validateUserMFACode: useValidateUserMFACode, // ✅ Available in useCache [BATCH 8]
+    useEnableUserMFA,
+    useDisableUserMFA,
+    useValidateUserMFACode,
 
     // Checkout & Credits
-    createCheckoutSession: useCreateCheckoutSession, // ✅ Available in useCache [BATCH 8]
-    burnCredit: useBurnCredit, // ✅ Available in useCache [BATCH 8]
-    refreshStripePrices: useStripePrices, // ✅ Available in useCache [BATCH 8]
+    useCreateCheckoutSession,
+    useBurnCredit,
+    useStripePrices,
 
     // Support & Growth
-    requestPlatformSupport: useRequestPlatformSupport, // ✅ Available in useCache [BATCH 8]
-    requestPlatformSupport2: useRequestPlatformSupport2, // ✅ Available in useCache [BATCH 8]
-    getUserSurveys: useUserSurveys, // ✅ Available in useCache [BATCH 8]
-    getGrowthKPI: useGrowthKPI, // ✅ Available in useCache [BATCH 10]
-
-    // Note: Cache management is automatic with TanStack Query
-    // Use queryClient.invalidateQueries() or refetch() for manual cache control
+    useRequestPlatformSupport,
+    useRequestPlatformSupport2,
+    useUserSurveys,
+    useGrowthKPI,
 
     // Query keys for manual operations
-    queryKeys, // ✅ TanStack Query keys
+    queryKeys,
 
     // Upload
-    notebookUploadLoading, // ✅ Available in useCache
-    notebookUploadProgress, // ✅ Available in useCache
-    resetNotebookUpload, // ✅ Available in useCache
+    notebookUploadLoading,
+    notebookUploadProgress,
+    resetNotebookUpload,
   };
 };
 

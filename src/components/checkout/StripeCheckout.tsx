@@ -44,7 +44,7 @@ export function StripeCheckout({
 }: {
   checkoutPortal: ICheckoutPortal | null;
 }) {
-  const { createCheckoutSession, refreshStripePrices } = useCache();
+  const { useCreateCheckoutSession, useStripePrices } = useCache();
   const [stripe, setStripe] = useState<Promise<Stripe | null> | null>(null);
   const [components, setComponents] = useState<any>(null);
   const [items, setItems] = useState<IPrice[] | null>(null);
@@ -52,7 +52,7 @@ export function StripeCheckout({
   const [checkout, setCheckout] = useState<boolean>(false);
 
   // Get Stripe prices using TanStack Query hook
-  const { data: pricesData } = refreshStripePrices();
+  const { data: pricesData } = useStripePrices();
 
   // Update items when prices data changes
   useEffect(() => {
@@ -62,7 +62,7 @@ export function StripeCheckout({
   }, [pricesData]);
 
   // Get checkout session mutation
-  const checkoutSessionMutation = createCheckoutSession();
+  const checkoutSessionMutation = useCreateCheckoutSession();
 
   // Load stripe components.
   useEffect(() => {

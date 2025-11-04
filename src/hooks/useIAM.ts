@@ -39,9 +39,9 @@ export const useIAM = (
   const layoutStore = useLayoutStore();
   const organizationStore = useOrganizationStore();
   const spaceStore = useSpaceStore();
-  const { whoami, logout: useLogout } = useCache();
+  const { useWhoami, useLogout } = useCache();
 
-  const { data: whoamiData } = whoami();
+  const { data: whoamiData } = useWhoami();
   const logoutMutation = useLogout();
   const loginAndNavigate = async (
     token: string,

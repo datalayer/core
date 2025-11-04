@@ -14,9 +14,10 @@ export const OrganizationSelect = () => {
   const user = useUser();
   const { organization, updateLayoutOrganization, updateLayoutSpace } =
     useLayoutStore();
-  const { refreshUserOrganizations, getUserOrganizations } = useCache();
-  const { mutate: refreshUserOrganizationsMutate } = refreshUserOrganizations();
-  const { data: organizations = [] } = getUserOrganizations();
+  const { useRefreshUserOrganizations, useUserOrganizations } = useCache();
+  const { mutate: refreshUserOrganizationsMutate } =
+    useRefreshUserOrganizations();
+  const { data: organizations = [] } = useUserOrganizations();
 
   useEffect(() => {
     if (user) {

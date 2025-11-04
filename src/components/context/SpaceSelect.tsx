@@ -14,18 +14,18 @@ export const SpaceSelect = () => {
   const user = useUser();
   const { organization, space, updateLayoutSpace } = useLayoutStore();
   const {
-    refreshUserSpaces,
-    getUserSpaces,
-    refreshOrganizationSpaces,
-    getOrganizationSpaces,
+    useRefreshUserSpaces,
+    useUserSpaces,
+    useRefreshOrganizationSpaces,
+    useOrganizationSpaces,
   } = useCache();
-  const { mutate: refreshUserSpacesMutate } = refreshUserSpaces();
+  const { mutate: refreshUserSpacesMutate } = useRefreshUserSpaces();
   const { mutate: refreshOrganizationSpacesMutate } =
-    refreshOrganizationSpaces();
-  const { data: organizationSpaces = [] } = getOrganizationSpaces(
+    useRefreshOrganizationSpaces();
+  const { data: organizationSpaces = [] } = useOrganizationSpaces(
     organization?.id ?? '',
   );
-  const { data: userSpaces = [] } = getUserSpaces();
+  const { data: userSpaces = [] } = useUserSpaces();
   const spaces: IAnySpace[] = organization ? organizationSpaces : userSpaces;
 
   useEffect(() => {
