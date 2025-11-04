@@ -1089,7 +1089,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!namingPattern,
+      enabled: namingPattern !== undefined && namingPattern !== null,
     });
   };
 
