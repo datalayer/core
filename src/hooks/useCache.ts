@@ -116,8 +116,11 @@ const DEFAULT_QUERY_OPTIONS = {
   staleTime: 5 * 60 * 1000, // 5 minutes
   gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   retry: 1,
+  refetchOnMount: false, // Don't refetch on mount if data is still fresh
   refetchOnWindowFocus: true,
   refetchOnReconnect: true,
+  // Ensure queries prioritize cache over network when data is fresh
+  networkMode: 'online' as const,
 };
 
 // ============================================================================
