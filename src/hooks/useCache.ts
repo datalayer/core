@@ -2773,26 +2773,50 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   /**
    * Get user space by handle (personal space)
+   * This reads from the cache populated by useUserSpaces()
    */
   const useUserSpaceByHandle = (handle: string) => {
     return useQuery({
       queryKey: queryKeys.spaces.byHandle(handle),
       queryFn: async () => {
+        // First check if we have it in the cache from useUserSpaces()
+        const cached = queryClient.getQueryData(
+          queryKeys.spaces.byHandle(handle),
+        );
+        if (cached) {
+          return cached;
+        }
+
+        // If not in cache, fetch all user spaces which will populate it
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/handle/${handle}`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me`,
           method: 'GET',
         });
-        if (resp.success && resp.space) {
-          const space = toSpace(resp.space);
-          if (space) {
-            queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
-          }
-          return space;
+
+        if (resp.success && resp.spaces) {
+          let targetSpace: IAnySpace | null = null;
+          resp.spaces.forEach((spc: unknown) => {
+            const space = toSpace(spc);
+            if (space) {
+              queryClient.setQueryData(
+                queryKeys.spaces.detail(space.id),
+                space,
+              );
+              queryClient.setQueryData(
+                queryKeys.spaces.byHandle(space.handle),
+                space,
+              );
+              if (space.handle === handle) {
+                targetSpace = space;
+              }
+            }
+          });
+          return targetSpace;
         }
         return null;
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!handle,
+      enabled: !!handle && !!user,
     });
   };
 
@@ -3590,7 +3614,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me`,
           method: 'GET',
         });
       },
@@ -3866,18 +3890,42 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
       },
-      onSuccess: resp => {
+      onSuccess: (resp, variables) => {
         if (resp.success) {
-          // Invalidate relevant caches
+          // Set data directly into cache instead of just invalidating
           if (resp.user) {
+            queryClient.setQueryData(
+              queryKeys.users.byHandle(variables.accountHandle),
+              resp.user,
+            );
             queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
           }
           if (resp.organization) {
+            queryClient.setQueryData(
+              queryKeys.organizations.byHandle(variables.accountHandle),
+              resp.organization,
+            );
             queryClient.invalidateQueries({
               queryKey: queryKeys.organizations.all(),
             });
           }
           if (resp.space) {
+            // Set both user and org space queries based on which type it is
+            if (resp.user && variables.spaceHandle) {
+              queryClient.setQueryData(
+                queryKeys.spaces.byHandle(variables.spaceHandle),
+                resp.space,
+              );
+            }
+            if (resp.organization && variables.spaceHandle) {
+              queryClient.setQueryData(
+                queryKeys.spaces.orgSpaceByHandle(
+                  resp.organization.id,
+                  variables.spaceHandle,
+                ),
+                resp.space,
+              );
+            }
             queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
           }
         }
@@ -5688,12 +5736,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         types = ['notebook', 'document', 'lesson'],
         max = 100,
       }: {
-        q: string;
+        q?: string;
         types?: string[];
         max?: number;
       }) => {
         const queryString = Object.entries({
-          q,
+          q: q || '*',
           types: types.join(' '),
           max: max.toString(),
           public: 'true',
@@ -6263,7 +6311,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         return resp;
       },
-      onSuccess: (data, spaceId) => {
+      onSuccess: (data: any, spaceId) => {
+        // Set the notebooks data directly into cache
+        if (data.success && data.items) {
+          const notebooks = data.items.map((n: unknown) => {
+            const notebook = toNotebook(n);
+            queryClient.setQueryData(
+              queryKeys.notebooks.detail(notebook.id),
+              notebook,
+            );
+            return notebook;
+          });
+          queryClient.setQueryData(
+            queryKeys.notebooks.bySpace(spaceId),
+            notebooks,
+          );
+        }
         queryClient.invalidateQueries({
           queryKey: queryKeys.notebooks.bySpace(spaceId),
         });

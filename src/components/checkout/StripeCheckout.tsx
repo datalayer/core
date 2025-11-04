@@ -57,7 +57,7 @@ export function StripeCheckout({
   // Update items when prices data changes
   useEffect(() => {
     if (pricesData) {
-      setItems((pricesData as any).prices || []);
+      setItems(pricesData as IPrice[]);
     }
   }, [pricesData]);
 
