@@ -3,6 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/************************************
+ *
+ * DEPRECATED - use useCache instead.
+ *
+ ***********************************/
+
 import { URLExt } from '@jupyterlab/coreutils';
 import {
   BOOTSTRAP_USER_ONBOARDING,
@@ -133,11 +139,13 @@ const DEFAULT_SEARCH_OPTS = {
 };
 
 /**
- * Callbacks to RUN service.
+ * Callbacks to Datalayer service.
  *
  * It assumes to be used within a {@link Router} component. If not
  * you must set the options `loginRoute` to `null` (raise an error _Unauthorized_
  * instead of redirecting to the login page).
+ *
+ * @deprecated use useCache instead.
  */
 export const useCache0 = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const coreStore = useCoreStore();
