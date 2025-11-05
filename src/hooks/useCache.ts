@@ -1252,15 +1252,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.organization) {
           const org = toOrganization(resp.organization);
+          // Set detail cache
           queryClient.setQueryData(queryKeys.organizations.detail(org.id), org);
-          queryClient.setQueryData(
-            queryKeys.organizations.byHandle(org.handle),
-            org,
-          );
+          // Invalidate all organization queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.organizations.all(),
+          });
         }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.organizations.userOrgs(),
-        });
       },
     });
   };
@@ -1280,47 +1278,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         });
       },
-      onMutate: async organization => {
-        const orgId = organization.id ?? '';
-        // Cancel outgoing refetches
-        await queryClient.cancelQueries({
-          queryKey: queryKeys.organizations.detail(orgId),
-        });
-
-        // Snapshot the previous value
-        const previous = queryClient.getQueryData(
-          queryKeys.organizations.detail(orgId),
-        );
-
-        // Optimistically update
-        queryClient.setQueryData(
-          queryKeys.organizations.detail(orgId),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (old: any) => ({
-            ...old,
-            name: organization.name,
-            description: organization.description,
-          }),
-        );
-
-        return { previous, id: organization.id };
-      },
-      onError: (err, organization, context) => {
-        // Rollback on error
-        if (context?.previous) {
-          queryClient.setQueryData(
-            queryKeys.organizations.detail(context.id ?? ''),
-            context.previous,
-          );
-        }
-      },
       onSuccess: (_, organization) => {
         const orgId = organization.id ?? '';
+        // Invalidate detail cache
         queryClient.invalidateQueries({
           queryKey: queryKeys.organizations.detail(orgId),
         });
+        // Invalidate all organization queries
         queryClient.invalidateQueries({
-          queryKey: queryKeys.organizations.userOrgs(),
+          queryKey: queryKeys.organizations.all(),
         });
       },
     });
@@ -1407,15 +1373,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         });
       },
-      onSuccess: (resp, variables) => {
+      onSuccess: (resp, _variables) => {
         if (resp.team) {
-          const team = toTeam(resp.team, variables.organization.id);
+          const team = toTeam(resp.team, _variables.organization.id);
+          // Set detail cache
           queryClient.setQueryData(queryKeys.teams.detail(team.id), team);
-          queryClient.setQueryData(queryKeys.teams.byHandle(team.handle), team);
+          // Invalidate all team queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.teams.all(),
+          });
         }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.teams.byOrganization(variables.organization.id),
-        });
       },
     });
   };
@@ -1435,21 +1402,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         });
       },
-      onSuccess: (resp, team) => {
-        if (resp.team && team.organization) {
-          const updatedTeam = toTeam(resp.team, team.organization.id);
-          queryClient.setQueryData(
-            queryKeys.teams.detail(updatedTeam.id),
-            updatedTeam,
-          );
-          queryClient.setQueryData(
-            queryKeys.teams.byHandle(updatedTeam.handle),
-            updatedTeam,
-          );
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.teams.byOrganization(team.organization.id),
-          });
-        }
+      onSuccess: (_, team) => {
+        // Invalidate detail cache
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.teams.detail(team.id ?? ''),
+        });
+        // Invalidate all team queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.teams.all(),
+        });
       },
     });
   };
@@ -1592,22 +1553,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         });
       },
-      onSuccess: (resp, variables) => {
+      onSuccess: (resp, _variables) => {
         if (resp.space) {
           const space = toSpace(resp.space);
+          // Set detail cache
           queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
-
-          if (variables.organization) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.spaces.byOrganization(
-                variables.organization.id,
-              ),
-            });
-          } else {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.spaces.userSpaces(),
-            });
-          }
+          // Invalidate all space queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.spaces.all(),
+          });
         }
       },
     });
@@ -1628,39 +1582,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         });
       },
-      onMutate: async space => {
-        const spaceId = space.id ?? '';
-        await queryClient.cancelQueries({
-          queryKey: queryKeys.spaces.detail(spaceId),
-        });
-        const previous = queryClient.getQueryData(
-          queryKeys.spaces.detail(spaceId),
-        );
-
-        queryClient.setQueryData(
-          queryKeys.spaces.detail(spaceId),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (old: any) => ({
-            ...old,
-            name: space.name,
-            description: space.description,
-          }),
-        );
-
-        return { previous, id: space.id };
-      },
-      onError: (err, space, context) => {
-        if (context?.previous) {
-          queryClient.setQueryData(
-            queryKeys.spaces.detail(context.id ?? ''),
-            context.previous,
-          );
-        }
-      },
       onSuccess: (_, space) => {
         const spaceId = space.id ?? '';
+        // Invalidate detail cache
         queryClient.invalidateQueries({
           queryKey: queryKeys.spaces.detail(spaceId),
+        });
+        // Invalidate all space queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spaces.all(),
         });
       },
     });
@@ -1745,15 +1675,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await uploadNotebook(formData);
         return resp;
       },
-      onSuccess: (resp, variables) => {
+      onSuccess: (resp, _variables) => {
         if (resp.success && resp.notebook) {
           const notebook = toNotebook(resp.notebook);
+          // Set detail cache
           queryClient.setQueryData(
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
+          // Invalidate all notebook queries (including bySpace)
           queryClient.invalidateQueries({
-            queryKey: queryKeys.notebooks.bySpace(variables.spaceId),
+            queryKey: queryKeys.notebooks.all(),
           });
         }
       },
@@ -1780,38 +1712,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { name, description },
         });
       },
-      onMutate: async notebook => {
-        await queryClient.cancelQueries({
-          queryKey: queryKeys.notebooks.detail(notebook.id),
-        });
-        const previous = queryClient.getQueryData(
-          queryKeys.notebooks.detail(notebook.id),
-        );
-
-        queryClient.setQueryData(
-          queryKeys.notebooks.detail(notebook.id),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (old: any) => ({
-            ...old,
-            name: notebook.name,
-            description: notebook.description,
-          }),
-        );
-
-        return { previous, id: notebook.id };
-      },
-      onError: (err, notebook, context) => {
-        if (context?.previous) {
-          queryClient.setQueryData(
-            queryKeys.notebooks.detail(context.id),
-            context.previous,
-          );
+      onSuccess: (resp, notebook) => {
+        if (resp.success) {
+          // Invalidate detail query
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.notebooks.detail(notebook.id),
+          });
+          // Invalidate all notebook lists (including bySpace queries)
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.notebooks.all(),
+          });
         }
-      },
-      onSuccess: (_, notebook) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.notebooks.detail(notebook.id),
-        });
       },
     });
   };
@@ -1841,6 +1752,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.notebooks.model(variables.notebookId),
         });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.notebooks.all(),
+        });
       },
     });
   };
@@ -1859,10 +1773,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.notebook) {
           const notebook = toNotebook(resp.notebook);
+          // Set detail cache
           queryClient.setQueryData(
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
+          // Invalidate list to refetch
+          const spaceId = notebook.space;
+          if (spaceId) {
+            const spaceIdStr =
+              typeof spaceId === 'string' ? spaceId : spaceId.id;
+            if (spaceIdStr) {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.notebooks.bySpace(spaceIdStr),
+              });
+            }
+          }
         }
       },
     });
@@ -1939,38 +1865,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { name, description },
         });
       },
-      onMutate: async doc => {
-        await queryClient.cancelQueries({
-          queryKey: queryKeys.documents.detail(doc.id),
-        });
-        const previous = queryClient.getQueryData(
-          queryKeys.documents.detail(doc.id),
-        );
-
-        queryClient.setQueryData(
-          queryKeys.documents.detail(doc.id),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (old: any) => ({
-            ...old,
-            name: doc.name,
-            description: doc.description,
-          }),
-        );
-
-        return { previous, id: doc.id };
-      },
-      onError: (err, doc, context) => {
-        if (context?.previous) {
-          queryClient.setQueryData(
-            queryKeys.documents.detail(context.id),
-            context.previous,
-          );
+      onSuccess: (resp, doc) => {
+        if (resp.success) {
+          // Invalidate detail query
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.documents.detail(doc.id),
+          });
+          // Invalidate all document lists (including bySpace queries)
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.documents.all(),
+          });
         }
-      },
-      onSuccess: (_, doc) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.documents.detail(doc.id),
-        });
       },
     });
   };
@@ -1991,6 +1896,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.documents.detail(variables.id),
         });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.documents.all(),
+        });
       },
     });
   };
@@ -2009,7 +1917,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.document) {
           const doc = toDocument(resp.document);
+          // Set detail cache
           queryClient.setQueryData(queryKeys.documents.detail(doc.id), doc);
+          // Invalidate list to refetch
+          const spaceId = doc.space;
+          if (spaceId) {
+            const spaceIdStr =
+              typeof spaceId === 'string' ? spaceId : spaceId.id;
+            if (spaceIdStr) {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.documents.bySpace(spaceIdStr),
+              });
+            }
+          }
         }
       },
     });
@@ -2085,10 +2005,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.page) {
           const page = toPage(resp.page);
           if (page) {
+            // Set detail cache
             queryClient.setQueryData(queryKeys.pages.detail(page.id), page);
+            // Invalidate list to refetch
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.pages.all(),
+            });
           }
         }
-        queryClient.invalidateQueries({ queryKey: queryKeys.pages.all() });
       },
     });
   };
@@ -2112,16 +2036,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (resp, page) => {
-        if (resp.success && resp.page) {
-          const updatedPage = toPage(resp.page);
-          if (updatedPage) {
-            queryClient.setQueryData(
-              queryKeys.pages.detail(page.id),
-              updatedPage,
-            );
-          }
+        if (resp.success) {
+          // Invalidate detail and list queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.pages.detail(page.id),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.pages.all(),
+          });
         }
-        queryClient.invalidateQueries({ queryKey: queryKeys.pages.all() });
       },
     });
   };
@@ -2138,8 +2061,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, pageId) => {
+        // Remove from detail cache
         queryClient.removeQueries({ queryKey: queryKeys.pages.detail(pageId) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.pages.all() });
+        // Invalidate list to refetch
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.pages.all(),
+        });
       },
     });
   };
@@ -2427,10 +2354,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.contact) {
           const contact = toContact(resp.contact);
           if (contact) {
+            // Set detail cache
             queryClient.setQueryData(
               queryKeys.contacts.detail(contact.id),
               contact,
             );
+            // Invalidate all contact queries
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.contacts.all(),
+            });
           }
         }
       },
@@ -2455,16 +2387,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { contact },
         });
       },
-      onSuccess: (resp, variables) => {
-        if (resp.success && resp.contact) {
-          const contact = toContact(resp.contact);
-          if (contact) {
-            queryClient.setQueryData(
-              queryKeys.contacts.detail(variables.contactId),
-              contact,
-            );
-          }
-        }
+      onSuccess: (_, variables) => {
+        // Invalidate detail cache
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contacts.detail(variables.contactId),
+        });
+        // Invalidate all contact queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contacts.all(),
+        });
       },
     });
   };
@@ -2481,8 +2412,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, contactId) => {
+        // Remove detail cache
         queryClient.removeQueries({
           queryKey: queryKeys.contacts.detail(contactId),
+        });
+        // Invalidate all contact queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contacts.all(),
         });
       },
     });
@@ -2525,6 +2461,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           queryKey: queryKeys.assignments.detail(itemId),
         });
 
+        // Invalidate all artifact type queries
+        queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.cells.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.datasets.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
+        queryClient.invalidateQueries({ queryKey: queryKeys.exercises.all() });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.assignments.all(),
+        });
         // Invalidate space items lists
         queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
       },
@@ -2843,18 +2789,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: updates,
         });
       },
-      onSuccess: (resp, { organizationId, spaceId }) => {
-        if (resp.success && resp.space) {
-          const space = toSpace(resp.space);
-          if (space) {
-            queryClient.setQueryData(queryKeys.spaces.detail(space.id), space);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.spaces.byOrganization(organizationId),
-        });
+      onSuccess: (_, { spaceId }) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.spaces.detail(spaceId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spaces.all(),
         });
       },
     });
@@ -3686,8 +3626,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, { courseId }) => {
+        // Invalidate detail cache
         queryClient.invalidateQueries({
           queryKey: ['courses', 'detail', courseId],
+        });
+        // Invalidate all course queries
+        queryClient.invalidateQueries({
+          queryKey: ['courses'],
         });
       },
     });
@@ -4016,11 +3961,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: cell,
         });
       },
-      onSuccess: (_, { id, spaceId }) => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.cells.detail(id) });
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.cells.bySpace(spaceId),
-        });
+      onSuccess: (resp, cell) => {
+        if (resp.success) {
+          // Invalidate detail and list queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.cells.detail(cell.id),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.cells.bySpace(cell.spaceId),
+          });
+        }
       },
     });
   };
@@ -4039,14 +3989,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (resp, _cellId) => {
         if (resp.success && resp.cell) {
           const cell = toCell(resp.cell);
+          // Set detail cache
+          queryClient.setQueryData(queryKeys.cells.detail(cell.id), cell);
+          // Invalidate list to refetch
           if (cell?.space) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.cells.bySpace(
-                typeof cell.space === 'string'
-                  ? cell.space
-                  : (cell.space.id ?? ''),
-              ),
-            });
+            const spaceIdStr =
+              typeof cell.space === 'string'
+                ? cell.space
+                : (cell.space.id ?? '');
+            if (spaceIdStr) {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.cells.bySpace(spaceIdStr),
+              });
+            }
           }
         }
       },
@@ -4108,6 +4063,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         id: string;
         name: string;
         description: string;
+        spaceId?: string;
       }) => {
         return requestDatalayer({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/datasets/${id}`,
@@ -4115,11 +4071,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { name, description },
         });
       },
-      onSuccess: (_, { id }) => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.detail(id),
-        });
-        queryClient.invalidateQueries({ queryKey: queryKeys.datasets.all() });
+      onSuccess: (resp, { id, spaceId }) => {
+        if (resp.success) {
+          // Invalidate detail and list queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.datasets.detail(id),
+          });
+          if (spaceId) {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.datasets.bySpace(spaceId),
+            });
+          }
+        }
       },
     });
   };
@@ -4222,14 +4185,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (resp, _lessonId) => {
         if (resp.success && resp.notebook) {
           const lesson = toLesson(resp.notebook);
+          // Set detail cache
+          queryClient.setQueryData(queryKeys.lessons.detail(lesson.id), lesson);
+          // Invalidate list to refetch
           if (lesson?.space) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.lessons.bySpace(
-                typeof lesson.space === 'string'
-                  ? lesson.space
-                  : (lesson.space.id ?? ''),
-              ),
-            });
+            const spaceIdStr =
+              typeof lesson.space === 'string'
+                ? lesson.space
+                : (lesson.space.id ?? '');
+            if (spaceIdStr) {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.lessons.bySpace(spaceIdStr),
+              });
+            }
           }
         }
       },
@@ -4343,14 +4311,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.exercise) {
           const exercise = toExercise(resp.exercise);
+          // Set detail cache
+          queryClient.setQueryData(
+            queryKeys.exercises.detail(exercise.id),
+            exercise,
+          );
+          // Invalidate list to refetch
           if (exercise?.space) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.exercises.bySpace(
-                typeof exercise.space === 'string'
-                  ? exercise.space
-                  : (exercise.space.id ?? ''),
-              ),
-            });
+            const spaceIdStr =
+              typeof exercise.space === 'string'
+                ? exercise.space
+                : (exercise.space.id ?? '');
+            if (spaceIdStr) {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.exercises.bySpace(spaceIdStr),
+              });
+            }
           }
         }
       },
@@ -4413,14 +4389,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.notebook) {
           const assignment = toAssignment(resp.notebook);
+          // Set detail cache
+          queryClient.setQueryData(
+            queryKeys.assignments.detail(assignment.id),
+            assignment,
+          );
+          // Invalidate list to refetch
           if (assignment?.space) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.assignments.bySpace(
-                typeof assignment.space === 'string'
-                  ? assignment.space
-                  : (assignment.space.id ?? ''),
-              ),
-            });
+            const spaceIdStr =
+              typeof assignment.space === 'string'
+                ? assignment.space
+                : (assignment.space.id ?? '');
+            if (spaceIdStr) {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.assignments.bySpace(spaceIdStr),
+              });
+            }
           }
         }
       },
@@ -4636,6 +4620,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (_, { exerciseId }) => {
         queryClient.invalidateQueries({
           queryKey: ['exercises', exerciseId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.exercises.all(),
         });
       },
     });
@@ -6314,6 +6301,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         return resp;
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onSuccess: (data: any, spaceId) => {
         // Set the notebooks data directly into cache
         if (data.success && data.items) {
