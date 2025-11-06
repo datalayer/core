@@ -115,6 +115,7 @@ ignore_missing_imports = true
 disallow_untyped_defs = true
 disallow_any_generics = true
 warn_unused_ignores = true
+exclude = ["tests/"]
 
 [tool.ruff.lint]
 extend-select = ["I"]

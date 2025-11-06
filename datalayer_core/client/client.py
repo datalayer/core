@@ -11,6 +11,7 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
+from datalayer_core.auth import AuthManager
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
@@ -56,13 +57,18 @@ class DatalayerClient(
     urls : Optional[DatalayerURLs]
         Pre-configured URLs object for all Datalayer services.
     token : Optional[str]
-        Authentication token (can also be set via DATALAYER_API_KEY env var).
+        Authentication token. If None and auto_discover=True, will attempt
+        to discover token from environment variables or keyring.
+    auto_discover : bool
+        If True, automatically discover token from environment or keyring.
+        Default is True.
     """
 
     def __init__(
         self,
         urls: Optional[DatalayerURLs] = None,
         token: Optional[str] = None,
+        auto_discover: bool = True,
     ):
         """
         Initialize Datalayer.
@@ -72,15 +78,26 @@ class DatalayerClient(
         urls : Optional[DatalayerURLs]
             Pre-configured URLs object. If not provided, will use environment variables or defaults.
         token : Optional[str]
-            Authentication token (can also be set via DATALAYER_API_KEY env var).
+            Authentication token. If None and auto_discover=True, will attempt
+            to discover token from environment variables or keyring.
+        auto_discover : bool
+            If True, automatically discover token from environment or keyring.
+            Default is True.
         """
-        # TODO: Check user and password login
-
         # Use provided urls or create from environment
         if urls is not None:
             self._urls = urls
         else:
             self._urls = DatalayerURLs.from_environment()
+
+        # Initialize AuthManager
+        self.auth = AuthManager(self._urls)
+
+        # Auto-discover token if not provided
+        if token is None and auto_discover:
+            discovered_token = self.auth.get_stored_token()
+            if discovered_token:
+                token = discovered_token
 
         self._token = token  # Store the explicitly passed token
         self._external_token = None
@@ -88,12 +105,15 @@ class DatalayerClient(
         self._kernel_client = None
         self._notebook_client = None
 
-        # Use the AuthnMixin token management to get token with fallbacks
-        resolved_token = self._get_token()
-        if not resolved_token:
-            raise ValueError(
-                "Token is required. Set it via parameter, `DATALAYER_API_KEY` environment variable, or authenticate with `datalayer login`"
-            )
+        # Only validate token if auto_discover is True
+        # When auto_discover is False, user is expected to call login methods
+        if auto_discover:
+            # Use the AuthnMixin token management to get token with fallbacks
+            resolved_token = self._get_token()
+            if not resolved_token:
+                raise ValueError(
+                    "Token is required. Set it via parameter, `DATALAYER_API_KEY` environment variable, or authenticate with `datalayer login`"
+                )
 
     @property
     def urls(self) -> DatalayerURLs:
@@ -133,6 +153,126 @@ class DatalayerClient(
         if response["success"]:
             return UserModel.from_data(response["profile"])
         raise RuntimeError("Failed to get profile information")
+
+    def login_browser(self, port: Optional[int] = None) -> dict[str, Any]:
+        """
+        Login using browser OAuth flow.
+
+        Opens browser for GitHub OAuth authentication. Token is automatically
+        stored in system keyring if available.
+
+        Parameters
+        ----------
+        port : int, optional
+            Port for local HTTP server (default: random available port).
+
+        Returns
+        -------
+        dict
+            User information from profile endpoint.
+
+        Raises
+        ------
+        Exception
+            If login fails
+
+        Examples
+        --------
+        >>> client = DatalayerClient(auto_discover=False)
+        >>> user_info = client.login_browser()
+        >>> print(f"Logged in as {user_info['handle_s']}")
+        """
+        user_handle, token = self.auth.login_with_browser(port=port)
+        self._token = token
+        # Get and return full user profile
+        response = self._get_profile()
+        return response.get("profile", {})
+
+    def login_password(self, handle: str, password: str) -> dict[str, Any]:
+        """
+        Login using username/email and password.
+
+        Authenticates with Datalayer platform using credentials. Token is
+        automatically stored in system keyring if available.
+
+        Parameters
+        ----------
+        handle : str
+            Username or email address.
+        password : str
+            User password.
+
+        Returns
+        -------
+        dict
+            User information from login endpoint.
+
+        Raises
+        ------
+        Exception
+            If login fails
+
+        Examples
+        --------
+        >>> client = DatalayerClient(auto_discover=False)
+        >>> user_info = client.login_password("user@example.com", "mypassword")
+        >>> print(f"Logged in as {user_info}")
+        """
+        user_handle, token = self.auth.login_with_credentials(handle, password)
+        self._token = token
+        # Get and return full user profile
+        response = self._get_profile()
+        return response.get("profile", {})
+
+    def login_token(self, token: str) -> dict[str, Any]:
+        """
+        Login using an API token.
+
+        Validates token with profile endpoint. Token is automatically stored
+        in system keyring if available.
+
+        Parameters
+        ----------
+        token : str
+            API authentication token.
+
+        Returns
+        -------
+        dict
+            User information from profile endpoint.
+
+        Raises
+        ------
+        Exception
+            If token is invalid
+
+        Examples
+        --------
+        >>> client = DatalayerClient(auto_discover=False)
+        >>> user_info = client.login_token("dla_abc123...")
+        >>> print(f"Logged in as {user_info['handle_s']}")
+        """
+        user_handle, validated_token = self.auth.login_with_token(token)
+        self._token = validated_token
+        # Get and return full user profile
+        response = self._get_profile()
+        return response.get("profile", {})
+
+    def logout(self) -> None:
+        """
+        Logout and clear authentication.
+
+        Clears token from client and removes from system keyring if stored there.
+        Also clears environment variables DATALAYER_API_KEY and DATALAYER_EXTERNAL_TOKEN.
+
+        Examples
+        --------
+        >>> client = DatalayerClient()
+        >>> client.logout()
+        >>> print("Logged out successfully")
+        """
+        self.auth.logout()
+        self._token = None
 
     @lru_cache
     def list_environments(self) -> list[EnvironmentModel]:

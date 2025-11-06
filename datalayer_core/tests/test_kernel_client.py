@@ -7,6 +7,9 @@
 Test script to debug kernel client variable operations.
 """
 
+import os
+
+import pytest
 from dotenv import load_dotenv
 
 from datalayer_core.client.client import DatalayerClient
@@ -14,11 +17,16 @@ from datalayer_core.client.client import DatalayerClient
 load_dotenv()
 
 
+@pytest.mark.skipif(
+    not os.getenv("DATALAYER_API_KEY") and not os.getenv("DATALAYER_EXTERNAL_TOKEN"),
+    reason="Requires DATALAYER_API_KEY or DATALAYER_EXTERNAL_TOKEN environment variable",
+)
 def test_kernel_client() -> None:
     """Test kernel client variable operations"""
     print("Testing kernel client variable operations...")
 
-    client = DatalayerClient()
+    # Use auto_discover to get token from environment
+    client = DatalayerClient(auto_discover=True)
     with client.create_runtime(
         name="test-kernel-vars", environment="ai-env"
     ) as runtime:

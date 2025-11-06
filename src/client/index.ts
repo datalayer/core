@@ -122,6 +122,9 @@ export interface DatalayerClient {
   // IAM Methods
   whoami(): Promise<UserDTO>;
   login(token: string): Promise<UserDTO>;
+  loginBrowser(redirectUri?: string, port?: number): Promise<UserDTO>;
+  loginPassword(handle: string, password: string): Promise<UserDTO>;
+  loginToken(token: string): Promise<UserDTO>;
   logout(): Promise<void>;
   getCredits(): Promise<CreditsDTO>;
   calculateMaxRuntimeMinutes(
