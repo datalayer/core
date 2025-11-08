@@ -878,6 +878,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * ```
    */
   const useLogin = () => {
+    const iamStore = useIAMStore();
     return useMutation({
       mutationFn: async ({
         handle,
@@ -892,7 +893,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: { handle, password },
         });
       },
-      onSuccess: () => {
+      onSuccess: async resp => {
+        // Set the token in IAM state
+        if (resp.token) {
+          await iamStore.refreshUserByToken(resp.token);
+        }
         // Invalidate all queries on successful login
         queryClient.invalidateQueries();
       },
