@@ -25,6 +25,8 @@ export interface SDKHandlers {
 export interface DatalayerClientConfig {
   /** Authentication token for API requests */
   token?: string;
+  /** Auto-discover token from environment variables (DATALAYER_API_KEY, DATALAYER_EXTERNAL_TOKEN) */
+  autoDiscover?: boolean;
   /** URL for the IAM service */
   iamRunUrl?: string;
   /** URL for the Runtimes service */
@@ -59,7 +61,19 @@ export class DatalayerClientBase {
     this.runtimesRunUrl =
       config.runtimesRunUrl || DEFAULT_SERVICE_URLS.RUNTIMES;
     this.spacerRunUrl = config.spacerRunUrl || DEFAULT_SERVICE_URLS.SPACER;
-    this.token = config.token;
+
+    // Auto-discover token from environment if enabled
+    let token = config.token;
+    if (!token && config.autoDiscover !== false) {
+      // Default to auto-discover unless explicitly disabled
+      token =
+        (typeof process !== 'undefined' && process.env?.DATALAYER_API_KEY) ||
+        (typeof process !== 'undefined' &&
+          process.env?.DATALAYER_EXTERNAL_TOKEN) ||
+        undefined;
+    }
+
+    this.token = token;
     this.handlers = config.handlers;
   }
 
