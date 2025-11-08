@@ -5,4 +5,3 @@
 
 export * from './jupyter';
 export * from './runtimes';
-export * from '../api/DatalayerApi';
