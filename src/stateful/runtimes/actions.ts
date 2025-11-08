@@ -13,7 +13,7 @@ import {
   IRuntimeOptions,
   requestDatalayerAPI,
   type RunResponseError,
-} from '..';
+} from '../../api';
 import { asRuntimeSnapshot } from '../../models';
 import type {
   IRuntimeSnapshot,

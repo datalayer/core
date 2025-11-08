@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { ChangeEvent, useCallback, useEffect } from 'react';
 import { FormControl, Select } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { useCache, useUser } from './../../hooks';
@@ -14,39 +14,42 @@ export const SpaceSelect = () => {
   const user = useUser();
   const { organization, space, updateLayoutSpace } = useLayoutStore();
   const {
-    refreshUserSpaces,
-    getUserSpaces,
-    refreshOrganizationSpaces,
-    getOrganizationSpaces,
+    useRefreshUserSpaces,
+    useUserSpaces,
+    useRefreshOrganizationSpaces,
+    useOrganizationSpaces,
   } = useCache();
-  const [spaces, setSpaces] = useState<IAnySpace[]>([]);
-  const [_, setSelection] = useState<IAnySpace | undefined>(space);
+  const { mutate: refreshUserSpacesMutate } = useRefreshUserSpaces();
+  const { mutate: refreshOrganizationSpacesMutate } =
+    useRefreshOrganizationSpaces();
+  const { data: organizationSpaces = [] } = useOrganizationSpaces(
+    organization?.id ?? '',
+  );
+  const { data: userSpaces = [] } = useUserSpaces();
+  const spaces: IAnySpace[] = organization ? organizationSpaces : userSpaces;
+
   useEffect(() => {
-    if (organization) {
-      refreshOrganizationSpaces(organization.id).then(resp => {
-        if (resp.success) {
-          setSpaces(getOrganizationSpaces(organization.id));
-        }
-      });
-    } else {
-      refreshUserSpaces().then(resp => {
-        if (resp.success) {
-          setSpaces(getUserSpaces());
-        }
-      });
+    if (organization?.id) {
+      refreshOrganizationSpacesMutate(organization.id);
+    } else if (user) {
+      refreshUserSpacesMutate();
     }
-  }, [user, organization]);
+  }, [
+    organization?.id,
+    refreshOrganizationSpacesMutate,
+    refreshUserSpacesMutate,
+    user,
+  ]);
   const onSelectionChange = useCallback(
-    (e: any) => {
-      const selectedSpace = (e.target as HTMLSelectElement).value;
-      const org =
-        selectedSpace === undefined
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      const selectedSpaceIndex = Number.parseInt(event.target.value, 10);
+      const selectedSpace =
+        Number.isNaN(selectedSpaceIndex) || selectedSpaceIndex < 0
           ? undefined
-          : spaces[parseInt(selectedSpace, 10)];
-      setSelection(org);
-      updateLayoutSpace(org);
+          : spaces[selectedSpaceIndex];
+      updateLayoutSpace(selectedSpace);
     },
-    [setSelection, spaces],
+    [spaces, updateLayoutSpace],
   );
   return (
     <>
@@ -63,7 +66,11 @@ export const SpaceSelect = () => {
             placeholder="Please select an space..."
           >
             {spaces.map((sp, index) => (
-              <Select.Option value={`${index}`} selected={sp.id === space?.id}>
+              <Select.Option
+                key={sp.id}
+                value={`${index}`}
+                selected={sp.id === space?.id}
+              >
                 {sp.name}
               </Select.Option>
             ))}

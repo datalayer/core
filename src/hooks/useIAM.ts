@@ -39,7 +39,10 @@ export const useIAM = (
   const layoutStore = useLayoutStore();
   const organizationStore = useOrganizationStore();
   const spaceStore = useSpaceStore();
-  const { clearAllCaches, whoami } = useCache();
+  const { useWhoami, useLogout } = useCache();
+
+  const { data: whoamiData } = useWhoami();
+  const logoutMutation = useLogout();
   const loginAndNavigate = async (
     token: string,
     logout: () => void,
@@ -91,27 +94,27 @@ export const useIAM = (
     layoutStore.reset();
     organizationStore.updateOrganizations([]);
     spaceStore.updateSpaces([]);
-    clearAllCaches();
+    // Call TanStack Query logout mutation which will clear all caches
+    logoutMutation.mutate();
     setIAMState({ user: ANONYMOUS_USER, token: ANONYMOUS_USER_TOKEN });
   };
+
   useEffect(() => {
-    if (token) {
-      whoami().then(resp => {
-        if (resp.success) {
-          const user = asUser(resp.profile);
-          setIAMState({ user, token });
-          iamStore.setLogin(user, token);
-          // TODO centralize user settings management.
-          const aiagentsRunUrl = user.settings?.aiAgentsUrl;
-          if (aiagentsRunUrl) {
-            coreStore.getState().setConfiguration({
-              aiagentsRunUrl,
-            });
-          }
+    if (token && whoamiData) {
+      if (whoamiData.success) {
+        const user = asUser(whoamiData.profile);
+        setIAMState({ user, token });
+        iamStore.setLogin(user, token);
+        // TODO centralize user settings management.
+        const aiagentsRunUrl = user.settings?.aiAgentsUrl;
+        if (aiagentsRunUrl) {
+          coreStore.getState().setConfiguration({
+            aiagentsRunUrl,
+          });
         }
-      });
+      }
     }
-  }, []);
+  }, [token, whoamiData, iamStore]);
   return {
     user: iamState.user,
     token: iamState.token,

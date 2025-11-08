@@ -31,9 +31,11 @@ export const useAuthorization = () => {
   // Account -------------------------------------------------------------------
 
   const checkUserAccountPermissions = (user: IUser, accountHandle: string) => {
-    if (user.handle !== accountHandle) {
+    // Note: user object from API has handle_s property, not handle
+    const userHandle = (user as any).handle_s || user.handle;
+    if (userHandle !== accountHandle) {
       goToApplicationStateError(
-        `Permissions check failed for account handle: ${accountHandle} and user: ${user}`,
+        `Permissions check failed for account handle: ${accountHandle} and user handle: ${userHandle}`,
       );
     }
   };
