@@ -23,26 +23,30 @@ LANDING_PAGE = """<!DOCTYPE html>
 
 AUTH_SUCCESS_PAGE = """<!DOCTYPE html>
 <html>
-<body>
-  <script type="module">
-    // Store the user information
-    window.localStorage.setItem(
-      '{user_key}',
-      JSON.stringify({{
-        uid: '{uid}',
-        handle: '{handle}',
-        firstName: '{first_name}',
-        lastName: '{last_name}',
-        email: '{email}',
-        displayName: '{display_name}'
-      }})
-    );
-    // Store the token
-    localStorage.setItem('{token_key}', '{token}');
-    // Redirect to default page
-    window.location.replace('{base_url}');
-  </script>
-</body>
+  <head>
+    <script type="module">
+      // Store the user information
+      window.localStorage.setItem(
+        '{user_key}',
+        JSON.stringify({{
+          uid: '{uid}',
+          handle: '{handle}',
+          firstName: '{first_name}',
+          lastName: '{last_name}',
+          email: '{email}',
+          displayName: '{display_name}'
+        }})
+      );
+      // Store the token.
+      localStorage.setItem('{token_key}', '{token}');
+      // Redirect to login page.
+      window.location.pathname = '/datalayer/login/cli';
+    </script>
+  </head>
+  <body>
+  <h1>Authentication Successful</h1>
+  <p>You can close this window and return to your application.</p>
+  </body>
 </html>"""
 
 

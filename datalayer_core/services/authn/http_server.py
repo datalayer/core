@@ -86,6 +86,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
         if not user_raw or not token:
             self.send_error(HTTPStatus.BAD_REQUEST, "User and token must be provided.")
+
         user = json.loads(urllib.parse.unquote(user_raw))
         content = AUTH_SUCCESS_PAGE.format(
             user_key=DATALAYER_IAM_USER_KEY,
@@ -107,10 +108,10 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         """Handle GET requests for authentication flow."""
-        parts = urllib.parse.urlsplit(self.path)
-        if parts[2].strip("/").endswith("oauth/callback"):
-            self._save_token(parts[3])
-        elif parts[2] in {"/", "/datalayer/login/cli"}:
+        (scheme, netloc, path, query, fragment) = urllib.parse.urlsplit(self.path)
+        if path.strip("/").endswith("callback"):
+            self._save_token(query)
+        elif path in {"/", "/datalayer/login/cli"}:
             content = LANDING_PAGE.format(
                 config=json.dumps(
                     {
@@ -165,9 +166,9 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         )
 
 
-class DualStackServer(HTTPServer):
+class AuthHTTPServer(HTTPServer):
     """
-    HTTP server supporting both IPv4 and IPv6.
+    HTTP server supporting authentication.
 
     Parameters
     ----------
@@ -297,7 +298,7 @@ def get_token(
         #        return None if httpd.token is None else (httpd.user_handle, httpd.token)
         return None
     else:
-        httpd = DualStackServer(server_address, LoginRequestHandler, run_url)
+        httpd = AuthHTTPServer(server_address, LoginRequestHandler, run_url)
         logger.info(
             f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n"
         )

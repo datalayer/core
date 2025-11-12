@@ -6,7 +6,6 @@
 import os
 import threading
 import time
-import warnings
 from typing import Optional
 
 import questionary
@@ -14,10 +13,9 @@ import typer
 from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.me import display_me
 from datalayer_core.services.authn.http_server import get_token
 from datalayer_core.utils.network import fetch, find_http_port
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
+from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for auth commands
 app = typer.Typer(name="auth", help="Authentication commands")
