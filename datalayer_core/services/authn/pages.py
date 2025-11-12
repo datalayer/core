@@ -44,8 +44,6 @@ AUTH_SUCCESS_PAGE = """<!DOCTYPE html>
     </script>
   </head>
   <body>
-  <h1>Authentication Successful</h1>
-  <p>You can close this window and return to your application.</p>
   </body>
 </html>"""
 
