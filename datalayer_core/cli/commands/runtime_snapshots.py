@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Snapshot commands for Datalayer CLI."""
+"""Runtime Snapshot commands for Datalayer CLI."""
 
 from typing import Optional
 
