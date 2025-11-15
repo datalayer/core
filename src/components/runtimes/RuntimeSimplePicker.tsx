@@ -50,6 +50,10 @@ interface IRuntimeSimplePickerProps {
    * Connection to the active runtime.
    */
   sessionConnection?: Session.ISessionConnection;
+  /**
+   * Whether browser runtime is available.
+   */
+  browserRuntimeAvailable?: boolean;
 }
 
 /**
@@ -76,7 +80,11 @@ enum RuntimeDialogCause {
 export function RuntimeSimplePicker(
   props: IRuntimeSimplePickerProps,
 ): JSX.Element {
-  const { assignRuntime, sessionConnection } = props;
+  const {
+    assignRuntime,
+    sessionConnection,
+    browserRuntimeAvailable = true,
+  } = props;
   const { runtimeModels, multiServiceManager } = useRuntimesStore();
   const jupyterReactStore = useJupyterReactStore();
   const jupyterLabAdapter = (jupyterReactStore as any).jupyterLabAdapter;
@@ -208,27 +216,29 @@ export function RuntimeSimplePicker(
                   A simple Notebook Viewer without Runtime.
                 </ActionList.Description>
               </ActionList.Item>
-              <ActionList.Item
-                selected={runtimeLocation === 'browser'}
-                onSelect={() => {
-                  setRuntimeLocation('browser');
-                  assignRuntime({
-                    runtimeDesc: {
-                      name: 'pyodide',
-                      location: 'browser',
-                      language: 'python',
-                    },
-                  });
-                }}
-              >
-                <ActionList.LeadingVisual>
-                  <BrowserIcon />
-                </ActionList.LeadingVisual>
-                Browser Runtime
-                <ActionList.Description variant="block">
-                  A Browser Runtime based on Pyodide.
-                </ActionList.Description>
-              </ActionList.Item>
+              {browserRuntimeAvailable && (
+                <ActionList.Item
+                  selected={runtimeLocation === 'browser'}
+                  onSelect={() => {
+                    setRuntimeLocation('browser');
+                    assignRuntime({
+                      runtimeDesc: {
+                        name: 'pyodide',
+                        location: 'browser',
+                        language: 'python',
+                      },
+                    });
+                  }}
+                >
+                  <ActionList.LeadingVisual>
+                    <BrowserIcon />
+                  </ActionList.LeadingVisual>
+                  Browser Runtime
+                  <ActionList.Description variant="block">
+                    A Browser Runtime based on Pyodide.
+                  </ActionList.Description>
+                </ActionList.Item>
+              )}
             </ActionList.Group>
             {runtimeModels.length > 0 && (
               <ActionList.Group>
