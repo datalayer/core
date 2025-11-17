@@ -1213,7 +1213,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.organizations) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const orgs = resp.organizations.map((org: any) => {
             const organization = toOrganization(org);
             // Pre-populate caches
@@ -3467,9 +3466,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/teams`,
           method: 'GET',
-          body: { organizationId },
         });
       },
       onSuccess: (resp, organizationId) => {
@@ -3845,38 +3843,45 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (resp, variables) => {
         if (resp.success) {
+          // Transform raw API data to typed models
+          const transformedUser = resp.user ? toUser(resp.user) : undefined;
+          const transformedOrganization = resp.organization
+            ? toOrganization(resp.organization)
+            : undefined;
+          const transformedSpace = resp.space ? toSpace(resp.space) : undefined;
+
           // Set data directly into cache instead of just invalidating
-          if (resp.user) {
+          if (transformedUser) {
             queryClient.setQueryData(
               queryKeys.users.byHandle(variables.accountHandle),
-              resp.user,
+              transformedUser,
             );
             queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
           }
-          if (resp.organization) {
+          if (transformedOrganization) {
             queryClient.setQueryData(
               queryKeys.organizations.byHandle(variables.accountHandle),
-              resp.organization,
+              transformedOrganization,
             );
             queryClient.invalidateQueries({
               queryKey: queryKeys.organizations.all(),
             });
           }
-          if (resp.space) {
+          if (transformedSpace) {
             // Set both user and org space queries based on which type it is
-            if (resp.user && variables.spaceHandle) {
+            if (transformedUser && variables.spaceHandle) {
               queryClient.setQueryData(
                 queryKeys.spaces.byHandle(variables.spaceHandle),
-                resp.space,
+                transformedSpace,
               );
             }
-            if (resp.organization && variables.spaceHandle) {
+            if (transformedOrganization && variables.spaceHandle) {
               queryClient.setQueryData(
                 queryKeys.spaces.orgSpaceByHandle(
-                  resp.organization.id,
+                  transformedOrganization.id,
                   variables.spaceHandle,
                 ),
-                resp.space,
+                transformedSpace,
               );
             }
             queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
