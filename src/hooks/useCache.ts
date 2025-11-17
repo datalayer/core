@@ -1213,7 +1213,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         if (resp.success && resp.organizations) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const orgs = resp.organizations.map((org: any) => {
             const organization = toOrganization(org);
             // Pre-populate caches
@@ -2483,7 +2482,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 1: Core CRUD Operations - Refresh & Get Methods
+  // Core CRUD Operations - Refresh & Get Methods
   // ============================================================================
 
   /**
@@ -2806,7 +2805,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 2: Member Management & User Extensions
+  // Member Management & User Extensions
   // ============================================================================
 
   /**
@@ -3206,7 +3205,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 3: Authentication, Roles, Schools, and Refresh Methods
+  // Authentication, Roles, Schools, and Refresh Methods
   // ============================================================================
 
   /**
@@ -3467,9 +3466,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/teams`,
           method: 'GET',
-          body: { organizationId },
         });
       },
       onSuccess: (resp, organizationId) => {
@@ -3532,7 +3530,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/organizations/${organizationId}/spaces`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/organizations/${organizationId}`,
           method: 'GET',
         });
       },
@@ -3586,7 +3584,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 4: Courses, Space Items, and Advanced Features
+  // Courses, Space Items, and Advanced Features
   // ============================================================================
 
   /**
@@ -3845,38 +3843,45 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (resp, variables) => {
         if (resp.success) {
+          // Transform raw API data to typed models
+          const transformedUser = resp.user ? toUser(resp.user) : undefined;
+          const transformedOrganization = resp.organization
+            ? toOrganization(resp.organization)
+            : undefined;
+          const transformedSpace = resp.space ? toSpace(resp.space) : undefined;
+
           // Set data directly into cache instead of just invalidating
-          if (resp.user) {
+          if (transformedUser) {
             queryClient.setQueryData(
               queryKeys.users.byHandle(variables.accountHandle),
-              resp.user,
+              transformedUser,
             );
             queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
           }
-          if (resp.organization) {
+          if (transformedOrganization) {
             queryClient.setQueryData(
               queryKeys.organizations.byHandle(variables.accountHandle),
-              resp.organization,
+              transformedOrganization,
             );
             queryClient.invalidateQueries({
               queryKey: queryKeys.organizations.all(),
             });
           }
-          if (resp.space) {
+          if (transformedSpace) {
             // Set both user and org space queries based on which type it is
-            if (resp.user && variables.spaceHandle) {
+            if (transformedUser && variables.spaceHandle) {
               queryClient.setQueryData(
                 queryKeys.spaces.byHandle(variables.spaceHandle),
-                resp.space,
+                transformedSpace,
               );
             }
-            if (resp.organization && variables.spaceHandle) {
+            if (transformedOrganization && variables.spaceHandle) {
               queryClient.setQueryData(
                 queryKeys.spaces.orgSpaceByHandle(
-                  resp.organization.id,
+                  transformedOrganization.id,
                   variables.spaceHandle,
                 ),
-                resp.space,
+                transformedSpace,
               );
             }
             queryClient.invalidateQueries({ queryKey: queryKeys.spaces.all() });
@@ -3901,7 +3906,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 5: Cells, Datasets, Environments, and Lessons
+  // Cells, Datasets, Environments, and Lessons
   // ============================================================================
 
   /**
@@ -4210,7 +4215,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 6: Exercises, Assignments, Invites, and Contacts
+  // Exercises, Assignments, Invites, and Contacts
   // ============================================================================
 
   /**
@@ -4479,7 +4484,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Assignment Student Operations
+  // Assignment Student Operations
   // ============================================================================
 
   /**
@@ -4597,7 +4602,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Exercise Grading
+  // Exercise Grading
   // ============================================================================
 
   /**
@@ -4634,7 +4639,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Course Student & Course Items
+  // Course Student & Course Items
   // ============================================================================
 
   /**
@@ -4729,7 +4734,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Inbounds & Outbounds
+  // Inbounds & Outbounds
   // ============================================================================
 
   /**
@@ -4821,7 +4826,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Advanced Outbound Operations
+  // Advanced Outbound Operations
   // ============================================================================
 
   /**
@@ -4917,7 +4922,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Outbound Subscriptions
+  // Outbound Subscriptions
   // ============================================================================
 
   /**
@@ -4977,7 +4982,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] MFA (Multi-Factor Authentication)
+  // MFA (Multi-Factor Authentication)
   // ============================================================================
 
   /**
@@ -5040,7 +5045,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Checkout & Credits
+  // Checkout & Credits
   // ============================================================================
 
   /**
@@ -5109,7 +5114,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Support & Surveys
+  // Support & Surveys
   // ============================================================================
 
   /**
@@ -5192,7 +5197,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Join & Registration
+  // Join & Registration
   // ============================================================================
 
   /**
@@ -5310,7 +5315,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Password Recovery
+  // Password Recovery
   // ============================================================================
 
   /**
@@ -5357,7 +5362,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] OAuth2 Authentication
+  // OAuth2 Authentication
   // ============================================================================
 
   /**
@@ -5402,7 +5407,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Contact Enrichment & Tagging
+  // Contact Enrichment & Tagging
   // ============================================================================
 
   /**
@@ -5559,7 +5564,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Contact-User Linking
+  // Contact-User Linking
   // ============================================================================
 
   /**
@@ -5623,7 +5628,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Credits Quota & Usage
+  // Credits Quota & Usage
   // ============================================================================
 
   /**
@@ -5718,7 +5723,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Search Operations
+  // Search Operations
   // ============================================================================
 
   /**
@@ -5758,7 +5763,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Social Media Integrations
+  // Social Media Integrations
   // ============================================================================
 
   /**
@@ -5943,7 +5948,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Proxy Operations
+  // Proxy Operations
   // ============================================================================
 
   /**
@@ -6022,7 +6027,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Waiting List & Growth
+  // Waiting List & Growth
   // ============================================================================
 
   /**
@@ -6075,7 +6080,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 11: Refresh Operations & Additional Methods
+  // Refresh Operations & Additional Methods
   // ============================================================================
 
   /**
@@ -6622,7 +6627,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 12: Additional Refresh Operations
+  // Additional Refresh Operations
   // ============================================================================
 
   /**
@@ -6918,7 +6923,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 13: Final Methods - Invites, Contacts, Inbounds, Outbounds
+  // Invites, Contacts, Inbounds, Outbounds
   // ============================================================================
 
   /**
