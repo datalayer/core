@@ -2483,7 +2483,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 1: Core CRUD Operations - Refresh & Get Methods
+  // Core CRUD Operations - Refresh & Get Methods
   // ============================================================================
 
   /**
@@ -2806,7 +2806,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 2: Member Management & User Extensions
+  // Member Management & User Extensions
   // ============================================================================
 
   /**
@@ -3206,7 +3206,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 3: Authentication, Roles, Schools, and Refresh Methods
+  // Authentication, Roles, Schools, and Refresh Methods
   // ============================================================================
 
   /**
@@ -3532,7 +3532,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/organizations/${organizationId}/spaces`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/organizations/${organizationId}`,
           method: 'GET',
         });
       },
@@ -3586,7 +3586,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 4: Courses, Space Items, and Advanced Features
+  // Courses, Space Items, and Advanced Features
   // ============================================================================
 
   /**
@@ -3901,7 +3901,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 5: Cells, Datasets, Environments, and Lessons
+  // Cells, Datasets, Environments, and Lessons
   // ============================================================================
 
   /**
@@ -4210,7 +4210,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 6: Exercises, Assignments, Invites, and Contacts
+  // Exercises, Assignments, Invites, and Contacts
   // ============================================================================
 
   /**
@@ -4479,7 +4479,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Assignment Student Operations
+  // Assignment Student Operations
   // ============================================================================
 
   /**
@@ -4597,7 +4597,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Exercise Grading
+  // Exercise Grading
   // ============================================================================
 
   /**
@@ -4634,7 +4634,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Course Student & Course Items
+  // Course Student & Course Items
   // ============================================================================
 
   /**
@@ -4729,7 +4729,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 7] Inbounds & Outbounds
+  // Inbounds & Outbounds
   // ============================================================================
 
   /**
@@ -4821,7 +4821,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Advanced Outbound Operations
+  // Advanced Outbound Operations
   // ============================================================================
 
   /**
@@ -4917,7 +4917,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Outbound Subscriptions
+  // Outbound Subscriptions
   // ============================================================================
 
   /**
@@ -4977,7 +4977,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] MFA (Multi-Factor Authentication)
+  // MFA (Multi-Factor Authentication)
   // ============================================================================
 
   /**
@@ -5040,7 +5040,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Checkout & Credits
+  // Checkout & Credits
   // ============================================================================
 
   /**
@@ -5109,7 +5109,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 8] Support & Surveys
+  // Support & Surveys
   // ============================================================================
 
   /**
@@ -5192,7 +5192,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Join & Registration
+  // Join & Registration
   // ============================================================================
 
   /**
@@ -5310,7 +5310,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Password Recovery
+  // Password Recovery
   // ============================================================================
 
   /**
@@ -5357,7 +5357,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] OAuth2 Authentication
+  // OAuth2 Authentication
   // ============================================================================
 
   /**
@@ -5402,7 +5402,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Contact Enrichment & Tagging
+  // Contact Enrichment & Tagging
   // ============================================================================
 
   /**
@@ -5559,7 +5559,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Contact-User Linking
+  // Contact-User Linking
   // ============================================================================
 
   /**
@@ -5623,7 +5623,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 9] Credits Quota & Usage
+  // Credits Quota & Usage
   // ============================================================================
 
   /**
@@ -5718,7 +5718,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Search Operations
+  // Search Operations
   // ============================================================================
 
   /**
@@ -5758,7 +5758,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Social Media Integrations
+  // Social Media Integrations
   // ============================================================================
 
   /**
@@ -5943,7 +5943,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Proxy Operations
+  // Proxy Operations
   // ============================================================================
 
   /**
@@ -6022,7 +6022,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // [BATCH 10] Waiting List & Growth
+  // Waiting List & Growth
   // ============================================================================
 
   /**
@@ -6075,7 +6075,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 11: Refresh Operations & Additional Methods
+  // Refresh Operations & Additional Methods
   // ============================================================================
 
   /**
@@ -6622,7 +6622,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 12: Additional Refresh Operations
+  // Additional Refresh Operations
   // ============================================================================
 
   /**
@@ -6918,7 +6918,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // BATCH 13: Final Methods - Invites, Contacts, Inbounds, Outbounds
+  // Invites, Contacts, Inbounds, Outbounds
   // ============================================================================
 
   /**
