@@ -5690,9 +5690,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           startDate: u.start_date ? new Date(u.start_date) : new Date(),
           updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
           endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || '',
+          givenName: u.given_name || u.resource_given_name || '',
           resourceState: u.resource_state,
-          resources: u.resources,
+          resources: u.pod_resources,
           metadata: new Map(Object.entries(u.metadata || {})),
         }));
         return usages;
@@ -5726,9 +5726,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           startDate: u.start_date ? new Date(u.start_date) : new Date(),
           updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
           endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || '',
+          givenName: u.given_name || u.resource_given_name || '',
           resourceState: u.resource_state,
-          resources: u.resources,
+          resources: u.pod_resources,
           metadata: new Map(Object.entries(u.metadata || {})),
         }));
         return usages;
@@ -5762,9 +5762,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           startDate: u.start_date ? new Date(u.start_date) : new Date(),
           updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
           endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || '',
+          givenName: u.given_name || u.resource_given_name || '',
           resourceState: u.resource_state,
-          resources: u.resources,
+          resources: u.pod_resources,
           metadata: new Map(Object.entries(u.metadata || {})),
         }));
         return usages;
