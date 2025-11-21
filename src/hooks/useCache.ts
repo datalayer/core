@@ -1830,6 +1830,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: queryKeys.documents.bySpace(spaceId),
       queryFn: async () => {
+        if (!spaceId) {
+          return [];
+        }
         const resp = await requestDatalayer({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/document`,
           method: 'GET',
