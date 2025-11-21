@@ -5676,7 +5676,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
           method: 'GET',
         });
-        return resp.usages || [];
+        // Transform snake_case API response to camelCase IUsage interface
+        const usages = (resp.usages || []).map((u: any) => ({
+          id: u.resource_uid,
+          accountId: u.account_uid,
+          type: u.resource_type,
+          burningRate: u.burning_rate,
+          credits: u.credits,
+          creditsLimit: u.credits_limit,
+          startDate: u.start_date ? new Date(u.start_date) : new Date(),
+          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
+          endDate: u.end_date ? new Date(u.end_date) : undefined,
+          givenName: u.given_name || '',
+          resourceState: u.resource_state,
+          resources: u.resources,
+          metadata: new Map(Object.entries(u.metadata || {})),
+        }));
+        return usages;
       },
       ...options,
     });
@@ -5696,7 +5712,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/users/${userId}`,
           method: 'GET',
         });
-        return resp.usages || [];
+        // Transform snake_case API response to camelCase IUsage interface
+        const usages = (resp.usages || []).map((u: any) => ({
+          id: u.resource_uid,
+          accountId: u.account_uid,
+          type: u.resource_type,
+          burningRate: u.burning_rate,
+          credits: u.credits,
+          creditsLimit: u.credits_limit,
+          startDate: u.start_date ? new Date(u.start_date) : new Date(),
+          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
+          endDate: u.end_date ? new Date(u.end_date) : undefined,
+          givenName: u.given_name || '',
+          resourceState: u.resource_state,
+          resources: u.resources,
+          metadata: new Map(Object.entries(u.metadata || {})),
+        }));
+        return usages;
       },
       enabled: !!userId,
       ...options,
@@ -5716,7 +5748,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/platform`,
           method: 'GET',
         });
-        return resp.usages || [];
+        // Transform snake_case API response to camelCase IUsage interface
+        const usages = (resp.usages || []).map((u: any) => ({
+          id: u.resource_uid,
+          accountId: u.account_uid,
+          type: u.resource_type,
+          burningRate: u.burning_rate,
+          credits: u.credits,
+          creditsLimit: u.credits_limit,
+          startDate: u.start_date ? new Date(u.start_date) : new Date(),
+          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
+          endDate: u.end_date ? new Date(u.end_date) : undefined,
+          givenName: u.given_name || '',
+          resourceState: u.resource_state,
+          resources: u.resources,
+          metadata: new Map(Object.entries(u.metadata || {})),
+        }));
+        return usages;
       },
       ...options,
     });
