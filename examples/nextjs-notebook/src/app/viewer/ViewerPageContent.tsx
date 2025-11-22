@@ -45,14 +45,15 @@ function ViewerContent() {
   const { token } = useIAMStore();
   const { activeNotebook, setActiveNotebook, clearActiveNotebook } =
     useActiveNotebook();
-  
+
   // Call hooks at the top level
   const { data: userSpaces } = useCache().useUserSpaces();
-  const defaultSpaceId = userSpaces && userSpaces.length > 0 ? userSpaces[0].id : '';
+  const defaultSpaceId =
+    userSpaces && userSpaces.length > 0 ? userSpaces[0].id : '';
   const { data: spaceItems } = useCache().useSpaceItems(defaultSpaceId);
   const refreshUserSpaces = useCache().useRefreshUserSpaces();
   const refreshSpaceItems = useCache().useRefreshSpaceItems();
-  
+
   const [notebookData, setNotebookData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

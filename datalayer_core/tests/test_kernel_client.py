@@ -7,6 +7,9 @@
 Test script to debug kernel client variable operations.
 """
 
+import os
+
+import pytest
 from dotenv import load_dotenv
 
 from datalayer_core.client.client import DatalayerClient
@@ -18,7 +21,14 @@ def test_kernel_client() -> None:
     """Test kernel client variable operations"""
     print("Testing kernel client variable operations...")
 
-    client = DatalayerClient()
+    # Explicitly get token from env vars (CI sets TEST_DATALAYER_API_KEY or DATALAYER_API_KEY)
+    token = os.getenv("DATALAYER_API_KEY") or os.getenv("TEST_DATALAYER_API_KEY")
+    if not token:
+        pytest.skip(
+            "DATALAYER_API_KEY or TEST_DATALAYER_API_KEY environment variable not set"
+        )
+
+    client = DatalayerClient(token=token)
     with client.create_runtime(
         name="test-kernel-vars", environment="ai-env"
     ) as runtime:

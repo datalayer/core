@@ -61,9 +61,6 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
       // Create DatalayerServiceManager if we have credentials
       if (configuration?.token && configuration?.runUrl) {
         try {
-          console.log(
-            'Creating DatalayerServiceManager for Datalayer infrastructure',
-          );
           // Now we can pass undefined to use config/defaults
           const manager = await createDatalayerServiceManager(
             configuration?.cpuEnvironment,

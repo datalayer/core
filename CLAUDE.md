@@ -289,6 +289,48 @@ Features:
 - **SDK Usage**: Always use the handlers pattern for cross-cutting concerns instead of wrapping SDK methods
 - **VS Code Extension**: Use `(sdk as any)` casting when TypeScript definitions are incomplete
 
+## ag-ui (CopilotKit) Architecture (November 2024)
+
+### Critical Fix: Separated Hook Files
+
+The ag-ui adapter uses **separated hook files** to prevent Lumino widget initialization crashes:
+
+**Files:**
+
+- `src/tools/adapters/agui/notebookHooks.tsx` - Notebook-only (imports `@datalayer/jupyter-react`)
+- `src/tools/adapters/agui/lexicalHooks.tsx` - Lexical-only (imports `@datalayer/jupyter-lexical`)
+- `src/tools/adapters/agui/AgUIToolAdapter.ts` - Shared components (`ActionRegistrar`, `UseFrontendToolFn`)
+
+**Problem Solved:**
+
+Original combined `hooks.tsx` imported from BOTH packages, causing:
+
+1. When `useNotebookToolActions` was called → entire lexical package loaded
+2. Lexical package initialization → creates Lumino widgets for Jupyter output nodes
+3. Lumino widget initialization → **CRASH**: `Cannot set properties of undefined (setting 'class-name')`
+
+**Solution Benefits:**
+
+- ✅ Notebook example never loads lexical code (no crash)
+- ✅ Lazy loading (lexical only loads when needed)
+- ✅ No code duplication (shared components in `AgUIToolAdapter.ts`)
+- ✅ Smaller bundles (tree-shaking eliminates unused code)
+
+**Critical Rule:**
+
+```typescript
+// ❌ NEVER create combined hooks that import from both packages
+import { ... } from '@datalayer/jupyter-lexical';
+import { ... } from '@datalayer/jupyter-react';
+
+// ✅ ALWAYS keep hooks separated by package
+// notebookHooks.tsx
+import { ... } from '@datalayer/jupyter-react';
+
+// lexicalHooks.tsx
+import { ... } from '@datalayer/jupyter-lexical';
+```
+
 ## Critical Lessons Learned (January 2025)
 
 ### Module Import/Export Issues

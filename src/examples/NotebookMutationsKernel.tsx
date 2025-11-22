@@ -53,7 +53,6 @@ const NotebookMutationsKernel = () => {
   const onSessionConnection: OnSessionConnection = (
     session: Session.ISessionConnection | undefined,
   ) => {
-    console.log('Received a Kernel Session.', session);
     if (session) {
       setSessions(sessions.concat(session));
     }
@@ -76,7 +75,6 @@ const NotebookMutationsKernel = () => {
         setJupyterServerUrl(location.protocol + '//' + location.host);
         createLiteServiceManager().then(liteServiceManager => {
           setKernelIndex(-1);
-          console.log('Lite Service Manager is available', liteServiceManager);
           setServiceManager(liteServiceManager);
           setNbformat(
             notebook?.adapter?.notebookPanel?.content.model?.toJSON() as INotebookContent,

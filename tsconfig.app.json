@@ -34,5 +34,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["src/stories", "src/**/__tests__", "src/**/*.test.ts"]
+  "exclude": ["src/stories", "src/**/__tests__", "src/**/*.test.ts", "src/examples"]
 }

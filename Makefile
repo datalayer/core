@@ -51,7 +51,7 @@ publish-conda: # publish the conda package
 
 pydoc:
 	rm -fr docs/docs/python_api
-	pydoc-markdown
+	python -m pydoc_markdown.main
 	echo -e "label: Python API\nposition: 4" > docs/docs/python_api/_category_.yml
 
 typedoc:

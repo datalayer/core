@@ -66,10 +66,11 @@ export default function NotebooksPage() {
   const router = useRouter();
   const { token } = useIAMStore();
   const { activeNotebook } = useActiveNotebook();
-  
+
   // Call hooks at the top level
   const { data: userSpaces } = useCache().useUserSpaces();
-  const defaultSpaceId = userSpaces && userSpaces.length > 0 ? userSpaces[0].id : '';
+  const defaultSpaceId =
+    userSpaces && userSpaces.length > 0 ? userSpaces[0].id : '';
   const { data: spaceItems } = useCache().useSpaceItems(defaultSpaceId);
   const refreshUserSpaces = useCache().useRefreshUserSpaces();
   const refreshSpaceItems = useCache().useRefreshSpaceItems();
@@ -100,9 +101,11 @@ export default function NotebooksPage() {
         await refreshSpaceItems.mutateAsync(defaultSpace.id);
         console.log('All space items:', spaceItems);
 
-        const notebookItems = spaceItems?.filter(
-          (item: any) => item.type === 'notebook' || item.type_s === 'notebook',
-        ) || [];
+        const notebookItems =
+          spaceItems?.filter(
+            (item: any) =>
+              item.type === 'notebook' || item.type_s === 'notebook',
+          ) || [];
         console.log('Filtered notebook items:', notebookItems);
 
         // Log detailed info for each notebook
