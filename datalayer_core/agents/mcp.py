@@ -7,7 +7,7 @@
 import httpx
 from typing import Any, Dict, List
 
-from jupyter_ai_agents.agents.models import MCPServer
+from datalayer_core.agents.models import MCPServer
 
 
 class MCPClient:

@@ -2,14 +2,12 @@
 #
 # BSD 3-Clause License
 
-"""AI agent for JupyterLab chat."""
-
-from typing import Any
+"""AI agent for chat."""
 
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStreamableHTTP
 
-from jupyter_ai_agents.utils.model import create_model_with_provider
+from datalayer_core.agents.utils.model import create_model_with_provider
 
 
 def create_chat_agent(

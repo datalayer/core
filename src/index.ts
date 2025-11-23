@@ -54,4 +54,4 @@ export {
   loadRuntimeSnapshot,
 } from './stateful/runtimes/actions';
 
-export * from './ChatWidget';
+export * from './ChatComponent';

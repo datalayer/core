@@ -85,7 +85,10 @@
     "watch:lib:src": "tsc -b -w",
     "type-check:watch": "tsc -b -w --noEmit",
     "example": "vite --config vite.examples.config.ts",
+    "example:chat": "run-p jupyter:start example:chat:vite",
+    "example:chat:vite": "EXAMPLE=ChatExample vite --config vite.examples.config.ts",
     "example:nextjs": "npm run dev --workspace=nextjs-notebook-example",
+    "jupyter:start": "jupyter server --config=dev/config/jupyter_server_config.py --autoreload",
     "prepare": "husky"
   },
   "dependencies": {

@@ -5,7 +5,6 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ReactWidget } from '@jupyterlab/ui-components';
 import { useQuery } from '@tanstack/react-query';
 import {
   Conversation,
@@ -259,19 +258,3 @@ export const ChatComponent: React.FC = () => {
     </>
   );
 };
-
-/**
- * JupyterLab ReactWidget wrapper for the Chat component
- */
-export class ChatWidget extends ReactWidget {
-  constructor() {
-    super();
-    this.addClass('jp-ai-chat-container');
-    this.id = 'jupyter-ai-chat';
-    this.title.closable = true;
-  }
-
-  render(): JSX.Element {
-    return <ChatComponent />;
-  }
-}

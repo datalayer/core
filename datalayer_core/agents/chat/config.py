@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
-from jupyter_ai_agents.agents.models import MCPServer
+from datalayer_core.agents.models import MCPServer
 
 
 class ChatConfig:
@@ -20,11 +20,11 @@ class ChatConfig:
         
         Args:
             config_dir: Directory to store configuration files.
-                       If None, uses ~/.jupyter/jupyter_ai_agents
+                       If None, uses ~/.jupyter/datalayer_core
         """
         if config_dir is None:
             from jupyter_core.paths import jupyter_config_dir
-            config_dir = Path(jupyter_config_dir()) / 'jupyter_ai_agents'
+            config_dir = Path(jupyter_config_dir()) / 'datalayer_core'
         
         self.config_dir = config_dir
         self.config_file = config_dir / 'chat_config.json'

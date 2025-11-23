@@ -10,12 +10,12 @@ import tornado.web
 
 from jupyter_server.base.handlers import APIHandler
 
-from jupyter_ai_agents.agents.models import (
+from datalayer_core.agents.models import (
     FrontendConfig,
     AIModel,
     BuiltinTool,
 )
-from jupyter_ai_agents.tools import get_available_tools, generate_name_from_id
+from datalayer_core.tools import get_available_tools, generate_name_from_id
 
 logger = logging.getLogger(__name__)
 
