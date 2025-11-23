@@ -4,6 +4,7 @@
  */
 
 /// <reference types="vitest/config" />
+
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';

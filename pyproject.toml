@@ -28,14 +28,17 @@ classifiers = [
 ]
 # TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
+    "jupyter-console",
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",
-    "jupyter-console",
     "jupyter_server>=2.10,<3",
     "keyring==23.0.1",
+    "mcp",
+    "pydantic-ai-slim[anthropic,openai,cli,mcp]>=1.9.1",
+    "pydantic-settings",
+    "pydantic[email]",
     "questionary",
     "requests",
-    "pydantic[email]",
     "rich",
     "traitlets",
     "typer",
