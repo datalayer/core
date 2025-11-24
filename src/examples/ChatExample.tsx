@@ -7,7 +7,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '../components/ui/tooltip';
-import { ChatComponent0 } from '../components/chat0/ChatComponent0';
+import { ChatComponent } from '../components/chat/ChatComponent';
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -40,7 +40,7 @@ const ChatExample: React.FC = () => {
             </p>
           </header>
           <main className="flex-1 overflow-hidden">
-            <ChatComponent0 />
+            <ChatComponent />
           </main>
         </div>
       </TooltipProvider>
