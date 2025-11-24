@@ -4,11 +4,7 @@
  */
 
 import { type CSSProperties } from 'react';
-import {
-  BaseStyles,
-  ThemeProvider as PrimerThemeProvider,
-  ThemeProviderProps,
-} from '@primer/react';
+import { BaseStyles, ThemeProvider, ThemeProviderProps } from '@primer/react';
 
 export interface IDatalayerThemeProviderProps extends ThemeProviderProps {
   /**
@@ -22,7 +18,7 @@ export function DatalayerThemeProvider(
 ): JSX.Element {
   const { children, colorMode, baseStyles, ...rest } = props;
   return (
-    <PrimerThemeProvider colorMode={colorMode} {...rest}>
+    <ThemeProvider colorMode={colorMode} {...rest}>
       <BaseStyles
         style={{
           backgroundColor: 'var(--bgColor-default)',
@@ -33,6 +29,6 @@ export function DatalayerThemeProvider(
       >
         {children}
       </BaseStyles>
-    </PrimerThemeProvider>
+    </ThemeProvider>
   );
 }

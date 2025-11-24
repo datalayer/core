@@ -3,4 +3,4 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './chat0';
+export * from './chat';

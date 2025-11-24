@@ -151,7 +151,9 @@ export const ChatComponent: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
+        width: '100%',
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {/* Messages Container */}
@@ -160,7 +162,9 @@ export const ChatComponent: React.FC = () => {
         sx={{
           flex: 1,
           overflowY: 'auto',
+          overflowX: 'hidden',
           padding: 3,
+          paddingBottom: 4,
         }}
       >
         {messages.map(message => (
@@ -191,8 +195,9 @@ export const ChatComponent: React.FC = () => {
         <Box
           sx={{
             position: 'absolute',
-            bottom: 140,
+            bottom: 160,
             right: 16,
+            zIndex: 1,
           }}
         >
           <IconButton
@@ -205,13 +210,15 @@ export const ChatComponent: React.FC = () => {
         </Box>
       )}
 
-      {/* Input Area */}
+      {/* Input Area - Fixed at bottom */}
       <Box
         sx={{
+          flexShrink: 0,
           borderTop: '1px solid',
           borderColor: 'border.default',
           padding: 3,
           backgroundColor: 'canvas.default',
+          zIndex: 2,
         }}
       >
         <form onSubmit={handleSubmit}>

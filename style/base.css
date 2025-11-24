@@ -3,6 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
 :root {
   --dla-color-green-light: #2ECC71;
   --dla-color-green-main: #1ABC9C;

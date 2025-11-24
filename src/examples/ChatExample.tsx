@@ -4,10 +4,11 @@
  * BSD 3-Clause License
  */
 
-import React from 'react';
+import { Text } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TooltipProvider } from '../components/ui/tooltip';
 import { ChatComponent } from '../components/chat/ChatComponent';
+import { datalayerTheme, DatalayerThemeProvider } from '@/theme';
 
 // Create a query client for React Query
 const queryClient = new QueryClient({
@@ -26,24 +27,54 @@ const queryClient = new QueryClient({
  *
  * Demonstrates the ChatComponent with all necessary providers:
  * - QueryClientProvider for data fetching
- * - TooltipProvider for tooltip functionality
  */
 const ChatExample: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="flex flex-col h-screen bg-background">
-          <header className="border-b p-4">
-            <h1 className="text-2xl font-bold">Chat Example</h1>
-            <p className="text-sm text-muted-foreground">
+      <DatalayerThemeProvider theme={datalayerTheme}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            backgroundColor: 'canvas.default',
+          }}
+        >
+          <Box
+            as="header"
+            sx={{
+              borderBottom: '1px solid',
+              borderColor: 'border.default',
+              padding: 3,
+            }}
+          >
+            <Text
+              sx={{
+                fontSize: 3,
+                fontWeight: 'bold',
+                display: 'block',
+                marginBottom: 1,
+              }}
+            >
+              Chat Example
+            </Text>
+            <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
               Interactive chat interface with AI assistance
-            </p>
-          </header>
-          <main className="flex-1 overflow-hidden">
+            </Text>
+          </Box>
+          <Box
+            as="main"
+            sx={{
+              flex: 1,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <ChatComponent />
-          </main>
-        </div>
-      </TooltipProvider>
+          </Box>
+        </Box>
+      </DatalayerThemeProvider>
     </QueryClientProvider>
   );
 };
