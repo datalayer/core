@@ -147,24 +147,31 @@ export const ChatComponent: React.FC = () => {
 
   return (
     <Box
+      className="dla-chat-root"
       sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        width: '100%',
-        position: 'relative',
-        overflow: 'hidden',
       }}
     >
       {/* Messages Container */}
       <Box
         ref={scrollContainerRef}
+        className="dla-chat-messages"
         sx={{
-          flex: 1,
-          overflowY: 'auto',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflowY: 'scroll',
           overflowX: 'hidden',
           padding: 3,
-          paddingBottom: 4,
+          paddingBottom: '180px',
         }}
       >
         {messages.map(message => (
@@ -210,15 +217,18 @@ export const ChatComponent: React.FC = () => {
         </Box>
       )}
 
-      {/* Input Area - Fixed at bottom */}
+      {/* Input Area - Absolutely positioned at bottom */}
       <Box
         sx={{
-          flexShrink: 0,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
           borderTop: '1px solid',
           borderColor: 'border.default',
           padding: 3,
           backgroundColor: 'canvas.default',
-          zIndex: 2,
+          zIndex: 10,
         }}
       >
         <form onSubmit={handleSubmit}>
