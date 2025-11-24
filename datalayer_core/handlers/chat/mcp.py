@@ -36,7 +36,7 @@ class MCPServersHandler(APIHandler):
     async def post(self):
         """Add a new MCP server."""
         try:
-            from ..agents.models import MCPServer
+            from ...agents.models import MCPServer
             
             data = json.loads(self.request.body.decode('utf-8'))
             server = MCPServer(**data)
@@ -66,7 +66,7 @@ class MCPServerHandler(APIHandler):
     async def put(self, server_id: str):
         """Update MCP server."""
         try:
-            from ..agents.models import MCPServer
+            from ...agents.models import MCPServer
             
             data = json.loads(self.request.body.decode('utf-8'))
             server = MCPServer(**data)

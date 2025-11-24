@@ -6,12 +6,13 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Settings2Icon } from 'lucide-react';
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
-} from './components/ai-elements/conversation';
-import { Loader } from './components/ai-elements/loader';
+} from '../ai-elements/conversation';
+import { Loader } from '../ai-elements/loader';
 import {
   PromptInput,
   PromptInputButton,
@@ -25,28 +26,23 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
-} from './components/ai-elements/prompt-input';
+} from '../ai-elements/prompt-input';
 import {
   Source,
   Sources,
   SourcesContent,
   SourcesTrigger,
-} from './components/ai-elements/sources';
+} from '../ai-elements/sources';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from './components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from './components/ui/tooltip';
-import { Switch } from './components/ui/switch';
-import { Part } from './Part';
-import { useJupyterChat } from './hooks/useJupyterChat';
+} from '../ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Switch } from '../ui/switch';
+import { useJupyterChat } from '../../hooks/useJupyterChat';
 import { requestAPI } from './handler';
-import { Settings2Icon } from 'lucide-react';
+import { Part } from './Part';
 
 interface IModelConfig {
   id: string;
@@ -71,7 +67,7 @@ async function getModels() {
 /**
  * Main Chat component for JupyterLab sidebar
  */
-export const ChatComponent: React.FC = () => {
+export const ChatComponent0: React.FC = () => {
   const [model, setModel] = useState<string>('');
   const [enabledTools, setEnabledTools] = useState<string[]>([]);
   const { messages, sendMessage, status, regenerate } = useJupyterChat();

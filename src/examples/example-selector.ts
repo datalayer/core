@@ -12,7 +12,7 @@ export const EXAMPLES: Record<
   () => Promise<{ default: React.ComponentType }>
 > = {
   CellExample: () => import('./CellExample'),
-  ChatExample: () => import('./ChatExample'),
+  ChatExample0: () => import('./ChatExample0'),
   DatalayerNotebookExample: () => import('./DatalayerNotebookExample'),
   NotebookExample: () => import('./NotebookExample'),
   NotebookMutationsKernel: () => import('./NotebookMutationsKernel'),

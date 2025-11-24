@@ -86,10 +86,11 @@
     "type-check:watch": "tsc -b -w --noEmit",
     "example": "vite --config vite.examples.config.ts",
     "example:chat": "run-p jupyter:start example:chat:vite",
-    "example:chat:vite": "EXAMPLE=ChatExample vite --config vite.examples.config.ts",
+    "example:chat:vite": "EXAMPLE=ChatExample0 vite --config vite.examples.config.ts",
     "example:nextjs": "npm run dev --workspace=nextjs-notebook-example",
-    "jupyter:start": "jupyter server --config=dev/config/jupyter_server_config.py --autoreload",
-    "prepare": "husky"
+    "jupyter:start": "./dev/sh/start-jupyter-server.sh",
+    "prepare": "husky",
+    "kill": "./dev/sh/kill.sh || true"
   },
   "dependencies": {
     "@ai-sdk/react": "^2.0.34",

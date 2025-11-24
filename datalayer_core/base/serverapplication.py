@@ -16,9 +16,9 @@ from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 from datalayer_core.services.authn.state import get_server_port
-from datalayer_core.handlers.chat import ChatHandler
-from datalayer_core.handlers.configure import ConfigureHandler
-from datalayer_core.handlers.mcp import (
+from datalayer_core.handlers.chat.chat import ChatHandler
+from datalayer_core.handlers.chat.configure import ConfigureHandler
+from datalayer_core.handlers.chat.mcp import (
     MCPServersHandler,
     MCPServerHandler,
 )
@@ -45,7 +45,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    # 'run_url' can be set set and None or ' ' (empty string).
+    # run_url can be set set and None or ' ' (empty string).
     # In that case, the consumer of those settings are free to consider run_url as null.
     run_url = Unicode(
         "https://prod1.datalayer.run",
@@ -189,9 +189,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             config = ChatConfig()
             
             # Get Jupyter server connection details
-            base_url = self.serverapp.connection_url
+            connection_url = self.serverapp.connection_url
             token = self.serverapp.token
-            self.log.info(f"Jupyter server URL: {base_url}")
+            self.log.info(f"Jupyter server URL: {connection_url}")
             
             # Create chat agent without eagerly attaching MCP server tools
             # We'll create the MCP connection per request to avoid async context issues
@@ -216,13 +216,13 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             self.settings['chat_agent'] = agent
             self.settings['mcp_manager'] = mcp_manager
             self.settings['chat_config'] = config
-            self.settings['chat_base_url'] = base_url
+            self.settings['chat_base_url'] = connection_url
             self.settings['chat_token'] = token
             
-            self.log.info("Jupyter AI Agents extension initialized successfully")
+            self.log.info("Datalayer Core extension initialized successfully")
             
         except Exception as e:
-            self.log.error(f"Error initializing Jupyter AI Agents: {e}", exc_info=True)
+            self.log.error(f"Error initializing Datalayer Core: {e}", exc_info=True)
             raise
 
         self.serverapp.answer_yes = True
@@ -269,6 +269,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 "run_url": self.run_url,
             }
         )
+
 
     def initialize_handlers(self) -> None:
         """Initialize HTTP request handlers."""

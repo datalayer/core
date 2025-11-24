@@ -2,14 +2,14 @@
 #
 # BSD 3-Clause License
 
-"""Tools integration for Jupyter AI Agents using MCP (Model Context Protocol)."""
+"""Tools integration for Datalayer AI Agents using MCP (Model Context Protocol)."""
 
 import logging
 from typing import Any
 from urllib.parse import urljoin
 
-import httpx
 from pydantic_ai.mcp import MCPServerStreamableHTTP
+
 
 logger = logging.getLogger(__name__)
 

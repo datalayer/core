@@ -15,7 +15,8 @@ from datalayer_core.agents.models import (
     AIModel,
     BuiltinTool,
 )
-from datalayer_core.tools import get_available_tools, generate_name_from_id
+from datalayer_core.handlers.chat.tools import get_available_tools, generate_name_from_id
+
 
 logger = logging.getLogger(__name__)
 

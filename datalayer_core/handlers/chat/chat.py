@@ -14,7 +14,8 @@ from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from starlette.requests import Request
 from starlette.datastructures import Headers
 
-from ..tools import create_mcp_server
+from datalayer_core.handlers.chat.tools import create_mcp_server
+
 
 logger = logging.getLogger(__name__)
 

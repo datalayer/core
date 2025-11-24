@@ -22,7 +22,7 @@ export async function requestAPI<T>(
   const settings = ServerConnection.makeSettings();
   const requestUrl = URLExt.join(
     settings.baseUrl,
-    'datalayer_core', // API Namespace - matches backend handlers at /datalayer-core/*
+    'datalayer', // API Namespace - matches backend handlers at /datalayer/*
     endPoint,
   );
 
