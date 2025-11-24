@@ -4,20 +4,25 @@
  * BSD 3-Clause License
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Button,
   IconButton,
   Textarea,
-  Select,
   FormControl,
   Spinner,
   ActionMenu,
   ActionList,
+  Text,
 } from '@primer/react';
-import { GearIcon, ArrowUpIcon, ArrowDownIcon } from '@primer/octicons-react';
+import {
+  ToolsIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  AiModelIcon,
+} from '@primer/octicons-react';
 import { useAIJupyterChat } from '../../hooks/useAIJupyterChat';
 import { requestAPI } from './handler';
 import { MessagePart } from './MessagePart';
@@ -228,7 +233,7 @@ export const ChatComponent: React.FC = () => {
           borderColor: 'border.default',
           padding: 3,
           backgroundColor: 'canvas.default',
-          zIndex: 10,
+          zIndex: 0,
         }}
       >
         <form onSubmit={handleSubmit}>
@@ -259,9 +264,10 @@ export const ChatComponent: React.FC = () => {
                 <ActionMenu>
                   <ActionMenu.Anchor>
                     <IconButton
-                      icon={GearIcon}
+                      icon={ToolsIcon}
                       aria-label="Tools"
                       variant="invisible"
+                      size="small"
                     />
                   </ActionMenu.Anchor>
                   <ActionMenu.Overlay>
@@ -290,17 +296,34 @@ export const ChatComponent: React.FC = () => {
 
               {/* Model Select */}
               {configQuery.data && model && (
-                <Select
-                  value={model}
-                  onChange={e => setModel(e.target.value)}
-                  sx={{ minWidth: 200 }}
-                >
-                  {configQuery.data.models.map(modelItem => (
-                    <Select.Option key={modelItem.id} value={modelItem.id}>
-                      {modelItem.name}
-                    </Select.Option>
-                  ))}
-                </Select>
+                <ActionMenu>
+                  <ActionMenu.Anchor>
+                    <Button
+                      type="button"
+                      variant="invisible"
+                      size="small"
+                      leadingVisual={AiModelIcon}
+                    >
+                      <Text sx={{ fontSize: 0 }}>
+                        {configQuery.data.models.find(m => m.id === model)
+                          ?.name || 'Select Model'}
+                      </Text>
+                    </Button>
+                  </ActionMenu.Anchor>
+                  <ActionMenu.Overlay>
+                    <ActionList selectionVariant="single">
+                      {configQuery.data.models.map(modelItem => (
+                        <ActionList.Item
+                          key={modelItem.id}
+                          selected={model === modelItem.id}
+                          onSelect={() => setModel(modelItem.id)}
+                        >
+                          {modelItem.name}
+                        </ActionList.Item>
+                      ))}
+                    </ActionList>
+                  </ActionMenu.Overlay>
+                </ActionMenu>
               )}
             </Box>
 
@@ -308,6 +331,7 @@ export const ChatComponent: React.FC = () => {
             <Button
               type="submit"
               variant="primary"
+              size="small"
               disabled={!inputValue.trim() || status === 'streaming'}
               leadingVisual={ArrowUpIcon}
             >
