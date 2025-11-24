@@ -150,13 +150,3 @@ class ChatHandler(APIHandler):
             if not self._finished:
                 self.set_status(500)
                 self.finish(json.dumps({"error": str(e)}))
-    
-
-    @tornado.web.authenticated
-    async def options(self):
-        """Handle OPTIONS request for CORS."""
-        self.set_header('Access-Control-Allow-Origin', '*')
-        self.set_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.set_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.set_status(204)
-        self.finish()

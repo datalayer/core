@@ -285,9 +285,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 ServiceWorkerHandler,
             ),
             (url_path_join(self.name, "configure"), ConfigureHandler),
-            (url_path_join("api", "chat"), ChatHandler),
-            (url_path_join("api", "mcp/servers"), MCPServersHandler),
-            (url_path_join("api", r"mcp/servers/([^/]+)"), MCPServerHandler),
+            (url_path_join(self.name, "chat"), ChatHandler),
+            (url_path_join(self.name, "mcp", "servers"), MCPServersHandler),
+            (url_path_join(self.name, "mcp", "servers", r"([^/]+)"), MCPServerHandler),
         ]
         self.handlers.extend(handlers)
 

@@ -40,7 +40,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { Switch } from '../ui/switch';
-import { useJupyterChat } from '../../hooks/useJupyterChat';
+import { useAIJupyterChat } from '../../hooks/useAIJupyterChat';
 import { requestAPI } from './handler';
 import { Part } from './Part';
 
@@ -70,7 +70,7 @@ async function getModels() {
 export const ChatComponent0: React.FC = () => {
   const [model, setModel] = useState<string>('');
   const [enabledTools, setEnabledTools] = useState<string[]>([]);
-  const { messages, sendMessage, status, regenerate } = useJupyterChat();
+  const { messages, sendMessage, status, regenerate } = useAIJupyterChat();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const configQuery = useQuery({

@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
                 req.method,
                 req.url,
                 '->',
-                options.target + req.url,
+                options.target + (req.url || ''),
               );
             });
           },
@@ -70,12 +70,12 @@ export default defineConfig(({ mode }) => {
             )
             .replaceAll(
               /%VITE_DATALAYER_RUN_URL%/g,
-              env.VITE_DATALAYER_RUN_URL || 'https://prod1.datallayer.run',
+              env.VITE_DATALAYER_RUN_URL || 'https://prod1.datalayer.run',
             )
             .replaceAll(
               /%VITE_DATALAYER_RUN_URL_WS%/g,
               (
-                env.VITE_DATALAYER_RUN_URL || 'https://prod1.datallayer.run'
+                env.VITE_DATALAYER_RUN_URL || 'https://prod1.datalayer.run'
               ).replace('http', 'ws'),
             );
         },
