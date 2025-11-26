@@ -5,6 +5,7 @@
 
 export class Outbound implements IOutbound {
   id: string;
+  uid: string;
   subType: string;
   name: string;
   description: string;
@@ -20,7 +21,8 @@ export class Outbound implements IOutbound {
   launchedDate?: Date;
 
   constructor(u: any) {
-    this.id = u.uid;
+    this.id = u.id;
+    this.uid = u.uid;
     this.subType = u.subType;
     this.name = u.name;
     this.description = u.description;
@@ -49,6 +51,7 @@ export function asOutbound(u: any): IOutbound {
 
 export type IOutbound = {
   id: string;
+  uid: string;
   subType: string;
   name: string;
   description: string;
