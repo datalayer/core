@@ -339,6 +339,7 @@ export const queryKeys = {
   // Contacts
   contacts: {
     all: () => ['contacts'] as const,
+    lists: () => [...queryKeys.contacts.all(), 'list'] as const,
     details: () => [...queryKeys.contacts.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.contacts.details(), id] as const,
     byHandle: (handle: string) =>
@@ -2282,7 +2283,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get contact by ID
    */
-  const useContact = (contactId: string) => {
+  const useContact = (contactId: string, options?: { enabled?: boolean }) => {
     return useQuery({
       queryKey: queryKeys.contacts.detail(contactId),
       queryFn: async () => {
@@ -2303,7 +2304,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         throw new Error(resp.message || 'Failed to fetch contact');
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!contactId,
+      enabled: options?.enabled ?? !!contactId,
     });
   };
 
@@ -2399,9 +2400,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.contacts.detail(variables.contactId),
         });
-        // Invalidate all contact queries
+        // Invalidate contact list queries (avoid re-fetching deleted detail)
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contacts.all(),
+          queryKey: queryKeys.contacts.lists(),
         });
       },
     });
@@ -4823,7 +4824,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['outbounds'] });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
       },
     });
   };
@@ -4849,6 +4853,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (_, outboundId) => {
         queryClient.invalidateQueries({
           queryKey: ['outbounds', outboundId],
+          refetchType: 'inactive',
         });
       },
     });
@@ -4869,10 +4874,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, outboundId) => {
-        queryClient.invalidateQueries({
+        queryClient.removeQueries({
           queryKey: ['outbounds', outboundId],
         });
-        queryClient.invalidateQueries({ queryKey: ['outbounds'] });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
       },
     });
   };
@@ -4916,10 +4924,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, outboundId) => {
-        queryClient.invalidateQueries({
+        queryClient.removeQueries({
           queryKey: ['outbounds', outboundId],
         });
-        queryClient.invalidateQueries({ queryKey: ['outbounds'] });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
       },
     });
   };
