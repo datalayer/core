@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import { LayoutBackdrop } from './layouts';
 
@@ -30,7 +30,7 @@ export function useBackdrop(): BackdropContextType {
 export const BackdropContextProvider = BackdropContext.Provider;
 
 type IBackdropProviderProps = {
-  children?: JSX.Element | JSX.Element[];
+  children?: ReactNode;
   zIndex?: number;
   disableDarken?: boolean;
   backdropSurface?: any;
@@ -64,8 +64,12 @@ const App = () => (
 )
 export default App
 */
-export function BackdropProvider(props: IBackdropProviderProps) {
-  const { children, zIndex, disableDarken, backdropSurface } = props;
+export function BackdropProvider({
+  children = null,
+  zIndex = 9999,
+  disableDarken = false,
+  backdropSurface = null,
+}: IBackdropProviderProps) {
   const defaultBackdropSurface = {
     position: 'fixed',
     top: 0,
@@ -111,7 +115,10 @@ export function BackdropProvider(props: IBackdropProviderProps) {
 }
 
 BackdropProvider.propTypes = {
-  children: PropTypes.element,
+  children: PropTypes.oneOfType([
+    PropTypes.node,
+    PropTypes.arrayOf(PropTypes.node),
+  ]),
   // zIndex of the backdrop surface. Unused if backdropSurface is overridden.
   zIndex: PropTypes.number,
   // If true, backdrop background is transparent.
@@ -121,10 +128,3 @@ BackdropProvider.propTypes = {
   // See /example/src/ExampleApp.jsx for proper use.
   backdropSurface: PropTypes.func,
 };
-
-BackdropProvider.defaultProps = {
-  children: undefined,
-  disableBackdrop: false,
-  zIndex: 9999,
-  backdropSurface: null,
-} as IBackdropProviderProps;
