@@ -15,11 +15,11 @@ type VariantType =
   | undefined;
 
 type IBoringAvatarProps = {
-  displayName: string;
-  variant: VariantType;
-  size: number;
-  square: boolean;
-  style: object;
+  displayName?: string;
+  variant?: VariantType;
+  size?: number;
+  square?: boolean;
+  style?: object;
 };
 /*
 const variants = [
@@ -36,15 +36,20 @@ const getRandomBoringAvatarVariant = () => 'bauhaus' as VariantType;
 
 const RANDOM_BORING_AVATOR_VARIANT = getRandomBoringAvatarVariant();
 
-export const BoringAvatar = (props: IBoringAvatarProps) => {
-  const { displayName, size, square, style } = props;
-  const variant = props.variant ?? getRandomBoringAvatarVariant();
+export const BoringAvatar = ({
+  displayName = '',
+  variant,
+  size = 40,
+  square = false,
+  style,
+}: IBoringAvatarProps) => {
+  const resolvedVariant = variant ?? RANDOM_BORING_AVATOR_VARIANT;
   return (
     <span style={{ ...(style || {}) }}>
       <BoringAvatars
         size={size}
         name={displayName}
-        variant={variant}
+        variant={resolvedVariant}
         square={square}
         colors={[
           '#000000',
@@ -62,14 +67,6 @@ export const BoringAvatar = (props: IBoringAvatarProps) => {
       />
     </span>
   );
-};
-
-BoringAvatar.defaultProps = {
-  displayName: '',
-  variant: RANDOM_BORING_AVATOR_VARIANT,
-  size: 40,
-  square: false,
-  style: undefined,
 };
 
 export default BoringAvatar;

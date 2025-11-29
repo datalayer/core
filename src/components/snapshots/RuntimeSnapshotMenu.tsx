@@ -62,11 +62,13 @@ type IRuntimeSnapshotMenu = {
 /**
  * Runtime Snapshot menu component.
  */
-export function RuntimeSnapshotMenu(
-  props: PropsWithChildren<IRuntimeSnapshotMenu>,
-): JSX.Element {
-  const { children, connection, podName, multiServiceManager, disabled } =
-    props;
+export function RuntimeSnapshotMenu({
+  children,
+  connection,
+  podName,
+  multiServiceManager,
+  disabled = false,
+}: PropsWithChildren<IRuntimeSnapshotMenu>): JSX.Element {
   const {
     addRuntimeSnapshot,
     runtimesRunUrl,
@@ -296,7 +298,3 @@ export function RuntimeSnapshotMenu(
     </>
   );
 }
-
-RuntimeSnapshotMenu.defaultProps = {
-  disabled: false,
-} as Partial<IRuntimeSnapshotMenu>;

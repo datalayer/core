@@ -11,12 +11,16 @@ import { VariantType } from './VariantType';
 type IDownloadJsonButtonProps = {
   data?: object;
   fileName: string;
-  extension: string;
-  variant: VariantType;
+  extension?: string;
+  variant?: VariantType;
 };
 
-export const DownloadJsonButton = (props: IDownloadJsonButtonProps) => {
-  const { data, fileName, variant, extension } = props;
+export const DownloadJsonButton = ({
+  data,
+  fileName,
+  variant = 'default',
+  extension = 'json',
+}: IDownloadJsonButtonProps) => {
   return (
     <Button
       variant={variant}
@@ -26,12 +30,6 @@ export const DownloadJsonButton = (props: IDownloadJsonButtonProps) => {
       Download
     </Button>
   );
-};
-
-DownloadJsonButton.defaultProps = {
-  variant: 'default',
-  name: 'data',
-  extension: 'json',
 };
 
 export default DownloadJsonButton;

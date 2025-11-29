@@ -11,11 +11,14 @@ import { VariantType } from './VariantType';
 type IDownloadCSVButtonProps = {
   data?: object;
   fileName: string;
-  variant: VariantType;
+  variant?: VariantType;
 };
 
-export const DownloadCSVButton = (props: IDownloadCSVButtonProps) => {
-  const { data, fileName, variant } = props;
+export const DownloadCSVButton = ({
+  data,
+  fileName,
+  variant = 'default',
+}: IDownloadCSVButtonProps) => {
   return (
     <Button
       variant={variant}
@@ -25,10 +28,6 @@ export const DownloadCSVButton = (props: IDownloadCSVButtonProps) => {
       Download
     </Button>
   );
-};
-
-DownloadCSVButton.defaultProps = {
-  variant: 'default',
 };
 
 export default DownloadCSVButton;

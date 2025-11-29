@@ -15,8 +15,7 @@ type IUserProfileAvatarProps = {
   onClick?: React.MouseEventHandler<any>;
 };
 
-const Profile = (props: IUserProfileAvatarProps) => {
-  const { user, size, onClick } = props;
+const Profile = ({ user, size = 100, onClick }: IUserProfileAvatarProps) => {
   return (
     <Box style={{ width: size }}>
       <Avatar
@@ -29,23 +28,22 @@ const Profile = (props: IUserProfileAvatarProps) => {
   );
 };
 
-export const UserProfileAvatar = (props: IUserProfileAvatarProps) => {
-  const { onClick, user, size } = props;
+export const UserProfileAvatar = ({
+  onClick,
+  user,
+  size = 100,
+}: IUserProfileAvatarProps) => {
   return user ? (
     onClick ? (
       <Link href="javascript: return false;" onClick={onClick}>
-        <Profile {...props} />
+        <Profile user={user} size={size} onClick={onClick} />
       </Link>
     ) : (
-      <Profile {...props} />
+      <Profile user={user} size={size} onClick={onClick} />
     )
   ) : (
     <AvatarSkeleton size={size} />
   );
-};
-
-UserProfileAvatar.defaultProps = {
-  size: 100,
 };
 
 export default UserProfileAvatar;
