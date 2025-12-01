@@ -11,7 +11,7 @@ import json
 import logging
 
 from jupyter_server.base.handlers import APIHandler
-from tornado import web as tornado_web  # type: ignore[attr-defined]
+from tornado import web as tornado_web
 
 from datalayer_core.agents.models import (
     AIModel,

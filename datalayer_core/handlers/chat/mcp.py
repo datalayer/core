@@ -10,7 +10,7 @@
 import json
 
 from jupyter_server.base.handlers import APIHandler
-from tornado import web as tornado_web  # type: ignore[attr-defined]
+from tornado import web as tornado_web
 
 
 class MCPServersHandler(APIHandler):
