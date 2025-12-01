@@ -24,7 +24,7 @@ class MCPClient:
         Args:
             server_url: URL of the MCP server
         """
-        self.server_url = server_url.rstrip('/')
+        self.server_url = server_url.rstrip("/")
         # Create a long-lived HTTP client with appropriate settings
         # matching the settings used in tools.py for consistency
         self.client = httpx.AsyncClient(
@@ -32,15 +32,15 @@ class MCPClient:
                 connect=10.0,
                 read=300.0,  # Long timeout for LLM responses
                 write=10.0,
-                pool=5.0
+                pool=5.0,
             ),
             http2=False,  # Disable HTTP/2 for better compatibility
             follow_redirects=True,
             limits=httpx.Limits(
                 max_keepalive_connections=5,  # Reduced to avoid exhaustion
                 max_connections=10,  # Reduced to avoid exhaustion
-                keepalive_expiry=60.0  # Longer keepalive
-            )
+                keepalive_expiry=60.0,  # Longer keepalive
+            ),
         )
 
     async def list_tools(self) -> List[Dict[str, Any]]:
@@ -71,8 +71,7 @@ class MCPClient:
         """
         try:
             response = await self.client.post(
-                f"{self.server_url}/tools/{tool_name}",
-                json={"arguments": arguments}
+                f"{self.server_url}/tools/{tool_name}", json={"arguments": arguments}
             )
             response.raise_for_status()
             return response.json()
@@ -152,8 +151,8 @@ class MCPToolManager:
             if server.enabled:
                 tools = await client.list_tools()
                 for tool in tools:
-                    tool['mcp_server_id'] = server_id
-                    tool['mcp_server_name'] = server.name
+                    tool["mcp_server_id"] = server_id
+                    tool["mcp_server_name"] = server.name
                     all_tools.append(tool)
         return all_tools
 

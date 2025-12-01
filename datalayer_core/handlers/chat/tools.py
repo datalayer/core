@@ -32,7 +32,7 @@ def generate_name_from_id(tool_id: str) -> str:
         return ""
 
     # Replace underscores with spaces
-    name = tool_id.replace('_', ' ')
+    name = tool_id.replace("_", " ")
 
     # Capitalize first letter
     if name:
@@ -60,7 +60,7 @@ def create_mcp_server(
     """
     # Construct the MCP endpoint URL
     # jupyter-mcp-server typically runs at /mcp endpoint
-    mcp_url = urljoin(base_url.rstrip('/') + '/', 'mcp')
+    mcp_url = urljoin(base_url.rstrip("/") + "/", "mcp")
 
     logger.info(f"Creating MCP server connection to {mcp_url}")
 
@@ -114,7 +114,7 @@ async def get_available_tools_from_mcp(
                 }
 
                 # Include inputSchema if available
-                if hasattr(tool, 'inputSchema') and tool.inputSchema:
+                if hasattr(tool, "inputSchema") and tool.inputSchema:
                     tool_dict["inputSchema"] = tool.inputSchema
                 else:
                     tool_dict["inputSchema"] = {
@@ -126,11 +126,15 @@ async def get_available_tools_from_mcp(
                 converted_tools.append(tool_dict)
                 logger.debug(f"Converted tool: {tool.name}")
 
-            logger.info(f"Successfully retrieved {len(converted_tools)} tools from MCP server")
+            logger.info(
+                f"Successfully retrieved {len(converted_tools)} tools from MCP server"
+            )
             return converted_tools
 
     except Exception as e:
-        logger.error(f"Error connecting to MCP server at {base_url}: {e}", exc_info=True)
+        logger.error(
+            f"Error connecting to MCP server at {base_url}: {e}", exc_info=True
+        )
         return []
 
 
@@ -165,4 +169,4 @@ def tools_to_builtin_list(tools: list[dict[str, Any]]) -> list[str]:
     Returns:
         List of tool names/IDs
     """
-    return [tool.get('name', '') for tool in tools if tool.get('name')]
+    return [tool.get("name", "") for tool in tools if tool.get("name")]

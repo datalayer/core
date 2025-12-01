@@ -205,18 +205,20 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             # Load additional MCP servers from configuration
             saved_servers = config.load_mcp_servers()
             for server in saved_servers:
-                self.log.info(f"Loading additional MCP server: {server.name} ({server.url})")
+                self.log.info(
+                    f"Loading additional MCP server: {server.name} ({server.url})"
+                )
                 mcp_manager.add_server(server)
 
             # Register additional MCP tools with agent
             mcp_manager.register_with_agent(agent)
 
             # Store in settings for handlers to access
-            self.settings['chat_agent'] = agent
-            self.settings['mcp_manager'] = mcp_manager
-            self.settings['chat_config'] = config
-            self.settings['chat_base_url'] = connection_url
-            self.settings['chat_token'] = token
+            self.settings["chat_agent"] = agent
+            self.settings["mcp_manager"] = mcp_manager
+            self.settings["chat_config"] = config
+            self.settings["chat_base_url"] = connection_url
+            self.settings["chat_token"] = token
 
             self.log.info("Datalayer Core extension initialized successfully")
 
@@ -259,7 +261,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
         self.settings.update(**settings)
 
-
     def initialize_templates(self) -> None:
         """Initialize Jinja templates with Datalayer variables."""
         self.serverapp.jinja_template_vars.update(
@@ -268,7 +269,6 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 "run_url": self.run_url,
             }
         )
-
 
     def initialize_handlers(self) -> None:
         """Initialize HTTP request handlers."""

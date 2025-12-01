@@ -17,9 +17,15 @@ class AIModel(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True)
 
-    id: str = Field(..., description="Model identifier (e.g., 'anthropic:claude-sonnet-4-5')")
+    id: str = Field(
+        ..., description="Model identifier (e.g., 'anthropic:claude-sonnet-4-5')"
+    )
     name: str = Field(..., description="Display name for the model")
-    builtin_tools: List[str] = Field(default_factory=list, description="List of builtin tool IDs", serialization_alias="builtinTools")
+    builtin_tools: List[str] = Field(
+        default_factory=list,
+        description="List of builtin tool IDs",
+        serialization_alias="builtinTools",
+    )
 
 
 class BuiltinTool(BaseModel):
@@ -40,7 +46,9 @@ class MCPServer(BaseModel):
     name: str = Field(..., description="Display name for the server")
     url: str = Field(..., description="Server URL")
     enabled: bool = Field(default=True, description="Whether the server is enabled")
-    tools: List[str] = Field(default_factory=list, description="List of available tool names")
+    tools: List[str] = Field(
+        default_factory=list, description="List of available tool names"
+    )
 
 
 class FrontendConfig(BaseModel):
@@ -48,6 +56,16 @@ class FrontendConfig(BaseModel):
 
     model_config = ConfigDict(populate_by_name=True, by_alias=True)
 
-    models: List[AIModel] = Field(default_factory=list, description="Available AI models")
-    builtin_tools: List[BuiltinTool] = Field(default_factory=list, description="Available builtin tools", serialization_alias="builtinTools")
-    mcp_servers: List[MCPServer] = Field(default_factory=list, description="Configured MCP servers", serialization_alias="mcpServers")
+    models: List[AIModel] = Field(
+        default_factory=list, description="Available AI models"
+    )
+    builtin_tools: List[BuiltinTool] = Field(
+        default_factory=list,
+        description="Available builtin tools",
+        serialization_alias="builtinTools",
+    )
+    mcp_servers: List[MCPServer] = Field(
+        default_factory=list,
+        description="Configured MCP servers",
+        serialization_alias="mcpServers",
+    )

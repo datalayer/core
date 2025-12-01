@@ -10,6 +10,6 @@
 from .model import create_model_with_provider, get_model_string
 
 __all__ = [
-    'create_model_with_provider',
-    'get_model_string',
+    "create_model_with_provider",
+    "get_model_string",
 ]

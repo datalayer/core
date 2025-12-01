@@ -35,20 +35,20 @@ def get_model_string(model_provider: str, model_name: str) -> str:
     """
     # For Azure OpenAI, we return just the model name
     # The provider will be set to 'azure' when creating the OpenAIModel
-    if model_provider.lower() == 'azure-openai':
+    if model_provider.lower() == "azure-openai":
         return model_name
 
     # Map provider names to pydantic-ai format for other providers
     provider_map = {
-        'openai': 'openai',
-        'anthropic': 'anthropic',
-        'github-copilot': 'openai',      # GitHub Copilot uses OpenAI models
-        'bedrock': 'bedrock',
-        'google': 'google',
-        'gemini': 'google',
-        'groq': 'groq',
-        'mistral': 'mistral',
-        'cohere': 'cohere',
+        "openai": "openai",
+        "anthropic": "anthropic",
+        "github-copilot": "openai",  # GitHub Copilot uses OpenAI models
+        "bedrock": "bedrock",
+        "google": "google",
+        "gemini": "google",
+        "groq": "groq",
+        "mistral": "mistral",
+        "cohere": "cohere",
     }
 
     provider = provider_map.get(model_provider.lower(), model_provider)
@@ -83,30 +83,31 @@ def create_model_with_provider(
     # Create httpx timeout configuration with generous connect timeout
     # connect timeout is separate from read/write timeout
     import httpx
+
     http_timeout = httpx.Timeout(timeout, connect=30.0)
 
     logger.info(f"Creating model with timeout: {timeout}s (read/write), connect: 30.0s")
 
-    if model_provider == 'azure-openai' or model_provider == 'azure':
+    if model_provider == "azure-openai" or model_provider == "azure":
         from openai import AsyncAzureOpenAI
         from pydantic_ai.models.openai import OpenAIChatModel
         from pydantic_ai.providers import infer_provider
         from pydantic_ai.providers.openai import OpenAIProvider
 
         # Infer Azure provider to get configuration
-        azure_provider = infer_provider('azure')
+        azure_provider = infer_provider("azure")
 
         # Extract base URL - remove /openai suffix since AsyncAzureOpenAI adds it
         base_url = str(azure_provider.client.base_url)
         # base_url is like: https://xxx.openai.azure.com/openai/
         # AsyncAzureOpenAI expects: https://xxx.openai.azure.com (it adds /openai automatically)
-        azure_endpoint = base_url.rstrip('/').rsplit('/openai', 1)[0]
+        azure_endpoint = base_url.rstrip("/").rsplit("/openai", 1)[0]
 
         # Create AsyncAzureOpenAI client with custom timeout
         azure_client = AsyncAzureOpenAI(
             azure_endpoint=azure_endpoint,
             azure_deployment=model_name,
-            api_version=azure_provider.client.default_query.get('api-version'),
+            api_version=azure_provider.client.default_query.get("api-version"),
             api_key=azure_provider.client.api_key,
             timeout=http_timeout,
         )
@@ -115,7 +116,7 @@ def create_model_with_provider(
         azure_provider_with_timeout = OpenAIProvider(openai_client=azure_client)
 
         return OpenAIChatModel(model_name, provider=azure_provider_with_timeout)
-    elif model_provider.lower() == 'anthropic':
+    elif model_provider.lower() == "anthropic":
         from anthropic import AsyncAnthropic
         from pydantic_ai.models.anthropic import AnthropicModel
         from pydantic_ai.providers.anthropic import AnthropicProvider
@@ -123,18 +124,17 @@ def create_model_with_provider(
         # Create Anthropic client with custom timeout and longer connect timeout
         # Note: Many corporate networks block Anthropic API, use Azure/OpenAI if connection fails
         anthropic_client = AsyncAnthropic(
-            timeout=httpx.Timeout(timeout, connect=60.0),  # Longer connect timeout for slow/restricted networks
-            max_retries=2
+            timeout=httpx.Timeout(
+                timeout, connect=60.0
+            ),  # Longer connect timeout for slow/restricted networks
+            max_retries=2,
         )
 
         # Wrap in AnthropicProvider
         anthropic_provider = AnthropicProvider(anthropic_client=anthropic_client)
 
-        return AnthropicModel(
-            model_name,
-            provider=anthropic_provider
-        )
-    elif model_provider.lower() in ['openai', 'github-copilot']:
+        return AnthropicModel(model_name, provider=anthropic_provider)
+    elif model_provider.lower() in ["openai", "github-copilot"]:
         from pydantic_ai.models.openai import OpenAIChatModel
         from pydantic_ai.providers import infer_provider
         from pydantic_ai.providers.openai import OpenAIProvider
@@ -144,18 +144,14 @@ def create_model_with_provider(
         http_client = httpx.AsyncClient(timeout=http_timeout, follow_redirects=True)
 
         # Infer OpenAI provider first to get proper configuration
-        openai_provider_base = infer_provider('openai')
+        openai_provider_base = infer_provider("openai")
 
         # Create new provider with same base_url but custom http_client
         openai_provider = OpenAIProvider(
-            base_url=str(openai_provider_base.client.base_url),
-            http_client=http_client
+            base_url=str(openai_provider_base.client.base_url), http_client=http_client
         )
 
-        return OpenAIChatModel(
-            model_name,
-            provider=openai_provider
-        )
+        return OpenAIChatModel(model_name, provider=openai_provider)
     else:
         # For other providers, use the standard string format
         # Note: String format doesn't allow custom timeout configuration

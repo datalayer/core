@@ -19,7 +19,7 @@ This package provides:
 """
 
 __all__ = [
-    'create_chat_agent',
-    'MCPToolManager',
-    'ChatConfig',
+    "create_chat_agent",
+    "MCPToolManager",
+    "ChatConfig",
 ]

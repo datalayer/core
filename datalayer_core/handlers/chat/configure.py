@@ -11,7 +11,7 @@ import json
 import logging
 
 from jupyter_server.base.handlers import APIHandler
-from tornado import web as tornado_web
+from tornado import web as tornado_web  # type: ignore[attr-defined]
 
 from datalayer_core.agents.models import (
     AIModel,
@@ -41,10 +41,10 @@ class ConfigureHandler(APIHandler):
         """Return configuration for frontend."""
         try:
             # Get MCP manager from settings.
-            mcp_manager = self.settings.get('mcp_manager')
+            mcp_manager = self.settings.get("mcp_manager")
 
             # Get Jupyter server connection details
-            serverapp = self.settings.get('serverapp')
+            serverapp = self.settings.get("serverapp")
             if serverapp:
                 base_url = serverapp.connection_url
                 token = serverapp.token
@@ -61,26 +61,23 @@ class ConfigureHandler(APIHandler):
             available_tools = await get_available_tools(
                 base_url=base_url,
                 token=token,
-                enabled_only=False  # Get all tools, not just enabled ones
+                enabled_only=False,  # Get all tools, not just enabled ones
             )
-            logger.info(f"Fetched {len(available_tools)} tools from jupyter-mcp-tools: {[t.get('name') for t in available_tools]}")
+            logger.info(
+                f"Fetched {len(available_tools)} tools from jupyter-mcp-tools: {[t.get('name') for t in available_tools]}"
+            )
 
             # Convert tools to BuiltinTool format
             builtin_tools = []
             for tool in available_tools:
-                tool_id = tool.get('name', '')
-                tool_name = tool.get('description', '')
+                tool_id = tool.get("name", "")
+                tool_name = tool.get("description", "")
 
                 # If name is empty, generate from ID
                 if not tool_name or not tool_name.strip():
                     tool_name = generate_name_from_id(tool_id)
 
-                builtin_tools.append(
-                    BuiltinTool(
-                        id=tool_id,
-                        name=tool_name
-                    )
-                )
+                builtin_tools.append(BuiltinTool(id=tool_id, name=tool_name))
 
             logger.info(f"Converted to {len(builtin_tools)} BuiltinTool objects")
 
@@ -90,7 +87,7 @@ class ConfigureHandler(APIHandler):
                 AIModel(
                     id="anthropic:claude-sonnet-4-5",
                     name="Claude Sonnet 4.5",
-                    builtin_tools=tool_ids  # Associate all available tools
+                    builtin_tools=tool_ids,  # Associate all available tools
                 )
             ]
             logger.info(f"Created model with {len(tool_ids)} associated tools")
@@ -102,9 +99,7 @@ class ConfigureHandler(APIHandler):
 
             # Create response.
             config = FrontendConfig(
-                models=models,
-                builtin_tools=builtin_tools,
-                mcp_servers=mcp_servers
+                models=models, builtin_tools=builtin_tools, mcp_servers=mcp_servers
             )
 
             logger.info(f"Returning config with {len(builtin_tools)} builtin_tools")

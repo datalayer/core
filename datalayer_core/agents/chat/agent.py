@@ -43,10 +43,12 @@ def create_chat_agent(
     # Determine model to use
     if model:
         # User provided full model string
-        if model.startswith('azure-openai:'):
+        if model.startswith("azure-openai:"):
             # Special handling for Azure OpenAI format
-            deployment_name = model.split(':', 1)[1]
-            model_obj = create_model_with_provider('azure-openai', deployment_name, timeout)
+            deployment_name = model.split(":", 1)[1]
+            model_obj = create_model_with_provider(
+                "azure-openai", deployment_name, timeout
+            )
         else:
             model_obj = model
     else:

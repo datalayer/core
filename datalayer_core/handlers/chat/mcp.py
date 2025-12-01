@@ -10,7 +10,7 @@
 import json
 
 from jupyter_server.base.handlers import APIHandler
-from tornado import web as tornado_web
+from tornado import web as tornado_web  # type: ignore[attr-defined]
 
 
 class MCPServersHandler(APIHandler):
@@ -20,7 +20,7 @@ class MCPServersHandler(APIHandler):
     async def get(self) -> None:
         """Get all MCP servers."""
         try:
-            mcp_manager = self.settings.get('mcp_manager')
+            mcp_manager = self.settings.get("mcp_manager")
             if not mcp_manager:
                 self.finish(json.dumps([]))
                 return
@@ -33,18 +33,17 @@ class MCPServersHandler(APIHandler):
             self.set_status(500)
             self.finish(json.dumps({"error": str(e)}))
 
-
     @tornado_web.authenticated
     async def post(self) -> None:
         """Add a new MCP server."""
         try:
             from ...agents.models import MCPServer
 
-            data = json.loads(self.request.body.decode('utf-8'))
+            data = json.loads(self.request.body.decode("utf-8"))
             server = MCPServer(**data)
 
-            mcp_manager = self.settings.get('mcp_manager')
-            config = self.settings.get('chat_config')
+            mcp_manager = self.settings.get("mcp_manager")
+            config = self.settings.get("chat_config")
 
             if mcp_manager:
                 mcp_manager.add_server(server)
@@ -70,11 +69,11 @@ class MCPServerHandler(APIHandler):
         try:
             from ...agents.models import MCPServer
 
-            data = json.loads(self.request.body.decode('utf-8'))
+            data = json.loads(self.request.body.decode("utf-8"))
             server = MCPServer(**data)
 
-            mcp_manager = self.settings.get('mcp_manager')
-            config = self.settings.get('chat_config')
+            mcp_manager = self.settings.get("mcp_manager")
+            config = self.settings.get("chat_config")
 
             if mcp_manager:
                 mcp_manager.update_server(server_id, server)
@@ -90,13 +89,12 @@ class MCPServerHandler(APIHandler):
             self.set_status(500)
             self.finish(json.dumps({"error": str(e)}))
 
-
     @tornado_web.authenticated
     async def delete(self, server_id: str) -> None:
         """Delete MCP server."""
         try:
-            mcp_manager = self.settings.get('mcp_manager')
-            config = self.settings.get('chat_config')
+            mcp_manager = self.settings.get("mcp_manager")
+            config = self.settings.get("chat_config")
 
             if mcp_manager:
                 mcp_manager.remove_server(server_id)
