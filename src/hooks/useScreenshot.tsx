@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { createContext, useState, useContext } from 'react';
+import { createContext, useState, useContext, ReactNode } from 'react';
 import { LayoutScreenshot } from './layouts';
 
 type ScreenshotContextType = {
@@ -29,14 +29,18 @@ export function useScreenshot(): ScreenshotContextType {
 export const ScreenshotContextProvider = ScreenshotContext.Provider;
 
 type IScreenshotProviderProps = {
-  children?: JSX.Element | JSX.Element[];
+  children?: ReactNode;
   zIndex?: number;
   disableDarken?: boolean;
   screenshotSurface?: (qfds: any) => JSX.Element;
 };
 
-export function ScreenshotProvider(props: IScreenshotProviderProps) {
-  const { children, zIndex, disableDarken, screenshotSurface } = props;
+export function ScreenshotProvider({
+  children = null,
+  zIndex = 9999,
+  disableDarken = false,
+  screenshotSurface = undefined,
+}: IScreenshotProviderProps) {
   const defaultScreenshotSurface = {
     position: 'fixed',
     top: 0,
@@ -80,10 +84,3 @@ export function ScreenshotProvider(props: IScreenshotProviderProps) {
     </ScreenshotContextProvider>
   );
 }
-
-ScreenshotProvider.defaultProps = {
-  children: undefined,
-  disableScreenshot: false,
-  zIndex: 9999,
-  screenshotSurface: undefined,
-} as IScreenshotProviderProps;

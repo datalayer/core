@@ -3,15 +3,18 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+// Export core components and utilities
+export * from './components';
 export * from './utils';
 export * from './state';
 export * from './collaboration';
 export * from './services';
+
 // Export navigation before hooks to avoid conflicts
 export * from './navigation';
 export * from './hooks';
 
-// Export API and SDK layers
+// Export API.
 export {
   requestDatalayerAPI,
   RunResponseError,
@@ -24,10 +27,11 @@ export * as iamApi from './api/iam';
 export * as spacerApi from './api/spacer';
 
 export {
+  // Export client and config types
   DatalayerClient,
   type DatalayerClientConfig,
   type SDKHandlers,
-  // Export SDK models
+  // Export domain models
   User,
   Runtime,
   Environment,
@@ -37,13 +41,13 @@ export {
   LexicalDTO,
   Credits,
   Item,
-  // Export typed interfaces for stable contracts
+  // Export typed domain interfaces for stable contracts
   type RuntimeJSON,
   type EnvironmentJSON,
   type UserJSON,
 } from './client';
 
-// Export commonly used SDK functions directly for convenience
+// Export commonly used functions directly for convenience
 export {
   getEnvironments,
   createRuntime,

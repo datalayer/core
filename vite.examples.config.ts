@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
                 req.method,
                 req.url,
                 '->',
-                options.target + req.url,
+                options.target + (req.url || ''),
               );
             });
           },
@@ -64,10 +64,20 @@ export default defineConfig(({ mode }) => {
         name: 'html-transform',
         transformIndexHtml(html) {
           // Replace environment variables in HTML
-          return html.replace(
-            /%VITE_DATALAYER_API_KEY%/g,
-            env.VITE_DATALAYER_API_KEY || '',
-          );
+          return html.replaceAll(
+              /%VITE_DATALAYER_API_KEY%/g,
+              env.VITE_DATALAYER_API_KEY || '',
+            )
+            .replaceAll(
+              /%VITE_DATALAYER_RUN_URL%/g,
+              env.VITE_DATALAYER_RUN_URL || 'https://prod1.datalayer.run',
+            )
+            .replaceAll(
+              /%VITE_DATALAYER_RUN_URL_WS%/g,
+              (
+                env.VITE_DATALAYER_RUN_URL || 'https://prod1.datalayer.run'
+              ).replace('http', 'ws'),
+            );
         },
       },
       {
@@ -114,6 +124,10 @@ export default defineConfig(({ mode }) => {
 
     resolve: {
       alias: [
+        {
+          find: '@',
+          replacement: path.resolve(__dirname, './src'),
+        },
         {
           find: /^~(.*)$/,
           replacement: '$1',

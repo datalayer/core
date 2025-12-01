@@ -11,6 +11,15 @@ from traitlets import Bool, CInt, Instance, Unicode, default
 from traitlets.config import Configurable
 
 from datalayer_core.__version__ import __version__
+from datalayer_core.agents.chat.agent import create_chat_agent
+from datalayer_core.agents.chat.config import ChatConfig
+from datalayer_core.agents.mcp import MCPToolManager
+from datalayer_core.handlers.chat.chat import ChatHandler
+from datalayer_core.handlers.chat.configure import ConfigureHandler
+from datalayer_core.handlers.chat.mcp import (
+    MCPServerHandler,
+    MCPServersHandler,
+)
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
@@ -35,7 +44,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    # 'run_url' can be set set and None or ' ' (empty string).
+    # run_url can be set set and None or ' ' (empty string).
     # In that case, the consumer of those settings are free to consider run_url as null.
     run_url = Unicode(
         "https://prod1.datalayer.run",
@@ -116,7 +125,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         about = Unicode(
-            "AI Platform for Data Analysis",
+            "AI Agents for Data Analysis",
             config=True,
             help=("About brand."),
         )
@@ -173,16 +182,63 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     def initialize_settings(self) -> None:
         """Initialize server settings based on configuration."""
+
+        try:
+            # Create configuration manager
+            config = ChatConfig()
+
+            # Get Jupyter server connection details
+            connection_url = self.serverapp.connection_url
+            token = self.serverapp.token
+            self.log.info(f"Jupyter server URL: {connection_url}")
+
+            # Create chat agent without eagerly attaching MCP server tools
+            # We'll create the MCP connection per request to avoid async context issues
+            default_model = config.get_default_model()
+            self.log.info(f"Creating chat agent with model: {default_model}")
+            agent = create_chat_agent(model=default_model, mcp_server=None)
+            self.log.info("Chat agent created; MCP tools will be attached per request")
+
+            # Create MCP tool manager for additional MCP servers
+            mcp_manager = MCPToolManager()
+
+            # Load additional MCP servers from configuration
+            saved_servers = config.load_mcp_servers()
+            for server in saved_servers:
+                self.log.info(
+                    f"Loading additional MCP server: {server.name} ({server.url})"
+                )
+                mcp_manager.add_server(server)
+
+            # Register additional MCP tools with agent
+            mcp_manager.register_with_agent(agent)
+
+            # Store in settings for handlers to access
+            self.settings["chat_agent"] = agent
+            self.settings["mcp_manager"] = mcp_manager
+            self.settings["chat_config"] = config
+            self.settings["chat_base_url"] = connection_url
+            self.settings["chat_token"] = token
+
+            self.log.info("Datalayer Core extension initialized successfully")
+
+        except Exception as e:
+            self.log.error(f"Error initializing Datalayer Core: {e}", exc_info=True)
+            raise
+
         self.serverapp.answer_yes = True
+
         if self.benchmarks:
             self.serverapp.default_url = "/datalayer/benchmarks"
         if self.kernels:
             self.serverapp.default_url = "/datalayer/kernels"
         if self.webapp:
             self.serverapp.default_url = "/datalayer/web"
+
         port = get_server_port()
         if port is not None:
             self.serverapp.port = port
+
         settings = dict(
             run_url=self.run_url,
             launcher={
@@ -202,6 +258,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             },
             white_label=self.white_label,
         )
+
         self.settings.update(**settings)
 
     def initialize_templates(self) -> None:
@@ -226,6 +283,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 url_path_join(self.name, "service-worker", r"([^/]+\.js)"),
                 ServiceWorkerHandler,
             ),
+            (url_path_join(self.name, "configure"), ConfigureHandler),
+            (url_path_join(self.name, "chat"), ChatHandler),
+            (url_path_join(self.name, "mcp", "servers"), MCPServersHandler),
+            (url_path_join(self.name, "mcp", "servers", r"([^/]+)"), MCPServerHandler),
         ]
         self.handlers.extend(handlers)
 

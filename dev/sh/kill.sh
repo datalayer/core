@@ -3,8 +3,9 @@
 # Distributed under the terms of the Modified BSD License.
 
 
-# Copyright (c) Datalayer, Inc. https://datalayer.io
-# Distributed under the terms of the MIT License.
+# Copyright (c) 2021-2024 Datalayer, Inc.
+#
+# Datalayer License
 
 uname_out="$(uname -s)"
 
@@ -24,5 +25,25 @@ function kill_port() {
     esac    
 }
 
+kill_port 2181
+kill_port 2200
 kill_port 3063
+kill_port 4400
+kill_port 6600
+kill_port 6650
+kill_port 7000
+kill_port 7667
+kill_port 8080
+kill_port 8098
+kill_port 8200
 kill_port 8888
+kill_port 9092
+kill_port 8686
+kill_port 8888
+kill_port 8983
+kill_port 9300
+kill_port 9500
+kill_port 9600
+kill_port 9700
+kill_port 9800
+kill_port 9900

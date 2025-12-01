@@ -10,14 +10,13 @@ name = "datalayer_core"
 description="Datalayer Core"
 keywords = []
 readme = "README.md"
-license = { file = "LICENSE" }
+license = { text = "BSD-3-Clause" }
 requires-python = ">=3.9"
 classifiers = [
     "Framework :: Jupyter",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
@@ -28,14 +27,17 @@ classifiers = [
 ]
 # TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
+    "jupyter-console",
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",
-    "jupyter-console",
     "jupyter_server>=2.10,<3",
     "keyring==23.0.1",
+    "mcp",
+    "pydantic-ai-slim[anthropic,openai,cli,mcp]>=1.9.1",
+    "pydantic-settings",
+    "pydantic[email]",
     "questionary",
     "requests",
-    "pydantic[email]",
     "rich",
     "traitlets",
     "typer",

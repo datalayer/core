@@ -305,6 +305,6 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 ---
 
 <p align="center">
-  <strong>🚀 AI Platform for Data Analysis</strong><br></br>
+  <strong>🚀 AI Agents for Data Analysis</strong><br></br>
   <a href="https://datalayer.app/">Get started with Datalayer today!</a>
 </p>

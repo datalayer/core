@@ -39,7 +39,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   },
   brand: {
     name: 'Datalayer',
-    about: 'AI Platform for Data Analysis',
+    about: 'AI Agents for Data Analysis',
     logoUrl: 'https://assets.datalayer.tech/datalayer-25.svg',
     logoSquareUrl: 'https://assets.datalayer.tech/datalayer-square.png',
     copyright: '© 2025 Datalayer, Inc',

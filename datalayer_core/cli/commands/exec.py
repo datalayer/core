@@ -189,7 +189,7 @@ class RuntimesExecService:
                         raise
                     console.print(f"[yellow]Warning: Cell {i} failed: {e}[/yellow]")
 
-            console.print(f"[green]✓ Execution completed successfully[/green]")
+            console.print("[green]✓ Execution completed successfully[/green]")
 
         except Exception as e:
             if raise_exceptions:

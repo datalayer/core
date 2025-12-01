@@ -12,8 +12,10 @@ type IJupyterNotebooProps = {
   height?: string;
 };
 
-export const JupyterNotebook = (props: IJupyterNotebooProps) => {
-  const { boxPanel, height } = props;
+export const JupyterNotebook = ({
+  boxPanel,
+  height = '100%',
+}: IJupyterNotebooProps) => {
   return (
     <div style={{ position: 'relative' }}>
       <Box
@@ -45,10 +47,6 @@ export const JupyterNotebook = (props: IJupyterNotebooProps) => {
       </Box>
     </div>
   );
-};
-
-JupyterNotebook.defaultProps = {
-  height: '100%',
 };
 
 export default JupyterNotebook;

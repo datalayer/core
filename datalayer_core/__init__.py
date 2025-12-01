@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Datalayer Core - Python SDK and CLI for the Datalayer AI Platform."""
+"""Datalayer Core - Python Client and CLI for the Datalayer AI Platform."""
 
 from typing import Any, Dict, List
 

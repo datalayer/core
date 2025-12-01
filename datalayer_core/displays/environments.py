@@ -11,8 +11,6 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from datalayer_core.utils.date import timestamp_to_local_date
-
 
 def display_environments(environments: list[dict[str, Any]]) -> None:
     """

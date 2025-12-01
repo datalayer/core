@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join

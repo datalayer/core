@@ -31,8 +31,14 @@ export interface IFlashDatalayerProps extends FlashProps {
 /**
  * Closable flash component with actions.
  */
-export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
-  const { actions, children, closable, variant, sx, ...others } = props;
+export const FlashClosable = ({
+  actions,
+  children,
+  closable = true,
+  variant,
+  sx,
+  ...others
+}: IFlashDatalayerProps): JSX.Element => {
   const [open, setOpen] = useState(true);
   const visual =
     variant === 'warning' ? (
@@ -127,9 +133,5 @@ export const FlashClosable = (props: IFlashDatalayerProps): JSX.Element => {
     <></>
   );
 };
-
-FlashClosable.defaultProps = {
-  closable: true,
-} as Partial<IFlashDatalayerProps>;
 
 export default FlashClosable;

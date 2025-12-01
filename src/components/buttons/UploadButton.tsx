@@ -77,7 +77,7 @@ export function UploadIconButton(props: IUploadIconButtonProps): JSX.Element {
         onClick={onClick}
       />
     ),
-    [],
+    [label],
   );
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }
@@ -94,8 +94,11 @@ export interface IUploadButtonProps
   variant?: VariantType;
 }
 
-export function UploadButton(props: IUploadButtonProps): JSX.Element {
-  const { label, variant, ...others } = props;
+export function UploadButton({
+  label,
+  variant = 'primary',
+  ...others
+}: IUploadButtonProps): JSX.Element {
   const factory = useMemo(
     () => (onClick: () => void) => (
       <Button
@@ -108,13 +111,9 @@ export function UploadButton(props: IUploadButtonProps): JSX.Element {
         {label}
       </Button>
     ),
-    [],
+    [label, variant],
   );
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }
-
-UploadButton.defaultProps = {
-  variant: 'primary',
-} as Partial<IUploadButtonProps>;
 
 export default UploadButton;

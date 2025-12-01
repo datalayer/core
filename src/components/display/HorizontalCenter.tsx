@@ -9,10 +9,10 @@ type IHorizontalCenterProps = {
   margin?: string;
 };
 
-export const HorizontalCenter = (
-  props: PropsWithChildren<IHorizontalCenterProps>,
-) => {
-  const { children, margin } = props;
+export const HorizontalCenter = ({
+  children,
+  margin = '0px',
+}: PropsWithChildren<IHorizontalCenterProps>) => {
   return (
     <div
       style={{
@@ -26,9 +26,5 @@ export const HorizontalCenter = (
     </div>
   );
 };
-
-HorizontalCenter.defaultProps = {
-  margin: '0px',
-} as IHorizontalCenterProps;
 
 export default HorizontalCenter;

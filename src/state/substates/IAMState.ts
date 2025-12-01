@@ -401,15 +401,25 @@ iamStore
     // Start the credits poll in any case after trying to validate the user token.
     creditsPoll.start();
 
-    // Force a refresh when the user comeback to the application tab
+    // Force a refresh when the user comes back to the application tab.
     // Useful for checkout platform redirecting to another tab to add credits.
-    if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && iamStore.getState().user?.id) {
+    const maybeSetupVisibilityListener = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+      const doc = window.document;
+      if (!doc || typeof doc.addEventListener !== 'function') {
+        return;
+      }
+      const onVisibilityChange = () => {
+        if (!doc.hidden && iamStore.getState().user?.id) {
           creditsPoll.refresh();
         }
-      });
-    }
+      };
+      doc.addEventListener('visibilitychange', onVisibilityChange);
+    };
+
+    maybeSetupVisibilityListener();
   });
 
 // Connect the core store with the iam store.

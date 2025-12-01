@@ -41,12 +41,18 @@ c.IdentityProvider.token = '60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50
 # Security
 #################
 
-c.ServerApp.disable_check_xsrf = False
-# ORIGIN = 'http://localhost:3208'
-ORIGIN = '*'
+#################
+# Security
+#################
+
+c.ServerApp.disable_check_xsrf = True
+
 # c.ServerApp.allow_origin = ORIGIN
 c.ServerApp.allow_origin_pat = '.*'
 c.ServerApp.allow_credentials = True
+
+ORIGIN = '*'
+
 c.ServerApp.tornado_settings = {
   'headers': {
 #    'Access-Control-Allow-Origin': ORIGIN,
@@ -87,7 +93,7 @@ c.ServerApp.preferred_dir = content_dir
 # URLs
 #################
 
-c.ServerApp.base_url = '/'
+c.ServerApp.base_url = '/api/jupyter-server/'
 c.ServerApp.default_url = '/lab'
 
 #################

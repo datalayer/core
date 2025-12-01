@@ -22,28 +22,35 @@ export const useUploadForm = (url: string) => {
   };
   const uploadAndSubmit = async (formData: FormData) => {
     setIsLoading(true);
-    const { data } = await axios.post(url, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`,
-      },
-      onUploadProgress: progressEvent => {
-        const progress = (progressEvent.loaded / progressEvent.total!) * 50;
-        setProgress(progress);
-      },
-      onDownloadProgress: progressEvent => {
-        const progress =
-          50 + (progressEvent.loaded / progressEvent.total!) * 50;
-        setProgress(progress);
-      },
-    });
-    setProgress(100);
-    await new Promise(resolve => {
-      setTimeout(() => resolve('success'), 500);
-    });
-    setIsSuccess(true);
-    setProgress(0);
-    return data;
+    try {
+      const { data } = await axios.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+        onUploadProgress: progressEvent => {
+          const progress = (progressEvent.loaded / progressEvent.total!) * 50;
+          setProgress(progress);
+        },
+        onDownloadProgress: progressEvent => {
+          const progress =
+            50 + (progressEvent.loaded / progressEvent.total!) * 50;
+          setProgress(progress);
+        },
+      });
+      setProgress(100);
+      await new Promise(resolve => {
+        setTimeout(() => resolve('success'), 500);
+      });
+      setIsSuccess(true);
+      setIsLoading(false);
+      setProgress(0);
+      return data;
+    } catch (error) {
+      setIsLoading(false);
+      setProgress(0);
+      throw error;
+    }
   };
   return { uploadAndSubmit, isSuccess, isLoading, progress, reset };
 };

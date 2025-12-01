@@ -17,8 +17,10 @@ type ICenteredSpinnerProps = {
   size?: keyof typeof sizeMap;
 };
 
-export const CenteredSpinner = (props: ICenteredSpinnerProps) => {
-  const { message, size } = props;
+export const CenteredSpinner = ({
+  message,
+  size = 'medium',
+}: ICenteredSpinnerProps) => {
   return (
     <Box
       sx={{
@@ -33,9 +35,5 @@ export const CenteredSpinner = (props: ICenteredSpinnerProps) => {
     </Box>
   );
 };
-
-CenteredSpinner.defaultProps = {
-  size: 'medium',
-} as Partial<ICenteredSpinnerProps>;
 
 export default CenteredSpinner;

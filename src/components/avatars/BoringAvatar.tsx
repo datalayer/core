@@ -14,15 +14,8 @@ type VariantType =
   | 'bauhaus'
   | undefined;
 
-type IBoringAvatarProps = {
-  displayName: string;
-  variant: VariantType;
-  size: number;
-  square: boolean;
-  style: object;
-};
 /*
-const variants = [
+const VARIANTS = [
   "bauhaus",
   "beam",
   "marble",
@@ -30,46 +23,70 @@ const variants = [
   "ring",
   "sunset",
 ];
-export const getRandomBoringAvatarVariant = () => variants[Math.floor(Math.random() * variants.length)] as VariantType;
 */
+type IBoringAvatarProps = {
+  displayName?: string;
+  variant?: VariantType;
+  size?: number;
+  square?: boolean;
+  style?: object;
+};
+
+// export const getRandomBoringAvatarVariant = () => VARIANTS[Math.floor(Math.random() * VARIANTS.length)] as VariantType;
+
 const getRandomBoringAvatarVariant = () => 'bauhaus' as VariantType;
 
 const RANDOM_BORING_AVATOR_VARIANT = getRandomBoringAvatarVariant();
 
-export const BoringAvatar = (props: IBoringAvatarProps) => {
-  const { displayName, size, square, style } = props;
-  const variant = props.variant ?? getRandomBoringAvatarVariant();
-  return (
-    <span style={{ ...(style || {}) }}>
-      <BoringAvatars
-        size={size}
-        name={displayName}
-        variant={variant}
-        square={square}
-        colors={[
-          '#000000',
-          '#146A7C',
-          '#16A085',
-          '#1ABC9C',
-          '#2ECC71',
-          '#59595C',
-          '#92A1C6',
-          '#C20D90',
-          '#C271B4',
-          '#F0AB3D',
-          //      '#FFFFFF',
-        ]}
-      />
-    </span>
-  );
-};
+export const BoringAvatar = ({
+  displayName = '',
+  variant,
+  size = 40,
+  square = false,
+  style,
+}: IBoringAvatarProps) => {
+  const resolvedVariant = variant ?? RANDOM_BORING_AVATOR_VARIANT;
+  const safeName = String(displayName ?? '');
 
-BoringAvatar.defaultProps = {
-  displayName: '',
-  variant: RANDOM_BORING_AVATOR_VARIANT,
-  size: 40,
-  square: false,
-  style: undefined,
+  try {
+    return (
+      <span style={{ ...(style || {}) }}>
+        <BoringAvatars
+          size={size}
+          name={safeName}
+          variant={resolvedVariant}
+          square={square}
+          colors={[
+            '#000000',
+            '#146A7C',
+            '#16A085',
+            '#1ABC9C',
+            '#2ECC71',
+            '#59595C',
+            '#92A1C6',
+            '#C20D90',
+            '#C271B4',
+            '#F0AB3D',
+            //      '#FFFFFF',
+          ]}
+        />
+      </span>
+    );
+  } catch (error) {
+    console.error('BoringAvatar error:', error);
+    return (
+      <span
+        style={{
+          display: 'inline-block',
+          width: `${size}px`,
+          height: `${size}px`,
+          borderRadius: square ? '4px' : '50%',
+          backgroundColor: '#59595C',
+          ...(style || {}),
+        }}
+      />
+    );
+  }
 };
 
 export default BoringAvatar;

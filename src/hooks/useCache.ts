@@ -339,6 +339,7 @@ export const queryKeys = {
   // Contacts
   contacts: {
     all: () => ['contacts'] as const,
+    lists: () => [...queryKeys.contacts.all(), 'list'] as const,
     details: () => [...queryKeys.contacts.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.contacts.details(), id] as const,
     byHandle: (handle: string) =>
@@ -1830,6 +1831,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: queryKeys.documents.bySpace(spaceId),
       queryFn: async () => {
+        if (!spaceId) {
+          return [];
+        }
         const resp = await requestDatalayer({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/document`,
           method: 'GET',
@@ -2279,7 +2283,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get contact by ID
    */
-  const useContact = (contactId: string) => {
+  const useContact = (contactId: string, options?: { enabled?: boolean }) => {
     return useQuery({
       queryKey: queryKeys.contacts.detail(contactId),
       queryFn: async () => {
@@ -2300,7 +2304,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         throw new Error(resp.message || 'Failed to fetch contact');
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!contactId,
+      enabled: options?.enabled ?? !!contactId,
     });
   };
 
@@ -2396,9 +2400,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.contacts.detail(variables.contactId),
         });
-        // Invalidate all contact queries
+        // Invalidate contact list queries (avoid re-fetching deleted detail)
         queryClient.invalidateQueries({
-          queryKey: queryKeys.contacts.all(),
+          queryKey: queryKeys.contacts.lists(),
         });
       },
     });
@@ -4820,7 +4824,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['outbounds'] });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
       },
     });
   };
@@ -4846,6 +4853,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (_, outboundId) => {
         queryClient.invalidateQueries({
           queryKey: ['outbounds', outboundId],
+          refetchType: 'inactive',
         });
       },
     });
@@ -4866,10 +4874,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, outboundId) => {
-        queryClient.invalidateQueries({
+        queryClient.removeQueries({
           queryKey: ['outbounds', outboundId],
         });
-        queryClient.invalidateQueries({ queryKey: ['outbounds'] });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
       },
     });
   };
@@ -4913,10 +4924,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: (_, outboundId) => {
-        queryClient.invalidateQueries({
+        queryClient.removeQueries({
           queryKey: ['outbounds', outboundId],
         });
-        queryClient.invalidateQueries({ queryKey: ['outbounds'] });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
       },
     });
   };
@@ -5676,7 +5690,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
           method: 'GET',
         });
-        return resp.usages || [];
+        // Transform snake_case API response to camelCase IUsage interface
+        const usages = (resp.usages || []).map((u: any) => ({
+          id: u.resource_uid,
+          accountId: u.account_uid,
+          type: u.resource_type,
+          burningRate: u.burning_rate,
+          credits: u.credits,
+          creditsLimit: u.credits_limit,
+          startDate: u.start_date ? new Date(u.start_date) : new Date(),
+          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
+          endDate: u.end_date ? new Date(u.end_date) : undefined,
+          givenName: u.given_name || u.resource_given_name || '',
+          resourceState: u.resource_state,
+          resources: u.pod_resources,
+          metadata: new Map(Object.entries(u.metadata || {})),
+        }));
+        return usages;
       },
       ...options,
     });
@@ -5696,7 +5726,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/users/${userId}`,
           method: 'GET',
         });
-        return resp.usages || [];
+        // Transform snake_case API response to camelCase IUsage interface
+        const usages = (resp.usages || []).map((u: any) => ({
+          id: u.resource_uid,
+          accountId: u.account_uid,
+          type: u.resource_type,
+          burningRate: u.burning_rate,
+          credits: u.credits,
+          creditsLimit: u.credits_limit,
+          startDate: u.start_date ? new Date(u.start_date) : new Date(),
+          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
+          endDate: u.end_date ? new Date(u.end_date) : undefined,
+          givenName: u.given_name || u.resource_given_name || '',
+          resourceState: u.resource_state,
+          resources: u.pod_resources,
+          metadata: new Map(Object.entries(u.metadata || {})),
+        }));
+        return usages;
       },
       enabled: !!userId,
       ...options,
@@ -5716,7 +5762,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/platform`,
           method: 'GET',
         });
-        return resp.usages || [];
+        // Transform snake_case API response to camelCase IUsage interface
+        const usages = (resp.usages || []).map((u: any) => ({
+          id: u.resource_uid,
+          accountId: u.account_uid,
+          type: u.resource_type,
+          burningRate: u.burning_rate,
+          credits: u.credits,
+          creditsLimit: u.credits_limit,
+          startDate: u.start_date ? new Date(u.start_date) : new Date(),
+          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
+          endDate: u.end_date ? new Date(u.end_date) : undefined,
+          givenName: u.given_name || u.resource_given_name || '',
+          resourceState: u.resource_state,
+          resources: u.pod_resources,
+          metadata: new Map(Object.entries(u.metadata || {})),
+        }));
+        return usages;
       },
       ...options,
     });

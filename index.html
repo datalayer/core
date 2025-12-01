@@ -13,7 +13,7 @@
     <!-- Datalayer Configuration -->
     <script id="datalayer-config-data" type="application/json">
       {
-        "runUrl": "https://prod1.datalayer.run",
+        "runUrl": "%VITE_DATALAYER_RUN_URL%",
         "token": "%VITE_DATALAYER_API_KEY%",
         "credits": 100,
         "cpuEnvironment": "python-cpu-env",
@@ -25,8 +25,8 @@
     <script id="jupyter-config-data" type="application/json">
       {
         "appName": "Datalayer Core Examples",
-        "baseUrl": "https://prod1.datalayer.run/api/jupyter-server",
-        "wsUrl": "wss://prod1.datalayer.run/api/jupyter-server",
+        "baseUrl": "%VITE_DATALAYER_RUN_URL%/api/jupyter-server",
+        "wsUrl": "%VITE_DATALAYER_RUN_URL_WS%/api/jupyter-server",
         "token": "60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6",
         "appUrl": "/lab",
         "themesUrl": "/lab/api/themes",

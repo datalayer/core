@@ -161,6 +161,6 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 ---
 
 <p align="center">
-  <strong>🚀 AI Platform for Data Analysis</strong><br></br>
+  <strong>🚀 AI Agents for Data Analysis</strong><br></br>
   <a href="https://datalayer.app/">Get started with Datalayer today!</a>
 </p>

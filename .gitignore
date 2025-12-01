@@ -73,6 +73,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+.ruff_cache
+
 # C extensions
 *.so
 
@@ -185,6 +187,7 @@ dmypy.json
 !**/.env
 !.github
 !.devcontainer
+!src/lib
 
 # Ignore environment files
 .env

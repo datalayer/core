@@ -52,16 +52,16 @@ const { colorSchemes: primerSchemes, ...primerOthers } = cloneDeep(primerTheme);
 const { colorSchemes: jupyterSchemes, ...datalayerOthers } = datalayerThemeDefs;
 
 // Merge with the light theme to ensure all variables are defined (although the style may be ugly).
-const theme = merge(primerOthers, datalayerOthers, {
+const datalayerTheme = merge(primerOthers, datalayerOthers, {
   colorSchemes: { light: {}, dark: {} },
 });
-theme.colorSchemes.light = {
+datalayerTheme.colorSchemes.light = {
   colors: merge(primerSchemes.light.colors, jupyterSchemes.light.colors),
   shadows: merge(primerSchemes.light.shadows, jupyterSchemes.light.shadows),
 };
-theme.colorSchemes.dark = {
+datalayerTheme.colorSchemes.dark = {
   colors: merge(primerSchemes.dark.colors, jupyterSchemes.dark.colors),
   shadows: merge(primerSchemes.dark.shadows, jupyterSchemes.dark.shadows),
 };
 
-export { theme as datalayerTheme };
+export { datalayerTheme };

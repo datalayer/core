@@ -66,13 +66,14 @@ export default function NotebooksPage() {
   const router = useRouter();
   const { token } = useIAMStore();
   const { activeNotebook } = useActiveNotebook();
-  const {
-    getUserSpaces,
-    getSpaceItems,
-    refreshUserSpaces,
-    refreshSpaceItems,
-    createNotebook,
-  } = useCache();
+  
+  // Call hooks at the top level
+  const { data: userSpaces } = useCache().useUserSpaces();
+  const defaultSpaceId = userSpaces && userSpaces.length > 0 ? userSpaces[0].id : '';
+  const { data: spaceItems } = useCache().useSpaceItems(defaultSpaceId);
+  const refreshUserSpaces = useCache().useRefreshUserSpaces();
+  const refreshSpaceItems = useCache().useRefreshSpaceItems();
+  const createNotebook = useCache().useCreateNotebook();
 
   useEffect(() => {
     if (token) {
@@ -89,21 +90,19 @@ export default function NotebooksPage() {
       setLoading(true);
       setError(null);
 
-      await refreshUserSpaces();
-      const userSpaces = getUserSpaces();
+      await refreshUserSpaces.mutateAsync();
       console.log('User spaces:', userSpaces);
 
-      if (userSpaces.length > 0) {
+      if (userSpaces && userSpaces.length > 0) {
         const defaultSpace = userSpaces[0];
         console.log('Using default space:', defaultSpace);
 
-        await refreshSpaceItems(defaultSpace.id);
-        const spaceItems = getSpaceItems();
+        await refreshSpaceItems.mutateAsync(defaultSpace.id);
         console.log('All space items:', spaceItems);
 
-        const notebookItems = spaceItems.filter(
+        const notebookItems = spaceItems?.filter(
           (item: any) => item.type === 'notebook' || item.type_s === 'notebook',
-        );
+        ) || [];
         console.log('Filtered notebook items:', notebookItems);
 
         // Log detailed info for each notebook
@@ -183,10 +182,9 @@ export default function NotebooksPage() {
     try {
       setIsCreating(true);
 
-      const userSpaces = getUserSpaces();
       console.log('User spaces:', userSpaces);
 
-      if (userSpaces.length === 0) {
+      if (!userSpaces || userSpaces.length === 0) {
         throw new Error('No spaces found');
       }
 
@@ -198,12 +196,11 @@ export default function NotebooksPage() {
         notebookType: 'notebook',
       });
 
-      const result = await createNotebook(
-        defaultSpace.id,
-        newNotebookName.trim(),
-        undefined,
-        'notebook',
-      );
+      const result = await createNotebook.mutateAsync({
+        spaceId: defaultSpace.id,
+        name: newNotebookName.trim(),
+        notebookType: 'notebook',
+      });
 
       console.log('Create notebook result:', result);
 
