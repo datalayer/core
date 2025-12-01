@@ -11,7 +11,7 @@ import json
 import logging
 from typing import Any
 from pydantic_ai import UsageLimits
-from tornado import web as tornado_web  # type: ignore[attr-defined]
+from tornado import web as tornado_web
 
 from jupyter_server.base.handlers import APIHandler
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter

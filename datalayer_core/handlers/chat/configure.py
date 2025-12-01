@@ -9,7 +9,7 @@
 
 import json
 import logging
-from tornado import web as tornado_web  # type: ignore[attr-defined]
+from tornado import web as tornado_web
 
 from jupyter_server.base.handlers import APIHandler
 
