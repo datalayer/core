@@ -10,14 +10,13 @@ name = "datalayer_core"
 description="Datalayer Core"
 keywords = []
 readme = "README.md"
-license = { file = "LICENSE" }
+license = { text = "BSD-3-Clause" }
 requires-python = ">=3.9"
 classifiers = [
     "Framework :: Jupyter",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
