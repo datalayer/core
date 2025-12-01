@@ -22,7 +22,7 @@ def create_chat_agent(
 ) -> Agent:
     """
     Create the main chat agent for JupyterLab.
-    
+
     Args:
         model: Optional full model string (e.g., "openai:gpt-4o", "azure-openai:gpt-4o-mini").
                If not provided, uses model_provider and model_name.
@@ -30,10 +30,10 @@ def create_chat_agent(
         model_name: Model/deployment name (default: "claude-sonnet-4-5")
         timeout: HTTP timeout in seconds for API requests (default: 60.0)
         mcp_server: Optional MCP server connection for Jupyter tools
-    
+
     Returns:
         Configured Pydantic AI agent
-        
+
     Note:
         For Azure OpenAI, requires these environment variables:
         - AZURE_OPENAI_API_KEY
@@ -52,17 +52,17 @@ def create_chat_agent(
     else:
         # Create model object with provider-specific configuration
         model_obj = create_model_with_provider(model_provider, model_name, timeout)
-    
+
     # Create toolsets list
     toolsets = []
     if mcp_server:
         toolsets.append(mcp_server)
-    
+
     agent = Agent(
         model_obj,
         toolsets=toolsets,
         instructions="""You are a helpful AI assistant integrated into JupyterLab.
-        
+
 You can help users with:
 - Writing and debugging Python code
 - Data analysis and visualization
@@ -75,8 +75,8 @@ When users ask you to execute code or work with notebooks, use the available too
 
 Always be clear, concise, and provide working code examples when appropriate.""",
     )
-    
+
     # Note: Built-in Jupyter tools are now provided via MCP server
     # No need to register them manually
-    
+
     return agent

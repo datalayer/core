@@ -7,19 +7,20 @@
 
 """MCP (Model Context Protocol) tools integration."""
 
-import httpx
 from typing import Any, Dict, List
+
+import httpx
 
 from datalayer_core.agents.models import MCPServer
 
 
 class MCPClient:
     """Client for communicating with MCP servers."""
-    
+
     def __init__(self, server_url: str):
         """
         Initialize MCP client.
-        
+
         Args:
             server_url: URL of the MCP server
         """
@@ -41,11 +42,11 @@ class MCPClient:
                 keepalive_expiry=60.0  # Longer keepalive
             )
         )
-    
+
     async def list_tools(self) -> List[Dict[str, Any]]:
         """
         List available tools from MCP server.
-        
+
         Returns:
             List of tool definitions
         """
@@ -56,15 +57,15 @@ class MCPClient:
         except Exception as e:
             print(f"Error listing tools from {self.server_url}: {e}")
             return []
-    
+
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
         """
         Call a tool on the MCP server.
-        
+
         Args:
             tool_name: Name of the tool to call
             arguments: Tool arguments
-        
+
         Returns:
             Tool execution result
         """
@@ -78,7 +79,7 @@ class MCPClient:
         except Exception as e:
             print(f"Error calling tool {tool_name}: {e}")
             return {"error": str(e)}
-    
+
     async def close(self) -> None:
         """Close the HTTP client."""
         await self.client.aclose()
@@ -86,27 +87,27 @@ class MCPClient:
 
 class MCPToolManager:
     """Manage MCP tools and servers."""
-    
+
     def __init__(self) -> None:
         """Initialize MCP tool manager."""
         self.servers: Dict[str, MCPServer] = {}
         self.clients: Dict[str, MCPClient] = {}
-    
+
     def add_server(self, server: MCPServer) -> None:
         """
         Add an MCP server.
-        
+
         Args:
             server: MCP server configuration
         """
         self.servers[server.id] = server
         if server.enabled:
             self.clients[server.id] = MCPClient(server.url)
-    
+
     def remove_server(self, server_id: str) -> None:
         """
         Remove an MCP server.
-        
+
         Args:
             server_id: ID of the server to remove
         """
@@ -114,11 +115,11 @@ class MCPToolManager:
             del self.servers[server_id]
         if server_id in self.clients:
             del self.clients[server_id]
-    
+
     def update_server(self, server_id: str, server: MCPServer) -> None:
         """
         Update an MCP server configuration.
-        
+
         Args:
             server_id: ID of the server to update
             server: New server configuration
@@ -128,20 +129,20 @@ class MCPToolManager:
             self.clients[server_id] = MCPClient(server.url)
         elif not server.enabled and server_id in self.clients:
             del self.clients[server_id]
-    
+
     def get_servers(self) -> List[MCPServer]:
         """
         Get all MCP servers.
-        
+
         Returns:
             List of MCP server configurations
         """
         return list(self.servers.values())
-    
+
     async def get_available_tools(self) -> List[Dict[str, Any]]:
         """
         Get all available tools from enabled MCP servers.
-        
+
         Returns:
             List of tool definitions with server information
         """
@@ -155,18 +156,18 @@ class MCPToolManager:
                     tool['mcp_server_name'] = server.name
                     all_tools.append(tool)
         return all_tools
-    
+
     def register_with_agent(self, agent: Any) -> None:
         """
         Register MCP tools with Pydantic AI agent.
-        
+
         Args:
             agent: The Pydantic AI agent
         """
         # TODO: Implement dynamic tool registration
         # This will be implemented when we add MCP tool calling support
         pass
-    
+
     async def close_all(self) -> None:
         """Close all MCP clients."""
         for client in self.clients.values():

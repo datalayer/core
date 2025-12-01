@@ -212,7 +212,7 @@ def _authenticate_with_browser(server_url: str) -> None:
     try:
         port = find_http_port()
 
-        console.print(f"🌐 Opening browser for authentication...")
+        console.print("🌐 Opening browser for authentication...")
         console.print(f"🔗 URL: [cyan]http://localhost:{port}[/cyan]")
         console.print("📋 Please complete authentication in your browser")
         console.print("⌨️  Press CTRL+C to cancel")

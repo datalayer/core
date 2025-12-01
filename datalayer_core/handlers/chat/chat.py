@@ -10,33 +10,30 @@
 import json
 import logging
 from typing import Any
-from pydantic_ai import UsageLimits
-from tornado import web as tornado_web
 
 from jupyter_server.base.handlers import APIHandler
+from pydantic_ai import UsageLimits
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
 from starlette.requests import Request
-from starlette.datastructures import Headers
 
 from datalayer_core.handlers.chat.tools import create_mcp_server
-
 
 logger = logging.getLogger(__name__)
 
 
 class TornadoRequestAdapter(Request):
     """Adapter to make Tornado request compatible with Starlette Request interface."""
-    
+
     def __init__(self, handler: APIHandler) -> None:
         """
         Initialize the adapter with a Tornado handler.
-        
+
         Args:
             handler: The Tornado RequestHandler instance
         """
         self.handler = handler
         self._body_cache = None
-        
+
         # Create a minimal scope for Starlette Request
         scope = {
             'type': 'http',
@@ -46,7 +43,7 @@ class TornadoRequestAdapter(Request):
             'headers': [(k.lower().encode(), v.encode()) for k, v in handler.request.headers.items()],
             'server': (handler.request.host.split(':')[0], int(handler.request.host.split(':')[1]) if ':' in handler.request.host else 80),
         }
-        
+
         # Initialize the parent Starlette Request
         # We need to provide a receive callable
         async def receive() -> dict[str, Any]:
@@ -55,9 +52,9 @@ class TornadoRequestAdapter(Request):
                 'body': handler.request.body,
                 'more_body': False,
             }
-        
+
         super().__init__(scope, receive)
-    
+
     async def body(self) -> bytes:
         """Get request body as bytes."""
         if self._body_cache is None:
@@ -68,7 +65,7 @@ class TornadoRequestAdapter(Request):
 class ChatHandler(APIHandler):
     """
     Handler for /api/chat endpoint.
-    
+
     This handler implements the Vercel AI protocol for streaming chat responses.
     It receives chat messages and streams back AI responses with support for:
     - Text responses
@@ -76,7 +73,7 @@ class ChatHandler(APIHandler):
     - Reasoning steps
     - Source citations
     """
-    
+
     async def post(self) -> None:
         """Handle chat POST request with streaming."""
         try:
@@ -86,7 +83,7 @@ class ChatHandler(APIHandler):
                 self.set_status(500)
                 self.finish(json.dumps({"error": "Chat agent not initialized"}))
                 return
-            
+
             # Lazily create the MCP server connection for this request
             base_url = self.settings.get('chat_base_url')
             token = self.settings.get('chat_token')
@@ -95,25 +92,25 @@ class ChatHandler(APIHandler):
             async with mcp_server:
                 # Create request adapter (Starlette-compatible)
                 tornado_request = TornadoRequestAdapter(self)
-                
+
                 # Parse request body to extract model if specified
                 try:
                     body = await tornado_request.json()
                     model = body.get('model') if isinstance(body, dict) else None
                 except Exception:
                     model = None
-                
+
                 # Get builtin tools (empty list - tools metadata is only for UI display)
                 # The actual pydantic-ai tools are registered in the agent itself
                 builtin_tools: list[str] = []
-                
+
                 # Create usage limits for the agent
                 usage_limits = UsageLimits(
-                    tool_calls_limit=5,                    
+                    tool_calls_limit=5,
                     output_tokens_limit=5000,
                     total_tokens_limit=100000,
                 )
-                
+
                 # Use VercelAIAdapter.dispatch_request (new API)
                 response = await VercelAIAdapter.dispatch_request(
                     tornado_request,
@@ -123,11 +120,11 @@ class ChatHandler(APIHandler):
                     toolsets=[mcp_server],
                     builtin_tools=builtin_tools,
                 )
-            
+
                 # Set headers from FastAPI response
                 for key, value in response.headers.items():
                     self.set_header(key, value)
-                
+
                 # Stream the response body
                 if hasattr(response, 'body_iterator'):
                     try:
@@ -145,10 +142,10 @@ class ChatHandler(APIHandler):
                         self.write(body)
                     else:
                         self.write(body.encode('utf-8') if isinstance(body, str) else body)
-                
+
                 # Finish the response while MCP context is active
                 self.finish()
-            
+
         except Exception as e:
             self.log.error(f"Error in chat handler: {e}", exc_info=True)
             if not self._finished:

@@ -6,8 +6,8 @@
 # BSD 3-Clause License
 
 from .chat.agent import create_chat_agent
-from .mcp import MCPToolManager
 from .chat.config import ChatConfig
+from .mcp import MCPToolManager
 
 """
 Chat functionality for Jupyter AI Agents.

@@ -11,21 +11,20 @@ from traitlets import Bool, CInt, Instance, Unicode, default
 from traitlets.config import Configurable
 
 from datalayer_core.__version__ import __version__
+from datalayer_core.agents.chat.agent import create_chat_agent
+from datalayer_core.agents.chat.config import ChatConfig
+from datalayer_core.agents.mcp import MCPToolManager
+from datalayer_core.handlers.chat.chat import ChatHandler
+from datalayer_core.handlers.chat.configure import ConfigureHandler
+from datalayer_core.handlers.chat.mcp import (
+    MCPServerHandler,
+    MCPServersHandler,
+)
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 from datalayer_core.services.authn.state import get_server_port
-from datalayer_core.handlers.chat.chat import ChatHandler
-from datalayer_core.handlers.chat.configure import ConfigureHandler
-from datalayer_core.handlers.chat.mcp import (
-    MCPServersHandler,
-    MCPServerHandler,
-)
-from datalayer_core.agents.mcp import MCPToolManager
-from datalayer_core.agents.chat.config import ChatConfig
-from datalayer_core.agents.chat.agent import create_chat_agent
-
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
 
@@ -187,40 +186,40 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         try:
             # Create configuration manager
             config = ChatConfig()
-            
+
             # Get Jupyter server connection details
             connection_url = self.serverapp.connection_url
             token = self.serverapp.token
             self.log.info(f"Jupyter server URL: {connection_url}")
-            
+
             # Create chat agent without eagerly attaching MCP server tools
             # We'll create the MCP connection per request to avoid async context issues
             default_model = config.get_default_model()
             self.log.info(f"Creating chat agent with model: {default_model}")
             agent = create_chat_agent(model=default_model, mcp_server=None)
             self.log.info("Chat agent created; MCP tools will be attached per request")
-            
+
             # Create MCP tool manager for additional MCP servers
             mcp_manager = MCPToolManager()
-            
+
             # Load additional MCP servers from configuration
             saved_servers = config.load_mcp_servers()
             for server in saved_servers:
                 self.log.info(f"Loading additional MCP server: {server.name} ({server.url})")
                 mcp_manager.add_server(server)
-            
+
             # Register additional MCP tools with agent
             mcp_manager.register_with_agent(agent)
-            
+
             # Store in settings for handlers to access
             self.settings['chat_agent'] = agent
             self.settings['mcp_manager'] = mcp_manager
             self.settings['chat_config'] = config
             self.settings['chat_base_url'] = connection_url
             self.settings['chat_token'] = token
-            
+
             self.log.info("Datalayer Core extension initialized successfully")
-            
+
         except Exception as e:
             self.log.error(f"Error initializing Datalayer Core: {e}", exc_info=True)
             raise

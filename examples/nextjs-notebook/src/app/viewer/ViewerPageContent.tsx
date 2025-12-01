@@ -45,8 +45,14 @@ function ViewerContent() {
   const { token } = useIAMStore();
   const { activeNotebook, setActiveNotebook, clearActiveNotebook } =
     useActiveNotebook();
-  const { getUserSpaces, getSpaceItems, refreshUserSpaces, refreshSpaceItems } =
-    useCache();
+  
+  // Call hooks at the top level
+  const { data: userSpaces } = useCache().useUserSpaces();
+  const defaultSpaceId = userSpaces && userSpaces.length > 0 ? userSpaces[0].id : '';
+  const { data: spaceItems } = useCache().useSpaceItems(defaultSpaceId);
+  const refreshUserSpaces = useCache().useRefreshUserSpaces();
+  const refreshSpaceItems = useCache().useRefreshSpaceItems();
+  
   const [notebookData, setNotebookData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,10 +65,9 @@ function ViewerContent() {
 
   const getNotebook = async (notebookId: string, token: string) => {
     // First, get user spaces
-    await refreshUserSpaces();
-    const userSpaces = getUserSpaces();
+    await refreshUserSpaces.mutateAsync();
 
-    if (userSpaces.length === 0) {
+    if (!userSpaces || userSpaces.length === 0) {
       throw new Error('No spaces found for user');
     }
 
@@ -77,11 +82,10 @@ function ViewerContent() {
     }
 
     // Get items from the space
-    await refreshSpaceItems(defaultSpace.id);
-    const spaceItems = getSpaceItems();
+    await refreshSpaceItems.mutateAsync(defaultSpace.id);
 
     // Find the specific notebook
-    const notebook = spaceItems.find(
+    const notebook = spaceItems?.find(
       (item: any) =>
         (item.id === notebookId || item.uid === notebookId) &&
         (item.type === 'notebook' || item.type_s === 'notebook'),

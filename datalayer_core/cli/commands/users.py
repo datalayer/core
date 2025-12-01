@@ -49,7 +49,7 @@ def dump_user(
 
         # Print response details
         console.print(f"[green]Status Code:[/green] {response.status_code}")
-        console.print(f"[green]Headers:[/green]")
+        console.print("[green]Headers:[/green]")
         for key, value in response.headers.items():
             console.print(f"  {key}: {value}")
         console.print()
@@ -72,10 +72,10 @@ def dump_user(
         console.print(f"[red]Request error: {e}[/red]")
         if hasattr(e, "response") and e.response is not None:
             console.print(f"[yellow]Status Code:[/yellow] {e.response.status_code}")
-            console.print(f"[yellow]Response:[/yellow]")
+            console.print("[yellow]Response:[/yellow]")
             try:
                 console.print(json.dumps(e.response.json(), indent=2))
-            except:
+            except (ValueError, TypeError):
                 console.print(e.response.text)
         raise typer.Exit(1)
     except Exception as e:

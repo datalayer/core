@@ -7,7 +7,6 @@ Runtime services for Datalayer.
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
 
-import os
 from pathlib import Path
 from typing import Any, Optional, Union
 
