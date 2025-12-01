@@ -18,7 +18,7 @@ export const FlashDisclaimer = () => {
       {configuration?.whiteLabel === false && showDisclaimer && (
         <Banner
           variant="info"
-          title="AI Platform for Data Analysis"
+          title="AI Agents for Data Analysis"
           description={
             <Box>
               <Label style={{ marginRight: 10 }}>PRIVATE BETA</Label>

@@ -126,7 +126,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         about = Unicode(
-            "AI Platform for Data Analysis",
+            "AI Agents for Data Analysis",
             config=True,
             help=("About brand."),
         )

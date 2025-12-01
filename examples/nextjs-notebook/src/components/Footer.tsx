@@ -46,7 +46,7 @@ export default function Footer() {
               />
             </Box>
             <Text as="p" sx={{ fontSize: 1, color: 'fg.muted' }}>
-              AI Platform for Data Analysis
+              AI Agents for Data Analysis
             </Text>
           </Box>
 
