@@ -9,7 +9,7 @@
 
 import json
 
-import tornado.web
+from tornado import web as tornado_web  # type: ignore[attr-defined]
 
 from jupyter_server.base.handlers import APIHandler
 
@@ -17,8 +17,8 @@ from jupyter_server.base.handlers import APIHandler
 class MCPServersHandler(APIHandler):
     """Handler for MCP server CRUD operations."""
     
-    @tornado.web.authenticated
-    async def get(self):
+    @tornado_web.authenticated
+    async def get(self) -> None:
         """Get all MCP servers."""
         try:
             mcp_manager = self.settings.get('mcp_manager')
@@ -35,8 +35,8 @@ class MCPServersHandler(APIHandler):
             self.finish(json.dumps({"error": str(e)}))
     
 
-    @tornado.web.authenticated
-    async def post(self):
+    @tornado_web.authenticated
+    async def post(self) -> None:
         """Add a new MCP server."""
         try:
             from ...agents.models import MCPServer
@@ -65,8 +65,8 @@ class MCPServersHandler(APIHandler):
 class MCPServerHandler(APIHandler):
     """Handler for individual MCP server operations."""
     
-    @tornado.web.authenticated
-    async def put(self, server_id: str):
+    @tornado_web.authenticated
+    async def put(self, server_id: str) -> None:
         """Update MCP server."""
         try:
             from ...agents.models import MCPServer
@@ -92,8 +92,8 @@ class MCPServerHandler(APIHandler):
             self.finish(json.dumps({"error": str(e)}))
     
 
-    @tornado.web.authenticated
-    async def delete(self, server_id: str):
+    @tornado_web.authenticated
+    async def delete(self, server_id: str) -> None:
         """Delete MCP server."""
         try:
             mcp_manager = self.settings.get('mcp_manager')

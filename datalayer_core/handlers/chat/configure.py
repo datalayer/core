@@ -9,7 +9,7 @@
 
 import json
 import logging
-import tornado.web
+from tornado import web as tornado_web  # type: ignore[attr-defined]
 
 from jupyter_server.base.handlers import APIHandler
 
@@ -34,8 +34,8 @@ class ConfigureHandler(APIHandler):
     - MCP servers
     """
     
-    @tornado.web.authenticated
-    async def get(self):
+    @tornado_web.authenticated
+    async def get(self) -> None:
         """Return configuration for frontend."""
         try:
             # Get MCP manager from settings.

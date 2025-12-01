@@ -9,8 +9,9 @@
 
 import json
 import logging
+from typing import Any
 from pydantic_ai import UsageLimits
-import tornado.web
+from tornado import web as tornado_web  # type: ignore[attr-defined]
 
 from jupyter_server.base.handlers import APIHandler
 from pydantic_ai.ui.vercel_ai import VercelAIAdapter
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 class TornadoRequestAdapter(Request):
     """Adapter to make Tornado request compatible with Starlette Request interface."""
     
-    def __init__(self, handler):
+    def __init__(self, handler: APIHandler) -> None:
         """
         Initialize the adapter with a Tornado handler.
         
@@ -48,7 +49,7 @@ class TornadoRequestAdapter(Request):
         
         # Initialize the parent Starlette Request
         # We need to provide a receive callable
-        async def receive():
+        async def receive() -> dict[str, Any]:
             return {
                 'type': 'http.request',
                 'body': handler.request.body,
@@ -61,7 +62,7 @@ class TornadoRequestAdapter(Request):
         """Get request body as bytes."""
         if self._body_cache is None:
             self._body_cache = self.handler.request.body
-        return self._body_cache
+        return self._body_cache if self._body_cache is not None else b''
 
 
 class ChatHandler(APIHandler):
@@ -76,7 +77,7 @@ class ChatHandler(APIHandler):
     - Source citations
     """
     
-    async def post(self):
+    async def post(self) -> None:
         """Handle chat POST request with streaming."""
         try:
             # Get agent from application settings
@@ -104,7 +105,7 @@ class ChatHandler(APIHandler):
                 
                 # Get builtin tools (empty list - tools metadata is only for UI display)
                 # The actual pydantic-ai tools are registered in the agent itself
-                builtin_tools = []
+                builtin_tools: list[str] = []
                 
                 # Create usage limits for the agent
                 usage_limits = UsageLimits(

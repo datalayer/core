@@ -79,7 +79,7 @@ class MCPClient:
             print(f"Error calling tool {tool_name}: {e}")
             return {"error": str(e)}
     
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP client."""
         await self.client.aclose()
 
@@ -87,12 +87,12 @@ class MCPClient:
 class MCPToolManager:
     """Manage MCP tools and servers."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize MCP tool manager."""
         self.servers: Dict[str, MCPServer] = {}
         self.clients: Dict[str, MCPClient] = {}
     
-    def add_server(self, server: MCPServer):
+    def add_server(self, server: MCPServer) -> None:
         """
         Add an MCP server.
         
@@ -103,7 +103,7 @@ class MCPToolManager:
         if server.enabled:
             self.clients[server.id] = MCPClient(server.url)
     
-    def remove_server(self, server_id: str):
+    def remove_server(self, server_id: str) -> None:
         """
         Remove an MCP server.
         
@@ -115,7 +115,7 @@ class MCPToolManager:
         if server_id in self.clients:
             del self.clients[server_id]
     
-    def update_server(self, server_id: str, server: MCPServer):
+    def update_server(self, server_id: str, server: MCPServer) -> None:
         """
         Update an MCP server configuration.
         
@@ -156,7 +156,7 @@ class MCPToolManager:
                     all_tools.append(tool)
         return all_tools
     
-    def register_with_agent(self, agent: Any):
+    def register_with_agent(self, agent: Any) -> None:
         """
         Register MCP tools with Pydantic AI agent.
         
@@ -167,7 +167,7 @@ class MCPToolManager:
         # This will be implemented when we add MCP tool calling support
         pass
     
-    async def close_all(self):
+    async def close_all(self) -> None:
         """Close all MCP clients."""
         for client in self.clients.values():
             await client.close()

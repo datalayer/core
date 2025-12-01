@@ -8,6 +8,7 @@
 """Model creation utilities for AI Agents."""
 
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ def create_model_with_provider(
     model_provider: str, 
     model_name: str,
     timeout: float = 60.0,
-):
+) -> Any:
     """
     Create a pydantic-ai model object with the appropriate provider configuration.
     

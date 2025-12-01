@@ -77,7 +77,7 @@ export function UploadIconButton(props: IUploadIconButtonProps): JSX.Element {
         onClick={onClick}
       />
     ),
-    [],
+    [label],
   );
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }
@@ -111,7 +111,7 @@ export function UploadButton({
         {label}
       </Button>
     ),
-    [],
+    [label, variant],
   );
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }

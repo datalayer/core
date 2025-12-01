@@ -9,7 +9,7 @@
 
 import json
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from datalayer_core.agents.models import MCPServer
 
@@ -37,7 +37,7 @@ class ChatConfig:
         if not self.config_file.exists():
             self._create_default_config()
     
-    def _create_default_config(self):
+    def _create_default_config(self) -> None:
         """Create default configuration file."""
         default_config = {
             'mcp_servers': [],
@@ -46,7 +46,7 @@ class ChatConfig:
         }
         self.save_config(default_config)
     
-    def load_config(self) -> dict:
+    def load_config(self) -> Dict[str, Any]:
         """Load configuration from file."""
         if not self.config_file.exists():
             return {}
@@ -54,7 +54,7 @@ class ChatConfig:
         with open(self.config_file, 'r', encoding='utf-8') as f:
             return json.load(f)
     
-    def save_config(self, config: dict):
+    def save_config(self, config: Dict[str, Any]) -> None:
         """Save configuration to file."""
         with open(self.config_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2)
@@ -65,7 +65,7 @@ class ChatConfig:
         servers_data = config.get('mcp_servers', [])
         return [MCPServer(**server) for server in servers_data]
     
-    def save_mcp_servers(self, servers: List[MCPServer]):
+    def save_mcp_servers(self, servers: List[MCPServer]) -> None:
         """Save MCP servers to config."""
         config = self.load_config()
         config['mcp_servers'] = [server.model_dump() for server in servers]
@@ -76,7 +76,7 @@ class ChatConfig:
         config = self.load_config()
         return config.get('default_model', 'anthropic:claude-sonnet-4-5')
     
-    def set_default_model(self, model_id: str):
+    def set_default_model(self, model_id: str) -> None:
         """Set the default model ID."""
         config = self.load_config()
         config['default_model'] = model_id
