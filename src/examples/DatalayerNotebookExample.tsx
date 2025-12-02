@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Box, Checkbox, FormControl, Heading } from '@primer/react';
+import { Checkbox, FormControl, Heading } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { INotebookContent } from '@jupyterlab/nbformat';
 import { ServiceManager } from '@jupyterlab/services';
 import {
@@ -109,7 +110,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
     <JupyterReactTheme>
       <Box p={3}>
         <Heading as="h2" sx={{ mb: 3 }}>
-          DatalayerNotebook Collaboration Example
+          Datalayer Notebook Collaboration Example
         </Heading>
 
         <Box sx={{ mb: 3 }}>

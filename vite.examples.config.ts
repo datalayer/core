@@ -6,11 +6,13 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
-import path from 'node:path';
+import path from 'path';
 
 // Select which example to run by uncommenting the desired line
 const EXAMPLE =
   // 'CellExample';
+  // 'AgUILexicalExample';
+  // 'AgUINotebookExample';
   'DatalayerNotebookExample';
 // 'NotebookExample';
 // 'NotebookMutationsKernel';
@@ -131,14 +133,6 @@ export default defineConfig(({ mode }) => {
         {
           find: /^~(.*)$/,
           replacement: '$1',
-        },
-        {
-          find: 'crypto',
-          replacement: path.resolve(__dirname, 'node_modules/crypto-browserify'),
-        },
-        {
-          find: 'buffer',
-          replacement: path.resolve(__dirname, 'node_modules/buffer'),
         },
       ],
     },
