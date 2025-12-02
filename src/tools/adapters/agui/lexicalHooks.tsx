@@ -11,7 +11,8 @@
  */
 
 import { useMemo } from 'react';
-import type { ToolExecutionContext } from '@datalayer/jupyter-react';
+// TODO: Re-enable when @datalayer/jupyter-react exports these
+// import type { ToolExecutionContext } from '@datalayer/jupyter-react';
 
 import {
   createAllCopilotKitActions,
@@ -19,13 +20,22 @@ import {
   type UseFrontendToolFn,
 } from './AgUIToolAdapter';
 
-// Import from lexical
-import {
-  useLexicalStore,
-  DefaultExecutor as LexicalDefaultExecutor,
-  lexicalToolDefinitions,
-  lexicalToolOperations,
-} from '@datalayer/jupyter-lexical';
+// TODO: Re-enable when @datalayer/jupyter-lexical exports these
+// import {
+//   useLexicalStore,
+//   DefaultExecutor as LexicalDefaultExecutor,
+//   lexicalToolDefinitions,
+//   lexicalToolOperations,
+// } from '@datalayer/jupyter-lexical';
+
+// Temporary placeholders
+type ToolExecutionContext = any;
+const useLexicalStore = () => ({});
+class LexicalDefaultExecutor {
+  constructor(...args: any[]) {}
+}
+const lexicalToolDefinitions: any[] = [];
+const lexicalToolOperations: Record<string, any> = {};
 
 // Re-export shared types and components for convenience
 export { ActionRegistrar, type UseFrontendToolFn };

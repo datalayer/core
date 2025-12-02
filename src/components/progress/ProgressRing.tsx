@@ -26,8 +26,7 @@ export interface IProgressRingItemProps {
  * Progress ring properties
  */
 export interface IProgressRingProps
-  extends React.SVGAttributes<SVGElement>,
-    IProgressRingItemProps {
+  extends React.SVGAttributes<SVGElement>, IProgressRingItemProps {
   /**
    * Accessible short description
    */

@@ -30,8 +30,7 @@ export type IDatalayerRequestProps = {
 };
 
 export interface DatalayerRequest
-  extends IDatalayerRequestProps,
-    IRequestDatalayerAPIOptions {}
+  extends IDatalayerRequestProps, IRequestDatalayerAPIOptions {}
 
 export function useDatalayer(props: IDatalayerRequestProps = {}) {
   const { loginRoute = '/login', notifyOnError = true } = props;

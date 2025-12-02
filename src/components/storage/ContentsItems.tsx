@@ -41,8 +41,10 @@ interface ITreeItemProps {
 /**
  * Directory component properties
  */
-interface IDirectoryItemProps
-  extends Omit<ITreeItemProps, 'current' | 'onSelect' | 'refresh'> {
+interface IDirectoryItemProps extends Omit<
+  ITreeItemProps,
+  'current' | 'onSelect' | 'refresh'
+> {
   /**
    * Jupyter contents manager
    */

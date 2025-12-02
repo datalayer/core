@@ -109,9 +109,26 @@
     "@datalayer/jupyter-react": "^1.1.8",
     "@datalayer/primer-addons": "^1.0.4",
     "@datalayer/primer-rjsf": "^1.0.1",
+    "@jupyter-widgets/base-manager": "^1.0.12",
+    "@jupyter-widgets/schema": "^0.5.6",
+    "@jupyterlab/apputils": "^4.6.0",
+    "@jupyterlab/cells": "^4.5.0",
+    "@jupyterlab/codeeditor": "^4.5.0",
     "@jupyterlab/coreutils": "^6.0.0",
-    "@jupyterlab/services": "^7.0.0",
+    "@jupyterlab/documentsearch": "^4.5.0",
+    "@jupyterlab/rendermime": "^4.5.0",
+    "@jupyterlab/services": "7.4.5",
+    "@jupyterlab/translation": "^4.5.0",
+    "@jupyterlab/ui-components": "^4.5.0",
     "@jupyterlite/javascript-kernel-extension": "^0.3.0",
+    "@lumino/commands": "^2.3.3",
+    "@lumino/coreutils": "^2.2.2",
+    "@lumino/datagrid": "^2.5.3",
+    "@lumino/disposable": "^2.1.5",
+    "@lumino/polling": "^2.1.5",
+    "@lumino/signaling": "^2.1.5",
+    "@lumino/widgets": "^2.7.2",
+    "@primer/behaviors": "^1.8.4",
     "@primer/brand-primitives": "^0.51.0",
     "@primer/css": "^21.5.1",
     "@primer/octicons-react": "^19.15.1",
@@ -119,6 +136,8 @@
     "@primer/react": "^37.19.0",
     "@primer/react-brand": "^0.58.0",
     "@stripe/react-stripe-js": "^2.7.1",
+    "@stripe/stripe-js": "^4.0.0",
+    "@styled-system/css": "^5.1.5",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.90.6",
     "@toon-format/toon": "^1.3.0",
@@ -128,6 +147,7 @@
     "boring-avatars": "^2.0.1",
     "buffer": "^6.0.3",
     "date-fns": "^2.29.3",
+    "deepmerge": "^4.3.1",
     "echarts": "^5.5.0",
     "echarts-for-react": "^3.0.2",
     "fuse.js": "^7.0.0",
@@ -140,10 +160,13 @@
     "react": "18.3.1",
     "react-confetti": "^6.4.0",
     "react-dom": "18.3.1",
+    "react-is": "^19.2.0",
     "react-toastify": "^11.0.5",
     "streamdown": "^1.6.6",
+    "styled-system": "^5.1.5",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.13",
+    "tslib": "^2.8.1",
     "tus-js-client": "^4.2.3",
     "tw-animate-css": "^1.4.0",
     "ulid": "^2.3.0",
@@ -214,6 +237,7 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
+    "@jupyterlab/services": "7.4.5",
     "@microsoft/fast-colors": "5.3.1",
     "@microsoft/fast-components": "2.30.6",
     "@microsoft/fast-element": "1.13.0",
@@ -236,5 +260,8 @@
     "src/**/*.{css,json,md}": [
       "prettier --write"
     ]
+  },
+  "optionalDependencies": {
+    "keytar": "^7.9.0"
   }
 }
