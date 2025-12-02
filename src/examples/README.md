@@ -6,7 +6,7 @@ This directory contains interactive examples demonstrating how to use Datalayer 
 
 ### Prerequisites
 
-1. **Datalayer API Token**: Get your token from [Datalayer Platform](https://datalayer.app/)
+1. **Datalayer API Key**: Get your key from [Datalayer Platform](https://datalayer.app)
 2. **Node.js**: Version 18+ recommended
 3. **npm**: Comes with Node.js
 

@@ -137,16 +137,9 @@ const NotebookOnlyApp: React.FC = () => {
       try {
         const { configuration } = coreStore.getState();
 
-        if (configuration?.token) {
+        // Always try to create collaboration provider if we have token and runUrl
+        if (configuration?.token && configuration?.runUrl) {
           try {
-            const manager = await createDatalayerServiceManager(
-              configuration.cpuEnvironment || 'python-3.11',
-              configuration.credits || 100,
-            );
-            await manager.ready;
-            setServiceManager(manager);
-
-            // Create collaboration provider for iframe notebooks
             const { DatalayerCollaborationProvider } =
               await import('../collaboration/DatalayerCollaborationProvider');
             const provider = new DatalayerCollaborationProvider({
@@ -158,6 +151,23 @@ const NotebookOnlyApp: React.FC = () => {
               provider,
             );
             setCollaborationProvider(provider);
+          } catch (error) {
+            console.error(
+              'Failed to create DatalayerCollaborationProvider:',
+              error,
+            );
+          }
+        }
+
+        // Create service manager
+        if (configuration?.token) {
+          try {
+            const manager = await createDatalayerServiceManager(
+              configuration.cpuEnvironment || 'python-3.11',
+              configuration.credits || 100,
+            );
+            await manager.ready;
+            setServiceManager(manager);
           } catch (error) {
             console.error('Failed to create DatalayerServiceManager:', error);
             const serverSettings = createServerSettings(
@@ -394,47 +404,55 @@ export const ExampleApp: React.FC = () => {
             borderBottom: '1px solid #ccc',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '15px',
             fontSize: '14px',
             fontFamily: 'system-ui, -apple-system, sans-serif',
           }}
         >
-          <label style={{ fontWeight: 500, color: '#333' }}>
-            Select Example:
-          </label>
-          <select
-            value={selectedExample}
-            onChange={e => handleExampleChange(e.target.value)}
-            disabled={isChangingExample}
-            style={{
-              padding: '6px 12px',
-              fontSize: '14px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              background: 'white',
-              cursor: isChangingExample ? 'not-allowed' : 'pointer',
-              fontFamily: 'monospace',
-              minWidth: '250px',
-            }}
-          >
-            {getExampleNames()
-              .sort()
-              .map(name => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-          </select>
-          {isChangingExample && (
-            <span style={{ color: '#666', fontSize: '12px' }}>Loading...</span>
-          )}
-          {error && (
-            <span
-              style={{ color: '#dc3545', fontSize: '12px', marginLeft: 'auto' }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <label style={{ fontWeight: 500, color: '#333' }}>
+              Select Example:
+            </label>
+            <select
+              value={selectedExample}
+              onChange={e => handleExampleChange(e.target.value)}
+              disabled={isChangingExample}
+              style={{
+                padding: '6px 12px',
+                fontSize: '14px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                background: 'white',
+                cursor: isChangingExample ? 'not-allowed' : 'pointer',
+                fontFamily: 'monospace',
+                minWidth: '250px',
+              }}
             >
-              Error: {error}
-            </span>
-          )}
+              {getExampleNames()
+                .sort()
+                .map(name => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+            </select>
+            {isChangingExample && (
+              <span style={{ color: '#666', fontSize: '12px' }}>
+                Loading...
+              </span>
+            )}
+            {error && (
+              <span style={{ color: '#dc3545', fontSize: '12px' }}>
+                Error: {error}
+              </span>
+            )}
+          </div>
+          <img
+            src="https://assets.datalayer.tech/datalayer-25.svg"
+            alt="Datalayer"
+            style={{ height: '24px' }}
+          />
         </div>
         <div style={{ height: 'calc(100vh - 50px)', overflow: 'auto' }}>
           {isChangingExample ? (
