@@ -3,8 +3,9 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { ServiceManager } from '@jupyterlab/services';
 import {
-  JupyterReactTheme,
+  Jupyter,
   Cell,
   KernelIndicator,
   useJupyter,
@@ -15,6 +16,10 @@ import { Button, Label } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 
 const CELL_ID = 'cell-example-1';
+
+type ICellExampleProps = {
+  serviceManager?: ServiceManager.IManager;
+};
 
 const DEFAULT_SOURCE = `from IPython.display import display
 
@@ -57,11 +62,11 @@ const CellExampleContent = () => {
   );
 };
 
-export const CellExample = () => {
+export const CellExample = (props: ICellExampleProps) => {
   return (
-    <JupyterReactTheme>
+    <Jupyter serviceManager={props.serviceManager}>
       <CellExampleContent />
-    </JupyterReactTheme>
+    </Jupyter>
   );
 };
 

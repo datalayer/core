@@ -16,11 +16,13 @@ import {
   getJupyterServerUrl,
   getJupyterServerToken,
 } from '@datalayer/jupyter-react';
+import { INotebookContent } from '@jupyterlab/nbformat';
 import { ServiceManager } from '@jupyterlab/services';
 import { coreStore } from '../state/substates/CoreState';
 import { iamStore } from '../state';
 import { EXAMPLES } from './example-selector';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
+import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
 // Load configurations from DOM
 const loadConfigurations = () => {
@@ -117,14 +119,16 @@ const getDefaultExampleName = (): string => {
   return 'DatalayerNotebookExample';
 };
 
-// Notebook-only component for iframe display
+// Notebook-only component for iframe display - renders ONLY the notebook without any UI chrome
 const NotebookOnlyApp: React.FC = () => {
   const [serviceManager, setServiceManager] =
     useState<ServiceManager.IManager | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [NotebookComponent, setNotebookComponent] =
+  const [nbformat] = useState(nbformatExample as INotebookContent);
+  const [Notebook2Component, setNotebook2Component] =
     useState<React.ComponentType<any> | null>(null);
+  const [collaborationProvider, setCollaborationProvider] = useState<any>(null);
 
   useEffect(() => {
     loadConfigurations();
@@ -141,6 +145,15 @@ const NotebookOnlyApp: React.FC = () => {
             );
             await manager.ready;
             setServiceManager(manager);
+
+            // Create collaboration provider for iframe notebooks
+            const { DatalayerCollaborationProvider } =
+              await import('../collaboration/DatalayerCollaborationProvider');
+            const provider = new DatalayerCollaborationProvider({
+              runUrl: configuration.runUrl,
+              token: configuration.token,
+            });
+            setCollaborationProvider(provider);
           } catch (error) {
             console.error('Failed to create DatalayerServiceManager:', error);
             const serverSettings = createServerSettings(
@@ -173,14 +186,13 @@ const NotebookOnlyApp: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (serviceManager) {
-      EXAMPLES['DatalayerNotebookExample']().then(module => {
-        setNotebookComponent(() => module.default);
-      });
-    }
-  }, [serviceManager]);
+    // Dynamically import Notebook2 component
+    import('@datalayer/jupyter-react').then(module => {
+      setNotebook2Component(() => module.Notebook2);
+    });
+  }, []);
 
-  if (loading) {
+  if (loading || !Notebook2Component) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <h2>Loading Notebook...</h2>
@@ -198,18 +210,24 @@ const NotebookOnlyApp: React.FC = () => {
     );
   }
 
-  if (!NotebookComponent) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>Loading Component...</h2>
-      </div>
-    );
+  if (!serviceManager) {
+    return null;
   }
+
+  const NOTEBOOK_ID = '01JZQRQ35GG871QQCZW9TB1A8J';
 
   return (
     <JupyterReactTheme>
       <div style={{ width: '100vw', height: '100vh' }}>
-        <NotebookComponent serviceManager={serviceManager} />
+        <Notebook2Component
+          id={NOTEBOOK_ID}
+          height="100vh"
+          nbformat={nbformat}
+          readonly={false}
+          serviceManager={serviceManager}
+          startDefaultKernel={true}
+          collaborationProvider={collaborationProvider}
+        />
       </div>
     </JupyterReactTheme>
   );
