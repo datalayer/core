@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2025 Datalayer, Inc.
- *
- * MIT License
- */
-
 /**
  * Platform-agnostic tools for notebook and lexical integration with AI frameworks
  *
@@ -18,10 +12,10 @@
 // Export adapters
 export * from './adapters/agui';
 
-// Re-export tool types from jupyter-react for convenience
-export type {
-  ToolDefinition,
-  ToolConfig,
-  ToolOperation,
-  ToolExecutionContext,
-} from '@datalayer/jupyter-react';
+// TODO: Re-export tool types from jupyter-react when available
+// export type {
+//   ToolDefinition,
+//   ToolConfig,
+//   ToolOperation,
+//   ToolExecutionContext,
+// } from '@datalayer/jupyter-react';

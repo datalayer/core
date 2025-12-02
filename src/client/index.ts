@@ -113,6 +113,9 @@ export type { HealthCheckJSON } from '../models/HealthCheck';
 export { ItemTypes } from './constants';
 export type { ItemType } from './constants';
 
+// Export authentication module
+export * from './auth';
+
 // Interface declaration for TypeScript to recognize mixin methods
 export interface DatalayerClient {
   // Base Methods

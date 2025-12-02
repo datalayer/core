@@ -10,6 +10,7 @@
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
 import { EnvironmentDTO } from '../models/EnvironmentDTO';
+import { AuthenticationManager } from './auth';
 
 /** Handlers for SDK method lifecycle events. */
 export interface SDKHandlers {
@@ -49,6 +50,8 @@ export class DatalayerClientBase {
   public readonly environments: EnvironmentDTO[] = [];
   /** Method lifecycle handlers */
   public readonly handlers?: SDKHandlers;
+  /** Authentication manager */
+  public readonly auth: AuthenticationManager;
 
   /**
    * Create a DatalayerClient base instance.
@@ -61,6 +64,14 @@ export class DatalayerClientBase {
     this.spacerRunUrl = config.spacerRunUrl || DEFAULT_SERVICE_URLS.SPACER;
     this.token = config.token;
     this.handlers = config.handlers;
+
+    // Initialize authentication manager
+    this.auth = new AuthenticationManager(this.iamRunUrl);
+
+    // If a token was provided, store it in the auth manager
+    if (this.token) {
+      this.auth.storeToken(this.token);
+    }
   }
 
   /**

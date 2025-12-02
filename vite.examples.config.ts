@@ -53,7 +53,8 @@ export default defineConfig(({ mode }) => {
         name: 'html-transform',
         transformIndexHtml(html) {
           // Replace environment variables in HTML
-          return html.replaceAll(
+          return html
+            .replaceAll(
               /%VITE_DATALAYER_API_KEY%/g,
               env.VITE_DATALAYER_API_KEY || '',
             )

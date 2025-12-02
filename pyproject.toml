@@ -120,6 +120,14 @@ disallow_untyped_defs = true
 disallow_any_generics = true
 warn_unused_ignores = true
 
+[[tool.mypy.overrides]]
+module = "tornado.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "datalayer_core.handlers.chat.*"
+disable_error_code = ["attr-defined"]
+
 [tool.ruff.lint]
 extend-select = ["I"]
 

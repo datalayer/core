@@ -57,8 +57,10 @@ function UploadBaseButton(props: IUploadBaseButtonProps): JSX.Element {
   );
 }
 
-export interface IUploadIconButtonProps
-  extends Omit<IUploadBaseButtonProps, 'buttonFactory'> {
+export interface IUploadIconButtonProps extends Omit<
+  IUploadBaseButtonProps,
+  'buttonFactory'
+> {
   /**
    * Button aria-label
    */
@@ -82,8 +84,10 @@ export function UploadIconButton(props: IUploadIconButtonProps): JSX.Element {
   return <UploadBaseButton buttonFactory={factory} {...others} />;
 }
 
-export interface IUploadButtonProps
-  extends Omit<IUploadBaseButtonProps, 'buttonFactory'> {
+export interface IUploadButtonProps extends Omit<
+  IUploadBaseButtonProps,
+  'buttonFactory'
+> {
   /**
    * Button aria-label
    */

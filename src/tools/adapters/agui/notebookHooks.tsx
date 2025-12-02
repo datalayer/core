@@ -11,7 +11,8 @@
  */
 
 import { useMemo } from 'react';
-import type { ToolExecutionContext } from '@datalayer/jupyter-react';
+// TODO: Re-enable when @datalayer/jupyter-react exports these
+// import type { ToolExecutionContext } from '@datalayer/jupyter-react';
 
 import {
   createAllCopilotKitActions,
@@ -19,13 +20,22 @@ import {
   type UseFrontendToolFn,
 } from './AgUIToolAdapter';
 
-// Import from jupyter-react
-import {
-  useNotebookStore2,
-  DefaultExecutor,
-  notebookToolDefinitions,
-  notebookToolOperations,
-} from '@datalayer/jupyter-react';
+// TODO: Re-enable when jupyter-react exports these
+// import {
+//   useNotebookStore2,
+//   DefaultExecutor,
+//   notebookToolDefinitions,
+//   notebookToolOperations,
+// } from '@datalayer/jupyter-react';
+
+// Temporary placeholders
+type ToolExecutionContext = any;
+const useNotebookStore2 = () => ({});
+class DefaultExecutor {
+  constructor(...args: any[]) {}
+}
+const notebookToolDefinitions: any[] = [];
+const notebookToolOperations: Record<string, any> = {};
 
 // Re-export shared types and components for convenience
 export { ActionRegistrar, type UseFrontendToolFn };

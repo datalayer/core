@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2025 Datalayer, Inc.
- *
- * MIT License
- */
-
 /**
  * ag-ui/CopilotKit Tool Adapter
  *
@@ -18,12 +12,25 @@
  * @module tools/adapters/agui/AgUIToolAdapter
  */
 
-import type {
-  ToolDefinition,
-  ToolOperation,
-  ToolExecutionContext,
-} from '@datalayer/jupyter-react';
-import { OperationRunner } from '@datalayer/jupyter-react';
+// TODO: Re-enable when @datalayer/jupyter-react exports these types
+// import type {
+//   ToolDefinition,
+//   ToolOperation,
+//   ToolExecutionContext,
+// } from '@datalayer/jupyter-react';
+// import { OperationRunner } from '@datalayer/jupyter-react';
+
+// Temporary placeholder types until jupyter-react exports are available
+type ToolDefinition = any;
+type ToolOperation<T, U> = any;
+type ToolExecutionContext = any;
+class OperationRunner {
+  async execute(...args: any[]): Promise<any> {
+    throw new Error(
+      'OperationRunner not available - update @datalayer/jupyter-react',
+    );
+  }
+}
 
 /**
  * Type signature for CopilotKit's useFrontendTool hook

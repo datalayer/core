@@ -7,8 +7,10 @@ import React, { forwardRef, useCallback } from 'react';
 import { useNavigate } from '../hooks/useNavigate';
 
 // Simple type definition for NavigationLink props
-export interface NavigationLinkProps
-  extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> {
+export interface NavigationLinkProps extends Omit<
+  React.AnchorHTMLAttributes<HTMLAnchorElement>,
+  'href'
+> {
   to: string;
   replace?: boolean;
   state?: any;
