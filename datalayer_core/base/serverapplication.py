@@ -246,8 +246,18 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 self.log.info("Datalayer Core extension initialized successfully")
 
         except Exception as e:
-            self.log.error(f"Error initializing Datalayer Core: {e}", exc_info=True)
-            raise
+            self.log.error(
+                f"Error initializing Datalayer Core: {e}. "
+                "Extension will continue with limited functionality.",
+                exc_info=True,
+            )
+            # Don't raise - allow the extension to load with limited functionality
+            # Store None values in settings so handlers can detect unavailability
+            self.settings["chat_agent"] = None
+            self.settings["mcp_manager"] = MCPToolManager()
+            self.settings["chat_config"] = ChatConfig()
+            self.settings["chat_base_url"] = None
+            self.settings["chat_token"] = None
 
         self.serverapp.answer_yes = True
 
