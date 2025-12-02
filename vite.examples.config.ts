@@ -6,22 +6,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
-import path from 'node:path';
-
-// Select which example to run by uncommenting the desired line
-const EXAMPLE =
-  // 'CellExample';
-  'DatalayerNotebookExample';
-// 'NotebookExample';
-// 'NotebookMutationsKernel';
-// 'NotebookMutationsServiceManager';
-// 'ReactRouterNavigationExample';
-// 'NativeNavigationExample';
-
-// Allow override via environment variable
-const SELECTED_EXAMPLE = process.env.EXAMPLE || EXAMPLE;
-
-console.log(`🚀 Running example: ${SELECTED_EXAMPLE}`);
+import path from 'path';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
@@ -55,7 +40,11 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+      // Handle SPA routing - serve index.html for all routes
+      middlewareMode: false,
     },
+
+    appType: 'spa',
 
     plugins: [
       react(),
@@ -117,7 +106,6 @@ export default defineConfig(({ mode }) => {
     define: {
       global: 'globalThis',
       __webpack_public_path__: '""',
-      'import.meta.env.EXAMPLE': JSON.stringify(SELECTED_EXAMPLE),
     },
 
     assetsInclude: ['**/*.whl', '**/*.raw.css'],
@@ -131,14 +119,6 @@ export default defineConfig(({ mode }) => {
         {
           find: /^~(.*)$/,
           replacement: '$1',
-        },
-        {
-          find: 'crypto',
-          replacement: path.resolve(__dirname, 'node_modules/crypto-browserify'),
-        },
-        {
-          find: 'buffer',
-          replacement: path.resolve(__dirname, 'node_modules/buffer'),
         },
       ],
     },

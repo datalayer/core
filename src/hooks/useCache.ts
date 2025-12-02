@@ -2255,7 +2255,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const useCreateToken = () => {
     return useMutation({
       mutationFn: async (token: Omit<IIAMToken, 'id' | 'value'>) => {
-        return requestDatalayer({
+        const resp = await requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/tokens`,
           method: 'POST',
           body: {
@@ -2263,13 +2263,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             expirationDate: token.expirationDate.getTime(),
           },
         });
+        // Transform the token in the response
+        if (resp.success && resp.token) {
+          resp.token = toToken(resp.token);
+        }
+        return resp;
       },
       onSuccess: resp => {
         if (resp.success && resp.token) {
-          const tok = toToken(resp.token);
-          if (tok) {
-            queryClient.setQueryData(queryKeys.tokens.detail(tok.id), tok);
-          }
+          queryClient.setQueryData(
+            queryKeys.tokens.detail(resp.token.id),
+            resp.token,
+          );
         }
         queryClient.invalidateQueries({ queryKey: queryKeys.tokens.all() });
       },

@@ -4,7 +4,7 @@
  */
 
 /**
- * ag-ui Notebook Example with CopilotKit Integration
+ * AG-UI Notebook Example with CopilotKit Integration
  *
  * To run this example, create a .env file in the core directory with:
  * - VITE_DATALAYER_API_TOKEN: Get from https://datalayer.app/settings/iam/tokens
@@ -12,7 +12,7 @@
  *
  * You also will need to connect co[pilot kit to some sort of LLM Add LLM Provider API Key
  *
- * @module datalayer-core/AgUINotebookExample
+ * @module datalayer-core/AgUiNotebookExample
  */
 
 import React from 'react';
@@ -25,7 +25,7 @@ import { CopilotKit, useFrontendTool } from '@copilotkit/react-core';
 import { CopilotSidebar } from '@copilotkit/react-ui';
 import '@copilotkit/react-ui/styles.css';
 
-// Import ag-ui components and hooks
+// Import AG-UI components and hooks
 import {
   ActionRegistrar,
   useNotebookToolActions,
@@ -76,7 +76,7 @@ const NotebookUI = React.memo(function NotebookUI({
             borderColor: 'border.default',
           }}
         >
-          <h1>ag-ui Notebook Example</h1>
+          <h1>AG-UI Notebook Example</h1>
           <p>Platform-agnostic tool usage with CopilotKit integration.</p>
         </Box>
 
@@ -131,16 +131,16 @@ function NotebookActions() {
 }
 
 /**
- * Main ag-ui notebook example component with tool registration
+ * Main AG-UI notebook example component with tool registration
  * IMPORTANT: This must be inside CopilotKit context
  */
-interface AgUINotebookExampleProps {
+interface AgUiNotebookExampleProps {
   serviceManager?: ServiceManager.IManager;
 }
 
-function AgUINotebookExample({
+function AgUiNotebookExample({
   serviceManager,
-}: AgUINotebookExampleProps): JSX.Element {
+}: AgUiNotebookExampleProps): JSX.Element {
   return (
     <CopilotKit
       showDevConsole={true}
@@ -160,4 +160,4 @@ function AgUINotebookExample({
   );
 }
 
-export default AgUINotebookExample;
+export default AgUiNotebookExample;

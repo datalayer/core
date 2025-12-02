@@ -1,10 +1,6 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-# Copyright (c) 2024-2025 Datalayer, Inc.
-#
-# BSD 3-Clause License
-
 """AI agent for chat."""
 
 from pydantic_ai import Agent
@@ -19,7 +15,7 @@ def create_chat_agent(
     model_name: str = "claude-sonnet-4-5",
     timeout: float = 60.0,
     mcp_server: MCPServerStreamableHTTP | None = None,
-) -> Agent:
+) -> Agent | None:
     """
     Create the main chat agent for JupyterLab.
 
@@ -32,7 +28,7 @@ def create_chat_agent(
         mcp_server: Optional MCP server connection for Jupyter tools
 
     Returns:
-        Configured Pydantic AI agent
+        Configured Pydantic AI agent, or None if creation fails (e.g., missing API keys)
 
     Note:
         For Azure OpenAI, requires these environment variables:
@@ -40,30 +36,35 @@ def create_chat_agent(
         - AZURE_OPENAI_ENDPOINT (base URL only, e.g., https://your-resource.openai.azure.com)
         - AZURE_OPENAI_API_VERSION (optional, defaults to latest)
     """
-    # Determine model to use
-    if model:
-        # User provided full model string
-        if model.startswith("azure-openai:"):
-            # Special handling for Azure OpenAI format
-            deployment_name = model.split(":", 1)[1]
-            model_obj = create_model_with_provider(
-                "azure-openai", deployment_name, timeout
-            )
+    try:
+        # Determine model to use
+        if model:
+            # User provided full model string
+            if model.startswith("azure-openai:"):
+                # Special handling for Azure OpenAI format
+                deployment_name = model.split(":", 1)[1]
+                model_obj = create_model_with_provider(
+                    "azure-openai", deployment_name, timeout
+                )
+            else:
+                model_obj = model
         else:
-            model_obj = model
-    else:
-        # Create model object with provider-specific configuration
-        model_obj = create_model_with_provider(model_provider, model_name, timeout)
+            # Create model object with provider-specific configuration
+            model_obj = create_model_with_provider(model_provider, model_name, timeout)
+    except Exception:
+        # Failed to create model (likely missing API keys)
+        return None
 
-    # Create toolsets list
-    toolsets = []
-    if mcp_server:
-        toolsets.append(mcp_server)
+    try:
+        # Create toolsets list
+        toolsets = []
+        if mcp_server:
+            toolsets.append(mcp_server)
 
-    agent = Agent(
-        model_obj,
-        toolsets=toolsets,
-        instructions="""You are a helpful AI assistant integrated into JupyterLab.
+        agent = Agent(
+            model_obj,
+            toolsets=toolsets,
+            instructions="""You are a helpful AI assistant integrated into JupyterLab.
 
 You can help users with:
 - Writing and debugging Python code
@@ -76,9 +77,12 @@ You have access to various tools to interact with the Jupyter environment.
 When users ask you to execute code or work with notebooks, use the available tools.
 
 Always be clear, concise, and provide working code examples when appropriate.""",
-    )
+        )
 
-    # Note: Built-in Jupyter tools are now provided via MCP server
-    # No need to register them manually
+        # Note: Built-in Jupyter tools are now provided via MCP server
+        # No need to register them manually
 
-    return agent
+        return agent
+    except Exception:
+        # Failed to create agent (likely missing API keys or other configuration issues)
+        return None

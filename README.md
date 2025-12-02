@@ -1,7 +1,3 @@
-**Datalayer Core**
-
----
-
 [![Datalayer](https://assets.datalayer.tech/datalayer-25.svg)](https://datalayer.io)
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
@@ -9,11 +5,7 @@
 # Ξ Datalayer Core
 
 <p align="center">
-  <img src="https://assets.datalayer.tech/datalayer-25.svg" alt="Datalayer Logo" width="200"></img>
-</p>
-
-<p align="center">
-  <strong>The foundational Python SDK for the Datalayer AI Platform</strong>
+  <strong>Python and Typescript libraries for Datalayer</strong>
 </p>
 
 <p align="center">
@@ -21,12 +13,12 @@
   <a href="https://pypi.org/project/datalayer-core/"><img src="https://img.shields.io/pypi/pyversions/datalayer-core.svg" alt="Python versions"></img></a>
   <a href="https://github.com/datalayer/core/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg" alt="License"></img></a>
   <a href="https://docs.datalayer.app/"><img src="https://img.shields.io/badge/docs-datalayer.app-blue" alt="Documentation"></img></a>
-  <a href="https://github.com/datalayer/core/actions/workflows/tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/tests.yml/badge.svg" alt="Units Tests"></img></a>
+  <a href="https://github.com/datalayer/core/actions/workflows/py-tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/py-tests.yml/badge.svg" alt="Units Tests"></img></a><a href="https://github.com/datalayer/core/actions/workflows/ts-tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/ts-tests.yml/badge.svg" alt="Units Tests"></img></a>
 </p>
 
 ## Overview
 
-Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.app/). It provides both a Python SDK and Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
+Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.app/). It provides a TypesScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
 
 This package serves as the base foundation used by many other Datalayer packages, containing core application classes, configuration, and unified APIs for authentication, runtime management, and code execution in cloud-based environments.
 
@@ -156,7 +148,7 @@ npm install
 echo "VITE_DATALAYER_API_KEY=your-token-here" > .env
 
 # Start the examples server
-npm run example
+npm run examples
 ```
 
 Available at http://localhost:3000/:
@@ -303,6 +295,10 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 - **Community**: [Datalayer Platform](https://datalayer.app/)
 
 ---
+
+<p align="center">
+  <img src="https://assets.datalayer.tech/datalayer-25.svg" alt="Datalayer Logo" width="200"></img>
+</p>
 
 <p align="center">
   <strong>🚀 AI Agents for Data Analysis</strong><br></br>

@@ -4,22 +4,23 @@
  */
 
 /**
- * ag-ui Lexical Example with CopilotKit Integration
+ * AG-UI Lexical Example with CopilotKit Integration
  *
  * To run this example, create a .env file in the core directory with:
  * - VITE_DATALAYER_API_TOKEN: Get from https://datalayer.app/settings/iam/tokens
  * - VITE_COPILOT_KIT_API_KEY: Get from https://cloud.copilotkit.ai/dashboard
  *
- * You also will need to connect co[pilot kit to some sort of LLM Add LLM Provider API Key
+ * You also will need to connect copilot kit to some sort of LLM Add LLM Provider API Key
  *
  * https://docs.copilotkit.ai/reference/hooks/useFrontendTool
  *
- * @module datalayer-core/AgUILexicalExample
+ * @module datalayer-core/AgUiLexicalExample
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { $getRoot, $createParagraphNode, EditorState } from 'lexical';
+
 import 'prismjs';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
@@ -35,6 +36,7 @@ import 'prismjs/components/prism-swift';
 
 // Import Lexical theme styles
 import './lexical-theme.css';
+import '@datalayer/jupyter-lexical/style/index.css';
 
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
@@ -97,7 +99,7 @@ import { CopilotKit, useFrontendTool } from '@copilotkit/react-core';
 import { CopilotSidebar } from '@copilotkit/react-ui';
 import '@copilotkit/react-ui/styles.css';
 
-// Import ag-ui hooks and components
+// Import AG-UI hooks and components
 import {
   ActionRegistrar,
   useLexicalToolActions,
@@ -269,7 +271,7 @@ const LexicalUI = React.memo(function LexicalUI({
   };
 
   const editorConfig = {
-    namespace: 'AgUILexicalEditor',
+    namespace: 'AgUiLexicalEditor',
     editable: true,
     theme,
     nodes: [
@@ -336,7 +338,7 @@ const LexicalUI = React.memo(function LexicalUI({
             borderColor: 'border.default',
           }}
         >
-          <h1>ag-ui Lexical Example</h1>
+          <h1>AG-UI Lexical Example</h1>
           <p>
             Platform-agnostic tool usage with CopilotKit integration. Use the AI
             copilot to manipulate the document.
@@ -448,17 +450,17 @@ function LexicalWithTools({
 }
 
 /**
- * Main ag-ui lexical example component
+ * Main AG-UI lexical example component
  */
-interface AgUILexicalExampleProps {
+interface AgUiLexicalExampleProps {
   content?: string;
   serviceManager?: ServiceManager.IManager;
 }
 
-function AgUILexicalExample({
+function AgUiLexicalExample({
   content,
   serviceManager,
-}: AgUILexicalExampleProps): JSX.Element {
+}: AgUiLexicalExampleProps): JSX.Element {
   return (
     <CopilotKit
       showDevConsole={true}
@@ -478,4 +480,4 @@ function AgUILexicalExample({
   );
 }
 
-export default AgUILexicalExample;
+export default AgUiLexicalExample;

@@ -16,11 +16,13 @@ import {
   getJupyterServerUrl,
   getJupyterServerToken,
 } from '@datalayer/jupyter-react';
+import { INotebookContent } from '@jupyterlab/nbformat';
 import { ServiceManager } from '@jupyterlab/services';
 import { coreStore } from '../state/substates/CoreState';
 import { iamStore } from '../state';
-import { getSelectedExample, getSelectedExampleName } from './example-selector';
+import { EXAMPLES } from './example-selector';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
+import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
 // Load configurations from DOM
 const loadConfigurations = () => {
@@ -63,9 +65,9 @@ const loadConfigurations = () => {
               roles: [],
               setRoles: () => {},
               iamProviders: [],
-              settings: {} as any,
+              settings: {},
               unsubscribedFromOutbounds: false,
-              onboarding: {} as any,
+              onboarding: {},
               events: [],
             },
             datalayerConfig.token,
@@ -97,14 +99,195 @@ const loadConfigurations = () => {
   }
 };
 
+const getExampleNames = () => Object.keys(EXAMPLES);
+
+// Check if we're on the notebook-only route
+const isNotebookOnlyRoute = () => {
+  const path = window.location.pathname;
+  console.log('Current pathname:', path);
+  const isNotebookRoute = path === '/datalayer/notebook';
+  console.log('Is notebook-only route:', isNotebookRoute);
+  return isNotebookRoute;
+};
+
+// Get the default example name from localStorage
+const getDefaultExampleName = (): string => {
+  const stored = localStorage.getItem('selectedExample');
+  if (stored && EXAMPLES[stored]) {
+    return stored;
+  }
+  return 'DatalayerNotebookExample';
+};
+
+// Notebook-only component for iframe display - renders ONLY the notebook without any UI chrome
+const NotebookOnlyApp: React.FC = () => {
+  const [serviceManager, setServiceManager] =
+    useState<ServiceManager.IManager | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [nbformat] = useState(nbformatExample as INotebookContent);
+  const [Notebook2Component, setNotebook2Component] =
+    useState<React.ComponentType<any> | null>(null);
+  const [collaborationProvider, setCollaborationProvider] = useState<any>(null);
+
+  useEffect(() => {
+    loadConfigurations();
+
+    const initializeApp = async () => {
+      try {
+        const { configuration } = coreStore.getState();
+
+        // Always try to create collaboration provider if we have token and runUrl
+        if (configuration?.token && configuration?.runUrl) {
+          try {
+            const { DatalayerCollaborationProvider } =
+              await import('../collaboration/DatalayerCollaborationProvider');
+            const provider = new DatalayerCollaborationProvider({
+              runUrl: configuration.runUrl,
+              token: configuration.token,
+            });
+            console.log(
+              '[NotebookOnlyApp] Created collaboration provider:',
+              provider,
+            );
+            setCollaborationProvider(provider);
+          } catch (error) {
+            console.error(
+              'Failed to create DatalayerCollaborationProvider:',
+              error,
+            );
+          }
+        }
+
+        // Create service manager
+        if (configuration?.token) {
+          try {
+            const manager = await createDatalayerServiceManager(
+              configuration.cpuEnvironment || 'python-3.11',
+              configuration.credits || 100,
+            );
+            await manager.ready;
+            setServiceManager(manager);
+          } catch (error) {
+            console.error('Failed to create DatalayerServiceManager:', error);
+            const serverSettings = createServerSettings(
+              getJupyterServerUrl(),
+              getJupyterServerToken(),
+            );
+            const manager = new ServiceManager({ serverSettings });
+            await manager.ready;
+            setServiceManager(manager);
+          }
+        } else {
+          const serverSettings = createServerSettings(
+            getJupyterServerUrl(),
+            getJupyterServerToken(),
+          );
+          const manager = new ServiceManager({ serverSettings });
+          await manager.ready;
+          setServiceManager(manager);
+        }
+
+        setLoading(false);
+      } catch (e) {
+        console.error('Failed to initialize app:', e);
+        setError(`Failed to initialize app: ${e}`);
+        setLoading(false);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  useEffect(() => {
+    // Dynamically import Notebook2 component
+    import('@datalayer/jupyter-react').then(module => {
+      setNotebook2Component(() => module.Notebook2);
+    });
+  }, []);
+
+  if (loading || !Notebook2Component) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Loading Notebook...</h2>
+        <p>Please wait...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '20px', color: 'red' }}>
+        <h2>Error Loading Notebook</h2>
+        <pre>{error}</pre>
+      </div>
+    );
+  }
+
+  if (!serviceManager) {
+    return null;
+  }
+
+  const NOTEBOOK_ID = '01JZQRQ35GG871QQCZW9TB1A8J';
+
+  console.log('[NotebookOnlyApp] Rendering with:', {
+    hasServiceManager: !!serviceManager,
+    hasCollaborationProvider: !!collaborationProvider,
+    notebookId: NOTEBOOK_ID,
+  });
+
+  return (
+    <JupyterReactTheme>
+      <div style={{ width: '100vw', height: '100vh' }}>
+        <Notebook2Component
+          id={NOTEBOOK_ID}
+          height="100vh"
+          nbformat={nbformat}
+          readonly={false}
+          serviceManager={serviceManager}
+          startDefaultKernel={true}
+          collaborationProvider={collaborationProvider}
+        />
+      </div>
+    </JupyterReactTheme>
+  );
+};
+
 // Main App component that loads and renders the selected example
-const ExampleApp: React.FC = () => {
+export const ExampleApp: React.FC = () => {
   const [ExampleComponent, setExampleComponent] =
     useState<React.ComponentType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [serviceManager, setServiceManager] =
     useState<ServiceManager.IManager | null>(null);
+  const [selectedExample, setSelectedExample] = useState<string>(
+    getDefaultExampleName(),
+  );
+  const [isChangingExample, setIsChangingExample] = useState(false);
+
+  const loadExample = async (
+    exampleName: string,
+    _manager: ServiceManager.IManager,
+  ) => {
+    try {
+      setIsChangingExample(true);
+      setError(null);
+
+      const exampleLoader = EXAMPLES[exampleName];
+      if (!exampleLoader) {
+        throw new Error(`Example "${exampleName}" not found`);
+      }
+
+      const module = await exampleLoader();
+      setExampleComponent(() => module.default);
+      setIsChangingExample(false);
+    } catch (e) {
+      console.error('Failed to load example:', e);
+      setError(`Failed to load example: ${e}`);
+      setIsChangingExample(false);
+    }
+  };
 
   useEffect(() => {
     // Load configurations
@@ -124,6 +307,9 @@ const ExampleApp: React.FC = () => {
             );
             await manager.ready;
             setServiceManager(manager);
+
+            // Load initial example
+            await loadExample(selectedExample, manager);
           } catch (error) {
             console.error('Failed to create DatalayerServiceManager:', error);
             // Fall back to regular ServiceManager
@@ -134,6 +320,9 @@ const ExampleApp: React.FC = () => {
             const manager = new ServiceManager({ serverSettings });
             await manager.ready;
             setServiceManager(manager);
+
+            // Load initial example
+            await loadExample(selectedExample, manager);
           }
         } else {
           // Use regular ServiceManager (no Datalayer token)
@@ -144,12 +333,11 @@ const ExampleApp: React.FC = () => {
           const manager = new ServiceManager({ serverSettings });
           await manager.ready;
           setServiceManager(manager);
+
+          // Load initial example
+          await loadExample(selectedExample, manager);
         }
 
-        // Load the example AFTER service manager is ready
-        const exampleLoader = getSelectedExample();
-        const module = await exampleLoader();
-        setExampleComponent(() => module.default);
         setLoading(false);
       } catch (e) {
         console.error('Failed to initialize app:', e);
@@ -159,18 +347,27 @@ const ExampleApp: React.FC = () => {
     };
 
     initializeApp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleExampleChange = async (newExample: string) => {
+    if (newExample === selectedExample || !serviceManager) return;
+
+    setSelectedExample(newExample);
+    localStorage.setItem('selectedExample', newExample);
+    await loadExample(newExample, serviceManager);
+  };
 
   if (loading) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>Loading Example: {getSelectedExampleName()}</h2>
+        <h2>Loading Example: {selectedExample}</h2>
         <p>Please wait...</p>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !ExampleComponent) {
     return (
       <div style={{ padding: '20px', color: 'red' }}>
         <h2>Error Loading Example</h2>
@@ -179,7 +376,7 @@ const ExampleApp: React.FC = () => {
     );
   }
 
-  if (!ExampleComponent) {
+  if (!ExampleComponent && !isChangingExample) {
     return (
       <div style={{ padding: '20px' }}>
         <h2>Example Not Found</h2>
@@ -190,7 +387,7 @@ const ExampleApp: React.FC = () => {
 
   // Check if the example component expects props
   // Most examples will need serviceManager
-  const exampleProps: any = {};
+  const exampleProps: { serviceManager?: ServiceManager.IManager } = {};
   if (serviceManager) {
     exampleProps.serviceManager = serviceManager;
   }
@@ -200,27 +397,90 @@ const ExampleApp: React.FC = () => {
       <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
         <div
           style={{
-            padding: '10px',
+            position: 'relative',
+            zIndex: 9999,
+            padding: '10px 20px',
             background: '#f0f0f0',
             borderBottom: '1px solid #ccc',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '15px',
             fontSize: '14px',
-            fontFamily: 'monospace',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
           }}
         >
-          Running Example: <strong>{getSelectedExampleName()}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <label style={{ fontWeight: 500, color: '#333' }}>
+              Select Example:
+            </label>
+            <select
+              value={selectedExample}
+              onChange={e => handleExampleChange(e.target.value)}
+              disabled={isChangingExample}
+              style={{
+                padding: '6px 12px',
+                fontSize: '14px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                background: 'white',
+                cursor: isChangingExample ? 'not-allowed' : 'pointer',
+                fontFamily: 'monospace',
+                minWidth: '250px',
+              }}
+            >
+              {getExampleNames()
+                .sort()
+                .map(name => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+            </select>
+            {isChangingExample && (
+              <span style={{ color: '#666', fontSize: '12px' }}>
+                Loading...
+              </span>
+            )}
+            {error && (
+              <span style={{ color: '#dc3545', fontSize: '12px' }}>
+                Error: {error}
+              </span>
+            )}
+          </div>
+          <img
+            src="https://assets.datalayer.tech/datalayer-25.svg"
+            alt="Datalayer"
+            style={{ height: '24px' }}
+          />
         </div>
-        <div style={{ height: 'calc(100vh - 40px)', overflow: 'auto' }}>
-          <ExampleComponent {...exampleProps} />
+        <div style={{ height: 'calc(100vh - 50px)', overflow: 'auto' }}>
+          {isChangingExample ? (
+            <div
+              style={{ padding: '40px', textAlign: 'center', color: '#666' }}
+            >
+              <h3>Loading {selectedExample}...</h3>
+              <p>Please wait while the example loads.</p>
+            </div>
+          ) : ExampleComponent ? (
+            <ExampleComponent {...exampleProps} />
+          ) : null}
         </div>
       </div>
     </JupyterReactTheme>
   );
 };
 
-// Mount the app
+// Mount the app - check route to determine which app to render
 const root = document.getElementById('root');
 if (root) {
-  createRoot(root).render(<ExampleApp />);
+  if (isNotebookOnlyRoute()) {
+    console.log('Rendering NotebookOnlyApp');
+    createRoot(root).render(<NotebookOnlyApp />);
+  } else {
+    console.log('Rendering ExampleApp');
+    createRoot(root).render(<ExampleApp />);
+  }
 } else {
   console.error('Root element not found');
 }

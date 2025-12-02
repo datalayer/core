@@ -1,10 +1,6 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-# Copyright (c) 2024-2025 Datalayer, Inc.
-#
-# BSD 3-Clause License
-
 """Tornado handlers for chat API compatible with Vercel AI SDK."""
 
 import json
@@ -88,8 +84,15 @@ class ChatHandler(APIHandler):
             # Get agent from application settings
             agent = self.settings.get("chat_agent")
             if not agent:
-                self.set_status(500)
-                self.finish(json.dumps({"error": "Chat agent not initialized"}))
+                self.set_status(503)
+                self.finish(
+                    json.dumps(
+                        {
+                            "error": "Chat agent not available",
+                            "message": "The chat service is currently unavailable. Please check that required API keys (e.g., ANTHROPIC_API_KEY, OPENAI_API_KEY) are configured.",
+                        }
+                    )
+                )
                 return
 
             # Lazily create the MCP server connection for this request

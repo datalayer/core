@@ -3,13 +3,6 @@
 
 """Path utility functions."""
 
-# Copyright (c) Datalayer Development Team.
-# Distributed under the terms of the Modified BSD License.
-
-# Derived from IPython.utils.path, which is
-# Copyright (c) IPython Development Team.
-# Distributed under the terms of the Modified BSD License.
-
 import errno
 import os
 import site

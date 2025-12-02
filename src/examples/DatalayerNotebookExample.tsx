@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Box, Checkbox, FormControl, Heading } from '@primer/react';
+import { Checkbox, FormControl, Heading } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { INotebookContent } from '@jupyterlab/nbformat';
 import { ServiceManager } from '@jupyterlab/services';
 import {
@@ -109,7 +110,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
     <JupyterReactTheme>
       <Box p={3}>
         <Heading as="h2" sx={{ mb: 3 }}>
-          DatalayerNotebook Collaboration Example
+          Datalayer Notebook Collaboration Example
         </Heading>
 
         <Box sx={{ mb: 3 }}>
@@ -138,29 +139,98 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
           </Box>
         )}
 
-        <Box
-          sx={{
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 2,
-          }}
-        >
-          {serviceManager ? (
-            <Notebook2
-              id={NOTEBOOK_ID}
-              height="calc(100vh - 200px)"
-              nbformat={nbformat}
-              readonly={readonly}
-              serviceManager={serviceManager}
-              startDefaultKernel={true}
-              collaborationProvider={collaborationProvider}
-            />
-          ) : (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              Loading ServiceManager...
+        {enableCollaboration ? (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              flexDirection: 'row',
+            }}
+          >
+            <Box
+              sx={{
+                flex: 1,
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  bg: 'canvas.subtle',
+                  borderBottom: '1px solid',
+                  borderColor: 'border.default',
+                  fontWeight: 'bold',
+                }}
+              >
+                Collaborator 1
+              </Box>
+              <iframe
+                src={`${window.location.origin}/datalayer/notebook`}
+                style={{
+                  width: '100%',
+                  height: 'calc(100vh - 280px)',
+                  border: 'none',
+                }}
+                title="Collaborator 1"
+              />
             </Box>
-          )}
-        </Box>
+            <Box
+              sx={{
+                flex: 1,
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  bg: 'canvas.subtle',
+                  borderBottom: '1px solid',
+                  borderColor: 'border.default',
+                  fontWeight: 'bold',
+                }}
+              >
+                Collaborator 2
+              </Box>
+              <iframe
+                src={`${window.location.origin}/datalayer/notebook`}
+                style={{
+                  width: '100%',
+                  height: 'calc(100vh - 280px)',
+                  border: 'none',
+                }}
+                title="Collaborator 2"
+              />
+            </Box>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 2,
+            }}
+          >
+            {serviceManager ? (
+              <Notebook2
+                id={NOTEBOOK_ID}
+                height="calc(100vh - 200px)"
+                nbformat={nbformat}
+                readonly={readonly}
+                serviceManager={serviceManager}
+                startDefaultKernel={true}
+                collaborationProvider={collaborationProvider}
+              />
+            ) : (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                Loading ServiceManager...
+              </Box>
+            )}
+          </Box>
+        )}
 
         <Box sx={{ mt: 2, fontSize: 1, color: 'fg.subtle' }}>
           <p>

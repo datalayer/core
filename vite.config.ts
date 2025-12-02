@@ -8,7 +8,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
-import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -74,14 +73,6 @@ export default defineConfig({
       {
         find: /^~(.*)$/,
         replacement: '$1',
-      },
-      {
-        find: 'crypto',
-        replacement: path.resolve(__dirname, 'node_modules/crypto-browserify'),
-      },
-      {
-        find: 'buffer',
-        replacement: path.resolve(__dirname, 'node_modules/buffer'),
       },
     ],
   },

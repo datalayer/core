@@ -6,7 +6,7 @@ This directory contains interactive examples demonstrating how to use Datalayer 
 
 ### Prerequisites
 
-1. **Datalayer API Token**: Get your token from [Datalayer Platform](https://datalayer.app/)
+1. **Datalayer API Key**: Get your key from [Datalayer Platform](https://datalayer.app)
 2. **Node.js**: Version 18+ recommended
 3. **npm**: Comes with Node.js
 
@@ -29,7 +29,7 @@ echo "VITE_DATALAYER_RUN_URL=$DATALAYER_RUN_URL" >> .env
 3. Start the examples server:
 
 ```bash
-npm run example
+npm run examples
 ```
 
 4. Open http://localhost:3000/ in your browser
