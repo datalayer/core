@@ -99,6 +99,15 @@ const loadConfigurations = () => {
 
 const getExampleNames = () => Object.keys(EXAMPLES);
 
+// Check if we're on the notebook-only route
+const isNotebookOnlyRoute = () => {
+  const path = window.location.pathname;
+  console.log('Current pathname:', path);
+  const isNotebookRoute = path === '/datalayer/notebook';
+  console.log('Is notebook-only route:', isNotebookRoute);
+  return isNotebookRoute;
+};
+
 // Get the default example name from localStorage
 const getDefaultExampleName = (): string => {
   const stored = localStorage.getItem('selectedExample');
@@ -106,6 +115,104 @@ const getDefaultExampleName = (): string => {
     return stored;
   }
   return 'DatalayerNotebookExample';
+};
+
+// Notebook-only component for iframe display
+const NotebookOnlyApp: React.FC = () => {
+  const [serviceManager, setServiceManager] =
+    useState<ServiceManager.IManager | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [NotebookComponent, setNotebookComponent] =
+    useState<React.ComponentType<any> | null>(null);
+
+  useEffect(() => {
+    loadConfigurations();
+
+    const initializeApp = async () => {
+      try {
+        const { configuration } = coreStore.getState();
+
+        if (configuration?.token) {
+          try {
+            const manager = await createDatalayerServiceManager(
+              configuration.cpuEnvironment || 'python-3.11',
+              configuration.credits || 100,
+            );
+            await manager.ready;
+            setServiceManager(manager);
+          } catch (error) {
+            console.error('Failed to create DatalayerServiceManager:', error);
+            const serverSettings = createServerSettings(
+              getJupyterServerUrl(),
+              getJupyterServerToken(),
+            );
+            const manager = new ServiceManager({ serverSettings });
+            await manager.ready;
+            setServiceManager(manager);
+          }
+        } else {
+          const serverSettings = createServerSettings(
+            getJupyterServerUrl(),
+            getJupyterServerToken(),
+          );
+          const manager = new ServiceManager({ serverSettings });
+          await manager.ready;
+          setServiceManager(manager);
+        }
+
+        setLoading(false);
+      } catch (e) {
+        console.error('Failed to initialize app:', e);
+        setError(`Failed to initialize app: ${e}`);
+        setLoading(false);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  useEffect(() => {
+    if (serviceManager) {
+      EXAMPLES['DatalayerNotebookExample']().then(module => {
+        setNotebookComponent(() => module.default);
+      });
+    }
+  }, [serviceManager]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Loading Notebook...</h2>
+        <p>Please wait...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: '20px', color: 'red' }}>
+        <h2>Error Loading Notebook</h2>
+        <pre>{error}</pre>
+      </div>
+    );
+  }
+
+  if (!NotebookComponent) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Loading Component...</h2>
+      </div>
+    );
+  }
+
+  return (
+    <JupyterReactTheme>
+      <div style={{ width: '100vw', height: '100vh' }}>
+        <NotebookComponent serviceManager={serviceManager} />
+      </div>
+    </JupyterReactTheme>
+  );
 };
 
 // Main App component that loads and renders the selected example
@@ -318,10 +425,16 @@ export const ExampleApp: React.FC = () => {
   );
 };
 
-// Mount the app
+// Mount the app - check route to determine which app to render
 const root = document.getElementById('root');
 if (root) {
-  createRoot(root).render(<ExampleApp />);
+  if (isNotebookOnlyRoute()) {
+    console.log('Rendering NotebookOnlyApp');
+    createRoot(root).render(<NotebookOnlyApp />);
+  } else {
+    console.log('Rendering ExampleApp');
+    createRoot(root).render(<ExampleApp />);
+  }
 } else {
   console.error('Root element not found');
 }

@@ -167,7 +167,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
                 Collaborator 1
               </Box>
               <iframe
-                src={window.location.href}
+                src={`${window.location.origin}/datalayer/notebook`}
                 style={{
                   width: '100%',
                   height: 'calc(100vh - 280px)',
@@ -196,7 +196,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
                 Collaborator 2
               </Box>
               <iframe
-                src={window.location.href}
+                src={`${window.location.origin}/datalayer/notebook`}
                 style={{
                   width: '100%',
                   height: 'calc(100vh - 280px)',

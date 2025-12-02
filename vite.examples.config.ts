@@ -40,7 +40,11 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+      // Handle SPA routing - serve index.html for all routes
+      middlewareMode: false,
     },
+
+    appType: 'spa',
 
     plugins: [
       react(),
