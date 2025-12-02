@@ -196,8 +196,23 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             # We'll create the MCP connection per request to avoid async context issues
             default_model = config.get_default_model()
             self.log.info(f"Creating chat agent with model: {default_model}")
-            agent = create_chat_agent(model=default_model, mcp_server=None)
-            self.log.info("Chat agent created; MCP tools will be attached per request")
+            
+            agent = None
+            try:
+                agent = create_chat_agent(model=default_model, mcp_server=None)
+                if agent is None:
+                    self.log.warning(
+                        "Chat agent could not be created (missing API keys or configuration). "
+                        "Chat functionality will be disabled."
+                    )
+                else:
+                    self.log.info("Chat agent created; MCP tools will be attached per request")
+            except Exception as agent_error:
+                self.log.warning(
+                    f"Failed to create chat agent: {agent_error}. "
+                    "Chat functionality will be disabled. "
+                    "Please check your API key configuration (e.g., ANTHROPIC_API_KEY, OPENAI_API_KEY)."
+                )
 
             # Create MCP tool manager for additional MCP servers
             mcp_manager = MCPToolManager()
@@ -210,17 +225,25 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                 )
                 mcp_manager.add_server(server)
 
-            # Register additional MCP tools with agent
-            mcp_manager.register_with_agent(agent)
+            # Register additional MCP tools with agent (only if agent exists)
+            if agent is not None:
+                mcp_manager.register_with_agent(agent)
 
             # Store in settings for handlers to access
+            # Store agent even if None so handlers can check for availability
             self.settings["chat_agent"] = agent
             self.settings["mcp_manager"] = mcp_manager
             self.settings["chat_config"] = config
             self.settings["chat_base_url"] = connection_url
             self.settings["chat_token"] = token
 
-            self.log.info("Datalayer Core extension initialized successfully")
+            if agent is None:
+                self.log.info(
+                    "Datalayer Core extension initialized with limited functionality "
+                    "(chat agent unavailable)"
+                )
+            else:
+                self.log.info("Datalayer Core extension initialized successfully")
 
         except Exception as e:
             self.log.error(f"Error initializing Datalayer Core: {e}", exc_info=True)
