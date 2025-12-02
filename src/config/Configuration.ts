@@ -189,7 +189,7 @@ export class DatalayerConfiguration {
  * Default configuration values for Datalayer
  */
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  runUrl: 'https://prod1.datalayer.run',
+  runUrl: 'https://oss.datalayer.run',
   credits: 100,
   cpuEnvironment: 'python-cpu-env',
   gpuEnvironment: 'ai-env',

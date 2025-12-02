@@ -8,6 +8,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
+import path from 'path';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -51,7 +52,7 @@ export default defineConfig({
     global: 'globalThis',
     __webpack_public_path__: '""',
   },
-  assetsInclude: ['**/*.whl', '**/*.raw.css'],
+  assetsInclude: ['**/*.whl', '**/*.raw.css', '**/*.lexical'],
   build: {
     rollupOptions: {
       output: {
@@ -76,11 +77,11 @@ export default defineConfig({
       },
       {
         find: 'crypto',
-        replacement: 'crypto-browserify',
+        replacement: path.resolve(__dirname, 'node_modules/crypto-browserify'),
       },
       {
         find: 'buffer',
-        replacement: 'buffer',
+        replacement: path.resolve(__dirname, 'node_modules/buffer'),
       },
     ],
   },
@@ -89,6 +90,7 @@ export default defineConfig({
     esbuildOptions: {
       loader: {
         '.whl': 'text',
+        '.lexical': 'json',
       },
     },
   },

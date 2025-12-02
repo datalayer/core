@@ -11,6 +11,8 @@ export const EXAMPLES: Record<
   string,
   () => Promise<{ default: React.ComponentType }>
 > = {
+  AgUINotebookExample: () => import('./AgUINotebookExample'),
+  AgUILexicalExample: () => import('./AgUILexicalExample'),
   CellExample: () => import('./CellExample'),
   ChatExample: () => import('./ChatExample'),
   DatalayerNotebookExample: () => import('./DatalayerNotebookExample'),
@@ -44,7 +46,6 @@ export function getSelectedExample(): () => Promise<{
       `Example "${exampleName}" not found. Available examples:`,
       getExampleNames(),
     );
-    console.log('Falling back to NotebookExample');
     return EXAMPLES['NotebookExample'];
   }
 

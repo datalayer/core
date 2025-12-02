@@ -36,6 +36,7 @@ dependencies = [
     "pydantic-ai-slim[anthropic,openai,cli,mcp]>=1.9.1",
     "pydantic-settings",
     "pydantic[email]",
+    "pyyaml>=6.0",  # Require newer PyYAML that builds on Python 3.12+
     "questionary",
     "requests",
     "rich",
@@ -65,9 +66,9 @@ test = [
     "typing-extensions",
 ]
 docs = [
-    "click<=8.2.1",  # 8.2.2 is broken https://github.com/pallets/click/issues/3024
+    "click>=8.3.1",  # Use latest version, 8.2.2 issue has been fixed
     "npdoc_to_md",
-    "pydoc-markdown",
+    "pydoc-markdown>=4.0",  # Use modern version with proper module structure
 ]
 examples = [
     "fastapi",

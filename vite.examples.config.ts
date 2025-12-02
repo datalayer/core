@@ -134,11 +134,11 @@ export default defineConfig(({ mode }) => {
         },
         {
           find: 'crypto',
-          replacement: 'crypto-browserify',
+          replacement: path.resolve(__dirname, 'node_modules/crypto-browserify'),
         },
         {
           find: 'buffer',
-          replacement: 'buffer',
+          replacement: path.resolve(__dirname, 'node_modules/buffer'),
         },
       ],
     },

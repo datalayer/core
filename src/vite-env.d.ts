@@ -4,3 +4,8 @@
  */
 
 /// <reference types="vite/client" />
+
+declare module '*.lexical' {
+  const content: any;
+  export default content;
+}

@@ -3,6 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/// <reference types="vite/client" />
+
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -29,8 +31,19 @@ const loadConfigurations = () => {
   if (datalayerConfigElement?.textContent) {
     try {
       const datalayerConfig = JSON.parse(datalayerConfigElement.textContent);
+
+      // If token is empty or still has placeholder, use environment variable from .env
+      if (
+        !datalayerConfig.token ||
+        datalayerConfig.token.startsWith('%VITE_')
+      ) {
+        const envToken = import.meta.env.VITE_DATALAYER_API_TOKEN;
+        if (envToken) {
+          datalayerConfig.token = envToken;
+        }
+      }
+
       if (datalayerConfig.runUrl) {
-        console.log('Setting Datalayer config:', datalayerConfig);
         coreStore.getState().setConfiguration(datalayerConfig);
 
         // Also set the token in the IAM store for API authentication
@@ -97,57 +110,55 @@ const ExampleApp: React.FC = () => {
     // Load configurations
     loadConfigurations();
 
-    // Create service manager
-    const createManager = async () => {
-      const { configuration } = coreStore.getState();
-
-      // Try to use DatalayerServiceManager if we have a token
-      if (configuration?.token) {
-        console.log('Using DatalayerServiceManager with token');
-        try {
-          const manager = await createDatalayerServiceManager(
-            configuration.cpuEnvironment || 'python-3.11',
-            configuration.credits || 100,
-          );
-          await manager.ready;
-          console.log('DatalayerServiceManager is ready');
-          setServiceManager(manager);
-          return;
-        } catch (error) {
-          console.error('Failed to create DatalayerServiceManager:', error);
-          console.log('Falling back to regular ServiceManager');
-        }
-      }
-
-      // Fall back to regular ServiceManager
-      console.log('Using regular ServiceManager (no Datalayer token)');
-      const serverSettings = createServerSettings(
-        getJupyterServerUrl(),
-        getJupyterServerToken(),
-      );
-      const manager = new ServiceManager({ serverSettings });
-      await manager.ready;
-      console.log('Regular ServiceManager is ready');
-      setServiceManager(manager);
-    };
-
-    createManager();
-
-    // Load the selected example
-    const loadExample = async () => {
+    // Create service manager and load example - must be sequential
+    const initializeApp = async () => {
       try {
+        const { configuration } = coreStore.getState();
+
+        // Try to use DatalayerServiceManager if we have a token
+        if (configuration?.token) {
+          try {
+            const manager = await createDatalayerServiceManager(
+              configuration.cpuEnvironment || 'python-3.11',
+              configuration.credits || 100,
+            );
+            await manager.ready;
+            setServiceManager(manager);
+          } catch (error) {
+            console.error('Failed to create DatalayerServiceManager:', error);
+            // Fall back to regular ServiceManager
+            const serverSettings = createServerSettings(
+              getJupyterServerUrl(),
+              getJupyterServerToken(),
+            );
+            const manager = new ServiceManager({ serverSettings });
+            await manager.ready;
+            setServiceManager(manager);
+          }
+        } else {
+          // Use regular ServiceManager (no Datalayer token)
+          const serverSettings = createServerSettings(
+            getJupyterServerUrl(),
+            getJupyterServerToken(),
+          );
+          const manager = new ServiceManager({ serverSettings });
+          await manager.ready;
+          setServiceManager(manager);
+        }
+
+        // Load the example AFTER service manager is ready
         const exampleLoader = getSelectedExample();
         const module = await exampleLoader();
         setExampleComponent(() => module.default);
         setLoading(false);
       } catch (e) {
-        console.error('Failed to load example:', e);
-        setError(`Failed to load example: ${e}`);
+        console.error('Failed to initialize app:', e);
+        setError(`Failed to initialize app: ${e}`);
         setLoading(false);
       }
     };
 
-    loadExample();
+    initializeApp();
   }, []);
 
   if (loading) {
