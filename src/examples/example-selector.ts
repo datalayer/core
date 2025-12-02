@@ -11,8 +11,8 @@ export const EXAMPLES: Record<
   string,
   () => Promise<{ default: React.ComponentType }>
 > = {
-  AgUINotebookExample: () => import('./AgUINotebookExample'),
-  AgUILexicalExample: () => import('./AgUILexicalExample'),
+  AgUiNotebookExample: () => import('./AgUiNotebookExample'),
+  AgUiLexicalExample: () => import('./AgUiLexicalExample'),
   CellExample: () => import('./CellExample'),
   ChatExample: () => import('./ChatExample'),
   DatalayerNotebookExample: () => import('./DatalayerNotebookExample'),

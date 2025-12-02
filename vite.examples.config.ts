@@ -8,23 +8,6 @@ import react from '@vitejs/plugin-react';
 import { treatAsCommonjs } from 'vite-plugin-treat-umd-as-commonjs';
 import path from 'path';
 
-// Select which example to run by uncommenting the desired line
-const EXAMPLE =
-  // 'CellExample';
-  // 'AgUILexicalExample';
-  // 'AgUINotebookExample';
-  'DatalayerNotebookExample';
-// 'NotebookExample';
-// 'NotebookMutationsKernel';
-// 'NotebookMutationsServiceManager';
-// 'ReactRouterNavigationExample';
-// 'NativeNavigationExample';
-
-// Allow override via environment variable
-const SELECTED_EXAMPLE = process.env.EXAMPLE || EXAMPLE;
-
-console.log(`🚀 Running example: ${SELECTED_EXAMPLE}`);
-
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
@@ -119,7 +102,6 @@ export default defineConfig(({ mode }) => {
     define: {
       global: 'globalThis',
       __webpack_public_path__: '""',
-      'import.meta.env.EXAMPLE': JSON.stringify(SELECTED_EXAMPLE),
     },
 
     assetsInclude: ['**/*.whl', '**/*.raw.css'],
