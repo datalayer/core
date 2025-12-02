@@ -29,7 +29,7 @@ echo "VITE_DATALAYER_RUN_URL=$DATALAYER_RUN_URL" >> .env
 3. Start the examples server:
 
 ```bash
-npm run example
+npm run examples
 ```
 
 4. Open http://localhost:3000/ in your browser

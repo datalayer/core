@@ -148,7 +148,7 @@ npm install
 echo "VITE_DATALAYER_API_KEY=your-token-here" > .env
 
 # Start the examples server
-npm run example
+npm run examples
 ```
 
 Available at http://localhost:3000/:

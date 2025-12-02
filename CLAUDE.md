@@ -59,7 +59,7 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 **Python**: `pip install -e .[test]` | `pytest datalayer_core/tests/` | `mypy datalayer_core/`
 **TypeScript Library**: `npm install` | `npm run build:lib` | `npm run lint` | `npm run test`
 **Integration Tests**: `npm run test:integration` (runs all API and SDK integration tests)
-**Examples**: `npm run example` (starts dev server at http://localhost:3000/)
+**Examples**: `npm run examples` (starts dev server at http://localhost:3000/)
 **Code Quality**: `npm run check` | `npm run check:fix` | `npm run lint` | `npm run format` | `npm run type-check`
 **Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs) | See `API.md` for comprehensive API/SDK examples
 **Make**: `make build` | `make start` | `make docs`
@@ -113,7 +113,7 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 **Start the examples server:**
 
 ```bash
-npm run example
+npm run examples
 ```
 
 The examples are served at http://localhost:3000/ and include:

@@ -56,7 +56,7 @@ npm run apply:patches
 1. **Make changes** in `../jupyter-ui/packages/lexical` or `../jupyter-ui/packages/react`
 2. **Option A - Manual sync**: `npm run sync:jupyter` when ready to test
 3. **Option B - Auto sync**: `npm run sync:jupyter:watch` in a separate terminal for live updates
-4. **Test changes**: Run Storybook or build examples (`npm run storybook` or `npm run example`)
+4. **Test changes**: Run Storybook or build examples (`npm run storybook` or `npm run examples`)
 5. **Create patches**: `npm run create:patches` (when ready to commit)
 
 The patches in `patches/` directory are automatically applied when anyone runs `npm install`, ensuring all contributors get your modifications.
@@ -191,13 +191,13 @@ npm run build-storybook
 
 ```bash
 # Run example with Vite
-npm run example
+npm run examples
 
 # Run example with fresh Vite cache (recommended after patches)
-npm run example:fresh
+npm run examples:fresh
 
 # Run Next.js example
-npm run example:nextjs
+npm run examples:nextjs
 
 # Build examples
 npm run build:examples
@@ -213,7 +213,7 @@ Vite caches compiled modules in `node_modules/.vite`, which can cause issues whe
 npm run clean:cache
 
 # Run example with fresh cache (clears cache first)
-EXAMPLE=AgUIExample npm run example:fresh
+EXAMPLE=AgUIExample npm run examples:fresh
 
 # Nuclear option: rebuild everything with fresh cache
 npm run rebuild:fresh
@@ -232,7 +232,7 @@ npm run rebuild:fresh
 npm run rebuild:fresh
 
 # Then start example
-EXAMPLE=AgUIExample npm run example
+EXAMPLE=AgUIExample npm run examples
 ```
 
 ## Patch Management

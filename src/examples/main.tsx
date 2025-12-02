@@ -153,6 +153,10 @@ const NotebookOnlyApp: React.FC = () => {
               runUrl: configuration.runUrl,
               token: configuration.token,
             });
+            console.log(
+              '[NotebookOnlyApp] Created collaboration provider:',
+              provider,
+            );
             setCollaborationProvider(provider);
           } catch (error) {
             console.error('Failed to create DatalayerServiceManager:', error);
@@ -215,6 +219,12 @@ const NotebookOnlyApp: React.FC = () => {
   }
 
   const NOTEBOOK_ID = '01JZQRQ35GG871QQCZW9TB1A8J';
+
+  console.log('[NotebookOnlyApp] Rendering with:', {
+    hasServiceManager: !!serviceManager,
+    hasCollaborationProvider: !!collaborationProvider,
+    notebookId: NOTEBOOK_ID,
+  });
 
   return (
     <JupyterReactTheme>
