@@ -196,7 +196,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             # We'll create the MCP connection per request to avoid async context issues
             default_model = config.get_default_model()
             self.log.info(f"Creating chat agent with model: {default_model}")
-            
+
             agent = None
             try:
                 agent = create_chat_agent(model=default_model, mcp_server=None)
@@ -206,7 +206,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
                         "Chat functionality will be disabled."
                     )
                 else:
-                    self.log.info("Chat agent created; MCP tools will be attached per request")
+                    self.log.info(
+                        "Chat agent created; MCP tools will be attached per request"
+                    )
             except Exception as agent_error:
                 self.log.warning(
                     f"Failed to create chat agent: {agent_error}. "
