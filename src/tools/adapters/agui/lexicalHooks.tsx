@@ -20,22 +20,19 @@ import {
   type UseFrontendToolFn,
 } from './AgUIToolAdapter';
 
-// TODO: Re-enable when @datalayer/jupyter-lexical exports these
-// import {
-//   useLexicalStore,
-//   DefaultExecutor as LexicalDefaultExecutor,
-//   lexicalToolDefinitions,
-//   lexicalToolOperations,
-// } from '@datalayer/jupyter-lexical';
+// TODO: Re-enable when @datalayer/jupyter-react exports these
+// import type { ToolExecutionContext } from '@datalayer/jupyter-react';
 
-// Temporary placeholders
+// Import from patched @datalayer/jupyter-lexical package
+import {
+  useLexicalStore,
+  DefaultExecutor as LexicalDefaultExecutor,
+  lexicalToolDefinitions,
+  lexicalToolOperations,
+} from '@datalayer/jupyter-lexical';
+
+// Temporary placeholder for ToolExecutionContext
 type ToolExecutionContext = any;
-const useLexicalStore = () => ({});
-class LexicalDefaultExecutor {
-  constructor(...args: any[]) {}
-}
-const lexicalToolDefinitions: any[] = [];
-const lexicalToolOperations: Record<string, any> = {};
 
 // Re-export shared types and components for convenience
 export { ActionRegistrar, type UseFrontendToolFn };

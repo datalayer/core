@@ -12,25 +12,13 @@
  * @module tools/adapters/agui/AgUIToolAdapter
  */
 
-// TODO: Re-enable when @datalayer/jupyter-react exports these types
-// import type {
-//   ToolDefinition,
-//   ToolOperation,
-//   ToolExecutionContext,
-// } from '@datalayer/jupyter-react';
-// import { OperationRunner } from '@datalayer/jupyter-react';
-
-// Temporary placeholder types until jupyter-react exports are available
-type ToolDefinition = any;
-type ToolOperation<T, U> = any;
-type ToolExecutionContext = any;
-class OperationRunner {
-  async execute(...args: any[]): Promise<any> {
-    throw new Error(
-      'OperationRunner not available - update @datalayer/jupyter-react',
-    );
-  }
-}
+// Import from patched @datalayer/jupyter-react package
+import type {
+  ToolDefinition,
+  ToolOperation,
+  ToolExecutionContext,
+} from '@datalayer/jupyter-react';
+import { OperationRunner } from '@datalayer/jupyter-react';
 
 /**
  * Type signature for CopilotKit's useFrontendTool hook
