@@ -20,22 +20,19 @@ import {
   type UseFrontendToolFn,
 } from './AgUIToolAdapter';
 
-// TODO: Re-enable when jupyter-react exports these
-// import {
-//   useNotebookStore2,
-//   DefaultExecutor,
-//   notebookToolDefinitions,
-//   notebookToolOperations,
-// } from '@datalayer/jupyter-react';
+// Import from patched @datalayer/jupyter-react package
+import {
+  notebookStore2,
+  DefaultExecutor,
+  notebookToolDefinitions,
+  notebookToolOperations,
+} from '@datalayer/jupyter-react';
 
-// Temporary placeholders
+// Temporary placeholder for ToolExecutionContext
 type ToolExecutionContext = any;
-const useNotebookStore2 = () => ({});
-class DefaultExecutor {
-  constructor(...args: any[]) {}
-}
-const notebookToolDefinitions: any[] = [];
-const notebookToolOperations: Record<string, any> = {};
+
+// Hook wrapper to get notebook store state
+const useNotebookStore2 = () => notebookStore2.getState();
 
 // Re-export shared types and components for convenience
 export { ActionRegistrar, type UseFrontendToolFn };

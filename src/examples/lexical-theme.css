@@ -174,23 +174,66 @@
    Code Blocks
    ============================================ */
 
-.lexical-theme-code-block {
-  background-color: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
-  overflow-x: auto;
+/* Code blocks styled like Jupyter cells */
+code.lexical-theme-code-block,
+code.lexical-theme-code-block[spellcheck],
+code.lexical-theme-code-block[data-highlight-language] {
+  background-color: #f7f7f7 !important;
+  background: #f7f7f7 !important;
+  border: 1px solid #d3d3d3 !important;
+  border-radius: 6px !important;
+  border-left: 3px solid #0366d6 !important;
+  padding: 8px 16px 8px 70px !important;
+  margin: 16px 0 0 0 !important;
+  overflow-x: auto !important;
   font-family: var(
     --jp-code-font-family,
     'Monaco',
     'Menlo',
     'Ubuntu Mono',
     monospace
-  );
-  font-size: var(--jp-code-font-size, 0.9em);
-  line-height: var(--jp-code-line-height, 1.5);
-  color: var(--jp-content-font-color1, var(--fgColor-default));
+  ) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  color: #24292e !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  display: block !important;
+  min-height: 50px !important;
+  position: relative !important;
+}
+
+/* Display line numbers from data-gutter attribute */
+code.lexical-theme-code-block::before {
+  content: attr(data-gutter);
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 50px !important;
+  padding: 8px 8px 8px 0 !important;
+  color: #999 !important;
+  text-align: right !important;
+  white-space: pre !important;
+  font-family: monospace !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  background-color: #f7f7f7 !important;
+  border-right: 1px solid #e1e4e8 !important;
+}
+
+/* Force transparent background on all child elements */
+code.lexical-theme-code-block *,
+code.lexical-theme-code-block span,
+code.lexical-theme-code-block span[class*='lexical-theme-code-token'],
+code.lexical-theme-code-block span[data-lexical-text],
+code.lexical-theme-code-block br {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+code.lexical-theme-code-block:hover {
+  border-color: #66afe9 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Code syntax highlighting tokens using JupyterLab CodeMirror colors */
