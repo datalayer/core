@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.1.0",
+  "version": "0.0.19",
   "type": "module",
   "workspaces": [
     ".",
@@ -117,7 +117,7 @@
     "@jupyterlab/coreutils": "^6.0.0",
     "@jupyterlab/documentsearch": "^4.5.0",
     "@jupyterlab/rendermime": "^4.5.0",
-    "@jupyterlab/services": "7.4.5",
+    "@jupyterlab/services": "^7.0.0",
     "@jupyterlab/translation": "^4.5.0",
     "@jupyterlab/ui-components": "^4.5.0",
     "@jupyterlite/javascript-kernel-extension": "^0.3.0",
@@ -237,7 +237,6 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "@jupyterlab/services": "7.4.5",
     "@microsoft/fast-colors": "5.3.1",
     "@microsoft/fast-components": "2.30.6",
     "@microsoft/fast-element": "1.13.0",
