@@ -54,6 +54,7 @@ export default defineConfig({
   assetsInclude: ['**/*.whl', '**/*.raw.css', '**/*.lexical'],
   build: {
     rollupOptions: {
+      external: ['keytar'],
       output: {
         assetFileNames: assetInfo => {
           if (/pypi\//.test(assetInfo.names[0])) {
@@ -78,6 +79,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['crypto-browserify', 'buffer'],
+    exclude: ['keytar'],
     esbuildOptions: {
       loader: {
         '.whl': 'text',
