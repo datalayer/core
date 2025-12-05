@@ -1695,7 +1695,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await uploadNotebook(formData);
         return resp;
       },
-      onSuccess: async (resp, _variables) => {
+      onSuccess: (resp, _variables) => {
         if (resp.success && resp.notebook) {
           const notebook = toNotebook(resp.notebook);
           // Set detail cache
@@ -1703,13 +1703,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
-          // Invalidate all notebook queries (including bySpace) and wait for completion
-          await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.notebooks.all(),
-            }),
-            queryClient.invalidateQueries({ queryKey: queryKeys.items.all() }),
-          ]);
+          // Refetch all notebook queries immediately (including bySpace)
+          queryClient.refetchQueries({
+            queryKey: queryKeys.notebooks.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -1801,17 +1800,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
-          // Invalidate list to refetch
-          const spaceId = notebook.space;
-          if (spaceId) {
-            const spaceIdStr =
-              typeof spaceId === 'string' ? spaceId : spaceId.id;
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.notebooks.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all notebook queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.notebooks.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -1959,7 +1953,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await uploadDocument(formData);
         return resp;
       },
-      onSuccess: async (resp, _variables) => {
+      onSuccess: (resp, _variables) => {
         if (resp.success && resp.document) {
           const document = toDocument(resp.document);
           // Set detail cache
@@ -1967,13 +1961,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.documents.detail(document.id),
             document,
           );
-          // Invalidate all document queries (including bySpace) and wait for completion
-          await Promise.all([
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.documents.all(),
-            }),
-            queryClient.invalidateQueries({ queryKey: queryKeys.items.all() }),
-          ]);
+          // Refetch all document queries immediately (including bySpace)
+          queryClient.refetchQueries({
+            queryKey: queryKeys.documents.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -1995,17 +1988,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const doc = toDocument(resp.document);
           // Set detail cache
           queryClient.setQueryData(queryKeys.documents.detail(doc.id), doc);
-          // Invalidate list to refetch
-          const spaceId = doc.space;
-          if (spaceId) {
-            const spaceIdStr =
-              typeof spaceId === 'string' ? spaceId : spaceId.id;
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.documents.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all document queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.documents.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4078,18 +4066,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const cell = toCell(resp.cell);
           // Set detail cache
           queryClient.setQueryData(queryKeys.cells.detail(cell.id), cell);
-          // Invalidate list to refetch
-          if (cell?.space) {
-            const spaceIdStr =
-              typeof cell.space === 'string'
-                ? cell.space
-                : (cell.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.cells.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all cell queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.cells.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4274,18 +4256,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const lesson = toLesson(resp.notebook);
           // Set detail cache
           queryClient.setQueryData(queryKeys.lessons.detail(lesson.id), lesson);
-          // Invalidate list to refetch
-          if (lesson?.space) {
-            const spaceIdStr =
-              typeof lesson.space === 'string'
-                ? lesson.space
-                : (lesson.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.lessons.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all lesson queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.lessons.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4403,18 +4379,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.exercises.detail(exercise.id),
             exercise,
           );
-          // Invalidate list to refetch
-          if (exercise?.space) {
-            const spaceIdStr =
-              typeof exercise.space === 'string'
-                ? exercise.space
-                : (exercise.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.exercises.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all exercise queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.exercises.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4481,18 +4451,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.assignments.detail(assignment.id),
             assignment,
           );
-          // Invalidate list to refetch
-          if (assignment?.space) {
-            const spaceIdStr =
-              typeof assignment.space === 'string'
-                ? assignment.space
-                : (assignment.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.assignments.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all assignment queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.assignments.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
