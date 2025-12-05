@@ -470,6 +470,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/notebooks`,
   );
 
+  // Hook for document upload/creation
+  const {
+    isLoading: documentUploadLoading,
+    uploadAndSubmit: uploadDocument,
+    progress: documentUploadProgress,
+    reset: resetDocumentUpload,
+  } = useUploadForm(
+    `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/lexicals`,
+  );
+
   // ============================================================================
   // Transformation Functions (kept from original useCache)
   // Note: These functions use 'any' because they handle dynamic API responses
@@ -1665,22 +1675,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         name,
         description,
         notebookType = 'notebook',
+        file,
       }: {
         spaceId: string;
         name: string;
         description?: string;
         notebookType?: string;
+        file?: File;
       }) => {
         const formData = new FormData();
         formData.append('spaceId', spaceId);
         formData.append('notebookType', notebookType);
         formData.append('name', name);
         formData.append('description', description || '');
+        if (file) {
+          formData.append('file', file);
+        }
 
         const resp = await uploadNotebook(formData);
         return resp;
       },
-      onSuccess: (resp, _variables) => {
+      onSuccess: async (resp, _variables) => {
         if (resp.success && resp.notebook) {
           const notebook = toNotebook(resp.notebook);
           // Set detail cache
@@ -1688,10 +1703,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
-          // Invalidate all notebook queries (including bySpace)
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.notebooks.all(),
-          });
+          // Invalidate all notebook queries (including bySpace) and wait for completion
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.notebooks.all(),
+            }),
+            queryClient.invalidateQueries({ queryKey: queryKeys.items.all() }),
+          ]);
         }
       },
     });
@@ -1907,6 +1925,56 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.documents.all(),
         });
+      },
+    });
+  };
+
+  /**
+   * Create document
+   */
+  const useCreateDocument = () => {
+    return useMutation({
+      mutationFn: async ({
+        spaceId,
+        name,
+        description,
+        documentType = 'document',
+        file,
+      }: {
+        spaceId: string;
+        name: string;
+        description?: string;
+        documentType?: string;
+        file?: File;
+      }) => {
+        const formData = new FormData();
+        formData.append('spaceId', spaceId);
+        formData.append('documentType', documentType);
+        formData.append('name', name);
+        formData.append('description', description || '');
+        if (file) {
+          formData.append('file', file);
+        }
+
+        const resp = await uploadDocument(formData);
+        return resp;
+      },
+      onSuccess: async (resp, _variables) => {
+        if (resp.success && resp.document) {
+          const document = toDocument(resp.document);
+          // Set detail cache
+          queryClient.setQueryData(
+            queryKeys.documents.detail(document.id),
+            document,
+          );
+          // Invalidate all document queries (including bySpace) and wait for completion
+          await Promise.all([
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.documents.all(),
+            }),
+            queryClient.invalidateQueries({ queryKey: queryKeys.items.all() }),
+          ]);
+        }
       },
     });
   };
@@ -7413,6 +7481,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Documents
     useDocument,
     useDocumentsBySpace,
+    useCreateDocument,
     useUpdateDocument,
     useUpdateDocumentModel,
     useCloneDocument,
@@ -7576,6 +7645,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     notebookUploadLoading,
     notebookUploadProgress,
     resetNotebookUpload,
+    documentUploadLoading,
+    documentUploadProgress,
+    resetDocumentUpload,
   };
 };
 
