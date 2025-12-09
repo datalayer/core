@@ -14,7 +14,6 @@ export const EXAMPLES: Record<
   AgUiNotebookExample: () => import('./AgUiNotebookExample'),
   AgUiLexicalExample: () => import('./AgUiLexicalExample'),
   CellExample: () => import('./CellExample'),
-  ChatExample: () => import('./ChatExample'),
   DatalayerNotebookExample: () => import('./DatalayerNotebookExample'),
   NotebookExample: () => import('./NotebookExample'),
   NotebookMutationsKernel: () => import('./NotebookMutationsKernel'),

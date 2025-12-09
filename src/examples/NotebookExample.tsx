@@ -18,6 +18,7 @@ import {
   CellSidebarButton,
 } from '@datalayer/jupyter-react';
 import { ServiceManager } from '@jupyterlab/services';
+
 import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
 const NOTEBOOK_ID = 'notebook-example-1';

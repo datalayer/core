@@ -34,7 +34,6 @@
  * @module models
  */
 
-export * from './AIAgent';
 export * from './Assignment';
 export * from './Base';
 export * from './Cell';
