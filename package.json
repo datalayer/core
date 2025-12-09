@@ -100,9 +100,6 @@
     "rebuild:fresh": "npm run create:patches && npm install && npm run build && npm run clean:cache"
   },
   "dependencies": {
-    "@ai-sdk/react": "^2.0.34",
-    "@copilotkit/react-core": "^1.10.6",
-    "@copilotkit/react-ui": "^1.10.6",
     "@datalayer/icons-react": "^1.0.6",
     "@datalayer/jupyter-lexical": "^1.0.6",
     "@datalayer/jupyter-react": "^1.1.8",
@@ -185,7 +182,10 @@
     }
   },
   "devDependencies": {
+    "@ai-sdk/react": "^2.0.34",
     "@chromatic-com/storybook": "^4.1.0",
+    "@copilotkit/react-core": "^1.10.6",
+    "@copilotkit/react-ui": "^1.10.6",
     "@eslint/js": "^9.29.0",
     "@storybook/addon-a11y": "^9.1.1",
     "@storybook/addon-docs": "^9.1.1",

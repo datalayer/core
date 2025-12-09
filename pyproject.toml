@@ -32,9 +32,6 @@ dependencies = [
     "jupyter_server>=2.10,<3",
     "keyring==23.0.1",
     "mcp",
-    "pydantic-ai-slim>=1.9.1,<2.0",
-    "anthropic>=0.40.0",
-    "openai>=1.0.0",
     "pydantic-settings",
     "pydantic[email]",
     "pyyaml>=6.0",  # Require newer PyYAML that builds on Python 3.12+
