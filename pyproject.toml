@@ -29,7 +29,7 @@ dependencies = [
     "jupyter-console",
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",
-    "jupyter_server>=2.10,<3",
+    "jupyter-server>=2.10,<3",
     "keyring==23.0.1",
     "mcp",
     "pydantic-settings",
