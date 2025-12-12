@@ -58,6 +58,10 @@ class PasswordResetRequest(BaseModel):
     """Password reset request model."""
 
     handle: str = Field(..., description="User handle")
+    password: str = Field(..., description="New password")
+    password_confirm: str = Field(
+        ..., alias="passwordConfirm", description="Password confirmation"
+    )
 
 
 class PasswordResetConfirm(BaseModel):

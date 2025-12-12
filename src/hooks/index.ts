@@ -3,7 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './useAIAgents';
 export * from './useAuthorization';
 export * from './useBackdrop';
 export * from './useBackdropJupyterLab';
@@ -23,7 +22,6 @@ export * from './useLocation';
 export * from './useLocationHandles';
 export * from './useNavigate';
 export * from './useParams';
-export * from './useNotebookAIAgent';
 export * from './useOnClickOutside';
 export * from './useRef';
 export * from './useRuntimes';

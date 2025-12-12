@@ -3,6 +3,8 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+/// <reference types="vite/client" />
+
 /**
  * Registry of available examples with dynamic imports.
  * Add new examples here to make them available in the example runner.
@@ -11,10 +13,7 @@ export const EXAMPLES: Record<
   string,
   () => Promise<{ default: React.ComponentType }>
 > = {
-  AgUiNotebookExample: () => import('./AgUiNotebookExample'),
-  AgUiLexicalExample: () => import('./AgUiLexicalExample'),
   CellExample: () => import('./CellExample'),
-  ChatExample: () => import('./ChatExample'),
   DatalayerNotebookExample: () => import('./DatalayerNotebookExample'),
   NotebookExample: () => import('./NotebookExample'),
   NotebookMutationsKernel: () => import('./NotebookMutationsKernel'),

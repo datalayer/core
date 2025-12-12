@@ -126,6 +126,7 @@ export default defineConfig(({ mode }) => {
 
     optimizeDeps: {
       include: ['crypto-browserify', 'buffer'],
+      exclude: ['keytar'],
       esbuildOptions: {
         loader: {
           '.whl': 'text',
@@ -135,6 +136,7 @@ export default defineConfig(({ mode }) => {
 
     build: {
       rollupOptions: {
+        external: ['keytar'],
         input: path.resolve(__dirname, 'index.html'),
       },
     },

@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.0.17",
+  "version": "0.0.19",
   "type": "module",
   "workspaces": [
     ".",
@@ -85,9 +85,8 @@
     "watch:lib:res": "gulp resources-to-lib-watch",
     "watch:lib:src": "tsc -b -w",
     "type-check:watch": "tsc -b -w --noEmit",
-    "examples": "vite --config vite.examples.config.ts",
-    "examples:chat": "run-p jupyter:start example:chat:vite",
-    "examples:chat:vite": "EXAMPLE=ChatExample vite --config vite.examples.config.ts",
+    "examples": "run-p jupyter:start examples:vite",
+    "examples:vite": "VITE_DATALAYER_RUN_URL=http://localhost:8888 vite --config vite.examples.config.ts",
     "examples:nextjs": "npm run dev --workspace=nextjs-notebook-example",
     "jupyter:start": "./dev/sh/start-jupyter-server.sh",
     "prepare": "husky",
@@ -101,9 +100,6 @@
     "rebuild:fresh": "npm run create:patches && npm install && npm run build && npm run clean:cache"
   },
   "dependencies": {
-    "@ai-sdk/react": "^2.0.34",
-    "@copilotkit/react-core": "^1.10.6",
-    "@copilotkit/react-ui": "^1.10.6",
     "@datalayer/icons-react": "^1.0.6",
     "@datalayer/jupyter-lexical": "^1.0.6",
     "@datalayer/jupyter-react": "^1.1.8",
@@ -117,7 +113,7 @@
     "@jupyterlab/coreutils": "^6.0.0",
     "@jupyterlab/documentsearch": "^4.5.0",
     "@jupyterlab/rendermime": "^4.5.0",
-    "@jupyterlab/services": "7.4.5",
+    "@jupyterlab/services": "^7.0.0",
     "@jupyterlab/translation": "^4.5.0",
     "@jupyterlab/ui-components": "^4.5.0",
     "@jupyterlite/javascript-kernel-extension": "^0.3.0",
@@ -237,7 +233,6 @@
     "vitest": "^3.2.4"
   },
   "overrides": {
-    "@jupyterlab/services": "7.4.5",
     "@microsoft/fast-colors": "5.3.1",
     "@microsoft/fast-components": "2.30.6",
     "@microsoft/fast-element": "1.13.0",

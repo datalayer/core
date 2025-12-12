@@ -470,6 +470,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/notebooks`,
   );
 
+  // Hook for document upload/creation
+  const {
+    isLoading: documentUploadLoading,
+    uploadAndSubmit: uploadDocument,
+    progress: documentUploadProgress,
+    reset: resetDocumentUpload,
+  } = useUploadForm(
+    `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/lexicals`,
+  );
+
   // ============================================================================
   // Transformation Functions (kept from original useCache)
   // Note: These functions use 'any' because they handle dynamic API responses
@@ -1665,17 +1675,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         name,
         description,
         notebookType = 'notebook',
+        file,
       }: {
         spaceId: string;
         name: string;
         description?: string;
         notebookType?: string;
+        file?: File;
       }) => {
         const formData = new FormData();
         formData.append('spaceId', spaceId);
         formData.append('notebookType', notebookType);
         formData.append('name', name);
         formData.append('description', description || '');
+        if (file) {
+          formData.append('file', file);
+        }
 
         const resp = await uploadNotebook(formData);
         return resp;
@@ -1688,10 +1703,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
-          // Invalidate all notebook queries (including bySpace)
-          queryClient.invalidateQueries({
+          // Refetch all notebook queries immediately (including bySpace)
+          queryClient.refetchQueries({
             queryKey: queryKeys.notebooks.all(),
           });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -1783,17 +1800,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.notebooks.detail(notebook.id),
             notebook,
           );
-          // Invalidate list to refetch
-          const spaceId = notebook.space;
-          if (spaceId) {
-            const spaceIdStr =
-              typeof spaceId === 'string' ? spaceId : spaceId.id;
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.notebooks.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all notebook queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.notebooks.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -1912,6 +1924,55 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Create document
+   */
+  const useCreateDocument = () => {
+    return useMutation({
+      mutationFn: async ({
+        spaceId,
+        name,
+        description,
+        documentType = 'document',
+        file,
+      }: {
+        spaceId: string;
+        name: string;
+        description?: string;
+        documentType?: string;
+        file?: File;
+      }) => {
+        const formData = new FormData();
+        formData.append('spaceId', spaceId);
+        formData.append('documentType', documentType);
+        formData.append('name', name);
+        formData.append('description', description || '');
+        if (file) {
+          formData.append('file', file);
+        }
+
+        const resp = await uploadDocument(formData);
+        return resp;
+      },
+      onSuccess: (resp, _variables) => {
+        if (resp.success && resp.document) {
+          const document = toDocument(resp.document);
+          // Set detail cache
+          queryClient.setQueryData(
+            queryKeys.documents.detail(document.id),
+            document,
+          );
+          // Refetch all document queries immediately (including bySpace)
+          queryClient.refetchQueries({
+            queryKey: queryKeys.documents.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
+        }
+      },
+    });
+  };
+
+  /**
    * Clone document
    */
   const useCloneDocument = () => {
@@ -1927,17 +1988,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const doc = toDocument(resp.document);
           // Set detail cache
           queryClient.setQueryData(queryKeys.documents.detail(doc.id), doc);
-          // Invalidate list to refetch
-          const spaceId = doc.space;
-          if (spaceId) {
-            const spaceIdStr =
-              typeof spaceId === 'string' ? spaceId : spaceId.id;
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.documents.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all document queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.documents.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4010,18 +4066,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const cell = toCell(resp.cell);
           // Set detail cache
           queryClient.setQueryData(queryKeys.cells.detail(cell.id), cell);
-          // Invalidate list to refetch
-          if (cell?.space) {
-            const spaceIdStr =
-              typeof cell.space === 'string'
-                ? cell.space
-                : (cell.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.cells.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all cell queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.cells.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4206,18 +4256,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const lesson = toLesson(resp.notebook);
           // Set detail cache
           queryClient.setQueryData(queryKeys.lessons.detail(lesson.id), lesson);
-          // Invalidate list to refetch
-          if (lesson?.space) {
-            const spaceIdStr =
-              typeof lesson.space === 'string'
-                ? lesson.space
-                : (lesson.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.lessons.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all lesson queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.lessons.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4335,18 +4379,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.exercises.detail(exercise.id),
             exercise,
           );
-          // Invalidate list to refetch
-          if (exercise?.space) {
-            const spaceIdStr =
-              typeof exercise.space === 'string'
-                ? exercise.space
-                : (exercise.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.exercises.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all exercise queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.exercises.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -4413,18 +4451,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryKeys.assignments.detail(assignment.id),
             assignment,
           );
-          // Invalidate list to refetch
-          if (assignment?.space) {
-            const spaceIdStr =
-              typeof assignment.space === 'string'
-                ? assignment.space
-                : (assignment.space.id ?? '');
-            if (spaceIdStr) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.assignments.bySpace(spaceIdStr),
-              });
-            }
-          }
+          // Refetch all assignment queries immediately
+          queryClient.refetchQueries({
+            queryKey: queryKeys.assignments.all(),
+          });
+          // Refetch space items lists immediately
+          queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
         }
       },
     });
@@ -7413,6 +7445,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Documents
     useDocument,
     useDocumentsBySpace,
+    useCreateDocument,
     useUpdateDocument,
     useUpdateDocumentModel,
     useCloneDocument,
@@ -7576,6 +7609,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     notebookUploadLoading,
     notebookUploadProgress,
     resetNotebookUpload,
+    documentUploadLoading,
+    documentUploadProgress,
+    resetDocumentUpload,
   };
 };
 

@@ -22,6 +22,7 @@ import { coreStore } from '../state/substates/CoreState';
 import { iamStore } from '../state';
 import { EXAMPLES } from './example-selector';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
+
 import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
 // Load configurations from DOM
