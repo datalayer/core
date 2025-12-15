@@ -337,6 +337,11 @@ def whoami(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    details: bool = typer.Option(
+        False,
+        "--details",
+        help="Show detailed user information",
+    ),
 ) -> None:
     """Show current authenticated user."""
     try:
@@ -353,6 +358,56 @@ def whoami(
             if email:
                 console.print(f"📧 Email: {email}")
             console.print(f"🌐 Server: [green]{urls.run_url}[/green]")
+
+            if details:
+                console.print("\n[bold]Detailed Information:[/bold]")
+                
+                # Full name
+                first_name = user.get("first_name_t", "")
+                last_name = user.get("last_name_t", "")
+                if first_name or last_name:
+                    console.print(f"📝 Name: {first_name} {last_name}".strip())
+                
+                # User IDs
+                if user.get("uid"):
+                    console.print(f"🆔 UID: {user.get('uid')}")
+                if user.get("id"):
+                    console.print(f"🔑 ID: {user.get('id')}")
+                
+                # Roles
+                roles = user.get("roles_ss", [])
+                if roles:
+                    console.print(f"🎭 Roles: {', '.join(roles)}")
+                
+                # Avatar
+                if user.get("avatar_url_s"):
+                    console.print(f"🖼️  Avatar: {user.get('avatar_url_s')}")
+                
+                # Timestamps
+                if user.get("creation_ts_dt"):
+                    console.print(f"📅 Created: {user.get('creation_ts_dt')}")
+                if user.get("last_update_ts_dt"):
+                    console.print(f"🔄 Last Updated: {user.get('last_update_ts_dt')}")
+                
+                # IAM Providers
+                iam_providers = user.get("iam_providers", [])
+                if iam_providers:
+                    console.print("\n[bold]Connected Accounts:[/bold]")
+                    for provider in iam_providers:
+                        provider_name = provider.get("iam_provider_name_s", "unknown")
+                        linked_id = provider.get("linked_account_id_s", "")
+                        linked_url = provider.get("linked_account_url_s", "")
+                        
+                        if linked_url:
+                            console.print(f"  🔗 {provider_name.capitalize()}: {linked_url}")
+                        elif linked_id:
+                            console.print(f"  🔗 {provider_name.capitalize()}: ID {linked_id}")
+                        else:
+                            console.print(f"  🔗 {provider_name.capitalize()}")
+                
+                # Customer UID
+                if user.get("credits_customer_uid"):
+                    console.print(f"\n💳 Credits Customer: {user.get('credits_customer_uid')}")
         else:
             console.print("[yellow]Not authenticated[/yellow]")
             console.print("Run 'datalayer login' to authenticate")
@@ -437,8 +492,13 @@ def whoami_root(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    details: bool = typer.Option(
+        False,
+        "--details",
+        help="Show detailed user information",
+    ),
 ) -> None:
     """
     Show current authenticated user.
     """
-    whoami(run_url=run_url, iam_url=iam_url)
+    whoami(run_url=run_url, iam_url=iam_url, details=details)
