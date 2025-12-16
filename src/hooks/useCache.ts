@@ -2226,6 +2226,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       ...DEFAULT_QUERY_OPTIONS,
+      refetchOnMount: true, // Override to refetch when stale after invalidation
     });
   };
 
@@ -2302,6 +2303,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return [];
       },
       ...DEFAULT_QUERY_OPTIONS,
+      refetchOnMount: true, // Override to refetch when stale after invalidation
     });
   };
 
@@ -2600,7 +2602,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get single secret by ID
    */
-  const useSecret = (secretId: string) => {
+  const useSecret = (
+    secretId: string,
+    options?: { enabled?: boolean; refetchOnMount?: boolean },
+  ) => {
     return useQuery({
       queryKey: queryKeys.secrets.detail(secretId),
       queryFn: async () => {
@@ -2614,7 +2619,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return null;
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!secretId,
+      enabled: options?.enabled ?? !!secretId,
+      refetchOnMount:
+        options?.refetchOnMount ?? DEFAULT_QUERY_OPTIONS.refetchOnMount,
     });
   };
 
