@@ -3,24 +3,18 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useEffect, useState } from 'react';
 import {
   PageHeader,
   FormControl,
   Button,
   TextInput,
-  Box,
   Textarea,
   Select,
   Text,
   IconButton,
 } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { CopyIcon } from '@primer/octicons-react';
 import { Calendar, defaultCalendarStrings } from '@fluentui/react';
 import { useCache, useNavigate, useToast } from '../../hooks';

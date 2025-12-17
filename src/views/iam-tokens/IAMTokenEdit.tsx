@@ -3,25 +3,19 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   PageHeader,
   Heading,
   Text,
-  Box,
   Button,
   TextInput,
   FormControl,
   Textarea,
   Label,
 } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { BoringAvatar } from '../../components/avatars';
 import { IIAMToken as AnyToken } from '../../models';
 import { useCache, useToast } from '../../hooks';
