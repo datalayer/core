@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2024 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 import { useEffect, useState } from 'react';
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { EyeIcon, EyeClosedIcon, MarkGithubIcon } from '@primer/octicons-react';
