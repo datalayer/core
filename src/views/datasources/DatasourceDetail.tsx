@@ -15,13 +15,13 @@ import {
   PageHeader,
   Heading,
   Text,
-  Box,
   Button,
   TextInput,
   FormControl,
   Textarea,
   Label,
 } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
 import { EyeIcon, EyeClosedIcon } from '@primer/octicons-react';
 import { BoringAvatar } from '../../components/avatars';
 import { IDatasource as AnyDatasource } from '../../models';

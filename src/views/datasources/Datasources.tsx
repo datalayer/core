@@ -10,20 +10,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import {
-  PageLayout,
-  Box,
-  Button,
-  IconButton,
-  Text,
-  Label,
-} from '@primer/react';
+import { PageLayout, Button, IconButton, Text, Label } from '@primer/react';
 import {
   Blankslate,
   PageHeader,
   Table,
   DataTable,
 } from '@primer/react/experimental';
+import { Box } from '@datalayer/primer-addons';
 import { EditIcon } from '@datalayer/icons-react';
 import { IDatasource } from '../../models';
 import { useCache, useNavigate } from '../../hooks';
