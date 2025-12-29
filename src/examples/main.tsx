@@ -127,7 +127,7 @@ const NotebookOnlyApp: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nbformat] = useState(nbformatExample as INotebookContent);
-  const [Notebook2Component, setNotebook2Component] =
+  const [NotebookComponent, setNotebookComponent] =
     useState<React.ComponentType<any> | null>(null);
   const [collaborationProvider, setCollaborationProvider] = useState<any>(null);
 
@@ -201,13 +201,13 @@ const NotebookOnlyApp: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Dynamically import Notebook2 component
+    // Dynamically import Notebook component
     import('@datalayer/jupyter-react').then(module => {
-      setNotebook2Component(() => module.Notebook2);
+      setNotebookComponent(() => module.Notebook);
     });
   }, []);
 
-  if (loading || !Notebook2Component) {
+  if (loading || !NotebookComponent) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <h2>Loading Notebook...</h2>
@@ -240,7 +240,7 @@ const NotebookOnlyApp: React.FC = () => {
   return (
     <JupyterReactTheme>
       <div style={{ width: '100vw', height: '100vh' }}>
-        <Notebook2Component
+        <NotebookComponent
           id={NOTEBOOK_ID}
           height="100vh"
           nbformat={nbformat}

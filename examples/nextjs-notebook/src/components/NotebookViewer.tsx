@@ -29,8 +29,8 @@ const JupyterReactTheme = dynamic(
   { ssr: false },
 );
 
-const Notebook2 = dynamic(
-  () => import('@datalayer/jupyter-react').then(mod => mod.Notebook2),
+const Notebook = dynamic(
+  () => import('@datalayer/jupyter-react').then(mod => mod.Notebook),
   { ssr: false },
 );
 
@@ -330,7 +330,7 @@ export default function NotebookViewer({
   return (
     <JupyterReactTheme colormode="light">
       <div style={{ height: 'calc(100vh - 250px)', width: '100%' }}>
-        <Notebook2
+        <Notebook
           id={notebookPath}
           nbformat={nbformat}
           serviceManager={serviceManager as any}
