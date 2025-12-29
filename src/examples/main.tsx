@@ -15,6 +15,7 @@ import {
   setJupyterServerToken,
   getJupyterServerUrl,
   getJupyterServerToken,
+  ICollaborationProvider,
 } from '@datalayer/jupyter-react';
 import { INotebookContent } from '@jupyterlab/nbformat';
 import { ServiceManager } from '@jupyterlab/services';
@@ -22,6 +23,7 @@ import { coreStore } from '../state/substates/CoreState';
 import { iamStore } from '../state';
 import { EXAMPLES } from './example-selector';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
+import { BOOTSTRAP_USER_ONBOARDING } from '../models/UserOnboarding';
 
 import nbformatExample from './notebooks/NotebookExample1.ipynb.json';
 
@@ -68,7 +70,7 @@ const loadConfigurations = () => {
               iamProviders: [],
               settings: {},
               unsubscribedFromOutbounds: false,
-              onboarding: {},
+              onboarding: { ...BOOTSTRAP_USER_ONBOARDING },
               events: [],
             },
             datalayerConfig.token,
@@ -105,9 +107,9 @@ const getExampleNames = () => Object.keys(EXAMPLES);
 // Check if we're on the notebook-only route
 const isNotebookOnlyRoute = () => {
   const path = window.location.pathname;
-  console.log('Current pathname:', path);
+  console.warn('[DEBUG] Current pathname:', path);
   const isNotebookRoute = path === '/datalayer/notebook';
-  console.log('Is notebook-only route:', isNotebookRoute);
+  console.warn('[DEBUG] Is notebook-only route:', isNotebookRoute);
   return isNotebookRoute;
 };
 
@@ -128,8 +130,10 @@ const NotebookOnlyApp: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [nbformat] = useState(nbformatExample as INotebookContent);
   const [NotebookComponent, setNotebookComponent] =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     useState<React.ComponentType<any> | null>(null);
-  const [collaborationProvider, setCollaborationProvider] = useState<any>(null);
+  const [collaborationProvider, setCollaborationProvider] =
+    useState<ICollaborationProvider | null>(null);
 
   useEffect(() => {
     loadConfigurations();
@@ -147,7 +151,7 @@ const NotebookOnlyApp: React.FC = () => {
               runUrl: configuration.runUrl,
               token: configuration.token,
             });
-            console.log(
+            console.warn(
               '[NotebookOnlyApp] Created collaboration provider:',
               provider,
             );
@@ -231,7 +235,7 @@ const NotebookOnlyApp: React.FC = () => {
 
   const NOTEBOOK_ID = '01JZQRQ35GG871QQCZW9TB1A8J';
 
-  console.log('[NotebookOnlyApp] Rendering with:', {
+  console.warn('[NotebookOnlyApp] Rendering with:', {
     hasServiceManager: !!serviceManager,
     hasCollaborationProvider: !!collaborationProvider,
     notebookId: NOTEBOOK_ID,
@@ -256,8 +260,9 @@ const NotebookOnlyApp: React.FC = () => {
 
 // Main App component that loads and renders the selected example
 export const ExampleApp: React.FC = () => {
-  const [ExampleComponent, setExampleComponent] =
-    useState<React.ComponentType | null>(null);
+  const [ExampleComponent, setExampleComponent] = useState<React.ComponentType<{
+    serviceManager?: ServiceManager.IManager;
+  }> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [serviceManager, setServiceManager] =
@@ -476,10 +481,10 @@ export const ExampleApp: React.FC = () => {
 const root = document.getElementById('root');
 if (root) {
   if (isNotebookOnlyRoute()) {
-    console.log('Rendering NotebookOnlyApp');
+    console.warn('[DEBUG] Rendering NotebookOnlyApp');
     createRoot(root).render(<NotebookOnlyApp />);
   } else {
-    console.log('Rendering ExampleApp');
+    console.warn('[DEBUG] Rendering ExampleApp');
     createRoot(root).render(<ExampleApp />);
   }
 } else {
