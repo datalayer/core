@@ -11,7 +11,7 @@ import { ServiceManager } from '@jupyterlab/services';
 import {
   loadJupyterConfig,
   JupyterReactTheme,
-  Notebook2,
+  Notebook,
 } from '@datalayer/jupyter-react';
 import { DatalayerCollaborationProvider } from '../collaboration/DatalayerCollaborationProvider';
 import { createDatalayerServiceManager } from '../services/DatalayerServiceManager';
@@ -215,7 +215,7 @@ const DatalayerNotebookExample = (props: IDatalayerNotebookExampleProps) => {
             }}
           >
             {serviceManager ? (
-              <Notebook2
+              <Notebook
                 id={NOTEBOOK_ID}
                 height="calc(100vh - 200px)"
                 nbformat={nbformat}

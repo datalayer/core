@@ -5,7 +5,7 @@
 
 import { ServiceManager } from '@jupyterlab/services';
 import {
-  Jupyter,
+  JupyterReactTheme,
   Cell,
   KernelIndicator,
   useJupyter,
@@ -26,7 +26,8 @@ const DEFAULT_SOURCE = `from IPython.display import display
 for i in range(10):
     display('I am a long string which is repeatedly added to the dom in separated divs: %d' % i)`;
 
-const CellExampleContent = () => {
+const CellExampleContent = (props: ICellExampleProps) => {
+  //  const { serviceManager } = props;
   const { defaultKernel } = useJupyter({ startDefaultKernel: true });
   const cellsStore = useCellsStore();
   const kernelsStore = useKernelsStore();
@@ -64,9 +65,9 @@ const CellExampleContent = () => {
 
 export const CellExample = (props: ICellExampleProps) => {
   return (
-    <Jupyter serviceManager={props.serviceManager}>
-      <CellExampleContent />
-    </Jupyter>
+    <JupyterReactTheme>
+      <CellExampleContent {...props} />
+    </JupyterReactTheme>
   );
 };
 
