@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2023 Datalayer, Inc.
- *
- * MIT License
- */
-
 import { useState } from 'react';
 import reactLogo from './assets/react.svg';
 import { useJupyter, JupyterReactTheme } from '@datalayer/jupyter-react';

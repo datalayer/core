@@ -1,11 +1,10 @@
 /*
- * Copyright (c) 2021-2023 Datalayer, Inc.
- *
- * MIT License
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
  */
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Jupyter, Cell } from '@datalayer/jupyter-react';
+import { JupyterReactTheme, Cell } from '@datalayer/jupyter-react';
 
 const meta: Meta<typeof Cell> = {
   title: 'Datalayer/JupyterCell',
@@ -33,7 +32,9 @@ const meta: Meta<typeof Cell> = {
 
 export default meta;
 
-type Story = StoryObj<typeof Cell | typeof Jupyter | { lite: string }>;
+type Story = StoryObj<
+  typeof Cell | typeof JupyterReactTheme | { lite: string }
+>;
 
 const Template = (args: any) => {
   const { browser, initCode, ...others } = args;
@@ -62,23 +63,23 @@ const Template = (args: any) => {
       : undefined;
 
   return (
-    <Jupyter
-      startDefaultKernel={true}
-      lite={lite}
-      initCode={initCode}
-      defaultKernelName={kernelName}
-      jupyterServerUrl="https://oss.datalayer.run/api/jupyter-server"
-      jupyterServerToken="60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6"
+    <JupyterReactTheme
+    //      startDefaultKernel={true}
+    //      lite={lite}
+    //      initCode={initCode}
+    //      defaultKernelName={kernelName}
+    //      jupyterServerUrl="https://oss.datalayer.run/api/jupyter-server"
+    //      jupyterServerToken="60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6"
     >
       <Cell {...others} />
-    </Jupyter>
+    </JupyterReactTheme>
   );
 };
 
 export const Default: Story = Template.bind({}) as Story;
 Default.args = {
   lite: 'false',
-  initCode: '',
+  //  initCode: '',
   source: '',
   autoStart: false,
 };
@@ -142,7 +143,7 @@ export const WithInitialization: Story = Template.bind({}) as Story;
 WithInitialization.args = {
   ...Default.args,
   lite: 'true',
-  initCode: 'import micropip\nawait micropip.install("ipywidgets")',
+  //  initCode: 'import micropip\nawait micropip.install("ipywidgets")',
   source: '# ipywidgets is imported at initialization\nimport ipywidgets',
   autoStart: true,
 };

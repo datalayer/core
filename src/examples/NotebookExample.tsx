@@ -3,16 +3,10 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2021-2023 Datalayer, Inc.
- *
- * MIT License
- */
-
 import { useMemo } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import {
-  Notebook2,
+  Notebook,
   NotebookToolbar,
   CellSidebarExtension,
   CellSidebarButton,
@@ -46,7 +40,7 @@ export const NotebookExample = (props: INotebookExampleProps) => {
   return (
     <>
       <Box as="h1">A Jupyter Notebook</Box>
-      <Notebook2
+      <Notebook
         id={NOTEBOOK_ID}
         nbformat={nbformatExample}
         serviceManager={serviceManager}

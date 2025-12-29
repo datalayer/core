@@ -17,7 +17,7 @@
   "dependencies": {
     "@datalayer/core": "file:../..",
     "@datalayer/icons-react": "^1.0.6",
-    "@datalayer/jupyter-react": "^1.1.2",
+    "@datalayer/jupyter-react": "^2.0.0",
     "@datalayer/primer-addons": "^1.0.3",
     "@humanwhocodes/config-array": "^0.13.0",
     "@jupyterlab/coreutils": "^6.0.0",
@@ -25,7 +25,6 @@
     "@jupyterlab/services": "^7.0.0",
     "@jupyterlab/settingregistry": "^4.0.0",
     "@jupyterlab/theme-light-extension": "^4.0.0",
-    "@jupyterlite/settings": "^0.2.0",
     "@primer/css": "^22.0.2",
     "@primer/react": "^37.19.0",
     "dir-glob": "^3.0.1",

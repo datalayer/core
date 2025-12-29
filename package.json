@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.0.19",
+  "version": "0.1.0",
   "type": "module",
   "workspaces": [
     ".",
@@ -102,7 +102,7 @@
   "dependencies": {
     "@datalayer/icons-react": "^1.0.6",
     "@datalayer/jupyter-lexical": "^1.0.7",
-    "@datalayer/jupyter-react": "^1.1.9",
+    "@datalayer/jupyter-react": "^2.0.0",
     "@datalayer/primer-addons": "^1.0.4",
     "@datalayer/primer-rjsf": "^1.0.1",
     "@fluentui/react": "^8.125.3",
@@ -117,7 +117,6 @@
     "@jupyterlab/services": "^7.0.0",
     "@jupyterlab/translation": "^4.5.0",
     "@jupyterlab/ui-components": "^4.5.0",
-    "@jupyterlite/javascript-kernel-extension": "^0.3.0",
     "@lumino/commands": "^2.3.3",
     "@lumino/coreutils": "^2.2.2",
     "@lumino/datagrid": "^2.5.3",

@@ -3,15 +3,17 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Button, Box } from '@primer/react';
-import { RepoPushIcon, PlayIcon, StopIcon } from '@primer/octicons-react';
-import { notebookStore } from '@datalayer/jupyter-react';
+import { Button } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { RepoPushIcon } from '@primer/octicons-react';
+// import { PlayIcon, StopIcon } from '@primer/octicons-react';
+// import { notebookStore } from '@datalayer/jupyter-react';
 import { useGradeStore } from '../../state';
 
 export const AssignmentEditorToolbar = (props: { notebookId: string }) => {
-  const { notebookId } = props;
+  //  const { notebookId } = props;
+  //   const notebook = notebookStore.getState().selectNotebook(notebookId);
   const { grade } = useGradeStore();
-  const notebook = notebookStore.getState().selectNotebook(notebookId);
   return (
     <Box display="flex">
       <Box>
@@ -24,7 +26,8 @@ export const AssignmentEditorToolbar = (props: { notebookId: string }) => {
           Grade
         </Button>
       </Box>
-      {notebook?.kernelStatus !== 'busy' && (
+      {/* notebook?.kernelStatus !== 'busy' && (
+      TODO Fix run all button when kernel is busy
         <Box>
           <Button
             variant="invisible"
@@ -35,8 +38,9 @@ export const AssignmentEditorToolbar = (props: { notebookId: string }) => {
             Run all
           </Button>
         </Box>
-      )}
-      {notebook?.kernelStatus === 'busy' && (
+      )*/}
+      {/* notebook?.kernelStatus === 'busy' && (
+      // TODO Fix interrupt button when kernel is busy
         <Box>
           <Button
             variant="danger"
@@ -47,7 +51,7 @@ export const AssignmentEditorToolbar = (props: { notebookId: string }) => {
             Interrupt
           </Button>
         </Box>
-      )}
+      )*/}
     </Box>
   );
 };
