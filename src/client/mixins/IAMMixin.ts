@@ -11,12 +11,24 @@
 import * as authentication from '../../api/iam/authentication';
 import * as profile from '../../api/iam/profile';
 import * as usage from '../../api/iam/usage';
+import * as secrets from '../../api/iam/secrets';
+import * as datasources from '../../api/iam/datasources';
 import type { UserData as ApiUser } from '../../models/UserDTO';
 import type { CreditsResponse } from '../../models/CreditsDTO';
 import type { Constructor } from '../utils/mixins';
 import { UserDTO } from '../../models/UserDTO';
 import { CreditsDTO } from '../../models/CreditsDTO';
 import { HealthCheck } from '../../models/HealthCheck';
+import { SecretDTO } from '../../models/Secret';
+import type {
+  CreateSecretRequest,
+  UpdateSecretRequest,
+} from '../../models/Secret';
+import { DatasourceDTO } from '../../models/Datasource';
+import type {
+  CreateDatasourceRequest,
+  UpdateDatasourceRequest,
+} from '../../models/Datasource';
 
 /** IAM mixin providing authentication and user management. */
 export function IAMMixin<TBase extends Constructor>(Base: TBase) {
@@ -224,6 +236,166 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
           this as any,
         );
       }
+    }
+
+    // ========================================================================
+    // Secrets Management
+    // ========================================================================
+
+    /**
+     * Create a new secret.
+     * @param data - Secret configuration
+     * @returns Created secret instance
+     */
+    async createSecret(data: CreateSecretRequest): Promise<SecretDTO> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await secrets.createSecret(token, data, iamRunUrl);
+      return new SecretDTO(response.secret, this as any);
+    }
+
+    /**
+     * List all secrets.
+     * @returns Array of secret instances
+     */
+    async listSecrets(): Promise<SecretDTO[]> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await secrets.listSecrets(token, iamRunUrl);
+      return response.secrets.map(s => new SecretDTO(s, this as any));
+    }
+
+    /**
+     * Get a specific secret by ID.
+     * @param secretId - Secret unique identifier
+     * @returns Secret instance
+     */
+    async getSecret(secretId: string): Promise<SecretDTO> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await secrets.getSecret(token, secretId, iamRunUrl);
+      return new SecretDTO(response.secret, this as any);
+    }
+
+    /**
+     * Update a secret.
+     * @param secretId - Secret unique identifier
+     * @param updates - Fields to update
+     * @returns Updated secret instance
+     */
+    async updateSecret(
+      secretId: string,
+      updates: UpdateSecretRequest,
+    ): Promise<SecretDTO> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await secrets.updateSecret(
+        token,
+        secretId,
+        updates,
+        iamRunUrl,
+      );
+      return new SecretDTO(response.secret, this as any);
+    }
+
+    /**
+     * Delete a secret.
+     * @param secretId - Secret unique identifier
+     */
+    async deleteSecret(secretId: string): Promise<void> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      await secrets.deleteSecret(token, secretId, iamRunUrl);
+    }
+
+    // ========================================================================
+    // Datasources Management
+    // ========================================================================
+
+    /**
+     * Create a new datasource.
+     * @param data - Datasource configuration
+     * @returns Created datasource instance
+     */
+    async createDatasource(
+      data: CreateDatasourceRequest,
+    ): Promise<DatasourceDTO> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await datasources.createDatasource(
+        token,
+        data,
+        iamRunUrl,
+      );
+      return new DatasourceDTO(response.datasource, this as any);
+    }
+
+    /**
+     * List all datasources.
+     * @returns Array of datasource instances
+     */
+    async listDatasources(): Promise<DatasourceDTO[]> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await datasources.listDatasources(token, iamRunUrl);
+      return response.datasources.map(d => new DatasourceDTO(d, this as any));
+    }
+
+    /**
+     * Get a specific datasource by ID.
+     * @param datasourceId - Datasource unique identifier
+     * @returns Datasource instance
+     */
+    async getDatasource(datasourceId: string): Promise<DatasourceDTO> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await datasources.getDatasource(
+        token,
+        datasourceId,
+        iamRunUrl,
+      );
+      return new DatasourceDTO(response.datasource, this as any);
+    }
+
+    /**
+     * Update a datasource.
+     * @param datasourceId - Datasource unique identifier
+     * @param updates - Fields to update
+     * @returns Updated datasource instance
+     */
+    async updateDatasource(
+      datasourceId: string,
+      updates: UpdateDatasourceRequest,
+    ): Promise<DatasourceDTO> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      const response = await datasources.updateDatasource(
+        token,
+        datasourceId,
+        updates,
+        iamRunUrl,
+      );
+      return new DatasourceDTO(response.datasource, this as any);
+    }
+
+    /**
+     * Delete a datasource.
+     * @param datasourceId - Datasource unique identifier
+     */
+    async deleteDatasource(datasourceId: string): Promise<void> {
+      const token = (this as any).getToken();
+      const iamRunUrl = (this as any).getIamRunUrl();
+
+      await datasources.deleteDatasource(token, datasourceId, iamRunUrl);
     }
   };
 }

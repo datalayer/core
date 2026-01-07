@@ -11,6 +11,7 @@
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
 import { EnvironmentDTO } from '../models/EnvironmentDTO';
 import { AuthenticationManager } from './auth';
+import type { TokenStorage } from './auth/types';
 
 /** Handlers for SDK method lifecycle events. */
 export interface SDKHandlers {
@@ -32,6 +33,8 @@ export interface DatalayerClientConfig {
   runtimesRunUrl?: string;
   /** URL for the Spacer service */
   spacerRunUrl?: string;
+  /** Custom token storage backend (optional, defaults to auto-detected) */
+  storage?: TokenStorage;
   /** Handlers for intercepting SDK method calls */
   handlers?: SDKHandlers;
 }
@@ -65,8 +68,8 @@ export class DatalayerClientBase {
     this.token = config.token;
     this.handlers = config.handlers;
 
-    // Initialize authentication manager
-    this.auth = new AuthenticationManager(this.iamRunUrl);
+    // Initialize authentication manager with custom storage if provided
+    this.auth = new AuthenticationManager(this.iamRunUrl, config.storage);
 
     // If a token was provided, store it in the auth manager
     if (this.token) {

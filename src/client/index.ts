@@ -39,6 +39,16 @@ import type { SpaceDTO } from '../models/SpaceDTO';
 import type { NotebookDTO } from '../models/NotebookDTO';
 import type { LexicalDTO } from '../models/LexicalDTO';
 import type { HealthCheck } from '../models/HealthCheck';
+import type { SecretDTO } from '../models/Secret';
+import type {
+  CreateSecretRequest,
+  UpdateSecretRequest,
+} from '../models/Secret';
+import type { DatasourceDTO } from '../models/Datasource';
+import type {
+  CreateDatasourceRequest,
+  UpdateDatasourceRequest,
+} from '../models/Datasource';
 
 /**
  * Helper function to compose mixins in a more readable way.
@@ -158,6 +168,30 @@ export type {
 export { ItemDTO as Item } from '../models/ItemDTO';
 export { HealthCheck } from '../models/HealthCheck';
 export type { HealthCheckJSON } from '../models/HealthCheck';
+export { SecretDTO as Secret } from './../models/Secret';
+export type {
+  SecretJSON,
+  SecretData,
+  CreateSecretRequest,
+  UpdateSecretRequest,
+  CreateSecretResponse,
+  GetSecretResponse,
+  ListSecretsResponse,
+  UpdateSecretResponse,
+  DeleteSecretResponse,
+} from './../models/Secret';
+export { DatasourceDTO as Datasource } from './../models/Datasource';
+export type {
+  DatasourceJSON,
+  DatasourceData,
+  DatasourceType,
+  CreateDatasourceRequest,
+  UpdateDatasourceRequest,
+  CreateDatasourceResponse,
+  GetDatasourceResponse,
+  ListDatasourcesResponse,
+  UpdateDatasourceResponse,
+} from './../models/Datasource';
 
 // Export IAM types
 export type {
@@ -197,6 +231,8 @@ export type {
   IRuntimeModel,
   IRuntimePod,
   IRuntimeType,
+  IRuntimeLocation,
+  IRuntimeCapabilities,
 } from '../models/Runtime';
 export type { IRuntimeSnapshot } from '../models/RuntimeSnapshot';
 export type {
@@ -299,6 +335,26 @@ export interface DatalayerClient {
   ): number;
   calculateCreditsRequired(minutes: number, burningRate: number): number;
   checkIAMHealth(): Promise<HealthCheck>;
+
+  // Secrets Methods (part of IAM)
+  createSecret(data: CreateSecretRequest): Promise<SecretDTO>;
+  listSecrets(): Promise<SecretDTO[]>;
+  getSecret(secretId: string): Promise<SecretDTO>;
+  updateSecret(
+    secretId: string,
+    updates: UpdateSecretRequest,
+  ): Promise<SecretDTO>;
+  deleteSecret(secretId: string): Promise<void>;
+
+  // Datasources Methods (part of IAM)
+  createDatasource(data: CreateDatasourceRequest): Promise<DatasourceDTO>;
+  listDatasources(): Promise<DatasourceDTO[]>;
+  getDatasource(datasourceId: string): Promise<DatasourceDTO>;
+  updateDatasource(
+    datasourceId: string,
+    updates: UpdateDatasourceRequest,
+  ): Promise<DatasourceDTO>;
+  deleteDatasource(datasourceId: string): Promise<void>;
 
   // Runtime Methods
   listEnvironments(): Promise<EnvironmentDTO[]>;
