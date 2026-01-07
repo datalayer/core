@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-type IFetchSessionId = {
+export type IFetchSessionId = {
   url: string;
   token?: string;
   /**

@@ -34,9 +34,9 @@ function JupyterLabBackdrop({ open, element }: JupyterLabBackdropType) {
 
 export default JupyterLabBackdrop;
 
-interface JupyterLabBackdropProps {}
+export interface JupyterLabBackdropProps {}
 
-type UseJupyterLabBackdropProps = {
+export type UseJupyterLabBackdropProps = {
   openBackdrop: (element: JSX.Element) => void;
   closeBackdrop: () => void;
 };

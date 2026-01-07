@@ -214,7 +214,7 @@ export class RuntimeSnapshotDTO {
   /**
    * Create a runtime from this snapshot (restore functionality).
    *
-   * @param config - Optional runtime configuration to override defaults
+   * @param minutesLimit - Time limit in minutes for the restored runtime
    * @returns Created Runtime instance
    */
   async restore(minutesLimit: number): Promise<RuntimeDTO> {

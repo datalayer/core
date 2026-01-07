@@ -39,7 +39,7 @@ import { coreStore } from './CoreState';
  */
 export const RESERVATION_WARNING_TIME_MS = 5 * 60_000;
 
-type IAMProviderAuthorizationURL = string;
+export type IAMProviderAuthorizationURL = string;
 
 export type IIAMState = {
   /**

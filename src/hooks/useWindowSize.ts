@@ -14,7 +14,7 @@ export enum BreakpointSize {
   XXLARGE = 'xxlarge',
 }
 
-type WindowSize = {
+export type WindowSize = {
   width?: number;
   height?: number;
   isXSmall?: boolean;

@@ -9,9 +9,11 @@ import { NotebookPanel } from '@jupyterlab/notebook';
 /**
  * Create a notebook
  *
- * @param app JupyterLab application
- * @param name Notebook name
- * @param url Notebook content URL
+ * @param params Configuration object
+ * @param params.app JupyterLab application
+ * @param params.name Notebook name
+ * @param params.url Notebook content URL
+ * @param params.options Additional options for notebook creation
  */
 export const createNotebook = async ({
   app,

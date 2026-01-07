@@ -52,11 +52,10 @@ sync_packages() {
   # Copy react to core's node_modules for patch-package
   echo -e "${BLUE}📋 Copying react to core/node_modules...${NC}"
   cd "$CORE_ROOT"
-  # Only replace lib/ directory, preserving LICENSE, README.md, etc.
+  # Only replace lib/ directory, preserving package.json, LICENSE, README.md, etc from npm
   rm -rf node_modules/@datalayer/jupyter-react/lib
   mkdir -p node_modules/@datalayer/jupyter-react/lib
   cp -r "$JUPYTER_UI_ROOT/packages/react/lib/." node_modules/@datalayer/jupyter-react/lib/
-  cp "$JUPYTER_UI_ROOT/packages/react/package.json" node_modules/@datalayer/jupyter-react/
 
   # Now build jupyter-lexical (finds react via workspace hoisting)
   echo -e "${BLUE}📦 Building @datalayer/jupyter-lexical...${NC}"
@@ -71,11 +70,10 @@ sync_packages() {
   # Copy lexical to node_modules
   echo -e "${BLUE}📋 Copying lexical to node_modules...${NC}"
   cd "$CORE_ROOT"
-  # Only replace lib/ directory, preserving LICENSE, README.md, etc.
+  # Only replace lib/ directory, preserving package.json, LICENSE, README.md, etc from npm
   rm -rf node_modules/@datalayer/jupyter-lexical/lib
   mkdir -p node_modules/@datalayer/jupyter-lexical/lib
   cp -r "$JUPYTER_UI_ROOT/packages/lexical/lib/." node_modules/@datalayer/jupyter-lexical/lib/
-  cp "$JUPYTER_UI_ROOT/packages/lexical/package.json" node_modules/@datalayer/jupyter-lexical/
 
   echo -e "${GREEN}✅ Successfully synced at $(date +"%H:%M:%S")${NC}"
 }

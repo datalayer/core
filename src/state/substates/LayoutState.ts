@@ -37,13 +37,13 @@ export type BackdropDisplay = {
   message?: string | void;
 };
 
-type BannerDisplay = {
+export type BannerDisplay = {
   message: string;
   variant: BannerDisplayVariant;
   timestamp?: Date;
 };
 
-type PortalDisplay = {
+export type PortalDisplay = {
   portal: ReactPortal;
   pinned: boolean;
 };

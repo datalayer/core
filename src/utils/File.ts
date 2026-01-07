@@ -7,7 +7,7 @@
  * creates name of file.
  *
  * @param {string} extension
- * @param {string[]} parts of file name
+ * @param {string[]} names parts of file name
  */
 export const createFileName = (extension = '', ...names) => {
   if (!extension) {
