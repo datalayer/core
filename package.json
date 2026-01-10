@@ -22,7 +22,9 @@
   "files": [
     "lib/**/*.{css,d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
     "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}",
-    "schema/*.json"
+    "schema/*.json",
+    "patches/",
+    "scripts/"
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -50,7 +52,7 @@
     "clean:dist": "rimraf dist",
     "clean:cache": "rimraf node_modules/.vite",
     "build": "npm run clean && gulp resources-to-lib && tsc -b && vite build",
-    "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b",
+    "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs",
     "build:types": "npm run clean:lib && tsc -b",
     "build:nextjs": "npm run build --workspace=nextjs-notebook-example",
     "build:examples": "npm run build:nextjs",
@@ -81,6 +83,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "typedoc": "typedoc --options typedoc.json --out docs/docs/typescript_api",
+    "docs": "make typedoc && make pydoc && cd docs && npm install && npm run build",
     "watch:lib": "run-p 'watch:lib:*'",
     "watch:lib:res": "gulp resources-to-lib-watch",
     "watch:lib:src": "tsc -b -w",
@@ -89,7 +92,7 @@
     "examples:vite": "VITE_DATALAYER_RUN_URL=http://localhost:8888 vite --config vite.examples.config.ts",
     "examples:nextjs": "npm run dev --workspace=nextjs-notebook-example",
     "jupyter:start": "./dev/sh/start-jupyter-server.sh",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "postinstall": "bash scripts/apply-patches.sh",
     "kill": "./dev/sh/kill.sh || true",
     "sync:jupyter": "bash scripts/sync-jupyter.sh",

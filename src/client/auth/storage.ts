@@ -134,11 +134,16 @@ export class NodeStorage implements TokenStorage {
     this.serviceUrl = serviceUrl;
     try {
       // Load keytar for system keyring access
-      // VS Code extensions get this from VS Code's bundled keytar
-      // CLI gets this from installed keytar package
-      this.keytar = require('keytar');
+      // VS Code bundles keytar, but require path may vary
+      // Try multiple possible paths for compatibility
+      try {
+        this.keytar = require('keytar');
+      } catch {
+        // Try alternate path for VS Code bundled keytar
+        this.keytar = require('@vscode/keytar');
+      }
     } catch (e) {
-      // Keyring not available, use memory only
+      // Keyring not available, tokens will not persist across sessions
       console.warn('keytar not available, tokens will not persist');
     }
   }
@@ -148,84 +153,41 @@ export class NodeStorage implements TokenStorage {
    * Supports both sync (getPasswordSync) and async (getPassword) keytar APIs
    */
   get(key: string): string | null {
-    console.log(
-      '[NodeStorage.get] key:',
-      key,
-      'keytar available:',
-      !!this.keytar,
-    );
     // 1. Try keyring first (if available)
     if (this.keytar) {
       try {
         // Try sync API first (CLI keytar)
         if (this.keytar.getPasswordSync) {
-          console.log('[NodeStorage.get] using keytar.getPasswordSync');
           const value = this.keytar.getPasswordSync(this.serviceUrl, key);
-          console.log(
-            '[NodeStorage.get] keytar returned:',
-            value ? 'token found' : 'null',
-          );
           if (value) return value;
-        } else {
-          console.log(
-            '[NodeStorage.get] getPasswordSync not available, skipping sync keytar',
-          );
         }
       } catch (e) {
-        console.warn('[NodeStorage.get] keytar.getPasswordSync failed:', e);
         // Fall through to other methods
       }
     }
 
     // 2. Try environment variables
     const envValue = process.env[key];
-    console.log(
-      '[NodeStorage.get] env var',
-      key,
-      ':',
-      envValue ? 'found' : 'not found',
-    );
     if (envValue) return envValue;
 
     // 3. Fall back to memory storage
-    const memValue = this.memoryStorage.get(key) || null;
-    console.log(
-      '[NodeStorage.get] memory storage:',
-      memValue ? 'found' : 'not found',
-    );
-    return memValue;
+    return this.memoryStorage.get(key) || null;
   }
 
   /**
    * Set token in keyring or memory storage (sync version)
    */
   set(key: string, value: string): void {
-    console.log(
-      '[NodeStorage.set] key:',
-      key,
-      'keytar available:',
-      !!this.keytar,
-    );
     // Store in keyring if available and has sync API
     if (this.keytar && this.keytar.setPasswordSync) {
       try {
-        console.log('[NodeStorage.set] calling keytar.setPasswordSync');
         this.keytar.setPasswordSync(this.serviceUrl, key, value);
-        console.log('[NodeStorage.set] keytar.setPasswordSync succeeded');
         return;
       } catch (e) {
-        console.warn(
-          '[NodeStorage.set] Failed to store in keyring, using memory:',
-          e,
-        );
+        // Fall through to memory storage
       }
-    } else if (this.keytar) {
-      console.log(
-        '[NodeStorage.set] setPasswordSync not available, use setAsync() instead',
-      );
     }
     // Fall back to memory
-    console.log('[NodeStorage.set] falling back to memory storage');
     this.memoryStorage.set(key, value);
   }
 
@@ -233,46 +195,28 @@ export class NodeStorage implements TokenStorage {
    * Async version of set - supports VS Code's async keytar API
    */
   async setAsync(key: string, value: string): Promise<void> {
-    console.log(
-      '[NodeStorage.setAsync] key:',
-      key,
-      'keytar available:',
-      !!this.keytar,
-    );
     // Store in keyring if available
     if (this.keytar) {
       try {
         // Try async API (VS Code keytar)
         if (this.keytar.setPassword) {
-          console.log(
-            '[NodeStorage.setAsync] calling keytar.setPassword (async)',
-          );
           await this.keytar.setPassword(this.serviceUrl, key, value);
-          console.log('[NodeStorage.setAsync] keytar.setPassword succeeded');
           // IMPORTANT: Also store in memory so synchronous get() can access it
           this.memoryStorage.set(key, value);
           return;
         }
         // Try sync API (CLI keytar)
         else if (this.keytar.setPasswordSync) {
-          console.log('[NodeStorage.setAsync] calling keytar.setPasswordSync');
           this.keytar.setPasswordSync(this.serviceUrl, key, value);
-          console.log(
-            '[NodeStorage.setAsync] keytar.setPasswordSync succeeded',
-          );
           // Also store in memory for consistency
           this.memoryStorage.set(key, value);
           return;
         }
       } catch (e) {
-        console.warn(
-          '[NodeStorage.setAsync] Failed to store in keyring, using memory:',
-          e,
-        );
+        // Fall through to memory storage
       }
     }
     // Fall back to memory
-    console.log('[NodeStorage.setAsync] falling back to memory storage');
     this.memoryStorage.set(key, value);
   }
 
@@ -280,85 +224,43 @@ export class NodeStorage implements TokenStorage {
    * Async version of get - supports VS Code's async keytar API
    */
   async getAsync(key: string): Promise<string | null> {
-    console.log(
-      '[NodeStorage.getAsync] key:',
-      key,
-      'keytar available:',
-      !!this.keytar,
-    );
     // Try keyring first (if available)
     if (this.keytar) {
       try {
         // Try async API (VS Code keytar)
         if (this.keytar.getPassword) {
-          console.log(
-            '[NodeStorage.getAsync] calling keytar.getPassword (async)',
-          );
           const value = await this.keytar.getPassword(this.serviceUrl, key);
-          console.log(
-            '[NodeStorage.getAsync] keytar returned:',
-            value ? 'token found' : 'null',
-          );
           if (value) return value;
         }
         // Try sync API (CLI keytar)
         else if (this.keytar.getPasswordSync) {
-          console.log('[NodeStorage.getAsync] calling keytar.getPasswordSync');
           const value = this.keytar.getPasswordSync(this.serviceUrl, key);
-          console.log(
-            '[NodeStorage.getAsync] keytar returned:',
-            value ? 'token found' : 'null',
-          );
           if (value) return value;
         }
       } catch (e) {
-        console.warn('[NodeStorage.getAsync] keytar failed:', e);
+        // Fall through to other methods
       }
     }
 
     // Try environment variables
     const envValue = process.env[key];
-    console.log(
-      '[NodeStorage.getAsync] env var',
-      key,
-      ':',
-      envValue ? 'found' : 'not found',
-    );
     if (envValue) return envValue;
 
     // Fall back to memory storage
-    const memValue = this.memoryStorage.get(key) || null;
-    console.log(
-      '[NodeStorage.getAsync] memory storage:',
-      memValue ? 'found' : 'not found',
-    );
-    return memValue;
+    return this.memoryStorage.get(key) || null;
   }
 
   /**
    * Delete token from keyring or memory storage (sync version)
    */
   delete(key: string): void {
-    console.log(
-      '[NodeStorage.delete] key:',
-      key,
-      'keytar available:',
-      !!this.keytar,
-    );
     if (this.keytar && this.keytar.deletePasswordSync) {
       try {
-        console.log('[NodeStorage.delete] calling keytar.deletePasswordSync');
         this.keytar.deletePasswordSync(this.serviceUrl, key);
-        console.log('[NodeStorage.delete] keytar.deletePasswordSync succeeded');
       } catch (e) {
-        console.warn('[NodeStorage.delete] Failed to delete from keyring:', e);
+        // Fall through to memory deletion
       }
-    } else if (this.keytar) {
-      console.log(
-        '[NodeStorage.delete] deletePasswordSync not available, use deleteAsync() instead',
-      );
     }
-    console.log('[NodeStorage.delete] deleting from memory storage');
     this.memoryStorage.delete(key);
   }
 
@@ -366,42 +268,20 @@ export class NodeStorage implements TokenStorage {
    * Async version of delete - supports VS Code's async keytar API
    */
   async deleteAsync(key: string): Promise<void> {
-    console.log(
-      '[NodeStorage.deleteAsync] key:',
-      key,
-      'keytar available:',
-      !!this.keytar,
-    );
     if (this.keytar) {
       try {
         // Try async API (VS Code keytar)
         if (this.keytar.deletePassword) {
-          console.log(
-            '[NodeStorage.deleteAsync] calling keytar.deletePassword (async)',
-          );
           await this.keytar.deletePassword(this.serviceUrl, key);
-          console.log(
-            '[NodeStorage.deleteAsync] keytar.deletePassword succeeded',
-          );
         }
         // Try sync API (CLI keytar)
         else if (this.keytar.deletePasswordSync) {
-          console.log(
-            '[NodeStorage.deleteAsync] calling keytar.deletePasswordSync',
-          );
           this.keytar.deletePasswordSync(this.serviceUrl, key);
-          console.log(
-            '[NodeStorage.deleteAsync] keytar.deletePasswordSync succeeded',
-          );
         }
       } catch (e) {
-        console.warn(
-          '[NodeStorage.deleteAsync] Failed to delete from keyring:',
-          e,
-        );
+        // Fall through to memory deletion
       }
     }
-    console.log('[NodeStorage.deleteAsync] deleting from memory storage');
     this.memoryStorage.delete(key);
   }
 
@@ -442,37 +322,24 @@ export class NodeStorage implements TokenStorage {
    * Store authentication token (async version - use this in auth strategies)
    */
   async setToken(token: string): Promise<void> {
-    console.log(
-      '[NodeStorage] setToken called, keytar available:',
-      !!this.keytar,
-    );
-    console.log(
-      '[NodeStorage] storing token with key: access_token, service:',
-      this.serviceUrl,
-    );
     // Use async method to support VS Code's keytar
     await this.setAsync('access_token', token);
-    console.log('[NodeStorage] token stored successfully');
   }
 
   /**
    * Delete authentication token (async version - use this in auth manager)
    */
   async deleteToken(): Promise<void> {
-    console.log('[NodeStorage] deleteToken called');
     // Use async method to support VS Code's keytar
     await this.deleteAsync('access_token');
-    console.log('[NodeStorage] token deleted successfully');
   }
 
   /**
    * Clear all authentication data (async version - use this in auth manager)
    */
   async clear(): Promise<void> {
-    console.log('[NodeStorage] clear called');
     await this.deleteToken();
     this.memoryStorage.clear();
-    console.log('[NodeStorage] all data cleared');
   }
 }
 

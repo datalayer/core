@@ -395,18 +395,6 @@ export interface GetNotebookResponse {
 }
 
 /**
- * Request payload for creating a notebook
- * @interface CreateNotebookRequest
- */
-export interface CreateNotebookRequest {
-  spaceId: string;
-  notebookType: string;
-  name: string;
-  description: string;
-  file?: File | Blob;
-}
-
-/**
  * Request payload for updating a notebook
  * @interface UpdateNotebookRequest
  */

@@ -6,7 +6,7 @@
 import { createContext, useState, useContext, ReactNode } from 'react';
 import { LayoutScreenshot } from './layouts';
 
-type ScreenshotContextType = {
+export type ScreenshotContextType = {
   closeScreenshot: () => void;
   displayScreenshot: (nextScreenshot: any) => void;
 };
@@ -28,7 +28,7 @@ export function useScreenshot(): ScreenshotContextType {
  */
 export const ScreenshotContextProvider = ScreenshotContext.Provider;
 
-type IScreenshotProviderProps = {
+export type IScreenshotProviderProps = {
   children?: ReactNode;
   zIndex?: number;
   disableDarken?: boolean;

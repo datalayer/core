@@ -7,7 +7,7 @@ import { createContext, useState, useContext, ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import { LayoutBackdrop } from './layouts';
 
-type BackdropContextType = {
+export type BackdropContextType = {
   closeBackdrop: () => void;
   displayBackdrop: (nextBackdrop: any) => void;
 };
@@ -29,7 +29,7 @@ export function useBackdrop(): BackdropContextType {
  */
 export const BackdropContextProvider = BackdropContext.Provider;
 
-type IBackdropProviderProps = {
+export type IBackdropProviderProps = {
   children?: ReactNode;
   zIndex?: number;
   disableDarken?: boolean;

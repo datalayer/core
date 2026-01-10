@@ -13,7 +13,7 @@ import type {
 } from '@datalayer/jupyter-react';
 
 // Import CollaborationStatus enum separately since it's exported
-enum CollaborationStatus {
+export enum CollaborationStatus {
   Disconnected = 'disconnected',
   Connecting = 'connecting',
   Connected = 'connected',

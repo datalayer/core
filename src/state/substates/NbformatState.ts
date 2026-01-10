@@ -6,7 +6,7 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 
-type SaveRequest = {
+export type SaveRequest = {
   counter: number;
 };
 

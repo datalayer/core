@@ -98,11 +98,11 @@ import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
 // Types
 // ============================================================================
 
-type CacheProps = {
+export type CacheProps = {
   loginRoute?: string;
 };
 
-type ISearchOpts = {
+export type ISearchOpts = {
   q: string;
   types: string[];
   max: number;

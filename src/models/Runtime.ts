@@ -126,7 +126,7 @@ export interface IRuntimeDesc {
 /**
  * Runtime type.
  *
- * TODO refactor with type { RuntimeLocation }
+ * TODO refactor with type `IRuntimeLocation`
  */
 export type IRuntimeType = 'notebook' | 'cell';
 
