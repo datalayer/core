@@ -7,7 +7,14 @@ export MAMBA_ROOT_PREFIX="${HOME}/micromamba" && \
 eval "$(./bin/micromamba shell hook -s posix)" && \
 micromamba create -n datalayer make python=3.11 nodejs -c conda-forge -y && \
 micromamba activate datalayer && \
+npm cache clean --force && \
 npm install && \
 pip install .[docs] && \
 npm run docs'''
 publish = "docs/build"
+
+# Skip Netlify's automatic npm install - use custom build command only
+# Setting NPM_FLAGS to just print version skips the install
+[build.environment]
+NODE_VERSION = "22.21.1"
+NPM_FLAGS = "--version"
