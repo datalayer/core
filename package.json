@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "type": "module",
   "workspaces": [
     ".",
@@ -93,7 +93,6 @@
     "examples:nextjs": "npm run dev --workspace=nextjs-notebook-example",
     "jupyter:start": "./dev/sh/start-jupyter-server.sh",
     "prepare": "husky || true",
-    "postinstall": "bash scripts/apply-patches.sh",
     "kill": "./dev/sh/kill.sh || true",
     "sync:jupyter": "bash scripts/sync-jupyter.sh",
     "sync:jupyter:watch": "bash scripts/sync-jupyter.sh --watch",
@@ -104,8 +103,8 @@
   },
   "dependencies": {
     "@datalayer/icons-react": "^1.0.6",
-    "@datalayer/jupyter-lexical": "^1.0.7",
-    "@datalayer/jupyter-react": "^2.0.0",
+    "@datalayer/jupyter-lexical": "^1.0.8",
+    "@datalayer/jupyter-react": "^2.0.2",
     "@datalayer/primer-addons": "^1.0.4",
     "@datalayer/primer-rjsf": "^1.0.1",
     "@fluentui/react": "^8.125.3",
