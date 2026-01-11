@@ -132,19 +132,28 @@ export class NodeStorage implements TokenStorage {
 
   constructor(serviceUrl: string = 'https://prod1.datalayer.run') {
     this.serviceUrl = serviceUrl;
-    try {
-      // Load keytar for system keyring access
-      // VS Code bundles keytar, but require path may vary
-      // Try multiple possible paths for compatibility
+    // Only load keytar in Node.js environment, never in browser
+    if (
+      typeof window === 'undefined' &&
+      typeof process !== 'undefined' &&
+      process.versions?.node
+    ) {
       try {
-        this.keytar = require('keytar');
-      } catch {
-        // Try alternate path for VS Code bundled keytar
-        this.keytar = require('@vscode/keytar');
+        // Use eval to hide require from bundlers (Vite/Rollup/webpack)
+        const nodeRequire = eval('require');
+        try {
+          this.keytar = nodeRequire('keytar');
+        } catch {
+          try {
+            this.keytar = nodeRequire('@vscode/keytar');
+          } catch {
+            // Keyring not available
+          }
+        }
+      } catch (e) {
+        // Keyring not available, tokens will not persist across sessions
+        console.warn('keytar not available, tokens will not persist');
       }
-    } catch (e) {
-      // Keyring not available, tokens will not persist across sessions
-      console.warn('keytar not available, tokens will not persist');
     }
   }
 
