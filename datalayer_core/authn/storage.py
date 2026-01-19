@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 
-"""Token storage backend implementations for Python SDK."""
+"""Token storage backend implementations for Core."""
 
 import json
 import os

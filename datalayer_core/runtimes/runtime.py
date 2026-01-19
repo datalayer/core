@@ -17,7 +17,7 @@ from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.services.runtimes.runtime_snapshot import (
+from datalayer_core.runtimes.runtime_snapshot import (
     RuntimeSnapshotModel,
     as_runtime_snapshots,
     create_snapshot,
@@ -289,6 +289,20 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
     def __repr__(self) -> str:
         return f"RuntimeService(uid='{self.model.uid}', name='{self.model.name}')"
+
+    def start(self) -> None:
+        """Start the runtime and kernel client.
+
+        This is a public wrapper for `_start()` to support non-context usage.
+        """
+        self._start()
+
+    def stop(self) -> bool:
+        """Stop the runtime and terminate the kernel client.
+
+        This is a public wrapper for `_stop()` to support non-context usage.
+        """
+        return self._stop()
 
     def _start(self) -> None:
         """Start the runtime."""

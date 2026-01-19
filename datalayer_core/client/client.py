@@ -23,8 +23,8 @@ from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
-from datalayer_core.services.runtimes.runtime import RuntimeService
-from datalayer_core.services.runtimes.runtime_snapshot import (
+from datalayer_core.runtimes.runtime import RuntimeService
+from datalayer_core.runtimes.runtime_snapshot import (
     as_runtime_snapshots,
     create_snapshot,
 )
