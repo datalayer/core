@@ -13,7 +13,7 @@ DEFAULT_TIME_RESERVATION: Minutes = 10.0
 
 
 def get_default_credits_limit(
-    reservations: list[dict[str, Any]], credits: dict[str, Any]
+    reservations: list[dict[str, Any]], credits: Any
 ) -> float:
     """
     Get the default credits limit based on the available credits and reservations.
@@ -30,10 +30,20 @@ def get_default_credits_limit(
     float
         The calculated default credits limit.
     """
-    available = (
-        credits["credits"]
-        if credits.get("quota") is None
-        else credits["quota"] - credits["credits"]
-    )
+    if isinstance(credits, dict):
+        if "available" in credits:
+            available = credits["available"]
+        elif "credits_available" in credits:
+            available = credits["credits_available"]
+        elif "remaining" in credits:
+            available = credits["remaining"]
+        elif credits.get("quota") is None and "credits" in credits:
+            available = credits["credits"]
+        elif "quota" in credits and "credits" in credits:
+            available = credits["quota"] - credits["credits"]
+        else:
+            available = 0.0
+    else:
+        available = float(credits)
     available -= sum(r["credits"] for r in reservations)
     return max(0.0, available * 0.5)

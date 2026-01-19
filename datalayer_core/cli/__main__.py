@@ -29,6 +29,8 @@ from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.users import app as users_app
+from datalayer_core.cli.commands.usage import app as usage_app
+from datalayer_core.cli.commands.usage import usage_root
 from datalayer_core.cli.commands.web import app as web_app
 
 
@@ -73,6 +75,7 @@ app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
 app.add_typer(tokens_app)
 app.add_typer(users_app)
+app.add_typer(usage_app)
 app.add_typer(web_app)
 
 # Add exec command directly to root level
@@ -82,6 +85,7 @@ app.command(name="exec")(exec_main)
 app.command(name="login")(login_root)
 app.command(name="logout")(logout_root)
 app.command(name="whoami")(whoami_root)
+app.command(name="usage")(usage_root)
 
 # Add convenient aliases at root level
 app.command(name="envs-list")(envs_list)

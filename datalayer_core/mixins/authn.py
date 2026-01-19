@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Datalayer client authentication mixin.
+Datalayer authentication mixin.
 """
 
 import os

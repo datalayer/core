@@ -17,6 +17,7 @@ from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.tokens import TokensMixin
+from datalayer_core.mixins.usage import UsageMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import UserModel
 from datalayer_core.models.environment import EnvironmentModel
@@ -43,6 +44,7 @@ class DatalayerClient(
     SecretsMixin,
     RuntimeSnapshotsMixin,
     TokensMixin,
+    UsageMixin,
     WhoamiAppMixin,
 ):
     """
@@ -133,6 +135,16 @@ class DatalayerClient(
         if response["success"]:
             return UserModel.from_data(response["profile"])
         raise RuntimeError("Failed to get profile information")
+
+    def get_usage_credits(self) -> dict[str, Any]:
+        """Get usage credits and reservations.
+
+        Returns
+        -------
+        dict[str, Any]
+            Usage credits response.
+        """
+        return self._get_usage_credits()
 
     @lru_cache
     def list_environments(self) -> list[EnvironmentModel]:
