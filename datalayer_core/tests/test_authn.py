@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from datalayer_core.sdk.auth.core import AuthenticationManager
-from datalayer_core.sdk.auth.storage import EnvironmentStorage
+from datalayer_core.authn import AuthenticationManager
+from datalayer_core.astorage import EnvironmentStorage
 
 
 class TestAuthenticationManager:
@@ -95,7 +95,7 @@ class TestAuthenticationManager:
         storage.set("access_token", "test-token")
 
         # Mock the httpx client
-        with patch("datalayer_core.sdk.auth.core.httpx.AsyncClient") as mock_client:
+        with patch("datalayer_core.authn.authn.httpx.AsyncClient") as mock_client:
             mock_instance = AsyncMock()
             mock_client.return_value.__aenter__.return_value = mock_instance
 

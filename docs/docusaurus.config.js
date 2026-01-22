@@ -42,13 +42,13 @@ module.exports = {
           type: 'doc',
           docId: 'python/index',
           position: 'left',
-          label: 'Python SDK',
+          label: 'Python Core',
         },
         {
           type: 'doc',
           docId: 'typescript/index',
           position: 'left',
-          label: 'TypeScript SDK',
+          label: 'TypeScript Core',
         },
         {
           type: 'doc',

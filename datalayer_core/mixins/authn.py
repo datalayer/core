@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 """
-Datalayer client authentication mixin.
+Datalayer authentication mixin.
 """
 
 import os
@@ -111,10 +111,23 @@ class AuthnMixin:
         except requests.exceptions.Timeout as e:
             raise e
         except requests.exceptions.HTTPError as e:
-            # raw = e.response.json()
-            # self.log.debug(raw)
+            url = request if isinstance(request, str) else request.url
+            status = None
+            body = None
+            if getattr(e, "response", None) is not None:
+                status = e.response.status_code
+                try:
+                    body = e.response.text
+                except Exception:
+                    body = None
+            details = []
+            if status is not None:
+                details.append(f"status={status}")
+            if body:
+                details.append(f"body={body}")
+            detail_msg = f" ({', '.join(details)})" if details else ""
             raise RuntimeError(
-                f"Failed to request the URL {request if isinstance(request, str) else request.url!s}"
+                f"Failed to request the URL {url!s}{detail_msg}"
             ) from e
 
     def _log_in(self) -> dict[str, Any]:

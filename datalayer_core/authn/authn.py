@@ -1,6 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
-"""Core authentication manager for Datalayer Python SDK."""
+
+"""Authentication manager for Datalayer Core."""
 
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -18,7 +19,7 @@ from .strategies import (
 
 class AuthenticationManager:
     """
-    Authentication Manager for Datalayer Python SDK.
+    Authentication Manager for Datalayer Core.
 
     Provides a unified interface for all authentication methods using the strategy pattern.
 

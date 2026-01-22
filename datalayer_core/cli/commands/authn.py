@@ -13,8 +13,8 @@ import questionary
 import typer
 from rich.console import Console
 
-from datalayer_core.sdk.auth import AuthenticationManager
-from datalayer_core.services.authn.http_server import get_token
+from datalayer_core.authn import AuthenticationManager
+from datalayer_core.authn.server.http_server import get_token
 from datalayer_core.utils.network import find_http_port
 from datalayer_core.utils.urls import DatalayerURLs
 

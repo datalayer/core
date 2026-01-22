@@ -1,13 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""
-Copyright (c) 2023-2025 Datalayer, Inc.
-
-Datalayer License
-"""
-
-"""Authentication strategy implementations for Python SDK."""
+"""Authentication strategy implementations for Core."""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Tuple

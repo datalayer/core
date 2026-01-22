@@ -6,7 +6,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from datalayer_core.sdk.auth.storage import (
+from datalayer_core.authn.storage import (
     EnvironmentStorage,
     FileStorage,
     KeyringStorage,
