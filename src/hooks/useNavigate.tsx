@@ -43,8 +43,13 @@ export const useNavigate = () => {
   if (isReactRouter && rrNavigate) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useCallback(
-      (to: string, options?: any) => {
-        // For React Router, just pass through directly without side effects
+      (to: string | number, options?: any) => {
+        // Scroll to top when navigating (except for history navigation)
+        if (typeof to === 'string') {
+          window.scrollTo(0, 0);
+          document.body.scrollTop = 0;
+        }
+        // For React Router, pass through directly
         return rrNavigate(to, options);
       },
       [rrNavigate],
@@ -58,11 +63,17 @@ export const useNavigate = () => {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const navigate = useCallback(
     (
-      location: string,
+      location: string | number,
       optionsOrEvent?: any,
       resetPortals = true,
       extraOptions?: any,
     ) => {
+      // Handle number for history navigation (e.g., -1 to go back)
+      if (typeof location === 'number') {
+        window.history.go(location);
+        return;
+      }
+
       // Handle different call signatures for native navigation
       let options: any = undefined;
       let event: any = undefined;
