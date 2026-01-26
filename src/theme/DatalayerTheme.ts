@@ -9,7 +9,7 @@ import merge from 'lodash/merge.js';
 
 /**
  * Datalayer Accessible Color System
- * Based on BRAND_MANUAL.md - WCAG AA/AAA compliant
+ * Based on Datalayer's brand manual - WCAG AA/AAA compliant
  */
 export const datalayerColors = {
   // Core Neutrals
@@ -28,10 +28,8 @@ export const datalayerColors = {
 
 /**
  * Datalayer Theme for Primer React.
- * Uses accessible color palette from BRAND_MANUAL.md
  *
- * Following JupyterLabTheme pattern: using direct color values in theme object
- * which Primer's styled-components uses directly.
+ * Uses accessible color palette from Datalayer's brand manual.
  */
 const datalayerThemeDefs = {
   colorSchemes: {
@@ -40,7 +38,7 @@ const datalayerThemeDefs = {
         // Canvas colors
         canvas: {
           default: datalayerColors.white,
-          subtle: datalayerColors.greenTint,
+          // subtle: datalayerColors.greenTint,
         },
         // Foreground colors
         fg: {
@@ -53,17 +51,16 @@ const datalayerThemeDefs = {
           fg: datalayerColors.greenText,
           emphasis: datalayerColors.greenBrand,
           muted: datalayerColors.greenAccent,
-          subtle: datalayerColors.greenTint,
+          // subtle: datalayerColors.greenTint,
         },
         // Success colors (green)
         success: {
           fg: datalayerColors.greenText,
           emphasis: datalayerColors.greenBrand,
           muted: datalayerColors.greenAccent,
-          subtle: datalayerColors.greenTint,
+          // subtle: datalayerColors.greenTint,
         },
         // Button colors
-        // Following JupyterLabTheme pattern with direct values
         btn: {
           text: datalayerColors.black,
           bg: datalayerColors.white,
