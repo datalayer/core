@@ -2200,6 +2200,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get all secrets
    */
+  // TODO: Previously this hook pre-populated individual secret caches with setQueryData,
+  // but this prevented useSecret from fetching fresh data (e.g., the value field).
+  // Consider re-adding cache pre-population if the list endpoint returns full secret data,
+  // or use a different query key pattern for partial vs full secret data.
   const useSecrets = () => {
     return useQuery({
       queryKey: queryKeys.secrets.all(),
@@ -2210,16 +2214,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.secrets) {
           const secrets = resp.secrets
-            .map((s: unknown) => {
-              const secret = toSecret(s);
-              if (secret) {
-                queryClient.setQueryData(
-                  queryKeys.secrets.detail(secret.id),
-                  secret,
-                );
-              }
-              return secret;
-            })
+            .map((s: unknown) => toSecret(s))
             .filter(Boolean);
           return secrets;
         }
@@ -2604,7 +2599,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useSecret = (
     secretId: string,
-    options?: { enabled?: boolean; refetchOnMount?: boolean },
+    options?: {
+      enabled?: boolean;
+      refetchOnMount?: boolean | 'always';
+      staleTime?: number;
+      gcTime?: number;
+    },
   ) => {
     return useQuery({
       queryKey: queryKeys.secrets.detail(secretId),
@@ -2622,6 +2622,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       enabled: options?.enabled ?? !!secretId,
       refetchOnMount:
         options?.refetchOnMount ?? DEFAULT_QUERY_OPTIONS.refetchOnMount,
+      staleTime: options?.staleTime ?? DEFAULT_QUERY_OPTIONS.staleTime,
+      gcTime: options?.gcTime ?? DEFAULT_QUERY_OPTIONS.gcTime,
     });
   };
 
@@ -5459,7 +5461,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }>({
           url: `${configuration.iamRunUrl}/api/iam/v1/oauth2/authz/url/link?${queryString}`,
         });
-        return resp.autorization_url;
+        return resp;
       },
     });
   };
