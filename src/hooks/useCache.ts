@@ -5904,7 +5904,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
           body: {
             request_method: 'GET',
-            request_url: 'https://api.linkedin.com/v2/me',
+            request_url: 'https://api.linkedin.com/v2/userinfo',
             request_token: accessToken,
           },
         });
