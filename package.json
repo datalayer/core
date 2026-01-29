@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/core",
-  "version": "0.0.24",
+  "version": "0.0.25",
   "type": "module",
   "workspaces": [
     ".",
@@ -103,7 +103,7 @@
   },
   "dependencies": {
     "@datalayer/icons-react": "^1.0.6",
-    "@datalayer/jupyter-lexical": "^1.0.8",
+    "@datalayer/jupyter-lexical": "^1.0.9",
     "@datalayer/jupyter-react": "^2.0.2",
     "@datalayer/primer-addons": "^1.0.4",
     "@datalayer/primer-rjsf": "^1.0.1",
@@ -125,7 +125,7 @@
     "@lumino/disposable": "^2.1.5",
     "@lumino/polling": "^2.1.5",
     "@lumino/signaling": "^2.1.5",
-    "@lumino/widgets": "^2.7.2",
+    "@lumino/widgets": "^2.7.3",
     "@primer/behaviors": "^1.8.4",
     "@primer/brand-primitives": "^0.51.0",
     "@primer/css": "^21.5.1",
