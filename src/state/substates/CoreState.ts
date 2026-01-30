@@ -73,7 +73,7 @@ try {
         'Datalayer configuration loaded from HTML page',
         initialConfiguration,
       );
-      window.document.title = `${initialConfiguration.brand.name} Ξ ${initialConfiguration.brand.about}`;
+      window.document.title = `${initialConfiguration.brand.name} ☰ ${initialConfiguration.brand.about}`;
     }
   }
 } catch (error) {
