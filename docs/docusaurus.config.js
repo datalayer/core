@@ -5,7 +5,7 @@
 
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: 'Ξ Datalayer core',
+  title: '☰ Datalayer core',
   tagline: 'Core package used by many other Datalayer packages',
   url: 'https://core.datalayer.tech',
   baseUrl: '/',
