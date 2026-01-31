@@ -91,6 +91,11 @@ import { newUserMock } from './../mocks';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
 import { useUploadForm } from './useUpload';
+import type {
+  AgentSpaceData,
+  CreateAgentSpaceRequest,
+  UpdateAgentSpaceRequest,
+} from '../api/spacer/agentSpaces';
 
 import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
 
@@ -400,6 +405,15 @@ export const queryKeys = {
       [...queryKeys.items.all(), 'space', spaceId] as const,
     search: (opts: ISearchOpts) =>
       [...queryKeys.items.all(), 'search', opts] as const,
+  },
+
+  // Agent Spaces
+  agentSpaces: {
+    all: () => ['agentSpaces'] as const,
+    lists: () => [...queryKeys.agentSpaces.all(), 'list'] as const,
+    details: () => [...queryKeys.agentSpaces.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.agentSpaces.details(), id] as const,
+    public: () => [...queryKeys.agentSpaces.all(), 'public'] as const,
   },
 
   // Layout
@@ -1609,6 +1623,243 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
     });
+  };
+
+  // ============================================================================
+  // Agent Spaces Hooks
+  // ============================================================================
+
+  /**
+   * Get agent space by ID
+   */
+  const useAgentSpace = (uid: string | undefined) => {
+    return useQuery({
+      queryKey: queryKeys.agentSpaces.detail(uid || ''),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}`,
+          method: 'GET',
+        });
+        if (resp.success && resp.agentSpace) {
+          return resp.agentSpace as AgentSpaceData;
+        }
+        throw new Error(resp.message || 'Failed to fetch agent space');
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!uid,
+    });
+  };
+
+  /**
+   * List user's agent spaces
+   */
+  const useAgentSpaces = () => {
+    return useQuery({
+      queryKey: queryKeys.agentSpaces.lists(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces`,
+          method: 'GET',
+        });
+        if (resp.success && resp.agentSpaces) {
+          const agentSpaces = resp.agentSpaces as AgentSpaceData[];
+          // Set detail cache for each agent space
+          agentSpaces.forEach((agentSpace: AgentSpaceData) => {
+            queryClient.setQueryData(
+              queryKeys.agentSpaces.detail(agentSpace.id),
+              agentSpace,
+            );
+          });
+          return agentSpaces;
+        }
+        return [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!user,
+    });
+  };
+
+  /**
+   * List public agent spaces (Library)
+   */
+  const usePublicAgentSpaces = () => {
+    return useQuery({
+      queryKey: queryKeys.agentSpaces.public(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/public`,
+          method: 'GET',
+        });
+        if (resp.success && resp.agentSpaces) {
+          return resp.agentSpaces as AgentSpaceData[];
+        }
+        return [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+    });
+  };
+
+  /**
+   * Create agent space
+   */
+  const useCreateAgentSpace = () => {
+    return useMutation({
+      mutationFn: async (data: CreateAgentSpaceRequest) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces`,
+          method: 'POST',
+          body: data,
+        });
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.agentSpace) {
+          const agentSpace = resp.agentSpace as AgentSpaceData;
+          // Set detail cache
+          queryClient.setQueryData(
+            queryKeys.agentSpaces.detail(agentSpace.id),
+            agentSpace,
+          );
+          // Invalidate all agent space queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Update agent space
+   */
+  const useUpdateAgentSpace = () => {
+    return useMutation({
+      mutationFn: async ({
+        uid,
+        data,
+      }: {
+        uid: string;
+        data: UpdateAgentSpaceRequest;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}`,
+          method: 'PUT',
+          body: data,
+        });
+      },
+      onSuccess: (resp, { uid }) => {
+        if (resp.success) {
+          // Invalidate detail cache
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.detail(uid),
+          });
+          // Invalidate all agent space queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Delete agent space
+   */
+  const useDeleteAgentSpace = () => {
+    return useMutation({
+      mutationFn: async (uid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        // Invalidate all agent space queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.agentSpaces.all(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Make agent space public
+   */
+  const useMakeAgentSpacePublic = () => {
+    return useMutation({
+      mutationFn: async (uid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}/public`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (resp, uid) => {
+        if (resp.success) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.detail(uid),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Make agent space private
+   */
+  const useMakeAgentSpacePrivate = () => {
+    return useMutation({
+      mutationFn: async (uid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}/private`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (resp, uid) => {
+        if (resp.success) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.detail(uid),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Refresh agent space data
+   */
+  const useRefreshAgentSpace = () => {
+    return (uid: string) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentSpaces.detail(uid),
+      });
+    };
+  };
+
+  /**
+   * Refresh agent spaces list
+   */
+  const useRefreshAgentSpaces = () => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentSpaces.all(),
+      });
+    };
+  };
+
+  /**
+   * Refresh public agent spaces list
+   */
+  const useRefreshPublicAgentSpaces = () => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentSpaces.public(),
+      });
+    };
   };
 
   // ============================================================================
@@ -7423,6 +7674,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRefreshUserSpace,
     useRefreshLayout,
     useExportSpace,
+
+    // Agent Spaces
+    useAgentSpace,
+    useAgentSpaces,
+    usePublicAgentSpaces,
+    useCreateAgentSpace,
+    useUpdateAgentSpace,
+    useDeleteAgentSpace,
+    useMakeAgentSpacePublic,
+    useMakeAgentSpacePrivate,
+    useRefreshAgentSpace,
+    useRefreshAgentSpaces,
+    useRefreshPublicAgentSpaces,
 
     // Courses
     useCourse,
