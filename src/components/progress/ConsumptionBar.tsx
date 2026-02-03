@@ -13,6 +13,25 @@ const CRITICAL_LEVEL = 90;
 const WARNING_LEVEL = 75;
 
 /**
+ * Format seconds into a human-friendly string (e.g., "2h 15m", "45m", "30s")
+ */
+function formatTimeRemaining(seconds: number): string {
+  if (seconds < 0) return '0s';
+
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+  }
+  if (minutes > 0) {
+    return secs > 0 && minutes < 5 ? `${minutes}m ${secs}s` : `${minutes}m`;
+  }
+  return `${secs}s`;
+}
+
+/**
  * Consumption progress bar properties
  */
 export interface IConsumptionBarProps {
@@ -99,8 +118,9 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
         : 'success.emphasis'
     : 'neutral.emphasis';
   const burntCredits = duration * burningRate;
+  const secondsRemaining = (1 - progress / 100) * duration;
   const title = duration
-    ? `${((1 - progress / 100) * duration).toFixed(0)} seconds left - ${((progress / 100) * burntCredits).toFixed(2)} / ${burntCredits.toFixed(2)} credits`
+    ? `${formatTimeRemaining(secondsRemaining)} left - ${((progress / 100) * burntCredits).toFixed(2)} / ${burntCredits.toFixed(2)} credits`
     : `Started at ${new Date(startedAt * 1000).toISOString()} - ${burntCredits.toFixed(2)} credits consumed`;
   return (
     <>
