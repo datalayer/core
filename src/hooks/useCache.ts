@@ -1876,19 +1876,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
 
   /**
-   * Agent Runtime data type returned from runtimes service
+   * Agent Runtime data type returned from runtimes service.
+   *
+   * Backend RuntimePod fields: pod_name, environment_name, environment_title, uid,
+   * type, given_name, token, ingress, reservation_id, started_at, expired_at, burning_rate.
+   *
+   * We map 'ingress' to 'url' for consistency with the UI.
    */
   type AgentRuntimeData = {
     pod_name: string;
     id: string;
     environment_name: string;
+    environment_title?: string;
     given_name: string;
-    phase: string;
+    phase?: string;
     type: string;
-    creation_ts: string;
-    expiration_ts: string;
+    started_at?: string;
+    expired_at?: string;
     burning_rate?: number;
     status: 'starting' | 'running' | 'paused' | 'terminated' | 'archived';
+    // Backend returns 'ingress', we map it to 'url' for UI consistency
+    ingress?: string;
     url?: string;
     token?: string;
   };
@@ -1929,9 +1937,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
                   ? ('starting' as const)
                   : rt.phase === 'Terminated'
                     ? ('terminated' as const)
-                    : ('running' as const),
+                    : rt.phase === 'Paused'
+                      ? ('paused' as const)
+                      : rt.phase === 'Archived'
+                        ? ('archived' as const)
+                        : ('running' as const),
               name: rt.given_name || rt.pod_name,
               id: rt.pod_name,
+              // Map ingress URL to url for UI consistency
+              url: rt.ingress,
               messageCount: 0, // Default for UI compatibility
             }));
           // Set detail cache for each runtime
@@ -1976,9 +1990,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
                 ? ('starting' as const)
                 : rt.phase === 'Terminated'
                   ? ('terminated' as const)
-                  : ('running' as const),
+                  : rt.phase === 'Paused'
+                    ? ('paused' as const)
+                    : rt.phase === 'Archived'
+                      ? ('archived' as const)
+                      : ('running' as const),
             name: rt.given_name || rt.pod_name,
             id: rt.pod_name,
+            // Map ingress URL to url for UI consistency
+            url: rt.ingress,
             messageCount: 0,
           };
         }
@@ -2033,6 +2053,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
                   : ('running' as const),
               name: rt.given_name || rt.pod_name,
               id: rt.pod_name,
+              // Map ingress URL to url for UI consistency
+              url: rt.ingress,
               messageCount: 0,
             },
           );
