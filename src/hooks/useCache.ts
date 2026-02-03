@@ -1896,6 +1896,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * List agent runtimes (runtimes with ai-agents-env environment)
    */
+  /**
+   * Get all agent runtimes for the current user.
+   *
+   * Note on phase/status mapping:
+   * The backend (operator) RuntimePod model does not include a 'phase' field.
+   * The operator only keeps active/assigned runtimes in its cache (OperatorCache.USER_RUNTIMES),
+   * so any runtime returned by this endpoint is inherently running or starting.
+   * Therefore, if rt.phase is undefined (which it will be), we default to 'running'.
+   * A 'paused' state would require explicit backend support to track paused runtimes.
+   */
   const useAgentRuntimes = () => {
     return useQuery({
       queryKey: queryKeys.agentRuntimes.lists(),
@@ -1912,15 +1922,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             )
             .map((rt: AgentRuntimeData) => ({
               ...rt,
-              // Map phase to status for consistency with UI
+              // Phase/status mapping: see hook JSDoc for details.
+              // Backend returns only active runtimes, so default to 'running'.
               status:
-                rt.phase === 'Running'
-                  ? ('running' as const)
-                  : rt.phase === 'Pending'
-                    ? ('starting' as const)
-                    : rt.phase === 'Terminated'
-                      ? ('terminated' as const)
-                      : ('paused' as const),
+                rt.phase === 'Pending'
+                  ? ('starting' as const)
+                  : rt.phase === 'Terminated'
+                    ? ('terminated' as const)
+                    : ('running' as const),
               name: rt.given_name || rt.pod_name,
               id: rt.pod_name,
               messageCount: 0, // Default for UI compatibility
@@ -1943,7 +1952,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Get a single agent runtime by pod name
+   * Get a single agent runtime by pod name.
+   *
+   * Note on phase/status mapping:
+   * Same as useAgentRuntimes - the backend RuntimePod model has no 'phase' field,
+   * and only active runtimes exist in the operator cache. Default to 'running'.
    */
   const useAgentRuntime = (podName: string | undefined) => {
     return useQuery({
@@ -1957,14 +1970,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const rt = resp.runtime as AgentRuntimeData;
           return {
             ...rt,
+            // Phase/status mapping: see useAgentRuntimes JSDoc for details.
             status:
-              rt.phase === 'Running'
-                ? ('running' as const)
-                : rt.phase === 'Pending'
-                  ? ('starting' as const)
-                  : rt.phase === 'Terminated'
-                    ? ('terminated' as const)
-                    : ('paused' as const),
+              rt.phase === 'Pending'
+                ? ('starting' as const)
+                : rt.phase === 'Terminated'
+                  ? ('terminated' as const)
+                  : ('running' as const),
             name: rt.given_name || rt.pod_name,
             id: rt.pod_name,
             messageCount: 0,
@@ -1979,7 +1991,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Request to create an agent runtime
+   * Create a new agent runtime.
+   *
+   * Note on phase/status mapping:
+   * Newly created runtimes are immediately active (the operator assigns a pod from the pool).
+   * The response won't have a 'phase' field, so we default to 'running'.
+   * See useAgentRuntimes JSDoc for full explanation.
    */
   type CreateAgentRuntimeRequest = {
     environmentName?: string;
@@ -2005,17 +2022,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: resp => {
         if (resp.success && resp.runtime) {
           const rt = resp.runtime as AgentRuntimeData;
-          // Set detail cache
+          // Phase/status mapping: see useAgentRuntimes JSDoc for details.
           queryClient.setQueryData(
             queryKeys.agentRuntimes.detail(rt.pod_name),
             {
               ...rt,
               status:
-                rt.phase === 'Running'
-                  ? ('running' as const)
-                  : rt.phase === 'Pending'
-                    ? ('starting' as const)
-                    : ('paused' as const),
+                rt.phase === 'Pending'
+                  ? ('starting' as const)
+                  : ('running' as const),
               name: rt.given_name || rt.pod_name,
               id: rt.pod_name,
               messageCount: 0,
