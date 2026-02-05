@@ -11,6 +11,7 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
+from datalayer_core.mixins.agent_spaces import AgentSpacesMixin
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
 from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
@@ -38,6 +39,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 
 class DatalayerClient(
+    AgentSpacesMixin,
     AuthnMixin,
     RuntimesMixin,
     EnvironmentsMixin,

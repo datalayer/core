@@ -91,6 +91,11 @@ import { newUserMock } from './../mocks';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
 import { useUploadForm } from './useUpload';
+import type {
+  AgentSpaceData,
+  CreateAgentSpaceRequest,
+  UpdateAgentSpaceRequest,
+} from '../api/spacer/agentSpaces';
 
 import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
 
@@ -400,6 +405,24 @@ export const queryKeys = {
       [...queryKeys.items.all(), 'space', spaceId] as const,
     search: (opts: ISearchOpts) =>
       [...queryKeys.items.all(), 'search', opts] as const,
+  },
+
+  // Agent Spaces
+  agentSpaces: {
+    all: () => ['agentSpaces'] as const,
+    lists: () => [...queryKeys.agentSpaces.all(), 'list'] as const,
+    details: () => [...queryKeys.agentSpaces.all(), 'detail'] as const,
+    detail: (id: string) => [...queryKeys.agentSpaces.details(), id] as const,
+    public: () => [...queryKeys.agentSpaces.all(), 'public'] as const,
+  },
+
+  // Agent Runtimes (runtimes with ai-agents environment)
+  agentRuntimes: {
+    all: () => ['agentRuntimes'] as const,
+    lists: () => [...queryKeys.agentRuntimes.all(), 'list'] as const,
+    details: () => [...queryKeys.agentRuntimes.all(), 'detail'] as const,
+    detail: (podName: string) =>
+      [...queryKeys.agentRuntimes.details(), podName] as const,
   },
 
   // Layout
@@ -1609,6 +1632,474 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
     });
+  };
+
+  // ============================================================================
+  // Agent Spaces Hooks
+  // ============================================================================
+
+  /**
+   * Get agent space by ID
+   */
+  const useAgentSpace = (uid: string | undefined) => {
+    return useQuery({
+      queryKey: queryKeys.agentSpaces.detail(uid || ''),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}`,
+          method: 'GET',
+        });
+        if (resp.success && resp.agentSpace) {
+          return resp.agentSpace as AgentSpaceData;
+        }
+        throw new Error(resp.message || 'Failed to fetch agent space');
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!uid,
+    });
+  };
+
+  /**
+   * List user's agent spaces
+   */
+  const useAgentSpaces = () => {
+    return useQuery({
+      queryKey: queryKeys.agentSpaces.lists(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces`,
+          method: 'GET',
+        });
+        if (resp.success && resp.agentSpaces) {
+          const agentSpaces = resp.agentSpaces as AgentSpaceData[];
+          // Set detail cache for each agent space
+          agentSpaces.forEach((agentSpace: AgentSpaceData) => {
+            queryClient.setQueryData(
+              queryKeys.agentSpaces.detail(agentSpace.id),
+              agentSpace,
+            );
+          });
+          return agentSpaces;
+        }
+        return [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!user,
+    });
+  };
+
+  /**
+   * List public agent spaces (Library)
+   */
+  const usePublicAgentSpaces = () => {
+    return useQuery({
+      queryKey: queryKeys.agentSpaces.public(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/public`,
+          method: 'GET',
+        });
+        if (resp.success && resp.agentSpaces) {
+          return resp.agentSpaces as AgentSpaceData[];
+        }
+        return [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+    });
+  };
+
+  /**
+   * Create agent space
+   */
+  const useCreateAgentSpace = () => {
+    return useMutation({
+      mutationFn: async (data: CreateAgentSpaceRequest) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces`,
+          method: 'POST',
+          body: data,
+        });
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.agentSpace) {
+          const agentSpace = resp.agentSpace as AgentSpaceData;
+          // Set detail cache
+          queryClient.setQueryData(
+            queryKeys.agentSpaces.detail(agentSpace.id),
+            agentSpace,
+          );
+          // Invalidate all agent space queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Update agent space
+   */
+  const useUpdateAgentSpace = () => {
+    return useMutation({
+      mutationFn: async ({
+        uid,
+        data,
+      }: {
+        uid: string;
+        data: UpdateAgentSpaceRequest;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}`,
+          method: 'PUT',
+          body: data,
+        });
+      },
+      onSuccess: (resp, { uid }) => {
+        if (resp.success) {
+          // Invalidate detail cache
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.detail(uid),
+          });
+          // Invalidate all agent space queries
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Delete agent space
+   */
+  const useDeleteAgentSpace = () => {
+    return useMutation({
+      mutationFn: async (uid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        // Invalidate all agent space queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.agentSpaces.all(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Make agent space public
+   */
+  const useMakeAgentSpacePublic = () => {
+    return useMutation({
+      mutationFn: async (uid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}/public`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (resp, uid) => {
+        if (resp.success) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.detail(uid),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Make agent space private
+   */
+  const useMakeAgentSpacePrivate = () => {
+    return useMutation({
+      mutationFn: async (uid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/agent-spaces/${uid}/private`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (resp, uid) => {
+        if (resp.success) {
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.detail(uid),
+          });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentSpaces.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Refresh agent space data
+   */
+  const useRefreshAgentSpace = () => {
+    return (uid: string) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentSpaces.detail(uid),
+      });
+    };
+  };
+
+  /**
+   * Refresh agent spaces list
+   */
+  const useRefreshAgentSpaces = () => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentSpaces.all(),
+      });
+    };
+  };
+
+  /**
+   * Refresh public agent spaces list
+   */
+  const useRefreshPublicAgentSpaces = () => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentSpaces.public(),
+      });
+    };
+  };
+
+  // ============================================================================
+  // Agent Runtimes Hooks (runtimes with ai-agents environment)
+  // ============================================================================
+
+  /**
+   * Agent Runtime data type returned from runtimes service.
+   *
+   * Backend RuntimePod fields: pod_name, environment_name, environment_title, uid,
+   * type, given_name, token, ingress, reservation_id, started_at, expired_at, burning_rate.
+   *
+   * We map 'ingress' to 'url' for consistency with the UI.
+   */
+  type AgentRuntimeData = {
+    pod_name: string;
+    id: string;
+    environment_name: string;
+    environment_title?: string;
+    given_name: string;
+    phase?: string;
+    type: string;
+    started_at?: string;
+    expired_at?: string;
+    burning_rate?: number;
+    status: 'starting' | 'running' | 'paused' | 'terminated' | 'archived';
+    // Backend returns 'ingress', we map it to 'url' for UI consistency
+    ingress?: string;
+    url?: string;
+    token?: string;
+    // Agent specification with chat suggestions
+    agentSpec?: AgentSpaceData['agentSpec'];
+  };
+
+  /**
+   * List agent runtimes (runtimes with ai-agents-env environment)
+   */
+  /**
+   * Get all agent runtimes for the current user.
+   *
+   * Note on phase/status mapping:
+   * The backend (operator) RuntimePod model does not include a 'phase' field.
+   * The operator only keeps active/assigned runtimes in its cache (OperatorCache.USER_RUNTIMES),
+   * so any runtime returned by this endpoint is inherently running or starting.
+   * Therefore, if rt.phase is undefined (which it will be), we default to 'running'.
+   * A 'paused' state would require explicit backend support to track paused runtimes.
+   */
+  const useAgentRuntimes = () => {
+    return useQuery({
+      queryKey: queryKeys.agentRuntimes.lists(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes`,
+          method: 'GET',
+        });
+        if (resp.success && resp.runtimes) {
+          // Filter to only include ai-agents-env runtimes
+          const agentRuntimes = (resp.runtimes as AgentRuntimeData[])
+            .filter(
+              (rt: AgentRuntimeData) => rt.environment_name === 'ai-agents-env',
+            )
+            .map((rt: AgentRuntimeData) => ({
+              ...rt,
+              // Phase/status mapping: see hook JSDoc for details.
+              // Backend returns only active runtimes, so default to 'running'.
+              status:
+                rt.phase === 'Pending'
+                  ? ('starting' as const)
+                  : rt.phase === 'Terminated'
+                    ? ('terminated' as const)
+                    : rt.phase === 'Paused'
+                      ? ('paused' as const)
+                      : rt.phase === 'Archived'
+                        ? ('archived' as const)
+                        : ('running' as const),
+              name: rt.given_name || rt.pod_name,
+              id: rt.pod_name,
+              // Map ingress URL to url for UI consistency
+              url: rt.ingress,
+              messageCount: 0, // Default for UI compatibility
+            }));
+          // Set detail cache for each runtime
+          agentRuntimes.forEach((runtime: AgentRuntimeData) => {
+            queryClient.setQueryData(
+              queryKeys.agentRuntimes.detail(runtime.pod_name),
+              runtime,
+            );
+          });
+          return agentRuntimes;
+        }
+        return [];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      refetchInterval: 10000, // Refetch every 10 seconds for status updates
+      enabled: !!user,
+    });
+  };
+
+  /**
+   * Get a single agent runtime by pod name.
+   *
+   * Note on phase/status mapping:
+   * Same as useAgentRuntimes - the backend RuntimePod model has no 'phase' field,
+   * and only active runtimes exist in the operator cache. Default to 'running'.
+   */
+  const useAgentRuntime = (podName: string | undefined) => {
+    return useQuery({
+      queryKey: queryKeys.agentRuntimes.detail(podName ?? ''),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes/${podName}`,
+          method: 'GET',
+        });
+        if (resp.runtime) {
+          const rt = resp.runtime as AgentRuntimeData;
+          return {
+            ...rt,
+            // Phase/status mapping: see useAgentRuntimes JSDoc for details.
+            status:
+              rt.phase === 'Pending'
+                ? ('starting' as const)
+                : rt.phase === 'Terminated'
+                  ? ('terminated' as const)
+                  : rt.phase === 'Paused'
+                    ? ('paused' as const)
+                    : rt.phase === 'Archived'
+                      ? ('archived' as const)
+                      : ('running' as const),
+            name: rt.given_name || rt.pod_name,
+            id: rt.pod_name,
+            // Map ingress URL to url for UI consistency
+            url: rt.ingress,
+            messageCount: 0,
+          };
+        }
+        throw new Error('Failed to fetch agent runtime');
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      refetchInterval: 5000, // Refetch every 5 seconds for status
+      enabled: !!podName,
+    });
+  };
+
+  /**
+   * Create a new agent runtime.
+   *
+   * Note on phase/status mapping:
+   * Newly created runtimes are immediately active (the operator assigns a pod from the pool).
+   * The response won't have a 'phase' field, so we default to 'running'.
+   * See useAgentRuntimes JSDoc for full explanation.
+   */
+  type CreateAgentRuntimeRequest = {
+    environmentName?: string;
+    givenName?: string;
+    creditsLimit?: number;
+    type?: string;
+    editorVariant?: string; // 'none', 'notebook', or 'document'
+  };
+
+  const useCreateAgentRuntime = () => {
+    return useMutation({
+      mutationFn: async (data: CreateAgentRuntimeRequest) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes`,
+          method: 'POST',
+          body: {
+            environment_name: data.environmentName || 'ai-agents-env',
+            given_name: data.givenName || 'Agent Space',
+            credits_limit: data.creditsLimit || 10,
+            type: data.type || 'notebook',
+            editor_variant: data.editorVariant || 'none',
+          },
+        });
+      },
+      onSuccess: resp => {
+        if (resp.success && resp.runtime) {
+          const rt = resp.runtime as AgentRuntimeData;
+          // Phase/status mapping: see useAgentRuntimes JSDoc for details.
+          queryClient.setQueryData(
+            queryKeys.agentRuntimes.detail(rt.pod_name),
+            {
+              ...rt,
+              status:
+                rt.phase === 'Pending'
+                  ? ('starting' as const)
+                  : ('running' as const),
+              name: rt.given_name || rt.pod_name,
+              id: rt.pod_name,
+              // Map ingress URL to url for UI consistency
+              url: rt.ingress,
+              messageCount: 0,
+            },
+          );
+          // Invalidate list
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.agentRuntimes.all(),
+          });
+        }
+      },
+    });
+  };
+
+  /**
+   * Delete agent runtime
+   */
+  const useDeleteAgentRuntime = () => {
+    return useMutation({
+      mutationFn: async (podName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes/${podName}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        // Invalidate all agent runtime queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.agentRuntimes.all(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Refresh agent runtimes list
+   */
+  const useRefreshAgentRuntimes = () => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.agentRuntimes.all(),
+      });
+    };
   };
 
   // ============================================================================
@@ -7423,6 +7914,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRefreshUserSpace,
     useRefreshLayout,
     useExportSpace,
+
+    // Agent Spaces
+    useAgentSpace,
+    useAgentSpaces,
+    usePublicAgentSpaces,
+    useCreateAgentSpace,
+    useUpdateAgentSpace,
+    useDeleteAgentSpace,
+    useMakeAgentSpacePublic,
+    useMakeAgentSpacePrivate,
+    useRefreshAgentSpace,
+    useRefreshAgentSpaces,
+    useRefreshPublicAgentSpaces,
+
+    // Agent Runtimes (runtimes with ai-agents environment)
+    useAgentRuntime,
+    useAgentRuntimes,
+    useCreateAgentRuntime,
+    useDeleteAgentRuntime,
+    useRefreshAgentRuntimes,
 
     // Courses
     useCourse,
