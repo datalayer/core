@@ -2025,6 +2025,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     givenName?: string;
     creditsLimit?: number;
     type?: string;
+    editorVariant?: string; // 'none', 'notebook', or 'document'
   };
 
   const useCreateAgentRuntime = () => {
@@ -2038,6 +2039,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             given_name: data.givenName || 'Agent Space',
             credits_limit: data.creditsLimit || 10,
             type: data.type || 'notebook',
+            editor_variant: data.editorVariant || 'none',
           },
         });
       },
