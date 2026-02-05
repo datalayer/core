@@ -68,6 +68,8 @@ export interface AgentSpec {
   environmentName: string;
   icon?: string;
   color?: string;
+  /** Chat suggestions to show users what this agent can do */
+  suggestions?: string[];
 }
 
 /**

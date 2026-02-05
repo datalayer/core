@@ -1899,6 +1899,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     ingress?: string;
     url?: string;
     token?: string;
+    // Agent specification with chat suggestions
+    agentSpec?: AgentSpaceData['agentSpec'];
   };
 
   /**
