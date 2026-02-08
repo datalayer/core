@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 /**
- * Authentication types and interfaces for the Datalayer SDK
+ * Authentication types and interfaces for the Datalayer Client
  */
 
 import { UserDTO } from '../../models/UserDTO';

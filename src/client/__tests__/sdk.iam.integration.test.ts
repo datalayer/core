@@ -11,12 +11,12 @@ import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 
 /**
- * SDK IAM Integration Tests
+ * Client IAM Integration Tests
  *
  * Tests authentication and identity management functionality
- * using the SDK client.
+ * using the Client client.
  */
-describe('SDK IAM Integration Tests', () => {
+describe('Client IAM Integration Tests', () => {
   let client: DatalayerClient;
 
   beforeAll(() => {
@@ -129,7 +129,7 @@ describe('SDK IAM Integration Tests', () => {
         const user = await client.whoami();
         expect(user).toBeDefined();
 
-        // Verify token is stored in SDK
+        // Verify token is stored in Client
         const token = (client as any).getToken();
         expect(token).toBe(testConfig.getToken());
 
@@ -160,7 +160,7 @@ describe('SDK IAM Integration Tests', () => {
       it('should handle logout operation', async () => {
         console.log('Testing logout...');
 
-        // Create a separate SDK instance for logout test
+        // Create a separate Client instance for logout test
         const logoutSdk = new DatalayerClient({
           token: testConfig.getToken(),
           iamRunUrl: DEFAULT_SERVICE_URLS.IAM,

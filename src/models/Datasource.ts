@@ -166,7 +166,7 @@ export interface UpdateDatasourceResponse {
 }
 
 /**
- * Datasource domain model for the Datalayer SDK.
+ * Datasource domain model for the Datalayer Client.
  * Provides state management and operations for datasources.
  *
  * @example
@@ -192,7 +192,7 @@ export class DatasourceDTO {
   /**
    * Create a Datasource instance.
    * @param data - Datasource data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: DatasourceData, sdk: DatalayerClient) {
     this._data = data;

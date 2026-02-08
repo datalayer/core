@@ -4,7 +4,7 @@
  */
 
 /**
- * Space domain model for the Datalayer SDK.
+ * Space domain model for the Datalayer Client.
  *
  * @module models/SpaceDTO
  */
@@ -38,7 +38,7 @@ export interface SpaceData {
 
 /**
  * Stable public interface for Space data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface SpaceJSON {
@@ -77,7 +77,7 @@ export class SpaceDTO {
    * Create a Space instance.
    *
    * @param data - Space data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: SpaceData, sdk: DatalayerClient) {
     this._data = data;
@@ -169,7 +169,7 @@ export class SpaceDTO {
   }): Promise<T> {
     this._checkDeleted();
 
-    // Get necessary configuration from SDK
+    // Get necessary configuration from Client
     const token = (this._sdk as any).getToken();
     const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
 

@@ -4,7 +4,7 @@
  */
 
 /**
- * User model for the Datalayer SDK with rich functionality.
+ * User model for the Datalayer Client with rich functionality.
  *
  * @module models/UserDTO
  */
@@ -65,7 +65,7 @@ export class UserDTO {
    * Create a User instance.
    *
    * @param data - User data from API
-   * @param sdk - SDK instance (currently unused but kept for compatibility)
+   * @param sdk - Client instance (currently unused but kept for compatibility)
    */
   constructor(data: UserData, sdk?: DatalayerClient) {
     this._data = data;

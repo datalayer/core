@@ -2,16 +2,16 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# PyTorch GPU Workloads + Datalayer SDK Example
+# PyTorch GPU Workloads + Datalayer Client Example
 
-This example demonstrates how to leverage GPU acceleration for computationally intensive PyTorch workloads using the Datalayer SDK, showcasing significant performance improvements over CPU-only execution.
+This example demonstrates how to leverage GPU acceleration for computationally intensive PyTorch workloads using the Datalayer Client, showcasing significant performance improvements over CPU-only execution.
 
 ## Overview
 
 This example showcases:
 
 - **GPU Acceleration**: High-performance computing workloads utilizing CUDA-enabled GPUs
-- **Datalayer SDK**: Integration with Datalayer's runtime environment for AI workloads
+- **Datalayer Client**: Integration with Datalayer's runtime environment for AI workloads
 - **Performance Benchmarking**: Side-by-side comparison of CPU vs GPU execution times
 - **PyTorch Integration**: Optimized matrix operations and tensor computations
 - **Heavy Workload Processing**: Large-scale matrix multiplications demonstrating GPU advantages
@@ -27,7 +27,7 @@ This example showcases:
 ## Prerequisites
 
 - Python 3.9+
-- Datalayer SDK
+- Datalayer Client
 - Environment access to Datalayer platform
 
 ## Installation

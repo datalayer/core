@@ -75,7 +75,7 @@ export interface CreateSecretRequest {
   name: string;
   /** Human-readable description */
   description?: string;
-  /** Plain text value (will be Base64 encoded by SDK) */
+  /** Plain text value (will be Base64 encoded by Client) */
   value: string;
 }
 
@@ -143,7 +143,7 @@ export interface DeleteSecretResponse {
 }
 
 /**
- * Secret domain model for the Datalayer SDK.
+ * Secret domain model for the Datalayer Client.
  * Provides state management and operations for user secrets.
  *
  * @example
@@ -169,7 +169,7 @@ export class SecretDTO {
   /**
    * Create a Secret instance.
    * @param data - Secret data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: SecretData, sdk: DatalayerClient) {
     this._data = data;

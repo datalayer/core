@@ -4,7 +4,7 @@
  */
 
 /**
- * Base SDK class providing core configuration and token management.
+ * Base Client class providing core configuration and token management.
  * @module client/base
  */
 
@@ -13,13 +13,13 @@ import { EnvironmentDTO } from '../models/EnvironmentDTO';
 import { AuthenticationManager } from './auth';
 import type { TokenStorage } from './auth/types';
 
-/** Handlers for SDK method lifecycle events. */
-export interface SDKHandlers {
-  /** Called before any SDK method execution */
+/** Handlers for Client method lifecycle events. */
+export interface ClientHandlers {
+  /** Called before any Client method execution */
   beforeCall?: (methodName: string, args: any[]) => void | Promise<void>;
-  /** Called after successful SDK method execution */
+  /** Called after successful Client method execution */
   afterCall?: (methodName: string, result: any) => void | Promise<void>;
-  /** Called when an SDK method throws an error */
+  /** Called when an Client method throws an error */
   onError?: (methodName: string, error: any) => void | Promise<void>;
 }
 
@@ -35,8 +35,8 @@ export interface DatalayerClientConfig {
   spacerRunUrl?: string;
   /** Custom token storage backend (optional, defaults to auto-detected) */
   storage?: TokenStorage;
-  /** Handlers for intercepting SDK method calls */
-  handlers?: SDKHandlers;
+  /** Handlers for intercepting Client method calls */
+  handlers?: ClientHandlers;
 }
 
 /** Base Client class providing core configuration and token management. */
@@ -52,7 +52,7 @@ export class DatalayerClientBase {
   /** Environments */
   public readonly environments: EnvironmentDTO[] = [];
   /** Method lifecycle handlers */
-  public readonly handlers?: SDKHandlers;
+  public readonly handlers?: ClientHandlers;
   /** Authentication manager */
   public readonly auth: AuthenticationManager;
 
@@ -119,7 +119,7 @@ export class DatalayerClientBase {
   }
 
   /**
-   * Wrap all SDK methods with handlers for cross-cutting concerns.
+   * Wrap all Client methods with handlers for cross-cutting concerns.
    * Called automatically by the DatalayerClient constructor.
    *
    * @internal
@@ -225,7 +225,7 @@ export class DatalayerClientBase {
       baseClassMethods.add(name);
     });
 
-    // Also exclude methods from the concrete SDK class itself
+    // Also exclude methods from the concrete Client class itself
     const sdkPrototype = Object.getPrototypeOf(this).constructor.prototype;
     Object.getOwnPropertyNames(sdkPrototype).forEach(name => {
       baseClassMethods.add(name);

@@ -4,7 +4,7 @@
  */
 
 /**
- * Runtime domain model for the Datalayer SDK.
+ * Runtime domain model for the Datalayer Client.
  *
  * @module models/RuntimeDTO
  */
@@ -45,7 +45,7 @@ export interface RuntimeData {
 
 /**
  * Stable public interface for Runtime data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface RuntimeJSON {
@@ -138,7 +138,7 @@ export class RuntimeDTO {
    * Create a Runtime instance.
    *
    * @param data - Runtime data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: RuntimeData, sdk: DatalayerClient) {
     this._data = data;

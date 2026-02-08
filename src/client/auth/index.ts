@@ -10,7 +10,7 @@
  */
 
 /**
- * Authentication module for Datalayer SDK
+ * Authentication module for Datalayer Client
  * Provides unified authentication interface with multiple strategies
  */
 

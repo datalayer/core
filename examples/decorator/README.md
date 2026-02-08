@@ -28,7 +28,7 @@ This example showcases:
 ## Prerequisites
 
 - Python 3.9+
-- Datalayer SDK
+- Datalayer Client
 - Environment access to Datalayer platform
 
 ## Installation

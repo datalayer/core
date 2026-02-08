@@ -26,11 +26,11 @@ describe('Snapshot Model', () => {
     updated_at: '2023-01-01T12:00:00Z',
   };
 
-  let mockSDK: Partial<DatalayerClient>;
+  let mockClient: Partial<DatalayerClient>;
   let snapshot: RuntimeSnapshotDTO;
 
   beforeEach(() => {
-    mockSDK = {
+    mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getRuntimesRunUrl: vi
         .fn()
@@ -39,7 +39,7 @@ describe('Snapshot Model', () => {
     } as any;
     snapshot = new RuntimeSnapshotDTO(
       mockSnapshotData,
-      mockSDK as DatalayerClient,
+      mockClient as DatalayerClient,
     );
     vi.clearAllMocks();
   });
@@ -74,7 +74,7 @@ describe('Snapshot Model', () => {
       };
       const minimalSnapshot = new RuntimeSnapshotDTO(
         minimalData,
-        mockSDK as DatalayerClient,
+        mockClient as DatalayerClient,
       );
 
       expect(minimalSnapshot.description).toBe('');
@@ -96,11 +96,11 @@ describe('Snapshot Model', () => {
 
     it('should restore runtime from snapshot', async () => {
       const mockRuntime = { uid: 'runtime-123', name: 'Restored Runtime' };
-      (mockSDK.createRuntime as any).mockResolvedValue(mockRuntime);
+      (mockClient.createRuntime as any).mockResolvedValue(mockRuntime);
 
       const runtime = await snapshot.restore(150);
 
-      expect(mockSDK.createRuntime).toHaveBeenCalledWith({
+      expect(mockClient.createRuntime).toHaveBeenCalledWith({
         environmentName: 'python-cpu',
         type: 'notebook',
         givenName: 'Restored from Test Snapshot',

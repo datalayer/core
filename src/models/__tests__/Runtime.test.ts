@@ -22,11 +22,11 @@ describe('Runtime Model', () => {
     expired_at: '',
   };
 
-  let mockSDK: Partial<DatalayerClient>;
+  let mockClient: Partial<DatalayerClient>;
   let runtime: RuntimeDTO;
 
   beforeEach(() => {
-    mockSDK = {
+    mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getRuntimesRunUrl: vi
         .fn()
@@ -34,7 +34,7 @@ describe('Runtime Model', () => {
       deleteRuntime: vi.fn().mockResolvedValue(undefined),
       createSnapshot: vi.fn(),
     } as any;
-    runtime = new RuntimeDTO(mockRuntimeData, mockSDK as DatalayerClient);
+    runtime = new RuntimeDTO(mockRuntimeData, mockClient as DatalayerClient);
     vi.clearAllMocks();
   });
 
@@ -68,16 +68,16 @@ describe('Runtime Model', () => {
     it('should delete runtime', async () => {
       await runtime.delete();
 
-      expect(mockSDK.deleteRuntime).toHaveBeenCalledWith('jupyter-pod-123');
+      expect(mockClient.deleteRuntime).toHaveBeenCalledWith('jupyter-pod-123');
     });
 
     it('should create snapshot', async () => {
       const mockSnapshot = { uid: 'snapshot-123', name: 'My Snapshot' };
-      (mockSDK.createSnapshot as any).mockResolvedValue(mockSnapshot);
+      (mockClient.createSnapshot as any).mockResolvedValue(mockSnapshot);
 
       const snapshot = await runtime.createSnapshot('My Snapshot');
 
-      expect(mockSDK.createSnapshot).toHaveBeenCalledWith(
+      expect(mockClient.createSnapshot).toHaveBeenCalledWith(
         'jupyter-pod-123',
         'My Snapshot',
         undefined,

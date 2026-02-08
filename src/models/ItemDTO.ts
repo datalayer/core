@@ -27,7 +27,7 @@ export abstract class ItemDTO<TData> {
   /**
    * Create an Item instance.
    * @param data - Item data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: TData, sdk: DatalayerClient) {
     this._data = data;
@@ -242,7 +242,7 @@ export abstract class ItemDTO<TData> {
   // Protected Helper Methods
   // ========================================================================
 
-  /** Get SDK token for API calls. */
+  /** Get Client token for API calls. */
   protected _getToken(): string {
     return (this._sdk as any).getToken();
   }

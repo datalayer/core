@@ -78,7 +78,7 @@ export default function WelcomePage() {
             />
           </Box>
           <Heading sx={{ fontSize: 5, mb: 2 }}>
-            Welcome to Datalayer SDK
+            Welcome to Datalayer Client
           </Heading>
           <Text as="p" sx={{ fontSize: 2, color: 'fg.muted' }}>
             Next.js Example Application

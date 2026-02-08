@@ -4,7 +4,7 @@
  */
 
 /**
- * Notebook domain model for the Datalayer SDK.
+ * Notebook domain model for the Datalayer Client.
  *
  * @module models/Notebook
  */
@@ -34,7 +34,7 @@ export interface NotebookData {
 
 /**
  * Stable public interface for Notebook data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface NotebookJSON {
@@ -69,7 +69,7 @@ export class NotebookDTO extends ItemDTO<NotebookData> {
    * Create a Notebook instance.
    *
    * @param data - Notebook data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: NotebookData, sdk: DatalayerClient) {
     super(data, sdk);

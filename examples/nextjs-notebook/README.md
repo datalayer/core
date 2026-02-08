@@ -22,7 +22,7 @@ This example showcases:
 
 - **Welcome Page**: Token-based authentication to access Datalayer platform
 - **Notebooks Page**: Browse, create, and manage notebooks from your Datalayer workspace
-- **Notebook Creation**: Create new notebooks directly from the UI using Datalayer SDK
+- **Notebook Creation**: Create new notebooks directly from the UI using Datalayer Client
 - **Environments Page**: View available compute environments with their specifications
 - **Notebook Viewer**: Execute notebooks with real-time outputs using cloud runtimes
 - **Responsive Design**: Modern UI with GitHub Primer components
@@ -77,7 +77,7 @@ This example showcases:
 ### Notebooks Page (`/notebooks`)
 
 - Browse notebooks from your Datalayer workspace
-- Create new notebooks using integrated SDK functionality
+- Create new notebooks using integrated Client functionality
 - Real-time notebook listing with detailed metadata logging
 - Select notebooks to open with a runtime
 - Choose environment for notebook execution
@@ -170,8 +170,8 @@ export default {
 
 ### Recent Updates
 
-- ✅ **Enhanced Notebook Creation**: Integrated SDK-based notebook creation with proper error handling
-- ✅ **Improved State Management**: Updated to use `createNotebook` from `@datalayer/core` SDK
+- ✅ **Enhanced Notebook Creation**: Integrated Client-based notebook creation with proper error handling
+- ✅ **Improved State Management**: Updated to use `createNotebook` from `@datalayer/core` Client
 - ✅ **Fixed TypeScript Issues**: Resolved all compilation errors and type safety issues
 - ✅ **Theme Simplification**: Streamlined to light mode for consistent user experience
 - ✅ **Better Logging**: Added comprehensive console logging for debugging notebook operations
@@ -180,7 +180,7 @@ export default {
 
 ### Key Dependencies
 
-- **`@datalayer/core`**: Core SDK for Datalayer platform integration
+- **`@datalayer/core`**: Core Client for Datalayer platform integration
 - **`@datalayer/jupyter-react`**: React components for Jupyter notebooks
 - **`@datalayer/primer-addons`**: Extended Primer components
 - **`@jupyterlab/services`**: JupyterLab services for kernel management

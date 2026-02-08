@@ -4,7 +4,7 @@
  */
 
 /**
- * Credits model for the Datalayer SDK.
+ * Credits model for the Datalayer Client.
  *
  * @module models/CreditsDTO
  */

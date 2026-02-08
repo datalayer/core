@@ -20,7 +20,7 @@ import { ItemTypes } from '../constants';
  * to avoid code duplication.
  *
  * @param response - Raw API response containing space items
- * @param sdk - SDK instance to pass to model constructors
+ * @param sdk - Client instance to pass to model constructors
  * @returns Array of Notebook and Lexical model instances
  */
 export function convertSpaceItemsToModels(

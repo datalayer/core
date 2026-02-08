@@ -24,15 +24,15 @@ describe('Lexical Model', () => {
     document_extension_s: '',
   };
 
-  let mockSDK: Partial<DatalayerClient>;
+  let mockClient: Partial<DatalayerClient>;
   let lexical: LexicalDTO;
 
   beforeEach(() => {
-    mockSDK = {
+    mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
     } as any;
-    lexical = new LexicalDTO(mockLexicalData, mockSDK as DatalayerClient);
+    lexical = new LexicalDTO(mockLexicalData, mockClient as DatalayerClient);
     vi.clearAllMocks();
   });
 

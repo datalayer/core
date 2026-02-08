@@ -23,7 +23,7 @@
 import {
   DatalayerClientBase,
   type DatalayerClientConfig,
-  type SDKHandlers,
+  type ClientHandlers,
 } from './base';
 import { IAMMixin } from './mixins/IAMMixin';
 import { RuntimesMixin } from './mixins/RuntimesMixin';
@@ -100,7 +100,7 @@ export class DatalayerClient extends DatalayerClientWithMixins {
 }
 
 // Export configuration interface and base for extensibility
-export type { DatalayerClientConfig, SDKHandlers };
+export type { DatalayerClientConfig, ClientHandlers };
 export { DatalayerClientBase };
 
 // Export models for use by consumers

@@ -4,7 +4,7 @@
  */
 
 /**
- * Snapshot domain model for the Datalayer SDK.
+ * Snapshot domain model for the Datalayer Client.
  *
  * @module models/RuntimeSnapshotDTO
  */
@@ -49,7 +49,7 @@ export interface RuntimeSnapshotData {
 
 /**
  * Stable public interface for Snapshot data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface RuntimeSnapshotJSON {
@@ -138,7 +138,7 @@ export class RuntimeSnapshotDTO {
    * Create a Runtime Snapshot instance.
    *
    * @param data - Snapshot data from API
-   * @param sdk - SDK instance
+   * @param sdk - Client instance
    */
   constructor(data: RuntimeSnapshotData, sdk: DatalayerClient) {
     this._data = data;

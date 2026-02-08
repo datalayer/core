@@ -6,7 +6,7 @@
 /**
  * Models definitions for all Datalayer API services.
  *
- * This module consolidates all type definitions used by the SDK, providing
+ * This module consolidates all type definitions used by the Client, providing
  * comprehensive TypeScript support for requests, responses, and data models
  * across all Datalayer services.
  *

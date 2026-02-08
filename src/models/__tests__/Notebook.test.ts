@@ -31,15 +31,15 @@ describe('Notebook Model', () => {
     space_id: 'space-456',
   };
 
-  let mockSDK: Partial<DatalayerClient>;
+  let mockClient: Partial<DatalayerClient>;
   let notebook: NotebookDTO;
 
   beforeEach(() => {
-    mockSDK = {
+    mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
     } satisfies Partial<DatalayerClient>;
-    notebook = new NotebookDTO(mockNotebookData, mockSDK as DatalayerClient);
+    notebook = new NotebookDTO(mockNotebookData, mockClient as DatalayerClient);
     vi.clearAllMocks();
   });
 

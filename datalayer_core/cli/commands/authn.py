@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Authentication commands for Datalayer CLI - Refactored to use SDK."""
+"""Authentication commands for Datalayer CLI - Refactored to use Client."""
 
 import asyncio
 import os
@@ -58,7 +58,7 @@ def login(
     ),
 ) -> None:
     """
-    Log into a Datalayer server using SDK authentication.
+    Log into a Datalayer server using Client authentication.
 
     Examples
     --------
@@ -82,7 +82,7 @@ def login(
         # Use DatalayerURLs for proper URL configuration
         urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
 
-        # Initialize SDK authentication manager
+        # Initialize Client authentication manager
         auth = AuthenticationManager(urls.iam_url)
 
         # Determine authentication method
@@ -148,7 +148,7 @@ def login(
 async def _login_with_token(
     auth: AuthenticationManager, token: str, server_url: str
 ) -> None:
-    """Login using token via SDK."""
+    """Login using token via Client."""
     try:
         user, _ = await auth.login(token=token)
         user_handle = user.get("handle_s", user.get("handle", "unknown"))
@@ -167,7 +167,7 @@ async def _login_with_token(
 async def _login_with_credentials(
     auth: AuthenticationManager, handle: str, password: str, server_url: str
 ) -> None:
-    """Login using handle/password via SDK."""
+    """Login using handle/password via Client."""
     try:
         user, _ = await auth.login(handle=handle, password=password)
         user_handle = user.get("handle_s", user.get("handle", "unknown"))
@@ -258,7 +258,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
     Authenticate using browser-based flow.
 
     Note: This still uses the old HTTP server for OAuth callback.
-    TODO: Integrate with SDK BrowserAuthStrategy when implemented.
+    TODO: Integrate with Client BrowserAuthStrategy when implemented.
     """
     try:
         port = find_http_port()
@@ -281,7 +281,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
 
         user_handle, token = result
 
-        # Store token using SDK
+        # Store token using Client
         auth.store_token(token)
 
         console.print(
