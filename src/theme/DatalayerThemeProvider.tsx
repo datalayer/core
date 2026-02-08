@@ -45,26 +45,44 @@ export interface IDatalayerThemeProviderProps extends Omit<
   'theme'
 > {
   /**
-   * Base styles.
+   * Additional base styles merged on top of theme defaults.
    */
   baseStyles?: CSSProperties;
+  /**
+   * Optional Primer theme object. Defaults to the built-in datalayerTheme.
+   */
+  theme?: Record<string, any>;
+  /**
+   * Optional per-mode style overrides (base + button CSS vars).
+   * When provided, these replace the built-in datalayer styles entirely.
+   * The `baseStyles` prop is still merged on top.
+   */
+  themeStyles?: {
+    light: CSSProperties;
+    dark: CSSProperties;
+  };
 }
 
 export function DatalayerThemeProvider(
   props: React.PropsWithChildren<IDatalayerThemeProviderProps>,
 ): JSX.Element {
-  const { children, colorMode, baseStyles, ...rest } = props;
+  const { children, colorMode, baseStyles, theme, themeStyles, ...rest } =
+    props;
   const isDark = colorMode === 'dark' || colorMode === 'night';
-  const baseStyleDefaults = isDark ? baseStyleDark : baseStyleLight;
-  const primaryButtonVars = isDark
-    ? primaryButtonVarsDark
-    : primaryButtonVarsLight;
+  const resolvedTheme = theme ?? datalayerTheme;
+  const defaultStyles = isDark
+    ? { ...baseStyleDark, ...primaryButtonVarsDark }
+    : { ...baseStyleLight, ...primaryButtonVarsLight };
+  const resolvedStyles = themeStyles
+    ? isDark
+      ? themeStyles.dark
+      : themeStyles.light
+    : defaultStyles;
   return (
-    <ThemeProvider colorMode={colorMode} theme={datalayerTheme} {...rest}>
+    <ThemeProvider colorMode={colorMode} theme={resolvedTheme} {...rest}>
       <BaseStyles
         style={{
-          ...baseStyleDefaults,
-          ...primaryButtonVars,
+          ...resolvedStyles,
           ...baseStyles,
         }}
       >
