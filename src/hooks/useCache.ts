@@ -6369,7 +6369,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to search public items');
         }
-        return resp.items || [];
+        return (resp.items || [])
+          .map((item: any) => toItem(item))
+          .filter(Boolean);
       },
     });
   };
