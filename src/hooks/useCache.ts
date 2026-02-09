@@ -2026,6 +2026,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     creditsLimit?: number;
     type?: string;
     editorVariant?: string; // 'none', 'notebook', or 'document'
+    enableCodemode?: boolean;
   };
 
   const useCreateAgentRuntime = () => {
@@ -2040,6 +2041,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             credits_limit: data.creditsLimit || 10,
             type: data.type || 'notebook',
             editor_variant: data.editorVariant || 'none',
+            enable_codemode: data.enableCodemode ?? false,
           },
         });
       },
@@ -2082,10 +2084,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'DELETE',
         });
       },
-      onSuccess: () => {
-        // Invalidate all agent runtime queries
+      onSuccess: (_data, podName) => {
+        // Cancel any in-flight queries for the deleted runtime so they
+        // don't re-fetch a resource that no longer exists.
+        queryClient.cancelQueries({
+          queryKey: queryKeys.agentRuntimes.detail(podName),
+        });
+        // Remove the detail cache entry immediately — prevents React
+        // Query from triggering a stale re-fetch while the component
+        // unmounts.
+        queryClient.removeQueries({
+          queryKey: queryKeys.agentRuntimes.detail(podName),
+        });
+        // Invalidate the list so the sidebar refreshes.
         queryClient.invalidateQueries({
-          queryKey: queryKeys.agentRuntimes.all(),
+          queryKey: queryKeys.agentRuntimes.lists(),
         });
       },
     });

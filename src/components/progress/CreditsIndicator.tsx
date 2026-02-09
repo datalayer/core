@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { ConsumptionBar } from '../../components/progress';
+import useNavigate from '../../hooks/useNavigate';
 import type { IRemoteServicesManager } from '../../stateful/runtimes';
 import type { IRuntimeModel } from '../../models';
 
@@ -19,7 +20,13 @@ type ICreditsIndicatorProps = {
    */
   kernelId: string;
   /**
-   * Callback on progress bar click event
+   * Route to navigate to when the indicator is clicked.
+   * Ignored if `onClick` is provided.
+   */
+  navigateTo?: string;
+  /**
+   * Callback on progress bar click event.
+   * Takes precedence over `navigateTo`.
    */
   onClick?: () => void;
   /**
@@ -37,7 +44,8 @@ type ICreditsIndicatorProps = {
 export function CreditsIndicator(
   props: ICreditsIndicatorProps,
 ): JSX.Element | null {
-  const { serviceManager, kernelId, onClick, onUpdate } = props;
+  const { serviceManager, kernelId, navigateTo, onClick, onUpdate } = props;
+  const navigate = useNavigate();
   const [model, setModel] = useState<IRuntimeModel>();
   useEffect(() => {
     serviceManager.runtimesManager.findById(kernelId).then(model => {
@@ -55,7 +63,9 @@ export function CreditsIndicator(
         startedAt={parseFloat(model.started_at)}
         expiredAt={model.expired_at ? parseFloat(model.expired_at) : undefined}
         burningRate={model.burning_rate}
-        onClick={onClick}
+        onClick={
+          onClick ?? (navigateTo ? () => navigate(navigateTo) : undefined)
+        }
         onUpdate={onUpdate}
         style={{ cursor: 'pointer' }}
       />

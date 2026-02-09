@@ -125,24 +125,27 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
   return (
     <>
       <Tooltip text={title} direction="w">
-        <Button variant="invisible">
+        <Button
+          variant="invisible"
+          onClick={onClick}
+          onKeyDown={
+            onClick
+              ? event => {
+                  if (event.key === 'Enter' || event.key === 'Space') {
+                    onClick();
+                  }
+                }
+              : undefined
+          }
+          tabIndex={onClick ? 0 : -1}
+          sx={{ cursor: onClick ? 'pointer' : 'default' }}
+        >
           <Box sx={{ width: '70px' }}>
             <ProgressBar
-              tabIndex={onClick ? 0 : -1}
               style={style}
               animated={expiredAt ? false : true}
               bg={bg}
               progress={progress}
-              onClick={onClick}
-              onKeyDown={
-                onClick
-                  ? event => {
-                      if (event.key === 'Enter' || event.key === 'Space') {
-                        onClick();
-                      }
-                    }
-                  : undefined
-              }
             />
           </Box>
         </Button>
