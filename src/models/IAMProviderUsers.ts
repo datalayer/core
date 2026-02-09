@@ -36,6 +36,18 @@ export type ILinkedInUser = {
   getUrn(): string;
 };
 
+export type IGoogleUser = {
+  iamProvider: IIAMProviderName;
+  sub: string;
+  email_verified: boolean;
+  name: string;
+  given_name: string;
+  family_name: string;
+  email: string;
+  picture: string;
+  locale: string;
+};
+
 export type IXUser = {
   iamProvider: IIAMProviderName;
   sub: string;

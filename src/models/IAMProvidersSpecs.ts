@@ -84,7 +84,7 @@ export class IAMProvidersSpecs {
     accessTokenCookieName: (user: IUser) =>
       `__datalayer__google_access_token_${user.id}`,
     refreshTokenCookieName: '__datalayer__google_refresh_token',
-    userInfoURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+    userInfoURL: 'https://openidconnect.googleapis.com/v1/userinfo',
     tokenRefreshURL: 'https://oauth2.googleapis.com/token',
     postShareURL: '',
     registerUploadURL: '',

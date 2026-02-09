@@ -6398,6 +6398,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get Google profile from access token
+   */
+  const useGetGoogleProfile = () => {
+    return useMutation({
+      mutationFn: async (accessToken: string) => {
+        const response = await fetch(
+          'https://openidconnect.googleapis.com/v1/userinfo',
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
+        return response.json();
+      },
+    });
+  };
+
+  /**
    * Get LinkedIn profile via proxy
    */
   const useGetLinkedinProfile = () => {
@@ -7847,6 +7868,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useOAuth2AuthorizationURL,
     useOAuth2AuthorizationLinkURL,
     useGetGitHubProfile,
+    useGetGoogleProfile,
     useGetLinkedinProfile,
     usePostLinkedinShare,
     usePostLinkedinShareWithUpload,
