@@ -22,14 +22,14 @@
 .crosshairs::before {
   height: 24px;
   width: 2px;
-  background: #000;
+  background: #fff;
   top: -11px;
 }
 
 .crosshairs::after {
   width: 24px;
   height: 2px;
-  background: #000;
+  background: #fff;
   left: -11px;
 }
 
