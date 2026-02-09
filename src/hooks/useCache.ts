@@ -6492,79 +6492,98 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }: {
         linkedinUserUrn: string;
         postText: string;
-        uploadObject: string;
+        uploadObject?: string;
         accessToken: string;
       }) => {
-        // Step 1: Register upload
-        const registerUploadRequest = {
-          registerUploadRequest: {
-            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-            owner: linkedinUserUrn,
-            serviceRelationships: [
-              {
-                relationshipType: 'OWNER',
-                identifier: 'urn:li:userGeneratedContent',
-              },
-            ],
-          },
-        };
+        let shareRequest: any;
 
-        const registerResp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'POST',
-            request_url:
-              'https://api.linkedin.com/v2/assets?action=registerUpload',
-            request_token: accessToken,
-            request_body: registerUploadRequest,
-          },
-        });
-
-        const asset = registerResp.response.value.asset;
-        const uploadUrl =
-          registerResp.response.value.uploadMechanism[
-            'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-          ].uploadUrl;
-
-        // Step 2: Upload image
-        await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'PUT',
-            request_url: uploadUrl,
-            request_token: accessToken,
-            request_body: {
-              uploadURL: uploadUrl,
-              content: uploadObject,
-              userURN: linkedinUserUrn,
-            },
-          },
-        });
-
-        // Step 3: Create share with media
-        const shareRequest = {
-          author: linkedinUserUrn,
-          lifecycleState: 'PUBLISHED',
-          specificContent: {
-            'com.linkedin.ugc.ShareContent': {
-              shareCommentary: { text: postText },
-              shareMediaCategory: 'IMAGE',
-              media: [
+        if (uploadObject) {
+          // Step 1: Register upload
+          const registerUploadRequest = {
+            registerUploadRequest: {
+              recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+              owner: linkedinUserUrn,
+              serviceRelationships: [
                 {
-                  status: 'READY',
-                  description: { text: 'Datalayer Notebook' },
-                  media: asset,
-                  title: { text: 'Datalayer Notebook' },
+                  relationshipType: 'OWNER',
+                  identifier: 'urn:li:userGeneratedContent',
                 },
               ],
             },
-          },
-          visibility: {
-            'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-          },
-        };
+          };
+
+          const registerResp = await requestDatalayer({
+            url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+            method: 'POST',
+            body: {
+              request_method: 'POST',
+              request_url:
+                'https://api.linkedin.com/v2/assets?action=registerUpload',
+              request_token: accessToken,
+              request_body: registerUploadRequest,
+            },
+          });
+
+          const asset = registerResp.response.value.asset;
+          const uploadUrl =
+            registerResp.response.value.uploadMechanism[
+              'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
+            ].uploadUrl;
+
+          // Step 2: Upload image
+          await requestDatalayer({
+            url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+            method: 'POST',
+            body: {
+              request_method: 'PUT',
+              request_url: uploadUrl,
+              request_token: accessToken,
+              request_body: {
+                uploadURL: uploadUrl,
+                content: uploadObject,
+                userURN: linkedinUserUrn,
+              },
+            },
+          });
+
+          // Step 3: Create share with media
+          shareRequest = {
+            author: linkedinUserUrn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+              'com.linkedin.ugc.ShareContent': {
+                shareCommentary: { text: postText },
+                shareMediaCategory: 'IMAGE',
+                media: [
+                  {
+                    status: 'READY',
+                    description: { text: 'Datalayer Notebook' },
+                    media: asset,
+                    title: { text: 'Datalayer Notebook' },
+                  },
+                ],
+              },
+            },
+            visibility: {
+              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+            },
+          };
+        } else {
+          // Text-only share (no image upload)
+          shareRequest = {
+            author: linkedinUserUrn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+              'com.linkedin.ugc.ShareContent': {
+                shareCommentary: { text: postText },
+                shareMediaCategory: 'NONE',
+              },
+            },
+            visibility: {
+              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+            },
+          };
+        }
 
         return requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
