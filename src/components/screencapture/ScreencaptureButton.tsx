@@ -10,20 +10,20 @@ import { lazyWithPreload, WithSuspense } from '../../utils';
 import { useToast } from '../../hooks';
 import { useLayoutStore } from '../../state';
 
-const ScreenCapture = WithSuspense(
-  lazyWithPreload(() => import('../screenshot/ScreenCapture')),
+const Screencapture = WithSuspense(
+  lazyWithPreload(() => import('./Screencapture')),
 );
 
-export const ScreenCaptureButton = (props: PropsWithChildren) => {
+export const ScreencaptureButton = (props: PropsWithChildren) => {
   const { enqueueToast } = useToast();
-  const { setScreenCapture, hideScreenshot } = useLayoutStore();
-  const handleScreenCapture = (screenCapture: string) => {
-    setScreenCapture(screenCapture);
-    hideScreenshot();
+  const { setScreencapture, hideScreencapture } = useLayoutStore();
+  const handleScreencapture = (screenCapture: string) => {
+    setScreencapture(screenCapture);
+    hideScreencapture();
     enqueueToast('Screen is captured.', { variant: 'success' });
   };
   return (
-    <ScreenCapture onEndCapture={handleScreenCapture}>
+    <Screencapture onEndCapture={handleScreencapture}>
       {({ onStartCapture }) => (
         <Tooltip text="Take a screen capture" direction="s">
           <Button variant="invisible">
@@ -46,8 +46,8 @@ export const ScreenCaptureButton = (props: PropsWithChildren) => {
           </Button>
         </Tooltip>
       )}
-    </ScreenCapture>
+    </Screencapture>
   );
 };
 
-export default ScreenCaptureButton;
+export default ScreencaptureButton;

@@ -24,7 +24,7 @@ export * from './Notebook';
 export * from './Number';
 export * from './Plots';
 export * from './Random';
-// export * from './Screenshot'; Do not export html2canvas for now.
+// export * from './Screencapture'; Do not export html2canvas for now.
 export * from './Sleep';
 export * from './Snapshot';
 export * from './String';

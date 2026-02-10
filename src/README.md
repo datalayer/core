@@ -425,7 +425,7 @@ function RuntimeDashboard() {
 import {
   useToast,
   useBackdrop,
-  useScreenshot,
+  useScreencapture,
   useUpload,
   useVisibilityObserver,
 } from '@datalayer/core';
@@ -433,7 +433,7 @@ import {
 function InteractiveComponent() {
   const { showToast } = useToast();
   const { showBackdrop, hideBackdrop } = useBackdrop();
-  const { takeScreenshot } = useScreenshot();
+  const { takeScreencapture } = useScreencapture();
   const { uploadFiles, uploading, progress } = useUpload();
   const { ref, isVisible } = useVisibilityObserver();
 
@@ -449,15 +449,15 @@ function InteractiveComponent() {
     }
   };
 
-  const handleScreenshot = async () => {
-    const screenshot = await takeScreenshot(ref.current);
+  const handleScreencapture = async () => {
+    const screenshot = await takeScreencapture(ref.current);
     // Use screenshot data
   };
 
   return (
     <div ref={ref}>
       <button onClick={handleAction}>Perform Action</button>
-      <button onClick={handleScreenshot}>Take Screenshot</button>
+      <button onClick={handleScreencapture}>Take Screencapture</button>
       {isVisible && <div>Component is visible!</div>}
 
       <input type="file" onChange={e => uploadFiles(e.target.files)} multiple />

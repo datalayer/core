@@ -5,7 +5,7 @@
 
 import html2canvas from 'html2canvas';
 
-export const takeHTMLNodeScreenshot = async (
+export const takeHTMLNodeScreencapture = async (
   node: HTMLDivElement,
 ): Promise<string> => {
   const sc = html2canvas(node, {

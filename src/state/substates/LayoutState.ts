@@ -48,7 +48,7 @@ export type PortalDisplay = {
   pinned: boolean;
 };
 
-export type ScreenshotDisplay = {
+export type ScreencaptureDisplay = {
   open: boolean;
   message?: string | void;
 };
@@ -64,14 +64,14 @@ export type ILayoutState = {
   organization?: IAnyOrganization;
   rightPortal?: PortalDisplay;
   screenCapture?: string;
-  screenshot?: ScreenshotDisplay;
+  screenshot?: ScreencaptureDisplay;
   space?: IAnySpace;
   team?: IAnyTeam;
 };
 
 export type LayoutState = ILayoutState & {
   hideBackdrop: () => void;
-  hideScreenshot: () => void;
+  hideScreencapture: () => void;
   reset: () => void;
   resetForcedLeftPortal: () => void;
   resetForcedRightPortal: () => void;
@@ -83,9 +83,9 @@ export type LayoutState = ILayoutState & {
   setLeftPortal: (leftPortal: PortalDisplay) => void;
   setLeftSidebarVariant: (leftSidebarVariant: LeftSidebarVariant) => void;
   setRightPortal: (rightPortal: PortalDisplay) => void;
-  setScreenCapture: (screenCapture?: string) => void;
+  setScreencapture: (screenCapture?: string) => void;
   showBackdrop: (message?: string) => void;
-  showScreenshot: (message?: string) => void;
+  showScreencapture: (message?: string) => void;
   triggerItemsRefresh: () => void;
   updateLayoutOrganization: (organization?: Partial<IAnyOrganization>) => void;
   updateLayoutSpace: (space?: Partial<IAnySpace>) => void;
@@ -109,7 +109,7 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     set((state: LayoutState) => ({
       backdrop: { open: false, message: undefined },
     })),
-  hideScreenshot: () =>
+  hideScreencapture: () =>
     set((state: LayoutState) => ({
       screenshot: { open: false, message: undefined },
     })),
@@ -117,7 +117,7 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     set((state: LayoutState) => ({ bootstrapped })),
   showBackdrop: (message?: string) =>
     set((state: LayoutState) => ({ backdrop: { open: true, message } })),
-  showScreenshot: (message?: string) =>
+  showScreencapture: (message?: string) =>
     set((state: LayoutState) => ({ screenshot: { open: true, message } })),
   setBanner: (bannerDisplay: BannerDisplay) =>
     set((state: LayoutState) => ({
@@ -183,7 +183,7 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     set((state: LayoutState) => ({
       itemsRefreshCount: state.itemsRefreshCount + 1,
     })),
-  setScreenCapture: (screenCapture?: string) =>
+  setScreencapture: (screenCapture?: string) =>
     set((state: LayoutState) => ({ screenCapture })),
   reset: () => set((state: LayoutState) => ({ bootstrapped: false })),
 }));
