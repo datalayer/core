@@ -50,7 +50,7 @@ export const asPage = (s: any): IPage => {
     description: s.description_t,
     theme: s.theme_s,
     nbformat: s.nbformat_s ? JSON.parse(s.nbformat_s) : undefined,
-    screenCapture: s.screen_capture_s,
+    screenCapture: s.screen_capture_cdn_url_s || s.screen_capture_s,
     tags: s.tags_ss ?? [],
     creator: s.creator ? asUser(s.creator) : undefined,
     creatorId: s.creator_uid,
