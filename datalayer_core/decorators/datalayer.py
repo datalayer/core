@@ -180,7 +180,7 @@ def datalayer(
             # print("function_source:", function_source)
             # print("function_call:", function_call)
 
-            client = DatalayerClient()
+            client = DatalayerClient()  # Resolves token from env/keyring
             with client.create_runtime(
                 name=runtime_name_decorated,
                 snapshot_name=snapshot_name_decorated,

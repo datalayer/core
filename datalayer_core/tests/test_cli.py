@@ -29,7 +29,7 @@ def _delete_all_runtimes(secs: int = 5) -> None:
         The number of seconds to wait before and after deleting runtimes.
     """
     time.sleep(secs)
-    client = DatalayerClient()
+    client = DatalayerClient(token=TEST_DATALAYER_API_KEY)
     runtimes = client.list_runtimes()
     for runtime in runtimes:
         client.terminate_runtime(runtime)
