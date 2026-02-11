@@ -21,17 +21,17 @@ import * as items from '../api/spacer/items';
  */
 export abstract class ItemDTO<TData> {
   protected _data: TData;
-  private _sdk: DatalayerClient;
+  private _client: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
    * Create an Item instance.
    * @param data - Item data from API
-   * @param sdk - Client instance
+   * @param client - Client instance
    */
-  constructor(data: TData, sdk: DatalayerClient) {
+  constructor(data: TData, client: DatalayerClient) {
     this._data = data;
-    this._sdk = sdk;
+    this._client = client;
   }
 
   // ========================================================================
@@ -162,8 +162,8 @@ export abstract class ItemDTO<TData> {
    */
   async delete(): Promise<void> {
     this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+    const token = (this._client as any).getToken();
+    const spacerRunUrl = (this._client as any).getSpacerRunUrl();
     await items.deleteItem(token, this.uid, spacerRunUrl);
     this._deleted = true;
   }
@@ -197,8 +197,8 @@ export abstract class ItemDTO<TData> {
 
     // Third try: Fetch full item details from API
     try {
-      const token = (this._sdk as any).getToken();
-      const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+      const token = (this._client as any).getToken();
+      const spacerRunUrl = (this._client as any).getSpacerRunUrl();
       const response = await items.getItem(token, this.uid, spacerRunUrl);
 
       // Update internal data with full item details
@@ -244,12 +244,12 @@ export abstract class ItemDTO<TData> {
 
   /** Get Client token for API calls. */
   protected _getToken(): string {
-    return (this._sdk as any).getToken();
+    return (this._client as any).getToken();
   }
 
   /** Get spacer API URL for API calls. */
   protected _getSpacerRunUrl(): string {
-    return (this._sdk as any).getSpacerRunUrl();
+    return (this._client as any).getSpacerRunUrl();
   }
 
   /** Update internal data after API call. */

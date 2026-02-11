@@ -124,25 +124,25 @@ export interface ListRuntimesResponse {
  *
  * @example
  * ```typescript
- * const runtime = await sdk.createRuntime({ environment_name: 'python-cpu' });
+ * const runtime = await client.createRuntime({ environment_name: 'python-cpu' });
  * await runtime.waitUntilReady();
  * ```
  */
 export class RuntimeDTO {
   /** @internal */
   _data: RuntimeData;
-  private _sdk: DatalayerClient;
+  private _client: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
    * Create a Runtime instance.
    *
    * @param data - Runtime data from API
-   * @param sdk - Client instance
+   * @param client - Client instance
    */
-  constructor(data: RuntimeData, sdk: DatalayerClient) {
+  constructor(data: RuntimeData, client: DatalayerClient) {
     this._data = data;
-    this._sdk = sdk;
+    this._client = client;
   }
 
   // ========================================================================
@@ -240,7 +240,7 @@ export class RuntimeDTO {
    * After deletion, subsequent calls to dynamic methods will throw errors.
    */
   async delete(): Promise<void> {
-    await this._sdk.deleteRuntime(this.podName);
+    await this._client.deleteRuntime(this.podName);
     this._deleted = true;
   }
 
@@ -253,12 +253,12 @@ export class RuntimeDTO {
   async update(from: string): Promise<RuntimeDTO> {
     this._checkDeleted();
     const updated = await updateRuntime(
-      (this._sdk as any).getToken(),
+      (this._client as any).getToken(),
       this.podName,
       from,
-      (this._sdk as any).getRuntimesRunUrl(),
+      (this._client as any).getRuntimesRunUrl(),
     );
-    return new RuntimeDTO(updated, this._sdk);
+    return new RuntimeDTO(updated, this._client);
   }
 
   /**
@@ -275,7 +275,7 @@ export class RuntimeDTO {
     stop?: boolean,
   ): Promise<RuntimeSnapshotDTO> {
     this._checkDeleted();
-    return await (this._sdk as any).createSnapshot(
+    return await (this._client as any).createSnapshot(
       this.podName,
       name,
       description,

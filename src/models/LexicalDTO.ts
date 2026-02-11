@@ -132,7 +132,7 @@ export interface LexicalJSON {
  *
  * @example
  * ```typescript
- * const lexical = await sdk.createLexical(formData);
+ * const lexical = await client.createLexical(formData);
  * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
@@ -141,10 +141,10 @@ export class LexicalDTO extends ItemDTO<LexicalData> {
    * Create a Lexical instance.
    *
    * @param data - Lexical data from API
-   * @param sdk - Client instance
+   * @param client - Client instance
    */
-  constructor(data: LexicalData, sdk: DatalayerClient) {
-    super(data, sdk);
+  constructor(data: LexicalData, client: DatalayerClient) {
+    super(data, client);
   }
 
   // ========================================================================

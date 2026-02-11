@@ -147,7 +147,7 @@ describe('Client IAM Integration Tests', () => {
         });
 
         try {
-          await expiredSdk.whoami();
+          await expiredclient.whoami();
           expect(true).toBe(false);
         } catch (error: any) {
           expect(error).toBeDefined();
@@ -169,12 +169,12 @@ describe('Client IAM Integration Tests', () => {
         });
 
         // Verify we can make authenticated requests
-        const userBefore = await logoutSdk.whoami();
+        const userBefore = await logoutclient.whoami();
         expect(userBefore).toBeDefined();
 
         // Note: Actual logout may not invalidate the token server-side
         // This tests the logout method exists and can be called
-        await logoutSdk.logout();
+        await logoutclient.logout();
         console.log('Logout completed');
 
         // In a real scenario, subsequent requests might fail
@@ -194,7 +194,7 @@ describe('Client IAM Integration Tests', () => {
         });
 
         try {
-          await invalidSdk.whoami();
+          await invalidclient.whoami();
           expect(true).toBe(false);
         } catch (error: any) {
           expect(error.message).toBeDefined();

@@ -92,7 +92,7 @@ export interface ListEnvironmentsResponse {
  *
  * @example
  * ```typescript
- * const environments = await sdk.listEnvironments();
+ * const environments = await client.listEnvironments();
  * const aiEnv = environments.find(env => env.name === 'ai-env');
  * console.log(aiEnv.title); // "AI Environment"
  * ```
@@ -105,9 +105,9 @@ export class EnvironmentDTO {
    * Create an Environment instance.
    *
    * @param data - Environment data from API
-   * @param _sdk - Client instance (not currently used but kept for consistency)
+   * @param _client - Client instance (not currently used but kept for consistency)
    */
-  constructor(data: EnvironmentData, _sdk: DatalayerClient) {
+  constructor(data: EnvironmentData, _client: DatalayerClient) {
     this._data = data;
     // Client instance not currently used but kept for future extensibility
   }

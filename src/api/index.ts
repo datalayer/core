@@ -7,7 +7,7 @@
  * Minimal API layer for the Datalayer platform providing base HTTP client and functional API methods.
  *
  * This module contains the low-level API functionality. For high-level object-oriented
- * Client classes, use @datalayer/core/sdk instead.
+ * Client classes, use @datalayer/core/client instead.
  *
  * @module @datalayer/core/api
  */

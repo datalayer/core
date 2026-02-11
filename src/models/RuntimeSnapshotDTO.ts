@@ -131,18 +131,18 @@ export interface ListRuntimeSnapshotsResponse {
  */
 export class RuntimeSnapshotDTO {
   protected _data: RuntimeSnapshotData;
-  private _sdk: DatalayerClient;
+  private _client: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
    * Create a Runtime Snapshot instance.
    *
    * @param data - Snapshot data from API
-   * @param sdk - Client instance
+   * @param client - Client instance
    */
-  constructor(data: RuntimeSnapshotData, sdk: DatalayerClient) {
+  constructor(data: RuntimeSnapshotData, client: DatalayerClient) {
     this._data = data;
-    this._sdk = sdk;
+    this._client = client;
   }
 
   // ========================================================================
@@ -205,8 +205,8 @@ export class RuntimeSnapshotDTO {
    */
   async delete(): Promise<void> {
     this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const runtimesRunUrl = (this._sdk as any).getRuntimesRunUrl();
+    const token = (this._client as any).getToken();
+    const runtimesRunUrl = (this._client as any).getRuntimesRunUrl();
     await snapshots.deleteSnapshot(token, this.uid, runtimesRunUrl);
     this._deleted = true;
   }
@@ -219,7 +219,7 @@ export class RuntimeSnapshotDTO {
    */
   async restore(minutesLimit: number): Promise<RuntimeDTO> {
     this._checkDeleted();
-    return await (this._sdk as any).createRuntime({
+    return await (this._client as any).createRuntime({
       environmentName: this.environment,
       type: 'notebook',
       givenName: `Restored from ${this.name}`,

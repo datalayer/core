@@ -58,7 +58,7 @@ export interface CreditsResponse {
  *
  * @example
  * ```typescript
- * const credits = await sdk.getCredits();
+ * const credits = await client.getCredits();
  * console.log(`Available: ${credits.available}`);
  * console.log(`Quota: ${credits.quota || 'unlimited'}`);
  *

@@ -20,9 +20,9 @@ export class HealthCheck {
   /**
    * Create a HealthCheck instance.
    * @param data - The health check data
-   * @param sdk - Reference to the Client instance (unused but kept for consistency)
+   * @param client - Reference to the Client instance (unused but kept for consistency)
    */
-  constructor(data: any, sdk: any) {
+  constructor(data: any, client: any) {
     // Initialize properties
     this.healthy = data.healthy || false;
     this.status = data.status || 'unknown';

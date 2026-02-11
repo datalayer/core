@@ -287,7 +287,7 @@ Features:
 - Use playwright MCP to inspect things directly
 - Check API.md for comprehensive examples of both raw API and Client usage
 - **Client Usage**: Always use the handlers pattern for cross-cutting concerns instead of wrapping Client methods
-- **VS Code Extension**: Use `(sdk as any)` casting when TypeScript definitions are incomplete
+- **VS Code Extension**: Use `(client as any)` casting when TypeScript definitions are incomplete
 
 ## ag-ui (CopilotKit) Architecture (November 2024)
 
@@ -384,7 +384,7 @@ Eliminated massive code duplication where consuming applications (VS Code extens
 The Client now supports lifecycle handlers that can be injected at initialization:
 
 ```typescript
-const sdk = new DatalayerClient({
+const client = new DatalayerClient({
   token: 'your-token',
   iamRunUrl: 'https://prod1.datalayer.run',
   handlers: {

@@ -60,7 +60,7 @@ export interface NotebookJSON {
  *
  * @example
  * ```typescript
- * const notebook = await sdk.createNotebook(formData);
+ * const notebook = await client.createNotebook(formData);
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
@@ -69,10 +69,10 @@ export class NotebookDTO extends ItemDTO<NotebookData> {
    * Create a Notebook instance.
    *
    * @param data - Notebook data from API
-   * @param sdk - Client instance
+   * @param client - Client instance
    */
-  constructor(data: NotebookData, sdk: DatalayerClient) {
-    super(data, sdk);
+  constructor(data: NotebookData, client: DatalayerClient) {
+    super(data, client);
   }
 
   // ========================================================================
@@ -131,8 +131,8 @@ export class NotebookDTO extends ItemDTO<NotebookData> {
   async update(name?: string, description?: string): Promise<this> {
     // FIXME: check if both are needed, and use the existing values if only one provided
     this._checkDeleted();
-    const token = (this as any)._sdk.getToken();
-    const spacerRunUrl = (this as any)._sdk.getSpacerRunUrl();
+    const token = (this as any)._client.getToken();
+    const spacerRunUrl = (this as any)._client.getSpacerRunUrl();
     const updateData: UpdateNotebookRequest = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;

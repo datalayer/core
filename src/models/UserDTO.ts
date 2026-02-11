@@ -65,9 +65,9 @@ export class UserDTO {
    * Create a User instance.
    *
    * @param data - User data from API
-   * @param sdk - Client instance (currently unused but kept for compatibility)
+   * @param client - Client instance (currently unused but kept for compatibility)
    */
-  constructor(data: UserData, sdk?: DatalayerClient) {
+  constructor(data: UserData, client?: DatalayerClient) {
     this._data = data;
   }
 

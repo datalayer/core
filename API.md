@@ -605,7 +605,7 @@ const client = new DatalayerClient({
 7. **Use environment variables for configuration**:
    ```typescript
 <<<<<<< HEAD
-   const sdk = new DatalayerClient({
+   const client = new DatalayerClient({
      token: process.env.DATALAYER_API_KEY,
 =======
    const client = new DatalayerClient({

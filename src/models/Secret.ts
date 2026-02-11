@@ -148,7 +148,7 @@ export interface DeleteSecretResponse {
  *
  * @example
  * ```typescript
- * const secret = await sdk.createSecret({
+ * const secret = await client.createSecret({
  *   variant: 'password',
  *   name: 'db_password',
  *   description: 'Production DB password',
@@ -163,17 +163,17 @@ export interface DeleteSecretResponse {
 export class SecretDTO {
   /** @internal */
   _data: SecretData;
-  private _sdk: DatalayerClient;
+  private _client: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
    * Create a Secret instance.
    * @param data - Secret data from API
-   * @param sdk - Client instance
+   * @param client - Client instance
    */
-  constructor(data: SecretData, sdk: DatalayerClient) {
+  constructor(data: SecretData, client: DatalayerClient) {
     this._data = data;
-    this._sdk = sdk;
+    this._client = client;
   }
 
   // ========================================================================
@@ -244,7 +244,7 @@ export class SecretDTO {
    */
   async update(updates: UpdateSecretRequest): Promise<SecretDTO> {
     this._checkDeleted();
-    const updated = await this._sdk.updateSecret(this.uid, updates);
+    const updated = await this._client.updateSecret(this.uid, updates);
     return updated;
   }
 
@@ -253,7 +253,7 @@ export class SecretDTO {
    */
   async delete(): Promise<void> {
     this._checkDeleted();
-    await this._sdk.deleteSecret(this.uid);
+    await this._client.deleteSecret(this.uid);
     this._deleted = true;
   }
 
