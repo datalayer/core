@@ -298,8 +298,8 @@ class AgentSpacesMixin:
         """
         response = self._fetch(  # type: ignore
             "{}/api/spacer/v1/agent-spaces/{}/private".format(
-                self.urls.spacer_url, uid
-            ),  # type: ignore
+                self.urls.spacer_url, uid  # type: ignore[attr-defined]
+            ),
             method="POST",
         )
 
