@@ -337,6 +337,11 @@ def whoami(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="User access token",
+    ),
     details: bool = typer.Option(
         False,
         "--details",
@@ -347,6 +352,11 @@ def whoami(
     try:
         urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
         auth = AuthenticationManager(urls.iam_url)
+
+        # If token provided, store it temporarily for whoami
+        access_token = token or os.environ.get("DATALAYER_API_KEY")
+        if access_token:
+            auth.store_token(access_token)
 
         user = asyncio.run(auth.whoami())
 
@@ -498,6 +508,11 @@ def whoami_root(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="User access token",
+    ),
     details: bool = typer.Option(
         False,
         "--details",
@@ -507,4 +522,4 @@ def whoami_root(
     """
     Show current authenticated user.
     """
-    whoami(run_url=run_url, iam_url=iam_url, details=details)
+    whoami(run_url=run_url, iam_url=iam_url, token=token, details=details)

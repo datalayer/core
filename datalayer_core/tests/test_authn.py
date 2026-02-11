@@ -70,7 +70,16 @@ class TestAuthenticationManager:
         auth = AuthenticationManager("https://test.datalayer.run", storage=storage)
 
         storage.set("access_token", "stored-token")
-        assert auth.get_stored_token() == "stored-token"
+        # Temporarily remove DATALAYER_API_KEY so get_token() falls through to the prefixed env var
+        with patch.dict("os.environ", {}, clear=False):
+            import os
+
+            saved = os.environ.pop("DATALAYER_API_KEY", None)
+            try:
+                assert auth.get_stored_token() == "stored-token"
+            finally:
+                if saved is not None:
+                    os.environ["DATALAYER_API_KEY"] = saved
 
         # Cleanup
         storage.clear()

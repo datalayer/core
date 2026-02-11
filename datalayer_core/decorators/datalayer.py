@@ -30,6 +30,7 @@ def datalayer(
     inputs: Optional[list[str]] = None,
     output: Optional[str] = None,
     snapshot_name: Optional[str] = None,
+    token: Optional[str] = None,
     debug: bool = True,
     timeout: Seconds = 10.0,
 ) -> Any:
@@ -48,6 +49,8 @@ def datalayer(
         The name of the output variable for the function.
     snapshot_name : str, optional
         The name of the runtime snapshot to use.
+    token : str, optional
+        Authentication token. If not provided, will be resolved from env/keyring.
     debug : bool
         Whether to enable debug mode. If `True`, the output and error streams will be printed.
     timeout : Seconds
@@ -180,7 +183,9 @@ def datalayer(
             # print("function_source:", function_source)
             # print("function_call:", function_call)
 
-            client = DatalayerClient()  # Resolves token from env/keyring
+            client = DatalayerClient(
+                token=token
+            )  # Resolves token from param/env/keyring
             with client.create_runtime(
                 name=runtime_name_decorated,
                 snapshot_name=snapshot_name_decorated,

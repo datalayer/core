@@ -41,10 +41,18 @@ def sum_test(x: float, y: float, z: float = 1) -> float:
 @pytest.mark.parametrize(
     "args,expected_output,decorator",
     [
-        ([1, 4.5, 2], 7.5, datalayer),
-        ([1, 4.5, 2], 7.5, datalayer(runtime_name="runtime-test")),
-        ([1, 4.5, 2], 7.5, datalayer(output="result")),
-        ([1, 4.5, 2], 7.5, datalayer(inputs=["a", "b", "c"])),
+        ([1, 4.5, 2], 7.5, datalayer(token=TEST_DATALAYER_API_KEY)),
+        (
+            [1, 4.5, 2],
+            7.5,
+            datalayer(runtime_name="runtime-test", token=TEST_DATALAYER_API_KEY),
+        ),
+        ([1, 4.5, 2], 7.5, datalayer(output="result", token=TEST_DATALAYER_API_KEY)),
+        (
+            [1, 4.5, 2],
+            7.5,
+            datalayer(inputs=["a", "b", "c"], token=TEST_DATALAYER_API_KEY),
+        ),
     ],
 )
 @pytest.mark.skipif(

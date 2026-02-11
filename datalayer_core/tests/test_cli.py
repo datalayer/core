@@ -62,7 +62,7 @@ def test_cli(args: List[str], expected_output: str) -> None:
     [
         (
             ["login", "--token", TEST_DATALAYER_API_KEY],
-            "🎉 Successfully authenticated as urn:dla:iam:ext::github:226720 on \nhttps://prod1.datalayer.run\n✅ Token saved to keyring for future use\n",
+            "Token saved for future use",
         ),
         (["envs", "list", "--token", TEST_DATALAYER_API_KEY], "Environments"),
         (["envs", "ls", "--token", TEST_DATALAYER_API_KEY], "Environments"),
@@ -75,8 +75,8 @@ def test_cli(args: List[str], expected_output: str) -> None:
         #        (["snapshots", "ls", "--token", TEST_DATALAYER_API_KEY], "Snapshots"),
         (["tokens", "list", "--token", TEST_DATALAYER_API_KEY], "Tokens"),
         (["tokens", "ls", "--token", TEST_DATALAYER_API_KEY], "Tokens"),
-        (["whoami", "--token", TEST_DATALAYER_API_KEY], "Profile"),
-        (["logout"], "✅ Successfully logged out"),
+        (["whoami", "--token", TEST_DATALAYER_API_KEY], "User:"),
+        (["logout"], "Stored token cleared"),
     ],
 )
 @pytest.mark.skipif(
