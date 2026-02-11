@@ -106,7 +106,7 @@ npm run check:fix
 ├── src/                    # TypeScript source files
 │   ├── api/               # API client implementations
 │   ├── components/        # React components
-│   ├── sdk/               # Client client models
+│   ├── client/               # Client client models
 │   ├── services/          # Service layer
 │   └── utils/             # Utility functions
 ├── lib/                    # Compiled JavaScript (git-ignored)

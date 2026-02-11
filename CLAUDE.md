@@ -37,10 +37,10 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 - Result: `items` becomes `undefined` at runtime, causing "Cannot read properties of undefined"
 
 ### Files Fixed (January 2025)
-- `lib/sdk/client/models/Space.js`
-- `lib/sdk/client/models/Notebook.js`
-- `lib/sdk/client/models/Lexical.js`
-- `lib/sdk/client/models/Item.js`
+- `lib/client/client/models/Space.js`
+- `lib/client/client/models/Notebook.js`
+- `lib/client/client/models/Lexical.js`
+- `lib/client/client/models/Item.js`
 
 **Always use namespace imports for spacer API!**
 
@@ -48,7 +48,7 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 
 - **Source code**: `src/` contains the TypeScript/React library code
 - **API Layer**: `src/api/` contains raw API functions for direct service access
-- **Client**: `src/sdk/client/` contains the high-level Client with models and mixins
+- **Client**: `src/client/client/` contains the high-level Client with models and mixins
 - **Examples**: `src/examples/` contains interactive React examples
 - **Python**: `datalayer_core/` contains the Python Client
 - **Tests**: `src/__tests__/` for TypeScript, `datalayer_core/tests/` for Python
@@ -203,7 +203,7 @@ Features:
 - Returns raw API responses
 - Minimal abstraction, maximum control
 
-**2. Client Layer** (`src/sdk/client/`)
+**2. Client Layer** (`src/client/client/`)
 - High-level, intuitive interface
 - Domain models with rich methods
 - Automatic state management
@@ -408,7 +408,7 @@ const sdk = new DatalayerClient({
 ### Key Implementation Details
 
 **Automatic Method Wrapping**: The Client automatically wraps all mixin methods with handlers:
-- Located in `src/sdk/client/base.ts`
+- Located in `src/client/client/base.ts`
 - Smart detection: Only wraps mixin methods, not base class infrastructure
 - No hardcoded method lists - automatically detects based on prototype chain
 
