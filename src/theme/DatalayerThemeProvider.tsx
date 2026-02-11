@@ -6,6 +6,8 @@
 import { type CSSProperties } from 'react';
 import { BaseStyles, ThemeProvider, ThemeProviderProps } from '@primer/react';
 import { datalayerTheme, datalayerColors } from './DatalayerTheme';
+import { useSystemColorMode } from './useSystemColorMode';
+
 const baseStyleLight: CSSProperties = {
   backgroundColor: datalayerColors.white,
   color: datalayerColors.black,
@@ -42,29 +44,64 @@ const primaryButtonVarsDark: CSSProperties = {
 
 export interface IDatalayerThemeProviderProps extends Omit<
   ThemeProviderProps,
-  'theme'
+  'theme' | 'colorMode'
 > {
   /**
-   * Base styles.
+   * Color mode to use.
+   * - `'light'` / `'dark'` — explicit override
+   * - `'auto'` — follow the operating system preference (prefers-color-scheme)
+   * - Primer's `'day'` / `'night'` are still accepted.
+   */
+  colorMode?: 'light' | 'dark' | 'auto' | 'day' | 'night';
+  /**
+   * Additional base styles merged on top of theme defaults.
    */
   baseStyles?: CSSProperties;
+  /**
+   * Optional Primer theme object. Defaults to the built-in datalayerTheme.
+   */
+  theme?: Record<string, any>;
+  /**
+   * Optional per-mode style overrides (base + button CSS vars).
+   * When provided, these replace the built-in datalayer styles entirely.
+   * The `baseStyles` prop is still merged on top.
+   */
+  themeStyles?: {
+    light: CSSProperties;
+    dark: CSSProperties;
+  };
 }
 
 export function DatalayerThemeProvider(
   props: React.PropsWithChildren<IDatalayerThemeProviderProps>,
 ): JSX.Element {
-  const { children, colorMode, baseStyles, ...rest } = props;
-  const isDark = colorMode === 'dark' || colorMode === 'night';
-  const baseStyleDefaults = isDark ? baseStyleDark : baseStyleLight;
-  const primaryButtonVars = isDark
-    ? primaryButtonVarsDark
-    : primaryButtonVarsLight;
+  const { children, colorMode, baseStyles, theme, themeStyles, ...rest } =
+    props;
+
+  // Resolve 'auto' → actual system preference ('light' or 'dark').
+  const systemMode = useSystemColorMode();
+  const resolvedColorMode =
+    colorMode === 'auto' ? systemMode : (colorMode ?? 'light');
+
+  const isDark = resolvedColorMode === 'dark' || resolvedColorMode === 'night';
+  const resolvedTheme = theme ?? datalayerTheme;
+  const defaultStyles = isDark
+    ? { ...baseStyleDark, ...primaryButtonVarsDark }
+    : { ...baseStyleLight, ...primaryButtonVarsLight };
+  const resolvedStyles = themeStyles
+    ? isDark
+      ? themeStyles.dark
+      : themeStyles.light
+    : defaultStyles;
   return (
-    <ThemeProvider colorMode={colorMode} theme={datalayerTheme} {...rest}>
+    <ThemeProvider
+      colorMode={resolvedColorMode}
+      theme={resolvedTheme}
+      {...rest}
+    >
       <BaseStyles
         style={{
-          ...baseStyleDefaults,
-          ...primaryButtonVars,
+          ...resolvedStyles,
           ...baseStyles,
         }}
       >

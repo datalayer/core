@@ -25,7 +25,7 @@ export * from './useParams';
 export * from './useOnClickOutside';
 export * from './useRef';
 export * from './useRuntimes';
-export * from './useScreenshot';
+export * from './useScreencapture';
 export * from './useToast';
 export * from './useUpload';
 export * from './useUser';

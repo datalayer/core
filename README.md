@@ -28,8 +28,8 @@ This package serves as the base foundation used by many other Datalayer packages
 - **⚡ Runtime Management**: Create and manage scalable compute runtimes (CPU/GPU) for code execution
 - **📸 Snapshot Management**: Create and manage compute snapshots of your runtimes for reproducible environments
 - **🔒 Secrets Management**: Securely handle sensitive data and credentials in your workflows
-- **🐍 Python SDK**: Programmatic access to Datalayer platform with context managers and clean resource management
-- **🌐 TypeScript/React SDK**: React components and services for building Jupyter-based applications
+- **🐍 Python Client**: Programmatic access to Datalayer platform with context managers and clean resource management
+- **🌐 TypeScript/React Client**: React components and services for building Jupyter-based applications
 - **💻 Command Line Interface**: CLI tools for managing runtimes, snapshots, and platform resources
 - **🔧 Base Classes**: Core application classes and configuration inherited by other Datalayer projects
 - **📓 Jupyter Integration**: ServiceManager and collaboration providers for notebook experiences
@@ -37,7 +37,7 @@ This package serves as the base foundation used by many other Datalayer packages
 
 ## Installation
 
-### Python SDK
+### Python Client
 
 Install Datalayer Core using pip:
 
@@ -45,7 +45,7 @@ Install Datalayer Core using pip:
 pip install datalayer-core
 ```
 
-### TypeScript/React SDK
+### TypeScript/React Client
 
 Install as an npm package:
 
@@ -76,7 +76,7 @@ Set your Datalayer token as an environment variable:
 export DATALAYER_API_KEY="your-api-key"
 ```
 
-Or pass it directly to the SDK:
+Or pass it directly to the Client:
 
 ```python
 from datalayer_core import DatalayerClient
@@ -182,16 +182,16 @@ Features:
 
 Datalayer adds AI capabilities and scalable compute runtimes to your development workflows. The platform is designed to seamlessly integrate into your existing processes and supercharge your computations with the processing power you need.
 
-Key platform features accessible through this SDK and CLI:
+Key platform features accessible through this Client and CLI:
 
 - **Remote Runtimes**: Execute code on powerful remote machines with CPU, RAM, and GPU resources
-- **Multiple Interfaces**: Access and consume runtimes through Python SDK, CLI, or other integrated tools
+- **Multiple Interfaces**: Access and consume runtimes through Python Client, CLI, or other integrated tools
 - **Scalable Compute**: Dynamically scale your computational resources based on workload requirements
 
 ## Documentation
 
 - **Command Line Interface (CLI)**: [https://docs.datalayer.app/cli/](https://docs.datalayer.app/cli/)
-- **Core Python SDK**: [core.datalayer.tech/python/](https://core.datalayer.tech/python/)
+- **Core Python Client**: [core.datalayer.tech/python/](https://core.datalayer.tech/python/)
 - **Platform Documentation**: [docs.datalayer.app](https://docs.datalayer.app/)
 - **API Reference**: [API documentation](https://docs.datalayer.app/api/)
 
@@ -256,7 +256,7 @@ npm run test:coverage # With coverage
 
 ### Contributing
 
-This SDK is designed to be simple and extensible. We welcome contributions! Please:
+This Client is designed to be simple and extensible. We welcome contributions! Please:
 
 1. Fork the repository
 2. Create a feature branch
@@ -278,7 +278,7 @@ Datalayer Core serves as the foundation for the entire Datalayer ecosystem:
 
 ## Use Cases
 
-- **AI/ML Development**: Scale your machine learning workflows with cloud compute using SDK or CLI
+- **AI/ML Development**: Scale your machine learning workflows with cloud compute using Client or CLI
 - **Data Analysis**: Process large datasets with powerful remote runtimes
 - **Research**: Collaborate on computational research with reproducible environments
 - **Automation**: Integrate Datalayer into CI/CD pipelines and automated workflows using CLI tools

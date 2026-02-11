@@ -2026,6 +2026,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     creditsLimit?: number;
     type?: string;
     editorVariant?: string; // 'none', 'notebook', or 'document'
+    enableCodemode?: boolean;
   };
 
   const useCreateAgentRuntime = () => {
@@ -2040,6 +2041,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             credits_limit: data.creditsLimit || 10,
             type: data.type || 'notebook',
             editor_variant: data.editorVariant || 'none',
+            enable_codemode: data.enableCodemode ?? false,
           },
         });
       },
@@ -2082,10 +2084,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'DELETE',
         });
       },
-      onSuccess: () => {
-        // Invalidate all agent runtime queries
+      onSuccess: (_data, podName) => {
+        // Cancel any in-flight queries for the deleted runtime so they
+        // don't re-fetch a resource that no longer exists.
+        queryClient.cancelQueries({
+          queryKey: queryKeys.agentRuntimes.detail(podName),
+        });
+        // Remove the detail cache entry immediately — prevents React
+        // Query from triggering a stale re-fetch while the component
+        // unmounts.
+        queryClient.removeQueries({
+          queryKey: queryKeys.agentRuntimes.detail(podName),
+        });
+        // Invalidate the list so the sidebar refreshes.
         queryClient.invalidateQueries({
-          queryKey: queryKeys.agentRuntimes.all(),
+          queryKey: queryKeys.agentRuntimes.lists(),
         });
       },
     });
@@ -6356,7 +6369,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to search public items');
         }
-        return resp.items || [];
+        return (resp.items || [])
+          .map((item: any) => toItem(item))
+          .filter(Boolean);
       },
     });
   };
@@ -6379,6 +6394,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             'X-GitHub-Api-Version': '2022-11-28',
           },
         });
+        return response.json();
+      },
+    });
+  };
+
+  /**
+   * Get Google profile from access token
+   */
+  const useGetGoogleProfile = () => {
+    return useMutation({
+      mutationFn: async (accessToken: string) => {
+        const response = await fetch(
+          'https://openidconnect.googleapis.com/v1/userinfo',
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        );
         return response.json();
       },
     });
@@ -6458,79 +6494,98 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       }: {
         linkedinUserUrn: string;
         postText: string;
-        uploadObject: string;
+        uploadObject?: string;
         accessToken: string;
       }) => {
-        // Step 1: Register upload
-        const registerUploadRequest = {
-          registerUploadRequest: {
-            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-            owner: linkedinUserUrn,
-            serviceRelationships: [
-              {
-                relationshipType: 'OWNER',
-                identifier: 'urn:li:userGeneratedContent',
-              },
-            ],
-          },
-        };
+        let shareRequest: any;
 
-        const registerResp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'POST',
-            request_url:
-              'https://api.linkedin.com/v2/assets?action=registerUpload',
-            request_token: accessToken,
-            request_body: registerUploadRequest,
-          },
-        });
-
-        const asset = registerResp.response.value.asset;
-        const uploadUrl =
-          registerResp.response.value.uploadMechanism[
-            'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-          ].uploadUrl;
-
-        // Step 2: Upload image
-        await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
-          method: 'POST',
-          body: {
-            request_method: 'PUT',
-            request_url: uploadUrl,
-            request_token: accessToken,
-            request_body: {
-              uploadURL: uploadUrl,
-              content: uploadObject,
-              userURN: linkedinUserUrn,
-            },
-          },
-        });
-
-        // Step 3: Create share with media
-        const shareRequest = {
-          author: linkedinUserUrn,
-          lifecycleState: 'PUBLISHED',
-          specificContent: {
-            'com.linkedin.ugc.ShareContent': {
-              shareCommentary: { text: postText },
-              shareMediaCategory: 'IMAGE',
-              media: [
+        if (uploadObject) {
+          // Step 1: Register upload
+          const registerUploadRequest = {
+            registerUploadRequest: {
+              recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+              owner: linkedinUserUrn,
+              serviceRelationships: [
                 {
-                  status: 'READY',
-                  description: { text: 'Datalayer Notebook' },
-                  media: asset,
-                  title: { text: 'Datalayer Notebook' },
+                  relationshipType: 'OWNER',
+                  identifier: 'urn:li:userGeneratedContent',
                 },
               ],
             },
-          },
-          visibility: {
-            'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-          },
-        };
+          };
+
+          const registerResp = await requestDatalayer({
+            url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+            method: 'POST',
+            body: {
+              request_method: 'POST',
+              request_url:
+                'https://api.linkedin.com/v2/assets?action=registerUpload',
+              request_token: accessToken,
+              request_body: registerUploadRequest,
+            },
+          });
+
+          const asset = registerResp.response.value.asset;
+          const uploadUrl =
+            registerResp.response.value.uploadMechanism[
+              'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
+            ].uploadUrl;
+
+          // Step 2: Upload image
+          await requestDatalayer({
+            url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+            method: 'POST',
+            body: {
+              request_method: 'PUT',
+              request_url: uploadUrl,
+              request_token: accessToken,
+              request_body: {
+                uploadURL: uploadUrl,
+                content: uploadObject,
+                userURN: linkedinUserUrn,
+              },
+            },
+          });
+
+          // Step 3: Create share with media
+          shareRequest = {
+            author: linkedinUserUrn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+              'com.linkedin.ugc.ShareContent': {
+                shareCommentary: { text: postText },
+                shareMediaCategory: 'IMAGE',
+                media: [
+                  {
+                    status: 'READY',
+                    description: { text: 'Datalayer Notebook' },
+                    media: asset,
+                    title: { text: 'Datalayer Notebook' },
+                  },
+                ],
+              },
+            },
+            visibility: {
+              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+            },
+          };
+        } else {
+          // Text-only share (no image upload)
+          shareRequest = {
+            author: linkedinUserUrn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+              'com.linkedin.ugc.ShareContent': {
+                shareCommentary: { text: postText },
+                shareMediaCategory: 'NONE',
+              },
+            },
+            visibility: {
+              'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+            },
+          };
+        }
 
         return requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
@@ -7834,6 +7889,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useOAuth2AuthorizationURL,
     useOAuth2AuthorizationLinkURL,
     useGetGitHubProfile,
+    useGetGoogleProfile,
     useGetLinkedinProfile,
     usePostLinkedinShare,
     usePostLinkedinShareWithUpload,

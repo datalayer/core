@@ -13,10 +13,13 @@ export type PageTagMetadata = {
 };
 
 export type PageTagName =
+  | 'agent'
   | 'ai'
+  | 'ai-agent'
   | 'deep-learning'
   | 'example'
   | 'llm'
+  | 'notebook'
   | 'python'
   | 'pytorch'
   | 'spatial'
@@ -36,11 +39,23 @@ export const PAGE_TAGE_NONE: PageTag = {
   Icon: CopilotIcon,
   color: 'pink',
 };
+const PAGE_TAGE_AGENT: PageTag = {
+  id: '9',
+  text: 'agent',
+  Icon: CopilotIcon,
+  color: 'teal',
+};
 const PAGE_TAGE_AI: PageTag = {
   id: '1',
   text: 'ai',
   Icon: CopilotIcon,
   color: 'pink',
+};
+const PAGE_TAGE_AI_AGENT: PageTag = {
+  id: '10',
+  text: 'ai-agent',
+  Icon: CopilotIcon,
+  color: 'purple',
 };
 const PAGE_TAGE_DEEP_LEARNING: PageTag = {
   id: '2',
@@ -59,6 +74,12 @@ const PAGE_TAGE_LLM: PageTag = {
   text: 'llm',
   Icon: CopilotIcon,
   color: 'coral',
+};
+const PAGE_TAGE_NOTEBOOK: PageTag = {
+  id: '11',
+  text: 'notebook',
+  Icon: CopilotIcon,
+  color: 'blue',
 };
 const PAGE_TAGE_PYTHON: PageTag = {
   id: '5',
@@ -88,10 +109,13 @@ const PAGE_TAGE_TUTORIAL: PageTag = {
 };
 
 export const PAGE_TAGS: PageTag[] = [
+  PAGE_TAGE_AGENT,
   PAGE_TAGE_AI,
+  PAGE_TAGE_AI_AGENT,
   PAGE_TAGE_DEEP_LEARNING,
   PAGE_TAGE_EXAMPLE,
   PAGE_TAGE_LLM,
+  PAGE_TAGE_NOTEBOOK,
   PAGE_TAGE_PYTHON,
   PAGE_TAGE_PYTORCH,
   PAGE_TAGE_SPATIAL,

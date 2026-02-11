@@ -13,12 +13,12 @@ import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 /**
- * SDK Spacer Integration Tests
+ * Client Spacer Integration Tests
  *
  * Tests workspace, notebook, and lexical document lifecycle
- * using the SDK client and model classes.
+ * using the Client client and model classes.
  */
-describe('SDK Spacer Integration Tests', () => {
+describe('Client Spacer Integration Tests', () => {
   let client: DatalayerClient;
   let testSpace: SpaceDTO | null = null;
   let createdNotebook: NotebookDTO | null = null;
@@ -128,7 +128,7 @@ describe('SDK Spacer Integration Tests', () => {
         spaceId: testSpace.uid,
         notebookType: 'jupyter',
         name: 'client-test-notebook-' + Date.now(),
-        description: 'Test notebook from SDK',
+        description: 'Test notebook from Client',
       });
 
       expect(notebook).toBeInstanceOf(Notebook);
@@ -171,7 +171,7 @@ describe('SDK Spacer Integration Tests', () => {
 
       const updatedNotebook = await client.updateNotebook(createdNotebook, {
         name: 'client-test-notebook-updated',
-        description: 'Updated description from SDK test',
+        description: 'Updated description from Client test',
       });
 
       expect(updatedNotebook).toBeInstanceOf(Notebook);
@@ -268,7 +268,7 @@ describe('SDK Spacer Integration Tests', () => {
       const lexical = await client.createLexical({
         spaceId: testSpace.uid,
         name: 'client-test-lexical-' + Date.now(),
-        description: 'Test lexical from SDK',
+        description: 'Test lexical from Client',
         documentType: 'document',
       });
 
@@ -312,7 +312,7 @@ describe('SDK Spacer Integration Tests', () => {
 
       const updatedLexical = await client.updateLexical(createdLexical, {
         name: 'client-test-lexical-updated',
-        description: 'Updated description from SDK test',
+        description: 'Updated description from Client test',
       });
 
       expect(updatedLexical).toBeInstanceOf(Lexical);

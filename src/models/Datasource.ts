@@ -166,12 +166,12 @@ export interface UpdateDatasourceResponse {
 }
 
 /**
- * Datasource domain model for the Datalayer SDK.
+ * Datasource domain model for the Datalayer Client.
  * Provides state management and operations for datasources.
  *
  * @example
  * ```typescript
- * const datasource = await sdk.createDatasource({
+ * const datasource = await client.createDatasource({
  *   type: 'Amazon Athena',
  *   name: 'my-athena-datasource',
  *   description: 'Production Athena datasource',
@@ -186,17 +186,17 @@ export interface UpdateDatasourceResponse {
 export class DatasourceDTO {
   /** @internal */
   _data: DatasourceData;
-  private _sdk: DatalayerClient;
+  private _client: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
    * Create a Datasource instance.
    * @param data - Datasource data from API
-   * @param sdk - SDK instance
+   * @param client - Client instance
    */
-  constructor(data: DatasourceData, sdk: DatalayerClient) {
+  constructor(data: DatasourceData, client: DatalayerClient) {
     this._data = data;
-    this._sdk = sdk;
+    this._client = client;
   }
 
   // ========================================================================
@@ -271,7 +271,7 @@ export class DatasourceDTO {
    */
   async update(updates: UpdateDatasourceRequest): Promise<DatasourceDTO> {
     this._checkDeleted();
-    const updated = await this._sdk.updateDatasource(this.uid, updates);
+    const updated = await this._client.updateDatasource(this.uid, updates);
     return updated;
   }
 
@@ -280,7 +280,7 @@ export class DatasourceDTO {
    */
   async delete(): Promise<void> {
     this._checkDeleted();
-    await this._sdk.deleteDatasource(this.uid);
+    await this._client.deleteDatasource(this.uid);
     this._deleted = true;
   }
 

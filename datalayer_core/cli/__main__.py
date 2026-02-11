@@ -28,9 +28,9 @@ from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
 from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
-from datalayer_core.cli.commands.users import app as users_app
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
+from datalayer_core.cli.commands.users import app as users_app
 from datalayer_core.cli.commands.web import app as web_app
 
 

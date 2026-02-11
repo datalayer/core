@@ -179,7 +179,7 @@ export const validateRequiredString = (
 /**
  * Validates that all properties in an object are defined (not undefined).
  * Recursively checks nested objects and arrays to ensure complete data integrity.
- * This is used to validate model toJSON() outputs and ensure SDK contract compliance.
+ * This is used to validate model toJSON() outputs and ensure Client contract compliance.
  *
  * @param obj - The object to validate
  * @param modelName - Name of the model class for error messages (e.g., 'Runtime')

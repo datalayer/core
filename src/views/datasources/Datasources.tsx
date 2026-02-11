@@ -16,7 +16,18 @@ import { EditIcon } from '@datalayer/icons-react';
 import { IDatasource } from '../../models';
 import { useCache, useNavigate } from '../../hooks';
 
-const DatasourcesTable = () => {
+export type DatasourcesProps = {
+  /** Route to navigate when clicking "New datasource" button. Defaults to '/new/datasource'. */
+  newDatasourceRoute?: string;
+  /** Base route for the datasources list (used for edit navigation). Defaults to current relative path. */
+  datasourcesListRoute?: string;
+};
+
+const DatasourcesTable = ({
+  datasourcesListRoute,
+}: {
+  datasourcesListRoute?: string;
+}) => {
   const { useDatasources } = useCache();
 
   const datasourcesQuery = useDatasources();
@@ -73,7 +84,14 @@ const DatasourcesTable = () => {
                 aria-label="Edit"
                 size="small"
                 variant="invisible"
-                onClick={e => navigate(`${datasource.id}`, e)}
+                onClick={e =>
+                  navigate(
+                    datasourcesListRoute
+                      ? `${datasourcesListRoute}/${datasource.id}`
+                      : `${datasource.id}`,
+                    e,
+                  )
+                }
               />
             ),
           },
@@ -83,7 +101,10 @@ const DatasourcesTable = () => {
   );
 };
 
-export const Datasources = () => {
+export const Datasources = ({
+  newDatasourceRoute = '/new/datasource',
+  datasourcesListRoute,
+}: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
     <PageLayout
@@ -100,7 +121,7 @@ export const Datasources = () => {
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/new/datasource', e)}
+              onClick={e => navigate(newDatasourceRoute, e)}
             >
               New datasource
             </Button>
@@ -109,7 +130,7 @@ export const Datasources = () => {
       </PageLayout.Header>
       <PageLayout.Content>
         <Box>
-          <DatasourcesTable />
+          <DatasourcesTable datasourcesListRoute={datasourcesListRoute} />
         </Box>
       </PageLayout.Content>
     </PageLayout>

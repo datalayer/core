@@ -4,13 +4,13 @@
  */
 
 /**
- * Constants for the Datalayer SDK.
+ * Constants for the Datalayer Client.
  *
  * @module client/constants
  */
 
 /**
- * Item types used throughout the SDK and consuming applications.
+ * Item types used throughout the Client and consuming applications.
  * These constants define the type identifiers for different Datalayer items.
  * Values match what the Datalayer API returns.
  */

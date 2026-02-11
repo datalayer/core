@@ -4,7 +4,7 @@
  */
 
 /**
- * Space domain model for the Datalayer SDK.
+ * Space domain model for the Datalayer Client.
  *
  * @module models/SpaceDTO
  */
@@ -38,7 +38,7 @@ export interface SpaceData {
 
 /**
  * Stable public interface for Space data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface SpaceJSON {
@@ -69,7 +69,7 @@ export interface SpaceJSON {
  */
 export class SpaceDTO {
   protected _data: SpaceData;
-  private _sdk: DatalayerClient;
+  private _client: DatalayerClient;
   private _items: (NotebookDTO | LexicalDTO)[] | null = null;
   private _deleted: boolean = false;
 
@@ -77,11 +77,11 @@ export class SpaceDTO {
    * Create a Space instance.
    *
    * @param data - Space data from API
-   * @param sdk - SDK instance
+   * @param client - Client instance
    */
-  constructor(data: SpaceData, sdk: DatalayerClient) {
+  constructor(data: SpaceData, client: DatalayerClient) {
     this._data = data;
-    this._sdk = sdk;
+    this._client = client;
   }
 
   // ========================================================================
@@ -104,8 +104,8 @@ export class SpaceDTO {
    * Refresh space data from the API by fetching user's spaces.
    */
   async refresh(): Promise<void> {
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+    const token = (this._client as any).getToken();
+    const spacerRunUrl = (this._client as any).getSpacerRunUrl();
     const response = await users.getMySpaces(token, spacerRunUrl);
     const freshSpace = response.spaces.find(s => s.uid === this.uid);
     if (freshSpace) {
@@ -169,9 +169,9 @@ export class SpaceDTO {
   }): Promise<T> {
     this._checkDeleted();
 
-    // Get necessary configuration from SDK
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+    // Get necessary configuration from Client
+    const token = (this._client as any).getToken();
+    const spacerRunUrl = (this._client as any).getSpacerRunUrl();
 
     if (data.type === ItemTypes.NOTEBOOK) {
       const requestData = {
@@ -189,7 +189,7 @@ export class SpaceDTO {
       if (!response.notebook) {
         throw new Error('Failed to create notebook: No notebook returned');
       } else {
-        return new NotebookDTO(response.notebook, this._sdk) as T;
+        return new NotebookDTO(response.notebook, this._client) as T;
       }
     } else if (data.type === ItemTypes.LEXICAL) {
       const requestData = {
@@ -209,7 +209,7 @@ export class SpaceDTO {
           'Failed to create lexical document: No document returned',
         );
       } else {
-        return new LexicalDTO(response.document, this._sdk) as T;
+        return new LexicalDTO(response.document, this._client) as T;
       }
     } else {
       throw new Error(`Unsupported item type: ${data.type}`);
@@ -223,8 +223,8 @@ export class SpaceDTO {
    */
   async getItems(): Promise<(NotebookDTO | LexicalDTO)[]> {
     this._checkDeleted();
-    const token = (this._sdk as any).getToken();
-    const spacerRunUrl = (this._sdk as any).getSpacerRunUrl();
+    const token = (this._client as any).getToken();
+    const spacerRunUrl = (this._client as any).getSpacerRunUrl();
 
     const response: GetSpaceItemsResponse = await items.getSpaceItems(
       token,
@@ -233,7 +233,7 @@ export class SpaceDTO {
     );
 
     // Use shared utility function to convert items to model instances
-    this._items = convertSpaceItemsToModels(response.items || [], this._sdk);
+    this._items = convertSpaceItemsToModels(response.items || [], this._client);
     return this._items;
   }
 
@@ -301,7 +301,7 @@ export class SpaceDTO {
       variant: this.variant,
       handle: this.handle,
       items: this._data.items
-        ? convertSpaceItemsToModels(this._data.items, this._sdk).map(item =>
+        ? convertSpaceItemsToModels(this._data.items, this._client).map(item =>
             item.toJSON(),
           )
         : [],

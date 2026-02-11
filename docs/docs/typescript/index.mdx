@@ -6,7 +6,7 @@ import DocCardList from '@theme/DocCardList';
 
 # TypeScript Core
 
-The Datalayer TypeScript Core (`@datalayer/core`) provides a comprehensive client library for building modern web applications and integrations with the Datalayer AI Platform. This SDK offers TypeScript-first APIs, React components, utilities, and hooks for seamless development.
+The Datalayer TypeScript Core (`@datalayer/core`) provides a comprehensive client library for building modern web applications and integrations with the Datalayer AI Platform. This Client offers TypeScript-first APIs, React components, utilities, and hooks for seamless development.
 
 ## Overview
 
@@ -96,7 +96,7 @@ function RuntimeSelector() {
 
 ### Hooks
 
-The SDK provides a comprehensive set of React hooks for common operations:
+The Client provides a comprehensive set of React hooks for common operations:
 
 - **`useCoreStore()`** - Access core platform configuration and state
 - **`useUser(role)`** - Manage user authentication and profile data
@@ -141,7 +141,7 @@ Helper functions for common development tasks:
 
 ## State Management
 
-The SDK uses Zustand for state management with pre-configured stores:
+The Client uses Zustand for state management with pre-configured stores:
 
 ```typescript
 import { 
@@ -180,7 +180,7 @@ const notebooks = await api.getNotebooks();
 
 ## Testing
 
-The SDK includes testing utilities and configurations:
+The Client includes testing utilities and configurations:
 
 ```typescript
 import { describe, it, expect } from 'vitest';

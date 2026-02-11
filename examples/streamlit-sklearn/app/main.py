@@ -30,7 +30,7 @@ with col2:
         width=200,
         use_container_width=True,
     )
-st.title("""Streamlit + Datalayer SDK Example""")
+st.title("""Streamlit + Datalayer Client Example""")
 
 st.markdown("")
 st.markdown("""

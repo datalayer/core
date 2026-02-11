@@ -23,7 +23,14 @@ import { EditIcon } from '@datalayer/icons-react';
 import { IIAMToken } from '../../models';
 import { useCache, useNavigate } from '../../hooks';
 
-const TokensTable = () => {
+export type IAMTokensProps = {
+  /** Route to navigate when clicking "New IAM token" button. Defaults to '/new/token'. */
+  newTokenRoute?: string;
+  /** Base route for the tokens list (used for edit navigation). Defaults to current relative path. */
+  tokensListRoute?: string;
+};
+
+const TokensTable = ({ tokensListRoute }: { tokensListRoute?: string }) => {
   const { useTokens } = useCache();
 
   const getTokensQuery = useTokens();
@@ -85,7 +92,14 @@ const TokensTable = () => {
                 aria-label="Edit"
                 size="small"
                 variant="invisible"
-                onClick={e => navigate(`${token.id}`, e)}
+                onClick={e =>
+                  navigate(
+                    tokensListRoute
+                      ? `${tokensListRoute}/${token.id}`
+                      : `${token.id}`,
+                    e,
+                  )
+                }
               />
             ),
           },
@@ -95,7 +109,10 @@ const TokensTable = () => {
   );
 };
 
-export const IAMTokens = () => {
+export const IAMTokens = ({
+  newTokenRoute = '/new/token',
+  tokensListRoute,
+}: IAMTokensProps = {}) => {
   const navigate = useNavigate();
   return (
     <PageLayout
@@ -112,7 +129,7 @@ export const IAMTokens = () => {
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/new/token', e)}
+              onClick={e => navigate(newTokenRoute, e)}
             >
               New IAM token
             </Button>
@@ -121,7 +138,7 @@ export const IAMTokens = () => {
       </PageLayout.Header>
       <PageLayout.Content>
         <Box>
-          <TokensTable />
+          <TokensTable tokensListRoute={tokensListRoute} />
         </Box>
       </PageLayout.Content>
     </PageLayout>

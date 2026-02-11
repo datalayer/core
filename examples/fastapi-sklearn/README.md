@@ -2,16 +2,16 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# FastAPI + Datalayer SDK Example
+# FastAPI + Datalayer Client Example
 
-This example demonstrates how to integrate the Datalayer SDK with FastAPI to serve machine learning models using Runtime snapshots.
+This example demonstrates how to integrate the Datalayer Client with FastAPI to serve machine learning models using Runtime snapshots.
 
 ## Overview
 
 This example showcases:
 
 - **FastAPI Integration**: A modern, fast web framework for building APIs with Python
-- **Datalayer SDK**: Integration with Datalayer's client.
+- **Datalayer Client**: Integration with Datalayer's client.
 - **Snapshot Loading**: Loading and serving pre-trained models from Runtime snapshots.
 - **Scikit-learn Models**: Example implementation using sklearn models
 - **RESTful API**: Clean API endpoints for model predictions.
@@ -27,7 +27,7 @@ This example showcases:
 ## Prerequisites
 
 - Python 3.9+
-- Datalayer SDK
+- Datalayer Client
 - FastAPI
 - Scikit-learn
 - Uvicorn (ASGI server)

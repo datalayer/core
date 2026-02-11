@@ -5,14 +5,14 @@
 
 import { useState } from 'react';
 import { useCellStore } from '../state';
-import { takeHTMLNodeScreenshot } from '../utils/Screenshot';
+import { takeHTMLNodeScreencapture } from '../utils/Screencapture';
 
 const useCellOutputshot = () => {
   const [outputshot, setOutputshot] = useState('');
   const [error, setError] = useState();
   const { update } = useCellStore();
   const takeOutputshot = (node: HTMLDivElement) => {
-    takeHTMLNodeScreenshot(node as HTMLDivElement)
+    takeHTMLNodeScreencapture(node as HTMLDivElement)
       .then(outputshotData => {
         setOutputshot(outputshotData);
         update({

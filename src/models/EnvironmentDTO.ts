@@ -4,7 +4,7 @@
  */
 
 /**
- * Environment domain model for the Datalayer SDK.
+ * Environment domain model for the Datalayer Client.
  *
  * @module models/EnvironmentDTO
  */
@@ -56,7 +56,7 @@ export interface EnvironmentData {
 
 /**
  * Stable public interface for Environment data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface EnvironmentJSON {
@@ -92,7 +92,7 @@ export interface ListEnvironmentsResponse {
  *
  * @example
  * ```typescript
- * const environments = await sdk.listEnvironments();
+ * const environments = await client.listEnvironments();
  * const aiEnv = environments.find(env => env.name === 'ai-env');
  * console.log(aiEnv.title); // "AI Environment"
  * ```
@@ -105,11 +105,11 @@ export class EnvironmentDTO {
    * Create an Environment instance.
    *
    * @param data - Environment data from API
-   * @param _sdk - SDK instance (not currently used but kept for consistency)
+   * @param _client - Client instance (not currently used but kept for consistency)
    */
-  constructor(data: EnvironmentData, _sdk: DatalayerClient) {
+  constructor(data: EnvironmentData, _client: DatalayerClient) {
     this._data = data;
-    // SDK instance not currently used but kept for future extensibility
+    // Client instance not currently used but kept for future extensibility
   }
 
   // ========================================================================

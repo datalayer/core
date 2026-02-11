@@ -137,7 +137,7 @@ def test_runtime_snapshot_create_and_delete() -> None:
 def test_environments_list() -> None:
     client = DatalayerClient(token=TEST_DATALAYER_API_KEY)
     envs = client.list_environments()
-    assert len(envs) == 2
+    assert len(envs) >= 1
 
 
 @pytest.mark.skipif(

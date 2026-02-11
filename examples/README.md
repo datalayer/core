@@ -2,30 +2,30 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# Datalayer SDK Examples
+# Datalayer Client Examples
 
-This directory contains practical examples demonstrating how to use the Datalayer SDK and core functionality in various scenarios and frameworks.
+This directory contains practical examples demonstrating how to use the Datalayer Client and core functionality in various scenarios and frameworks.
 
 ## 📋 Available Examples
 
-## 🎯 SDK Fundamentals
+## 🎯 Client Fundamentals
 
 ### 🎭 [Datalayer Decorator](./decorator/README.md)
 
 Comprehensive examples demonstrating the `@datalayer` decorator for seamless remote function execution.
 
 - **Use Case**: Transform regular functions into distributed computations
-- **Technologies**: Datalayer SDK decorators, remote runtime execution
+- **Technologies**: Datalayer Client decorators, remote runtime execution
 - **Features**: Function decoration, input/output mapping, snapshot integration, multiple environments
 
 ## 🖥️ Desktop Applications
 
 ### ⚡ [Datalayer Desktop App](https://github.com/datalayer/desktop)
 
-A native desktop application showcasing the Datalayer frontend SDK with Jupyter notebook integration.
+A native desktop application showcasing the Datalayer frontend Client with Jupyter notebook integration.
 
 - **Use Case**: Desktop-based data science environment with cloud compute
-- **Technologies**: Electron, React, TypeScript, Datalayer SDK
+- **Technologies**: Electron, React, TypeScript, Datalayer Client
 - **Features**: Jupyter notebooks, runtime management, environment selection, real-time collaboration
 - **Repository**: https://github.com/datalayer/desktop
 
@@ -33,7 +33,7 @@ A native desktop application showcasing the Datalayer frontend SDK with Jupyter 
 
 ### 🚀 [FastAPI + Scikit-learn](./fastapi-sklearn/README.md)
 
-A REST API server that serves machine learning models using FastAPI and Datalayer SDK.
+A REST API server that serves machine learning models using FastAPI and Datalayer Client.
 
 - **Use Case**: Production ML model deployment with REST API
 - **Technologies**: FastAPI, Scikit-learn, Uvicorn

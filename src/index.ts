@@ -33,7 +33,7 @@ export {
   // Export client and config types
   DatalayerClient,
   type DatalayerClientConfig,
-  type SDKHandlers,
+  type ClientHandlers,
   // Export domain models
   User,
   Runtime,

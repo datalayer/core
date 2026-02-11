@@ -21,7 +21,6 @@ from socketserver import BaseRequestHandler
 from typing import Optional, Union
 
 from datalayer_core.__version__ import __version__
-from datalayer_core.base.serverapplication import launch_new_instance
 from datalayer_core.authn.server.keys import (
     DATALAYER_IAM_TOKEN_KEY,
     DATALAYER_IAM_USER_KEY,
@@ -32,6 +31,7 @@ from datalayer_core.authn.server.pages import (
     OAUTH_ERROR_PAGE,
 )
 from datalayer_core.authn.server.state import set_server_port
+from datalayer_core.base.serverapplication import launch_new_instance
 from datalayer_core.utils.network import find_http_port
 from datalayer_core.utils.urls import DatalayerURLs
 

@@ -51,7 +51,9 @@ def display_usage(usage: dict[str, Any]) -> None:
     summary = _new_summary_table()
     summary.add_row("Used", "N/A" if used_value is None else f"{used_value}")
     summary.add_row("Quota", "Unlimited" if quota is None else f"{quota}")
-    summary.add_row("Available (before reservations)", f"{available_before_reservations}")
+    summary.add_row(
+        "Available (before reservations)", f"{available_before_reservations}"
+    )
     summary.add_row("Reserved", f"{reserved_total}")
     summary.add_row("Available (after reservations)", f"{available_after_reservations}")
 

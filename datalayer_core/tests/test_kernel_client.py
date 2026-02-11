@@ -30,7 +30,7 @@ def test_kernel_client() -> None:
 
     client = DatalayerClient(token=token)
     with client.create_runtime(
-        name="test-kernel-vars", environment="ai-env"
+        name="test-kernel-vars", environment="ai-agents-env"
     ) as runtime:
         print(f"Runtime created: {runtime.uid}")
 

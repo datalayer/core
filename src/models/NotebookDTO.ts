@@ -4,7 +4,7 @@
  */
 
 /**
- * Notebook domain model for the Datalayer SDK.
+ * Notebook domain model for the Datalayer Client.
  *
  * @module models/Notebook
  */
@@ -34,7 +34,7 @@ export interface NotebookData {
 
 /**
  * Stable public interface for Notebook data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface NotebookJSON {
@@ -60,7 +60,7 @@ export interface NotebookJSON {
  *
  * @example
  * ```typescript
- * const notebook = await sdk.createNotebook(formData);
+ * const notebook = await client.createNotebook(formData);
  * const kernelSpec = await notebook.getKernelSpec();
  * ```
  */
@@ -69,10 +69,10 @@ export class NotebookDTO extends ItemDTO<NotebookData> {
    * Create a Notebook instance.
    *
    * @param data - Notebook data from API
-   * @param sdk - SDK instance
+   * @param client - Client instance
    */
-  constructor(data: NotebookData, sdk: DatalayerClient) {
-    super(data, sdk);
+  constructor(data: NotebookData, client: DatalayerClient) {
+    super(data, client);
   }
 
   // ========================================================================
@@ -131,8 +131,8 @@ export class NotebookDTO extends ItemDTO<NotebookData> {
   async update(name?: string, description?: string): Promise<this> {
     // FIXME: check if both are needed, and use the existing values if only one provided
     this._checkDeleted();
-    const token = (this as any)._sdk.getToken();
-    const spacerRunUrl = (this as any)._sdk.getSpacerRunUrl();
+    const token = (this as any)._client.getToken();
+    const spacerRunUrl = (this as any)._client.getSpacerRunUrl();
     const updateData: UpdateNotebookRequest = {};
     if (name !== undefined) updateData.name = name;
     if (description !== undefined) updateData.description = description;

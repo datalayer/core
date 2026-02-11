@@ -9,6 +9,7 @@ export type IIAMProviderName =
   | 'bluesky'
   | 'discord'
   | 'github'
+  | 'google'
   | 'linkedin'
   | 'okta'
   | 'x';
@@ -35,6 +36,9 @@ export class IAMProvidersSpecs {
       }
       case 'github': {
         return this.GitHub;
+      }
+      case 'google': {
+        return this.Google;
       }
       case 'linkedin': {
         return this.LinkedIn;
@@ -70,6 +74,18 @@ export class IAMProvidersSpecs {
     refreshTokenCookieName: '__datalayer__github_refresh_token',
     userInfoURL: 'https://api.github.com/user',
     tokenRefreshURL: 'https://github.com/login/oauth/access_token',
+    postShareURL: '',
+    registerUploadURL: '',
+  };
+  static readonly Google: IIAMProviderSpec = {
+    name: 'google',
+    oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
+    oauth2CallbackUIRoute: '/iam/oauth2/google/callback',
+    accessTokenCookieName: (user: IUser) =>
+      `__datalayer__google_access_token_${user.id}`,
+    refreshTokenCookieName: '__datalayer__google_refresh_token',
+    userInfoURL: 'https://openidconnect.googleapis.com/v1/userinfo',
+    tokenRefreshURL: 'https://oauth2.googleapis.com/token',
     postShareURL: '',
     registerUploadURL: '',
   };

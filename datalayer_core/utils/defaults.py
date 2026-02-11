@@ -7,7 +7,7 @@ from typing import Any
 
 from datalayer_core.utils.types import Minutes
 
-DEFAULT_ENVIRONMENT = "python-cpu-env"
+DEFAULT_ENVIRONMENT = "ai-agents-env"
 
 DEFAULT_TIME_RESERVATION: Minutes = 10.0
 

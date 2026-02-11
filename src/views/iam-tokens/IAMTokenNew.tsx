@@ -35,7 +35,14 @@ interface ValidationData {
   expirationDate?: boolean;
 }
 
-export const IAMTokenNew = () => {
+export type IAMTokenNewProps = {
+  /** Route to navigate when clicking "List my Tokens". Defaults to '/settings/iam/tokens'. */
+  tokensListRoute?: string;
+};
+
+export const IAMTokenNew = ({
+  tokensListRoute = '/settings/iam/tokens',
+}: IAMTokenNewProps = {}) => {
   const runStore = useRunStore();
   const { useCreateToken } = useCache();
   const createTokenMutation = useCreateToken();
@@ -183,7 +190,7 @@ export const IAMTokenNew = () => {
             </Box>
           </Box>
           <Box mt={3}>
-            <Button onClick={e => navigate('/settings/iam/tokens', e)}>
+            <Button onClick={e => navigate(tokensListRoute, e)}>
               List my Tokens
             </Button>
           </Box>

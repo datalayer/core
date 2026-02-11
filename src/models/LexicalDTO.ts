@@ -4,7 +4,7 @@
  */
 
 /**
- * Lexical domain model for the Datalayer SDK.
+ * Lexical domain model for the Datalayer Client.
  *
  * @module models/LexicalDTO
  */
@@ -102,7 +102,7 @@ export interface UpdateLexicalResponse {
 
 /**
  * Stable public interface for Lexical data.
- * This is the contract that SDK consumers can rely on.
+ * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
 export interface LexicalJSON {
@@ -132,7 +132,7 @@ export interface LexicalJSON {
  *
  * @example
  * ```typescript
- * const lexical = await sdk.createLexical(formData);
+ * const lexical = await client.createLexical(formData);
  * await lexical.update({ name: 'Updated Documentation' });
  * ```
  */
@@ -141,10 +141,10 @@ export class LexicalDTO extends ItemDTO<LexicalData> {
    * Create a Lexical instance.
    *
    * @param data - Lexical data from API
-   * @param sdk - SDK instance
+   * @param client - Client instance
    */
-  constructor(data: LexicalData, sdk: DatalayerClient) {
-    super(data, sdk);
+  constructor(data: LexicalData, client: DatalayerClient) {
+    super(data, client);
   }
 
   // ========================================================================

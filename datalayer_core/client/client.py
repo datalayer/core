@@ -139,7 +139,8 @@ class DatalayerClient(
         raise RuntimeError("Failed to get profile information")
 
     def get_usage_credits(self) -> dict[str, Any]:
-        """Get usage credits and reservations.
+        """
+        Get usage credits and reservations.
 
         Returns
         -------

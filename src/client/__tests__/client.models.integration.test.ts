@@ -17,12 +17,12 @@ import { testConfig } from '../../__tests__/shared/test-config';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 /**
- * SDK Models Integration Tests
+ * Client Models Integration Tests
  *
  * Tests model state management, lazy loading, and relationships
- * using the SDK client and model classes.
+ * using the Client client and model classes.
  */
-describe('SDK Models Integration Tests', () => {
+describe('Client Models Integration Tests', () => {
   let client: DatalayerClient;
   let testSpace: SpaceDTO | null = null;
   let testNotebook: NotebookDTO | null = null;

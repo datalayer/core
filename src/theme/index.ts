@@ -6,3 +6,4 @@
 export * from './DatalayerTheme';
 export * from './DatalayerThemeProvider';
 export * from './Palette';
+export * from './useSystemColorMode';

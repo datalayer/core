@@ -522,7 +522,7 @@ export const ReactRouterAdvancedExample: React.FC = () => {
             working with our custom hooks that detect and use React Router.
           </Text>
           <Text as="p" sx={{ color: 'success.fg', fontWeight: 'bold' }}>
-            ✓ React Router detected and integrated with Datalayer SDK hooks
+            ✓ React Router detected and integrated with Datalayer Client hooks
           </Text>
         </Box>
 

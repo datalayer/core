@@ -20,12 +20,12 @@ import { ItemTypes } from '../constants';
  * to avoid code duplication.
  *
  * @param response - Raw API response containing space items
- * @param sdk - SDK instance to pass to model constructors
+ * @param client - Client instance to pass to model constructors
  * @returns Array of Notebook and Lexical model instances
  */
 export function convertSpaceItemsToModels(
   items: GetSpaceItemsResponse['items'],
-  sdk: DatalayerClient,
+  client: DatalayerClient,
 ): (NotebookDTO | LexicalDTO)[] {
   const modelItems: (NotebookDTO | LexicalDTO)[] = [];
 
@@ -35,9 +35,9 @@ export function convertSpaceItemsToModels(
 
     // Only include notebooks and lexicals
     if (itemType === ItemTypes.NOTEBOOK) {
-      modelItems.push(new NotebookDTO(item as any, sdk));
+      modelItems.push(new NotebookDTO(item as any, client));
     } else if (itemType === ItemTypes.LEXICAL) {
-      modelItems.push(new LexicalDTO(item as any, sdk));
+      modelItems.push(new LexicalDTO(item as any, client));
     }
     // Skip everything else (exercises, cells, etc.)
   }

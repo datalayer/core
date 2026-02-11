@@ -291,14 +291,16 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         return f"RuntimeService(uid='{self.model.uid}', name='{self.model.name}')"
 
     def start(self) -> None:
-        """Start the runtime and kernel client.
+        """
+        Start the runtime and kernel client.
 
         This is a public wrapper for `_start()` to support non-context usage.
         """
         self._start()
 
     def stop(self) -> bool:
-        """Stop the runtime and terminate the kernel client.
+        """
+        Stop the runtime and terminate the kernel client.
 
         This is a public wrapper for `_stop()` to support non-context usage.
         """

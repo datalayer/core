@@ -48,6 +48,7 @@ def usage_show(
 
 # Root-level command for convenience
 
+
 def usage_root(
     token: Optional[str] = typer.Option(
         None,

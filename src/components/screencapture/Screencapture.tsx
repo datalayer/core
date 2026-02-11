@@ -6,13 +6,13 @@
 import { Component, CSSProperties } from 'react';
 import html2canvas from 'html2canvas';
 
-type ScreenCaptureProps = {
+type ScreencaptureProps = {
   children: any;
   onStartCapture?: () => void;
   onEndCapture: (url: string) => void;
 };
 
-type ScreenCaptureState = {
+type ScreencaptureState = {
   on: boolean;
   startX: number;
   startY: number;
@@ -31,9 +31,9 @@ type ScreenCaptureState = {
   imageURL: string;
 };
 
-export class ScreenCapture extends Component<
-  ScreenCaptureProps,
-  ScreenCaptureState
+export class Screencapture extends Component<
+  ScreencaptureProps,
+  ScreencaptureState
 > {
   state = {
     on: false,
@@ -52,7 +52,7 @@ export class ScreenCapture extends Component<
     cropWidth: 0,
     cropHeigth: 0,
     imageURL: '',
-  } as ScreenCaptureState;
+  } as ScreencaptureState;
 
   handleWindowResize = () => {
     const windowWidth =
@@ -258,4 +258,4 @@ export class ScreenCapture extends Component<
   }
 }
 
-export default ScreenCapture;
+export default Screencapture;

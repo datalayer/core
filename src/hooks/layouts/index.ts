@@ -4,4 +4,4 @@
  */
 
 export * from './LayoutBackdrop';
-export * from './LayoutScreenshot';
+export * from './LayoutScreencapture';

@@ -24,17 +24,17 @@ describe('Space Model', () => {
     //    visibility: 'private',
   };
 
-  let mockSDK: Partial<DatalayerClient>;
+  let mockClient: Partial<DatalayerClient>;
   let space: SpaceDTO;
 
   beforeEach(() => {
-    mockSDK = {
+    mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
       getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
       createNotebook: vi.fn(),
       createLexical: vi.fn(),
     } as any;
-    space = new SpaceDTO(mockSpaceData, mockSDK as DatalayerClient);
+    space = new SpaceDTO(mockSpaceData, mockClient as DatalayerClient);
     vi.clearAllMocks();
   });
 

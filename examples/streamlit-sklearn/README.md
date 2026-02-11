@@ -2,16 +2,16 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# Streamlit + Datalayer SDK Example
+# Streamlit + Datalayer Client Example
 
-This example demonstrates how to integrate the Datalayer SDK with a [Streamlit](https://streamlit.io/) application to serve machine learning models using Runtime snapshots.
+This example demonstrates how to integrate the Datalayer Client with a [Streamlit](https://streamlit.io/) application to serve machine learning models using Runtime snapshots.
 
 ## Overview
 
 This example showcases:
 
 - **Streamlit Integration**: A faster way to build and share data apps
-- **Datalayer SDK**: Integration with Datalayer's client.
+- **Datalayer Client**: Integration with Datalayer's client.
 - **Snapshot Loading**: Loading and serving pre-trained models from Runtime snapshots.
 - **Scikit-learn Models**: Example implementation using sklearn models
 - **Web UI**: Use the streamlit application UI to get results
@@ -27,7 +27,7 @@ This example showcases:
 ## Prerequisites
 
 - Python 3.9+
-- Datalayer SDK
+- Datalayer Client
 - Scikit-learn
 - Streamlit
 

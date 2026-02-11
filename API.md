@@ -1,6 +1,6 @@
 # Datalayer Core - DatalayerClient Documentation
 
-This document provides comprehensive examples for using the DatalayerClient SDK.
+This document provides comprehensive examples for using the DatalayerClient.
 
 ## Table of Contents
 
@@ -36,7 +36,7 @@ The DatalayerClient provides a high-level, object-oriented interface for interac
 #### Key Features
 
 - **Flat API**: All methods directly on `client.` (e.g., `client.createNotebook()`)
-- **Handlers Pattern**: Inject platform-specific behavior without wrapping SDK methods
+- **Handlers Pattern**: Inject platform-specific behavior without wrapping Client methods
 - **Rich Models**: Returns model instances with methods, not just plain objects
 - **Type Safety**: Full TypeScript support with proper interfaces
 
@@ -70,7 +70,7 @@ const client = new DatalayerClient({
   token: 'bearer-token-123',
   iamRunUrl: 'https://prod1.datalayer.run',
   handlers: {
-    // Called before every SDK method
+    // Called before every Client method
     beforeCall: async (methodName, args) => {
       console.log(`[Client] Calling ${methodName}`, args);
     },
@@ -566,11 +566,11 @@ const client = new DatalayerClient({
 
 ## Best Practices
 
-1. **Use handlers for cross-cutting concerns**: Implement logging, error handling, and UI updates through the handlers pattern rather than wrapping SDK methods.
+1. **Use handlers for cross-cutting concerns**: Implement logging, error handling, and UI updates through the handlers pattern rather than wrapping Client methods.
 
 2. **Handle deletion states**: Models track deletion state to prevent operations on deleted resources.
 
-3. **Cache dynamic data**: The SDK models cache dynamic data for 5 seconds to reduce API calls.
+3. **Cache dynamic data**: The Client models cache dynamic data for 5 seconds to reduce API calls.
 
 4. **Wait for runtime readiness**: Always use `waitUntilReady()` after creating a runtime before performing operations:
    ```typescript
@@ -605,7 +605,7 @@ const client = new DatalayerClient({
 7. **Use environment variables for configuration**:
    ```typescript
 <<<<<<< HEAD
-   const sdk = new DatalayerSDK({
+   const client = new DatalayerClient({
      token: process.env.DATALAYER_API_KEY,
 =======
    const client = new DatalayerClient({
@@ -696,8 +696,8 @@ export interface DatalayerClientConfig {
   cacheEnabled?: boolean;
   /** Enable offline mode */
   offlineMode?: boolean;
-  /** Handlers for intercepting SDK method calls */
-  handlers?: SDKHandlers;
+  /** Handlers for intercepting Client method calls */
+  handlers?: ClientHandlers;
 }
 ```
 

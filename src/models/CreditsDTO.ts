@@ -4,7 +4,7 @@
  */
 
 /**
- * Credits model for the Datalayer SDK.
+ * Credits model for the Datalayer Client.
  *
  * @module models/CreditsDTO
  */
@@ -58,7 +58,7 @@ export interface CreditsResponse {
  *
  * @example
  * ```typescript
- * const credits = await sdk.getCredits();
+ * const credits = await client.getCredits();
  * console.log(`Available: ${credits.available}`);
  * console.log(`Quota: ${credits.quota || 'unlimited'}`);
  *

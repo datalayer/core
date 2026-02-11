@@ -8,7 +8,7 @@ import { DatalayerClient } from '../../index';
 
 describe('ensureRuntime', () => {
   it('should create DatalayerClient', () => {
-    const sdk = new DatalayerClient({ token: 'mock-token' });
-    expect(sdk).toBeInstanceOf(DatalayerClient);
+    const client = new DatalayerClient({ token: 'mock-token' });
+    expect(client).toBeInstanceOf(DatalayerClient);
   });
 });

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Datalayer Core - Python SDK and CLI for the Datalayer AI Platform. Hybrid Python/TypeScript codebase with server-side Python and client-side React components.
+Datalayer Core - Python Client and CLI for the Datalayer AI Platform. Hybrid Python/TypeScript codebase with server-side Python and client-side React components.
 
 ## ⚠️ CRITICAL: Import/Export Pattern Issue (January 2025)
 
@@ -37,10 +37,10 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 - Result: `items` becomes `undefined` at runtime, causing "Cannot read properties of undefined"
 
 ### Files Fixed (January 2025)
-- `lib/sdk/client/models/Space.js`
-- `lib/sdk/client/models/Notebook.js`
-- `lib/sdk/client/models/Lexical.js`
-- `lib/sdk/client/models/Item.js`
+- `lib/client/client/models/Space.js`
+- `lib/client/client/models/Notebook.js`
+- `lib/client/client/models/Lexical.js`
+- `lib/client/client/models/Item.js`
 
 **Always use namespace imports for spacer API!**
 
@@ -48,9 +48,9 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 
 - **Source code**: `src/` contains the TypeScript/React library code
 - **API Layer**: `src/api/` contains raw API functions for direct service access
-- **SDK Client**: `src/sdk/client/` contains the high-level SDK with models and mixins
+- **Client**: `src/client/client/` contains the high-level Client with models and mixins
 - **Examples**: `src/examples/` contains interactive React examples
-- **Python**: `datalayer_core/` contains the Python SDK
+- **Python**: `datalayer_core/` contains the Python Client
 - **Tests**: `src/__tests__/` for TypeScript, `datalayer_core/tests/` for Python
 - **No default Vite files**: Removed App.tsx, main.tsx, public/ - this is a library, not an app
 
@@ -58,10 +58,10 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 
 **Python**: `pip install -e .[test]` | `pytest datalayer_core/tests/` | `mypy datalayer_core/`
 **TypeScript Library**: `npm install` | `npm run build:lib` | `npm run lint` | `npm run test`
-**Integration Tests**: `npm run test:integration` (runs all API and SDK integration tests)
+**Integration Tests**: `npm run test:integration` (runs all API and Client integration tests)
 **Examples**: `npm run examples` (starts dev server at http://localhost:3000/)
 **Code Quality**: `npm run check` | `npm run check:fix` | `npm run lint` | `npm run format` | `npm run type-check`
-**Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs) | See `API.md` for comprehensive API/SDK examples
+**Docs**: `cd docs && make build` | `npm run typedoc` (generates TypeScript API docs) | See `API.md` for comprehensive API/Client examples
 **Make**: `make build` | `make start` | `make docs`
 
 **CLI Scripts**: `datalayer`/`dla`/`d`, `datalayer-config`, `datalayer-migrate`, `datalayer-server`, `datalayer-troubleshoot`
@@ -71,7 +71,7 @@ const response = await spacerAPI.items.getSpaceItems(...);  // ✅ Works correct
 **Python Core**:
 
 - `DatalayerApp` - Base application class (traitlets)
-- `DatalayerClient` - Main SDK class with mixins
+- `DatalayerClient` - Main Client class with mixins
 - CLI with subcommands: about, console, envs, runtimes, login, secrets, snapshots
 - Resource management: runtimes, environments, secrets, snapshots
 
@@ -193,7 +193,7 @@ Features:
   - `npm run format` / `npm run format:check` - Prettier formatting
   - `npm run type-check` - TypeScript compilation check
 
-## API and SDK Architecture
+## API and Client Architecture
 
 ### Two-Layer Architecture
 
@@ -203,18 +203,18 @@ Features:
 - Returns raw API responses
 - Minimal abstraction, maximum control
 
-**2. SDK Client Layer** (`src/sdk/client/`)
+**2. Client Layer** (`src/client/client/`)
 - High-level, intuitive interface
 - Domain models with rich methods
 - Automatic state management
 - Mixins for organized functionality
 
-**SDK Client Structure**:
+**Client Structure**:
 - `storage/`: Platform-agnostic storage implementations (Browser, Node, Electron)
 - `state/`: Service-specific state managers with TTL caching
 - `models/`: Rich domain models (User, Runtime, Space, Notebook, Lexical, Snapshot)
 - `mixins/`: Service mixins (IAMMixin, RuntimesMixin, SpacerMixin, HealthMixin)
-- `base.ts`: SDK base class composition
+- `base.ts`: Client base class composition
 
 ### Key Changes and Fixes
 
@@ -245,11 +245,11 @@ Features:
 
 **TypeScript Improvements**:
 - Fixed strict null checks in model constructors
-- Proper typing for SDK mixins and models
+- Proper typing for Client mixins and models
 - Consistent error handling across all models
 - Fixed unused variable warnings in test files
 
-### SDK Models
+### Client Models
 
 **Runtime Model**:
 - Dynamic state checking (always fetches fresh from API)
@@ -285,9 +285,9 @@ Features:
 - Run integration tests: `npm run test:integration`
 - Avoid old-school require imports
 - Use playwright MCP to inspect things directly
-- Check API.md for comprehensive examples of both raw API and SDK usage
-- **SDK Usage**: Always use the handlers pattern for cross-cutting concerns instead of wrapping SDK methods
-- **VS Code Extension**: Use `(sdk as any)` casting when TypeScript definitions are incomplete
+- Check API.md for comprehensive examples of both raw API and Client usage
+- **Client Usage**: Always use the handlers pattern for cross-cutting concerns instead of wrapping Client methods
+- **VS Code Extension**: Use `(client as any)` casting when TypeScript definitions are incomplete
 
 ## ag-ui (CopilotKit) Architecture (November 2024)
 
@@ -375,27 +375,27 @@ await items.getSpaceItems(...);
 3. Clean rebuild (`rm -rf dist lib node_modules`) can resolve mysterious issues
 4. Always verify fixes actually work in the runtime environment
 
-## SDK Handlers Pattern (January 2025)
+## Client Handlers Pattern (January 2025)
 
 ### Problem Solved
-Eliminated massive code duplication where consuming applications (VS Code extension, React apps) were wrapping every SDK method 1:1 just to add logging, error handling, or platform-specific behavior.
+Eliminated massive code duplication where consuming applications (VS Code extension, React apps) were wrapping every Client method 1:1 just to add logging, error handling, or platform-specific behavior.
 
 ### Solution: Handlers Pattern
-The SDK now supports lifecycle handlers that can be injected at initialization:
+The Client now supports lifecycle handlers that can be injected at initialization:
 
 ```typescript
-const sdk = new DatalayerSDK({
+const client = new DatalayerClient({
   token: 'your-token',
   iamRunUrl: 'https://prod1.datalayer.run',
   handlers: {
     beforeCall: async (methodName, args) => {
-      console.log(`[SDK] Calling ${methodName}`, args);
+      console.log(`[Client] Calling ${methodName}`, args);
     },
     afterCall: async (methodName, result) => {
-      console.log(`[SDK] ${methodName} completed`, result);
+      console.log(`[Client] ${methodName} completed`, result);
     },
     onError: async (methodName, error) => {
-      console.error(`[SDK] ${methodName} failed`, error);
+      console.error(`[Client] ${methodName} failed`, error);
       // Platform-specific error handling
       if (error.message.includes('Not authenticated')) {
         // Show platform-specific auth prompt
@@ -407,14 +407,14 @@ const sdk = new DatalayerSDK({
 
 ### Key Implementation Details
 
-**Automatic Method Wrapping**: The SDK automatically wraps all mixin methods with handlers:
-- Located in `src/sdk/client/base.ts`
+**Automatic Method Wrapping**: The Client automatically wraps all mixin methods with handlers:
+- Located in `src/client/client/base.ts`
 - Smart detection: Only wraps mixin methods, not base class infrastructure
 - No hardcoded method lists - automatically detects based on prototype chain
 
 **Clean Mixin Composition**: Uses helper function for readable mixin composition:
 ```typescript
-const DatalayerSDKWithMixins = composeMixins(
+const DatalayerClientWithMixins = composeMixins(
   IAMMixin,
   RuntimesMixin,
   SpacerMixin,
@@ -423,7 +423,7 @@ const DatalayerSDKWithMixins = composeMixins(
 
 **TypeScript Support**: Proper interface declaration for mixin methods:
 ```typescript
-export interface DatalayerSDK {
+export interface DatalayerClient {
   // All mixin methods declared here for TypeScript
   whoami(): Promise<any>;
   createRuntime(config: any): Promise<any>;
@@ -433,12 +433,12 @@ export interface DatalayerSDK {
 
 ### Benefits
 - **Zero code duplication**: No more wrapper services
-- **Platform agnostic**: Same SDK works everywhere
-- **Clean separation**: Business logic in SDK, platform behavior in handlers
+- **Platform agnostic**: Same Client works everywhere
+- **Clean separation**: Business logic in Client, platform behavior in handlers
 - **Type safe**: Full TypeScript support
-- **Maintainable**: Add new SDK methods without updating consumers
+- **Maintainable**: Add new Client methods without updating consumers
 
 ### Removed Components
 - Deleted `HealthMixin` (unnecessary complexity)
 - VS Code extension: Removed `spacerService.ts` and `runtimeService.ts`
-- All wrapper services replaced with direct SDK usage + handlers
+- All wrapper services replaced with direct Client usage + handlers

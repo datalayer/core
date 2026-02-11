@@ -14,12 +14,12 @@ import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
 /**
- * SDK Runtimes Integration Tests
+ * Client Runtimes Integration Tests
  *
  * Tests runtime and snapshot lifecycle management
- * using the SDK client and model classes.
+ * using the Client client and model classes.
  */
-describe('SDK Runtimes Integration Tests', () => {
+describe('Client Runtimes Integration Tests', () => {
   let client: DatalayerClient;
   let createdRuntime: RuntimeDTO | null = null;
   let createdSnapshot: RuntimeSnapshotDTO | null = null;
@@ -183,7 +183,7 @@ describe('SDK Runtimes Integration Tests', () => {
 
         const snapshot = await createdRuntime.createSnapshot(
           'client-test-snapshot',
-          'Test snapshot from SDK',
+          'Test snapshot from Client',
         );
 
         expect(snapshot).toBeInstanceOf(Snapshot);

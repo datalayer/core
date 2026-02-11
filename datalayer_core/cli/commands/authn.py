@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Authentication commands for Datalayer CLI - Refactored to use SDK."""
+"""Authentication commands for Datalayer CLI - Refactored to use Client."""
 
 import asyncio
 import os
@@ -58,7 +58,7 @@ def login(
     ),
 ) -> None:
     """
-    Log into a Datalayer server using SDK authentication.
+    Log into a Datalayer server using Client authentication.
 
     Examples
     --------
@@ -82,7 +82,7 @@ def login(
         # Use DatalayerURLs for proper URL configuration
         urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
 
-        # Initialize SDK authentication manager
+        # Initialize Client authentication manager
         auth = AuthenticationManager(urls.iam_url)
 
         # Determine authentication method
@@ -148,7 +148,7 @@ def login(
 async def _login_with_token(
     auth: AuthenticationManager, token: str, server_url: str
 ) -> None:
-    """Login using token via SDK."""
+    """Login using token via Client."""
     try:
         user, _ = await auth.login(token=token)
         user_handle = user.get("handle_s", user.get("handle", "unknown"))
@@ -167,7 +167,7 @@ async def _login_with_token(
 async def _login_with_credentials(
     auth: AuthenticationManager, handle: str, password: str, server_url: str
 ) -> None:
-    """Login using handle/password via SDK."""
+    """Login using handle/password via Client."""
     try:
         user, _ = await auth.login(handle=handle, password=password)
         user_handle = user.get("handle_s", user.get("handle", "unknown"))
@@ -207,18 +207,18 @@ def _ask_credentials() -> dict[str, str]:
             "name": "password",
             "message": "Password:",
             "when": lambda x: x["credentials_type"] == "password",
-            "validate": lambda x: True
-            if len(x) >= 8
-            else "Password must have at least 8 characters",
+            "validate": lambda x: (
+                True if len(x) >= 8 else "Password must have at least 8 characters"
+            ),
         },
         {
             "type": "password",
             "name": "token",
             "message": "Token:",
             "when": lambda x: x["credentials_type"] == "token",
-            "validate": lambda x: True
-            if len(x) >= 8
-            else "Token must have at least 8 characters",
+            "validate": lambda x: (
+                True if len(x) >= 8 else "Token must have at least 8 characters"
+            ),
         },
     ]
     return questionary.prompt(questions)
@@ -258,7 +258,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
     Authenticate using browser-based flow.
 
     Note: This still uses the old HTTP server for OAuth callback.
-    TODO: Integrate with SDK BrowserAuthStrategy when implemented.
+    TODO: Integrate with Client BrowserAuthStrategy when implemented.
     """
     try:
         port = find_http_port()
@@ -281,7 +281,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
 
         user_handle, token = result
 
-        # Store token using SDK
+        # Store token using Client
         auth.store_token(token)
 
         console.print(
@@ -337,6 +337,11 @@ def whoami(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="User access token",
+    ),
     details: bool = typer.Option(
         False,
         "--details",
@@ -347,6 +352,11 @@ def whoami(
     try:
         urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
         auth = AuthenticationManager(urls.iam_url)
+
+        # If token provided, store it temporarily for whoami
+        access_token = token or os.environ.get("DATALAYER_API_KEY")
+        if access_token:
+            auth.store_token(access_token)
 
         user = asyncio.run(auth.whoami())
 
@@ -361,34 +371,34 @@ def whoami(
 
             if details:
                 console.print("\n[bold]Detailed Information:[/bold]")
-                
+
                 # Full name
                 first_name = user.get("first_name_t", "")
                 last_name = user.get("last_name_t", "")
                 if first_name or last_name:
                     console.print(f"📝 Name: {first_name} {last_name}".strip())
-                
+
                 # User IDs
                 if user.get("uid"):
                     console.print(f"🆔 UID: {user.get('uid')}")
                 if user.get("id"):
                     console.print(f"🔑 ID: {user.get('id')}")
-                
+
                 # Roles
                 roles = user.get("roles_ss", [])
                 if roles:
                     console.print(f"🎭 Roles: {', '.join(roles)}")
-                
+
                 # Avatar
                 if user.get("avatar_url_s"):
                     console.print(f"🖼️  Avatar: {user.get('avatar_url_s')}")
-                
+
                 # Timestamps
                 if user.get("creation_ts_dt"):
                     console.print(f"📅 Created: {user.get('creation_ts_dt')}")
                 if user.get("last_update_ts_dt"):
                     console.print(f"🔄 Last Updated: {user.get('last_update_ts_dt')}")
-                
+
                 # IAM Providers
                 iam_providers = user.get("iam_providers", [])
                 if iam_providers:
@@ -397,17 +407,23 @@ def whoami(
                         provider_name = provider.get("iam_provider_name_s", "unknown")
                         linked_id = provider.get("linked_account_id_s", "")
                         linked_url = provider.get("linked_account_url_s", "")
-                        
+
                         if linked_url:
-                            console.print(f"  🔗 {provider_name.capitalize()}: {linked_url}")
+                            console.print(
+                                f"  🔗 {provider_name.capitalize()}: {linked_url}"
+                            )
                         elif linked_id:
-                            console.print(f"  🔗 {provider_name.capitalize()}: ID {linked_id}")
+                            console.print(
+                                f"  🔗 {provider_name.capitalize()}: ID {linked_id}"
+                            )
                         else:
                             console.print(f"  🔗 {provider_name.capitalize()}")
-                
+
                 # Customer UID
                 if user.get("credits_customer_uid"):
-                    console.print(f"\n💳 Credits Customer: {user.get('credits_customer_uid')}")
+                    console.print(
+                        f"\n💳 Credits Customer: {user.get('credits_customer_uid')}"
+                    )
         else:
             console.print("[yellow]Not authenticated[/yellow]")
             console.print("Run 'datalayer login' to authenticate")
@@ -492,6 +508,11 @@ def whoami_root(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="User access token",
+    ),
     details: bool = typer.Option(
         False,
         "--details",
@@ -501,4 +522,4 @@ def whoami_root(
     """
     Show current authenticated user.
     """
-    whoami(run_url=run_url, iam_url=iam_url, details=details)
+    whoami(run_url=run_url, iam_url=iam_url, token=token, details=details)

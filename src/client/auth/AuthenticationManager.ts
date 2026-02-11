@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 /**
- * Core authentication manager for the Datalayer SDK
+ * Core authentication manager for the Datalayer Client
  */
 
 import * as authentication from '../../api/iam/authentication';
@@ -24,7 +24,7 @@ import { NodeStorage, BrowserStorage } from './storage';
 import { UserDTO } from '../../models/UserDTO';
 
 /**
- * Authentication Manager for Datalayer SDK
+ * Authentication Manager for Datalayer Client
  * Provides a unified interface for all authentication methods
  */
 export class AuthenticationManager {

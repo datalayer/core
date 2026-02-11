@@ -115,7 +115,7 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       const token = (this as any).getToken();
       const iamRunUrl = (this as any).getIamRunUrl();
       await authentication.logout(token, iamRunUrl);
-      // Clear the token from the SDK and cached user
+      // Clear the token from the Client and cached user
       (this as any).setToken('');
       this.currentUserCache = undefined;
     }

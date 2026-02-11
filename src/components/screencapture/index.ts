@@ -3,5 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './ScreenCapture';
-export * from './ScreenCaptureButton';
+export * from './Screencapture';
+export * from './ScreencaptureButton';

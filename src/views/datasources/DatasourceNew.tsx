@@ -36,7 +36,17 @@ interface ValidationData {
   description?: boolean;
 }
 
-export const DatasourceNew = () => {
+export type DatasourceNewProps = {
+  /** Route to navigate after creating a datasource. Defaults to '/settings/integrations/datasources'. */
+  datasourcesListRoute?: string;
+  /** Route to navigate to the secrets page. Defaults to '/settings/iam/secrets'. */
+  secretsRoute?: string;
+};
+
+export const DatasourceNew = ({
+  datasourcesListRoute = '/settings/integrations/datasources',
+  secretsRoute = '/settings/iam/secrets',
+}: DatasourceNewProps = {}) => {
   const runStore = useRunStore();
   const { useCreateDatasource } = useCache();
 
@@ -139,7 +149,7 @@ export const DatasourceNew = () => {
         onSuccess: (resp: any) => {
           if (resp.success) {
             enqueueToast(resp.message, { variant: 'success' });
-            navigate(`/settings/integrations/datasources`);
+            navigate(datasourcesListRoute);
           }
         },
         onSettled: () => {
@@ -162,7 +172,7 @@ export const DatasourceNew = () => {
             ensure the following{' '}
             <Link
               href="javascript: return false;"
-              onClick={e => navigate('/settings/iam/secrets', e)}
+              onClick={e => navigate(secretsRoute, e)}
             >
               Secrets
             </Link>{' '}
@@ -183,7 +193,7 @@ export const DatasourceNew = () => {
             , ensure the following{' '}
             <Link
               href="javascript: return false;"
-              onClick={e => navigate('/settings/iam/secrets', e)}
+              onClick={e => navigate(secretsRoute, e)}
             >
               Secret
             </Link>{' '}
@@ -200,7 +210,7 @@ export const DatasourceNew = () => {
             , ensure the following{' '}
             <Link
               href="javascript: return false;"
-              onClick={e => navigate('/settings/iam/secrets', e)}
+              onClick={e => navigate(secretsRoute, e)}
             >
               Secret
             </Link>{' '}
@@ -226,7 +236,7 @@ export const DatasourceNew = () => {
             following{' '}
             <Link
               href="javascript: return false;"
-              onClick={e => navigate('/settings/iam/secrets', e)}
+              onClick={e => navigate(secretsRoute, e)}
             >
               Secret
             </Link>{' '}
