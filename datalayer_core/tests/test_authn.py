@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from datalayer_core.authn import AuthenticationManager
 from datalayer_core.astorage import EnvironmentStorage
+from datalayer_core.authn import AuthenticationManager
 
 
 class TestAuthenticationManager:

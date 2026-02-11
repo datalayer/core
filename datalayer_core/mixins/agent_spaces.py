@@ -50,7 +50,9 @@ class AgentSpacesMixin:
         )
 
         if response.status_code != 200:
-            logger.error(f"Failed to list public agent spaces: HTTP {response.status_code}")
+            logger.error(
+                f"Failed to list public agent spaces: HTTP {response.status_code}"
+            )
             return []
 
         data = response.json()
@@ -180,9 +182,17 @@ class AgentSpacesMixin:
         # Build update body from provided kwargs
         body = {}
         valid_fields = {
-            "name", "description", "tags", "status", "isPublic",
-            "agentSpec", "podName", "runtimeUrl", "messageCount",
-            "lastMessage", "thumbnail",
+            "name",
+            "description",
+            "tags",
+            "status",
+            "isPublic",
+            "agentSpec",
+            "podName",
+            "runtimeUrl",
+            "messageCount",
+            "lastMessage",
+            "thumbnail",
         }
         for key, value in kwargs.items():
             if key in valid_fields and value is not None:
@@ -262,7 +272,9 @@ class AgentSpacesMixin:
             return None
 
         if response.status_code != 200:
-            logger.error(f"Failed to make agent space public: HTTP {response.status_code}")
+            logger.error(
+                f"Failed to make agent space public: HTTP {response.status_code}"
+            )
             return None
 
         data = response.json()
@@ -285,7 +297,9 @@ class AgentSpacesMixin:
             The updated agent space, or None on failure.
         """
         response = self._fetch(  # type: ignore
-            "{}/api/spacer/v1/agent-spaces/{}/private".format(self.urls.spacer_url, uid),  # type: ignore
+            "{}/api/spacer/v1/agent-spaces/{}/private".format(
+                self.urls.spacer_url, uid
+            ),  # type: ignore
             method="POST",
         )
 
@@ -293,7 +307,9 @@ class AgentSpacesMixin:
             return None
 
         if response.status_code != 200:
-            logger.error(f"Failed to make agent space private: HTTP {response.status_code}")
+            logger.error(
+                f"Failed to make agent space private: HTTP {response.status_code}"
+            )
             return None
 
         data = response.json()

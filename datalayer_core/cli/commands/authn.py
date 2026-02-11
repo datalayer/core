@@ -207,18 +207,18 @@ def _ask_credentials() -> dict[str, str]:
             "name": "password",
             "message": "Password:",
             "when": lambda x: x["credentials_type"] == "password",
-            "validate": lambda x: True
-            if len(x) >= 8
-            else "Password must have at least 8 characters",
+            "validate": lambda x: (
+                True if len(x) >= 8 else "Password must have at least 8 characters"
+            ),
         },
         {
             "type": "password",
             "name": "token",
             "message": "Token:",
             "when": lambda x: x["credentials_type"] == "token",
-            "validate": lambda x: True
-            if len(x) >= 8
-            else "Token must have at least 8 characters",
+            "validate": lambda x: (
+                True if len(x) >= 8 else "Token must have at least 8 characters"
+            ),
         },
     ]
     return questionary.prompt(questions)
@@ -361,34 +361,34 @@ def whoami(
 
             if details:
                 console.print("\n[bold]Detailed Information:[/bold]")
-                
+
                 # Full name
                 first_name = user.get("first_name_t", "")
                 last_name = user.get("last_name_t", "")
                 if first_name or last_name:
                     console.print(f"📝 Name: {first_name} {last_name}".strip())
-                
+
                 # User IDs
                 if user.get("uid"):
                     console.print(f"🆔 UID: {user.get('uid')}")
                 if user.get("id"):
                     console.print(f"🔑 ID: {user.get('id')}")
-                
+
                 # Roles
                 roles = user.get("roles_ss", [])
                 if roles:
                     console.print(f"🎭 Roles: {', '.join(roles)}")
-                
+
                 # Avatar
                 if user.get("avatar_url_s"):
                     console.print(f"🖼️  Avatar: {user.get('avatar_url_s')}")
-                
+
                 # Timestamps
                 if user.get("creation_ts_dt"):
                     console.print(f"📅 Created: {user.get('creation_ts_dt')}")
                 if user.get("last_update_ts_dt"):
                     console.print(f"🔄 Last Updated: {user.get('last_update_ts_dt')}")
-                
+
                 # IAM Providers
                 iam_providers = user.get("iam_providers", [])
                 if iam_providers:
@@ -397,17 +397,23 @@ def whoami(
                         provider_name = provider.get("iam_provider_name_s", "unknown")
                         linked_id = provider.get("linked_account_id_s", "")
                         linked_url = provider.get("linked_account_url_s", "")
-                        
+
                         if linked_url:
-                            console.print(f"  🔗 {provider_name.capitalize()}: {linked_url}")
+                            console.print(
+                                f"  🔗 {provider_name.capitalize()}: {linked_url}"
+                            )
                         elif linked_id:
-                            console.print(f"  🔗 {provider_name.capitalize()}: ID {linked_id}")
+                            console.print(
+                                f"  🔗 {provider_name.capitalize()}: ID {linked_id}"
+                            )
                         else:
                             console.print(f"  🔗 {provider_name.capitalize()}")
-                
+
                 # Customer UID
                 if user.get("credits_customer_uid"):
-                    console.print(f"\n💳 Credits Customer: {user.get('credits_customer_uid')}")
+                    console.print(
+                        f"\n💳 Credits Customer: {user.get('credits_customer_uid')}"
+                    )
         else:
             console.print("[yellow]Not authenticated[/yellow]")
             console.print("Run 'datalayer login' to authenticate")

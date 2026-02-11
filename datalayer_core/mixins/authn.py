@@ -126,9 +126,7 @@ class AuthnMixin:
             if body:
                 details.append(f"body={body}")
             detail_msg = f" ({', '.join(details)})" if details else ""
-            raise RuntimeError(
-                f"Failed to request the URL {url!s}{detail_msg}"
-            ) from e
+            raise RuntimeError(f"Failed to request the URL {url!s}{detail_msg}") from e
 
     def _log_in(self) -> dict[str, Any]:
         """

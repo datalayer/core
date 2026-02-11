@@ -5,7 +5,8 @@
 # Copyright (c) 2025-2026 Datalayer, Inc.
 # BSD 3-Clause License
 
-"""Simple Datalayer runtime example (no context manager).
+"""
+Simple Datalayer runtime example (no context manager).
 
 Creates a Datalayer client, lists environments, creates a runtime from the
 first environment, executes `1+1`, prints the result, then terminates.

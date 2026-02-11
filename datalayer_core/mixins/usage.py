@@ -10,7 +10,8 @@ class UsageMixin:
     """Mixin for usage and credits."""
 
     def _get_usage_credits(self) -> dict[str, Any]:
-        """Fetch usage credits and reservations.
+        """
+        Fetch usage credits and reservations.
 
         Returns
         -------
