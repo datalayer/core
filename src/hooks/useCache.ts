@@ -2016,7 +2016,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         throw new Error('Failed to fetch agent runtime');
       },
       ...DEFAULT_QUERY_OPTIONS,
-      refetchInterval: 5000, // Refetch every 5 seconds for status
+      // Poll every 5 seconds while the runtime exists. Stop polling on error
+      // (e.g. 404 — runtime deleted) to avoid hammering the server.
+      refetchInterval: query => {
+        if (query.state.error) return false;
+        return 5000;
+      },
+      retry: (failureCount, error) => {
+        // Don't retry 404s — the runtime is gone.
+        const msg = (error as Error)?.message ?? '';
+        if (msg.includes('404') || msg.includes('Not Found')) return false;
+        return failureCount < 1;
+      },
       enabled: !!podName,
     });
   };
@@ -4365,6 +4376,31 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return asArray(resp.items).map((itm: any) => toItem(itm));
         }
         return [];
+      },
+      enabled: !!spaceId,
+      ...DEFAULT_QUERY_OPTIONS,
+    });
+  };
+
+  /**
+   * Get default items (notebook UID & document UID) for a space / project.
+   * Calls GET /api/spacer/v1/spaces/{spaceId}/default-items
+   */
+  const useSpaceDefaultItems = (spaceId: string | undefined) => {
+    return useQuery({
+      queryKey: ['spaces', spaceId, 'default-items'] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/default-items`,
+          method: 'GET',
+        });
+        if (resp.success) {
+          return {
+            defaultNotebookUid: resp.default_notebook_uid as string | null,
+            defaultDocumentUid: resp.default_document_uid as string | null,
+          };
+        }
+        throw new Error(resp.message || 'Failed to fetch default items');
       },
       enabled: !!spaceId,
       ...DEFAULT_QUERY_OPTIONS,
@@ -8091,6 +8127,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Items (Generic)
     useDeleteItem,
     useSpaceItems,
+    useSpaceDefaultItems,
     useMakeItemPublic,
     useMakeItemPrivate,
     useSearchPublicItems,
