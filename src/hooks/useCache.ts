@@ -1639,6 +1639,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  /**
+   * Delete a space and all its contents.
+   */
+  const useDeleteSpace = () => {
+    return useMutation({
+      mutationFn: async (spaceUid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceUid}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        // Invalidate all space queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spaces.all(),
+        });
+      },
+    });
+  };
+
   // ============================================================================
   // Agent Spaces Hooks
   // ============================================================================
@@ -8006,6 +8026,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUserSpaces,
     useCreateSpace,
     useUpdateSpace,
+    useDeleteSpace,
     useUpdateOrganizationSpace,
     useAddMemberToOrganizationSpace,
     useRemoveMemberFromOrganizationSpace,
