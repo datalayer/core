@@ -1606,17 +1606,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Update space with optimistic update
+   * Update space with optimistic update.
+   * Any extra fields (e.g. attached_agent_pod_name_s) are forwarded to the backend.
    */
   const useUpdateSpace = () => {
     return useMutation({
-      mutationFn: async (space: Partial<IAnySpace>) => {
+      mutationFn: async (
+        space: Partial<IAnySpace> & Record<string, unknown>,
+      ) => {
+        const { id, name, description, ...extraFields } = space as any;
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/users/${user?.id}`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}/users/${user?.id}`,
           method: 'PUT',
           body: {
-            name: space.name,
-            description: space.description,
+            name,
+            description,
+            ...extraFields,
           },
         });
       },
