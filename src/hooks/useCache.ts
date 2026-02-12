@@ -1906,6 +1906,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     token?: string;
     // Agent specification with chat suggestions
     agentSpec?: AgentSpaceData['agentSpec'];
+    // ID of the agent spec used to create this runtime
+    agent_spec_id?: string;
   };
 
   /**
@@ -1954,6 +1956,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               // Map ingress URL to url for UI consistency
               url: rt.ingress,
               messageCount: 0, // Default for UI compatibility
+              agent_spec_id: rt.agent_spec_id || undefined,
             }));
           // Set detail cache for each runtime
           agentRuntimes.forEach((runtime: AgentRuntimeData) => {
@@ -2007,6 +2010,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             // Map ingress URL to url for UI consistency
             url: rt.ingress,
             messageCount: 0,
+            agent_spec_id: rt.agent_spec_id || undefined,
           };
         }
         throw new Error('Failed to fetch agent runtime');
@@ -2032,6 +2036,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     type?: string;
     editorVariant?: string; // 'none', 'notebook', or 'document'
     enableCodemode?: boolean;
+    agentSpecId?: string; // ID of the agent spec used to create this runtime
   };
 
   const useCreateAgentRuntime = () => {
@@ -2067,6 +2072,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               // Map ingress URL to url for UI consistency
               url: rt.ingress,
               messageCount: 0,
+              agent_spec_id: rt.agent_spec_id || undefined,
             },
           );
           // Invalidate list
