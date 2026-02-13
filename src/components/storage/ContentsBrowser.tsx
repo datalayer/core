@@ -345,32 +345,34 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
                   );
                 })}
               </TreeView>
-              <ActionMenu
-                anchorRef={contextMenuAnchor ?? undefined}
-                open={contextMenuAnchor?.current !== null}
-                onOpenChange={() => {
-                  setContextMenuAnchor(null);
-                }}
-              >
-                <ActionMenu.Overlay>
-                  <ActionList>
-                    <ActionList.Item
-                      title="Delete the active item."
-                      onSelect={onSelectDelete}
-                    >
-                      Delete…
-                    </ActionList.Item>
-                    {localContents && (
+              {contextMenuAnchor !== null && (
+                <ActionMenu
+                  anchorRef={contextMenuAnchor ?? undefined}
+                  open={contextMenuAnchor?.current !== null}
+                  onOpenChange={() => {
+                    setContextMenuAnchor(null);
+                  }}
+                >
+                  <ActionMenu.Overlay>
+                    <ActionList>
                       <ActionList.Item
-                        title="Copy the active item to the local drive."
-                        onSelect={onSelectCopyToLocal}
+                        title="Delete the active item."
+                        onSelect={onSelectDelete}
                       >
-                        Copy to local drive…
+                        Delete…
                       </ActionList.Item>
-                    )}
-                  </ActionList>
-                </ActionMenu.Overlay>
-              </ActionMenu>
+                      {localContents && (
+                        <ActionList.Item
+                          title="Copy the active item to the local drive."
+                          onSelect={onSelectCopyToLocal}
+                        >
+                          Copy to local drive…
+                        </ActionList.Item>
+                      )}
+                    </ActionList>
+                  </ActionMenu.Overlay>
+                </ActionMenu>
+              )}
               {openDeleteConfirmation && (
                 <Dialog
                   title={
