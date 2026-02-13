@@ -11,7 +11,7 @@ import { JupyterReactTheme } from '@datalayer/jupyter-react';
 import type { VariantType } from './../components/buttons';
 import { isInsideJupyterLab } from '../utils';
 
-const TOAST_POSITION = 'bottom-right' as const;
+const TOAST_POSITION = 'bottom-left' as const;
 
 export type ToastProps = {
   /**
