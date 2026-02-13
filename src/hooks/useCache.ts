@@ -2037,17 +2037,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       // Poll every 5 seconds while the runtime exists. Stop polling on error
-      // (e.g. 404 — runtime deleted) to avoid hammering the server.
+      // (e.g. 404 — runtime deleted, 500 — broken state) to avoid hammering the server.
       refetchInterval: query => {
         if (query.state.error) return false;
         return 5000;
       },
-      retry: (failureCount, error) => {
-        // Don't retry 404s — the runtime is gone.
-        const msg = (error as Error)?.message ?? '';
-        if (msg.includes('404') || msg.includes('Not Found')) return false;
-        return failureCount < 1;
-      },
+      // Don't retry failed detail requests. The refetchInterval handles
+      // periodic re-checks, so retrying only generates duplicate failing requests.
+      retry: false,
       enabled: !!podName,
     });
   };
