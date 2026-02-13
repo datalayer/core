@@ -2075,11 +2075,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
           body: {
             environment_name: data.environmentName || 'ai-agents-env',
-            given_name: data.givenName || 'Agent Space',
+            given_name: data.givenName || 'Agent',
             credits_limit: data.creditsLimit || 10,
             type: data.type || 'notebook',
             editor_variant: data.editorVariant || 'none',
             enable_codemode: data.enableCodemode ?? false,
+            agent_spec_id: data.agentSpecId || undefined,
           },
         });
       },
