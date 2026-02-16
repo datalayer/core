@@ -1606,17 +1606,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Update space with optimistic update
+   * Update space with optimistic update.
+   * Any extra fields (e.g. attached_agent_pod_name_s) are forwarded to the backend.
    */
   const useUpdateSpace = () => {
     return useMutation({
-      mutationFn: async (space: Partial<IAnySpace>) => {
+      mutationFn: async (
+        space: Partial<IAnySpace> & Record<string, unknown>,
+      ) => {
+        const { id, name, description, ...extraFields } = space as any;
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${space.id}/users/${user?.id}`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}/users/${user?.id}`,
           method: 'PUT',
           body: {
-            name: space.name,
-            description: space.description,
+            name,
+            description,
+            ...extraFields,
           },
         });
       },
@@ -1626,6 +1631,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.spaces.detail(spaceId),
         });
+        // Invalidate all space queries
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.spaces.all(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Delete a space and all its contents.
+   */
+  const useDeleteSpace = () => {
+    return useMutation({
+      mutationFn: async (spaceUid: string) => {
+        return requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceUid}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
         // Invalidate all space queries
         queryClient.invalidateQueries({
           queryKey: queryKeys.spaces.all(),
@@ -1901,6 +1926,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     token?: string;
     // Agent specification with chat suggestions
     agentSpec?: AgentSpaceData['agentSpec'];
+    // ID of the agent spec used to create this runtime
+    agent_spec_id?: string;
   };
 
   /**
@@ -1949,6 +1976,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               // Map ingress URL to url for UI consistency
               url: rt.ingress,
               messageCount: 0, // Default for UI compatibility
+              agent_spec_id: rt.agent_spec_id || undefined,
             }));
           // Set detail cache for each runtime
           agentRuntimes.forEach((runtime: AgentRuntimeData) => {
@@ -2002,12 +2030,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             // Map ingress URL to url for UI consistency
             url: rt.ingress,
             messageCount: 0,
+            agent_spec_id: rt.agent_spec_id || undefined,
           };
         }
         throw new Error('Failed to fetch agent runtime');
       },
       ...DEFAULT_QUERY_OPTIONS,
-      refetchInterval: 5000, // Refetch every 5 seconds for status
+      // Poll every 5 seconds while the runtime exists. Stop polling on error
+      // (e.g. 404 — runtime deleted, 500 — broken state) to avoid hammering the server.
+      refetchInterval: query => {
+        if (query.state.error) return false;
+        return 5000;
+      },
+      // Don't retry failed detail requests. The refetchInterval handles
+      // periodic re-checks, so retrying only generates duplicate failing requests.
+      retry: false,
       enabled: !!podName,
     });
   };
@@ -2027,6 +2064,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     type?: string;
     editorVariant?: string; // 'none', 'notebook', or 'document'
     enableCodemode?: boolean;
+    agentSpecId?: string; // ID of the agent spec used to create this runtime
   };
 
   const useCreateAgentRuntime = () => {
@@ -2037,11 +2075,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
           body: {
             environment_name: data.environmentName || 'ai-agents-env',
-            given_name: data.givenName || 'Agent Space',
+            given_name: data.givenName || 'Agent',
             credits_limit: data.creditsLimit || 10,
             type: data.type || 'notebook',
             editor_variant: data.editorVariant || 'none',
             enable_codemode: data.enableCodemode ?? false,
+            agent_spec_id: data.agentSpecId || undefined,
           },
         });
       },
@@ -2062,6 +2101,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               // Map ingress URL to url for UI consistency
               url: rt.ingress,
               messageCount: 0,
+              agent_spec_id: rt.agent_spec_id || undefined,
             },
           );
           // Invalidate list
@@ -4354,6 +4394,31 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return asArray(resp.items).map((itm: any) => toItem(itm));
         }
         return [];
+      },
+      enabled: !!spaceId,
+      ...DEFAULT_QUERY_OPTIONS,
+    });
+  };
+
+  /**
+   * Get default items (notebook UID & document UID) for a space / project.
+   * Calls GET /api/spacer/v1/spaces/{spaceId}/default-items
+   */
+  const useSpaceDefaultItems = (spaceId: string | undefined) => {
+    return useQuery({
+      queryKey: ['spaces', spaceId, 'default-items'] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/default-items`,
+          method: 'GET',
+        });
+        if (resp.success) {
+          return {
+            defaultNotebookUid: resp.default_notebook_uid as string | null,
+            defaultDocumentUid: resp.default_document_uid as string | null,
+          };
+        }
+        throw new Error(resp.message || 'Failed to fetch default items');
       },
       enabled: !!spaceId,
       ...DEFAULT_QUERY_OPTIONS,
@@ -7959,6 +8024,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUserSpaces,
     useCreateSpace,
     useUpdateSpace,
+    useDeleteSpace,
     useUpdateOrganizationSpace,
     useAddMemberToOrganizationSpace,
     useRemoveMemberFromOrganizationSpace,
@@ -8080,6 +8146,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Items (Generic)
     useDeleteItem,
     useSpaceItems,
+    useSpaceDefaultItems,
     useMakeItemPublic,
     useMakeItemPrivate,
     useSearchPublicItems,

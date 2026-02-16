@@ -3,7 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { MutableRefObject, useCallback, useEffect, useState } from 'react';
+import {
+  type ReactNode,
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { Notification } from '@jupyterlab/apputils';
 import { PathExt } from '@jupyterlab/coreutils';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
@@ -56,13 +62,34 @@ export interface IContentsBrowserProps {
    * Document registry.
    */
   documentRegistry?: DocumentRegistry;
+  /**
+   * Optional title for the browser heading.
+   * Defaults to "Contents Browser".
+   */
+  title?: ReactNode;
 }
 
 /**
  * Storage browser component.
  */
 export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
-  const { contents, localContents, documentRegistry } = props;
+  const {
+    contents,
+    localContents,
+    documentRegistry,
+    title = (
+      <Heading
+        as="h4"
+        sx={{
+          fontSize: 'var(--text-title-size-small)',
+          lineHeight: 'var(--text-title-lineHeight-medium)',
+          fontWeight: 'var(--text-title-weight-medium)',
+        }}
+      >
+        Contents Browser
+      </Heading>
+    ),
+  } = props;
   const isMounted = useIsMounted();
   const { trackAsyncTask } = useToast();
   const [children, setChildren] = useState<IContentsView[] | null>(null);
@@ -270,17 +297,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   return (
     <Box sx={{ display: 'grid', gridTemplateAreas: `"header" "content"` }}>
       <Box sx={{ gridArea: 'header', display: 'flex', alignItems: 'center' }}>
-        <Heading
-          as="h4"
-          sx={{
-            fontSize: 'var(--text-title-size-small)',
-            lineHeight: 'var(--text-title-lineHeight-medium)',
-            fontWeight: 'var(--text-title-weight-medium)',
-            flex: '1 1 auto',
-          }}
-        >
-          Contents Browser
-        </Heading>
+        <Box sx={{ flex: '1 1 auto' }}>{title}</Box>
         <Box>
           <IconButton
             variant="invisible"
@@ -345,32 +362,34 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
                   );
                 })}
               </TreeView>
-              <ActionMenu
-                anchorRef={contextMenuAnchor ?? undefined}
-                open={contextMenuAnchor?.current !== null}
-                onOpenChange={() => {
-                  setContextMenuAnchor(null);
-                }}
-              >
-                <ActionMenu.Overlay>
-                  <ActionList>
-                    <ActionList.Item
-                      title="Delete the active item."
-                      onSelect={onSelectDelete}
-                    >
-                      Delete…
-                    </ActionList.Item>
-                    {localContents && (
+              {contextMenuAnchor !== null && (
+                <ActionMenu
+                  anchorRef={contextMenuAnchor ?? undefined}
+                  open={contextMenuAnchor?.current !== null}
+                  onOpenChange={() => {
+                    setContextMenuAnchor(null);
+                  }}
+                >
+                  <ActionMenu.Overlay>
+                    <ActionList>
                       <ActionList.Item
-                        title="Copy the active item to the local drive."
-                        onSelect={onSelectCopyToLocal}
+                        title="Delete the active item."
+                        onSelect={onSelectDelete}
                       >
-                        Copy to local drive…
+                        Delete…
                       </ActionList.Item>
-                    )}
-                  </ActionList>
-                </ActionMenu.Overlay>
-              </ActionMenu>
+                      {localContents && (
+                        <ActionList.Item
+                          title="Copy the active item to the local drive."
+                          onSelect={onSelectCopyToLocal}
+                        >
+                          Copy to local drive…
+                        </ActionList.Item>
+                      )}
+                    </ActionList>
+                  </ActionMenu.Overlay>
+                </ActionMenu>
+              )}
               {openDeleteConfirmation && (
                 <Dialog
                   title={

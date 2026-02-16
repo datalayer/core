@@ -40,6 +40,9 @@ export const asSpace = (raw_space: any): ISpace => {
     organization: {
       handle: raw_space.handle_s,
     },
+    // Preserve raw Solr fields so consumers can access dynamic fields
+    // (e.g. attached_agent_pod_name_s for project-agent assignment)
+    ...raw_space,
   };
   return space;
 };
