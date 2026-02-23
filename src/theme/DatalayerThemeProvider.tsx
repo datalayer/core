@@ -8,16 +8,38 @@ import { BaseStyles, ThemeProvider, ThemeProviderProps } from '@primer/react';
 import { datalayerTheme, datalayerColors } from './DatalayerTheme';
 import { useSystemColorMode } from './useSystemColorMode';
 
+/**
+ * Shared typographic rhythm — clean, spacious feel inspired by
+ * modern developer-blog aesthetics (generous line-height, open
+ * letter-spacing on headings, crisp body text).
+ */
+const typographyVars: CSSProperties = {
+  '--text-body-lineHeight': '1.7',
+  '--text-title-lineHeight': '1.2',
+  '--text-title-letterSpacing': '-0.02em',
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
+  WebkitFontSmoothing: 'antialiased',
+  MozOsxFontSmoothing: 'grayscale',
+  textRendering: 'optimizeLegibility',
+} as CSSProperties;
+
 const baseStyleLight: CSSProperties = {
   backgroundColor: datalayerColors.white,
   color: datalayerColors.black,
   fontSize: 'var(--text-body-size-medium)',
+  lineHeight: '1.7',
+  transition: 'background-color 0.25s ease, color 0.25s ease',
+  ...typographyVars,
 } as CSSProperties;
 
 const baseStyleDark: CSSProperties = {
   backgroundColor: datalayerColors.black,
   color: datalayerColors.white,
   fontSize: 'var(--text-body-size-medium)',
+  lineHeight: '1.7',
+  transition: 'background-color 0.25s ease, color 0.25s ease',
+  ...typographyVars,
 } as CSSProperties;
 
 const primaryButtonVarsLight: CSSProperties = {
