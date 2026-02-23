@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import { type CSSProperties } from 'react';
 import { theme as primerTheme } from '@primer/react';
 import cloneDeep from 'lodash/cloneDeep.js';
 import merge from 'lodash/merge.js';
@@ -231,6 +232,40 @@ datalayerTheme.colorSchemes.light = {
 datalayerTheme.colorSchemes.dark = {
   colors: merge(primerSchemes.dark.colors, datalayerSchemes.dark.colors),
   shadows: merge(primerSchemes.dark.shadows, datalayerSchemes.dark.shadows),
+};
+
+/** Datalayer-themed CSS vars for DatalayerThemeProvider's `themeStyles` prop. */
+export const datalayerThemeStyles = {
+  light: {
+    backgroundColor: datalayerColors.white,
+    color: datalayerColors.black,
+    fontSize: 'var(--text-body-size-medium)',
+    '--brand-color-canvas-default': datalayerColors.white,
+    '--brand-color-text-default': datalayerColors.black,
+    '--button-primary-bgColor-rest': datalayerColors.greenText,
+    '--button-primary-bgColor-hover': datalayerColors.greenHover,
+    '--button-primary-bgColor-active': datalayerColors.greenHover,
+    '--button-primary-fgColor-rest': datalayerColors.white,
+    '--button-primary-borderColor-rest': datalayerColors.greenText,
+    '--button-primary-borderColor-hover': datalayerColors.greenHover,
+    '--color-btn-primary-bg': datalayerColors.greenText,
+    '--color-btn-primary-hover-bg': datalayerColors.greenHover,
+  } as CSSProperties,
+  dark: {
+    backgroundColor: datalayerColors.black,
+    color: datalayerColors.white,
+    fontSize: 'var(--text-body-size-medium)',
+    '--brand-color-canvas-default': datalayerColors.black,
+    '--brand-color-text-default': datalayerColors.white,
+    '--button-primary-bgColor-rest': datalayerColors.greenAccent,
+    '--button-primary-bgColor-hover': datalayerColors.greenBright,
+    '--button-primary-bgColor-active': datalayerColors.greenBright,
+    '--button-primary-fgColor-rest': datalayerColors.white,
+    '--button-primary-borderColor-rest': datalayerColors.greenAccent,
+    '--button-primary-borderColor-hover': datalayerColors.greenBright,
+    '--color-btn-primary-bg': datalayerColors.greenAccent,
+    '--color-btn-primary-hover-bg': datalayerColors.greenBright,
+  } as CSSProperties,
 };
 
 export default datalayerTheme;

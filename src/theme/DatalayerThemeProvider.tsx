@@ -5,8 +5,8 @@
 
 import { type CSSProperties } from 'react';
 import { BaseStyles, ThemeProvider, ThemeProviderProps } from '@primer/react';
-import { datalayerTheme, datalayerColors } from './DatalayerTheme';
 import { useSystemColorMode } from './useSystemColorMode';
+import { datalayerTheme, datalayerColors } from './themes/datalayerTheme';
 
 /**
  * Shared typographic rhythm — clean, spacious feel inspired by
