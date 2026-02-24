@@ -8,24 +8,10 @@ import { theme as primerTheme } from '@primer/react';
 import cloneDeep from 'lodash/cloneDeep.js';
 import merge from 'lodash/merge.js';
 
-/**
- * Spatial Theme – Cosmic & Space-Inspired
- * Deep blues, indigo, nebula purples — designed for dark-first usage.
- */
-export const spatialColors = {
-  // Core Neutrals
-  black: '#0B1120', // Deep space — primary dark background
-  gray: '#8892B0', // Nebula gray — secondary text
-  white: '#F8FAFF', // Star white — primary light background
+import { spatialColors } from '../colors';
 
-  // Indigo / Cosmic palette
-  indigoBrand: '#4F46E5', // Core brand — headings, icons, dividers
-  indigoAccent: '#6366F1', // Charts, highlights on dark surfaces
-  indigoText: '#3730A3', // Accessible text & buttons on light (AA+)
-  indigoTint: '#EEF2FF', // Soft background for callouts
-  indigoBright: '#818CF8', // Highlights & glow on dark
-  indigoHover: '#312E81', // Primary button hover
-};
+// Re-export so existing consumers keep working.
+export { spatialColors };
 
 const spatialThemeDefs = {
   colorSchemes: {

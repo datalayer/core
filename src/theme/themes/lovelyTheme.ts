@@ -8,24 +8,10 @@ import { theme as primerTheme } from '@primer/react';
 import cloneDeep from 'lodash/cloneDeep.js';
 import merge from 'lodash/merge.js';
 
-/**
- * Lovely Theme – Warm & Pink-Inspired
- * Rose, magenta, blush — designed for light-first usage.
- */
-export const lovelyColors = {
-  // Core Neutrals
-  black: '#1A0A14', // Deep plum — primary dark background
-  gray: '#9D7A8F', // Mauve gray — secondary text
-  white: '#FFF5F7', // Rose white — primary light background
+import { lovelyColors } from '../colors';
 
-  // Rose / Pink palette
-  roseBrand: '#DB2777', // Core brand — headings, icons, dividers
-  roseAccent: '#EC4899', // Charts, highlights on dark surfaces
-  roseText: '#9D174D', // Accessible text & buttons on light (AA+)
-  roseTint: '#FDF2F8', // Soft background for callouts
-  roseBright: '#F472B6', // Highlights & glow on dark
-  roseHover: '#831843', // Primary button hover
-};
+// Re-export so existing consumers keep working.
+export { lovelyColors };
 
 const lovelyThemeDefs = {
   colorSchemes: {
