@@ -6,7 +6,7 @@
 import { type CSSProperties } from 'react';
 import { BaseStyles, ThemeProvider, ThemeProviderProps } from '@primer/react';
 import { useSystemColorMode } from './useSystemColorMode';
-import { datalayerTheme, datalayerColors } from './themes/datalayerTheme';
+import { datalayerTheme, datalayerThemeStyles } from './themes/datalayerTheme';
 
 /**
  * Shared typographic rhythm — clean, spacious feel inspired by
@@ -22,46 +22,6 @@ const typographyVars: CSSProperties = {
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   textRendering: 'optimizeLegibility',
-} as CSSProperties;
-
-const baseStyleLight: CSSProperties = {
-  backgroundColor: datalayerColors.white,
-  color: datalayerColors.black,
-  fontSize: 'var(--text-body-size-medium)',
-  lineHeight: '1.7',
-  transition: 'background-color 0.25s ease, color 0.25s ease',
-  ...typographyVars,
-} as CSSProperties;
-
-const baseStyleDark: CSSProperties = {
-  backgroundColor: datalayerColors.black,
-  color: datalayerColors.white,
-  fontSize: 'var(--text-body-size-medium)',
-  lineHeight: '1.7',
-  transition: 'background-color 0.25s ease, color 0.25s ease',
-  ...typographyVars,
-} as CSSProperties;
-
-const primaryButtonVarsLight: CSSProperties = {
-  '--button-primary-bgColor-rest': datalayerColors.greenText,
-  '--button-primary-bgColor-hover': datalayerColors.greenHover,
-  '--button-primary-bgColor-active': datalayerColors.greenHover,
-  '--button-primary-fgColor-rest': datalayerColors.white,
-  '--button-primary-borderColor-rest': datalayerColors.greenText,
-  '--button-primary-borderColor-hover': datalayerColors.greenHover,
-  '--color-btn-primary-bg': datalayerColors.greenText,
-  '--color-btn-primary-hover-bg': datalayerColors.greenHover,
-} as CSSProperties;
-
-const primaryButtonVarsDark: CSSProperties = {
-  '--button-primary-bgColor-rest': datalayerColors.greenAccent,
-  '--button-primary-bgColor-hover': datalayerColors.greenBright,
-  '--button-primary-bgColor-active': datalayerColors.greenBright,
-  '--button-primary-fgColor-rest': datalayerColors.white,
-  '--button-primary-borderColor-rest': datalayerColors.greenAccent,
-  '--button-primary-borderColor-hover': datalayerColors.greenBright,
-  '--color-btn-primary-bg': datalayerColors.greenAccent,
-  '--color-btn-primary-hover-bg': datalayerColors.greenBright,
 } as CSSProperties;
 
 export interface IDatalayerThemeProviderProps extends Omit<
@@ -80,13 +40,20 @@ export interface IDatalayerThemeProviderProps extends Omit<
    */
   baseStyles?: CSSProperties;
   /**
-   * Optional Primer theme object. Defaults to the built-in datalayerTheme.
+   * Optional Primer theme object. Defaults to the built-in datalayerTheme
+   * (which is the unmodified default Primer theme — all theming is done
+   * via CSS custom-property overrides in `themeStyles`).
    */
   theme?: Record<string, any>;
   /**
-   * Optional per-mode style overrides (base + button CSS vars).
+   * Per-mode CSS-property overrides (background, foreground, and all
+   * Primer functional-token CSS custom properties).
+   *
    * When provided, these replace the built-in datalayer styles entirely.
    * The `baseStyles` prop is still merged on top.
+   *
+   * Use the `buildThemeStyles` helper from `./themes/createThemeCSSVars`
+   * to generate comprehensive overrides from a `ThemeColorDefs` pair.
    */
   themeStyles?: {
     light: CSSProperties;
@@ -107,14 +74,9 @@ export function DatalayerThemeProvider(
 
   const isDark = resolvedColorMode === 'dark' || resolvedColorMode === 'night';
   const resolvedTheme = theme ?? datalayerTheme;
-  const defaultStyles = isDark
-    ? { ...baseStyleDark, ...primaryButtonVarsDark }
-    : { ...baseStyleLight, ...primaryButtonVarsLight };
-  const resolvedStyles = themeStyles
-    ? isDark
-      ? themeStyles.dark
-      : themeStyles.light
-    : defaultStyles;
+  const styles = themeStyles ?? datalayerThemeStyles;
+  const resolvedStyles = isDark ? styles.dark : styles.light;
+
   return (
     <ThemeProvider
       colorMode={resolvedColorMode}
@@ -123,6 +85,9 @@ export function DatalayerThemeProvider(
     >
       <BaseStyles
         style={{
+          lineHeight: '1.7',
+          transition: 'background-color 0.25s ease, color 0.25s ease',
+          ...typographyVars,
           ...resolvedStyles,
           ...baseStyles,
         }}
