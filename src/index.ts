@@ -14,9 +14,6 @@ export * from './services';
 export * from './navigation';
 export * from './hooks';
 
-// Export Theme.
-export * from './theme';
-
 // Export APIs.
 export {
   requestDatalayerAPI,
