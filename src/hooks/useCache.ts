@@ -1673,8 +1673,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     ingress?: string;
     url?: string;
     token?: string;
-    // Agent specification with chat suggestions
-    agentSpec?: Record<string, any>;
+    // Agent specification with chat suggestions (raw from backend, enriched downstream)
+    agentSpec?: any;
     // ID of the agent spec used to create this runtime
     agent_spec_id?: string;
   };
