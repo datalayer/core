@@ -39,6 +39,8 @@ export type IPage = {
   creatorId?: string;
   kernelSnapshot?: IRuntimeSnapshot;
   kernelSnapshotId?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export const asPage = (s: any): IPage => {

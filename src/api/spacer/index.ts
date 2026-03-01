@@ -7,12 +7,11 @@
  * Spacer API exports.
  *
  * Provides organized access to spacer functionality including
- * spaces, notebooks, cells, lexical documents, and agent spaces.
+ * spaces, notebooks, cells, lexical documents, and agent runtimes.
  *
  * @module api/spacer
  */
 
-export * as agentSpaces from './agentSpaces';
 export * as documents from './documents';
 export * as healthz from './healthz';
 export * as items from './items';
