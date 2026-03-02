@@ -96,7 +96,7 @@ export const Secrets = () => {
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/new/secret', e)}
+              onClick={e => navigate('/secrets/new', e)}
             >
               New secret
             </Button>

@@ -112,7 +112,7 @@ export const Tokens = () => {
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/new/token', e)}
+              onClick={e => navigate('/tokens/new', e)}
             >
               New token
             </Button>

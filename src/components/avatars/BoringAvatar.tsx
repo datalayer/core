@@ -30,6 +30,8 @@ type IBoringAvatarProps = {
   size?: number;
   square?: boolean;
   style?: object;
+  /** Custom color palette passed to boring-avatars. When omitted the default Datalayer palette is used. */
+  colors?: string[];
 };
 
 // export const getRandomBoringAvatarVariant = () => VARIANTS[Math.floor(Math.random() * VARIANTS.length)] as VariantType;
@@ -38,15 +40,30 @@ const getRandomBoringAvatarVariant = () => 'bauhaus' as VariantType;
 
 const RANDOM_BORING_AVATOR_VARIANT = getRandomBoringAvatarVariant();
 
+const DEFAULT_COLORS = [
+  '#000000',
+  '#146A7C',
+  '#16A085',
+  '#1ABC9C',
+  '#2ECC71',
+  '#59595C',
+  '#92A1C6',
+  '#C20D90',
+  '#C271B4',
+  '#F0AB3D',
+];
+
 export const BoringAvatar = ({
   displayName = '',
   variant,
   size = 40,
   square = false,
   style,
+  colors,
 }: IBoringAvatarProps) => {
   const resolvedVariant = variant ?? RANDOM_BORING_AVATOR_VARIANT;
   const safeName = String(displayName ?? '');
+  const resolvedColors = colors ?? DEFAULT_COLORS;
 
   try {
     return (
@@ -56,19 +73,7 @@ export const BoringAvatar = ({
           name={safeName}
           variant={resolvedVariant}
           square={square}
-          colors={[
-            '#000000',
-            '#146A7C',
-            '#16A085',
-            '#1ABC9C',
-            '#2ECC71',
-            '#59595C',
-            '#92A1C6',
-            '#C20D90',
-            '#C271B4',
-            '#F0AB3D',
-            //      '#FFFFFF',
-          ]}
+          colors={resolvedColors}
         />
       </span>
     );
