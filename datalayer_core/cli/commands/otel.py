@@ -34,7 +34,15 @@ console = Console()
 app = typer.Typer(
     name="otel",
     help="OpenTelemetry observability commands – query traces, metrics, logs.",
+    invoke_without_command=True,
 )
+
+
+@app.callback()
+def main(ctx: typer.Context):
+    """OpenTelemetry observability commands – query traces, metrics, logs."""
+    if ctx.invoked_subcommand is None:
+        rprint(ctx.get_help())
 
 
 def _resolve_token(token: str | None) -> str:
@@ -454,6 +462,7 @@ def smoke_test(
 
     # ── 5. Flush service buffers ─────────────────────────────────────
     console.rule("[bold cyan]5/7  Flushing service buffers[/bold cyan]")
+    rprint("  [dim]CLI: datalayer otel flush[/dim]")
     try:
         resp = httpx.post(f"{url}/api/otel/v1/flush", headers=headers, timeout=30, follow_redirects=True)
         resp.raise_for_status()
@@ -466,6 +475,7 @@ def smoke_test(
 
     # 6a – traces
     rprint("\n  [bold]Traces:[/bold]")
+    rprint(f"  [dim]CLI: datalayer otel traces --service {service_name}[/dim]")
     try:
         resp = httpx.get(
             f"{url}/api/otel/v1/traces/",
@@ -500,6 +510,7 @@ def smoke_test(
     # 6b – metrics
     counter_name = f"smoke_test.requests.{smoke_id}"
     rprint("\n  [bold]Metrics:[/bold]")
+    rprint(f"  [dim]CLI: datalayer otel metrics --name {counter_name} --service {service_name}[/dim]")
     try:
         resp = httpx.get(
             f"{url}/api/otel/v1/metrics/query",
@@ -512,6 +523,19 @@ def smoke_test(
         metric_count = len(metric_rows) if isinstance(metric_rows, list) else 0
         if metric_count > 0:
             rprint(f"  [green]  ✓ Found {metric_count} metric data point(s) for '{counter_name}'[/green]")
+            tbl = Table(show_header=True, header_style="bold")
+            tbl.add_column("Metric Name", style="cyan")
+            tbl.add_column("Value", style="yellow")
+            tbl.add_column("Unit", style="dim")
+            tbl.add_column("Time", style="dim")
+            for row in metric_rows[:5]:
+                tbl.add_row(
+                    str(row.get("metric_name", row.get("name", ""))),
+                    str(row.get("value_double", row.get("value", ""))),
+                    str(row.get("metric_unit", row.get("unit", ""))),
+                    str(row.get("start_time", row.get("time", ""))),
+                )
+            console.print(tbl)
             passed += 1
         else:
             rprint(f"  [red]  ✗ No metrics found for '{counter_name}'[/red]")
@@ -522,6 +546,7 @@ def smoke_test(
 
     # 6c – logs
     rprint("\n  [bold]Logs:[/bold]")
+    rprint(f"  [dim]CLI: datalayer otel logs --service {service_name}[/dim]")
     try:
         resp = httpx.get(
             f"{url}/api/otel/v1/logs/",
@@ -534,6 +559,17 @@ def smoke_test(
         log_count = len(log_rows) if isinstance(log_rows, list) else 0
         if log_count > 0:
             rprint(f"  [green]  ✓ Found {log_count} log(s) for service '{service_name}'[/green]")
+            tbl = Table(show_header=True, header_style="bold")
+            tbl.add_column("Severity", style="cyan")
+            tbl.add_column("Body", style="yellow", max_width=60)
+            tbl.add_column("Time", style="dim")
+            for row in log_rows[:5]:
+                tbl.add_row(
+                    str(row.get("severity_text", row.get("severity", ""))),
+                    str(row.get("body", ""))[:60],
+                    str(row.get("timestamp", row.get("time", ""))),
+                )
+            console.print(tbl)
             passed += 1
         else:
             rprint(f"  [red]  ✗ No logs found for service '{service_name}'[/red]")
@@ -553,6 +589,8 @@ def smoke_test(
 
     for table_name, sql_str in sql_queries:
         rprint(f"\n  [bold]SQL on {table_name}:[/bold]  [dim]{sql_str}[/dim]")
+        escaped_sql = sql_str.replace('"', '\\"')
+        rprint(f'  [dim]CLI: datalayer otel query "{escaped_sql}"[/dim]')
         try:
             resp = httpx.post(
                 f"{url}/api/otel/v1/query/",
@@ -564,6 +602,14 @@ def smoke_test(
             sql_rows = sql_data.get("data", [])
             if sql_rows:
                 rprint(f"  [green]  ✓ Got {len(sql_rows)} row(s) from {table_name}[/green]")
+                # Build a table from whatever columns the rows have.
+                tbl = Table(show_header=True, header_style="bold")
+                columns = list(sql_rows[0].keys()) if sql_rows else []
+                for col in columns:
+                    tbl.add_column(col, style="cyan" if col == columns[0] else "yellow", max_width=40)
+                for row in sql_rows[:5]:
+                    tbl.add_row(*(str(row.get(c, ""))[:40] for c in columns))
+                console.print(tbl)
                 passed += 1
             else:
                 rprint(f"  [red]  ✗ No rows from {table_name}[/red]")
