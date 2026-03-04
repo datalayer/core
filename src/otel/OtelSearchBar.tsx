@@ -79,7 +79,7 @@ export const OtelSearchBar: React.FC<OtelSearchBarProps> = ({
         <ActionMenu.Button size="small" variant="invisible">
           {selectedService || 'All services'}
         </ActionMenu.Button>
-        <ActionMenu.Overlay width="auto" sx={{ bg: 'canvas.overlay' }}>
+        <ActionMenu.Overlay width="auto">
           <ActionList selectionVariant="single">
             <ActionList.Item
               selected={selectedService === ''}

@@ -10,6 +10,7 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Box, Text, Button, Dialog } from '@primer/react';
+import { TelescopeIcon } from '@primer/octicons-react';
 
 export interface OtelHeaderProps {
   /** Base URL for the generate API. Defaults to ''. */
@@ -24,6 +25,7 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogRequest, setDialogRequest] = useState('');
   const [dialogBody, setDialogBody] = useState('');
   const [dialogVariant, setDialogVariant] = useState<'success' | 'error'>(
     'success',
@@ -34,11 +36,10 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
   const generate = useCallback(
     async (kind: 'traces' | 'logs' | 'metrics', count: number) => {
       setGenerating(true);
+      const url = `${baseUrl}/api/generate/${kind}?count=${count}`;
+      setDialogRequest(`POST ${url}`);
       try {
-        const resp = await fetch(
-          `${baseUrl}/api/generate/${kind}?count=${count}`,
-          { method: 'POST' },
-        );
+        const resp = await fetch(url, { method: 'POST' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         setDialogTitle(`Generated ${kind}`);
@@ -72,7 +73,10 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
           flexShrink: 0,
         }}
       >
-        <Text sx={{ fontWeight: 'bold', fontSize: 2 }}>🔭 Datalayer OTEL</Text>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <TelescopeIcon size={20} />
+          <Text sx={{ fontWeight: 'bold', fontSize: 2 }}>Datalayer OTEL</Text>
+        </Box>
 
         <Box sx={{ flex: 1 }} />
 
@@ -113,25 +117,59 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
             {
               content: 'Close',
               onClick: () => setDialogOpen(false),
+              buttonType: 'default',
             },
           ]}
         >
-          <Box
-            as="pre"
-            sx={{
-              fontFamily: 'mono',
-              fontSize: 1,
-              p: 2,
-              bg: 'canvas.subtle',
-              borderRadius: 2,
-              overflow: 'auto',
-              maxHeight: 300,
-              color: dialogVariant === 'error' ? 'danger.fg' : 'fg.default',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-all',
-            }}
-          >
-            {dialogBody}
+          {/* Request */}
+          <Box sx={{ mb: 2 }}>
+            <Text sx={{ fontWeight: 'bold', fontSize: 1, color: 'fg.muted' }}>
+              Request
+            </Text>
+            <Box
+              as="pre"
+              sx={{
+                fontFamily: 'mono',
+                fontSize: 1,
+                p: 2,
+                mt: 1,
+                bg: 'canvas.inset',
+                borderRadius: 2,
+                overflow: 'auto',
+                color: 'fg.default',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+                border: '1px solid',
+                borderColor: 'border.default',
+              }}
+            >
+              {dialogRequest}
+            </Box>
+          </Box>
+          {/* Response */}
+          <Box>
+            <Text sx={{ fontWeight: 'bold', fontSize: 1, color: 'fg.muted' }}>
+              Response
+            </Text>
+            <Box
+              as="pre"
+              sx={{
+                fontFamily: 'mono',
+                fontSize: 1,
+                p: 2,
+                mt: 1,
+                bg: 'canvas.subtle',
+                borderRadius: 2,
+                overflow: 'auto',
+                maxHeight: 300,
+                color:
+                  dialogVariant === 'error' ? 'danger.fg' : 'fg.default',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+              }}
+            >
+              {dialogBody}
+            </Box>
           </Box>
         </Dialog>
       )}

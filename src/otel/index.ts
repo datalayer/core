@@ -26,6 +26,7 @@ export type {
   OtelMetricsListProps,
   OtelSpanTreeProps,
   OtelSearchBarProps,
+  OtelTimelineRangeSliderProps,
 } from './types';
 
 // Hooks
@@ -47,3 +48,4 @@ export { OtelLogsList } from './OtelLogsList';
 export { OtelSearchBar } from './OtelSearchBar';
 export { OtelMetricsList } from './OtelMetricsList';
 export { OtelLive } from './OtelLive';
+export { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';

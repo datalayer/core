@@ -142,6 +142,30 @@ export interface OtelMetricsListProps {
   loading?: boolean;
 }
 
+/** Props for the timeline range slider. */
+export interface OtelTimelineRangeSliderProps {
+  /** Timeline start (left edge). */
+  timelineStart: Date;
+  /** Timeline end (right edge). */
+  timelineEnd: Date;
+  /** Current selected range start. */
+  selectedStart: Date;
+  /** Current selected range end. */
+  selectedEnd: Date;
+  /** Called continuously while dragging. */
+  onRangeChange: (start: Date, end: Date) => void;
+  /** Called once when dragging ends. */
+  onRangeCommit?: (start: Date, end: Date) => void;
+  /** Number of tick marks. Default 8. */
+  tickCount?: number;
+  /** Format a Date into a tick label string. */
+  formatTick?: (date: Date) => string;
+  /** Height of the slider in px. Default 56. */
+  height?: number;
+  /** Optional histogram data: array of { time: Date; count: number } */
+  histogram?: { time: Date; count: number }[];
+}
+
 /** Props for the search / filter bar. */
 export interface OtelSearchBarProps {
   /** Current signal type. */

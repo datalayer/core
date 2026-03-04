@@ -16,7 +16,13 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Box, Text, Button } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
-import type { OtelLiveProps, OtelSpan, OtelLog, SignalType } from './types';
+import type {
+  OtelLiveProps,
+  OtelSpan,
+  OtelLog,
+  OtelMetric,
+  SignalType,
+} from './types';
 import {
   useOtelTraces,
   useOtelTrace,
@@ -25,6 +31,7 @@ import {
   useOtelServices,
 } from './hooks';
 import { OtelSearchBar } from './OtelSearchBar';
+import { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
 import { OtelTracesList } from './OtelTracesList';
 import { OtelLogsList } from './OtelLogsList';
 import { OtelMetricsList } from './OtelMetricsList';
@@ -37,6 +44,38 @@ import { buildSpanTree } from './utils';
 
 const BOTTOM_PANE_VIEWS = ['timeline', 'tree'] as const;
 type BottomPane = (typeof BOTTOM_PANE_VIEWS)[number];
+
+const HISTOGRAM_BUCKETS = 60;
+
+/** Extract timestamp from any signal record. */
+function signalTs(
+  signal: SignalType,
+  item: OtelSpan | OtelLog | OtelMetric,
+): number {
+  if (signal === 'traces')
+    return new Date((item as OtelSpan).start_time).getTime();
+  return new Date((item as OtelLog | OtelMetric).timestamp).getTime();
+}
+
+/** Build histogram buckets from a list of raw timestamps. */
+function buildHistogram(
+  timestamps: number[],
+  start: number,
+  end: number,
+  buckets: number,
+): { time: Date; count: number }[] {
+  const range = end - start || 1;
+  const step = range / buckets;
+  const counts = new Array(buckets).fill(0) as number[];
+  for (const ts of timestamps) {
+    const idx = Math.min(Math.floor((ts - start) / step), buckets - 1);
+    if (idx >= 0) counts[idx]++;
+  }
+  return counts.map((count, i) => ({
+    time: new Date(start + i * step + step / 2),
+    count,
+  }));
+}
 
 // ── OtelLive ────────────────────────────────────────────────────────
 
@@ -54,6 +93,8 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   const [selectedSpan, setSelectedSpan] = useState<OtelSpan | null>(null);
   const [selectedLogIdx, setSelectedLogIdx] = useState<number | null>(null);
   const [bottomPane, setBottomPane] = useState<BottomPane | null>(null);
+  const [rangeStart, setRangeStart] = useState<Date | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<Date | null>(null);
 
   // ── data hooks ──
   const {
@@ -108,6 +149,43 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
     [traceSpans],
   );
 
+  // ── Timeline range slider data ──
+  const allTimestamps = useMemo(() => {
+    const ts: number[] = [];
+    if (traces) for (const s of traces) ts.push(signalTs('traces', s));
+    if (logs) for (const l of logs) ts.push(signalTs('logs', l));
+    if (metrics) for (const m of metrics) ts.push(signalTs('metrics', m));
+    // Drop invalid timestamps (NaN) so the slider doesn't collapse
+    return ts.filter(t => Number.isFinite(t) && t > 0);
+  }, [traces, logs, metrics]);
+
+  const timelineBounds = useMemo(() => {
+    if (allTimestamps.length === 0) return null;
+    const min = Math.min(...allTimestamps);
+    const max = Math.max(...allTimestamps);
+    // Add a small padding (2 %) so edge items aren't clipped
+    const pad = Math.max((max - min) * 0.02, 1000);
+    return { start: new Date(min - pad), end: new Date(max + pad) };
+  }, [allTimestamps]);
+
+  const histogram = useMemo(() => {
+    if (!timelineBounds || allTimestamps.length === 0) return undefined;
+    return buildHistogram(
+      allTimestamps,
+      timelineBounds.start.getTime(),
+      timelineBounds.end.getTime(),
+      HISTOGRAM_BUCKETS,
+    );
+  }, [allTimestamps, timelineBounds]);
+
+  // Reset slider range when data bounds change
+  useEffect(() => {
+    if (timelineBounds) {
+      setRangeStart(timelineBounds.start);
+      setRangeEnd(timelineBounds.end);
+    }
+  }, [timelineBounds?.start.getTime(), timelineBounds?.end.getTime()]);
+
   // Reset selection on signal change
   useEffect(() => {
     setSelectedSpan(null);
@@ -137,6 +215,11 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
     setSelectedLogIdx(null);
   }, []);
 
+  const handleRangeChange = useCallback((start: Date, end: Date) => {
+    setRangeStart(start);
+    setRangeEnd(end);
+  }, []);
+
   const toggleBottomPane = useCallback(
     (pane: BottomPane) => setBottomPane(cur => (cur === pane ? null : pane)),
     [],
@@ -145,6 +228,47 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   const hasDetail =
     (signal === 'traces' && selectedSpan !== null) ||
     (signal === 'logs' && selectedLogIdx !== null);
+
+  // ── Time-range-filtered data ──
+  const isRangeActive =
+    rangeStart !== null &&
+    rangeEnd !== null &&
+    timelineBounds !== null &&
+    (rangeStart.getTime() > timelineBounds.start.getTime() + 100 ||
+      rangeEnd.getTime() < timelineBounds.end.getTime() - 100);
+
+  const filteredTraces = useMemo(() => {
+    const list = filterSpans(traces ?? [], query);
+    if (!isRangeActive || !rangeStart || !rangeEnd) return list;
+    const s = rangeStart.getTime();
+    const e = rangeEnd.getTime();
+    return list.filter(t => {
+      const ts = new Date(t.start_time).getTime();
+      return ts >= s && ts <= e;
+    });
+  }, [traces, query, isRangeActive, rangeStart, rangeEnd]);
+
+  const filteredLogs = useMemo(() => {
+    const list = filterLogs(logs ?? [], query);
+    if (!isRangeActive || !rangeStart || !rangeEnd) return list;
+    const s = rangeStart.getTime();
+    const e = rangeEnd.getTime();
+    return list.filter(l => {
+      const ts = new Date(l.timestamp).getTime();
+      return ts >= s && ts <= e;
+    });
+  }, [logs, query, isRangeActive, rangeStart, rangeEnd]);
+
+  const filteredMetrics = useMemo(() => {
+    const list = metrics ?? [];
+    if (!isRangeActive || !rangeStart || !rangeEnd) return list;
+    const s = rangeStart.getTime();
+    const e = rangeEnd.getTime();
+    return list.filter(m => {
+      const ts = new Date(m.timestamp).getTime();
+      return ts >= s && ts <= e;
+    });
+  }, [metrics, isRangeActive, rangeStart, rangeEnd]);
 
   return (
     <Box
@@ -179,6 +303,34 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
         }
       />
 
+      {/* ─── Timeline Range Slider ─── */}
+      {timelineBounds && rangeStart && rangeEnd && (
+        <Box
+          sx={{
+            px: 3,
+            pt: 2,
+            pb: 1,
+            borderBottom: '1px solid',
+            borderColor: 'border.default',
+            bg: 'canvas.subtle',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 0,
+          }}
+        >
+          <OtelTimelineRangeSlider
+            timelineStart={timelineBounds.start}
+            timelineEnd={timelineBounds.end}
+            selectedStart={rangeStart}
+            selectedEnd={rangeEnd}
+            onRangeChange={handleRangeChange}
+            histogram={histogram}
+            height={48}
+            tickCount={6}
+          />
+        </Box>
+      )}
+
       {/* ─── Main area (list + detail) ─── */}
       <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Left: signal list */}
@@ -190,7 +342,7 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
         >
           {signal === 'traces' && (
             <OtelTracesList
-              spans={filterSpans(traces ?? [], query)}
+              spans={filteredTraces}
               loading={tracesLoading}
               selectedSpanId={selectedSpan?.span_id}
               onSelectSpan={handleSpanSelect}
@@ -198,14 +350,17 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
           )}
           {signal === 'logs' && (
             <OtelLogsList
-              logs={filterLogs(logs ?? [], query)}
+              logs={filteredLogs}
               loading={logsLoading}
               selectedLogIndex={selectedLogIdx}
               onSelectLog={handleLogSelect}
             />
           )}
           {signal === 'metrics' && (
-            <OtelMetricsList metrics={metrics ?? []} loading={metricsLoading} />
+            <OtelMetricsList
+              metrics={filteredMetrics}
+              loading={metricsLoading}
+            />
           )}
         </Box>
 

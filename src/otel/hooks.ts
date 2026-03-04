@@ -45,20 +45,31 @@ function nanoToIso(val: unknown): string {
 /** Normalise a raw API span row into the OtelSpan shape components expect. */
 function normalizeSpan(raw: Record<string, unknown>): OtelSpan {
   return {
-    trace_id: String(raw.trace_id ?? ''),
-    span_id: String(raw.span_id ?? raw.trace_id ?? ''),
-    parent_span_id: raw.parent_span_id ? String(raw.parent_span_id) : undefined,
-    span_name: String(raw.span_name ?? raw.operation_name ?? raw.name ?? ''),
-    service_name: String(raw.service_name ?? ''),
-    kind: String(raw.kind ?? raw.span_kind ?? 'INTERNAL'),
-    start_time: nanoToIso(raw.start_time ?? raw.start_time_unix_nano),
+    trace_id: String(raw.trace_id ?? raw.TraceId ?? ''),
+    span_id: String(
+      raw.span_id ?? raw.SpanId ?? raw.trace_id ?? raw.TraceId ?? '',
+    ),
+    parent_span_id:
+      (raw.parent_span_id ?? raw.ParentSpanId)
+        ? String(raw.parent_span_id ?? raw.ParentSpanId)
+        : undefined,
+    span_name: String(
+      raw.span_name ?? raw.SpanName ?? raw.operation_name ?? raw.name ?? '',
+    ),
+    service_name: String(raw.service_name ?? raw.ServiceName ?? ''),
+    kind: String(raw.kind ?? raw.SpanKind ?? raw.span_kind ?? 'INTERNAL'),
+    start_time: nanoToIso(
+      raw.start_time ?? raw.Timestamp ?? raw.start_time_unix_nano,
+    ),
     end_time: nanoToIso(raw.end_time ?? raw.end_time_unix_nano),
     duration_ms:
       raw.duration_ms != null
         ? Number(raw.duration_ms)
-        : raw.duration_ns != null
-          ? Number(raw.duration_ns) / 1e6
-          : 0,
+        : raw.Duration != null
+          ? Number(raw.Duration) / 1e6
+          : raw.duration_ns != null
+            ? Number(raw.duration_ns) / 1e6
+            : 0,
     status_code: raw.status_code ? String(raw.status_code) : undefined,
     status_message: raw.status_message ? String(raw.status_message) : undefined,
     otel_scope_name: raw.otel_scope_name
@@ -82,14 +93,24 @@ function normalizeSpan(raw: Record<string, unknown>): OtelSpan {
 /** Normalise a raw API log row into the OtelLog shape components expect. */
 function normalizeLog(raw: Record<string, unknown>): OtelLog {
   return {
-    timestamp: nanoToIso(raw.timestamp ?? raw.timestamp_unix_nano),
-    severity_text: String(raw.severity_text ?? ''),
+    timestamp: nanoToIso(
+      raw.timestamp ?? raw.Timestamp ?? raw.timestamp_unix_nano,
+    ),
+    severity_text: String(raw.severity_text ?? raw.SeverityText ?? ''),
     severity_number:
-      raw.severity_number != null ? Number(raw.severity_number) : undefined,
-    body: String(raw.body ?? ''),
-    service_name: String(raw.service_name ?? ''),
-    trace_id: raw.trace_id ? String(raw.trace_id) : undefined,
-    span_id: raw.span_id ? String(raw.span_id) : undefined,
+      (raw.severity_number ?? raw.SeverityNumber) != null
+        ? Number(raw.severity_number ?? raw.SeverityNumber)
+        : undefined,
+    body: String(raw.body ?? raw.Body ?? ''),
+    service_name: String(raw.service_name ?? raw.ServiceName ?? ''),
+    trace_id:
+      (raw.trace_id ?? raw.TraceId)
+        ? String(raw.trace_id ?? raw.TraceId)
+        : undefined,
+    span_id:
+      (raw.span_id ?? raw.SpanId)
+        ? String(raw.span_id ?? raw.SpanId)
+        : undefined,
     attributes:
       typeof raw.attributes === 'object' && raw.attributes !== null
         ? (raw.attributes as Record<string, unknown>)
@@ -108,18 +129,29 @@ function normalizeLog(raw: Record<string, unknown>): OtelLog {
 /** Normalise a raw API metric row into the OtelMetric shape components expect. */
 function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
   return {
-    metric_name: String(raw.metric_name ?? raw.name ?? ''),
-    service_name: String(raw.service_name ?? ''),
-    value: Number(raw.value ?? raw.value_double ?? raw.value_int ?? 0),
-    unit: raw.metric_unit
-      ? String(raw.metric_unit)
-      : raw.unit
-        ? String(raw.unit)
-        : undefined,
-    timestamp: nanoToIso(
-      raw.timestamp ?? raw.timestamp_unix_nano ?? raw.start_time_unix_nano,
+    metric_name: String(
+      raw.metric_name ?? raw.MetricName ?? raw.name ?? raw.Name ?? '',
     ),
-    metric_type: raw.metric_type ? String(raw.metric_type) : undefined,
+    service_name: String(raw.service_name ?? raw.ServiceName ?? ''),
+    value: Number(
+      raw.value ?? raw.Value ?? raw.value_double ?? raw.value_int ?? 0,
+    ),
+    unit:
+      (raw.metric_unit ?? raw.MetricUnit)
+        ? String(raw.metric_unit ?? raw.MetricUnit)
+        : (raw.unit ?? raw.Unit)
+          ? String(raw.unit ?? raw.Unit)
+          : undefined,
+    timestamp: nanoToIso(
+      raw.timestamp ??
+        raw.Timestamp ??
+        raw.timestamp_unix_nano ??
+        raw.start_time_unix_nano,
+    ),
+    metric_type:
+      (raw.metric_type ?? raw.MetricType)
+        ? String(raw.metric_type ?? raw.MetricType)
+        : undefined,
     attributes:
       typeof raw.attributes === 'object' && raw.attributes !== null
         ? (raw.attributes as Record<string, unknown>)
@@ -309,12 +341,9 @@ export function useOtelMetrics(options: {
       const params = new URLSearchParams({ limit: String(limit) });
       if (serviceName) params.set('service_name', serviceName);
       if (metricName) params.set('name', metricName);
-      const resp = await fetch(
-        `${baseUrl}/api/otel/v1/metrics/query?${params}`,
-        {
-          headers: authHeaders(token),
-        },
-      );
+      const resp = await fetch(`${baseUrl}/api/otel/v1/metrics?${params}`, {
+        headers: authHeaders(token),
+      });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const rows = data.data ?? data ?? [];

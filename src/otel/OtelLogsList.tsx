@@ -21,11 +21,13 @@ import { formatTime, severityVariant } from './utils';
 
 // ── helpers ─────────────────────────────────────────────────────────
 
-/** Severity badge using Primer Label. */
+/** Severity badge using Primer Label, centered in its grid cell. */
 const Severity: React.FC<{ text: string }> = ({ text }) => (
-  <Label size="small" variant={severityVariant(text)}>
-    {text}
-  </Label>
+  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Label size="small" variant={severityVariant(text)}>
+      {text}
+    </Label>
+  </Box>
 );
 
 /** Expandable row detail for a single log record. */
@@ -210,6 +212,7 @@ export const OtelLogsList: React.FC<OtelLogsListProps> = ({
               color: 'fg.muted',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
+              textAlign: h === 'Severity' ? 'center' : undefined,
             }}
           >
             {h}

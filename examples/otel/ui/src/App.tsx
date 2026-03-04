@@ -16,11 +16,18 @@
  */
 
 import React from 'react';
-import { Box } from '@primer/react';
+import { Box } from '@datalayer/primer-addons';
+import { setupPrimerPortals } from '@datalayer/primer-addons/lib/utils/Portals';
+import '../style/primer-primitives.css';
 import { ThemedProvider } from './stores/themedProvider';
 import { OtelHeader } from './header';
 import { ThemeSwitcher } from './header/ThemeSwitcher';
 import { DashboardView } from './views';
+
+// Register document.body as the Primer portal root BEFORE React renders,
+// so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
+// from the very first paint.
+setupPrimerPortals();
 
 // Use the Vite proxy – all /api requests → FastAPI on port 8600
 const BASE_URL = '';
