@@ -67,7 +67,12 @@ SPAN_TEMPLATES = [
 
 
 def generate_sample_traces(count: int = 3) -> None:
-    """Generate *count* multi-span traces and export via OTLP/HTTP."""
+    """Generate *count* multi-span traces and export via OTLP/HTTP.
+
+    Each trace has a root span with 1-3 children, each child can have
+    0-2 grandchildren, and each grandchild can have 0-1 great-grandchild,
+    producing realistic nested call-trees for the tree-view UI.
+    """
     endpoint = _otlp_endpoint()
     for _ in range(count):
         svc = random.choice(SERVICE_NAMES)
@@ -89,17 +94,38 @@ def generate_sample_traces(count: int = 3) -> None:
                 child_svc = random.choice(SERVICE_NAMES)
                 with tracer.start_as_current_span(child_tpl[0]) as child:
                     child.set_attribute("service.name", child_svc)
-                    # Simulate a tiny delay
                     time.sleep(random.uniform(0.001, 0.02))
-                    # Occasionally add an event
                     if random.random() > 0.6:
                         child.add_event(
                             "cache.miss",
                             attributes={"cache.key": f"user:{random.randint(1,999)}"},
                         )
-                    # Occasionally mark as error
                     if random.random() > 0.85:
                         child.set_status(StatusCode.ERROR, "simulated error")
+
+                    # 0–2 grandchild spans
+                    n_grandchildren = random.randint(0, 2)
+                    for _ in range(n_grandchildren):
+                        gc_tpl = random.choice(SPAN_TEMPLATES)
+                        gc_svc = random.choice(SERVICE_NAMES)
+                        with tracer.start_as_current_span(gc_tpl[0]) as gc:
+                            gc.set_attribute("service.name", gc_svc)
+                            time.sleep(random.uniform(0.001, 0.01))
+                            if random.random() > 0.7:
+                                gc.add_event(
+                                    "db.query",
+                                    attributes={"db.statement": "SELECT ..."},
+                                )
+                            if random.random() > 0.9:
+                                gc.set_status(StatusCode.ERROR, "downstream failure")
+
+                            # 0–1 great-grandchild span
+                            if random.random() > 0.5:
+                                ggc_tpl = random.choice(SPAN_TEMPLATES)
+                                ggc_svc = random.choice(SERVICE_NAMES)
+                                with tracer.start_as_current_span(ggc_tpl[0]) as ggc:
+                                    ggc.set_attribute("service.name", ggc_svc)
+                                    time.sleep(random.uniform(0.001, 0.005))
 
             # Small delay for root realism
             time.sleep(random.uniform(0.005, 0.03))

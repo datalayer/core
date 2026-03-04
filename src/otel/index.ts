@@ -23,6 +23,7 @@ export type {
   OtelSpanDetailProps,
   OtelTimelineProps,
   OtelLogsListProps,
+  OtelMetricsListProps,
   OtelSpanTreeProps,
   OtelSearchBarProps,
 } from './types';
@@ -44,4 +45,5 @@ export { OtelSpanDetail } from './OtelSpanDetail';
 export { OtelSpanTree } from './OtelSpanTree';
 export { OtelLogsList } from './OtelLogsList';
 export { OtelSearchBar } from './OtelSearchBar';
+export { OtelMetricsList } from './OtelMetricsList';
 export { OtelLive } from './OtelLive';

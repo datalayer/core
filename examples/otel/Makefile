@@ -33,7 +33,7 @@ start: ## Start both the FastAPI server and React UI (single target).
 	@echo
 	@trap 'kill 0' EXIT; \
 	  uvicorn app.main:app --reload --port 8600 & \
-	  (cd ui && npm run dev) & \
+	  (sleep 2 && cd ui && npm run dev) & \
 	  wait
 
 start-server: ## Start the FastAPI server only.

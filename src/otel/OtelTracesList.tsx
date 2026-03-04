@@ -5,14 +5,17 @@
 
 /**
  * OtelTracesList – Tabular list of spans with Time / Message / Scope / Duration
- * columns, resembling the Logfire Live trace list.
+ * columns, using Primer React components for consistent theming.
  *
  * @module otel/OtelTracesList
  */
 
 import React from 'react';
+import { Box, Text, Label, Spinner } from '@primer/react';
+import { Blankslate } from '@primer/react/experimental';
+import { TelescopeIcon } from '@primer/octicons-react';
 import type { OtelTracesListProps } from './types';
-import { formatDuration, formatTime, kindColor } from './utils';
+import { formatDuration, formatTime } from './utils';
 
 export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   spans,
@@ -22,134 +25,109 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
 }) => {
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 32 }}>
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          style={{ animation: 'spin 1s linear infinite' }}
-        >
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="#0969da"
-            strokeWidth="3"
-            fill="none"
-            strokeDasharray="40 20"
-          />
-        </svg>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+        <Spinner size="medium" />
+      </Box>
     );
   }
 
   if (spans.length === 0) {
     return (
-      <div
-        style={{
-          padding: 32,
-          textAlign: 'center',
-          color: '#656d76',
-          fontSize: 13,
-        }}
-      >
-        No traces found. Send some telemetry data first.
-      </div>
+      <Blankslate>
+        <Blankslate.Visual>
+          <TelescopeIcon size={24} />
+        </Blankslate.Visual>
+        <Blankslate.Heading>No traces found</Blankslate.Heading>
+        <Blankslate.Description>
+          Send some telemetry data first.
+        </Blankslate.Description>
+      </Blankslate>
     );
   }
 
-  const headerStyle: React.CSSProperties = {
-    fontWeight: 600,
-    fontSize: 11,
-    color: '#656d76',
-    textTransform: 'uppercase' as const,
-    letterSpacing: 0.5,
-    padding: '8px 0',
-    borderBottom: '2px solid #d0d7de',
-    position: 'sticky' as const,
-    top: 0,
-    background: '#f6f8fa',
-    zIndex: 1,
-  };
-
   return (
-    <div style={{ width: '100%', overflow: 'auto' }}>
+    <Box sx={{ width: '100%', overflow: 'auto' }}>
       {/* Header row */}
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'grid',
           gridTemplateColumns: '100px 1fr 160px 90px',
-          gap: 8,
-          paddingLeft: 12,
-          paddingRight: 12,
+          gap: 2,
+          px: 3,
+          position: 'sticky',
+          top: 0,
+          bg: 'canvas.subtle',
+          zIndex: 1,
+          borderBottom: '2px solid',
+          borderColor: 'border.default',
         }}
       >
-        <div style={headerStyle}>Time</div>
-        <div style={headerStyle}>Message</div>
-        <div style={headerStyle}>Scope</div>
-        <div style={{ ...headerStyle, textAlign: 'right' }}>Duration</div>
-      </div>
+        {['Time', 'Message', 'Scope', 'Duration'].map(h => (
+          <Text
+            key={h}
+            sx={{
+              fontWeight: 'bold',
+              fontSize: 0,
+              color: 'fg.muted',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              py: 2,
+              ...(h === 'Duration' ? { textAlign: 'right' } : {}),
+            }}
+          >
+            {h}
+          </Text>
+        ))}
+      </Box>
 
       {/* Rows */}
-      {spans.map(span => {
+      {spans.map((span, idx) => {
         const isSelected = selectedSpanId === span.span_id;
         return (
-          <div
-            key={span.span_id}
+          <Box
+            key={`${span.trace_id}-${span.span_id}-${idx}`}
             onClick={() => onSelectSpan?.(span)}
-            style={{
+            sx={{
               display: 'grid',
               gridTemplateColumns: '100px 1fr 160px 90px',
-              gap: 8,
-              padding: '5px 12px',
+              gap: 2,
+              px: 3,
+              py: '5px',
               cursor: 'pointer',
-              background: isSelected ? 'rgba(9,105,218,0.08)' : 'transparent',
-              borderBottom: '1px solid #eaeef2',
-              transition: 'background 0.1s',
-            }}
-            onMouseEnter={e => {
-              if (!isSelected) e.currentTarget.style.background = '#f6f8fa';
-            }}
-            onMouseLeave={e => {
-              if (!isSelected) e.currentTarget.style.background = 'transparent';
+              bg: isSelected ? 'accent.subtle' : 'canvas.default',
+              borderBottom: '1px solid',
+              borderColor: 'border.muted',
+              ':hover': {
+                bg: isSelected ? 'accent.subtle' : 'canvas.subtle',
+              },
             }}
           >
             {/* Time */}
-            <div
-              style={{
-                fontSize: 12,
-                fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                color: '#656d76',
+            <Text
+              sx={{
+                fontSize: 1,
+                fontFamily: 'mono',
+                color: 'fg.muted',
                 whiteSpace: 'nowrap',
                 lineHeight: '22px',
               }}
             >
               {formatTime(span.start_time)}
-            </div>
+            </Text>
 
             {/* Message */}
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 1,
                 overflow: 'hidden',
                 lineHeight: '22px',
               }}
             >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: kindColor(span.kind),
-                  flexShrink: 0,
-                }}
-              />
-              <span
-                style={{
-                  fontSize: 13,
+              <Text
+                sx={{
+                  fontSize: 1,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -157,29 +135,19 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                 title={span.span_name}
               >
                 {span.span_name}
-              </span>
+              </Text>
               {span.status_code === 'ERROR' && (
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#cf222e',
-                    border: '1px solid #cf222e',
-                    borderRadius: 4,
-                    padding: '0 4px',
-                    lineHeight: '16px',
-                  }}
-                >
+                <Label variant="danger" size="small">
                   ERROR
-                </span>
+                </Label>
               )}
-            </div>
+            </Box>
 
             {/* Scope */}
-            <div
-              style={{
-                fontSize: 12,
-                color: '#656d76',
+            <Text
+              sx={{
+                fontSize: 1,
+                color: 'fg.muted',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -188,26 +156,26 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
               title={`${span.service_name} / ${span.otel_scope_name ?? ''}`}
             >
               {span.service_name}
-            </div>
+            </Text>
 
             {/* Duration */}
-            <div
-              style={{
-                fontSize: 12,
-                fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+            <Text
+              sx={{
+                fontSize: 1,
+                fontFamily: 'mono',
                 textAlign: 'right',
                 lineHeight: '22px',
                 color:
                   span.duration_ms != null && span.duration_ms > 1000
-                    ? '#cf222e'
-                    : '#1f2328',
+                    ? 'danger.fg'
+                    : 'fg.default',
               }}
             >
               {formatDuration(span.duration_ms)}
-            </div>
-          </div>
+            </Text>
+          </Box>
         );
       })}
-    </div>
+    </Box>
   );
 };

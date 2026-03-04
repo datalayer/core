@@ -7,13 +7,13 @@
  * OtelTimeline – Horizontal waterfall timeline for trace spans.
  *
  * Each span renders as a coloured bar positioned relative to the trace's
- * overall time window. Clicking a bar fires `onSelectSpan`.
- * Supports tree-indented labels when spans carry a `depth` property.
+ * overall time window. Uses Primer React components for consistent theming.
  *
  * @module otel/OtelTimeline
  */
 
 import React, { useMemo } from 'react';
+import { Box, Text } from '@primer/react';
 import type { OtelTimelineProps } from './types';
 import { toMs, formatDuration, serviceColor } from './utils';
 
@@ -47,14 +47,14 @@ export const OtelTimeline: React.FC<OtelTimelineProps> = ({
 
   if (sortedSpans.length === 0) {
     return (
-      <div style={{ padding: 16, color: '#656d76', textAlign: 'center' }}>
-        No spans to display.
-      </div>
+      <Box sx={{ p: 3, color: 'fg.muted', textAlign: 'center' }}>
+        <Text>No spans to display.</Text>
+      </Box>
     );
   }
 
   return (
-    <div style={{ width: '100%', overflowX: 'auto', padding: '4px 0' }}>
+    <Box sx={{ width: '100%', overflowX: 'auto', py: 1 }}>
       {sortedSpans.map(span => {
         const startOffset =
           ((toMs(span.start_time) - minTime) / totalDuration) * 100;
@@ -69,99 +69,93 @@ export const OtelTimeline: React.FC<OtelTimelineProps> = ({
         const indent = (span.depth ?? 0) * 16;
 
         return (
-          <div
+          <Box
             key={span.span_id}
-            style={{
+            sx={{
               display: 'flex',
               alignItems: 'center',
               height: barHeight,
-              marginBottom: 2,
+              mb: '2px',
               cursor: 'pointer',
-              background: isSelected ? 'rgba(9,105,218,0.08)' : 'transparent',
-              borderRadius: 4,
+              bg: isSelected ? 'accent.subtle' : 'canvas.default',
+              borderRadius: 1,
+              ':hover': {
+                bg: isSelected ? 'accent.subtle' : 'canvas.subtle',
+              },
             }}
             onClick={() => onSelectSpan?.(span)}
             title={`${span.service_name} / ${span.span_name} — ${formatDuration(span.duration_ms)}`}
           >
             {/* Span name label */}
-            <div
-              style={{
+            <Text
+              sx={{
                 width: 200,
                 minWidth: 200,
-                paddingLeft: indent,
-                paddingRight: 8,
+                pl: `${indent}px`,
+                pr: 2,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                fontSize: 12,
-                fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                color: '#656d76',
+                fontSize: 1,
+                fontFamily: 'mono',
+                color: 'fg.muted',
               }}
             >
               {span.span_name}
-            </div>
+            </Text>
             {/* Bar area */}
-            <div
-              style={{
-                flex: 1,
-                position: 'relative',
-                height: '100%',
-              }}
-            >
-              <div
-                style={{
+            <Box sx={{ flex: 1, position: 'relative', height: '100%' }}>
+              <Box
+                sx={{
                   position: 'absolute',
                   left: `${startOffset}%`,
                   width: `${width}%`,
                   height: barHeight - 6,
-                  top: 3,
-                  background: color,
-                  borderRadius: 3,
+                  top: '3px',
+                  bg: color,
+                  borderRadius: 1,
                   opacity: isSelected ? 1 : 0.8,
-                  transition: 'opacity 0.15s',
-                  border: isSelected ? '2px solid rgba(9,105,218,0.6)' : 'none',
+                  border: isSelected ? '2px solid' : 'none',
+                  borderColor: 'accent.emphasis',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                onMouseLeave={e =>
-                  (e.currentTarget.style.opacity = isSelected ? '1' : '0.8')
-                }
               />
-            </div>
+            </Box>
             {/* Duration */}
-            <div
-              style={{
+            <Text
+              sx={{
                 minWidth: 64,
                 textAlign: 'right',
-                paddingLeft: 4,
-                fontSize: 11,
-                fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                color: '#656d76',
+                pl: 1,
+                fontSize: 0,
+                fontFamily: 'mono',
+                color: 'fg.muted',
               }}
             >
               {formatDuration(span.duration_ms)}
-            </div>
-          </div>
+            </Text>
+          </Box>
         );
       })}
       {/* Footer summary */}
-      <div
-        style={{
-          borderTop: '1px solid #d0d7de',
-          marginTop: 6,
-          paddingTop: 6,
+      <Box
+        sx={{
+          borderTop: '1px solid',
+          borderColor: 'border.default',
+          mt: 2,
+          pt: 2,
           display: 'flex',
           justifyContent: 'space-between',
-          fontSize: 11,
-          color: '#656d76',
+          fontSize: 0,
+          color: 'fg.muted',
         }}
       >
-        <span>
+        <Text>
           {sortedSpans.length} span{sortedSpans.length !== 1 ? 's' : ''}
-        </span>
-        <span style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+        </Text>
+        <Text sx={{ fontFamily: 'mono' }}>
           Total: {formatDuration(totalDuration)}
-        </span>
-      </div>
-    </div>
+        </Text>
+      </Box>
+    </Box>
   );
 };

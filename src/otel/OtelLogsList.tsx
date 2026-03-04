@@ -7,167 +7,147 @@
  * OtelLogsList – Tabular log-records view with severity colour coding,
  * expandable body/attributes, and trace correlation links.
  *
+ * Uses Primer React components for consistent theming.
+ *
  * @module otel/OtelLogsList
  */
 
 import React, { useState } from 'react';
+import { Box, Text, Label, Spinner } from '@primer/react';
+import { Blankslate } from '@primer/react/experimental';
+import { LogIcon } from '@primer/octicons-react';
 import type { OtelLogsListProps, OtelLog } from './types';
-import { formatTime, severityColor } from './utils';
+import { formatTime, severityVariant } from './utils';
 
 // ── helpers ─────────────────────────────────────────────────────────
 
-/** Severity badge. */
-const Severity: React.FC<{ text: string }> = ({ text }) => {
-  const bg = severityColor(text);
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        fontSize: 10,
-        fontWeight: 600,
-        padding: '1px 6px',
-        borderRadius: 10,
-        background: bg + '22',
-        color: bg,
-        textTransform: 'uppercase',
-        lineHeight: '16px',
-      }}
-    >
-      {text}
-    </span>
-  );
-};
+/** Severity badge using Primer Label. */
+const Severity: React.FC<{ text: string }> = ({ text }) => (
+  <Label size="small" variant={severityVariant(text)}>
+    {text}
+  </Label>
+);
 
 /** Expandable row detail for a single log record. */
 const LogDetail: React.FC<{ log: OtelLog }> = ({ log }) => (
-  <div
-    style={{
+  <Box
+    sx={{
       gridColumn: '1 / -1',
-      background: '#f6f8fa',
-      borderBottom: '1px solid #d0d7de',
-      padding: '10px 14px',
+      bg: 'canvas.subtle',
+      borderBottom: '1px solid',
+      borderColor: 'border.default',
+      p: 3,
     }}
   >
     {/* Body (potentially long) */}
-    <div style={{ marginBottom: 8 }}>
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: '#656d76',
-          display: 'inline-block',
-          marginBottom: 2,
+    <Box sx={{ mb: 2 }}>
+      <Text
+        sx={{
+          fontSize: 0,
+          fontWeight: 'bold',
+          color: 'fg.muted',
+          display: 'block',
+          mb: 1,
         }}
       >
         Body
-      </span>
-      <pre
-        style={{
-          fontSize: 12,
-          fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+      </Text>
+      <Box
+        as="pre"
+        sx={{
+          fontSize: 1,
+          fontFamily: 'mono',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
-          margin: 0,
-          background: '#ffffff',
-          border: '1px solid #d0d7de',
-          borderRadius: 6,
-          padding: 8,
+          m: 0,
+          bg: 'canvas.default',
+          border: '1px solid',
+          borderColor: 'border.default',
+          borderRadius: 2,
+          p: 2,
         }}
       >
         {log.body}
-      </pre>
-    </div>
+      </Box>
+    </Box>
 
     {/* Trace correlation */}
     {log.trace_id && (
-      <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-        <span style={{ fontSize: 11, color: '#656d76', fontWeight: 600 }}>
+      <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+        <Text sx={{ fontSize: 0, color: 'fg.muted', fontWeight: 'bold' }}>
           trace_id
-        </span>
-        <span
-          style={{
-            fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-            fontSize: 11,
-          }}
-        >
-          {log.trace_id}
-        </span>
+        </Text>
+        <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>{log.trace_id}</Text>
         {log.span_id && (
           <>
-            <span style={{ fontSize: 11, color: '#656d76', fontWeight: 600 }}>
+            <Text sx={{ fontSize: 0, color: 'fg.muted', fontWeight: 'bold' }}>
               span_id
-            </span>
-            <span
-              style={{
-                fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                fontSize: 11,
-              }}
-            >
-              {log.span_id}
-            </span>
+            </Text>
+            <Text sx={{ fontFamily: 'mono', fontSize: 0 }}>{log.span_id}</Text>
           </>
         )}
-      </div>
+      </Box>
     )}
 
     {/* Attributes */}
     {log.attributes && Object.keys(log.attributes).length > 0 && (
-      <div>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: '#656d76',
-            display: 'inline-block',
-            marginBottom: 2,
+      <Box>
+        <Text
+          sx={{
+            fontSize: 0,
+            fontWeight: 'bold',
+            color: 'fg.muted',
+            display: 'block',
+            mb: 1,
           }}
         >
           Attributes
-        </span>
-        <div
-          style={{
-            background: '#ffffff',
-            border: '1px solid #d0d7de',
-            borderRadius: 6,
-            padding: 8,
+        </Text>
+        <Box
+          sx={{
+            bg: 'canvas.default',
+            border: '1px solid',
+            borderColor: 'border.default',
+            borderRadius: 2,
+            p: 2,
           }}
         >
           {Object.entries(log.attributes).map(([k, v]) => (
-            <div
+            <Box
               key={k}
-              style={{
+              sx={{
                 display: 'flex',
-                gap: 8,
-                padding: '2px 0',
-                borderBottom: '1px solid #eaeef2',
+                gap: 2,
+                py: 1,
+                borderBottom: '1px solid',
+                borderColor: 'border.muted',
               }}
             >
-              <span
-                style={{
-                  color: '#0550ae',
-                  fontSize: 11,
-                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+              <Text
+                sx={{
+                  color: 'accent.fg',
+                  fontSize: 0,
+                  fontFamily: 'mono',
                   minWidth: 150,
                 }}
               >
                 {k}
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+              </Text>
+              <Text
+                sx={{
+                  fontSize: 0,
+                  fontFamily: 'mono',
                   wordBreak: 'break-word',
                 }}
               >
                 {typeof v === 'string' ? v : JSON.stringify(v)}
-              </span>
-            </div>
+              </Text>
+            </Box>
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
     )}
-  </div>
+  </Box>
 );
 
 // ── Main component ──────────────────────────────────────────────────
@@ -182,126 +162,131 @@ export const OtelLogsList: React.FC<OtelLogsListProps> = ({
 
   const colTemplate = '140px 80px 120px 1fr';
 
+  if (loading && logs.length === 0) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+        <Spinner size="medium" />
+      </Box>
+    );
+  }
+
+  if (!loading && logs.length === 0) {
+    return (
+      <Blankslate>
+        <Blankslate.Visual>
+          <LogIcon size={24} />
+        </Blankslate.Visual>
+        <Blankslate.Heading>No log records found</Blankslate.Heading>
+        <Blankslate.Description>
+          Send some log data first.
+        </Blankslate.Description>
+      </Blankslate>
+    );
+  }
+
   return (
-    <div>
+    <Box>
       {/* Header */}
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'grid',
           gridTemplateColumns: colTemplate,
-          background: '#f6f8fa',
-          borderBottom: '2px solid #d0d7de',
-          padding: '6px 14px',
+          bg: 'canvas.subtle',
+          borderBottom: '2px solid',
+          borderColor: 'border.default',
+          px: 3,
+          py: 1,
           position: 'sticky',
           top: 0,
           zIndex: 1,
         }}
       >
         {['Time', 'Severity', 'Service', 'Body'].map(h => (
-          <span
+          <Text
             key={h}
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: '#656d76',
+            sx={{
+              fontSize: 0,
+              fontWeight: 'bold',
+              color: 'fg.muted',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
             }}
           >
             {h}
-          </span>
+          </Text>
         ))}
-      </div>
+      </Box>
 
       {/* Rows */}
-      {loading && logs.length === 0 && (
-        <div style={{ padding: 32, textAlign: 'center', color: '#656d76' }}>
-          Loading logs…
-        </div>
-      )}
-      {!loading && logs.length === 0 && (
-        <div style={{ padding: 32, textAlign: 'center', color: '#656d76' }}>
-          No log records found.
-        </div>
-      )}
-
       {logs.map((log, idx) => {
         const selected = idx === selectedLogIndex;
         const expanded = idx === expandedIdx;
         return (
           <React.Fragment key={idx}>
-            <div
-              style={{
+            <Box
+              sx={{
                 display: 'grid',
                 gridTemplateColumns: colTemplate,
-                padding: '5px 14px',
-                borderBottom: '1px solid #eaeef2',
+                px: 3,
+                py: '5px',
+                borderBottom: '1px solid',
+                borderColor: 'border.muted',
                 cursor: 'pointer',
-                background: selected
-                  ? '#ddf4ff'
+                bg: selected
+                  ? 'accent.subtle'
                   : expanded
-                    ? '#f6f8fa'
-                    : 'transparent',
-                transition: 'background 120ms',
+                    ? 'canvas.subtle'
+                    : 'canvas.default',
+                ':hover': {
+                  bg: selected || expanded ? undefined : 'canvas.subtle',
+                },
               }}
               onClick={() => {
                 setExpandedIdx(expanded ? null : idx);
                 onSelectLog?.(log, idx);
               }}
-              onMouseEnter={e => {
-                if (!selected && !expanded)
-                  e.currentTarget.style.background = '#f6f8fa';
-              }}
-              onMouseLeave={e => {
-                if (!selected && !expanded)
-                  e.currentTarget.style.background = 'transparent';
-              }}
             >
               {/* Time */}
-              <span
-                style={{
-                  fontSize: 12,
-                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                  color: '#1f2328',
-                }}
+              <Text
+                sx={{ fontSize: 1, fontFamily: 'mono', color: 'fg.default' }}
               >
                 {formatTime(log.timestamp)}
-              </span>
+              </Text>
 
               {/* Severity */}
               <Severity text={log.severity_text} />
 
               {/* Service */}
-              <span
-                style={{
-                  fontSize: 12,
-                  color: '#656d76',
+              <Text
+                sx={{
+                  fontSize: 1,
+                  color: 'fg.muted',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}
               >
                 {log.service_name}
-              </span>
+              </Text>
 
               {/* Body preview */}
-              <span
-                style={{
-                  fontSize: 12,
+              <Text
+                sx={{
+                  fontSize: 1,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}
               >
                 {log.body}
-              </span>
-            </div>
+              </Text>
+            </Box>
 
             {/* Expanded detail */}
             {expanded && <LogDetail log={log} />}
           </React.Fragment>
         );
       })}
-    </div>
+    </Box>
   );
 };

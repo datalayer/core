@@ -136,6 +136,12 @@ export interface OtelLogsListProps {
   onSelectLog?: (log: OtelLog, index: number) => void;
 }
 
+/** Props for the metrics list view. */
+export interface OtelMetricsListProps {
+  metrics: OtelMetric[];
+  loading?: boolean;
+}
+
 /** Props for the search / filter bar. */
 export interface OtelSearchBarProps {
   /** Current signal type. */

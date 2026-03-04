@@ -30,10 +30,13 @@ export function formatDuration(ms: number | undefined | null): string {
   return `${(ms / 60000).toFixed(1)}m`;
 }
 
-/** Format an ISO timestamp to local time string. */
-export function formatTime(ts: string): string {
+/** Format an ISO timestamp or nanosecond epoch to local time string. */
+export function formatTime(ts: string | number | undefined | null): string {
+  if (ts === undefined || ts === null || ts === '') return '—';
   try {
-    const d = new Date(ts);
+    const ms = toMs(ts);
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) return String(ts);
     return d.toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit',
@@ -41,7 +44,7 @@ export function formatTime(ts: string): string {
       fractionalSecondDigits: 3,
     } as Intl.DateTimeFormatOptions);
   } catch {
-    return ts;
+    return String(ts);
   }
 }
 
@@ -103,6 +106,30 @@ export function severityColor(severity: string): string {
       return 'fg.muted';
     default:
       return 'fg.default';
+  }
+}
+
+/**
+ * Map severity text to a Primer `Label` variant string.
+ * Used by OtelLogsList for severity badges.
+ */
+export function severityVariant(
+  severity: string,
+): 'danger' | 'attention' | 'accent' | 'secondary' | 'primary' {
+  switch (severity?.toUpperCase()) {
+    case 'ERROR':
+    case 'FATAL':
+      return 'danger';
+    case 'WARN':
+    case 'WARNING':
+      return 'attention';
+    case 'INFO':
+      return 'accent';
+    case 'DEBUG':
+    case 'TRACE':
+      return 'secondary';
+    default:
+      return 'primary';
   }
 }
 

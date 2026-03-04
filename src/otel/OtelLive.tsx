@@ -8,31 +8,26 @@
  * search bar, signal list, timeline, span tree, and detail panel into
  * a Logfire-inspired experience.
  *
- * Layout (top → bottom):
- *  ┌────────────────────────────────────────────────┐
- *  │  OtelSearchBar  (filters / signal tabs)        │
- *  ├──────────────────────────┬─────────────────────┤
- *  │  Signal list             │  Detail panel       │
- *  │  (Traces / Logs / …)     │  (SpanDetail or     │
- *  │                          │   LogDetail)        │
- *  ├──────────────────────────┴─────────────────────┤
- *  │  Timeline / SpanTree (expandable bottom pane)  │
- *  └────────────────────────────────────────────────┘
+ * Uses Primer React components for consistent theming.
  *
  * @module otel/OtelLive
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { Box, Text, Button } from '@primer/react';
+import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
 import type { OtelLiveProps, OtelSpan, OtelLog, SignalType } from './types';
 import {
   useOtelTraces,
   useOtelTrace,
   useOtelLogs,
+  useOtelMetrics,
   useOtelServices,
 } from './hooks';
 import { OtelSearchBar } from './OtelSearchBar';
 import { OtelTracesList } from './OtelTracesList';
 import { OtelLogsList } from './OtelLogsList';
+import { OtelMetricsList } from './OtelMetricsList';
 import { OtelSpanDetail } from './OtelSpanDetail';
 import { OtelTimeline } from './OtelTimeline';
 import { OtelSpanTree } from './OtelSpanTree';
@@ -85,6 +80,18 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
     autoRefreshMs,
   });
 
+  const {
+    metrics,
+    loading: metricsLoading,
+    refetch: refetchMetrics,
+  } = useOtelMetrics({
+    baseUrl,
+    token,
+    limit,
+    serviceName: service || undefined,
+    autoRefreshMs,
+  });
+
   const { services } = useOtelServices({ baseUrl, token });
 
   // trace-detail fetch (when a span is selected)
@@ -112,7 +119,8 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   const handleRefresh = useCallback(() => {
     if (signal === 'traces') void refetchTraces();
     if (signal === 'logs') void refetchLogs();
-  }, [signal, refetchTraces, refetchLogs]);
+    if (signal === 'metrics') void refetchMetrics();
+  }, [signal, refetchTraces, refetchLogs, refetchMetrics]);
 
   const handleSpanSelect = useCallback((span: OtelSpan) => {
     setSelectedSpan(span);
@@ -139,17 +147,16 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
     (signal === 'logs' && selectedLogIdx !== null);
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-        color: '#1f2328',
-        background: '#ffffff',
-        border: '1px solid #d0d7de',
-        borderRadius: 8,
+        color: 'fg.default',
+        bg: 'canvas.default',
+        border: '1px solid',
+        borderColor: 'border.default',
+        borderRadius: 2,
         overflow: 'hidden',
       }}
     >
@@ -163,17 +170,22 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
         query={query}
         onQueryChange={setQuery}
         onRefresh={handleRefresh}
-        loading={signal === 'traces' ? tracesLoading : logsLoading}
+        loading={
+          signal === 'traces'
+            ? tracesLoading
+            : signal === 'logs'
+              ? logsLoading
+              : metricsLoading
+        }
       />
 
       {/* ─── Main area (list + detail) ─── */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Left: signal list */}
-        <div
-          style={{
+        <Box
+          sx={{
             flex: hasDetail ? '0 0 55%' : '1 1 100%',
             overflow: 'auto',
-            transition: 'flex 200ms ease',
           }}
         >
           {signal === 'traces' && (
@@ -193,25 +205,18 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
             />
           )}
           {signal === 'metrics' && (
-            <div
-              style={{
-                padding: 32,
-                textAlign: 'center',
-                color: '#656d76',
-              }}
-            >
-              Metrics view coming soon.
-            </div>
+            <OtelMetricsList metrics={metrics ?? []} loading={metricsLoading} />
           )}
-        </div>
+        </Box>
 
         {/* Right: detail panel */}
         {hasDetail && (
-          <div
-            style={{
+          <Box
+            sx={{
               flex: '0 0 45%',
               overflow: 'auto',
-              borderLeft: '1px solid #d0d7de',
+              borderLeft: '1px solid',
+              borderColor: 'border.default',
             }}
           >
             {signal === 'traces' && selectedSpan && (
@@ -222,91 +227,84 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
               />
             )}
             {signal === 'logs' && selectedLogIdx !== null && logs && (
-              <div
-                style={{
-                  padding: 16,
-                  fontSize: 12,
-                  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                }}
-              >
-                <div
-                  style={{
+              <Box sx={{ p: 3 }}>
+                <Box
+                  sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    marginBottom: 12,
+                    mb: 3,
                   }}
                 >
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>
+                  <Text sx={{ fontWeight: 'bold', fontSize: 2 }}>
                     Log Detail
-                  </span>
-                  <span
-                    style={{
-                      cursor: 'pointer',
-                      color: '#656d76',
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                    }}
+                  </Text>
+                  <Button
+                    size="small"
+                    variant="invisible"
                     onClick={handleCloseDetail}
                   >
                     ✕
-                  </span>
-                </div>
-                <pre style={{ margin: 0 }}>
+                  </Button>
+                </Box>
+                <Box
+                  as="pre"
+                  sx={{
+                    m: 0,
+                    fontSize: 1,
+                    fontFamily: 'mono',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {JSON.stringify(logs[selectedLogIdx], null, 2)}
-                </pre>
-              </div>
+                </Box>
+              </Box>
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {/* ─── Bottom pane toggle bar ─── */}
       {signal === 'traces' && selectedSpan && spanTree.length > 0 && (
         <>
-          <div
-            style={{
+          <Box
+            sx={{
               display: 'flex',
-              gap: 4,
-              padding: '4px 12px',
-              background: '#f6f8fa',
-              borderTop: '1px solid #d0d7de',
+              gap: 1,
+              px: 3,
+              py: 1,
+              bg: 'canvas.subtle',
+              borderTop: '1px solid',
+              borderColor: 'border.default',
               flexShrink: 0,
             }}
           >
-            {BOTTOM_PANE_VIEWS.map(pane => {
-              const active = bottomPane === pane;
-              return (
-                <button
-                  key={pane}
-                  onClick={() => toggleBottomPane(pane)}
-                  style={{
-                    padding: '3px 10px',
-                    fontSize: 11,
-                    fontWeight: active ? 600 : 400,
-                    border: '1px solid',
-                    borderColor: active ? '#0969da' : '#d0d7de',
-                    borderRadius: 6,
-                    background: active ? '#ddf4ff' : '#ffffff',
-                    color: active ? '#0969da' : '#1f2328',
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {pane === 'timeline' ? '⎇ Timeline' : '🌳 Span Tree'}
-                </button>
-              );
-            })}
-          </div>
+            <Button
+              size="small"
+              variant={bottomPane === 'timeline' ? 'primary' : 'invisible'}
+              leadingVisual={ClockIcon}
+              onClick={() => toggleBottomPane('timeline')}
+            >
+              Timeline
+            </Button>
+            <Button
+              size="small"
+              variant={bottomPane === 'tree' ? 'primary' : 'invisible'}
+              leadingVisual={GitBranchIcon}
+              onClick={() => toggleBottomPane('tree')}
+            >
+              Span Tree
+            </Button>
+          </Box>
 
           {/* Bottom pane content */}
           {bottomPane && (
-            <div
-              style={{
+            <Box
+              sx={{
                 height: 260,
                 overflow: 'auto',
-                borderTop: '1px solid #d0d7de',
+                borderTop: '1px solid',
+                borderColor: 'border.default',
                 flexShrink: 0,
               }}
             >
@@ -325,11 +323,11 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
                   defaultExpandDepth={3}
                 />
               )}
-            </div>
+            </Box>
           )}
         </>
       )}
-    </div>
+    </Box>
   );
 };
 

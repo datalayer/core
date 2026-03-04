@@ -6,13 +6,15 @@
 /**
  * OtelSpanTree – Collapsible tree view of nested spans within a trace.
  *
- * Renders spans as an indented, expandable tree. Each node shows the span
- * name, duration bar, and can be selected. Supports deep nesting.
+ * Renders spans as an indented, expandable tree with duration bars.
+ * Uses Primer React components for consistent theming.
  *
  * @module otel/OtelSpanTree
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { Box, Text } from '@primer/react';
+import { ChevronDownIcon, ChevronRightIcon } from '@primer/octicons-react';
 import type { OtelSpanTreeProps, OtelSpan } from './types';
 import { formatDuration, serviceColor, toMs } from './utils';
 
@@ -53,111 +55,115 @@ const SpanNode: React.FC<SpanNodeProps> = ({
 
   return (
     <>
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
           height: 28,
-          paddingLeft: depth * INDENT_PX,
-          paddingRight: 8,
+          pl: `${depth * INDENT_PX}px`,
+          pr: 2,
           cursor: 'pointer',
-          background: isSelected ? 'rgba(9,105,218,0.08)' : 'transparent',
-          borderBottom: '1px solid #eaeef2',
-          transition: 'background 0.1s',
+          bg: isSelected ? 'accent.subtle' : 'canvas.default',
+          borderBottom: '1px solid',
+          borderColor: 'border.muted',
+          ':hover': {
+            bg: isSelected ? 'accent.subtle' : 'canvas.subtle',
+          },
         }}
         onClick={() => onSelectSpan?.(span)}
-        onMouseEnter={e => {
-          if (!isSelected) e.currentTarget.style.background = '#f6f8fa';
-        }}
-        onMouseLeave={e => {
-          if (!isSelected) e.currentTarget.style.background = 'transparent';
-        }}
       >
         {/* Expand/collapse toggle */}
-        <div
-          style={{
+        <Box
+          sx={{
             width: 20,
             textAlign: 'center',
-            fontSize: 12,
-            color: '#656d76',
+            color: 'fg.muted',
             userSelect: 'none',
             flexShrink: 0,
+            cursor: hasChildren ? 'pointer' : 'default',
           }}
           onClick={e => {
             e.stopPropagation();
             if (hasChildren) toggleExpanded(span.span_id);
           }}
         >
-          {hasChildren ? (isExpanded ? '▾' : '▸') : '·'}
-        </div>
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDownIcon size={12} />
+            ) : (
+              <ChevronRightIcon size={12} />
+            )
+          ) : (
+            <Text sx={{ color: 'fg.subtle', fontSize: 0 }}>·</Text>
+          )}
+        </Box>
 
         {/* Service color dot */}
-        <div
-          style={{
+        <Box
+          sx={{
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: color,
+            bg: color,
             flexShrink: 0,
-            marginRight: 6,
+            mr: 1,
           }}
         />
 
         {/* Name */}
-        <div
-          style={{
+        <Text
+          sx={{
             flex: '0 0 200px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-            fontSize: 12,
-            fontWeight: isSelected ? 600 : 400,
+            fontSize: 1,
+            fontWeight: isSelected ? 'bold' : 'normal',
           }}
           title={`${span.service_name} / ${span.span_name}`}
         >
           {span.span_name}
-        </div>
+        </Text>
 
         {/* Mini duration bar */}
-        <div
-          style={{
+        <Box
+          sx={{
             flex: 1,
             position: 'relative',
             height: 12,
-            background: '#f6f8fa',
-            borderRadius: 3,
-            marginLeft: 8,
-            marginRight: 8,
+            bg: 'canvas.subtle',
+            borderRadius: 1,
+            mx: 2,
             overflow: 'hidden',
           }}
         >
-          <div
-            style={{
+          <Box
+            sx={{
               position: 'absolute',
               left: `${startPct}%`,
               width: `${widthPct}%`,
               height: '100%',
-              background: color,
-              borderRadius: 3,
+              bg: color,
+              borderRadius: 1,
               opacity: isSelected ? 1 : 0.7,
             }}
           />
-        </div>
+        </Box>
 
         {/* Duration text */}
-        <div
-          style={{
+        <Text
+          sx={{
             minWidth: 60,
             textAlign: 'right',
-            fontSize: 11,
-            fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-            color: '#656d76',
+            fontSize: 0,
+            fontFamily: 'mono',
+            color: 'fg.muted',
             flexShrink: 0,
           }}
         >
           {formatDuration(span.duration_ms)}
-        </div>
-      </div>
+        </Text>
+      </Box>
 
       {/* Children (recursive) */}
       {hasChildren &&
@@ -234,36 +240,67 @@ export const OtelSpanTree: React.FC<OtelSpanTreeProps> = ({
 
   if (spans.length === 0) {
     return (
-      <div style={{ padding: 16, color: '#656d76', textAlign: 'center' }}>
-        No span tree to display.
-      </div>
+      <Box sx={{ p: 3, color: 'fg.muted', textAlign: 'center' }}>
+        <Text>No span tree to display.</Text>
+      </Box>
     );
   }
 
   return (
-    <div style={{ width: '100%', overflow: 'auto' }}>
+    <Box sx={{ width: '100%', overflow: 'auto' }}>
       {/* Header */}
-      <div
-        style={{
+      <Box
+        sx={{
           display: 'flex',
           alignItems: 'center',
           height: 28,
-          padding: '0 8px',
-          borderBottom: '2px solid #d0d7de',
-          background: '#f6f8fa',
-          fontSize: 11,
-          fontWeight: 600,
-          color: '#656d76',
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          px: 2,
+          borderBottom: '2px solid',
+          borderColor: 'border.default',
+          bg: 'canvas.subtle',
         }}
       >
-        <div style={{ width: 20 }} />
-        <div style={{ width: 8, marginRight: 6 }} />
-        <div style={{ flex: '0 0 200px' }}>Span</div>
-        <div style={{ flex: 1, marginLeft: 8, marginRight: 8 }}>Timeline</div>
-        <div style={{ minWidth: 60, textAlign: 'right' }}>Duration</div>
-      </div>
+        <Box sx={{ width: 20 }} />
+        <Box sx={{ width: 8, mr: 1 }} />
+        <Text
+          sx={{
+            flex: '0 0 200px',
+            fontSize: 0,
+            fontWeight: 'bold',
+            color: 'fg.muted',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Span
+        </Text>
+        <Text
+          sx={{
+            flex: 1,
+            mx: 2,
+            fontSize: 0,
+            fontWeight: 'bold',
+            color: 'fg.muted',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Timeline
+        </Text>
+        <Text
+          sx={{
+            minWidth: 60,
+            textAlign: 'right',
+            fontSize: 0,
+            fontWeight: 'bold',
+            color: 'fg.muted',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Duration
+        </Text>
+      </Box>
       {spans.map(root => (
         <SpanNode
           key={root.span_id}
@@ -277,6 +314,6 @@ export const OtelSpanTree: React.FC<OtelSpanTreeProps> = ({
           traceDuration={traceDuration}
         />
       ))}
-    </div>
+    </Box>
   );
 };

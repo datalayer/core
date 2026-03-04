@@ -20,6 +20,121 @@ function authHeaders(token?: string): Record<string, string> {
   return {};
 }
 
+/** Convert nanosecond epoch to ISO string. Returns the input if already a string. */
+function nanoToIso(val: unknown): string {
+  if (typeof val === 'string' && val.length > 0) {
+    // Already a date string — use as-is.
+    return val;
+  }
+  const n = Number(val);
+  if (!isNaN(n) && n > 1e15) {
+    // Nanosecond epoch → milliseconds.
+    return new Date(n / 1e6).toISOString();
+  }
+  if (!isNaN(n) && n > 1e12) {
+    // Microsecond epoch.
+    return new Date(n / 1e3).toISOString();
+  }
+  if (!isNaN(n) && n > 0) {
+    // Millisecond epoch.
+    return new Date(n).toISOString();
+  }
+  return String(val ?? '');
+}
+
+/** Normalise a raw API span row into the OtelSpan shape components expect. */
+function normalizeSpan(raw: Record<string, unknown>): OtelSpan {
+  return {
+    trace_id: String(raw.trace_id ?? ''),
+    span_id: String(raw.span_id ?? raw.trace_id ?? ''),
+    parent_span_id: raw.parent_span_id ? String(raw.parent_span_id) : undefined,
+    span_name: String(raw.span_name ?? raw.operation_name ?? raw.name ?? ''),
+    service_name: String(raw.service_name ?? ''),
+    kind: String(raw.kind ?? raw.span_kind ?? 'INTERNAL'),
+    start_time: nanoToIso(raw.start_time ?? raw.start_time_unix_nano),
+    end_time: nanoToIso(raw.end_time ?? raw.end_time_unix_nano),
+    duration_ms:
+      raw.duration_ms != null
+        ? Number(raw.duration_ms)
+        : raw.duration_ns != null
+          ? Number(raw.duration_ns) / 1e6
+          : 0,
+    status_code: raw.status_code ? String(raw.status_code) : undefined,
+    status_message: raw.status_message ? String(raw.status_message) : undefined,
+    otel_scope_name: raw.otel_scope_name
+      ? String(raw.otel_scope_name)
+      : undefined,
+    attributes:
+      typeof raw.attributes === 'object' && raw.attributes !== null
+        ? (raw.attributes as Record<string, unknown>)
+        : typeof raw.attributes === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(raw.attributes as string);
+              } catch {
+                return undefined;
+              }
+            })()
+          : undefined,
+  };
+}
+
+/** Normalise a raw API log row into the OtelLog shape components expect. */
+function normalizeLog(raw: Record<string, unknown>): OtelLog {
+  return {
+    timestamp: nanoToIso(raw.timestamp ?? raw.timestamp_unix_nano),
+    severity_text: String(raw.severity_text ?? ''),
+    severity_number:
+      raw.severity_number != null ? Number(raw.severity_number) : undefined,
+    body: String(raw.body ?? ''),
+    service_name: String(raw.service_name ?? ''),
+    trace_id: raw.trace_id ? String(raw.trace_id) : undefined,
+    span_id: raw.span_id ? String(raw.span_id) : undefined,
+    attributes:
+      typeof raw.attributes === 'object' && raw.attributes !== null
+        ? (raw.attributes as Record<string, unknown>)
+        : typeof raw.attributes === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(raw.attributes as string);
+              } catch {
+                return undefined;
+              }
+            })()
+          : undefined,
+  };
+}
+
+/** Normalise a raw API metric row into the OtelMetric shape components expect. */
+function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
+  return {
+    metric_name: String(raw.metric_name ?? raw.name ?? ''),
+    service_name: String(raw.service_name ?? ''),
+    value: Number(raw.value ?? raw.value_double ?? raw.value_int ?? 0),
+    unit: raw.metric_unit
+      ? String(raw.metric_unit)
+      : raw.unit
+        ? String(raw.unit)
+        : undefined,
+    timestamp: nanoToIso(
+      raw.timestamp ?? raw.timestamp_unix_nano ?? raw.start_time_unix_nano,
+    ),
+    metric_type: raw.metric_type ? String(raw.metric_type) : undefined,
+    attributes:
+      typeof raw.attributes === 'object' && raw.attributes !== null
+        ? (raw.attributes as Record<string, unknown>)
+        : typeof raw.attributes === 'string'
+          ? (() => {
+              try {
+                return JSON.parse(raw.attributes as string);
+              } catch {
+                return undefined;
+              }
+            })()
+          : undefined,
+  };
+}
+
 // ── useOtelTraces ───────────────────────────────────────────────────
 
 /** Fetch a list of traces / spans from the OTEL service. */
@@ -50,7 +165,8 @@ export function useOtelTraces(options: {
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      setTraces(data.data ?? data ?? []);
+      const rows = data.data ?? data ?? [];
+      setTraces(Array.isArray(rows) ? rows.map(normalizeSpan) : []);
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -97,7 +213,8 @@ export function useOtelTrace(options: {
         return resp.json();
       })
       .then(data => {
-        setSpans(data.data ?? data ?? []);
+        const rows = data.data ?? data ?? [];
+        setSpans(Array.isArray(rows) ? rows.map(normalizeSpan) : []);
         setError(null);
       })
       .catch((err: any) => setError(err.message))
@@ -143,7 +260,8 @@ export function useOtelLogs(options: {
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      setLogs(data.data ?? data ?? []);
+      const rows = data.data ?? data ?? [];
+      setLogs(Array.isArray(rows) ? rows.map(normalizeLog) : []);
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -199,7 +317,8 @@ export function useOtelMetrics(options: {
       );
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
-      setMetrics(data.data ?? data ?? []);
+      const rows = data.data ?? data ?? [];
+      setMetrics(Array.isArray(rows) ? rows.map(normalizeMetric) : []);
       setError(null);
     } catch (err: any) {
       setError(err.message);
@@ -232,7 +351,22 @@ export function useOtelServices(options: { token?: string; baseUrl?: string }) {
       headers: authHeaders(token),
     })
       .then(resp => resp.json())
-      .then(data => setServices(data.services ?? data ?? []))
+      .then(data => {
+        // Handle various response shapes:
+        // { services: ["a","b"] } | { data: [{service_name:"a"},...] } | ["a","b"]
+        let raw: unknown = data.services ?? data.data ?? data;
+        if (
+          Array.isArray(raw) &&
+          raw.length > 0 &&
+          typeof raw[0] === 'object' &&
+          raw[0] !== null
+        ) {
+          raw = (raw as Array<Record<string, unknown>>).map(
+            r => (r.service_name ?? r.name ?? '') as string,
+          );
+        }
+        setServices(Array.isArray(raw) ? (raw as string[]) : []);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token, baseUrl]);
