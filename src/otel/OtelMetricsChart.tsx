@@ -12,8 +12,7 @@
  * @module otel/OtelMetricsChart
  */
 
-import React, { useMemo } from 'react';
-import type { EChartsOption } from 'echarts';
+import React from 'react';
 import * as echarts from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import type { OtelMetric } from './types';
@@ -82,99 +81,92 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
   metrics,
   height = 280,
 }) => {
-  const option = useMemo<EChartsOption>(() => {
-    if (!metrics || metrics.length === 0) {
-      return {
-        title: {
-          text: 'No metrics data',
-          left: 'center',
-          top: 'center',
-          textStyle: { color: '#999', fontSize: 14, fontWeight: 'normal' },
-        },
-      };
-    }
-
-    // Group by metric_name, sort each group by timestamp.
-    const groups = new Map<string, { ts: number; value: number }[]>();
-    for (const m of metrics) {
-      const key = m.metric_name || '(unnamed)';
-      const arr = groups.get(key) ?? [];
-      if (!groups.has(key)) groups.set(key, arr);
-      arr.push({
-        ts: new Date(m.timestamp).getTime(),
-        value: m.value,
-      });
-    }
-
-    // Sort each series chronologically.
-    for (const points of groups.values()) {
-      points.sort((a, b) => a.ts - b.ts);
-    }
-
-    const seriesNames = [...groups.keys()];
-
-    // Build ECharts series with line gradient.
-    const series: EChartsOption['series'] = seriesNames.map((name, idx) => {
-      const palette = SERIES_COLORS[idx % SERIES_COLORS.length];
-      const points = groups.get(name) ?? [];
-      return {
-        name,
-        type: 'line' as const,
-        smooth: true,
-        symbol: 'circle',
-        symbolSize: 5,
-        showSymbol: false,
-        color: palette.line,
-        lineStyle: {
-          width: 2,
-        },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: palette.gradientStart },
-            { offset: 1, color: palette.gradientEnd },
-          ]),
-        },
-        emphasis: {
-          focus: 'series' as const,
-        },
-        data: points.map(p => [p.ts, p.value]),
-      };
+  // Group by metric_name, sort each group by timestamp.
+  const groups = new Map<string, { ts: number; value: number }[]>();
+  for (const m of metrics ?? []) {
+    const key = m.metric_name || '(unnamed)';
+    const arr = groups.get(key) ?? [];
+    if (!groups.has(key)) groups.set(key, arr);
+    arr.push({
+      ts: new Date(m.timestamp).getTime(),
+      value: m.value,
     });
+  }
+  for (const points of groups.values()) {
+    points.sort((a, b) => a.ts - b.ts);
+  }
 
+  const seriesNames = [...groups.keys()];
+
+  const series = seriesNames.map((name, idx) => {
+    const palette = SERIES_COLORS[idx % SERIES_COLORS.length];
+    const points = groups.get(name) ?? [];
     return {
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross',
-          label: { backgroundColor: '#6a7985' },
-        },
+      name,
+      type: 'line',
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 5,
+      showSymbol: false,
+      lineStyle: { width: 2, color: palette.line },
+      itemStyle: { color: palette.line },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: palette.gradientStart },
+          { offset: 1, color: palette.gradientEnd },
+        ]),
       },
-      legend: {
-        data: seriesNames,
-        top: 6,
-        textStyle: { fontSize: 11 },
+      emphasis: { focus: 'series' },
+      data: points.map(p => [p.ts, p.value]),
+    };
+  });
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross',
+        label: { backgroundColor: '#6a7985' },
       },
-      grid: {
-        left: 50,
-        right: 20,
-        top: 40,
-        bottom: 30,
-      },
-      xAxis: {
-        type: 'time',
-        boundaryGap: false,
-        axisLine: { lineStyle: { color: '#ccc' } },
-        axisLabel: { fontSize: 10 },
-      },
-      yAxis: {
-        type: 'value',
-        splitLine: { lineStyle: { type: 'dashed', color: '#e8e8e8' } },
-        axisLine: { show: false },
-        axisLabel: { fontSize: 10 },
-      },
-      series,
-    } as EChartsOption;
-  }, [metrics]);
+    },
+    legend: {
+      data: seriesNames,
+      top: 6,
+      textStyle: { fontSize: 11 },
+    },
+    grid: { left: 50, right: 20, top: 40, bottom: 30 },
+    xAxis: {
+      type: 'time',
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: '#ccc' } },
+      axisLabel: { fontSize: 10 },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { type: 'dashed', color: '#e8e8e8' } },
+      axisLine: { show: false },
+      axisLabel: { fontSize: 10 },
+    },
+    series,
+  };
+
+  if (!metrics || metrics.length === 0) {
+    return (
+      <ReactECharts
+        echarts={echarts}
+        option={{
+          title: {
+            text: 'No metrics data',
+            left: 'center',
+            top: 'center',
+            textStyle: { color: '#999', fontSize: 14, fontWeight: 'normal' },
+          },
+        }}
+        style={{ width: '100%', height: `${height}px` }}
+        notMerge={true}
+      />
+    );
+  }
 
   return (
     <ReactECharts

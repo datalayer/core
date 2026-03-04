@@ -340,7 +340,7 @@ export function useOtelMetrics(options: {
     try {
       const params = new URLSearchParams({ limit: String(limit) });
       if (serviceName) params.set('service_name', serviceName);
-      if (metricName) params.set('name', metricName);
+      if (metricName) params.set('metric_name', metricName);
       const resp = await fetch(`${baseUrl}/api/otel/v1/metrics?${params}`, {
         headers: authHeaders(token),
       });
