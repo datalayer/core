@@ -34,6 +34,27 @@ interface SpanRow {
 
 const GRID_COLS = '140px 1fr 160px 90px';
 
+// ── Helpers ─────────────────────────────────────────────────────────
+
+/** Extract gen_ai token counts from span attributes. */
+function getTokenUsage(span: OtelSpan): {
+  input?: number;
+  output?: number;
+} | null {
+  const attrs = span.attributes;
+  if (!attrs) return null;
+  const input =
+    attrs['gen_ai.usage.input_tokens'] != null
+      ? Number(attrs['gen_ai.usage.input_tokens'])
+      : undefined;
+  const output =
+    attrs['gen_ai.usage.output_tokens'] != null
+      ? Number(attrs['gen_ai.usage.output_tokens'])
+      : undefined;
+  if (input == null && output == null) return null;
+  return { input, output };
+}
+
 export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   spans,
   loading,
@@ -236,6 +257,68 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
               {span.status_code === 'ERROR' && (
                 <Label variant="danger" size="small">
                   ERROR
+                </Label>
+              )}
+              {/* Token usage badges for AI spans */}
+              {(() => {
+                const usage = getTokenUsage(span);
+                if (!usage) return null;
+                return (
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '2px',
+                      border: '1px solid',
+                      borderColor: 'border.default',
+                      borderRadius: 2,
+                      px: 1,
+                      fontSize: '10px',
+                      fontFamily: 'mono',
+                      color: 'fg.muted',
+                      flexShrink: 0,
+                      lineHeight: '16px',
+                    }}
+                  >
+                    {usage.input != null && (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '1px',
+                        }}
+                      >
+                        <Text sx={{ fontSize: '9px', color: 'fg.subtle' }}>
+                          ↗
+                        </Text>
+                        <Text>{usage.input}</Text>
+                      </Box>
+                    )}
+                    {usage.output != null && (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '1px',
+                        }}
+                      >
+                        <Text sx={{ fontSize: '9px', color: 'fg.subtle' }}>
+                          ↙
+                        </Text>
+                        <Text>{usage.output}</Text>
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })()}
+              {/* Scope tag for instrumented libraries */}
+              {span.otel_scope_name && (
+                <Label
+                  size="small"
+                  variant="secondary"
+                  sx={{ flexShrink: 0, fontSize: '10px' }}
+                >
+                  {span.otel_scope_name}
                 </Label>
               )}
             </Box>

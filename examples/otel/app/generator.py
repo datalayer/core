@@ -92,11 +92,11 @@ SPAN_TEMPLATES = [
 # ── Pydantic-AI / Logfire style agent traces ────────────────────────
 
 AI_MODELS = [
-    "ollama:gemma3:1b-it-qat",
-    "openai:gpt-4o",
-    "openai:gpt-4o-mini",
-    "anthropic:claude-sonnet-4-20250514",
-    "ollama:llama3:8b",
+    ("ollama:gemma3:1b-it-qat", "gemma3:1b-it-qat"),
+    ("openai:gpt-4o", "gpt-4o"),
+    ("openai:gpt-4o-mini", "gpt-4o-mini"),
+    ("anthropic:claude-sonnet-4-20250514", "claude-sonnet-4-20250514"),
+    ("ollama:llama3:8b", "llama3:8b"),
 ]
 
 AI_PROMPTS = [
@@ -129,40 +129,99 @@ def generate_pydantic_ai_traces(count: int = 3) -> None:
     """Generate *count* pydantic-ai / logfire-style nested agent traces.
 
     Each trace has:
-      - A root "agent run" span (scope: pydantic-ai)
-      - A child "chat {model}" span with gen_ai attributes
+      - A root "agent run" span (scope: pydantic-ai) with full agent attributes
+      - A child "chat {model}" span with gen_ai semantic conventions
     This simulates what logfire.instrument_pydantic_ai() produces.
     """
+    import json
+
     endpoint = _otlp_endpoint()
     for _ in range(count):
-        model = random.choice(AI_MODELS)
-        prompt = random.choice(AI_PROMPTS)
-        response = random.choice(AI_RESPONSES)
+        model_full, model_short = random.choice(AI_MODELS)
+        prompt_idx = random.randrange(len(AI_PROMPTS))
+        prompt = AI_PROMPTS[prompt_idx]
+        response = AI_RESPONSES[prompt_idx]
         instruction = random.choice(AI_INSTRUCTIONS)
-        duration = random.uniform(0.5, 4.0)
+        input_tokens = random.randint(20, 120)
+        output_tokens = random.randint(10, 80)
 
         provider = TracerProvider(resource=_resource("unknown_service"))
         exporter = OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")
         provider.add_span_processor(BatchSpanProcessor(exporter))
-        tracer = provider.get_tracer("pydantic-ai")
+        tracer = provider.get_tracer("pydantic-ai", "1.42.0")
 
         with tracer.start_as_current_span("agent run") as root:
-            root.set_attribute("pydantic_ai.agent", True)
-            root.set_attribute("gen_ai.system_instructions", instruction)
-            root.set_attribute("pydantic_ai.prompt", prompt)
-            root.set_attribute("pydantic_ai.final_result", response)
+            # Core agent attributes
+            root.set_attribute("agent_name", "agent")
+            root.set_attribute("gen_ai.agent.name", "agent")
+            root.set_attribute("model_name", model_short)
+            root.set_attribute("final_result", response)
+
+            # Token usage on root span (aggregated)
+            root.set_attribute("gen_ai.usage.input_tokens", input_tokens)
+            root.set_attribute("gen_ai.usage.output_tokens", output_tokens)
+
+            # System instructions as JSON string (OTEL attributes are flat)
+            root.set_attribute(
+                "gen_ai.system_instructions",
+                json.dumps([{"type": "text", "content": instruction}]),
+            )
+
+            # Full conversation messages
+            root.set_attribute(
+                "pydantic_ai.all_messages",
+                json.dumps([
+                    {
+                        "role": "user",
+                        "parts": [{"type": "text", "content": prompt}],
+                    },
+                    {
+                        "role": "assistant",
+                        "parts": [{"type": "text", "content": response}],
+                        "finish_reason": "stop",
+                    },
+                ]),
+            )
 
             # Simulate agent thinking time
             time.sleep(random.uniform(0.01, 0.05))
 
             # Child: chat completion span
-            with tracer.start_as_current_span(f"chat {model}") as child:
+            with tracer.start_as_current_span(f"chat {model_short}") as child:
                 child.set_attribute("gen_ai.system", "pydantic-ai")
-                child.set_attribute("gen_ai.request.model", model)
-                child.set_attribute("gen_ai.input.messages", prompt)
-                child.set_attribute("gen_ai.output.messages", response)
-                child.set_attribute("gen_ai.system_instructions", instruction)
+                child.set_attribute("gen_ai.operation.name", "chat")
+                child.set_attribute("gen_ai.request.model", model_full)
+                child.set_attribute("gen_ai.response.model", model_short)
+                child.set_attribute("gen_ai.usage.input_tokens", input_tokens)
+                child.set_attribute("gen_ai.usage.output_tokens", output_tokens)
                 child.set_attribute("gen_ai.response.finish_reason", "stop")
+
+                # Request/response content
+                child.set_attribute(
+                    "gen_ai.input.messages",
+                    json.dumps([
+                        {
+                            "role": "system",
+                            "parts": [{"type": "text", "content": instruction}],
+                        },
+                        {
+                            "role": "user",
+                            "parts": [{"type": "text", "content": prompt}],
+                        },
+                    ]),
+                )
+                child.set_attribute(
+                    "gen_ai.output.messages",
+                    json.dumps([
+                        {
+                            "role": "assistant",
+                            "parts": [{"type": "text", "content": response}],
+                            "finish_reason": "stop",
+                        },
+                    ]),
+                )
+
+                # pydantic-ai model request parameters
                 child.set_attribute("pydantic_ai.model_request_parameters.output_mode", "text")
                 child.set_attribute("pydantic_ai.model_request_parameters.allow_text_output", True)
 

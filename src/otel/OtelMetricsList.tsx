@@ -346,7 +346,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
           borderColor: 'border.default',
           position: 'sticky',
           top: 0,
-          zIndex: 2,
+          zIndex: 0,
         }}
       >
         <SegmentedControl

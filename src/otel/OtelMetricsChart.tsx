@@ -14,7 +14,8 @@
 
 import React, { useMemo } from 'react';
 import type { EChartsOption } from 'echarts';
-import { EChartsReact } from '../components/echarts/EChartsReact';
+import * as echarts from 'echarts';
+import ReactECharts from 'echarts-for-react';
 import type { OtelMetric } from './types';
 
 // ── Gradient palette ────────────────────────────────────────────────
@@ -123,25 +124,15 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
         symbol: 'circle',
         symbolSize: 5,
         showSymbol: false,
+        color: palette.line,
         lineStyle: {
           width: 2,
-          color: palette.line,
-        },
-        itemStyle: {
-          color: palette.line,
         },
         areaStyle: {
-          color: {
-            type: 'linear' as const,
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: palette.gradientStart },
-              { offset: 1, color: palette.gradientEnd },
-            ],
-          },
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: palette.gradientStart },
+            { offset: 1, color: palette.gradientEnd },
+          ]),
         },
         emphasis: {
           focus: 'series' as const,
@@ -186,9 +177,11 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
   }, [metrics]);
 
   return (
-    <EChartsReact
-      options={option}
+    <ReactECharts
+      echarts={echarts}
+      option={option}
       style={{ width: '100%', height: `${height}px` }}
+      notMerge={true}
     />
   );
 };
