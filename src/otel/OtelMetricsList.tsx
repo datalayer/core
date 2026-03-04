@@ -13,15 +13,25 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Box, Text, Label, Spinner, CounterLabel } from '@primer/react';
+import {
+  Box,
+  Text,
+  Label,
+  Spinner,
+  CounterLabel,
+  SegmentedControl,
+} from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
 import {
   MeterIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  GraphIcon,
+  TableIcon,
 } from '@primer/octicons-react';
 import type { OtelMetric } from './types';
 import { formatTime } from './utils';
+import { OtelMetricsChart } from './OtelMetricsChart';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -287,6 +297,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
   metrics,
   loading,
 }) => {
+  const [view, setView] = useState<'chart' | 'table'>('chart');
   const grouped = useMemo(() => groupByName(metrics), [metrics]);
 
   if (loading) {
@@ -322,6 +333,54 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
 
   return (
     <Box sx={{ overflow: 'auto', height: '100%' }}>
+      {/* View toggle + chart */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          px: 3,
+          py: 2,
+          bg: 'canvas.subtle',
+          borderBottom: '1px solid',
+          borderColor: 'border.default',
+          position: 'sticky',
+          top: 0,
+          zIndex: 2,
+        }}
+      >
+        <SegmentedControl
+          aria-label="Metrics view"
+          size="small"
+          onChange={(idx: number) => setView(idx === 0 ? 'chart' : 'table')}
+        >
+          <SegmentedControl.IconButton
+            icon={GraphIcon}
+            aria-label="Chart"
+            selected={view === 'chart'}
+          />
+          <SegmentedControl.IconButton
+            icon={TableIcon}
+            aria-label="Table"
+            selected={view === 'table'}
+          />
+        </SegmentedControl>
+      </Box>
+
+      {/* Chart panel */}
+      {view === 'chart' && (
+        <Box
+          sx={{
+            px: 3,
+            py: 2,
+            borderBottom: '1px solid',
+            borderColor: 'border.default',
+          }}
+        >
+          <OtelMetricsChart metrics={metrics} height={280} />
+        </Box>
+      )}
+
       {/* Table header */}
       <Box
         sx={{
@@ -334,7 +393,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
           borderBottom: '1px solid',
           borderColor: 'border.default',
           position: 'sticky',
-          top: 0,
+          top: 44,
           zIndex: 1,
         }}
       >

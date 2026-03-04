@@ -137,6 +137,24 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
 
   const { services } = useOtelServices({ baseUrl, token });
 
+  // ── WebSocket live updates ──
+  // When a WS message arrives for a signal, refetch the corresponding hook
+  // so the data stays fresh without polling.
+  const wsCallbacks = useMemo<OtelWsCallbacks>(
+    () => ({
+      onTraces: () => void refetchTraces(),
+      onLogs: () => void refetchLogs(),
+      onMetrics: () => void refetchMetrics(),
+    }),
+    [refetchTraces, refetchLogs, refetchMetrics],
+  );
+
+  const { connected: wsConnected } = useOtelWebSocket({
+    baseUrl,
+    token,
+    callbacks: wsCallbacks,
+  });
+
   // trace-detail fetch (when a span is selected)
   const { spans: traceSpans } = useOtelTrace({
     baseUrl,
@@ -287,23 +305,33 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
       }}
     >
       {/* ─── Search Bar ─── */}
-      <OtelSearchBar
-        signal={signal}
-        onSignalChange={setSignal}
-        services={services ?? []}
-        selectedService={service}
-        onServiceChange={setService}
-        query={query}
-        onQueryChange={setQuery}
-        onRefresh={handleRefresh}
-        loading={
-          signal === 'traces'
-            ? tracesLoading
-            : signal === 'logs'
-              ? logsLoading
-              : metricsLoading
-        }
-      />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+        <Box sx={{ flex: 1 }}>
+          <OtelSearchBar
+            signal={signal}
+            onSignalChange={setSignal}
+            services={services ?? []}
+            selectedService={service}
+            onServiceChange={setService}
+            query={query}
+            onQueryChange={setQuery}
+            onRefresh={handleRefresh}
+            loading={
+              signal === 'traces'
+                ? tracesLoading
+                : signal === 'logs'
+                  ? logsLoading
+                  : metricsLoading
+            }
+          />
+        </Box>
+        {/* WebSocket status indicator */}
+        <Box sx={{ pr: 2, flexShrink: 0 }}>
+          <Label variant={wsConnected ? 'success' : 'secondary'} size="small">
+            {wsConnected ? '● Live' : '○ Polling'}
+          </Label>
+        </Box>
+      </Box>
 
       {/* ─── Timeline Range Slider ─── */}
       {timelineBounds && rangeStart && rangeEnd && (

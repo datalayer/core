@@ -51,5 +51,7 @@ export { OtelSpanTree } from './OtelSpanTree';
 export { OtelLogsList } from './OtelLogsList';
 export { OtelSearchBar } from './OtelSearchBar';
 export { OtelMetricsList } from './OtelMetricsList';
+export { OtelMetricsChart } from './OtelMetricsChart';
+export type { OtelMetricsChartProps } from './OtelMetricsChart';
 export { OtelLive } from './OtelLive';
 export { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';

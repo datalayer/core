@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { OtelSpan, OtelLog, OtelMetric, SignalType } from './types';
+import type { OtelSpan, OtelLog, OtelMetric } from './types';
 
 /** Build auth headers from a token. */
 function authHeaders(token?: string): Record<string, string> {
