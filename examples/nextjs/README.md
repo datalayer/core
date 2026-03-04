@@ -40,7 +40,7 @@ This example showcases:
 
    ```bash
    git clone https://github.com/datalayer/core.git
-   cd core/examples/nextjs-notebook
+   cd core/examples/nextjj
    ```
 
 2. **Install dependencies**:
@@ -101,7 +101,7 @@ This example showcases:
 ## Application Structure
 
 ```
-nextjs-notebook/
+nextjj/
 ├── src/
 │   ├── app/                      # Next.js app router pages
 │   │   ├── layout.tsx            # Root layout

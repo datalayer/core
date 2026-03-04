@@ -36,7 +36,7 @@ This example showcases:
 
    ```bash
    git clone https://github.com/datalayer/core.git
-   cd core/examples/pytorch-workloads
+   cd core/examples/pytorch
    ```
 
 2. **Install dependencies**:
@@ -120,7 +120,7 @@ Average GPU Speedup: 53.04x
 ## Project Structure
 
 ```
-pytorch-workloads/
+pytorch/
 ├── requirements.txt      # Python dependencies (torch)
 ├── README.md             # This file
 ├── main.py               # Main benchmark execution script

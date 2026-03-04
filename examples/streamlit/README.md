@@ -2,35 +2,34 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# FastAPI + Datalayer Client Example
+# Streamlit + Datalayer Client Example
 
-This example demonstrates how to integrate the Datalayer Client with FastAPI to serve machine learning models using Runtime snapshots.
+This example demonstrates how to integrate the Datalayer Client with a [Streamlit](https://streamlit.io/) application to serve machine learning models using Runtime snapshots.
 
 ## Overview
 
 This example showcases:
 
-- **FastAPI Integration**: A modern, fast web framework for building APIs with Python
+- **Streamlit Integration**: A faster way to build and share data apps
 - **Datalayer Client**: Integration with Datalayer's client.
 - **Snapshot Loading**: Loading and serving pre-trained models from Runtime snapshots.
 - **Scikit-learn Models**: Example implementation using sklearn models
-- **RESTful API**: Clean API endpoints for model predictions.
+- **Web UI**: Use the streamlit application UI to get results
 
 ## Features
 
 - ✅ Train ML model on a Datalayer Runtime.
 - ✅ Save a Runtime Snapshot for future model prediction.
 - ✅ Load ML models from Datalayer snapshots.
-- ✅ FastAPI-based REST API with automatic documentation.
-- ✅ Type hints and Pydantic models for request/response validation.
+- ✅ Create a Streamlit Web UI to use your app.
+- ✅ Type hints and Pydantic models for validation.
 
 ## Prerequisites
 
 - Python 3.9+
 - Datalayer Client
-- FastAPI
 - Scikit-learn
-- Uvicorn (ASGI server)
+- Streamlit
 
 ## Installation
 
@@ -38,7 +37,7 @@ This example showcases:
 
    ```bash
    git clone https://github.com/datalayer/core.git
-   cd core/examples/fastapi-sklearn
+   cd core/examples/streamlit
    ```
 
 2. **Install dependencies**:
@@ -54,98 +53,31 @@ This example showcases:
    python app/scripts/snapshot.py
    ```
 
-2. **Start the FastAPI server**:
+2. **Run the local streamlit application**:
 
    ```bash
-   cd app
-   uvicorn app/main:app --reload --host 0.0.0.0 --port 8000
+   streamlit run app/main.py
    ```
 
-3. **Access the API**:
-   - **API Documentation**: http://localhost:8000/docs
-   - **Alternative Docs**: http://localhost:8000/redoc
-   - **Info Check**: http://localhost:8000/
+## Web UI
 
-## API Endpoints
+Access the localhost and test the app!
 
-### Information
-
-```http
-GET /
-```
-
-Returns the API welcome message.
-
-### Model Prediction
-
-```http
-POST /predict
-```
-
-Make predictions using the loaded model.
-
-**Request Body**:
-
-```json
-{
-  "features": [1.0, 2.0, 3.0, 4.0]
-}
-```
-
-**Response**:
-
-```json
-{
-  "prediction": "0"
-}
-```
+![streamlit](https://raw.githubusercontent.com/datalayer/core/refs/heads/main/docs/static/img/streamlit.gif)
 
 ## Project Structure
 
 ```
-fastapi-sklearn/
+streamlit/
 ├── requirements.txt      # Python dependencies
 ├── README.md             # This file
 └── app/
-    ├── main.py           # FastAPI application and endpoints
+    ├── main.py           # Streamlit application
     ├── models.py         # Pydantic model definition
     └── scripts/
         ├── predict.py    # Model prediction logic
         ├── train.py      # Model training logic
         └── snapshot.py   # Model traning and snapshot creation
-```
-
-## Usage Examples
-
-### Using curl
-
-```bash
-# Info check
-curl -X GET "http://localhost:8000/"
-
-# Make a prediction
-curl -X POST "http://localhost:8000/predict" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "features": [5.1, 3.5, 1.4, 0.2]
-  }'
-```
-
-### Using Python requests
-
-```python
-import requests
-
-# Info check
-response = requests.get("http://localhost:8000/")
-print(response.json())
-
-# Make prediction
-data = {
-    "features": [5.1, 3.5, 1.4, 0.2]
-}
-response = requests.post("http://localhost:8000/predict", json=data)
-print(response.json())
 ```
 
 ## License

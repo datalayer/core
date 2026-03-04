@@ -222,3 +222,6 @@ export {
   getRuntimeSnapshots,
   loadRuntimeSnapshot,
 } from './stateful/runtimes/actions';
+
+// OTEL observability components, hooks, and types
+export * from './otel';

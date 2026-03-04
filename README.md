@@ -165,7 +165,7 @@ Available at http://localhost:3000/:
 A complete Next.js application demonstrating platform integration:
 
 ```bash
-cd examples/nextjs-notebook
+cd examples/nextjj
 npm install
 npm run dev
 ```

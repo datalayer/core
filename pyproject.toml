@@ -26,6 +26,7 @@ classifiers = [
 ]
 # TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
+    "httpx",
     "jupyter-console",
     "jupyter-kernel-client",
     "jupyter-nbmodel-client",

@@ -76,7 +76,7 @@ export default function Footer() {
               </Box>
               <Box as="li" sx={{ mb: 2 }}>
                 <Link
-                  href="https://github.com/datalayer/core/tree/main/examples/nextjs-notebook"
+                  href="https://github.com/datalayer/core/tree/main/examples/nextjj"
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{

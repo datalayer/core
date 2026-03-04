@@ -28,6 +28,18 @@
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./otel": {
+      "types": "./lib/otel/index.d.ts",
+      "default": "./lib/otel/index.js"
+    },
+    "./style/*": "./style/*",
+    "./*": "./*"
+  },
   "style": "style/index.css",
   "repository": {
     "type": "git",
@@ -54,7 +66,7 @@
     "build": "npm run clean && gulp resources-to-lib && tsc -b && vite build",
     "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs",
     "build:types": "npm run clean:lib && tsc -b",
-    "build:nextjs": "npm run build --workspace=nextjs-notebook-example",
+    "build:nextjs": "npm run build --workspace=nextjj-example",
     "build:examples": "npm run build:nextjs",
     "build:all": "npm run build && npm run build:examples",
     "lint": "eslint . --quiet",
@@ -90,7 +102,7 @@
     "type-check:watch": "tsc -b -w --noEmit",
     "examples": "run-p jupyter:start examples:vite",
     "examples:vite": "VITE_DATALAYER_RUN_URL=http://localhost:8888 vite --config vite.examples.config.ts",
-    "examples:nextjs": "npm run dev --workspace=nextjs-notebook-example",
+    "examples:nextjs": "npm run dev --workspace=nextjj-example",
     "jupyter:start": "./dev/sh/start-jupyter-server.sh",
     "prepare": "husky || true",
     "kill": "./dev/sh/kill.sh || true",

@@ -124,10 +124,10 @@ The examples are served at http://localhost:3000/ and include:
 
 **Next.js Notebook Example:**
 
-Located in `examples/nextjs-notebook/`, this is a full Next.js application demonstrating platform integration:
+Located in `examples/nextjj/`, this is a full Next.js application demonstrating platform integration:
 
 ```bash
-cd examples/nextjs-notebook
+cd examples/nextjj
 npm install
 npm run dev
 ```
