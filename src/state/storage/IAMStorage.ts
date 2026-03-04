@@ -21,7 +21,8 @@ export type IJWTToken = {
   iss: string;
   jti: number;
   roles: Array<string>;
-  sub: IUser;
+  sub: string;
+  user: IUser;
 };
 
 /**
