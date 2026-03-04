@@ -86,6 +86,12 @@ export interface OtelLiveProps {
   defaultSignal?: SignalType;
   /** Maximum rows to fetch per signal type. */
   limit?: number;
+  /**
+   * Callback invoked once with the internal signal setter so a parent
+   * component (e.g. a header with generate buttons) can programmatically
+   * navigate to a signal tab.
+   */
+  onSignalRef?: (setter: (s: SignalType) => void) => void;
 }
 
 /** Props for the traces table. */

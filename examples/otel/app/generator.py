@@ -31,6 +31,7 @@ from opentelemetry._logs import set_logger_provider, get_logger_provider
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics.view import View, ExponentialBucketHistogramAggregation
 
 from opentelemetry.sdk.resources import Resource
 
@@ -70,7 +71,17 @@ def _flush_and_wait(wait: float = 2.0) -> None:
 
 
 def _resource(service_name: str = "otel-example") -> Resource:
-    return Resource.create({"service.name": service_name})
+    """Create an OTel resource with service name and user identity.
+
+    If ``DATALAYER_USER_UID`` is set the resource includes a
+    ``datalayer.user_uid`` attribute so the OTEL backend can
+    associate the data with the authenticated user.
+    """
+    attrs: dict[str, str] = {"service.name": service_name}
+    user_uid = os.environ.get("DATALAYER_USER_UID")
+    if user_uid:
+        attrs["datalayer.user_uid"] = user_uid
+    return Resource.create(attrs)
 
 
 # ── Trace generation ────────────────────────────────────────────────
@@ -344,40 +355,90 @@ def generate_sample_logs(count: int = 10) -> None:
 
 # ── Metric generation ───────────────────────────────────────────────
 
-METRIC_NAMES = [
-    ("http.server.duration", "ms"),
+# Each tuple: (name, unit, type).
+# type is one of "sum", "histogram", "gauge".
+SUM_METRICS = [
     ("http.server.request_count", "1"),
+    ("http.client.request_count", "1"),
+    ("process.runtime.gc.count", "1"),
+]
+
+HISTOGRAM_METRICS = [
+    ("http.server.duration", "ms"),
+    ("db.client.operation.duration", "ms"),
+    ("http.client.duration", "ms"),
+]
+
+GAUGE_METRICS = [
     ("system.cpu.utilization", "%"),
     ("system.memory.usage", "By"),
-    ("db.client.operation.duration", "ms"),
+    ("process.runtime.memory.usage", "By"),
+]
+
+EXPONENTIAL_HISTOGRAM_METRICS = [
+    ("http.server.request.size", "By"),
+    ("ml.model.inference.latency", "ms"),
+    ("messaging.process.duration", "ms"),
 ]
 
 
 def generate_sample_metrics(count: int = 5) -> None:
-    """Generate *count* metric data-points and export via OTLP/HTTP."""
+    """Generate metric data-points for every type and export via OTLP/HTTP.
+
+    Always produces **sum** (counter), **histogram**, **gauge**
+    (up-down-counter), and **exponentialHistogram** metrics so the UI
+    can display each type differently.
+    *count* controls the number of data-points per metric.
+    """
     endpoint = _otlp_endpoint()
     svc = random.choice(SERVICE_NAMES)
     resource = _resource(svc)
 
     exporter = OTLPMetricExporter(endpoint=f"{endpoint}/v1/metrics")
     reader = PeriodicExportingMetricReader(exporter, export_interval_millis=1000)
-    provider = MeterProvider(resource=resource, metric_readers=[reader])
+
+    # Views that map specific instruments to Exponential Bucket Histogram
+    # aggregation so they are exported as exponentialHistogram data points.
+    exp_views = [
+        View(
+            instrument_name=name,
+            aggregation=ExponentialBucketHistogramAggregation(),
+        )
+        for name, _ in EXPONENTIAL_HISTOGRAM_METRICS
+    ]
+
+    provider = MeterProvider(
+        resource=resource, metric_readers=[reader], views=exp_views
+    )
 
     meter = provider.get_meter("otel-example-generator")
 
-    for _ in range(count):
-        name, unit = random.choice(METRIC_NAMES)
-        if "count" in name:
-            counter = meter.create_counter(name, unit=unit, description=f"Sample {name}")
+    # ── Sum / Counter metrics ────────────────────────────────────────
+    for name, unit in SUM_METRICS:
+        counter = meter.create_counter(name, unit=unit, description=f"Sample {name}")
+        for _ in range(count):
             counter.add(random.randint(1, 100), {"service.name": svc})
-        elif "duration" in name:
-            histogram = meter.create_histogram(name, unit=unit, description=f"Sample {name}")
+
+    # ── Histogram metrics ────────────────────────────────────────────
+    for name, unit in HISTOGRAM_METRICS:
+        histogram = meter.create_histogram(name, unit=unit, description=f"Sample {name}")
+        for _ in range(count):
             histogram.record(random.uniform(1.0, 5000.0), {"service.name": svc})
-        else:
-            gauge_val = random.uniform(0.0, 100.0)
-            # Use an up-down counter to simulate a gauge
-            gauge = meter.create_up_down_counter(name, unit=unit, description=f"Sample {name}")
-            gauge.add(gauge_val, {"service.name": svc})
+
+    # ── Gauge (up-down counter) metrics ──────────────────────────────
+    for name, unit in GAUGE_METRICS:
+        gauge = meter.create_up_down_counter(name, unit=unit, description=f"Sample {name}")
+        for _ in range(count):
+            gauge.add(random.uniform(-20.0, 100.0), {"service.name": svc})
+
+    # ── Exponential Histogram metrics ────────────────────────────
+    # These are recorded as histograms but the View above maps them to
+    # ExponentialBucketHistogramAggregation, so they are exported as
+    # exponentialHistogram data points.
+    for name, unit in EXPONENTIAL_HISTOGRAM_METRICS:
+        hist = meter.create_histogram(name, unit=unit, description=f"Sample {name}")
+        for _ in range(count):
+            hist.record(random.uniform(0.5, 2000.0), {"service.name": svc})
 
     # Wait for the reader to export
     provider.force_flush()

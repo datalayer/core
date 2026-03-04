@@ -17,6 +17,8 @@ export interface DashboardViewProps {
   autoRefreshMs?: number;
   defaultSignal?: 'traces' | 'logs' | 'metrics';
   limit?: number;
+  /** Callback to receive the signal setter from OtelLive. */
+  onSignalRef?: (setter: (s: 'traces' | 'logs' | 'metrics') => void) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -25,6 +27,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   autoRefreshMs = 5000,
   defaultSignal = 'traces',
   limit = 200,
+  onSignalRef,
 }) => (
   <Box sx={{ flex: 1, overflow: 'hidden' }}>
     <OtelLive
@@ -33,6 +36,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       autoRefreshMs={autoRefreshMs}
       defaultSignal={defaultSignal}
       limit={limit}
+      onSignalRef={onSignalRef}
     />
   </Box>
 );

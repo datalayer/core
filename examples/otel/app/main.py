@@ -9,10 +9,10 @@ import os
 import random
 import time
 import uuid
-from typing import Any
+from typing import Any, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from datalayer_core.otel import OtelClient
@@ -38,12 +38,20 @@ app.add_middleware(
 )
 
 
-def _client() -> OtelClient:
-    """Create an OtelClient from env vars."""
+def _client(token: Optional[str] = None) -> OtelClient:
+    """Create an OtelClient from env vars, optionally using a caller token."""
     return OtelClient(
         base_url=os.environ.get("DATALAYER_OTEL_URL", "http://localhost:7800"),
-        token=os.environ.get("DATALAYER_API_KEY", ""),
+        token=token or os.environ.get("DATALAYER_API_KEY", ""),
     )
+
+
+def _extract_token(request: Request) -> Optional[str]:
+    """Extract the Bearer token from the Authorization header, if present."""
+    auth = request.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        return auth[7:]
+    return None
 
 
 # ── Home ─────────────────────────────────────────────────────────────
@@ -94,17 +102,18 @@ def gen_metrics(count: int = Query(5, ge=1, le=100)) -> dict:
 
 @app.get("/api/otel/v1/traces")
 def list_traces(
+    request: Request,
     service_name: str | None = None,
     limit: int = 20,
 ) -> Any:
     """Proxy: list recent traces."""
-    return _client().list_traces(service_name=service_name, limit=limit)
+    return _client(_extract_token(request)).list_traces(service_name=service_name, limit=limit)
 
 
 @app.get("/api/otel/v1/traces/services/list")
-def list_services() -> Any:
+def list_services(request: Request) -> Any:
     """Proxy: list observed service names."""
-    svc = _client().list_services()
+    svc = _client(_extract_token(request)).list_services()
     # Normalise to dict if client returns a plain list
     if isinstance(svc, list):
         return {"services": svc}
@@ -112,19 +121,20 @@ def list_services() -> Any:
 
 
 @app.get("/api/otel/v1/traces/{trace_id}")
-def get_trace(trace_id: str) -> Any:
+def get_trace(trace_id: str, request: Request) -> Any:
     """Proxy: get spans of a single trace."""
-    return _client().get_trace(trace_id)
+    return _client(_extract_token(request)).get_trace(trace_id)
 
 
 @app.get("/api/otel/v1/logs")
 def list_logs(
+    request: Request,
     service_name: str | None = None,
     severity: str | None = None,
     limit: int = 50,
 ) -> Any:
     """Proxy: list log records."""
-    return _client().query_logs(
+    return _client(_extract_token(request)).query_logs(
         service_name=service_name,
         severity=severity,
         limit=limit,
@@ -133,12 +143,13 @@ def list_logs(
 
 @app.get("/api/otel/v1/metrics")
 def list_metrics(
+    request: Request,
     metric_name: str | None = None,
     service_name: str | None = None,
     limit: int = 20,
 ) -> Any:
     """Proxy: list metrics."""
-    return _client().list_metrics(
+    return _client(_extract_token(request)).list_metrics(
         metric_name=metric_name,
         service_name=service_name,
         limit=limit,
@@ -146,6 +157,6 @@ def list_metrics(
 
 
 @app.get("/api/otel/v1/stats")
-def get_stats() -> Any:
+def get_stats(request: Request) -> Any:
     """Proxy: storage statistics."""
-    return _client().get_stats()
+    return _client(_extract_token(request)).get_stats()

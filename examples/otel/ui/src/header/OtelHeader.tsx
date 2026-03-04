@@ -10,19 +10,31 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { Box, Text, Button, Dialog } from '@primer/react';
-import { TelescopeIcon } from '@primer/octicons-react';
+import { TelescopeIcon, SignOutIcon } from '@primer/octicons-react';
+import { useAuthStore } from '../stores/authStore';
 
 export interface OtelHeaderProps {
   /** Base URL for the generate API. Defaults to ''. */
   baseUrl?: string;
+  /** JWT bearer token for authenticated requests. */
+  token?: string;
   /** Optional extra controls rendered on the right side of the header. */
   trailing?: React.ReactNode;
+  /**
+   * Called before a generate request is fired so the dashboard can
+   * navigate to the relevant signal view (e.g. "logs", "metrics").
+   */
+  onNavigate?: (signal: 'traces' | 'logs' | 'metrics') => void;
 }
 
 export const OtelHeader: React.FC<OtelHeaderProps> = ({
   baseUrl = '',
+  token,
   trailing,
+  onNavigate,
 }) => {
+  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const handle = useAuthStore((s) => s.handle);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogRequest, setDialogRequest] = useState('');
@@ -35,11 +47,25 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
 
   const generate = useCallback(
     async (kind: 'traces' | 'ai-traces' | 'logs' | 'metrics', count: number) => {
+      // Navigate to the corresponding view first.
+      if (onNavigate) {
+        const signalMap: Record<string, 'traces' | 'logs' | 'metrics'> = {
+          traces: 'traces',
+          'ai-traces': 'traces',
+          logs: 'logs',
+          metrics: 'metrics',
+        };
+        onNavigate(signalMap[kind]);
+      }
       setGenerating(true);
       const url = `${baseUrl}/api/generate/${kind}?count=${count}`;
       setDialogRequest(`POST ${url}`);
       try {
-        const resp = await fetch(url, { method: 'POST' });
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const resp = await fetch(url, { method: 'POST', headers });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         setDialogTitle(`Generated ${kind}`);
@@ -54,7 +80,7 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
         setDialogOpen(true);
       }
     },
-    [baseUrl],
+    [baseUrl, token, onNavigate],
   );
 
   return (
@@ -112,6 +138,21 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
           onClick={() => generate('metrics', 5)}
         >
           + Metrics
+        </Button>
+
+        {handle && (
+          <Text sx={{ fontSize: 1, color: 'fg.muted', ml: 2 }}>
+            {handle}
+          </Text>
+        )}
+        <Button
+          size="small"
+          variant="invisible"
+          onClick={clearAuth}
+          sx={{ color: 'fg.muted' }}
+          leadingVisual={SignOutIcon}
+        >
+          Logout
         </Button>
 
         {trailing}

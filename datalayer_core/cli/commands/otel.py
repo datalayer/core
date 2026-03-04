@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich import print as rprint
@@ -377,12 +377,39 @@ def smoke_test(
         )
         raise typer.Exit(code=1)
 
+    import base64
     import logging
     import uuid
 
     smoke_id = uuid.uuid4().hex[:8]
     tag = f"smoke-{smoke_id}"
-    resource = Resource.create({"service.name": service_name, "smoke.id": smoke_id})
+
+    # Decode the JWT to extract user_uid so the OTLP resource attribute
+    # matches what the query endpoints filter on.
+    resolved_token = _resolve_token(token)
+    user_uid: str | None = None
+    if resolved_token:
+        try:
+            payload_b64 = resolved_token.split(".")[1]
+            # Fix base64 padding
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            jwt_payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+            user_claim = jwt_payload.get("user")
+            if isinstance(user_claim, dict):
+                user_uid = user_claim.get("uid")
+            if not user_uid:
+                sub = jwt_payload.get("sub")
+                if isinstance(sub, str):
+                    user_uid = sub
+            if user_uid:
+                rprint(f"  [dim]Resolved user_uid from token: {user_uid}[/dim]")
+        except Exception as exc:
+            rprint(f"  [yellow]Could not decode user_uid from token: {exc}[/yellow]")
+
+    resource_attrs: dict[str, Any] = {"service.name": service_name, "smoke.id": smoke_id}
+    if user_uid:
+        resource_attrs["datalayer.user_uid"] = user_uid
+    resource = Resource.create(resource_attrs)
 
     passed = 0
     failed = 0

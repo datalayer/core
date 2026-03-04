@@ -63,7 +63,7 @@ function formatValue(value: number, unit?: string): string {
 /** Map metric_type to a Primer Label variant. */
 function typeVariant(
   type?: string,
-): 'accent' | 'attention' | 'secondary' | 'primary' {
+): 'accent' | 'attention' | 'secondary' | 'primary' | 'success' {
   switch (type?.toLowerCase()) {
     case 'gauge':
       return 'accent';
@@ -72,6 +72,8 @@ function typeVariant(
       return 'attention';
     case 'histogram':
       return 'secondary';
+    case 'exponentialhistogram':
+      return 'success';
     default:
       return 'primary';
   }

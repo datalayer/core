@@ -87,9 +87,16 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   autoRefreshMs = 5000,
   defaultSignal = 'traces',
   limit = 200,
+  onSignalRef,
 }) => {
   // ── state ──
   const [signal, setSignal] = useState<SignalType>(defaultSignal);
+
+  // Expose signal setter to parent so external controls (e.g. generate
+  // buttons) can navigate to the right tab.
+  useEffect(() => {
+    onSignalRef?.(setSignal);
+  }, [onSignalRef]);
   const [service, setService] = useState('');
   const [query, setQuery] = useState('');
   const [selectedSpan, setSelectedSpan] = useState<OtelSpan | null>(null);
