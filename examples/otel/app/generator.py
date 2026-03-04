@@ -35,6 +35,9 @@ from opentelemetry.sdk.metrics.view import View, ExponentialBucketHistogramAggre
 
 from opentelemetry.sdk.resources import Resource
 
+import base64
+import json as _json
+
 logger = logging.getLogger(__name__)
 
 # ── OTLP endpoint helper ────────────────────────────────────────────
@@ -70,15 +73,38 @@ def _flush_and_wait(wait: float = 2.0) -> None:
     time.sleep(wait)
 
 
-def _resource(service_name: str = "otel-example") -> Resource:
+def _decode_user_uid(token: str | None) -> str | None:
+    """Decode a JWT token and extract the user uid.
+
+    Tries ``user.uid`` first, then falls back to ``sub``.
+    Returns *None* if the token is absent or cannot be decoded.
+    """
+    if not token:
+        return None
+    try:
+        payload_b64 = token.split(".")[1]
+        payload_b64 += "=" * (-len(payload_b64) % 4)
+        payload = _json.loads(base64.urlsafe_b64decode(payload_b64))
+        user_claim = payload.get("user")
+        if isinstance(user_claim, dict) and user_claim.get("uid"):
+            return str(user_claim["uid"])
+        sub = payload.get("sub")
+        if isinstance(sub, str) and sub:
+            return sub
+    except Exception as exc:
+        logger.warning("Could not decode user_uid from token: %s", exc)
+    return None
+
+
+def _resource(service_name: str = "otel-example", token: str | None = None) -> Resource:
     """Create an OTel resource with service name and user identity.
 
-    If ``DATALAYER_USER_UID`` is set the resource includes a
-    ``datalayer.user_uid`` attribute so the OTEL backend can
-    associate the data with the authenticated user.
+    The user uid is resolved in order:
+    1. Decoded from the *token* JWT (preferred — matches the query filter)
+    2. ``DATALAYER_USER_UID`` environment variable (fallback)
     """
     attrs: dict[str, str] = {"service.name": service_name}
-    user_uid = os.environ.get("DATALAYER_USER_UID")
+    user_uid = _decode_user_uid(token) or os.environ.get("DATALAYER_USER_UID")
     if user_uid:
         attrs["datalayer.user_uid"] = user_uid
     return Resource.create(attrs)
@@ -136,7 +162,7 @@ AI_INSTRUCTIONS = [
 ]
 
 
-def generate_pydantic_ai_traces(count: int = 3) -> None:
+def generate_pydantic_ai_traces(count: int = 3, token: str | None = None) -> None:
     """Generate *count* pydantic-ai / logfire-style nested agent traces.
 
     Each trace has:
@@ -156,7 +182,7 @@ def generate_pydantic_ai_traces(count: int = 3) -> None:
         input_tokens = random.randint(20, 120)
         output_tokens = random.randint(10, 80)
 
-        provider = TracerProvider(resource=_resource("unknown_service"))
+        provider = TracerProvider(resource=_resource("unknown_service", token=token))
         exporter = OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")
         provider.add_span_processor(BatchSpanProcessor(exporter))
         tracer = provider.get_tracer("pydantic-ai", "1.42.0")
@@ -243,7 +269,7 @@ def generate_pydantic_ai_traces(count: int = 3) -> None:
         provider.shutdown()
 
 
-def generate_sample_traces(count: int = 3) -> None:
+def generate_sample_traces(count: int = 3, token: str | None = None) -> None:
     """Generate *count* multi-span traces and export via OTLP/HTTP.
 
     Each trace has a root span with 1-3 children, each child can have
@@ -253,7 +279,7 @@ def generate_sample_traces(count: int = 3) -> None:
     endpoint = _otlp_endpoint()
     for _ in range(count):
         svc = random.choice(SERVICE_NAMES)
-        provider = TracerProvider(resource=_resource(svc))
+        provider = TracerProvider(resource=_resource(svc, token=token))
         exporter = OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")
         provider.add_span_processor(BatchSpanProcessor(exporter))
         tracer = provider.get_tracer("otel-example-generator")
@@ -327,11 +353,11 @@ LOG_MESSAGES = [
 ]
 
 
-def generate_sample_logs(count: int = 10) -> None:
+def generate_sample_logs(count: int = 10, token: str | None = None) -> None:
     """Generate *count* log records and export via OTLP/HTTP."""
     endpoint = _otlp_endpoint()
     svc = random.choice(SERVICE_NAMES)
-    resource = _resource(svc)
+    resource = _resource(svc, token=token)
 
     log_provider = LoggerProvider(resource=resource)
     exporter = OTLPLogExporter(endpoint=f"{endpoint}/v1/logs")
@@ -382,7 +408,7 @@ EXPONENTIAL_HISTOGRAM_METRICS = [
 ]
 
 
-def generate_sample_metrics(count: int = 5) -> None:
+def generate_sample_metrics(count: int = 5, token: str | None = None) -> None:
     """Generate metric data-points for every type and export via OTLP/HTTP.
 
     Always produces **sum** (counter), **histogram**, **gauge**
@@ -392,7 +418,7 @@ def generate_sample_metrics(count: int = 5) -> None:
     """
     endpoint = _otlp_endpoint()
     svc = random.choice(SERVICE_NAMES)
-    resource = _resource(svc)
+    resource = _resource(svc, token=token)
 
     exporter = OTLPMetricExporter(endpoint=f"{endpoint}/v1/metrics")
     reader = PeriodicExportingMetricReader(exporter, export_interval_millis=1000)
@@ -425,11 +451,34 @@ def generate_sample_metrics(count: int = 5) -> None:
         for _ in range(count):
             histogram.record(random.uniform(1.0, 5000.0), {"service.name": svc})
 
-    # ── Gauge (up-down counter) metrics ──────────────────────────────
+    # ── Gauge (observable gauge) metrics ──────────────────────────────
+    # ObservableGauge is exported as OTLP "gauge" type (unlike
+    # UpDownCounter which is exported as "sum" with isMonotonic=false).
+    from opentelemetry.metrics import Observation as _Observation
+
     for name, unit in GAUGE_METRICS:
-        gauge = meter.create_up_down_counter(name, unit=unit, description=f"Sample {name}")
-        for _ in range(count):
-            gauge.add(random.uniform(-20.0, 100.0), {"service.name": svc})
+        _gauge_values: list[float] = [random.uniform(-20.0, 100.0) for _ in range(count)]
+        _gauge_call_count = 0
+
+        def _make_gauge_callback(
+            gname: str, gunit: str, gsvc: str, values: list[float]
+        ):
+            idx = 0
+            def callback(options):
+                nonlocal idx
+                if idx < len(values):
+                    obs = _Observation(value=values[idx], attributes={"service.name": gsvc})
+                    idx += 1
+                    return [obs]
+                return []
+            return callback
+
+        meter.create_observable_gauge(
+            name,
+            callbacks=[_make_gauge_callback(name, unit, svc, _gauge_values)],
+            unit=unit,
+            description=f"Sample {name}",
+        )
 
     # ── Exponential Histogram metrics ────────────────────────────
     # These are recorded as histograms but the View above maps them to

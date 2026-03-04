@@ -453,12 +453,56 @@ def smoke_test(
         unit="ms",
     )
 
+    # Observable gauge – exported as OTLP "gauge" type.
+    from opentelemetry.metrics import Observation as _Observation
+    gauge_values = [42.0, 37.5, 55.1, 60.0, 48.8]
+    gauge_idx = 0
+    def _gauge_callback(options):
+        nonlocal gauge_idx
+        if gauge_idx < len(gauge_values):
+            obs = _Observation(value=gauge_values[gauge_idx], attributes={"smoke.id": smoke_id})
+            gauge_idx += 1
+            return [obs]
+        return []
+    meter.create_observable_gauge(
+        name=f"smoke_test.temperature.{smoke_id}",
+        callbacks=[_gauge_callback],
+        description="Smoke test gauge (temperature)",
+        unit="C",
+    )
+
+    # Exponential histogram – uses ExponentialBucketHistogramAggregation view.
+    from opentelemetry.sdk.metrics.view import View, ExponentialBucketHistogramAggregation
+    exp_hist_name = f"smoke_test.payload_size.{smoke_id}"
+    exp_view = View(
+        instrument_name=exp_hist_name,
+        aggregation=ExponentialBucketHistogramAggregation(),
+    )
+    # We need to recreate the MeterProvider with the view to get exponentialHistogram export.
+    # Flush the current provider first, then create a new one with the view.
     for i in range(5):
         counter.add(1, {"smoke.id": smoke_id, "endpoint": f"/test/{i}"})
         histogram.record(50.0 + i * 10, {"smoke.id": smoke_id})
 
     meter_provider.force_flush()
-    rprint("[green]  Sent 5 counter increments + 5 histogram observations.[/green]")
+
+    # Second MeterProvider with exponential histogram view.
+    metric_reader2 = PeriodicExportingMetricReader(
+        OTLPMetricExporter(endpoint=f"{otlp_endpoint}/v1/metrics"),
+        export_interval_millis=1000,
+    )
+    meter_provider2 = MeterProvider(resource=resource, metric_readers=[metric_reader2], views=[exp_view])
+    meter2 = meter_provider2.get_meter("datalayer-otel-smoke-exp")
+    exp_histogram = meter2.create_histogram(
+        name=exp_hist_name,
+        description="Smoke test exponential histogram (payload size)",
+        unit="By",
+    )
+    for i in range(5):
+        exp_histogram.record(100.0 + i * 50, {"smoke.id": smoke_id})
+
+    meter_provider2.force_flush()
+    rprint("[green]  Sent 5 counter + 5 histogram + gauge + 5 exponentialHistogram data points.[/green]")
 
     # ── 3. Send logs ─────────────────────────────────────────────────
     console.rule("[bold cyan]3/7  Sending test logs[/bold cyan]")
@@ -648,6 +692,7 @@ def smoke_test(
     # ── Cleanup SDK providers ────────────────────────────────────────
     trace_provider.shutdown()
     meter_provider.shutdown()
+    meter_provider2.shutdown()
     log_provider.shutdown()
 
     # ── Summary ──────────────────────────────────────────────────────

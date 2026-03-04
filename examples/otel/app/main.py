@@ -67,33 +67,33 @@ def home() -> dict:
 # ── Signal generators ───────────────────────────────────────────────
 
 @app.post("/api/generate/traces")
-def gen_traces(count: int = Query(3, ge=1, le=50)) -> dict:
+def gen_traces(request: Request, count: int = Query(3, ge=1, le=50)) -> dict:
     """Generate *count* sample traces with nested spans and send them via OTLP."""
-    generate_sample_traces(count)
+    generate_sample_traces(count, token=_extract_token(request))
     _flush_and_wait()
     return {"status": "ok", "generated_traces": count}
 
 
 @app.post("/api/generate/ai-traces")
-def gen_ai_traces(count: int = Query(3, ge=1, le=50)) -> dict:
+def gen_ai_traces(request: Request, count: int = Query(3, ge=1, le=50)) -> dict:
     """Generate *count* pydantic-ai / logfire-style nested agent traces."""
-    generate_pydantic_ai_traces(count)
+    generate_pydantic_ai_traces(count, token=_extract_token(request))
     _flush_and_wait()
     return {"status": "ok", "generated_ai_traces": count}
 
 
 @app.post("/api/generate/logs")
-def gen_logs(count: int = Query(10, ge=1, le=200)) -> dict:
+def gen_logs(request: Request, count: int = Query(10, ge=1, le=200)) -> dict:
     """Generate *count* sample log records and send them via OTLP."""
-    generate_sample_logs(count)
+    generate_sample_logs(count, token=_extract_token(request))
     _flush_and_wait()
     return {"status": "ok", "generated_logs": count}
 
 
 @app.post("/api/generate/metrics")
-def gen_metrics(count: int = Query(5, ge=1, le=100)) -> dict:
+def gen_metrics(request: Request, count: int = Query(5, ge=1, le=100)) -> dict:
     """Generate *count* sample metric data-points and send them via OTLP."""
-    generate_sample_metrics(count)
+    generate_sample_metrics(count, token=_extract_token(request))
     _flush_and_wait()
     return {"status": "ok", "generated_metrics": count}
 

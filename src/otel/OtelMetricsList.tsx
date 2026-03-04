@@ -334,7 +334,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
   }
 
   return (
-    <Box sx={{ overflow: 'auto', height: '100%' }}>
+    <Box sx={{ overflow: 'auto', minHeight: '100%', bg: 'canvas.default' }}>
       {/* View toggle + chart */}
       <Box
         sx={{
