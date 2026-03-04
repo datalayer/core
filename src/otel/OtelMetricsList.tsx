@@ -297,9 +297,9 @@ const MetricRow: React.FC<{ metric: OtelMetric }> = ({ metric }) => {
 
 export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
   metrics,
-  loading,
+  loading = false,
 }) => {
-  const [view, setView] = useState<'chart' | 'table'>('chart');
+  const [view, setView] = useState<'chart' | 'table'>('table');
   const grouped = useMemo(() => groupByName(metrics), [metrics]);
 
   if (loading) {
@@ -333,11 +333,19 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
     );
   }
 
+  // Use position:absolute for the scroll area so its height is always
+  // "total parent height minus toolbar height", regardless of flex context.
   return (
-    <Box>
-      {/* View toggle + chart */}
+    <Box
+      sx={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}
+    >
+      {/* Toolbar — fixed at top, known height */}
       <Box
         sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end',
@@ -346,9 +354,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
           bg: 'canvas.subtle',
           borderBottom: '1px solid',
           borderColor: 'border.default',
-          position: 'sticky',
-          top: 0,
-          zIndex: 0,
+          zIndex: 2,
         }}
       >
         <SegmentedControl
@@ -369,88 +375,66 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
         </SegmentedControl>
       </Box>
 
-      {/* Chart panel */}
-      {view === 'chart' && (
-        <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderBottom: '1px solid',
-            borderColor: 'border.default',
-            maxHeight: 600,
-            overflow: 'auto',
-          }}
-        >
-          <OtelMetricsChart metrics={metrics} height={280} />
-        </Box>
-      )}
-
-      {/* Table header */}
+      {/* Content area — fills everything below the toolbar */}
       <Box
         sx={{
-          display: 'grid',
-          gridTemplateColumns: '20px 1fr auto auto auto auto',
-          gap: 3,
-          px: 3,
-          py: 1,
-          bg: 'canvas.subtle',
-          borderBottom: '1px solid',
-          borderColor: 'border.default',
-          position: 'sticky',
-          top: 44,
-          zIndex: 1,
+          position: 'absolute',
+          top: 48,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          overflow: 'auto',
         }}
       >
-        <Box />
-        <Text sx={{ fontSize: 0, fontWeight: 'bold', color: 'fg.muted' }}>
-          Metric Name
-        </Text>
-        <Text
-          sx={{
-            fontSize: 0,
-            fontWeight: 'bold',
-            color: 'fg.muted',
-            textAlign: 'right',
-          }}
-        >
-          Latest
-        </Text>
-        <Text
-          sx={{
-            fontSize: 0,
-            fontWeight: 'bold',
-            color: 'fg.muted',
-            textAlign: 'right',
-          }}
-        >
-          Average
-        </Text>
-        <Text
-          sx={{
-            fontSize: 0,
-            fontWeight: 'bold',
-            color: 'fg.muted',
-            textAlign: 'right',
-          }}
-        >
-          Min/Max
-        </Text>
-        <Text
-          sx={{
-            fontSize: 0,
-            fontWeight: 'bold',
-            color: 'fg.muted',
-            textAlign: 'right',
-          }}
-        >
-          Points
-        </Text>
-      </Box>
+        {view === 'chart' ? (
+          <Box sx={{ px: 3, py: 2 }}>
+            <OtelMetricsChart metrics={metrics} height={280} />
+          </Box>
+        ) : (
+          <>
+            {/* Column header — sticky inside the scroll container */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '20px 1fr auto auto auto auto',
+                gap: 3,
+                px: 3,
+                py: 1,
+                bg: 'canvas.subtle',
+                borderBottom: '2px solid',
+                borderColor: 'border.default',
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+              }}
+            >
+              <Box />
+              {['Metric Name', 'Latest', 'Average', 'Min/Max', 'Points'].map(
+                (h, i) => (
+                  <Text
+                    key={h}
+                    sx={{
+                      fontSize: 0,
+                      fontWeight: 'bold',
+                      color: 'fg.muted',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      textAlign: i === 0 ? undefined : 'right',
+                    }}
+                  >
+                    {h}
+                  </Text>
+                ),
+              )}
+            </Box>
 
-      {/* Metric groups */}
-      {[...grouped.entries()].map(([name, points]) => (
-        <MetricGroup key={name} name={name} points={points} />
-      ))}
+            {/* Metric group rows */}
+            {[...grouped.entries()].map(([name, points]) => (
+              <MetricGroup key={name} name={name} points={points} />
+            ))}
+          </>
+        )}
+      </Box>
     </Box>
   );
 };

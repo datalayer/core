@@ -29,7 +29,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   limit = 200,
   onSignalRef,
 }) => (
-  <Box sx={{ flex: 1, overflow: 'hidden' }}>
+  <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
     <OtelLive
       baseUrl={baseUrl}
       token={token}

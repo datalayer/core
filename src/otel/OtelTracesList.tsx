@@ -120,7 +120,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   }
 
   return (
-    <Box sx={{ width: '100%', overflow: 'auto' }}>
+    <Box sx={{ width: '100%', flex: 1, minHeight: 0, overflow: 'auto' }}>
       {/* Header row */}
       <Box
         sx={{

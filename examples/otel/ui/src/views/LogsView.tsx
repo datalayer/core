@@ -25,7 +25,7 @@ export const LogsView: React.FC<LogsViewProps> = ({
   autoRefreshMs = 5000,
   limit = 200,
 }) => (
-  <Box sx={{ flex: 1, overflow: 'hidden' }}>
+  <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
     <OtelLive
       baseUrl={baseUrl}
       token={token}

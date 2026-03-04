@@ -302,6 +302,8 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
+        flex: 1,
+        minHeight: 0,
         height: '100%',
         color: 'fg.default',
         bg: 'canvas.default',
@@ -369,12 +371,15 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
       )}
 
       {/* ─── Main area (list + detail) ─── */}
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {/* Left: signal list */}
         <Box
           sx={{
+            display: 'flex',
+            flexDirection: 'column',
             flex: hasDetail ? '0 0 55%' : '1 1 100%',
-            overflow: 'auto',
+            minHeight: 0,
+            overflow: 'hidden',
           }}
         >
           {signal === 'traces' && (
@@ -406,6 +411,7 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
           <Box
             sx={{
               flex: '0 0 45%',
+              minHeight: 0,
               overflow: 'auto',
               borderLeft: '1px solid',
               borderColor: 'border.default',
