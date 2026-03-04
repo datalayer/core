@@ -17,7 +17,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from datalayer_core.otel import OtelClient
 
-from .generator import generate_sample_traces, generate_sample_logs, generate_sample_metrics
+from .generator import (
+    generate_sample_traces,
+    generate_pydantic_ai_traces,
+    generate_sample_logs,
+    generate_sample_metrics,
+    _flush_and_wait,
+)
 
 load_dotenv()
 
@@ -56,13 +62,23 @@ def home() -> dict:
 def gen_traces(count: int = Query(3, ge=1, le=50)) -> dict:
     """Generate *count* sample traces with nested spans and send them via OTLP."""
     generate_sample_traces(count)
+    _flush_and_wait()
     return {"status": "ok", "generated_traces": count}
+
+
+@app.post("/api/generate/ai-traces")
+def gen_ai_traces(count: int = Query(3, ge=1, le=50)) -> dict:
+    """Generate *count* pydantic-ai / logfire-style nested agent traces."""
+    generate_pydantic_ai_traces(count)
+    _flush_and_wait()
+    return {"status": "ok", "generated_ai_traces": count}
 
 
 @app.post("/api/generate/logs")
 def gen_logs(count: int = Query(10, ge=1, le=200)) -> dict:
     """Generate *count* sample log records and send them via OTLP."""
     generate_sample_logs(count)
+    _flush_and_wait()
     return {"status": "ok", "generated_logs": count}
 
 
@@ -70,6 +86,7 @@ def gen_logs(count: int = Query(10, ge=1, le=200)) -> dict:
 def gen_metrics(count: int = Query(5, ge=1, le=100)) -> dict:
     """Generate *count* sample metric data-points and send them via OTLP."""
     generate_sample_metrics(count)
+    _flush_and_wait()
     return {"status": "ok", "generated_metrics": count}
 
 

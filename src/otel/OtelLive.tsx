@@ -14,7 +14,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { Box, Text, Button } from '@primer/react';
+import { Box, Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
 import type {
   OtelLiveProps,
@@ -29,7 +29,9 @@ import {
   useOtelLogs,
   useOtelMetrics,
   useOtelServices,
+  useOtelWebSocket,
 } from './hooks';
+import type { OtelWsCallbacks } from './hooks';
 import { OtelSearchBar } from './OtelSearchBar';
 import { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
 import { OtelTracesList } from './OtelTracesList';

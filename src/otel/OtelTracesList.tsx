@@ -7,15 +7,32 @@
  * OtelTracesList – Tabular list of spans with Time / Message / Scope / Duration
  * columns, using Primer React components for consistent theming.
  *
+ * Spans that share the same trace_id are grouped into collapsible trees:
+ * only root spans are shown initially; clicking a row with children
+ * expands / collapses the nested child rows (shown indented).
+ *
  * @module otel/OtelTracesList
  */
 
-import React from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Box, Text, Label, Spinner } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
-import { TelescopeIcon } from '@primer/octicons-react';
-import type { OtelTracesListProps } from './types';
-import { formatDuration, formatTime } from './utils';
+import {
+  TelescopeIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+} from '@primer/octicons-react';
+import type { OtelTracesListProps, OtelSpan } from './types';
+import { formatDuration, formatTime, buildSpanTree } from './utils';
+
+/** A row in the rendered list – carries the tree depth for indentation. */
+interface SpanRow {
+  span: OtelSpan;
+  depth: number;
+  hasChildren: boolean;
+}
+
+const GRID_COLS = '140px 1fr 160px 90px';
 
 export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   spans,
@@ -23,6 +40,42 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
   selectedSpanId,
   onSelectSpan,
 }) => {
+  // Set of expanded span_ids (show their children)
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  // Build the span tree from flat input
+  const roots = useMemo(() => buildSpanTree(spans), [spans]);
+
+  // Flatten visible rows based on which nodes are expanded
+  const visibleRows = useMemo(() => {
+    const rows: SpanRow[] = [];
+    function walk(node: OtelSpan, depth: number) {
+      const children = node.children ?? [];
+      rows.push({ span: node, depth, hasChildren: children.length > 0 });
+      if (expanded.has(node.span_id)) {
+        for (const child of children) {
+          walk(child, depth + 1);
+        }
+      }
+    }
+    for (const root of roots) {
+      walk(root, 0);
+    }
+    return rows;
+  }, [roots, expanded]);
+
+  const toggleExpand = useCallback((spanId: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(spanId)) {
+        next.delete(spanId);
+      } else {
+        next.add(spanId);
+      }
+      return next;
+    });
+  }, []);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
@@ -51,7 +104,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: '100px 1fr 160px 90px',
+          gridTemplateColumns: GRID_COLS,
           gap: 2,
           px: 3,
           position: 'sticky',
@@ -81,20 +134,31 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
       </Box>
 
       {/* Rows */}
-      {spans.map((span, idx) => {
+      {visibleRows.map(({ span, depth, hasChildren }, idx) => {
         const isSelected = selectedSpanId === span.span_id;
+        const isExpanded = expanded.has(span.span_id);
+        const indent = depth * 20;
         return (
           <Box
             key={`${span.trace_id}-${span.span_id}-${idx}`}
-            onClick={() => onSelectSpan?.(span)}
+            onClick={() => {
+              if (hasChildren) {
+                toggleExpand(span.span_id);
+              }
+              onSelectSpan?.(span);
+            }}
             sx={{
               display: 'grid',
-              gridTemplateColumns: '100px 1fr 160px 90px',
+              gridTemplateColumns: GRID_COLS,
               gap: 2,
               px: 3,
               py: '5px',
               cursor: 'pointer',
-              bg: isSelected ? 'accent.subtle' : 'canvas.default',
+              bg: isSelected
+                ? 'accent.subtle'
+                : depth > 0
+                  ? 'canvas.inset'
+                  : 'canvas.default',
               borderBottom: '1px solid',
               borderColor: 'border.muted',
               ':hover': {
@@ -115,7 +179,7 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
               {formatTime(span.start_time)}
             </Text>
 
-            {/* Message */}
+            {/* Message (with indent + expand chevron) */}
             <Box
               sx={{
                 display: 'flex',
@@ -123,8 +187,41 @@ export const OtelTracesList: React.FC<OtelTracesListProps> = ({
                 gap: 1,
                 overflow: 'hidden',
                 lineHeight: '22px',
+                pl: `${indent}px`,
               }}
             >
+              {/* Expand/collapse chevron for spans with children */}
+              {hasChildren ? (
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    color: 'fg.muted',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  {isExpanded ? (
+                    <ChevronDownIcon size={14} />
+                  ) : (
+                    <ChevronRightIcon size={14} />
+                  )}
+                </Box>
+              ) : depth > 0 ? (
+                /* Connector dash for child leaves */
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    width: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'fg.subtle',
+                    fontSize: 0,
+                  }}
+                >
+                  ─
+                </Box>
+              ) : null}
               <Text
                 sx={{
                   fontSize: 1,

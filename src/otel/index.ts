@@ -37,7 +37,11 @@ export {
   useOtelMetrics,
   useOtelServices,
   useOtelStats,
+  useOtelWebSocket,
 } from './hooks';
+
+// WebSocket types
+export type { OtelWsMessage, OtelWsCallbacks } from './hooks';
 
 // Components
 export { OtelTimeline } from './OtelTimeline';

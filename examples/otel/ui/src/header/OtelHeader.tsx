@@ -34,7 +34,7 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
   const returnFocusRef = useRef<HTMLButtonElement>(null);
 
   const generate = useCallback(
-    async (kind: 'traces' | 'logs' | 'metrics', count: number) => {
+    async (kind: 'traces' | 'ai-traces' | 'logs' | 'metrics', count: number) => {
       setGenerating(true);
       const url = `${baseUrl}/api/generate/${kind}?count=${count}`;
       setDialogRequest(`POST ${url}`);
@@ -88,6 +88,14 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
           onClick={() => generate('traces', 3)}
         >
           + Traces
+        </Button>
+        <Button
+          size="small"
+          variant="primary"
+          disabled={generating}
+          onClick={() => generate('ai-traces', 3)}
+        >
+          + AI Traces
         </Button>
         <Button
           size="small"

@@ -39,10 +39,34 @@ logger = logging.getLogger(__name__)
 # ── OTLP endpoint helper ────────────────────────────────────────────
 
 def _otlp_endpoint() -> str:
-    """Return the OTLP base endpoint (without /v1/traces etc.)."""
-    # The Datalayer OTEL service exposes OTLP endpoints under /v1/
-    base = os.environ.get("DATALAYER_OTEL_URL", "http://localhost:7800")
+    """Return the OTLP base endpoint (without /v1/traces etc.).
+
+    Uses ``DATALAYER_OTLP_URL`` which should point at the OTLP
+    collector HTTP port (default 4318), **not** the query API (7800).
+    """
+    base = os.environ.get("DATALAYER_OTLP_URL", "http://localhost:4318")
     return base.rstrip("/")
+
+
+def _otel_api_url() -> str:
+    """Return the OTEL REST-query API base URL (port 7800 by default)."""
+    return os.environ.get("DATALAYER_OTEL_URL", "http://localhost:7800").rstrip("/")
+
+
+def _flush_and_wait(wait: float = 2.0) -> None:
+    """Call the flush endpoint on the OTEL service and wait for ingestion."""
+    import httpx
+
+    url = _otel_api_url()
+    token = os.environ.get("DATALAYER_API_KEY", "")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    try:
+        resp = httpx.post(f"{url}/api/otel/v1/flush", headers=headers, timeout=10, follow_redirects=True)
+        resp.raise_for_status()
+        logger.info("Flush response: %s", resp.json())
+    except Exception as exc:
+        logger.warning("Flush failed (non-fatal): %s", exc)
+    time.sleep(wait)
 
 
 def _resource(service_name: str = "otel-example") -> Resource:
@@ -64,6 +88,89 @@ SPAN_TEMPLATES = [
     ("send_notification", "PRODUCER"),
     ("consume_event", "CONSUMER"),
 ]
+
+# ── Pydantic-AI / Logfire style agent traces ────────────────────────
+
+AI_MODELS = [
+    "ollama:gemma3:1b-it-qat",
+    "openai:gpt-4o",
+    "openai:gpt-4o-mini",
+    "anthropic:claude-sonnet-4-20250514",
+    "ollama:llama3:8b",
+]
+
+AI_PROMPTS = [
+    'Where does "hello world" come from?',
+    "Explain quantum computing in one sentence.",
+    "What is the capital of France?",
+    "Write a haiku about programming.",
+    "Summarize the theory of relativity.",
+    "What are the benefits of type checking?",
+]
+
+AI_RESPONSES = [
+    '"Hello, world!" is a classic introductory message originating from Brian Kernighan\'s 1978 book on C programming.',
+    "Quantum computing uses quantum bits that can exist in superpositions to solve certain problems exponentially faster than classical computers.",
+    "The capital of France is Paris.",
+    "Code flows like water,\nBugs emerge then fade away,\nTests keep us afloat.",
+    "Einstein's theory of relativity describes how space and time are interlinked and how gravity is a curvature of spacetime caused by mass and energy.",
+    "Type checking catches errors at compile time, improving code reliability and developer productivity.",
+]
+
+AI_INSTRUCTIONS = [
+    "Be concise, reply with one sentence.",
+    "You are a helpful assistant.",
+    "Answer accurately and briefly.",
+    "Respond in a friendly tone.",
+]
+
+
+def generate_pydantic_ai_traces(count: int = 3) -> None:
+    """Generate *count* pydantic-ai / logfire-style nested agent traces.
+
+    Each trace has:
+      - A root "agent run" span (scope: pydantic-ai)
+      - A child "chat {model}" span with gen_ai attributes
+    This simulates what logfire.instrument_pydantic_ai() produces.
+    """
+    endpoint = _otlp_endpoint()
+    for _ in range(count):
+        model = random.choice(AI_MODELS)
+        prompt = random.choice(AI_PROMPTS)
+        response = random.choice(AI_RESPONSES)
+        instruction = random.choice(AI_INSTRUCTIONS)
+        duration = random.uniform(0.5, 4.0)
+
+        provider = TracerProvider(resource=_resource("unknown_service"))
+        exporter = OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")
+        provider.add_span_processor(BatchSpanProcessor(exporter))
+        tracer = provider.get_tracer("pydantic-ai")
+
+        with tracer.start_as_current_span("agent run") as root:
+            root.set_attribute("pydantic_ai.agent", True)
+            root.set_attribute("gen_ai.system_instructions", instruction)
+            root.set_attribute("pydantic_ai.prompt", prompt)
+            root.set_attribute("pydantic_ai.final_result", response)
+
+            # Simulate agent thinking time
+            time.sleep(random.uniform(0.01, 0.05))
+
+            # Child: chat completion span
+            with tracer.start_as_current_span(f"chat {model}") as child:
+                child.set_attribute("gen_ai.system", "pydantic-ai")
+                child.set_attribute("gen_ai.request.model", model)
+                child.set_attribute("gen_ai.input.messages", prompt)
+                child.set_attribute("gen_ai.output.messages", response)
+                child.set_attribute("gen_ai.system_instructions", instruction)
+                child.set_attribute("gen_ai.response.finish_reason", "stop")
+                child.set_attribute("pydantic_ai.model_request_parameters.output_mode", "text")
+                child.set_attribute("pydantic_ai.model_request_parameters.allow_text_output", True)
+
+                # Simulate model latency
+                time.sleep(random.uniform(0.02, 0.1))
+
+        provider.force_flush()
+        provider.shutdown()
 
 
 def generate_sample_traces(count: int = 3) -> None:
