@@ -109,6 +109,19 @@ export type ISearchOpts = {
   public: boolean;
 };
 
+/** Request payload for creating a new agent runtime. */
+export type CreateAgentRuntimeRequest = {
+  environmentName?: string;
+  givenName?: string;
+  creditsLimit?: number;
+  type?: string;
+  /** 'none', 'notebook', or 'document' */
+  editorVariant?: string;
+  enableCodemode?: boolean;
+  /** ID of the agent spec used to create this runtime */
+  agentSpecId?: string;
+};
+
 // Kept for potential future use
 
 // Default query options for all queries
@@ -1806,16 +1819,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * The response won't have a 'phase' field, so we default to 'running'.
    * See useAgentRuntimes JSDoc for full explanation.
    */
-  type CreateAgentRuntimeRequest = {
-    environmentName?: string;
-    givenName?: string;
-    creditsLimit?: number;
-    type?: string;
-    editorVariant?: string; // 'none', 'notebook', or 'document'
-    enableCodemode?: boolean;
-    agentSpecId?: string; // ID of the agent spec used to create this runtime
-  };
-
   const useCreateAgentRuntime = () => {
     return useMutation({
       mutationFn: async (data: CreateAgentRuntimeRequest) => {
@@ -2984,6 +2987,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryClient.setQueryData(queryKeys.tokens.detail(tok.id), tok);
           }
         }
+        queryClient.invalidateQueries({ queryKey: queryKeys.tokens.all() });
+      },
+    });
+  };
+
+  /**
+   * Delete token by ID
+   */
+  const useDeleteToken = () => {
+    return useMutation({
+      mutationFn: async (tokenId: string) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/tokens/${tokenId}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: (_, tokenId) => {
+        queryClient.removeQueries({
+          queryKey: queryKeys.tokens.detail(tokenId),
+        });
         queryClient.invalidateQueries({ queryKey: queryKeys.tokens.all() });
       },
     });
@@ -7917,6 +7940,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useTokens,
     useCreateToken,
     useUpdateToken,
+    useDeleteToken,
 
     // Invites
     useInvite,

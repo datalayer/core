@@ -5,7 +5,7 @@
 
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: '☰ Datalayer core',
+  title: '☰ Datalayer Core',
   tagline: 'Core package used by many other Datalayer packages',
   url: 'https://core.datalayer.tech',
   baseUrl: '/',
@@ -49,6 +49,12 @@ module.exports = {
           docId: 'typescript/index',
           position: 'left',
           label: 'TypeScript Core',
+        },
+        {
+          type: 'doc',
+          docId: 'otel/index',
+          position: 'left',
+          label: 'OTEL',
         },
         {
           type: 'doc',

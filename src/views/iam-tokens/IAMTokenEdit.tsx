@@ -18,48 +18,60 @@ import {
 import { Box } from '@datalayer/primer-addons';
 import { BoringAvatar } from '../../components/avatars';
 import { IIAMToken as AnyToken } from '../../models';
-import { useCache, useToast } from '../../hooks';
+import { useCache, useNavigate, useToast } from '../../hooks';
 import { useRunStore } from '../../state';
 
 interface ValidationData {
   name?: boolean;
+  nameConfirm?: boolean;
   description?: boolean;
 }
 
 interface FormData {
   name: string;
+  nameConfirm: string;
   description: string;
 }
 
 export const IAMTokenEdit = () => {
   const { tokenId } = useParams();
   const runStore = useRunStore();
+  const navigate = useNavigate();
   const { enqueueToast } = useToast();
-  const { useUpdateToken, useToken } = useCache();
+  const { useUpdateToken, useToken, useDeleteToken } = useCache();
 
   const getTokenQuery = useToken(tokenId!);
   const updateTokenMutation = useUpdateToken();
+  const deleteTokenMutation = useDeleteToken();
 
   const [token, setToken] = useState<AnyToken>();
   const [formValues, setFormValues] = useState<FormData>({
     name: token?.name!,
+    nameConfirm: '',
     description: token?.description!,
   });
   const [validationResult, setValidationResult] = useState<ValidationData>({
     name: undefined,
+    nameConfirm: undefined,
     description: undefined,
   });
   useEffect(() => {
     if (getTokenQuery.data) {
       const token = getTokenQuery.data;
       setToken(token);
-      setFormValues({ ...token });
+      setFormValues({ ...token, nameConfirm: '' });
     }
   }, [getTokenQuery.data]);
   const nameNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormValues(prevFormValues => ({
       ...prevFormValues,
       name: event.target.value,
+    }));
+  };
+  const nameConfirmChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormValues(prevFormValues => ({
+      ...prevFormValues,
+      nameConfirm: event.target.value,
     }));
   };
   const nameDescriptionChange = (
@@ -79,6 +91,7 @@ export const IAMTokenEdit = () => {
           : formValues.name.length > 2
             ? true
             : false,
+      nameConfirm: formValues.nameConfirm === token?.name ? true : false,
       description:
         formValues.description === undefined
           ? undefined
@@ -102,6 +115,29 @@ export const IAMTokenEdit = () => {
           });
           setToken(updatedToken);
         }
+      },
+      onSettled: () => {
+        runStore.layout().hideBackdrop();
+      },
+    });
+  };
+  const handleDelete = async () => {
+    runStore.layout().showBackdrop('Deleting the token...');
+    deleteTokenMutation.mutate(token!.id, {
+      onSuccess: (resp: any) => {
+        if (resp.success) {
+          enqueueToast('The token is successfully deleted.', {
+            variant: 'success',
+          });
+          navigate('/settings/iam/tokens');
+        } else {
+          enqueueToast(resp.message || 'Failed to delete token.', {
+            variant: 'error',
+          });
+        }
+      },
+      onError: () => {
+        enqueueToast('Failed to delete token.', { variant: 'error' });
       },
       onSettled: () => {
         runStore.layout().hideBackdrop();
@@ -173,6 +209,56 @@ export const IAMTokenEdit = () => {
             >
               Update token
             </Button>
+          </Box>
+          <Box sx={{ marginTop: 3 }}>
+            <Heading
+              as="h2"
+              sx={{
+                fontSize: 4,
+                fontWeight: 'normal',
+                color: 'danger.fg',
+                mb: 2,
+              }}
+            >
+              Danger zone
+            </Heading>
+            <Box
+              sx={{
+                border: '1px solid',
+                borderColor: 'danger.emphasis',
+                borderRadius: 2,
+                p: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 3,
+              }}
+            >
+              <Box sx={{ display: 'grid', gap: 1 }}>
+                <Text
+                  sx={{ fontSize: 1, fontWeight: 'bold', color: 'danger.fg' }}
+                >
+                  Confirm the token name to delete
+                </Text>
+                <FormControl>
+                  <TextInput
+                    block
+                    value={formValues.nameConfirm}
+                    onChange={nameConfirmChange}
+                  />
+                </FormControl>
+                <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+                  This operation is not reversible.
+                </Text>
+              </Box>
+              <Button
+                variant="danger"
+                disabled={!validationResult.nameConfirm}
+                onClick={handleDelete}
+              >
+                Delete token
+              </Button>
+            </Box>
           </Box>
         </Box>
       </Box>

@@ -8,6 +8,7 @@
  */
 export const API_BASE_PATHS = {
   IAM: '/api/iam/v1',
+  OTEL: '/api/otel/v1',
   RUNTIMES: '/api/runtimes/v1',
   SPACER: '/api/spacer/v1',
 } as const;
@@ -18,6 +19,8 @@ export const API_BASE_PATHS = {
 export const DEFAULT_SERVICE_URLS = {
   /** Default URL for IAM (Identity and Access Management) service */
   IAM: 'https://prod1.datalayer.run',
+  /** Default URL for OTEL (OpenTelemetry observability) service */
+  OTEL: 'https://prod1.datalayer.run',
   /** Default URL for Runtimes service */
   RUNTIMES: 'https://prod1.datalayer.run',
   /** Default URL for Spacer (workspaces and collaboration) service */

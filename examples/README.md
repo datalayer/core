@@ -31,7 +31,7 @@ A native desktop application showcasing the Datalayer frontend Client with Jupyt
 
 ## 🚀 Web Frameworks & APIs
 
-### 🚀 [FastAPI + Scikit-learn](./fastapi-sklearn/README.md)
+### 🚀 [FastAPI + Scikit-learn](./fastapi/README.md)
 
 A REST API server that serves machine learning models using FastAPI and Datalayer Client.
 
@@ -39,7 +39,7 @@ A REST API server that serves machine learning models using FastAPI and Datalaye
 - **Technologies**: FastAPI, Scikit-learn, Uvicorn
 - **Features**: Model serving, snapshot loading, automatic API documentation
 
-### 📊 [Streamlit + Scikit-learn](./streamlit-sklearn/README.md)
+### 📊 [Streamlit + Scikit-learn](./streamlit/README.md)
 
 An interactive web application for machine learning model inference using Streamlit.
 
@@ -49,7 +49,7 @@ An interactive web application for machine learning model inference using Stream
 
 ## 📓 Interactive Notebooks
 
-### ⚛️ [Next.js + Datalayer Notebook](./nextjs-notebook/README.md)
+### ⚛️ [Next.js + Datalayer Notebook](./nextjj/README.md)
 
 A modern Next.js application integrating Jupyter notebooks with Datalayer's cloud platform for interactive data science workflows.
 
@@ -65,7 +65,7 @@ A modern Next.js application integrating Jupyter notebooks with Datalayer's clou
 
 ## 🔥 High-Performance Computing
 
-### ⚡ [PyTorch GPU Workloads](./pytorch-workloads/README.md)
+### ⚡ [PyTorch GPU Workloads](./pytorch/README.md)
 
 GPU-accelerated PyTorch benchmarks demonstrating significant performance improvements over CPU execution across multiple computation types.
 

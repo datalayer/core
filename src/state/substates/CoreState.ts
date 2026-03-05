@@ -27,6 +27,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   aiagentsRunUrl: 'https://prod1.datalayer.run',
   aiinferenceRunUrl: 'https://prod1.datalayer.run',
   mcpserversRunUrl: 'https://prod1.datalayer.run',
+  otelRunUrl: 'https://prod1.datalayer.run',
   growthRunUrl: 'https://prod1.datalayer.run',
   inboundsRunUrl: 'https://prod1.datalayer.run',
   successRunUrl: 'https://prod1.datalayer.run',
