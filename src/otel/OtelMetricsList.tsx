@@ -374,8 +374,6 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
     );
   }
 
-  // Use position:absolute for the scroll area so its height is always
-  // "total parent height minus toolbar height", regardless of flex context.
   return (
     <Box
       sx={{
@@ -386,7 +384,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* Toolbar */}
+      {/* Toolbar — fixed height, does not scroll */}
       <Box
         sx={{
           flexShrink: 0,
@@ -398,6 +396,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
           bg: 'canvas.subtle',
           borderBottom: '1px solid',
           borderColor: 'border.default',
+          zIndex: 0,
         }}
       >
         <SegmentedControl
@@ -420,21 +419,15 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
         </SegmentedControl>
       </Box>
 
-      {/* Content area */}
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflow: 'auto',
-        }}
-      >
+      {/* Scroll area */}
+      <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
         {view === 'chart' ? (
           <Box sx={{ px: 3, py: 2 }}>
             <OtelMetricsChart metrics={metrics} height={280} />
           </Box>
         ) : (
           <>
-            {/* Column header — sticky inside the scroll container */}
+            {/* Column header — sticky inside this scroll container */}
             <Box
               sx={{
                 display: 'grid',
@@ -470,7 +463,6 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
               )}
             </Box>
 
-            {/* Metric group rows */}
             {[...grouped.entries()].map(([name, points]) => (
               <MetricGroup key={name} name={name} points={points} />
             ))}

@@ -110,12 +110,12 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
+        overflow: 'hidden',
         bg: 'canvas.default',
         color: 'fg.default',
       }}
     >
       <OtelHeader
-        baseUrl={BASE_URL}
         token={token}
         trailing={<ThemeSwitcher />}
         onNavigate={handleNavigate}

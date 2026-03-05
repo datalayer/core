@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 import time
 from typing import Any, Optional
 
@@ -847,7 +848,23 @@ def load_test(
                 OTLPMetricExporter(endpoint=f"{otlp_endpoint}/v1/metrics"),
                 export_interval_millis=1000,
             )
-            meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+
+            from opentelemetry.metrics import Observation as _OtelObs
+            from opentelemetry.sdk.metrics.view import (
+                ExponentialBucketHistogramAggregation,
+                View,
+            )
+
+            exp_metric_name = f"load_test.exp_latency.{load_id}"
+            exp_view = View(
+                instrument_name=exp_metric_name,
+                aggregation=ExponentialBucketHistogramAggregation(),
+            )
+            meter_provider = MeterProvider(
+                resource=resource,
+                metric_readers=[metric_reader],
+                views=[exp_view],
+            )
             meter = meter_provider.get_meter("datalayer-otel-load")
 
             counter = meter.create_counter(
@@ -860,9 +877,26 @@ def load_test(
                 description="Load test latency histogram",
                 unit="ms",
             )
+            # Gauge – observable gauge exported as OTLP "gauge" type
+            _cpu_value = [random.uniform(0.0, 100.0)]
+            def _cpu_callback(options):
+                return [_OtelObs(_cpu_value[0], {"load.id": load_id})]
+            meter.create_observable_gauge(
+                name=f"load_test.cpu_utilization.{load_id}",
+                callbacks=[_cpu_callback],
+                description="Load test CPU utilization gauge",
+                unit="%",
+            )
+            # Exponential histogram – View above maps it to exponentialHistogram
+            exp_hist = meter.create_histogram(
+                name=exp_metric_name,
+                description="Load test exponential latency",
+                unit="ms",
+            )
             for i in range(5):
                 counter.add(1, {"load.id": load_id, "endpoint": f"/test/{i}"})
                 latency_hist.record(50.0 + i * 10, {"load.id": load_id})
+                exp_hist.record(random.uniform(0.5, 500.0), {"load.id": load_id})
 
             meter_provider.force_flush()
 

@@ -16,6 +16,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Generate endpoints → local FastAPI backend (port 8600)
+      '/api/generate': {
+        target: 'http://localhost:8600',
+        changeOrigin: true,
+      },
       // IAM login endpoint → Datalayer platform IAM service
       '/api/iam': {
         target: RUN_URL,
