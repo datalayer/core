@@ -13,7 +13,13 @@
  * @module otel/OtelLive
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
 import { Box, Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
 import type {
@@ -104,6 +110,13 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   const [bottomPane, setBottomPane] = useState<BottomPane | null>(null);
   const [rangeStart, setRangeStart] = useState<Date | null>(null);
   const [rangeEnd, setRangeEnd] = useState<Date | null>(null);
+  // Refs so the bounds-change effect can read current range without making
+  // rangeStart/rangeEnd deps (which would cause infinite loops).
+  const rangeStartRef = useRef<Date | null>(null);
+  const rangeEndRef = useRef<Date | null>(null);
+  rangeStartRef.current = rangeStart;
+  rangeEndRef.current = rangeEnd;
+  const prevBoundsRef = useRef<{ start: number; end: number } | null>(null);
 
   // ── data hooks ──
   const {
@@ -205,11 +218,37 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
     );
   }, [allTimestamps, timelineBounds]);
 
-  // Reset slider range when data bounds change
+  // Auto-adapt slider range when data bounds change.
+  // Behaviour:
+  //  – First load (rangeStart is null): initialise to the full range.
+  //  – Subsequent updates: if the user's range handle was at the previous
+  //    bounds edge (within 600 ms), advance it to the new edge so the view
+  //    "follows" live data.  If the handle was moved inward, leave it alone.
   useEffect(() => {
-    if (timelineBounds) {
+    if (!timelineBounds) return;
+    const prev = prevBoundsRef.current;
+    prevBoundsRef.current = {
+      start: timelineBounds.start.getTime(),
+      end: timelineBounds.end.getTime(),
+    };
+
+    // First load
+    if (
+      !prev ||
+      rangeStartRef.current === null ||
+      rangeEndRef.current === null
+    ) {
       setRangeStart(timelineBounds.start);
       setRangeEnd(timelineBounds.end);
+      return;
+    }
+
+    const STICKY_THRESHOLD = 600; // ms – how close to the edge counts as "at edge"
+    if (rangeEndRef.current.getTime() >= prev.end - STICKY_THRESHOLD) {
+      setRangeEnd(timelineBounds.end);
+    }
+    if (rangeStartRef.current.getTime() <= prev.start + STICKY_THRESHOLD) {
+      setRangeStart(timelineBounds.start);
     }
   }, [timelineBounds?.start.getTime(), timelineBounds?.end.getTime()]);
 

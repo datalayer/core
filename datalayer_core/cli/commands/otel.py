@@ -705,6 +705,202 @@ def smoke_test(
         raise typer.Exit(code=1)
 
 
+# ── load-test ────────────────────────────────────────────────────────
+
+
+@app.command("load-test")
+def load_test(
+    otlp_endpoint: str = typer.Option(
+        "http://localhost:4318",
+        "--otlp-endpoint",
+        "-e",
+        help="OTLP HTTP endpoint of the collector.",
+    ),
+    service_name: str = typer.Option(
+        "datalayer-otel-load",
+        "--service",
+        "-s",
+        help="Service name for test data.",
+    ),
+    interval: float = typer.Option(
+        5.0,
+        "--interval",
+        "-i",
+        help="Seconds between each burst of test data.",
+    ),
+    count: int = typer.Option(
+        0,
+        "--count",
+        "-n",
+        help="Number of iterations to run (0 = unlimited, stop with Ctrl+C).",
+    ),
+    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+) -> None:
+    """Continuously send traces, metrics and logs at a configurable interval.
+
+    Exercises the full OTEL ingest pipeline in a loop:
+      1. Emit test traces, metrics and logs via the OpenTelemetry SDK
+      2. Wait for --interval seconds
+      3. Repeat until --count is reached or Ctrl+C is pressed
+
+    Examples:
+      # Send data every 5 seconds indefinitely:
+      datalayer otel load-test
+
+      # Send 10 bursts every 2 seconds using a specific service name:
+      datalayer otel load-test --count 10 --interval 2 --service my-service
+    """
+    try:
+        from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+        from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+        from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    except ImportError:
+        rprint("[red]opentelemetry SDK packages are required. Install with:[/red]")
+        rprint(
+            "  pip install opentelemetry-api opentelemetry-sdk "
+            "opentelemetry-exporter-otlp-proto-http"
+        )
+        raise typer.Exit(code=1)
+
+    import base64
+    import logging
+    import uuid
+
+    # Resolve user_uid from token so the OTLP resource attribute matches query filters.
+    resolved_token = _resolve_token(token)
+    user_uid: str | None = None
+    if resolved_token:
+        try:
+            payload_b64 = resolved_token.split(".")[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            jwt_payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+            user_claim = jwt_payload.get("user")
+            if isinstance(user_claim, dict):
+                user_uid = user_claim.get("uid")
+            if not user_uid:
+                sub = jwt_payload.get("sub")
+                if isinstance(sub, str):
+                    user_uid = sub
+            if user_uid:
+                rprint(f"  [dim]Resolved user_uid from token: {user_uid}[/dim]")
+        except Exception as exc:
+            rprint(f"  [yellow]Could not decode user_uid from token: {exc}[/yellow]")
+
+    count_label = str(count) if count > 0 else "∞"
+    rprint(
+        f"[bold cyan]Starting load test[/bold cyan] — "
+        f"interval=[yellow]{interval}s[/yellow], "
+        f"iterations=[yellow]{count_label}[/yellow], "
+        f"service=[yellow]{service_name}[/yellow]"
+    )
+    rprint("  Press [bold]Ctrl+C[/bold] to stop.\n")
+
+    iteration = 0
+    try:
+        while count == 0 or iteration < count:
+            iteration += 1
+            load_id = uuid.uuid4().hex[:8]
+            tag = f"load-{load_id}"
+
+            resource_attrs: dict[str, Any] = {
+                "service.name": service_name,
+                "load.id": load_id,
+                "load.iteration": iteration,
+            }
+            if user_uid:
+                resource_attrs["datalayer.user_uid"] = user_uid
+            resource = Resource.create(resource_attrs)
+
+            rprint(f"[bold]Iteration {iteration}[/bold]  (id={load_id})", end="  ")
+
+            # ── Send traces ──────────────────────────────────────────
+            trace_provider = TracerProvider(resource=resource)
+            trace_exporter = OTLPSpanExporter(endpoint=f"{otlp_endpoint}/v1/traces")
+            trace_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
+            tracer = trace_provider.get_tracer("datalayer-otel-load")
+
+            with tracer.start_as_current_span(f"{tag}-parent") as parent:
+                parent.set_attribute("load.id", load_id)
+                parent.set_attribute("load.iteration", iteration)
+                for i in range(3):
+                    with tracer.start_as_current_span(f"{tag}-child-{i}") as child:
+                        child.set_attribute("test.iteration", i)
+
+            trace_provider.force_flush()
+
+            # ── Send metrics ─────────────────────────────────────────
+            metric_reader = PeriodicExportingMetricReader(
+                OTLPMetricExporter(endpoint=f"{otlp_endpoint}/v1/metrics"),
+                export_interval_millis=1000,
+            )
+            meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+            meter = meter_provider.get_meter("datalayer-otel-load")
+
+            counter = meter.create_counter(
+                name=f"load_test.requests.{load_id}",
+                description="Load test request counter",
+                unit="1",
+            )
+            latency_hist = meter.create_histogram(
+                name=f"load_test.latency.{load_id}",
+                description="Load test latency histogram",
+                unit="ms",
+            )
+            for i in range(5):
+                counter.add(1, {"load.id": load_id, "endpoint": f"/test/{i}"})
+                latency_hist.record(50.0 + i * 10, {"load.id": load_id})
+
+            meter_provider.force_flush()
+
+            # ── Send logs ────────────────────────────────────────────
+            log_provider = LoggerProvider(resource=resource)
+            log_exporter = OTLPLogExporter(endpoint=f"{otlp_endpoint}/v1/logs")
+            log_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
+
+            handler = LoggingHandler(level=logging.DEBUG, logger_provider=log_provider)
+            test_logger = logging.getLogger(f"load-test-{load_id}")
+            test_logger.addHandler(handler)
+            test_logger.setLevel(logging.DEBUG)
+
+            test_logger.info("Load test INFO log – id=%s iteration=%d", load_id, iteration)
+            test_logger.warning("Load test WARNING log – id=%s", load_id)
+            test_logger.error("Load test ERROR log – id=%s", load_id)
+
+            log_provider.force_flush()
+
+            # ── Shutdown providers ───────────────────────────────────
+            trace_provider.shutdown()
+            meter_provider.shutdown()
+            log_provider.shutdown()
+
+            rprint(f"[green]✓ traces + metrics + logs sent[/green]")
+
+            # ── Wait before next iteration ───────────────────────────
+            if count == 0 or iteration < count:
+                remaining_total = interval
+                step = min(1.0, interval)
+                elapsed = 0.0
+                while elapsed < remaining_total:
+                    secs_left = remaining_total - elapsed
+                    rprint(f"  [dim]Next burst in {secs_left:.0f}s …[/dim]", end="\r")
+                    time.sleep(step)
+                    elapsed += step
+                rprint(f"  {'':40s}", end="\r")  # clear countdown line
+
+    except KeyboardInterrupt:
+        rprint(f"\n[bold yellow]Load test stopped after {iteration} iteration(s).[/bold yellow]")
+        raise typer.Exit(code=0)
+
+    rprint(f"\n[bold green]Load test complete: {iteration} iteration(s) sent.[/bold green]")
+
+
 # ── logfire ──────────────────────────────────────────────────────────
 
 

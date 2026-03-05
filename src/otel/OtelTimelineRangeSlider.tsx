@@ -67,6 +67,7 @@ export const OtelTimelineRangeSlider: React.FC<
   const dragging = useRef<'start' | 'end' | 'track' | null>(null);
   const dragOrigin = useRef({ pct: 0, startPct: 0, endPct: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [hoverPct, setHoverPct] = useState<number | null>(null);
 
   // Compute percentages
   const tlStart = timelineStart.getTime();
@@ -159,6 +160,38 @@ export const OtelTimelineRangeSlider: React.FC<
     [selectedStart, selectedEnd, onRangeCommit],
   );
 
+  // Hover handlers – show dotted line + tooltip while not dragging
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (dragging.current) return;
+      setHoverPct(pointerToPct(e.clientX));
+    },
+    [pointerToPct],
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setHoverPct(null);
+  }, []);
+
+  // Format date for hover tooltip (date + time with seconds)
+  const formatHoverDate = useCallback(
+    (pct: number): string => {
+      const d = pctToDate(pct);
+      const date = d.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+      const time = d.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      return `${date}  ${time}`;
+    },
+    [pctToDate],
+  );
+
   // Rail click to jump
   const handleRailClick = useCallback(
     (e: React.MouseEvent) => {
@@ -213,6 +246,8 @@ export const OtelTimelineRangeSlider: React.FC<
         onClick={handleRailClick}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         sx={{
           position: 'relative',
           width: '100%',
@@ -343,6 +378,55 @@ export const OtelTimelineRangeSlider: React.FC<
             }}
           />
         </Box>
+
+        {/* Hover indicator: vertical dotted line + date tooltip */}
+        {hoverPct !== null && !isDragging && (
+          <>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: `${hoverPct}%`,
+                width: '1px',
+                height: RAIL_HEIGHT,
+                borderLeft: '1px dashed',
+                borderColor: 'fg.default',
+                opacity: 0.55,
+                pointerEvents: 'none',
+                zIndex: 5,
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -36,
+                left: `${hoverPct}%`,
+                transform: 'translateX(-50%)',
+                bg: 'canvas.overlay',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 2,
+                px: 2,
+                py: '2px',
+                pointerEvents: 'none',
+                zIndex: 10,
+                boxShadow: 'shadow.medium',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Text
+                sx={{
+                  fontSize: '11px',
+                  color: 'fg.default',
+                  fontFamily: 'mono',
+                  lineHeight: '18px',
+                }}
+              >
+                {formatHoverDate(hoverPct)}
+              </Text>
+            </Box>
+          </>
+        )}
 
         {/* Tick lines */}
         {ticks.map((t, i) => {
