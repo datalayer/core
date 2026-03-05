@@ -5743,6 +5743,29 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Create URL for password change (sends clickable link via email)
+   */
+  const useCreateUrlForPasswordChange = () => {
+    return useMutation({
+      mutationFn: async ({
+        handle,
+        password,
+        passwordConfirm,
+      }: {
+        handle: string;
+        password: string;
+        passwordConfirm: string;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/password`,
+          method: 'PUT',
+          body: { handle, password, passwordConfirm },
+        });
+      },
+    });
+  };
+
+  /**
    * Confirm password change with token
    */
   const useConfirmPasswordWithToken = () => {
@@ -7722,6 +7745,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useJoinWithInvite,
     useConfirmJoinWithToken,
     useCreateTokenForPasswordChange,
+    useCreateUrlForPasswordChange,
     useConfirmPasswordWithToken,
     useOAuth2AuthorizationURL,
     useOAuth2AuthorizationLinkURL,

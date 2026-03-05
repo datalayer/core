@@ -23,11 +23,19 @@ import { Text } from '@primer/react';
 import { TelescopeIcon } from '@primer/octicons-react';
 import { setupPrimerPortals } from '@datalayer/primer-addons/lib/utils/Portals';
 import '../style/primer-primitives.css';
-import { ThemedProvider, ThemeSwitcher } from '@datalayer/primer-addons';
-import { useThemeStore } from './themeStore';
+import {
+  ThemedProvider,
+  ThemeSwitcher,
+  useThemeStore,
+} from '@datalayer/primer-addons';
 import { useSimpleAuthStore as useAuthStore } from '@datalayer/core/views/otel';
 import { SignInSimple } from '@datalayer/core/views/iam';
-import { OtelHeader, DashboardView, SqlView, SystemView } from '@datalayer/core/views/otel';
+import {
+  OtelHeader,
+  DashboardView,
+  SqlView,
+  SystemView,
+} from '@datalayer/core/views/otel';
 
 // Register document.body as the Primer portal root BEFORE React renders,
 // so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
