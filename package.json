@@ -33,29 +33,29 @@
       "types": "./lib/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./hooks": {
+      "types": "./lib/hooks/index.d.ts",
+      "default": "./lib/hooks/index.js"
+    },
     "./otel": {
       "types": "./lib/otel/index.d.ts",
       "default": "./lib/otel/index.js"
+    },
+    "./utils/jwt": {
+      "types": "./lib/utils/Jwt.d.ts",
+      "default": "./lib/utils/Jwt.js"
     },
     "./views/iam": {
       "types": "./lib/views/iam/index.d.ts",
       "default": "./lib/views/iam/index.js"
     },
-    "./views/profile": {
-      "types": "./lib/views/profile/index.d.ts",
-      "default": "./lib/views/profile/index.js"
-    },
     "./views/otel": {
       "types": "./lib/views/otel/index.d.ts",
       "default": "./lib/views/otel/index.js"
     },
-    "./hooks": {
-      "types": "./lib/hooks/index.d.ts",
-      "default": "./lib/hooks/index.js"
-    },
-    "./utils/jwt": {
-      "types": "./lib/utils/Jwt.d.ts",
-      "default": "./lib/utils/Jwt.js"
+    "./views/profile": {
+      "types": "./lib/views/profile/index.d.ts",
+      "default": "./lib/views/profile/index.js"
     },
     "./style/*": "./style/*",
     "./*": "./*"

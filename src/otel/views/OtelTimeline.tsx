@@ -14,8 +14,8 @@
 
 import React, { useMemo } from 'react';
 import { Box, Text } from '@primer/react';
-import type { OtelTimelineProps } from './types';
-import { toMs, formatDuration, serviceColor } from './utils';
+import type { OtelTimelineProps } from '../types';
+import { toMs, formatDuration, serviceColor } from '../utils';
 
 export const OtelTimeline: React.FC<OtelTimelineProps> = ({
   spans,

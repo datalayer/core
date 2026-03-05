@@ -26,8 +26,8 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
 } from '@primer/octicons-react';
-import type { OtelSpanDetailProps } from './types';
-import { formatDuration, buildSpanTree } from './utils';
+import type { OtelSpanDetailProps } from '../types';
+import { formatDuration, buildSpanTree } from '../utils';
 import { OtelSpanTree } from './OtelSpanTree';
 
 // ── Helpers ─────────────────────────────────────────────────────────

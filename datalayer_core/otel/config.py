@@ -9,7 +9,7 @@ import os
 # The URL of the datalayer-otel FastAPI query service.
 OTEL_BASE_URL = os.environ.get(
     "DATALAYER_OTEL_URL",
-    "http://localhost:7800",
+    "https://prod1.datalayer.run",
 )
 
 # ── OTLP Collector endpoints ───────────────────────────────────────

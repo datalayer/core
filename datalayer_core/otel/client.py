@@ -10,7 +10,7 @@ Usage::
 
     from datalayer_core.otel import OtelClient
 
-    client = OtelClient(base_url="http://localhost:7800", token="my-jwt")
+    client = OtelClient(base_url="https://prod1.datalayer.run", token="my-jwt")
     traces = client.list_traces(service_name="my-service", limit=10)
     metrics = client.query_metrics(metric_name="http.requests")
     logs = client.query_logs(severity="ERROR", limit=50)

@@ -22,8 +22,8 @@ import {
   ChevronRightIcon,
   ChevronDownIcon,
 } from '@primer/octicons-react';
-import type { OtelTracesListProps, OtelSpan } from './types';
-import { formatDuration, formatTime, buildSpanTree } from './utils';
+import type { OtelTracesListProps, OtelSpan } from '../types';
+import { formatDuration, formatTime, buildSpanTree } from '../utils';
 
 /** A row in the rendered list – carries the tree depth for indentation. */
 interface SpanRow {

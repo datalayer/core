@@ -21,7 +21,7 @@ import React from 'react';
 import * as echarts from 'echarts';
 import ReactECharts from 'echarts-for-react';
 import { Box, Text, Label } from '@primer/react';
-import type { OtelMetric } from './types';
+import type { OtelMetric } from '../types';
 
 // ── Gradient palette ────────────────────────────────────────────────
 

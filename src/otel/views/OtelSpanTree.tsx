@@ -15,8 +15,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Text } from '@primer/react';
 import { ChevronDownIcon, ChevronRightIcon } from '@primer/octicons-react';
-import type { OtelSpanTreeProps, OtelSpan } from './types';
-import { formatDuration, serviceColor, toMs } from './utils';
+import type { OtelSpanTreeProps, OtelSpan } from '../types';
+import { formatDuration, serviceColor, toMs } from '../utils';
 
 interface SpanNodeProps {
   span: OtelSpan;

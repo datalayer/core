@@ -41,7 +41,7 @@ app.add_middleware(
 def _client(token: Optional[str] = None) -> OtelClient:
     """Create an OtelClient from env vars, optionally using a caller token."""
     return OtelClient(
-        base_url=os.environ.get("DATALAYER_OTEL_URL", "http://localhost:7800"),
+        base_url=os.environ.get("DATALAYER_OTEL_URL") or os.environ.get("DATALAYER_RUN_URL") or None,
         token=token or os.environ.get("DATALAYER_API_KEY", ""),
     )
 

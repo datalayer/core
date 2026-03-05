@@ -10,7 +10,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { OtelSpan, OtelLog, OtelMetric, OtelQueryRow } from './types';
+import type { OtelSpan, OtelLog, OtelMetric, OtelQueryRow } from '../types';
+import { coreStore } from '../../state/substates/CoreState';
 
 /**
  * Lightweight fetch helper for OTEL API calls.
@@ -206,7 +207,7 @@ export function useOtelTraces(options: {
 }) {
   const {
     token,
-    baseUrl = '',
+    baseUrl = coreStore.getState().configuration.otelRunUrl,
     serviceName,
     limit = 50,
     autoRefreshMs,
@@ -290,7 +291,7 @@ export function useOtelLogs(options: {
 }) {
   const {
     token,
-    baseUrl = '',
+    baseUrl = coreStore.getState().configuration.otelRunUrl,
     serviceName,
     severity,
     traceId,
@@ -345,7 +346,7 @@ export function useOtelMetrics(options: {
 }) {
   const {
     token,
-    baseUrl = '',
+    baseUrl = coreStore.getState().configuration.otelRunUrl,
     serviceName,
     metricName,
     limit = 50,
@@ -587,7 +588,7 @@ export function useOtelWebSocket(options: {
   callbacks?: OtelWsCallbacks;
 }) {
   const {
-    baseUrl = '',
+    baseUrl = coreStore.getState().configuration.otelRunUrl,
     token,
     autoReconnect = true,
     reconnectDelayMs = 3000,

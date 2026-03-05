@@ -16,8 +16,8 @@
 import React from 'react';
 import { Box, Button, Spinner, Text } from '@primer/react';
 import { SyncIcon } from '@primer/octicons-react';
-import { useOtelSystem } from './hooks';
-import type { OtelSystemData } from './hooks';
+import { useOtelSystem } from '../hooks';
+import type { OtelSystemData } from '../hooks';
 
 // ── Helpers ───────────────────────────────────────────────────────
 

@@ -22,14 +22,14 @@ import React, {
 } from 'react';
 import { Box, Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
-import { coreStore } from '../state/substates/CoreState';
+import { coreStore } from '../../state/substates/CoreState';
 import type {
   OtelLiveProps,
   OtelSpan,
   OtelLog,
   OtelMetric,
   SignalType,
-} from './types';
+} from '../types';
 import {
   useOtelTraces,
   useOtelTrace,
@@ -37,8 +37,8 @@ import {
   useOtelMetrics,
   useOtelServices,
   useOtelWebSocket,
-} from './hooks';
-import type { OtelWsCallbacks } from './hooks';
+} from '../hooks';
+import type { OtelWsCallbacks } from '../hooks';
 import { OtelSearchBar } from './OtelSearchBar';
 import { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
 import { OtelTracesList } from './OtelTracesList';
@@ -47,7 +47,7 @@ import { OtelMetricsList } from './OtelMetricsList';
 import { OtelSpanDetail } from './OtelSpanDetail';
 import { OtelTimeline } from './OtelTimeline';
 import { OtelSpanTree } from './OtelSpanTree';
-import { buildSpanTree } from './utils';
+import { buildSpanTree } from '../utils';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

@@ -22,7 +22,7 @@ import {
   Button,
 } from '@primer/react';
 import { SyncIcon, SearchIcon } from '@primer/octicons-react';
-import type { OtelSearchBarProps, SignalType } from './types';
+import type { OtelSearchBarProps, SignalType } from '../types';
 
 const SIGNALS: { value: SignalType; label: string }[] = [
   { value: 'traces', label: 'Traces' },

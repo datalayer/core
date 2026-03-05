@@ -13,9 +13,8 @@
  * If the user is not authenticated, the SignInSimple page is shown instead
  * of the dashboard.
  *
- * Split into:
- *  - header/  → OtelHeader (branding + signal generators + theme switcher)
- *  - views/   → DashboardView, TracesView, LogsView, MetricsView
+ * Components come directly from @datalayer/core/views/otel (OtelHeader, views)
+ * and @datalayer/primer-addons (ThemedProvider, ThemeSwitcher).
  */
 
 import React, { useCallback, useRef, useState } from 'react';
@@ -24,12 +23,11 @@ import { Text } from '@primer/react';
 import { TelescopeIcon } from '@primer/octicons-react';
 import { setupPrimerPortals } from '@datalayer/primer-addons/lib/utils/Portals';
 import '../style/primer-primitives.css';
-import { ThemedProvider } from './stores/themedProvider';
-import { useAuthStore } from './stores/authStore';
+import { ThemedProvider, ThemeSwitcher } from '@datalayer/primer-addons';
+import { useThemeStore } from './themeStore';
+import { useSimpleAuthStore as useAuthStore } from '@datalayer/core/views/otel';
 import { SignInSimple } from '@datalayer/core/views/iam';
-import { OtelHeader } from './header';
-import { ThemeSwitcher } from './header/ThemeSwitcher';
-import { DashboardView, SqlView, SystemView } from './views';
+import { OtelHeader, DashboardView, SqlView, SystemView } from '@datalayer/core/views/otel';
 
 // Register document.body as the Primer portal root BEFORE React renders,
 // so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
@@ -49,7 +47,7 @@ export const App: React.FC = () => {
   // If not authenticated, show the sign-in page.
   if (!token) {
     return (
-      <ThemedProvider>
+      <ThemedProvider useStore={useThemeStore}>
         <SignInSimple
           onSignIn={setAuth}
           title="Datalayer OTEL"
@@ -61,7 +59,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <ThemedProvider>
+    <ThemedProvider useStore={useThemeStore}>
       <AuthenticatedApp token={token} />
     </ThemedProvider>
   );
@@ -125,7 +123,7 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
     >
       <OtelHeader
         token={token}
-        trailing={<ThemeSwitcher />}
+        trailing={<ThemeSwitcher useStore={useThemeStore} />}
         onNavigate={handleNavigate}
         onSignOut={clearAuth}
       />

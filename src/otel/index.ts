@@ -4,13 +4,20 @@
  */
 
 /**
- * OTEL React components for visualizing OpenTelemetry signals
- * (traces, logs, metrics) in a Logfire-inspired Live view.
+ * OTEL React components, hooks, and client for visualizing OpenTelemetry
+ * signals (traces, logs, metrics) in a Logfire-inspired Live view.
+ *
+ * Structure:
+ *  - `types`  – shared TypeScript types
+ *  - `utils`  – pure helpers (formatDuration, buildSpanTree, …)
+ *  - `hooks/` – React hooks that read from Datalayer config by default
+ *  - `client/`– Typed HTTP client (non-React, reads Datalayer config by default)
+ *  - `views/` – React view components
  *
  * @module otel
  */
 
-// Types
+// ── Types ────────────────────────────────────────────────────────────────────
 export type {
   OtelSpan,
   OtelLog,
@@ -31,7 +38,20 @@ export type {
   OtelQueryResult,
 } from './types';
 
-// Hooks
+// ── Utils ─────────────────────────────────────────────────────────────────────
+export {
+  toMs,
+  formatDuration,
+  formatTime,
+  serviceColor,
+  kindColor,
+  severityColor,
+  severityVariant,
+  buildSpanTree,
+  flattenSpanTree,
+} from './utils';
+
+// ── Hooks ─────────────────────────────────────────────────────────────────────
 export {
   useOtelTraces,
   useOtelTrace,
@@ -43,29 +63,37 @@ export {
   useOtelSystem,
   useOtelWebSocket,
 } from './hooks';
-
-// WebSocket types
-export type { OtelWsMessage, OtelWsCallbacks } from './hooks';
-
-// Components
-export { OtelTimeline } from './OtelTimeline';
-export { OtelTracesList } from './OtelTracesList';
-export { OtelSpanDetail } from './OtelSpanDetail';
-export { OtelSpanTree } from './OtelSpanTree';
-export { OtelLogsList } from './OtelLogsList';
-export { OtelSearchBar } from './OtelSearchBar';
-export { OtelMetricsList } from './OtelMetricsList';
-export { OtelMetricsChart } from './OtelMetricsChart';
-export type { OtelMetricsChartProps } from './OtelMetricsChart';
-export { OtelLive } from './OtelLive';
-export { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
-export { OtelSqlView } from './OtelSqlView';
-export type { OtelSqlViewProps } from './OtelSqlView';
-export { OtelSystemView } from './OtelSystemView';
-export type { OtelSystemViewProps } from './OtelSystemView';
 export type {
+  OtelWsMessage,
+  OtelWsCallbacks,
   OtelSystemData,
   OtelSystemProcess,
   OtelSystemDisk,
   OtelSystemTable,
 } from './hooks';
+
+// ── Client ────────────────────────────────────────────────────────────────────
+export { OtelClient, createOtelClient } from './client';
+export type {
+  OtelClientOptions,
+  FetchTracesOptions,
+  FetchLogsOptions,
+  FetchMetricsOptions,
+} from './client';
+
+// ── Views ─────────────────────────────────────────────────────────────────────
+export { OtelLive } from './views';
+export { OtelTracesList } from './views';
+export { OtelSpanDetail } from './views';
+export { OtelSpanTree } from './views';
+export { OtelLogsList } from './views';
+export { OtelSearchBar } from './views';
+export { OtelMetricsList } from './views';
+export { OtelMetricsChart } from './views';
+export type { OtelMetricsChartProps } from './views';
+export { OtelTimeline } from './views';
+export { OtelTimelineRangeSlider } from './views';
+export { OtelSqlView } from './views';
+export type { OtelSqlViewProps } from './views';
+export { OtelSystemView } from './views';
+export type { OtelSystemViewProps } from './views';

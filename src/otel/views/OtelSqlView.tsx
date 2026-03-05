@@ -30,8 +30,8 @@ import {
   XCircleIcon,
   DownloadIcon,
 } from '@primer/octicons-react';
-import { useOtelQuery } from './hooks';
-import type { OtelQueryRow } from './types';
+import { useOtelQuery } from '../hooks';
+import type { OtelQueryRow } from '../types';
 
 // ── Cookie helpers ────────────────────────────────────────────────
 

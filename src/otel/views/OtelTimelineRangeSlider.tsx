@@ -19,7 +19,7 @@
 
 import React, { useCallback, useRef, useState, useMemo } from 'react';
 import { Box, Text } from '@primer/react';
-import type { OtelTimelineRangeSliderProps } from './types';
+import type { OtelTimelineRangeSliderProps } from '../types';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

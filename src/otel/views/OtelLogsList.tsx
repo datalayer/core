@@ -16,8 +16,8 @@ import React, { useState } from 'react';
 import { Box, Text, Label, Spinner } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
 import { LogIcon } from '@primer/octicons-react';
-import type { OtelLogsListProps, OtelLog } from './types';
-import { formatTime, severityVariant } from './utils';
+import type { OtelLogsListProps, OtelLog } from '../types';
+import { formatTime, severityVariant } from '../utils';
 
 // ── helpers ─────────────────────────────────────────────────────────
 

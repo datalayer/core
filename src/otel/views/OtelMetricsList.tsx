@@ -29,8 +29,8 @@ import {
   GraphIcon,
   TableIcon,
 } from '@primer/octicons-react';
-import type { OtelMetric } from './types';
-import { formatTime } from './utils';
+import type { OtelMetric } from '../types';
+import { formatTime } from '../utils';
 import { OtelMetricsChart } from './OtelMetricsChart';
 
 // ── Types ───────────────────────────────────────────────────────────
