@@ -3,5 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './iam';
-export * from './profile';
+export { SignInSimple } from './SignInSimple';
+export type { SignInSimpleProps } from './SignInSimple';

@@ -10,7 +10,7 @@
  * a Zustand store (persisted to localStorage), with a theme / color
  * mode switcher in the header.
  *
- * If the user is not authenticated, the LoginPage is shown instead
+ * If the user is not authenticated, the SignInSimple page is shown instead
  * of the dashboard.
  *
  * Split into:
@@ -21,11 +21,12 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { Text } from '@primer/react';
+import { TelescopeIcon } from '@primer/octicons-react';
 import { setupPrimerPortals } from '@datalayer/primer-addons/lib/utils/Portals';
 import '../style/primer-primitives.css';
 import { ThemedProvider } from './stores/themedProvider';
 import { useAuthStore } from './stores/authStore';
-import { LoginPage } from './LoginPage';
+import { SignInSimple } from '@datalayer/core/views/iam';
 import { OtelHeader } from './header';
 import { ThemeSwitcher } from './header/ThemeSwitcher';
 import { DashboardView, SqlView, SystemView } from './views';
@@ -43,12 +44,18 @@ const WS_BASE_URL: string = __DATALAYER_OTEL_URL__;
 
 export const App: React.FC = () => {
   const token = useAuthStore((s) => s.token);
+  const setAuth = useAuthStore((s) => s.setAuth);
 
-  // If not authenticated, show the login page.
+  // If not authenticated, show the sign-in page.
   if (!token) {
     return (
       <ThemedProvider>
-        <LoginPage />
+        <SignInSimple
+          onSignIn={setAuth}
+          title="Datalayer OTEL"
+          description="Sign in to access the observability dashboard."
+          leadingIcon={<TelescopeIcon size={24} />}
+        />
       </ThemedProvider>
     );
   }

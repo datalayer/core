@@ -37,6 +37,14 @@
       "types": "./lib/otel/index.d.ts",
       "default": "./lib/otel/index.js"
     },
+    "./views/iam": {
+      "types": "./lib/views/iam/index.d.ts",
+      "default": "./lib/views/iam/index.js"
+    },
+    "./views/profile": {
+      "types": "./lib/views/profile/index.d.ts",
+      "default": "./lib/views/profile/index.js"
+    },
     "./utils/jwt": {
       "types": "./lib/utils/Jwt.d.ts",
       "default": "./lib/utils/Jwt.js"

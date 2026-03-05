@@ -45,11 +45,21 @@ logger = logging.getLogger(__name__)
 def _otlp_endpoint() -> str:
     """Return the OTLP base endpoint (without /v1/traces etc.).
 
-    Uses ``DATALAYER_OTLP_URL`` which should point at the OTLP
-    collector HTTP port (default 4318), **not** the query API (7800).
+    Resolution order (mirrors the CLI load-test):
+    1. ``DATALAYER_OTLP_URL``   – explicit OTLP collector URL
+    2. ``DATALAYER_OTEL_RUN_URL`` / ``DATALAYER_RUN_URL`` + ``/api/otel/v1/otlp``
+    3. ``http://localhost:4318``  – standard local collector (fallback)
     """
-    base = os.environ.get("DATALAYER_OTLP_URL", "http://localhost:4318")
-    return base.rstrip("/")
+    explicit = os.environ.get("DATALAYER_OTLP_URL")
+    if explicit:
+        return explicit.rstrip("/")
+    run_url = (
+        os.environ.get("DATALAYER_OTEL_RUN_URL")
+        or os.environ.get("DATALAYER_RUN_URL")
+    )
+    if run_url:
+        return run_url.rstrip("/") + "/api/otel/v1/otlp"
+    return "http://localhost:4318"
 
 
 def _otel_api_url() -> str:

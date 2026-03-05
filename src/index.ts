@@ -225,3 +225,6 @@ export {
 
 // OTEL observability components, hooks, and types
 export * from './otel';
+
+// Reusable views (sign-in pages, etc.)
+export * from './views';

@@ -4,10 +4,13 @@
  */
 
 /**
- * LoginPage – Minimal handle + password login for the OTEL example.
+ * SignInSimple – Generic handle + password sign-in form.
  *
- * Posts to `/api/iam/v1/login` (proxied by Vite to the IAM service)
- * and stores the returned JWT in the auth Zustand store.
+ * Posts to `loginUrl` (default `/api/iam/v1/login`) with
+ * `{ handle, password }`, then calls `onSignIn(token, handle)` on
+ * success so the caller can persist credentials as needed.
+ *
+ * @module views/signin
  */
 
 import React, { useState, useCallback } from 'react';
@@ -20,11 +23,45 @@ import {
   TextInput,
 } from '@primer/react';
 import { EyeIcon, EyeClosedIcon, TelescopeIcon } from '@primer/octicons-react';
-import { useAuthStore } from './stores/authStore';
 
-export const LoginPage: React.FC = () => {
-  const setAuth = useAuthStore((s) => s.setAuth);
+// ── Props ────────────────────────────────────────────────────────────
 
+export interface SignInSimpleProps {
+  /**
+   * Called after a successful login with the JWT and the user handle.
+   * Typically used to store credentials in a Zustand / context store.
+   */
+  onSignIn: (token: string, handle: string) => void;
+  /**
+   * Login endpoint.  Defaults to `/api/iam/v1/login`.
+   * The endpoint must accept `POST { handle, password }` and return
+   * `{ success: boolean; token?: string; message?: string }`.
+   */
+  loginUrl?: string;
+  /**
+   * Optional heading text.  Defaults to `"Datalayer OTEL"`.
+   */
+  title?: string;
+  /**
+   * Optional subtitle / description.
+   */
+  description?: string;
+  /**
+   * Leading icon element rendered next to the title.
+   * Defaults to `<TelescopeIcon size={24} />`.
+   */
+  leadingIcon?: React.ReactNode;
+}
+
+// ── Component ────────────────────────────────────────────────────────
+
+export const SignInSimple: React.FC<SignInSimpleProps> = ({
+  onSignIn,
+  loginUrl = '/api/iam/v1/login',
+  title = 'Datalayer OTEL',
+  description = 'Sign in to access the observability dashboard.',
+  leadingIcon = <TelescopeIcon size={24} />,
+}) => {
   const [handle, setHandle] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +73,7 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetch('/api/iam/v1/login', {
+      const resp = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ handle, password }),
@@ -46,7 +83,7 @@ export const LoginPage: React.FC = () => {
       }
       const data = await resp.json();
       if (data.success && data.token) {
-        setAuth(data.token, handle);
+        onSignIn(data.token, handle);
       } else {
         setError(data.message || 'Invalid username or password.');
       }
@@ -55,7 +92,7 @@ export const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [handle, password, loading, setAuth]);
+  }, [handle, password, loading, loginUrl, onSignIn]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -95,12 +132,15 @@ export const LoginPage: React.FC = () => {
             justifyContent: 'center',
           }}
         >
-          <TelescopeIcon size={24} />
-          <Heading sx={{ fontSize: 3 }}>Datalayer OTEL</Heading>
+          {leadingIcon}
+          <Heading sx={{ fontSize: 3 }}>{title}</Heading>
         </Box>
 
-        <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', mb: 3, textAlign: 'center' }}>
-          Sign in to access the observability dashboard.
+        <Text
+          as="p"
+          sx={{ fontSize: 1, color: 'fg.muted', mb: 3, textAlign: 'center' }}
+        >
+          {description}
         </Text>
 
         {/* Handle */}
@@ -111,7 +151,7 @@ export const LoginPage: React.FC = () => {
             block
             placeholder="Your username"
             value={handle}
-            onChange={(e) => setHandle(e.target.value)}
+            onChange={e => setHandle(e.target.value)}
             onKeyDown={handleKeyDown}
           />
         </FormControl>
@@ -124,7 +164,7 @@ export const LoginPage: React.FC = () => {
             placeholder="Your password"
             type={showPassword ? 'text' : 'password'}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             onKeyDown={handleKeyDown}
             trailingAction={
               <TextInput.Action
@@ -139,7 +179,9 @@ export const LoginPage: React.FC = () => {
 
         {/* Error */}
         {error && (
-          <Text sx={{ color: 'danger.fg', fontSize: 1, mb: 3, display: 'block' }}>
+          <Text
+            sx={{ color: 'danger.fg', fontSize: 1, mb: 3, display: 'block' }}
+          >
             {error}
           </Text>
         )}
@@ -157,3 +199,5 @@ export const LoginPage: React.FC = () => {
     </Box>
   );
 };
+
+export default SignInSimple;
