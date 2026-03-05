@@ -69,6 +69,7 @@ export const App: React.FC = () => {
 
 /** The main dashboard, rendered only when the user has a valid token. */
 const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
+  const clearAuth = useAuthStore((s) => s.clearAuth);
   // Hold the OtelLive signal setter so the header can navigate tabs.
   const signalSetterRef = useRef<((s: 'traces' | 'logs' | 'metrics') => void) | null>(null);
   const [view, setView] = useState<'dashboard' | 'sql' | 'system'>(() => {
@@ -126,6 +127,7 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
         token={token}
         trailing={<ThemeSwitcher />}
         onNavigate={handleNavigate}
+        onSignOut={clearAuth}
       />
       {/* ── View tab bar ── */}
       <Box
