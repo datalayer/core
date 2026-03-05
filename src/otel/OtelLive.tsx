@@ -22,6 +22,7 @@ import React, {
 } from 'react';
 import { Box, Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
+import { coreStore } from '../state/substates/CoreState';
 import type {
   OtelLiveProps,
   OtelSpan,
@@ -88,7 +89,8 @@ function buildHistogram(
 // ── OtelLive ────────────────────────────────────────────────────────
 
 export const OtelLive: React.FC<OtelLiveProps> = ({
-  baseUrl = '',
+  baseUrl = coreStore.getState().configuration.otelRunUrl,
+  wsBaseUrl,
   token,
   autoRefreshMs = 5000,
   defaultSignal = 'traces',
@@ -189,7 +191,7 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   );
 
   const { connected: wsConnected } = useOtelWebSocket({
-    baseUrl,
+    baseUrl: wsBaseUrl ?? baseUrl,
     token,
     callbacks: wsCallbacks,
   });

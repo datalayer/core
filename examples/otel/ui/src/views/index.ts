@@ -7,3 +7,4 @@ export { DashboardView } from './DashboardView';
 export { TracesView } from './TracesView';
 export { LogsView } from './LogsView';
 export { MetricsView } from './MetricsView';
+export { SqlView } from './SqlView';

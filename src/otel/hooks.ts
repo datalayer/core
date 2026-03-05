@@ -10,15 +10,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { OtelSpan, OtelLog, OtelMetric } from './types';
-
-/** Build auth headers from a token. */
-function authHeaders(token?: string): Record<string, string> {
-  if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  return {};
-}
+import type { OtelSpan, OtelLog, OtelMetric, OtelQueryRow } from './types';
+import { requestDatalayerAPI } from '../api/DatalayerApi';
 
 /** Convert nanosecond epoch to ISO string. Returns the input if already a string. */
 function nanoToIso(val: unknown): string {
@@ -192,11 +185,10 @@ export function useOtelTraces(options: {
     try {
       const params = new URLSearchParams({ limit: String(limit) });
       if (serviceName) params.set('service_name', serviceName);
-      const resp = await fetch(`${baseUrl}/api/otel/v1/traces?${params}`, {
-        headers: authHeaders(token),
+      const data = await requestDatalayerAPI({
+        url: `${baseUrl}/api/otel/v1/traces?${params}`,
+        token,
       });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
       const rows = data.data ?? data ?? [];
       setTraces(Array.isArray(rows) ? rows.map(normalizeSpan) : []);
       setError(null);
@@ -237,13 +229,10 @@ export function useOtelTrace(options: {
       return;
     }
     setLoading(true);
-    fetch(`${baseUrl}/api/otel/v1/traces/${traceId}`, {
-      headers: authHeaders(token),
+    requestDatalayerAPI({
+      url: `${baseUrl}/api/otel/v1/traces/${traceId}`,
+      token,
     })
-      .then(resp => {
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        return resp.json();
-      })
       .then(data => {
         const rows = data.data ?? data ?? [];
         setSpans(Array.isArray(rows) ? rows.map(normalizeSpan) : []);
@@ -287,11 +276,10 @@ export function useOtelLogs(options: {
       if (serviceName) params.set('service_name', serviceName);
       if (severity) params.set('severity', severity);
       if (traceId) params.set('trace_id', traceId);
-      const resp = await fetch(`${baseUrl}/api/otel/v1/logs?${params}`, {
-        headers: authHeaders(token),
+      const data = await requestDatalayerAPI({
+        url: `${baseUrl}/api/otel/v1/logs?${params}`,
+        token,
       });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
       const rows = data.data ?? data ?? [];
       setLogs(Array.isArray(rows) ? rows.map(normalizeLog) : []);
       setError(null);
@@ -341,11 +329,10 @@ export function useOtelMetrics(options: {
       const params = new URLSearchParams({ limit: String(limit) });
       if (serviceName) params.set('service_name', serviceName);
       if (metricName) params.set('metric_name', metricName);
-      const resp = await fetch(`${baseUrl}/api/otel/v1/metrics?${params}`, {
-        headers: authHeaders(token),
+      const data = await requestDatalayerAPI({
+        url: `${baseUrl}/api/otel/v1/metrics?${params}`,
+        token,
       });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
       const rows = data.data ?? data ?? [];
       setMetrics(Array.isArray(rows) ? rows.map(normalizeMetric) : []);
       setError(null);
@@ -376,10 +363,10 @@ export function useOtelServices(options: { token?: string; baseUrl?: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/otel/v1/traces/services/list`, {
-      headers: authHeaders(token),
+    requestDatalayerAPI({
+      url: `${baseUrl}/api/otel/v1/traces/services/list`,
+      token,
     })
-      .then(resp => resp.json())
       .then(data => {
         // Handle various response shapes:
         // { services: ["a","b"] } | { data: [{service_name:"a"},...] } | ["a","b"]
@@ -412,16 +399,58 @@ export function useOtelStats(options: { token?: string; baseUrl?: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${baseUrl}/api/otel/v1/stats`, {
-      headers: authHeaders(token),
+    requestDatalayerAPI({
+      url: `${baseUrl}/api/otel/v1/stats`,
+      token,
     })
-      .then(resp => resp.json())
       .then(data => setStats(data))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token, baseUrl]);
 
   return { stats, loading };
+}
+
+// ── useOtelQuery ────────────────────────────────────────────────────
+
+/**
+ * Execute an ad-hoc DataFusion SQL query against the OTEL service.
+ *
+ * Usage:
+ * ```tsx
+ * const { execute, rows, loading, error } = useOtelQuery({ baseUrl, token });
+ * await execute('SELECT trace_id FROM spans LIMIT 10');
+ * ```
+ */
+export function useOtelQuery(options: { token?: string; baseUrl?: string }) {
+  const { token, baseUrl = '' } = options;
+  const [rows, setRows] = useState<OtelQueryRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const execute = useCallback(
+    async (sql: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await requestDatalayerAPI({
+          url: `${baseUrl}/api/otel/v1/query/`,
+          method: 'POST',
+          body: { sql },
+          token,
+        });
+        setRows(data.data ?? []);
+      } catch (err: any) {
+        setError(err.message ?? 'Query failed');
+        setRows([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token, baseUrl],
+  );
+
+  return { rows, loading, error, execute };
 }
 
 // ── useOtelWebSocket ────────────────────────────────────────────────

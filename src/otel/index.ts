@@ -27,6 +27,8 @@ export type {
   OtelSpanTreeProps,
   OtelSearchBarProps,
   OtelTimelineRangeSliderProps,
+  OtelQueryRow,
+  OtelQueryResult,
 } from './types';
 
 // Hooks
@@ -37,6 +39,7 @@ export {
   useOtelMetrics,
   useOtelServices,
   useOtelStats,
+  useOtelQuery,
   useOtelWebSocket,
 } from './hooks';
 
@@ -55,3 +58,5 @@ export { OtelMetricsChart } from './OtelMetricsChart';
 export type { OtelMetricsChartProps } from './OtelMetricsChart';
 export { OtelLive } from './OtelLive';
 export { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
+export { OtelSqlView } from './OtelSqlView';
+export type { OtelSqlViewProps } from './OtelSqlView';

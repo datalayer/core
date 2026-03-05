@@ -85,6 +85,10 @@ export type IDatalayerCoreConfig = {
    */
   mcpserversRunUrl: string;
   /**
+   * OTEL (OpenTelemetry) API URL.
+   */
+  otelRunUrl: string;
+  /**
    * Growth API URL.
    */
   growthRunUrl: string;

@@ -2993,6 +2993,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Delete token by ID
+   */
+  const useDeleteToken = () => {
+    return useMutation({
+      mutationFn: async (tokenId: string) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/tokens/${tokenId}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: (_, tokenId) => {
+        queryClient.removeQueries({
+          queryKey: queryKeys.tokens.detail(tokenId),
+        });
+        queryClient.invalidateQueries({ queryKey: queryKeys.tokens.all() });
+      },
+    });
+  };
+
+  /**
    * Get contact by handle
    */
   const useContactByHandle = (handle: string) => {
@@ -7920,6 +7940,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useTokens,
     useCreateToken,
     useUpdateToken,
+    useDeleteToken,
 
     // Invites
     useInvite,

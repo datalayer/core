@@ -13,6 +13,8 @@ import { OtelLive } from '@datalayer/core/otel';
 
 export interface DashboardViewProps {
   baseUrl?: string;
+  /** WebSocket base URL – passed directly to OtelLive to bypass the Vite proxy. */
+  wsBaseUrl?: string;
   token?: string;
   autoRefreshMs?: number;
   defaultSignal?: 'traces' | 'logs' | 'metrics';
@@ -23,6 +25,7 @@ export interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   baseUrl = '',
+  wsBaseUrl,
   token,
   autoRefreshMs = 5000,
   defaultSignal = 'traces',
@@ -32,6 +35,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   <Box sx={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
     <OtelLive
       baseUrl={baseUrl}
+      wsBaseUrl={wsBaseUrl}
       token={token}
       autoRefreshMs={autoRefreshMs}
       defaultSignal={defaultSignal}

@@ -61,7 +61,11 @@ def _auth_headers(token: str | None) -> dict[str, str]:
 
 def _otel_base_url(url: str | None) -> str:
     """Resolve the OTEL service base URL."""
-    return url or os.environ.get("DATALAYER_OTEL_URL", "http://localhost:7800")
+    return (
+        url
+        or os.environ.get("DATALAYER_OTEL_RUN_URL")
+        or os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
+    )
 
 
 # ── traces ───────────────────────────────────────────────────────────
@@ -72,7 +76,7 @@ def traces(
     trace_id: Optional[str] = typer.Argument(None, help="Specific trace ID to retrieve."),
     service_name: Optional[str] = typer.Option(None, "--service", "-s", help="Filter by service name."),
     limit: int = typer.Option(20, "--limit", "-n", help="Max number of traces to return."),
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """List or get traces from the OTEL service."""
@@ -120,7 +124,7 @@ def metrics(
     metric_name: Optional[str] = typer.Option(None, "--name", "-m", help="Filter by metric name."),
     service_name: Optional[str] = typer.Option(None, "--service", "-s", help="Filter by service name."),
     limit: int = typer.Option(20, "--limit", "-n", help="Max rows."),
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Query metrics from the OTEL service."""
@@ -166,7 +170,7 @@ def logs(
     severity: Optional[str] = typer.Option(None, "--severity", help="Filter by severity (INFO, WARN, ERROR…)."),
     trace_id: Optional[str] = typer.Option(None, "--trace-id", help="Filter by trace ID."),
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows."),
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Query log records from the OTEL service."""
@@ -211,7 +215,7 @@ def logs(
 @app.command()
 def query(
     sql: str = typer.Argument(..., help="SQL query to execute against the SQL Engine store."),
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     raw: bool = typer.Option(False, "--raw", help="Output raw JSON instead of a table."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
@@ -221,7 +225,7 @@ def query(
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
     resp = httpx.post(
-        f"{url}/api/otel/v1/query",
+        f"{url}/api/otel/v1/query/",
         json={"sql": sql},
         headers=headers,
         timeout=60,
@@ -253,7 +257,7 @@ def query(
 
 @app.command()
 def stats(
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Show storage statistics from the running OTEL service."""
@@ -279,7 +283,7 @@ def stats(
 
 @app.command("services")
 def list_services(
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """List all observed service names."""
@@ -309,7 +313,7 @@ def list_services(
 
 @app.command()
 def flush(
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Force-flush all buffered telemetry data to Parquet storage."""
@@ -329,13 +333,13 @@ def flush(
 
 @app.command("smoke-test")
 def smoke_test(
-    otlp_endpoint: str = typer.Option(
-        "http://localhost:4318",
+    otlp_endpoint: Optional[str] = typer.Option(
+        None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector.",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
     ),
-    base_url: Optional[str] = typer.Option(None, "--url", help="OTEL query service base URL."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL query service run URL."),
     service_name: str = typer.Option("datalayer-otel-smoke", "--service", "-s", help="Service name for test data."),
     wait: int = typer.Option(3, "--wait", "-w", help="Seconds to wait for data to be ingested before querying."),
     token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
@@ -354,6 +358,7 @@ def smoke_test(
     import httpx
 
     url = _otel_base_url(base_url)
+    otlp_endpoint = otlp_endpoint or f"{url}/api/otel/v1/otlp"
     headers = _auth_headers(token)
 
     try:
@@ -711,11 +716,11 @@ def smoke_test(
 
 @app.command("load-test")
 def load_test(
-    otlp_endpoint: str = typer.Option(
-        "http://localhost:4318",
+    otlp_endpoint: Optional[str] = typer.Option(
+        None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector.",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
     ),
     service_name: str = typer.Option(
         "datalayer-otel-load",
@@ -751,6 +756,7 @@ def load_test(
       # Send 10 bursts every 2 seconds using a specific service name:
       datalayer otel load-test --count 10 --interval 2 --service my-service
     """
+    otlp_endpoint = otlp_endpoint or f"{_otel_base_url(None)}/api/otel/v1/otlp"
     try:
         from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
         from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
@@ -907,11 +913,11 @@ def load_test(
 
 @app.command("logfire-test")
 def logfire_test(
-    otlp_endpoint: str = typer.Option(
-        "http://localhost:4318",
+    otlp_endpoint: Optional[str] = typer.Option(
+        None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (where to forward data).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
     ),
     service_name: str = typer.Option(
         "datalayer-otel-logfire",
@@ -933,6 +939,8 @@ def logfire_test(
     import base64
     import logging as _logging
     import uuid
+
+    otlp_endpoint = otlp_endpoint or f"{_otel_base_url(None)}/api/otel/v1/otlp"
 
     try:
         import logfire
@@ -1086,3 +1094,105 @@ def logfire_test(
         f"[bold green]All data sent to {otlp_endpoint} "
         f"— service=[cyan]{service_name}[/cyan], id=[cyan]{test_id}[/cyan][/bold green]"
     )
+
+
+# ── system ────────────────────────────────────────────────────────────
+
+
+@app.command("system")
+def system(
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY). Must have platform_admin role."),
+    json_output: bool = typer.Option(False, "--json", help="Output raw JSON."),
+) -> None:
+    """Show system statistics (platform_admin only).
+
+    Displays service memory/CPU, disk space, row counts per table,
+    and number of distinct users.  Requires a token with the
+    ``platform_admin`` role.
+    """
+    import httpx
+
+    url = _otel_base_url(base_url)
+    headers = _auth_headers(token)
+    endpoint = f"{url}/api/otel/v1/system/"
+
+    try:
+        resp = httpx.get(endpoint, headers=headers, timeout=15)
+    except httpx.RequestError as exc:
+        rprint(f"[red]Connection error: {exc}[/red]")
+        raise typer.Exit(code=1)
+
+    if resp.status_code == 403:
+        rprint("[red]Access denied: platform_admin role required.[/red]")
+        raise typer.Exit(code=1)
+    if resp.status_code != 200:
+        rprint(f"[red]HTTP {resp.status_code}: {resp.text}[/red]")
+        raise typer.Exit(code=1)
+
+    payload = resp.json()
+    data = payload.get("data", payload)
+
+    if json_output:
+        rprint(json.dumps(data, indent=2))
+        return
+
+    console.rule("[bold cyan]OTEL System Statistics[/bold cyan]")
+
+    # ── Process ──────────────────────────────────────────────────────
+    proc = data.get("process", {})
+    if "error" not in proc:
+        rss_mb = proc.get("memory_rss_bytes", 0) / 1024 / 1024
+        vms_mb = proc.get("memory_vms_bytes", 0) / 1024 / 1024
+        cpu = proc.get("cpu_percent", 0)
+        threads = proc.get("num_threads", "?")
+        t = Table(title="Process", box=None, show_header=True)
+        t.add_column("Metric", style="bold")
+        t.add_column("Value")
+        t.add_row("RSS Memory", f"{rss_mb:.1f} MB")
+        t.add_row("VMS Memory", f"{vms_mb:.1f} MB")
+        t.add_row("CPU", f"{cpu:.1f} %")
+        t.add_row("Threads", str(threads))
+        console.print(t)
+    else:
+        rprint(f"  [yellow]Process stats unavailable: {proc['error']}[/yellow]")
+
+    # ── Disk ─────────────────────────────────────────────────────────
+    disk = data.get("disk", {})
+    if "error" not in disk:
+        used_gb = disk.get("used_bytes", 0) / 1024 ** 3
+        free_gb = disk.get("free_bytes", 0) / 1024 ** 3
+        total_gb = disk.get("total_bytes", 0) / 1024 ** 3
+        used_pct = disk.get("used_percent", 0)
+        t = Table(title="Disk", box=None, show_header=True)
+        t.add_column("Metric", style="bold")
+        t.add_column("Value")
+        t.add_row("Data Dir", disk.get("data_dir", "?"))
+        t.add_row("Total", f"{total_gb:.1f} GB")
+        t.add_row("Used", f"{used_gb:.1f} GB  ({used_pct:.1f}%)")
+        t.add_row("Free", f"{free_gb:.1f} GB")
+        console.print(t)
+    else:
+        rprint(f"  [yellow]Disk stats unavailable: {disk['error']}[/yellow]")
+
+    # ── Tables ───────────────────────────────────────────────────────
+    tables_info = data.get("tables", {})
+    if tables_info:
+        t = Table(title="Tables", box=None, show_header=True)
+        t.add_column("Table", style="bold")
+        t.add_column("Rows", justify="right")
+        t.add_column("Users", justify="right")
+        t.add_column("Disk", justify="right")
+        for tbl, tinfo in tables_info.items():
+            if "error" in tinfo:
+                t.add_row(tbl, "[red]error[/red]", "-", "-")
+            else:
+                rows = f"{tinfo.get('row_count', 0):,}"
+                users = str(tinfo.get("distinct_users", 0))
+                disk_mb = tinfo.get("disk_bytes", 0) / 1024 / 1024
+                t.add_row(tbl, rows, users, f"{disk_mb:.2f} MB")
+        console.print(t)
+
+    # ── Summary ──────────────────────────────────────────────────────
+    total_users = data.get("total_distinct_users", "?")
+    rprint(f"\n  [bold]Total distinct users (across all tables):[/bold] {total_users}")

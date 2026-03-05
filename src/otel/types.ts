@@ -76,8 +76,17 @@ export type SignalType = 'traces' | 'logs' | 'metrics';
 
 /** Props for the main OtelLive orchestrator component. */
 export interface OtelLiveProps {
-  /** OTEL API base URL (e.g. "http://localhost:9600"). Defaults to "". */
+  /**
+   * OTEL API base URL. When omitted, falls back to `otelRunUrl` from the
+   * Datalayer core configuration (defaults to "https://prod1.datalayer.run").
+   */
   baseUrl?: string;
+  /**
+   * WebSocket base URL. When provided, the WebSocket connects directly to this
+   * URL instead of deriving it from `baseUrl`. Use this to bypass a dev proxy
+   * and connect directly to the OTEL service (e.g. "https://prod1.datalayer.run").
+   */
+  wsBaseUrl?: string;
   /** Bearer token for authentication. */
   token?: string;
   /** Auto-refresh interval in ms. Set to 0 to disable. Default 5000. */
@@ -170,6 +179,18 @@ export interface OtelTimelineRangeSliderProps {
   height?: number;
   /** Optional histogram data: array of { time: Date; count: number } */
   histogram?: { time: Date; count: number }[];
+}
+
+// ── SQL query ──────────────────────────────────────────────────────
+
+/** A single row returned by the SQL query endpoint. */
+export type OtelQueryRow = Record<string, unknown>;
+
+/** Response shape from POST /api/otel/v1/query/ */
+export interface OtelQueryResult {
+  success: boolean;
+  data: OtelQueryRow[];
+  count: number;
 }
 
 /** Props for the search / filter bar. */

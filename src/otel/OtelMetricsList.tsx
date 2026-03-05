@@ -362,17 +362,15 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
 
   if (metrics.length === 0) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Blankslate>
-          <Blankslate.Visual>
-            <MeterIcon size={32} />
-          </Blankslate.Visual>
-          <Blankslate.Heading>No metrics yet</Blankslate.Heading>
-          <Blankslate.Description>
-            Generate some metrics or adjust the filters above.
-          </Blankslate.Description>
-        </Blankslate>
-      </Box>
+      <Blankslate>
+        <Blankslate.Visual>
+          <MeterIcon size={32} />
+        </Blankslate.Visual>
+        <Blankslate.Heading>No metrics yet</Blankslate.Heading>
+        <Blankslate.Description>
+          Generate some metrics or adjust the filters above.
+        </Blankslate.Description>
+      </Blankslate>
     );
   }
 
