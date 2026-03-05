@@ -37,6 +37,10 @@
       "types": "./lib/otel/index.d.ts",
       "default": "./lib/otel/index.js"
     },
+    "./utils/jwt": {
+      "types": "./lib/utils/Jwt.d.ts",
+      "default": "./lib/utils/Jwt.js"
+    },
     "./style/*": "./style/*",
     "./*": "./*"
   },

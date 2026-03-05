@@ -93,7 +93,7 @@ def traces(
         params: dict = {"limit": limit}
         if service_name:
             params["service_name"] = service_name
-        resp = httpx.get(f"{url}/api/otel/v1/traces", params=params, headers=headers, timeout=30, follow_redirects=True)
+        resp = httpx.get(f"{url}/api/otel/v1/traces/", params=params, headers=headers, timeout=30, follow_redirects=True)
         resp.raise_for_status()
         data = resp.json()
 
@@ -138,7 +138,7 @@ def metrics(
     if service_name:
         params["service_name"] = service_name
 
-    resp = httpx.get(f"{url}/api/otel/v1/metrics", params=params, headers=headers, timeout=30, follow_redirects=True)
+    resp = httpx.get(f"{url}/api/otel/v1/metrics/", params=params, headers=headers, timeout=30, follow_redirects=True)
     resp.raise_for_status()
     data = resp.json()
 
@@ -186,7 +186,7 @@ def logs(
     if trace_id:
         params["trace_id"] = trace_id
 
-    resp = httpx.get(f"{url}/api/otel/v1/logs", params=params, headers=headers, timeout=30, follow_redirects=True)
+    resp = httpx.get(f"{url}/api/otel/v1/logs/", params=params, headers=headers, timeout=30, follow_redirects=True)
     resp.raise_for_status()
     data = resp.json()
 
@@ -265,7 +265,7 @@ def stats(
 
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
-    resp = httpx.get(f"{url}/api/otel/v1/stats", headers=headers, timeout=15, follow_redirects=True)
+    resp = httpx.get(f"{url}/api/otel/v1/stats/", headers=headers, timeout=15, follow_redirects=True)
     resp.raise_for_status()
     data = resp.json()
 
@@ -291,7 +291,7 @@ def list_services(
 
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
-    resp = httpx.get(f"{url}/api/otel/v1/traces/services/list", headers=headers, timeout=15, follow_redirects=True)
+    resp = httpx.get(f"{url}/api/otel/v1/traces/services/list/", headers=headers, timeout=15, follow_redirects=True)
     resp.raise_for_status()
     data = resp.json()
 
@@ -321,7 +321,7 @@ def flush(
 
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
-    resp = httpx.post(f"{url}/api/otel/v1/flush", headers=headers, timeout=30, follow_redirects=True)
+    resp = httpx.post(f"{url}/api/otel/v1/flush/", headers=headers, timeout=30, follow_redirects=True)
     resp.raise_for_status()
     data = resp.json()
     rprint("[bold green]Flush complete.[/bold green]")
@@ -541,7 +541,7 @@ def smoke_test(
     console.rule("[bold cyan]5/7  Flushing service buffers[/bold cyan]")
     rprint("  [dim]CLI: datalayer otel flush[/dim]")
     try:
-        resp = httpx.post(f"{url}/api/otel/v1/flush", headers=headers, timeout=30, follow_redirects=True)
+        resp = httpx.post(f"{url}/api/otel/v1/flush/", headers=headers, timeout=30, follow_redirects=True)
         resp.raise_for_status()
         rprint(f"  [green]Flush result: {resp.json()}[/green]")
     except Exception as exc:

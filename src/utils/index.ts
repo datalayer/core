@@ -16,6 +16,7 @@ export * from './Env';
 export * from './File';
 export * from './Format';
 export * from './Ids';
+export * from './Jwt';
 export * from './Jupyter';
 export * from './Lazy';
 export * from './Msc';

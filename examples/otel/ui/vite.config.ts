@@ -22,19 +22,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
-      // OTEL WebSocket endpoint
-      '/api/otel/v1/ws': {
-        target: OTEL_URL,
-        changeOrigin: true,
-        ws: true,
-        ...(OTEL_URL.startsWith('https') ? { secure: true } : {}),
-      },
-      // OTEL REST endpoints
-      '/api/otel': {
-        target: OTEL_URL,
-        changeOrigin: true,
-        ...(OTEL_URL.startsWith('https') ? { secure: true } : {}),
-      },
       // All other REST endpoints → Datalayer platform
       '/api': {
         target: RUN_URL,

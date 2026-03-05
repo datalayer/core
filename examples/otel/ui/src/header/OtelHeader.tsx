@@ -11,7 +11,146 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Box, Text, Button, Dialog } from '@primer/react';
 import { TelescopeIcon, SignOutIcon } from '@primer/octicons-react';
+import {
+  parseJwtPayload,
+  getDatalayerJwtUser,
+  getDatalayerDisplayName,
+} from '@datalayer/core/utils/jwt';
+import type { DatalayerJwtPayload } from '@datalayer/core/utils/jwt';
 import { useAuthStore } from '../stores/authStore';
+
+// ── UserBadge ─────────────────────────────────────────────────────
+
+/** Shows the display name; on hover reveals a JWT details popover. */
+const UserBadge: React.FC<{ token: string }> = ({ token }) => {
+  const [open, setOpen] = useState(false);
+  const user = getDatalayerJwtUser(token);
+  const displayName = getDatalayerDisplayName(user, user?.handle ?? '');
+  const claims = parseJwtPayload<DatalayerJwtPayload>(token);
+
+  return (
+    <Box
+      sx={{ position: 'relative' }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <Text
+        sx={{
+          fontSize: 1,
+          color: 'fg.muted',
+          cursor: 'default',
+          borderBottom: '1px dashed',
+          borderColor: 'border.muted',
+          pb: '1px',
+          userSelect: 'none',
+        }}
+      >
+        {displayName}
+      </Text>
+
+      {open && claims && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            zIndex: 100,
+            width: '400px',
+            bg: 'canvas.overlay',
+            border: '1px solid',
+            borderColor: 'border.default',
+            borderRadius: 2,
+            boxShadow: 'shadow.large',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Header row */}
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              bg: 'canvas.subtle',
+              borderBottom: '1px solid',
+              borderColor: 'border.default',
+            }}
+          >
+            <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>JWT Claims</Text>
+          </Box>
+
+          {/* User summary */}
+          {claims.user && (
+            <Box sx={{ px: 3, py: 2, borderBottom: '1px solid', borderColor: 'border.muted' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: 1, fontSize: 0 }}>
+                {claims.user.email && (
+                  <>
+                    <Text sx={{ color: 'fg.muted' }}>Email</Text>
+                    <Text sx={{ fontFamily: 'mono' }}>{claims.user.email}</Text>
+                  </>
+                )}
+                <Text sx={{ color: 'fg.muted' }}>Handle</Text>
+                <Text sx={{ fontFamily: 'mono' }}>{claims.user.handle}</Text>
+                <Text sx={{ color: 'fg.muted' }}>UID</Text>
+                <Text sx={{ fontFamily: 'mono', wordBreak: 'break-all' }}>{claims.user.uid}</Text>
+                <Text sx={{ color: 'fg.muted' }}>Issued</Text>
+                <Text sx={{ fontFamily: 'mono' }}>{new Date(claims.iat * 1000).toISOString()}</Text>
+                <Text sx={{ color: 'fg.muted' }}>Expires</Text>
+                <Text sx={{ fontFamily: 'mono' }}>{new Date(claims.exp * 1000).toISOString()}</Text>
+              </Box>
+            </Box>
+          )}
+
+          {/* Roles */}
+          {(claims.user?.roles ?? claims.roles ?? []).length > 0 && (
+            <Box sx={{ px: 3, py: 2, borderBottom: '1px solid', borderColor: 'border.muted' }}>
+              <Text sx={{ fontSize: 0, color: 'fg.muted', display: 'block', mb: 1 }}>Roles</Text>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {(claims.user?.roles ?? claims.roles ?? []).map(r => (
+                  <Box
+                    key={r}
+                    sx={{
+                      fontSize: 0,
+                      fontFamily: 'mono',
+                      px: 1,
+                      py: '1px',
+                      bg: 'accent.subtle',
+                      color: 'accent.fg',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'accent.muted',
+                    }}
+                  >
+                    {r}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
+
+          {/* Raw JSON */}
+          <Box
+            as="pre"
+            sx={{
+              m: 0,
+              px: 3,
+              py: 2,
+              fontFamily: 'mono',
+              fontSize: 0,
+              color: 'fg.default',
+              bg: 'canvas.inset',
+              overflow: 'auto',
+              maxHeight: '220px',
+              whiteSpace: 'pre',
+            }}
+          >
+            {JSON.stringify(claims, null, 2)}
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+// ── OtelHeader ────────────────────────────────────────────────────
 
 export interface OtelHeaderProps {
   /** Base URL for the generate API. Defaults to ''. */
@@ -34,7 +173,6 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
   onNavigate,
 }) => {
   const clearAuth = useAuthStore((s) => s.clearAuth);
-  const handle = useAuthStore((s) => s.handle);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogRequest, setDialogRequest] = useState('');
@@ -97,6 +235,8 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
           borderBottom: '1px solid',
           borderColor: 'border.default',
           flexShrink: 0,
+          // Allow overflow visible so the JWT popover can extend below the header.
+          overflow: 'visible',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -142,9 +282,8 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
 
         {trailing}
 
-        {handle && (
-          <Text sx={{ fontSize: 1, color: 'fg.muted' }}>{handle}</Text>
-        )}
+        {token && <UserBadge token={token} />}
+
         <Button
           size="small"
           variant="invisible"

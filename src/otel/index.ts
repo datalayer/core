@@ -40,6 +40,7 @@ export {
   useOtelServices,
   useOtelStats,
   useOtelQuery,
+  useOtelSystem,
   useOtelWebSocket,
 } from './hooks';
 
@@ -60,3 +61,11 @@ export { OtelLive } from './OtelLive';
 export { OtelTimelineRangeSlider } from './OtelTimelineRangeSlider';
 export { OtelSqlView } from './OtelSqlView';
 export type { OtelSqlViewProps } from './OtelSqlView';
+export { OtelSystemView } from './OtelSystemView';
+export type { OtelSystemViewProps } from './OtelSystemView';
+export type {
+  OtelSystemData,
+  OtelSystemProcess,
+  OtelSystemDisk,
+  OtelSystemTable,
+} from './hooks';

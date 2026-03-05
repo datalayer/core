@@ -28,22 +28,17 @@ import { useAuthStore } from './stores/authStore';
 import { LoginPage } from './LoginPage';
 import { OtelHeader } from './header';
 import { ThemeSwitcher } from './header/ThemeSwitcher';
-import { DashboardView, SqlView } from './views';
+import { DashboardView, SqlView, SystemView } from './views';
 
 // Register document.body as the Primer portal root BEFORE React renders,
 // so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
 // from the very first paint.
 setupPrimerPortals();
 
-// REST requests use a relative base URL so that Vite's proxy (dev) or the
-// same-origin server (prod) forwards /api/otel/* correctly. The Vite proxy
-// is configured in vite.config.ts to forward /api/otel → DATALAYER_OTEL_RUN_URL.
-const BASE_URL = '';
-
-// WebSocket connects directly to the OTEL service URL, bypassing the Vite WS
-// proxy which is unreliable for wss:// targets.
 // __DATALAYER_OTEL_URL__ is injected at build time by vite.config.ts.
+// Both REST and WebSocket requests go directly to the OTEL backend – no proxy.
 declare const __DATALAYER_OTEL_URL__: string;
+const BASE_URL: string = __DATALAYER_OTEL_URL__;
 const WS_BASE_URL: string = __DATALAYER_OTEL_URL__;
 
 export const App: React.FC = () => {
@@ -69,7 +64,18 @@ export const App: React.FC = () => {
 const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
   // Hold the OtelLive signal setter so the header can navigate tabs.
   const signalSetterRef = useRef<((s: 'traces' | 'logs' | 'metrics') => void) | null>(null);
-  const [view, setView] = useState<'dashboard' | 'sql'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'sql' | 'system'>(() => {
+    try {
+      const m = document.cookie.match(/(?:^|;\s*)otel_view=([^;]+)/);
+      if (m && (m[1] === 'dashboard' || m[1] === 'sql' || m[1] === 'system')) return m[1] as 'dashboard' | 'sql' | 'system';
+    } catch { /* ignore */ }
+    return 'dashboard';
+  });
+
+  const switchView = (v: 'dashboard' | 'sql' | 'system') => {
+    try { document.cookie = `otel_view=${v};path=/;max-age=31536000`; } catch { /* ignore */ }
+    setView(v);
+  };
 
   const handleSignalRef = useCallback(
     (setter: (s: 'traces' | 'logs' | 'metrics') => void) => {
@@ -126,11 +132,14 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
           flexShrink: 0,
         }}
       >
-        <Box sx={TAB_SX(view === 'dashboard')} onClick={() => setView('dashboard')}>
+        <Box sx={TAB_SX(view === 'dashboard')} onClick={() => switchView('dashboard')}>
           <Text>Live</Text>
         </Box>
-        <Box sx={TAB_SX(view === 'sql')} onClick={() => setView('sql')}>
+        <Box sx={TAB_SX(view === 'sql')} onClick={() => switchView('sql')}>
           <Text>SQL</Text>
+        </Box>
+        <Box sx={TAB_SX(view === 'system')} onClick={() => switchView('system')}>
+          <Text>System</Text>
         </Box>
       </Box>
       {/* ── View content ── */}
@@ -144,8 +153,10 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
           limit={200}
           onSignalRef={handleSignalRef}
         />
-      ) : (
+      ) : view === 'sql' ? (
         <SqlView baseUrl={BASE_URL} token={token} />
+      ) : (
+        <SystemView baseUrl={BASE_URL} token={token} />
       )}
     </Box>
   );

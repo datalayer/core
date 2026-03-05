@@ -364,7 +364,7 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
     return (
       <Blankslate>
         <Blankslate.Visual>
-          <MeterIcon size={32} />
+          <MeterIcon size={20} />
         </Blankslate.Visual>
         <Blankslate.Heading>No metrics yet</Blankslate.Heading>
         <Blankslate.Description>
