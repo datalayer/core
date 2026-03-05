@@ -12,8 +12,9 @@ Provides subcommands to query and interact with the Datalayer OTEL service::
     datalayer otel stats       # Show storage statistics
     datalayer otel services    # List observed service names
     datalayer otel flush       # Force-flush buffered data
-    datalayer otel smoke-test  # Send traces/metrics/logs and query them back
-    datalayer otel logfire     # Send test spans/logs to Logfire
+    datalayer otel smoke-test   # Send traces/metrics/logs and query them back
+    datalayer otel load-test    # Continuously send test data at a configurable interval
+    datalayer otel logfire-test # Send test traces/metrics/logs via Logfire to local OTLP
 """
 
 from __future__ import annotations
@@ -72,7 +73,7 @@ def traces(
     service_name: Optional[str] = typer.Option(None, "--service", "-s", help="Filter by service name."),
     limit: int = typer.Option(20, "--limit", "-n", help="Max number of traces to return."),
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """List or get traces from the OTEL service."""
     import httpx
@@ -120,7 +121,7 @@ def metrics(
     service_name: Optional[str] = typer.Option(None, "--service", "-s", help="Filter by service name."),
     limit: int = typer.Option(20, "--limit", "-n", help="Max rows."),
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Query metrics from the OTEL service."""
     import httpx
@@ -166,7 +167,7 @@ def logs(
     trace_id: Optional[str] = typer.Option(None, "--trace-id", help="Filter by trace ID."),
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows."),
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Query log records from the OTEL service."""
     import httpx
@@ -212,7 +213,7 @@ def query(
     sql: str = typer.Argument(..., help="SQL query to execute against the SQL Engine store."),
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
     raw: bool = typer.Option(False, "--raw", help="Output raw JSON instead of a table."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Run an ad-hoc SQL query via the SQL Engine engine."""
     import httpx
@@ -253,7 +254,7 @@ def query(
 @app.command()
 def stats(
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Show storage statistics from the running OTEL service."""
     import httpx
@@ -279,7 +280,7 @@ def stats(
 @app.command("services")
 def list_services(
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """List all observed service names."""
     import httpx
@@ -309,7 +310,7 @@ def list_services(
 @app.command()
 def flush(
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL service base URL."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Force-flush all buffered telemetry data to Parquet storage."""
     import httpx
@@ -337,7 +338,7 @@ def smoke_test(
     base_url: Optional[str] = typer.Option(None, "--url", help="OTEL query service base URL."),
     service_name: str = typer.Option("datalayer-otel-smoke", "--service", "-s", help="Service name for test data."),
     wait: int = typer.Option(3, "--wait", "-w", help="Seconds to wait for data to be ingested before querying."),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """End-to-end smoke test: send traces, metrics and logs, then query them back.
 
@@ -734,7 +735,7 @@ def load_test(
         "-n",
         help="Number of iterations to run (0 = unlimited, stop with Ctrl+C).",
     ),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
 ) -> None:
     """Continuously send traces, metrics and logs at a configurable interval.
 
@@ -901,22 +902,38 @@ def load_test(
     rprint(f"\n[bold green]Load test complete: {iteration} iteration(s) sent.[/bold green]")
 
 
-# ── logfire ──────────────────────────────────────────────────────────
+# ── logfire-test ──────────────────────────────────────────────────────
 
 
-@app.command("logfire")
-def logfire_cmd(
-    send_to_logfire: bool = typer.Option(
-        True,
-        "--send/--no-send",
-        help="Whether to send data to Logfire cloud (requires DATALAYER_LOGFIRE_API_KEY).",
+@app.command("logfire-test")
+def logfire_test(
+    otlp_endpoint: str = typer.Option(
+        "http://localhost:4318",
+        "--otlp-endpoint",
+        "-e",
+        help="OTLP HTTP endpoint of the collector (where to forward data).",
     ),
-    token: Optional[str] = typer.Option(None, "--token", "-t", help="Logfire write token."),
-    project: Optional[str] = typer.Option(None, "--project", "-p", help="Logfire project name."),
-    url: Optional[str] = typer.Option(None, "--logfire-url", help="Logfire base URL."),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose console output."),
+    service_name: str = typer.Option(
+        "datalayer-otel-logfire",
+        "--service",
+        "-s",
+        help="Service name for the test data.",
+    ),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logfire console output."),
 ) -> None:
-    """Send test traces and logs to Logfire."""
+    """Send test traces, metrics and logs via the Logfire library to the local OTLP endpoint.
+
+    Uses the pydantic logfire library for traces and logs, and the OpenTelemetry SDK
+    for metrics.  All data is forwarded to the local OTLP collector (--otlp-endpoint)
+    so it is visible in the Datalayer OTEL example UI.
+
+    Logfire is configured with send_to_logfire=False so no cloud token is required.
+    """
+    import base64
+    import logging as _logging
+    import uuid
+
     try:
         import logfire
     except ImportError:
@@ -924,73 +941,148 @@ def logfire_cmd(
         rprint("  pip install 'logfire>=3.0.0'")
         raise typer.Exit(code=1)
 
-    from datalayer_core.otel.config import (
-        LOGFIRE_PROJECT,
-        LOGFIRE_SEND_TO_LOGFIRE,
-        LOGFIRE_TOKEN,
-        LOGFIRE_URL,
-    )
-
-    effective_token = token or LOGFIRE_TOKEN
-    effective_project = project or LOGFIRE_PROJECT
-    effective_url = url or LOGFIRE_URL
-    effective_send = send_to_logfire and LOGFIRE_SEND_TO_LOGFIRE
-
-    if effective_send and not effective_token:
-        rprint(
-            "[red]Logfire write token is required when sending to Logfire cloud.\n"
-            "Set DATALAYER_LOGFIRE_API_KEY or pass --token, or use --no-send for local-only.[/red]"
-        )
+    try:
+        from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+        from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+        from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    except ImportError:
+        rprint("[red]opentelemetry SDK packages are required. Install with:[/red]")
+        rprint("  pip install opentelemetry-api opentelemetry-sdk opentelemetry-exporter-otlp-proto-http")
         raise typer.Exit(code=1)
 
-    console.rule("[bold cyan]Configuring Logfire[/bold cyan]")
-    rprint(f"  Project     : [cyan]{effective_project}[/cyan]")
-    rprint(f"  URL         : [cyan]{effective_url}[/cyan]")
-    rprint(f"  Send to cloud: [cyan]{effective_send}[/cyan]")
-    rprint(f"  Token       : [cyan]{'****' + effective_token[-4:] if effective_token else '(none)'}[/cyan]")
+    test_id = uuid.uuid4().hex[:8]
 
-    configure_kwargs: dict = {
-        "send_to_logfire": effective_send,
-        "console": logfire.ConsoleOptions(verbose=verbose),
-        "sampling": logfire.SamplingOptions(head=1),
+    # Resolve user_uid from JWT token.
+    resolved_token = _resolve_token(token)
+    user_uid: str | None = None
+    if resolved_token:
+        try:
+            payload_b64 = resolved_token.split(".")[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            jwt_payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+            user_claim = jwt_payload.get("user")
+            if isinstance(user_claim, dict):
+                user_uid = user_claim.get("uid")
+            if not user_uid:
+                sub = jwt_payload.get("sub")
+                if isinstance(sub, str):
+                    user_uid = sub
+            if user_uid:
+                rprint(f"  [dim]Resolved user_uid from token: {user_uid}[/dim]")
+        except Exception as exc:
+            rprint(f"  [yellow]Could not decode user_uid from token: {exc}[/yellow]")
+
+    resource_attrs: dict[str, Any] = {
+        "service.name": service_name,
+        "logfire.test.id": test_id,
     }
-    if effective_send and effective_token:
-        configure_kwargs["token"] = effective_token
-    if effective_project:
-        configure_kwargs["project_name"] = effective_project
-    if effective_url:
-        configure_kwargs["base_url"] = effective_url
+    if user_uid:
+        resource_attrs["datalayer.user_uid"] = user_uid
 
+    # ── 1. Configure logfire (traces + logs) → local OTLP collector ──────────
+    console.rule("[bold cyan]1/3  Configuring Logfire (traces + logs)[/bold cyan]")
+    rprint(f"  OTLP endpoint : [cyan]{otlp_endpoint}[/cyan]")
+    rprint(f"  Service       : [cyan]{service_name}[/cyan]")
+    rprint(f"  Test ID       : [cyan]{test_id}[/cyan]")
+    rprint(f"  Logfire       : [cyan]{logfire.__version__}[/cyan]")
+
+    otlp_span_processor = BatchSpanProcessor(
+        OTLPSpanExporter(endpoint=f"{otlp_endpoint}/v1/traces")
+    )
+    configure_kwargs: dict[str, Any] = {
+        "send_to_logfire": False,
+        "service_name": service_name,
+        "console": logfire.ConsoleOptions(verbose=verbose),
+    }
     logfire.configure(**configure_kwargs)
-    rprint(f"  Logfire version: [green]{logfire.__version__}[/green]")
+    rprint("  [green]Logfire configured ✔[/green]")
 
-    console.rule("[bold cyan]Sending test spans[/bold cyan]")
-    logfire.info("Datalayer OTEL smoke test – hello from {service}!", service="datalayer-otel")
-    logfire.debug("Debug span – testing debug level output")
+    # ── 2. Send traces via OTel SDK (with proper resource/user_uid) ───────────
+    # We use the OTel SDK directly so the Resource (incl. datalayer.user_uid)
+    # is attached to the spans — logfire's internal TracerProvider doesn't carry
+    # our custom resource attributes.
+    console.rule("[bold cyan]2/3  Sending traces via OTel SDK + logs via Logfire[/bold cyan]")
 
-    with logfire.span("smoke-test-parent") as parent_span:
-        parent_span.set_attribute("smoke.signal", "trace")
-        rprint("  [green]Created parent span 'smoke-test-parent'[/green]")
+    resource = Resource.create(resource_attrs)
+    trace_provider = TracerProvider(resource=resource)
+    trace_provider.add_span_processor(otlp_span_processor)
+    tracer = trace_provider.get_tracer("datalayer-otel-logfire-test")
+
+    with tracer.start_as_current_span(f"logfire-test-parent") as parent_span:
+        parent_span.set_attribute("logfire.test.id", test_id)
+        parent_span.set_attribute("logfire.test.signal", "trace")
+        if user_uid:
+            parent_span.set_attribute("datalayer.user_uid", user_uid)
         for i in range(3):
-            with logfire.span(f"smoke-test-child-{i}") as child_span:
+            with tracer.start_as_current_span(f"logfire-test-child-{i}") as child_span:
                 child_span.set_attribute("test.iteration", i)
-                time.sleep(0.1)
-            rprint(f"  [green]Created child span 'smoke-test-child-{i}'[/green]")
+                child_span.set_attribute("logfire.test.id", test_id)
+                time.sleep(0.05)
 
-    console.rule("[bold cyan]Sending test log messages[/bold cyan]")
-    logfire.info("Smoke test INFO log – everything is working", level="info")
-    logfire.warn("Smoke test WARNING log – this is a warning", level="warning")
-    logfire.error("Smoke test ERROR log – simulated error", level="error")
-    rprint("  [green]Sent 3 log messages (INFO, WARNING, ERROR)[/green]")
+    trace_provider.force_flush()
+    trace_provider.shutdown()
+    rprint("  [green]1 parent + 3 child spans sent via OTel SDK ✔[/green]")
 
-    console.rule("[bold cyan]Flushing[/bold cyan]")
+    logfire.info("Logfire test INFO log – id={test_id}", test_id=test_id)
+    logfire.warn("Logfire test WARNING log – id={test_id}", test_id=test_id)
+    logfire.error("Logfire test ERROR log – id={test_id}", test_id=test_id)
+
+    # Also emit logs via OTel SDK so they appear in the Logs tab.
+    resource = Resource.create(resource_attrs)
+    log_provider = LoggerProvider(resource=resource)
+    log_provider.add_log_record_processor(
+        BatchLogRecordProcessor(OTLPLogExporter(endpoint=f"{otlp_endpoint}/v1/logs"))
+    )
+    handler = LoggingHandler(level=_logging.DEBUG, logger_provider=log_provider)
+    sdk_logger = _logging.getLogger(f"logfire-test-sdk-{test_id}")
+    sdk_logger.addHandler(handler)
+    sdk_logger.setLevel(_logging.DEBUG)
+    sdk_logger.info("Logfire-test SDK INFO log – id=%s", test_id)
+    sdk_logger.warning("Logfire-test SDK WARNING log – id=%s", test_id)
+    sdk_logger.error("Logfire-test SDK ERROR log – id=%s", test_id)
+    log_provider.force_flush()
+    log_provider.shutdown()
+    rprint("  [green]3 logfire messages + 3 SDK log records sent ✔[/green]")
+
+    # ── 3. Send metrics via OTel SDK ──────────────────────────────────────────
+    console.rule("[bold cyan]3/3  Sending metrics via OTel SDK[/bold cyan]")
+    metric_reader = PeriodicExportingMetricReader(
+        OTLPMetricExporter(endpoint=f"{otlp_endpoint}/v1/metrics"),
+        export_interval_millis=1000,
+    )
+    meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+    meter = meter_provider.get_meter("datalayer-otel-logfire-test")
+
+    req_counter = meter.create_counter(
+        name=f"logfire_test.requests.{test_id}",
+        description="Logfire test request counter",
+        unit="1",
+    )
+    latency_hist = meter.create_histogram(
+        name=f"logfire_test.latency.{test_id}",
+        description="Logfire test latency histogram",
+        unit="ms",
+    )
+    for i in range(5):
+        req_counter.add(1, {"logfire.test.id": test_id, "endpoint": f"/test/{i}"})
+        latency_hist.record(40.0 + i * 12, {"logfire.test.id": test_id})
+
+    meter_provider.force_flush()
+    meter_provider.shutdown()
+    rprint("  [green]5 counter + 5 histogram data points sent ✔[/green]")
+
+    # ── Flush & summary ───────────────────────────────────────────────────────
     logfire.force_flush()
-    rprint("  [green]Flushed all pending data.[/green]")
 
     console.rule("[bold]Logfire Test Summary[/bold]")
-    rprint("[bold green]All test data sent successfully.[/bold green]")
-    if effective_send:
-        rprint(
-            f"View at: [link={effective_url}]{effective_url}[/link]"
-            f" → project [cyan]{effective_project}[/cyan]"
-        )
+    rprint(
+        f"[bold green]All data sent to {otlp_endpoint} "
+        f"— service=[cyan]{service_name}[/cyan], id=[cyan]{test_id}[/cyan][/bold green]"
+    )

@@ -140,10 +140,10 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
           + Metrics
         </Button>
 
+        {trailing}
+
         {handle && (
-          <Text sx={{ fontSize: 1, color: 'fg.muted', ml: 2 }}>
-            {handle}
-          </Text>
+          <Text sx={{ fontSize: 1, color: 'fg.muted' }}>{handle}</Text>
         )}
         <Button
           size="small"
@@ -154,8 +154,6 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
         >
           Logout
         </Button>
-
-        {trailing}
       </Box>
 
       {dialogOpen && (

@@ -266,6 +266,50 @@ function buildOption(
   };
 }
 
+// ── Stats helpers ───────────────────────────────────────────────────
+
+interface SectionStats {
+  total: number;
+  count: number;
+  startTs: number | null;
+  endTs: number | null;
+}
+
+function computeStats(
+  nameMap: Map<string, { ts: number; value: number }[]>,
+): SectionStats {
+  let total = 0;
+  let count = 0;
+  let startTs: number | null = null;
+  let endTs: number | null = null;
+  for (const points of nameMap.values()) {
+    for (const p of points) {
+      total += p.value;
+      count += 1;
+      if (startTs === null || p.ts < startTs) startTs = p.ts;
+      if (endTs === null || p.ts > endTs) endTs = p.ts;
+    }
+  }
+  return { total, count, startTs, endTs };
+}
+
+function formatTs(ts: number): string {
+  return new Date(ts).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return rem > 0 ? `${m}m ${rem}s` : `${m}m`;
+}
+
 // ── Props ───────────────────────────────────────────────────────────
 
 export interface OtelMetricsChartProps {
@@ -316,6 +360,11 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
       {sortedTypes.map(mtype => {
         const nameMap = byType.get(mtype)!;
         const option = buildOption(mtype, nameMap);
+        const stats = computeStats(nameMap);
+        const durationMs =
+          stats.startTs !== null && stats.endTs !== null
+            ? stats.endTs - stats.startTs
+            : null;
         return (
           <Box key={mtype}>
             {/* Section header */}
@@ -337,6 +386,55 @@ export const OtelMetricsChart: React.FC<OtelMetricsChartProps> = ({
               <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
                 ({[...nameMap.keys()].join(', ')})
               </Text>
+            </Box>
+
+            {/* Stats row: sum + time interval */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                px: 1,
+                mb: 1,
+              }}
+            >
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                <Text
+                  as="span"
+                  sx={{ fontWeight: 'bold', color: 'fg.default' }}
+                >
+                  Sum:
+                </Text>{' '}
+                {stats.total.toLocaleString(undefined, {
+                  maximumFractionDigits: 4,
+                })}
+              </Text>
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                <Text
+                  as="span"
+                  sx={{ fontWeight: 'bold', color: 'fg.default' }}
+                >
+                  Points:
+                </Text>{' '}
+                {stats.count}
+              </Text>
+              {stats.startTs !== null && stats.endTs !== null && (
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                  <Text
+                    as="span"
+                    sx={{ fontWeight: 'bold', color: 'fg.default' }}
+                  >
+                    Interval:
+                  </Text>{' '}
+                  {formatTs(stats.startTs)} → {formatTs(stats.endTs)}
+                  {durationMs !== null && durationMs > 0 && (
+                    <Text as="span" sx={{ color: 'fg.subtle' }}>
+                      {' '}
+                      ({formatDuration(durationMs)})
+                    </Text>
+                  )}
+                </Text>
+              )}
             </Box>
 
             <ReactECharts

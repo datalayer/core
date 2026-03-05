@@ -96,7 +96,26 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
   onSignalRef,
 }) => {
   // ── state ──
-  const [signal, setSignal] = useState<SignalType>(defaultSignal);
+  const [signal, setSignalState] = useState<SignalType>(() => {
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)otel_signal=([^;]+)/);
+      if (match && ['traces', 'logs', 'metrics'].includes(match[1])) {
+        return match[1] as SignalType;
+      }
+    } catch {
+      // ignore
+    }
+    return defaultSignal;
+  });
+
+  const setSignal = (s: SignalType) => {
+    try {
+      document.cookie = `otel_signal=${s};path=/;max-age=31536000`;
+    } catch {
+      // ignore
+    }
+    setSignalState(s);
+  };
 
   // Expose signal setter to parent so external controls (e.g. generate
   // buttons) can navigate to the right tab.

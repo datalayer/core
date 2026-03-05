@@ -95,7 +95,12 @@ const MetricGroup: React.FC<{
     const max = Math.max(...values);
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const latest = values[values.length - 1];
-    return { min, max, avg, latest };
+    const timestamps = points
+      .map(p => new Date(p.timestamp).getTime())
+      .filter(t => !isNaN(t));
+    const startTs = timestamps.length > 0 ? Math.min(...timestamps) : null;
+    const endTs = timestamps.length > 0 ? Math.max(...timestamps) : null;
+    return { min, max, avg, latest, startTs, endTs };
   }, [points]);
 
   return (
@@ -125,15 +130,27 @@ const MetricGroup: React.FC<{
           <ChevronRightIcon size={16} />
         )}
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>{name}</Text>
-          {first?.metric_type && (
-            <Label size="small" variant={typeVariant(first.metric_type)}>
-              {first.metric_type}
-            </Label>
-          )}
-          {first?.unit && (
-            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>({first.unit})</Text>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>{name}</Text>
+            {first?.metric_type && (
+              <Label size="small" variant={typeVariant(first.metric_type)}>
+                {first.metric_type}
+              </Label>
+            )}
+            {first?.unit && (
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                ({first.unit})
+              </Text>
+            )}
+          </Box>
+          {stats.startTs !== null && stats.endTs !== null && (
+            <Text sx={{ fontSize: 0, color: 'fg.subtle', fontFamily: 'mono' }}>
+              {formatTime(new Date(stats.startTs).toISOString())}
+              {stats.startTs !== stats.endTs && (
+                <> → {formatTime(new Date(stats.endTs).toISOString())}</>
+              )}
+            </Text>
           )}
         </Box>
 
@@ -295,11 +312,37 @@ const MetricRow: React.FC<{ metric: OtelMetric }> = ({ metric }) => {
 
 // ── OtelMetricsList ─────────────────────────────────────────────────
 
+const COOKIE_KEY = 'otel_metrics_view';
+
+function readViewCookie(): 'chart' | 'table' {
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)otel_metrics_view=([^;]+)/);
+    if (match && (match[1] === 'chart' || match[1] === 'table'))
+      return match[1];
+  } catch {
+    // ignore
+  }
+  return 'table';
+}
+
+function writeViewCookie(v: 'chart' | 'table') {
+  try {
+    document.cookie = `${COOKIE_KEY}=${v};path=/;max-age=31536000`;
+  } catch {
+    // ignore
+  }
+}
+
 export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
   metrics,
   loading = false,
 }) => {
-  const [view, setView] = useState<'chart' | 'table'>('table');
+  const [view, setView] = useState<'chart' | 'table'>(readViewCookie);
+
+  const handleViewChange = (v: 'chart' | 'table') => {
+    writeViewCookie(v);
+    setView(v);
+  };
   const grouped = useMemo(() => groupByName(metrics), [metrics]);
 
   if (loading) {
@@ -337,15 +380,18 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
   // "total parent height minus toolbar height", regardless of flex context.
   return (
     <Box
-      sx={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
     >
-      {/* Toolbar — fixed at top, known height */}
+      {/* Toolbar */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
+          flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'flex-end',
@@ -354,13 +400,14 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
           bg: 'canvas.subtle',
           borderBottom: '1px solid',
           borderColor: 'border.default',
-          zIndex: 2,
         }}
       >
         <SegmentedControl
           aria-label="Metrics view"
           size="small"
-          onChange={(idx: number) => setView(idx === 0 ? 'chart' : 'table')}
+          onChange={(idx: number) =>
+            handleViewChange(idx === 0 ? 'chart' : 'table')
+          }
         >
           <SegmentedControl.IconButton
             icon={GraphIcon}
@@ -375,14 +422,11 @@ export const OtelMetricsList: React.FC<OtelMetricsListProps> = ({
         </SegmentedControl>
       </Box>
 
-      {/* Content area — fills everything below the toolbar */}
+      {/* Content area */}
       <Box
         sx={{
-          position: 'absolute',
-          top: 48,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          flex: 1,
+          minHeight: 0,
           overflow: 'auto',
         }}
       >
