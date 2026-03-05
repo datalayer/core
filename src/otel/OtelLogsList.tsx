@@ -162,7 +162,7 @@ export const OtelLogsList: React.FC<OtelLogsListProps> = ({
 }) => {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  const colTemplate = '140px 80px 120px 1fr';
+  const colTemplate = '140px 80px 160px 1fr';
 
   if (loading && logs.length === 0) {
     return (

@@ -394,7 +394,7 @@ export function useOtelServices(options: { token?: string; baseUrl?: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    otelFetch(`${baseUrl}/api/otel/v1/traces/services/list/`, token)
+    otelFetch(`${baseUrl}/api/otel/v1/traces/services/list`, token)
       .then(data => {
         // Handle various response shapes:
         // { services: ["a","b"] } | { data: [{service_name:"a"},...] } | ["a","b"]
@@ -531,7 +531,12 @@ export function useOtelQuery(options: { token?: string; baseUrl?: string }) {
     [token, baseUrl],
   );
 
-  return { rows, loading, error, execute };
+  const clear = useCallback(() => {
+    setRows([]);
+    setError(null);
+  }, []);
+
+  return { rows, loading, error, execute, clear };
 }
 
 // ── useOtelWebSocket ────────────────────────────────────────────────

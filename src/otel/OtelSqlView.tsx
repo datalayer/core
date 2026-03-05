@@ -24,7 +24,12 @@ import {
   Textarea,
   Spinner,
 } from '@primer/react';
-import { HistoryIcon } from '@primer/octicons-react';
+import {
+  HistoryIcon,
+  TableIcon,
+  XCircleIcon,
+  DownloadIcon,
+} from '@primer/octicons-react';
 import { useOtelQuery } from './hooks';
 import type { OtelQueryRow } from './types';
 
@@ -70,7 +75,7 @@ const PRESETS: Preset[] = [
   {
     group: 'Spans',
     label: 'Recent spans',
-    sql: 'SELECT trace_id, operation_name, service_name, start_time\nFROM spans\nORDER BY start_time DESC\nLIMIT 20',
+    sql: 'SELECT trace_id, operation_name, service_name, start_time_unix_nano\nFROM spans\nORDER BY start_time_unix_nano DESC\nLIMIT 20',
   },
   {
     group: 'Spans',
@@ -85,17 +90,17 @@ const PRESETS: Preset[] = [
   {
     group: 'Logs',
     label: 'Recent logs',
-    sql: 'SELECT timestamp, severity_text, body, service_name\nFROM logs\nORDER BY timestamp DESC\nLIMIT 20',
+    sql: 'SELECT timestamp_unix_nano, severity_text, body, service_name\nFROM logs\nORDER BY timestamp_unix_nano DESC\nLIMIT 20',
   },
   {
     group: 'Logs',
     label: 'Error logs',
-    sql: "SELECT timestamp, severity_text, body, service_name\nFROM logs\nWHERE severity_text IN ('ERROR', 'FATAL')\nLIMIT 20",
+    sql: "SELECT timestamp_unix_nano, severity_text, body, service_name\nFROM logs\nWHERE severity_text IN ('ERROR', 'FATAL')\nLIMIT 20",
   },
   {
     group: 'Metrics',
     label: 'Recent metrics',
-    sql: 'SELECT metric_name, value_double, metric_unit, service_name, start_time\nFROM metrics\nORDER BY start_time DESC\nLIMIT 20',
+    sql: 'SELECT metric_name, value_double, metric_unit, service_name, timestamp_unix_nano\nFROM metrics\nORDER BY timestamp_unix_nano DESC\nLIMIT 20',
   },
   {
     group: 'Metrics',
@@ -119,7 +124,10 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
 }) => {
   const [sql, setSql] = useState(PRESETS[0].sql);
   const [history, setHistory] = useState<string[]>(() => readHistory());
-  const { rows, loading, error, execute } = useOtelQuery({ token, baseUrl });
+  const { rows, loading, error, execute, clear } = useOtelQuery({
+    token,
+    baseUrl,
+  });
 
   const handleRun = useCallback(() => {
     const trimmed = sql.trim();
@@ -219,6 +227,193 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
         </Box>
       </Box>
 
+      {/* ── Error banner ── */}
+      {error && (
+        <Box
+          sx={{
+            p: 3,
+            bg: 'danger.subtle',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'danger.muted',
+          }}
+        >
+          <Text sx={{ color: 'danger.fg', fontFamily: 'mono', fontSize: 1 }}>
+            {error}
+          </Text>
+        </Box>
+      )}
+
+      {/* ── Results table ── */}
+      {!error && rows.length > 0 && (
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <TableIcon size={14} />
+            <Text sx={{ fontSize: 1, fontWeight: 'bold', color: 'fg.default' }}>
+              Results
+            </Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted', ml: 1 }}>
+              ({rows.length} row{rows.length !== 1 ? 's' : ''})
+            </Text>
+            <Box
+              as="button"
+              onClick={clear}
+              title="Clear results"
+              sx={{
+                ml: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: '2px',
+                border: 'none',
+                borderRadius: 2,
+                bg: 'transparent',
+                color: 'fg.muted',
+                cursor: 'pointer',
+                fontSize: 0,
+                '&:hover': { color: 'danger.fg', bg: 'danger.subtle' },
+              }}
+            >
+              <XCircleIcon size={12} />
+              <Text sx={{ fontSize: 0 }}>Clear</Text>
+            </Box>
+            <Box
+              as="button"
+              onClick={() => {
+                const header = columns.join(',');
+                const body = (rows as OtelQueryRow[])
+                  .map(row =>
+                    columns
+                      .map(col => {
+                        const v = String(row[col] ?? '');
+                        return v.includes(',') ||
+                          v.includes('"') ||
+                          v.includes('\n')
+                          ? `"${v.replace(/"/g, '""')}"`
+                          : v;
+                      })
+                      .join(','),
+                  )
+                  .join('\n');
+                const blob = new Blob([header + '\n' + body], {
+                  type: 'text/csv',
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'otel-query-result.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              title="Download as CSV"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: '2px',
+                border: 'none',
+                borderRadius: 2,
+                bg: 'transparent',
+                color: 'fg.muted',
+                cursor: 'pointer',
+                fontSize: 0,
+                '&:hover': { color: 'accent.fg', bg: 'accent.subtle' },
+              }}
+            >
+              <DownloadIcon size={12} />
+              <Text sx={{ fontSize: 0 }}>CSV</Text>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 200,
+              overflow: 'auto',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 2,
+            }}
+          >
+            <Box as="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+              <Box as="thead">
+                <Box as="tr" sx={{ bg: 'canvas.subtle' }}>
+                  {columns.map(col => (
+                    <Box
+                      key={col}
+                      as="th"
+                      sx={{
+                        px: 3,
+                        py: 2,
+                        textAlign: 'left',
+                        fontWeight: 'bold',
+                        fontSize: 0,
+                        color: 'fg.muted',
+                        borderBottom: '1px solid',
+                        borderColor: 'border.default',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {col}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+              <Box as="tbody">
+                {(rows as OtelQueryRow[]).map((row, ri) => (
+                  <Box
+                    key={ri}
+                    as="tr"
+                    sx={{
+                      '&:hover': { bg: 'canvas.subtle' },
+                      '&:not(:last-child) td': {
+                        borderBottom: '1px solid',
+                        borderColor: 'border.muted',
+                      },
+                    }}
+                  >
+                    {columns.map(col => (
+                      <Box
+                        key={col}
+                        as="td"
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          fontSize: 0,
+                          fontFamily: 'mono',
+                          maxWidth: '300px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {String(row[col] ?? '')}
+                      </Box>
+                    ))}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/* ── Empty state ── */}
+      {!error && !loading && rows.length === 0 && (
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'fg.muted',
+          }}
+        >
+          <Text sx={{ fontSize: 1 }}>Run a query to see results.</Text>
+        </Box>
+      )}
+
       {/* ── Query history ── */}
       {history.length > 0 && (
         <Box>
@@ -274,112 +469,6 @@ export const OtelSqlView: React.FC<OtelSqlViewProps> = ({
               </Box>
             ))}
           </Box>
-        </Box>
-      )}
-
-      {/* ── Error banner ── */}
-      {error && (
-        <Box
-          sx={{
-            p: 3,
-            bg: 'danger.subtle',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'danger.muted',
-          }}
-        >
-          <Text sx={{ color: 'danger.fg', fontFamily: 'mono', fontSize: 1 }}>
-            {error}
-          </Text>
-        </Box>
-      )}
-
-      {/* ── Results table ── */}
-      {!error && rows.length > 0 && (
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 200,
-            overflow: 'auto',
-            border: '1px solid',
-            borderColor: 'border.default',
-            borderRadius: 2,
-          }}
-        >
-          <Box as="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
-            <Box as="thead">
-              <Box as="tr" sx={{ bg: 'canvas.subtle' }}>
-                {columns.map(col => (
-                  <Box
-                    key={col}
-                    as="th"
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                      fontSize: 0,
-                      color: 'fg.muted',
-                      borderBottom: '1px solid',
-                      borderColor: 'border.default',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {col}
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-            <Box as="tbody">
-              {(rows as OtelQueryRow[]).map((row, ri) => (
-                <Box
-                  key={ri}
-                  as="tr"
-                  sx={{
-                    '&:hover': { bg: 'canvas.subtle' },
-                    '&:not(:last-child) td': {
-                      borderBottom: '1px solid',
-                      borderColor: 'border.muted',
-                    },
-                  }}
-                >
-                  {columns.map(col => (
-                    <Box
-                      key={col}
-                      as="td"
-                      sx={{
-                        px: 3,
-                        py: 2,
-                        fontSize: 0,
-                        fontFamily: 'mono',
-                        maxWidth: '300px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {String(row[col] ?? '')}
-                    </Box>
-                  ))}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      {/* ── Empty state ── */}
-      {!error && !loading && rows.length === 0 && (
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'fg.muted',
-          }}
-        >
-          <Text sx={{ fontSize: 1 }}>Run a query to see results.</Text>
         </Box>
       )}
     </Box>

@@ -277,6 +277,7 @@ export const OtelTimelineRangeSlider: React.FC<
             left: `${startPct}%`,
             width: `${endPct - startPct}%`,
             bg: 'accent.muted',
+            opacity: 0.45,
             borderTop: '2px solid',
             borderBottom: '2px solid',
             borderColor: 'accent.fg',
