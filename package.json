@@ -57,6 +57,10 @@
       "types": "./lib/views/profile/index.d.ts",
       "default": "./lib/views/profile/index.js"
     },
+    "./components/sparklines": {
+      "types": "./lib/components/sparklines/index.d.ts",
+      "default": "./lib/components/sparklines/index.js"
+    },
     "./style/*": "./style/*",
     "./*": "./*"
   },
