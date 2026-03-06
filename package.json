@@ -52,7 +52,7 @@
     "clean:dist": "rimraf dist",
     "clean:cache": "rimraf node_modules/.vite",
     "build": "npm run clean && gulp resources-to-lib && tsc -b && vite build",
-    "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs && node scripts/generate-exports.cjs",
+    "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs",
     "build:types": "npm run clean:lib && tsc -b",
     "build:nextjs": "npm run build --workspace=nextjj-example",
     "build:examples": "npm run build:nextjs",
