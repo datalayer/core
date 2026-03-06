@@ -28,14 +28,14 @@ import {
   ThemeSwitcher,
   useThemeStore,
 } from '@datalayer/primer-addons';
-import { useSimpleAuthStore as useAuthStore } from '@datalayer/core/views/otel';
-import { SignInSimple } from '@datalayer/core/views/iam';
+import { useSimpleAuthStore as useAuthStore } from '@datalayer/core/lib/views/otel';
+import { SignInSimple } from '@datalayer/core/lib/views/iam';
 import {
   OtelHeader,
   DashboardView,
   SqlView,
   SystemView,
-} from '@datalayer/core/views/otel';
+} from '@datalayer/core/lib/views/otel';
 
 // Register document.body as the Primer portal root BEFORE React renders,
 // so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
