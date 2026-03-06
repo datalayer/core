@@ -56,8 +56,8 @@ smoke-test: ## Run an end-to-end smoke test against the OTEL service.
 	  --url http://localhost:7800 \
 	  --otlp-endpoint http://localhost:4318
 
-logfire: ## Send test data via Logfire SDK.
-	datalayer otel logfire
+logfire: ## Run the logfire + pydantic_ai example against the Datalayer OTEL service.
+	python -m app.example
 
 ##@ Query (via datalayer core CLI)
 

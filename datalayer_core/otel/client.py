@@ -230,3 +230,16 @@ class OtelClient:
             SQL query string.
         """
         return self._post("/api/otel/v1/query", json={"sql": sql})
+
+    def admin_sql(self, sql: str) -> dict:
+        """Run an arbitrary SQL query without user-scope filtering.
+
+        Requires ``platform_admin`` role.  Sends the SQL directly to the
+        admin endpoint so the result spans all accounts.
+
+        Parameters
+        ----------
+        sql : str
+            SQL query string.
+        """
+        return self._post("/api/otel/v1/system/sql", json={"sql": sql})
