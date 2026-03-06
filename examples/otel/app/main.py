@@ -5,15 +5,20 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import random
 import time
 import uuid
 from typing import Any, Optional
 
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 from datalayer_core.otel import OtelClient
 
@@ -100,33 +105,52 @@ def gen_metrics(request: Request, count: int = Query(5, ge=1, le=100)) -> dict:
 
 # ── Read-query proxies (use OtelClient) ─────────────────────────────
 
-@app.get("/api/otel/v1/traces")
+
+def _proxy(func, *args, **kwargs) -> Any:
+    """Call *func* and translate upstream HTTP errors into proper responses."""
+    try:
+        return func(*args, **kwargs)
+    except httpx.HTTPStatusError as exc:
+        status = exc.response.status_code
+        detail = exc.response.text or str(exc)
+        logger.warning("Upstream %s %s → %s", exc.request.method, exc.request.url, status)
+        return JSONResponse(status_code=status, content={"detail": detail})
+    except httpx.ConnectError as exc:
+        logger.error("Cannot reach upstream: %s", exc)
+        return JSONResponse(status_code=502, content={"detail": f"Cannot reach upstream OTEL service: {exc}"})
+
+
+@app.get("/api/otel/v1/traces/")
 def list_traces(
     request: Request,
     service_name: str | None = None,
     limit: int = 20,
 ) -> Any:
     """Proxy: list recent traces."""
-    return _client(_extract_token(request)).list_traces(service_name=service_name, limit=limit)
+    client = _client(_extract_token(request))
+    return _proxy(client.list_traces, service_name=service_name, limit=limit)
 
 
-@app.get("/api/otel/v1/traces/services/list")
+@app.get("/api/otel/v1/traces/services/list/")
 def list_services(request: Request) -> Any:
     """Proxy: list observed service names."""
-    svc = _client(_extract_token(request)).list_services()
+    client = _client(_extract_token(request))
+    svc = _proxy(client.list_services)
+    if isinstance(svc, JSONResponse):
+        return svc
     # Normalise to dict if client returns a plain list
     if isinstance(svc, list):
         return {"services": svc}
     return svc
 
 
-@app.get("/api/otel/v1/traces/{trace_id}")
+@app.get("/api/otel/v1/traces/{trace_id}/")
 def get_trace(trace_id: str, request: Request) -> Any:
     """Proxy: get spans of a single trace."""
-    return _client(_extract_token(request)).get_trace(trace_id)
+    return _proxy(_client(_extract_token(request)).get_trace, trace_id)
 
 
-@app.get("/api/otel/v1/logs")
+@app.get("/api/otel/v1/logs/")
 def list_logs(
     request: Request,
     service_name: str | None = None,
@@ -134,14 +158,16 @@ def list_logs(
     limit: int = 50,
 ) -> Any:
     """Proxy: list log records."""
-    return _client(_extract_token(request)).query_logs(
+    client = _client(_extract_token(request))
+    return _proxy(
+        client.query_logs,
         service_name=service_name,
         severity=severity,
         limit=limit,
     )
 
 
-@app.get("/api/otel/v1/metrics")
+@app.get("/api/otel/v1/metrics/")
 def list_metrics(
     request: Request,
     metric_name: str | None = None,
@@ -149,14 +175,16 @@ def list_metrics(
     limit: int = 20,
 ) -> Any:
     """Proxy: list metrics."""
-    return _client(_extract_token(request)).list_metrics(
+    client = _client(_extract_token(request))
+    return _proxy(
+        client.list_metrics,
         metric_name=metric_name,
         service_name=service_name,
         limit=limit,
     )
 
 
-@app.get("/api/otel/v1/stats")
+@app.get("/api/otel/v1/stats/")
 def get_stats(request: Request) -> Any:
     """Proxy: storage statistics."""
-    return _client(_extract_token(request)).get_stats()
+    return _proxy(_client(_extract_token(request)).get_stats)

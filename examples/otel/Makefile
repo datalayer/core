@@ -52,9 +52,7 @@ proxy: ## Port-forward the OTEL service (Collector + FastAPI).
 	plane pf-otel
 
 smoke-test: ## Run an end-to-end smoke test against the OTEL service.
-	datalayer otel smoke-test \
-	  --url http://localhost:7800 \
-	  --otlp-endpoint http://localhost:4318
+	datalayer otel smoke-test
 
 logfire: ## Run the logfire + pydantic_ai example against the Datalayer OTEL service.
 	python -m app.example

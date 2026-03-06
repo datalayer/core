@@ -13,9 +13,34 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OtelSpan, OtelLog, OtelMetric, OtelQueryRow } from '../types';
 import { coreStore } from '../../state/substates/CoreState';
 
+// ── Global 401 handler ──────────────────────────────────────────────
+
+let _onUnauthorized: (() => void) | null = null;
+
+/**
+ * Register a callback invoked whenever an OTEL API call receives a
+ * **401 Unauthorized** response.  Typically used to clear auth state
+ * (i.e. log the user out) when the token has expired.
+ *
+ * Pass `null` to unregister.
+ *
+ * @example
+ * ```ts
+ * import { setOtelOnUnauthorized } from '@datalayer/core/lib/otel';
+ * setOtelOnUnauthorized(() => authStore.getState().clearAuth());
+ * ```
+ */
+export function setOtelOnUnauthorized(cb: (() => void) | null): void {
+  _onUnauthorized = cb;
+}
+
 /**
  * Lightweight fetch helper for OTEL API calls.
  * Uses plain `fetch` to avoid pulling in `@jupyterlab/coreutils` / axios.
+ *
+ * If the response is **401 Unauthorized** and a global `onUnauthorized`
+ * handler has been registered via {@link setOtelOnUnauthorized}, the
+ * handler is called before the error is thrown.
  */
 async function otelFetch<T = any>(
   url: string,
@@ -43,6 +68,9 @@ async function otelFetch<T = any>(
         : undefined,
   });
   if (!res.ok) {
+    if (res.status === 401 && _onUnauthorized) {
+      _onUnauthorized();
+    }
     throw new Error(`HTTP ${res.status} ${res.statusText}`);
   }
   return res.json() as Promise<T>;
@@ -395,7 +423,7 @@ export function useOtelServices(options: { token?: string; baseUrl?: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    otelFetch(`${baseUrl}/api/otel/v1/traces/services/list`, token)
+    otelFetch(`${baseUrl}/api/otel/v1/traces/services/list/`, token)
       .then(data => {
         // Handle various response shapes:
         // { services: ["a","b"] } | { data: [{service_name:"a"},...] } | ["a","b"]

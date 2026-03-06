@@ -62,6 +62,7 @@ export {
   useOtelQuery,
   useOtelSystem,
   useOtelWebSocket,
+  setOtelOnUnauthorized,
 } from './hooks';
 export type {
   OtelWsMessage,

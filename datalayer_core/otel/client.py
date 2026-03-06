@@ -88,19 +88,19 @@ class OtelClient:
 
     def ping(self) -> dict:
         """Health check (no auth required)."""
-        return self._get("/api/otel/v1/ping")
+        return self._get("/api/otel/v1/ping/")
 
     def version(self) -> dict:
         """Get service version."""
-        return self._get("/api/otel/v1/version")
+        return self._get("/api/otel/v1/version/")
 
     def get_stats(self) -> dict:
         """Get storage statistics."""
-        return self._get("/api/otel/v1/stats")
+        return self._get("/api/otel/v1/stats/")
 
     def flush(self) -> dict:
         """Force-flush all buffered telemetry data to storage."""
-        return self._post("/api/otel/v1/flush")
+        return self._post("/api/otel/v1/flush/")
 
     # ── traces ───────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ class OtelClient:
         params: dict = {"limit": limit}
         if service_name:
             params["service_name"] = service_name
-        return self._get("/api/otel/v1/traces", params=params)
+        return self._get("/api/otel/v1/traces/", params=params)
 
     def get_trace(self, trace_id: str) -> dict:
         """Get spans for a specific trace.
@@ -131,11 +131,11 @@ class OtelClient:
         trace_id : str
             The trace ID.
         """
-        return self._get(f"/api/otel/v1/traces/{trace_id}")
+        return self._get(f"/api/otel/v1/traces/{trace_id}/")
 
     def list_services(self) -> list[str]:
         """List all observed service names."""
-        data = self._get("/api/otel/v1/traces/services/list")
+        data = self._get("/api/otel/v1/traces/services/list/")
         return data.get("services", data)
 
     # ── metrics ──────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ class OtelClient:
             params["metric_name"] = metric_name
         if service_name:
             params["service_name"] = service_name
-        return self._get("/api/otel/v1/metrics", params=params)
+        return self._get("/api/otel/v1/metrics/", params=params)
 
     def query_metrics(
         self,
@@ -186,7 +186,7 @@ class OtelClient:
             params["name"] = name
         if service_name:
             params["service_name"] = service_name
-        return self._get("/api/otel/v1/metrics/query", params=params)
+        return self._get("/api/otel/v1/metrics/query/", params=params)
 
     # ── logs ─────────────────────────────────────────────────────────
 
@@ -217,7 +217,7 @@ class OtelClient:
             params["severity"] = severity
         if trace_id:
             params["trace_id"] = trace_id
-        return self._get("/api/otel/v1/logs", params=params)
+        return self._get("/api/otel/v1/logs/", params=params)
 
     # ── SQL query ────────────────────────────────────────────────────
 
@@ -229,7 +229,7 @@ class OtelClient:
         sql : str
             SQL query string.
         """
-        return self._post("/api/otel/v1/query", json={"sql": sql})
+        return self._post("/api/otel/v1/query/", json={"sql": sql})
 
     def admin_sql(self, sql: str) -> dict:
         """Run an arbitrary SQL query without user-scope filtering.
@@ -242,4 +242,4 @@ class OtelClient:
         sql : str
             SQL query string.
         """
-        return self._post("/api/otel/v1/system/sql", json={"sql": sql})
+        return self._post("/api/otel/v1/system/sql/", json={"sql": sql})

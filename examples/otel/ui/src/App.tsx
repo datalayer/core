@@ -17,7 +17,7 @@
  * and @datalayer/primer-addons (ThemedProvider, ThemeSwitcher).
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { Text } from '@primer/react';
 import { TelescopeIcon } from '@primer/octicons-react';
@@ -36,17 +36,23 @@ import {
   SqlView,
   SystemView,
 } from '@datalayer/core/lib/views/otel';
+import { setOtelOnUnauthorized } from '@datalayer/core/lib/otel';
 
 // Register document.body as the Primer portal root BEFORE React renders,
 // so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
 // from the very first paint.
 setupPrimerPortals();
 
-// __DATALAYER_OTEL_URL__ is injected at build time by vite.config.ts.
-// Both REST and WebSocket requests go directly to the OTEL backend – no proxy.
+// __DATALAYER_OTEL_URL__ / __DATALAYER_OTEL_WS_URL__ are injected at build time
+// by vite.config.ts.
+// In dev mode BASE_URL is '' so REST calls are relative and routed through the
+// Vite proxy → local FastAPI server (which injects DATALAYER_API_KEY auth).
+// WS_BASE_URL always points to the real platform because the local server has no
+// WebSocket endpoint; the WS connection authenticates via `?token=` query param.
 declare const __DATALAYER_OTEL_URL__: string;
+declare const __DATALAYER_OTEL_WS_URL__: string;
 const BASE_URL: string = __DATALAYER_OTEL_URL__;
-const WS_BASE_URL: string = __DATALAYER_OTEL_URL__;
+const WS_BASE_URL: string = __DATALAYER_OTEL_WS_URL__;
 
 export const App: React.FC = () => {
   const token = useAuthStore((s) => s.token);
@@ -76,6 +82,13 @@ export const App: React.FC = () => {
 /** The main dashboard, rendered only when the user has a valid token. */
 const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
   const clearAuth = useAuthStore((s) => s.clearAuth);
+
+  // Auto-logout on 401 (expired token) from any OTEL API call.
+  useEffect(() => {
+    setOtelOnUnauthorized(clearAuth);
+    return () => setOtelOnUnauthorized(null);
+  }, [clearAuth]);
+
   // Hold the OtelLive signal setter so the header can navigate tabs.
   const signalSetterRef = useRef<((s: 'traces' | 'logs' | 'metrics') => void) | null>(null);
   const [view, setView] = useState<'dashboard' | 'sql' | 'system'>(() => {
