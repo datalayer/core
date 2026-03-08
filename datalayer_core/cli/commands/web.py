@@ -13,9 +13,16 @@ from datalayer_core.base.serverapplication import launch_new_instance
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for web commands
-app = typer.Typer(name="web", help="Web application commands")
+app = typer.Typer(name="web", help="Web application commands", invoke_without_command=True)
 
 console = Console()
+
+
+@app.callback()
+def web_callback(ctx: typer.Context):
+    """Web application commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="start")

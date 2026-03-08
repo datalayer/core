@@ -11,6 +11,11 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
+from datalayer_core.base.user_config import (
+    get_iam_url as _get_config_iam_url,
+    get_runtimes_url as _get_config_runtimes_url,
+)
+
 DEFAULT_DATALAYER_RUN_URL = "https://prod1.datalayer.run"
 
 DEFAULT_DATALAYER_IAM_URL = "https://prod1.datalayer.run"
@@ -167,7 +172,9 @@ class DatalayerURLs:
             run_url or os.environ.get("DATALAYER_RUN_URL") or DEFAULT_DATALAYER_RUN_URL
         )
         resolved_iam_url = (
-            iam_url or os.environ.get("DATALAYER_IAM_URL") or DEFAULT_DATALAYER_IAM_URL
+            iam_url
+            or os.environ.get("DATALAYER_IAM_URL")
+            or _get_config_iam_url()
         )
 
         # If iam_url is provided (either as parameter or env var),
@@ -178,12 +185,12 @@ class DatalayerURLs:
             else None
         )
 
-        # Determine service URLs with priority: parameter > env var > base_url_for_services > default
+        # Determine service URLs with priority: parameter > env var > base_url_for_services > config file > default
         resolved_runtimes_url = (
             runtimes_url
             or os.environ.get("DATALAYER_RUNTIMES_URL")
             or base_url_for_services
-            or DEFAULT_DATALAYER_RUNTIMES_URL
+            or _get_config_runtimes_url()
         )
         resolved_spacer_url = (
             spacer_url

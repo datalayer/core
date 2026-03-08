@@ -13,9 +13,16 @@ from datalayer_core.console.consoleapp import RuntimesConsoleApp
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for console commands
-app = typer.Typer(name="console", help="Runtime console commands")
+app = typer.Typer(name="console", help="Runtime console commands", invoke_without_command=True)
 
 console = Console()
+
+
+@app.callback()
+def console_callback(ctx: typer.Context):
+    """Runtime console commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="connect")

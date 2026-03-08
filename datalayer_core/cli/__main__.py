@@ -16,6 +16,7 @@ from datalayer_core.cli.commands.authn import (
     whoami_root,
 )
 from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
+from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
 from datalayer_core.cli.commands.envs import envs_list, envs_ls
@@ -69,6 +70,7 @@ def main_callback(
 app.add_typer(about_app)
 app.add_typer(auth_app)
 app.add_typer(benchmarks_app)
+app.add_typer(config_app)
 app.add_typer(console_app)
 app.add_typer(envs_app)
 app.add_typer(otel_app)

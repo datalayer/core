@@ -90,7 +90,7 @@ class RuntimesCreateMixin:
             if from_snapshot_uid:
                 body["from"] = from_snapshot_uid
 
-            runtime_url = "{}/api/runtimes/v1/runtimes".format(self.urls.run_url)  # type: ignore
+            runtime_url = "{}/api/runtimes/v1/runtimes".format(self.urls.runtimes_url)  # type: ignore
             logger.debug(
                 "Creating runtime via %s with payload keys=%s",
                 runtime_url,
@@ -153,7 +153,7 @@ class RuntimesListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes".format(self.urls.run_url),  # type: ignore
+                "{}/api/runtimes/v1/runtimes".format(self.urls.runtimes_url),  # type: ignore
             )
 
             if response.status_code != 200:
@@ -201,7 +201,7 @@ class RuntimesTerminateMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes/{}".format(self.urls.run_url, pod_name),  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}".format(self.urls.runtimes_url, pod_name),  # type: ignore
                 method="DELETE",
             )
 

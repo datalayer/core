@@ -10,11 +10,28 @@ from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.runtimes import display_runtimes
+from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for runtime commands
-app = typer.Typer(name="runtimes", help="Runtime management commands")
+app = typer.Typer(name="runtimes", help="Runtime management commands", invoke_without_command=True)
 
 console = Console()
+
+
+@app.callback()
+def runtimes_callback(ctx: typer.Context):
+    """Runtime management commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+
+
+def _make_client(
+    token: Optional[str] = None,
+    runtimes_url: Optional[str] = None,
+) -> DatalayerClient:
+    """Create a DatalayerClient with optional runtimes URL override."""
+    urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
+    return DatalayerClient(urls=urls, token=token)
 
 
 @app.command(name="list")
@@ -24,10 +41,15 @@ def list_runtimes(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List running runtimes."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, runtimes_url=runtimes_url)
         runtimes = client.list_runtimes()
 
         # Convert to dict format for display_runtimes
@@ -62,14 +84,19 @@ def list_runtimes_alias(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List running runtimes (alias for list)."""
-    list_runtimes(token=token)
+    list_runtimes(token=token, runtimes_url=runtimes_url)
 
 
 @app.command(name="create")
 def create_runtime(
-    environment: str = typer.Argument(..., help="Environment name"),
+    environment: Optional[str] = typer.Argument(None, help="Environment name"),
     given_name: Optional[str] = typer.Option(
         None,
         "--given-name",
@@ -90,10 +117,40 @@ def create_runtime(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """Create a new runtime."""
+    import questionary
+
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, runtimes_url=runtimes_url)
+
+        if environment is None:
+            # List environments and let the user pick one
+            environments = client.list_environments()
+            if not environments:
+                console.print("[yellow]No environments available.[/yellow]")
+                raise typer.Exit(0)
+
+            choices = []
+            for env in environments:
+                label = env.name
+                if env.title:
+                    label += f"  ({env.title})"
+                choices.append(questionary.Choice(title=label, value=env.name))
+
+            selected = questionary.select(
+                "Select the environment for the new runtime:",
+                choices=choices,
+            ).ask()
+
+            if selected is None:
+                raise typer.Exit(0)
+            environment = selected
 
         # Create runtime
         final_time_reservation = time_reservation or 10.0
@@ -109,6 +166,8 @@ def create_runtime(
         console.print(f"Runtime created successfully: {runtime.name}")
         console.print(f"[green]Runtime '{runtime.name}' created successfully![/green]")
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[red]Error creating runtime: {e}[/red]")
         raise typer.Exit(1)
@@ -116,16 +175,49 @@ def create_runtime(
 
 @app.command(name="terminate")
 def terminate_runtime(
-    pod_name: str = typer.Argument(..., help="Pod name of the runtime to terminate"),
+    pod_name: Optional[str] = typer.Argument(None, help="Pod name of the runtime to terminate"),
     token: Optional[str] = typer.Option(
         None,
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """Terminate a running runtime."""
+    import questionary
+
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, runtimes_url=runtimes_url)
+
+        if pod_name is None:
+            # List runtimes and let the user pick one
+            runtimes = client.list_runtimes()
+            if not runtimes:
+                console.print("[yellow]No running runtimes found.[/yellow]")
+                raise typer.Exit(0)
+
+            choices = []
+            for rt in runtimes:
+                label = rt.pod_name
+                if rt.name:
+                    label = f"{rt.pod_name}  ({rt.name})"
+                if rt.environment:
+                    label += f"  [{rt.environment}]"
+                choices.append(questionary.Choice(title=label, value=rt.pod_name))
+
+            selected = questionary.select(
+                "Select the runtime to terminate:",
+                choices=choices,
+            ).ask()
+
+            if selected is None:
+                # User cancelled (Ctrl-C / Esc)
+                raise typer.Exit(0)
+            pod_name = selected
 
         success = client.terminate_runtime(pod_name)
 
@@ -137,6 +229,8 @@ def terminate_runtime(
             console.print(f"[red]Failed to terminate runtime '{pod_name}'[/red]")
             raise typer.Exit(1)
 
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[red]Error terminating runtime: {e}[/red]")
         raise typer.Exit(1)
@@ -149,9 +243,14 @@ def runtimes_list(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List running runtimes (root command)."""
-    list_runtimes(token=token)
+    list_runtimes(token=token, runtimes_url=runtimes_url)
 
 
 def runtimes_ls(
@@ -160,6 +259,11 @@ def runtimes_ls(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List running runtimes (root command alias)."""
-    list_runtimes(token=token)
+    list_runtimes(token=token, runtimes_url=runtimes_url)

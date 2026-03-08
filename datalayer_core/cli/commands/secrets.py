@@ -13,9 +13,16 @@ from datalayer_core.displays.secrets import display_secrets
 from datalayer_core.models.secret import SecretVariant
 
 # Create a Typer app for secret commands
-app = typer.Typer(name="secrets", help="Secret management commands")
+app = typer.Typer(name="secrets", help="Secret management commands", invoke_without_command=True)
 
 console = Console()
+
+
+@app.callback()
+def secrets_callback(ctx: typer.Context):
+    """Secret management commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="list")
