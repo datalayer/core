@@ -66,34 +66,30 @@ def get_config() -> Dict[str, Any]:
     return _load_config()
 
 
-def get_iam_url() -> str:
+def get_iam_url() -> Optional[str]:
     """
     Get the configured IAM URL.
 
-    Priority: config file > default.
-
     Returns
     -------
-    str
-        The IAM URL.
+    Optional[str]
+        The IAM URL from the config file, or None if not explicitly set.
     """
     config = _load_config()
-    return config.get("iam_url", DEFAULT_IAM_URL)
+    return config.get("iam_url")
 
 
-def get_runtimes_url() -> str:
+def get_runtimes_url() -> Optional[str]:
     """
     Get the configured Runtimes URL.
 
-    Priority: config file > default.
-
     Returns
     -------
-    str
-        The Runtimes URL.
+    Optional[str]
+        The Runtimes URL from the config file, or None if not explicitly set.
     """
     config = _load_config()
-    return config.get("runtimes_url", DEFAULT_RUNTIMES_URL)
+    return config.get("runtimes_url")
 
 
 def set_iam_url(url: str) -> None:

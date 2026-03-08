@@ -175,6 +175,7 @@ class DatalayerURLs:
             iam_url
             or os.environ.get("DATALAYER_IAM_URL")
             or _get_config_iam_url()
+            or DEFAULT_DATALAYER_IAM_URL
         )
 
         # If iam_url is provided (either as parameter or env var),
@@ -185,12 +186,18 @@ class DatalayerURLs:
             else None
         )
 
-        # Determine service URLs with priority: parameter > env var > base_url_for_services > config file > default
+        # Determine service URLs with priority:
+        #   parameter > env var > config file > base_url_for_services > default
+        # For runtimes_url and iam_url, the config file takes precedence over
+        # the IAM-derived base_url_for_services so that explicit user config
+        # (e.g. "runtimes on r1, iam on prod1") is respected.
+        config_runtimes_url = _get_config_runtimes_url()
         resolved_runtimes_url = (
             runtimes_url
             or os.environ.get("DATALAYER_RUNTIMES_URL")
+            or config_runtimes_url
             or base_url_for_services
-            or _get_config_runtimes_url()
+            or DEFAULT_DATALAYER_RUNTIMES_URL
         )
         resolved_spacer_url = (
             spacer_url
