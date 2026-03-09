@@ -15,6 +15,9 @@
 export * as agents from './agents';
 export * as toolApprovals from './tool-approvals';
 export * as notifications from './notifications';
+export * as output from './output';
+export * as evals from './evals';
+export * as context from './context';
 export type {
   RunningAgent,
   AgentStatus,
@@ -26,4 +29,10 @@ export type {
   NotificationFilters,
   ConversationCheckpoint,
   AgentUsageSummary,
+  OutputArtifact,
+  EvalReport,
+  RunEvalsRequest,
+  ContextUsage,
+  CostUsage,
+  ModelCostBreakdown,
 } from './types';
