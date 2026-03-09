@@ -5,12 +5,11 @@
 
 import os
 
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_OTEL_URL
+
 # ── OTEL service base URL ──────────────────────────────────────────
 # The URL of the datalayer-otel FastAPI query service.
-OTEL_BASE_URL = os.environ.get(
-    "DATALAYER_OTEL_URL",
-    "https://prod1.datalayer.run",
-)
+OTEL_BASE_URL = os.environ.get("DATALAYER_OTEL_URL") or DEFAULT_DATALAYER_OTEL_URL
 
 # ── OTLP Collector endpoints ───────────────────────────────────────
 # Standard OpenTelemetry env vars for client-side telemetry emission.

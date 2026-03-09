@@ -28,6 +28,7 @@ from typing import Any
 import httpx
 
 from datalayer_core.otel.config import OTEL_BASE_URL
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_OTEL_URL
 
 
 class OtelClient:
@@ -37,7 +38,7 @@ class OtelClient:
     ----------
     base_url : str, optional
         OTEL service base URL.  Defaults to ``DATALAYER_OTEL_URL`` env var
-        or ``http://localhost:7800``.
+        or ``DEFAULT_DATALAYER_OTEL_URL`` (``https://prod1.datalayer.run``).
     token : str, optional
         JWT bearer token for authentication.  Falls back to
         ``DATALAYER_API_KEY`` env var.

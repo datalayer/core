@@ -16,6 +16,7 @@ from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_IAM_URL
 
 DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
 
@@ -38,7 +39,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     # run_url can be set set and None or ' ' (empty string).
     # In that case, the consumer of those settings are free to consider run_url as null.
     run_url = Unicode(
-        "https://prod1.datalayer.run",
+        DEFAULT_DATALAYER_IAM_URL,
         config=True,
         allow_none=True,
         help="""URL to connect to the Datalayer RUN APIs.""",

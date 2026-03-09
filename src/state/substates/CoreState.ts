@@ -21,7 +21,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   loadConfigurationFromServer: true,
   jupyterServerless: false,
   iamRunUrl: 'https://prod1.datalayer.run',
-  runtimesRunUrl: 'https://prod1.datalayer.run',
+  runtimesRunUrl: 'https://r1.datalayer.run',
   libraryRunUrl: 'https://prod1.datalayer.run',
   spacerRunUrl: 'https://prod1.datalayer.run',
   aiagentsRunUrl: 'https://prod1.datalayer.run',
