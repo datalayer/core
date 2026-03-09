@@ -196,7 +196,7 @@ export function AiAgentsMixin<TBase extends Constructor>(Base: TBase) {
     async markAllNotificationsRead(): Promise<void> {
       const token = (this as any).getToken();
       const baseUrl = (this as any).getIamRunUrl();
-      return notifications.markAllNotificationsRead(token, baseUrl);
+      return notifications.markAllRead(token, undefined, baseUrl);
     }
 
     // ========================================================================

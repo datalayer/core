@@ -17,7 +17,6 @@ import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import { validateToken } from '../utils/validation';
 import type {
   RunningAgent,
-  AgentStatus,
   AgentUsageSummary,
   ConversationCheckpoint,
 } from './types';
