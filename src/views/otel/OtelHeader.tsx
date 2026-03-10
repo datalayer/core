@@ -31,7 +31,7 @@ export interface OtelHeaderProps {
    */
   onNavigate?: (signal: 'traces' | 'logs' | 'metrics') => void;
   /**
-   * Optional sign-out handler. When provided a "Logout" button is shown.
+   * Optional sign-out handler. When provided a "Sign out" button is shown.
    * Wire this to your auth store's clearAuth / signOut action.
    */
   onSignOut?: () => void;
@@ -176,7 +176,7 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
             sx={{ color: 'fg.muted' }}
             leadingVisual={SignOutIcon}
           >
-            Logout
+            Sign out
           </Button>
         )}
       </Box>
@@ -234,8 +234,7 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
                 borderRadius: 2,
                 overflow: 'auto',
                 maxHeight: 300,
-                color:
-                  dialogVariant === 'error' ? 'danger.fg' : 'fg.default',
+                color: dialogVariant === 'error' ? 'danger.fg' : 'fg.default',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-all',
               }}
