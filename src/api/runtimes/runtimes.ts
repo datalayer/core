@@ -231,3 +231,51 @@ export const updateRuntime = async (
     throw error;
   }
 };
+
+/**
+ * Pause a runtime by creating a CRIU checkpoint.
+ * @param token - Authentication token
+ * @param podName - The unique pod name of the runtime to pause
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving when the runtime is paused
+ * @throws {Error} If authentication token is missing or invalid
+ * @throws {Error} If pod name is missing or invalid
+ */
+export const pauseRuntime = async (
+  token: string,
+  podName: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<void> => {
+  validateToken(token);
+  validateRequiredString(podName, 'Pod name');
+
+  await requestDatalayerAPI<void>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/pause`,
+    method: 'POST',
+    token,
+  });
+};
+
+/**
+ * Resume a paused runtime by restoring from a CRIU checkpoint.
+ * @param token - Authentication token
+ * @param podName - The unique pod name of the runtime to resume
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving when the runtime is resumed
+ * @throws {Error} If authentication token is missing or invalid
+ * @throws {Error} If pod name is missing or invalid
+ */
+export const resumeRuntime = async (
+  token: string,
+  podName: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<void> => {
+  validateToken(token);
+  validateRequiredString(podName, 'Pod name');
+
+  await requestDatalayerAPI<void>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/resume`,
+    method: 'POST',
+    token,
+  });
+};

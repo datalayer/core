@@ -15,3 +15,4 @@ export * as environments from './environments';
 export * as healthz from './healthz';
 export * as runtimes from './runtimes';
 export * as snapshots from './snapshots';
+export * as checkpoints from './checkpoints';
