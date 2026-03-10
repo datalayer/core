@@ -13,16 +13,23 @@
  * @module views/signin
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
   Button,
   FormControl,
   Heading,
   Text,
+  Textarea,
   TextInput,
 } from '@primer/react';
-import { EyeIcon, EyeClosedIcon, TelescopeIcon } from '@primer/octicons-react';
+import { Dialog } from '@primer/react/experimental';
+import {
+  EyeIcon,
+  EyeClosedIcon,
+  KeyIcon,
+  TelescopeIcon,
+} from '@primer/octicons-react';
 
 // ── Props ────────────────────────────────────────────────────────────
 
@@ -32,6 +39,11 @@ export interface SignInSimpleProps {
    * Typically used to store credentials in a Zustand / context store.
    */
   onSignIn: (token: string, handle: string) => void;
+  /**
+   * Called when the user authenticates with an API key.
+   * If not provided the "Sign in with API Key" button is hidden.
+   */
+  onApiKeySignIn?: (apiKey: string) => void;
   /**
    * Login endpoint.  Defaults to `/api/iam/v1/login`.
    * The endpoint must accept `POST { handle, password }` and return
@@ -57,6 +69,7 @@ export interface SignInSimpleProps {
 
 export const SignInSimple: React.FC<SignInSimpleProps> = ({
   onSignIn,
+  onApiKeySignIn,
   loginUrl = '/api/iam/v1/login',
   title = 'Datalayer OTEL',
   description = 'Sign in to access the observability dashboard.',
@@ -67,6 +80,11 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // API Key dialog state
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const apiKeyRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = useCallback(async () => {
     if (!handle || !password || loading) return;
@@ -195,6 +213,79 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         >
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
+
+        {/* API Key */}
+        {onApiKeySignIn && (
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                my: 3,
+              }}
+            >
+              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>or</Text>
+              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+            </Box>
+            <Button
+              block
+              leadingVisual={KeyIcon}
+              onClick={() => setShowApiKeyDialog(true)}
+            >
+              Sign in with API Key
+            </Button>
+            {showApiKeyDialog && (
+              <Dialog
+                title="Enter your API Key"
+                onClose={() => {
+                  setShowApiKeyDialog(false);
+                  setApiKey('');
+                }}
+                initialFocusRef={apiKeyRef}
+                footerButtons={[
+                  {
+                    buttonType: 'default',
+                    onClick: () => {
+                      setShowApiKeyDialog(false);
+                      setApiKey('');
+                    },
+                    content: 'Cancel',
+                  },
+                  {
+                    buttonType: 'primary',
+                    onClick: () => {
+                      if (apiKey.trim()) {
+                        onApiKeySignIn(apiKey.trim());
+                        setShowApiKeyDialog(false);
+                        setApiKey('');
+                      }
+                    },
+                    content: 'Authenticate',
+                  },
+                ]}
+              >
+                <Box as="form">
+                  <FormControl required>
+                    <FormControl.Label>API Key</FormControl.Label>
+                    <Textarea
+                      block
+                      required
+                      autoFocus
+                      placeholder="Paste your API key here"
+                      value={apiKey}
+                      onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setApiKey(e.target.value)
+                      }
+                      ref={apiKeyRef}
+                    />
+                  </FormControl>
+                </Box>
+              </Dialog>
+            )}
+          </>
+        )}
       </Box>
     </Box>
   );

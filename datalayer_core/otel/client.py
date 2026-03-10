@@ -28,7 +28,6 @@ from typing import Any
 import httpx
 
 from datalayer_core.otel.config import OTEL_BASE_URL
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_OTEL_URL
 
 
 class OtelClient:

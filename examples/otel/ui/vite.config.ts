@@ -29,16 +29,16 @@ export default defineConfig(({ command }: ConfigEnv) => {
     server: {
       port: 5173,
       proxy: {
-        // Signal generators + OTEL read proxies → local FastAPI backend (port 8600).
-        // The local server uses DATALAYER_API_KEY from env so the browser does not
-        // need to forward auth credentials to the Datalayer platform directly.
+        // Signal generators → local FastAPI backend (port 8600).
         '/api/generate': {
           target: 'http://localhost:8600',
           changeOrigin: true,
         },
+        // OTEL read proxies → Datalayer platform (browser sends JWT directly).
         '/api/otel': {
-          target: 'http://localhost:8600',
+          target: RUN_URL,
           changeOrigin: true,
+          secure: true,
         },
         // IAM login endpoint → Datalayer platform IAM service (needed for sign-in).
         '/api/iam': {
