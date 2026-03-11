@@ -293,6 +293,25 @@ export const pauseRuntime = async (
 };
 
 /**
+ * Optional body for the resume endpoint.
+ * Contains information needed by the operator to restore from a CRIU checkpoint.
+ */
+export interface ResumeRuntimeBody {
+  /** Agent spec identifier (required by the operator for restore) */
+  agent_spec_id?: string;
+  /** Specific checkpoint timestamp to restore from */
+  checkpoint_timestamp?: string;
+  /** Environment name override */
+  environment_name?: string;
+  /** Container image override */
+  container_image?: string;
+  /** Target node name */
+  node_name?: string;
+  /** Additional metadata */
+  metadata?: Record<string, any>;
+}
+
+/**
  * Resume a paused runtime by restoring from a CRIU checkpoint (async).
  *
  * Returns immediately with a 202 Accepted response.  The actual restore
@@ -302,6 +321,7 @@ export const pauseRuntime = async (
  * @param token - Authentication token
  * @param podName - The unique pod name of the runtime to resume
  * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @param body - Optional body with agent_spec_id and restore options
  * @returns Promise resolving with the checkpoint ID for status tracking
  * @throws {Error} If authentication token is missing or invalid
  * @throws {Error} If pod name is missing or invalid
@@ -310,6 +330,7 @@ export const resumeRuntime = async (
   token: string,
   podName: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+  body?: ResumeRuntimeBody,
 ): Promise<PauseResumeResponse> => {
   validateToken(token);
   validateRequiredString(podName, 'Pod name');
@@ -318,5 +339,6 @@ export const resumeRuntime = async (
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/resume`,
     method: 'POST',
     token,
+    ...(body ? { body } : {}),
   });
 };
