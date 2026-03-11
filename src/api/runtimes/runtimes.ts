@@ -253,7 +253,7 @@ export interface PauseRuntimeBody {
   /** Checkpoint description */
   description?: string;
   /** Agent spec identifier */
-  agentspec_id?: string;
+  agent_spec_id?: string;
   /** Full agent spec payload to persist with the checkpoint */
   agentspec?: Record<string, any>;
   /** Additional metadata */
