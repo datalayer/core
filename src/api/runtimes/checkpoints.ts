@@ -22,14 +22,14 @@ import { validateToken, validateRequiredString } from '../utils/validation';
  * A single runtime checkpoint record.
  */
 export interface RuntimeCheckpointData {
-  /** Unique identifier */
-  uid: string;
+  /** Unique identifier (ULID) */
+  id: string;
   /** Human-readable name */
   name: string;
   /** Checkpoint description */
   description: string;
-  /** Pod that was checkpointed */
-  pod_name: string;
+  /** Runtime that was checkpointed */
+  runtime_uid: string;
   /** Agent spec identifier (e.g. "mocks/monitor-sales-kpis") */
   agentspec_id: string;
   /** Full agent spec payload */
@@ -38,6 +38,8 @@ export interface RuntimeCheckpointData {
   metadata: Record<string, any>;
   /** Status: requested | created | failed | deleted */
   status: string;
+  /** Human-readable details about the current status (e.g. error message) */
+  status_message?: string;
   /** ISO 8601 timestamp */
   updated_at: string;
 }
@@ -46,8 +48,8 @@ export interface RuntimeCheckpointData {
  * Request payload for creating a checkpoint.
  */
 export interface CreateRuntimeCheckpointRequest {
-  /** Pod name of the runtime that was checkpointed */
-  pod_name: string;
+  /** Runtime UID of the runtime that was checkpointed */
+  runtime_uid: string;
   /** Human-readable name */
   name?: string;
   /** Checkpoint description */
@@ -90,45 +92,50 @@ export interface CreateRuntimeCheckpointResponse {
 // ─── API Functions ─────────────────────────────────────────────────────────
 
 /**
- * List runtime checkpoints, optionally filtered by pod name.
+ * List runtime checkpoints for a specific runtime.
  * @param token - Authentication token
  * @param baseUrl - Base URL for the runtimes API
- * @param podName - Optional pod name filter
+ * @param runtimeUid - Runtime UID to list checkpoints for
  * @returns Promise resolving to list of checkpoints
  */
 export const listCheckpoints = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-  podName?: string,
+  runtimeUid?: string,
 ): Promise<ListRuntimeCheckpointsResponse> => {
   validateToken(token);
 
-  const params = podName ? `?pod_name=${encodeURIComponent(podName)}` : '';
+  if (!runtimeUid) {
+    throw new Error('runtimeUid is required to list checkpoints');
+  }
 
   return requestDatalayerAPI<ListRuntimeCheckpointsResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints${params}`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${encodeURIComponent(runtimeUid)}`,
     method: 'GET',
     token,
   });
 };
 
 /**
- * Get a single runtime checkpoint by UID.
+ * Get a single runtime checkpoint by ID.
  * @param token - Authentication token
- * @param checkpointId - The checkpoint UID
+ * @param runtimeUid - The runtime UID
+ * @param checkpointId - The checkpoint ID (ULID)
  * @param baseUrl - Base URL for the runtimes API
  * @returns Promise resolving to checkpoint details
  */
 export const getCheckpoint = async (
   token: string,
+  runtimeUid: string,
   checkpointId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
 ): Promise<GetRuntimeCheckpointResponse> => {
   validateToken(token);
+  validateRequiredString(runtimeUid, 'Runtime UID');
   validateRequiredString(checkpointId, 'Checkpoint ID');
 
   return requestDatalayerAPI<GetRuntimeCheckpointResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${checkpointId}`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${encodeURIComponent(runtimeUid)}/${checkpointId}`,
     method: 'GET',
     token,
   });
@@ -137,7 +144,7 @@ export const getCheckpoint = async (
 /**
  * Create a checkpoint record (after a CRIU checkpoint has been taken).
  * @param token - Authentication token
- * @param data - Checkpoint creation payload (pod_name, agentspec, etc.)
+ * @param data - Checkpoint creation payload (runtime_uid, agentspec, etc.)
  * @param baseUrl - Base URL for the runtimes API
  * @returns Promise resolving to the created checkpoint
  */
@@ -157,22 +164,70 @@ export const createCheckpoint = async (
 };
 
 /**
+ * Poll a checkpoint until it reaches one of the target statuses.
+ *
+ * Useful for waiting until an async pause (status "paused") or
+ * resume (status "resumed") completes before proceeding.
+ *
+ * @param token - Authentication token
+ * @param runtimeUid - The runtime UID that owns the checkpoint
+ * @param checkpointId - The checkpoint ID (ULID) to poll
+ * @param targetStatuses - Set of statuses that signal completion (e.g. ["paused", "failed"])
+ * @param baseUrl - Base URL for the runtimes API
+ * @param intervalMs - Polling interval in milliseconds (default: 2000)
+ * @param timeoutMs - Maximum wait time in milliseconds (default: 600000 = 10 min)
+ * @returns Promise resolving to the checkpoint data once a target status is reached
+ * @throws {Error} If polling times out or the request fails
+ */
+export const waitForCheckpointStatus = async (
+  token: string,
+  runtimeUid: string,
+  checkpointId: string,
+  targetStatuses: string[],
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+  intervalMs: number = 2000,
+  timeoutMs: number = 600_000,
+): Promise<RuntimeCheckpointData> => {
+  validateToken(token);
+  validateRequiredString(runtimeUid, 'Runtime UID');
+  validateRequiredString(checkpointId, 'Checkpoint ID');
+
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const resp = await getCheckpoint(token, runtimeUid, checkpointId, baseUrl);
+    if (targetStatuses.includes(resp.checkpoint.status)) {
+      return resp.checkpoint;
+    }
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+
+  throw new Error(
+    `Checkpoint ${checkpointId} did not reach status [${targetStatuses.join(', ')}] within ${timeoutMs / 1000}s`,
+  );
+};
+
+/**
  * Delete a runtime checkpoint.
  * @param token - Authentication token
- * @param checkpointId - The checkpoint UID to delete
+ * @param runtimeUid - The runtime UID that owns the checkpoint
+ * @param checkpointId - The checkpoint ID (ULID) to delete
  * @param baseUrl - Base URL for the runtimes API
  * @returns Promise resolving when deletion is complete
  */
 export const deleteCheckpoint = async (
   token: string,
+  runtimeUid: string,
   checkpointId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
 ): Promise<void> => {
   validateToken(token);
+  validateRequiredString(runtimeUid, 'Runtime UID');
   validateRequiredString(checkpointId, 'Checkpoint ID');
 
   return requestDatalayerAPI<void>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${checkpointId}`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${encodeURIComponent(runtimeUid)}/${checkpointId}`,
     method: 'DELETE',
     token,
   });

@@ -233,11 +233,45 @@ export const updateRuntime = async (
 };
 
 /**
- * Pause a runtime by creating a CRIU checkpoint.
+ * Response from the pause/resume runtime endpoints.
+ * The server returns 202 Accepted and provides a checkpoint UID
+ * that can be polled for status updates.
+ */
+export interface PauseResumeResponse {
+  success: boolean;
+  message: string;
+  checkpoint_id: string | null;
+}
+
+/**
+ * Optional body for the pause endpoint.
+ * Metadata is stored in the checkpoint Solr record created by the backend.
+ */
+export interface PauseRuntimeBody {
+  /** Human-readable checkpoint name */
+  name?: string;
+  /** Checkpoint description */
+  description?: string;
+  /** Agent spec identifier */
+  agentspec_id?: string;
+  /** Full agent spec payload to persist with the checkpoint */
+  agentspec?: Record<string, any>;
+  /** Additional metadata */
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Pause a runtime by creating a CRIU checkpoint (async).
+ *
+ * Returns immediately with a 202 Accepted response.  The actual checkpoint
+ * process runs in the background.  Use the returned `checkpoint_id` to
+ * poll for status via the runtime-checkpoints API.
+ *
  * @param token - Authentication token
  * @param podName - The unique pod name of the runtime to pause
  * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
- * @returns Promise resolving when the runtime is paused
+ * @param body - Optional metadata to store in the checkpoint record
+ * @returns Promise resolving with the checkpoint ID for status tracking
  * @throws {Error} If authentication token is missing or invalid
  * @throws {Error} If pod name is missing or invalid
  */
@@ -245,23 +279,30 @@ export const pauseRuntime = async (
   token: string,
   podName: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<void> => {
+  body?: PauseRuntimeBody,
+): Promise<PauseResumeResponse> => {
   validateToken(token);
   validateRequiredString(podName, 'Pod name');
 
-  await requestDatalayerAPI<void>({
+  return await requestDatalayerAPI<PauseResumeResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/pause`,
     method: 'POST',
     token,
+    ...(body ? { body } : {}),
   });
 };
 
 /**
- * Resume a paused runtime by restoring from a CRIU checkpoint.
+ * Resume a paused runtime by restoring from a CRIU checkpoint (async).
+ *
+ * Returns immediately with a 202 Accepted response.  The actual restore
+ * process runs in the background.  Use the returned `checkpoint_id` to
+ * poll for status.
+ *
  * @param token - Authentication token
  * @param podName - The unique pod name of the runtime to resume
  * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
- * @returns Promise resolving when the runtime is resumed
+ * @returns Promise resolving with the checkpoint ID for status tracking
  * @throws {Error} If authentication token is missing or invalid
  * @throws {Error} If pod name is missing or invalid
  */
@@ -269,11 +310,11 @@ export const resumeRuntime = async (
   token: string,
   podName: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<void> => {
+): Promise<PauseResumeResponse> => {
   validateToken(token);
   validateRequiredString(podName, 'Pod name');
 
-  await requestDatalayerAPI<void>({
+  return await requestDatalayerAPI<PauseResumeResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/resume`,
     method: 'POST',
     token,
