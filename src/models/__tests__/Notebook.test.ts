@@ -24,7 +24,7 @@ describe('Notebook Model', () => {
     description_t: 'A test notebook description',
     type_s: '',
     notebook_extension_s: '',
-    s3_path_s: 'datalayer.app/space-456/notebooks/test-notebook.ipynb',
+    s3_path_s: 'datalayer.ai/space-456/notebooks/test-notebook.ipynb',
     s3_url_s: '',
     cdn_url_s: '',
     path: '/notebooks/test',

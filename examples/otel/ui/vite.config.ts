@@ -7,11 +7,9 @@ const RUN_URL = process.env.DATALAYER_RUN_URL || 'https://prod1.datalayer.run';
 const OTEL_URL = process.env.DATALAYER_OTEL_RUN_URL || RUN_URL;
 
 export default defineConfig(({ command }: ConfigEnv) => {
-  // In dev (vite serve) use empty base URL so all API calls are relative and
-  // routed through the Vite proxy → local FastAPI server (port 8600), which in
-  // turn forwards to the Datalayer platform using DATALAYER_API_KEY from env.
-  // In production builds use the absolute OTEL service URL.
-  const otelBaseUrl = command === 'serve' ? '' : OTEL_URL;
+  // Always use the absolute OTEL service URL so the browser talks to the
+  // Datalayer platform directly (auth via JWT token query param / header).
+  const otelBaseUrl = OTEL_URL;
 
   return {
     plugins: [react()],

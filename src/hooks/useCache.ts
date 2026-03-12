@@ -1698,12 +1698,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get all agent runtimes for the current user.
    *
-   * Note on phase/status mapping:
-   * The backend (operator) RuntimePod model does not include a 'phase' field.
-   * The operator only keeps active/assigned runtimes in its cache (OperatorCache.USER_RUNTIMES),
-   * so any runtime returned by this endpoint is inherently running or starting.
-   * Therefore, if rt.phase is undefined (which it will be), we default to 'running'.
-   * A 'paused' state would require explicit backend support to track paused runtimes.
+   * The backend returns active runtimes from the operator **plus** paused
+   * runtimes synthesised from Solr checkpoint records (with ``phase="Paused"``).
+   *
+   * Phase → status mapping:
+   * - ``Pending``    → ``starting``
+   * - ``Paused``     → ``paused``
+   * - ``Terminated`` → ``terminated``
+   * - ``Archived``   → ``archived``
+   * - (default)      → ``running``
    */
   const useAgentRuntimes = () => {
     return useQuery({
@@ -1889,6 +1892,36 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           queryKey: queryKeys.agentRuntimes.detail(podName),
         });
         // Invalidate the list so the sidebar refreshes.
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.agentRuntimes.lists(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Delete a paused agent runtime.
+   *
+   * Paused agents have no K8s pod — their state lives entirely in Solr
+   * checkpoint records.  This calls the dedicated
+   * ``DELETE /runtimes/{podName}/paused`` endpoint which removes those
+   * Solr records.
+   */
+  const useDeletePausedAgentRuntime = () => {
+    return useMutation({
+      mutationFn: async (podName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes/${podName}/paused`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: (_data, podName) => {
+        queryClient.cancelQueries({
+          queryKey: queryKeys.agentRuntimes.detail(podName),
+        });
+        queryClient.removeQueries({
+          queryKey: queryKeys.agentRuntimes.detail(podName),
+        });
         queryClient.invalidateQueries({
           queryKey: queryKeys.agentRuntimes.lists(),
         });
@@ -7838,6 +7871,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useAgentRuntimes,
     useCreateAgentRuntime,
     useDeleteAgentRuntime,
+    useDeletePausedAgentRuntime,
     useRefreshAgentRuntimes,
 
     // Courses

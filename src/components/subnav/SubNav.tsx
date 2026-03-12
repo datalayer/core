@@ -389,7 +389,7 @@ const _SubNavRoot = memo(
                     <Button
                       href="#"
                       onClick={e => {
-                        window.location.assign('https://datalayer.app');
+                        window.location.assign('https://datalayer.ai');
                       }}
                       hasArrow={true}
                       variant="subtle"
@@ -397,7 +397,7 @@ const _SubNavRoot = memo(
                       Login
                     </Button>
                     {/*
-                  <Button href="#" onClick={(e) => {window.location.assign("https://datalayer.app/join")}} hasArrow={true} variant="primary">
+                  <Button href="#" onClick={(e) => {window.location.assign("https://datalayer.ai/join")}} hasArrow={true} variant="primary">
                     Try if for FREE
                   </Button>
                   */}

@@ -364,12 +364,12 @@ export const Login = (props: ILoginProps): JSX.Element => {
                     </Button>
                     <Box pt={6} />
                     {/*
-                    <Link href="https://datalayer.app/join" target="_blank">
+                    <Link href="https://datalayer.ai/join" target="_blank">
                         Don't have an account?
                       </Link>
                     <Box pt={1} />
                     */}
-                    <Link href="https://datalayer.app/password" target="_blank">
+                    <Link href="https://datalayer.ai/password" target="_blank">
                       Forgot password?
                     </Link>
                     {/*joinRoute && (

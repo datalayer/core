@@ -6,7 +6,7 @@ This directory contains interactive examples demonstrating how to use Datalayer 
 
 ### Prerequisites
 
-1. **Datalayer API Key**: Get your key from [Datalayer Platform](https://datalayer.app)
+1. **Datalayer API Key**: Get your key from [Datalayer Platform](https://datalayer.ai)
 2. **Node.js**: Version 18+ recommended
 3. **npm**: Comes with Node.js
 
@@ -163,7 +163,7 @@ If you see "Datalayer configuration is missing" warning:
 
 1. Check your `.env` file has `VITE_DATALAYER_API_KEY` set
 2. Restart the dev server after adding the token
-3. Verify the token is valid at [Datalayer Platform](https://datalayer.app/)
+3. Verify the token is valid at [Datalayer Platform](https://datalayer.ai/)
 
 ### Server Errors
 
@@ -205,7 +205,7 @@ npm run lint
 
 ## Resources
 
-- [Datalayer Documentation](https://docs.datalayer.app/)
+- [Datalayer Documentation](https://docs.datalayer.ai/)
 - [Jupyter React Components](https://jupyter-react.datalayer.tech/)
 - [TypeScript API Reference](https://core.datalayer.tech/typescript/)
 - [Platform API Reference](https://prod1.datalayer.run/api/runtimes/v1/ui/)
