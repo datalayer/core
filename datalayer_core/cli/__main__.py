@@ -21,6 +21,8 @@ from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
 from datalayer_core.cli.commands.envs import envs_list, envs_ls
 from datalayer_core.cli.commands.exec import main as exec_main
+from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
+from datalayer_core.cli.commands.runtime_checkpoints import checkpoints_list, checkpoints_ls
 from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app
 from datalayer_core.cli.commands.runtime_snapshots import snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app
@@ -70,6 +72,7 @@ def main_callback(
 app.add_typer(about_app)
 app.add_typer(auth_app)
 app.add_typer(benchmarks_app)
+app.add_typer(checkpoints_app)
 app.add_typer(config_app)
 app.add_typer(console_app)
 app.add_typer(envs_app)
@@ -100,6 +103,8 @@ app.command(name="secrets-list")(secrets_list)
 app.command(name="secrets-ls")(secrets_ls)
 app.command(name="snapshots-list")(snapshots_list)
 app.command(name="snapshots-ls")(snapshots_ls)
+app.command(name="checkpoints-list")(checkpoints_list)
+app.command(name="checkpoints-ls")(checkpoints_ls)
 app.command(name="tokens-list")(tokens_list)
 app.command(name="tokens-ls")(tokens_ls)
 
