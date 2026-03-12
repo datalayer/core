@@ -424,6 +424,12 @@ export const queryKeys = {
       [...queryKeys.agentRuntimes.details(), podName] as const,
   },
 
+  // Runtime Checkpoints (CRIU full-pod checkpoints)
+  checkpoints: {
+    all: () => ['checkpoints'] as const,
+    lists: () => [...queryKeys.checkpoints.all(), 'list'] as const,
+  },
+
   // Layout
   layout: {
     byAccount: (accountHandle: string, spaceHandle?: string) =>
@@ -1925,6 +1931,34 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.agentRuntimes.lists(),
         });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.checkpoints.all(),
+        });
+      },
+    });
+  };
+
+  /**
+   * Resume a paused agent runtime via the runtimes CRIU restore endpoint.
+   *
+   * Calls ``POST /runtimes/{podName}/resume`` which triggers an async
+   * background restore from the latest CRIU checkpoint.
+   */
+  const useResumePausedAgentRuntime = () => {
+    return useMutation({
+      mutationFn: async (podName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes/${podName}/resume`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (_data, podName) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.agentRuntimes.all(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.checkpoints.all(),
+        });
       },
     });
   };
@@ -1936,6 +1970,62 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.agentRuntimes.all(),
+      });
+    };
+  };
+
+  // ============================================================================
+  // Checkpoint Hooks (CRIU full-pod checkpoints)
+  // ============================================================================
+
+  /**
+   * Checkpoint data returned by the runtime-checkpoints API.
+   */
+  type CheckpointData = {
+    id: string;
+    name: string;
+    description: string;
+    runtime_uid: string;
+    agent_spec_id: string;
+    agentspec: Record<string, unknown>;
+    metadata: Record<string, unknown>;
+    status: string;
+    status_message: string;
+    updated_at: string;
+  };
+
+  /**
+   * Fetch all runtime checkpoints for the current user.
+   *
+   * Calls ``GET /api/runtimes/v1/runtime-checkpoints`` and returns
+   * the list of checkpoint records in visible states.
+   */
+  const useCheckpoints = () => {
+    return useQuery({
+      queryKey: queryKeys.checkpoints.lists(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtime-checkpoints`,
+          method: 'GET',
+        });
+        if (resp.success && resp.checkpoints) {
+          return resp.checkpoints as CheckpointData[];
+        }
+        return [] as CheckpointData[];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      refetchInterval: 15000,
+      enabled: !!user,
+    });
+  };
+
+  /**
+   * Refresh checkpoints list.
+   */
+  const useRefreshCheckpoints = () => {
+    return () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.checkpoints.all(),
       });
     };
   };
@@ -7872,7 +7962,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useCreateAgentRuntime,
     useDeleteAgentRuntime,
     useDeletePausedAgentRuntime,
+    useResumePausedAgentRuntime,
     useRefreshAgentRuntimes,
+
+    // Checkpoints (CRIU full-pod checkpoints)
+    useCheckpoints,
+    useRefreshCheckpoints,
 
     // Courses
     useCourse,
