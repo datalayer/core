@@ -166,8 +166,9 @@ export const createCheckpoint = async (
 /**
  * Poll a checkpoint until it reaches one of the target statuses.
  *
- * Useful for waiting until an async pause (status "paused") or
- * resume (status "resumed") completes before proceeding.
+ * Useful for waiting until an async pause (status "paused")
+ * completes before proceeding.  Checkpoint status stays "paused"
+ * during resume — only the agent runtime status transitions.
  *
  * @param token - Authentication token
  * @param runtimeUid - The runtime UID that owns the checkpoint

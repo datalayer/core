@@ -28,7 +28,6 @@ import {
 import { IAMMixin } from './mixins/IAMMixin';
 import { RuntimesMixin } from './mixins/RuntimesMixin';
 import { SpacerMixin } from './mixins/SpacerMixin';
-import { AiAgentsMixin } from './mixins/AiAgentsMixin';
 
 // Import model types for interface declaration
 import type { UserDTO } from './../models/UserDTO';
@@ -67,7 +66,6 @@ const DatalayerClientWithMixins = composeMixins(
   IAMMixin,
   RuntimesMixin,
   SpacerMixin,
-  AiAgentsMixin,
 );
 
 /**
@@ -433,30 +431,4 @@ export interface DatalayerClient {
   checkSpacerHealth(): Promise<HealthCheck>;
   // Utility Methods
   calculateCreditsFromMinutes(minutes: number, burningRate: number): number;
-
-  // AI Agents Methods
-  getRunningAgents(): Promise<any[]>;
-  getAgentStatus(podName: string, agentId?: string): Promise<any>;
-  pauseAgent(podName: string): Promise<void>;
-  resumeAgent(podName: string): Promise<void>;
-  getAgentCheckpoints(podName: string, agentId?: string): Promise<any[]>;
-  getAgentUsage(podName: string, agentId?: string): Promise<any>;
-  getToolApprovals(filters?: any): Promise<any[]>;
-  approveToolRequest(approvalId: string): Promise<void>;
-  rejectToolRequest(approvalId: string, reason?: string): Promise<void>;
-  getNotifications(filters?: any): Promise<any[]>;
-  markNotificationRead(notificationId: string): Promise<void>;
-  markAllNotificationsRead(): Promise<void>;
-  getAgentOutputs(agentId: string): Promise<any[]>;
-  getAgentOutput(agentId: string, outputId: string): Promise<any>;
-  generateAgentOutput(
-    agentId: string,
-    format: string,
-    options?: Record<string, any>,
-  ): Promise<any>;
-  runEvals(agentId: string, request: any): Promise<any>;
-  listEvals(agentId: string): Promise<any[]>;
-  getEval(agentId: string, evalId: string): Promise<any>;
-  getContextUsage(agentId: string): Promise<any>;
-  getCostUsage(agentId: string): Promise<any>;
 }

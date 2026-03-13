@@ -21,7 +21,6 @@ export {
 export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
 
 // Domain-organized API exports
-export * as aiAgents from './ai-agents';
 export * as iam from './iam';
 export * as otel from './otel';
 export * as runtimes from './runtimes';
