@@ -26,13 +26,21 @@ import { IIAMToken } from '../../models';
 import { useCache, useNavigate, useToast } from '../../hooks';
 
 export type IAMTokensProps = {
-  /** Route to navigate when clicking "New IAM token" button. Defaults to '/new/token'. */
+  /** Route to navigate when clicking "New API Key" button. Defaults to '/new/token'. */
   newTokenRoute?: string;
   /** Base route for the tokens list (used for edit navigation). Defaults to current relative path. */
   tokensListRoute?: string;
+  /** Whether to display view titles/headings. Defaults to true. */
+  showTitle?: boolean;
 };
 
-const TokensTable = ({ tokensListRoute }: { tokensListRoute?: string }) => {
+const TokensTable = ({
+  tokensListRoute,
+  showTitle = true,
+}: {
+  tokensListRoute?: string;
+  showTitle?: boolean;
+}) => {
   const { useTokens, useDeleteToken } = useCache();
   const { enqueueToast } = useToast();
 
@@ -70,20 +78,24 @@ const TokensTable = ({ tokensListRoute }: { tokensListRoute?: string }) => {
   };
   return tokens.length === 0 ? (
     <Blankslate border spacious>
-      <Blankslate.Heading>IAM Tokens</Blankslate.Heading>
+      {showTitle && <Blankslate.Heading>API Keys</Blankslate.Heading>}
       <Blankslate.Description>
-        <Text sx={{ textAlign: 'center' }}>No IAM Tokens found.</Text>
+        <Text sx={{ textAlign: 'center' }}>No API Keys found.</Text>
       </Blankslate.Description>
     </Blankslate>
   ) : (
     <>
       <Table.Container>
-        <Table.Title as="h2" id="tokens">
-          IAM Tokens
-        </Table.Title>
-        <Table.Subtitle as="p" id="tokens-subtitle">
-          Your tokens.
-        </Table.Subtitle>
+        {showTitle && (
+          <>
+            <Table.Title as="h2" id="tokens">
+              API Keys
+            </Table.Title>
+            <Table.Subtitle as="p" id="tokens-subtitle">
+              Your tokens.
+            </Table.Subtitle>
+          </>
+        )}
         <DataTable
           aria-labelledby="teams"
           aria-describedby="teams-subtitle"
@@ -165,6 +177,7 @@ const TokensTable = ({ tokensListRoute }: { tokensListRoute?: string }) => {
 export const IAMTokens = ({
   newTokenRoute = '/new/token',
   tokensListRoute,
+  showTitle = true,
 }: IAMTokensProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -175,23 +188,28 @@ export const IAMTokens = ({
     >
       <PageLayout.Header>
         <PageHeader>
-          <PageHeader.TitleArea variant="large">
-            <PageHeader.Title>IAM Tokens</PageHeader.Title>
-          </PageHeader.TitleArea>
+          {showTitle && (
+            <PageHeader.TitleArea variant="large">
+              <PageHeader.Title>API Keys</PageHeader.Title>
+            </PageHeader.TitleArea>
+          )}
           <PageHeader.Actions>
             <Button
               size="small"
               variant="primary"
               onClick={e => navigate(newTokenRoute, e)}
             >
-              New IAM token
+              New API Key
             </Button>
           </PageHeader.Actions>
         </PageHeader>
       </PageLayout.Header>
       <PageLayout.Content>
         <Box>
-          <TokensTable tokensListRoute={tokensListRoute} />
+          <TokensTable
+            tokensListRoute={tokensListRoute}
+            showTitle={showTitle}
+          />
         </Box>
       </PageLayout.Content>
     </PageLayout>

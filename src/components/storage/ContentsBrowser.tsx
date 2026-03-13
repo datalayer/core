@@ -296,8 +296,15 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   );
   return (
     <Box sx={{ display: 'grid', gridTemplateAreas: `"header" "content"` }}>
-      <Box sx={{ gridArea: 'header', display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ flex: '1 1 auto' }}>{title}</Box>
+      <Box
+        sx={{
+          gridArea: 'header',
+          display: 'flex',
+          alignItems: 'center',
+          minWidth: 0,
+        }}
+      >
+        <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>{title}</Box>
         <Box>
           <IconButton
             variant="invisible"

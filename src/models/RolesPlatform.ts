@@ -70,8 +70,8 @@ export class PlatformRoles {
   static readonly IAMToken: IRole = {
     id: 'platform_iam_token',
     handle: 'platform_iam_token',
-    displayName: 'Platform IAM Token',
-    description: 'A Platform IAM Token.',
+    displayName: 'Platform API Key',
+    description: 'A Platform API Key.',
     permissions: PLATFORM_IAM_TOKEN_PERMSSIONS,
     icon: UserIcon,
   };
