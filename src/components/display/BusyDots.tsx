@@ -8,7 +8,7 @@ import { Text } from '@primer/react';
 
 const DOTS = ['.', '..', '...'] as const;
 
-type PausingDotsProps = {
+type BusyDotsProps = {
   color?: string;
   fontSize?: number;
   ml?: number;
@@ -16,13 +16,13 @@ type PausingDotsProps = {
   intervalMs?: number;
 };
 
-export function PausingDots({
+export function BusyDots({
   color = 'fg.muted',
   fontSize = 0,
   ml = 1,
   ariaLabel = 'In progress',
   intervalMs = 450,
-}: PausingDotsProps) {
+}: BusyDotsProps) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -63,4 +63,4 @@ export function PausingDots({
   );
 }
 
-export default PausingDots;
+export default BusyDots;

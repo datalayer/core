@@ -12,7 +12,7 @@ export * from './JupyterDialog';
 export * from './Markdown';
 export * from './NavLink';
 export * from './NotebookSkeleton';
-export * from './PausingDots';
+export * from './BusyDots';
 export * from './Placeholder';
 export * from './ToTopBranded';
 export * from './VisuallyHidden';
