@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { useInterval } from 'usehooks-ts';
 import { ProgressBar, Tooltip, Button } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
-import { useInterval } from 'usehooks-ts';
 
 const CRITICAL_LEVEL = 90;
 
@@ -17,11 +17,9 @@ const WARNING_LEVEL = 75;
  */
 function formatTimeRemaining(seconds: number): string {
   if (seconds < 0) return '0s';
-
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-
   if (hours > 0) {
     return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
   }
@@ -124,7 +122,7 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
     : `Started at ${new Date(startedAt * 1000).toISOString()} - ${burntCredits.toFixed(2)} credits consumed`;
   return (
     <>
-      <Tooltip text={title} direction="w">
+      <Tooltip text={title}>
         <Button
           variant="invisible"
           onClick={onClick}

@@ -5,10 +5,10 @@
 
 import { useState, useEffect } from 'react';
 import { Box } from '@datalayer/primer-addons';
-import { ConsumptionBar } from '../../components/progress';
-import useNavigate from '../../hooks/useNavigate';
+import { useNavigate } from '../../hooks/useNavigate';
 import type { IRemoteServicesManager } from '../../stateful/runtimes';
 import type { IRuntimeModel } from '../../models';
+import { ConsumptionBar } from './ConsumptionBar';
 
 type ICreditsIndicatorProps = {
   /**
@@ -54,11 +54,6 @@ export function CreditsIndicator(
   }, [kernelId, serviceManager]);
   return model ? (
     <Box display="flex" style={{ alignItems: 'center' }}>
-      {/*
-      <Box style={{ padding: '0px 6px 12px 0px', userSelect: 'none' }} color="fg.subtle">
-        <ArtifactIcon type="credits"/>
-      </Box>
-      */}
       <ConsumptionBar
         startedAt={parseFloat(model.started_at)}
         expiredAt={model.expired_at ? parseFloat(model.expired_at) : undefined}
