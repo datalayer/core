@@ -248,6 +248,8 @@ export interface PauseResumeResponse {
  * Metadata is stored in the checkpoint Solr record created by the backend.
  */
 export interface PauseRuntimeBody {
+  /** Checkpoint mode: 'criu' (full) or 'light' (history-only) */
+  checkpoint_mode?: 'criu' | 'light';
   /** Human-readable checkpoint name */
   name?: string;
   /** Checkpoint description */
@@ -258,6 +260,8 @@ export interface PauseRuntimeBody {
   agentspec?: Record<string, any>;
   /** Additional metadata */
   metadata?: Record<string, any>;
+  /** Lightweight checkpoint message history */
+  messages?: string[];
 }
 
 /**
@@ -297,6 +301,10 @@ export const pauseRuntime = async (
  * Contains information needed by the operator to restore from a CRIU checkpoint.
  */
 export interface ResumeRuntimeBody {
+  /** Checkpoint mode to resume from: 'criu' or 'light' */
+  checkpoint_mode?: 'criu' | 'light';
+  /** Explicit checkpoint identifier */
+  checkpoint_id?: string;
   /** Agent spec identifier (required by the operator for restore) */
   agent_spec_id?: string;
   /** Specific checkpoint timestamp to restore from */

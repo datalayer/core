@@ -36,6 +36,10 @@ export interface RuntimeCheckpointData {
   agentspec: Record<string, any>;
   /** Additional metadata */
   metadata: Record<string, any>;
+  /** Checkpoint mode: criu (full) or light (history-only) */
+  checkpoint_mode?: 'criu' | 'light';
+  /** Lightweight checkpoint message history */
+  messages?: string[];
   /** Status: requested | created | failed | deleted */
   status: string;
   /** Human-readable details about the current status (e.g. error message) */
