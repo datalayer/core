@@ -69,3 +69,49 @@ export const timeSince = (date: Date) => {
   const i = Math.floor(interval);
   return i + ` second${p(i)}`;
 };
+
+/**
+ * Format a timestamp into a compact relative string.
+ *
+ * Examples: "just now", "15m ago", "3h ago", "2d ago", "4w ago", "1y ago".
+ */
+export const formatRelativeTime = (
+  value?: Date | string | number,
+  now: Date = new Date(),
+): string | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const date =
+    value instanceof Date
+      ? value
+      : typeof value === 'number'
+        ? new Date(value)
+        : new Date(value);
+
+  const ts = date.getTime();
+  if (Number.isNaN(ts)) {
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  const diffMs = Math.max(0, now.getTime() - ts);
+  const seconds = Math.floor(diffMs / 1000);
+
+  if (seconds < 60) return 'just now';
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+
+  const weeks = Math.floor(days / 7);
+  if (weeks < 52) return `${weeks}w ago`;
+
+  const years = Math.floor(days / 365);
+  return `${years}y ago`;
+};

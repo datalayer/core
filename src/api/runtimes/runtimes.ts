@@ -265,7 +265,7 @@ export interface PauseRuntimeBody {
 }
 
 /**
- * Pause a runtime by creating a CRIU checkpoint (async).
+ * Pause a runtime by creating a checkpoint (async, light mode by default).
  *
  * Returns immediately with a 202 Accepted response.  The actual checkpoint
  * process runs in the background.  Use the returned `checkpoint_id` to
@@ -298,7 +298,7 @@ export const pauseRuntime = async (
 
 /**
  * Optional body for the resume endpoint.
- * Contains information needed by the operator to restore from a CRIU checkpoint.
+ * Contains information needed by the operator to restore from a checkpoint.
  */
 export interface ResumeRuntimeBody {
   /** Checkpoint mode to resume from: 'criu' or 'light' */
@@ -320,7 +320,7 @@ export interface ResumeRuntimeBody {
 }
 
 /**
- * Resume a paused runtime by restoring from a CRIU checkpoint (async).
+ * Resume a paused runtime by restoring from a checkpoint (async).
  *
  * Returns immediately with a 202 Accepted response.  The actual restore
  * process runs in the background.  Use the returned `checkpoint_id` to
