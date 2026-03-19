@@ -418,27 +418,44 @@ export function useOtelMetrics(options: {
 
 /** Fetch list of observed service names. */
 export function useOtelServices(options: { token?: string; baseUrl?: string }) {
-  const { token, baseUrl = '' } = options;
+  const { token, baseUrl = coreStore.getState().configuration.otelRunUrl } =
+    options;
   const [services, setServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     otelFetch(`${baseUrl}/api/otel/v1/traces/services/list/`, token)
       .then(data => {
-        // Handle various response shapes:
-        // { services: ["a","b"] } | { data: [{service_name:"a"},...] } | ["a","b"]
-        let raw: unknown = data.services ?? data.data ?? data;
-        if (
-          Array.isArray(raw) &&
-          raw.length > 0 &&
-          typeof raw[0] === 'object' &&
-          raw[0] !== null
-        ) {
-          raw = (raw as Array<Record<string, unknown>>).map(
-            r => (r.service_name ?? r.name ?? '') as string,
-          );
-        }
-        setServices(Array.isArray(raw) ? (raw as string[]) : []);
+        // Accept multiple backend response shapes and normalize to unique names.
+        // Examples:
+        // { services: ["a","b"] }
+        // { data: [{ service_name: "a" }] }
+        // { data: [{ service: "a" }] }
+        // ["a", "b"]
+        // [{ serviceName: "a" }]
+        const raw: unknown = data.services ?? data.data ?? data;
+        const rows = Array.isArray(raw) ? raw : [];
+        const names = rows
+          .map(row => {
+            if (typeof row === 'string') {
+              return row.trim();
+            }
+            if (row && typeof row === 'object') {
+              const record = row as Record<string, unknown>;
+              const value =
+                record.service_name ??
+                record.serviceName ??
+                record.service ??
+                record.name;
+              return value == null ? '' : String(value).trim();
+            }
+            return '';
+          })
+          .filter(Boolean);
+
+        setServices(
+          Array.from(new Set(names)).sort((a, b) => a.localeCompare(b)),
+        );
       })
       .catch(() => {})
       .finally(() => setLoading(false));

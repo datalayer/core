@@ -178,6 +178,30 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
 
   const { services } = useOtelServices({ baseUrl, token });
 
+  const effectiveServices = useMemo(() => {
+    const fromApi = (services ?? []).map(s => s.trim()).filter(Boolean);
+    const fromTraces = (traces ?? [])
+      .map(s => (s.service_name ?? '').trim())
+      .filter(Boolean);
+    const fromLogs = (logs ?? [])
+      .map(l => (l.service_name ?? '').trim())
+      .filter(Boolean);
+    const fromMetrics = (metrics ?? [])
+      .map(m => (m.service_name ?? '').trim())
+      .filter(Boolean);
+
+    const fromSignal =
+      signal === 'traces'
+        ? fromTraces
+        : signal === 'logs'
+          ? fromLogs
+          : fromMetrics;
+
+    return Array.from(new Set([...fromApi, ...fromSignal])).sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }, [services, traces, logs, metrics, signal]);
+
   // ── WebSocket live updates ──
   // When a WS message arrives for a signal, refetch the corresponding hook
   // so the data stays fresh without polling.
@@ -379,7 +403,7 @@ export const OtelLive: React.FC<OtelLiveProps> = ({
           <OtelSearchBar
             signal={signal}
             onSignalChange={setSignal}
-            services={services ?? []}
+            services={effectiveServices}
             selectedService={service}
             onServiceChange={setService}
             query={query}
