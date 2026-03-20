@@ -87,6 +87,81 @@ export interface FetchMetricsOptions {
   limit?: number;
 }
 
+export interface FetchMetricTotalOptions {
+  serviceName?: string;
+  limit?: number;
+  fallbackWithoutService?: boolean;
+}
+
+function parseMetricValue(raw: Record<string, unknown>): number {
+  const candidates = [raw.value, raw.value_double, raw.value_int];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === 'string') {
+      const parsed = Number(candidate);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return 0;
+}
+
+function parseMetricTimestamp(raw: Record<string, unknown>): string {
+  const candidate =
+    raw.timestamp ??
+    raw.Timestamp ??
+    raw.timestamp_unix_nano ??
+    raw.start_time_unix_nano;
+  if (typeof candidate === 'string' && candidate.trim().length > 0) {
+    return candidate;
+  }
+  const numeric = Number(candidate);
+  if (!Number.isFinite(numeric)) {
+    return '';
+  }
+  if (numeric > 1e15) {
+    return new Date(numeric / 1e6).toISOString();
+  }
+  if (numeric > 1e12) {
+    return new Date(numeric / 1e3).toISOString();
+  }
+  return new Date(numeric).toISOString();
+}
+
+function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
+  return {
+    metric_name: String(
+      raw.metric_name ?? raw.MetricName ?? raw.name ?? raw.Name ?? '',
+    ),
+    service_name: String(raw.service_name ?? raw.ServiceName ?? ''),
+    value: parseMetricValue(raw),
+    unit:
+      raw.metric_unit != null
+        ? String(raw.metric_unit)
+        : raw.MetricUnit != null
+          ? String(raw.MetricUnit)
+          : raw.unit != null
+            ? String(raw.unit)
+            : raw.Unit != null
+              ? String(raw.Unit)
+              : undefined,
+    timestamp: parseMetricTimestamp(raw),
+    metric_type:
+      raw.metric_type != null
+        ? String(raw.metric_type)
+        : raw.MetricType != null
+          ? String(raw.MetricType)
+          : undefined,
+    attributes:
+      typeof raw.attributes === 'object' && raw.attributes !== null
+        ? (raw.attributes as Record<string, unknown>)
+        : undefined,
+  };
+}
+
 // ── OtelClient class ─────────────────────────────────────────────────────────
 
 /**
@@ -162,7 +237,38 @@ export class OtelClient {
       this.token,
     );
     const rows = (Array.isArray(resp) ? resp : (resp as any).data) ?? [];
-    return { data: rows, count: rows.length };
+    const normalized = Array.isArray(rows)
+      ? rows.map(row =>
+          normalizeMetric(row as unknown as Record<string, unknown>),
+        )
+      : [];
+    return { data: normalized, count: normalized.length };
+  }
+
+  /** Sum all values for one metric name, with optional service filter. */
+  async fetchMetricTotal(
+    metricName: string,
+    options: FetchMetricTotalOptions = {},
+  ): Promise<number> {
+    const { serviceName, limit = 500, fallbackWithoutService = true } = options;
+    const filtered = await this.fetchMetrics({
+      metricName,
+      serviceName,
+      limit,
+    });
+    const filteredTotal = filtered.data.reduce(
+      (sum, row) => sum + Number(row.value || 0),
+      0,
+    );
+    if (filteredTotal > 0 || !serviceName || !fallbackWithoutService) {
+      return filteredTotal;
+    }
+
+    const unfiltered = await this.fetchMetrics({ metricName, limit });
+    return unfiltered.data.reduce(
+      (sum, row) => sum + Number(row.value || 0),
+      0,
+    );
   }
 
   // ── Services ──────────────────────────────────────────────────────────────
@@ -170,7 +276,9 @@ export class OtelClient {
   /** List known service names observed in traces. */
   async fetchServices(): Promise<string[]> {
     const resp = await otelFetch<
-      { services?: string[] } | { data?: Array<{ service_name: string }> } | string[]
+      | { services?: string[] }
+      | { data?: Array<{ service_name: string }> }
+      | string[]
     >(`${this.baseUrl}/api/otel/v1/traces/services/list`, this.token);
     if (Array.isArray(resp)) return resp as string[];
     const byServices = (resp as any).services;

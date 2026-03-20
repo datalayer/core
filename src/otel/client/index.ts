@@ -9,6 +9,7 @@ export type {
   FetchTracesOptions,
   FetchLogsOptions,
   FetchMetricsOptions,
+  FetchMetricTotalOptions,
   OtelSystemData,
   OtelSystemProcess,
   OtelSystemDisk,

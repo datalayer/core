@@ -80,6 +80,7 @@ export type {
   FetchTracesOptions,
   FetchLogsOptions,
   FetchMetricsOptions,
+  FetchMetricTotalOptions,
 } from './client';
 
 // ── Views ─────────────────────────────────────────────────────────────────────
