@@ -9,6 +9,7 @@ export * from './CodePreview';
 export * from './DatalayerBox';
 export * from './HorizontalCenter';
 export * from './JupyterDialog';
+export * from './LiveRelativeTime';
 export * from './Markdown';
 export * from './NavLink';
 export * from './NotebookSkeleton';
