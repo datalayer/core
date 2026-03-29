@@ -13,7 +13,7 @@
  * @module views/signin
  */
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -30,6 +30,7 @@ import {
   KeyIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
+import { coreStore } from '../../state';
 
 // ── Props ────────────────────────────────────────────────────────────
 
@@ -70,11 +71,16 @@ export interface SignInSimpleProps {
 export const SignInSimple: React.FC<SignInSimpleProps> = ({
   onSignIn,
   onApiKeySignIn,
-  loginUrl = '/api/iam/v1/login',
+  loginUrl: loginUrlProp,
   title = 'Datalayer OTEL',
   description = 'Sign in to access the observability dashboard.',
   leadingIcon = <TelescopeIcon size={24} />,
 }) => {
+  const loginUrl = useMemo(() => {
+    if (loginUrlProp) return loginUrlProp;
+    const iamRunUrl = coreStore.getState().configuration?.iamRunUrl;
+    return iamRunUrl ? `${iamRunUrl}/api/iam/v1/login` : '/api/iam/v1/login';
+  }, [loginUrlProp]);
   const [handle, setHandle] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
