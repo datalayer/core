@@ -9,13 +9,14 @@ import logging
 from typing import Optional
 
 from datalayer_core.authn.server.http_server import get_token
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
 
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
 
-DATALAYER_RUN_URL = "https://prod1.datalayer.run"
+DATALAYER_RUN_URL = DEFAULT_DATALAYER_RUN_URL
 
 
 if __name__ == "__main__":

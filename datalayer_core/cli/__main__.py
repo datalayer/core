@@ -16,10 +16,15 @@ from datalayer_core.cli.commands.authn import (
     whoami_root,
 )
 from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
+from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
 from datalayer_core.cli.commands.envs import envs_list, envs_ls
+from datalayer_core.cli.commands.events import app as events_app
+from datalayer_core.cli.commands.events import events_list, events_ls
 from datalayer_core.cli.commands.exec import main as exec_main
+from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
+from datalayer_core.cli.commands.runtime_checkpoints import checkpoints_list, checkpoints_ls
 from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app
 from datalayer_core.cli.commands.runtime_snapshots import snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app
@@ -69,8 +74,11 @@ def main_callback(
 app.add_typer(about_app)
 app.add_typer(auth_app)
 app.add_typer(benchmarks_app)
+app.add_typer(checkpoints_app)
+app.add_typer(config_app)
 app.add_typer(console_app)
 app.add_typer(envs_app)
+app.add_typer(events_app)
 app.add_typer(otel_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
@@ -92,12 +100,16 @@ app.command(name="usage")(usage_root)
 # Add convenient aliases at root level
 app.command(name="envs-list")(envs_list)
 app.command(name="envs-ls")(envs_ls)
+app.command(name="events-list")(events_list)
+app.command(name="events-ls")(events_ls)
 app.command(name="runtimes-list")(runtimes_list)
 app.command(name="runtimes-ls")(runtimes_ls)
 app.command(name="secrets-list")(secrets_list)
 app.command(name="secrets-ls")(secrets_ls)
 app.command(name="snapshots-list")(snapshots_list)
 app.command(name="snapshots-ls")(snapshots_ls)
+app.command(name="checkpoints-list")(checkpoints_list)
+app.command(name="checkpoints-ls")(checkpoints_ls)
 app.command(name="tokens-list")(tokens_list)
 app.command(name="tokens-ls")(tokens_ls)
 

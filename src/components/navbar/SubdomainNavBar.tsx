@@ -98,7 +98,7 @@ function Root({
   className,
   fixed = true,
   fullWidth = false,
-  logoHref = 'https://datalayer.app',
+  logoHref = 'https://datalayer.ai',
   title,
   titleHref = '/',
   ...rest

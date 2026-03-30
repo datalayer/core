@@ -11,8 +11,15 @@ from rich.console import Console
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.usage import display_usage
 
-app = typer.Typer(name="usage", help="Usage and credits commands")
+app = typer.Typer(name="usage", help="Usage and credits commands", invoke_without_command=True)
 console = Console()
+
+
+@app.callback()
+def usage_callback(ctx: typer.Context):
+    """Usage and credits commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="show")

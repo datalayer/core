@@ -48,7 +48,7 @@ def _otlp_endpoint() -> str:
     Resolution order (mirrors the CLI load-test):
     1. ``DATALAYER_OTLP_URL``   – explicit OTLP collector URL
     2. ``DATALAYER_OTEL_RUN_URL`` / ``DATALAYER_RUN_URL`` + ``/api/otel/v1/otlp``
-    3. ``http://localhost:4318``  – standard local collector (fallback)
+    3. ``https://prod1.datalayer.run/api/otel/v1/otlp``  – production fallback
     """
     explicit = os.environ.get("DATALAYER_OTLP_URL")
     if explicit:
@@ -56,15 +56,19 @@ def _otlp_endpoint() -> str:
     run_url = (
         os.environ.get("DATALAYER_OTEL_RUN_URL")
         or os.environ.get("DATALAYER_RUN_URL")
+        or "https://prod1.datalayer.run"
     )
-    if run_url:
-        return run_url.rstrip("/") + "/api/otel/v1/otlp"
-    return "http://localhost:4318"
+    return run_url.rstrip("/") + "/api/otel/v1/otlp"
 
 
 def _otel_api_url() -> str:
-    """Return the OTEL REST-query API base URL (port 7800 by default)."""
-    return os.environ.get("DATALAYER_OTEL_URL", "http://localhost:7800").rstrip("/")
+    """Return the OTEL REST-query API base URL."""
+    return (
+        os.environ.get("DATALAYER_OTEL_URL")
+        or os.environ.get("DATALAYER_OTEL_RUN_URL")
+        or os.environ.get("DATALAYER_RUN_URL")
+        or "https://prod1.datalayer.run"
+    ).rstrip("/")
 
 
 def _flush_and_wait(wait: float = 2.0) -> None:

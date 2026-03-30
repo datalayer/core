@@ -33,7 +33,14 @@ interface FormData {
   description: string;
 }
 
-export const IAMTokenEdit = () => {
+export type IAMTokenEditProps = {
+  /** Route to navigate after delete. Defaults to '/settings/iam/tokens'. */
+  tokensListRoute?: string;
+};
+
+export const IAMTokenEdit = ({
+  tokensListRoute = '/settings/iam/tokens',
+}: IAMTokenEditProps = {}) => {
   const { tokenId } = useParams();
   const runStore = useRunStore();
   const navigate = useNavigate();
@@ -129,7 +136,7 @@ export const IAMTokenEdit = () => {
           enqueueToast('The token is successfully deleted.', {
             variant: 'success',
           });
-          navigate('/settings/iam/tokens');
+          navigate(tokensListRoute);
         } else {
           enqueueToast(resp.message || 'Failed to delete token.', {
             variant: 'error',
@@ -147,7 +154,7 @@ export const IAMTokenEdit = () => {
   return (
     <>
       <PageHeader>
-        <Heading sx={{ fontSize: 3 }}>IAM Token</Heading>
+        <Heading sx={{ fontSize: 3 }}>API Key</Heading>
       </PageHeader>
       <Box display="flex">
         <Box>

@@ -13,9 +13,16 @@ from datalayer_core.displays.tokens import display_tokens
 from datalayer_core.models.token import TokenType
 
 # Create a Typer app for token commands
-app = typer.Typer(name="tokens", help="Token management commands")
+app = typer.Typer(name="tokens", help="Token management commands", invoke_without_command=True)
 
 console = Console()
+
+
+@app.callback()
+def tokens_callback(ctx: typer.Context):
+    """Token management commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="list")

@@ -11,31 +11,38 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
+from datalayer_core.base.user_config import (
+    get_iam_url as _get_config_iam_url,
+    get_runtimes_url as _get_config_runtimes_url,
+)
+
 DEFAULT_DATALAYER_RUN_URL = "https://prod1.datalayer.run"
 
-DEFAULT_DATALAYER_IAM_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_RUNTIMES_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_RUNTIMES_URL = "https://r1.datalayer.run"
 
-DEFAULT_DATALAYER_SPACER_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_LIBRARY_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_MANAGER_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_AI_AGENTS_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_AI_INFERENCE_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_MCP_SERVERS_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_GROWTH_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_SUCCESS_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_STATUS_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_SUPPORT_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_RUN_URL
+
+DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_RUN_URL
 
 
 @dataclass
@@ -68,6 +75,8 @@ class DatalayerURLs:
         The Datalayer growth service URL
     success_url : str
         The Datalayer success service URL
+    otel_url : str
+        The Datalayer OTEL service URL
     status_url : str
         The Datalayer status service URL
     support_url : str
@@ -84,6 +93,7 @@ class DatalayerURLs:
     manager_url: str
     ai_agents_url: str
     ai_inference_url: str
+    otel_url: str
     growth_url: str
     success_url: str
     status_url: str
@@ -101,6 +111,7 @@ class DatalayerURLs:
         manager_url: Optional[str] = None,
         ai_agents_url: Optional[str] = None,
         ai_inference_url: Optional[str] = None,
+        otel_url: Optional[str] = None,
         growth_url: Optional[str] = None,
         success_url: Optional[str] = None,
         status_url: Optional[str] = None,
@@ -136,6 +147,9 @@ class DatalayerURLs:
         ai_inference_url : Optional[str]
             Override for the AI inference URL. If None, will check DATALAYER_AI_INFERENCE_URL env var
             then fallback to DEFAULT_DATALAYER_AI_INFERENCE_URL.
+        otel_url : Optional[str]
+            Override for the OTEL URL. If None, will check DATALAYER_OTEL_URL env var
+            then fallback to DEFAULT_DATALAYER_OTEL_URL.
         growth_url : Optional[str]
             Override for the growth URL. If None, will check DATALAYER_GROWTH_URL env var
             then fallback to DEFAULT_DATALAYER_GROWTH_URL.
@@ -167,7 +181,10 @@ class DatalayerURLs:
             run_url or os.environ.get("DATALAYER_RUN_URL") or DEFAULT_DATALAYER_RUN_URL
         )
         resolved_iam_url = (
-            iam_url or os.environ.get("DATALAYER_IAM_URL") or DEFAULT_DATALAYER_IAM_URL
+            iam_url
+            or os.environ.get("DATALAYER_IAM_URL")
+            or _get_config_iam_url()
+            or DEFAULT_DATALAYER_IAM_URL
         )
 
         # If iam_url is provided (either as parameter or env var),
@@ -178,10 +195,16 @@ class DatalayerURLs:
             else None
         )
 
-        # Determine service URLs with priority: parameter > env var > base_url_for_services > default
+        # Determine service URLs with priority:
+        #   parameter > env var > config file > base_url_for_services > default
+        # For runtimes_url and iam_url, the config file takes precedence over
+        # the IAM-derived base_url_for_services so that explicit user config
+        # (e.g. "runtimes on r1, iam on prod1") is respected.
+        config_runtimes_url = _get_config_runtimes_url()
         resolved_runtimes_url = (
             runtimes_url
             or os.environ.get("DATALAYER_RUNTIMES_URL")
+            or config_runtimes_url
             or base_url_for_services
             or DEFAULT_DATALAYER_RUNTIMES_URL
         )
@@ -214,6 +237,12 @@ class DatalayerURLs:
             or os.environ.get("DATALAYER_AI_INFERENCE_URL")
             or base_url_for_services
             or DEFAULT_DATALAYER_AI_INFERENCE_URL
+        )
+        resolved_otel_url = (
+            otel_url
+            or os.environ.get("DATALAYER_OTEL_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_OTEL_URL
         )
         resolved_growth_url = (
             growth_url
@@ -255,6 +284,7 @@ class DatalayerURLs:
         resolved_manager_url = resolved_manager_url.rstrip("/")
         resolved_ai_agents_url = resolved_ai_agents_url.rstrip("/")
         resolved_ai_inference_url = resolved_ai_inference_url.rstrip("/")
+        resolved_otel_url = resolved_otel_url.rstrip("/")
         resolved_growth_url = resolved_growth_url.rstrip("/")
         resolved_success_url = resolved_success_url.rstrip("/")
         resolved_status_url = resolved_status_url.rstrip("/")
@@ -270,6 +300,7 @@ class DatalayerURLs:
             manager_url=resolved_manager_url,
             ai_agents_url=resolved_ai_agents_url,
             ai_inference_url=resolved_ai_inference_url,
+            otel_url=resolved_otel_url,
             growth_url=resolved_growth_url,
             success_url=resolved_success_url,
             status_url=resolved_status_url,
@@ -287,6 +318,7 @@ class DatalayerURLs:
         self.manager_url = self.manager_url.rstrip("/")
         self.ai_agents_url = self.ai_agents_url.rstrip("/")
         self.ai_inference_url = self.ai_inference_url.rstrip("/")
+        self.otel_url = self.otel_url.rstrip("/")
         self.growth_url = self.growth_url.rstrip("/")
         self.success_url = self.success_url.rstrip("/")
         self.status_url = self.status_url.rstrip("/")

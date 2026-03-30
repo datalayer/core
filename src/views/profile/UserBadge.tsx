@@ -29,11 +29,16 @@ import type { DatalayerJwtPayload } from '../../utils/Jwt';
 export interface UserBadgeProps {
   /** Raw JWT bearer token. */
   token: string;
+  /** Display variant for the claims overlay. */
+  variant?: 'full' | 'small';
 }
 
 // ── Component ─────────────────────────────────────────────────────
 
-export const UserBadge: React.FC<UserBadgeProps> = ({ token }) => {
+export const UserBadge: React.FC<UserBadgeProps> = ({
+  token,
+  variant = 'full',
+}) => {
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -184,23 +189,25 @@ export const UserBadge: React.FC<UserBadgeProps> = ({ token }) => {
           )}
 
           {/* Raw JSON */}
-          <Box
-            as="pre"
-            sx={{
-              m: 0,
-              px: 3,
-              py: 2,
-              fontFamily: 'mono',
-              fontSize: 0,
-              color: 'fg.default',
-              bg: 'canvas.inset',
-              overflow: 'auto',
-              maxHeight: '220px',
-              whiteSpace: 'pre',
-            }}
-          >
-            {JSON.stringify(claims, null, 2)}
-          </Box>
+          {variant === 'full' && (
+            <Box
+              as="pre"
+              sx={{
+                m: 0,
+                px: 3,
+                py: 2,
+                fontFamily: 'mono',
+                fontSize: 0,
+                color: 'fg.default',
+                bg: 'canvas.inset',
+                overflow: 'auto',
+                maxHeight: '220px',
+                whiteSpace: 'pre',
+              }}
+            >
+              {JSON.stringify(claims, null, 2)}
+            </Box>
+          )}
         </Box>
       )}
     </Box>

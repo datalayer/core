@@ -56,6 +56,11 @@ print(logs)
 result = client.query_sql("SELECT * FROM spans LIMIT 10")
 print(result)
 
+# Run arbitrary SQL as platform_admin (no user-scope filter)
+# Requires platform_admin role.
+result = client.admin_sql("SELECT DISTINCT user_uid, count(*) as n FROM spans GROUP BY user_uid")
+print(result)
+
 # Storage statistics
 stats = client.get_stats()
 print(stats)
@@ -88,6 +93,11 @@ datalayer otel logs --service datalayer-iam --severity ERROR
 datalayer otel query "SELECT * FROM spans LIMIT 10"
 datalayer otel query "SELECT * FROM spans LIMIT 10" --raw  # Raw JSON output
 
+# Run arbitrary SQL as platform_admin (no user-scope filter)
+datalayer otel sql "SELECT * FROM spans LIMIT 10"
+datalayer otel sql "SELECT DISTINCT user_uid, count(*) as n FROM spans GROUP BY user_uid"
+datalayer otel sql "SELECT * FROM metrics ORDER BY timestamp DESC LIMIT 20" --raw
+
 # Storage statistics
 datalayer otel stats
 
@@ -102,8 +112,33 @@ datalayer otel smoke-test --url http://localhost:7800 --otlp-endpoint http://loc
 
 # Test with Logfire SDK
 datalayer otel logfire
-datalayer otel logfire --no-send  # Local-only, no cloud
 ```
+
+> **Note:** `datalayer otel query` automatically injects a `user_uid` filter so
+> you only see your own data. Use `datalayer otel sql` (platform_admin only) to
+> query across all accounts without filtering.
+
+## User Attribution
+
+Every span, metric and log record is tagged with a `user_uid` resource attribute
+so that query results are automatically scoped to the authenticated user.
+
+When using the Logfire SDK or the raw OTEL SDK, set the resource attribute
+before initialising the SDK:
+
+```bash
+export OTEL_RESOURCE_ATTRIBUTES="datalayer.user_uid=<your-uid>"
+```
+
+Or in Python (must be set before `logfire.configure()` / provider init):
+
+```python
+import os
+os.environ["OTEL_RESOURCE_ATTRIBUTES"] = f"datalayer.user_uid={user_uid}"
+```
+
+The `make logfire` example resolves this value automatically from the
+`DATALAYER_API_KEY` JWT — no manual configuration needed.
 
 ## Authentication
 
@@ -166,6 +201,8 @@ These configure where client services send telemetry — not the OTEL service it
 | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` | OTLP traces endpoint | `http://...:4318/v1/traces` |
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | OTLP metrics endpoint | `http://...:4318/v1/metrics` |
 | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` | OTLP logs endpoint | `http://...:4318/v1/logs` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | HTTP headers for OTLP requests | `Authorization=Bearer%20<token>` |
+| `OTEL_RESOURCE_ATTRIBUTES` | Extra resource attributes (comma-separated) | `datalayer.user_uid=<uid>` |
 | `OTEL_SERVICE_NAME` | Service name tag | `datalayer-iam` |
 | `OTEL_PYTHON_LOG_LEVEL` | SDK log level | `info` |
 
@@ -234,7 +271,9 @@ The OTEL service exposes these REST endpoints:
 | GET | `/api/otel/v1/metrics/` | List metric names |
 | GET | `/api/otel/v1/metrics/query` | Query metric data points |
 | GET | `/api/otel/v1/logs/` | Query log records |
-| POST | `/api/otel/v1/query/` | Execute ad-hoc SQL |
+| POST | `/api/otel/v1/query/` | Execute ad-hoc SQL (user-scoped) |
+| POST | `/api/otel/v1/system/sql` | Execute arbitrary SQL — **platform_admin only** |
+| GET | `/api/otel/v1/system/` | System statistics — **platform_admin only** |
 | | `/api/otel/v1/docs` | Swagger UI |
 | | `/api/otel/v1/redoc` | ReDoc |
 

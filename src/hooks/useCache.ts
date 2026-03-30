@@ -109,19 +109,6 @@ export type ISearchOpts = {
   public: boolean;
 };
 
-/** Request payload for creating a new agent runtime. */
-export type CreateAgentRuntimeRequest = {
-  environmentName?: string;
-  givenName?: string;
-  creditsLimit?: number;
-  type?: string;
-  /** 'none', 'notebook', or 'document' */
-  editorVariant?: string;
-  enableCodemode?: boolean;
-  /** ID of the agent spec used to create this runtime */
-  agentSpecId?: string;
-};
-
 // Kept for potential future use
 
 // Default query options for all queries
@@ -413,15 +400,6 @@ export const queryKeys = {
       [...queryKeys.items.all(), 'space', spaceId] as const,
     search: (opts: ISearchOpts) =>
       [...queryKeys.items.all(), 'search', opts] as const,
-  },
-
-  // Agent Runtimes (runtimes with ai-agents environment)
-  agentRuntimes: {
-    all: () => ['agentRuntimes'] as const,
-    lists: () => [...queryKeys.agentRuntimes.all(), 'list'] as const,
-    details: () => [...queryKeys.agentRuntimes.all(), 'detail'] as const,
-    detail: (podName: string) =>
-      [...queryKeys.agentRuntimes.details(), podName] as const,
   },
 
   // Layout
@@ -1656,255 +1634,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
     });
-  };
-
-  // ============================================================================
-  // Agent Runtimes Hooks (runtimes with ai-agents environment)
-  // ============================================================================
-
-  /**
-   * Agent Runtime data type returned from runtimes service.
-   *
-   * Backend RuntimePod fields: pod_name, environment_name, environment_title, uid,
-   * type, given_name, token, ingress, reservation_id, started_at, expired_at, burning_rate.
-   *
-   * We map 'ingress' to 'url' for consistency with the UI.
-   */
-  type AgentRuntimeData = {
-    pod_name: string;
-    id: string;
-    environment_name: string;
-    environment_title?: string;
-    given_name: string;
-    phase?: string;
-    type: string;
-    started_at?: string;
-    expired_at?: string;
-    burning_rate?: number;
-    status: 'starting' | 'running' | 'paused' | 'terminated' | 'archived';
-    // Backend returns 'ingress', we map it to 'url' for UI consistency
-    ingress?: string;
-    url?: string;
-    token?: string;
-    // Agent specification with chat suggestions (raw from backend, enriched downstream)
-    agentSpec?: any;
-    // ID of the agent spec used to create this runtime
-    agent_spec_id?: string;
-  };
-
-  /**
-   * List agent runtimes (runtimes with ai-agents-env environment)
-   */
-  /**
-   * Get all agent runtimes for the current user.
-   *
-   * Note on phase/status mapping:
-   * The backend (operator) RuntimePod model does not include a 'phase' field.
-   * The operator only keeps active/assigned runtimes in its cache (OperatorCache.USER_RUNTIMES),
-   * so any runtime returned by this endpoint is inherently running or starting.
-   * Therefore, if rt.phase is undefined (which it will be), we default to 'running'.
-   * A 'paused' state would require explicit backend support to track paused runtimes.
-   */
-  const useAgentRuntimes = () => {
-    return useQuery({
-      queryKey: queryKeys.agentRuntimes.lists(),
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes`,
-          method: 'GET',
-        });
-        if (resp.success && resp.runtimes) {
-          // Filter to only include ai-agents-env runtimes
-          const agentRuntimes = (resp.runtimes as AgentRuntimeData[])
-            .filter(
-              (rt: AgentRuntimeData) => rt.environment_name === 'ai-agents-env',
-            )
-            .map((rt: AgentRuntimeData) => ({
-              ...rt,
-              // Phase/status mapping: see hook JSDoc for details.
-              // Backend returns only active runtimes, so default to 'running'.
-              status:
-                rt.phase === 'Pending'
-                  ? ('starting' as const)
-                  : rt.phase === 'Terminated'
-                    ? ('terminated' as const)
-                    : rt.phase === 'Paused'
-                      ? ('paused' as const)
-                      : rt.phase === 'Archived'
-                        ? ('archived' as const)
-                        : ('running' as const),
-              name: rt.given_name || rt.pod_name,
-              id: rt.pod_name,
-              // Map ingress URL to url for UI consistency
-              url: rt.ingress,
-              messageCount: 0, // Default for UI compatibility
-              agent_spec_id: rt.agent_spec_id || undefined,
-            }));
-          // Set detail cache for each runtime
-          agentRuntimes.forEach((runtime: AgentRuntimeData) => {
-            queryClient.setQueryData(
-              queryKeys.agentRuntimes.detail(runtime.pod_name),
-              runtime,
-            );
-          });
-          return agentRuntimes;
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      refetchInterval: 10000, // Refetch every 10 seconds for status updates
-      enabled: !!user,
-    });
-  };
-
-  /**
-   * Get a single agent runtime by pod name.
-   *
-   * Note on phase/status mapping:
-   * Same as useAgentRuntimes - the backend RuntimePod model has no 'phase' field,
-   * and only active runtimes exist in the operator cache. Default to 'running'.
-   */
-  const useAgentRuntime = (podName: string | undefined) => {
-    return useQuery({
-      queryKey: queryKeys.agentRuntimes.detail(podName ?? ''),
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes/${podName}`,
-          method: 'GET',
-        });
-        if (resp.runtime) {
-          const rt = resp.runtime as AgentRuntimeData;
-          return {
-            ...rt,
-            // Phase/status mapping: see useAgentRuntimes JSDoc for details.
-            status:
-              rt.phase === 'Pending'
-                ? ('starting' as const)
-                : rt.phase === 'Terminated'
-                  ? ('terminated' as const)
-                  : rt.phase === 'Paused'
-                    ? ('paused' as const)
-                    : rt.phase === 'Archived'
-                      ? ('archived' as const)
-                      : ('running' as const),
-            name: rt.given_name || rt.pod_name,
-            id: rt.pod_name,
-            // Map ingress URL to url for UI consistency
-            url: rt.ingress,
-            messageCount: 0,
-            agent_spec_id: rt.agent_spec_id || undefined,
-          };
-        }
-        throw new Error('Failed to fetch agent runtime');
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      // Poll every 5 seconds while the runtime exists. Stop polling on error
-      // (e.g. 404 — runtime deleted, 500 — broken state) to avoid hammering the server.
-      refetchInterval: query => {
-        if (query.state.error) return false;
-        return 5000;
-      },
-      // Don't retry failed detail requests. The refetchInterval handles
-      // periodic re-checks, so retrying only generates duplicate failing requests.
-      retry: false,
-      enabled: !!podName,
-    });
-  };
-
-  /**
-   * Create a new agent runtime.
-   *
-   * Note on phase/status mapping:
-   * Newly created runtimes are immediately active (the operator assigns a pod from the pool).
-   * The response won't have a 'phase' field, so we default to 'running'.
-   * See useAgentRuntimes JSDoc for full explanation.
-   */
-  const useCreateAgentRuntime = () => {
-    return useMutation({
-      mutationFn: async (data: CreateAgentRuntimeRequest) => {
-        return requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes`,
-          method: 'POST',
-          body: {
-            environment_name: data.environmentName || 'ai-agents-env',
-            given_name: data.givenName || 'Agent',
-            credits_limit: data.creditsLimit || 10,
-            type: data.type || 'notebook',
-            editor_variant: data.editorVariant || 'none',
-            enable_codemode: data.enableCodemode ?? false,
-            agent_spec_id: data.agentSpecId || undefined,
-          },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.runtime) {
-          const rt = resp.runtime as AgentRuntimeData;
-          // Phase/status mapping: see useAgentRuntimes JSDoc for details.
-          queryClient.setQueryData(
-            queryKeys.agentRuntimes.detail(rt.pod_name),
-            {
-              ...rt,
-              status:
-                rt.phase === 'Pending'
-                  ? ('starting' as const)
-                  : ('running' as const),
-              name: rt.given_name || rt.pod_name,
-              id: rt.pod_name,
-              // Map ingress URL to url for UI consistency
-              url: rt.ingress,
-              messageCount: 0,
-              agent_spec_id: rt.agent_spec_id || undefined,
-            },
-          );
-          // Invalidate list
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.agentRuntimes.all(),
-          });
-        }
-      },
-    });
-  };
-
-  /**
-   * Delete agent runtime
-   */
-  const useDeleteAgentRuntime = () => {
-    return useMutation({
-      mutationFn: async (podName: string) => {
-        return requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/runtimes/${podName}`,
-          method: 'DELETE',
-        });
-      },
-      onSuccess: (_data, podName) => {
-        // Cancel any in-flight queries for the deleted runtime so they
-        // don't re-fetch a resource that no longer exists.
-        queryClient.cancelQueries({
-          queryKey: queryKeys.agentRuntimes.detail(podName),
-        });
-        // Remove the detail cache entry immediately — prevents React
-        // Query from triggering a stale re-fetch while the component
-        // unmounts.
-        queryClient.removeQueries({
-          queryKey: queryKeys.agentRuntimes.detail(podName),
-        });
-        // Invalidate the list so the sidebar refreshes.
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.agentRuntimes.lists(),
-        });
-      },
-    });
-  };
-
-  /**
-   * Refresh agent runtimes list
-   */
-  const useRefreshAgentRuntimes = () => {
-    return () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.agentRuntimes.all(),
-      });
-    };
   };
 
   // ============================================================================
@@ -5743,6 +5472,29 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Create URL for password change (sends clickable link via email)
+   */
+  const useCreateUrlForPasswordChange = () => {
+    return useMutation({
+      mutationFn: async ({
+        handle,
+        password,
+        passwordConfirm,
+      }: {
+        handle: string;
+        password: string;
+        passwordConfirm: string;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/password`,
+          method: 'PUT',
+          body: { handle, password, passwordConfirm },
+        });
+      },
+    });
+  };
+
+  /**
    * Confirm password change with token
    */
   const useConfirmPasswordWithToken = () => {
@@ -7722,6 +7474,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useJoinWithInvite,
     useConfirmJoinWithToken,
     useCreateTokenForPasswordChange,
+    useCreateUrlForPasswordChange,
     useConfirmPasswordWithToken,
     useOAuth2AuthorizationURL,
     useOAuth2AuthorizationLinkURL,
@@ -7808,13 +7561,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRefreshUserSpace,
     useRefreshLayout,
     useExportSpace,
-
-    // Agent Runtimes (runtimes with ai-agents environment)
-    useAgentRuntime,
-    useAgentRuntimes,
-    useCreateAgentRuntime,
-    useDeleteAgentRuntime,
-    useRefreshAgentRuntimes,
 
     // Courses
     useCourse,

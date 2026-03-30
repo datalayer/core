@@ -40,7 +40,7 @@ export type ProjectData = {
   isPublic: boolean;
   /** Attached agent (runtime) pod name, if any */
   attachedAgentPodName?: string;
-  /** Attached agent spec ID (e.g. 'datalayer-ai/data-acquisition'), if any */
+  /** Attached agent spec ID (e.g. 'data-acquisition'), if any */
   attachedAgentSpecId?: string;
 };
 

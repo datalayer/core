@@ -80,7 +80,7 @@ export abstract class ItemDTO<TData> {
       return (this._data as any).space_id;
     }
 
-    // Extract from s3_path_s if available: "datalayer.app/SPACE_ID/..."
+    // Extract from s3_path_s if available: "datalayer.ai/SPACE_ID/..."
     const s3Path = (this._data as any).s3_path_s;
     if (s3Path && typeof s3Path === 'string') {
       const match = s3Path.match(/^datalayer\.app\/([^/]+)\//);

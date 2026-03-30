@@ -8,7 +8,8 @@ Provides subcommands to query and interact with the Datalayer OTEL service::
     datalayer otel traces      # List / get traces
     datalayer otel metrics     # Query metrics
     datalayer otel logs        # Query logs
-    datalayer otel query       # Run ad-hoc SQL via SQL Engine
+    datalayer otel query       # Run ad-hoc SQL via SQL Engine (user-scoped)
+    datalayer otel sql         # Run arbitrary SQL as platform_admin (no user filter)
     datalayer otel stats       # Show storage statistics
     datalayer otel services    # List observed service names
     datalayer otel flush       # Force-flush buffered data
@@ -245,6 +246,53 @@ def query(
         return
 
     table = Table(title="Query Results")
+    columns = list(rows[0].keys()) if rows else []
+    for col in columns:
+        table.add_column(col, style="cyan")
+    for row in rows:
+        table.add_row(*(str(row.get(c, "")) for c in columns))
+    console.print(table)
+
+
+# ── admin sql ────────────────────────────────────────────────────────
+
+
+@app.command(name="sql")
+def admin_sql(
+    sql: str = typer.Argument(..., help="Arbitrary SQL to execute (no user-scope filter). Platform admin only."),
+    base_url: Optional[str] = typer.Option(None, "--otel-run-url", help="OTEL service run URL."),
+    raw: bool = typer.Option(False, "--raw", help="Output raw JSON instead of a table."),
+    token: Optional[str] = typer.Option(None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."),
+) -> None:
+    """Run an arbitrary SQL query as platform_admin (no user-scope filtering).
+
+    Useful for inspecting raw table contents across all accounts.
+    Requires the DATALAYER_API_KEY to belong to a platform_admin user.
+    """
+    import httpx
+
+    url = _otel_base_url(base_url)
+    headers = _auth_headers(token)
+    resp = httpx.post(
+        f"{url}/api/otel/v1/system/sql",
+        json={"sql": sql},
+        headers=headers,
+        timeout=60,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    if raw:
+        rprint(json.dumps(data, indent=2))
+        return
+
+    rows = data.get("data", [])
+    if not rows:
+        rprint("[yellow]No results.[/yellow]")
+        return
+
+    table = Table(title=f"Admin SQL — {data.get('count', len(rows))} row(s)")
     columns = list(rows[0].keys()) if rows else []
     for col in columns:
         table.add_column(col, style="cyan")

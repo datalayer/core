@@ -56,7 +56,7 @@ export const FlashSurveys = (props: IFlashSurveysProps) => {
           <Box mt={3}>
             <Text>
               The information you give will remain fully private, read our{' '}
-              <Link href="https://datalayer.app/privacy" target="_blank">
+              <Link href="https://datalayer.ai/privacy" target="_blank">
                 privacy policy
               </Link>
               .

@@ -11,7 +11,7 @@
   "dependencies": {
     "@datalayer/core": "file:../../",
     "@datalayer/icons-react": "^1.0.6",
-    "@datalayer/primer-addons": "^1.0.4",
+    "@datalayer/primer-addons": "^1.0.12",
     "@primer/octicons-react": "^19.15.1",
     "echarts": "^5.5.0",
     "echarts-for-react": "^3.0.2",

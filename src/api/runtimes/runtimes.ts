@@ -231,3 +231,122 @@ export const updateRuntime = async (
     throw error;
   }
 };
+
+/**
+ * Response from the pause/resume runtime endpoints.
+ * The server returns 202 Accepted and provides a checkpoint UID
+ * that can be polled for status updates.
+ */
+export interface PauseResumeResponse {
+  success: boolean;
+  message: string;
+  checkpoint_id: string | null;
+}
+
+/**
+ * Optional body for the pause endpoint.
+ * Metadata is stored in the checkpoint Solr record created by the backend.
+ */
+export interface PauseRuntimeBody {
+  /** Checkpoint mode: 'criu' (full) or 'light' (history-only) */
+  checkpoint_mode?: 'criu' | 'light';
+  /** Human-readable checkpoint name */
+  name?: string;
+  /** Checkpoint description */
+  description?: string;
+  /** Agent spec identifier */
+  agent_spec_id?: string;
+  /** Full agent spec payload to persist with the checkpoint */
+  agentspec?: Record<string, any>;
+  /** Additional metadata */
+  metadata?: Record<string, any>;
+  /** Lightweight checkpoint message history */
+  messages?: string[];
+}
+
+/**
+ * Pause a runtime by creating a checkpoint (async, light mode by default).
+ *
+ * Returns immediately with a 202 Accepted response.  The actual checkpoint
+ * process runs in the background.  Use the returned `checkpoint_id` to
+ * poll for status via the runtime-checkpoints API.
+ *
+ * @param token - Authentication token
+ * @param podName - The unique pod name of the runtime to pause
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @param body - Optional metadata to store in the checkpoint record
+ * @returns Promise resolving with the checkpoint ID for status tracking
+ * @throws {Error} If authentication token is missing or invalid
+ * @throws {Error} If pod name is missing or invalid
+ */
+export const pauseRuntime = async (
+  token: string,
+  podName: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+  body?: PauseRuntimeBody,
+): Promise<PauseResumeResponse> => {
+  validateToken(token);
+  validateRequiredString(podName, 'Pod name');
+
+  return await requestDatalayerAPI<PauseResumeResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/pause`,
+    method: 'POST',
+    token,
+    ...(body ? { body } : {}),
+  });
+};
+
+/**
+ * Optional body for the resume endpoint.
+ * Contains information needed by the operator to restore from a checkpoint.
+ */
+export interface ResumeRuntimeBody {
+  /** Checkpoint mode to resume from: 'criu' or 'light' */
+  checkpoint_mode?: 'criu' | 'light';
+  /** Explicit checkpoint identifier */
+  checkpoint_id?: string;
+  /** Agent spec identifier (required by the operator for restore) */
+  agent_spec_id?: string;
+  /** Specific checkpoint timestamp to restore from */
+  checkpoint_timestamp?: string;
+  /** Environment name override */
+  environment_name?: string;
+  /** Container image override */
+  container_image?: string;
+  /** Target node name */
+  node_name?: string;
+  /** Additional metadata */
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Resume a paused runtime by restoring from a checkpoint (async).
+ *
+ * Returns immediately with a 202 Accepted response.  The actual restore
+ * process runs in the background.  Use the returned `checkpoint_id` to
+ * poll for status.
+ *
+ * @param token - Authentication token
+ * @param podName - The unique pod name of the runtime to resume
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @param body - Optional body with agent_spec_id and restore options
+ * @returns Promise resolving with the checkpoint ID for status tracking
+ * @throws {Error} If authentication token is missing or invalid
+ * @throws {Error} If pod name is missing or invalid
+ */
+export const resumeRuntime = async (
+  token: string,
+  podName: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+  body?: ResumeRuntimeBody,
+): Promise<PauseResumeResponse> => {
+  validateToken(token);
+  validateRequiredString(podName, 'Pod name');
+
+  return await requestDatalayerAPI<PauseResumeResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/resume`,
+    method: 'POST',
+    token,
+    ...(body ? { body } : {}),
+  });
+};

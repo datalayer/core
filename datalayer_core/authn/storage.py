@@ -10,6 +10,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_IAM_URL
+
 
 class TokenStorage(ABC):
     """Abstract base class for token storage backends."""
@@ -54,7 +56,7 @@ class TokenStorage(ABC):
 class KeyringStorage(TokenStorage):
     """System keyring-based token storage using keyring library."""
 
-    def __init__(self, service_name: str = "https://prod1.datalayer.run"):
+    def __init__(self, service_name: str = DEFAULT_DATALAYER_IAM_URL):
         """Initialize keyring storage.
 
         Args:

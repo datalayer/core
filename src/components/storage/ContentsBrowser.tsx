@@ -295,10 +295,34 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
     [selectedItem],
   );
   return (
-    <Box sx={{ display: 'grid', gridTemplateAreas: `"header" "content"` }}>
-      <Box sx={{ gridArea: 'header', display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ flex: '1 1 auto' }}>{title}</Box>
-        <Box>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateAreas: `"header" "content"`,
+        overflow: 'hidden',
+      }}
+    >
+      <Box
+        sx={{
+          gridArea: 'header',
+          display: 'flex',
+          alignItems: 'center',
+          minWidth: 0,
+          overflow: 'hidden',
+        }}
+      >
+        <Box sx={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
+          {title}
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexWrap: 'nowrap',
+            flexShrink: 0,
+          }}
+        >
           <IconButton
             variant="invisible"
             aria-label={'Refresh contents browser.'}

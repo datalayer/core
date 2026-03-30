@@ -10,11 +10,28 @@ from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.environments import display_environments
+from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for environment commands
-app = typer.Typer(name="envs", help="Environment management commands")
+app = typer.Typer(name="envs", help="Environment management commands", invoke_without_command=True)
 
 console = Console()
+
+
+def _make_client(
+    token: Optional[str] = None,
+    runtimes_url: Optional[str] = None,
+) -> DatalayerClient:
+    """Create a DatalayerClient with optional runtimes URL override."""
+    urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
+    return DatalayerClient(urls=urls, token=token)
+
+
+@app.callback()
+def envs_callback(ctx: typer.Context):
+    """Environment management commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="list")
@@ -24,10 +41,15 @@ def list_environments(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List available environments."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, runtimes_url=runtimes_url)
         environments = client.list_environments()
 
         # Convert to dict format for display_environments
@@ -67,9 +89,14 @@ def list_environments_alias(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List available environments (alias for list)."""
-    list_environments(token=token)
+    list_environments(token=token, runtimes_url=runtimes_url)
 
 
 # Root level commands for convenience
@@ -79,9 +106,14 @@ def envs_list(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List available environments (root command)."""
-    list_environments(token=token)
+    list_environments(token=token, runtimes_url=runtimes_url)
 
 
 def envs_ls(
@@ -90,6 +122,11 @@ def envs_ls(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
 ) -> None:
     """List available environments (root command alias)."""
-    list_environments(token=token)
+    list_environments(token=token, runtimes_url=runtimes_url)

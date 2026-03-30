@@ -142,12 +142,13 @@ export const IAMTokenNew = ({
         <>
           <PageHeader>
             <PageHeader.TitleArea variant="large">
-              <PageHeader.Title>Your Token is created</PageHeader.Title>
+              <PageHeader.Title>Your API Key is created</PageHeader.Title>
             </PageHeader.TitleArea>
           </PageHeader>
           <Box>
             <Text>
-              Take note of the Token value, you won't be able to see it after.
+              Take note of the API Key value, you will not be able to see it
+              after.
             </Text>
           </Box>
           <Box>
@@ -191,7 +192,7 @@ export const IAMTokenNew = ({
           </Box>
           <Box mt={3}>
             <Button onClick={e => navigate(tokensListRoute, e)}>
-              List my Tokens
+              List my API Keys
             </Button>
           </Box>
         </>
@@ -199,7 +200,7 @@ export const IAMTokenNew = ({
         <>
           <PageHeader>
             <PageHeader.TitleArea variant="large">
-              <PageHeader.Title>New IAM Token</PageHeader.Title>
+              <PageHeader.Title>New API Key</PageHeader.Title>
             </PageHeader.TitleArea>
           </PageHeader>
           <Box display="grid" gridTemplateColumns="1fr 1fr" sx={{ gap: 3 }}>

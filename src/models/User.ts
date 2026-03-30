@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { asDisplayName, namesAsInitials } from '../utils';
+import { asDisplayName, namesAsInitials, toFriendlyName } from '../utils';
 import { IInvite } from './Invite';
 import { asIAMProviderLinked, IIAMProviderLinked } from './IAMProviderLinked';
 import { BOOTSTRAP_USER_ONBOARDING, IUserOnboarding } from './UserOnboarding';
@@ -43,6 +43,7 @@ export class User implements IUser {
   lastName: string;
   initials: string;
   displayName: string;
+  friendlyName?: string;
   joinDate?: Date;
   roles: string[];
   credits?: number;
@@ -67,6 +68,8 @@ export class User implements IUser {
     this.initials = namesAsInitials(u.first_name_t, u.last_name_t);
     const displayName = asDisplayName(u.first_name_t, u.last_name_t);
     this.displayName = displayName === '' ? u.handle_s : displayName;
+    this.friendlyName =
+      toFriendlyName(u.first_name_t, u.last_name_t) || u.handle_s;
     this.avatarUrl = u.avatar_url_s;
     this.origin = u.origin_s;
     this.joinDate = u.join_ts_dt ? new Date(u.join_ts_dt) : undefined;
@@ -118,6 +121,7 @@ export type IBaseUser = {
   lastName: string;
   initials: string;
   displayName: string;
+  friendlyName?: string;
   joinDate?: Date;
   roles: string[];
   setRoles: (roles: string[]) => void;

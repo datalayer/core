@@ -13,45 +13,75 @@
  * If the user is not authenticated, the SignInSimple page is shown instead
  * of the dashboard.
  *
- * Split into:
- *  - header/  → OtelHeader (branding + signal generators + theme switcher)
- *  - views/   → DashboardView, TracesView, LogsView, MetricsView
+ * Components come directly from @datalayer/core/views/otel (OtelHeader, views)
+ * and @datalayer/primer-addons (ThemedProvider, ThemeSwitcher).
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { Text } from '@primer/react';
 import { TelescopeIcon } from '@primer/octicons-react';
 import { setupPrimerPortals } from '@datalayer/primer-addons/lib/utils/Portals';
+import {
+  ThemedProvider,
+  AppearanceControlsWithStore,
+  useThemeStore,
+} from '@datalayer/primer-addons';
+import { useSimpleAuthStore as useAuthStore } from '@datalayer/core/lib/views/otel/simpleAuthStore';
+import { SignInSimple } from '@datalayer/core/lib/views/iam/SignInSimple';
+import { OtelHeader } from '@datalayer/core/lib/views/otel/OtelHeader';
+import { DashboardView } from '@datalayer/core/lib/views/otel/DashboardView';
+import { SqlView } from '@datalayer/core/lib/views/otel/SqlView';
+import { SystemView } from '@datalayer/core/lib/views/otel/SystemView';
+import { setOtelOnUnauthorized } from '@datalayer/core/lib/otel/hooks';
+
 import '../style/primer-primitives.css';
-import { ThemedProvider } from './stores/themedProvider';
-import { useAuthStore } from './stores/authStore';
-import { SignInSimple } from '@datalayer/core/views/iam';
-import { OtelHeader } from './header';
-import { ThemeSwitcher } from './header/ThemeSwitcher';
-import { DashboardView, SqlView, SystemView } from './views';
+
+/**
+ * Sync the token to the global iamStore so that core components
+ * (OtelHeader, etc.) that rely on iamStore also have access.
+ */
+const syncTokenToIamStore = (newToken: string) => {
+  import('@datalayer/core/lib/state/substates/IAMState').then(({ iamStore }) => {
+    iamStore.setState({ token: newToken });
+  });
+};
 
 // Register document.body as the Primer portal root BEFORE React renders,
 // so that portals (ActionMenu overlays, Dialogs) inherit theme tokens
 // from the very first paint.
 setupPrimerPortals();
 
-// __DATALAYER_OTEL_URL__ is injected at build time by vite.config.ts.
-// Both REST and WebSocket requests go directly to the OTEL backend – no proxy.
+// __DATALAYER_OTEL_URL__ / __DATALAYER_OTEL_WS_URL__ are injected at build time
+// by vite.config.ts.
+// In dev mode BASE_URL is '' so REST calls are relative and routed through the
+// Vite proxy → local FastAPI server (which injects DATALAYER_API_KEY auth).
+// WS_BASE_URL always points to the real platform because the local server has no
+// WebSocket endpoint; the WS connection authenticates via `?token=` query param.
 declare const __DATALAYER_OTEL_URL__: string;
+declare const __DATALAYER_OTEL_WS_URL__: string;
 const BASE_URL: string = __DATALAYER_OTEL_URL__;
-const WS_BASE_URL: string = __DATALAYER_OTEL_URL__;
+const WS_BASE_URL: string = __DATALAYER_OTEL_WS_URL__;
 
 export const App: React.FC = () => {
-  const token = useAuthStore((s) => s.token);
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const token = useAuthStore(s => s.token);
+  const setAuth = useAuthStore(s => s.setAuth);
+
+  const handleSignIn = useCallback(
+    (newToken: string, handle: string) => {
+      setAuth(newToken, handle);
+      syncTokenToIamStore(newToken);
+    },
+    [setAuth],
+  );
 
   // If not authenticated, show the sign-in page.
   if (!token) {
     return (
-      <ThemedProvider>
+      <ThemedProvider useStore={useThemeStore}>
         <SignInSimple
-          onSignIn={setAuth}
+          onSignIn={handleSignIn}
+          onApiKeySignIn={apiKey => handleSignIn(apiKey, 'api-key-user')}
           title="Datalayer OTEL"
           description="Sign in to access the observability dashboard."
           leadingIcon={<TelescopeIcon size={24} />}
@@ -61,7 +91,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <ThemedProvider>
+    <ThemedProvider useStore={useThemeStore}>
       <AuthenticatedApp token={token} />
     </ThemedProvider>
   );
@@ -69,18 +99,43 @@ export const App: React.FC = () => {
 
 /** The main dashboard, rendered only when the user has a valid token. */
 const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
+  const clearAuth = useAuthStore(s => s.clearAuth);
+
+  // Clear both the simple auth store and the global iamStore on logout.
+  const handleLogout = useCallback(() => {
+    clearAuth();
+    import('@datalayer/core/lib/state/substates/IAMState').then(({ iamStore }) => {
+      iamStore.setState({ token: undefined });
+    });
+  }, [clearAuth]);
+
+  // Auto-logout on 401 (expired token) from any OTEL API call.
+  useEffect(() => {
+    setOtelOnUnauthorized(handleLogout);
+    return () => setOtelOnUnauthorized(null);
+  }, [handleLogout]);
+
   // Hold the OtelLive signal setter so the header can navigate tabs.
-  const signalSetterRef = useRef<((s: 'traces' | 'logs' | 'metrics') => void) | null>(null);
+  const signalSetterRef = useRef<
+    ((s: 'traces' | 'logs' | 'metrics') => void) | null
+  >(null);
   const [view, setView] = useState<'dashboard' | 'sql' | 'system'>(() => {
     try {
       const m = document.cookie.match(/(?:^|;\s*)otel_view=([^;]+)/);
-      if (m && (m[1] === 'dashboard' || m[1] === 'sql' || m[1] === 'system')) return m[1] as 'dashboard' | 'sql' | 'system';
-    } catch { /* ignore */ }
+      if (m && (m[1] === 'dashboard' || m[1] === 'sql' || m[1] === 'system'))
+        return m[1] as 'dashboard' | 'sql' | 'system';
+    } catch {
+      /* ignore */
+    }
     return 'dashboard';
   });
 
   const switchView = (v: 'dashboard' | 'sql' | 'system') => {
-    try { document.cookie = `otel_view=${v};path=/;max-age=31536000`; } catch { /* ignore */ }
+    try {
+      document.cookie = `otel_view=${v};path=/;max-age=31536000`;
+    } catch {
+      /* ignore */
+    }
     setView(v);
   };
 
@@ -124,8 +179,9 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
     >
       <OtelHeader
         token={token}
-        trailing={<ThemeSwitcher />}
+        trailing={<AppearanceControlsWithStore useStore={useThemeStore} />}
         onNavigate={handleNavigate}
+        onSignOut={handleLogout}
       />
       {/* ── View tab bar ── */}
       <Box
@@ -139,13 +195,19 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
           flexShrink: 0,
         }}
       >
-        <Box sx={TAB_SX(view === 'dashboard')} onClick={() => switchView('dashboard')}>
+        <Box
+          sx={TAB_SX(view === 'dashboard')}
+          onClick={() => switchView('dashboard')}
+        >
           <Text>Live</Text>
         </Box>
         <Box sx={TAB_SX(view === 'sql')} onClick={() => switchView('sql')}>
           <Text>SQL</Text>
         </Box>
-        <Box sx={TAB_SX(view === 'system')} onClick={() => switchView('system')}>
+        <Box
+          sx={TAB_SX(view === 'system')}
+          onClick={() => switchView('system')}
+        >
           <Text>System</Text>
         </Box>
       </Box>

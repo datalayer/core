@@ -42,4 +42,45 @@ export const downloadFile = (data: any, filename: string, mime?, bom?) => {
   }, 200);
 };
 
+export type TextDownloadPayload = {
+  content: string;
+  filename: string;
+  mime: string;
+};
+
+const sanitizeFileStem = (value: string) =>
+  value
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9-_]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'download';
+
+/**
+ * Create a generic markdown text payload for file downloads.
+ */
+export const createMarkdownDownloadPayload = (
+  content: string,
+  fileStem: string,
+): TextDownloadPayload => ({
+  content,
+  filename: `${sanitizeFileStem(fileStem)}.md`,
+  mime: 'text/markdown;charset=utf-8',
+});
+
+/**
+ * Download a text payload produced by a helper such as createMarkdownDownloadPayload.
+ */
+export const downloadTextPayload = (
+  payload: TextDownloadPayload,
+  withBom = true,
+) => {
+  downloadFile(
+    payload.content,
+    payload.filename,
+    payload.mime,
+    withBom ? '\uFEFF' : undefined,
+  );
+};
+
 export default downloadFile;

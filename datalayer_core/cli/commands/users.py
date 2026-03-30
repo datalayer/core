@@ -13,9 +13,16 @@ from rich.console import Console
 from datalayer_core.client.client import DatalayerClient
 
 # Create a Typer app for user commands
-app = typer.Typer(name="users", help="User management commands")
+app = typer.Typer(name="users", help="User management commands", invoke_without_command=True)
 
 console = Console()
+
+
+@app.callback()
+def users_callback(ctx: typer.Context):
+    """User management commands."""
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
 
 
 @app.command(name="dump-user")
