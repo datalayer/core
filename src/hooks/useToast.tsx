@@ -7,57 +7,11 @@ import React from 'react';
 import { type Id, toast } from 'react-toastify';
 import { Notification } from '@jupyterlab/apputils';
 import { Button } from '@primer/react';
+import { JupyterReactTheme } from '@datalayer/jupyter-react';
 import type { VariantType } from './../components/buttons';
 import { isInsideJupyterLab } from '../utils';
 
 const TOAST_POSITION = 'bottom-right' as const;
-
-export type ToastRenderer = 'auto' | 'jupyterlab' | 'web';
-
-let toastRendererOverride: Exclude<ToastRenderer, 'auto'> | null = null;
-
-export const setToastRendererOverride = (renderer: ToastRenderer = 'auto') => {
-  toastRendererOverride = renderer === 'auto' ? null : renderer;
-};
-
-export const getToastRendererOverride = () => toastRendererOverride;
-
-const resolveToastRenderer = (
-  localRenderer?: ToastRenderer,
-): Exclude<ToastRenderer, 'auto'> => {
-  if (localRenderer && localRenderer !== 'auto') {
-    return localRenderer;
-  }
-  if (toastRendererOverride) {
-    return toastRendererOverride;
-  }
-  return isInsideJupyterLab() ? 'jupyterlab' : 'web';
-};
-
-const getWebToastTheme = (): 'light' | 'dark' => {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return 'light';
-  }
-
-  const modeAttr =
-    document.documentElement?.getAttribute('data-color-mode') ||
-    document.body?.getAttribute('data-color-mode') ||
-    '';
-
-  if (modeAttr === 'dark') return 'dark';
-  if (modeAttr === 'light') return 'light';
-
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-};
-
-const getWebToastOptions = (autoClose?: number | false) =>
-  ({
-    autoClose,
-    position: TOAST_POSITION,
-    theme: getWebToastTheme(),
-  }) as const;
 
 export type ToastProps = {
   /**
@@ -72,10 +26,6 @@ export type ToastProps = {
    * Notification type
    */
   variant: 'info' | 'success' | 'warning' | 'error';
-};
-
-export type UseToastOptions = {
-  renderer?: ToastRenderer;
 };
 
 interface IToastButtonProps {
@@ -133,7 +83,7 @@ function createContent(
 ): React.ReactNode {
   return (
     <>
-      <div>
+      <div className="jp-toast-message">
         {message.split('\n').map((part, index) => (
           <React.Fragment key={`part-${index}`}>
             {index > 0 ? <br /> : null}
@@ -142,22 +92,17 @@ function createContent(
         ))}
       </div>
       {(actions?.length ?? 0) > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginTop: 8,
-            justifyContent: 'flex-end',
-          }}
-        >
+        <div className="jp-toast-buttonBar">
+          <div className="jp-toast-spacer" />
           {actions!.map((action, idx) => {
             return (
-              <ToastButton
-                key={'button-' + idx}
-                action={action}
-                closeToast={closeHandler}
-              />
+              <JupyterReactTheme>
+                <ToastButton
+                  key={'button-' + idx}
+                  action={action}
+                  closeToast={closeHandler}
+                />
+              </JupyterReactTheme>
             );
           })}
         </div>
@@ -166,16 +111,17 @@ function createContent(
   );
 }
 
-export const useToast = (hookOptions?: UseToastOptions) => {
+export const useToast = () => {
+  // This CANNOT use Jupyter React hooks as it may be used outside Jupyter React context.
+  const insideJupyterLab = isInsideJupyterLab();
   const enqueueToast = (
     message: string,
-    toastOptions: ToastProps = { variant: 'info' },
+    options: ToastProps = { variant: 'info' },
   ) => {
-    const { actions, autoClose } = toastOptions;
-    const renderer = resolveToastRenderer(hookOptions?.renderer);
-    switch (toastOptions.variant) {
+    const { actions, autoClose } = options;
+    switch (options.variant) {
       case 'info': {
-        return renderer === 'jupyterlab'
+        return insideJupyterLab
           ? Notification.info(message, {
               autoClose: autoClose ?? 5000,
               actions,
@@ -189,11 +135,11 @@ export const useToast = (hookOptions?: UseToastOptions) => {
                   },
                   actions,
                 ),
-              getWebToastOptions(autoClose),
+              { autoClose, position: TOAST_POSITION },
             );
       }
       case 'success': {
-        return renderer === 'jupyterlab'
+        return insideJupyterLab
           ? Notification.success(message, {
               autoClose: autoClose ?? 5000,
               actions,
@@ -207,11 +153,11 @@ export const useToast = (hookOptions?: UseToastOptions) => {
                   },
                   actions,
                 ),
-              getWebToastOptions(autoClose),
+              { autoClose, position: TOAST_POSITION },
             );
       }
       case 'warning': {
-        return renderer === 'jupyterlab'
+        return insideJupyterLab
           ? Notification.warning(message, {
               autoClose: autoClose ?? false,
               actions,
@@ -225,11 +171,11 @@ export const useToast = (hookOptions?: UseToastOptions) => {
                   },
                   actions,
                 ),
-              getWebToastOptions(autoClose ?? false),
+              { autoClose: autoClose ?? false, position: TOAST_POSITION },
             );
       }
       case 'error': {
-        return renderer === 'jupyterlab'
+        return insideJupyterLab
           ? Notification.error(message, {
               autoClose: autoClose ?? false,
               actions,
@@ -243,7 +189,7 @@ export const useToast = (hookOptions?: UseToastOptions) => {
                   },
                   actions,
                 ),
-              getWebToastOptions(autoClose ?? false),
+              { autoClose: autoClose ?? false, position: TOAST_POSITION },
             );
       }
     }
@@ -253,8 +199,7 @@ export const useToast = (hookOptions?: UseToastOptions) => {
     promise: Promise<any>,
     options: Notification.IPromiseOptions<any>,
   ) => {
-    const renderer = resolveToastRenderer(hookOptions?.renderer);
-    return renderer === 'jupyterlab'
+    return insideJupyterLab
       ? Notification.promise(promise, options)
       : toast.promise(
           promise,
@@ -267,7 +212,6 @@ export const useToast = (hookOptions?: UseToastOptions) => {
             },
           },
           {
-            theme: getWebToastTheme(),
             position: TOAST_POSITION,
             ...options.pending.options,
           },
@@ -289,8 +233,7 @@ export const useToast = (hookOptions?: UseToastOptions) => {
      * @param id Toast id
      */
     dismiss: (id?: Id) => {
-      const renderer = resolveToastRenderer(hookOptions?.renderer);
-      if (renderer === 'jupyterlab') {
+      if (insideJupyterLab) {
         Notification.dismiss(id as string | undefined);
       } else {
         toast.dismiss(id);
