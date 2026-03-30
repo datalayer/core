@@ -12,8 +12,72 @@ export default defineConfig(({ command }: ConfigEnv) => {
   const otelBaseUrl = OTEL_URL;
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      {
+        name: 'strip-tilde-import-prefix',
+        enforce: 'pre',
+        async resolveId(source, importer) {
+          if (!source.startsWith('~')) {
+            return null;
+          }
+          const normalized = source.slice(1);
+          const resolved = await this.resolve(normalized, importer, {
+            skipSelf: true,
+          });
+          if (resolved) {
+            return resolved.id;
+          }
+          return normalized;
+        },
+      },
+      {
+        name: 'raw-css-as-string',
+        enforce: 'pre',
+        async resolveId(source, importer) {
+          if (!source.endsWith('.raw.css') || source.includes('?raw')) {
+            return null;
+          }
+          const resolved = await this.resolve(source + '?raw', importer, {
+            skipSelf: true,
+          });
+          if (resolved) {
+            return resolved.id;
+          }
+          return null;
+        },
+      },
+      {
+        name: 'fix-text-query',
+        enforce: 'pre',
+        async resolveId(source, importer) {
+          if (!source.includes('?text')) {
+            return null;
+          }
+          const fixed = source.replace('?text', '?raw');
+          const resolved = await this.resolve(fixed, importer, {
+            skipSelf: true,
+          });
+          if (resolved) {
+            return resolved.id;
+          }
+          return fixed;
+        },
+      },
+    ],
+    resolve: {
+      alias: [
+        {
+          find: /^~(.*)$/,
+          replacement: '$1',
+        },
+      ],
+    },
+    assetsInclude: ['**/*.raw.css'],
     define: {
+      global: 'globalThis',
+      __webpack_public_path__: '""',
+      'process.env': {},
       // REST base URL: empty in dev so browser uses relative paths → Vite proxy →
       // local FastAPI (port 8600) → Datalayer platform (auth via DATALAYER_API_KEY).
       // Absolute in prod builds so the SPA talks to the platform directly.
