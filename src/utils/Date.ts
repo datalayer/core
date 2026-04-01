@@ -115,3 +115,32 @@ export const formatRelativeTime = (
   const years = Math.floor(days / 365);
   return `${years}y ago`;
 };
+
+/**
+ * Format a duration in milliseconds into a human-readable string.
+ *
+ * Examples:
+ * - 500 → "< 1s"
+ * - 1500 → "1s"
+ * - 65000 → "1m 5s"
+ * - 3661000 → "1h 1m 1s"
+ * - 90061000 → "1d 1h 1m"
+ */
+export const formatDurationMs = (ms: number): string => {
+  const clamped = Math.max(0, ms);
+  const totalSeconds = Math.floor(clamped / 1000);
+  if (totalSeconds < 1) return '< 1s';
+
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 && days === 0) parts.push(`${seconds}s`);
+
+  return parts.join(' ') || '< 1s';
+};
