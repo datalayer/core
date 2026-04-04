@@ -1,6 +1,5 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
-#
-# Datalayer License
+# Distributed under the terms of the Modified BSD License.
 
 SHELL=/bin/bash
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 Datalayer, Inc.
+ * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
 
@@ -17,8 +17,10 @@ export const max = (data: number[]): number => {
   return Math.max(...data);
 };
 
+import type { Point } from './types';
+
 /**
- * Convert data array to SVG points
+ * Options for converting data array to SVG points
  */
 export interface DataToPointsOptions {
   data: number[];
@@ -30,10 +32,7 @@ export interface DataToPointsOptions {
   min?: number;
 }
 
-export interface Point {
-  x: number;
-  y: number;
-}
+export type { Point };
 
 export const dataToPoints = ({
   data,

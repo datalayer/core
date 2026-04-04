@@ -22,7 +22,7 @@ describe('Runtimes Healthz', () => {
 
     expect(result).toEqual(mockResponse);
     expect(requestDatalayerAPI).toHaveBeenCalledWith({
-      url: 'https://prod1.datalayer.run/api/runtimes/v1/ping',
+      url: 'https://r1.datalayer.run/api/runtimes/v1/ping',
       method: 'GET',
     });
   });

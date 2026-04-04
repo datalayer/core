@@ -29,16 +29,11 @@ import {
   GraphIcon,
   TableIcon,
 } from '@primer/octicons-react';
-import type { OtelMetric } from '../types';
+import type { OtelMetric, OtelMetricsListProps } from '../types';
 import { formatTime } from '../utils';
 import { OtelMetricsChart } from './OtelMetricsChart';
 
-// ── Types ───────────────────────────────────────────────────────────
-
-export interface OtelMetricsListProps {
-  metrics: OtelMetric[];
-  loading?: boolean;
-}
+export type { OtelMetricsListProps };
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

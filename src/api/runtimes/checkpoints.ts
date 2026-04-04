@@ -99,7 +99,7 @@ export interface CreateRuntimeCheckpointResponse {
  * List runtime checkpoints for a specific runtime.
  * @param token - Authentication token
  * @param baseUrl - Base URL for the runtimes API
- * @param runtimeUid - Runtime UID to list checkpoints for
+ * @param runtimeUid - Runtime UID to list checkpoints for (optional — omit to list all user checkpoints)
  * @returns Promise resolving to list of checkpoints
  */
 export const listCheckpoints = async (
@@ -109,12 +109,12 @@ export const listCheckpoints = async (
 ): Promise<ListRuntimeCheckpointsResponse> => {
   validateToken(token);
 
-  if (!runtimeUid) {
-    throw new Error('runtimeUid is required to list checkpoints');
-  }
+  const path = runtimeUid
+    ? `${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${encodeURIComponent(runtimeUid)}`
+    : `${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints`;
 
   return requestDatalayerAPI<ListRuntimeCheckpointsResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-checkpoints/${encodeURIComponent(runtimeUid)}`,
+    url: `${baseUrl}${path}`,
     method: 'GET',
     token,
   });

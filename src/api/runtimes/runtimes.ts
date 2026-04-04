@@ -192,6 +192,29 @@ export const deleteRuntime = async (
 };
 
 /**
+ * Delete a paused agent runtime (remove Solr checkpoint records).
+ * Paused agents have no K8s pod — their state lives in checkpoint records.
+ * @param token - Authentication token
+ * @param podName - The unique pod name of the paused runtime
+ * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
+ * @returns Promise resolving when deletion is complete
+ */
+export const deletePausedRuntime = async (
+  token: string,
+  podName: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
+): Promise<void> => {
+  validateToken(token);
+  validateRequiredString(podName, 'Pod name');
+
+  return requestDatalayerAPI<void>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtimes/${encodeURIComponent(podName)}/paused`,
+    method: 'DELETE',
+    token,
+  });
+};
+
+/**
  * Update a runtime instance.
  * @param token - Authentication token
  * @param podName - The unique pod name of the runtime

@@ -51,7 +51,7 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:dist": "rimraf dist",
     "clean:cache": "rimraf node_modules/.vite",
-    "build": "npm run clean && gulp resources-to-lib && tsc -b && vite build",
+    "build": "npm run clean && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs && vite build",
     "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs",
     "build:types": "npm run clean:lib && tsc -b",
     "build:nextjs": "npm run build --workspace=nextjj-example",

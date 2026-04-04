@@ -177,7 +177,7 @@ export interface OtelTimelineRangeSliderProps {
   formatTick?: (date: Date) => string;
   /** Height of the slider in px. Default 56. */
   height?: number;
-  /** Optional histogram data: array of { time: Date; count: number } */
+  /** Optional histogram data rendered as a bar chart behind the slider. */
   histogram?: { time: Date; count: number }[];
 }
 

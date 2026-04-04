@@ -3,18 +3,27 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-// Export core components and utilities
-export * from './components';
-export * from './utils';
-export * from './state';
-export * from './collaboration';
+/**
+ * Node.js-safe entry point for @datalayer/core.
+ *
+ * Exports only the client, models, API, and services modules.
+ * Excludes React components, views, hooks, navigation, otel UI,
+ * state, utils, and collaboration modules that depend on browser
+ * APIs, React, or CSS imports incompatible with Node.js ESM.
+ *
+ * Use this entry point in VS Code extensions, CLI tools, and
+ * server-side code.
+ *
+ * @example
+ * ```typescript
+ * import { DatalayerClient } from "@datalayer/core/lib/node";
+ * ```
+ */
+
+// Services (no React/CSS dependencies)
 export * from './services';
 
-// Export navigation before hooks to avoid conflicts
-export * from './navigation';
-export * from './hooks';
-
-// Export APIs.
+// Export APIs
 export {
   requestDatalayerAPI,
   RunResponseError,
@@ -27,12 +36,11 @@ export * as runtimesApi from './api/runtimes';
 export * as iamApi from './api/iam';
 export * as spacerApi from './api/spacer';
 
+// Export client, models, and types
 export {
-  // Export client and config types
   DatalayerClient,
   type DatalayerClientConfig,
   type ClientHandlers,
-  // Export domain models
   User,
   Runtime,
   Environment,
@@ -43,7 +51,6 @@ export {
   Secret,
   Credits,
   Item,
-  // Export typed domain interfaces for stable contracts
   type RuntimeJSON,
   type EnvironmentJSON,
   type UserJSON,
@@ -57,7 +64,6 @@ export {
   type RuntimeSnapshotData,
   type CreditsInfo,
   type CreditReservation,
-  // Export request/response types
   type CreateRuntimeRequest,
   type CreateRuntimeResponse,
   type ListRuntimesResponse,
@@ -100,16 +106,13 @@ export {
   type RuntimeSnapshotJSON,
   HealthCheck,
   type HealthCheckJSON,
-  // Export IAM types
   type LoginRequest,
   type LoginResponse,
   type UserMeResponse,
   type MembershipsResponse,
   type WhoAmIResponse,
   type HealthzPingResponse,
-  // Export auth
   AuthenticationManager,
-  // Export model interfaces
   type IUser,
   type IBaseUser,
   type ICell,
@@ -194,38 +197,16 @@ export {
   type IUserEvent,
   type IIAMProviderLinked,
   type IContent,
-  // Export auth types
   type AuthResult,
   type TokenValidationResult,
   type AuthOptions,
   type TokenStorage,
-  // Export runtime types
   type IRuntimeOptions,
   type IMultiServiceManager,
   type IRemoteServicesManager,
   type IEnvironmentsManager,
   type IRemoteRuntimesManager,
-  // Export navigation types
-  type NavigationLinkProps,
-  // Export state types
   type IDatalayerCoreConfig,
   type IRuntimesConfiguration,
   type IIAMProviderName,
 } from './client';
-
-// Export commonly used functions directly for convenience
-export {
-  getEnvironments,
-  createRuntime,
-  getRuntimes,
-  deleteRuntime,
-  snapshotRuntime,
-  getRuntimeSnapshots,
-  loadRuntimeSnapshot,
-} from './stateful/runtimes/actions';
-
-// OTEL observability components, hooks, and types
-export * from './otel';
-
-// Reusable views (sign-in pages, etc.)
-export * from './views';
