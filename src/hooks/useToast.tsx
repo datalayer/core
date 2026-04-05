@@ -13,6 +13,42 @@ import { isInsideJupyterLab } from '../utils';
 
 const TOAST_POSITION = 'bottom-right' as const;
 
+type ToastTheme = 'light' | 'dark';
+
+const THEME_STORAGE_KEY = 'datalayer-theme';
+
+function resolveToastTheme(): ToastTheme {
+  if (typeof window === 'undefined') {
+    return 'dark';
+  }
+
+  let preferredMode: string | undefined;
+  try {
+    const raw = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as {
+        state?: { colorMode?: string };
+      };
+      preferredMode = parsed?.state?.colorMode;
+    }
+  } catch {
+    // Ignore parsing/storage access errors and fall back to media query.
+  }
+
+  if (preferredMode === 'light') {
+    return 'light';
+  }
+
+  if (preferredMode === 'dark') {
+    return 'dark';
+  }
+
+  const systemPrefersDark = window.matchMedia?.(
+    '(prefers-color-scheme: dark)',
+  )?.matches;
+  return systemPrefersDark ? 'dark' : 'light';
+}
+
 export type ToastProps = {
   /**
    * List of associated actions
@@ -119,6 +155,7 @@ export const useToast = () => {
     options: ToastProps = { variant: 'info' },
   ) => {
     const { actions, autoClose } = options;
+    const theme = resolveToastTheme();
     switch (options.variant) {
       case 'info': {
         return insideJupyterLab
@@ -135,7 +172,7 @@ export const useToast = () => {
                   },
                   actions,
                 ),
-              { autoClose, position: TOAST_POSITION },
+              { autoClose, position: TOAST_POSITION, theme },
             );
       }
       case 'success': {
@@ -153,7 +190,7 @@ export const useToast = () => {
                   },
                   actions,
                 ),
-              { autoClose, position: TOAST_POSITION },
+              { autoClose, position: TOAST_POSITION, theme },
             );
       }
       case 'warning': {
@@ -171,7 +208,11 @@ export const useToast = () => {
                   },
                   actions,
                 ),
-              { autoClose: autoClose ?? false, position: TOAST_POSITION },
+              {
+                autoClose: autoClose ?? false,
+                position: TOAST_POSITION,
+                theme,
+              },
             );
       }
       case 'error': {
@@ -189,7 +230,11 @@ export const useToast = () => {
                   },
                   actions,
                 ),
-              { autoClose: autoClose ?? false, position: TOAST_POSITION },
+              {
+                autoClose: autoClose ?? false,
+                position: TOAST_POSITION,
+                theme,
+              },
             );
       }
     }
@@ -199,6 +244,7 @@ export const useToast = () => {
     promise: Promise<any>,
     options: Notification.IPromiseOptions<any>,
   ) => {
+    const theme = resolveToastTheme();
     return insideJupyterLab
       ? Notification.promise(promise, options)
       : toast.promise(
@@ -213,6 +259,7 @@ export const useToast = () => {
           },
           {
             position: TOAST_POSITION,
+            theme,
             ...options.pending.options,
           },
         );
