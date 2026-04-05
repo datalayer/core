@@ -239,7 +239,7 @@ export type ProjectDefaultItems = {
 /**
  * Hook to fetch the default notebook and document UIDs for a project.
  *
- * This calls the spacer `GET /spaces/{uid}/default-items` endpoint which
+ * This calls the spacer `GET /spaces/:uid/default-items` endpoint which
  * returns the UID of the first notebook and first document in the space.
  */
 export function useProjectDefaultItems(projectUid: string | undefined) {

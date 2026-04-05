@@ -99,3 +99,22 @@ export const updateLexical = async (
     body: data,
   });
 };
+
+/**
+ * Clone a lexical document.
+ * @param token - Authentication token
+ * @param id - The document ID to clone
+ * @param baseUrl - Base URL for the API (defaults to production)
+ * @returns Promise resolving to the cloned document response
+ */
+export const cloneLexical = async (
+  token: string,
+  id: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
+): Promise<CreateLexicalResponse> => {
+  return requestDatalayerAPI<CreateLexicalResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.SPACER}/lexicals/${id}/clone`,
+    method: 'POST',
+    token,
+  });
+};

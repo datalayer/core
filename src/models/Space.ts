@@ -47,7 +47,7 @@ export const asSpace = (raw_space: any): ISpace => {
   return space;
 };
 
-export type ISpaceVariant = 'default' | 'course';
+export type ISpaceVariant = 'default' | 'course' | 'project';
 
 export type IAnySpace = ISpace | ICourse;
 

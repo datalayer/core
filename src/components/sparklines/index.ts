@@ -12,3 +12,4 @@ export { Sparklines } from './Sparklines';
 export { SparklinesLine } from './SparklinesLine';
 export type { SparklinesProps, SparklinesLineProps, Point } from './types';
 export { dataToPoints, min, max } from './dataProcessing';
+export type { DataToPointsOptions } from './dataProcessing';

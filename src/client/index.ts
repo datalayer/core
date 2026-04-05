@@ -44,6 +44,10 @@ import type {
   CreateSecretRequest,
   UpdateSecretRequest,
 } from '../models/Secret';
+import type { ProjectDTO } from '../models/ProjectDTO';
+import type { ProjectDefaultItems } from '../models/ProjectDTO';
+import type { UpdateSpaceRequest } from '../models/SpaceDTO';
+// Note: ProjectDTO is standalone (no inheritance from SpaceDTO) to avoid circular deps
 import type { DatasourceDTO } from '../models/Datasource';
 import type {
   CreateDatasourceRequest,
@@ -146,7 +150,15 @@ export type {
   GetNotebookResponse,
   UpdateNotebookRequest,
   UpdateNotebookResponse,
+  UpdateSpaceRequest,
+  GetSpaceResponse,
+  UpdateSpaceResponse,
+  DeleteSpaceResponse,
+  GetSpaceDefaultItemsResponse,
+  GetSpacesByTypeResponse,
 } from '../models/SpaceDTO';
+export { ProjectDTO as Project } from '../models/ProjectDTO';
+export type { ProjectJSON, ProjectDefaultItems } from '../models/ProjectDTO';
 export { NotebookDTO as Notebook } from '../models/NotebookDTO';
 export type { NotebookJSON, NotebookData } from '../models/NotebookDTO';
 export { LexicalDTO } from '../models/LexicalDTO';
@@ -429,6 +441,40 @@ export interface DatalayerClient {
   getCollaborationSessionId(documentId: string): Promise<string>;
   getContent(itemId: string): Promise<any>;
   checkSpacerHealth(): Promise<HealthCheck>;
+
+  // Additional Space Methods
+  getSpace(uid: string): Promise<SpaceDTO>;
+  updateSpace(uid: string, data: UpdateSpaceRequest): Promise<SpaceDTO>;
+  updateUserSpace(
+    uid: string,
+    userId: string,
+    data: UpdateSpaceRequest,
+  ): Promise<SpaceDTO>;
+  deleteSpace(uid: string): Promise<void>;
+  makeSpacePublic(uid: string): Promise<SpaceDTO>;
+  makeSpacePrivate(uid: string): Promise<SpaceDTO>;
+  exportSpace(uid: string): Promise<any>;
+  cloneNotebook(id: string): Promise<NotebookDTO>;
+  cloneLexical(id: string): Promise<LexicalDTO>;
+
+  // Project Methods
+  getProjects(): Promise<ProjectDTO[]>;
+  getProject(uid: string): Promise<ProjectDTO>;
+  createProject(name: string, description?: string): Promise<ProjectDTO>;
+  updateProject(uid: string, data: UpdateSpaceRequest): Promise<ProjectDTO>;
+  renameProject(uid: string, newName: string): Promise<ProjectDTO>;
+  assignAgent(
+    uid: string,
+    agentPodName: string,
+    agentSpecId?: string,
+  ): Promise<ProjectDTO>;
+  unassignAgent(uid: string): Promise<ProjectDTO>;
+  deleteProject(uid: string): Promise<void>;
+  getProjectDefaultItems(uid: string): Promise<ProjectDefaultItems>;
+  makeProjectPublic(uid: string): Promise<ProjectDTO>;
+  makeProjectPrivate(uid: string): Promise<ProjectDTO>;
+  exportProject(uid: string): Promise<any>;
+
   // Utility Methods
   calculateCreditsFromMinutes(minutes: number, burningRate: number): number;
 }
