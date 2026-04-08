@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def benchmarks_callback(ctx: typer.Context):
+def benchmarks_callback(ctx: typer.Context) -> None:
     """Benchmarks management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def runtimes_callback(ctx: typer.Context):
+def runtimes_callback(ctx: typer.Context) -> None:
     """Runtime management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -202,7 +202,7 @@ def terminate_runtime(
 
             choices = []
             for rt in runtimes:
-                label = rt.pod_name
+                label = rt.pod_name or ""
                 if rt.name:
                     label = f"{rt.pod_name}  ({rt.name})"
                 if rt.environment:

@@ -25,7 +25,7 @@ console = Console()
 
 
 @app.callback()
-def exec_callback(ctx: typer.Context):
+def exec_callback(ctx: typer.Context) -> None:
     """Execute files or notebooks on runtimes."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

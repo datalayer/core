@@ -194,6 +194,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             status_url="",
             support_url="",
             mcp_server_url="",
+            otel_url="",
         )
 
     @property

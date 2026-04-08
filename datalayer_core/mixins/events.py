@@ -47,7 +47,7 @@ class EventsMixin:
             params["status"] = status
 
         if agent_id:
-            url = "{}/api/ai-agents/v1/agents/{}/events".format(  # type: ignore
+            url = "{}/api/ai-agents/v1/agents/{}/events".format(
                 self.urls.run_url,  # type: ignore
                 agent_id,
             )
@@ -79,7 +79,7 @@ class EventsMixin:
             "metadata": metadata or {},
         }
         response = self._fetch(  # type: ignore
-            "{}/api/ai-agents/v1/agents/{}/events".format(  # type: ignore
+            "{}/api/ai-agents/v1/agents/{}/events".format(
                 self.urls.run_url,  # type: ignore
                 agent_id,
             ),
@@ -92,7 +92,7 @@ class EventsMixin:
         """Get a single event by ID."""
         resolved_agent_id = agent_id or self._resolve_event_agent_id(event_id)
         response = self._fetch(  # type: ignore
-            "{}/api/ai-agents/v1/agents/{}/events/{}".format(  # type: ignore
+            "{}/api/ai-agents/v1/agents/{}/events/{}".format(
                 self.urls.run_url,  # type: ignore
                 resolved_agent_id,
                 event_id,
@@ -129,7 +129,7 @@ class EventsMixin:
             body["metadata"] = metadata
 
         response = self._fetch(  # type: ignore
-            "{}/api/ai-agents/v1/agents/{}/events/{}".format(  # type: ignore
+            "{}/api/ai-agents/v1/agents/{}/events/{}".format(
                 self.urls.run_url,  # type: ignore
                 resolved_agent_id,
                 event_id,
@@ -143,7 +143,7 @@ class EventsMixin:
         """Delete an event by ID."""
         resolved_agent_id = agent_id or self._resolve_event_agent_id(event_id)
         response = self._fetch(  # type: ignore
-            "{}/api/ai-agents/v1/agents/{}/events/{}".format(  # type: ignore
+            "{}/api/ai-agents/v1/agents/{}/events/{}".format(
                 self.urls.run_url,  # type: ignore
                 resolved_agent_id,
                 event_id,

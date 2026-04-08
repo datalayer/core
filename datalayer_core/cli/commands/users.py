@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def users_callback(ctx: typer.Context):
+def users_callback(ctx: typer.Context) -> None:
     """User management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

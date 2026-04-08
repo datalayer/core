@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def secrets_callback(ctx: typer.Context):
+def secrets_callback(ctx: typer.Context) -> None:
     """Secret management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

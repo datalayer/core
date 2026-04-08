@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def web_callback(ctx: typer.Context):
+def web_callback(ctx: typer.Context) -> None:
     """Web application commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -67,7 +67,7 @@ def web_start(
 
 # For backward compatibility, also allow just `d web` without subcommand
 @app.callback(invoke_without_command=True)
-def web_callback(
+def web_callback_default(
     ctx: typer.Context,
     run_url: Optional[str] = typer.Option(
         None,

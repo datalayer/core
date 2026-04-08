@@ -180,7 +180,7 @@ def flush() -> None:
     provider = _trace.get_tracer_provider()
     _log.debug("Flushing tracer provider: %s", type(provider).__name__)
     try:
-        provider.force_flush()  # type: ignore[union-attr]
-        provider.shutdown()  # type: ignore[union-attr]
+        provider.force_flush()
+        provider.shutdown()
     except Exception as exc:  # noqa: BLE001
         _log.warning("Error during tracer provider flush/shutdown: %s", exc)

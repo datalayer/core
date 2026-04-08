@@ -159,20 +159,43 @@ class DatalayerClient(
         list[Environment]
             A list of available environments.
         """
-        self._available_environments = self._list_environments()["environments"]
+        response = self._list_environments()
+
+        # Some API failures return payloads without an `environments` key.
+        # Surface a clear runtime error instead of raising KeyError.
+        if not response.get("success", True):
+            raise RuntimeError(
+                f"Failed to list environments: {response.get('message', 'Unknown error')}"
+            )
+
+        environments_raw = response.get("environments")
+        if environments_raw is None:
+            raise RuntimeError(
+                "Failed to list environments: missing 'environments' field in response"
+            )
+
+        if not isinstance(environments_raw, list):
+            raise RuntimeError(
+                "Failed to list environments: invalid 'environments' field type"
+            )
+
+        self._available_environments = environments_raw
         self._available_environments_names = []
         env_objs = []
         for env in self._available_environments:
+            if not isinstance(env, dict):
+                continue
             self._available_environments_names.append(env.get("name"))
+            env_data = dict(env)
             env_objs.append(
                 EnvironmentModel(
-                    name=env.pop("name"),
-                    title=env.pop("title"),
-                    burning_rate=env.pop("burning_rate", 0.0),
-                    language=env.pop("language"),
-                    owner=env.pop("owner"),
-                    visibility=env.pop("visibility"),
-                    metadata=env,
+                    name=env_data.pop("name"),
+                    title=env_data.pop("title"),
+                    burning_rate=env_data.pop("burning_rate", 0.0),
+                    language=env_data.pop("language"),
+                    owner=env_data.pop("owner"),
+                    visibility=env_data.pop("visibility"),
+                    metadata=env_data,
                 )
             )
         return env_objs

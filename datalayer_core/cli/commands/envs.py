@@ -28,7 +28,7 @@ def _make_client(
 
 
 @app.callback()
-def envs_callback(ctx: typer.Context):
+def envs_callback(ctx: typer.Context) -> None:
     """Environment management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

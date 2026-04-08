@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import os
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Generator
 
 
 class OTelEmitter:
@@ -118,7 +118,7 @@ class OTelEmitter:
         self._histograms[name].record(value, attributes or {})
 
     @contextmanager
-    def span(self, name: str, attributes: dict[str, Any] | None = None):
+    def span(self, name: str, attributes: dict[str, Any] | None = None) -> Generator[Any, None, None]:
         if not self._enabled or self._tracer is None:
             yield None
             return

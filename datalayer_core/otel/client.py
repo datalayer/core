@@ -62,7 +62,7 @@ class OtelClient:
             return {"Authorization": f"Bearer {self.token}"}
         return {}
 
-    def _get(self, path: str, params: dict | None = None) -> Any:
+    def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         resp = httpx.get(
             f"{self.base_url}{path}",
             params=params,
@@ -73,7 +73,7 @@ class OtelClient:
         resp.raise_for_status()
         return resp.json()
 
-    def _post(self, path: str, json: dict | None = None) -> Any:
+    def _post(self, path: str, json: dict[str, Any] | None = None) -> Any:
         resp = httpx.post(
             f"{self.base_url}{path}",
             json=json,
@@ -86,19 +86,19 @@ class OtelClient:
 
     # ── public API ───────────────────────────────────────────────────
 
-    def ping(self) -> dict:
+    def ping(self) -> dict[str, Any]:
         """Health check (no auth required)."""
         return self._get("/api/otel/v1/ping/")
 
-    def version(self) -> dict:
+    def version(self) -> dict[str, Any]:
         """Get service version."""
         return self._get("/api/otel/v1/version/")
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Any]:
         """Get storage statistics."""
         return self._get("/api/otel/v1/stats/")
 
-    def flush(self) -> dict:
+    def flush(self) -> dict[str, Any]:
         """Force-flush all buffered telemetry data to storage."""
         return self._post("/api/otel/v1/flush/")
 
@@ -108,7 +108,7 @@ class OtelClient:
         self,
         service_name: str | None = None,
         limit: int = 20,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """List recent traces.
 
         Parameters
@@ -118,12 +118,12 @@ class OtelClient:
         limit : int
             Maximum number of traces.
         """
-        params: dict = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if service_name:
             params["service_name"] = service_name
         return self._get("/api/otel/v1/traces/", params=params)
 
-    def get_trace(self, trace_id: str) -> dict:
+    def get_trace(self, trace_id: str) -> dict[str, Any]:
         """Get spans for a specific trace.
 
         Parameters
@@ -145,7 +145,7 @@ class OtelClient:
         metric_name: str | None = None,
         service_name: str | None = None,
         limit: int = 20,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """List metric names / data points.
 
         Parameters
@@ -157,7 +157,7 @@ class OtelClient:
         limit : int
             Maximum number of rows.
         """
-        params: dict = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if metric_name:
             params["metric_name"] = metric_name
         if service_name:
@@ -169,7 +169,7 @@ class OtelClient:
         name: str | None = None,
         service_name: str | None = None,
         limit: int = 20,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Query metric data points.
 
         Parameters
@@ -181,7 +181,7 @@ class OtelClient:
         limit : int
             Maximum rows.
         """
-        params: dict = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if name:
             params["name"] = name
         if service_name:
@@ -196,7 +196,7 @@ class OtelClient:
         severity: str | None = None,
         trace_id: str | None = None,
         limit: int = 50,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Query log records.
 
         Parameters
@@ -210,7 +210,7 @@ class OtelClient:
         limit : int
             Maximum rows.
         """
-        params: dict = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if service_name:
             params["service_name"] = service_name
         if severity:
@@ -221,7 +221,7 @@ class OtelClient:
 
     # ── SQL query ────────────────────────────────────────────────────
 
-    def query_sql(self, sql: str) -> dict:
+    def query_sql(self, sql: str) -> dict[str, Any]:
         """Run an ad-hoc SQL query via SQL Engine.
 
         Parameters
@@ -231,7 +231,7 @@ class OtelClient:
         """
         return self._post("/api/otel/v1/query/", json={"sql": sql})
 
-    def admin_sql(self, sql: str) -> dict:
+    def admin_sql(self, sql: str) -> dict[str, Any]:
         """Run an arbitrary SQL query without user-scope filtering.
 
         Requires ``platform_admin`` role.  Sends the SQL directly to the

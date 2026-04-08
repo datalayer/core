@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def tokens_callback(ctx: typer.Context):
+def tokens_callback(ctx: typer.Context) -> None:
     """Token management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

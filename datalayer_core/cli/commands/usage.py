@@ -16,7 +16,7 @@ console = Console()
 
 
 @app.callback()
-def usage_callback(ctx: typer.Context):
+def usage_callback(ctx: typer.Context) -> None:
     """Usage and credits commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

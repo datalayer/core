@@ -19,7 +19,7 @@ console = Console()
 
 
 @app.callback()
-def console_callback(ctx: typer.Context):
+def console_callback(ctx: typer.Context) -> None:
     """Runtime console commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -128,7 +128,7 @@ def console_connect(
 
 # For backward compatibility, make connect the default command
 @app.callback(invoke_without_command=True)
-def console_callback(
+def console_callback_default(
     ctx: typer.Context,
     runtime_name: Optional[str] = typer.Option(
         None,

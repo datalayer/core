@@ -118,6 +118,7 @@ class RuntimesConsoleApp(AuthnMixin, KonsoleApp):
             status_url="",
             support_url="",
             mcp_server_url="",
+            otel_url="",
         )
 
     @default("kernel_manager_class")

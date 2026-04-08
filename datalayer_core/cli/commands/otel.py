@@ -42,7 +42,7 @@ app = typer.Typer(
 
 
 @app.callback()
-def main(ctx: typer.Context):
+def main(ctx: typer.Context) -> None:
     """OpenTelemetry observability commands – query traces, metrics, logs."""
     if ctx.invoked_subcommand is None:
         rprint(ctx.get_help())
@@ -92,7 +92,7 @@ def traces(
         resp.raise_for_status()
         rprint(json.dumps(resp.json(), indent=2))
     else:
-        params: dict = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if service_name:
             params["service_name"] = service_name
         resp = httpx.get(f"{url}/api/otel/v1/traces/", params=params, headers=headers, timeout=30, follow_redirects=True)
@@ -134,7 +134,7 @@ def metrics(
 
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
-    params: dict = {"limit": limit}
+    params: dict[str, Any] = {"limit": limit}
     if metric_name:
         params["metric_name"] = metric_name
     if service_name:
@@ -180,7 +180,7 @@ def logs(
 
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
-    params: dict = {"limit": limit}
+    params: dict[str, Any] = {"limit": limit}
     if service_name:
         params["service_name"] = service_name
     if severity:
@@ -512,7 +512,7 @@ def smoke_test(
     from opentelemetry.metrics import Observation as _Observation
     gauge_values = [42.0, 37.5, 55.1, 60.0, 48.8]
     gauge_idx = 0
-    def _gauge_callback(options):
+    def _gauge_callback(options: Any) -> list[Any]:
         nonlocal gauge_idx
         if gauge_idx < len(gauge_values):
             obs = _Observation(value=gauge_values[gauge_idx], attributes={"smoke.id": smoke_id})
@@ -927,7 +927,7 @@ def load_test(
             )
             # Gauge – observable gauge exported as OTLP "gauge" type
             _cpu_value = [random.uniform(0.0, 100.0)]
-            def _cpu_callback(options):
+            def _cpu_callback(options: Any) -> list[Any]:
                 return [_OtelObs(_cpu_value[0], {"load.id": load_id})]
             meter.create_observable_gauge(
                 name=f"load_test.cpu_utilization.{load_id}",
