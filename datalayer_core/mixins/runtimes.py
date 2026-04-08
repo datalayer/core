@@ -185,7 +185,7 @@ class RuntimesTerminateMixin:
     Mixin for terminating Datalayer runtimes.
     """
 
-    def _terminate_runtime(self, pod_name: str) -> dict[str, Any]:
+    def _terminate_runtime(self: Any, pod_name: str) -> dict[str, Any]:
         """
         Terminate a Runtime with the given kernel ID.
 
@@ -200,10 +200,10 @@ class RuntimesTerminateMixin:
             Response containing termination status.
         """
         try:
-            response = self._fetch(  # type: ignore
+            response = self._fetch(
                 "{}/api/runtimes/v1/runtimes/{}".format(
                     self.urls.runtimes_url, pod_name
-                ),  # type: ignore
+                ),
                 method="DELETE",
             )
 
