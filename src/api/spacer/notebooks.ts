@@ -99,3 +99,22 @@ export const updateNotebook = async (
     body: data,
   });
 };
+
+/**
+ * Clone a notebook.
+ * @param token - Authentication token
+ * @param id - The notebook ID to clone
+ * @param baseUrl - Base URL for the API (defaults to production)
+ * @returns Promise resolving to the cloned notebook response
+ */
+export const cloneNotebook = async (
+  token: string,
+  id: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.SPACER,
+): Promise<CreateNotebookResponse> => {
+  return requestDatalayerAPI<CreateNotebookResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.SPACER}/notebooks/${id}/clone`,
+    method: 'POST',
+    token,
+  });
+};

@@ -10,8 +10,8 @@ describe('BrowserStorage', () => {
 
   beforeEach(() => {
     storage = new BrowserStorage();
-    // Clear localStorage before each test
-    if (typeof window !== 'undefined') {
+    // Clear localStorage before each test (only if functional)
+    if (storage.isAvailable()) {
       window.localStorage.clear();
     }
   });
@@ -23,7 +23,7 @@ describe('BrowserStorage', () => {
 
   it('should store and retrieve token', () => {
     if (!storage.isAvailable()) {
-      return; // Skip in Node environment
+      return; // Skip when localStorage is not functional
     }
 
     storage.setToken('test-token');

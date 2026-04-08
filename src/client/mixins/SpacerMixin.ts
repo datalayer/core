@@ -16,6 +16,7 @@ import * as documents from '../../api/spacer/documents';
 import * as items from '../../api/spacer/items';
 import type {
   CreateSpaceRequest,
+  UpdateSpaceRequest,
   UpdateNotebookRequest,
   GetSpaceItemsResponse,
 } from '../../models/SpaceDTO';
@@ -24,8 +25,10 @@ import type { Constructor } from '../utils/mixins';
 import { NotebookDTO } from '../../models/NotebookDTO';
 import { LexicalDTO } from '../../models/LexicalDTO';
 import { SpaceDTO } from '../../models/SpaceDTO';
+import { ProjectDTO, type ProjectDefaultItems } from '../../models/ProjectDTO';
 import { HealthCheck } from '../../models/HealthCheck';
 import { convertSpaceItemsToModels } from '../utils/spacerUtils';
+import { generateHandle } from '../utils/slugify';
 
 /** Options for content loading with CDN support. */
 export interface ContentLoadingOptions {
@@ -457,6 +460,309 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         );
       }
       return response.sessionId;
+    }
+
+    // ========================================================================
+    // Additional Space Operations
+    // ========================================================================
+
+    /**
+     * Get a space by UID.
+     * @param uid - Space UID
+     * @returns Space instance
+     */
+    async getSpace(uid: string): Promise<SpaceDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.getSpace(token, uid, spacerRunUrl);
+      if (!response.space) {
+        throw new Error(`Space with UID '${uid}' not found`);
+      }
+      return new SpaceDTO(response.space, this as any);
+    }
+
+    /**
+     * Update a space (owner updating their own space).
+     * @param uid - Space UID
+     * @param data - Update data (supports arbitrary Solr fields)
+     * @returns Updated Space instance
+     */
+    async updateSpace(
+      uid: string,
+      data: UpdateSpaceRequest,
+    ): Promise<SpaceDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.updateSpace(token, uid, data, spacerRunUrl);
+      if (!response.space) {
+        throw new Error(`Failed to update space '${uid}'`);
+      }
+      return new SpaceDTO(response.space, this as any);
+    }
+
+    /**
+     * Update a user-specific space (e.g., org admin context).
+     * @param uid - Space UID
+     * @param userId - User ID
+     * @param data - Update data (supports arbitrary Solr fields)
+     * @returns Updated Space instance
+     */
+    async updateUserSpace(
+      uid: string,
+      userId: string,
+      data: UpdateSpaceRequest,
+    ): Promise<SpaceDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.updateUserSpace(
+        token,
+        uid,
+        userId,
+        data,
+        spacerRunUrl,
+      );
+      if (!response.space) {
+        throw new Error(`Failed to update space '${uid}' for user '${userId}'`);
+      }
+      return new SpaceDTO(response.space, this as any);
+    }
+
+    /**
+     * Delete a space and all its contents.
+     * @param uid - Space UID
+     */
+    async deleteSpace(uid: string): Promise<void> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      await spaces.deleteSpace(token, uid, spacerRunUrl);
+    }
+
+    /**
+     * Make a space public.
+     * @param uid - Space UID
+     * @returns Updated Space instance
+     */
+    async makeSpacePublic(uid: string): Promise<SpaceDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.makeSpacePublic(token, uid, spacerRunUrl);
+      if (!response.space) {
+        throw new Error(`Failed to make space '${uid}' public`);
+      }
+      return new SpaceDTO(response.space, this as any);
+    }
+
+    /**
+     * Make a space private.
+     * @param uid - Space UID
+     * @returns Updated Space instance
+     */
+    async makeSpacePrivate(uid: string): Promise<SpaceDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.makeSpacePrivate(token, uid, spacerRunUrl);
+      if (!response.space) {
+        throw new Error(`Failed to make space '${uid}' private`);
+      }
+      return new SpaceDTO(response.space, this as any);
+    }
+
+    /**
+     * Export a space and its contents.
+     * @param uid - Space UID
+     * @returns Export data
+     */
+    async exportSpace(uid: string): Promise<any> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      return spaces.exportSpace(token, uid, spacerRunUrl);
+    }
+
+    /**
+     * Clone a notebook.
+     * @param id - Notebook ID to clone
+     * @returns Cloned Notebook instance
+     */
+    async cloneNotebook(id: string): Promise<NotebookDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await notebooks.cloneNotebook(token, id, spacerRunUrl);
+      if (!response.notebook) {
+        throw new Error(`Failed to clone notebook '${id}'`);
+      }
+      return new NotebookDTO(response.notebook, this as any);
+    }
+
+    /**
+     * Clone a lexical document.
+     * @param id - Document ID to clone
+     * @returns Cloned Lexical instance
+     */
+    async cloneLexical(id: string): Promise<LexicalDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await lexicals.cloneLexical(token, id, spacerRunUrl);
+      if (!response.document) {
+        throw new Error(`Failed to clone lexical document '${id}'`);
+      }
+      return new LexicalDTO(response.document, this as any);
+    }
+
+    // ========================================================================
+    // Projects
+    // ========================================================================
+
+    /**
+     * Get all projects for the authenticated user.
+     * Projects are spaces with variant='project'.
+     * @returns Array of Project instances
+     */
+    async getProjects(): Promise<ProjectDTO[]> {
+      // Use getMySpaces and filter by variant, because the
+      // /spaces/types/project endpoint returns empty results.
+      const allSpaces = await this.getMySpaces();
+      return allSpaces
+        .filter(s => s.variant === 'project')
+        .map(s => new ProjectDTO(s.rawData()));
+    }
+
+    /**
+     * Get a project by UID.
+     * @param uid - Project UID
+     * @returns Project instance
+     */
+    async getProject(uid: string): Promise<ProjectDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.getSpace(token, uid, spacerRunUrl);
+      if (!response.space) {
+        throw new Error(`Project with UID '${uid}' not found`);
+      }
+      return new ProjectDTO(response.space);
+    }
+
+    /**
+     * Create a new project.
+     * @param name - Project name
+     * @param description - Project description
+     * @returns Created Project instance
+     */
+    async createProject(
+      name: string,
+      description?: string,
+    ): Promise<ProjectDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const spaceHandle = generateHandle(name);
+
+      const data: CreateSpaceRequest = {
+        name,
+        description: description || '',
+        variant: 'project',
+        spaceHandle,
+        organizationId: '',
+        seedSpaceId: '',
+        public: false,
+      };
+
+      const response = await spaces.createSpace(token, data, spacerRunUrl);
+      if (!response.space) {
+        throw new Error('Failed to create project: no project returned');
+      }
+      return new ProjectDTO(response.space);
+    }
+
+    /**
+     * Update a project.
+     * @param uid - Project UID
+     * @param data - Update data (supports arbitrary Solr fields)
+     * @returns Updated Project instance
+     */
+    async updateProject(
+      uid: string,
+      data: UpdateSpaceRequest,
+    ): Promise<ProjectDTO> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      // Resolve userId from: IAM mixin cache > AuthenticationManager cache > whoami()
+      let resolvedUserId: string | undefined;
+      const iamUser = (this as any).currentUserCache;
+      if (iamUser) {
+        resolvedUserId = iamUser.uid ?? iamUser.id;
+      }
+      if (!resolvedUserId) {
+        const authUser = (this as any).auth?.getCurrentUser?.();
+        if (authUser) {
+          resolvedUserId = authUser.uid ?? authUser.id;
+        }
+      }
+      if (!resolvedUserId) {
+        try {
+          const user = await (this as any).whoami();
+          resolvedUserId = user?.uid ?? user?.id;
+        } catch (_e: any) {
+          // whoami() not available — no user context
+        }
+      }
+      if (!resolvedUserId) {
+        throw new Error('Cannot update project: no authenticated user');
+      }
+      const response = await spaces.updateUserSpace(
+        token,
+        uid,
+        resolvedUserId,
+        data,
+        spacerRunUrl,
+      );
+      if (response.space) {
+        return new ProjectDTO(response.space);
+      }
+      // Backend returns space: null on success for user-scoped updates.
+      // Re-fetch the project to return fresh data.
+      const freshResponse = await spaces.getSpace(token, uid, spacerRunUrl);
+      if (!freshResponse.space) {
+        throw new Error(`Failed to update project '${uid}'`);
+      }
+      return new ProjectDTO(freshResponse.space);
+    }
+
+    /**
+     * Rename a project.
+     * @param uid - Project UID
+     * @param newName - New project name
+     * @param description - Project description to preserve.
+     * @param userId - Authenticated user ID for user-scoped update.
+     * @returns Updated Project instance
+     */
+    async renameProject(
+      uid: string,
+      newName: string,
+      description?: string,
+    ): Promise<ProjectDTO> {
+      const data: UpdateSpaceRequest = { name: newName };
+      if (description !== undefined) {
+        data.description = description;
+      }
+      return this.updateProject(uid, data);
+    }
+
+    /**
+     * Get default items (notebook UID and document UID) for a project.
+     * @param uid - Project UID
+     * @returns Default notebook and document UIDs
+     */
+    async getProjectDefaultItems(uid: string): Promise<ProjectDefaultItems> {
+      const token = (this as any).getToken();
+      const spacerRunUrl = (this as any).getSpacerRunUrl();
+      const response = await spaces.getSpaceDefaultItems(
+        token,
+        uid,
+        spacerRunUrl,
+      );
+      return {
+        defaultNotebookUid: response.default_notebook_uid,
+        defaultDocumentUid: response.default_document_uid,
+      };
     }
   };
 }

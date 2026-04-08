@@ -30,7 +30,7 @@ export interface SimpleAuthState {
 
 export const useSimpleAuthStore = create<SimpleAuthState>()(
   persist(
-    (set) => ({
+    set => ({
       token: null,
       handle: null,
       setAuth: (token, handle) => set({ token, handle }),

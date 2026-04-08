@@ -8,6 +8,9 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { Point } from './types';
+export type { Point } from './types';
+
 /**
  * Get minimum value from array
  */
@@ -33,11 +36,6 @@ export interface DataToPointsOptions {
   margin?: number;
   max?: number;
   min?: number;
-}
-
-export interface Point {
-  x: number;
-  y: number;
 }
 
 export const dataToPoints = ({

@@ -3903,7 +3903,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   /**
    * Get default items (notebook UID & document UID) for a space / project.
-   * Calls GET /api/spacer/v1/spaces/{spaceId}/default-items
+   * Calls `GET /api/spacer/v1/spaces/:spaceId/default-items`
    */
   const useSpaceDefaultItems = (spaceId: string | undefined) => {
     return useQuery({
