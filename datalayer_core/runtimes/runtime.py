@@ -179,22 +179,9 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         """
         from datalayer_core.utils.urls import DatalayerURLs
 
-        return DatalayerURLs(
+        return DatalayerURLs.from_environment(
             run_url=self._model.run_url,
             iam_url=self._model.iam_url or self._model.run_url,
-            # Use defaults for other URLs
-            runtimes_url="",
-            spacer_url="",
-            library_url="",
-            manager_url="",
-            ai_agents_url="",
-            ai_inference_url="",
-            growth_url="",
-            success_url="",
-            status_url="",
-            support_url="",
-            mcp_server_url="",
-            otel_url="",
         )
 
     @property

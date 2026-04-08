@@ -75,10 +75,14 @@ export const testConfig = {
 
   /**
    * Check if expensive tests should be skipped
-   * Default is false (run expensive tests) unless explicitly set to 'true'
+   * Default is true (skip expensive tests) unless explicitly enabled.
    */
   shouldSkipExpensive(): boolean {
-    return process.env.DATALAYER_TEST_SKIP_EXPENSIVE === 'true';
+    const explicitSkip = process.env.DATALAYER_TEST_SKIP_EXPENSIVE;
+    if (explicitSkip !== undefined) {
+      return explicitSkip === 'true';
+    }
+    return process.env.DATALAYER_TEST_RUN_EXPENSIVE !== 'true';
   },
 
   /**
