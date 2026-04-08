@@ -14,7 +14,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   runUrl: 'https://prod1.datalayer.run',
   token: '',
   credits: 0,
-  cpuEnvironment: 'python-cpu-env"',
+  cpuEnvironment: 'ai-agents-env"',
   gpuEnvironment: 'ai-env',
   useMock: false,
   whiteLabel: true,

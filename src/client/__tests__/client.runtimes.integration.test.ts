@@ -77,7 +77,7 @@ describe('Client Runtimes Integration Tests', () => {
         console.log('Creating runtime...');
 
         const runtime = await client.createRuntime(
-          'python-cpu-env',
+          'ai-agents-env',
           'notebook',
           'client-test-runtime',
           10,
@@ -85,7 +85,7 @@ describe('Client Runtimes Integration Tests', () => {
 
         expect(runtime).toBeInstanceOf(RuntimeDTO);
         expect(runtime.podName).toBeDefined();
-        expect(runtime.environmentName).toBe('python-cpu-env');
+        expect(runtime.environmentName).toBe('ai-agents-env');
         expect(runtime.givenName).toContain('client-test-runtime');
 
         createdRuntime = runtime;

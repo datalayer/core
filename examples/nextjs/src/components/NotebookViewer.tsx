@@ -120,14 +120,14 @@ export default function NotebookViewer({
         // Create new runtime if we don't have one
         if (!manager) {
           manager = await createDatalayerServiceManager(
-            runtime || 'python-cpu-env',
+            runtime || 'ai-agents-env',
             100,
           );
 
           // Get runtime info from the store - find the runtime for our environment
           const currentPods = runtimesStore.runtimePods;
           const matchingRuntime = currentPods.find(
-            pod => pod.environment_name === (runtime || 'python-cpu-env'),
+            pod => pod.environment_name === (runtime || 'ai-agents-env'),
           );
 
           if (matchingRuntime && matchingRuntime.reservation_id) {

@@ -252,7 +252,7 @@ describe('Client Models Integration Tests', () => {
 
         // Create a runtime
         testRuntime = await client.createRuntime(
-          'python-cpu-env',
+          'ai-agents-env',
           'notebook',
           'model-test-runtime',
           10,

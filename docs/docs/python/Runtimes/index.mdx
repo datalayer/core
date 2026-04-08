@@ -68,7 +68,7 @@ from datalayer_core import DatalayerClient
 client = DatalayerClient()
 with client.create_runtime(
     name="restored-runtime",
-    environment="python-cpu-env",
+    environment="ai-agents-env",
     snapshot_name="my-saved-snapshot"  # Restore from snapshot
 ) as runtime:
     # Runtime starts with the state from the snapshot

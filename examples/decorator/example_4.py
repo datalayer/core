@@ -20,7 +20,7 @@ HERE = Path(__file__).parent
 # Example 4: Data analysis
 @datalayer(
     runtime_name="analysis-runtime",
-    environment="python-cpu-env",
+    environment="ai-agents-env",
     timeout=30.0,
 )
 def analyze_dataset() -> dict:

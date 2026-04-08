@@ -37,7 +37,7 @@ export type IDatalayerCoreConfig = {
   /**
    * CPU environment name.
    * Specifies which CPU-based environment to use for kernels.
-   * @example "python-cpu-env"
+   * @example "ai-agents-env"
    */
   cpuEnvironment: string;
 
@@ -195,7 +195,7 @@ export class DatalayerConfiguration {
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
   runUrl: 'https://oss.datalayer.run',
   credits: 100,
-  cpuEnvironment: 'python-cpu-env',
+  cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
 };
 

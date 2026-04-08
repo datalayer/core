@@ -86,7 +86,7 @@ export const testConfig = {
    */
   getTestEnvironments(): { python: string; ai: string } {
     return {
-      python: process.env.DATALAYER_TEST_PYTHON_ENV || 'python-cpu-env',
+      python: process.env.DATALAYER_TEST_PYTHON_ENV || 'ai-agents-env',
       ai: process.env.DATALAYER_TEST_AI_ENV || 'ai-env',
     };
   },

@@ -192,7 +192,7 @@ class DatalayerClient(
         name : str, optional
             Name of the runtime to create.
         environment : str, optional
-            Environment type (e.g., "python-cpu-env"). Type of resources needed (cpu, gpu, etc.).
+            Environment type (e.g., "ai-agents-env"). Type of resources needed (cpu, gpu, etc.).
         time_reservation : Minutes, optional
             Time reservation in minutes for the runtime. Defaults to 10 minutes.
         snapshot_name : Optional[str], optional

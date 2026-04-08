@@ -163,7 +163,7 @@ export default function NotebooksPage() {
     setShowEnvironmentModal(true);
     if (environments.length > 0) {
       const defaultEnv =
-        environments.find(env => env.name === 'python-cpu-env') ||
+        environments.find(env => env.name === 'ai-agents-env') ||
         environments[0];
       setSelectedEnvironment(defaultEnv.name);
     }

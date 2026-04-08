@@ -84,7 +84,7 @@ const DatalayerClientWithMixins = composeMixins(
  *
  * const user = await client.whoami();
  * const runtime = await client.createRuntime({
- *   environment_name: 'python-cpu-env',
+ *   environment_name: 'ai-agents-env',
  *   credits_limit: 100
  * });
  * ```
