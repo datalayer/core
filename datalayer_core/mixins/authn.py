@@ -36,8 +36,9 @@ class AuthnMixin:
         Tries in this order:
         1. Instance token (_token)
         2. Environment variable DATALAYER_API_KEY
-        3. External token environment variable
-        4. Keyring stored token
+        3. Environment variable TEST_DATALAYER_API_KEY
+        4. External token environment variable
+        5. Keyring stored token
 
         Returns
         -------
@@ -54,13 +55,19 @@ class AuthnMixin:
             self._token = env_token
             return self._token
 
-        # 3. Check external token environment variable
+        # 3. Check test environment variable
+        test_env_token = os.environ.get("TEST_DATALAYER_API_KEY")
+        if test_env_token:
+            self._token = test_env_token
+            return self._token
+
+        # 4. Check external token environment variable
         external_token = os.environ.get("DATALAYER_EXTERNAL_TOKEN")
         if external_token:
             self._external_token = external_token
             return external_token
 
-        # 4. Try to get token from keyring
+        # 5. Try to get token from keyring
         try:
             import keyring
 
