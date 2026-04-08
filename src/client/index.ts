@@ -462,18 +462,12 @@ export interface DatalayerClient {
   getProject(uid: string): Promise<ProjectDTO>;
   createProject(name: string, description?: string): Promise<ProjectDTO>;
   updateProject(uid: string, data: UpdateSpaceRequest): Promise<ProjectDTO>;
-  renameProject(uid: string, newName: string): Promise<ProjectDTO>;
-  assignAgent(
+  renameProject(
     uid: string,
-    agentPodName: string,
-    agentSpecId?: string,
+    newName: string,
+    description?: string,
   ): Promise<ProjectDTO>;
-  unassignAgent(uid: string): Promise<ProjectDTO>;
-  deleteProject(uid: string): Promise<void>;
   getProjectDefaultItems(uid: string): Promise<ProjectDefaultItems>;
-  makeProjectPublic(uid: string): Promise<ProjectDTO>;
-  makeProjectPrivate(uid: string): Promise<ProjectDTO>;
-  exportProject(uid: string): Promise<any>;
 
   // Utility Methods
   calculateCreditsFromMinutes(minutes: number, burningRate: number): number;

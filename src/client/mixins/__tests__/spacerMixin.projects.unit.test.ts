@@ -5,6 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as spaces from '../../../api/spacer/spaces';
+import * as users from '../../../api/spacer/users';
 import * as notebooks from '../../../api/spacer/notebooks';
 import * as lexicals from '../../../api/spacer/lexicals';
 import { SpacerMixin } from '../SpacerMixin';
@@ -14,9 +15,9 @@ import { NotebookDTO } from '../../../models/NotebookDTO';
 import { LexicalDTO } from '../../../models/LexicalDTO';
 
 vi.mock('../../../api/spacer/spaces');
+vi.mock('../../../api/spacer/users');
 vi.mock('../../../api/spacer/notebooks');
 vi.mock('../../../api/spacer/lexicals');
-vi.mock('../../../api/spacer/users');
 vi.mock('../../../api/spacer/documents');
 vi.mock('../../../api/spacer/items');
 
@@ -28,6 +29,10 @@ class MockBase {
   getSpacerRunUrl() {
     return 'https://spacer.example.com';
   }
+  // Auth mock for updateProject userId resolution
+  auth = {
+    getCurrentUser: () => ({ uid: 'mock-user-id', id: 'mock-user-id' }),
+  };
 }
 
 const MixedClass = SpacerMixin(MockBase);
@@ -53,18 +58,20 @@ describe('SpacerMixin - Project Methods', () => {
   });
 
   describe('getProjects', () => {
-    it('should fetch projects by type', async () => {
-      vi.mocked(spaces.getSpacesByType).mockResolvedValue({
+    it('should fetch projects filtered from user spaces', async () => {
+      vi.mocked(users.getMySpaces).mockResolvedValue({
         success: true,
         message: 'OK',
-        spaces: [mockProjectSpace],
+        spaces: [
+          mockProjectSpace,
+          { ...mockProjectSpace, uid: 'other', variant_s: 'workspace' },
+        ],
       });
 
       const projects = await instance.getProjects();
 
-      expect(spaces.getSpacesByType).toHaveBeenCalledWith(
+      expect(users.getMySpaces).toHaveBeenCalledWith(
         'mock-token',
-        'project',
         'https://spacer.example.com',
       );
       expect(projects).toHaveLength(1);
@@ -132,7 +139,7 @@ describe('SpacerMixin - Project Methods', () => {
 
   describe('renameProject', () => {
     it('should rename a project', async () => {
-      vi.mocked(spaces.updateSpace).mockResolvedValue({
+      vi.mocked(spaces.updateUserSpace).mockResolvedValue({
         success: true,
         message: 'Updated',
         space: { ...mockProjectSpace, name_t: 'New Name' },
@@ -140,85 +147,14 @@ describe('SpacerMixin - Project Methods', () => {
 
       const project = await instance.renameProject('proj-uid-123', 'New Name');
 
-      expect(spaces.updateSpace).toHaveBeenCalledWith(
+      expect(spaces.updateUserSpace).toHaveBeenCalledWith(
         'mock-token',
         'proj-uid-123',
+        'mock-user-id',
         { name: 'New Name' },
         'https://spacer.example.com',
       );
       expect(project.name).toBe('New Name');
-    });
-  });
-
-  describe('assignAgent', () => {
-    it('should assign an agent with correct Solr fields', async () => {
-      vi.mocked(spaces.updateSpace).mockResolvedValue({
-        success: true,
-        message: 'Updated',
-        space: {
-          ...mockProjectSpace,
-          attached_agent_pod_name_s: 'agent-pod-abc',
-          attached_agent_spec_id_s: 'data-acquisition',
-        },
-      });
-
-      const project = await instance.assignAgent(
-        'proj-uid-123',
-        'agent-pod-abc',
-        'data-acquisition',
-      );
-
-      expect(spaces.updateSpace).toHaveBeenCalledWith(
-        'mock-token',
-        'proj-uid-123',
-        {
-          attached_agent_pod_name_s: 'agent-pod-abc',
-          attached_agent_spec_id_s: 'data-acquisition',
-        },
-        'https://spacer.example.com',
-      );
-      expect(project.hasAgent).toBe(true);
-      expect(project.attachedAgentPodName).toBe('agent-pod-abc');
-    });
-  });
-
-  describe('unassignAgent', () => {
-    it('should clear agent fields', async () => {
-      vi.mocked(spaces.updateSpace).mockResolvedValue({
-        success: true,
-        message: 'Updated',
-        space: mockProjectSpace,
-      });
-
-      const project = await instance.unassignAgent('proj-uid-123');
-
-      expect(spaces.updateSpace).toHaveBeenCalledWith(
-        'mock-token',
-        'proj-uid-123',
-        {
-          attached_agent_pod_name_s: '',
-          attached_agent_spec_id_s: '',
-        },
-        'https://spacer.example.com',
-      );
-      expect(project.hasAgent).toBe(false);
-    });
-  });
-
-  describe('deleteProject', () => {
-    it('should delete a project', async () => {
-      vi.mocked(spaces.deleteSpace).mockResolvedValue({
-        success: true,
-        message: 'Deleted',
-      });
-
-      await instance.deleteProject('proj-uid-123');
-
-      expect(spaces.deleteSpace).toHaveBeenCalledWith(
-        'mock-token',
-        'proj-uid-123',
-        'https://spacer.example.com',
-      );
     });
   });
 
@@ -289,6 +225,29 @@ describe('SpacerMixin - Space Methods', () => {
     });
   });
 
+  describe('updateUserSpace', () => {
+    it('should update a user-specific space', async () => {
+      vi.mocked(spaces.updateUserSpace).mockResolvedValue({
+        success: true,
+        message: 'Updated',
+        space: { ...mockSpaceData, name_t: 'Updated' },
+      });
+
+      const space = await instance.updateUserSpace('space-uid-1', 'user-1', {
+        name: 'Updated',
+      });
+
+      expect(space).toBeInstanceOf(SpaceDTO);
+      expect(spaces.updateUserSpace).toHaveBeenCalledWith(
+        'mock-token',
+        'space-uid-1',
+        'user-1',
+        { name: 'Updated' },
+        'https://spacer.example.com',
+      );
+    });
+  });
+
   describe('deleteSpace', () => {
     it('should delete a space', async () => {
       vi.mocked(spaces.deleteSpace).mockResolvedValue({
@@ -299,6 +258,60 @@ describe('SpacerMixin - Space Methods', () => {
       await instance.deleteSpace('space-uid-1');
 
       expect(spaces.deleteSpace).toHaveBeenCalledWith(
+        'mock-token',
+        'space-uid-1',
+        'https://spacer.example.com',
+      );
+    });
+  });
+
+  describe('makeSpacePublic', () => {
+    it('should make a space public', async () => {
+      vi.mocked(spaces.makeSpacePublic).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        space: { ...mockSpaceData, public_b: true },
+      });
+
+      const space = await instance.makeSpacePublic('space-uid-1');
+
+      expect(space).toBeInstanceOf(SpaceDTO);
+      expect(spaces.makeSpacePublic).toHaveBeenCalledWith(
+        'mock-token',
+        'space-uid-1',
+        'https://spacer.example.com',
+      );
+    });
+  });
+
+  describe('makeSpacePrivate', () => {
+    it('should make a space private', async () => {
+      vi.mocked(spaces.makeSpacePrivate).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        space: { ...mockSpaceData, public_b: false },
+      });
+
+      const space = await instance.makeSpacePrivate('space-uid-1');
+
+      expect(space).toBeInstanceOf(SpaceDTO);
+      expect(spaces.makeSpacePrivate).toHaveBeenCalledWith(
+        'mock-token',
+        'space-uid-1',
+        'https://spacer.example.com',
+      );
+    });
+  });
+
+  describe('exportSpace', () => {
+    it('should export a space', async () => {
+      const mockExport = { notebooks: [], documents: [] };
+      vi.mocked(spaces.exportSpace).mockResolvedValue(mockExport);
+
+      const result = await instance.exportSpace('space-uid-1');
+
+      expect(result).toEqual(mockExport);
+      expect(spaces.exportSpace).toHaveBeenCalledWith(
         'mock-token',
         'space-uid-1',
         'https://spacer.example.com',

@@ -618,14 +618,12 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
      * @returns Array of Project instances
      */
     async getProjects(): Promise<ProjectDTO[]> {
-      const token = (this as any).getToken();
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const response = await spaces.getSpacesByType(
-        token,
-        'project',
-        spacerRunUrl,
-      );
-      return response.spaces.map(s => new ProjectDTO(s));
+      // Use getMySpaces and filter by variant, because the
+      // /spaces/types/project endpoint returns empty results.
+      const allSpaces = await this.getMySpaces();
+      return allSpaces
+        .filter(s => s.variant === 'project')
+        .map(s => new ProjectDTO(s.rawData()));
     }
 
     /**
@@ -686,61 +684,66 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
     ): Promise<ProjectDTO> {
       const token = (this as any).getToken();
       const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const response = await spaces.updateSpace(token, uid, data, spacerRunUrl);
-      if (!response.space) {
+      // Resolve userId from: IAM mixin cache > AuthenticationManager cache > whoami()
+      let resolvedUserId: string | undefined;
+      const iamUser = (this as any).currentUserCache;
+      if (iamUser) {
+        resolvedUserId = iamUser.uid ?? iamUser.id;
+      }
+      if (!resolvedUserId) {
+        const authUser = (this as any).auth?.getCurrentUser?.();
+        if (authUser) {
+          resolvedUserId = authUser.uid ?? authUser.id;
+        }
+      }
+      if (!resolvedUserId) {
+        try {
+          const user = await (this as any).whoami();
+          resolvedUserId = user?.uid ?? user?.id;
+        } catch (_e: any) {
+          // whoami() not available — no user context
+        }
+      }
+      if (!resolvedUserId) {
+        throw new Error('Cannot update project: no authenticated user');
+      }
+      const response = await spaces.updateUserSpace(
+        token,
+        uid,
+        resolvedUserId,
+        data,
+        spacerRunUrl,
+      );
+      if (response.space) {
+        return new ProjectDTO(response.space);
+      }
+      // Backend returns space: null on success for user-scoped updates.
+      // Re-fetch the project to return fresh data.
+      const freshResponse = await spaces.getSpace(token, uid, spacerRunUrl);
+      if (!freshResponse.space) {
         throw new Error(`Failed to update project '${uid}'`);
       }
-      return new ProjectDTO(response.space);
+      return new ProjectDTO(freshResponse.space);
     }
 
     /**
      * Rename a project.
      * @param uid - Project UID
      * @param newName - New project name
+     * @param description - Project description to preserve.
+     * @param userId - Authenticated user ID for user-scoped update.
      * @returns Updated Project instance
      */
-    async renameProject(uid: string, newName: string): Promise<ProjectDTO> {
-      return this.updateProject(uid, { name: newName });
-    }
-
-    /**
-     * Assign an agent runtime to a project.
-     * @param uid - Project UID
-     * @param agentPodName - Agent runtime pod name
-     * @param agentSpecId - Agent spec ID (e.g., 'data-acquisition')
-     * @returns Updated Project instance
-     */
-    async assignAgent(
+    async renameProject(
       uid: string,
-      agentPodName: string,
-      agentSpecId?: string,
+      newName: string,
+      description?: string,
     ): Promise<ProjectDTO> {
-      return this.updateProject(uid, {
-        attached_agent_pod_name_s: agentPodName,
-        attached_agent_spec_id_s: agentSpecId || '',
-      });
-    }
-
-    /**
-     * Remove the agent assignment from a project.
-     * @param uid - Project UID
-     * @returns Updated Project instance
-     */
-    async unassignAgent(uid: string): Promise<ProjectDTO> {
-      return this.updateProject(uid, {
-        attached_agent_pod_name_s: '',
-        attached_agent_spec_id_s: '',
-      });
-    }
-
-    /**
-     * Delete a project and all its contents.
-     * @param uid - Project UID
-     */
-    async deleteProject(uid: string): Promise<void> {
-      const token = (this as any).getToken();
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      await spaces.deleteSpace(token, uid, spacerRunUrl);
+      const data: UpdateSpaceRequest = { name: newName };
+      if (description !== undefined) {
+        data.description = description;
+      }
+      return this.updateProject(uid, data);
     }
 
     /**
@@ -760,47 +763,6 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
         defaultNotebookUid: response.default_notebook_uid,
         defaultDocumentUid: response.default_document_uid,
       };
-    }
-
-    /**
-     * Make a project public.
-     * @param uid - Project UID
-     * @returns Updated Project instance
-     */
-    async makeProjectPublic(uid: string): Promise<ProjectDTO> {
-      const token = (this as any).getToken();
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const response = await spaces.makeSpacePublic(token, uid, spacerRunUrl);
-      if (!response.space) {
-        throw new Error(`Failed to make project '${uid}' public`);
-      }
-      return new ProjectDTO(response.space);
-    }
-
-    /**
-     * Make a project private.
-     * @param uid - Project UID
-     * @returns Updated Project instance
-     */
-    async makeProjectPrivate(uid: string): Promise<ProjectDTO> {
-      const token = (this as any).getToken();
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      const response = await spaces.makeSpacePrivate(token, uid, spacerRunUrl);
-      if (!response.space) {
-        throw new Error(`Failed to make project '${uid}' private`);
-      }
-      return new ProjectDTO(response.space);
-    }
-
-    /**
-     * Export a project and its contents.
-     * @param uid - Project UID
-     * @returns Export data
-     */
-    async exportProject(uid: string): Promise<any> {
-      const token = (this as any).getToken();
-      const spacerRunUrl = (this as any).getSpacerRunUrl();
-      return spaces.exportSpace(token, uid, spacerRunUrl);
     }
   };
 }

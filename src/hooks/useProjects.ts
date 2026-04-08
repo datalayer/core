@@ -228,13 +228,7 @@ export function useDeleteProject() {
   return useDeleteSpace();
 }
 
-/**
- * Default items (notebook UID and document UID) for a project.
- */
-export type ProjectDefaultItems = {
-  defaultNotebookUid: string | null;
-  defaultDocumentUid: string | null;
-};
+export type { ProjectDefaultItems } from '../models/ProjectDTO';
 
 /**
  * Hook to fetch the default notebook and document UIDs for a project.

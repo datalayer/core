@@ -39,6 +39,7 @@ export interface SpaceData {
   creation_ts_dt?: string;
   attached_agent_pod_name_s?: string;
   attached_agent_spec_id_s?: string;
+  attached_agent_given_name_s?: string;
 }
 
 /**

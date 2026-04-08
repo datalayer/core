@@ -127,4 +127,25 @@ describe('Spacer Lexicals', () => {
       ).rejects.toThrow('Update failed');
     });
   });
+
+  describe('clone', () => {
+    it('should clone lexical document', async () => {
+      const mockResponse = {
+        success: true,
+        document: { ...mockLexical, id: 'lexical-clone' },
+      };
+      vi.mocked(DatalayerApi.requestDatalayerAPI).mockResolvedValue(
+        mockResponse,
+      );
+
+      const result = await lexicals.cloneLexical(MOCK_JWT_TOKEN, 'lexical-123');
+
+      expect(result).toEqual(mockResponse);
+      expect(DatalayerApi.requestDatalayerAPI).toHaveBeenCalledWith({
+        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/lexicals/lexical-123/clone`,
+        method: 'POST',
+        token: MOCK_JWT_TOKEN,
+      });
+    });
+  });
 });

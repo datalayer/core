@@ -127,4 +127,28 @@ describe('Spacer Notebooks', () => {
       ).rejects.toThrow('Update failed');
     });
   });
+
+  describe('clone', () => {
+    it('should clone notebook', async () => {
+      const mockResponse = {
+        success: true,
+        notebook: { ...mockNotebook, id: 'notebook-clone' },
+      };
+      vi.mocked(DatalayerApi.requestDatalayerAPI).mockResolvedValue(
+        mockResponse,
+      );
+
+      const result = await notebooks.cloneNotebook(
+        MOCK_JWT_TOKEN,
+        'notebook-123',
+      );
+
+      expect(result).toEqual(mockResponse);
+      expect(DatalayerApi.requestDatalayerAPI).toHaveBeenCalledWith({
+        url: `${DEFAULT_SERVICE_URLS.SPACER}${API_BASE_PATHS.SPACER}/notebooks/notebook-123/clone`,
+        method: 'POST',
+        token: MOCK_JWT_TOKEN,
+      });
+    });
+  });
 });

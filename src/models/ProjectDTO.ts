@@ -29,6 +29,7 @@ export interface ProjectJSON {
   createdAt: string;
   attachedAgentPodName: string | null;
   attachedAgentSpecId: string | null;
+  attachedAgentGivenName: string | null;
   hasAgent: boolean;
 }
 
@@ -124,6 +125,12 @@ export class ProjectDTO {
     return this._data.attached_agent_spec_id_s || undefined;
   }
 
+  /** Human-readable name of the attached agent runtime, if any. */
+  get attachedAgentGivenName(): string | undefined {
+    this._checkDeleted();
+    return this._data.attached_agent_given_name_s || undefined;
+  }
+
   /** Whether an agent is currently attached to this project. */
   get hasAgent(): boolean {
     this._checkDeleted();
@@ -157,6 +164,7 @@ export class ProjectDTO {
       createdAt: this.createdAt.toISOString(),
       attachedAgentPodName: this.attachedAgentPodName ?? null,
       attachedAgentSpecId: this.attachedAgentSpecId ?? null,
+      attachedAgentGivenName: this.attachedAgentGivenName ?? null,
       hasAgent: this.hasAgent,
     };
   }
