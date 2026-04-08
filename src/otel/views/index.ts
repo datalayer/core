@@ -13,6 +13,7 @@ export { OtelLive } from './OtelLive';
 export { OtelTracesList } from './OtelTracesList';
 export { OtelLogsList } from './OtelLogsList';
 export { OtelMetricsList } from './OtelMetricsList';
+export type { OtelMetricsListProps } from './OtelMetricsList';
 export { OtelMetricsChart } from './OtelMetricsChart';
 export type { OtelMetricsChartProps } from './OtelMetricsChart';
 export { OtelSearchBar } from './OtelSearchBar';

@@ -27,6 +27,7 @@ import { validateJSON } from '../api/utils/validation';
  */
 export interface SpaceData {
   uid: string;
+  id?: string;
   name_t: string;
   handle_s: string;
   variant_s: string;
@@ -34,6 +35,11 @@ export interface SpaceData {
   tags_ss?: string[];
   members?: any[];
   items?: any[];
+  public_b?: boolean;
+  creation_ts_dt?: string;
+  attached_agent_pod_name_s?: string;
+  attached_agent_spec_id_s?: string;
+  attached_agent_given_name_s?: string;
 }
 
 /**
@@ -462,6 +468,67 @@ export interface GetSpaceItemResponse {
  * @interface SpacesForUserResponse
  */
 export interface SpacesForUserResponse {
+  success: boolean;
+  message: string;
+  spaces: SpaceData[];
+}
+
+/**
+ * Request payload for updating a space.
+ * Supports arbitrary Solr fields via index signature.
+ * @interface UpdateSpaceRequest
+ */
+export interface UpdateSpaceRequest {
+  name?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Response from getting a space by ID
+ * @interface GetSpaceResponse
+ */
+export interface GetSpaceResponse {
+  success: boolean;
+  message: string;
+  space?: SpaceData;
+}
+
+/**
+ * Response from updating a space
+ * @interface UpdateSpaceResponse
+ */
+export interface UpdateSpaceResponse {
+  success: boolean;
+  message: string;
+  space?: SpaceData;
+}
+
+/**
+ * Response from deleting a space
+ * @interface DeleteSpaceResponse
+ */
+export interface DeleteSpaceResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Response from getting default items for a space
+ * @interface GetSpaceDefaultItemsResponse
+ */
+export interface GetSpaceDefaultItemsResponse {
+  success: boolean;
+  message: string;
+  default_notebook_uid: string | null;
+  default_document_uid: string | null;
+}
+
+/**
+ * Response from getting spaces by type
+ * @interface GetSpacesByTypeResponse
+ */
+export interface GetSpacesByTypeResponse {
   success: boolean;
   message: string;
   spaces: SpaceData[];

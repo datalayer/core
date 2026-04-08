@@ -24,11 +24,13 @@ import { UserDTO } from '../../models/UserDTO';
  * Browser localStorage-based token storage
  */
 export class BrowserStorage implements TokenStorage {
+  private _available: boolean | undefined;
+
   /**
    * Get token from browser localStorage
    */
   get(key: string): string | null {
-    if (typeof window === 'undefined') {
+    if (!this.isAvailable()) {
       return null;
     }
     return window.localStorage.getItem(key);
@@ -38,7 +40,7 @@ export class BrowserStorage implements TokenStorage {
    * Set token in browser localStorage
    */
   set(key: string, value: string): void {
-    if (typeof window === 'undefined') {
+    if (!this.isAvailable()) {
       return;
     }
     window.localStorage.setItem(key, value);
@@ -48,17 +50,34 @@ export class BrowserStorage implements TokenStorage {
    * Delete token from browser localStorage
    */
   delete(key: string): void {
-    if (typeof window === 'undefined') {
+    if (!this.isAvailable()) {
       return;
     }
     window.localStorage.removeItem(key);
   }
 
   /**
-   * Check if browser localStorage is available
+   * Check if browser localStorage is available and functional.
+   * Result is cached after the first probe to avoid repeated writes.
    */
   isAvailable(): boolean {
-    return typeof window !== 'undefined' && !!window.localStorage;
+    if (this._available !== undefined) {
+      return this._available;
+    }
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        this._available = false;
+        return false;
+      }
+      const testKey = '__datalayer_storage_test__';
+      window.localStorage.setItem(testKey, 'test');
+      window.localStorage.removeItem(testKey);
+      this._available = true;
+      return true;
+    } catch {
+      this._available = false;
+      return false;
+    }
   }
 
   /**
@@ -429,16 +448,20 @@ export class ElectronStorage implements TokenStorage {
  */
 export function getDefaultStorage(): TokenStorage {
   if (typeof window !== 'undefined') {
-    // Browser environment
-    return new BrowserStorage();
-  } else if (typeof process !== 'undefined') {
+    const browserStorage = new BrowserStorage();
+    if (browserStorage.isAvailable()) {
+      return browserStorage;
+    }
+    // window exists but localStorage is not functional (e.g., Node 22 with --localstorage-file)
+    // Fall through to Node.js storage
+  }
+  if (typeof process !== 'undefined') {
     // Node.js environment
     return new NodeStorage();
-  } else {
-    // Unknown environment, use in-memory storage
-    console.warn(
-      'Unknown environment, using in-memory storage (data will not persist)',
-    );
-    return new NodeStorage(); // NodeStorage has in-memory fallback
   }
+  // Unknown environment, use in-memory storage
+  console.warn(
+    'Unknown environment, using in-memory storage (data will not persist)',
+  );
+  return new NodeStorage(); // NodeStorage has in-memory fallback
 }

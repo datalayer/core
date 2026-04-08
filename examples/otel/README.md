@@ -49,15 +49,15 @@ to the FastAPI server on port 8600.
 
 ## Endpoints (FastAPI)
 
-| Method | Path                          | Description                        |
-|--------|-------------------------------|------------------------------------|
-| GET    | `/`                           | Welcome page                       |
-| POST   | `/api/generate/traces`        | Generate sample traces             |
-| POST   | `/api/generate/logs`          | Generate sample log records        |
-| POST   | `/api/generate/metrics`       | Generate sample metric data points |
-| GET    | `/api/otel/v1/traces`         | Proxy to OTEL backend – list traces|
-| GET    | `/api/otel/v1/traces/{id}`    | Proxy to OTEL backend – trace spans|
-| GET    | `/api/otel/v1/logs`           | Proxy to OTEL backend – list logs  |
-| GET    | `/api/otel/v1/metrics`        | Proxy to OTEL backend – list metrics|
-| GET    | `/api/otel/v1/traces/services/list` | Proxy – list services        |
-| GET    | `/api/otel/v1/stats`          | Proxy – storage statistics         |
+| Method | Path                                | Description                          |
+| ------ | ----------------------------------- | ------------------------------------ |
+| GET    | `/`                                 | Welcome page                         |
+| POST   | `/api/generate/traces`              | Generate sample traces               |
+| POST   | `/api/generate/logs`                | Generate sample log records          |
+| POST   | `/api/generate/metrics`             | Generate sample metric data points   |
+| GET    | `/api/otel/v1/traces`               | Proxy to OTEL backend – list traces  |
+| GET    | `/api/otel/v1/traces/{id}`          | Proxy to OTEL backend – trace spans  |
+| GET    | `/api/otel/v1/logs`                 | Proxy to OTEL backend – list logs    |
+| GET    | `/api/otel/v1/metrics`              | Proxy to OTEL backend – list metrics |
+| GET    | `/api/otel/v1/traces/services/list` | Proxy – list services                |
+| GET    | `/api/otel/v1/stats`                | Proxy – storage statistics           |

@@ -7,6 +7,31 @@ import jwt_decode from 'jwt-decode';
 import { getCookie } from '../../utils';
 import { IUser, ANONYMOUS_USER, ANONYMOUS_USER_TOKEN } from '../../models';
 
+/**
+ * Check if browser localStorage is available and functional.
+ * Result is memoized to avoid repeated set/remove probes.
+ */
+let _localStorageAvailable: boolean | undefined;
+function isLocalStorageAvailable(): boolean {
+  if (_localStorageAvailable !== undefined) {
+    return _localStorageAvailable;
+  }
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      _localStorageAvailable = false;
+      return false;
+    }
+    const testKey = '__datalayer_ls_test__';
+    window.localStorage.setItem(testKey, 'test');
+    window.localStorage.removeItem(testKey);
+    _localStorageAvailable = true;
+    return true;
+  } catch {
+    _localStorageAvailable = false;
+    return false;
+  }
+}
+
 export const JWT_DATALAYER_ISSUER = 'https://id.datalayer.run';
 
 export const DATALAYER_IAM_USER_KEY = '@datalayer/iam:user';
@@ -29,7 +54,7 @@ export type IJWTToken = {
  * Return the user from the local storage.
  */
 export const getStoredUser = (): IUser | undefined => {
-  if (typeof window === 'undefined') {
+  if (!isLocalStorageAvailable()) {
     return ANONYMOUS_USER;
   }
   const user = window.localStorage.getItem(DATALAYER_IAM_USER_KEY);
@@ -49,7 +74,7 @@ export const getStoredUser = (): IUser | undefined => {
  * Set the user in the local storage.
  */
 export const storeUser = (user?: IUser): void => {
-  if (typeof window === 'undefined') {
+  if (!isLocalStorageAvailable()) {
     return;
   }
   if (user) {
@@ -63,7 +88,7 @@ export const storeUser = (user?: IUser): void => {
  * Return the IAM token from the local storage.
  */
 export const getStoredToken = (): string | undefined => {
-  if (typeof window === 'undefined') {
+  if (!isLocalStorageAvailable()) {
     return ANONYMOUS_USER_TOKEN;
   }
   const token = window.localStorage.getItem(DATALAYER_IAM_TOKEN_KEY);
@@ -77,7 +102,7 @@ export const getStoredToken = (): string | undefined => {
  * Set the IAM token in the local storage.
  */
 export const storeToken = (token?: string) => {
-  if (typeof window === 'undefined') {
+  if (!isLocalStorageAvailable()) {
     return;
   }
   if (token) {

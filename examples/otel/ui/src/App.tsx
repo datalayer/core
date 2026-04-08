@@ -42,9 +42,11 @@ import '../style/primer-primitives.css';
  * (OtelHeader, etc.) that rely on iamStore also have access.
  */
 const syncTokenToIamStore = (newToken: string) => {
-  import('@datalayer/core/lib/state/substates/IAMState').then(({ iamStore }) => {
-    iamStore.setState({ token: newToken });
-  });
+  import('@datalayer/core/lib/state/substates/IAMState').then(
+    ({ iamStore }) => {
+      iamStore.setState({ token: newToken });
+    },
+  );
 };
 
 // Register document.body as the Primer portal root BEFORE React renders,
@@ -104,9 +106,11 @@ const AuthenticatedApp: React.FC<{ token: string }> = ({ token }) => {
   // Clear both the simple auth store and the global iamStore on logout.
   const handleLogout = useCallback(() => {
     clearAuth();
-    import('@datalayer/core/lib/state/substates/IAMState').then(({ iamStore }) => {
-      iamStore.setState({ token: undefined });
-    });
+    import('@datalayer/core/lib/state/substates/IAMState').then(
+      ({ iamStore }) => {
+        iamStore.setState({ token: undefined });
+      },
+    );
   }, [clearAuth]);
 
   // Auto-logout on 401 (expired token) from any OTEL API call.
