@@ -19,7 +19,11 @@ from datalayer_core.console.manager import RuntimeManager
 from datalayer_core.utils.notebook import get_cells
 
 # Create the main Typer app for exec functionality
-app = typer.Typer(name="exec", help="Execute files or notebooks on runtimes", invoke_without_command=True)
+app = typer.Typer(
+    name="exec",
+    help="Execute files or notebooks on runtimes",
+    invoke_without_command=True,
+)
 
 console = Console()
 

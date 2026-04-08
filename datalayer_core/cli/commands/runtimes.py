@@ -13,7 +13,9 @@ from datalayer_core.displays.runtimes import display_runtimes
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for runtime commands
-app = typer.Typer(name="runtimes", help="Runtime management commands", invoke_without_command=True)
+app = typer.Typer(
+    name="runtimes", help="Runtime management commands", invoke_without_command=True
+)
 
 console = Console()
 
@@ -175,7 +177,9 @@ def create_runtime(
 
 @app.command(name="terminate")
 def terminate_runtime(
-    pod_name: Optional[str] = typer.Argument(None, help="Pod name of the runtime to terminate"),
+    pod_name: Optional[str] = typer.Argument(
+        None, help="Pod name of the runtime to terminate"
+    ),
     token: Optional[str] = typer.Option(
         None,
         "--token",

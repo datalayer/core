@@ -13,7 +13,9 @@ from datalayer_core.displays.environments import display_environments
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for environment commands
-app = typer.Typer(name="envs", help="Environment management commands", invoke_without_command=True)
+app = typer.Typer(
+    name="envs", help="Environment management commands", invoke_without_command=True
+)
 
 console = Console()
 

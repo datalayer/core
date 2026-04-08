@@ -13,7 +13,8 @@ from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
 
 # Create a Typer app for snapshot commands
 app = typer.Typer(
-    name="runtime-snapshots", help="Runtime snapshots management commands",
+    name="runtime-snapshots",
+    help="Runtime snapshots management commands",
     invoke_without_command=True,
 )
 

@@ -37,7 +37,8 @@ dependencies = [
     "pydantic[email]",
     "pyyaml>=6.0",  # Require newer PyYAML that builds on Python 3.12+
     "questionary",
-    "requests",
+    "requests>=2.33.0",
+    "pygments>=2.20.0",
     "rich",
     "traitlets",
     "typer",

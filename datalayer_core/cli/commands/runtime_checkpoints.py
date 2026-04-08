@@ -32,6 +32,7 @@ def _resolve_token(token: Optional[str] = None) -> str:
     # Fall back to DatalayerClient's token resolution (keyring, config file, etc.)
     try:
         from datalayer_core.client.client import DatalayerClient
+
         client = DatalayerClient()
         return client._get_token() or ""
     except Exception:
@@ -161,7 +162,9 @@ def checkpoints_delete(
         # If runtime_uid not provided, look up the checkpoint first.
         if not runtime_uid:
             # List all checkpoints and find the one matching the uid.
-            data = _fetch_api("/runtime-checkpoints", token=token, runtimes_url=runtimes_url)
+            data = _fetch_api(
+                "/runtime-checkpoints", token=token, runtimes_url=runtimes_url
+            )
             checkpoints = data.get("checkpoints", [])
             match = next((c for c in checkpoints if c["id"] == checkpoint_uid), None)
             if not match:
@@ -181,7 +184,9 @@ def checkpoints_delete(
             token=token,
             runtimes_url=runtimes_url,
         )
-        console.print(f"[green]Checkpoint {checkpoint_uid} deleted successfully.[/green]")
+        console.print(
+            f"[green]Checkpoint {checkpoint_uid} deleted successfully.[/green]"
+        )
 
     except typer.Exit:
         raise

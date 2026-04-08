@@ -12,13 +12,13 @@ from rich.panel import Panel
 from rich.table import Table
 
 from datalayer_core.base.user_config import (
+    CONFIG_FILE,
     DEFAULT_IAM_URL,
     DEFAULT_RUNTIMES_URL,
     get_config,
     get_iam_url,
     get_runtimes_url,
     set_config,
-    CONFIG_FILE,
 )
 
 # Create a Typer app for the config command
@@ -70,7 +70,9 @@ def set_values(
 ) -> None:
     """Set configuration values non-interactively."""
     if iam_url is None and runtimes_url is None:
-        console.print("[yellow]No values to set. Use --iam-url and/or --runtimes-url.[/yellow]")
+        console.print(
+            "[yellow]No values to set. Use --iam-url and/or --runtimes-url.[/yellow]"
+        )
         raise typer.Exit(1)
 
     set_config(iam_url=iam_url, runtimes_url=runtimes_url)

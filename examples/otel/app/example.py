@@ -1,7 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Simple logfire + pydantic_ai example that sends OTEL events to the Datalayer OTEL service.
+"""
+Simple logfire + pydantic_ai example that sends OTEL events to the Datalayer OTEL service.
 
 See ``datalayer_core.otel.logfire`` for endpoint / auth resolution details.
 """

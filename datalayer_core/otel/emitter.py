@@ -1,7 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Generic OpenTelemetry emitter helpers.
+"""
+Generic OpenTelemetry emitter helpers.
 
 This module provides a lightweight helper for emitting metrics and spans to OTLP
 using Datalayer environment conventions.
@@ -15,7 +16,8 @@ from typing import Any, Generator
 
 
 class OTelEmitter:
-    """Generic OTEL emitter for counters, histograms, and spans.
+    """
+    Generic OTEL emitter for counters, histograms, and spans.
 
     The class is intentionally no-op when OpenTelemetry dependencies are not
     installed, so callers can use it without defensive try/except wrappers.
@@ -52,7 +54,10 @@ class OTelEmitter:
                 os.environ.get("DATALAYER_OTLP_URL")
                 or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
                 or (
-                    (os.environ.get("DATALAYER_RUN_URL") or "https://prod1.datalayer.run").rstrip("/")
+                    (
+                        os.environ.get("DATALAYER_RUN_URL")
+                        or "https://prod1.datalayer.run"
+                    ).rstrip("/")
                     + "/api/otel/v1/otlp"
                 )
             ).rstrip("/")
@@ -91,7 +96,9 @@ class OTelEmitter:
                 OTLPMetricExporter(endpoint=metrics_endpoint, headers=headers),
                 export_interval_millis=10_000,
             )
-            meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+            meter_provider = MeterProvider(
+                resource=resource, metric_readers=[metric_reader]
+            )
             metrics.set_meter_provider(meter_provider)
             self._meter = meter_provider.get_meter(self.service_name)
 
@@ -103,14 +110,18 @@ class OTelEmitter:
     def enabled(self) -> bool:
         return self._enabled
 
-    def add_counter(self, name: str, value: int | float, attributes: dict[str, Any] | None = None) -> None:
+    def add_counter(
+        self, name: str, value: int | float, attributes: dict[str, Any] | None = None
+    ) -> None:
         if not self._enabled or self._meter is None:
             return
         if name not in self._counters:
             self._counters[name] = self._meter.create_counter(name)
         self._counters[name].add(value, attributes or {})
 
-    def add_histogram(self, name: str, value: int | float, attributes: dict[str, Any] | None = None) -> None:
+    def add_histogram(
+        self, name: str, value: int | float, attributes: dict[str, Any] | None = None
+    ) -> None:
         if not self._enabled or self._meter is None:
             return
         if name not in self._histograms:
@@ -118,9 +129,13 @@ class OTelEmitter:
         self._histograms[name].record(value, attributes or {})
 
     @contextmanager
-    def span(self, name: str, attributes: dict[str, Any] | None = None) -> Generator[Any, None, None]:
+    def span(
+        self, name: str, attributes: dict[str, Any] | None = None
+    ) -> Generator[Any, None, None]:
         if not self._enabled or self._tracer is None:
             yield None
             return
-        with self._tracer.start_as_current_span(name, attributes=attributes or {}) as span:
+        with self._tracer.start_as_current_span(
+            name, attributes=attributes or {}
+        ) as span:
             yield span

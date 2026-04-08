@@ -13,7 +13,9 @@ from rich.console import Console
 from datalayer_core.client.client import DatalayerClient
 
 # Create a Typer app for user commands
-app = typer.Typer(name="users", help="User management commands", invoke_without_command=True)
+app = typer.Typer(
+    name="users", help="User management commands", invoke_without_command=True
+)
 
 console = Console()
 

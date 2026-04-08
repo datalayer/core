@@ -1,7 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Helpers for configuring `logfire` to export telemetry to the Datalayer OTEL service.
+"""
+Helpers for configuring `logfire` to export telemetry to the Datalayer OTEL service.
 
 Usage (call `configure()` **before** any `import logfire` in the caller's module)::
 
@@ -53,8 +54,11 @@ __all__ = ["otlp_endpoint", "decode_user_uid", "setup_env", "configure", "flush"
 
 # ── Helpers ─────────────────────────────────────────────────────────
 
+
 def otlp_endpoint() -> str:
-    """Return the resolved OTLP base URL (no trailing ``/v1/traces`` suffix)."""
+    """
+    Return the resolved OTLP base URL (no trailing ``/v1/traces`` suffix).
+    """
     explicit = os.environ.get("DATALAYER_OTLP_URL")
     if explicit:
         return explicit.rstrip("/")
@@ -67,7 +71,8 @@ def otlp_endpoint() -> str:
 
 
 def decode_user_uid(token: str) -> str | None:
-    """Extract the Datalayer ``user_uid`` from a JWT *token* string.
+    """
+    Extract the Datalayer ``user_uid`` from a JWT *token* string.
 
     Returns ``None`` if the token is malformed or the claim is missing.
     """
@@ -87,14 +92,15 @@ def decode_user_uid(token: str) -> str | None:
 
 
 def setup_env(token: str | None = None) -> str:
-    """Set ``OTEL_EXPORTER_OTLP_*`` and ``OTEL_RESOURCE_ATTRIBUTES`` env vars.
+    """
+    Set ``OTEL_EXPORTER_OTLP_*`` and ``OTEL_RESOURCE_ATTRIBUTES`` env vars.
 
     This **must** be called before ``import logfire`` so logfire's internal SDK
     reads the correct values.
 
     Parameters
     ----------
-    token:
+    token : str | None
         Datalayer API key (Bearer token). Defaults to ``DATALAYER_API_KEY``.
 
     Returns
@@ -113,14 +119,20 @@ def setup_env(token: str | None = None) -> str:
         os.environ["OTEL_EXPORTER_OTLP_HEADERS"] = f"Authorization=Bearer%20{token}"
 
     # Inject user_uid as a resource attribute for backend account association.
-    user_uid = (token and decode_user_uid(token)) or os.environ.get("DATALAYER_USER_UID")
+    user_uid = (token and decode_user_uid(token)) or os.environ.get(
+        "DATALAYER_USER_UID"
+    )
     if user_uid:
         existing = os.environ.get("OTEL_RESOURCE_ATTRIBUTES", "")
         extra = f"datalayer.user_uid={user_uid}"
-        os.environ["OTEL_RESOURCE_ATTRIBUTES"] = f"{existing},{extra}" if existing else extra
+        os.environ["OTEL_RESOURCE_ATTRIBUTES"] = (
+            f"{existing},{extra}" if existing else extra
+        )
         _log.info("OTEL resource attribute: datalayer.user_uid=%s", user_uid)
     else:
-        _log.warning("No user_uid resolved – spans will not be associated with your account")
+        _log.warning(
+            "No user_uid resolved – spans will not be associated with your account"
+        )
 
     _log.info("OTLP export endpoint: %s", endpoint)
     return endpoint
@@ -132,7 +144,8 @@ def configure(
     instrument_pydantic_ai: bool = False,
     token: str | None = None,
 ) -> object:
-    """Configure logfire to ship telemetry to the Datalayer OTEL service.
+    """
+    Configure logfire to ship telemetry to the Datalayer OTEL service.
 
     Sets up the required ``OTEL_EXPORTER_OTLP_*`` env vars, then imports and
     initialises ``logfire`` with ``send_to_logfire=False`` so that the standard
@@ -140,11 +153,11 @@ def configure(
 
     Parameters
     ----------
-    service_name:
+    service_name : str
         OTEL ``service.name`` resource attribute.
-    instrument_pydantic_ai:
+    instrument_pydantic_ai : bool
         When ``True``, calls ``logfire.instrument_pydantic_ai()`` automatically.
-    token:
+    token : str | None
         Datalayer API key. Falls back to ``DATALAYER_API_KEY`` env var.
 
     Returns
@@ -169,7 +182,8 @@ def configure(
 
 
 def flush() -> None:
-    """Flush and shut down the active tracer provider.
+    """
+    Flush and shut down the active tracer provider.
 
     Call this at the end of short-lived scripts to ensure all buffered spans are
     exported before the process exits.  Safe to call even if ``configure()`` was

@@ -1,7 +1,8 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""HTTP client for the Datalayer OTEL query service.
+"""
+HTTP client for the Datalayer OTEL query service.
 
 Provides a high-level Python API for querying traces, metrics, logs, and
 running ad-hoc SQL against the datalayer-otel FastAPI service.
@@ -31,7 +32,8 @@ from datalayer_core.otel.config import OTEL_BASE_URL
 
 
 class OtelClient:
-    """Client for the Datalayer OTEL REST API.
+    """
+    Client for the Datalayer OTEL REST API.
 
     Parameters
     ----------
@@ -87,19 +89,27 @@ class OtelClient:
     # ── public API ───────────────────────────────────────────────────
 
     def ping(self) -> dict[str, Any]:
-        """Health check (no auth required)."""
+        """
+        Health check (no auth required).
+        """
         return self._get("/api/otel/v1/ping/")
 
     def version(self) -> dict[str, Any]:
-        """Get service version."""
+        """
+        Get service version.
+        """
         return self._get("/api/otel/v1/version/")
 
     def get_stats(self) -> dict[str, Any]:
-        """Get storage statistics."""
+        """
+        Get storage statistics.
+        """
         return self._get("/api/otel/v1/stats/")
 
     def flush(self) -> dict[str, Any]:
-        """Force-flush all buffered telemetry data to storage."""
+        """
+        Force-flush all buffered telemetry data to storage.
+        """
         return self._post("/api/otel/v1/flush/")
 
     # ── traces ───────────────────────────────────────────────────────
@@ -109,7 +119,8 @@ class OtelClient:
         service_name: str | None = None,
         limit: int = 20,
     ) -> dict[str, Any]:
-        """List recent traces.
+        """
+        List recent traces.
 
         Parameters
         ----------
@@ -124,7 +135,8 @@ class OtelClient:
         return self._get("/api/otel/v1/traces/", params=params)
 
     def get_trace(self, trace_id: str) -> dict[str, Any]:
-        """Get spans for a specific trace.
+        """
+        Get spans for a specific trace.
 
         Parameters
         ----------
@@ -134,7 +146,9 @@ class OtelClient:
         return self._get(f"/api/otel/v1/traces/{trace_id}/")
 
     def list_services(self) -> list[str]:
-        """List all observed service names."""
+        """
+        List all observed service names.
+        """
         data = self._get("/api/otel/v1/traces/services/list/")
         return data.get("services", data)
 
@@ -146,7 +160,8 @@ class OtelClient:
         service_name: str | None = None,
         limit: int = 20,
     ) -> dict[str, Any]:
-        """List metric names / data points.
+        """
+        List metric names / data points.
 
         Parameters
         ----------
@@ -170,7 +185,8 @@ class OtelClient:
         service_name: str | None = None,
         limit: int = 20,
     ) -> dict[str, Any]:
-        """Query metric data points.
+        """
+        Query metric data points.
 
         Parameters
         ----------
@@ -197,7 +213,8 @@ class OtelClient:
         trace_id: str | None = None,
         limit: int = 50,
     ) -> dict[str, Any]:
-        """Query log records.
+        """
+        Query log records.
 
         Parameters
         ----------
@@ -222,7 +239,8 @@ class OtelClient:
     # ── SQL query ────────────────────────────────────────────────────
 
     def query_sql(self, sql: str) -> dict[str, Any]:
-        """Run an ad-hoc SQL query via SQL Engine.
+        """
+        Run an ad-hoc SQL query via SQL Engine.
 
         Parameters
         ----------
@@ -232,7 +250,8 @@ class OtelClient:
         return self._post("/api/otel/v1/query/", json={"sql": sql})
 
     def admin_sql(self, sql: str) -> dict[str, Any]:
-        """Run an arbitrary SQL query without user-scope filtering.
+        """
+        Run an arbitrary SQL query without user-scope filtering.
 
         Requires ``platform_admin`` role.  Sends the SQL directly to the
         admin endpoint so the result spans all accounts.

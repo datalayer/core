@@ -1,7 +1,9 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Display functions for runtime checkpoints (CRIU full-pod checkpoints)."""
+"""
+Display functions for runtime checkpoints (CRIU full-pod checkpoints).
+"""
 
 from __future__ import annotations
 
@@ -12,7 +14,8 @@ from rich.table import Table
 
 
 def _new_runtime_checkpoints_table(title: str = "Runtime Checkpoints") -> Table:
-    """Create a new runtime checkpoints table.
+    """
+    Create a new runtime checkpoints table.
 
     Parameters
     ----------
@@ -35,7 +38,8 @@ def _new_runtime_checkpoints_table(title: str = "Runtime Checkpoints") -> Table:
 
 
 def _add_runtime_checkpoint_to_table(table: Table, checkpoint: dict[str, Any]) -> None:
-    """Add a runtime checkpoint row to the table.
+    """
+    Add a runtime checkpoint row to the table.
 
     Parameters
     ----------
@@ -55,7 +59,8 @@ def _add_runtime_checkpoint_to_table(table: Table, checkpoint: dict[str, Any]) -
 
 
 def display_runtime_checkpoints(checkpoints: list[dict[str, Any]]) -> None:
-    """Display a list of runtime checkpoints in the console.
+    """
+    Display a list of runtime checkpoints in the console.
 
     Parameters
     ----------

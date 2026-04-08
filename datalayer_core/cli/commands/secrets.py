@@ -13,7 +13,9 @@ from datalayer_core.displays.secrets import display_secrets
 from datalayer_core.models.secret import SecretVariant
 
 # Create a Typer app for secret commands
-app = typer.Typer(name="secrets", help="Secret management commands", invoke_without_command=True)
+app = typer.Typer(
+    name="secrets", help="Secret management commands", invoke_without_command=True
+)
 
 console = Console()
 

@@ -201,7 +201,9 @@ class RuntimesTerminateMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtimes/{}".format(self.urls.runtimes_url, pod_name),  # type: ignore
+                "{}/api/runtimes/v1/runtimes/{}".format(
+                    self.urls.runtimes_url, pod_name
+                ),  # type: ignore
                 method="DELETE",
             )
 

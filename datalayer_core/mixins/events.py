@@ -88,7 +88,9 @@ class EventsMixin:
         )
         return response.json()
 
-    def _get_event(self, event_id: str, agent_id: Optional[str] = None) -> dict[str, Any]:
+    def _get_event(
+        self, event_id: str, agent_id: Optional[str] = None
+    ) -> dict[str, Any]:
         """Get a single event by ID."""
         resolved_agent_id = agent_id or self._resolve_event_agent_id(event_id)
         response = self._fetch(  # type: ignore
@@ -139,7 +141,9 @@ class EventsMixin:
         )
         return response.json()
 
-    def _delete_event(self, event_id: str, agent_id: Optional[str] = None) -> dict[str, Any]:
+    def _delete_event(
+        self, event_id: str, agent_id: Optional[str] = None
+    ) -> dict[str, Any]:
         """Delete an event by ID."""
         resolved_agent_id = agent_id or self._resolve_event_agent_id(event_id)
         response = self._fetch(  # type: ignore
@@ -152,10 +156,14 @@ class EventsMixin:
         )
         return response.json()
 
-    def _mark_event_read(self, event_id: str, agent_id: Optional[str] = None) -> dict[str, Any]:
+    def _mark_event_read(
+        self, event_id: str, agent_id: Optional[str] = None
+    ) -> dict[str, Any]:
         """Mark an event as read."""
         return self._update_event(event_id, agent_id=agent_id, read=True)
 
-    def _mark_event_unread(self, event_id: str, agent_id: Optional[str] = None) -> dict[str, Any]:
+    def _mark_event_unread(
+        self, event_id: str, agent_id: Optional[str] = None
+    ) -> dict[str, Any]:
         """Mark an event as unread."""
         return self._update_event(event_id, agent_id=agent_id, read=False)
