@@ -7,8 +7,8 @@ Datalayer Client - A simple Python Client for AI engineers to work with Datalaye
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
-import uuid
 import time
+import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
