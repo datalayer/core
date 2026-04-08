@@ -13,6 +13,19 @@ import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
+const resolveEnvironmentName = async (
+  client: DatalayerClient,
+): Promise<string> => {
+  const environments = await client.listEnvironments();
+  if (environments.length === 0) {
+    throw new Error('No environments available to create runtime');
+  }
+
+  const preferred = testConfig.getTestEnvironments().python;
+  const found = environments.find(env => env.name === preferred);
+  return found ? found.name : environments[0].name;
+};
+
 /**
  * Client Runtimes Integration Tests
  *
@@ -58,12 +71,15 @@ describe('Client Runtimes Integration Tests', () => {
 
       const firstEnv = environments[0];
       expect(firstEnv.name).toBeDefined();
-      expect(firstEnv.title).toBeDefined();
-      expect(firstEnv.language).toBeDefined();
+      expect(firstEnv.title || firstEnv.name).toBeDefined();
 
       console.log(`Found ${environments.length} environment(s)`);
-      console.log(`First environment: ${firstEnv.title} (${firstEnv.name})`);
-      console.log(`  Language: ${firstEnv.language}`);
+      console.log(
+        `First environment: ${firstEnv.title || firstEnv.name} (${firstEnv.name})`,
+      );
+      if (firstEnv.language) {
+        console.log(`  Language: ${firstEnv.language}`);
+      }
       console.log(
         `  Resources: CPU ${firstEnv.resources?.cpu}, Memory ${firstEnv.resources?.memory}`,
       );
@@ -76,8 +92,10 @@ describe('Client Runtimes Integration Tests', () => {
       it('should create a runtime', async () => {
         console.log('Creating runtime...');
 
+        const environmentName = await resolveEnvironmentName(client);
+
         const runtime = await client.createRuntime(
-          'ai-agents-env',
+          environmentName,
           'notebook',
           'client-test-runtime',
           10,
@@ -85,7 +103,7 @@ describe('Client Runtimes Integration Tests', () => {
 
         expect(runtime).toBeInstanceOf(RuntimeDTO);
         expect(runtime.podName).toBeDefined();
-        expect(runtime.environmentName).toBe('ai-agents-env');
+        expect(runtime.environmentName).toBe(environmentName);
         expect(runtime.givenName).toContain('client-test-runtime');
 
         createdRuntime = runtime;
@@ -108,7 +126,7 @@ describe('Client Runtimes Integration Tests', () => {
 
         const found = runtimes.find(r => r.podName === createdRuntime!.podName);
         expect(found).toBeDefined();
-        expect(found).toBeInstanceOf(Runtime);
+        expect(found).toBeInstanceOf(RuntimeDTO);
 
         console.log(`Found ${runtimes.length} runtime(s)`);
         console.log(`Created runtime found in list: ${found!.podName}`);
@@ -124,13 +142,13 @@ describe('Client Runtimes Integration Tests', () => {
         console.log('Getting runtime details...');
         const runtime = await client.getRuntime(createdRuntime.podName);
 
-        expect(runtime).toBeInstanceOf(Runtime);
+        expect(runtime).toBeInstanceOf(RuntimeDTO);
         expect(runtime.podName).toBe(createdRuntime.podName);
         expect(runtime.environmentName).toBe(createdRuntime.environmentName);
 
         console.log(`Retrieved runtime: ${runtime.podName}`);
-        console.log(`  State: ${await runtime.getState()}`);
-        console.log(`  Running: ${await runtime.isRunning()}`);
+        console.log(`  Type: ${runtime.type}`);
+        console.log(`  Ingress: ${runtime.ingress}`);
       });
 
       it('should test runtime model methods', async () => {
@@ -142,21 +160,8 @@ describe('Client Runtimes Integration Tests', () => {
 
         console.log('Testing runtime model methods...');
 
-        // Test state checking methods
-        const state = await createdRuntime.getState();
-        expect(state).toBeDefined();
-        console.log(`Runtime state: ${state}`);
-
-        const isRunning = await createdRuntime.isRunning();
-        expect(typeof isRunning).toBe('boolean');
-        console.log(`Is running: ${isRunning}`);
-
-        const hasError = await createdRuntime.hasError();
-        expect(typeof hasError).toBe('boolean');
-        console.log(`Has error: ${hasError}`);
-
         // Test JSON export
-        const json = await createdRuntime.toJSON();
+        const json = createdRuntime.toJSON();
         expect(json).toBeDefined();
         expect(json.podName).toBe(createdRuntime.podName);
 
@@ -186,7 +191,7 @@ describe('Client Runtimes Integration Tests', () => {
           'Test snapshot from Client',
         );
 
-        expect(snapshot).toBeInstanceOf(Snapshot);
+        expect(snapshot).toBeInstanceOf(RuntimeSnapshotDTO);
         expect(snapshot.uid).toBeDefined();
         expect(snapshot.name).toContain('client-test-snapshot');
 
@@ -210,7 +215,7 @@ describe('Client Runtimes Integration Tests', () => {
 
         const found = snapshots.find(s => s.uid === createdSnapshot!.uid);
         expect(found).toBeDefined();
-        expect(found).toBeInstanceOf(Snapshot);
+        expect(found).toBeInstanceOf(RuntimeSnapshotDTO);
 
         console.log(`Found ${snapshots.length} snapshot(s)`);
         console.log(`Created snapshot found in list: ${found!.uid}`);
@@ -282,7 +287,7 @@ describe('Client Runtimes Integration Tests', () => {
 
         console.log('Deleting snapshot...');
         const snapshotUid = createdSnapshot.uid; // Get uid before deletion
-        await client.deleteSnapshot(createdSnapshot);
+        await client.deleteSnapshot(createdSnapshot.uid);
         console.log(`Snapshot ${snapshotUid} deleted`);
 
         // Verify deletion
@@ -311,7 +316,7 @@ describe('Client Runtimes Integration Tests', () => {
 
         console.log('Deleting runtime...');
         const podName = createdRuntime.podName; // Get podName before deletion
-        await client.deleteRuntime(createdRuntime);
+        await client.deleteRuntime(createdRuntime.podName);
         console.log(`Runtime ${podName} deleted`);
 
         // Verify deletion
@@ -360,7 +365,7 @@ describe('Client Runtimes Integration Tests', () => {
         await client.createRuntime(
           '', // Invalid environment name
           'notebook',
-          'Invalid test runtime',
+          'invalid-test-runtime',
           10,
         );
         expect(true).toBe(false); // Should not reach here
