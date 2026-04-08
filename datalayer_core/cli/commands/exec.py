@@ -319,13 +319,9 @@ def _select_runtime(token: Optional[str] = None) -> str:
         runtimes = client.list_runtimes()
 
         if not runtimes:
-            # No runtimes available, prompt to create one
-            console.print("[yellow]No runtimes are currently available.[/yellow]")
-            console.print("[blue]You can create a runtime using:[/blue]")
-            console.print("  [cyan]dla runtimes create <environment>[/cyan]")
-            console.print("\n[blue]Or list available environments with:[/blue]")
-            console.print("  [cyan]dla envs list[/cyan]")
-            raise typer.Exit(1)
+            # Return an empty runtime name to trigger RuntimeManager's built-in
+            # interactive flow that can launch a runtime from an environment.
+            return ""
 
         # Use the first available runtime
         selected = runtimes[0]

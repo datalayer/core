@@ -8,6 +8,7 @@ Provides authentication, runtime creation, and code execution capabilities.
 """
 
 import uuid
+import time
 from functools import lru_cache
 from typing import Any, Optional, Union
 
@@ -481,10 +482,19 @@ class DatalayerClient(
             description=description,
             stop=stop,
         )
-        snapshots_objects = self.list_snapshots()
-        for snapshot in snapshots_objects:
-            if snapshot.name == name:
+        snapshot: Optional[RuntimeSnapshotModel] = None
+        for _ in range(6):
+            snapshots_objects = self.list_snapshots()
+            snapshot = next((s for s in snapshots_objects if s.name == name), None)
+            if snapshot is not None:
                 break
+            time.sleep(1)
+
+        if snapshot is None:
+            raise RuntimeError(
+                f"Snapshot '{name}' was created but not found in snapshot listing"
+            )
+
         return RuntimeSnapshotModel(
             uid=snapshot.uid,
             name=name,
