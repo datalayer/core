@@ -19,13 +19,17 @@ from datalayer_core.console.manager import RuntimeManager
 from datalayer_core.utils.notebook import get_cells
 
 # Create the main Typer app for exec functionality
-app = typer.Typer(name="exec", help="Execute files or notebooks on runtimes", invoke_without_command=True)
+app = typer.Typer(
+    name="exec",
+    help="Execute files or notebooks on runtimes",
+    invoke_without_command=True,
+)
 
 console = Console()
 
 
 @app.callback()
-def exec_callback(ctx: typer.Context):
+def exec_callback(ctx: typer.Context) -> None:
     """Execute files or notebooks on runtimes."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -315,13 +319,9 @@ def _select_runtime(token: Optional[str] = None) -> str:
         runtimes = client.list_runtimes()
 
         if not runtimes:
-            # No runtimes available, prompt to create one
-            console.print("[yellow]No runtimes are currently available.[/yellow]")
-            console.print("[blue]You can create a runtime using:[/blue]")
-            console.print("  [cyan]dla runtimes create <environment>[/cyan]")
-            console.print("\n[blue]Or list available environments with:[/blue]")
-            console.print("  [cyan]dla envs list[/cyan]")
-            raise typer.Exit(1)
+            # Return an empty runtime name to trigger RuntimeManager's built-in
+            # interactive flow that can launch a runtime from an environment.
+            return ""
 
         # Use the first available runtime
         selected = runtimes[0]

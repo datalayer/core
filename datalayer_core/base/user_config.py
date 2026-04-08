@@ -119,7 +119,9 @@ def set_runtimes_url(url: str) -> None:
     _save_config(config)
 
 
-def set_config(iam_url: Optional[str] = None, runtimes_url: Optional[str] = None) -> None:
+def set_config(
+    iam_url: Optional[str] = None, runtimes_url: Optional[str] = None
+) -> None:
     """
     Set multiple config values at once.
 

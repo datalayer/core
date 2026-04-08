@@ -7,9 +7,11 @@ Runtime services for Datalayer.
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
 
+import time
 from pathlib import Path
 from typing import Any, Optional, Union
 
+import requests
 from jupyter_kernel_client import KernelClient
 
 from datalayer_core.mixins.authn import AuthnMixin
@@ -74,7 +76,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         name : str
             Name of the runtime (kernel).
         environment : str
-            Environment type (e.g., "python-cpu-env"). Type of resources needed (cpu, gpu, etc.).
+            Environment type (e.g., "ai-agents-env"). Type of resources needed (cpu, gpu, etc.).
         time_reservation : Minutes
             Time reservation in minutes for the runtime. Defaults to 10 minutes.
         run_url : str
@@ -179,21 +181,9 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         """
         from datalayer_core.utils.urls import DatalayerURLs
 
-        return DatalayerURLs(
+        return DatalayerURLs.from_environment(
             run_url=self._model.run_url,
             iam_url=self._model.iam_url or self._model.run_url,
-            # Use defaults for other URLs
-            runtimes_url="",
-            spacer_url="",
-            library_url="",
-            manager_url="",
-            ai_agents_url="",
-            ai_inference_url="",
-            growth_url="",
-            success_url="",
-            status_url="",
-            support_url="",
-            mcp_server_url="",
         )
 
     @property
@@ -370,14 +360,36 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             self.model.expired_at = runtime["expired_at"]
 
             # Create and start kernel client
-            try:
-                self.model.kernel_client = KernelClient(
-                    server_url=self.model.ingress, token=self.model.jupyter_token
+            last_error: Optional[Exception] = None
+            for attempt in range(1, 4):
+                try:
+                    self.model.kernel_client = KernelClient(
+                        server_url=self.model.ingress, token=self.model.jupyter_token
+                    )
+                    self.model.kernel_client.start()
+                    print(f"Runtime started successfully: {self.model.uid}")
+                    break
+                except requests.exceptions.HTTPError as e:
+                    status = (
+                        e.response.status_code
+                        if getattr(e, "response", None) is not None
+                        else None
+                    )
+                    last_error = e
+                    # Retry transient gateway/proxy failures that happen while
+                    # the runtime ingress and kernel API are warming up.
+                    if status in (502, 503, 504) and attempt < 3:
+                        time.sleep(2)
+                        continue
+                    raise RuntimeError(f"Failed to start kernel client: {str(e)}")
+                except Exception as e:
+                    last_error = e
+                    raise RuntimeError(f"Failed to start kernel client: {str(e)}")
+
+            if self.model.kernel_client is None:
+                raise RuntimeError(
+                    f"Failed to start kernel client: {str(last_error) if last_error else 'unknown error'}"
                 )
-                self.model.kernel_client.start()
-                print(f"Runtime started successfully: {self.model.uid}")
-            except Exception as e:
-                raise RuntimeError(f"Failed to start kernel client: {str(e)}")
 
     def _stop(self) -> bool:
         """
@@ -704,9 +716,20 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         response = self._list_snapshots()
         snapshot_objects = as_runtime_snapshots(response)
-        for snapshot in snapshot_objects:
-            if snapshot.name == name:
+        snapshot: Optional[RuntimeSnapshotModel] = None
+        for _ in range(6):
+            snapshot = next((s for s in snapshot_objects if s.name == name), None)
+            if snapshot is not None:
                 break
+            time.sleep(1)
+            response = self._list_snapshots()
+            snapshot_objects = as_runtime_snapshots(response)
+
+        if snapshot is None:
+            raise RuntimeError(
+                f"Snapshot '{name}' was created but not found in snapshot listing"
+            )
+
         return RuntimeSnapshotModel(
             uid=snapshot.uid,
             name=name,

@@ -25,7 +25,7 @@ export const DEFAULT_SERVICE_URLS = {
   /** Default URL for OTEL (OpenTelemetry observability) service */
   OTEL: 'https://prod1.datalayer.run',
   /** Default URL for Runtimes service */
-  RUNTIMES: 'https://prod1.datalayer.run',
+  RUNTIMES: 'https://r1.datalayer.run',
   /** Default URL for Spacer (workspaces and collaboration) service */
   SPACER: 'https://prod1.datalayer.run',
 } as const;

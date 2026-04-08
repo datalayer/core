@@ -136,7 +136,7 @@ def analyze_dataset() -> dict:
 ### Environment Types
 
 - **`ai-env`**: GPU-enabled environment for deep learning
-- **`python-cpu-env`**: General-purpose environment with common ML libraries
+- **`ai-agents-env`**: General-purpose environment with common ML libraries
 
 ## Use Cases
 

@@ -21,15 +21,18 @@ from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
 from datalayer_core.cli.commands.envs import envs_list, envs_ls
 from datalayer_core.cli.commands.exec import main as exec_main
+from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
-from datalayer_core.cli.commands.runtime_checkpoints import checkpoints_list, checkpoints_ls
+from datalayer_core.cli.commands.runtime_checkpoints import (
+    checkpoints_list,
+    checkpoints_ls,
+)
 from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app
 from datalayer_core.cli.commands.runtime_snapshots import snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app
 from datalayer_core.cli.commands.runtimes import runtimes_list, runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
-from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.usage import app as usage_app

@@ -13,7 +13,9 @@ from datalayer_core.displays.environments import display_environments
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for environment commands
-app = typer.Typer(name="envs", help="Environment management commands", invoke_without_command=True)
+app = typer.Typer(
+    name="envs", help="Environment management commands", invoke_without_command=True
+)
 
 console = Console()
 
@@ -28,7 +30,7 @@ def _make_client(
 
 
 @app.callback()
-def envs_callback(ctx: typer.Context):
+def envs_callback(ctx: typer.Context) -> None:
     """Environment management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

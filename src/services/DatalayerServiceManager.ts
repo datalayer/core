@@ -22,7 +22,7 @@ import { createRuntime } from '../stateful/runtimes/actions';
  *
  * @example
  * ```typescript
- * const serviceManager = await createDatalayerServiceManager('python-cpu-env', 100);
+ * const serviceManager = await createDatalayerServiceManager('ai-agents-env', 100);
  * await serviceManager.ready;
  * // Use the service manager with notebooks
  * ```

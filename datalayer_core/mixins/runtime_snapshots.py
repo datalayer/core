@@ -74,11 +74,11 @@ class RuntimeSnapshotsDeleteMixin:
                 method="DELETE",
             )
             return {
-                "success": response.status_code == 204,
+                "success": response.status_code in (200, 202, 204),
                 "message": "Snapshot deleted successfully.",
             }
         except RuntimeError as e:
-            return {"sucess": False, "message": str(e)}
+            return {"success": False, "message": str(e)}
 
 
 class RuntimeSnapshotsListMixin:
@@ -101,7 +101,7 @@ class RuntimeSnapshotsListMixin:
             )
             return response.json()
         except RuntimeError as e:
-            return {"sucess": False, "message": str(e)}
+            return {"success": False, "message": str(e)}
 
 
 class RuntimeSnapshotsMixin(

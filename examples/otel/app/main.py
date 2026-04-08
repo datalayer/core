@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 from datalayer_core.otel import OtelClient
 
 from .generator import (
-    generate_sample_traces,
+    _flush_and_wait,
     generate_pydantic_ai_traces,
     generate_sample_logs,
     generate_sample_metrics,
-    _flush_and_wait,
+    generate_sample_traces,
 )
 
 load_dotenv()
@@ -46,7 +46,9 @@ app.add_middleware(
 def _client(token: Optional[str] = None) -> OtelClient:
     """Create an OtelClient from env vars, optionally using a caller token."""
     return OtelClient(
-        base_url=os.environ.get("DATALAYER_OTEL_URL") or os.environ.get("DATALAYER_RUN_URL") or None,
+        base_url=os.environ.get("DATALAYER_OTEL_URL")
+        or os.environ.get("DATALAYER_RUN_URL")
+        or None,
         token=token or os.environ.get("DATALAYER_API_KEY", ""),
     )
 
@@ -61,6 +63,7 @@ def _extract_token(request: Request) -> Optional[str]:
 
 # ── Home ─────────────────────────────────────────────────────────────
 
+
 @app.get("/")
 def home() -> dict:
     """Welcome page."""
@@ -70,6 +73,7 @@ def home() -> dict:
 
 
 # ── Signal generators ───────────────────────────────────────────────
+
 
 @app.post("/api/generate/traces")
 def gen_traces(request: Request, count: int = Query(3, ge=1, le=50)) -> dict:
@@ -113,11 +117,16 @@ def _proxy(func, *args, **kwargs) -> Any:
     except httpx.HTTPStatusError as exc:
         status = exc.response.status_code
         detail = exc.response.text or str(exc)
-        logger.warning("Upstream %s %s → %s", exc.request.method, exc.request.url, status)
+        logger.warning(
+            "Upstream %s %s → %s", exc.request.method, exc.request.url, status
+        )
         return JSONResponse(status_code=status, content={"detail": detail})
     except httpx.ConnectError as exc:
         logger.error("Cannot reach upstream: %s", exc)
-        return JSONResponse(status_code=502, content={"detail": f"Cannot reach upstream OTEL service: {exc}"})
+        return JSONResponse(
+            status_code=502,
+            content={"detail": f"Cannot reach upstream OTEL service: {exc}"},
+        )
 
 
 @app.get("/api/otel/v1/traces/")

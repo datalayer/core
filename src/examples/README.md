@@ -172,7 +172,7 @@ If you get 500 errors from the API:
 - Check the Datalayer platform status
 - Verify your token has sufficient permissions
 - Ensure you have available credits
-- Try a different environment (e.g., `python-cpu-env`)
+- Try a different environment (e.g., `ai-agents-env`)
 
 ## Development
 

@@ -4,7 +4,7 @@
 """Runtime Checkpoint commands for Datalayer CLI (CRIU full-pod checkpoints)."""
 
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -32,8 +32,9 @@ def _resolve_token(token: Optional[str] = None) -> str:
     # Fall back to DatalayerClient's token resolution (keyring, config file, etc.)
     try:
         from datalayer_core.client.client import DatalayerClient
+
         client = DatalayerClient()
-        return client._get_token()
+        return client._get_token() or ""
     except Exception:
         return ""
 
@@ -44,7 +45,7 @@ def _fetch_api(
     method: str = "GET",
     token: Optional[str] = None,
     runtimes_url: Optional[str] = None,
-):
+) -> Any:
     """Make an authenticated request to the runtimes checkpoints API."""
     import requests
 
@@ -63,7 +64,7 @@ def _fetch_api(
 
 
 @app.callback()
-def checkpoints_callback(ctx: typer.Context):
+def checkpoints_callback(ctx: typer.Context) -> None:
     """Runtime checkpoint management commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
@@ -161,7 +162,9 @@ def checkpoints_delete(
         # If runtime_uid not provided, look up the checkpoint first.
         if not runtime_uid:
             # List all checkpoints and find the one matching the uid.
-            data = _fetch_api("/runtime-checkpoints", token=token, runtimes_url=runtimes_url)
+            data = _fetch_api(
+                "/runtime-checkpoints", token=token, runtimes_url=runtimes_url
+            )
             checkpoints = data.get("checkpoints", [])
             match = next((c for c in checkpoints if c["id"] == checkpoint_uid), None)
             if not match:
@@ -181,7 +184,9 @@ def checkpoints_delete(
             token=token,
             runtimes_url=runtimes_url,
         )
-        console.print(f"[green]Checkpoint {checkpoint_uid} deleted successfully.[/green]")
+        console.print(
+            f"[green]Checkpoint {checkpoint_uid} deleted successfully.[/green]"
+        )
 
     except typer.Exit:
         raise

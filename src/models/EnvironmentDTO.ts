@@ -121,7 +121,7 @@ export class EnvironmentDTO {
     return this._data.title;
   }
 
-  /** Unique name identifier for the environment (e.g., 'ai-env', 'python-cpu-env'). */
+  /** Unique name identifier for the environment (e.g., 'ai-env', 'ai-agents-env'). */
   get name(): string {
     return this._data.name;
   }

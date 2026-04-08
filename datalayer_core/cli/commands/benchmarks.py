@@ -13,14 +13,18 @@ from datalayer_core.base.serverapplication import launch_new_instance
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for benchmarks commands
-app = typer.Typer(name="benchmarks", help="Benchmarks management commands", invoke_without_command=True)
+app = typer.Typer(
+    name="benchmarks",
+    help="Benchmarks management commands",
+    invoke_without_command=True,
+)
 
 console = Console()
 
 
 @app.callback()
-def benchmarks_callback(ctx: typer.Context):
-    """Benchmarks management commands."""
+def benchmarks_callback(ctx: typer.Context) -> None:
+    """Manage benchmark commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
 

@@ -19,13 +19,15 @@ from datalayer_core.utils.network import find_http_port
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for auth commands
-app = typer.Typer(name="auth", help="Authentication commands", invoke_without_command=True)
+app = typer.Typer(
+    name="auth", help="Authentication commands", invoke_without_command=True
+)
 
 console = Console()
 
 
 @app.callback()
-def auth_callback(ctx: typer.Context):
+def auth_callback(ctx: typer.Context) -> None:
     """Authentication commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())

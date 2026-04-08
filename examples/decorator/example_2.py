@@ -18,7 +18,7 @@ HERE = Path(__file__).parent
 # Example 2: Function with inputs and output variables
 @datalayer(
     runtime_name="data-processing",
-    environment="python-cpu-env",
+    environment="ai-agents-env",
     inputs=["data"],
     output="processed_result",
 )

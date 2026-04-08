@@ -159,7 +159,7 @@ environments.forEach(env => {
 
 // Ensure runtime (creates or reuses existing)
 const runtime = await client.ensureRuntime(
-  'python-cpu-env',  // environment name
+  'ai-agents-env',  // environment name
   50,                // credits limit
   true,              // wait for ready
   60000,             // max wait time (ms)
@@ -534,7 +534,7 @@ try {
 }
 
 // Model deletion state
-const runtime = await client.createRuntime('python-cpu-env', 'notebook', 'test', 10);
+const runtime = await client.createRuntime('ai-agents-env', 'notebook', 'test', 10);
 await client.deleteRuntime(runtime.podName);
 
 // This will throw an error
@@ -574,7 +574,7 @@ const client = new DatalayerClient({
 
 4. **Wait for runtime readiness**: Always use `waitUntilReady()` after creating a runtime before performing operations:
    ```typescript
-   const runtime = await client.createRuntime('python-cpu-env', 'notebook', 'analysis', 50);
+   const runtime = await client.createRuntime('ai-agents-env', 'notebook', 'analysis', 50);
    await runtime.waitUntilReady(60000); // Wait up to 60 seconds
    // Now safe to use runtime
    ```
@@ -582,7 +582,7 @@ const client = new DatalayerClient({
 5. **Reuse runtimes when possible**: Use `ensureRuntime()` instead of `createRuntime()` to reuse existing runtimes and save credits:
    ```typescript
    const runtime = await client.ensureRuntime(
-     'python-cpu-env',
+     'ai-agents-env',
      50,    // credits limit
      true,  // wait for ready
      60000, // max wait time
@@ -671,7 +671,7 @@ if (testConfig.hasToken()) {
 // Skip expensive tests if configured
 if (!testConfig.shouldSkipExpensive()) {
   // Run expensive tests (runtime creation, etc.)
-  const runtime = await client.createRuntime('python-cpu-env', 'notebook', 'test', 10);
+  const runtime = await client.createRuntime('ai-agents-env', 'notebook', 'test', 10);
   await client.deleteRuntime(runtime.podName);
 }
 ```

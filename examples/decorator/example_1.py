@@ -16,7 +16,7 @@ HERE = Path(__file__).parent
 
 
 # Example 1: Simple function with decorator
-@datalayer(runtime_name="my-runtime", environment="python-cpu-env")
+@datalayer(runtime_name="my-runtime", environment="ai-agents-env")
 def simple_computation(x: int, y: int) -> int:
     """
     Simple computation that runs on a remote runtime.
