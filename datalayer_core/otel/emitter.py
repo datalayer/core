@@ -27,6 +27,7 @@ class OTelEmitter:
         self,
         service_name: str = "datalayer-service",
         service_version: str = "0.0.0",
+        user_uid: str | None = None,
     ) -> None:
         self.service_name = service_name
         self.service_version = service_version
@@ -80,7 +81,6 @@ class OTelEmitter:
                 "service.name": self.service_name,
                 "service.version": self.service_version,
             }
-            user_uid = os.environ.get("DATALAYER_USER_UID")
             if user_uid:
                 resource_attrs["datalayer.user_uid"] = user_uid
             resource = Resource.create(resource_attrs)
