@@ -76,12 +76,14 @@ class OTelEmitter:
             token = os.environ.get("DATALAYER_API_KEY")
             headers = {"Authorization": f"Bearer {token}"} if token else None
 
-            resource = Resource.create(
-                {
-                    "service.name": self.service_name,
-                    "service.version": self.service_version,
-                }
-            )
+            resource_attrs: dict[str, str] = {
+                "service.name": self.service_name,
+                "service.version": self.service_version,
+            }
+            user_uid = os.environ.get("DATALAYER_USER_UID")
+            if user_uid:
+                resource_attrs["datalayer.user_uid"] = user_uid
+            resource = Resource.create(resource_attrs)
 
             tracer_provider = TracerProvider(resource=resource)
             tracer_provider.add_span_processor(
