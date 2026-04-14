@@ -51,6 +51,14 @@ export {
   flattenSpanTree,
 } from './utils';
 
+// ── Auth helpers ──────────────────────────────────────────────────────────────
+export {
+  resolveOtelAuth,
+  resolveOtelUserUid,
+  buildOtelWebSocketUrl,
+} from './auth';
+export type { ResolvedOtelAuth } from './auth';
+
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 export {
   useOtelTraces,

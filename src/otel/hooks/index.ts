@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OtelSpan, OtelLog, OtelMetric, OtelQueryRow } from '../types';
 import { coreStore } from '../../state/substates/CoreState';
+import { buildOtelWebSocketUrl, resolveOtelAuth } from '../auth';
 
 // ── Global 401 handler ──────────────────────────────────────────────
 
@@ -45,15 +46,16 @@ export function setOtelOnUnauthorized(cb: (() => void) | null): void {
 async function otelFetch<T = any>(
   url: string,
   token?: string,
+  userUid?: string,
   options?: { method?: string; body?: unknown },
 ): Promise<T> {
+  const auth = resolveOtelAuth(token, userUid);
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  headers['Authorization'] = `Bearer ${auth.token}`;
+  headers['X-Datalayer-User-Uid'] = auth.userUid;
   const isPost = options?.method === 'POST';
   if (isPost) {
     headers['Content-Type'] = 'application/json';
@@ -562,10 +564,15 @@ export function useOtelQuery(options: { token?: string; baseUrl?: string }) {
       setLoading(true);
       setError(null);
       try {
-        const data = await otelFetch(`${baseUrl}/api/otel/v1/query/`, token, {
-          method: 'POST',
-          body: { sql },
-        });
+        const data = await otelFetch(
+          `${baseUrl}/api/otel/v1/query/`,
+          token,
+          undefined,
+          {
+            method: 'POST',
+            body: { sql },
+          },
+        );
         setRows(data.data ?? []);
       } catch (err: any) {
         setError(err.message ?? 'Query failed');
@@ -625,6 +632,8 @@ export function useOtelWebSocket(options: {
   baseUrl?: string;
   /** JWT token or API key for authentication. */
   token?: string;
+  /** Explicit user UID; optional when token contains user.uid/sub. */
+  userUid?: string;
   /** Whether to automatically reconnect on disconnect. Default true. */
   autoReconnect?: boolean;
   /** Reconnect delay in ms. Default 3000. */
@@ -635,6 +644,7 @@ export function useOtelWebSocket(options: {
   const {
     baseUrl = coreStore.getState().configuration.otelRunUrl,
     token,
+    userUid,
     autoReconnect = true,
     reconnectDelayMs = 3000,
     callbacks,
@@ -665,20 +675,18 @@ export function useOtelWebSocket(options: {
       return;
     }
 
-    // Derive ws(s):// URL from http(s):// baseUrl.
     let wsUrl: string;
-    if (baseUrl.startsWith('http://')) {
-      wsUrl = `ws://${baseUrl.slice(7)}`;
-    } else if (baseUrl.startsWith('https://')) {
-      wsUrl = `wss://${baseUrl.slice(8)}`;
-    } else if (baseUrl.startsWith('ws://') || baseUrl.startsWith('wss://')) {
-      wsUrl = baseUrl;
-    } else {
-      // Relative URL – use current page's protocol.
-      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      wsUrl = `${proto}//${window.location.host}${baseUrl}`;
+    try {
+      wsUrl = buildOtelWebSocketUrl({
+        baseUrl,
+        token,
+        userUid,
+      });
+    } catch (err: any) {
+      setError(err?.message ?? 'WebSocket auth error');
+      setConnected(false);
+      return;
     }
-    wsUrl = `${wsUrl.replace(/\/$/, '')}/api/otel/v1/ws?token=${encodeURIComponent(token)}`;
 
     function connect() {
       const ws = new WebSocket(wsUrl);
@@ -742,7 +750,7 @@ export function useOtelWebSocket(options: {
         wsRef.current = null;
       }
     };
-  }, [baseUrl, token, autoReconnect, reconnectDelayMs]);
+  }, [baseUrl, token, userUid, autoReconnect, reconnectDelayMs]);
 
   return { connected, error, close };
 }
