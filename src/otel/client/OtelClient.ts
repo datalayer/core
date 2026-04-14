@@ -132,6 +132,18 @@ function parseMetricTimestamp(raw: Record<string, unknown>): string {
 }
 
 function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
+  // Preserve the raw nanosecond timestamp for time-series charts.
+  let timestampUnixNano: number | undefined;
+  const rawNano = raw.timestamp_unix_nano;
+  if (typeof rawNano === 'number' && rawNano > 0) {
+    timestampUnixNano = rawNano;
+  } else if (typeof rawNano === 'string') {
+    const parsed = Number(rawNano);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      timestampUnixNano = parsed;
+    }
+  }
+
   return {
     metric_name: String(
       raw.metric_name ?? raw.MetricName ?? raw.name ?? raw.Name ?? '',
@@ -149,6 +161,7 @@ function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
               ? String(raw.Unit)
               : undefined,
     timestamp: parseMetricTimestamp(raw),
+    timestamp_unix_nano: timestampUnixNano,
     metric_type:
       raw.metric_type != null
         ? String(raw.metric_type)

@@ -65,6 +65,8 @@ export interface OtelMetric {
   value: number;
   unit?: string;
   timestamp: string;
+  /** Raw nanosecond timestamp preserved from the backend. */
+  timestamp_unix_nano?: number;
   attributes?: Record<string, unknown>;
   metric_type?: string;
 }
