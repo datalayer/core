@@ -51,6 +51,7 @@ class OTelEmitter:
         service_name: str = "datalayer-service",
         service_version: str = "0.0.0",
         user_uid: str | None = None,
+        token: str | None = None,
     ) -> None:
         self.service_name = service_name
         self.service_version = service_version
@@ -60,18 +61,18 @@ class OTelEmitter:
         self._counters: dict[str, Any] = {}
         self._histograms: dict[str, Any] = {}
 
-        token = os.environ.get("DATALAYER_API_KEY")
+        resolved_token = token or os.environ.get("DATALAYER_API_KEY")
         resolved_user_uid = user_uid or os.environ.get("DATALAYER_USER_UID")
         if not resolved_user_uid:
-            resolved_user_uid = _decode_user_uid(token)
+            resolved_user_uid = _decode_user_uid(resolved_token)
 
-        if not token:
+        if not resolved_token:
             raise ValueError(
-                "OTelEmitter requires DATALAYER_API_KEY for authenticated OTEL export"
+                "OTelEmitter requires a token (JWT or DATALAYER_API_KEY) for authenticated OTEL export"
             )
         if not resolved_user_uid:
             raise ValueError(
-                "OTelEmitter requires datalayer.user_uid; pass user_uid or provide a JWT DATALAYER_API_KEY"
+                "OTelEmitter requires datalayer.user_uid; pass user_uid or provide a JWT token"
             )
 
         try:
@@ -111,7 +112,7 @@ class OTelEmitter:
                 or f"{otlp_base}/v1/traces"
             )
 
-            headers = {"Authorization": f"Bearer {token}"}
+            headers = {"Authorization": f"Bearer {resolved_token}"}
 
             resource_attrs: dict[str, str] = {
                 "service.name": self.service_name,
