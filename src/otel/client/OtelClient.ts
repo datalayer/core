@@ -20,6 +20,7 @@
 
 import { coreStore } from '../../state/substates/CoreState';
 import type { OtelSpan, OtelLog, OtelMetric, OtelQueryResult } from '../types';
+import { resolveOtelAuth } from '../auth';
 import type {
   OtelSystemData,
   OtelSystemProcess,
@@ -32,15 +33,16 @@ import type {
 async function otelFetch<T = unknown>(
   url: string,
   token?: string,
+  userUid?: string,
   options?: { method?: string; body?: unknown },
 ): Promise<T> {
+  const auth = resolveOtelAuth(token, userUid);
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
   };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
+  headers['Authorization'] = `Bearer ${auth.token}`;
+  headers['X-Datalayer-User-Uid'] = auth.userUid;
   if (options?.body) {
     headers['Content-Type'] = 'application/json';
   }
@@ -67,6 +69,8 @@ export interface OtelClientOptions {
   baseUrl?: string;
   /** JWT bearer token or API key for authentication. */
   token?: string;
+  /** Explicit user UID; optional when token contains user.uid/sub. */
+  userUid?: string;
 }
 
 export interface FetchTracesOptions {
@@ -132,6 +136,18 @@ function parseMetricTimestamp(raw: Record<string, unknown>): string {
 }
 
 function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
+  // Preserve the raw nanosecond timestamp for time-series charts.
+  let timestampUnixNano: number | undefined;
+  const rawNano = raw.timestamp_unix_nano;
+  if (typeof rawNano === 'number' && rawNano > 0) {
+    timestampUnixNano = rawNano;
+  } else if (typeof rawNano === 'string') {
+    const parsed = Number(rawNano);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      timestampUnixNano = parsed;
+    }
+  }
+
   return {
     metric_name: String(
       raw.metric_name ?? raw.MetricName ?? raw.name ?? raw.Name ?? '',
@@ -149,6 +165,7 @@ function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
               ? String(raw.Unit)
               : undefined,
     timestamp: parseMetricTimestamp(raw),
+    timestamp_unix_nano: timestampUnixNano,
     metric_type:
       raw.metric_type != null
         ? String(raw.metric_type)
@@ -171,12 +188,15 @@ function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
  */
 export class OtelClient {
   private readonly baseUrl: string;
-  private readonly token?: string;
+  private readonly token: string;
+  private readonly userUid: string;
 
   constructor(options: OtelClientOptions = {}) {
     this.baseUrl =
       options.baseUrl ?? coreStore.getState().configuration.otelRunUrl;
-    this.token = options.token;
+    const auth = resolveOtelAuth(options.token, options.userUid);
+    this.token = auth.token;
+    this.userUid = auth.userUid;
   }
 
   // ── Traces ────────────────────────────────────────────────────────────────
@@ -190,6 +210,7 @@ export class OtelClient {
     const resp = await otelFetch<{ data?: OtelSpan[] } | OtelSpan[]>(
       `${this.baseUrl}/api/otel/v1/traces/?${params}`,
       this.token,
+      this.userUid,
     );
     const rows = (Array.isArray(resp) ? resp : (resp as any).data) ?? [];
     return { data: rows, count: rows.length };
@@ -200,6 +221,7 @@ export class OtelClient {
     const resp = await otelFetch<{ data?: OtelSpan[] } | OtelSpan[]>(
       `${this.baseUrl}/api/otel/v1/traces/${traceId}`,
       this.token,
+      this.userUid,
     );
     const rows = (Array.isArray(resp) ? resp : (resp as any).data) ?? [];
     return { data: rows };
@@ -218,6 +240,7 @@ export class OtelClient {
     const resp = await otelFetch<{ data?: OtelLog[] } | OtelLog[]>(
       `${this.baseUrl}/api/otel/v1/logs/?${params}`,
       this.token,
+      this.userUid,
     );
     const rows = (Array.isArray(resp) ? resp : (resp as any).data) ?? [];
     return { data: rows, count: rows.length };
@@ -235,6 +258,7 @@ export class OtelClient {
     const resp = await otelFetch<{ data?: OtelMetric[] } | OtelMetric[]>(
       `${this.baseUrl}/api/otel/v1/metrics/?${params}`,
       this.token,
+      this.userUid,
     );
     const rows = (Array.isArray(resp) ? resp : (resp as any).data) ?? [];
     const normalized = Array.isArray(rows)
@@ -279,7 +303,11 @@ export class OtelClient {
       | { services?: string[] }
       | { data?: Array<{ service_name: string }> }
       | string[]
-    >(`${this.baseUrl}/api/otel/v1/traces/services/list`, this.token);
+    >(
+      `${this.baseUrl}/api/otel/v1/traces/services/list`,
+      this.token,
+      this.userUid,
+    );
     if (Array.isArray(resp)) return resp as string[];
     const byServices = (resp as any).services;
     if (Array.isArray(byServices)) return byServices;
@@ -299,6 +327,7 @@ export class OtelClient {
     return otelFetch<Record<string, unknown>>(
       `${this.baseUrl}/api/otel/v1/stats/`,
       this.token,
+      this.userUid,
     );
   }
 
@@ -313,6 +342,7 @@ export class OtelClient {
     return otelFetch<OtelQueryResult>(
       `${this.baseUrl}/api/otel/v1/query/`,
       this.token,
+      this.userUid,
       { method: 'POST', body: { sql } },
     );
   }
@@ -328,6 +358,7 @@ export class OtelClient {
     const resp = await otelFetch<{ data?: OtelSystemData } | OtelSystemData>(
       `${this.baseUrl}/api/otel/v1/system/`,
       this.token,
+      this.userUid,
     );
     return ((resp as any).data ?? resp) as OtelSystemData;
   }

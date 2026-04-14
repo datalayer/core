@@ -23,6 +23,8 @@ Usage::
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 from typing import Any
 
@@ -51,18 +53,55 @@ class OtelClient:
         self,
         base_url: str | None = None,
         token: str | None = None,
+        user_uid: str | None = None,
         timeout: float = 30.0,
     ) -> None:
         self.base_url = (base_url or OTEL_BASE_URL).rstrip("/")
         self.token = token or os.environ.get("DATALAYER_API_KEY", "")
+        self.user_uid = (
+            user_uid
+            or os.environ.get("DATALAYER_USER_UID")
+            or self._decode_user_uid(self.token)
+            or ""
+        )
         self.timeout = timeout
 
     # ── internal helpers ─────────────────────────────────────────────
 
+    @staticmethod
+    def _decode_user_uid(token: str | None) -> str | None:
+        if not token:
+            return None
+        try:
+            parts = token.split(".")
+            if len(parts) != 3:
+                return None
+            payload_b64 = parts[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+            user_claim = payload.get("user")
+            if isinstance(user_claim, dict) and user_claim.get("uid"):
+                return str(user_claim["uid"])
+            sub = payload.get("sub")
+            if isinstance(sub, str) and sub.strip():
+                return sub.strip()
+        except Exception:
+            return None
+        return None
+
     def _headers(self) -> dict[str, str]:
-        if self.token:
-            return {"Authorization": f"Bearer {self.token}"}
-        return {}
+        if not self.token:
+            raise ValueError(
+                "OTEL client requires an authenticated token (DATALAYER_API_KEY)"
+            )
+        if not self.user_uid:
+            raise ValueError(
+                "OTEL client requires datalayer.user_uid; pass user_uid or use a JWT token containing user.uid/sub"
+            )
+        return {
+            "Authorization": f"Bearer {self.token}",
+            "X-Datalayer-User-Uid": self.user_uid,
+        }
 
     def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         resp = httpx.get(

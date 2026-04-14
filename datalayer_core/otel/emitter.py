@@ -10,9 +10,32 @@ using Datalayer environment conventions.
 
 from __future__ import annotations
 
+import base64
+import json
 import os
 from contextlib import contextmanager
 from typing import Any, Generator
+
+
+def _decode_user_uid(token: str | None) -> str | None:
+    if not token:
+        return None
+    try:
+        parts = token.split(".")
+        if len(parts) != 3:
+            return None
+        payload_b64 = parts[1]
+        payload_b64 += "=" * (-len(payload_b64) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
+        user_claim = payload.get("user")
+        if isinstance(user_claim, dict) and user_claim.get("uid"):
+            return str(user_claim["uid"])
+        sub = payload.get("sub")
+        if isinstance(sub, str) and sub.strip():
+            return sub.strip()
+    except Exception:
+        return None
+    return None
 
 
 class OTelEmitter:
@@ -27,6 +50,8 @@ class OTelEmitter:
         self,
         service_name: str = "datalayer-service",
         service_version: str = "0.0.0",
+        user_uid: str | None = None,
+        token: str | None = None,
     ) -> None:
         self.service_name = service_name
         self.service_version = service_version
@@ -35,6 +60,20 @@ class OTelEmitter:
         self._meter = None
         self._counters: dict[str, Any] = {}
         self._histograms: dict[str, Any] = {}
+
+        resolved_token = token or os.environ.get("DATALAYER_API_KEY")
+        resolved_user_uid = user_uid or os.environ.get("DATALAYER_USER_UID")
+        if not resolved_user_uid:
+            resolved_user_uid = _decode_user_uid(resolved_token)
+
+        if not resolved_token:
+            raise ValueError(
+                "OTelEmitter requires a token (JWT or DATALAYER_API_KEY) for authenticated OTEL export"
+            )
+        if not resolved_user_uid:
+            raise ValueError(
+                "OTelEmitter requires datalayer.user_uid; pass user_uid or provide a JWT token"
+            )
 
         try:
             from opentelemetry import metrics, trace
@@ -73,15 +112,14 @@ class OTelEmitter:
                 or f"{otlp_base}/v1/traces"
             )
 
-            token = os.environ.get("DATALAYER_API_KEY")
-            headers = {"Authorization": f"Bearer {token}"} if token else None
+            headers = {"Authorization": f"Bearer {resolved_token}"}
 
-            resource = Resource.create(
-                {
-                    "service.name": self.service_name,
-                    "service.version": self.service_version,
-                }
-            )
+            resource_attrs: dict[str, str] = {
+                "service.name": self.service_name,
+                "service.version": self.service_version,
+                "datalayer.user_uid": resolved_user_uid,
+            }
+            resource = Resource.create(resource_attrs)
 
             tracer_provider = TracerProvider(resource=resource)
             tracer_provider.add_span_processor(
