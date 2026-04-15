@@ -23,14 +23,13 @@ Usage::
 
 from __future__ import annotations
 
-import base64
-import json
 import os
 from typing import Any
 
 import httpx
 
 from datalayer_core.otel.config import OTEL_BASE_URL
+from datalayer_core.otel.logfire import decode_user_uid
 
 
 class OtelClient:
@@ -45,6 +44,9 @@ class OtelClient:
     token : str, optional
         JWT bearer token for authentication.  Falls back to
         ``DATALAYER_API_KEY`` env var.
+    user_uid : str, optional
+        Explicit Datalayer user UID. When omitted, resolves from
+        ``DATALAYER_USER_UID`` or from ``user.uid``/``sub`` in the JWT token.
     timeout : float
         HTTP request timeout in seconds.
     """
@@ -72,42 +74,37 @@ class OtelClient:
     def _decode_user_uid(token: str | None) -> str | None:
         if not token:
             return None
-        try:
-            parts = token.split(".")
-            if len(parts) != 3:
-                return None
-            payload_b64 = parts[1]
-            payload_b64 += "=" * (-len(payload_b64) % 4)
-            payload = json.loads(base64.urlsafe_b64decode(payload_b64))
-            user_claim = payload.get("user")
-            if isinstance(user_claim, dict) and user_claim.get("uid"):
-                return str(user_claim["uid"])
-            sub = payload.get("sub")
-            if isinstance(sub, str) and sub.strip():
-                return sub.strip()
-        except Exception:
-            return None
-        return None
+        return decode_user_uid(token)
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(self, require_auth: bool = True) -> dict[str, str]:
         if not self.token:
-            raise ValueError(
-                "OTEL client requires an authenticated token (DATALAYER_API_KEY)"
-            )
+            if require_auth:
+                raise ValueError(
+                    "OTEL client requires an authenticated token (DATALAYER_API_KEY)"
+                )
+            return {}
         if not self.user_uid:
-            raise ValueError(
-                "OTEL client requires datalayer.user_uid; pass user_uid or use a JWT token containing user.uid/sub"
-            )
+            if require_auth:
+                raise ValueError(
+                    "OTEL client requires datalayer.user_uid; pass user_uid or use a JWT token containing user.uid/sub"
+                )
+            return {"Authorization": f"Bearer {self.token}"}
         return {
             "Authorization": f"Bearer {self.token}",
             "X-Datalayer-User-Uid": self.user_uid,
         }
 
-    def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
+    def _get(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        *,
+        require_auth: bool = True,
+    ) -> Any:
         resp = httpx.get(
             f"{self.base_url}{path}",
             params=params,
-            headers=self._headers(),
+            headers=self._headers(require_auth=require_auth),
             timeout=self.timeout,
             follow_redirects=True,
         )
@@ -131,13 +128,13 @@ class OtelClient:
         """
         Health check (no auth required).
         """
-        return self._get("/api/otel/v1/ping/")
+        return self._get("/api/otel/v1/ping/", require_auth=False)
 
     def version(self) -> dict[str, Any]:
         """
         Get service version.
         """
-        return self._get("/api/otel/v1/version/")
+        return self._get("/api/otel/v1/version/", require_auth=False)
 
     def get_stats(self) -> dict[str, Any]:
         """
