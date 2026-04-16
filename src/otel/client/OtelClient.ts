@@ -143,7 +143,7 @@ function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
     timestampUnixNano = String(Math.trunc(rawNano));
   } else if (typeof rawNano === 'string') {
     const trimmed = rawNano.trim();
-    if (trimmed.length > 0) {
+    if (/^\d+$/.test(trimmed) && trimmed !== '0') {
       timestampUnixNano = trimmed;
     }
   }

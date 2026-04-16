@@ -20,6 +20,10 @@ from datalayer_core.otel.logfire import decode_user_uid
 def _decode_user_uid(token: str | None) -> str | None:
     if not token:
         return None
+    # Only attempt JWT decode when the token looks like a JWT (3 dot-separated segments).
+    parts = token.split(".")
+    if len(parts) != 3 or not all(parts):
+        return None
     return decode_user_uid(token)
 
 
@@ -59,7 +63,7 @@ class OTelEmitter:
             from opentelemetry.sdk.resources import Resource
             from opentelemetry.sdk.trace import TracerProvider
             from opentelemetry.sdk.trace.export import BatchSpanProcessor
-        except Exception:
+        except ImportError:
             self._enabled = False
             return
 

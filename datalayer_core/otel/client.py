@@ -74,21 +74,23 @@ class OtelClient:
     def _decode_user_uid(token: str | None) -> str | None:
         if not token:
             return None
+        # Only attempt JWT decode when the token looks like a JWT (3 dot-separated segments).
+        parts = token.split(".")
+        if len(parts) != 3 or not all(parts):
+            return None
         return decode_user_uid(token)
 
     def _headers(self, require_auth: bool = True) -> dict[str, str]:
-        if not self.token:
-            if require_auth:
-                raise ValueError(
-                    "OTEL client requires an authenticated token (DATALAYER_API_KEY)"
-                )
+        if not require_auth:
             return {}
+        if not self.token:
+            raise ValueError(
+                "OTEL client requires an authenticated token (DATALAYER_API_KEY)"
+            )
         if not self.user_uid:
-            if require_auth:
-                raise ValueError(
-                    "OTEL client requires datalayer.user_uid; pass user_uid or use a JWT token containing user.uid/sub"
-                )
-            return {"Authorization": f"Bearer {self.token}"}
+            raise ValueError(
+                "OTEL client requires datalayer.user_uid; pass user_uid or use a JWT token containing user.uid/sub"
+            )
         return {
             "Authorization": f"Bearer {self.token}",
             "X-Datalayer-User-Uid": self.user_uid,
