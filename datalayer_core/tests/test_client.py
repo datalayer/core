@@ -114,8 +114,8 @@ def test_runtime_snapshot_create_and_delete() -> None:
     def _delete_with_retry(
         client: DatalayerClient,
         snap: "RuntimeSnapshotModel",
-        retries: int = 5,
-        delay: float = 3.0,
+        retries: int = 10,
+        delay: float = 5.0,
     ) -> None:
         for attempt in range(retries):
             result = client.delete_snapshot(snap)
@@ -138,7 +138,9 @@ def test_runtime_snapshot_create_and_delete() -> None:
         )
         assert snapshot_3.name == snapshot_name_3
 
-        time.sleep(10)
+        # Wait for the operator to finish creating the snapshot files
+        # (snapshot status transitions from 'requested' to 'created' via messaging)
+        time.sleep(30)
 
         _delete_with_retry(client, snapshot)
         _delete_with_retry(client, snapshot_2)
