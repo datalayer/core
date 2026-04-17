@@ -7,6 +7,7 @@ Datalayer Client - A simple Python Client for AI engineers to work with Datalaye
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
+import logging
 import os
 import time
 import uuid
@@ -38,6 +39,9 @@ from datalayer_core.utils.defaults import (
 )
 from datalayer_core.utils.types import Minutes
 from datalayer_core.utils.urls import DatalayerURLs
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatalayerClient(
@@ -311,7 +315,26 @@ class DatalayerClient(
         list[Runtime]
             List of Runtime objects representing active runtimes.
         """
-        runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
+        response = self._list_runtimes()
+
+        if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            logger.error("Failed to list runtimes: %s", message)
+            raise RuntimeError(f"Failed to list runtimes: {message}")
+
+        runtimes_raw = response.get("runtimes")
+        if runtimes_raw is None:
+            logger.error("Failed to list runtimes: missing 'runtimes' field")
+            raise RuntimeError(
+                "Failed to list runtimes: missing 'runtimes' field in response"
+            )
+        if not isinstance(runtimes_raw, list):
+            logger.error("Failed to list runtimes: invalid 'runtimes' field type")
+            raise RuntimeError(
+                "Failed to list runtimes: invalid 'runtimes' field type"
+            )
+
+        runtimes: list[dict[str, Any]] = runtimes_raw
         runtime_services = []
         for runtime in runtimes:
             runtime_services.append(

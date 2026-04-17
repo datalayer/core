@@ -6,8 +6,10 @@
 from __future__ import annotations
 
 import re
+import time
 from typing import Any, Optional
 
+import requests
 from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
 
@@ -217,7 +219,31 @@ class RuntimeManager(KernelHttpManager):
         # Get runtime information.
         from datalayer_core.utils.network import fetch
 
-        response = fetch(f"{self.server_url}/api/kernels", token=self.token)
+        response = None
+        max_attempts = 4
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = fetch(f"{self.server_url}/api/kernels", token=self.token)
+                break
+            except requests.exceptions.HTTPError as e:
+                status = (
+                    e.response.status_code
+                    if getattr(e, "response", None) is not None
+                    else None
+                )
+                if status in (502, 503, 504) and attempt < max_attempts:
+                    time.sleep(2 ** (attempt - 1))
+                    continue
+                raise
+            except requests.exceptions.ConnectionError:
+                if attempt < max_attempts:
+                    time.sleep(2 ** (attempt - 1))
+                    continue
+                raise
+
+        if response is None:
+            raise RuntimeError("Failed to query kernel endpoint for runtime")
+
         kernels = response.json()
         if kernels:
             self._kernel_id = kernels[0]["id"]
