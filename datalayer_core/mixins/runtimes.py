@@ -4,8 +4,8 @@
 """Runtime management module for Datalayer Core."""
 
 import logging
-import time
 import sys
+import time
 from typing import Any, Optional
 
 import requests
