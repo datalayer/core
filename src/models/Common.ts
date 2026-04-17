@@ -18,11 +18,8 @@ export interface HealthzPingResponse {
   success: boolean;
   /** Response message from the server */
   message: string;
-  /** Service status information */
-  status?: {
-    /** Status indicator (e.g., "OK") */
-    status: string;
-  };
+  /** Service status indicator (e.g., "OK") */
+  status?: string;
   /** API version */
   version?: string;
 }

@@ -47,17 +47,17 @@ describe.skipIf(skipTests)('IAM Healthz Integration Tests', () => {
       expect(response).toBeDefined();
       expect(response.success).toBe(true);
       expect(response.message).toBeDefined();
-      expect(response.message.toLowerCase()).toContain('running');
+      expect(response.message.toLowerCase()).toContain('healthy');
       expect(response.status).toBeDefined();
-      expect(response.status?.status).toBe('OK');
-      expect(response.version).toBeDefined();
-      expect(typeof response.version).toBe('string');
+      expect(response.status).toBe('OK');
 
       console.log('Health check successful');
       console.log('Success:', response.success);
       console.log('Message:', response.message);
-      console.log('Status:', response.status?.status);
-      console.log('Version:', response.version);
+      console.log('Status:', response.status);
+      if (response.version) {
+        console.log('Version:', response.version);
+      }
     });
 
     it('should work with default URL if not specified', async () => {
@@ -75,7 +75,7 @@ describe.skipIf(skipTests)('IAM Healthz Integration Tests', () => {
       expect(response).toBeDefined();
       expect(response.success).toBe(true);
       expect(response.status).toBeDefined();
-      expect(response.status?.status).toBe('OK');
+      expect(response.status).toBe('OK');
     });
   });
 

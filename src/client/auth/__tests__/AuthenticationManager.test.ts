@@ -2,7 +2,7 @@
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { AuthenticationManager } from '../AuthenticationManager';
 import { NodeStorage } from '../storage';
 
@@ -19,11 +19,22 @@ vi.mock('../../../api/iam/profile', () => ({
 describe('AuthenticationManager', () => {
   let auth: AuthenticationManager;
   let storage: NodeStorage;
+  let savedApiKey: string | undefined;
   const iamUrl = 'https://test.datalayer.run';
 
   beforeEach(() => {
+    // Save and clear DATALAYER_API_KEY to prevent env contamination
+    savedApiKey = process.env.DATALAYER_API_KEY;
+    delete process.env.DATALAYER_API_KEY;
     storage = new NodeStorage();
     auth = new AuthenticationManager(iamUrl, storage);
+  });
+
+  afterEach(() => {
+    // Restore DATALAYER_API_KEY
+    if (savedApiKey !== undefined) {
+      process.env.DATALAYER_API_KEY = savedApiKey;
+    }
   });
 
   describe('constructor', () => {

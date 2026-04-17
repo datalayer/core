@@ -2,7 +2,7 @@
  * Copyright (c) 2023-2025 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { BrowserStorage, NodeStorage, getDefaultStorage } from '../storage';
 
 describe('BrowserStorage', () => {
@@ -53,9 +53,20 @@ describe('BrowserStorage', () => {
 
 describe('NodeStorage', () => {
   let storage: NodeStorage;
+  let savedApiKey: string | undefined;
 
   beforeEach(() => {
+    // Save and clear DATALAYER_API_KEY to prevent env contamination
+    savedApiKey = process.env.DATALAYER_API_KEY;
+    delete process.env.DATALAYER_API_KEY;
     storage = new NodeStorage();
+  });
+
+  afterEach(() => {
+    // Restore DATALAYER_API_KEY
+    if (savedApiKey !== undefined) {
+      process.env.DATALAYER_API_KEY = savedApiKey;
+    }
   });
 
   it('should always be available in Node environment', () => {

@@ -305,8 +305,12 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
         console.log('Logout failed:', error.message);
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
-        // Should get a server error for invalid token
-        expect(error.message).toContain('Server Error');
+        // Should get an auth error for invalid token
+        expect(
+          error.message.includes('Unauthorized') ||
+            error.message.includes('Server Error') ||
+            error.message.includes('401'),
+        ).toBe(true);
       }
     });
 

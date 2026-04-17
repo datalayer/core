@@ -71,26 +71,26 @@ describe.skipIf(skipTests)('IAM Profile Integration Tests', () => {
       expect(typeof response.me.id).toBe('string');
       expect(response.me.uid).toBeDefined();
       expect(typeof response.me.uid).toBe('string');
-      expect(response.me.handle).toBeDefined();
-      expect(typeof response.me.handle).toBe('string');
-      expect(response.me.email).toBeDefined();
-      expect(typeof response.me.email).toBe('string');
-      expect(response.me.firstName).toBeDefined();
-      expect(typeof response.me.firstName).toBe('string');
-      expect(response.me.lastName).toBeDefined();
-      expect(typeof response.me.lastName).toBe('string');
-      expect(response.me.avatarUrl).toBeDefined();
-      expect(typeof response.me.avatarUrl).toBe('string');
-      expect(response.me.roles).toBeDefined();
-      expect(Array.isArray(response.me.roles)).toBe(true);
+      expect(response.me.handle_s).toBeDefined();
+      expect(typeof response.me.handle_s).toBe('string');
+      expect(response.me.email_s).toBeDefined();
+      expect(typeof response.me.email_s).toBe('string');
+      expect(response.me.first_name_t).toBeDefined();
+      expect(typeof response.me.first_name_t).toBe('string');
+      expect(response.me.last_name_t).toBeDefined();
+      expect(typeof response.me.last_name_t).toBe('string');
+      expect(response.me.avatar_url_s).toBeDefined();
+      expect(typeof response.me.avatar_url_s).toBe('string');
+      expect(response.me.roles_ss).toBeDefined();
+      expect(Array.isArray(response.me.roles_ss)).toBe(true);
 
       console.log('Successfully retrieved user profile');
       console.log('ID:', response.me.id);
       console.log('UID:', response.me.uid);
-      console.log('Email:', response.me.email);
-      console.log('Handle:', response.me.handle);
-      console.log('Name:', response.me.firstName, response.me.lastName);
-      console.log('Roles:', response.me.roles.join(', '));
+      console.log('Email:', response.me.email_s);
+      console.log('Handle:', response.me.handle_s);
+      console.log('Name:', response.me.first_name_t, response.me.last_name_t);
+      console.log('Roles:', response.me.roles_ss.join(', '));
     });
 
     it('should successfully get current user profile using default URL', async () => {
@@ -109,13 +109,13 @@ describe.skipIf(skipTests)('IAM Profile Integration Tests', () => {
       expect(response.message).toBeDefined();
       expect(response.me).toBeDefined();
       expect(response.me.uid).toBeDefined();
-      expect(response.me.handle).toBeDefined();
-      expect(response.me.email).toBeDefined();
-      expect(Array.isArray(response.me.roles)).toBe(true);
+      expect(response.me.handle_s).toBeDefined();
+      expect(response.me.email_s).toBeDefined();
+      expect(Array.isArray(response.me.roles_ss)).toBe(true);
 
       console.log('Successfully retrieved user profile with default URL');
       console.log('UID:', response.me.uid);
-      console.log('Handle:', response.me.handle);
+      console.log('Handle:', response.me.handle_s);
     });
 
     it('should fail when using invalid token', async () => {

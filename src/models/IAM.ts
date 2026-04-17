@@ -82,17 +82,17 @@ export interface UserMeResponse {
     /** Unique identifier (UID) for the user */
     uid: string;
     /** User handle (username) */
-    handle: string;
+    handle_s: string;
     /** Email address of the user (may be empty string) */
-    email: string;
+    email_s: string;
     /** First name of the user (may be empty string) */
-    firstName: string;
+    first_name_t: string;
     /** Last name of the user (may be empty string) */
-    lastName: string;
+    last_name_t: string;
     /** Avatar URL for the user (may be empty string) */
-    avatarUrl: string;
+    avatar_url_s: string;
     /** Array of roles assigned to the user */
-    roles: string[];
+    roles_ss: string[];
     /** Allow additional fields that may come from the server */
     [key: string]: any;
   };
