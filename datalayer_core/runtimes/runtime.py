@@ -7,6 +7,7 @@ Runtime services for Datalayer.
 Provides runtime management and code execution capabilities in Datalayer environments.
 """
 
+import os
 import time
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -705,6 +706,10 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             description=description,
             stop=stop,
         )
+        if isinstance(response, dict) and not response.get("success", True):
+            raise RuntimeError(
+                f"Failed to create snapshot '{name}': {response.get('message', 'unknown error')}"
+            )
         if stop:
             self.model.kernel_client = None
             self.model.kernel_id = None
@@ -717,11 +722,19 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         response = self._list_snapshots()
         snapshot_objects = as_runtime_snapshots(response)
         snapshot: Optional[RuntimeSnapshotModel] = None
-        for _ in range(6):
+        max_poll_attempts = max(
+            1,
+            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
+        )
+        poll_interval_seconds = max(
+            0.1,
+            float(os.getenv("DATALAYER_SNAPSHOT_POLL_INTERVAL", "1.0")),
+        )
+        for _ in range(max_poll_attempts):
             snapshot = next((s for s in snapshot_objects if s.name == name), None)
             if snapshot is not None:
                 break
-            time.sleep(1)
+            time.sleep(poll_interval_seconds)
             response = self._list_snapshots()
             snapshot_objects = as_runtime_snapshots(response)
 

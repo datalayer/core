@@ -63,18 +63,19 @@ class RuntimesExecService:
     def init_kernel_manager(self, runtime_name: str) -> None:
         """Initialize the kernel manager and connect to runtime."""
         try:
-            # Get runtime information using DatalayerClient
-            runtimes = self._client.list_runtimes()
-            target_runtime = None
+            # Validate runtime only when explicitly provided.
+            # Empty runtime name delegates selection/creation to RuntimeManager.start_kernel.
+            if runtime_name:
+                runtimes = self._client.list_runtimes()
+                target_runtime = None
 
-            # Find the target runtime
-            for runtime in runtimes:
-                if runtime.name == runtime_name or runtime.uid == runtime_name:
-                    target_runtime = runtime
-                    break
+                for runtime in runtimes:
+                    if runtime.name == runtime_name or runtime.uid == runtime_name:
+                        target_runtime = runtime
+                        break
 
-            if target_runtime is None:
-                raise RuntimeError(f"Runtime '{runtime_name}' not found")
+                if target_runtime is None:
+                    raise RuntimeError(f"Runtime '{runtime_name}' not found")
 
             # Get token using the same method as DatalayerClient
             token = self._client._get_token()
@@ -90,12 +91,14 @@ class RuntimesExecService:
             signal.signal(signal.SIGINT, self.handle_sigint)
 
             # Start kernel and get client
-            self.kernel_manager.start_kernel(name=runtime_name)
+            self.kernel_manager.start_kernel(name=runtime_name or "")
             self.kernel_client = self.kernel_manager.client
 
             if self.kernel_client:
                 self.kernel_client.start_channels()
-                console.print(f"[green]Connected to runtime: {runtime_name}[/green]")
+                console.print(
+                    f"[green]Connected to runtime: {runtime_name or 'auto-selected'}[/green]"
+                )
             else:
                 raise RuntimeError("Failed to create kernel client")
 

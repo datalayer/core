@@ -64,9 +64,31 @@ jobs:
       uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
 
     - name: Install dependencies
-      run: ${{ inputs.install-command }}
+      run: |
+        set -euo pipefail
+        npm config set fetch-retries 5
+        npm config set fetch-retry-factor 2
+        npm config set fetch-retry-mintimeout 20000
+        npm config set fetch-retry-maxtimeout 120000
+        npm config set prefer-online true
+        for attempt in 1 2 3; do
+          echo "Install attempt ${attempt}/3: ${{ inputs.install-command }}"
+          if ${{ inputs.install-command }}; then
+            echo "Dependencies installed successfully"
+            exit 0
+          fi
+          if [[ "$attempt" -lt 3 ]]; then
+            sleep_seconds=$((attempt * 20))
+            echo "Install failed; retrying in ${sleep_seconds}s..."
+            sleep "$sleep_seconds"
+          fi
+        done
+        echo "Dependency installation failed after 3 attempts"
+        exit 1
       working-directory: ${{ inputs.working-directory }}
 
     # - name: Install Playwright browsers

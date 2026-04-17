@@ -5,11 +5,29 @@
 
 import logging
 import sys
+import time
 from typing import Any, Optional
+
+import requests
 
 from datalayer_core.utils.defaults import get_default_credits_limit
 
 logger = logging.getLogger(__name__)
+
+
+def _is_transient_runtime_create_error(message: str) -> bool:
+    """Return True when the error looks transient and safe to retry."""
+    lower = message.lower()
+    return (
+        "status=502" in lower
+        or "status=503" in lower
+        or "status=504" in lower
+        or "bad gateway" in lower
+        or "service unavailable" in lower
+        or "gateway timeout" in lower
+        or "timed out" in lower
+        or "timeout" in lower
+    )
 
 
 class RuntimesCreateMixin:
@@ -98,11 +116,39 @@ class RuntimesCreateMixin:
             )
             logger.debug("Runtime create payload: %s", body)
 
-            response = self._fetch(  # type: ignore
-                runtime_url,
-                method="POST",
-                json=body,
-            )
+            response = None
+            max_attempts = 4
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    response = self._fetch(  # type: ignore
+                        runtime_url,
+                        method="POST",
+                        json=body,
+                    )
+                    break
+                except Exception as e:
+                    message = str(e)
+                    is_transient = isinstance(
+                        e, requests.exceptions.Timeout
+                    ) or _is_transient_runtime_create_error(message)
+                    if is_transient and attempt < max_attempts:
+                        delay_seconds = 2 ** (attempt - 1)
+                        logger.warning(
+                            "Transient runtime create error (attempt %s/%s): %s. Retrying in %ss",
+                            attempt,
+                            max_attempts,
+                            message,
+                            delay_seconds,
+                        )
+                        time.sleep(delay_seconds)
+                        continue
+                    raise
+
+            if response is None:
+                return {
+                    "success": False,
+                    "message": "Failed to create runtime: no HTTP response",
+                }
 
             if response.status_code not in [200, 201]:
                 error_msg = f"Failed to create runtime: HTTP {response.status_code}"

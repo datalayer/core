@@ -1,4 +1,9 @@
 /*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+/*
  * Copyright (c) 2023-2026 Datalayer, Inc.
  * Distributed under the terms of the Modified BSD License.
  */
@@ -16,7 +21,22 @@ function normalizeBaseUrl(baseUrl: string): URL {
       ? baseUrl.replace(/^ws/, 'http')
       : baseUrl;
 
-  return new URL(normalized);
+  const isAbsoluteUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(normalized);
+  if (isAbsoluteUrl) {
+    return new URL(normalized);
+  }
+
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.location !== 'undefined' &&
+    typeof window.location.origin === 'string'
+  ) {
+    return new URL(normalized || '/', window.location.origin);
+  }
+
+  throw new Error(
+    'OTEL baseUrl must be an absolute URL when window.location is unavailable.',
+  );
 }
 
 export function resolveOtelUserUid(
@@ -52,7 +72,9 @@ export function resolveOtelAuth(
     throw new Error('OTEL requires an authenticated token.');
   }
 
-  const resolvedUserUid = resolveOtelUserUid(token, userUid);
+  const trimmedToken = token.trim();
+
+  const resolvedUserUid = resolveOtelUserUid(trimmedToken, userUid);
   if (!resolvedUserUid) {
     throw new Error(
       'OTEL requires datalayer.user_uid. Provide a JWT with user.uid/sub or pass userUid explicitly.',
@@ -60,7 +82,7 @@ export function resolveOtelAuth(
   }
 
   return {
-    token,
+    token: trimmedToken,
     userUid: resolvedUserUid,
   };
 }

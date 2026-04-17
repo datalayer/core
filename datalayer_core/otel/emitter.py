@@ -10,32 +10,21 @@ using Datalayer environment conventions.
 
 from __future__ import annotations
 
-import base64
-import json
 import os
 from contextlib import contextmanager
 from typing import Any, Generator
+
+from datalayer_core.otel.logfire import decode_user_uid
 
 
 def _decode_user_uid(token: str | None) -> str | None:
     if not token:
         return None
-    try:
-        parts = token.split(".")
-        if len(parts) != 3:
-            return None
-        payload_b64 = parts[1]
-        payload_b64 += "=" * (-len(payload_b64) % 4)
-        payload = json.loads(base64.urlsafe_b64decode(payload_b64))
-        user_claim = payload.get("user")
-        if isinstance(user_claim, dict) and user_claim.get("uid"):
-            return str(user_claim["uid"])
-        sub = payload.get("sub")
-        if isinstance(sub, str) and sub.strip():
-            return sub.strip()
-    except Exception:
+    # Only attempt JWT decode when the token looks like a JWT (3 dot-separated segments).
+    parts = token.split(".")
+    if len(parts) != 3 or not all(parts):
         return None
-    return None
+    return decode_user_uid(token)
 
 
 class OTelEmitter:
@@ -61,6 +50,23 @@ class OTelEmitter:
         self._counters: dict[str, Any] = {}
         self._histograms: dict[str, Any] = {}
 
+        try:
+            from opentelemetry import metrics, trace
+            from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
+                OTLPMetricExporter,
+            )
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                OTLPSpanExporter,
+            )
+            from opentelemetry.sdk.metrics import MeterProvider
+            from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+            from opentelemetry.sdk.resources import Resource
+            from opentelemetry.sdk.trace import TracerProvider
+            from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        except ImportError:
+            self._enabled = False
+            return
+
         resolved_token = token or os.environ.get("DATALAYER_API_KEY")
         resolved_user_uid = user_uid or os.environ.get("DATALAYER_USER_UID")
         if not resolved_user_uid:
@@ -76,19 +82,6 @@ class OTelEmitter:
             )
 
         try:
-            from opentelemetry import metrics, trace
-            from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
-                OTLPMetricExporter,
-            )
-            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-                OTLPSpanExporter,
-            )
-            from opentelemetry.sdk.metrics import MeterProvider
-            from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-            from opentelemetry.sdk.resources import Resource
-            from opentelemetry.sdk.trace import TracerProvider
-            from opentelemetry.sdk.trace.export import BatchSpanProcessor
-
             otlp_base = (
                 os.environ.get("DATALAYER_OTLP_URL")
                 or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")

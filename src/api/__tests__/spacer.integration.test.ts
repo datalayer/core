@@ -17,6 +17,9 @@ let BASE_URL: string;
 
 // Skip all tests if no token is available
 const skipTests = skipIfNoToken();
+const skipInCi =
+  process.env.CI === 'true' &&
+  process.env.DATALAYER_TEST_RUN_EXTERNAL_INTEGRATION !== 'true';
 
 beforeAll(async () => {
   if (skipTests) {
@@ -50,7 +53,7 @@ afterAll(async () => {
   await performCleanup('teardown');
 });
 
-describe.skipIf(skipTests)(
+describe.skipIf(skipTests || skipInCi)(
   'Spacer Complete Lifecycle Integration Tests',
   () => {
     // Complete lifecycle test for spacer resources

@@ -7,12 +7,16 @@ import { describe, it, expect } from 'vitest';
 import { healthz } from '../runtimes';
 import { testConfig, skipIfNoToken } from '../../__tests__/shared/test-config';
 
+const skipInCi =
+  process.env.CI === 'true' &&
+  process.env.DATALAYER_TEST_RUN_EXTERNAL_INTEGRATION !== 'true';
+
 /**
  * Integration tests for Runtimes health check API
  * These tests run against the actual Datalayer Runtimes API
  */
 describe('Runtimes Healthz Integration Tests', () => {
-  describe.skipIf(skipIfNoToken())('ping endpoint', () => {
+  describe.skipIf(skipIfNoToken() || skipInCi)('ping endpoint', () => {
     it('should successfully ping the Runtimes service', async () => {
       console.log('Testing health check ping endpoint for Runtimes...');
 
@@ -31,7 +35,7 @@ describe('Runtimes Healthz Integration Tests', () => {
       console.log('Success:', response.success);
       console.log('Message:', response.message);
       if (response.status) {
-        console.log('Status:', response.status.status);
+        console.log('Status:', response.status);
       }
       if (response.version) {
         console.log('Version:', response.version);

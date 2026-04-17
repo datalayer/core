@@ -68,7 +68,7 @@ export interface OtelClientOptions {
    */
   baseUrl?: string;
   /** JWT bearer token or API key for authentication. */
-  token?: string;
+  token: string;
   /** Explicit user UID; optional when token contains user.uid/sub. */
   userUid?: string;
 }
@@ -137,14 +137,14 @@ function parseMetricTimestamp(raw: Record<string, unknown>): string {
 
 function normalizeMetric(raw: Record<string, unknown>): OtelMetric {
   // Preserve the raw nanosecond timestamp for time-series charts.
-  let timestampUnixNano: number | undefined;
+  let timestampUnixNano: string | undefined;
   const rawNano = raw.timestamp_unix_nano;
-  if (typeof rawNano === 'number' && rawNano > 0) {
-    timestampUnixNano = rawNano;
+  if (typeof rawNano === 'number' && Number.isFinite(rawNano) && rawNano > 0) {
+    timestampUnixNano = String(Math.trunc(rawNano));
   } else if (typeof rawNano === 'string') {
-    const parsed = Number(rawNano);
-    if (Number.isFinite(parsed) && parsed > 0) {
-      timestampUnixNano = parsed;
+    const trimmed = rawNano.trim();
+    if (/^\d+$/.test(trimmed) && trimmed !== '0') {
+      timestampUnixNano = trimmed;
     }
   }
 
@@ -191,7 +191,7 @@ export class OtelClient {
   private readonly token: string;
   private readonly userUid: string;
 
-  constructor(options: OtelClientOptions = {}) {
+  constructor(options: OtelClientOptions) {
     this.baseUrl =
       options.baseUrl ?? coreStore.getState().configuration.otelRunUrl;
     const auth = resolveOtelAuth(options.token, options.userUid);
@@ -378,7 +378,7 @@ export class OtelClient {
  * const services = await client.fetchServices();
  * ```
  */
-export function createOtelClient(options: OtelClientOptions = {}): OtelClient {
+export function createOtelClient(options: OtelClientOptions): OtelClient {
   return new OtelClient(options);
 }
 

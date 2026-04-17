@@ -7,6 +7,8 @@ Datalayer Client - A simple Python Client for AI engineers to work with Datalaye
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
+import logging
+import os
 import time
 import uuid
 from functools import lru_cache
@@ -37,6 +39,8 @@ from datalayer_core.utils.defaults import (
 )
 from datalayer_core.utils.types import Minutes
 from datalayer_core.utils.urls import DatalayerURLs
+
+logger = logging.getLogger(__name__)
 
 
 class DatalayerClient(
@@ -310,7 +314,24 @@ class DatalayerClient(
         list[Runtime]
             List of Runtime objects representing active runtimes.
         """
-        runtimes: list[dict[str, Any]] = self._list_runtimes()["runtimes"]
+        response = self._list_runtimes()
+
+        if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            logger.error("Failed to list runtimes: %s", message)
+            raise RuntimeError(f"Failed to list runtimes: {message}")
+
+        runtimes_raw = response.get("runtimes")
+        if runtimes_raw is None:
+            logger.error("Failed to list runtimes: missing 'runtimes' field")
+            raise RuntimeError(
+                "Failed to list runtimes: missing 'runtimes' field in response"
+            )
+        if not isinstance(runtimes_raw, list):
+            logger.error("Failed to list runtimes: invalid 'runtimes' field type")
+            raise RuntimeError("Failed to list runtimes: invalid 'runtimes' field type")
+
+        runtimes: list[dict[str, Any]] = runtimes_raw
         runtime_services = []
         for runtime in runtimes:
             runtime_services.append(
@@ -482,13 +503,25 @@ class DatalayerClient(
             description=description,
             stop=stop,
         )
+        if isinstance(response, dict) and not response.get("success", True):
+            raise RuntimeError(
+                f"Failed to create snapshot '{name}': {response.get('message', 'unknown error')}"
+            )
         snapshot: Optional[RuntimeSnapshotModel] = None
-        for _ in range(6):
+        max_poll_attempts = max(
+            1,
+            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
+        )
+        poll_interval_seconds = max(
+            0.1,
+            float(os.getenv("DATALAYER_SNAPSHOT_POLL_INTERVAL", "1.0")),
+        )
+        for _ in range(max_poll_attempts):
             snapshots_objects = self.list_snapshots()
             snapshot = next((s for s in snapshots_objects if s.name == name), None)
             if snapshot is not None:
                 break
-            time.sleep(1)
+            time.sleep(poll_interval_seconds)
 
         if snapshot is None:
             raise RuntimeError(
