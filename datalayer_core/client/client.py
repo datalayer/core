@@ -7,6 +7,7 @@ Datalayer Client - A simple Python Client for AI engineers to work with Datalaye
 Provides authentication, runtime creation, and code execution capabilities.
 """
 
+import os
 import time
 import uuid
 from functools import lru_cache
@@ -483,12 +484,20 @@ class DatalayerClient(
             stop=stop,
         )
         snapshot: Optional[RuntimeSnapshotModel] = None
-        for _ in range(6):
+        max_poll_attempts = max(
+            1,
+            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "20")),
+        )
+        poll_interval_seconds = max(
+            0.1,
+            float(os.getenv("DATALAYER_SNAPSHOT_POLL_INTERVAL", "1.0")),
+        )
+        for _ in range(max_poll_attempts):
             snapshots_objects = self.list_snapshots()
             snapshot = next((s for s in snapshots_objects if s.name == name), None)
             if snapshot is not None:
                 break
-            time.sleep(1)
+            time.sleep(poll_interval_seconds)
 
         if snapshot is None:
             raise RuntimeError(

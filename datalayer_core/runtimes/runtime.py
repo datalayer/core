@@ -8,6 +8,7 @@ Provides runtime management and code execution capabilities in Datalayer environ
 """
 
 import time
+import os
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -717,11 +718,19 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         response = self._list_snapshots()
         snapshot_objects = as_runtime_snapshots(response)
         snapshot: Optional[RuntimeSnapshotModel] = None
-        for _ in range(6):
+        max_poll_attempts = max(
+            1,
+            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "20")),
+        )
+        poll_interval_seconds = max(
+            0.1,
+            float(os.getenv("DATALAYER_SNAPSHOT_POLL_INTERVAL", "1.0")),
+        )
+        for _ in range(max_poll_attempts):
             snapshot = next((s for s in snapshot_objects if s.name == name), None)
             if snapshot is not None:
                 break
-            time.sleep(1)
+            time.sleep(poll_interval_seconds)
             response = self._list_snapshots()
             snapshot_objects = as_runtime_snapshots(response)
 
