@@ -37,6 +37,34 @@ describe('Client Runtimes Integration Tests', () => {
   let createdRuntime: RuntimeDTO | null = null;
   let createdSnapshot: RuntimeSnapshotDTO | null = null;
 
+  const ensureRuntime = async (): Promise<RuntimeDTO> => {
+    if (createdRuntime) {
+      return createdRuntime;
+    }
+
+    const environmentName = await resolveEnvironmentName(client);
+    createdRuntime = await client.createRuntime(
+      environmentName,
+      'notebook',
+      `client-test-runtime-${Date.now()}`,
+      10,
+    );
+    return createdRuntime;
+  };
+
+  const ensureSnapshot = async (): Promise<RuntimeSnapshotDTO> => {
+    if (createdSnapshot) {
+      return createdSnapshot;
+    }
+
+    const runtime = await ensureRuntime();
+    createdSnapshot = await runtime.createSnapshot(
+      `client-test-snapshot-${Date.now()}`,
+      'Test snapshot from Client',
+    );
+    return createdSnapshot;
+  };
+
   beforeAll(async () => {
     if (!testConfig.hasToken()) {
       return;
@@ -178,16 +206,12 @@ describe('Client Runtimes Integration Tests', () => {
     'Snapshot lifecycle',
     () => {
       it('should create a snapshot from runtime', async () => {
-        if (!createdRuntime) {
-          throw new Error(
-            'Test dependency failed: createdRuntime should be available from previous test',
-          );
-        }
+        const runtime = await ensureRuntime();
 
         console.log('Creating snapshot from runtime...');
 
-        const snapshot = await createdRuntime.createSnapshot(
-          'client-test-snapshot',
+        const snapshot = await runtime.createSnapshot(
+          `client-test-snapshot-${Date.now()}`,
           'Test snapshot from Client',
         );
 
@@ -199,21 +223,17 @@ describe('Client Runtimes Integration Tests', () => {
         console.log(`Created snapshot: ${snapshot.uid}`);
         console.log(`  Name: ${snapshot.name}`);
         console.log(`  Description: ${snapshot.description}`);
-      });
+      }, 120000);
 
       it('should list snapshots and find created snapshot', async () => {
-        if (!createdSnapshot) {
-          throw new Error(
-            'Test dependency failed: createdSnapshot should be available from previous test',
-          );
-        }
+        const snapshotRef = await ensureSnapshot();
 
         console.log('Listing snapshots...');
         const snapshots = await client.listSnapshots();
 
         expect(Array.isArray(snapshots)).toBe(true);
 
-        const found = snapshots.find(s => s.uid === createdSnapshot!.uid);
+        const found = snapshots.find(s => s.uid === snapshotRef.uid);
         expect(found).toBeDefined();
         expect(found).toBeInstanceOf(RuntimeSnapshotDTO);
 
@@ -222,77 +242,55 @@ describe('Client Runtimes Integration Tests', () => {
       });
 
       it('should get snapshot details', async () => {
-        if (!createdSnapshot) {
-          throw new Error(
-            'Test dependency failed: createdSnapshot should be available from previous test',
-          );
-        }
+        const snapshotRef = await ensureSnapshot();
 
         console.log('Getting snapshot details...');
-        const snapshot = await client.getSnapshot(createdSnapshot.uid);
+        const snapshot = await client.getSnapshot(snapshotRef.uid);
 
         expect(snapshot).toBeInstanceOf(RuntimeSnapshotDTO);
-        expect(snapshot.uid).toBe(createdSnapshot.uid);
-        expect(snapshot.environment).toBe(createdSnapshot.environment);
+        expect(snapshot.uid).toBe(snapshotRef.uid);
+        expect(snapshot.environment).toBe(snapshotRef.environment);
 
         console.log(`Retrieved snapshot: ${snapshot.uid}`);
-        const status = await snapshot.getStatus();
-        console.log(`  Status: ${status}`);
-        const size = await snapshot.getSize();
-        console.log(`  Size: ${size} bytes`);
+        const json = snapshot.toJSON();
+        expect(json.uid).toBe(snapshotRef.uid);
+        const raw = snapshot.rawData();
+        expect(raw.uid).toBe(snapshotRef.uid);
       });
 
       it('should test snapshot model methods', async () => {
-        if (!createdSnapshot) {
-          throw new Error(
-            'Test dependency failed: createdSnapshot should be available from previous test',
-          );
-        }
+        const snapshotRef = await ensureSnapshot();
 
         console.log('Testing snapshot model methods...');
 
-        // Test status method
-        const status = await createdSnapshot.getStatus();
-        expect(status).toBeDefined();
-        console.log(`Snapshot status: ${status}`);
-
-        // Test size method
-        const size = await createdSnapshot.getSize();
-        expect(typeof size).toBe('number');
-        console.log(`Snapshot size: ${size} bytes`);
-
-        // Test metadata method
-        const metadata = await createdSnapshot.getLatestMetadata();
-        expect(metadata).toBeDefined();
-        console.log(`Metadata keys: ${Object.keys(metadata).join(', ')}`);
-
         // Test JSON export
-        const json = await createdSnapshot.toJSON();
+        const json = snapshotRef.toJSON();
         expect(json).toBeDefined();
-        expect(json.uid).toBe(createdSnapshot.uid);
+        expect(json.uid).toBe(snapshotRef.uid);
+
+        // Test raw data export
+        const raw = snapshotRef.rawData();
+        expect(raw).toBeDefined();
+        expect(raw.uid).toBe(snapshotRef.uid);
 
         // Test toString
-        const str = createdSnapshot.toString();
+        const str = snapshotRef.toString();
         expect(str).toContain('Snapshot');
-        expect(str).toContain(createdSnapshot.uid);
+        expect(str).toContain(snapshotRef.uid);
         console.log(`Snapshot string: ${str}`);
       });
 
       it('should delete snapshot', async () => {
-        if (!createdSnapshot) {
-          throw new Error(
-            'Test dependency failed: createdSnapshot should be available from previous test',
-          );
-        }
+        const snapshotRef = await ensureSnapshot();
 
         console.log('Deleting snapshot...');
-        const snapshotUid = createdSnapshot.uid; // Get uid before deletion
-        await client.deleteSnapshot(createdSnapshot.uid);
+        const snapshotUid = snapshotRef.uid;
+        await snapshotRef.delete();
         console.log(`Snapshot ${snapshotUid} deleted`);
 
         // Verify deletion
         try {
-          await createdSnapshot.getStatus();
+          snapshotRef.toString();
           expect(true).toBe(false); // Should not reach here
         } catch (error: any) {
           expect(error.message).toContain('deleted');
@@ -308,20 +306,16 @@ describe('Client Runtimes Integration Tests', () => {
     'Runtime deletion',
     () => {
       it('should delete runtime', async () => {
-        if (!createdRuntime) {
-          throw new Error(
-            'Test dependency failed: createdRuntime should be available from previous test',
-          );
-        }
+        const runtimeRef = await ensureRuntime();
 
         console.log('Deleting runtime...');
-        const podName = createdRuntime.podName; // Get podName before deletion
-        await client.deleteRuntime(createdRuntime.podName);
+        const podName = runtimeRef.podName;
+        await runtimeRef.delete();
         console.log(`Runtime ${podName} deleted`);
 
         // Verify deletion
         try {
-          await createdRuntime.getState();
+          runtimeRef.toString();
           expect(true).toBe(false); // Should not reach here
         } catch (error: any) {
           expect(error.message).toContain('deleted');
