@@ -110,6 +110,22 @@ def test_runtime_snapshot_create_and_delete() -> None:
     snapshot_name = f"test_snapshot-{uuid.uuid4()}"
     snapshot_name_2 = f"test_snapshot-{uuid.uuid4()}"
     snapshot_name_3 = f"test_snapshot-{uuid.uuid4()}"
+
+    def _delete_with_retry(
+        client: DatalayerClient,
+        snap: "RuntimeSnapshotModel",
+        retries: int = 5,
+        delay: float = 3.0,
+    ) -> None:
+        for attempt in range(retries):
+            result = client.delete_snapshot(snap)
+            if result.get("success"):
+                return
+            time.sleep(delay)
+        raise AssertionError(
+            f"Failed to delete snapshot '{snap.name}' after {retries} attempts: {result}"
+        )
+
     with client.create_runtime(name=runtime_name) as runtime:
         snapshot = runtime.create_snapshot(name=snapshot_name, stop=False)
         assert snapshot.name == snapshot_name
@@ -122,11 +138,11 @@ def test_runtime_snapshot_create_and_delete() -> None:
         )
         assert snapshot_3.name == snapshot_name_3
 
-        time.sleep(5)
+        time.sleep(10)
 
-        assert client.delete_snapshot(snapshot)["success"]
-        assert client.delete_snapshot(snapshot_2)["success"]
-        assert client.delete_snapshot(snapshot_3)["success"]
+        _delete_with_retry(client, snapshot)
+        _delete_with_retry(client, snapshot_2)
+        _delete_with_retry(client, snapshot_3)
     time.sleep(10)
 
 

@@ -40,7 +40,6 @@ from datalayer_core.utils.defaults import (
 from datalayer_core.utils.types import Minutes
 from datalayer_core.utils.urls import DatalayerURLs
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -330,9 +329,7 @@ class DatalayerClient(
             )
         if not isinstance(runtimes_raw, list):
             logger.error("Failed to list runtimes: invalid 'runtimes' field type")
-            raise RuntimeError(
-                "Failed to list runtimes: invalid 'runtimes' field type"
-            )
+            raise RuntimeError("Failed to list runtimes: invalid 'runtimes' field type")
 
         runtimes: list[dict[str, Any]] = runtimes_raw
         runtime_services = []
@@ -506,10 +503,14 @@ class DatalayerClient(
             description=description,
             stop=stop,
         )
+        if isinstance(response, dict) and not response.get("success", True):
+            raise RuntimeError(
+                f"Failed to create snapshot '{name}': {response.get('message', 'unknown error')}"
+            )
         snapshot: Optional[RuntimeSnapshotModel] = None
         max_poll_attempts = max(
             1,
-            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "20")),
+            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
         )
         poll_interval_seconds = max(
             0.1,

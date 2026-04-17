@@ -706,6 +706,10 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
             description=description,
             stop=stop,
         )
+        if isinstance(response, dict) and not response.get("success", True):
+            raise RuntimeError(
+                f"Failed to create snapshot '{name}': {response.get('message', 'unknown error')}"
+            )
         if stop:
             self.model.kernel_client = None
             self.model.kernel_id = None
@@ -720,7 +724,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         snapshot: Optional[RuntimeSnapshotModel] = None
         max_poll_attempts = max(
             1,
-            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "20")),
+            int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
         )
         poll_interval_seconds = max(
             0.1,
