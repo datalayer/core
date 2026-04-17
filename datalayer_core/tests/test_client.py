@@ -11,6 +11,7 @@ import pytest
 from dotenv import load_dotenv
 
 from datalayer_core import DatalayerClient
+from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
 
 load_dotenv()
 
@@ -113,7 +114,7 @@ def test_runtime_snapshot_create_and_delete() -> None:
 
     def _delete_with_retry(
         client: DatalayerClient,
-        snap: "RuntimeSnapshotModel",
+        snap: RuntimeSnapshotModel,
         retries: int = 10,
         delay: float = 5.0,
     ) -> None:
