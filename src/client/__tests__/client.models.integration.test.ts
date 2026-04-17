@@ -16,6 +16,10 @@ import { LexicalDTO } from '../../models/LexicalDTO';
 import { testConfig } from '../../__tests__/shared/test-config';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
+const skipInCi =
+  process.env.CI === 'true' &&
+  process.env.DATALAYER_TEST_RUN_EXTERNAL_INTEGRATION !== 'true';
+
 const resolveEnvironmentName = async (
   client: DatalayerClient,
 ): Promise<string> => {
@@ -35,7 +39,7 @@ const resolveEnvironmentName = async (
  * Tests model state management, lazy loading, and relationships
  * using the Client client and model classes.
  */
-describe('Client Models Integration Tests', () => {
+describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
   let client: DatalayerClient;
   let testSpace: SpaceDTO | null = null;
   let testNotebook: NotebookDTO | null = null;

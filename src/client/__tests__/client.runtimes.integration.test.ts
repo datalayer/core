@@ -13,6 +13,10 @@ import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
 
+const skipInCi =
+  process.env.CI === 'true' &&
+  process.env.DATALAYER_TEST_RUN_EXTERNAL_INTEGRATION !== 'true';
+
 const resolveEnvironmentName = async (
   client: DatalayerClient,
 ): Promise<string> => {
@@ -32,7 +36,7 @@ const resolveEnvironmentName = async (
  * Tests runtime and snapshot lifecycle management
  * using the Client client and model classes.
  */
-describe('Client Runtimes Integration Tests', () => {
+describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
   let client: DatalayerClient;
   let createdRuntime: RuntimeDTO | null = null;
   let createdSnapshot: RuntimeSnapshotDTO | null = null;
