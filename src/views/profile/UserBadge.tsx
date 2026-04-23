@@ -39,6 +39,14 @@ export interface UserBadgeProps {
    * Defaults to ``true``.  Ignored when ``variant`` is already ``full``.
    */
   showExpandToggle?: boolean;
+  /**
+   * Threshold (in milliseconds) below which the expiration timestamp is
+   * rendered in ``attention.fg`` (yellow) to warn that the token is about
+   * to expire.  Tokens already past ``exp`` render in ``danger.fg`` (red);
+   * tokens further out than this threshold render in ``success.fg``
+   * (green).  Defaults to ``3_600_000`` (1 hour).
+   */
+  expirationWarningMs?: number;
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -47,6 +55,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   token,
   variant = 'full',
   showExpandToggle = true,
+  expirationWarningMs = 60 * 60 * 1000,
 }) => {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -193,7 +202,18 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                   {new Date(claims.iat * 1000).toISOString()}
                 </Text>
                 <Text sx={{ color: 'fg.muted' }}>Expires</Text>
-                <Text sx={{ fontFamily: 'mono' }}>
+                <Text
+                  sx={{
+                    fontFamily: 'mono',
+                    color: (() => {
+                      const msUntilExpiry = claims.exp * 1000 - Date.now();
+                      if (msUntilExpiry <= 0) return 'danger.fg';
+                      if (msUntilExpiry <= expirationWarningMs)
+                        return 'attention.fg';
+                      return 'success.fg';
+                    })(),
+                  }}
+                >
                   {new Date(claims.exp * 1000).toISOString()}
                 </Text>
               </Box>
