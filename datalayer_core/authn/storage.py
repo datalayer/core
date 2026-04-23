@@ -135,7 +135,7 @@ class EnvironmentStorage(TokenStorage):
         os.environ.pop(env_key, None)
 
     def get_token(self) -> Optional[str]:
-        """Get token from DATALAYER_API_KEY or DATALAYER_TOKEN."""
+        """Get token from DATALAYER_API_KEY or stored access token."""
         return os.environ.get("DATALAYER_API_KEY") or self.get("access_token")
 
 

@@ -26,7 +26,7 @@ def _resolve_token(token: Optional[str] = None) -> str:
     """Resolve the authentication token from argument, env var, or DatalayerClient."""
     if token:
         return token
-    env_token = os.environ.get("DATALAYER_API_KEY") or os.environ.get("DATALAYER_TOKEN")
+    env_token = os.environ.get("DATALAYER_API_KEY")
     if env_token:
         return env_token
     # Fall back to DatalayerClient's token resolution (keyring, config file, etc.)
