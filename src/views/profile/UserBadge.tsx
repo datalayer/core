@@ -31,6 +31,14 @@ export interface UserBadgeProps {
   token: string;
   /** Display variant for the claims overlay. */
   variant?: 'full' | 'small';
+  /**
+   * When the popover is rendered in the ``small`` variant, show a ``+``
+   * affordance in the top-right corner of the header that lets the user
+   * expand the overlay to the ``full`` variant (raw JSON claims).
+   *
+   * Defaults to ``true``.  Ignored when ``variant`` is already ``full``.
+   */
+  showExpandToggle?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -38,8 +46,10 @@ export interface UserBadgeProps {
 export const UserBadge: React.FC<UserBadgeProps> = ({
   token,
   variant = 'full',
+  showExpandToggle = true,
 }) => {
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleEnter = useCallback(() => {
@@ -103,9 +113,49 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
               bg: 'canvas.subtle',
               borderBottom: '1px solid',
               borderColor: 'border.default',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
             }}
           >
             <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>JWT Claims</Text>
+            {variant === 'small' && showExpandToggle && (
+              <Box
+                as="button"
+                type="button"
+                onClick={() => setExpanded(v => !v)}
+                aria-label={
+                  expanded ? 'Hide full JWT claims' : 'Show full JWT claims'
+                }
+                aria-expanded={expanded}
+                title={
+                  expanded ? 'Hide full JWT claims' : 'Show full JWT claims'
+                }
+                sx={{
+                  appearance: 'none',
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  borderRadius: 1,
+                  bg: 'canvas.default',
+                  color: 'fg.default',
+                  fontSize: 1,
+                  lineHeight: 1,
+                  width: '20px',
+                  height: '20px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  p: 0,
+                  '&:hover': {
+                    bg: 'canvas.subtle',
+                  },
+                }}
+              >
+                {expanded ? '−' : '+'}
+              </Box>
+            )}
           </Box>
 
           {/* User summary */}
@@ -189,7 +239,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
           )}
 
           {/* Raw JSON */}
-          {variant === 'full' && (
+          {(variant === 'full' || expanded) && (
             <Box
               as="pre"
               sx={{
