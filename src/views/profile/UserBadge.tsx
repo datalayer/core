@@ -23,6 +23,7 @@ import {
   getDatalayerDisplayName,
 } from '../../utils/Jwt';
 import type { DatalayerJwtPayload } from '../../utils/Jwt';
+import { getRelativeTime } from '../../utils/Date';
 
 // ── Props ─────────────────────────────────────────────────────────
 
@@ -202,20 +203,65 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                   {new Date(claims.iat * 1000).toISOString()}
                 </Text>
                 <Text sx={{ color: 'fg.muted' }}>Expires</Text>
-                <Text
+                <Box
                   sx={{
-                    fontFamily: 'mono',
-                    color: (() => {
-                      const msUntilExpiry = claims.exp * 1000 - Date.now();
-                      if (msUntilExpiry <= 0) return 'danger.fg';
-                      if (msUntilExpiry <= expirationWarningMs)
-                        return 'attention.fg';
-                      return 'success.fg';
-                    })(),
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    minWidth: 0,
                   }}
                 >
-                  {new Date(claims.exp * 1000).toISOString()}
-                </Text>
+                  <Text
+                    sx={{
+                      fontFamily: 'mono',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {new Date(claims.exp * 1000).toISOString()}
+                  </Text>
+                  {(() => {
+                    const expDate = new Date(claims.exp * 1000);
+                    const msUntilExpiry = expDate.getTime() - Date.now();
+                    const expired = msUntilExpiry <= 0;
+                    const warning =
+                      !expired && msUntilExpiry <= expirationWarningMs;
+                    const bg = expired
+                      ? 'danger.subtle'
+                      : warning
+                        ? 'attention.subtle'
+                        : 'success.subtle';
+                    const fg = expired
+                      ? 'danger.fg'
+                      : warning
+                        ? 'attention.fg'
+                        : 'success.fg';
+                    const border = expired
+                      ? 'danger.muted'
+                      : warning
+                        ? 'attention.muted'
+                        : 'success.muted';
+                    return (
+                      <Box
+                        sx={{
+                          flexShrink: 0,
+                          fontSize: 0,
+                          px: 1,
+                          py: '1px',
+                          bg,
+                          color: fg,
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: border,
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {getRelativeTime(expDate)}
+                      </Box>
+                    );
+                  })()}
+                </Box>
               </Box>
             </Box>
           )}

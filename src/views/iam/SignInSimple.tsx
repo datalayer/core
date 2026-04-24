@@ -13,7 +13,13 @@
  * @module views/signin
  */
 
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  useEffect,
+} from 'react';
 import {
   Box,
   Button,
@@ -23,11 +29,11 @@ import {
   Textarea,
   TextInput,
 } from '@primer/react';
-import { Dialog } from '@primer/react/experimental';
 import {
   EyeIcon,
   EyeClosedIcon,
   KeyIcon,
+  LinkExternalIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
 import { coreStore } from '../../state';
@@ -42,7 +48,7 @@ export interface SignInSimpleProps {
   onSignIn: (token: string, handle: string) => void;
   /**
    * Called when the user authenticates with an API key.
-   * If not provided the "Sign in with API Key" button is hidden.
+   * If not provided the "Sign In with an API Key" button is hidden.
    */
   onApiKeySignIn?: (apiKey: string) => void;
   /**
@@ -91,6 +97,27 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const apiKeyRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (showApiKeyDialog) {
+      apiKeyRef.current?.focus();
+    }
+  }, [showApiKeyDialog]);
+
+  const closeApiKeyDialog = useCallback(() => {
+    setShowApiKeyDialog(false);
+    setApiKey('');
+  }, []);
+
+  const handleApiKeyAuthenticate = useCallback(() => {
+    if (!apiKey.trim() || !onApiKeySignIn) return;
+    onApiKeySignIn(apiKey.trim());
+    closeApiKeyDialog();
+  }, [apiKey, onApiKeySignIn, closeApiKeyDialog]);
+
+  const handleSignUp = useCallback(() => {
+    window.open('https://datalayer.ai/signup', '_blank', 'noopener,noreferrer');
+  }, []);
 
   const submit = useCallback(async () => {
     if (!handle || !password || loading) return;
@@ -220,6 +247,17 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
 
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+          <Button
+            size="small"
+            variant="invisible"
+            leadingVisual={LinkExternalIcon}
+            onClick={handleSignUp}
+          >
+            Sign Up
+          </Button>
+        </Box>
+
         {/* API Key */}
         {onApiKeySignIn && (
           <>
@@ -240,39 +278,54 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               leadingVisual={KeyIcon}
               onClick={() => setShowApiKeyDialog(true)}
             >
-              Sign in with API Key
+              Sign In with an API Key
             </Button>
             {showApiKeyDialog && (
-              <Dialog
-                title="Enter your API Key"
-                onClose={() => {
-                  setShowApiKeyDialog(false);
-                  setApiKey('');
+              <Box
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="signin-api-key-title"
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    closeApiKeyDialog();
+                  }
                 }}
-                initialFocusRef={apiKeyRef}
-                footerButtons={[
-                  {
-                    buttonType: 'default',
-                    onClick: () => {
-                      setShowApiKeyDialog(false);
-                      setApiKey('');
-                    },
-                    content: 'Cancel',
-                  },
-                  {
-                    buttonType: 'primary',
-                    onClick: () => {
-                      if (apiKey.trim()) {
-                        onApiKeySignIn(apiKey.trim());
-                        setShowApiKeyDialog(false);
-                        setApiKey('');
-                      }
-                    },
-                    content: 'Authenticate',
-                  },
-                ]}
+                onClick={closeApiKeyDialog}
+                sx={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 200,
+                  p: 3,
+                  bg: 'canvas.backdrop',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                <Box as="form">
+                <Box
+                  as="form"
+                  onClick={event => event.stopPropagation()}
+                  onSubmit={event => {
+                    event.preventDefault();
+                    handleApiKeyAuthenticate();
+                  }}
+                  sx={{
+                    width: 'min(560px, 100%)',
+                    p: 3,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'border.default',
+                    bg: 'canvas.overlay',
+                    color: 'fg.default',
+                    boxShadow: 'shadow.large',
+                  }}
+                >
+                  <Heading
+                    id="signin-api-key-title"
+                    sx={{ fontSize: 2, mb: 2 }}
+                  >
+                    Enter your API Key
+                  </Heading>
                   <FormControl required>
                     <FormControl.Label>API Key</FormControl.Label>
                     <Textarea
@@ -287,8 +340,27 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                       ref={apiKeyRef}
                     />
                   </FormControl>
+                  <Box
+                    sx={{
+                      mt: 3,
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 2,
+                    }}
+                  >
+                    <Button type="button" onClick={closeApiKeyDialog}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={!apiKey.trim()}
+                    >
+                      Authenticate
+                    </Button>
+                  </Box>
                 </Box>
-              </Dialog>
+              </Box>
             )}
           </>
         )}
