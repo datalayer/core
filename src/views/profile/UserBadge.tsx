@@ -77,6 +77,24 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   const displayName = getDatalayerDisplayName(user, user?.handle ?? '');
   const claims = parseJwtPayload<DatalayerJwtPayload>(token);
 
+  // Colour the trigger label based on token expiry:
+  // - red when already expired,
+  // - yellow when expiring within ``expirationWarningMs``,
+  // - muted grey otherwise.
+  const msUntilExpiry = claims?.exp
+    ? claims.exp * 1000 - Date.now()
+    : undefined;
+  const expired = msUntilExpiry !== undefined && msUntilExpiry <= 0;
+  const expiringSoon =
+    msUntilExpiry !== undefined &&
+    msUntilExpiry > 0 &&
+    msUntilExpiry <= expirationWarningMs;
+  const triggerColor = expired
+    ? 'danger.fg'
+    : expiringSoon
+      ? 'attention.fg'
+      : 'fg.muted';
+
   return (
     <Box
       sx={{ position: 'relative' }}
@@ -87,7 +105,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
       <Text
         sx={{
           fontSize: 1,
-          color: 'fg.muted',
+          color: triggerColor,
           cursor: 'default',
           borderBottom: '1px dashed',
           borderColor: 'border.muted',
