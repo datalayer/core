@@ -44,8 +44,8 @@ export interface UserBadgeProps {
    * Threshold (in milliseconds) below which the expiration timestamp is
    * rendered in ``attention.fg`` (yellow) to warn that the token is about
    * to expire.  Tokens already past ``exp`` render in ``danger.fg`` (red);
-   * tokens further out than this threshold render in ``success.fg``
-   * (green).  Defaults to ``3_600_000`` (1 hour).
+   * tokens further out than this threshold render in ``success.fg`` (green).
+   * Defaults to ``10_800_000`` (3 hours).
    */
   expirationWarningMs?: number;
 }
@@ -56,7 +56,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   token,
   variant = 'full',
   showExpandToggle = true,
-  expirationWarningMs = 60 * 60 * 1000,
+  expirationWarningMs = 3 * 60 * 60 * 1000,
 }) => {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
