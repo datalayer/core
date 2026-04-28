@@ -17,7 +17,7 @@ import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 /**
  * OAuth2 provider types supported by the platform
  */
-export type OAuth2Provider = 'github' | 'linkedin' | 'okta';
+export type OAuth2Provider = 'github' | 'google' | 'linkedin' | 'okta';
 
 /**
  * Response from the OAuth2 authorization URL endpoint
@@ -46,7 +46,7 @@ export type OAuth2CallbackResponse = string;
 
 /**
  * Get the OAuth2 authorization URL for a specific provider
- * @param provider - OAuth2 provider (bluesky, github, linkedin, okta)
+ * @param provider - OAuth2 provider (github, google, linkedin, okta)
  * @param callbackUri - Server endpoint to call with the authz token
  * @param nonce - Optional nonce for security
  * @param baseUrl - Base URL for the API (defaults to production IAM URL)
@@ -121,7 +121,7 @@ export const getOAuth2AuthzUrl = async (
 
 /**
  * Get the OAuth2 authorization URL for linking a provider to an existing account
- * @param provider - OAuth2 provider (bluesky, github, linkedin, okta)
+ * @param provider - OAuth2 provider (github, google, linkedin, okta)
  * @param callbackUri - Server endpoint to call with the authz token
  * @param baseUrl - Base URL for the API (defaults to production IAM URL)
  * @returns OAuth2 authorization URL response

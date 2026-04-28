@@ -35,6 +35,9 @@
     "@tsconfig/docusaurus": "^2.0.3",
     "cross-env": "^7.0.3"
   },
+  "overrides": {
+    "webpackbar": "^7.0.0"
+  },
   "browserslist": {
     "production": [
       ">0.5%",

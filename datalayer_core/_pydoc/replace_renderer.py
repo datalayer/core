@@ -112,7 +112,7 @@ class MyDocusaurusRenderer(Renderer):
     Custom Docusaurus renderer for pydoc-markdown.
     """
 
-    #: The #MarkdownRenderer configuration.
+    #: The MarkdownRenderer configuration.
     markdown: te.Annotated[
         MarkdownRenderer, DeserializeAs(CustomizedMarkdownRenderer)
     ] = dataclasses.field(default_factory=CustomizedMarkdownRenderer)

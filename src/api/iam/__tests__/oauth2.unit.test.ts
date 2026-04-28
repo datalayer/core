@@ -21,13 +21,15 @@ describe('IAM OAuth2 Unit Tests', () => {
     it('should only accept valid provider types', () => {
       const validProviders: oauth2.OAuth2Provider[] = [
         'github',
+        'google',
         'linkedin',
         'okta',
       ];
 
       // This test ensures at compile time that only valid providers are accepted
-      expect(validProviders).toHaveLength(3);
+      expect(validProviders).toHaveLength(4);
       expect(validProviders).toContain('github');
+      expect(validProviders).toContain('google');
       expect(validProviders).toContain('linkedin');
       expect(validProviders).toContain('okta');
 
