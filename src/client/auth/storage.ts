@@ -21,6 +21,78 @@ import type { TokenStorage } from './types';
 import { UserDTO } from '../../models/UserDTO';
 
 /**
+ * Resolve a real Node `require` function that survives bundling.
+ *
+ * `module.createRequire()` is the documented Node API for obtaining a
+ * require function that resolves modules against `node_modules`. Three
+ * runtimes need to be supported:
+ *
+ *   1. **Native Node ESM** (this package is `"type": "module"`). The
+ *      global `require` is undefined here, so we resolve `module` via
+ *      `process.getBuiltinModule('module')` (added in Node 22.3 / 20.16).
+ *   2. **Native Node CommonJS** and **bundler-injected CJS shims**
+ *      (e.g. webpack with `target: 'node'`). These expose a working
+ *      global `require`, and `require('module')` resolves to the real
+ *      Node builtin even after bundling.
+ *   3. **Native browser**. None of the above is available; we return
+ *      `null`.
+ *
+ * @returns A real Node `require`, or `null` outside Node, or
+ *   `undefined` if Node is detected but no `createRequire` source is
+ *   reachable (extremely old Node, or a hostile sandbox).
+ */
+function resolveNodeRequire(): ((id: string) => unknown) | null | undefined {
+  if (typeof process === 'undefined' || !process.versions?.node) {
+    return null;
+  }
+
+  type NodeModuleApi = {
+    createRequire?: (filename: string) => (id: string) => unknown;
+  };
+
+  const fname =
+    typeof __filename !== 'undefined'
+      ? __filename
+      : process.cwd() + '/__datalayer_keytar_loader__.js';
+
+  // 1. ESM-safe path: process.getBuiltinModule (Node 22.3+ / 20.16+).
+  //    Lets a `"type": "module"` package reach into `module` without a
+  //    CommonJS-only `require`.
+  const nodeProcess = process as typeof process & {
+    getBuiltinModule?: (id: string) => NodeModuleApi | undefined;
+  };
+  try {
+    const mod = nodeProcess.getBuiltinModule?.('module');
+    if (typeof mod?.createRequire === 'function') {
+      return mod.createRequire(fname);
+    }
+  } catch {
+    // Fall through to the CommonJS / bundler path.
+  }
+
+  // 2. CommonJS path: `require('module')` is left intact by webpack
+  //    when target: 'node'. Also covers older Node CJS where
+  //    getBuiltinModule does not exist.
+  try {
+    if (typeof require === 'function') {
+      const mod = require('module') as NodeModuleApi;
+      if (typeof mod?.createRequire === 'function') {
+        return mod.createRequire(fname);
+      }
+    }
+  } catch {
+    // Fall through to globalThis.require.
+  }
+
+  // 3. Last-ditch: a globalThis.require shim from some host environments.
+  const g = globalThis as { require?: (id: string) => unknown };
+  if (typeof g.require === 'function') {
+    return g.require;
+  }
+  return undefined;
+}
+
+/**
  * Browser localStorage-based token storage
  */
 export class BrowserStorage implements TokenStorage {
@@ -158,18 +230,48 @@ export class NodeStorage implements TokenStorage {
       process.versions?.node
     ) {
       try {
-        // Use eval to hide require from bundlers (Vite/Rollup/webpack)
-        const nodeRequire = eval('require');
-        try {
-          this.keytar = nodeRequire('keytar');
-        } catch {
-          try {
-            this.keytar = nodeRequire('@vscode/keytar');
-          } catch {
-            // Keyring not available
+        // Resolve a real Node `require` even when this module ends up
+        // inside a webpack bundle.
+        //
+        // Why not the previous `string-evaluated require` pattern? Webpack
+        // rewrites that pattern to its own loader (`__webpack_require__`),
+        // which has no entry for these runtime-only keyring modules
+        // (`@github/keytar`, `@vscode/keytar`, or legacy `keytar`)
+        // because the require call is hidden behind a string and is
+        // therefore invisible to webpack's static analysis — even when
+        // consumers declare those package IDs as commonjs/runtime
+        // externals. The result was that `this.keytar` silently stayed
+        // `null` in any webpacked host (e.g. the VS Code extension), so
+        // tokens written via `setAsync()` only landed in the in-memory
+        // `Map` and never made it to the OS keyring. They appeared to
+        // "save" within a session, but vanished on reload.
+        //
+        // `module.createRequire(...)` is the documented Node API for
+        // obtaining the real require, and webpack/Vite/Rollup all leave
+        // it intact when the host targets Node.
+        const nodeRequire = resolveNodeRequire();
+        if (nodeRequire) {
+          // Try variants in order of preference:
+          //   1. @github/keytar — actively maintained, ships prebuilt
+          //      binaries for every platform in the npm tarball, so a
+          //      single multi-platform VSIX / Electron build can ship
+          //      it without per-OS rebuilds.
+          //   2. @vscode/keytar — historically bundled with VS Code,
+          //      no longer published to npm but still resolvable in
+          //      some host environments.
+          //   3. keytar — the original, deprecated upstream. Kept as a
+          //      fallback so existing CLI installs that still depend
+          //      on it keep working.
+          for (const id of ['@github/keytar', '@vscode/keytar', 'keytar']) {
+            try {
+              this.keytar = nodeRequire(id);
+              break;
+            } catch {
+              // Try next variant.
+            }
           }
         }
-      } catch (e) {
+      } catch {
         // Keyring not available, tokens will not persist across sessions
         console.warn('keytar not available, tokens will not persist');
       }

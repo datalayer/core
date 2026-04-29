@@ -257,6 +257,6 @@
     ]
   },
   "optionalDependencies": {
-    "keytar": "^7.9.0"
+    "@github/keytar": "^7.10.6"
   }
 }
