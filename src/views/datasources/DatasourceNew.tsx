@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  PageHeader,
+  PageLayout,
   FormControl,
   Button,
   TextInput,
@@ -15,6 +15,7 @@ import {
   Flash,
   Link,
 } from '@primer/react';
+import { PageHeader } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { useCache, useNavigate, useToast } from '../../hooks';
 import { IDatasourceVariant } from '../../models';
@@ -103,8 +104,8 @@ export const DatasourceNew = ({
     }));
   };
   useEffect(() => {
-    setValidationResult({
-      ...validationResult,
+    setValidationResult(prev => ({
+      ...prev,
       name:
         formValues.name === undefined
           ? undefined
@@ -133,22 +134,35 @@ export const DatasourceNew = ({
             : formValues.outputBucket.length > 0
               ? true
               : false,
-    });
+    }));
   }, [formValues]);
   const submitCreate = () => {
+    if (!formValues.name || !formValues.description) {
+      return;
+    }
     runStore.layout().showBackdrop('Creating an datasource...');
     createDatasourceMutation.mutate(
       {
-        name: formValues.name!,
+        name: formValues.name,
         variant: formValues.variant,
         database: formValues.database ?? '',
         outputBucket: formValues.outputBucket ?? '',
-        description: formValues.description!,
+        description: formValues.description,
       },
       {
-        onSuccess: (resp: any) => {
-          if (resp.success) {
-            enqueueToast(resp.message, { variant: 'success' });
+        onSuccess: (resp: unknown) => {
+          if (
+            typeof resp === 'object' &&
+            resp !== null &&
+            'success' in resp &&
+            (resp as { success: boolean }).success
+          ) {
+            const message =
+              'message' in resp &&
+              typeof (resp as { message?: unknown }).message === 'string'
+                ? (resp as { message: string }).message
+                : 'Datasource created.';
+            enqueueToast(message, { variant: 'success' });
             navigate(datasourcesListRoute);
           }
         },
@@ -159,100 +173,107 @@ export const DatasourceNew = ({
     );
   };
   return (
-    <Box>
-      <PageHeader>
-        <PageHeader.TitleArea variant="large">
-          <PageHeader.Title>New Datasource</PageHeader.Title>
-        </PageHeader.TitleArea>
-      </PageHeader>
-      <Flash variant="warning">
-        {formValues.variant === 'athena' && (
-          <Text>
-            For <Link href="https://aws.amazon.com/athena">Amazon Athena</Link>,
-            ensure the following{' '}
-            <Link
-              href="javascript: return false;"
-              onClick={e => navigate(secretsRoute, e)}
-            >
-              Secrets
-            </Link>{' '}
-            are available:{'  '}
-            <Text as="code">AWS_SECRET_ACCESS_KEY</Text>
-            {'  '}
-            <Text as="code">AWS_ACCESS_KEY_ID</Text>
-            {'  '}
-            <Text as="code">AWS_DEFAULT_REGION</Text>
-          </Text>
-        )}
-        {formValues.variant === 'bigquery' && (
-          <Text>
-            For{' '}
-            <Link href="https://cloud.google.com/bigquery">
-              Google Big Query
-            </Link>
-            , ensure the following{' '}
-            <Link
-              href="javascript: return false;"
-              onClick={e => navigate(secretsRoute, e)}
-            >
-              Secret
-            </Link>{' '}
-            is available:{'  '}
-            <Text as="code">GOOGLE_APPLICATION_CREDENTIALS</Text>
-          </Text>
-        )}
-        {formValues.variant === 'mssentinel' && (
-          <Text>
-            For{' '}
-            <Link href="https://learn.microsoft.com/en-us/azure/sentinel/overview?tabs=defender-portaly">
-              Microsoft Sentinel
-            </Link>
-            , ensure the following{' '}
-            <Link
-              href="javascript: return false;"
-              onClick={e => navigate(secretsRoute, e)}
-            >
-              Secret
-            </Link>{' '}
-            is available:{'  '}
-            <Text as="code">AZURE_TENANT_ID</Text>
-            {` `}
-            <Text as="code">AZURE_CLIENT_ID</Text>
-            {` `}
-            <Text as="code">AZURE_CLIENT_SECRET</Text>
-            {` `}
-            <Text as="code">AZURE_SUBSCRIPTION_ID</Text>
-            {` `}
-            <Text as="code">AZURE_RESOURCE_GROUP</Text>
-            {` `}
-            <Text as="code">MSSENTINEL_WORKSPACE_ID</Text>
-            {` `}
-            <Text as="code">MSSENTINEL_WORKSPACE_NAME</Text>
-          </Text>
-        )}
-        {formValues.variant === 'splunk' && (
-          <Text>
-            For <Link href="https://www.splunk.com/">Splunk</Link>, ensure the
-            following{' '}
-            <Link
-              href="javascript: return false;"
-              onClick={e => navigate(secretsRoute, e)}
-            >
-              Secret
-            </Link>{' '}
-            is available:{'  '}
-            <Text as="code">SPLUNK_HOST</Text>
-            {` `}
-            <Text as="code">SPLUNK_PORT</Text>
-            {` `}
-            <Text as="code">SPLUNK_USERNAME</Text>
-            {` `}
-            <Text as="code">SPLUNK_PASSWORD</Text>
-          </Text>
-        )}
-      </Flash>
-      <Box display="grid" gridTemplateColumns="1fr 1fr" sx={{ gap: 3 }}>
-        <Box>
+    <PageLayout
+      containerWidth="full"
+      padding="normal"
+      style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
+    >
+      <PageLayout.Header>
+        <PageHeader>
+          <PageHeader.TitleArea variant="large">
+            <PageHeader.Title>New Datasource</PageHeader.Title>
+          </PageHeader.TitleArea>
+        </PageHeader>
+      </PageLayout.Header>
+      <PageLayout.Content>
+        <Box sx={{ maxWidth: '860px' }}>
+          <Flash variant="warning" sx={{ mb: 3 }}>
+            {formValues.variant === 'athena' && (
+              <Text>
+                For{' '}
+                <Link href="https://aws.amazon.com/athena">Amazon Athena</Link>,{' '}
+                ensure the following{' '}
+                <Link
+                  href="javascript: return false;"
+                  onClick={e => navigate(secretsRoute, e)}
+                >
+                  Secrets
+                </Link>{' '}
+                are available:{'  '}
+                <Text as="code">AWS_SECRET_ACCESS_KEY</Text>
+                {'  '}
+                <Text as="code">AWS_ACCESS_KEY_ID</Text>
+                {'  '}
+                <Text as="code">AWS_DEFAULT_REGION</Text>
+              </Text>
+            )}
+            {formValues.variant === 'bigquery' && (
+              <Text>
+                For{' '}
+                <Link href="https://cloud.google.com/bigquery">
+                  Google Big Query
+                </Link>
+                , ensure the following{' '}
+                <Link
+                  href="javascript: return false;"
+                  onClick={e => navigate(secretsRoute, e)}
+                >
+                  Secret
+                </Link>{' '}
+                is available:{'  '}
+                <Text as="code">GOOGLE_APPLICATION_CREDENTIALS</Text>
+              </Text>
+            )}
+            {formValues.variant === 'mssentinel' && (
+              <Text>
+                For{' '}
+                <Link href="https://learn.microsoft.com/en-us/azure/sentinel/overview?tabs=defender-portaly">
+                  Microsoft Sentinel
+                </Link>
+                , ensure the following{' '}
+                <Link
+                  href="javascript: return false;"
+                  onClick={e => navigate(secretsRoute, e)}
+                >
+                  Secret
+                </Link>{' '}
+                is available:{'  '}
+                <Text as="code">AZURE_TENANT_ID</Text>
+                {` `}
+                <Text as="code">AZURE_CLIENT_ID</Text>
+                {` `}
+                <Text as="code">AZURE_CLIENT_SECRET</Text>
+                {` `}
+                <Text as="code">AZURE_SUBSCRIPTION_ID</Text>
+                {` `}
+                <Text as="code">AZURE_RESOURCE_GROUP</Text>
+                {` `}
+                <Text as="code">MSSENTINEL_WORKSPACE_ID</Text>
+                {` `}
+                <Text as="code">MSSENTINEL_WORKSPACE_NAME</Text>
+              </Text>
+            )}
+            {formValues.variant === 'splunk' && (
+              <Text>
+                For <Link href="https://www.splunk.com/">Splunk</Link>, ensure
+                the following{' '}
+                <Link
+                  href="javascript: return false;"
+                  onClick={e => navigate(secretsRoute, e)}
+                >
+                  Secret
+                </Link>{' '}
+                is available:{'  '}
+                <Text as="code">SPLUNK_HOST</Text>
+                {` `}
+                <Text as="code">SPLUNK_PORT</Text>
+                {` `}
+                <Text as="code">SPLUNK_USERNAME</Text>
+                {` `}
+                <Text as="code">SPLUNK_PASSWORD</Text>
+              </Text>
+            )}
+          </Flash>
           <Box sx={{ label: { marginTop: 2 } }}>
             <FormControl required>
               <FormControl.Label>Datasource type</FormControl.Label>
@@ -351,8 +372,8 @@ export const DatasourceNew = ({
             </Button>
           </Box>
         </Box>
-      </Box>
-    </Box>
+      </PageLayout.Content>
+    </PageLayout>
   );
 };
 

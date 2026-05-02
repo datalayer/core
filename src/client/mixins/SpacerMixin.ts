@@ -621,8 +621,37 @@ export function SpacerMixin<TBase extends Constructor>(Base: TBase) {
       // Use getMySpaces and filter by variant, because the
       // /spaces/types/project endpoint returns empty results.
       const allSpaces = await this.getMySpaces();
+
+      const isProjectSpace = (space: SpaceDTO): boolean => {
+        const raw = space.rawData() as any;
+        const variant = raw?.variant_s ?? space.variant;
+        if (variant !== 'project') {
+          return false;
+        }
+
+        const items = Array.isArray(raw?.items)
+          ? raw.items
+          : raw?.items && typeof raw.items === 'object'
+            ? [raw.items]
+            : [];
+
+        if (items.length === 0) {
+          return true;
+        }
+
+        const hasNotebook = items.some(
+          (item: any) => (item?.type_s ?? item?.type) === 'notebook',
+        );
+        const hasDocument = items.some((item: any) => {
+          const type = item?.type_s ?? item?.type;
+          return type === 'document' || type === 'lexical';
+        });
+
+        return hasNotebook && hasDocument;
+      };
+
       return allSpaces
-        .filter(s => s.variant === 'project')
+        .filter(s => isProjectSpace(s))
         .map(s => new ProjectDTO(s.rawData()));
     }
 

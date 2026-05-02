@@ -417,6 +417,24 @@ export const queryKeys = {
     platform: () => ['usages', 'platform'] as const,
   },
 
+  // Credits allocations
+  credits: {
+    organizationOverview: (organizationUid: string) =>
+      ['credits', 'allocations', 'organization', organizationUid] as const,
+    organizationHistory: (organizationUid: string) =>
+      [
+        'credits',
+        'allocations',
+        'organization',
+        organizationUid,
+        'history',
+      ] as const,
+    teamOverview: (teamUid: string) =>
+      ['credits', 'allocations', 'team', teamUid] as const,
+    teamHistory: (teamUid: string) =>
+      ['credits', 'allocations', 'team', teamUid, 'history'] as const,
+  },
+
   // Prices
   prices: {
     stripe: () => ['prices', 'stripe'] as const,
@@ -1593,7 +1611,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       ) => {
         const { id, name, description, ...extraFields } = space as any;
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}/users/${user?.id}`,
+          // Use the canonical space update route. This keeps project runtime
+          // assignment cleanup resilient when stale runtime links must be cleared.
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}`,
           method: 'PUT',
           body: {
             name,
@@ -5785,6 +5805,216 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
 
   /**
+   * Get organization/team balances for allocation workflows
+   */
+  const useOrganizationAllocationOverview = (organizationUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.organizationOverview(organizationUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/overview`,
+          method: 'GET',
+        });
+        return resp.overview ?? { organization: null, teams: [] };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!organizationUid,
+    });
+  };
+
+  /**
+   * Get team/member balances for allocation workflows
+   */
+  const useTeamAllocationOverview = (teamUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.teamOverview(teamUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/overview`,
+          method: 'GET',
+        });
+        return resp.overview ?? { team: null, members: [] };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!teamUid,
+    });
+  };
+
+  /**
+   * Get organization allocation history
+   */
+  const useOrganizationAllocationHistory = (organizationUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.organizationHistory(organizationUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/history`,
+          method: 'GET',
+        });
+        return (
+          resp.history ?? { organization_uid: organizationUid, events: [] }
+        );
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!organizationUid,
+    });
+  };
+
+  /**
+   * Get team allocation history
+   */
+  const useTeamAllocationHistory = (teamUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.teamHistory(teamUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/history`,
+          method: 'GET',
+        });
+        return resp.history ?? { team_uid: teamUid, events: [] };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!teamUid,
+    });
+  };
+
+  /**
+   * Allocate credits from organization to team
+   */
+  const useAllocateOrganizationCreditsToTeam = () => {
+    return useMutation({
+      mutationFn: async ({
+        organizationUid,
+        teamUid,
+        amount,
+      }: {
+        organizationUid: string;
+        teamUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { organizationUid, teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationOverview(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationHistory(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
+   * Allocate credits from team to member
+   */
+  const useAllocateTeamCreditsToMember = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamUid,
+        memberUid,
+        amount,
+      }: {
+        teamUid: string;
+        memberUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
+   * Revoke credits from team back to organization
+   */
+  const useRevokeOrganizationCreditsFromTeam = () => {
+    return useMutation({
+      mutationFn: async ({
+        organizationUid,
+        teamUid,
+        amount,
+      }: {
+        organizationUid: string;
+        teamUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}/revoke`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { organizationUid, teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationOverview(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationHistory(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
+   * Revoke credits from member back to team
+   */
+  const useRevokeTeamCreditsFromMember = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamUid,
+        memberUid,
+        amount,
+      }: {
+        teamUid: string;
+        memberUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}/revoke`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
    * Update user credits quota
    */
   const useUpdateUserCreditsQuota = () => {
@@ -7501,6 +7731,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUpdateUserCredits,
     useAssignRoleToUser,
     useUnassignRoleFromUser,
+    useOrganizationAllocationOverview,
+    useOrganizationAllocationHistory,
+    useTeamAllocationOverview,
+    useTeamAllocationHistory,
+    useAllocateOrganizationCreditsToTeam,
+    useAllocateTeamCreditsToMember,
+    useRevokeOrganizationCreditsFromTeam,
+    useRevokeTeamCreditsFromMember,
     useUpdateUserCreditsQuota,
     useUsages,
     useUsagesForUser,
