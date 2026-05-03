@@ -5199,16 +5199,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
 
   /**
-   * Get Stripe pricing information
+   * Get Stripe top-up pricing information
    */
-  const useStripePrices = (
+  const useTopUpPrices = (
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
-      queryKey: ['stripe', 'prices'],
+      queryKey: ['stripe', 'topup', 'prices'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/prices`,
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/prices`,
           method: 'GET',
         });
         return resp.prices || [];
@@ -5218,27 +5218,61 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Create Stripe checkout session
+   * Create Stripe top-up payment intent client secret
    */
-  const useCreateCheckoutSession = () => {
+  const useCreateTopUpPaymentIntent = () => {
     return useMutation({
       mutationFn: async ({
         product,
-        location,
       }: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         product: any;
-        location: Location;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/checkout/session`,
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/payment-intent`,
           method: 'POST',
           body: {
             price_id: product?.id,
-            return_url: `${location.protocol}//${location.host}${location.pathname.split('/').slice(0, -1).join('/')}`,
           },
         });
         return resp.client_secret;
+      },
+    });
+  };
+
+  /**
+   * Get authenticated user subscription details.
+   */
+  const useSubscriptionStatus = (
+    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'status'],
+      queryFn: async () => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription`,
+          method: 'GET',
+        });
+      },
+      ...options,
+    });
+  };
+
+  /**
+   * Request cancellation portal for the current subscription.
+   */
+  const useCancelSubscription = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async () => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+          method: 'POST',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'status'] });
       },
     });
   };
@@ -7979,9 +8013,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useValidateUserMFACode,
 
     // Checkout & Credits
-    useCreateCheckoutSession,
+    useCreateTopUpPaymentIntent,
+    useSubscriptionStatus,
+    useCancelSubscription,
     useBurnCredit,
-    useStripePrices,
+    useTopUpPrices,
 
     // Support & Growth
     useRequestPlatformSupport,

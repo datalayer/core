@@ -154,6 +154,55 @@ class DatalayerClient(
         """
         return self._get_usage_credits()
 
+    def get_subscription(self) -> dict[str, Any]:
+        """
+        Get current subscription information.
+
+        Returns
+        -------
+        dict[str, Any]
+            Subscription response payload.
+        """
+        return self._get_subscription()
+
+    def cancel_subscription(self) -> dict[str, Any]:
+        """
+        Start cancellation flow for current subscription.
+
+        Returns
+        -------
+        dict[str, Any]
+            Cancellation response payload.
+        """
+        return self._cancel_subscription()
+
+    def get_subscription_plans(self) -> dict[str, Any]:
+        """
+        Get available monthly subscription plans.
+
+        Returns
+        -------
+        dict[str, Any]
+            Subscription plans response payload.
+        """
+        return self._get_subscription_plans()
+
+    def create_checkout_portal(self, return_url: str) -> dict[str, Any]:
+        """
+        Create a checkout portal session.
+
+        Parameters
+        ----------
+        return_url : str
+            URL to return to after checkout operations.
+
+        Returns
+        -------
+        dict[str, Any]
+            Checkout portal response payload.
+        """
+        return self._create_checkout_portal(return_url)
+
     @lru_cache
     def list_environments(self) -> list[EnvironmentModel]:
         """

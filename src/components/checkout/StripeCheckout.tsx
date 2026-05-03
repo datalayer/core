@@ -3,10 +3,23 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { createElement, useCallback, useEffect, useState } from 'react';
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from 'react';
+import {
+  Elements,
+  PaymentElement,
+  useElements,
+  useStripe,
+} from '@stripe/react-stripe-js';
 import { Button, Flash, FormControl, Spinner, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
-import type { Stripe } from '@stripe/stripe-js';
+import type { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { useCache } from '../../hooks';
 import type { ICheckoutPortal } from '../../models';
 
@@ -36,40 +49,101 @@ export interface IPrice {
   credits: number;
 }
 
+export type StripeCheckoutProps = {
+  checkoutPortal: ICheckoutPortal | null;
+  appearance?: StripeElementsOptions['appearance'];
+};
+
+type StripePaymentFormProps = {
+  onPaymentSucceeded: () => void;
+};
+
+function StripePaymentForm({ onPaymentSucceeded }: StripePaymentFormProps) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      if (!stripe || !elements) {
+        return;
+      }
+
+      setIsSubmitting(true);
+      setErrorMessage(null);
+
+      const result = await stripe.confirmPayment({
+        elements,
+        redirect: 'if_required',
+      });
+
+      if (result.error) {
+        setErrorMessage(
+          result.error.message || 'Payment failed. Please try again.',
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (result.paymentIntent?.status === 'succeeded') {
+        onPaymentSucceeded();
+      }
+
+      setIsSubmitting(false);
+    },
+    [elements, onPaymentSucceeded, stripe],
+  );
+
+  return (
+    <Box as="form" onSubmit={handleSubmit} sx={{ display: 'grid', gap: 3 }}>
+      <PaymentElement />
+      {errorMessage && <Flash variant="danger">{errorMessage}</Flash>}
+      <Button
+        variant="primary"
+        type="submit"
+        disabled={!stripe || isSubmitting}
+      >
+        {isSubmitting ? 'Processing payment...' : 'Pay now'}
+      </Button>
+    </Box>
+  );
+}
+
 /**
  * Stripe checkout.
  */
 export function StripeCheckout({
   checkoutPortal,
-}: {
-  checkoutPortal: ICheckoutPortal | null;
-}) {
-  const { useCreateCheckoutSession, useStripePrices } = useCache();
+  appearance,
+}: StripeCheckoutProps) {
+  const {
+    useCreateTopUpPaymentIntent,
+    useTopUpPrices,
+    useSubscriptionStatus,
+    useCancelSubscription,
+  } = useCache();
   const [stripe, setStripe] = useState<Promise<Stripe | null> | null>(null);
-  const [components, setComponents] = useState<any>(null);
-  const [items, setItems] = useState<IPrice[] | null>(null);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(
+    null,
+  );
   const [product, setProduct] = useState<IPrice | null>(null);
   const [checkout, setCheckout] = useState<boolean>(false);
+  const [cancelInProgress, setCancelInProgress] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
 
   // Get Stripe prices using TanStack Query hook
-  const { data: pricesData } = useStripePrices();
+  const { data: pricesData } = useTopUpPrices();
+  const items = (pricesData as IPrice[] | undefined) ?? null;
 
-  // Update items when prices data changes
-  useEffect(() => {
-    if (pricesData) {
-      setItems(pricesData as IPrice[]);
-    }
-  }, [pricesData]);
+  const { data: subscriptionResp } = useSubscriptionStatus();
+  const cancelSubscriptionMutation = useCancelSubscription();
 
   // Get checkout session mutation
-  const checkoutSessionMutation = useCreateCheckoutSession();
+  const topUpPaymentIntentMutation = useCreateTopUpPaymentIntent();
 
-  // Load stripe components.
-  useEffect(() => {
-    import('@stripe/react-stripe-js').then(module => {
-      setComponents(module);
-    });
-  }, []);
   // Load stripe API
   useEffect(() => {
     if (checkoutPortal?.metadata?.stripe_key) {
@@ -79,30 +153,191 @@ export function StripeCheckout({
     }
   }, [checkoutPortal?.metadata?.stripe_key]);
 
-  const fetchClientSecret = useCallback(async () => {
-    const location = document.location;
-    // Create a Checkout Session using TanStack Query mutation
-    const result = await checkoutSessionMutation.mutateAsync({
+  const paymentOptions = useMemo<StripeElementsOptions | null>(() => {
+    if (!paymentClientSecret) {
+      return null;
+    }
+
+    return {
+      clientSecret: paymentClientSecret,
+      ...(appearance ? { appearance } : {}),
+    };
+  }, [appearance, paymentClientSecret]);
+
+  const onPaymentSucceeded = useCallback(() => {
+    setCheckout(false);
+    setPaymentClientSecret(null);
+    setProduct(null);
+    setPaymentMessage(
+      'Payment confirmed. Credits update may take a few seconds.',
+    );
+  }, []);
+
+  const subscription = subscriptionResp?.subscription || null;
+  const subscriptionPortalUrl =
+    subscriptionResp?.portal?.url || checkoutPortal?.url;
+  const subscriptionPlan =
+    subscription?.plan_name ||
+    subscription?.plan?.name ||
+    subscription?.plan ||
+    'Free';
+  const subscriptionStatus =
+    subscription?.status || subscription?.subscription_status || 'unknown';
+  const includedRuns = Number(subscription?.included_runs);
+  const usedRuns = Number(subscription?.used_runs);
+  const remainingRuns =
+    Number.isFinite(includedRuns) && Number.isFinite(usedRuns)
+      ? Math.max(0, includedRuns - usedRuns)
+      : null;
+
+  const isPaidSubscription = useMemo(() => {
+    const normalizedPlan = String(subscriptionPlan).toLowerCase();
+    const normalizedStatus = String(subscriptionStatus).toLowerCase();
+    const freeLike =
+      normalizedPlan.includes('free') ||
+      normalizedPlan.includes('trial') ||
+      normalizedStatus.includes('free') ||
+      normalizedStatus.includes('canceled') ||
+      normalizedStatus.includes('cancelled');
+    return !freeLike;
+  }, [subscriptionPlan, subscriptionStatus]);
+
+  const hasTopUpAccess = useMemo(() => {
+    const normalizedPlan = String(subscriptionPlan).toLowerCase();
+    const normalizedStatus = String(subscriptionStatus).toLowerCase();
+    const freeLike =
+      normalizedPlan.includes('free') ||
+      normalizedPlan.includes('trial') ||
+      normalizedStatus.includes('free') ||
+      normalizedStatus.includes('canceled') ||
+      normalizedStatus.includes('cancelled');
+    if (freeLike) {
+      return false;
+    }
+    return ['active', 'trialing', 'paid', 'past_due'].includes(
+      normalizedStatus,
+    );
+  }, [subscriptionPlan, subscriptionStatus]);
+
+  const startCheckout = useCallback(async () => {
+    if (!product || !hasTopUpAccess) {
+      if (!hasTopUpAccess) {
+        setPaymentMessage(
+          'Monthly subscription required before buying top-up credits.',
+        );
+      }
+      return;
+    }
+    setPaymentMessage(null);
+    const clientSecret = await topUpPaymentIntentMutation.mutateAsync({
       product,
-      location,
     });
-    return result;
-  }, [checkoutSessionMutation, product]);
-  const options = { fetchClientSecret };
+    setPaymentClientSecret(clientSecret);
+    setCheckout(true);
+  }, [topUpPaymentIntentMutation, hasTopUpAccess, product]);
+
+  const openPortal = useCallback((url?: string) => {
+    if (!url) {
+      return;
+    }
+    window.open(url, '_blank', 'noreferrer');
+  }, []);
+
+  const onCancelSubscription = useCallback(async () => {
+    if (cancelInProgress) {
+      return;
+    }
+    setCancelInProgress(true);
+    try {
+      const resp = await cancelSubscriptionMutation.mutateAsync();
+      if (resp?.portal?.url) {
+        openPortal(resp.portal.url);
+      }
+    } finally {
+      setCancelInProgress(false);
+    }
+  }, [cancelInProgress, cancelSubscriptionMutation, openPortal]);
+
+  const subscriptionSummary = (
+    <Box
+      sx={{
+        border: '1px solid',
+        borderColor: 'border.default',
+        borderRadius: 'var(--borderRadius-medium)',
+        backgroundColor: 'canvas.default',
+        padding: 'var(--stack-padding-normal)',
+        marginBottom: 'var(--stack-gap-normal)',
+      }}
+    >
+      <Text
+        as="h3"
+        sx={{ fontWeight: 'bold', marginBottom: 'var(--stack-gap-condensed)' }}
+      >
+        Subscription status
+      </Text>
+      <Text as="p">Plan: {String(subscriptionPlan)}</Text>
+      <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+        Status: {String(subscriptionStatus).replaceAll('_', ' ')}
+      </Text>
+      {remainingRuns !== null && (
+        <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
+          Included runs remaining this period: {remainingRuns}
+        </Text>
+      )}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 'var(--stack-gap-condensed)',
+          flexWrap: 'wrap',
+        }}
+      >
+        {subscriptionPortalUrl && (
+          <Button
+            variant="default"
+            onClick={() => openPortal(subscriptionPortalUrl)}
+          >
+            Manage subscription
+          </Button>
+        )}
+        {isPaidSubscription && (
+          <Button
+            variant="danger"
+            onClick={onCancelSubscription}
+            disabled={cancelInProgress || cancelSubscriptionMutation.isPending}
+          >
+            {cancelInProgress || cancelSubscriptionMutation.isPending
+              ? 'Opening cancel flow...'
+              : 'Cancel subscription'}
+          </Button>
+        )}
+      </Box>
+      <Text
+        as="p"
+        sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
+      >
+        Next step:{' '}
+        {isPaidSubscription
+          ? 'Keep your subscription active. Top-up credits are available for active monthly subscribers.'
+          : 'Start with a monthly subscription in the billing portal before buying top-up credits.'}
+      </Text>
+    </Box>
+  );
+
   let view = (
     <Box sx={{ minHeight: '40px' }}>
       <Spinner />
     </Box>
   );
   if (checkout) {
-    if (stripe && components) {
+    if (stripe && paymentOptions) {
       view = createElement(
         Box,
-        { id: 'checkout', sx: { flex: '1 1 auto' } },
+        { id: 'checkout', sx: { flex: '1 1 auto', display: 'grid', gap: 3 } },
+        subscriptionSummary,
         createElement(
-          components.EmbeddedCheckoutProvider,
-          { stripe, options },
-          createElement(components.EmbeddedCheckout),
+          Elements,
+          { stripe, options: paymentOptions },
+          createElement(StripePaymentForm, { onPaymentSucceeded }),
         ),
       );
     }
@@ -112,10 +347,22 @@ export function StripeCheckout({
         sx={{ flex: '1 1 auto' }}
         onKeyDown={event => {
           if (product && event.key === 'Enter') {
-            setCheckout(true);
+            void startCheckout();
           }
         }}
       >
+        {subscriptionSummary}
+        {paymentMessage && (
+          <Flash variant={hasTopUpAccess ? 'success' : 'warning'}>
+            {paymentMessage}
+          </Flash>
+        )}
+        {!hasTopUpAccess && (
+          <Flash variant="warning" sx={{ mb: 3 }}>
+            Monthly subscription required. Activate a monthly plan first, then
+            top-up credits will be available.
+          </Flash>
+        )}
         <Text as="h3">Choose a credits package</Text>
         <Box
           role="radiogroup"
@@ -132,7 +379,9 @@ export function StripeCheckout({
               aria-labelledby={`checkout-price-${item.id}`}
               aria-checked={product?.id === item.id}
               onClick={() => {
-                setProduct(item);
+                if (hasTopUpAccess) {
+                  setProduct(item);
+                }
               }}
               sx={{
                 borderStyle: 'solid',
@@ -143,7 +392,8 @@ export function StripeCheckout({
                     ? 'var(--borderColor-accent-emphasis)'
                     : 'var(--borderColor-default)',
                 padding: 'var(--stack-padding-condensed)',
-                cursor: 'pointer',
+                cursor: hasTopUpAccess ? 'pointer' : 'not-allowed',
+                opacity: hasTopUpAccess ? 1 : 0.6,
               }}
             >
               <FormControl
@@ -172,9 +422,9 @@ export function StripeCheckout({
         <Button
           variant="primary"
           onClick={() => {
-            setCheckout(true);
+            void startCheckout();
           }}
-          disabled={product === null}
+          disabled={product === null || !hasTopUpAccess}
           sx={{ float: 'right' }}
         >
           Checkout
@@ -182,6 +432,7 @@ export function StripeCheckout({
       </Box>
     ) : (
       <Box>
+        {subscriptionSummary}
         <Flash variant="danger">
           Unable to fetch the available products. Please try again later.
         </Flash>
