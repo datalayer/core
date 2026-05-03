@@ -5241,6 +5241,48 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get available monthly subscription plans.
+   */
+  const useSubscriptionPlans = (
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'plans'],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/plans`,
+          method: 'GET',
+        });
+        return resp.plans || [];
+      },
+      ...options,
+    });
+  };
+
+  /**
+   * Create Stripe monthly subscription payment intent client secret.
+   */
+  const useCreateSubscriptionPaymentIntent = () => {
+    return useMutation({
+      mutationFn: async ({
+        plan,
+      }: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        plan: any;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/payment-intent`,
+          method: 'POST',
+          body: {
+            price_id: plan?.id,
+          },
+        });
+        return resp.client_secret;
+      },
+    });
+  };
+
+  /**
    * Get authenticated user subscription details.
    */
   const useSubscriptionStatus = (
@@ -8014,7 +8056,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
     // Checkout & Credits
     useCreateTopUpPaymentIntent,
+    useCreateSubscriptionPaymentIntent,
     useSubscriptionStatus,
+    useSubscriptionPlans,
     useCancelSubscription,
     useBurnCredit,
     useTopUpPrices,
