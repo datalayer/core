@@ -5283,6 +5283,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Create Stripe SetupIntent client secret to update card before resuming.
+   */
+  const useCreateResumeSetupIntent = () => {
+    return useMutation({
+      mutationFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/resume/setup-intent`,
+          method: 'POST',
+          body: {},
+        });
+        return resp.client_secret;
+      },
+    });
+  };
+
+  /**
    * Get authenticated user subscription details.
    */
   const useSubscriptionStatus = (
@@ -5310,6 +5326,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+          method: 'POST',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['subscription', 'status'] });
+      },
+    });
+  };
+
+  /**
+   * Resume a subscription already scheduled for cancellation.
+   */
+  const useResumeSubscription = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async () => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/resume`,
           method: 'POST',
         });
       },
@@ -8057,9 +8092,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Checkout & Credits
     useCreateTopUpPaymentIntent,
     useCreateSubscriptionPaymentIntent,
+    useCreateResumeSetupIntent,
     useSubscriptionStatus,
     useSubscriptionPlans,
     useCancelSubscription,
+    useResumeSubscription,
     useBurnCredit,
     useTopUpPrices,
 

@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
 } from 'react';
@@ -17,7 +18,14 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { Button, Flash, FormControl, Spinner, Text } from '@primer/react';
+import {
+  Button,
+  Flash,
+  FormControl,
+  Spinner,
+  Text,
+  useTheme,
+} from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import type { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { useCache } from '../../hooks';
@@ -88,17 +96,101 @@ const asNonNegativeNumber = (value: unknown): number | null => {
 
 type StripePaymentFormProps = {
   clientSecret: string;
+  intentType?: 'payment' | 'setup';
   onPaymentSucceeded: () => void;
 };
 
 function StripePaymentForm({
   clientSecret,
+  intentType = 'payment',
   onPaymentSucceeded,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
+  const { colorScheme, resolvedColorScheme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const themeIsDark = useMemo(() => {
+    const scheme = (resolvedColorScheme || colorScheme || '').toLowerCase();
+    if (scheme.includes('dark')) {
+      return true;
+    }
+    if (scheme.includes('light')) {
+      return false;
+    }
+    return false;
+  }, [colorScheme, resolvedColorScheme]);
+
+  const cardOptions = useMemo(() => {
+    const rootStyles =
+      typeof window !== 'undefined'
+        ? getComputedStyle(document.documentElement)
+        : null;
+    const detectDarkMode = () => {
+      if (themeIsDark) {
+        return true;
+      }
+      if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return false;
+      }
+      const candidates: (Element | null)[] = [
+        document.documentElement,
+        document.body,
+      ];
+      for (const el of candidates) {
+        const mode = el?.getAttribute('data-color-mode');
+        if (mode === 'dark') {
+          return true;
+        }
+        if (mode === 'light') {
+          return false;
+        }
+      }
+      for (const el of candidates) {
+        const darkTheme = el?.getAttribute('data-dark-theme');
+        if (
+          darkTheme &&
+          darkTheme !== 'light' &&
+          (el?.getAttribute('data-color-mode') || 'auto') === 'auto' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches
+        ) {
+          return true;
+        }
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    };
+    const isDarkMode = detectDarkMode();
+    const fontFamily =
+      rootStyles?.getPropertyValue('--base-text-font-family')?.trim() ||
+      'system-ui, -apple-system, Segoe UI, sans-serif';
+    // Stripe's CardElement renders in an iframe that does not inherit our CSS
+    // variables, so reading them from documentElement does not always reflect
+    // the active theme. Use explicit dark/light values so typed characters are
+    // always readable.
+    const baseColor = isDarkMode ? '#f0f6fc' : '#1f2328';
+    const mutedColor = isDarkMode ? '#8b949e' : '#59636e';
+    return {
+      style: {
+        base: {
+          color: baseColor,
+          iconColor: mutedColor,
+          fontFamily,
+          fontSize: '16px',
+          '::placeholder': {
+            color: mutedColor,
+          },
+          ':-webkit-autofill': {
+            color: baseColor,
+          },
+        },
+        invalid: {
+          color: '#d1242f',
+          iconColor: '#d1242f',
+        },
+      },
+    };
+  }, [themeIsDark]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -117,22 +209,42 @@ function StripePaymentForm({
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card,
-        },
-      });
+      if (intentType === 'setup') {
+        const result = await stripe.confirmCardSetup(clientSecret, {
+          payment_method: {
+            card,
+          },
+        });
 
-      if (result.error) {
-        setErrorMessage(
-          result.error.message || 'Payment failed. Please try again.',
-        );
-        setIsSubmitting(false);
-        return;
-      }
+        if (result.error) {
+          setErrorMessage(
+            result.error.message || 'Payment failed. Please try again.',
+          );
+          setIsSubmitting(false);
+          return;
+        }
 
-      if (result.paymentIntent?.status === 'succeeded') {
-        onPaymentSucceeded();
+        if (result.setupIntent?.status === 'succeeded') {
+          onPaymentSucceeded();
+        }
+      } else {
+        const result = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card,
+          },
+        });
+
+        if (result.error) {
+          setErrorMessage(
+            result.error.message || 'Payment failed. Please try again.',
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (result.paymentIntent?.status === 'succeeded') {
+          onPaymentSucceeded();
+        }
       }
 
       setIsSubmitting(false);
@@ -142,7 +254,16 @@ function StripePaymentForm({
 
   return (
     <Box as="form" onSubmit={handleSubmit} sx={{ display: 'grid', gap: 3 }}>
-      <CardElement />
+      <CardElement
+        options={cardOptions as any}
+        onReady={element => {
+          try {
+            element.focus();
+          } catch {
+            // no-op: focus may fail if the element is unmounted.
+          }
+        }}
+      />
       {errorMessage && <Flash variant="danger">{errorMessage}</Flash>}
       <Button
         variant="primary"
@@ -165,10 +286,12 @@ export function StripeCheckout({
   const {
     useCreateTopUpPaymentIntent,
     useCreateSubscriptionPaymentIntent,
+    useCreateResumeSetupIntent,
     useSubscriptionPlans,
     useTopUpPrices,
     useSubscriptionStatus,
     useCancelSubscription,
+    useResumeSubscription,
   } = useCache();
   const [stripe, setStripe] = useState<Promise<Stripe | null> | null>(null);
   const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(
@@ -178,9 +301,9 @@ export function StripeCheckout({
   const [subscriptionPlan, setSubscriptionPlan] =
     useState<ISubscriptionPlan | null>(null);
   const [checkout, setCheckout] = useState<boolean>(false);
-  const [checkoutType, setCheckoutType] = useState<'topup' | 'subscription'>(
-    'topup',
-  );
+  const [checkoutType, setCheckoutType] = useState<
+    'topup' | 'subscription' | 'resume'
+  >('topup');
   const [cancelViewOpen, setCancelViewOpen] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
 
@@ -195,11 +318,13 @@ export function StripeCheckout({
 
   const { data: subscriptionResp } = useSubscriptionStatus();
   const cancelSubscriptionMutation = useCancelSubscription();
+  const resumeSubscriptionMutation = useResumeSubscription();
 
   // Get checkout session mutation
   const topUpPaymentIntentMutation = useCreateTopUpPaymentIntent();
   const subscriptionPaymentIntentMutation =
     useCreateSubscriptionPaymentIntent();
+  const resumeSetupIntentMutation = useCreateResumeSetupIntent();
 
   // Load stripe API
   useEffect(() => {
@@ -232,11 +357,27 @@ export function StripeCheckout({
     }
   }, [appearance]);
 
-  const onPaymentSucceeded = useCallback(() => {
+  const onPaymentSucceeded = useCallback(async () => {
     setCheckout(false);
     setPaymentClientSecret(null);
     setProduct(null);
     setSubscriptionPlan(null);
+    if (checkoutType === 'resume') {
+      try {
+        const resp = await resumeSubscriptionMutation.mutateAsync();
+        setPaymentMessage(
+          resp?.message ||
+            'Payment confirmed and subscription resumed successfully.',
+        );
+      } catch (error) {
+        setPaymentMessage(
+          error instanceof Error
+            ? error.message
+            : 'Payment confirmed, but unable to resume subscription right now.',
+        );
+      }
+      return;
+    }
     if (checkoutType === 'subscription') {
       setPaymentMessage(
         'Subscription payment confirmed. Your plan status may take a few seconds to refresh.',
@@ -246,7 +387,7 @@ export function StripeCheckout({
         'Payment confirmed. Credits update may take a few seconds.',
       );
     }
-  }, [checkoutType]);
+  }, [checkoutType, resumeSubscriptionMutation]);
 
   const subscription = subscriptionResp?.subscription || null;
   const availablePlans = useMemo<ISubscriptionPlan[]>(() => {
@@ -281,22 +422,97 @@ export function StripeCheckout({
   const currentSubscriptionPlan = useMemo(() => {
     const raw = String(rawCurrentSubscriptionPlan || 'Free');
     const byId = availablePlans.find(plan => plan.id === raw);
-    if (byId?.name) {
-      return byId.name;
-    }
-    return raw;
+    const resolved = byId?.name || raw;
+    // Always present plan names with a trailing " Plan" for consistency with
+    // other surfaces (e.g. /settings/subscription/overview).
+    return /\bplan$/i.test(resolved) ? resolved : `${resolved} Plan`;
   }, [availablePlans, rawCurrentSubscriptionPlan]);
+  const currentPlanDetails = useMemo(() => {
+    const byPlanId = availablePlans.find(
+      plan => plan.id && plan.id === subscription?.plan_id,
+    );
+    if (byPlanId) {
+      return byPlanId;
+    }
+
+    const normalizedCurrentPlanName = String(
+      currentSubscriptionPlan,
+    ).toLowerCase();
+    return (
+      availablePlans.find(
+        plan =>
+          plan.name &&
+          normalizedCurrentPlanName.includes(plan.name.toLowerCase()),
+      ) || null
+    );
+  }, [availablePlans, currentSubscriptionPlan, subscription?.plan_id]);
+  const currentPlanPriceLabel = useMemo(() => {
+    if (!currentPlanDetails) {
+      return 'N/A';
+    }
+    const amount = Number(currentPlanDetails.amount || 0);
+    const currency = currentPlanDetails.currency || 'usd';
+    const formatted = new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+    }).format(amount / 100);
+    return `${formatted}${currentPlanDetails.interval ? ` / ${currentPlanDetails.interval}` : ''}`;
+  }, [currentPlanDetails]);
+  const subscriptionPeriodStartLabel = useMemo(() => {
+    const rawStart =
+      subscription?.current_period_start ||
+      subscription?.subscription_period_start_ts_dt;
+    if (!rawStart) {
+      return 'N/A';
+    }
+    const parsed = new Date(rawStart);
+    if (Number.isNaN(parsed.getTime())) {
+      return String(rawStart);
+    }
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    }).format(parsed);
+  }, [
+    subscription?.current_period_start,
+    subscription?.subscription_period_start_ts_dt,
+  ]);
+  const subscriptionPeriodEndLabel = useMemo(() => {
+    const rawEnd =
+      subscription?.current_period_end ||
+      subscription?.subscription_period_end_ts_dt;
+    if (!rawEnd) {
+      return 'N/A';
+    }
+    const parsed = new Date(rawEnd);
+    if (Number.isNaN(parsed.getTime())) {
+      return String(rawEnd);
+    }
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    }).format(parsed);
+  }, [
+    subscription?.current_period_end,
+    subscription?.subscription_period_end_ts_dt,
+  ]);
   const subscriptionPortalUrl =
     subscriptionResp?.portal?.url || checkoutPortal?.url;
   const subscriptionStatus =
     subscription?.status || subscription?.subscription_status || 'unknown';
   const normalizedSubscriptionStatus = String(subscriptionStatus).toLowerCase();
-  const displaySubscriptionStatus =
-    normalizedSubscriptionStatus && normalizedSubscriptionStatus !== 'unknown'
+  const isCancellationScheduled =
+    Boolean(subscription?.cancel_at_period_end) ||
+    Boolean(subscription?.subscription_cancel_at_period_end_b);
+  const isIncompleteSubscription =
+    normalizedSubscriptionStatus === 'incomplete';
+  const displaySubscriptionStatus = isCancellationScheduled
+    ? 'cancelled'
+    : normalizedSubscriptionStatus && normalizedSubscriptionStatus !== 'unknown'
       ? String(subscriptionStatus).replaceAll('_', ' ')
       : null;
-  const isIncompleteSubscription =
-    normalizedSubscriptionStatus.includes('incomplete');
   const normalizedPlanName = String(currentSubscriptionPlan).toLowerCase();
   const planIncludedRuns = asPositiveNumber(
     plans.find(
@@ -360,13 +576,15 @@ export function StripeCheckout({
 
     const status = String(subscriptionStatus).toLowerCase();
     const nonCancelable =
+      isCancellationScheduled ||
+      status.includes('incomplete_expired') ||
       status.includes('canceled') ||
       status.includes('cancelled') ||
       status.includes('free') ||
       status === 'unknown';
 
     return !nonCancelable;
-  }, [hasBillablePlan, subscriptionStatus]);
+  }, [hasBillablePlan, subscriptionStatus, isCancellationScheduled]);
 
   const hasTopUpAccess = useMemo(() => {
     const normalizedPlan = String(currentSubscriptionPlan).toLowerCase();
@@ -396,6 +614,32 @@ export function StripeCheckout({
       setSubscriptionPlan(plans[0]);
     }
   }, [isPaidSubscription, plans, subscriptionPlan]);
+
+  // Auto-open the in-app cancel/downgrade view when the page is opened with
+  // `?action=downgrade` (e.g. from the Subscription Overview "Downgrade" CTA).
+  // When opened with `?action=resume`, immediately trigger the resume flow.
+  const autoActionTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (autoActionTriggeredRef.current) {
+      return;
+    }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get('action');
+      if (action === 'downgrade' && isPaidSubscription) {
+        autoActionTriggeredRef.current = true;
+        setCancelViewOpen(true);
+      } else if (action === 'resume' && isCancellationScheduled) {
+        autoActionTriggeredRef.current = true;
+        void onResumeSubscription();
+      }
+    } catch (_error) {
+      // Ignore malformed URLs.
+    }
+  }, [isPaidSubscription, isCancellationScheduled]);
 
   const startCheckout = useCallback(async () => {
     if (!product || !canBuyTopUp) {
@@ -504,6 +748,33 @@ export function StripeCheckout({
     }
   }, [cancelSubscriptionMutation]);
 
+  const onResumeSubscription = useCallback(async () => {
+    setPaymentMessage(null);
+    try {
+      const clientSecret = await resumeSetupIntentMutation.mutateAsync();
+      if (!clientSecret) {
+        setCheckout(false);
+        setPaymentClientSecret(null);
+        setPaymentMessage(
+          'Unable to initialize Stripe checkout. Please try again.',
+        );
+        return;
+      }
+      setCheckoutType('resume');
+      setPaymentClientSecret(clientSecret);
+      setCheckout(true);
+      setPaymentMessage(
+        'Enter a new payment card to resume your subscription.',
+      );
+    } catch (error) {
+      setPaymentMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to initialize resume checkout right now.',
+      );
+    }
+  }, [resumeSetupIntentMutation]);
+
   const selectedCheckoutLabel = useMemo(() => {
     if (checkoutType === 'subscription' && subscriptionPlan) {
       const amount = new Intl.NumberFormat(undefined, {
@@ -521,139 +792,27 @@ export function StripeCheckout({
       return `${product.name} (${amount}, ${product.credits} credits)`;
     }
 
+    if (checkoutType === 'resume') {
+      return 'Subscription resume (card update required)';
+    }
+
     return null;
   }, [checkoutType, product, subscriptionPlan]);
 
   const topCards = (
     <Box
       sx={{
+        marginBottom: 'var(--stack-gap-normal)',
+        border: '1px solid',
+        borderColor: 'border.default',
+        borderRadius: 'var(--borderRadius-medium)',
+        backgroundColor: 'canvas.default',
+        padding: 'var(--stack-padding-normal)',
         display: 'grid',
         gap: 'var(--stack-gap-normal)',
-        gridTemplateColumns: ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)'],
-        marginBottom: 'var(--stack-gap-normal)',
       }}
     >
-      <Box
-        sx={{
-          order: [2, 1],
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 'var(--borderRadius-medium)',
-          backgroundColor: 'canvas.default',
-          padding: 'var(--stack-padding-normal)',
-        }}
-      >
-        <Text
-          as="h3"
-          sx={{
-            fontWeight: 'bold',
-            marginBottom: 'var(--stack-gap-condensed)',
-          }}
-        >
-          Subscription status
-        </Text>
-        <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
-        {displaySubscriptionStatus && (
-          <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
-            Status: {displaySubscriptionStatus}
-          </Text>
-        )}
-        {remainingRuns !== null && (
-          <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
-            {`Included runs remaining this period: ${remainingRuns.toLocaleString()}`}
-          </Text>
-        )}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 'var(--stack-gap-condensed)',
-            flexWrap: 'wrap',
-          }}
-        >
-          {subscriptionPortalUrl && (
-            <Button
-              variant="default"
-              onClick={() => openPortal(subscriptionPortalUrl)}
-            >
-              Open Stripe billing portal
-            </Button>
-          )}
-          {canCancelSubscription && (
-            <Button variant="danger" onClick={onCancelSubscription}>
-              Cancel subscription
-            </Button>
-          )}
-        </Box>
-        <Text
-          as="p"
-          sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
-        >
-          Next step:{' '}
-          {isIncompleteSubscription
-            ? 'Your payment is pending. Open the in-app cancel view below to cancel this subscription or continue with payment.'
-            : isPaidSubscription
-              ? 'Keep your subscription active. Top-up credits are available for active monthly subscribers.'
-              : 'Choose a monthly subscription, then buy top-up credits as needed.'}
-        </Text>
-        {cancelViewOpen && (
-          <Box
-            sx={{
-              marginTop: 'var(--stack-gap-normal)',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'var(--borderRadius-medium)',
-              backgroundColor: 'canvas.subtle',
-              padding: 'var(--stack-padding-normal)',
-              display: 'grid',
-              gap: 'var(--stack-gap-condensed)',
-            }}
-          >
-            <Text as="h4" sx={{ fontWeight: 'bold' }}>
-              Cancel Subscription In App
-            </Text>
-            <Text as="p" sx={{ color: 'fg.muted' }}>
-              {isIncompleteSubscription
-                ? 'This pending subscription will be canceled immediately.'
-                : 'Your subscription will be canceled at the end of the current billing period.'}
-            </Text>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 'var(--stack-gap-condensed)',
-                flexWrap: 'wrap',
-              }}
-            >
-              <Button
-                variant="danger"
-                onClick={() => void onConfirmCancelSubscription()}
-                disabled={cancelSubscriptionMutation.isPending}
-              >
-                {cancelSubscriptionMutation.isPending
-                  ? 'Cancelling...'
-                  : 'Confirm cancellation'}
-              </Button>
-              <Button
-                variant="default"
-                onClick={onAbortCancelView}
-                disabled={cancelSubscriptionMutation.isPending}
-              >
-                Keep subscription
-              </Button>
-            </Box>
-          </Box>
-        )}
-      </Box>
-
-      <Box
-        sx={{
-          order: [1, 2],
-          border: '1px solid',
-          borderColor: 'border.default',
-          borderRadius: 'var(--borderRadius-medium)',
-          backgroundColor: 'canvas.default',
-          padding: 'var(--stack-padding-normal)',
-        }}
-      >
+      <Box>
         <Text
           as="h3"
           sx={{
@@ -741,9 +900,155 @@ export function StripeCheckout({
           </>
         ) : (
           <Text as="p" sx={{ color: 'fg.muted' }}>
-            Your monthly subscription is active. You can manage plan details
-            from subscription controls.
+            {isCancellationScheduled
+              ? `Your monthly subscription will cancel on ${subscriptionPeriodEndLabel}.`
+              : 'Your monthly subscription is active. You can manage plan details from subscription controls.'}
           </Text>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          borderTop: '1px solid',
+          borderColor: 'border.muted',
+          paddingTop: 'var(--stack-gap-normal)',
+        }}
+      >
+        <Text
+          as="h3"
+          sx={{
+            fontWeight: 'bold',
+            marginBottom: 'var(--stack-gap-condensed)',
+          }}
+        >
+          Subscription status
+        </Text>
+        <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
+        <Text as="p">Price: {currentPlanPriceLabel}</Text>
+        {displaySubscriptionStatus && (
+          <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+            Status: {displaySubscriptionStatus}
+          </Text>
+        )}
+        <Text as="p">Period start: {subscriptionPeriodStartLabel}</Text>
+        <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+          Period end: {subscriptionPeriodEndLabel}
+        </Text>
+        {isCancellationScheduled && (
+          <Flash
+            variant="warning"
+            sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
+          >
+            Subscription will cancel at the end of the current period on{' '}
+            {subscriptionPeriodEndLabel}.
+          </Flash>
+        )}
+        {remainingRuns !== null && (
+          <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
+            {`Included runs remaining this period: ${remainingRuns.toLocaleString()}`}
+          </Text>
+        )}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 'var(--stack-gap-condensed)',
+            flexWrap: 'wrap',
+          }}
+        >
+          {subscriptionPortalUrl && (
+            <Button
+              variant="default"
+              onClick={() => openPortal(subscriptionPortalUrl)}
+            >
+              Open Stripe billing portal
+            </Button>
+          )}
+          {canCancelSubscription && (
+            <Button variant="danger" onClick={onCancelSubscription}>
+              Downgrade to Free Plan
+            </Button>
+          )}
+          {isCancellationScheduled && (
+            <Button
+              variant="primary"
+              onClick={() => void onResumeSubscription()}
+              disabled={resumeSubscriptionMutation.isPending}
+            >
+              {resumeSubscriptionMutation.isPending
+                ? 'Resuming...'
+                : 'Resume subscription'}
+            </Button>
+          )}
+        </Box>
+        <Text
+          as="p"
+          sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
+        >
+          Next step:{' '}
+          {isCancellationScheduled
+            ? 'Your subscription is already scheduled for cancellation at period end. You can keep using it until then.'
+            : isIncompleteSubscription
+              ? 'Your payment is pending. Open the in-app cancel view below to cancel this subscription or continue with payment.'
+              : isPaidSubscription
+                ? 'Keep your subscription active. Top-up credits are available for active monthly subscribers.'
+                : 'Choose a monthly subscription, then buy top-up credits as needed.'}
+        </Text>
+        {!hasTopUpAccess && canBuyTopUp && (
+          <Flash
+            variant="warning"
+            sx={{ marginTop: 'var(--stack-gap-normal)' }}
+          >
+            Monthly subscription is normally required. Temporary allowance is
+            enabled: you can buy top-up credits now. Update to Team Plan for
+            included monthly runs.
+          </Flash>
+        )}
+        {cancelViewOpen && (
+          <Box
+            sx={{
+              marginTop: 'var(--stack-gap-normal)',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'var(--borderRadius-medium)',
+              backgroundColor: 'canvas.subtle',
+              padding: 'var(--stack-padding-normal)',
+              display: 'grid',
+              gap: 'var(--stack-gap-condensed)',
+            }}
+          >
+            <Text as="h4" sx={{ fontWeight: 'bold' }}>
+              Downgrade to Free Plan
+            </Text>
+            <Text as="p" sx={{ color: 'fg.muted' }}>
+              {isIncompleteSubscription
+                ? 'This pending subscription will be canceled immediately.'
+                : 'Your subscription will be canceled at the end of the current billing period.'}
+            </Text>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 'var(--stack-gap-condensed)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Button
+                variant="danger"
+                onClick={() => void onConfirmCancelSubscription()}
+                disabled={cancelSubscriptionMutation.isPending}
+              >
+                {cancelSubscriptionMutation.isPending
+                  ? 'Downgrading...'
+                  : 'Confirm downgrade'}
+              </Button>
+              <Button
+                variant="default"
+                onClick={onAbortCancelView}
+                disabled={cancelSubscriptionMutation.isPending}
+              >
+                Keep current plan
+              </Button>
+            </Box>
+          </Box>
         )}
       </Box>
     </Box>
@@ -754,12 +1059,27 @@ export function StripeCheckout({
       <Spinner />
     </Box>
   );
+  // While the Stripe payment form is shown, disable interaction with the
+  // status / plan picker cards behind it so the only available action is the
+  // "Cancel" button next to the form.
+  const disabledTopCards = (
+    <Box
+      aria-disabled="true"
+      sx={{
+        pointerEvents: 'none',
+        opacity: 0.5,
+        userSelect: 'none',
+      }}
+    >
+      {topCards}
+    </Box>
+  );
   if (checkout) {
     if (stripe && paymentOptions && paymentClientSecret) {
       view = createElement(
         Box,
         { id: 'checkout', sx: { flex: '1 1 auto', display: 'grid', gap: 3 } },
-        topCards,
+        disabledTopCards,
         createElement(
           Box,
           {
@@ -796,16 +1116,32 @@ export function StripeCheckout({
             stripe,
             options: paymentOptions,
           },
-          createElement(StripePaymentForm, {
-            clientSecret: paymentClientSecret!,
-            onPaymentSucceeded,
-          }),
+          createElement(
+            Box,
+            {
+              sx: {
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'var(--borderRadius-medium)',
+                backgroundColor: 'canvas.default',
+                padding: 'var(--stack-padding-normal)',
+                width: '100%',
+                maxWidth: '720px',
+                margin: '0 auto',
+              },
+            },
+            createElement(StripePaymentForm, {
+              clientSecret: paymentClientSecret!,
+              intentType: checkoutType === 'resume' ? 'setup' : 'payment',
+              onPaymentSucceeded,
+            }),
+          ),
         ),
       );
     } else {
       view = (
         <Box sx={{ flex: '1 1 auto', display: 'grid', gap: 3 }}>
-          {topCards}
+          {disabledTopCards}
           <Box
             sx={{
               border: '1px solid',
@@ -844,20 +1180,23 @@ export function StripeCheckout({
             {paymentMessage}
           </Flash>
         )}
-        {!hasTopUpAccess && canBuyTopUp && (
-          <Flash variant="warning" sx={{ mt: 3, mb: 3 }}>
-            Monthly subscription is normally required. Temporary allowance is
-            enabled: you can buy top-up credits now. Update to Team Plan for
-            included monthly runs.
-          </Flash>
-        )}
         {!canBuyTopUp && (
           <Flash variant="warning" sx={{ mt: 3, mb: 3 }}>
             Monthly subscription required. Activate a monthly plan first, then
             top-up credits will be available.
           </Flash>
         )}
-        <Text as="h3">Choose a credits package</Text>
+        <Text
+          as="h3"
+          sx={{
+            marginTop: 'var(--stack-gap-spacious)',
+            marginBottom: 'var(--stack-gap-normal)',
+            fontSize: 4,
+            fontWeight: 'bold',
+          }}
+        >
+          Topup with credits package
+        </Text>
         <Box
           role="radiogroup"
           sx={{
