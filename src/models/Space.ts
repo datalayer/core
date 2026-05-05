@@ -9,7 +9,6 @@ import { ICourse as ICourse } from './Course';
 import { IOrganization } from './Organization';
 import { asUser, IUser } from './User';
 import { asArray } from '../utils';
-import { newUserMock } from './../mocks/models';
 
 /**
  * Convert the raw space object to {@link ISpace}.
@@ -18,7 +17,34 @@ import { newUserMock } from './../mocks/models';
  * @returns Space
  */
 export const asSpace = (raw_space: any): ISpace => {
-  const owner = newUserMock();
+  const organizationHandle =
+    raw_space?.organization_handle_s || raw_space?.organization?.handle;
+  const owner = raw_space?.owner
+    ? asUser(raw_space.owner)
+    : ({
+        id: raw_space?.creator_uid || raw_space?.user_uid || '',
+        handle:
+          raw_space?.owner_handle_s ||
+          raw_space?.creator_handle_s ||
+          raw_space?.user_handle_s ||
+          '',
+        email: '',
+        firstName: '',
+        lastName: '',
+        initials: '',
+        displayName:
+          raw_space?.owner_handle_s ||
+          raw_space?.creator_handle_s ||
+          raw_space?.user_handle_s ||
+          '',
+        roles: [],
+        iamProviders: [],
+        setRoles: () => {},
+        unsubscribedFromOutbounds: false,
+        onboarding: {} as any,
+        events: [],
+        settings: {},
+      } as IUser);
   let members = new Array<SpaceMember>();
   if (raw_space.members) {
     members = asArray(raw_space.members).map(m => {
@@ -37,9 +63,9 @@ export const asSpace = (raw_space: any): ISpace => {
     members,
     creationDate: new Date(raw_space.creation_ts_dt),
     owner,
-    organization: {
-      handle: raw_space.handle_s,
-    },
+    organization: organizationHandle
+      ? { handle: organizationHandle }
+      : undefined,
     // Preserve raw Solr fields so consumers can access dynamic fields
     // (e.g. attached_agent_pod_name_s for project-agent assignment)
     ...raw_space,
