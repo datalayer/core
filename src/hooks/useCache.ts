@@ -5355,6 +5355,47 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get subscription details for an arbitrary user (platform_admin only).
+   */
+  const useUserSubscription = (
+    userId: string | undefined,
+    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'admin', userId],
+      queryFn: async () => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}`,
+          method: 'GET',
+        });
+      },
+      enabled: Boolean(userId),
+      ...options,
+    });
+  };
+
+  /**
+   * Force-reset a user's subscription (platform_admin only).
+   */
+  const useResetUserSubscription = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async (userId: string) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}/reset`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (_data, userId) => {
+        queryClient.invalidateQueries({
+          queryKey: ['subscription', 'admin', userId],
+        });
+      },
+    });
+  };
+
+  /**
    * Burn user credits (deduct from balance)
    */
   const useBurnCredit = () => {
@@ -8097,6 +8138,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useSubscriptionPlans,
     useCancelSubscription,
     useResumeSubscription,
+    useUserSubscription,
+    useResetUserSubscription,
     useBurnCredit,
     useTopUpPrices,
 

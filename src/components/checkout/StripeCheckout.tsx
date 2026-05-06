@@ -310,13 +310,21 @@ export function StripeCheckout({
   // Get Stripe prices using TanStack Query hook
   const { data: pricesData } = useTopUpPrices();
   const items = (pricesData as IPrice[] | undefined) ?? null;
+  const sortedTopUpItems = useMemo(
+    () =>
+      [...(items ?? [])].sort(
+        (left, right) => Number(left.amount || 0) - Number(right.amount || 0),
+      ),
+    [items],
+  );
   const { data: plansData } = useSubscriptionPlans();
   const plans = useMemo(
     () => (plansData as ISubscriptionPlan[] | undefined) ?? [],
     [plansData],
   );
 
-  const { data: subscriptionResp } = useSubscriptionStatus();
+  const { data: subscriptionResp, refetch: refetchSubscriptionStatus } =
+    useSubscriptionStatus();
   const cancelSubscriptionMutation = useCancelSubscription();
   const resumeSubscriptionMutation = useResumeSubscription();
 
@@ -380,6 +388,18 @@ export function StripeCheckout({
       return;
     }
     if (checkoutType === 'subscription') {
+      // Poll subscription status briefly so the UI flips to paid state as soon
+      // as Stripe + backend snapshot are ready.
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          await refetchSubscriptionStatus();
+        } catch {
+          // Keep the success message even if refresh fails transiently.
+        }
+        if (attempt < 4) {
+          await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+      }
       setPaymentMessage(
         'Subscription payment confirmed. Your plan status may take a few seconds to refresh.',
       );
@@ -388,7 +408,7 @@ export function StripeCheckout({
         'Payment confirmed. Credits update may take a few seconds.',
       );
     }
-  }, [checkoutType, resumeSubscriptionMutation]);
+  }, [checkoutType, refetchSubscriptionStatus, resumeSubscriptionMutation]);
 
   const subscription = subscriptionResp?.subscription || null;
   const availablePlans = useMemo<ISubscriptionPlan[]>(() => {
@@ -611,6 +631,12 @@ export function StripeCheckout({
     hasTopUpAccess || (!isPaidSubscription && isTemporaryFreeTopUpAllowed);
 
   useEffect(() => {
+    if (isPaidSubscription && paymentMessage) {
+      setPaymentMessage(null);
+    }
+  }, [isPaidSubscription, paymentMessage]);
+
+  useEffect(() => {
     if (!isPaidSubscription && !subscriptionPlan && plans.length > 0) {
       setSubscriptionPlan(plans[0]);
     }
@@ -803,6 +829,108 @@ export function StripeCheckout({
     return null;
   }, [checkoutType, product, subscriptionPlan]);
 
+  const monthlySubscriptionSection = (
+    <Box
+      sx={{
+        borderTop: 'none',
+        paddingTop: 0,
+      }}
+    >
+      <Text
+        as="h3"
+        sx={{
+          fontWeight: 'bold',
+          marginBottom: 'var(--stack-gap-condensed)',
+        }}
+      >
+        Choose a monthly subscription
+      </Text>
+      {isIncompleteSubscription ? (
+        <Text as="p" sx={{ color: 'fg.muted' }}>
+          A pending subscription already exists. Complete payment or cancel it
+          from the billing portal before creating a new one.
+        </Text>
+      ) : !isPaidSubscription ? (
+        <>
+          <Box
+            role="radiogroup"
+            sx={{
+              display: 'grid',
+              gap: 'var(--stack-gap-condensed)',
+              maxHeight: '260px',
+              overflowY: 'auto',
+              marginBottom: 'var(--stack-gap-normal)',
+            }}
+          >
+            {plans.map(plan => (
+              <Box
+                key={plan.id}
+                role="radio"
+                aria-labelledby={`subscription-plan-${plan.id}`}
+                aria-checked={subscriptionPlan?.id === plan.id}
+                onClick={() => setSubscriptionPlan(plan)}
+                sx={{
+                  borderStyle: 'solid',
+                  borderRadius: 'var(--borderRadius-medium)',
+                  borderWidth: 'var(--borderWidth-thick)',
+                  borderColor:
+                    subscriptionPlan?.id === plan.id
+                      ? 'var(--borderColor-accent-emphasis)'
+                      : 'var(--borderColor-default)',
+                  padding: 'var(--stack-padding-condensed)',
+                  cursor: 'pointer',
+                }}
+              >
+                <FormControl sx={{ alignItems: 'center' }}>
+                  <FormControl.Label
+                    id={`subscription-plan-${plan.id}`}
+                    sx={{ alignSelf: 'center' }}
+                  >
+                    {plan.name}
+                  </FormControl.Label>
+                  <Text as="p">
+                    {new Intl.NumberFormat(undefined, {
+                      style: 'currency',
+                      currency: plan.currency,
+                    }).format((plan.amount || 0) / 100)}
+                    {plan.interval ? ` / ${plan.interval}` : ''}
+                  </Text>
+                  {typeof plan.included_runs === 'number' && (
+                    <Text as="p">{plan.included_runs} included runs</Text>
+                  )}
+                </FormControl>
+              </Box>
+            ))}
+            {plans.length === 0 && (
+              <Text as="p" sx={{ color: 'fg.muted' }}>
+                No monthly subscription plans available right now.
+              </Text>
+            )}
+          </Box>
+          <Button
+            variant="primary"
+            onClick={() => void startSubscriptionCheckout()}
+            disabled={
+              !subscriptionPlan ||
+              subscriptionPaymentIntentMutation.isPending ||
+              checkout
+            }
+          >
+            {subscriptionPaymentIntentMutation.isPending
+              ? 'Preparing Team plan checkout...'
+              : 'Update to Team Plan'}
+          </Button>
+        </>
+      ) : (
+        <Text as="p" sx={{ color: 'fg.muted' }}>
+          {isCancellationScheduled
+            ? `Your monthly subscription will cancel on ${subscriptionPeriodEndLabel}.`
+            : 'Your monthly subscription is active. You can manage plan details from subscription controls.'}
+        </Text>
+      )}
+    </Box>
+  );
+
   const topCards = (
     <Box
       sx={{
@@ -816,244 +944,157 @@ export function StripeCheckout({
         gap: 'var(--stack-gap-normal)',
       }}
     >
-      <Box>
-        <Text
-          as="h3"
-          sx={{
-            fontWeight: 'bold',
-            marginBottom: 'var(--stack-gap-condensed)',
-          }}
-        >
-          Choose a monthly subscription
-        </Text>
-        {isIncompleteSubscription ? (
-          <Text as="p" sx={{ color: 'fg.muted' }}>
-            A pending subscription already exists. Complete payment or cancel it
-            from the billing portal before creating a new one.
-          </Text>
-        ) : !isPaidSubscription ? (
-          <>
-            <Box
-              role="radiogroup"
-              sx={{
-                display: 'grid',
-                gap: 'var(--stack-gap-condensed)',
-                maxHeight: '260px',
-                overflowY: 'auto',
-                marginBottom: 'var(--stack-gap-normal)',
-              }}
-            >
-              {plans.map(plan => (
-                <Box
-                  key={plan.id}
-                  role="radio"
-                  aria-labelledby={`subscription-plan-${plan.id}`}
-                  aria-checked={subscriptionPlan?.id === plan.id}
-                  onClick={() => setSubscriptionPlan(plan)}
-                  sx={{
-                    borderStyle: 'solid',
-                    borderRadius: 'var(--borderRadius-medium)',
-                    borderWidth: 'var(--borderWidth-thick)',
-                    borderColor:
-                      subscriptionPlan?.id === plan.id
-                        ? 'var(--borderColor-accent-emphasis)'
-                        : 'var(--borderColor-default)',
-                    padding: 'var(--stack-padding-condensed)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <FormControl sx={{ alignItems: 'center' }}>
-                    <FormControl.Label
-                      id={`subscription-plan-${plan.id}`}
-                      sx={{ alignSelf: 'center' }}
-                    >
-                      {plan.name}
-                    </FormControl.Label>
-                    <Text as="p">
-                      {new Intl.NumberFormat(undefined, {
-                        style: 'currency',
-                        currency: plan.currency,
-                      }).format((plan.amount || 0) / 100)}
-                      {plan.interval ? ` / ${plan.interval}` : ''}
-                    </Text>
-                    {typeof plan.included_runs === 'number' && (
-                      <Text as="p">{plan.included_runs} included runs</Text>
-                    )}
-                  </FormControl>
-                </Box>
-              ))}
-              {plans.length === 0 && (
-                <Text as="p" sx={{ color: 'fg.muted' }}>
-                  No monthly subscription plans available right now.
-                </Text>
-              )}
-            </Box>
-            <Button
-              variant="primary"
-              onClick={() => void startSubscriptionCheckout()}
-              disabled={
-                !subscriptionPlan ||
-                subscriptionPaymentIntentMutation.isPending ||
-                checkout
-              }
-            >
-              {subscriptionPaymentIntentMutation.isPending
-                ? 'Preparing Team plan checkout...'
-                : 'Update to Team Plan'}
-            </Button>
-          </>
-        ) : (
-          <Text as="p" sx={{ color: 'fg.muted' }}>
-            {isCancellationScheduled
-              ? `Your monthly subscription will cancel on ${subscriptionPeriodEndLabel}.`
-              : 'Your monthly subscription is active. You can manage plan details from subscription controls.'}
-          </Text>
-        )}
-      </Box>
-
       <Box
         sx={{
-          borderTop: '1px solid',
-          borderColor: 'border.muted',
-          paddingTop: 'var(--stack-gap-normal)',
+          display: 'grid',
+          gap: 'var(--stack-gap-normal)',
+          gridTemplateColumns: ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)'],
+          alignItems: 'start',
         }}
       >
-        <Text
-          as="h3"
-          sx={{
-            fontWeight: 'bold',
-            marginBottom: 'var(--stack-gap-condensed)',
-          }}
-        >
-          Subscription status
-        </Text>
-        <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
-        <Text as="p">Price: {currentPlanPriceLabel}</Text>
-        {displaySubscriptionStatus && (
-          <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
-            Status: {displaySubscriptionStatus}
-          </Text>
-        )}
-        <Text as="p">Period start: {subscriptionPeriodStartLabel}</Text>
-        <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
-          Period end: {subscriptionPeriodEndLabel}
-        </Text>
-        {isCancellationScheduled && (
-          <Flash
-            variant="warning"
-            sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
-          >
-            Subscription will cancel at the end of the current period on{' '}
-            {subscriptionPeriodEndLabel}.
-          </Flash>
-        )}
-        {remainingRuns !== null && (
-          <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
-            {`Included runs remaining this period: ${remainingRuns.toLocaleString()}`}
-          </Text>
-        )}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 'var(--stack-gap-condensed)',
-            flexWrap: 'wrap',
-          }}
-        >
-          {subscriptionPortalUrl && (
-            <Button
-              variant="default"
-              onClick={() => openPortal(subscriptionPortalUrl)}
-            >
-              Open Stripe billing portal
-            </Button>
-          )}
-          {canCancelSubscription && (
-            <Button variant="danger" onClick={onCancelSubscription}>
-              Downgrade to Free Plan
-            </Button>
-          )}
-          {isCancellationScheduled && (
-            <Button
-              variant="primary"
-              onClick={() => void onResumeSubscription()}
-              disabled={resumeSubscriptionMutation.isPending}
-            >
-              {resumeSubscriptionMutation.isPending
-                ? 'Resuming...'
-                : 'Resume subscription'}
-            </Button>
-          )}
-        </Box>
-        <Text
-          as="p"
-          sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
-        >
-          Next step:{' '}
-          {isCancellationScheduled
-            ? 'Your subscription is already scheduled for cancellation at period end. You can keep using it until then.'
-            : isIncompleteSubscription
-              ? 'Your payment is pending. Open the in-app cancel view below to cancel this subscription or continue with payment.'
-              : isPaidSubscription
-                ? 'Keep your subscription active. Top-up credits are available for active monthly subscribers.'
-                : 'Choose a monthly subscription, then buy top-up credits as needed.'}
-        </Text>
-        {!hasTopUpAccess && canBuyTopUp && (
-          <Flash
-            variant="warning"
-            sx={{ marginTop: 'var(--stack-gap-normal)' }}
-          >
-            Monthly subscription is normally required. Temporary allowance is
-            enabled: you can buy top-up credits now. Update to Team Plan for
-            included monthly runs.
-          </Flash>
-        )}
-        {cancelViewOpen && (
-          <Box
+        <Box>
+          <Text
+            as="h3"
             sx={{
-              marginTop: 'var(--stack-gap-normal)',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 'var(--borderRadius-medium)',
-              backgroundColor: 'canvas.subtle',
-              padding: 'var(--stack-padding-normal)',
-              display: 'grid',
-              gap: 'var(--stack-gap-condensed)',
+              fontWeight: 'bold',
+              marginBottom: 'var(--stack-gap-condensed)',
             }}
           >
-            <Text as="h4" sx={{ fontWeight: 'bold' }}>
-              Downgrade to Free Plan
+            Subscription status
+          </Text>
+          <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
+          {currentPlanPriceLabel !== 'N/A' && (
+            <Text as="p">Price: {currentPlanPriceLabel}</Text>
+          )}
+          {displaySubscriptionStatus && (
+            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+              Status: {displaySubscriptionStatus}
             </Text>
-            <Text as="p" sx={{ color: 'fg.muted' }}>
-              {isIncompleteSubscription
-                ? 'This pending subscription will be canceled immediately.'
-                : 'Your subscription will be canceled at the end of the current billing period.'}
+          )}
+          {subscriptionPeriodStartLabel !== 'N/A' && (
+            <Text as="p">Period start: {subscriptionPeriodStartLabel}</Text>
+          )}
+          {subscriptionPeriodEndLabel !== 'N/A' && (
+            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+              Period end: {subscriptionPeriodEndLabel}
             </Text>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 'var(--stack-gap-condensed)',
-                flexWrap: 'wrap',
-              }}
+          )}
+          {isCancellationScheduled && (
+            <Flash
+              variant="warning"
+              sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
             >
-              <Button
-                variant="danger"
-                onClick={() => void onConfirmCancelSubscription()}
-                disabled={cancelSubscriptionMutation.isPending}
-              >
-                {cancelSubscriptionMutation.isPending
-                  ? 'Downgrading...'
-                  : 'Confirm downgrade'}
-              </Button>
+              Subscription will cancel at the end of the current period on{' '}
+              {subscriptionPeriodEndLabel}.
+            </Flash>
+          )}
+          {remainingRuns !== null && (
+            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
+              {`Included runs remaining this period: ${remainingRuns.toLocaleString()}`}
+            </Text>
+          )}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 'var(--stack-gap-condensed)',
+              flexWrap: 'wrap',
+            }}
+          >
+            {subscriptionPortalUrl && (
               <Button
                 variant="default"
-                onClick={onAbortCancelView}
-                disabled={cancelSubscriptionMutation.isPending}
+                onClick={() => openPortal(subscriptionPortalUrl)}
               >
-                Keep current plan
+                Open Stripe billing portal
               </Button>
-            </Box>
+            )}
+            {canCancelSubscription && !cancelViewOpen && (
+              <Button variant="danger" onClick={onCancelSubscription}>
+                Downgrade to Free Plan
+              </Button>
+            )}
+            {isCancellationScheduled && (
+              <Button
+                variant="primary"
+                onClick={() => void onResumeSubscription()}
+                disabled={resumeSubscriptionMutation.isPending}
+              >
+                {resumeSubscriptionMutation.isPending
+                  ? 'Resuming...'
+                  : 'Resume subscription'}
+              </Button>
+            )}
           </Box>
-        )}
+          <Text
+            as="p"
+            sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
+          >
+            Next step:{' '}
+            {isCancellationScheduled
+              ? 'Your subscription is already scheduled for cancellation at period end. You can keep using it until then.'
+              : isIncompleteSubscription
+                ? 'Your payment is pending. Open the in-app cancel view below to cancel this subscription or continue with payment.'
+                : isPaidSubscription
+                  ? 'Keep your subscription active. Top-up credits are available for active monthly subscribers.'
+                  : 'Choose a monthly subscription, then buy top-up credits as needed.'}
+          </Text>
+          {cancelViewOpen && (
+            <Box
+              sx={{
+                marginTop: 'var(--stack-gap-normal)',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'var(--borderRadius-medium)',
+                backgroundColor: 'canvas.subtle',
+                padding: 'var(--stack-padding-normal)',
+                display: 'grid',
+                gap: 'var(--stack-gap-condensed)',
+              }}
+            >
+              <Text as="h4" sx={{ fontWeight: 'bold' }}>
+                Downgrade to Free Plan
+              </Text>
+              <Text as="p" sx={{ color: 'fg.muted' }}>
+                {isIncompleteSubscription
+                  ? 'This pending subscription will be canceled immediately.'
+                  : 'Your subscription will be canceled at the end of the current billing period.'}
+              </Text>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 'var(--stack-gap-condensed)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Button
+                  variant="danger"
+                  onClick={() => void onConfirmCancelSubscription()}
+                  disabled={cancelSubscriptionMutation.isPending}
+                >
+                  {cancelSubscriptionMutation.isPending
+                    ? 'Downgrading...'
+                    : 'Confirm downgrade'}
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={onAbortCancelView}
+                  disabled={cancelSubscriptionMutation.isPending}
+                >
+                  Keep current plan
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
+        <Box
+          sx={{
+            borderLeft: ['none', '1px solid'],
+            borderColor: 'border.muted',
+            paddingLeft: ['0', 'var(--stack-gap-normal)'],
+          }}
+        >
+          {monthlySubscriptionSection}
+        </Box>
       </Box>
     </Box>
   );
@@ -1208,16 +1249,25 @@ export function StripeCheckout({
         >
           Topup with credits package
         </Text>
+        {!hasTopUpAccess && canBuyTopUp && (
+          <Flash variant="warning" sx={{ mt: 2, mb: 3 }}>
+            Monthly subscription is normally required. Temporary allowance is
+            enabled: you can buy top-up credits now. Update to Team Plan for
+            included monthly runs.
+          </Flash>
+        )}
         <Box
           role="radiogroup"
           sx={{
             display: 'grid',
             gap: 'var(--stack-gap-normal)',
-            gridTemplateColumns: Array(items.length).fill('1fr').join(' '),
+            gridTemplateColumns: Array(sortedTopUpItems.length)
+              .fill('1fr')
+              .join(' '),
             padding: 'var(--stack-padding-normal) 0',
           }}
         >
-          {items.map(item => (
+          {sortedTopUpItems.map(item => (
             <Box
               key={item.id}
               role="radio"
