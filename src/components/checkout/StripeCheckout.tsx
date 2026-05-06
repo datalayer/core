@@ -323,8 +323,11 @@ export function StripeCheckout({
     [plansData],
   );
 
-  const { data: subscriptionResp, refetch: refetchSubscriptionStatus } =
-    useSubscriptionStatus();
+  const {
+    data: subscriptionResp,
+    refetch: refetchSubscriptionStatus,
+    isFetching: isSubscriptionStatusRefreshing,
+  } = useSubscriptionStatus();
   const cancelSubscriptionMutation = useCancelSubscription();
   const resumeSubscriptionMutation = useResumeSubscription();
 
@@ -435,11 +438,17 @@ export function StripeCheckout({
     return Array.from(byId.values());
   }, [plans, subscriptionResp?.available_subscriptions]);
 
-  const rawCurrentSubscriptionPlan =
-    subscription?.plan_name ||
-    subscription?.plan?.name ||
-    subscription?.plan ||
-    'Free';
+  const subscriptionStatus =
+    subscription?.status || subscription?.subscription_status || 'unknown';
+  const normalizedSubscriptionStatus = String(subscriptionStatus).toLowerCase();
+  const isPendingSubscriptionCheckout =
+    normalizedSubscriptionStatus === 'incomplete';
+  const rawCurrentSubscriptionPlan = isPendingSubscriptionCheckout
+    ? 'Free'
+    : subscription?.plan_name ||
+      subscription?.plan?.name ||
+      subscription?.plan ||
+      'Free';
   const currentSubscriptionPlan = useMemo(() => {
     const raw = String(rawCurrentSubscriptionPlan || 'Free');
     const byId = availablePlans.find(plan => plan.id === raw);
@@ -521,9 +530,6 @@ export function StripeCheckout({
   ]);
   const subscriptionPortalUrl =
     subscriptionResp?.portal?.url || checkoutPortal?.url;
-  const subscriptionStatus =
-    subscription?.status || subscription?.subscription_status || 'unknown';
-  const normalizedSubscriptionStatus = String(subscriptionStatus).toLowerCase();
   const isCancellationScheduled =
     Boolean(subscription?.cancel_at_period_end) ||
     Boolean(subscription?.subscription_cancel_at_period_end_b);
@@ -704,37 +710,60 @@ export function StripeCheckout({
     }
   }, [topUpPaymentIntentMutation, canBuyTopUp, product]);
 
-  const startSubscriptionCheckout = useCallback(async () => {
-    if (!subscriptionPlan) {
+  const startSubscriptionCheckout = useCallback(
+    async (planOverride?: ISubscriptionPlan | null) => {
+      const selectedPlan = planOverride ?? subscriptionPlan;
+      if (!selectedPlan) {
+        setPaymentMessage('Select a monthly subscription plan first.');
+        return;
+      }
+      setPaymentMessage(null);
+      try {
+        const clientSecret =
+          await subscriptionPaymentIntentMutation.mutateAsync({
+            plan: selectedPlan,
+          });
+        if (!clientSecret) {
+          setPaymentClientSecret(null);
+          setCheckout(false);
+          setPaymentMessage(
+            'Unable to initialize Stripe checkout. Please try again.',
+          );
+          return;
+        }
+        setSubscriptionPlan(selectedPlan);
+        setPaymentClientSecret(clientSecret);
+        setCheckoutType('subscription');
+        setCheckout(true);
+      } catch (error) {
+        const detail =
+          error instanceof Error
+            ? error.message
+            : 'Unable to initialize Stripe checkout. Please try again.';
+        setPaymentClientSecret(null);
+        setCheckout(false);
+        setPaymentMessage(detail);
+      }
+    },
+    [subscriptionPaymentIntentMutation, subscriptionPlan],
+  );
+
+  const pendingSubscriptionPlan = useMemo(() => {
+    const teamLikePlan = plans.find(plan =>
+      String(plan?.name || '')
+        .toLowerCase()
+        .includes('team'),
+    );
+    return teamLikePlan || plans[0] || null;
+  }, [plans]);
+
+  const startPendingSubscriptionCheckout = useCallback(() => {
+    if (!pendingSubscriptionPlan) {
       setPaymentMessage('Select a monthly subscription plan first.');
       return;
     }
-    setPaymentMessage(null);
-    try {
-      const clientSecret = await subscriptionPaymentIntentMutation.mutateAsync({
-        plan: subscriptionPlan,
-      });
-      if (!clientSecret) {
-        setPaymentClientSecret(null);
-        setCheckout(false);
-        setPaymentMessage(
-          'Unable to initialize Stripe checkout. Please try again.',
-        );
-        return;
-      }
-      setPaymentClientSecret(clientSecret);
-      setCheckoutType('subscription');
-      setCheckout(true);
-    } catch (error) {
-      const detail =
-        error instanceof Error
-          ? error.message
-          : 'Unable to initialize Stripe checkout. Please try again.';
-      setPaymentClientSecret(null);
-      setCheckout(false);
-      setPaymentMessage(detail);
-    }
-  }, [subscriptionPaymentIntentMutation, subscriptionPlan]);
+    void startSubscriptionCheckout(pendingSubscriptionPlan);
+  }, [pendingSubscriptionPlan, startSubscriptionCheckout]);
 
   const openPortal = useCallback((url?: string) => {
     if (!url) {
@@ -762,11 +791,38 @@ export function StripeCheckout({
     setPaymentMessage(null);
     try {
       const resp = await cancelSubscriptionMutation.mutateAsync();
-      const datedMessage = subscriptionPeriodEndLabel
-        ? `Subscription will cancel at the end of the current period on ${subscriptionPeriodEndLabel}.`
-        : null;
+      if (resp?.success === false) {
+        throw new Error(
+          resp?.message || 'Unable to cancel subscription right now.',
+        );
+      }
+
+      // Refresh subscription status so stale "incomplete" snapshots disappear
+      // as soon as cancellation is applied upstream.
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          await refetchSubscriptionStatus();
+        } catch {
+          // Ignore transient refetch errors and keep trying.
+        }
+        if (attempt < 4) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+      }
+
+      const responseStatus = String(resp?.status || '').toLowerCase();
+      const responseCancelAtPeriodEnd = Boolean(resp?.cancel_at_period_end);
+      const isNowCanceled =
+        responseStatus.includes('canceled') ||
+        responseStatus.includes('cancelled');
+
+      const datedMessage =
+        responseCancelAtPeriodEnd && subscriptionPeriodEndLabel
+          ? `Subscription will cancel at the end of the current period on ${subscriptionPeriodEndLabel}.`
+          : null;
+
       setPaymentMessage(
-        datedMessage ||
+        (isNowCanceled ? 'Pending subscription canceled.' : datedMessage) ||
           resp?.message ||
           'Subscription cancellation requested successfully.',
       );
@@ -778,7 +834,11 @@ export function StripeCheckout({
           : 'Unable to cancel subscription right now.',
       );
     }
-  }, [cancelSubscriptionMutation, subscriptionPeriodEndLabel]);
+  }, [
+    cancelSubscriptionMutation,
+    refetchSubscriptionStatus,
+    subscriptionPeriodEndLabel,
+  ]);
 
   const onResumeSubscription = useCallback(async () => {
     setPaymentMessage(null);
@@ -804,6 +864,20 @@ export function StripeCheckout({
       );
     }
   }, [resumeSetupIntentMutation]);
+
+  const onRefreshSubscriptionStatus = useCallback(async () => {
+    setPaymentMessage(null);
+    try {
+      await refetchSubscriptionStatus();
+      setPaymentMessage('Subscription status refreshed.');
+    } catch (error) {
+      setPaymentMessage(
+        error instanceof Error
+          ? error.message
+          : 'Unable to refresh subscription status right now.',
+      );
+    }
+  }, [refetchSubscriptionStatus]);
 
   const selectedCheckoutLabel = useMemo(() => {
     if (checkoutType === 'subscription' && subscriptionPlan) {
@@ -963,6 +1037,15 @@ export function StripeCheckout({
             Subscription status
           </Text>
           <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
+          {isPendingSubscriptionCheckout && (
+            <Flash
+              variant="warning"
+              sx={{ marginTop: 'var(--stack-gap-condensed)' }}
+            >
+              Upgrade pending payment. Your Team plan is not active until card
+              payment succeeds.
+            </Flash>
+          )}
           {currentPlanPriceLabel !== 'N/A' && (
             <Text as="p">Price: {currentPlanPriceLabel}</Text>
           )}
@@ -1008,10 +1091,39 @@ export function StripeCheckout({
                 Open Stripe billing portal
               </Button>
             )}
+            <Button
+              variant="default"
+              onClick={() => void onRefreshSubscriptionStatus()}
+              disabled={isSubscriptionStatusRefreshing}
+            >
+              {isSubscriptionStatusRefreshing
+                ? 'Refreshing status...'
+                : 'Refresh status'}
+            </Button>
             {canCancelSubscription && !cancelViewOpen && (
               <Button variant="danger" onClick={onCancelSubscription}>
                 Downgrade to Free Plan
               </Button>
+            )}
+            {isIncompleteSubscription && !cancelViewOpen && (
+              <>
+                <Button
+                  variant="primary"
+                  onClick={startPendingSubscriptionCheckout}
+                  disabled={
+                    subscriptionPaymentIntentMutation.isPending ||
+                    checkout ||
+                    !pendingSubscriptionPlan
+                  }
+                >
+                  {subscriptionPaymentIntentMutation.isPending
+                    ? 'Preparing checkout...'
+                    : 'Continue pending payment'}
+                </Button>
+                <Button variant="danger" onClick={onCancelSubscription}>
+                  Cancel pending subscription
+                </Button>
+              </>
             )}
             {isCancellationScheduled && (
               <Button
@@ -1052,7 +1164,9 @@ export function StripeCheckout({
               }}
             >
               <Text as="h4" sx={{ fontWeight: 'bold' }}>
-                Downgrade to Free Plan
+                {isIncompleteSubscription
+                  ? 'Cancel pending subscription'
+                  : 'Downgrade to Free Plan'}
               </Text>
               <Text as="p" sx={{ color: 'fg.muted' }}>
                 {isIncompleteSubscription
@@ -1072,15 +1186,21 @@ export function StripeCheckout({
                   disabled={cancelSubscriptionMutation.isPending}
                 >
                   {cancelSubscriptionMutation.isPending
-                    ? 'Downgrading...'
-                    : 'Confirm downgrade'}
+                    ? isIncompleteSubscription
+                      ? 'Canceling pending subscription...'
+                      : 'Downgrading...'
+                    : isIncompleteSubscription
+                      ? 'Confirm cancel pending subscription'
+                      : 'Confirm downgrade'}
                 </Button>
                 <Button
                   variant="default"
                   onClick={onAbortCancelView}
                   disabled={cancelSubscriptionMutation.isPending}
                 >
-                  Keep current plan
+                  {isIncompleteSubscription
+                    ? 'Keep pending subscription'
+                    : 'Keep current plan'}
                 </Button>
               </Box>
             </Box>
