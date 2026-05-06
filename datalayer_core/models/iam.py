@@ -463,7 +463,7 @@ class ReservationData(BaseModel):
 
     id: str = Field(..., description="Reservation ID")
     account_uid: str = Field(..., description="Account UID")
-    cost_charged_uid: Optional[str] = Field(
+    billing_account_uid: Optional[str] = Field(
         None,
         description="Account UID charged for the reservation cost",
     )
@@ -479,7 +479,7 @@ class UsageData(BaseModel):
     """Usage data model."""
 
     account_uid: str = Field(..., description="Account UID")
-    cost_charged_uid: Optional[str] = Field(
+    billing_account_uid: Optional[str] = Field(
         None,
         description="Account UID charged for the usage cost",
     )
