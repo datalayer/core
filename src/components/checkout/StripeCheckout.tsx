@@ -362,6 +362,7 @@ export function StripeCheckout({
     setPaymentClientSecret(null);
     setProduct(null);
     setSubscriptionPlan(null);
+    setPaymentMessage(null);
     if (checkoutType === 'resume') {
       try {
         const resp = await resumeSubscriptionMutation.mutateAsync();
@@ -735,8 +736,13 @@ export function StripeCheckout({
     setPaymentMessage(null);
     try {
       const resp = await cancelSubscriptionMutation.mutateAsync();
+      const datedMessage = subscriptionPeriodEndLabel
+        ? `Subscription will cancel at the end of the current period on ${subscriptionPeriodEndLabel}.`
+        : null;
       setPaymentMessage(
-        resp?.message || 'Subscription cancellation requested successfully.',
+        datedMessage ||
+          resp?.message ||
+          'Subscription cancellation requested successfully.',
       );
       setCancelViewOpen(false);
     } catch (error) {
@@ -746,7 +752,7 @@ export function StripeCheckout({
           : 'Unable to cancel subscription right now.',
       );
     }
-  }, [cancelSubscriptionMutation]);
+  }, [cancelSubscriptionMutation, subscriptionPeriodEndLabel]);
 
   const onResumeSubscription = useCallback(async () => {
     setPaymentMessage(null);
@@ -763,9 +769,7 @@ export function StripeCheckout({
       setCheckoutType('resume');
       setPaymentClientSecret(clientSecret);
       setCheckout(true);
-      setPaymentMessage(
-        'Enter a new payment card to resume your subscription.',
-      );
+      setPaymentMessage(null);
     } catch (error) {
       setPaymentMessage(
         error instanceof Error
@@ -1109,6 +1113,13 @@ export function StripeCheckout({
             'Cancel',
           ),
         ),
+        checkoutType === 'resume'
+          ? createElement(
+              Flash,
+              { variant: 'warning' },
+              'Enter a new payment card to resume your subscription.',
+            )
+          : null,
         createElement(
           Elements,
           {
