@@ -463,6 +463,10 @@ class ReservationData(BaseModel):
 
     id: str = Field(..., description="Reservation ID")
     account_uid: str = Field(..., description="Account UID")
+    cost_charged_uid: Optional[str] = Field(
+        None,
+        description="Account UID charged for the reservation cost",
+    )
     credits: float = Field(..., description="Reserved credits")
     resource: str = Field(..., description="Resource identifier")
     resource_type: str = Field(..., description="Resource type")
@@ -475,6 +479,10 @@ class UsageData(BaseModel):
     """Usage data model."""
 
     account_uid: str = Field(..., description="Account UID")
+    cost_charged_uid: Optional[str] = Field(
+        None,
+        description="Account UID charged for the usage cost",
+    )
     resource_uid: str = Field(..., description="Resource UID")
     resource_type: str = Field(..., description="Resource type")
     resource_given_name: str = Field(..., description="Resource given name")
@@ -523,6 +531,10 @@ class CheckoutPortalRequest(BaseModel):
     """Checkout portal request model."""
 
     return_url: str = Field(..., description="Return URL after checkout")
+    account_uid: Optional[str] = Field(
+        None,
+        description="Optional target account UID for account-scoped checkout portal",
+    )
 
 
 class CheckoutPortalModel(BaseModel):

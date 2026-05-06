@@ -5201,6 +5201,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get Stripe top-up pricing information
    */
+  type SubscriptionScopeOptions = {
+    accountUid?: string;
+  };
+
+  const withAccountUidQuery = (url: string, accountUid?: string) => {
+    if (!accountUid) {
+      return url;
+    }
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}account_uid=${encodeURIComponent(accountUid)}`;
+  };
+
   const useTopUpPrices = (
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
@@ -5220,7 +5232,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create Stripe top-up payment intent client secret
    */
-  const useCreateTopUpPaymentIntent = () => {
+  const useCreateTopUpPaymentIntent = (scope?: SubscriptionScopeOptions) => {
     return useMutation({
       mutationFn: async ({
         product,
@@ -5233,6 +5245,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
           body: {
             price_id: product?.id,
+            ...(scope?.accountUid ? { account_uid: scope.accountUid } : {}),
           },
         });
         return resp.client_secret;
@@ -5244,13 +5257,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get available monthly subscription plans.
    */
   const useSubscriptionPlans = (
+    scope?: SubscriptionScopeOptions,
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
-      queryKey: ['subscription', 'plans'],
+      queryKey: ['subscription', 'plans', scope?.accountUid ?? 'self'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/plans`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription/plans`,
+            scope?.accountUid,
+          ),
           method: 'GET',
         });
         return resp.plans || [];
@@ -5262,7 +5279,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create Stripe monthly subscription payment intent client secret.
    */
-  const useCreateSubscriptionPaymentIntent = () => {
+  const useCreateSubscriptionPaymentIntent = (
+    scope?: SubscriptionScopeOptions,
+  ) => {
     return useMutation({
       mutationFn: async ({
         plan,
@@ -5275,6 +5294,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
           body: {
             price_id: plan?.id,
+            ...(scope?.accountUid ? { account_uid: scope.accountUid } : {}),
           },
         });
         return resp.client_secret;
@@ -5285,13 +5305,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create Stripe SetupIntent client secret to update card before resuming.
    */
-  const useCreateResumeSetupIntent = () => {
+  const useCreateResumeSetupIntent = (scope?: SubscriptionScopeOptions) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/resume/setup-intent`,
           method: 'POST',
-          body: {},
+          body: scope?.accountUid ? { account_uid: scope.accountUid } : {},
         });
         return resp.client_secret;
       },
@@ -5302,13 +5322,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get authenticated user subscription details.
    */
   const useSubscriptionStatus = (
+    scope?: SubscriptionScopeOptions,
     options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
-      queryKey: ['subscription', 'status'],
+      queryKey: ['subscription', 'status', scope?.accountUid ?? 'self'],
       queryFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription`,
+            scope?.accountUid,
+          ),
           method: 'GET',
         });
       },
@@ -5317,20 +5341,44 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get accounts (personal + organizations) eligible for subscription-backed workloads.
+   */
+  const useEligibleSubscriptionAccounts = (
+    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'eligible-accounts'],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/eligible-accounts`,
+          method: 'GET',
+        });
+        return resp.accounts || [];
+      },
+      ...options,
+    });
+  };
+
+  /**
    * Request cancellation portal for the current subscription.
    */
-  const useCancelSubscription = () => {
+  const useCancelSubscription = (scope?: SubscriptionScopeOptions) => {
     const queryClient = useQueryClient();
 
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+            scope?.accountUid,
+          ),
           method: 'POST',
         });
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['subscription', 'status'] });
+        queryClient.invalidateQueries({
+          queryKey: ['subscription', 'status', scope?.accountUid ?? 'self'],
+        });
       },
     });
   };
@@ -5338,18 +5386,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Resume a subscription already scheduled for cancellation.
    */
-  const useResumeSubscription = () => {
+  const useResumeSubscription = (scope?: SubscriptionScopeOptions) => {
     const queryClient = useQueryClient();
 
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/resume`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription/resume`,
+            scope?.accountUid,
+          ),
           method: 'POST',
         });
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['subscription', 'status'] });
+        queryClient.invalidateQueries({
+          queryKey: ['subscription', 'status', scope?.accountUid ?? 'self'],
+        });
       },
     });
   };
@@ -6202,13 +6255,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get current user's usage data
    */
   const useUsages = (
+    scopeOrOptions?:
+      | SubscriptionScopeOptions
+      | Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
+    const hasScope =
+      !!scopeOrOptions &&
+      typeof scopeOrOptions === 'object' &&
+      'accountUid' in scopeOrOptions;
+    const scope = (hasScope ? scopeOrOptions : undefined) as
+      | SubscriptionScopeOptions
+      | undefined;
+    const queryOptions = (hasScope ? options : scopeOrOptions) as
+      | Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>
+      | undefined;
+
     return useQuery({
-      queryKey: ['usage', 'me'],
+      queryKey: ['usage', 'me', scope?.accountUid ?? 'self'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
+            scope?.accountUid,
+          ),
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
@@ -6229,7 +6299,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }));
         return usages;
       },
-      ...options,
+      ...queryOptions,
     });
   };
 
@@ -8136,6 +8206,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useCreateResumeSetupIntent,
     useSubscriptionStatus,
     useSubscriptionPlans,
+    useEligibleSubscriptionAccounts,
     useCancelSubscription,
     useResumeSubscription,
     useUserSubscription,

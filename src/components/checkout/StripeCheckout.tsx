@@ -69,6 +69,7 @@ export interface ISubscriptionPlan {
 export type StripeCheckoutProps = {
   checkoutPortal: ICheckoutPortal | null;
   appearance?: StripeElementsOptions['appearance'];
+  accountUid?: string;
 };
 
 const PLAN_INCLUDED_RUNS_DEFAULTS: Record<string, number> = {
@@ -282,6 +283,7 @@ function StripePaymentForm({
 export function StripeCheckout({
   checkoutPortal,
   appearance,
+  accountUid,
 }: StripeCheckoutProps) {
   const {
     useCreateTopUpPaymentIntent,
@@ -317,7 +319,7 @@ export function StripeCheckout({
       ),
     [items],
   );
-  const { data: plansData } = useSubscriptionPlans();
+  const { data: plansData } = useSubscriptionPlans({ accountUid });
   const plans = useMemo(
     () => (plansData as ISubscriptionPlan[] | undefined) ?? [],
     [plansData],
@@ -327,15 +329,18 @@ export function StripeCheckout({
     data: subscriptionResp,
     refetch: refetchSubscriptionStatus,
     isFetching: isSubscriptionStatusRefreshing,
-  } = useSubscriptionStatus();
-  const cancelSubscriptionMutation = useCancelSubscription();
-  const resumeSubscriptionMutation = useResumeSubscription();
+  } = useSubscriptionStatus({ accountUid });
+  const cancelSubscriptionMutation = useCancelSubscription({ accountUid });
+  const resumeSubscriptionMutation = useResumeSubscription({ accountUid });
 
   // Get checkout session mutation
-  const topUpPaymentIntentMutation = useCreateTopUpPaymentIntent();
-  const subscriptionPaymentIntentMutation =
-    useCreateSubscriptionPaymentIntent();
-  const resumeSetupIntentMutation = useCreateResumeSetupIntent();
+  const topUpPaymentIntentMutation = useCreateTopUpPaymentIntent({
+    accountUid,
+  });
+  const subscriptionPaymentIntentMutation = useCreateSubscriptionPaymentIntent({
+    accountUid,
+  });
+  const resumeSetupIntentMutation = useCreateResumeSetupIntent({ accountUid });
 
   // Load stripe API
   useEffect(() => {

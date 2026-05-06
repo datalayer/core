@@ -220,6 +220,7 @@ const resolveAppearance = (
 
 export type ThemedStripeCheckoutProps = {
   checkoutPortal: ICheckoutPortal | null;
+  accountUid?: string;
   /**
    * Primer color mode. Accepts 'light' | 'dark' | 'auto' | 'day' | 'night'.
    * If omitted, falls back to Primer's `useTheme()` context, then to DOM.
@@ -235,6 +236,7 @@ export type ThemedStripeCheckoutProps = {
 
 export function ThemedStripeCheckout({
   checkoutPortal,
+  accountUid,
   colorMode,
   theme,
 }: ThemedStripeCheckoutProps) {
@@ -292,7 +294,11 @@ export function ThemedStripeCheckout({
   }, [effectiveColorMode, effectiveTheme]);
 
   return (
-    <StripeCheckout checkoutPortal={checkoutPortal} appearance={appearance} />
+    <StripeCheckout
+      checkoutPortal={checkoutPortal}
+      accountUid={accountUid}
+      appearance={appearance}
+    />
   );
 }
 
