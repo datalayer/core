@@ -6,7 +6,6 @@
 import { useEffect, useState } from 'react';
 import { useCache } from './useCache';
 import {
-  coreStore,
   useIAMStore,
   useLayoutStore,
   useOrganizationStore,
@@ -105,13 +104,6 @@ export const useIAM = (
         const user = asUser(whoamiData.profile);
         setIAMState({ user, token });
         iamStore.setLogin(user, token);
-        // TODO centralize user settings management.
-        const aiagentsRunUrl = user.settings?.aiAgentsUrl;
-        if (aiagentsRunUrl) {
-          coreStore.getState().setConfiguration({
-            aiagentsRunUrl,
-          });
-        }
       }
     }
   }, [token, whoamiData, iamStore]);

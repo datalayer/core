@@ -299,13 +299,6 @@ export const iamStore = createStore<IAMState>((set, get) => {
         storeUser(user);
         storeToken(token);
         set(() => ({ user, token }));
-        // TODO Centralize User Setting Management.
-        const aiagentsRunUrl = user.settings?.aiAgentsUrl;
-        if (aiagentsRunUrl) {
-          coreStore.getState().setConfiguration({
-            aiagentsRunUrl,
-          });
-        }
       } catch (error) {
         if (
           (error as RunResponseError).name === 'RunResponseError' &&
