@@ -76,7 +76,7 @@ export const OtelHeader: React.FC<OtelHeaderProps> = ({
         onNavigate(signalMap[kind]);
       }
       setGenerating(true);
-      const url = `${baseUrl}/api/generate/${kind}?count=${count}`;
+      const url = `${baseUrl}/api/otel/v1/generate/${kind}?count=${count}`;
       setDialogRequest(`POST ${url}`);
       try {
         const headers: Record<string, string> = {};
