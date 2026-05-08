@@ -395,6 +395,10 @@ class MembershipModel(BaseModel):
     members: Optional[List[Dict[str, Any]]] = Field(
         None, description="Members (if included)"
     )
+    roles_ss: List[str] = Field(
+        default_factory=list,
+        description="Membership roles (organization/team)",
+    )
 
     @classmethod
     def from_solr(cls, solr_doc: Dict[str, Any]) -> "MembershipModel":
@@ -419,6 +423,7 @@ class MembershipModel(BaseModel):
             organization_uid=solr_doc.get("organization_uid"),
             public=solr_doc.get("public_b"),
             members=members,
+            roles_ss=solr_doc.get("roles_ss", []),
         )
 
 
