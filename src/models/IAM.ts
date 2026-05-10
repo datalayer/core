@@ -125,3 +125,49 @@ export interface MembershipsResponse {
   /** Memberships information */
   memberships: any[];
 }
+
+export interface PrincipalSearchUser {
+  uid: string;
+  handle_s: string;
+  first_name_t?: string;
+  last_name_t?: string;
+  display_name_t?: string;
+  display_name?: string;
+  origin_s?: string;
+  origin?: string;
+  avatar_url_s?: string;
+  avatarUrl?: string;
+  [key: string]: any;
+}
+
+export interface PrincipalSearchTeam {
+  uid: string;
+  handle_s: string;
+  name_t?: string;
+  description_t?: string;
+  organization_uid?: string;
+  organization_handle_s?: string;
+  [key: string]: any;
+}
+
+export interface PrincipalSearchOrganization {
+  uid: string;
+  handle_s: string;
+  name_t?: string;
+  description_t?: string;
+  [key: string]: any;
+}
+
+export interface PrincipalSearchResponseData {
+  users: PrincipalSearchUser[];
+  teams: PrincipalSearchTeam[];
+  organizations: PrincipalSearchOrganization[];
+  principalTypes: string[];
+  total: number;
+}
+
+export interface PrincipalSearchResponse {
+  success: boolean;
+  message: string;
+  data: PrincipalSearchResponseData;
+}

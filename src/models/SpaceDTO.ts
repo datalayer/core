@@ -40,6 +40,8 @@ export interface SpaceData {
   attached_agent_pod_name_s?: string;
   attached_agent_spec_id_s?: string;
   attached_agent_given_name_s?: string;
+  shared_owner_user_uids_ss?: string[];
+  shared_ower_user_uids_ss?: string[];
 }
 
 /**
@@ -60,6 +62,8 @@ export interface SpaceJSON {
   description: string;
   /** Items contained in the space (as JSON) */
   items: Array<NotebookJSON | LexicalJSON>;
+  /** Owner user UIDs for this space */
+  ownerUserUids?: string[];
 }
 
 /**
@@ -300,12 +304,21 @@ export class SpaceDTO {
    */
   toJSON(): SpaceJSON {
     this._checkDeleted();
+    const ownerUserUids = Array.from(
+      new Set(
+        [
+          ...(this._data.shared_owner_user_uids_ss || []),
+          ...(this._data.shared_ower_user_uids_ss || []),
+        ].filter(uid => typeof uid === 'string' && uid.length > 0),
+      ),
+    );
     const obj = {
       uid: this.uid,
       name: this.name,
       description: this.description,
       variant: this.variant,
       handle: this.handle,
+      ownerUserUids,
       items: this._data.items
         ? convertSpaceItemsToModels(this._data.items, this._client).map(item =>
             item.toJSON(),

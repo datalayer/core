@@ -288,6 +288,11 @@ class UserSearchRequest(BaseModel):
     email: Optional[EmailStr] = Field(None, description="Filter by email")
     handle: Optional[str] = Field(None, description="Filter by handle")
     roles: Optional[List[str]] = Field(None, description="Filter by roles")
+    principal_types: Optional[List[str]] = Field(
+        None,
+        alias="principalTypes",
+        description="Principal types to include (user, team, organization)",
+    )
     limit: int = Field(default=10, ge=1, le=100, description="Maximum results")
     offset: int = Field(default=0, ge=0, description="Results offset")
 
@@ -619,6 +624,28 @@ class TeamListResponseData(BaseModel):
 
     teams: List[TeamModel] = Field(..., description="List of teams")
     total: int = Field(..., description="Total number of teams")
+
+
+class PrincipalsSearchResponseData(BaseModel):
+    """Principal search response data model."""
+
+    users: List[UserModel] = Field(
+        default_factory=list,
+        description="List of matching users",
+    )
+    teams: List[TeamModel] = Field(
+        default_factory=list,
+        description="List of matching teams",
+    )
+    organizations: List[OrganizationModel] = Field(
+        default_factory=list,
+        description="List of matching organizations",
+    )
+    principalTypes: List[str] = Field(
+        default_factory=list,
+        description="Principal types included in search",
+    )
+    total: int = Field(..., description="Total number of principals")
 
 
 class ReservationListResponseData(BaseModel):

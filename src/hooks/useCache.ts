@@ -1572,7 +1572,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           space.variant === 'course'
             ? (space as ICourse).seedSpace?.id
             : undefined;
-        return requestDatalayer({
+        const resp = await requestDatalayer<any>({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces`,
           method: 'POST',
           body: {
@@ -1585,6 +1585,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             seedSpaceId,
           },
         });
+
+        if (
+          (resp as any)?.success === false ||
+          (resp as any)?.sucess === false
+        ) {
+          throw new Error((resp as any)?.message || 'Failed to create space');
+        }
+
+        if (!(resp as any)?.space) {
+          throw new Error((resp as any)?.message || 'Failed to create space');
+        }
+
+        return resp;
       },
       onSuccess: (resp, _variables) => {
         if (resp.space) {

@@ -17,26 +17,28 @@ import { asArray } from '../utils';
  * @returns Space
  */
 export const asSpace = (raw_space: any): ISpace => {
-  const organizationHandle =
-    raw_space?.organization_handle_s || raw_space?.organization?.handle;
-  const owner = raw_space?.owner
+  const sharedOwnerUserUids = asArray(
+    raw_space?.shared_owner_user_uids_ss ||
+      raw_space?.shared_ower_user_uids_ss ||
+      [],
+  ).filter(
+    (uid: unknown): uid is string => typeof uid === 'string' && uid.length > 0,
+  );
+
+  // The backend resolves the canonical (friendly) account handles and exposes
+  // them as `space.owner` and `space.organization`. Trust those single sources
+  // of truth; do not invent fallbacks here.
+  const organizationHandle = raw_space?.organization?.handle;
+  const owner: IUser = raw_space?.owner
     ? asUser(raw_space.owner)
     : ({
-        id: raw_space?.creator_uid || raw_space?.user_uid || '',
-        handle:
-          raw_space?.owner_handle_s ||
-          raw_space?.creator_handle_s ||
-          raw_space?.user_handle_s ||
-          '',
+        id: '',
+        handle: '',
         email: '',
         firstName: '',
         lastName: '',
         initials: '',
-        displayName:
-          raw_space?.owner_handle_s ||
-          raw_space?.creator_handle_s ||
-          raw_space?.user_handle_s ||
-          '',
+        displayName: '',
         roles: [],
         iamProviders: [],
         setRoles: () => {},
@@ -66,6 +68,7 @@ export const asSpace = (raw_space: any): ISpace => {
     organization: organizationHandle
       ? { handle: organizationHandle }
       : undefined,
+    sharedOwnerUserUids,
     // Preserve raw Solr fields so consumers can access dynamic fields
     // (e.g. attached_agent_pod_name_s for project-agent assignment)
     ...raw_space,
@@ -89,6 +92,7 @@ export type IBaseSpace = {
   owner: IUser;
   organization?: Partial<IOrganization>;
   members?: SpaceMember[];
+  sharedOwnerUserUids?: string[];
 };
 
 export type ISpace = IBaseSpace & {
