@@ -555,7 +555,12 @@ export function StripeCheckout({
     normalizedSubscriptionStatus === 'incomplete';
   const displaySubscriptionStatus = isCancellationScheduled
     ? 'cancelled'
-    : normalizedSubscriptionStatus && normalizedSubscriptionStatus !== 'unknown'
+    : (String(currentSubscriptionPlan).toLowerCase().includes('free') ||
+        String(currentSubscriptionPlan).toLowerCase().includes('trial') ||
+        String(currentSubscriptionPlan).toLowerCase() === 'unknown' ||
+        String(currentSubscriptionPlan).toLowerCase() === 'none')
+      ? null
+      : normalizedSubscriptionStatus && normalizedSubscriptionStatus !== 'unknown'
       ? String(subscriptionStatus).replaceAll('_', ' ')
       : null;
   const normalizedPlanName = String(currentSubscriptionPlan).toLowerCase();
@@ -946,6 +951,12 @@ export function StripeCheckout({
     return null;
   }, [checkoutType, product, subscriptionPlan]);
 
+  const sectionTitleSx = {
+    fontSize: 2,
+    fontWeight: 'bold',
+    marginBottom: 'var(--stack-gap-normal)',
+  } as const;
+
   const monthlySubscriptionSection = (
     <Box
       sx={{
@@ -953,13 +964,7 @@ export function StripeCheckout({
         paddingTop: 0,
       }}
     >
-      <Text
-        as="h3"
-        sx={{
-          fontWeight: 'bold',
-          marginBottom: 'var(--stack-gap-condensed)',
-        }}
-      >
+      <Text as="h3" sx={sectionTitleSx}>
         Choose a monthly subscription
       </Text>
       {isIncompleteSubscription ? (
@@ -1051,6 +1056,89 @@ export function StripeCheckout({
     </Box>
   );
 
+  const topUpSection = (
+    <Box>
+      <Text as="h3" sx={sectionTitleSx}>
+        Topup with credits package
+      </Text>
+      <Box
+        role="radiogroup"
+        sx={{
+          display: 'grid',
+          gap: 'var(--stack-gap-normal)',
+          gridTemplateColumns: Array(sortedTopUpItems.length)
+            .fill('1fr')
+            .join(' '),
+          padding: 0,
+          marginBottom: 'var(--stack-gap-normal)',
+        }}
+      >
+        {sortedTopUpItems.map(item => (
+          <Box
+            key={item.id}
+            role="radio"
+            aria-labelledby={`checkout-price-${item.id}`}
+            aria-checked={product?.id === item.id}
+            onClick={() => {
+              if (canBuyTopUp) {
+                setProduct(item);
+              }
+            }}
+            sx={{
+              borderStyle: 'solid',
+              borderRadius: 'var(--borderRadius-medium)',
+              borderWidth: 'var(--borderWidth-thick)',
+              borderColor:
+                product?.id === item.id
+                  ? 'var(--borderColor-accent-emphasis)'
+                  : 'var(--borderColor-default)',
+              padding: 'var(--stack-padding-condensed)',
+              cursor: canBuyTopUp ? 'pointer' : 'not-allowed',
+              opacity: canBuyTopUp ? 1 : 0.6,
+            }}
+          >
+            <FormControl
+              sx={{
+                alignItems: 'center',
+              }}
+            >
+              <FormControl.Label
+                id={`checkout-price-${item.id}`}
+                sx={{ alignSelf: 'center' }}
+              >
+                {item.name}
+              </FormControl.Label>
+              <Text as="p">
+                {new Intl.NumberFormat(undefined, {
+                  style: 'currency',
+                  currency: item.currency,
+                }).format(item.amount / 100)}
+              </Text>
+              <Text as="p">{item.credits} credits</Text>
+            </FormControl>
+          </Box>
+        ))}
+      </Box>
+      <Button
+        variant="primary"
+        onClick={() => {
+          void startCheckout();
+        }}
+        disabled={
+          product === null ||
+          !canBuyTopUp ||
+          topUpPaymentIntentMutation.isPending ||
+          checkout
+        }
+        sx={{ float: 'right' }}
+      >
+        {topUpPaymentIntentMutation.isPending
+          ? 'Preparing top-up checkout...'
+          : 'Checkout'}
+      </Button>
+    </Box>
+  );
+
   const topCards = (
     <Box
       sx={{
@@ -1068,7 +1156,7 @@ export function StripeCheckout({
         sx={{
           display: 'grid',
           gap: 'var(--stack-gap-normal)',
-          gridTemplateColumns: ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)'],
+          gridTemplateColumns: ['1fr'],
           alignItems: 'start',
         }}
       >
@@ -1257,15 +1345,6 @@ export function StripeCheckout({
             </Box>
           )}
         </Box>
-        <Box
-          sx={{
-            borderLeft: ['none', '1px solid'],
-            borderColor: 'border.muted',
-            paddingLeft: ['0', 'var(--stack-gap-normal)'],
-          }}
-        >
-          {monthlySubscriptionSection}
-        </Box>
       </Box>
     </Box>
   );
@@ -1403,104 +1482,50 @@ export function StripeCheckout({
             {paymentMessage}
           </Flash>
         )}
+        {!hasTopUpAccess && canBuyTopUp && (
+          <Flash variant="warning" sx={{ mt: 3, mb: 3 }}>
+            Monthly subscription is normally required. Temporary allowance is
+            enabled: you can buy top-up credits now. Update to Team Plan for
+            included monthly runs.
+          </Flash>
+        )}
         {!canBuyTopUp && (
           <Flash variant="warning" sx={{ mt: 3, mb: 3 }}>
             Monthly subscription required. Activate a monthly plan first, then
             top-up credits will be available.
           </Flash>
         )}
-        <Text
-          as="h3"
-          sx={{
-            marginTop: 'var(--stack-gap-spacious)',
-            marginBottom: 'var(--stack-gap-normal)',
-            fontSize: 2,
-            fontWeight: 'bold',
-          }}
-        >
-          Topup with credits package
-        </Text>
-        {!hasTopUpAccess && canBuyTopUp && (
-          <Flash variant="warning" sx={{ mt: 2, mb: 3 }}>
-            Monthly subscription is normally required. Temporary allowance is
-            enabled: you can buy top-up credits now. Update to Team Plan for
-            included monthly runs.
-          </Flash>
-        )}
         <Box
-          role="radiogroup"
           sx={{
+            marginTop: 'var(--stack-gap-normal)',
+            border: '1px solid',
+            borderColor: 'border.default',
+            borderRadius: 'var(--borderRadius-medium)',
+            backgroundColor: 'canvas.default',
+            padding: 'var(--stack-padding-normal)',
             display: 'grid',
             gap: 'var(--stack-gap-normal)',
-            gridTemplateColumns: Array(sortedTopUpItems.length)
-              .fill('1fr')
-              .join(' '),
-            padding: 'var(--stack-padding-normal) 0',
+            gridTemplateColumns: ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)'],
+            alignItems: 'start',
           }}
         >
-          {sortedTopUpItems.map(item => (
-            <Box
-              key={item.id}
-              role="radio"
-              aria-labelledby={`checkout-price-${item.id}`}
-              aria-checked={product?.id === item.id}
-              onClick={() => {
-                if (canBuyTopUp) {
-                  setProduct(item);
-                }
-              }}
-              sx={{
-                borderStyle: 'solid',
-                borderRadius: 'var(--borderRadius-medium)',
-                borderWidth: 'var(--borderWidth-thick)',
-                borderColor:
-                  product?.id === item.id
-                    ? 'var(--borderColor-accent-emphasis)'
-                    : 'var(--borderColor-default)',
-                padding: 'var(--stack-padding-condensed)',
-                cursor: canBuyTopUp ? 'pointer' : 'not-allowed',
-                opacity: canBuyTopUp ? 1 : 0.6,
-              }}
-            >
-              <FormControl
-                sx={{
-                  alignItems: 'center',
-                }}
-              >
-                <FormControl.Label
-                  id={`checkout-price-${item.id}`}
-                  sx={{ alignSelf: 'center' }}
-                >
-                  {item.name}
-                </FormControl.Label>
-                <Text as="p">
-                  {new Intl.NumberFormat(undefined, {
-                    style: 'currency',
-                    currency: item.currency,
-                  }).format(item.amount / 100)}
-                </Text>
-                <Text as="p">{item.credits} credits</Text>
-              </FormControl>
-            </Box>
-          ))}
+          <Box
+            sx={{
+              borderRight: ['none', '1px solid'],
+              borderColor: 'border.muted',
+              paddingRight: ['0', 'var(--stack-gap-normal)'],
+            }}
+          >
+            {monthlySubscriptionSection}
+          </Box>
+          <Box
+            sx={{
+              paddingLeft: ['0', 'var(--stack-gap-normal)'],
+            }}
+          >
+            {topUpSection}
+          </Box>
         </Box>
-        <Button
-          variant="primary"
-          onClick={() => {
-            void startCheckout();
-          }}
-          disabled={
-            product === null ||
-            !canBuyTopUp ||
-            topUpPaymentIntentMutation.isPending ||
-            checkout
-          }
-          sx={{ float: 'right' }}
-        >
-          {topUpPaymentIntentMutation.isPending
-            ? 'Preparing top-up checkout...'
-            : 'Checkout'}
-        </Button>
       </Box>
     ) : (
       <Box>
