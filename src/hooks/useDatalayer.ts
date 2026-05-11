@@ -86,6 +86,7 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
       .catch(error => {
         if ((error as RunResponseError).name === 'RunResponseError') {
           const responseError = error as RunResponseError;
+          const isForbidden = responseError.response.status === 403;
           if (responseError.response.status === 401) {
             console.log('Datalayer sent a 401 return code.');
             const resolvedLoginRoute = resolveLoginRoute(loginRoute_);
@@ -98,7 +99,7 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
               navigate(resolvedLoginRoute);
             }
           } else {
-            if (notifyOnError_) {
+            if (notifyOnError_ && !isForbidden) {
               if (responseError.warnings) {
                 responseError.warnings.forEach(warning =>
                   enqueueToast(`${warning}`, { variant: 'warning' }),
@@ -122,9 +123,16 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
             }
           }
           const response = {
+            success: false,
             sucess: false,
             message: responseError.message,
             errors: responseError.errors,
+            warnings: responseError.warnings,
+            status: responseError.response.status,
+            code:
+              responseError.response.status === 403
+                ? 'FORBIDDEN'
+                : `HTTP_${responseError.response.status}`,
           } as T;
           return response;
         }

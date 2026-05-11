@@ -1599,6 +1599,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           );
           return space;
         }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this space');
+        }
         throw new Error(resp.message || 'Failed to fetch space');
       },
       ...DEFAULT_QUERY_OPTIONS,
@@ -1619,6 +1622,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.space) {
           return toSpace(resp.space);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this space');
         }
         throw new Error(resp.message || 'Failed to fetch space');
       },
@@ -1813,6 +1819,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.notebook) {
           return toNotebook(resp.notebook);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this notebook',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch notebook');
       },
@@ -2013,6 +2024,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.document) {
           return toDocument(resp.document);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this document',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch document');
       },
@@ -2975,6 +2991,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           }
           return space;
         }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this space');
+        }
         return null;
       },
       ...DEFAULT_QUERY_OPTIONS,
@@ -3044,6 +3063,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             }
           });
           return targetSpace;
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this space');
         }
         return null;
       },
@@ -4226,6 +4248,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.item) {
           return toCell(resp.item);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this cell');
         }
         return undefined;
       },
