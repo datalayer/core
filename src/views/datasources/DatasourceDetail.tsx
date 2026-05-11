@@ -14,8 +14,8 @@ import {
   Textarea,
   Label,
   Spinner,
+  Heading,
 } from '@primer/react';
-import { PageHeader } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { EyeIcon, EyeClosedIcon } from '@primer/octicons-react';
 import { BoringAvatar } from '../../components/avatars';
@@ -136,15 +136,17 @@ export const DatasourceDetail = () => {
         style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
       >
         <PageLayout.Content>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              py: 6,
-            }}
-          >
-            <Spinner size="large" />
+          <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                py: 6,
+              }}
+            >
+              <Spinner size="large" />
+            </Box>
           </Box>
         </PageLayout.Content>
       </PageLayout>
@@ -159,10 +161,12 @@ export const DatasourceDetail = () => {
         style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
       >
         <PageLayout.Content>
-          <Box sx={{ p: 4 }}>
-            <Text sx={{ color: 'danger.fg' }}>
-              Datasource not found or failed to load.
-            </Text>
+          <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
+            <Box sx={{ p: 4 }}>
+              <Text sx={{ color: 'danger.fg' }}>
+                Datasource not found or failed to load.
+              </Text>
+            </Box>
           </Box>
         </PageLayout.Content>
       </PageLayout>
@@ -175,118 +179,131 @@ export const DatasourceDetail = () => {
       padding="normal"
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
-      <PageLayout.Header>
-        <PageHeader>
-          <PageHeader.TitleArea variant="large">
-            <PageHeader.Title>Datasource</PageHeader.Title>
-          </PageHeader.TitleArea>
-        </PageHeader>
-      </PageLayout.Header>
       <PageLayout.Content>
-        <Box display="flex">
-          <Box>
-            <BoringAvatar
-              displayName={datasource?.name}
-              size={100}
-              style={{ paddingRight: 10 }}
-            />
-            <Box mt={3}>
-              <Label size="large">{datasource?.variant}</Label>
-            </Box>
+        <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
+          <Box sx={{ mb: 4 }}>
+            <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
+              Datasource
+            </Heading>
+            <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+              Update datasource connection metadata and review configured credentials.
+            </Text>
           </Box>
-          <Box ml={10}>
-            <Box sx={{ label: { marginTop: 2 } }}>
-              <FormControl>
-                <FormControl.Label>Name</FormControl.Label>
-                <TextInput
-                  block
-                  value={formValues.name}
-                  onChange={nameNameChange}
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 2,
+              bg: 'canvas.default',
+              p: 3,
+            }}
+          >
+            <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', '180px 1fr'], gap: 4 }}>
+              <Box>
+                <BoringAvatar
+                  displayName={datasource?.name}
+                  size={100}
+                  style={{ paddingRight: 10 }}
                 />
-                {validationResult.name === false && (
-                  <FormControl.Validation variant="error">
-                    Name must have more than 2 characters.
-                  </FormControl.Validation>
-                )}
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Description</FormControl.Label>
-                <Textarea
-                  block
-                  value={formValues.description}
-                  onChange={nameDescriptionChange}
-                  rows={5}
-                />
-                {validationResult.description === false && (
-                  <FormControl.Validation variant="error">
-                    Description must have more than 2 characters.
-                  </FormControl.Validation>
-                )}
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Database</FormControl.Label>
-                <TextInput
-                  placeholder="Database"
-                  monospace
-                  size="large"
-                  contrast={!passwordVisibility}
-                  disabled={!passwordVisibility}
-                  type={passwordVisibility ? 'text' : 'password'}
-                  value={datasource?.database || ''}
-                  readOnly
-                  trailingAction={
-                    <TextInput.Action
-                      onClick={() => {
-                        setPasswordVisibility(!passwordVisibility);
-                      }}
-                      icon={passwordVisibility ? EyeClosedIcon : EyeIcon}
-                      aria-label={
-                        passwordVisibility ? 'Hide database' : 'Reveal database'
-                      }
-                      sx={{ color: 'var(--fgColor-muted)' }}
+                <Box mt={3}>
+                  <Label size="large">{datasource?.variant}</Label>
+                </Box>
+              </Box>
+              <Box>
+                <Box sx={{ label: { marginTop: 2 } }}>
+                  <FormControl>
+                    <FormControl.Label>Name</FormControl.Label>
+                    <TextInput
+                      block
+                      value={formValues.name}
+                      onChange={nameNameChange}
                     />
-                  }
-                  sx={{ overflow: 'visible' }}
-                />
-              </FormControl>
-              <FormControl>
-                <FormControl.Label>Output bucket</FormControl.Label>
-                <TextInput
-                  placeholder="Output bucket"
-                  monospace
-                  size="large"
-                  contrast={!passwordVisibility}
-                  disabled={!passwordVisibility}
-                  type={passwordVisibility ? 'text' : 'password'}
-                  value={datasource?.outputBucket || ''}
-                  readOnly
-                  trailingAction={
-                    <TextInput.Action
-                      onClick={() => {
-                        setPasswordVisibility(!passwordVisibility);
-                      }}
-                      icon={passwordVisibility ? EyeClosedIcon : EyeIcon}
-                      aria-label={
-                        passwordVisibility
-                          ? 'Hide output bucket'
-                          : 'Reveal output bucket'
-                      }
-                      sx={{ color: 'var(--fgColor-muted)' }}
+                    {validationResult.name === false && (
+                      <FormControl.Validation variant="error">
+                        Name must have more than 2 characters.
+                      </FormControl.Validation>
+                    )}
+                  </FormControl>
+                  <FormControl>
+                    <FormControl.Label>Description</FormControl.Label>
+                    <Textarea
+                      block
+                      value={formValues.description}
+                      onChange={nameDescriptionChange}
+                      rows={5}
                     />
-                  }
-                  sx={{ overflow: 'visible' }}
-                />
-              </FormControl>
-              <Box sx={{ marginTop: 3 }}>
-                <Button
-                  variant="primary"
-                  disabled={
-                    !validationResult.name || !validationResult.description
-                  }
-                  onClick={nameSubmit}
-                >
-                  Update datasource
-                </Button>
+                    {validationResult.description === false && (
+                      <FormControl.Validation variant="error">
+                        Description must have more than 2 characters.
+                      </FormControl.Validation>
+                    )}
+                  </FormControl>
+                  <FormControl>
+                    <FormControl.Label>Database</FormControl.Label>
+                    <TextInput
+                      placeholder="Database"
+                      monospace
+                      size="large"
+                      contrast={!passwordVisibility}
+                      disabled={!passwordVisibility}
+                      type={passwordVisibility ? 'text' : 'password'}
+                      value={datasource?.database || ''}
+                      readOnly
+                      trailingAction={
+                        <TextInput.Action
+                          onClick={() => {
+                            setPasswordVisibility(!passwordVisibility);
+                          }}
+                          icon={passwordVisibility ? EyeClosedIcon : EyeIcon}
+                          aria-label={
+                            passwordVisibility ? 'Hide database' : 'Reveal database'
+                          }
+                          sx={{ color: 'var(--fgColor-muted)' }}
+                        />
+                      }
+                      sx={{ overflow: 'visible' }}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormControl.Label>Output bucket</FormControl.Label>
+                    <TextInput
+                      placeholder="Output bucket"
+                      monospace
+                      size="large"
+                      contrast={!passwordVisibility}
+                      disabled={!passwordVisibility}
+                      type={passwordVisibility ? 'text' : 'password'}
+                      value={datasource?.outputBucket || ''}
+                      readOnly
+                      trailingAction={
+                        <TextInput.Action
+                          onClick={() => {
+                            setPasswordVisibility(!passwordVisibility);
+                          }}
+                          icon={passwordVisibility ? EyeClosedIcon : EyeIcon}
+                          aria-label={
+                            passwordVisibility
+                              ? 'Hide output bucket'
+                              : 'Reveal output bucket'
+                          }
+                          sx={{ color: 'var(--fgColor-muted)' }}
+                        />
+                      }
+                      sx={{ overflow: 'visible' }}
+                    />
+                  </FormControl>
+                  <Box sx={{ marginTop: 3 }}>
+                    <Button
+                      variant="primary"
+                      disabled={
+                        !validationResult.name || !validationResult.description
+                      }
+                      onClick={nameSubmit}
+                    >
+                      Update datasource
+                    </Button>
+                  </Box>
+                </Box>
               </Box>
             </Box>
           </Box>

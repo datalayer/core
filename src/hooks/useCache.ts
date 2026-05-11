@@ -149,8 +149,12 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
     byHandle: (handle: string) =>
       [...queryKeys.users.all(), 'handle', handle] as const,
+    publicProfileByHandle: (handle: string) =>
+      [...queryKeys.users.all(), 'public-profile', handle] as const,
     search: (pattern: string) =>
       [...queryKeys.users.all(), 'search', pattern] as const,
+    bulk: (userIdsKey: string) =>
+      [...queryKeys.users.all(), 'bulk', userIdsKey] as const,
     settings: (userId: string) =>
       [...queryKeys.users.detail(userId), 'settings'] as const,
     onboarding: (userId: string) =>
@@ -169,6 +173,8 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.organizations.details(), id] as const,
     byHandle: (handle: string) =>
       [...queryKeys.organizations.all(), 'handle', handle] as const,
+    publicProfileByHandle: (handle: string) =>
+      [...queryKeys.organizations.all(), 'public-profile', handle] as const,
     userOrgs: () => [...queryKeys.organizations.all(), 'user'] as const,
     members: (orgId: string) =>
       [...queryKeys.organizations.detail(orgId), 'members'] as const,
@@ -1094,6 +1100,50 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get enriched public user profile by handle.
+   */
+  const useUserPublicProfileByHandle = (handle: string) => {
+    return useQuery({
+      queryKey: queryKeys.users.publicProfileByHandle(handle),
+      queryFn: async () => {
+        const normalizedHandle = String(handle || '').trim();
+        if (!normalizedHandle) {
+          return null;
+        }
+
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/users/public/${encodeURIComponent(normalizedHandle)}`,
+          method: 'GET',
+        });
+
+        if (resp.success) {
+          const profile = (resp as any).profile || null;
+          if (profile?.uid && profile?.handle) {
+            const mappedUser = toUser({
+              uid: profile.uid,
+              id: profile.id,
+              handle_s: profile.handle,
+              first_name_t: profile.first_name,
+              last_name_t: profile.last_name,
+              avatar_url_s: profile.avatar_url,
+              origin_s: profile.origin,
+            });
+            if (mappedUser) {
+              queryClient.setQueryData(queryKeys.users.detail(mappedUser.id), mappedUser);
+              queryClient.setQueryData(queryKeys.users.byHandle(mappedUser.handle), mappedUser);
+            }
+          }
+          return profile;
+        }
+
+        return null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!handle,
+    });
+  };
+
+  /**
    * Search users by naming pattern
    */
   const useSearchUsers = (namingPattern: string) => {
@@ -1124,6 +1174,56 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       enabled: namingPattern !== undefined && namingPattern !== null,
+    });
+  };
+
+  /**
+   * Get multiple users by UIDs in one request.
+   */
+  const useUsersByUids = (userIds: string[]) => {
+    const normalizedUserIds = Array.from(
+      new Set(
+        (userIds || [])
+          .map(userId => String(userId || '').trim())
+          .filter(Boolean),
+      ),
+    );
+    const idsKey = normalizedUserIds.join(',');
+
+    return useQuery({
+      queryKey: queryKeys.users.bulk(idsKey),
+      queryFn: async () => {
+        if (normalizedUserIds.length === 0) {
+          return [] as IUser[];
+        }
+
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/users/bulk`,
+          method: 'POST',
+          body: { userIds: normalizedUserIds },
+        });
+
+        if (resp.success && resp.users) {
+          const users = resp.users
+            .map((u: unknown) => {
+              const user = toUser(u);
+              if (user) {
+                queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+                queryClient.setQueryData(
+                  queryKeys.users.byHandle(user.handle),
+                  user,
+                );
+              }
+              return user;
+            })
+            .filter(Boolean) as IUser[];
+          return users;
+        }
+
+        return [] as IUser[];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: normalizedUserIds.length > 0,
     });
   };
 
@@ -1222,6 +1322,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           // Populate ID cache
           queryClient.setQueryData(queryKeys.organizations.detail(org.id), org);
           return org;
+        }
+        return null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!handle,
+    });
+  };
+
+  /**
+   * Get enriched public organization profile by handle.
+   */
+  const useOrganizationPublicProfileByHandle = (handle: string) => {
+    return useQuery({
+      queryKey: queryKeys.organizations.publicProfileByHandle(handle),
+      queryFn: async () => {
+        const normalizedHandle = String(handle || '').trim();
+        if (!normalizedHandle) {
+          return null;
+        }
+
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/public/${encodeURIComponent(normalizedHandle)}`,
+          method: 'GET',
+        });
+
+        if (resp.success) {
+          return (resp as any).organization || null;
         }
         return null;
       },
@@ -6287,6 +6414,60 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: ['usage', 'me', scope?.accountUid ?? 'self'],
       queryFn: async () => {
+        const parseUsageDate = (value: unknown): Date | undefined => {
+          if (!value) {
+            return undefined;
+          }
+          const date = value instanceof Date ? value : new Date(value as string);
+          return Number.isNaN(date.getTime()) ? undefined : date;
+        };
+
+        const asUsage = (u: any) => {
+          const metadata = new Map(Object.entries(u.metadata || {}));
+          if (u.billing_period_key) {
+            metadata.set('billing_period_key', String(u.billing_period_key));
+          }
+          if (u.billing_period_label) {
+            metadata.set('billing_period_label', String(u.billing_period_label));
+          }
+          if (u.billing_period_start) {
+            metadata.set('billing_period_start', String(u.billing_period_start));
+          }
+          if (u.billing_period_end) {
+            metadata.set('billing_period_end', String(u.billing_period_end));
+          }
+
+          const endDate = parseUsageDate(u.end_date);
+          const updatedAt = parseUsageDate(u.updated_at) || endDate || new Date();
+          const rawStartDate = parseUsageDate(u.start_date);
+
+          let startDate = rawStartDate || endDate || updatedAt;
+          if (
+            endDate &&
+            startDate &&
+            startDate.getTime() > endDate.getTime()
+          ) {
+            startDate =
+              updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
+          }
+
+          return {
+            id: u.resource_uid,
+            accountId: u.account_uid,
+            type: u.resource_type,
+            burningRate: u.burning_rate,
+            credits: u.credits,
+            creditsLimit: u.credits_limit,
+            startDate,
+            updatedAt,
+            endDate,
+            givenName: u.given_name || u.resource_given_name || '',
+            resourceState: u.resource_state,
+            resources: u.pod_resources,
+            metadata,
+          };
+        };
+
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
@@ -6295,21 +6476,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
-        const usages = (resp.usages || []).map((u: any) => ({
-          id: u.resource_uid,
-          accountId: u.account_uid,
-          type: u.resource_type,
-          burningRate: u.burning_rate,
-          credits: u.credits,
-          creditsLimit: u.credits_limit,
-          startDate: u.start_date ? new Date(u.start_date) : new Date(),
-          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
-          endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || u.resource_given_name || '',
-          resourceState: u.resource_state,
-          resources: u.pod_resources,
-          metadata: new Map(Object.entries(u.metadata || {})),
-        }));
+        const usages = (resp.usages || []).map(asUsage);
         return usages;
       },
       ...queryOptions,
@@ -6326,26 +6493,66 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: ['usage', 'user', userId],
       queryFn: async () => {
+        const parseUsageDate = (value: unknown): Date | undefined => {
+          if (!value) {
+            return undefined;
+          }
+          const date = value instanceof Date ? value : new Date(value as string);
+          return Number.isNaN(date.getTime()) ? undefined : date;
+        };
+
+        const asUsage = (u: any) => {
+          const metadata = new Map(Object.entries(u.metadata || {}));
+          if (u.billing_period_key) {
+            metadata.set('billing_period_key', String(u.billing_period_key));
+          }
+          if (u.billing_period_label) {
+            metadata.set('billing_period_label', String(u.billing_period_label));
+          }
+          if (u.billing_period_start) {
+            metadata.set('billing_period_start', String(u.billing_period_start));
+          }
+          if (u.billing_period_end) {
+            metadata.set('billing_period_end', String(u.billing_period_end));
+          }
+
+          const endDate = parseUsageDate(u.end_date);
+          const updatedAt = parseUsageDate(u.updated_at) || endDate || new Date();
+          const rawStartDate = parseUsageDate(u.start_date);
+
+          let startDate = rawStartDate || endDate || updatedAt;
+          if (
+            endDate &&
+            startDate &&
+            startDate.getTime() > endDate.getTime()
+          ) {
+            startDate =
+              updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
+          }
+
+          return {
+            id: u.resource_uid,
+            accountId: u.account_uid,
+            type: u.resource_type,
+            burningRate: u.burning_rate,
+            credits: u.credits,
+            creditsLimit: u.credits_limit,
+            startDate,
+            updatedAt,
+            endDate,
+            givenName: u.given_name || u.resource_given_name || '',
+            resourceState: u.resource_state,
+            resources: u.pod_resources,
+            metadata,
+          };
+        };
+
         const resp = await requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/users/${userId}`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
-        const usages = (resp.usages || []).map((u: any) => ({
-          id: u.resource_uid,
-          accountId: u.account_uid,
-          type: u.resource_type,
-          burningRate: u.burning_rate,
-          credits: u.credits,
-          creditsLimit: u.credits_limit,
-          startDate: u.start_date ? new Date(u.start_date) : new Date(),
-          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
-          endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || u.resource_given_name || '',
-          resourceState: u.resource_state,
-          resources: u.pod_resources,
-          metadata: new Map(Object.entries(u.metadata || {})),
-        }));
+        const usages = (resp.usages || []).map(asUsage);
         return usages;
       },
       enabled: !!userId,
@@ -6362,26 +6569,66 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: ['usage', 'platform'],
       queryFn: async () => {
+        const parseUsageDate = (value: unknown): Date | undefined => {
+          if (!value) {
+            return undefined;
+          }
+          const date = value instanceof Date ? value : new Date(value as string);
+          return Number.isNaN(date.getTime()) ? undefined : date;
+        };
+
+        const asUsage = (u: any) => {
+          const metadata = new Map(Object.entries(u.metadata || {}));
+          if (u.billing_period_key) {
+            metadata.set('billing_period_key', String(u.billing_period_key));
+          }
+          if (u.billing_period_label) {
+            metadata.set('billing_period_label', String(u.billing_period_label));
+          }
+          if (u.billing_period_start) {
+            metadata.set('billing_period_start', String(u.billing_period_start));
+          }
+          if (u.billing_period_end) {
+            metadata.set('billing_period_end', String(u.billing_period_end));
+          }
+
+          const endDate = parseUsageDate(u.end_date);
+          const updatedAt = parseUsageDate(u.updated_at) || endDate || new Date();
+          const rawStartDate = parseUsageDate(u.start_date);
+
+          let startDate = rawStartDate || endDate || updatedAt;
+          if (
+            endDate &&
+            startDate &&
+            startDate.getTime() > endDate.getTime()
+          ) {
+            startDate =
+              updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
+          }
+
+          return {
+            id: u.resource_uid,
+            accountId: u.account_uid,
+            type: u.resource_type,
+            burningRate: u.burning_rate,
+            credits: u.credits,
+            creditsLimit: u.credits_limit,
+            startDate,
+            updatedAt,
+            endDate,
+            givenName: u.given_name || u.resource_given_name || '',
+            resourceState: u.resource_state,
+            resources: u.pod_resources,
+            metadata,
+          };
+        };
+
         const resp = await requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/platform`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
-        const usages = (resp.usages || []).map((u: any) => ({
-          id: u.resource_uid,
-          accountId: u.account_uid,
-          type: u.resource_type,
-          burningRate: u.burning_rate,
-          credits: u.credits,
-          creditsLimit: u.credits_limit,
-          startDate: u.start_date ? new Date(u.start_date) : new Date(),
-          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
-          endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || u.resource_given_name || '',
-          resourceState: u.resource_state,
-          resources: u.pod_resources,
-          metadata: new Map(Object.entries(u.metadata || {})),
-        }));
+        const usages = (resp.usages || []).map(asUsage);
         return usages;
       },
       ...options,
@@ -7958,7 +8205,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Users
     useUser,
     useUserByHandle,
+    useUserPublicProfileByHandle,
     useSearchUsers,
+    useUsersByUids,
     useUpdateUserOnboarding,
     useUpdateUserSettings,
     useRefreshUser,
@@ -7982,6 +8231,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Organizations
     useOrganization,
     useOrganizationByHandle,
+    useOrganizationPublicProfileByHandle,
     useUserOrganizations,
     useCreateOrganization,
     useUpdateOrganization,

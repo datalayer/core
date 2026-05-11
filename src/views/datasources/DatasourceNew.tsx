@@ -10,12 +10,12 @@ import {
   Button,
   TextInput,
   Text,
+  Heading,
   Textarea,
   Select,
   Flash,
   Link,
 } from '@primer/react';
-import { PageHeader } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { useCache, useNavigate, useToast } from '../../hooks';
 import { IDatasourceVariant } from '../../models';
@@ -178,15 +178,16 @@ export const DatasourceNew = ({
       padding="normal"
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
-      <PageLayout.Header>
-        <PageHeader>
-          <PageHeader.TitleArea variant="large">
-            <PageHeader.Title>New Datasource</PageHeader.Title>
-          </PageHeader.TitleArea>
-        </PageHeader>
-      </PageLayout.Header>
       <PageLayout.Content>
-        <Box sx={{ maxWidth: '860px' }}>
+        <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
+          <Box sx={{ mb: 4 }}>
+            <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
+              New Datasource
+            </Heading>
+            <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+              Create a datasource and configure required secrets for the selected provider.
+            </Text>
+          </Box>
           <Flash variant="warning" sx={{ mb: 3 }}>
             {formValues.variant === 'athena' && (
               <Text>

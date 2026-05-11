@@ -3,11 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Avatar, Link } from '@primer/react';
+import { Link } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { IUser } from '../../models';
 import { AvatarSkeleton } from '../../components/display';
-import { getAvatarURL } from '../../utils';
+import { DLAvatar } from './DLAvatar';
 
 type IUserProfileAvatarProps = {
   user?: IUser;
@@ -18,9 +18,9 @@ type IUserProfileAvatarProps = {
 const Profile = ({ user, size = 100, onClick }: IUserProfileAvatarProps) => {
   return (
     <Box style={{ width: size }}>
-      <Avatar
+      <DLAvatar
         //      square
-        src={getAvatarURL(user?.avatarUrl)}
+        src={user?.avatarUrl}
         size={size}
         onClick={onClick}
       />

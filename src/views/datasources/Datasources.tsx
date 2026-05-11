@@ -4,13 +4,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { PageLayout, Button, IconButton, Text, Label } from '@primer/react';
+import { PageLayout, Button, IconButton, Text, Label, Heading } from '@primer/react';
 import {
   Blankslate,
-  PageHeader,
   Table,
   DataTable,
 } from '@primer/react/experimental';
+import { DatabaseIcon } from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
 import { EditIcon } from '@datalayer/icons-react';
 import { IDatasource } from '../../models';
@@ -112,24 +112,35 @@ export const Datasources = ({
       padding="normal"
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
-      <PageLayout.Header>
-        <PageHeader>
-          <PageHeader.TitleArea variant="large">
-            <PageHeader.Title>Datasources</PageHeader.Title>
-          </PageHeader.TitleArea>
-          <PageHeader.Actions>
+      <PageLayout.Content>
+        <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 3,
+              flexWrap: 'wrap',
+              mb: 4,
+            }}
+          >
+            <Box>
+              <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
+                Datasources
+              </Heading>
+              <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+                Configure external data providers available to your workspaces and agents.
+              </Text>
+            </Box>
             <Button
               size="small"
               variant="primary"
+              leadingVisual={DatabaseIcon}
               onClick={e => navigate(newDatasourceRoute, e)}
             >
               New datasource
             </Button>
-          </PageHeader.Actions>
-        </PageHeader>
-      </PageLayout.Header>
-      <PageLayout.Content>
-        <Box>
+          </Box>
           <DatasourcesTable datasourcesListRoute={datasourcesListRoute} />
         </Box>
       </PageLayout.Content>

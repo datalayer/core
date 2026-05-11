@@ -64,6 +64,7 @@ export interface ISubscriptionPlan {
   currency: string;
   interval?: string;
   included_runs?: number;
+  included_credits?: number;
 }
 
 export type StripeCheckoutProps = {
@@ -73,11 +74,19 @@ export type StripeCheckoutProps = {
 };
 
 const PLAN_INCLUDED_RUNS_DEFAULTS: Record<string, number> = {
-  starter: 1000,
-  free: 1000,
+  starter: 500,
+  free: 500,
   team: 5000,
   pro: 5000,
   enterprise: 50000,
+};
+
+const PLAN_INCLUDED_CREDITS_DEFAULTS: Record<string, number> = {
+  starter: 50,
+  free: 50,
+  team: 500,
+  pro: 500,
+  enterprise: 5000,
 };
 
 const asNumber = (value: unknown): number | null => {
@@ -436,6 +445,10 @@ export function StripeCheckout({
           typeof plan?.included_runs === 'number'
             ? plan.included_runs
             : undefined,
+        included_credits:
+          typeof plan?.included_credits === 'number'
+            ? plan.included_credits
+            : undefined,
       });
     };
     plans.forEach(add);
@@ -562,15 +575,40 @@ export function StripeCheckout({
     asPositiveNumber(subscription?.plan?.included_runs) ||
     asPositiveNumber(subscription?.metadata?.included_runs) ||
     defaultIncludedRuns;
+  const planIncludedCredits = asPositiveNumber(
+    plans.find(
+      plan => plan.name && normalizedPlanName.includes(plan.name.toLowerCase()),
+    )?.included_credits,
+  );
+  const defaultIncludedCredits =
+    planIncludedCredits ||
+    Object.entries(PLAN_INCLUDED_CREDITS_DEFAULTS).find(([planKey]) =>
+      normalizedPlanName.includes(planKey),
+    )?.[1] ||
+    null;
+  const resolvedIncludedCredits =
+    asPositiveNumber(subscription?.included_credits) ||
+    asPositiveNumber(subscription?.plan?.included_credits) ||
+    asPositiveNumber(subscription?.metadata?.included_credits) ||
+    defaultIncludedCredits;
   const usedRuns =
     asNonNegativeNumber(subscription?.used_runs) ||
     asNonNegativeNumber(subscription?.usage?.used_runs) ||
     asNonNegativeNumber(subscription?.metadata?.used_runs) ||
     0;
+  const usedCredits =
+    asNonNegativeNumber(subscription?.used_credits) ||
+    asNonNegativeNumber(subscription?.usage?.used_credits) ||
+    asNonNegativeNumber(subscription?.metadata?.used_credits) ||
+    0;
   const remainingRuns =
     resolvedIncludedRuns === null
       ? null
       : Math.max(0, (resolvedIncludedRuns ?? 0) - usedRuns);
+  const remainingCredits =
+    resolvedIncludedCredits === null
+      ? null
+      : Math.max(0, (resolvedIncludedCredits ?? 0) - usedCredits);
 
   const hasBillablePlan = useMemo(() => {
     const normalizedPlan = String(currentSubscriptionPlan).toLowerCase();
@@ -977,6 +1015,9 @@ export function StripeCheckout({
                   {typeof plan.included_runs === 'number' && (
                     <Text as="p">{plan.included_runs} included runs</Text>
                   )}
+                  {typeof plan.included_credits === 'number' && (
+                    <Text as="p">{plan.included_credits} included credits</Text>
+                  )}
                 </FormControl>
               </Box>
             ))}
@@ -1079,6 +1120,11 @@ export function StripeCheckout({
           {remainingRuns !== null && (
             <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
               {`Included runs remaining this period: ${remainingRuns.toLocaleString()}`}
+            </Text>
+          )}
+          {remainingCredits !== null && (
+            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
+              {`Included credits remaining this period: ${remainingCredits.toLocaleString()}`}
             </Text>
           )}
           <Box
@@ -1368,7 +1414,7 @@ export function StripeCheckout({
           sx={{
             marginTop: 'var(--stack-gap-spacious)',
             marginBottom: 'var(--stack-gap-normal)',
-            fontSize: 4,
+            fontSize: 2,
             fontWeight: 'bold',
           }}
         >
