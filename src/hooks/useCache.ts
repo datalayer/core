@@ -87,7 +87,6 @@ import {
 } from '../models';
 import { useCoreStore, useIAMStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
-import { newUserMock } from './../mocks';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
 import { useUploadForm } from './useUpload';
@@ -558,12 +557,57 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return asTeam(org, organizationId);
   };
 
+  /**
+   * Build a minimal {@link IUser} for an item's owner/creator from the
+   * raw fields returned by spacer (`creator_uid_s`/`creator_handle_s`
+   * and friends). Returns an empty-but-typed user when no creator info
+   * is available so the UI hydration hooks (e.g. `useUsersByUids`) can
+   * still fill in display data downstream.
+   */
+  const toItemOwner = (raw: any): IUser => {
+    const uid = String(
+      raw?.creator_uid_s ?? raw?.creator_uid ?? raw?.owner_uid_s ?? raw?.owner_uid ?? '',
+    ).trim();
+    const handle = String(
+      raw?.creator_handle_s ?? raw?.owner_handle_s ?? '',
+    ).trim();
+    const firstName = String(
+      raw?.creator_first_name_t ?? raw?.first_name_t ?? '',
+    ).trim();
+    const lastName = String(
+      raw?.creator_last_name_t ?? raw?.last_name_t ?? '',
+    ).trim();
+    const email = String(
+      raw?.creator_email_s ?? raw?.email_s ?? '',
+    ).trim();
+    const displayName =
+      firstName || lastName
+        ? asDisplayName(firstName, lastName)
+        : handle;
+    return {
+      id: uid,
+      handle,
+      email,
+      firstName,
+      lastName,
+      initials: namesAsInitials(firstName, lastName),
+      displayName,
+      roles: [],
+      iamProviders: [],
+      setRoles: () => {},
+      unsubscribedFromOutbounds: false,
+      onboarding: BOOTSTRAP_USER_ONBOARDING,
+      events: [],
+      settings: {} as IUserSettings,
+    };
+  };
+
   // Kept for potential future use
 
   // Kept for potential future use
 
   const toDataset = (raw_dataset: any): IDataset => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_dataset);
     return {
       id: raw_dataset.uid,
       type: 'dataset',
@@ -586,13 +630,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_dataset.handle_s,
       },
       organization: {
-        handle: raw_dataset.handle_s,
+        id: raw_dataset.organization_uid_s,
+        handle: raw_dataset.organization_handle_s,
       },
     };
   };
 
   const toCell = (cl: any): ICell => {
-    const owner = newUserMock();
+    const owner = toItemOwner(cl);
     return {
       id: cl.uid,
       type: 'cell',
@@ -611,13 +656,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: cl.handle_s,
       },
       organization: {
-        handle: cl.handle_s,
+        id: cl.organization_uid_s,
+        handle: cl.organization_handle_s,
       },
     };
   };
 
   const toNotebook = (raw_notebook: any): INotebook => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_notebook);
     return {
       id: raw_notebook.uid,
       type: 'notebook',
@@ -640,13 +686,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_notebook.handle_s,
       },
       organization: {
-        handle: raw_notebook.handle_s,
+        id: raw_notebook.organization_uid_s,
+        handle: raw_notebook.organization_handle_s,
       },
     };
   };
 
   const toDocument = (doc: any): IDocument => {
-    const owner = newUserMock();
+    const owner = toItemOwner(doc);
     return {
       id: doc.uid,
       type: 'document',
@@ -666,13 +713,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: doc.handle_s,
       },
       organization: {
-        handle: doc.handle_s,
+        id: doc.organization_uid_s,
+        handle: doc.organization_handle_s,
       },
     };
   };
 
   const toLesson = (raw_lesson: any): ILesson => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_lesson);
     return {
       id: raw_lesson.uid,
       type: 'lesson',
@@ -692,14 +740,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_lesson.handle_s,
       },
       organization: {
-        handle: raw_lesson.handle_s,
+        id: raw_lesson.organization_uid_s,
+        handle: raw_lesson.organization_handle_s,
       },
       datasets: [],
     };
   };
 
   const toExercise = (ex: any): IExercise => {
-    const owner = newUserMock();
+    const owner = toItemOwner(ex);
     return {
       id: ex.uid,
       type: 'exercise',
@@ -723,14 +772,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: ex.handle_s,
       },
       organization: {
-        handle: ex.handle_s,
+        id: ex.organization_uid_s,
+        handle: ex.organization_handle_s,
       },
       datasets: [],
     };
   };
 
   const toAssignment = (raw_assignment: any): IAssignment => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_assignment);
     let studentItem: IStudentItem | undefined = undefined;
     if (raw_assignment.student_items) {
       raw_assignment.student_items.forEach((student_item: any) => {
@@ -768,13 +818,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_assignment.handle_s,
       },
       organization: {
-        handle: raw_assignment.handle_s,
+        id: raw_assignment.organization_uid_s,
+        handle: raw_assignment.organization_handle_s,
       },
     };
   };
 
   const toEnvironment = (env: any): IEnvironment => {
-    const owner = newUserMock();
+    const owner = toItemOwner(env);
     return {
       id: env.uid,
       type: 'environment',
@@ -790,7 +841,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: env.handle_s,
       },
       organization: {
-        handle: env.handle_s,
+        id: env.organization_uid_s,
+        handle: env.organization_handle_s,
       },
     };
   };
@@ -823,7 +875,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   const toCourse = (raw_course: any): ICourse => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_course);
     let instructor: IUser | undefined = undefined;
     if (raw_course.members) {
       let raw_instructor = raw_course.members;
