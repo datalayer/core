@@ -37,6 +37,12 @@ export const DatalayerBox = (
           <Link
             href="javascript: return false;"
             onClick={e => navigate(linkRoute)}
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              whiteSpace: 'nowrap',
+            }}
           >
             {linkLabel}
             <ArrowRightIcon />
