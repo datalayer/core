@@ -51,6 +51,10 @@ export interface IDatalayerEnvironment {
    */
   description: string;
   /**
+   * Icon key (e.g. ai-agent -> AiAgentIcon)
+   */
+  icon?: string;
+  /**
    * Execution language
    */
   language: string;
