@@ -4,12 +4,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { PageLayout, Button, IconButton, Text, Label, Heading } from '@primer/react';
 import {
-  Blankslate,
-  Table,
-  DataTable,
-} from '@primer/react/experimental';
+  PageLayout,
+  Button,
+  IconButton,
+  Text,
+  Label,
+  Heading,
+} from '@primer/react';
+import { Blankslate, Table, DataTable } from '@primer/react/experimental';
 import { DatabaseIcon } from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
 import { EditIcon } from '@datalayer/icons-react';
@@ -49,12 +52,6 @@ const DatasourcesTable = ({
     </Blankslate>
   ) : (
     <Table.Container>
-      <Table.Title as="h2" id="datasources">
-        Datasources
-      </Table.Title>
-      <Table.Subtitle as="p" id="datasources-subtitle">
-        Your datasources.
-      </Table.Subtitle>
       <DataTable
         aria-labelledby="teams"
         aria-describedby="teams-subtitle"
@@ -129,7 +126,8 @@ export const Datasources = ({
                 Datasources
               </Heading>
               <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-                Configure external data providers available to your workspaces and agents.
+                Configure external data providers available to your workspaces
+                and agents.
               </Text>
             </Box>
             <Button

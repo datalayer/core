@@ -38,9 +38,6 @@ const SecretsTable = () => {
     </Blankslate>
   ) : (
     <Table.Container>
-      <Table.Title as="h2" id="secrets">
-        Secrets
-      </Table.Title>
       <DataTable
         aria-labelledby="secrets"
         aria-describedby="secrets-subtitle"
