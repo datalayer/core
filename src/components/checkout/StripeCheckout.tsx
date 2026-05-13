@@ -22,10 +22,13 @@ import {
   Button,
   Flash,
   FormControl,
+  Label,
+  ProgressBar,
   Spinner,
   Text,
   useTheme,
 } from '@primer/react';
+import { DotFillIcon } from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
 import type { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { useCache } from '../../hooks';
@@ -81,14 +84,6 @@ const PLAN_INCLUDED_RUNS_DEFAULTS: Record<string, number> = {
   enterprise: 50000,
 };
 
-const PLAN_INCLUDED_CREDITS_DEFAULTS: Record<string, number> = {
-  starter: 50,
-  free: 50,
-  team: 500,
-  pro: 500,
-  enterprise: 5000,
-};
-
 const asNumber = (value: unknown): number | null => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -102,6 +97,29 @@ const asPositiveNumber = (value: unknown): number | null => {
 const asNonNegativeNumber = (value: unknown): number | null => {
   const parsed = asNumber(value);
   return parsed !== null && parsed >= 0 ? parsed : null;
+};
+
+const buildUsageSegments = (
+  used: number,
+  total: number,
+): {
+  inQuotaPct: number;
+  remainingPct: number;
+  overPct: number;
+} => {
+  const safeUsed = Math.max(0, used);
+  const safeTotal = Math.max(0, total);
+  const denominator = Math.max(1, safeUsed, safeTotal);
+
+  const inQuota = Math.min(safeUsed, safeTotal);
+  const remaining = Math.max(0, safeTotal - safeUsed);
+  const over = Math.max(0, safeUsed - safeTotal);
+
+  return {
+    inQuotaPct: (inQuota / denominator) * 100,
+    remainingPct: (remaining / denominator) * 100,
+    overPct: (over / denominator) * 100,
+  };
 };
 
 type StripePaymentFormProps = {
@@ -392,20 +410,19 @@ export function StripeCheckout({
       try {
         const resp = await resumeSubscriptionMutation.mutateAsync();
         setPaymentMessage(
-          resp?.message ||
-            'Payment confirmed and subscription resumed successfully.',
+          resp?.message || 'Payment confirmed and plan resumed successfully.',
         );
       } catch (error) {
         setPaymentMessage(
           error instanceof Error
             ? error.message
-            : 'Payment confirmed, but unable to resume subscription right now.',
+            : 'Payment confirmed, but unable to resume your plan right now.',
         );
       }
       return;
     }
     if (checkoutType === 'subscription') {
-      // Poll subscription status briefly so the UI flips to paid state as soon
+      // Poll plan status briefly so the UI flips to paid state as soon
       // as Stripe + backend snapshot are ready.
       for (let attempt = 0; attempt < 5; attempt += 1) {
         try {
@@ -418,7 +435,7 @@ export function StripeCheckout({
         }
       }
       setPaymentMessage(
-        'Subscription payment confirmed. Your plan status may take a few seconds to refresh.',
+        'Plan payment confirmed. Your plan status may take a few seconds to refresh.',
       );
     } else {
       setPaymentMessage(
@@ -456,23 +473,19 @@ export function StripeCheckout({
     return Array.from(byId.values());
   }, [plans, subscriptionResp?.available_subscriptions]);
 
-  const subscriptionStatus =
-    subscription?.status || subscription?.subscription_status || 'unknown';
+  const subscriptionStatus = subscription?.status || 'unknown';
   const normalizedSubscriptionStatus = String(subscriptionStatus).toLowerCase();
   const isPendingSubscriptionCheckout =
     normalizedSubscriptionStatus === 'incomplete';
   const rawCurrentSubscriptionPlan = isPendingSubscriptionCheckout
     ? 'Free'
-    : subscription?.plan_name ||
-      subscription?.plan?.name ||
-      subscription?.plan ||
-      'Free';
+    : subscription?.plan_name || 'Free';
   const currentSubscriptionPlan = useMemo(() => {
     const raw = String(rawCurrentSubscriptionPlan || 'Free');
     const byId = availablePlans.find(plan => plan.id === raw);
     const resolved = byId?.name || raw;
     // Always present plan names with a trailing " Plan" for consistency with
-    // other surfaces (e.g. /settings/subscription/overview).
+    // other surfaces (e.g. /settings/plans/overview).
     return /\bplan$/i.test(resolved) ? resolved : `${resolved} Plan`;
   }, [availablePlans, rawCurrentSubscriptionPlan]);
   const currentPlanDetails = useMemo(() => {
@@ -506,30 +519,8 @@ export function StripeCheckout({
     }).format(amount / 100);
     return `${formatted}${currentPlanDetails.interval ? ` / ${currentPlanDetails.interval}` : ''}`;
   }, [currentPlanDetails]);
-  const subscriptionPeriodStartLabel = useMemo(() => {
-    const rawStart =
-      subscription?.current_period_start ||
-      subscription?.subscription_period_start_ts_dt;
-    if (!rawStart) {
-      return 'N/A';
-    }
-    const parsed = new Date(rawStart);
-    if (Number.isNaN(parsed.getTime())) {
-      return String(rawStart);
-    }
-    return new Intl.DateTimeFormat(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-    }).format(parsed);
-  }, [
-    subscription?.current_period_start,
-    subscription?.subscription_period_start_ts_dt,
-  ]);
   const subscriptionPeriodEndLabel = useMemo(() => {
-    const rawEnd =
-      subscription?.current_period_end ||
-      subscription?.subscription_period_end_ts_dt;
+    const rawEnd = subscription?.current_period_end;
     if (!rawEnd) {
       return 'N/A';
     }
@@ -542,27 +533,31 @@ export function StripeCheckout({
       month: 'short',
       day: '2-digit',
     }).format(parsed);
-  }, [
-    subscription?.current_period_end,
-    subscription?.subscription_period_end_ts_dt,
-  ]);
+  }, [subscription?.current_period_end]);
   const subscriptionPortalUrl =
     subscriptionResp?.portal?.url || checkoutPortal?.url;
-  const isCancellationScheduled =
-    Boolean(subscription?.cancel_at_period_end) ||
-    Boolean(subscription?.subscription_cancel_at_period_end_b);
+  const isStripeTestConfiguration = useMemo(() => {
+    const stripeKey = String(checkoutPortal?.metadata?.stripe_key || '').trim();
+    if (stripeKey.startsWith('pk_test_')) {
+      return true;
+    }
+    const portalUrl = String(checkoutPortal?.url || '').toLowerCase();
+    return portalUrl.includes('/test_');
+  }, [checkoutPortal]);
+  const isCancellationScheduled = Boolean(subscription?.cancel_at_period_end);
   const isIncompleteSubscription =
     normalizedSubscriptionStatus === 'incomplete';
   const displaySubscriptionStatus = isCancellationScheduled
     ? 'cancelled'
-    : (String(currentSubscriptionPlan).toLowerCase().includes('free') ||
+    : String(currentSubscriptionPlan).toLowerCase().includes('free') ||
         String(currentSubscriptionPlan).toLowerCase().includes('trial') ||
         String(currentSubscriptionPlan).toLowerCase() === 'unknown' ||
-        String(currentSubscriptionPlan).toLowerCase() === 'none')
+        String(currentSubscriptionPlan).toLowerCase() === 'none'
       ? null
-      : normalizedSubscriptionStatus && normalizedSubscriptionStatus !== 'unknown'
-      ? String(subscriptionStatus).replaceAll('_', ' ')
-      : null;
+      : normalizedSubscriptionStatus &&
+          normalizedSubscriptionStatus !== 'unknown'
+        ? String(subscriptionStatus).replaceAll('_', ' ')
+        : null;
   const normalizedPlanName = String(currentSubscriptionPlan).toLowerCase();
   const planIncludedRuns = asPositiveNumber(
     plans.find(
@@ -576,44 +571,77 @@ export function StripeCheckout({
     )?.[1] ||
     null;
   const resolvedIncludedRuns =
-    asPositiveNumber(subscription?.included_runs) ||
-    asPositiveNumber(subscription?.plan?.included_runs) ||
-    asPositiveNumber(subscription?.metadata?.included_runs) ||
-    defaultIncludedRuns;
-  const planIncludedCredits = asPositiveNumber(
-    plans.find(
-      plan => plan.name && normalizedPlanName.includes(plan.name.toLowerCase()),
-    )?.included_credits,
-  );
-  const defaultIncludedCredits =
-    planIncludedCredits ||
-    Object.entries(PLAN_INCLUDED_CREDITS_DEFAULTS).find(([planKey]) =>
-      normalizedPlanName.includes(planKey),
-    )?.[1] ||
-    null;
-  const resolvedIncludedCredits =
-    asPositiveNumber(subscription?.included_credits) ||
-    asPositiveNumber(subscription?.plan?.included_credits) ||
-    asPositiveNumber(subscription?.metadata?.included_credits) ||
-    defaultIncludedCredits;
+    asPositiveNumber(subscription?.included_runs) || defaultIncludedRuns;
   const usedRuns =
+    asNonNegativeNumber(subscription?.current_runs) ||
     asNonNegativeNumber(subscription?.used_runs) ||
-    asNonNegativeNumber(subscription?.usage?.used_runs) ||
-    asNonNegativeNumber(subscription?.metadata?.used_runs) ||
     0;
+  const walletIsQuota = Boolean(subscription?.wallet_is_quota);
+  const walletBalanceRaw =
+    asNonNegativeNumber(subscription?.wallet_balance) || 0;
+  const walletQuota = asPositiveNumber(subscription?.wallet_quota);
   const usedCredits =
+    asNonNegativeNumber(subscription?.current_credits) ||
     asNonNegativeNumber(subscription?.used_credits) ||
-    asNonNegativeNumber(subscription?.usage?.used_credits) ||
-    asNonNegativeNumber(subscription?.metadata?.used_credits) ||
     0;
-  const remainingRuns =
-    resolvedIncludedRuns === null
-      ? null
-      : Math.max(0, (resolvedIncludedRuns ?? 0) - usedRuns);
-  const remainingCredits =
-    resolvedIncludedCredits === null
-      ? null
-      : Math.max(0, (resolvedIncludedCredits ?? 0) - usedCredits);
+  const includedCredits = walletIsQuota
+    ? (walletQuota ?? 0)
+    : Math.max(0, usedCredits + walletBalanceRaw);
+  const remainingCredits = walletIsQuota
+    ? Math.max(0, includedCredits - usedCredits)
+    : Math.max(0, walletBalanceRaw);
+  const runsTotal = resolvedIncludedRuns ?? 0;
+  const runsSegments = useMemo(
+    () => buildUsageSegments(usedRuns, runsTotal),
+    [usedRuns, runsTotal],
+  );
+  const periodStartDate = useMemo(() => {
+    const rawStart = subscription?.current_period_start;
+    if (!rawStart) {
+      return null;
+    }
+    const parsed = new Date(rawStart);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [subscription?.current_period_start]);
+  const periodEndDate = useMemo(() => {
+    const rawEnd = subscription?.current_period_end;
+    if (!rawEnd) {
+      return null;
+    }
+    const parsed = new Date(rawEnd);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [subscription?.current_period_end]);
+  const periodProgress = useMemo(() => {
+    if (!periodStartDate || !periodEndDate) {
+      return null;
+    }
+    const startMs = periodStartDate.getTime();
+    const endMs = periodEndDate.getTime();
+    if (endMs <= startMs) {
+      return null;
+    }
+
+    const nowMs = Date.now();
+    const totalMs = endMs - startMs;
+    const elapsedMs = Math.min(Math.max(nowMs - startMs, 0), totalMs);
+    const remainingMs = Math.max(endMs - nowMs, 0);
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const totalDays = Math.max(1, Math.ceil(totalMs / msPerDay));
+    const elapsedDays = Math.min(totalDays, Math.floor(elapsedMs / msPerDay));
+    const remainingDays = Math.max(0, Math.ceil(remainingMs / msPerDay));
+
+    return {
+      elapsedPct: (elapsedMs / totalMs) * 100,
+      remainingPct: (remainingMs / totalMs) * 100,
+      totalDays,
+      elapsedDays,
+      remainingDays,
+    };
+  }, [periodEndDate, periodStartDate]);
+  const walletBalance = walletIsQuota
+    ? Math.max(0, remainingCredits)
+    : Math.max(0, walletBalanceRaw);
+  const isRunsOverQuota = runsTotal > 0 && usedRuns > runsTotal;
 
   const hasBillablePlan = useMemo(() => {
     const normalizedPlan = String(currentSubscriptionPlan).toLowerCase();
@@ -661,29 +689,6 @@ export function StripeCheckout({
     return !nonCancelable;
   }, [hasBillablePlan, subscriptionStatus, isCancellationScheduled]);
 
-  const hasTopUpAccess = useMemo(() => {
-    const normalizedPlan = String(currentSubscriptionPlan).toLowerCase();
-    const normalizedStatus = String(subscriptionStatus).toLowerCase();
-    const freeLike =
-      normalizedPlan.includes('free') ||
-      normalizedPlan.includes('trial') ||
-      normalizedStatus.includes('free') ||
-      normalizedStatus.includes('canceled') ||
-      normalizedStatus.includes('cancelled');
-    if (freeLike) {
-      return false;
-    }
-    return ['active', 'trialing', 'paid', 'past_due'].includes(
-      normalizedStatus,
-    );
-  }, [currentSubscriptionPlan, subscriptionStatus]);
-
-  // Temporary business override: allow top-up even when monthly subscription
-  // is not active, while still encouraging an upgrade path.
-  const isTemporaryFreeTopUpAllowed = true;
-  const canBuyTopUp =
-    hasTopUpAccess || (!isPaidSubscription && isTemporaryFreeTopUpAllowed);
-
   useEffect(() => {
     if (isPaidSubscription && paymentMessage) {
       setPaymentMessage(null);
@@ -697,7 +702,7 @@ export function StripeCheckout({
   }, [isPaidSubscription, plans, subscriptionPlan]);
 
   // Auto-open the in-app cancel/downgrade view when the page is opened with
-  // `?action=downgrade` (e.g. from the Subscription Overview "Downgrade" CTA).
+  // `?action=downgrade` (e.g. from the Plan Overview "Downgrade" CTA).
   // When opened with `?action=resume`, immediately trigger the resume flow.
   const autoActionTriggeredRef = useRef(false);
   useEffect(() => {
@@ -723,12 +728,7 @@ export function StripeCheckout({
   }, [isPaidSubscription, isCancellationScheduled]);
 
   const startCheckout = useCallback(async () => {
-    if (!product || !canBuyTopUp) {
-      if (!canBuyTopUp) {
-        setPaymentMessage(
-          'Monthly subscription required before buying top-up credits.',
-        );
-      }
+    if (!product) {
       return;
     }
     setPaymentMessage(null);
@@ -756,13 +756,13 @@ export function StripeCheckout({
       setCheckout(false);
       setPaymentMessage(detail);
     }
-  }, [topUpPaymentIntentMutation, canBuyTopUp, product]);
+  }, [topUpPaymentIntentMutation, product]);
 
   const startSubscriptionCheckout = useCallback(
     async (planOverride?: ISubscriptionPlan | null) => {
       const selectedPlan = planOverride ?? subscriptionPlan;
       if (!selectedPlan) {
-        setPaymentMessage('Select a monthly subscription plan first.');
+        setPaymentMessage('Select a monthly plan first.');
         return;
       }
       setPaymentMessage(null);
@@ -807,7 +807,7 @@ export function StripeCheckout({
 
   const startPendingSubscriptionCheckout = useCallback(() => {
     if (!pendingSubscriptionPlan) {
-      setPaymentMessage('Select a monthly subscription plan first.');
+      setPaymentMessage('Select a monthly plan first.');
       return;
     }
     void startSubscriptionCheckout(pendingSubscriptionPlan);
@@ -841,11 +841,11 @@ export function StripeCheckout({
       const resp = await cancelSubscriptionMutation.mutateAsync();
       if (resp?.success === false) {
         throw new Error(
-          resp?.message || 'Unable to cancel subscription right now.',
+          resp?.message || 'Unable to update your plan right now.',
         );
       }
 
-      // Refresh subscription status so stale "incomplete" snapshots disappear
+      // Refresh plan status so stale "incomplete" snapshots disappear
       // as soon as cancellation is applied upstream.
       for (let attempt = 0; attempt < 5; attempt += 1) {
         try {
@@ -866,20 +866,20 @@ export function StripeCheckout({
 
       const datedMessage =
         responseCancelAtPeriodEnd && subscriptionPeriodEndLabel
-          ? `Subscription will cancel at the end of the current period on ${subscriptionPeriodEndLabel}.`
+          ? `Plan will switch to Free at the end of the current period on ${subscriptionPeriodEndLabel}.`
           : null;
 
       setPaymentMessage(
-        (isNowCanceled ? 'Pending subscription canceled.' : datedMessage) ||
+        (isNowCanceled ? 'Pending plan change canceled.' : datedMessage) ||
           resp?.message ||
-          'Subscription cancellation requested successfully.',
+          'Plan change requested successfully.',
       );
       setCancelViewOpen(false);
     } catch (error) {
       setPaymentMessage(
         error instanceof Error
           ? error.message
-          : 'Unable to cancel subscription right now.',
+          : 'Unable to update your plan right now.',
       );
     }
   }, [
@@ -917,12 +917,12 @@ export function StripeCheckout({
     setPaymentMessage(null);
     try {
       await refetchSubscriptionStatus();
-      setPaymentMessage('Subscription status refreshed.');
+      setPaymentMessage('Plan status refreshed.');
     } catch (error) {
       setPaymentMessage(
         error instanceof Error
           ? error.message
-          : 'Unable to refresh subscription status right now.',
+          : 'Unable to refresh plan status right now.',
       );
     }
   }, [refetchSubscriptionStatus]);
@@ -945,7 +945,7 @@ export function StripeCheckout({
     }
 
     if (checkoutType === 'resume') {
-      return 'Subscription resume (card update required)';
+      return 'Plan resume (card update required)';
     }
 
     return null;
@@ -965,11 +965,11 @@ export function StripeCheckout({
       }}
     >
       <Text as="h3" sx={sectionTitleSx}>
-        Choose a monthly subscription
+        Choose a monthly plan
       </Text>
       {isIncompleteSubscription ? (
         <Text as="p" sx={{ color: 'fg.muted' }}>
-          A pending subscription already exists. Complete payment or cancel it
+          A pending plan change already exists. Complete payment or cancel it
           from the billing portal before creating a new one.
         </Text>
       ) : !isPaidSubscription ? (
@@ -1028,7 +1028,7 @@ export function StripeCheckout({
             ))}
             {plans.length === 0 && (
               <Text as="p" sx={{ color: 'fg.muted' }}>
-                No monthly subscription plans available right now.
+                No monthly plans available right now.
               </Text>
             )}
           </Box>
@@ -1049,8 +1049,8 @@ export function StripeCheckout({
       ) : (
         <Text as="p" sx={{ color: 'fg.muted' }}>
           {isCancellationScheduled
-            ? `Your monthly subscription will cancel on ${subscriptionPeriodEndLabel}.`
-            : 'Your monthly subscription is active. You can manage plan details from subscription controls.'}
+            ? `Your monthly plan will cancel on ${subscriptionPeriodEndLabel}.`
+            : 'Your monthly plan is active. You can manage plan details from plan controls.'}
         </Text>
       )}
     </Box>
@@ -1059,7 +1059,7 @@ export function StripeCheckout({
   const topUpSection = (
     <Box>
       <Text as="h3" sx={sectionTitleSx}>
-        Topup with credits package
+        Topup your wallet with credits
       </Text>
       <Box
         role="radiogroup"
@@ -1080,9 +1080,7 @@ export function StripeCheckout({
             aria-labelledby={`checkout-price-${item.id}`}
             aria-checked={product?.id === item.id}
             onClick={() => {
-              if (canBuyTopUp) {
-                setProduct(item);
-              }
+              setProduct(item);
             }}
             sx={{
               borderStyle: 'solid',
@@ -1093,8 +1091,7 @@ export function StripeCheckout({
                   ? 'var(--borderColor-accent-emphasis)'
                   : 'var(--borderColor-default)',
               padding: 'var(--stack-padding-condensed)',
-              cursor: canBuyTopUp ? 'pointer' : 'not-allowed',
-              opacity: canBuyTopUp ? 1 : 0.6,
+              cursor: 'pointer',
             }}
           >
             <FormControl
@@ -1125,10 +1122,7 @@ export function StripeCheckout({
           void startCheckout();
         }}
         disabled={
-          product === null ||
-          !canBuyTopUp ||
-          topUpPaymentIntentMutation.isPending ||
-          checkout
+          product === null || topUpPaymentIntentMutation.isPending || checkout
         }
         sx={{ float: 'right' }}
       >
@@ -1168,7 +1162,7 @@ export function StripeCheckout({
               marginBottom: 'var(--stack-gap-condensed)',
             }}
           >
-            Subscription status
+            Plan status
           </Text>
           <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
           {isPendingSubscriptionCheckout && (
@@ -1188,32 +1182,157 @@ export function StripeCheckout({
               Status: {displaySubscriptionStatus}
             </Text>
           )}
-          {subscriptionPeriodStartLabel !== 'N/A' && (
-            <Text as="p">Period start: {subscriptionPeriodStartLabel}</Text>
-          )}
-          {subscriptionPeriodEndLabel !== 'N/A' && (
-            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
-              Period end: {subscriptionPeriodEndLabel}
-            </Text>
-          )}
+          <Box
+            sx={{
+              marginBottom: 'var(--stack-gap-normal)',
+              border: '1px solid',
+              borderColor: 'border.muted',
+              borderRadius: 'var(--borderRadius-medium)',
+              backgroundColor: 'canvas.subtle',
+              padding: 'var(--stack-padding-condensed)',
+              display: 'grid',
+              gap: 'var(--stack-gap-condensed)',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
+              <Text as="h4" sx={{ fontWeight: 'bold' }}>
+                Current usage
+              </Text>
+              <Label size="small">{String(currentSubscriptionPlan)}</Label>
+            </Box>
+
+            <Box>
+              <Text
+                as="p"
+                sx={{
+                  marginBottom: 'var(--stack-gap-condensed)',
+                  color: isRunsOverQuota ? 'danger.fg' : 'fg.default',
+                  fontWeight: isRunsOverQuota ? 'bold' : 'normal',
+                }}
+              >
+                Runs: {usedRuns.toLocaleString()} / {runsTotal.toLocaleString()}
+              </Text>
+              <ProgressBar
+                barSize="small"
+                aria-label="Runs usage"
+                aria-valuenow={runsSegments.inQuotaPct + runsSegments.overPct}
+              >
+                <ProgressBar.Item
+                  progress={runsSegments.inQuotaPct}
+                  style={{ backgroundColor: 'var(--bgColor-success-emphasis)' }}
+                  aria-label={`Used in quota: ${runsSegments.inQuotaPct.toFixed(1)}%`}
+                />
+                <ProgressBar.Item
+                  progress={runsSegments.remainingPct}
+                  style={{ backgroundColor: 'var(--bgColor-accent-emphasis)' }}
+                  aria-label={`Remaining: ${runsSegments.remainingPct.toFixed(1)}%`}
+                />
+                <ProgressBar.Item
+                  progress={runsSegments.overPct}
+                  style={{ backgroundColor: 'var(--bgColor-danger-emphasis)' }}
+                  aria-label={`Over quota: ${runsSegments.overPct.toFixed(1)}%`}
+                />
+              </ProgressBar>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3,
+                  mt: 1,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Box
+                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+                >
+                  <DotFillIcon fill="var(--bgColor-success-emphasis)" />
+                  <Text sx={{ fontSize: 0 }}>Used in quota</Text>
+                </Box>
+                <Box
+                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+                >
+                  <DotFillIcon fill="var(--bgColor-accent-emphasis)" />
+                  <Text sx={{ fontSize: 0 }}>Remaining</Text>
+                </Box>
+                <Box
+                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+                >
+                  <DotFillIcon fill="var(--bgColor-danger-emphasis)" />
+                  <Text sx={{ fontSize: 0 }}>Over quota</Text>
+                </Box>
+              </Box>
+            </Box>
+
+            {periodProgress ? (
+              <Box>
+                <Text
+                  as="p"
+                  sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
+                >
+                  Usage period days: {periodProgress.elapsedDays} /{' '}
+                  {periodProgress.totalDays}
+                </Text>
+                <ProgressBar
+                  barSize="small"
+                  aria-label="Usage period progress"
+                  aria-valuenow={periodProgress.elapsedPct}
+                >
+                  <ProgressBar.Item
+                    progress={periodProgress.elapsedPct}
+                    style={{
+                      backgroundColor: 'var(--bgColor-success-emphasis)',
+                    }}
+                    aria-label={`Elapsed: ${periodProgress.elapsedPct.toFixed(1)}%`}
+                  />
+                  <ProgressBar.Item
+                    progress={periodProgress.remainingPct}
+                    style={{
+                      backgroundColor: 'var(--bgColor-accent-emphasis)',
+                    }}
+                    aria-label={`Remaining: ${periodProgress.remainingPct.toFixed(1)}%`}
+                  />
+                </ProgressBar>
+                <Text
+                  as="p"
+                  sx={{
+                    color: 'fg.muted',
+                    fontSize: 0,
+                    marginTop: 'var(--stack-gap-condensed)',
+                  }}
+                >
+                  {periodProgress.remainingDays} day(s) remaining in current
+                  period
+                </Text>
+              </Box>
+            ) : null}
+
+            <Box>
+              <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+                Wallet balance: {walletBalance.toLocaleString()}
+              </Text>
+              <Text as="p" sx={{ color: 'fg.muted' }}>
+                Spent in current period: {usedCredits.toLocaleString()}
+              </Text>
+              <Text as="p" sx={{ color: 'fg.muted' }}>
+                Wallet credits are additive on renewal and top-ups.
+              </Text>
+            </Box>
+          </Box>
           {isCancellationScheduled && (
             <Flash
               variant="warning"
               sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
             >
-              Subscription will cancel at the end of the current period on{' '}
+              Plan will switch to Free at the end of the current period on{' '}
               {subscriptionPeriodEndLabel}.
             </Flash>
-          )}
-          {remainingRuns !== null && (
-            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
-              {`Included runs remaining this period: ${remainingRuns.toLocaleString()}`}
-            </Text>
-          )}
-          {remainingCredits !== null && (
-            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-normal)' }}>
-              {`Included credits remaining this period: ${remainingCredits.toLocaleString()}`}
-            </Text>
           )}
           <Box
             sx={{
@@ -1260,7 +1379,7 @@ export function StripeCheckout({
                     : 'Continue pending payment'}
                 </Button>
                 <Button variant="danger" onClick={onCancelSubscription}>
-                  Cancel pending subscription
+                  Cancel pending plan change
                 </Button>
               </>
             )}
@@ -1272,7 +1391,7 @@ export function StripeCheckout({
               >
                 {resumeSubscriptionMutation.isPending
                   ? 'Resuming...'
-                  : 'Resume subscription'}
+                  : 'Resume plan'}
               </Button>
             )}
           </Box>
@@ -1282,12 +1401,12 @@ export function StripeCheckout({
           >
             Next step:{' '}
             {isCancellationScheduled
-              ? 'Your subscription is already scheduled for cancellation at period end. You can keep using it until then.'
+              ? 'Your plan is already scheduled to switch at period end. You can keep using it until then.'
               : isIncompleteSubscription
-                ? 'Your payment is pending. Open the in-app cancel view below to cancel this subscription or continue with payment.'
+                ? 'Your payment is pending. Open the in-app cancel view below to cancel this plan change or continue with payment.'
                 : isPaidSubscription
-                  ? 'Keep your subscription active. Top-up credits are available for active monthly subscribers.'
-                  : 'Choose a monthly subscription, then buy top-up credits as needed.'}
+                  ? 'Keep your plan active. You can top-up credits any time.'
+                  : 'Top-up credits are available on Free and Team plans.'}
           </Text>
           {cancelViewOpen && (
             <Box
@@ -1304,13 +1423,13 @@ export function StripeCheckout({
             >
               <Text as="h4" sx={{ fontWeight: 'bold' }}>
                 {isIncompleteSubscription
-                  ? 'Cancel pending subscription'
+                  ? 'Cancel pending plan change'
                   : 'Downgrade to Free Plan'}
               </Text>
               <Text as="p" sx={{ color: 'fg.muted' }}>
                 {isIncompleteSubscription
-                  ? 'This pending subscription will be canceled immediately.'
-                  : 'Your subscription will be canceled at the end of the current billing period.'}
+                  ? 'This pending plan change will be canceled immediately.'
+                  : 'Your plan will switch at the end of the current usage period.'}
               </Text>
               <Box
                 sx={{
@@ -1326,10 +1445,10 @@ export function StripeCheckout({
                 >
                   {cancelSubscriptionMutation.isPending
                     ? isIncompleteSubscription
-                      ? 'Canceling pending subscription...'
+                      ? 'Canceling pending plan change...'
                       : 'Downgrading...'
                     : isIncompleteSubscription
-                      ? 'Confirm cancel pending subscription'
+                      ? 'Confirm cancel pending plan change'
                       : 'Confirm downgrade'}
                 </Button>
                 <Button
@@ -1338,7 +1457,7 @@ export function StripeCheckout({
                   disabled={cancelSubscriptionMutation.isPending}
                 >
                   {isIncompleteSubscription
-                    ? 'Keep pending subscription'
+                    ? 'Keep pending plan change'
                     : 'Keep current plan'}
                 </Button>
               </Box>
@@ -1374,7 +1493,6 @@ export function StripeCheckout({
       view = createElement(
         Box,
         { id: 'checkout', sx: { flex: '1 1 auto', display: 'grid', gap: 3 } },
-        disabledTopCards,
         createElement(
           Box,
           {
@@ -1392,11 +1510,25 @@ export function StripeCheckout({
             },
           },
           createElement(
-            Text,
-            { as: 'p' },
+            Box,
+            {
+              sx: {
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 2,
+              },
+            },
+            createElement(Text, { as: 'p' }, 'Selected for checkout:'),
             selectedCheckoutLabel
-              ? `Selected for checkout: ${selectedCheckoutLabel}`
-              : 'Selected for checkout',
+              ? createElement(
+                  Label,
+                  {
+                    variant: checkoutType === 'topup' ? 'success' : 'accent',
+                  },
+                  selectedCheckoutLabel,
+                )
+              : null,
           ),
           createElement(
             Button,
@@ -1408,7 +1540,7 @@ export function StripeCheckout({
           ? createElement(
               Flash,
               { variant: 'warning' },
-              'Enter a new payment card to resume your subscription.',
+              'Enter a new payment card to resume your plan.',
             )
           : null,
         createElement(
@@ -1439,11 +1571,11 @@ export function StripeCheckout({
             }),
           ),
         ),
+        disabledTopCards,
       );
     } else {
       view = (
         <Box sx={{ flex: '1 1 auto', display: 'grid', gap: 3 }}>
-          {disabledTopCards}
           <Box
             sx={{
               border: '1px solid',
@@ -1463,6 +1595,7 @@ export function StripeCheckout({
               Cancel
             </Button>
           </Box>
+          {disabledTopCards}
         </Box>
       );
     }
@@ -1476,25 +1609,6 @@ export function StripeCheckout({
           }
         }}
       >
-        {topCards}
-        {paymentMessage && (
-          <Flash variant={canBuyTopUp ? 'success' : 'warning'} sx={{ mt: 3 }}>
-            {paymentMessage}
-          </Flash>
-        )}
-        {!hasTopUpAccess && canBuyTopUp && (
-          <Flash variant="warning" sx={{ mt: 3, mb: 3 }}>
-            Monthly subscription is normally required. Temporary allowance is
-            enabled: you can buy top-up credits now. Update to Team Plan for
-            included monthly runs.
-          </Flash>
-        )}
-        {!canBuyTopUp && (
-          <Flash variant="warning" sx={{ mt: 3, mb: 3 }}>
-            Monthly subscription required. Activate a monthly plan first, then
-            top-up credits will be available.
-          </Flash>
-        )}
         <Box
           sx={{
             marginTop: 'var(--stack-gap-normal)',
@@ -1525,7 +1639,25 @@ export function StripeCheckout({
           >
             {topUpSection}
           </Box>
+          {isStripeTestConfiguration ? (
+            <Box
+              sx={{
+                gridColumn: ['1', '1 / -1'],
+                borderTop: '1px solid',
+                borderColor: 'border.muted',
+                paddingTop: 'var(--stack-gap-normal)',
+              }}
+            >
+              <Label variant="attention">Stripe test configuration</Label>
+            </Box>
+          ) : null}
         </Box>
+        {paymentMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {paymentMessage}
+          </Flash>
+        )}
+        {topCards}
       </Box>
     ) : (
       <Box>

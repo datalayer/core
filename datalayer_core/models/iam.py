@@ -473,9 +473,9 @@ class ReservationData(BaseModel):
 
     id: str = Field(..., description="Reservation ID")
     account_uid: str = Field(..., description="Account UID")
-    billing_account_uid: Optional[str] = Field(
+    usage_account_uid: Optional[str] = Field(
         None,
-        description="Account UID charged for the reservation cost",
+        description="Account UID charged for the reservation usage",
     )
     credits: float = Field(..., description="Reserved credits")
     resource: str = Field(..., description="Resource identifier")
@@ -483,15 +483,20 @@ class ReservationData(BaseModel):
     last_update: datetime = Field(..., description="Last update timestamp")
     burning_rate: float = Field(..., description="Credits burning rate per second")
     start_date: datetime = Field(..., description="Reservation start date")
+    plan: Optional[str] = Field(None, description="Usage plan code")
+    usage_period_key: Optional[str] = Field(None, description="Usage period key")
+    usage_period_label: Optional[str] = Field(None, description="Usage period label")
+    usage_period_start: Optional[datetime] = Field(None, description="Usage period start")
+    usage_period_end: Optional[datetime] = Field(None, description="Usage period end")
 
 
 class UsageData(BaseModel):
     """Usage data model."""
 
     account_uid: str = Field(..., description="Account UID")
-    billing_account_uid: Optional[str] = Field(
+    usage_account_uid: Optional[str] = Field(
         None,
-        description="Account UID charged for the usage cost",
+        description="Account UID charged for the usage",
     )
     resource_uid: str = Field(..., description="Resource UID")
     resource_type: str = Field(..., description="Resource type")
@@ -505,6 +510,11 @@ class UsageData(BaseModel):
     burning_rate: float = Field(..., description="Credits burning rate per second")
     credits_limit: float = Field(..., description="Credits limit")
     credits: float = Field(..., description="Credits consumed")
+    plan: Optional[str] = Field(None, description="Usage plan code")
+    usage_period_key: Optional[str] = Field(None, description="Usage period key")
+    usage_period_label: Optional[str] = Field(None, description="Usage period label")
+    usage_period_start: Optional[datetime] = Field(None, description="Usage period start")
+    usage_period_end: Optional[datetime] = Field(None, description="Usage period end")
     metadata: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Additional metadata"
     )

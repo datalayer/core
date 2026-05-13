@@ -566,7 +566,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const toItemOwner = (raw: any): IUser => {
     const uid = String(
-      raw?.creator_uid_s ?? raw?.creator_uid ?? raw?.owner_uid_s ?? raw?.owner_uid ?? '',
+      raw?.creator_uid_s ??
+        raw?.creator_uid ??
+        raw?.owner_uid_s ??
+        raw?.owner_uid ??
+        '',
     ).trim();
     const handle = String(
       raw?.creator_handle_s ?? raw?.owner_handle_s ?? '',
@@ -577,13 +581,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const lastName = String(
       raw?.creator_last_name_t ?? raw?.last_name_t ?? '',
     ).trim();
-    const email = String(
-      raw?.creator_email_s ?? raw?.email_s ?? '',
-    ).trim();
+    const email = String(raw?.creator_email_s ?? raw?.email_s ?? '').trim();
     const displayName =
-      firstName || lastName
-        ? asDisplayName(firstName, lastName)
-        : handle;
+      firstName || lastName ? asDisplayName(firstName, lastName) : handle;
     return {
       id: uid,
       handle,
@@ -1181,8 +1181,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               origin_s: profile.origin,
             });
             if (mappedUser) {
-              queryClient.setQueryData(queryKeys.users.detail(mappedUser.id), mappedUser);
-              queryClient.setQueryData(queryKeys.users.byHandle(mappedUser.handle), mappedUser);
+              queryClient.setQueryData(
+                queryKeys.users.detail(mappedUser.id),
+                mappedUser,
+              );
+              queryClient.setQueryData(
+                queryKeys.users.byHandle(mappedUser.handle),
+                mappedUser,
+              );
             }
           }
           return profile;
@@ -1652,7 +1658,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return space;
         }
         if ((resp as any)?.code === 'FORBIDDEN') {
-          throw new Error(resp.message || 'Not authorized to access this space');
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch space');
       },
@@ -1676,7 +1684,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return toSpace(resp.space);
         }
         if ((resp as any)?.code === 'FORBIDDEN') {
-          throw new Error(resp.message || 'Not authorized to access this space');
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch space');
       },
@@ -3044,7 +3054,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return space;
         }
         if ((resp as any)?.code === 'FORBIDDEN') {
-          throw new Error(resp.message || 'Not authorized to access this space');
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
         }
         return null;
       },
@@ -3117,7 +3129,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return targetSpace;
         }
         if ((resp as any)?.code === 'FORBIDDEN') {
-          throw new Error(resp.message || 'Not authorized to access this space');
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
         }
         return null;
       },
@@ -6495,35 +6509,38 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           if (!value) {
             return undefined;
           }
-          const date = value instanceof Date ? value : new Date(value as string);
+          const date =
+            value instanceof Date ? value : new Date(value as string);
           return Number.isNaN(date.getTime()) ? undefined : date;
         };
 
         const asUsage = (u: any) => {
           const metadata = new Map(Object.entries(u.metadata || {}));
-          if (u.billing_period_key) {
-            metadata.set('billing_period_key', String(u.billing_period_key));
+          const usagePeriodKey = u.usage_period_key;
+          const usagePeriodLabel = u.usage_period_label;
+          const usagePeriodStart = u.usage_period_start;
+          const usagePeriodEnd = u.usage_period_end;
+
+          if (usagePeriodKey) {
+            metadata.set('usage_period_key', String(usagePeriodKey));
           }
-          if (u.billing_period_label) {
-            metadata.set('billing_period_label', String(u.billing_period_label));
+          if (usagePeriodLabel) {
+            metadata.set('usage_period_label', String(usagePeriodLabel));
           }
-          if (u.billing_period_start) {
-            metadata.set('billing_period_start', String(u.billing_period_start));
+          if (usagePeriodStart) {
+            metadata.set('usage_period_start', String(usagePeriodStart));
           }
-          if (u.billing_period_end) {
-            metadata.set('billing_period_end', String(u.billing_period_end));
+          if (usagePeriodEnd) {
+            metadata.set('usage_period_end', String(usagePeriodEnd));
           }
 
           const endDate = parseUsageDate(u.end_date);
-          const updatedAt = parseUsageDate(u.updated_at) || endDate || new Date();
+          const updatedAt =
+            parseUsageDate(u.updated_at) || endDate || new Date();
           const rawStartDate = parseUsageDate(u.start_date);
 
           let startDate = rawStartDate || endDate || updatedAt;
-          if (
-            endDate &&
-            startDate &&
-            startDate.getTime() > endDate.getTime()
-          ) {
+          if (endDate && startDate && startDate.getTime() > endDate.getTime()) {
             startDate =
               updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
           }
@@ -6541,6 +6558,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             givenName: u.given_name || u.resource_given_name || '',
             resourceState: u.resource_state,
             resources: u.pod_resources,
+            usagePeriodKey,
+            usagePeriodLabel,
+            usagePeriodStart: parseUsageDate(usagePeriodStart),
+            usagePeriodEnd: parseUsageDate(usagePeriodEnd),
             metadata,
           };
         };
@@ -6574,35 +6595,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           if (!value) {
             return undefined;
           }
-          const date = value instanceof Date ? value : new Date(value as string);
+          const date =
+            value instanceof Date ? value : new Date(value as string);
           return Number.isNaN(date.getTime()) ? undefined : date;
         };
 
         const asUsage = (u: any) => {
           const metadata = new Map(Object.entries(u.metadata || {}));
-          if (u.billing_period_key) {
-            metadata.set('billing_period_key', String(u.billing_period_key));
+          if (u.usage_period_key) {
+            metadata.set('usage_period_key', String(u.usage_period_key));
           }
-          if (u.billing_period_label) {
-            metadata.set('billing_period_label', String(u.billing_period_label));
+          if (u.usage_period_label) {
+            metadata.set('usage_period_label', String(u.usage_period_label));
           }
-          if (u.billing_period_start) {
-            metadata.set('billing_period_start', String(u.billing_period_start));
+          if (u.usage_period_start) {
+            metadata.set('usage_period_start', String(u.usage_period_start));
           }
-          if (u.billing_period_end) {
-            metadata.set('billing_period_end', String(u.billing_period_end));
+          if (u.usage_period_end) {
+            metadata.set('usage_period_end', String(u.usage_period_end));
           }
 
           const endDate = parseUsageDate(u.end_date);
-          const updatedAt = parseUsageDate(u.updated_at) || endDate || new Date();
+          const updatedAt =
+            parseUsageDate(u.updated_at) || endDate || new Date();
           const rawStartDate = parseUsageDate(u.start_date);
 
           let startDate = rawStartDate || endDate || updatedAt;
-          if (
-            endDate &&
-            startDate &&
-            startDate.getTime() > endDate.getTime()
-          ) {
+          if (endDate && startDate && startDate.getTime() > endDate.getTime()) {
             startDate =
               updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
           }
@@ -6620,6 +6639,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             givenName: u.given_name || u.resource_given_name || '',
             resourceState: u.resource_state,
             resources: u.pod_resources,
+            usagePeriodKey: u.usage_period_key,
+            usagePeriodLabel: u.usage_period_label,
+            usagePeriodStart: parseUsageDate(u.usage_period_start),
+            usagePeriodEnd: parseUsageDate(u.usage_period_end),
             metadata,
           };
         };
@@ -6650,35 +6673,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           if (!value) {
             return undefined;
           }
-          const date = value instanceof Date ? value : new Date(value as string);
+          const date =
+            value instanceof Date ? value : new Date(value as string);
           return Number.isNaN(date.getTime()) ? undefined : date;
         };
 
         const asUsage = (u: any) => {
           const metadata = new Map(Object.entries(u.metadata || {}));
-          if (u.billing_period_key) {
-            metadata.set('billing_period_key', String(u.billing_period_key));
+          if (u.usage_period_key) {
+            metadata.set('usage_period_key', String(u.usage_period_key));
           }
-          if (u.billing_period_label) {
-            metadata.set('billing_period_label', String(u.billing_period_label));
+          if (u.usage_period_label) {
+            metadata.set('usage_period_label', String(u.usage_period_label));
           }
-          if (u.billing_period_start) {
-            metadata.set('billing_period_start', String(u.billing_period_start));
+          if (u.usage_period_start) {
+            metadata.set('usage_period_start', String(u.usage_period_start));
           }
-          if (u.billing_period_end) {
-            metadata.set('billing_period_end', String(u.billing_period_end));
+          if (u.usage_period_end) {
+            metadata.set('usage_period_end', String(u.usage_period_end));
           }
 
           const endDate = parseUsageDate(u.end_date);
-          const updatedAt = parseUsageDate(u.updated_at) || endDate || new Date();
+          const updatedAt =
+            parseUsageDate(u.updated_at) || endDate || new Date();
           const rawStartDate = parseUsageDate(u.start_date);
 
           let startDate = rawStartDate || endDate || updatedAt;
-          if (
-            endDate &&
-            startDate &&
-            startDate.getTime() > endDate.getTime()
-          ) {
+          if (endDate && startDate && startDate.getTime() > endDate.getTime()) {
             startDate =
               updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
           }
@@ -6696,6 +6717,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             givenName: u.given_name || u.resource_given_name || '',
             resourceState: u.resource_state,
             resources: u.pod_resources,
+            usagePeriodKey: u.usage_period_key,
+            usagePeriodLabel: u.usage_period_label,
+            usagePeriodStart: parseUsageDate(u.usage_period_start),
+            usagePeriodEnd: parseUsageDate(u.usage_period_end),
             metadata,
           };
         };
