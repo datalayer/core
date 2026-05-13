@@ -128,6 +128,7 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
             message: responseError.message,
             errors: responseError.errors,
             warnings: responseError.warnings,
+            detail: responseError.detail,
             status: responseError.response.status,
             code:
               responseError.response.status === 403

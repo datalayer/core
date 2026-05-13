@@ -161,13 +161,11 @@ export type IUserSubscription = {
   included_runs?: number;
   current_runs?: number;
   used_runs?: number;
-  included_credits?: number;
   current_credits?: number;
   used_credits?: number;
   usage?: {
     included_runs?: number;
     current_runs?: number;
-    included_credits?: number;
     current_credits?: number;
   };
 };

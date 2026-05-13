@@ -4,4 +4,3 @@
  */
 
 export * from './StripeCheckout';
-export * from './ThemedStripeCheckout';

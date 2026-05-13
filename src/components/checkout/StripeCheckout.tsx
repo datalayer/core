@@ -67,13 +67,13 @@ export interface ISubscriptionPlan {
   currency: string;
   interval?: string;
   included_runs?: number;
-  included_credits?: number;
 }
 
 export type StripeCheckoutProps = {
   checkoutPortal: ICheckoutPortal | null;
   appearance?: StripeElementsOptions['appearance'];
   accountUid?: string;
+  showStatusUsageSummary?: boolean;
 };
 
 const PLAN_INCLUDED_RUNS_DEFAULTS: Record<string, number> = {
@@ -311,6 +311,7 @@ export function StripeCheckout({
   checkoutPortal,
   appearance,
   accountUid,
+  showStatusUsageSummary = true,
 }: StripeCheckoutProps) {
   const {
     useCreateTopUpPaymentIntent,
@@ -461,10 +462,6 @@ export function StripeCheckout({
         included_runs:
           typeof plan?.included_runs === 'number'
             ? plan.included_runs
-            : undefined,
-        included_credits:
-          typeof plan?.included_credits === 'number'
-            ? plan.included_credits
             : undefined,
       });
     };
@@ -700,6 +697,12 @@ export function StripeCheckout({
       setSubscriptionPlan(plans[0]);
     }
   }, [isPaidSubscription, plans, subscriptionPlan]);
+
+  useEffect(() => {
+    if (!product && sortedTopUpItems.length > 0) {
+      setProduct(sortedTopUpItems[sortedTopUpItems.length - 1]);
+    }
+  }, [product, sortedTopUpItems]);
 
   // Auto-open the in-app cancel/downgrade view when the page is opened with
   // `?action=downgrade` (e.g. from the Plan Overview "Downgrade" CTA).
@@ -1020,9 +1023,6 @@ export function StripeCheckout({
                   {typeof plan.included_runs === 'number' && (
                     <Text as="p">{plan.included_runs} included runs</Text>
                   )}
-                  {typeof plan.included_credits === 'number' && (
-                    <Text as="p">{plan.included_credits} included credits</Text>
-                  )}
                 </FormControl>
               </Box>
             ))}
@@ -1133,7 +1133,7 @@ export function StripeCheckout({
     </Box>
   );
 
-  const topCards = (
+  const topCards = showStatusUsageSummary ? (
     <Box
       sx={{
         marginBottom: 'var(--stack-gap-normal)',
@@ -1318,7 +1318,11 @@ export function StripeCheckout({
                 Wallet balance: {walletBalance.toLocaleString()}
               </Text>
               <Text as="p" sx={{ color: 'fg.muted' }}>
-                Spent in current period: {usedCredits.toLocaleString()}
+                Spent credits in current period:{' '}
+                {usedCredits.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </Text>
               <Text as="p" sx={{ color: 'fg.muted' }}>
                 Wallet credits are additive on renewal and top-ups.
@@ -1466,7 +1470,7 @@ export function StripeCheckout({
         </Box>
       </Box>
     </Box>
-  );
+  ) : null;
 
   let view = (
     <Box sx={{ minHeight: '40px' }}>
@@ -1476,7 +1480,7 @@ export function StripeCheckout({
   // While the Stripe payment form is shown, disable interaction with the
   // status / plan picker cards behind it so the only available action is the
   // "Cancel" button next to the form.
-  const disabledTopCards = (
+  const disabledTopCards = topCards ? (
     <Box
       aria-disabled="true"
       sx={{
@@ -1487,7 +1491,7 @@ export function StripeCheckout({
     >
       {topCards}
     </Box>
-  );
+  ) : null;
   if (checkout) {
     if (stripe && paymentOptions && paymentClientSecret) {
       view = createElement(

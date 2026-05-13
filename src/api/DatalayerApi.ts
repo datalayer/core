@@ -58,17 +58,25 @@ export class RunResponseError extends Error {
   static async create(response: Response): Promise<RunResponseError> {
     try {
       const data = await response.json();
-      const { message, errors, warnings, traceback, exception } = data;
+      const { message, errors, warnings, traceback, exception, detail } = data;
+      const resolvedMessage =
+        message ??
+        (typeof detail === 'string'
+          ? detail
+          : detail && typeof detail === 'object' && 'message' in detail
+            ? String((detail as any).message)
+            : undefined);
       if (traceback) {
         console.error(traceback);
       }
       const responseError = new RunResponseError(
         response,
-        message ?? RunResponseError._defaultMessage(response),
+        resolvedMessage ?? RunResponseError._defaultMessage(response),
         warnings,
         errors,
         exception,
         traceback ?? '',
+        detail,
       );
       return responseError;
     } catch (e) {
@@ -87,6 +95,7 @@ export class RunResponseError extends Error {
     errors = undefined,
     exceptionMessage = undefined,
     traceback = '',
+    detail: unknown = undefined,
   ) {
     super(message);
     this.name = 'RunResponseError';
@@ -95,6 +104,7 @@ export class RunResponseError extends Error {
     this.response = response;
     this.exceptionMessage = exceptionMessage;
     this.traceback = traceback;
+    this.detail = detail;
   }
 
   /**
@@ -121,6 +131,11 @@ export class RunResponseError extends Error {
    * The traceback associated with the error.
    */
   readonly traceback: string;
+
+  /**
+   * Optional structured backend detail payload.
+   */
+  readonly detail: unknown;
 
   private static _defaultMessage(response: Response): string {
     return `Invalid response: ${response.status} ${response.statusText}`;
