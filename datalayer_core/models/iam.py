@@ -486,7 +486,9 @@ class ReservationData(BaseModel):
     plan: Optional[str] = Field(None, description="Usage plan code")
     usage_period_key: Optional[str] = Field(None, description="Usage period key")
     usage_period_label: Optional[str] = Field(None, description="Usage period label")
-    usage_period_start: Optional[datetime] = Field(None, description="Usage period start")
+    usage_period_start: Optional[datetime] = Field(
+        None, description="Usage period start"
+    )
     usage_period_end: Optional[datetime] = Field(None, description="Usage period end")
 
 
@@ -513,7 +515,9 @@ class UsageData(BaseModel):
     plan: Optional[str] = Field(None, description="Usage plan code")
     usage_period_key: Optional[str] = Field(None, description="Usage period key")
     usage_period_label: Optional[str] = Field(None, description="Usage period label")
-    usage_period_start: Optional[datetime] = Field(None, description="Usage period start")
+    usage_period_start: Optional[datetime] = Field(
+        None, description="Usage period start"
+    )
     usage_period_end: Optional[datetime] = Field(None, description="Usage period end")
     metadata: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Additional metadata"

@@ -28,7 +28,9 @@ def _iam_get(client: DatalayerClient, path: str) -> dict[str, Any]:
     return client._fetch(f"{client.urls.iam_url}{path}", method="GET").json()
 
 
-def _iam_post(client: DatalayerClient, path: str, body: dict[str, Any]) -> dict[str, Any]:
+def _iam_post(
+    client: DatalayerClient, path: str, body: dict[str, Any]
+) -> dict[str, Any]:
     return client._fetch(
         f"{client.urls.iam_url}{path}",
         method="POST",
@@ -96,7 +98,9 @@ def usage_org_overview(
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/overview",
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
 
         if raw:
@@ -111,8 +115,12 @@ def usage_org_overview(
         summary.add_column("Field", style="cyan", no_wrap=True)
         summary.add_column("Value", style="white")
         summary.add_row("Organization UID", _normalize_value(organization.get("uid")))
-        summary.add_row("Credits", _normalize_value(organization.get("credits"), fallback="0"))
-        summary.add_row("Quota", _normalize_value(organization.get("quota"), fallback="none"))
+        summary.add_row(
+            "Credits", _normalize_value(organization.get("credits"), fallback="0")
+        )
+        summary.add_row(
+            "Quota", _normalize_value(organization.get("quota"), fallback="none")
+        )
         summary.add_row("Teams", str(len(teams)))
         console.print(summary)
 
@@ -156,7 +164,9 @@ def usage_team_overview(
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/overview",
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
 
         if raw:
@@ -196,7 +206,9 @@ def usage_team_overview(
 
 @app.command(name="org-history")
 def usage_org_history(
-    organization_uid: str = typer.Option(..., "--organization-uid", help="Organization UID."),
+    organization_uid: str = typer.Option(
+        ..., "--organization-uid", help="Organization UID."
+    ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
     limit: int = typer.Option(20, "--limit", help="Max events to print."),
 ) -> None:
@@ -208,7 +220,9 @@ def usage_org_history(
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/history",
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
 
         events = ((response.get("history") or {}).get("events") or [])[: max(1, limit)]
@@ -244,7 +258,9 @@ def usage_team_history(
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/history",
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
 
         events = ((response.get("history") or {}).get("events") or [])[: max(1, limit)]
@@ -268,9 +284,13 @@ def usage_team_history(
 
 @app.command(name="org-monitor")
 def usage_org_monitor(
-    organization_uid: str = typer.Option(..., "--organization-uid", help="Organization UID."),
+    organization_uid: str = typer.Option(
+        ..., "--organization-uid", help="Organization UID."
+    ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
-    window_hours: int = typer.Option(24, "--window-hours", help="Monitoring window in hours."),
+    window_hours: int = typer.Option(
+        24, "--window-hours", help="Monitoring window in hours."
+    ),
 ) -> None:
     """Show organization/team credits monitoring metrics and recommendations."""
     try:
@@ -280,7 +300,9 @@ def usage_org_monitor(
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/monitoring?window_hours={max(1, window_hours)}",
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
 
         monitoring = response.get("monitoring") or {}
@@ -291,7 +313,9 @@ def usage_org_monitor(
         summary = Table(title="Organization Monitoring")
         summary.add_column("Field", style="cyan")
         summary.add_column("Value", style="white")
-        summary.add_row("Credits", _normalize_value(organization.get("credits"), fallback="0"))
+        summary.add_row(
+            "Credits", _normalize_value(organization.get("credits"), fallback="0")
+        )
         summary.add_row(
             "Active reservations",
             _normalize_value(organization.get("active_reservations"), fallback="0"),
@@ -302,7 +326,9 @@ def usage_org_monitor(
         )
         summary.add_row(
             "ETA (hours)",
-            _normalize_value(organization.get("estimated_hours_to_depletion"), fallback="n/a"),
+            _normalize_value(
+                organization.get("estimated_hours_to_depletion"), fallback="n/a"
+            ),
         )
         console.print(summary)
 
@@ -318,7 +344,9 @@ def usage_org_monitor(
                 _normalize_value(team.get("credits"), fallback="0"),
                 _normalize_value(team.get("active_reservations"), fallback="0"),
                 _normalize_value(team.get("burning_rate_per_hour"), fallback="0"),
-                _normalize_value(team.get("estimated_hours_to_depletion"), fallback="n/a"),
+                _normalize_value(
+                    team.get("estimated_hours_to_depletion"), fallback="n/a"
+                ),
             )
         console.print(teams_table)
 
@@ -343,7 +371,9 @@ def usage_org_monitor(
 def usage_team_monitor(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
-    window_hours: int = typer.Option(24, "--window-hours", help="Monitoring window in hours."),
+    window_hours: int = typer.Option(
+        24, "--window-hours", help="Monitoring window in hours."
+    ),
 ) -> None:
     """Show team/member credits monitoring metrics and recommendations."""
     try:
@@ -353,7 +383,9 @@ def usage_team_monitor(
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/monitoring?window_hours={max(1, window_hours)}",
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
 
         monitoring = response.get("monitoring") or {}
@@ -392,7 +424,9 @@ def usage_team_monitor(
                 _normalize_value(member.get("credits"), fallback="0"),
                 _normalize_value(member.get("active_reservations"), fallback="0"),
                 _normalize_value(member.get("burning_rate_per_hour"), fallback="0"),
-                _normalize_value(member.get("estimated_hours_to_depletion"), fallback="n/a"),
+                _normalize_value(
+                    member.get("estimated_hours_to_depletion"), fallback="n/a"
+                ),
             )
         console.print(members_table)
 
@@ -415,9 +449,13 @@ def usage_team_monitor(
 
 @app.command(name="org-allocate-team")
 def usage_org_allocate_team(
-    organization_uid: str = typer.Option(..., "--organization-uid", help="Organization UID."),
+    organization_uid: str = typer.Option(
+        ..., "--organization-uid", help="Organization UID."
+    ),
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
-    amount: float = typer.Option(..., "--amount", help="Amount of credits to allocate."),
+    amount: float = typer.Option(
+        ..., "--amount", help="Amount of credits to allocate."
+    ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
 ) -> None:
     """Allocate credits from organization to team."""
@@ -429,7 +467,9 @@ def usage_org_allocate_team(
             {"amount": amount},
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
         console.print("[green]Credits allocated from organization to team.[/green]")
         console.print(response.get("transfer") or response)
@@ -440,7 +480,9 @@ def usage_org_allocate_team(
 
 @app.command(name="org-revoke-team")
 def usage_org_revoke_team(
-    organization_uid: str = typer.Option(..., "--organization-uid", help="Organization UID."),
+    organization_uid: str = typer.Option(
+        ..., "--organization-uid", help="Organization UID."
+    ),
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
@@ -454,7 +496,9 @@ def usage_org_revoke_team(
             {"amount": amount},
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
         console.print("[green]Credits revoked from team to organization.[/green]")
         console.print(response.get("transfer") or response)
@@ -467,7 +511,9 @@ def usage_org_revoke_team(
 def usage_team_allocate_member(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     member_uid: str = typer.Option(..., "--member-uid", help="Member UID."),
-    amount: float = typer.Option(..., "--amount", help="Amount of credits to allocate."),
+    amount: float = typer.Option(
+        ..., "--amount", help="Amount of credits to allocate."
+    ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
 ) -> None:
     """Allocate credits from team to member."""
@@ -479,7 +525,9 @@ def usage_team_allocate_member(
             {"amount": amount},
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
         console.print("[green]Credits allocated from team to member.[/green]")
         console.print(response.get("transfer") or response)
@@ -504,7 +552,9 @@ def usage_team_revoke_member(
             {"amount": amount},
         )
         if not response.get("success", True):
-            console.print(f"[red]Error: {response.get('message', 'Unknown error')}[/red]")
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
             raise typer.Exit(1)
         console.print("[green]Credits revoked from member to team.[/green]")
         console.print(response.get("transfer") or response)

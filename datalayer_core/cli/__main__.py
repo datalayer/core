@@ -33,10 +33,10 @@ from datalayer_core.cli.commands.runtimes import app as runtimes_app
 from datalayer_core.cli.commands.runtimes import runtimes_list, runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
-from datalayer_core.cli.commands.tokens import app as tokens_app
-from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
+from datalayer_core.cli.commands.tokens import app as tokens_app
+from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
 from datalayer_core.cli.commands.users import app as users_app
