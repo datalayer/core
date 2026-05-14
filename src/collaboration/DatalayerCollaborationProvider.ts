@@ -3,7 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { YNotebook } from '@jupyter/ydoc';
 import { WebsocketProvider } from 'y-websocket';
 import { URLExt } from '@jupyterlab/coreutils';
 import { Signal } from '@lumino/signaling';
@@ -20,6 +19,9 @@ export enum CollaborationStatus {
   Error = 'error',
 }
 import { requestDatalayerCollaborationSessionId } from './DatalayerCollaboration';
+
+type SharedModel = Parameters<ICollaborationProvider['connect']>[0];
+type ConnectOptions = Parameters<ICollaborationProvider['connect']>[2];
 
 /**
  * Configuration for Datalayer collaboration provider
@@ -50,10 +52,13 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
 
   private _status: CollaborationStatus = CollaborationStatus.Disconnected;
   private _provider: WebsocketProvider | null = null;
-  private _sharedModel: YNotebook | null = null;
-  private _statusChanged = new Signal<this, CollaborationStatus>(this);
-  private _errorOccurred = new Signal<this, Error>(this);
-  private _syncStateChanged = new Signal<this, boolean>(this);
+  private _sharedModel: SharedModel | null = null;
+  private _statusChanged = new Signal<
+    ICollaborationProvider,
+    CollaborationStatus
+  >(this);
+  private _errorOccurred = new Signal<ICollaborationProvider, Error>(this);
+  private _syncStateChanged = new Signal<ICollaborationProvider, boolean>(this);
   private _isDisposed = false;
 
   private _config: IDatalayerCollaborationConfig;
@@ -93,9 +98,9 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
   }
 
   async connect(
-    sharedModel: YNotebook,
+    sharedModel: SharedModel,
     documentId: string,
-    options?: Record<string, any>,
+    options?: ConnectOptions,
   ): Promise<void> {
     if (this.isConnected) {
       console.warn('Already connected to Datalayer collaboration service');
@@ -191,7 +196,7 @@ export class DatalayerCollaborationProvider implements ICollaborationProvider {
     return this._provider;
   }
 
-  getSharedModel(): YNotebook | null {
+  getSharedModel(): SharedModel | null {
     return this._sharedModel;
   }
 

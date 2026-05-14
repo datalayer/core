@@ -14,6 +14,35 @@ import { URLExt } from '@jupyterlab/coreutils';
 import axios, { AxiosRequestConfig } from 'axios';
 import { sleep } from '../utils/Sleep';
 
+function isFormDataBody(body: unknown): body is FormData {
+  if (!body || typeof body !== 'object') {
+    return false;
+  }
+
+  // `instanceof FormData` is not reliable across realms (e.g. jsdom/undici).
+  if (typeof FormData !== 'undefined' && body instanceof FormData) {
+    return true;
+  }
+
+  const formDataTag = Object.prototype.toString.call(body);
+  if (formDataTag === '[object FormData]') {
+    return true;
+  }
+
+  const candidate = body as {
+    append?: unknown;
+    get?: unknown;
+    has?: unknown;
+    entries?: unknown;
+  };
+  return (
+    typeof candidate.append === 'function' &&
+    typeof candidate.get === 'function' &&
+    typeof candidate.has === 'function' &&
+    typeof candidate.entries === 'function'
+  );
+}
+
 /**
  * Error wrapper for failed HTTP responses.
  * Includes response details, warnings, errors, and tracebacks.
@@ -29,17 +58,25 @@ export class RunResponseError extends Error {
   static async create(response: Response): Promise<RunResponseError> {
     try {
       const data = await response.json();
-      const { message, errors, warnings, traceback, exception } = data;
+      const { message, errors, warnings, traceback, exception, detail } = data;
+      const resolvedMessage =
+        message ??
+        (typeof detail === 'string'
+          ? detail
+          : detail && typeof detail === 'object' && 'message' in detail
+            ? String((detail as any).message)
+            : undefined);
       if (traceback) {
         console.error(traceback);
       }
       const responseError = new RunResponseError(
         response,
-        message ?? RunResponseError._defaultMessage(response),
+        resolvedMessage ?? RunResponseError._defaultMessage(response),
         warnings,
         errors,
         exception,
         traceback ?? '',
+        detail,
       );
       return responseError;
     } catch (e) {
@@ -58,6 +95,7 @@ export class RunResponseError extends Error {
     errors = undefined,
     exceptionMessage = undefined,
     traceback = '',
+    detail: unknown = undefined,
   ) {
     super(message);
     this.name = 'RunResponseError';
@@ -66,6 +104,7 @@ export class RunResponseError extends Error {
     this.response = response;
     this.exceptionMessage = exceptionMessage;
     this.traceback = traceback;
+    this.detail = detail;
   }
 
   /**
@@ -92,6 +131,11 @@ export class RunResponseError extends Error {
    * The traceback associated with the error.
    */
   readonly traceback: string;
+
+  /**
+   * Optional structured backend detail payload.
+   */
+  readonly detail: unknown;
 
   private static _defaultMessage(response: Response): string {
     return `Invalid response: ${response.status} ${response.statusText}`;
@@ -160,7 +204,7 @@ export async function requestDatalayerAPI<T = any>({
   headers = {},
 }: IRequestDatalayerAPIOptions): Promise<T> {
   // Handle FormData differently from JSON
-  const isFormData = body instanceof FormData;
+  const isFormData = isFormDataBody(body);
 
   // Prepare axios config
   const axiosConfig: AxiosRequestConfig = {

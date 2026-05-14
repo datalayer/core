@@ -28,6 +28,7 @@ export function asOrganization(org: any): IOrganization {
     handle: org.handle_s,
     type: 'organization',
     name: org.name_t,
+    displayName: org.display_name_t || org.name_t,
     description: org.description_t,
     public: org.public_b,
     members,
@@ -47,6 +48,7 @@ export type IBaseOrganization = {
   handle: string;
   type: string;
   name: string;
+  displayName?: string;
   description: string;
   public: boolean;
   creationDate: Date;

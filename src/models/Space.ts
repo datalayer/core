@@ -9,7 +9,6 @@ import { ICourse as ICourse } from './Course';
 import { IOrganization } from './Organization';
 import { asUser, IUser } from './User';
 import { asArray } from '../utils';
-import { newUserMock } from './../mocks/models';
 
 /**
  * Convert the raw space object to {@link ISpace}.
@@ -18,7 +17,36 @@ import { newUserMock } from './../mocks/models';
  * @returns Space
  */
 export const asSpace = (raw_space: any): ISpace => {
-  const owner = newUserMock();
+  const sharedOwnerUserUids = asArray(
+    raw_space?.shared_owner_user_uids_ss ||
+      raw_space?.shared_ower_user_uids_ss ||
+      [],
+  ).filter(
+    (uid: unknown): uid is string => typeof uid === 'string' && uid.length > 0,
+  );
+
+  // The backend resolves the canonical (friendly) account handles and exposes
+  // them as `space.owner` and `space.organization`. Trust those single sources
+  // of truth; do not invent fallbacks here.
+  const organizationHandle = raw_space?.organization?.handle;
+  const owner: IUser = raw_space?.owner
+    ? asUser(raw_space.owner)
+    : ({
+        id: '',
+        handle: '',
+        email: '',
+        firstName: '',
+        lastName: '',
+        initials: '',
+        displayName: '',
+        roles: [],
+        iamProviders: [],
+        setRoles: () => {},
+        unsubscribedFromOutbounds: false,
+        onboarding: {} as any,
+        events: [],
+        settings: {},
+      } as IUser);
   let members = new Array<SpaceMember>();
   if (raw_space.members) {
     members = asArray(raw_space.members).map(m => {
@@ -37,9 +65,10 @@ export const asSpace = (raw_space: any): ISpace => {
     members,
     creationDate: new Date(raw_space.creation_ts_dt),
     owner,
-    organization: {
-      handle: raw_space.handle_s,
-    },
+    organization: organizationHandle
+      ? { handle: organizationHandle }
+      : undefined,
+    sharedOwnerUserUids,
     // Preserve raw Solr fields so consumers can access dynamic fields
     // (e.g. attached_agent_pod_name_s for project-agent assignment)
     ...raw_space,
@@ -63,6 +92,7 @@ export type IBaseSpace = {
   owner: IUser;
   organization?: Partial<IOrganization>;
   members?: SpaceMember[];
+  sharedOwnerUserUids?: string[];
 };
 
 export type ISpace = IBaseSpace & {

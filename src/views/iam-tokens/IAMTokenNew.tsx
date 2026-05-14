@@ -38,10 +38,13 @@ interface ValidationData {
 export type IAMTokenNewProps = {
   /** Route to navigate when clicking "List my Tokens". Defaults to '/settings/iam/tokens'. */
   tokensListRoute?: string;
+  /** Whether to render the "New API Key" title header in create mode. Defaults to true. */
+  showTitle?: boolean;
 };
 
 export const IAMTokenNew = ({
   tokensListRoute = '/settings/iam/tokens',
+  showTitle = true,
 }: IAMTokenNewProps = {}) => {
   const runStore = useRunStore();
   const { useCreateToken } = useCache();
@@ -198,11 +201,13 @@ export const IAMTokenNew = ({
         </>
       ) : (
         <>
-          <PageHeader>
-            <PageHeader.TitleArea variant="large">
-              <PageHeader.Title>New API Key</PageHeader.Title>
-            </PageHeader.TitleArea>
-          </PageHeader>
+          {showTitle ? (
+            <PageHeader>
+              <PageHeader.TitleArea variant="large">
+                <PageHeader.Title>New API Key</PageHeader.Title>
+              </PageHeader.TitleArea>
+            </PageHeader>
+          ) : null}
           <Box display="grid" gridTemplateColumns="1fr 1fr" sx={{ gap: 3 }}>
             <Box>
               <Box sx={{ label: { marginTop: 2 } }}>

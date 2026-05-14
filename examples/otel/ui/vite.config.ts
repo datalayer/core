@@ -97,7 +97,7 @@ export default defineConfig(({ command }: ConfigEnv) => {
       port: 5173,
       proxy: {
         // Signal generators → local FastAPI backend (port 8600).
-        '/api/generate': {
+        '/api/otel/v1/generate': {
           target: 'http://localhost:8600',
           changeOrigin: true,
         },

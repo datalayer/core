@@ -124,6 +124,33 @@ datalayer runtime exec my-script.py --runtime <runtime-id>
 datalayer snapshots create <pod-name> my-snapshot 'AI work!' False
 ```
 
+### 4. Subscription and Credits CLI
+
+Use these commands to inspect billing and manage credits distribution.
+
+```bash
+# End-user billing view
+datalayer subscriptions show
+datalayer subscriptions available
+datalayer subscriptions move
+datalayer subscriptions topups
+datalayer subscriptions dry-run
+
+# Organization and team credits visibility
+datalayer usage org-overview --organization-uid <org_uid>
+datalayer usage team-overview --team-uid <team_uid>
+
+# Monitoring-driven credit management
+datalayer usage org-monitor --organization-uid <org_uid> --window-hours 24
+datalayer usage team-monitor --team-uid <team_uid> --window-hours 24
+
+# Credits transfer operations (owners/admins)
+datalayer usage org-allocate-team --organization-uid <org_uid> --team-uid <team_uid> --amount 50
+datalayer usage org-revoke-team --organization-uid <org_uid> --team-uid <team_uid> --amount 20
+datalayer usage team-allocate-member --team-uid <team_uid> --member-uid <member_uid> --amount 15
+datalayer usage team-revoke-member --team-uid <team_uid> --member-uid <member_uid> --amount 5
+```
+
 ## Examples
 
 ### Python Examples

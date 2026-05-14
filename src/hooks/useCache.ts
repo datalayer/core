@@ -87,7 +87,6 @@ import {
 } from '../models';
 import { useCoreStore, useIAMStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
-import { newUserMock } from './../mocks';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
 import { useUploadForm } from './useUpload';
@@ -149,8 +148,12 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
     byHandle: (handle: string) =>
       [...queryKeys.users.all(), 'handle', handle] as const,
+    publicProfileByHandle: (handle: string) =>
+      [...queryKeys.users.all(), 'public-profile', handle] as const,
     search: (pattern: string) =>
       [...queryKeys.users.all(), 'search', pattern] as const,
+    bulk: (userIdsKey: string) =>
+      [...queryKeys.users.all(), 'bulk', userIdsKey] as const,
     settings: (userId: string) =>
       [...queryKeys.users.detail(userId), 'settings'] as const,
     onboarding: (userId: string) =>
@@ -169,6 +172,8 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.organizations.details(), id] as const,
     byHandle: (handle: string) =>
       [...queryKeys.organizations.all(), 'handle', handle] as const,
+    publicProfileByHandle: (handle: string) =>
+      [...queryKeys.organizations.all(), 'public-profile', handle] as const,
     userOrgs: () => [...queryKeys.organizations.all(), 'user'] as const,
     members: (orgId: string) =>
       [...queryKeys.organizations.detail(orgId), 'members'] as const,
@@ -417,6 +422,24 @@ export const queryKeys = {
     platform: () => ['usages', 'platform'] as const,
   },
 
+  // Credits allocations
+  credits: {
+    organizationOverview: (organizationUid: string) =>
+      ['credits', 'allocations', 'organization', organizationUid] as const,
+    organizationHistory: (organizationUid: string) =>
+      [
+        'credits',
+        'allocations',
+        'organization',
+        organizationUid,
+        'history',
+      ] as const,
+    teamOverview: (teamUid: string) =>
+      ['credits', 'allocations', 'team', teamUid] as const,
+    teamHistory: (teamUid: string) =>
+      ['credits', 'allocations', 'team', teamUid, 'history'] as const,
+  },
+
   // Prices
   prices: {
     stripe: () => ['prices', 'stripe'] as const,
@@ -534,12 +557,57 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return asTeam(org, organizationId);
   };
 
+  /**
+   * Build a minimal {@link IUser} for an item's owner/creator from the
+   * raw fields returned by spacer (`creator_uid_s`/`creator_handle_s`
+   * and friends). Returns an empty-but-typed user when no creator info
+   * is available so the UI hydration hooks (e.g. `useUsersByUids`) can
+   * still fill in display data downstream.
+   */
+  const toItemOwner = (raw: any): IUser => {
+    const uid = String(
+      raw?.creator_uid_s ??
+        raw?.creator_uid ??
+        raw?.owner_uid_s ??
+        raw?.owner_uid ??
+        '',
+    ).trim();
+    const handle = String(
+      raw?.creator_handle_s ?? raw?.owner_handle_s ?? '',
+    ).trim();
+    const firstName = String(
+      raw?.creator_first_name_t ?? raw?.first_name_t ?? '',
+    ).trim();
+    const lastName = String(
+      raw?.creator_last_name_t ?? raw?.last_name_t ?? '',
+    ).trim();
+    const email = String(raw?.creator_email_s ?? raw?.email_s ?? '').trim();
+    const displayName =
+      firstName || lastName ? asDisplayName(firstName, lastName) : handle;
+    return {
+      id: uid,
+      handle,
+      email,
+      firstName,
+      lastName,
+      initials: namesAsInitials(firstName, lastName),
+      displayName,
+      roles: [],
+      iamProviders: [],
+      setRoles: () => {},
+      unsubscribedFromOutbounds: false,
+      onboarding: BOOTSTRAP_USER_ONBOARDING,
+      events: [],
+      settings: {} as IUserSettings,
+    };
+  };
+
   // Kept for potential future use
 
   // Kept for potential future use
 
   const toDataset = (raw_dataset: any): IDataset => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_dataset);
     return {
       id: raw_dataset.uid,
       type: 'dataset',
@@ -562,13 +630,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_dataset.handle_s,
       },
       organization: {
-        handle: raw_dataset.handle_s,
+        id: raw_dataset.organization_uid_s,
+        handle: raw_dataset.organization_handle_s,
       },
     };
   };
 
   const toCell = (cl: any): ICell => {
-    const owner = newUserMock();
+    const owner = toItemOwner(cl);
     return {
       id: cl.uid,
       type: 'cell',
@@ -587,13 +656,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: cl.handle_s,
       },
       organization: {
-        handle: cl.handle_s,
+        id: cl.organization_uid_s,
+        handle: cl.organization_handle_s,
       },
     };
   };
 
   const toNotebook = (raw_notebook: any): INotebook => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_notebook);
     return {
       id: raw_notebook.uid,
       type: 'notebook',
@@ -616,13 +686,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_notebook.handle_s,
       },
       organization: {
-        handle: raw_notebook.handle_s,
+        id: raw_notebook.organization_uid_s,
+        handle: raw_notebook.organization_handle_s,
       },
     };
   };
 
   const toDocument = (doc: any): IDocument => {
-    const owner = newUserMock();
+    const owner = toItemOwner(doc);
     return {
       id: doc.uid,
       type: 'document',
@@ -642,13 +713,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: doc.handle_s,
       },
       organization: {
-        handle: doc.handle_s,
+        id: doc.organization_uid_s,
+        handle: doc.organization_handle_s,
       },
     };
   };
 
   const toLesson = (raw_lesson: any): ILesson => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_lesson);
     return {
       id: raw_lesson.uid,
       type: 'lesson',
@@ -668,14 +740,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_lesson.handle_s,
       },
       organization: {
-        handle: raw_lesson.handle_s,
+        id: raw_lesson.organization_uid_s,
+        handle: raw_lesson.organization_handle_s,
       },
       datasets: [],
     };
   };
 
   const toExercise = (ex: any): IExercise => {
-    const owner = newUserMock();
+    const owner = toItemOwner(ex);
     return {
       id: ex.uid,
       type: 'exercise',
@@ -699,14 +772,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: ex.handle_s,
       },
       organization: {
-        handle: ex.handle_s,
+        id: ex.organization_uid_s,
+        handle: ex.organization_handle_s,
       },
       datasets: [],
     };
   };
 
   const toAssignment = (raw_assignment: any): IAssignment => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_assignment);
     let studentItem: IStudentItem | undefined = undefined;
     if (raw_assignment.student_items) {
       raw_assignment.student_items.forEach((student_item: any) => {
@@ -744,13 +818,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: raw_assignment.handle_s,
       },
       organization: {
-        handle: raw_assignment.handle_s,
+        id: raw_assignment.organization_uid_s,
+        handle: raw_assignment.organization_handle_s,
       },
     };
   };
 
   const toEnvironment = (env: any): IEnvironment => {
-    const owner = newUserMock();
+    const owner = toItemOwner(env);
     return {
       id: env.uid,
       type: 'environment',
@@ -766,7 +841,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         handle: env.handle_s,
       },
       organization: {
-        handle: env.handle_s,
+        id: env.organization_uid_s,
+        handle: env.organization_handle_s,
       },
     };
   };
@@ -799,7 +875,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   const toCourse = (raw_course: any): ICourse => {
-    const owner = newUserMock();
+    const owner = toItemOwner(raw_course);
     let instructor: IUser | undefined = undefined;
     if (raw_course.members) {
       let raw_instructor = raw_course.members;
@@ -1076,6 +1152,56 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Get enriched public user profile by handle.
+   */
+  const useUserPublicProfileByHandle = (handle: string) => {
+    return useQuery({
+      queryKey: queryKeys.users.publicProfileByHandle(handle),
+      queryFn: async () => {
+        const normalizedHandle = String(handle || '').trim();
+        if (!normalizedHandle) {
+          return null;
+        }
+
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/users/public/${encodeURIComponent(normalizedHandle)}`,
+          method: 'GET',
+        });
+
+        if (resp.success) {
+          const profile = (resp as any).profile || null;
+          if (profile?.uid && profile?.handle) {
+            const mappedUser = toUser({
+              uid: profile.uid,
+              id: profile.id,
+              handle_s: profile.handle,
+              first_name_t: profile.first_name,
+              last_name_t: profile.last_name,
+              avatar_url_s: profile.avatar_url,
+              origin_s: profile.origin,
+            });
+            if (mappedUser) {
+              queryClient.setQueryData(
+                queryKeys.users.detail(mappedUser.id),
+                mappedUser,
+              );
+              queryClient.setQueryData(
+                queryKeys.users.byHandle(mappedUser.handle),
+                mappedUser,
+              );
+            }
+          }
+          return profile;
+        }
+
+        return null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!handle,
+    });
+  };
+
+  /**
    * Search users by naming pattern
    */
   const useSearchUsers = (namingPattern: string) => {
@@ -1106,6 +1232,56 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       enabled: namingPattern !== undefined && namingPattern !== null,
+    });
+  };
+
+  /**
+   * Get multiple users by UIDs in one request.
+   */
+  const useUsersByUids = (userIds: string[]) => {
+    const normalizedUserIds = Array.from(
+      new Set(
+        (userIds || [])
+          .map(userId => String(userId || '').trim())
+          .filter(Boolean),
+      ),
+    );
+    const idsKey = normalizedUserIds.join(',');
+
+    return useQuery({
+      queryKey: queryKeys.users.bulk(idsKey),
+      queryFn: async () => {
+        if (normalizedUserIds.length === 0) {
+          return [] as IUser[];
+        }
+
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/users/bulk`,
+          method: 'POST',
+          body: { userIds: normalizedUserIds },
+        });
+
+        if (resp.success && resp.users) {
+          const users = resp.users
+            .map((u: unknown) => {
+              const user = toUser(u);
+              if (user) {
+                queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+                queryClient.setQueryData(
+                  queryKeys.users.byHandle(user.handle),
+                  user,
+                );
+              }
+              return user;
+            })
+            .filter(Boolean) as IUser[];
+          return users;
+        }
+
+        return [] as IUser[];
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: normalizedUserIds.length > 0,
     });
   };
 
@@ -1204,6 +1380,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           // Populate ID cache
           queryClient.setQueryData(queryKeys.organizations.detail(org.id), org);
           return org;
+        }
+        return null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!handle,
+    });
+  };
+
+  /**
+   * Get enriched public organization profile by handle.
+   */
+  const useOrganizationPublicProfileByHandle = (handle: string) => {
+    return useQuery({
+      queryKey: queryKeys.organizations.publicProfileByHandle(handle),
+      queryFn: async () => {
+        const normalizedHandle = String(handle || '').trim();
+        if (!normalizedHandle) {
+          return null;
+        }
+
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/public/${encodeURIComponent(normalizedHandle)}`,
+          method: 'GET',
+        });
+
+        if (resp.success) {
+          return (resp as any).organization || null;
         }
         return null;
       },
@@ -1454,6 +1657,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           );
           return space;
         }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
+        }
         throw new Error(resp.message || 'Failed to fetch space');
       },
       ...DEFAULT_QUERY_OPTIONS,
@@ -1474,6 +1682,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.space) {
           return toSpace(resp.space);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch space');
       },
@@ -1554,7 +1767,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           space.variant === 'course'
             ? (space as ICourse).seedSpace?.id
             : undefined;
-        return requestDatalayer({
+        const resp = await requestDatalayer<any>({
           url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces`,
           method: 'POST',
           body: {
@@ -1567,6 +1780,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             seedSpaceId,
           },
         });
+
+        if (
+          (resp as any)?.success === false ||
+          (resp as any)?.sucess === false
+        ) {
+          throw new Error((resp as any)?.message || 'Failed to create space');
+        }
+
+        if (!(resp as any)?.space) {
+          throw new Error((resp as any)?.message || 'Failed to create space');
+        }
+
+        return resp;
       },
       onSuccess: (resp, _variables) => {
         if (resp.space) {
@@ -1593,7 +1819,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       ) => {
         const { id, name, description, ...extraFields } = space as any;
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}/users/${user?.id}`,
+          // Use the canonical space update route. This keeps project runtime
+          // assignment cleanup resilient when stale runtime links must be cleared.
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}`,
           method: 'PUT',
           body: {
             name,
@@ -1653,6 +1881,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.notebook) {
           return toNotebook(resp.notebook);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this notebook',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch notebook');
       },
@@ -1853,6 +2086,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (resp.success && resp.document) {
           return toDocument(resp.document);
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this document',
+          );
         }
         throw new Error(resp.message || 'Failed to fetch document');
       },
@@ -2815,6 +3053,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           }
           return space;
         }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
+        }
         return null;
       },
       ...DEFAULT_QUERY_OPTIONS,
@@ -2884,6 +3127,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             }
           });
           return targetSpace;
+        }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(
+            resp.message || 'Not authorized to access this space',
+          );
         }
         return null;
       },
@@ -4067,6 +4315,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.item) {
           return toCell(resp.item);
         }
+        if ((resp as any)?.code === 'FORBIDDEN') {
+          throw new Error(resp.message || 'Not authorized to access this cell');
+        }
         return undefined;
       },
       enabled: !!cellId,
@@ -5179,16 +5430,28 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
 
   /**
-   * Get Stripe pricing information
+   * Get Stripe top-up pricing information
    */
-  const useStripePrices = (
+  type SubscriptionScopeOptions = {
+    accountUid?: string;
+  };
+
+  const withAccountUidQuery = (url: string, accountUid?: string) => {
+    if (!accountUid) {
+      return url;
+    }
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}account_uid=${encodeURIComponent(accountUid)}`;
+  };
+
+  const useTopUpPrices = (
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
-      queryKey: ['stripe', 'prices'],
+      queryKey: ['stripe', 'topup', 'prices'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/prices`,
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/prices`,
           method: 'GET',
         });
         return resp.prices || [];
@@ -5198,27 +5461,220 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Create Stripe checkout session
+   * Create Stripe top-up payment intent client secret
    */
-  const useCreateCheckoutSession = () => {
+  const useCreateTopUpPaymentIntent = (scope?: SubscriptionScopeOptions) => {
     return useMutation({
       mutationFn: async ({
         product,
-        location,
       }: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         product: any;
-        location: Location;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/checkout/session`,
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/payment-intent`,
           method: 'POST',
           body: {
             price_id: product?.id,
-            return_url: `${location.protocol}//${location.host}${location.pathname.split('/').slice(0, -1).join('/')}`,
+            ...(scope?.accountUid ? { account_uid: scope.accountUid } : {}),
           },
         });
         return resp.client_secret;
+      },
+    });
+  };
+
+  /**
+   * Get available monthly subscription plans.
+   */
+  const useSubscriptionPlans = (
+    scope?: SubscriptionScopeOptions,
+    options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'plans', scope?.accountUid ?? 'self'],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription/plans`,
+            scope?.accountUid,
+          ),
+          method: 'GET',
+        });
+        return resp.plans || [];
+      },
+      ...options,
+    });
+  };
+
+  /**
+   * Create Stripe monthly subscription payment intent client secret.
+   */
+  const useCreateSubscriptionPaymentIntent = (
+    scope?: SubscriptionScopeOptions,
+  ) => {
+    return useMutation({
+      mutationFn: async ({
+        plan,
+      }: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        plan: any;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/payment-intent`,
+          method: 'POST',
+          body: {
+            price_id: plan?.id,
+            ...(scope?.accountUid ? { account_uid: scope.accountUid } : {}),
+          },
+        });
+        return resp.client_secret;
+      },
+    });
+  };
+
+  /**
+   * Create Stripe SetupIntent client secret to update card before resuming.
+   */
+  const useCreateResumeSetupIntent = (scope?: SubscriptionScopeOptions) => {
+    return useMutation({
+      mutationFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/resume/setup-intent`,
+          method: 'POST',
+          body: scope?.accountUid ? { account_uid: scope.accountUid } : {},
+        });
+        return resp.client_secret;
+      },
+    });
+  };
+
+  /**
+   * Get authenticated user subscription details.
+   */
+  const useSubscriptionStatus = (
+    scope?: SubscriptionScopeOptions,
+    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'status', scope?.accountUid ?? 'self'],
+      queryFn: async () => {
+        return requestDatalayer({
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription`,
+            scope?.accountUid,
+          ),
+          method: 'GET',
+        });
+      },
+      ...options,
+    });
+  };
+
+  /**
+   * Get accounts (personal + organizations) eligible for subscription-backed workloads.
+   */
+  const useEligibleSubscriptionAccounts = (
+    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'eligible-accounts'],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/eligible-accounts`,
+          method: 'GET',
+        });
+        return resp.accounts || [];
+      },
+      ...options,
+    });
+  };
+
+  /**
+   * Request cancellation portal for the current subscription.
+   */
+  const useCancelSubscription = (scope?: SubscriptionScopeOptions) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async () => {
+        return requestDatalayer({
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+            scope?.accountUid,
+          ),
+          method: 'POST',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['subscription', 'status', scope?.accountUid ?? 'self'],
+        });
+      },
+    });
+  };
+
+  /**
+   * Resume a subscription already scheduled for cancellation.
+   */
+  const useResumeSubscription = (scope?: SubscriptionScopeOptions) => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async () => {
+        return requestDatalayer({
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/subscription/resume`,
+            scope?.accountUid,
+          ),
+          method: 'POST',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['subscription', 'status', scope?.accountUid ?? 'self'],
+        });
+      },
+    });
+  };
+
+  /**
+   * Get subscription details for an arbitrary user (platform_admin only).
+   */
+  const useUserSubscription = (
+    userId: string | undefined,
+    options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['subscription', 'admin', userId],
+      queryFn: async () => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}`,
+          method: 'GET',
+        });
+      },
+      enabled: Boolean(userId),
+      ...options,
+    });
+  };
+
+  /**
+   * Force-reset a user's subscription (platform_admin only).
+   */
+  const useResetUserSubscription = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async (userId: string) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}/reset`,
+          method: 'POST',
+        });
+      },
+      onSuccess: (_data, userId) => {
+        queryClient.invalidateQueries({
+          queryKey: ['subscription', 'admin', userId],
+        });
       },
     });
   };
@@ -5785,6 +6241,216 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
 
   /**
+   * Get organization/team balances for allocation workflows
+   */
+  const useOrganizationAllocationOverview = (organizationUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.organizationOverview(organizationUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/overview`,
+          method: 'GET',
+        });
+        return resp.overview ?? { organization: null, teams: [] };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!organizationUid,
+    });
+  };
+
+  /**
+   * Get team/member balances for allocation workflows
+   */
+  const useTeamAllocationOverview = (teamUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.teamOverview(teamUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/overview`,
+          method: 'GET',
+        });
+        return resp.overview ?? { team: null, members: [] };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!teamUid,
+    });
+  };
+
+  /**
+   * Get organization allocation history
+   */
+  const useOrganizationAllocationHistory = (organizationUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.organizationHistory(organizationUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/history`,
+          method: 'GET',
+        });
+        return (
+          resp.history ?? { organization_uid: organizationUid, events: [] }
+        );
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!organizationUid,
+    });
+  };
+
+  /**
+   * Get team allocation history
+   */
+  const useTeamAllocationHistory = (teamUid: string) => {
+    return useQuery({
+      queryKey: queryKeys.credits.teamHistory(teamUid),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/history`,
+          method: 'GET',
+        });
+        return resp.history ?? { team_uid: teamUid, events: [] };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: !!teamUid,
+    });
+  };
+
+  /**
+   * Allocate credits from organization to team
+   */
+  const useAllocateOrganizationCreditsToTeam = () => {
+    return useMutation({
+      mutationFn: async ({
+        organizationUid,
+        teamUid,
+        amount,
+      }: {
+        organizationUid: string;
+        teamUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { organizationUid, teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationOverview(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationHistory(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
+   * Allocate credits from team to member
+   */
+  const useAllocateTeamCreditsToMember = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamUid,
+        memberUid,
+        amount,
+      }: {
+        teamUid: string;
+        memberUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
+   * Revoke credits from team back to organization
+   */
+  const useRevokeOrganizationCreditsFromTeam = () => {
+    return useMutation({
+      mutationFn: async ({
+        organizationUid,
+        teamUid,
+        amount,
+      }: {
+        organizationUid: string;
+        teamUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}/revoke`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { organizationUid, teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationOverview(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.organizationHistory(organizationUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
+   * Revoke credits from member back to team
+   */
+  const useRevokeTeamCreditsFromMember = () => {
+    return useMutation({
+      mutationFn: async ({
+        teamUid,
+        memberUid,
+        amount,
+      }: {
+        teamUid: string;
+        memberUid: string;
+        amount: number;
+      }) => {
+        return requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}/revoke`,
+          method: 'POST',
+          body: { amount },
+        });
+      },
+      onSuccess: (_, { teamUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamOverview(teamUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.credits.teamHistory(teamUid),
+        });
+      },
+    });
+  };
+
+  /**
    * Update user credits quota
    */
   const useUpdateUserCreditsQuota = () => {
@@ -5820,34 +6486,98 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get current user's usage data
    */
   const useUsages = (
+    scopeOrOptions?:
+      | SubscriptionScopeOptions
+      | Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
+    const hasScope =
+      !!scopeOrOptions &&
+      typeof scopeOrOptions === 'object' &&
+      'accountUid' in scopeOrOptions;
+    const scope = (hasScope ? scopeOrOptions : undefined) as
+      | SubscriptionScopeOptions
+      | undefined;
+    const queryOptions = (hasScope ? options : scopeOrOptions) as
+      | Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>
+      | undefined;
+
     return useQuery({
-      queryKey: ['usage', 'me'],
+      queryKey: ['usage', 'me', scope?.accountUid ?? 'self'],
       queryFn: async () => {
+        const parseUsageDate = (value: unknown): Date | undefined => {
+          if (!value) {
+            return undefined;
+          }
+          const date =
+            value instanceof Date ? value : new Date(value as string);
+          return Number.isNaN(date.getTime()) ? undefined : date;
+        };
+
+        const asUsage = (u: any) => {
+          const metadata = new Map(Object.entries(u.metadata || {}));
+          const usagePeriodKey = u.usage_period_key;
+          const usagePeriodLabel = u.usage_period_label;
+          const usagePeriodStart = u.usage_period_start;
+          const usagePeriodEnd = u.usage_period_end;
+
+          if (usagePeriodKey) {
+            metadata.set('usage_period_key', String(usagePeriodKey));
+          }
+          if (usagePeriodLabel) {
+            metadata.set('usage_period_label', String(usagePeriodLabel));
+          }
+          if (usagePeriodStart) {
+            metadata.set('usage_period_start', String(usagePeriodStart));
+          }
+          if (usagePeriodEnd) {
+            metadata.set('usage_period_end', String(usagePeriodEnd));
+          }
+
+          const endDate = parseUsageDate(u.end_date);
+          const updatedAt =
+            parseUsageDate(u.updated_at) || endDate || new Date();
+          const rawStartDate = parseUsageDate(u.start_date);
+
+          let startDate = rawStartDate || endDate || updatedAt;
+          if (endDate && startDate && startDate.getTime() > endDate.getTime()) {
+            startDate =
+              updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
+          }
+
+          return {
+            id: u.resource_uid,
+            accountId: u.account_uid,
+            type: u.resource_type,
+            burningRate: u.burning_rate,
+            credits: u.credits,
+            creditsLimit: u.credits_limit,
+            startDate,
+            updatedAt,
+            endDate,
+            givenName: u.given_name || u.resource_given_name || '',
+            resourceState: u.resource_state,
+            resources: u.pod_resources,
+            usagePeriodKey,
+            usagePeriodLabel,
+            usagePeriodStart: parseUsageDate(usagePeriodStart),
+            usagePeriodEnd: parseUsageDate(usagePeriodEnd),
+            metadata,
+          };
+        };
+
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
+            scope?.accountUid,
+          ),
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
-        const usages = (resp.usages || []).map((u: any) => ({
-          id: u.resource_uid,
-          accountId: u.account_uid,
-          type: u.resource_type,
-          burningRate: u.burning_rate,
-          credits: u.credits,
-          creditsLimit: u.credits_limit,
-          startDate: u.start_date ? new Date(u.start_date) : new Date(),
-          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
-          endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || u.resource_given_name || '',
-          resourceState: u.resource_state,
-          resources: u.pod_resources,
-          metadata: new Map(Object.entries(u.metadata || {})),
-        }));
+        const usages = (resp.usages || []).map(asUsage);
         return usages;
       },
-      ...options,
+      ...queryOptions,
     });
   };
 
@@ -5861,26 +6591,68 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: ['usage', 'user', userId],
       queryFn: async () => {
+        const parseUsageDate = (value: unknown): Date | undefined => {
+          if (!value) {
+            return undefined;
+          }
+          const date =
+            value instanceof Date ? value : new Date(value as string);
+          return Number.isNaN(date.getTime()) ? undefined : date;
+        };
+
+        const asUsage = (u: any) => {
+          const metadata = new Map(Object.entries(u.metadata || {}));
+          if (u.usage_period_key) {
+            metadata.set('usage_period_key', String(u.usage_period_key));
+          }
+          if (u.usage_period_label) {
+            metadata.set('usage_period_label', String(u.usage_period_label));
+          }
+          if (u.usage_period_start) {
+            metadata.set('usage_period_start', String(u.usage_period_start));
+          }
+          if (u.usage_period_end) {
+            metadata.set('usage_period_end', String(u.usage_period_end));
+          }
+
+          const endDate = parseUsageDate(u.end_date);
+          const updatedAt =
+            parseUsageDate(u.updated_at) || endDate || new Date();
+          const rawStartDate = parseUsageDate(u.start_date);
+
+          let startDate = rawStartDate || endDate || updatedAt;
+          if (endDate && startDate && startDate.getTime() > endDate.getTime()) {
+            startDate =
+              updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
+          }
+
+          return {
+            id: u.resource_uid,
+            accountId: u.account_uid,
+            type: u.resource_type,
+            burningRate: u.burning_rate,
+            credits: u.credits,
+            creditsLimit: u.credits_limit,
+            startDate,
+            updatedAt,
+            endDate,
+            givenName: u.given_name || u.resource_given_name || '',
+            resourceState: u.resource_state,
+            resources: u.pod_resources,
+            usagePeriodKey: u.usage_period_key,
+            usagePeriodLabel: u.usage_period_label,
+            usagePeriodStart: parseUsageDate(u.usage_period_start),
+            usagePeriodEnd: parseUsageDate(u.usage_period_end),
+            metadata,
+          };
+        };
+
         const resp = await requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/users/${userId}`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
-        const usages = (resp.usages || []).map((u: any) => ({
-          id: u.resource_uid,
-          accountId: u.account_uid,
-          type: u.resource_type,
-          burningRate: u.burning_rate,
-          credits: u.credits,
-          creditsLimit: u.credits_limit,
-          startDate: u.start_date ? new Date(u.start_date) : new Date(),
-          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
-          endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || u.resource_given_name || '',
-          resourceState: u.resource_state,
-          resources: u.pod_resources,
-          metadata: new Map(Object.entries(u.metadata || {})),
-        }));
+        const usages = (resp.usages || []).map(asUsage);
         return usages;
       },
       enabled: !!userId,
@@ -5897,26 +6669,68 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useQuery({
       queryKey: ['usage', 'platform'],
       queryFn: async () => {
+        const parseUsageDate = (value: unknown): Date | undefined => {
+          if (!value) {
+            return undefined;
+          }
+          const date =
+            value instanceof Date ? value : new Date(value as string);
+          return Number.isNaN(date.getTime()) ? undefined : date;
+        };
+
+        const asUsage = (u: any) => {
+          const metadata = new Map(Object.entries(u.metadata || {}));
+          if (u.usage_period_key) {
+            metadata.set('usage_period_key', String(u.usage_period_key));
+          }
+          if (u.usage_period_label) {
+            metadata.set('usage_period_label', String(u.usage_period_label));
+          }
+          if (u.usage_period_start) {
+            metadata.set('usage_period_start', String(u.usage_period_start));
+          }
+          if (u.usage_period_end) {
+            metadata.set('usage_period_end', String(u.usage_period_end));
+          }
+
+          const endDate = parseUsageDate(u.end_date);
+          const updatedAt =
+            parseUsageDate(u.updated_at) || endDate || new Date();
+          const rawStartDate = parseUsageDate(u.start_date);
+
+          let startDate = rawStartDate || endDate || updatedAt;
+          if (endDate && startDate && startDate.getTime() > endDate.getTime()) {
+            startDate =
+              updatedAt.getTime() <= endDate.getTime() ? updatedAt : endDate;
+          }
+
+          return {
+            id: u.resource_uid,
+            accountId: u.account_uid,
+            type: u.resource_type,
+            burningRate: u.burning_rate,
+            credits: u.credits,
+            creditsLimit: u.credits_limit,
+            startDate,
+            updatedAt,
+            endDate,
+            givenName: u.given_name || u.resource_given_name || '',
+            resourceState: u.resource_state,
+            resources: u.pod_resources,
+            usagePeriodKey: u.usage_period_key,
+            usagePeriodLabel: u.usage_period_label,
+            usagePeriodStart: parseUsageDate(u.usage_period_start),
+            usagePeriodEnd: parseUsageDate(u.usage_period_end),
+            metadata,
+          };
+        };
+
         const resp = await requestDatalayer({
           url: `${configuration.iamRunUrl}/api/iam/v1/usage/platform`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
-        const usages = (resp.usages || []).map((u: any) => ({
-          id: u.resource_uid,
-          accountId: u.account_uid,
-          type: u.resource_type,
-          burningRate: u.burning_rate,
-          credits: u.credits,
-          creditsLimit: u.credits_limit,
-          startDate: u.start_date ? new Date(u.start_date) : new Date(),
-          updatedAt: u.updated_at ? new Date(u.updated_at) : new Date(),
-          endDate: u.end_date ? new Date(u.end_date) : undefined,
-          givenName: u.given_name || u.resource_given_name || '',
-          resourceState: u.resource_state,
-          resources: u.pod_resources,
-          metadata: new Map(Object.entries(u.metadata || {})),
-        }));
+        const usages = (resp.usages || []).map(asUsage);
         return usages;
       },
       ...options,
@@ -7493,7 +8307,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Users
     useUser,
     useUserByHandle,
+    useUserPublicProfileByHandle,
     useSearchUsers,
+    useUsersByUids,
     useUpdateUserOnboarding,
     useUpdateUserSettings,
     useRefreshUser,
@@ -7501,6 +8317,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUpdateUserCredits,
     useAssignRoleToUser,
     useUnassignRoleFromUser,
+    useOrganizationAllocationOverview,
+    useOrganizationAllocationHistory,
+    useTeamAllocationOverview,
+    useTeamAllocationHistory,
+    useAllocateOrganizationCreditsToTeam,
+    useAllocateTeamCreditsToMember,
+    useRevokeOrganizationCreditsFromTeam,
+    useRevokeTeamCreditsFromMember,
     useUpdateUserCreditsQuota,
     useUsages,
     useUsagesForUser,
@@ -7509,6 +8333,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Organizations
     useOrganization,
     useOrganizationByHandle,
+    useOrganizationPublicProfileByHandle,
     useUserOrganizations,
     useCreateOrganization,
     useUpdateOrganization,
@@ -7741,9 +8566,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useValidateUserMFACode,
 
     // Checkout & Credits
-    useCreateCheckoutSession,
+    useCreateTopUpPaymentIntent,
+    useCreateSubscriptionPaymentIntent,
+    useCreateResumeSetupIntent,
+    useSubscriptionStatus,
+    useSubscriptionPlans,
+    useEligibleSubscriptionAccounts,
+    useCancelSubscription,
+    useResumeSubscription,
+    useUserSubscription,
+    useResetUserSubscription,
     useBurnCredit,
-    useStripePrices,
+    useTopUpPrices,
 
     // Support & Growth
     useRequestPlatformSupport,

@@ -18,10 +18,20 @@ export interface IRawUsage {
   resource_given_name?: string;
   resource_state?: string;
   pod_resources?: IResources;
+  plan?: string;
+  usage_period_key?: string;
+  usage_period_label?: string;
+  usage_period_start?: string;
+  usage_period_end?: string;
   metadata: Map<string, string>;
 }
 
 export const asUsage = (u: any) => {
+  const usagePeriodKey = u.usage_period_key;
+  const usagePeriodLabel = u.usage_period_label;
+  const usagePeriodStart = u.usage_period_start;
+  const usagePeriodEnd = u.usage_period_end;
+
   return {
     id: u.resource_uid,
     accountId: u.account_uid ?? '',
@@ -35,6 +45,11 @@ export const asUsage = (u: any) => {
     endDate: u.end_date ? new Date(u.end_date) : undefined,
     resourceState: u.resource_state,
     resources: u.pod_resources,
+    plan: u.plan ?? 'free_plan',
+    usagePeriodKey,
+    usagePeriodLabel,
+    usagePeriodStart: usagePeriodStart ? new Date(usagePeriodStart) : undefined,
+    usagePeriodEnd: usagePeriodEnd ? new Date(usagePeriodEnd) : undefined,
     metadata: new Map(Object.entries(u.metadata ?? {})),
   } satisfies IUsage;
 };
@@ -52,5 +67,10 @@ export interface IUsage {
   givenName: string;
   resourceState: string;
   resources?: IResources;
+  plan?: string;
+  usagePeriodKey?: string;
+  usagePeriodLabel?: string;
+  usagePeriodStart?: Date;
+  usagePeriodEnd?: Date;
   metadata: Map<string, string>;
 }

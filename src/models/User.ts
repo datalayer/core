@@ -37,6 +37,7 @@ export const getUserRandomColor = (): string =>
 
 export class User implements IUser {
   id: string;
+  uid?: string;
   handle: string;
   email: string;
   firstName: string;
@@ -58,9 +59,11 @@ export class User implements IUser {
   onboarding: IUserOnboarding;
   linkedContactId?: string;
   events: Array<IUserEvent>;
+  subscription?: IUserSubscription;
 
   constructor(u: any) {
-    this.id = u.uid;
+    this.id = u.uid || u.id;
+    this.uid = u.uid || u.id;
     this.handle = u.handle_s;
     this.email = u.email_s;
     this.firstName = u.first_name_t;
@@ -92,6 +95,7 @@ export class User implements IUser {
       ? JSON.parse(u.onboarding_s)
       : BOOTSTRAP_USER_ONBOARDING;
     this.linkedContactId = u.linked_contact_uid;
+    this.subscription = u.subscription;
     let events = u.events ?? [];
     if (!Array.isArray(events)) {
       events = [events];
@@ -129,6 +133,7 @@ export type IBaseUser = {
 
 export type IUser = IBaseUser & {
   id: string;
+  uid?: string;
   handle: string;
   credits?: number;
   creditsCustomerId?: string;
@@ -142,6 +147,27 @@ export type IUser = IBaseUser & {
   onboarding: IUserOnboarding;
   linkedContactId?: string;
   events: Array<IUserEvent>;
+  subscription?: IUserSubscription;
+};
+
+export type IUserSubscription = {
+  plan_name?: string;
+  plan?:
+    | {
+        name?: string;
+      }
+    | string;
+  tier?: string;
+  included_runs?: number;
+  current_runs?: number;
+  used_runs?: number;
+  current_credits?: number;
+  used_credits?: number;
+  usage?: {
+    included_runs?: number;
+    current_runs?: number;
+    current_credits?: number;
+  };
 };
 
 export default IUser;

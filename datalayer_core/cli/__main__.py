@@ -33,6 +33,8 @@ from datalayer_core.cli.commands.runtimes import app as runtimes_app
 from datalayer_core.cli.commands.runtimes import runtimes_list, runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
+from datalayer_core.cli.commands.subscription import app as subscription_app
+from datalayer_core.cli.commands.subscription import subscription_root
 from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.usage import app as usage_app
@@ -83,6 +85,7 @@ app.add_typer(otel_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
+app.add_typer(subscription_app)
 app.add_typer(tokens_app)
 app.add_typer(users_app)
 app.add_typer(usage_app)
@@ -96,6 +99,7 @@ app.command(name="login")(login_root)
 app.command(name="logout")(logout_root)
 app.command(name="whoami")(whoami_root)
 app.command(name="usage")(usage_root)
+app.command(name="subscription")(subscription_root)
 
 # Add convenient aliases at root level
 app.command(name="envs-list")(envs_list)

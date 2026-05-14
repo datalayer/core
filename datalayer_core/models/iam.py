@@ -288,6 +288,11 @@ class UserSearchRequest(BaseModel):
     email: Optional[EmailStr] = Field(None, description="Filter by email")
     handle: Optional[str] = Field(None, description="Filter by handle")
     roles: Optional[List[str]] = Field(None, description="Filter by roles")
+    principal_types: Optional[List[str]] = Field(
+        None,
+        alias="principalTypes",
+        description="Principal types to include (user, team, organization)",
+    )
     limit: int = Field(default=10, ge=1, le=100, description="Maximum results")
     offset: int = Field(default=0, ge=0, description="Results offset")
 
@@ -395,6 +400,10 @@ class MembershipModel(BaseModel):
     members: Optional[List[Dict[str, Any]]] = Field(
         None, description="Members (if included)"
     )
+    roles_ss: List[str] = Field(
+        default_factory=list,
+        description="Membership roles (organization/team)",
+    )
 
     @classmethod
     def from_solr(cls, solr_doc: Dict[str, Any]) -> "MembershipModel":
@@ -419,6 +428,7 @@ class MembershipModel(BaseModel):
             organization_uid=solr_doc.get("organization_uid"),
             public=solr_doc.get("public_b"),
             members=members,
+            roles_ss=solr_doc.get("roles_ss", []),
         )
 
 
@@ -463,18 +473,33 @@ class ReservationData(BaseModel):
 
     id: str = Field(..., description="Reservation ID")
     account_uid: str = Field(..., description="Account UID")
+    usage_account_uid: Optional[str] = Field(
+        None,
+        description="Account UID charged for the reservation usage",
+    )
     credits: float = Field(..., description="Reserved credits")
     resource: str = Field(..., description="Resource identifier")
     resource_type: str = Field(..., description="Resource type")
     last_update: datetime = Field(..., description="Last update timestamp")
     burning_rate: float = Field(..., description="Credits burning rate per second")
     start_date: datetime = Field(..., description="Reservation start date")
+    plan: Optional[str] = Field(None, description="Usage plan code")
+    usage_period_key: Optional[str] = Field(None, description="Usage period key")
+    usage_period_label: Optional[str] = Field(None, description="Usage period label")
+    usage_period_start: Optional[datetime] = Field(
+        None, description="Usage period start"
+    )
+    usage_period_end: Optional[datetime] = Field(None, description="Usage period end")
 
 
 class UsageData(BaseModel):
     """Usage data model."""
 
     account_uid: str = Field(..., description="Account UID")
+    usage_account_uid: Optional[str] = Field(
+        None,
+        description="Account UID charged for the usage",
+    )
     resource_uid: str = Field(..., description="Resource UID")
     resource_type: str = Field(..., description="Resource type")
     resource_given_name: str = Field(..., description="Resource given name")
@@ -487,6 +512,13 @@ class UsageData(BaseModel):
     burning_rate: float = Field(..., description="Credits burning rate per second")
     credits_limit: float = Field(..., description="Credits limit")
     credits: float = Field(..., description="Credits consumed")
+    plan: Optional[str] = Field(None, description="Usage plan code")
+    usage_period_key: Optional[str] = Field(None, description="Usage period key")
+    usage_period_label: Optional[str] = Field(None, description="Usage period label")
+    usage_period_start: Optional[datetime] = Field(
+        None, description="Usage period start"
+    )
+    usage_period_end: Optional[datetime] = Field(None, description="Usage period end")
     metadata: Optional[Dict[str, Any]] = Field(
         default_factory=dict, description="Additional metadata"
     )
@@ -523,6 +555,10 @@ class CheckoutPortalRequest(BaseModel):
     """Checkout portal request model."""
 
     return_url: str = Field(..., description="Return URL after checkout")
+    account_uid: Optional[str] = Field(
+        None,
+        description="Optional target account UID for account-scoped checkout portal",
+    )
 
 
 class CheckoutPortalModel(BaseModel):
@@ -602,6 +638,28 @@ class TeamListResponseData(BaseModel):
 
     teams: List[TeamModel] = Field(..., description="List of teams")
     total: int = Field(..., description="Total number of teams")
+
+
+class PrincipalsSearchResponseData(BaseModel):
+    """Principal search response data model."""
+
+    users: List[UserModel] = Field(
+        default_factory=list,
+        description="List of matching users",
+    )
+    teams: List[TeamModel] = Field(
+        default_factory=list,
+        description="List of matching teams",
+    )
+    organizations: List[OrganizationModel] = Field(
+        default_factory=list,
+        description="List of matching organizations",
+    )
+    principalTypes: List[str] = Field(
+        default_factory=list,
+        description="Principal types included in search",
+    )
+    total: int = Field(..., description="Total number of principals")
 
 
 class ReservationListResponseData(BaseModel):

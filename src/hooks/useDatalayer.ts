@@ -35,6 +35,27 @@ export interface DatalayerRequest
 export function useDatalayer(props: IDatalayerRequestProps = {}) {
   const { loginRoute = '/login', notifyOnError = true } = props;
   const location = useLocation();
+  const resolveLoginRoute = (candidateRoute: string): string => {
+    if (candidateRoute !== '/login') {
+      return candidateRoute;
+    }
+
+    const pathname = location.pathname || '';
+    const kernelsPrefix = '/jupyter/kernels';
+    const iamPrefix = '/jupyter/iam';
+
+    if (pathname.includes(kernelsPrefix)) {
+      const [base] = pathname.split(kernelsPrefix);
+      return `${base}${kernelsPrefix}/login`;
+    }
+
+    if (pathname.includes(iamPrefix)) {
+      const [base] = pathname.split(iamPrefix);
+      return `${base}${iamPrefix}/login`;
+    }
+
+    return candidateRoute;
+  };
   /*
   // TODO Fix the conditional hook call.
   const coreStore = useCoreStore();
@@ -65,14 +86,20 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
       .catch(error => {
         if ((error as RunResponseError).name === 'RunResponseError') {
           const responseError = error as RunResponseError;
+          const isForbidden = responseError.response.status === 403;
           if (responseError.response.status === 401) {
             console.log('Datalayer sent a 401 return code.');
-            if (location.pathname !== loginRoute_) {
+            const resolvedLoginRoute = resolveLoginRoute(loginRoute_);
+            const alreadyOnLoginRoute =
+              location.pathname === resolvedLoginRoute ||
+              location.pathname.endsWith('/login');
+
+            if (!alreadyOnLoginRoute) {
               iamStore.logout();
-              navigate(loginRoute_);
+              navigate(resolvedLoginRoute);
             }
           } else {
-            if (notifyOnError_) {
+            if (notifyOnError_ && !isForbidden) {
               if (responseError.warnings) {
                 responseError.warnings.forEach(warning =>
                   enqueueToast(`${warning}`, { variant: 'warning' }),
@@ -96,9 +123,17 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
             }
           }
           const response = {
+            success: false,
             sucess: false,
             message: responseError.message,
             errors: responseError.errors,
+            warnings: responseError.warnings,
+            detail: responseError.detail,
+            status: responseError.response.status,
+            code:
+              responseError.response.status === 403
+                ? 'FORBIDDEN'
+                : `HTTP_${responseError.response.status}`,
           } as T;
           return response;
         }

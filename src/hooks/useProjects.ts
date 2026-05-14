@@ -20,6 +20,38 @@ import { useCache } from './useCache';
 /** The space type value used to identify project spaces in Solr */
 export const PROJECT_SPACE_VARIANT = 'project';
 
+const normalizeProjectItems = (items: unknown): any[] => {
+  if (Array.isArray(items)) {
+    return items;
+  }
+  if (items && typeof items === 'object') {
+    return [items];
+  }
+  return [];
+};
+
+const isProjectSpace = (space: any): boolean => {
+  const variant = space?.variant ?? space?.variant_s;
+  if (variant !== PROJECT_SPACE_VARIANT) {
+    return false;
+  }
+
+  const items = normalizeProjectItems(space?.items);
+  if (items.length === 0) {
+    return true;
+  }
+
+  const hasNotebook = items.some(
+    item => (item?.type_s ?? item?.type) === 'notebook',
+  );
+  const hasDocument = items.some(item => {
+    const type = item?.type_s ?? item?.type;
+    return type === 'document' || type === 'lexical';
+  });
+
+  return hasNotebook && hasDocument;
+};
+
 /**
  * Project data type (mapped from spacer service space data).
  */
@@ -69,11 +101,7 @@ export function useProjects() {
   const projects: ProjectData[] = useMemo(() => {
     if (!allSpaces) return [];
     return allSpaces
-      .filter(
-        (space: any) =>
-          space.variant === PROJECT_SPACE_VARIANT ||
-          space.type_s === PROJECT_SPACE_VARIANT,
-      )
+      .filter((space: any) => isProjectSpace(space))
       .map((space: any) => ({
         uid: space.uid,
         id: space.id ?? space.uid,

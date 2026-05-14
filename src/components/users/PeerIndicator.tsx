@@ -4,9 +4,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Avatar, AvatarStack } from '@primer/react';
+import { AvatarStack } from '@primer/react';
 import type { Awareness } from 'y-protocols/awareness';
-import { getAvatarURL, getRelativeTime } from '../../utils';
+import { getRelativeTime } from '../../utils';
+import { DLAvatar } from '../avatars';
 
 const AVATAR_SIZE = 28;
 
@@ -143,7 +144,7 @@ export function PeersIndicator({
           title += `\n${peer.notification}`;
         }
         return (
-          <Avatar
+          <DLAvatar
             key={peer.displayName}
             sx={{
               border: peer.notificationType
@@ -153,7 +154,7 @@ export function PeersIndicator({
             title={title}
             src={
               peer.avatarUrl
-                ? getAvatarURL(peer.avatarUrl)
+                ? peer.avatarUrl
                 : defaultAvatarSrc(peer.color, peer.initials)
             }
             size={AVATAR_SIZE}

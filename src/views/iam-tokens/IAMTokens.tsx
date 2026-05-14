@@ -32,6 +32,8 @@ export type IAMTokensProps = {
   tokensListRoute?: string;
   /** Whether to display view titles/headings. Defaults to true. */
   showTitle?: boolean;
+  /** Whether to render the "New API Key" button in this component header. Defaults to true. */
+  showNewButton?: boolean;
 };
 
 const TokensTable = ({
@@ -178,6 +180,7 @@ export const IAMTokens = ({
   newTokenRoute = '/new/token',
   tokensListRoute,
   showTitle = true,
+  showNewButton = true,
 }: IAMTokensProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -186,24 +189,28 @@ export const IAMTokens = ({
       padding="normal"
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
-      <PageLayout.Header>
-        <PageHeader>
-          {showTitle && (
-            <PageHeader.TitleArea variant="large">
-              <PageHeader.Title>API Keys</PageHeader.Title>
-            </PageHeader.TitleArea>
-          )}
-          <PageHeader.Actions>
-            <Button
-              size="small"
-              variant="primary"
-              onClick={e => navigate(newTokenRoute, e)}
-            >
-              New API Key
-            </Button>
-          </PageHeader.Actions>
-        </PageHeader>
-      </PageLayout.Header>
+      {showTitle || showNewButton ? (
+        <PageLayout.Header>
+          <PageHeader>
+            {showTitle && (
+              <PageHeader.TitleArea variant="large">
+                <PageHeader.Title>API Keys</PageHeader.Title>
+              </PageHeader.TitleArea>
+            )}
+            {showNewButton && (
+              <PageHeader.Actions>
+                <Button
+                  size="small"
+                  variant="primary"
+                  onClick={e => navigate(newTokenRoute, e)}
+                >
+                  New API Key
+                </Button>
+              </PageHeader.Actions>
+            )}
+          </PageHeader>
+        </PageLayout.Header>
+      ) : null}
       <PageLayout.Content>
         <Box>
           <TokensTable

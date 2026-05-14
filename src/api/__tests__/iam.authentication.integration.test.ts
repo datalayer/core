@@ -309,7 +309,9 @@ describe.skipIf(skipTests)('IAM Authentication Integration Tests', () => {
         expect(
           error.message.includes('Unauthorized') ||
             error.message.includes('Server Error') ||
-            error.message.includes('401'),
+            error.message.includes('401') ||
+            error.message.includes('Invalid authentication token') ||
+            error.message.includes('Invalid token'),
         ).toBe(true);
       }
     });
