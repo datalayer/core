@@ -5496,7 +5496,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription/plans`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans/catalog`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -5561,7 +5561,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -5581,7 +5581,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'eligible-accounts'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/eligible-accounts`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/eligible-accounts`,
           method: 'GET',
         });
         return resp.accounts || [];
@@ -5600,7 +5600,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans/cancel`,
             scope?.accountUid,
           ),
           method: 'POST',
@@ -5624,7 +5624,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription/resume`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans/resume`,
             scope?.accountUid,
           ),
           method: 'POST',
@@ -5649,7 +5649,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'admin', userId],
       queryFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/admin/${userId}`,
           method: 'GET',
         });
       },
@@ -5667,7 +5667,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}/reset`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/admin/${userId}/reset`,
           method: 'POST',
         });
       },

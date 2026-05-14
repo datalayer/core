@@ -429,9 +429,9 @@ def whoami(
                             console.print(f"  🔗 {provider_name.capitalize()}")
 
                 # Customer UID
-                if user.get("credits_customer_uid"):
+                if user.get("stripe_customer_id_s"):
                     console.print(
-                        f"\n💳 Credits Customer: {user.get('credits_customer_uid')}"
+                        f"\n💳 Credits Customer: {user.get('stripe_customer_id_s')}"
                     )
         else:
             console.print("[yellow]Not authenticated[/yellow]")

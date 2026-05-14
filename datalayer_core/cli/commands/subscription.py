@@ -21,7 +21,7 @@ console = Console()
 
 
 def _extract_subscription(payload: dict[str, Any]) -> dict[str, Any]:
-    return payload.get("subscription") or {}
+    return payload.get("plan") or {}
 
 
 def _normalize_value(value: Any, fallback: str = "Not available") -> str:
@@ -71,12 +71,8 @@ def _as_plan_list(value: Any) -> list[dict[str, Any]]:
 def _extract_available_plans(payload: dict[str, Any]) -> list[dict[str, Any]]:
     subscription = _extract_subscription(payload)
     candidates = [
-        payload.get("available_subscriptions"),
         payload.get("available_plans"),
         payload.get("plans"),
-        subscription.get("available_subscriptions")
-        if isinstance(subscription, dict)
-        else None,
         subscription.get("available_plans") if isinstance(subscription, dict) else None,
         subscription.get("plans") if isinstance(subscription, dict) else None,
     ]
@@ -572,8 +568,8 @@ def subscription_stats(
         paid_count = 0
 
         for user in users:
-            status = str(user.get("subscription_status_s") or "none").lower()
-            plan = str(user.get("subscription_plan_s") or "none")
+            status = str(user.get("plan_status_s") or "none").lower()
+            plan = str(user.get("plan_name_s") or "none")
             status_counter[status] += 1
             plan_counter[plan] += 1
 
@@ -663,9 +659,9 @@ def subscription_admin_users(
         for user in users:
             table.add_row(
                 _normalize_value(user.get("handle_s")),
-                _normalize_value(user.get("subscription_plan_s"), fallback="none"),
-                _normalize_value(user.get("subscription_status_s"), fallback="none"),
-                _normalize_value(user.get("credits_customer_uid"), fallback="none"),
+                _normalize_value(user.get("plan_name_s"), fallback="none"),
+                _normalize_value(user.get("plan_status_s"), fallback="none"),
+                _normalize_value(user.get("stripe_customer_id_s"), fallback="none"),
             )
 
         console.print(table)
@@ -740,13 +736,13 @@ def subscription_dry_run(
             if sub_resp.get("success", True):
                 sub = _extract_subscription(sub_resp)
                 console.print(
-                    "[green]OK[/green] /api/iam/v1/subscription "
+                    "[green]OK[/green] /api/iam/v1/plans "
                     f"plan={_normalize_value(sub.get('plan_name'), 'unknown')} "
                     f"status={_normalize_value(sub.get('status'), 'unknown')}"
                 )
             else:
                 console.print(
-                    "[red]FAILED[/red] /api/iam/v1/subscription "
+                    "[red]FAILED[/red] /api/iam/v1/plans "
                     f"{sub_resp.get('message', 'Unknown error')}"
                 )
 
