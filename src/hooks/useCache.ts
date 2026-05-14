@@ -5448,13 +5448,68 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
-      queryKey: ['stripe', 'topup', 'prices'],
+      queryKey: ['stripe', 'plans', 'prices'],
       queryFn: async () => {
+        const normalizeTopUpPrices = (raw: unknown[]): unknown[] => {
+          const prices = raw.map((item: any) => ({
+            ...item,
+            default: item?.default === true,
+          }));
+
+          const explicitDefaultIndex = prices.findIndex(
+            item => item.default === true,
+          );
+          if (explicitDefaultIndex >= 0) {
+            return prices.map((item, index) => ({
+              ...item,
+              default: index === explicitDefaultIndex,
+            }));
+          }
+
+          if (prices.length === 0) {
+            return prices;
+          }
+
+          let fallbackDefaultIndex = 0;
+          let fallbackDefaultAmount = Number(prices[0]?.amount || 0);
+          for (let index = 1; index < prices.length; index += 1) {
+            const amount = Number(prices[index]?.amount || 0);
+            if (amount > fallbackDefaultAmount) {
+              fallbackDefaultAmount = amount;
+              fallbackDefaultIndex = index;
+            }
+          }
+
+          return prices.map((item, index) => ({
+            ...item,
+            default: index === fallbackDefaultIndex,
+          }));
+        };
+
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/prices`,
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/plans/prices`,
           method: 'GET',
         });
-        return resp.prices || [];
+
+        if (resp?.success === false) {
+          throw new Error(
+            resp?.message || 'Unable to fetch available top-up products.',
+          );
+        }
+
+        if (Array.isArray(resp?.prices)) {
+          return normalizeTopUpPrices(resp.prices);
+        }
+
+        if (Array.isArray(resp)) {
+          return normalizeTopUpPrices(resp);
+        }
+
+        if (resp && Object.keys(resp).length === 0) {
+          return [];
+        }
+
+        throw new Error('Unable to fetch available top-up products.');
       },
       ...options,
     });
@@ -5586,6 +5641,38 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         return resp.accounts || [];
       },
+      ...options,
+    });
+  };
+
+  /**
+   * Get subscription details + eligibility for a batch of account UIDs.
+   */
+  const useSubscriptionAccountsDetails = (
+    accountUids: string[],
+    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn' | 'enabled'>,
+  ) => {
+    const normalizedAccountUids = Array.from(
+      new Set(
+        (accountUids || [])
+          .map(uid => String(uid || '').trim())
+          .filter(Boolean),
+      ),
+    );
+
+    return useQuery({
+      queryKey: ['subscription', 'accounts-details', normalizedAccountUids],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/accounts/details`,
+          method: 'POST',
+          body: {
+            account_uids: normalizedAccountUids,
+          },
+        });
+        return resp.accounts || [];
+      },
+      enabled: normalizedAccountUids.length > 0,
       ...options,
     });
   };
@@ -8572,6 +8659,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useSubscriptionStatus,
     useSubscriptionPlans,
     useEligibleSubscriptionAccounts,
+    useSubscriptionAccountsDetails,
     useCancelSubscription,
     useResumeSubscription,
     useUserSubscription,

@@ -58,6 +58,10 @@ export interface IPrice {
    * Computational credits to receive
    */
   credits: number;
+  /**
+   * Whether this price is the server-selected default option
+   */
+  default?: boolean;
 }
 
 export interface ISubscriptionPlan {
@@ -69,11 +73,23 @@ export interface ISubscriptionPlan {
   included_runs?: number;
 }
 
+type TopUpConfirmation = {
+  purchasedCredits: number;
+  oldWalletBalance: number;
+  newWalletBalance: number;
+  oldAvailableCredits: number;
+  newAvailableCredits: number;
+};
+
 export type StripeCheckoutProps = {
   checkoutPortal: ICheckoutPortal | null;
   appearance?: StripeElementsOptions['appearance'];
   accountUid?: string;
   showStatusUsageSummary?: boolean;
+  onCheckoutSuccess?: (event: {
+    checkoutType: 'topup' | 'subscription' | 'resume';
+    purchasedCredits?: number;
+  }) => void;
 };
 
 const PLAN_INCLUDED_RUNS_DEFAULTS: Record<string, number> = {
@@ -312,6 +328,7 @@ export function StripeCheckout({
   appearance,
   accountUid,
   showStatusUsageSummary = false,
+  onCheckoutSuccess,
 }: StripeCheckoutProps) {
   const {
     useCreateTopUpPaymentIntent,
@@ -334,11 +351,37 @@ export function StripeCheckout({
     'topup' | 'subscription' | 'resume'
   >('topup');
   const [cancelViewOpen, setCancelViewOpen] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  const [isResumingTransition, setIsResumingTransition] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [resumeConfirmationMessage, setResumeConfirmationMessage] = useState<
+    string | null
+  >(null);
+  const [isReturningFromCheckout, setIsReturningFromCheckout] = useState(false);
+  const [topUpConfirmation, setTopUpConfirmation] =
+    useState<TopUpConfirmation | null>(null);
+  const [pendingTopUpTarget, setPendingTopUpTarget] = useState<{
+    targetWalletBalance: number;
+  } | null>(null);
+  const topUpPurchaseRef = useRef<{
+    purchasedCredits: number;
+    oldWalletBalance: number;
+    oldAvailableCredits: number;
+  } | null>(null);
 
   // Get Stripe prices using TanStack Query hook
-  const { data: pricesData } = useTopUpPrices();
-  const items = (pricesData as IPrice[] | undefined) ?? null;
+  const {
+    data: pricesData,
+    isPending: isTopUpPricesPending,
+    isError: isTopUpPricesError,
+    error: topUpPricesError,
+  } = useTopUpPrices();
+  const items = useMemo(() => {
+    if (Array.isArray(pricesData)) {
+      return pricesData as IPrice[];
+    }
+    return [];
+  }, [pricesData]);
   const sortedTopUpItems = useMemo(
     () =>
       [...(items ?? [])].sort(
@@ -405,12 +448,14 @@ export function StripeCheckout({
     setProduct(null);
     setSubscriptionPlan(null);
     setPaymentMessage(null);
+    setIsReturningFromCheckout(true);
     if (checkoutType === 'resume') {
       try {
         const resp = await resumeSubscriptionMutation.mutateAsync();
         setPaymentMessage(
           resp?.message || 'Payment confirmed and plan resumed successfully.',
         );
+        onCheckoutSuccess?.({ checkoutType: 'resume' });
       } catch (error) {
         setPaymentMessage(
           error instanceof Error
@@ -418,6 +463,7 @@ export function StripeCheckout({
             : 'Payment confirmed, but unable to resume your plan right now.',
         );
       }
+      setIsReturningFromCheckout(false);
       return;
     }
     if (checkoutType === 'subscription') {
@@ -436,12 +482,53 @@ export function StripeCheckout({
       setPaymentMessage(
         'Plan payment confirmed. Your plan status may take a few seconds to refresh.',
       );
+      onCheckoutSuccess?.({ checkoutType: 'subscription' });
     } else {
+      const topUpPurchase = topUpPurchaseRef.current;
+      const purchasedCredits = topUpPurchase?.purchasedCredits || 0;
+      if (topUpPurchase && topUpPurchase.purchasedCredits > 0) {
+        const targetWalletBalance =
+          topUpPurchase.oldWalletBalance + topUpPurchase.purchasedCredits;
+        setTopUpConfirmation({
+          purchasedCredits: topUpPurchase.purchasedCredits,
+          oldWalletBalance: topUpPurchase.oldWalletBalance,
+          newWalletBalance: targetWalletBalance,
+          oldAvailableCredits: topUpPurchase.oldAvailableCredits,
+          newAvailableCredits:
+            topUpPurchase.oldAvailableCredits + topUpPurchase.purchasedCredits,
+        });
+        setPendingTopUpTarget({
+          targetWalletBalance,
+        });
+      }
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          await refetchSubscriptionStatus();
+        } catch {
+          // Keep confirmation visible even if refresh fails transiently.
+        }
+        if (attempt < 4) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+      }
+
       setPaymentMessage(
         'Payment confirmed. Credits update may take a few seconds.',
       );
+      onCheckoutSuccess?.({
+        checkoutType: 'topup',
+        purchasedCredits,
+      });
+      topUpPurchaseRef.current = null;
     }
-  }, [checkoutType, refetchSubscriptionStatus, resumeSubscriptionMutation]);
+    setIsReturningFromCheckout(false);
+  }, [
+    checkoutType,
+    onCheckoutSuccess,
+    refetchSubscriptionStatus,
+    resumeSubscriptionMutation,
+  ]);
 
   const subscription = subscriptionResp?.plan || null;
   const availablePlans = useMemo<ISubscriptionPlan[]>(() => {
@@ -636,6 +723,12 @@ export function StripeCheckout({
   const walletBalance = walletIsQuota
     ? Math.max(0, remainingCredits)
     : Math.max(0, walletBalanceRaw);
+  const displayedWalletBalance = pendingTopUpTarget
+    ? Math.max(walletBalance, pendingTopUpTarget.targetWalletBalance)
+    : walletBalance;
+  const displayedAvailableCredits = pendingTopUpTarget
+    ? Math.max(remainingCredits, pendingTopUpTarget.targetWalletBalance)
+    : remainingCredits;
   const isRunsOverQuota = runsTotal > 0 && usedRuns > runsTotal;
 
   const hasBillablePlan = useMemo(() => {
@@ -684,6 +777,18 @@ export function StripeCheckout({
     return !nonCancelable;
   }, [hasBillablePlan, subscriptionStatus, isCancellationScheduled]);
 
+  const isCancelActionPending =
+    cancelSubscriptionMutation.isPending || isConfirmingCancel;
+  const isResumeActionPending =
+    resumeSubscriptionMutation.isPending || isResumingTransition;
+  const showResumeAction = isCancellationScheduled && !isCancelActionPending;
+
+  useEffect(() => {
+    if (isResumingTransition && !isCancellationScheduled) {
+      setIsResumingTransition(false);
+    }
+  }, [isCancellationScheduled, isResumingTransition]);
+
   useEffect(() => {
     if (isPaidSubscription && paymentMessage) {
       setPaymentMessage(null);
@@ -698,9 +803,20 @@ export function StripeCheckout({
 
   useEffect(() => {
     if (!product && sortedTopUpItems.length > 0) {
-      setProduct(sortedTopUpItems[sortedTopUpItems.length - 1]);
+      const secondCard =
+        sortedTopUpItems.length > 1 ? sortedTopUpItems[1] : sortedTopUpItems[0];
+      setProduct(secondCard);
     }
   }, [product, sortedTopUpItems]);
+
+  useEffect(() => {
+    if (!pendingTopUpTarget) {
+      return;
+    }
+    if (walletBalance >= pendingTopUpTarget.targetWalletBalance) {
+      setPendingTopUpTarget(null);
+    }
+  }, [pendingTopUpTarget, walletBalance]);
 
   // Auto-open the in-app cancel/downgrade view when the page is opened with
   // `?action=downgrade` (e.g. from the Plan Overview "Downgrade" CTA).
@@ -732,6 +848,12 @@ export function StripeCheckout({
     if (!product) {
       return;
     }
+    topUpPurchaseRef.current = {
+      purchasedCredits: Math.max(0, Number(product.credits || 0)),
+      oldWalletBalance: displayedWalletBalance,
+      oldAvailableCredits: displayedAvailableCredits,
+    };
+    setTopUpConfirmation(null);
     setPaymentMessage(null);
     setCheckoutType('topup');
     setCheckout(true);
@@ -753,11 +875,17 @@ export function StripeCheckout({
         error instanceof Error
           ? error.message
           : 'Unable to initialize Stripe checkout. Please try again.';
+      topUpPurchaseRef.current = null;
       setPaymentClientSecret(null);
       setCheckout(false);
       setPaymentMessage(detail);
     }
-  }, [topUpPaymentIntentMutation, product]);
+  }, [
+    displayedAvailableCredits,
+    displayedWalletBalance,
+    topUpPaymentIntentMutation,
+    product,
+  ]);
 
   const startSubscriptionCheckout = useCallback(
     async (planOverride?: ISubscriptionPlan | null) => {
@@ -829,6 +957,7 @@ export function StripeCheckout({
 
   const onCancelSubscription = useCallback(() => {
     setPaymentMessage(null);
+    setResumeConfirmationMessage(null);
     setCancelViewOpen(true);
   }, []);
 
@@ -838,25 +967,13 @@ export function StripeCheckout({
 
   const onConfirmCancelSubscription = useCallback(async () => {
     setPaymentMessage(null);
+    setIsConfirmingCancel(true);
     try {
       const resp = await cancelSubscriptionMutation.mutateAsync();
       if (resp?.success === false) {
         throw new Error(
           resp?.message || 'Unable to update your plan right now.',
         );
-      }
-
-      // Refresh plan status so stale "incomplete" snapshots disappear
-      // as soon as cancellation is applied upstream.
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        try {
-          await refetchSubscriptionStatus();
-        } catch {
-          // Ignore transient refetch errors and keep trying.
-        }
-        if (attempt < 4) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
       }
 
       const responseStatus = String(resp?.status || '').toLowerCase();
@@ -876,7 +993,23 @@ export function StripeCheckout({
           'Plan change requested successfully.',
       );
       setCancelViewOpen(false);
+      setIsConfirmingCancel(false);
+
+      // Refresh plan status in the background so UI feedback is immediate.
+      void (async () => {
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          try {
+            await refetchSubscriptionStatus();
+          } catch {
+            // Ignore transient refetch errors and keep trying.
+          }
+          if (attempt < 4) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+        }
+      })();
     } catch (error) {
+      setIsConfirmingCancel(false);
       setPaymentMessage(
         error instanceof Error
           ? error.message
@@ -891,6 +1024,8 @@ export function StripeCheckout({
 
   const onResumeSubscription = useCallback(async () => {
     setPaymentMessage(null);
+    setResumeConfirmationMessage(null);
+    setIsResumingTransition(true);
     try {
       const resp = await resumeSubscriptionMutation.mutateAsync();
       if (resp?.success === false) {
@@ -899,28 +1034,44 @@ export function StripeCheckout({
         );
       }
 
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        try {
-          await refetchSubscriptionStatus();
-        } catch {
-          // Ignore transient refetch errors and keep trying.
-        }
-        if (attempt < 4) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
-      }
-
       setCheckout(false);
       setPaymentClientSecret(null);
-      setPaymentMessage(resp?.message || 'Plan resumed successfully.');
+      setPaymentMessage(null);
+      const periodEndText =
+        subscriptionPeriodEndLabel && subscriptionPeriodEndLabel !== 'N/A'
+          ? ` through ${subscriptionPeriodEndLabel}`
+          : '';
+      setResumeConfirmationMessage(
+        `Resume complete. Your plan remains active${periodEndText} and will renew automatically after that date.`,
+      );
+      setIsResumingTransition(false);
+
+      // Refresh plan status in the background so success feedback appears fast.
+      void (async () => {
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          try {
+            await refetchSubscriptionStatus();
+          } catch {
+            // Ignore transient refetch errors and keep trying.
+          }
+          if (attempt < 4) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+        }
+      })();
     } catch (error) {
+      setIsResumingTransition(false);
       setPaymentMessage(
         error instanceof Error
           ? error.message
           : 'Unable to resume your plan right now.',
       );
     }
-  }, [refetchSubscriptionStatus, resumeSubscriptionMutation]);
+  }, [
+    refetchSubscriptionStatus,
+    resumeSubscriptionMutation,
+    subscriptionPeriodEndLabel,
+  ]);
 
   const onRefreshSubscriptionStatus = useCallback(async () => {
     setPaymentMessage(null);
@@ -976,10 +1127,37 @@ export function StripeCheckout({
         Choose a monthly plan
       </Text>
       {isIncompleteSubscription ? (
-        <Text as="p" sx={{ color: 'fg.muted' }}>
-          A pending plan change already exists. Complete payment or cancel it
-          from the billing portal before creating a new one.
-        </Text>
+        <>
+          <Text as="p" sx={{ color: 'fg.muted' }}>
+            A pending plan change already exists. Complete payment or cancel it
+            from the billing portal before creating a new one.
+          </Text>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 'var(--stack-gap-condensed)',
+              flexWrap: 'wrap',
+              marginTop: 'var(--stack-gap-normal)',
+            }}
+          >
+            <Button
+              variant="primary"
+              onClick={startPendingSubscriptionCheckout}
+              disabled={
+                subscriptionPaymentIntentMutation.isPending ||
+                checkout ||
+                !pendingSubscriptionPlan
+              }
+            >
+              {subscriptionPaymentIntentMutation.isPending
+                ? 'Preparing checkout...'
+                : 'Continue pending payment'}
+            </Button>
+            <Button variant="danger" onClick={onCancelSubscription}>
+              Cancel pending plan change
+            </Button>
+          </Box>
+        </>
       ) : !isPaidSubscription ? (
         <>
           <Box
@@ -1129,6 +1307,20 @@ export function StripeCheckout({
           ? 'Preparing top-up checkout...'
           : 'Checkout'}
       </Button>
+      {topUpConfirmation ? (
+        <Flash variant="success" sx={{ mt: 3 }}>
+          <Text as="p" sx={{ fontWeight: 'bold' }}>
+            Top-up confirmed: +
+            {topUpConfirmation.purchasedCredits.toLocaleString()} credits
+          </Text>
+          <Text as="p">
+            {`Wallet balance: ${topUpConfirmation.oldWalletBalance.toLocaleString()} to ${topUpConfirmation.newWalletBalance.toLocaleString()}`}
+          </Text>
+          <Text as="p">
+            {`Available credits: ${topUpConfirmation.oldAvailableCredits.toLocaleString()} to ${topUpConfirmation.newAvailableCredits.toLocaleString()}`}
+          </Text>
+        </Flash>
+      ) : null}
     </Box>
   );
 
@@ -1337,7 +1529,7 @@ export function StripeCheckout({
                   as="p"
                   sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
                 >
-                  Wallet balance: {walletBalance.toLocaleString()}
+                  Wallet balance: {displayedWalletBalance.toLocaleString()}
                 </Text>
                 <Text as="p" sx={{ color: 'fg.muted' }}>
                   Spent credits in current period:{' '}
@@ -1409,15 +1601,16 @@ export function StripeCheckout({
                   </Button>
                 </>
               )}
-              {isCancellationScheduled && (
+              {showResumeAction && (
                 <Button
                   variant="primary"
                   onClick={() => void onResumeSubscription()}
-                  disabled={resumeSubscriptionMutation.isPending}
+                  disabled={isResumeActionPending}
+                  leadingVisual={() =>
+                    isResumeActionPending ? <Spinner size="small" /> : undefined
+                  }
                 >
-                  {resumeSubscriptionMutation.isPending
-                    ? 'Resuming...'
-                    : 'Resume plan'}
+                  {isResumeActionPending ? 'Resuming...' : 'Resume plan'}
                 </Button>
               )}
             </Box>
@@ -1467,12 +1660,17 @@ export function StripeCheckout({
                   <Button
                     variant="danger"
                     onClick={() => void onConfirmCancelSubscription()}
-                    disabled={cancelSubscriptionMutation.isPending}
+                    disabled={isCancelActionPending}
+                    leadingVisual={() =>
+                      isCancelActionPending ? (
+                        <Spinner size="small" />
+                      ) : undefined
+                    }
                   >
-                    {cancelSubscriptionMutation.isPending
+                    {isCancelActionPending
                       ? isIncompleteSubscription
                         ? 'Canceling pending plan change...'
-                        : 'Downgrading...'
+                        : 'Waiting for confirmation...'
                       : isIncompleteSubscription
                         ? 'Confirm cancel pending plan change'
                         : 'Confirm downgrade'}
@@ -1480,7 +1678,7 @@ export function StripeCheckout({
                   <Button
                     variant="default"
                     onClick={onAbortCancelView}
-                    disabled={cancelSubscriptionMutation.isPending}
+                    disabled={isCancelActionPending}
                   >
                     {isIncompleteSubscription
                       ? 'Keep pending plan change'
@@ -1541,14 +1739,16 @@ export function StripeCheckout({
           </Flash>
         ) : null}
 
-        <Text
-          as="p"
-          sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-condensed)' }}
-        >
-          {isCancellationScheduled
-            ? 'Possible action: Resume Team Plan.'
-            : 'Possible action: Downgrade to Free Plan.'}
-        </Text>
+        {!isCancellationScheduled || showResumeAction ? (
+          <Text
+            as="p"
+            sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-condensed)' }}
+          >
+            {showResumeAction
+              ? 'Possible action: Resume Team Plan.'
+              : 'Possible action: Downgrade to Free Plan.'}
+          </Text>
+        ) : null}
 
         <Box
           sx={{
@@ -1562,15 +1762,16 @@ export function StripeCheckout({
               Downgrade to Free Plan
             </Button>
           )}
-          {isCancellationScheduled && (
+          {showResumeAction && (
             <Button
               variant="primary"
               onClick={() => void onResumeSubscription()}
-              disabled={resumeSubscriptionMutation.isPending}
+              disabled={isResumeActionPending}
+              leadingVisual={() =>
+                isResumeActionPending ? <Spinner size="small" /> : undefined
+              }
             >
-              {resumeSubscriptionMutation.isPending
-                ? 'Resuming...'
-                : 'Resume plan'}
+              {isResumeActionPending ? 'Resuming...' : 'Resume plan'}
             </Button>
           )}
         </Box>
@@ -1604,16 +1805,19 @@ export function StripeCheckout({
               <Button
                 variant="danger"
                 onClick={() => void onConfirmCancelSubscription()}
-                disabled={cancelSubscriptionMutation.isPending}
+                disabled={isCancelActionPending}
+                leadingVisual={() =>
+                  isCancelActionPending ? <Spinner size="small" /> : undefined
+                }
               >
-                {cancelSubscriptionMutation.isPending
-                  ? 'Downgrading...'
+                {isCancelActionPending
+                  ? 'Waiting for confirmation...'
                   : 'Confirm downgrade'}
               </Button>
               <Button
                 variant="default"
                 onClick={onAbortCancelView}
-                disabled={cancelSubscriptionMutation.isPending}
+                disabled={isCancelActionPending}
               >
                 Keep current plan
               </Button>
@@ -1749,7 +1953,47 @@ export function StripeCheckout({
         </Box>
       );
     }
-  } else if (items) {
+  } else if (isReturningFromCheckout) {
+    view = (
+      <Box sx={{ flex: '1 1 auto', display: 'grid', gap: 3 }}>
+        <Box
+          sx={{
+            border: '1px solid',
+            borderColor: 'border.default',
+            borderRadius: 'var(--borderRadius-medium)',
+            backgroundColor: 'canvas.default',
+            padding: 'var(--stack-padding-normal)',
+            display: 'flex',
+            gap: 'var(--stack-gap-normal)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Spinner size="small" />
+          <Text as="p">Refreshing plan status…</Text>
+        </Box>
+        {disabledTopCards}
+      </Box>
+    );
+  } else if (isTopUpPricesPending) {
+    view = (
+      <Box sx={{ minHeight: '40px', display: 'grid', placeItems: 'center' }}>
+        <Spinner />
+      </Box>
+    );
+  } else if (isTopUpPricesError) {
+    view = (
+      <Box>
+        {topCards}
+        <Flash variant="danger">
+          {topUpPricesError instanceof Error
+            ? topUpPricesError.message
+            : 'Unable to fetch the available products. Please try again later.'}
+        </Flash>
+      </Box>
+    );
+  } else {
     view = items.length ? (
       <Box
         sx={{ flex: '1 1 auto' }}
@@ -1812,7 +2056,12 @@ export function StripeCheckout({
             </Box>
           ) : null}
         </Box>
-        {paymentMessage && (
+        {resumeConfirmationMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {resumeConfirmationMessage}
+          </Flash>
+        )}
+        {paymentMessage && !resumeConfirmationMessage && (
           <Flash variant="success" sx={{ mt: 3 }}>
             {paymentMessage}
           </Flash>
@@ -1821,10 +2070,18 @@ export function StripeCheckout({
       </Box>
     ) : (
       <Box>
+        {resumeConfirmationMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {resumeConfirmationMessage}
+          </Flash>
+        )}
+        {paymentMessage && !resumeConfirmationMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {paymentMessage}
+          </Flash>
+        )}
         {topCards}
-        <Flash variant="danger">
-          Unable to fetch the available products. Please try again later.
-        </Flash>
+        <Flash variant="default">No products are available yet.</Flash>
       </Box>
     );
   }
