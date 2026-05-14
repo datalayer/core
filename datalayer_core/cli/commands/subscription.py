@@ -567,8 +567,8 @@ def subscription_stats(
         data = response.get("data") or {}
         users = data.get("users") or response.get("users") or []
 
-        status_counter = Counter()
-        plan_counter = Counter()
+        status_counter: Counter[str] = Counter()
+        plan_counter: Counter[str] = Counter()
         paid_count = 0
 
         for user in users:

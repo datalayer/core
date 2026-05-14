@@ -197,8 +197,8 @@ class _TaskRunner:
         return fut.result(None)
 
 
-_runner_map = {}
-_loop_map = {}
+_runner_map: dict[str, Any] = {}
+_loop_map: dict[str, Any] = {}
 
 
 def run_sync(coro: Callable[..., Awaitable[T]]) -> Callable[..., T]:

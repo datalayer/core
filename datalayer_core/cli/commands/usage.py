@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.usage import display_usage
