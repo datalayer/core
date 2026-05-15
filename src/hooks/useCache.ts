@@ -7223,6 +7223,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  /**
+   * Get growth contacts KPIs.
+   */
+  const useGrowthContactsKPI = (
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['growth', 'contacts-kpi'],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.growthRunUrl}/api/growth/v1/kpis/contacts`,
+          method: 'GET',
+        });
+        return resp;
+      },
+      ...options,
+    });
+  };
+
   // ============================================================================
   // Refresh Operations & Additional Methods
   // ============================================================================
@@ -8672,6 +8691,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRequestPlatformSupport2,
     useUserSurveys,
     useGrowthKPI,
+    useGrowthContactsKPI,
 
     // Query keys for manual operations
     queryKeys,
