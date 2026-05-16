@@ -6,7 +6,7 @@
 import { INotebookContent } from '@jupyterlab/nbformat';
 import { IUser, asUser } from './User';
 import { PageTagName } from './PageTag';
-import { asRuntimeSnapshot, IRuntimeSnapshot } from './RuntimeSnapshot';
+import { asSandboxSnapshot, ISandboxSnapshot } from './SandboxSnapshot';
 
 export type PageTheme = 'default';
 
@@ -37,7 +37,7 @@ export type IPage = {
   screenCapture?: string;
   creator?: IUser;
   creatorId?: string;
-  kernelSnapshot?: IRuntimeSnapshot;
+  kernelSnapshot?: ISandboxSnapshot;
   kernelSnapshotId?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -57,7 +57,7 @@ export const asPage = (s: any): IPage => {
     creator: s.creator ? asUser(s.creator) : undefined,
     creatorId: s.creator_uid,
     kernelSnapshot: s.kernel_snapshot
-      ? asRuntimeSnapshot(s.kernel_snapshot)
+      ? asSandboxSnapshot(s.kernel_snapshot)
       : undefined,
     kernelSnapshotId: s.kernel_snapshot_uid,
   };

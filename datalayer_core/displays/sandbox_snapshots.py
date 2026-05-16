@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.table import Table
 
 
-def _new_runtime_snapshots_table(title: str = "Snapshots") -> Table:
+def _new_sandbox_snapshots_table(title: str = "Snapshots") -> Table:
     """
     Create a new runtime snapshots table.
 
@@ -33,7 +33,7 @@ def _new_runtime_snapshots_table(title: str = "Snapshots") -> Table:
     return table
 
 
-def _add_runtime_snapshot_to_table(table: Table, snapshot: dict[str, Any]) -> None:
+def _add_sandbox_snapshot_to_table(table: Table, snapshot: dict[str, Any]) -> None:
     """
     Add a runtime snapshot row to the table.
 
@@ -52,7 +52,7 @@ def _add_runtime_snapshot_to_table(table: Table, snapshot: dict[str, Any]) -> No
     )
 
 
-def display_runtime_snapshots(snapshots: list[dict[str, Any]]) -> None:
+def display_sandbox_snapshots(snapshots: list[dict[str, Any]]) -> None:
     """
     Display a list of runtime snapshots in the console.
 
@@ -61,8 +61,8 @@ def display_runtime_snapshots(snapshots: list[dict[str, Any]]) -> None:
     snapshots : list[dict[str, Any]]
         List of snapshot dictionaries to display.
     """
-    table = _new_runtime_snapshots_table(title="Runtime Snapshots")
+    table = _new_sandbox_snapshots_table(title="Runtime Snapshots")
     for snapshot in snapshots:
-        _add_runtime_snapshot_to_table(table, snapshot)
+        _add_sandbox_snapshot_to_table(table, snapshot)
     console = Console()
     console.print(table)

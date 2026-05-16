@@ -54,7 +54,7 @@ export {
   type SpaceItem,
   type NotebookData,
   type LexicalData,
-  type RuntimeSnapshotData,
+  type SandboxSnapshotData,
   type CreditsInfo,
   type CreditReservation,
   // Export request/response types
@@ -62,10 +62,10 @@ export {
   type CreateRuntimeResponse,
   type ListRuntimesResponse,
   type ListEnvironmentsResponse,
-  type CreateRuntimeSnapshotRequest,
-  type CreateRuntimeSnapshotResponse,
-  type GetRuntimeSnapshotResponse,
-  type ListRuntimeSnapshotsResponse,
+  type CreateSandboxSnapshotRequest,
+  type CreateSandboxSnapshotResponse,
+  type GetSandboxSnapshotResponse,
+  type ListSandboxSnapshotsResponse,
   type CreateSpaceRequest,
   type CreateSpaceResponse,
   type SpacesForUserResponse,
@@ -105,7 +105,7 @@ export {
   type GetSpacesByTypeResponse,
   type NotebookJSON,
   type LexicalJSON,
-  type RuntimeSnapshotJSON,
+  type SandboxSnapshotJSON,
   HealthCheck,
   type HealthCheckJSON,
   // Export IAM types
@@ -141,7 +141,7 @@ export {
   type IRuntimeType,
   type IRuntimeLocation,
   type IRuntimeCapabilities,
-  type IRuntimeSnapshot,
+  type ISandboxSnapshot,
   type IDatalayerEnvironment,
   type IResources,
   type ISnippet,
@@ -228,8 +228,8 @@ export {
   getRuntimes,
   deleteRuntime,
   snapshotRuntime,
-  getRuntimeSnapshots,
-  loadRuntimeSnapshot,
+  getSandboxSnapshots,
+  loadSandboxSnapshot,
 } from './stateful/runtimes/actions';
 
 // OTEL observability components, hooks, and types

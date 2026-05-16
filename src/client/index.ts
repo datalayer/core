@@ -34,7 +34,7 @@ import type { UserDTO } from './../models/UserDTO';
 import type { CreditsDTO } from '../models/CreditsDTO';
 import type { EnvironmentDTO } from '../models/EnvironmentDTO';
 import type { RuntimeDTO } from '../models/RuntimeDTO';
-import type { RuntimeSnapshotDTO } from '../models/RuntimeSnapshotDTO';
+import type { SandboxSnapshotDTO } from '../models/SandboxSnapshotDTO';
 import type { SpaceDTO } from '../models/SpaceDTO';
 import type { NotebookDTO } from '../models/NotebookDTO';
 import type { LexicalDTO } from '../models/LexicalDTO';
@@ -124,15 +124,15 @@ export type {
   EnvironmentData,
   ListEnvironmentsResponse,
 } from '../models/EnvironmentDTO';
-export { RuntimeSnapshotDTO as Snapshot } from '../models/RuntimeSnapshotDTO';
+export { SandboxSnapshotDTO as Snapshot } from '../models/SandboxSnapshotDTO';
 export type {
-  RuntimeSnapshotJSON,
-  RuntimeSnapshotData,
-  CreateRuntimeSnapshotRequest,
-  CreateRuntimeSnapshotResponse,
-  GetRuntimeSnapshotResponse,
-  ListRuntimeSnapshotsResponse,
-} from '../models/RuntimeSnapshotDTO';
+  SandboxSnapshotJSON,
+  SandboxSnapshotData,
+  CreateSandboxSnapshotRequest,
+  CreateSandboxSnapshotResponse,
+  GetSandboxSnapshotResponse,
+  ListSandboxSnapshotsResponse,
+} from '../models/SandboxSnapshotDTO';
 export { SpaceDTO as Space } from '../models/SpaceDTO';
 export type {
   SpaceJSON,
@@ -246,7 +246,7 @@ export type {
   IRuntimeLocation,
   IRuntimeCapabilities,
 } from '../models/Runtime';
-export type { IRuntimeSnapshot } from '../models/RuntimeSnapshot';
+export type { ISandboxSnapshot } from '../models/SandboxSnapshot';
 export type {
   IDatalayerEnvironment,
   IResources,
@@ -394,9 +394,9 @@ export interface DatalayerClient {
     name: string,
     description: string,
     stop?: boolean,
-  ): Promise<RuntimeSnapshotDTO>;
-  listSnapshots(): Promise<RuntimeSnapshotDTO[]>;
-  getSnapshot(id: string): Promise<RuntimeSnapshotDTO>;
+  ): Promise<SandboxSnapshotDTO>;
+  listSnapshots(): Promise<SandboxSnapshotDTO[]>;
+  getSnapshot(id: string): Promise<SandboxSnapshotDTO>;
   deleteSnapshot(id: string): Promise<void>;
   checkRuntimesHealth(): Promise<HealthCheck>;
 

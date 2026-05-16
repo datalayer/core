@@ -4,7 +4,7 @@
 from typing import Any
 
 
-class RuntimeSnapshotsCreateMixin:
+class SandboxSnapshotsCreateMixin:
     """Mixin class for creating snapshots."""
 
     def _create_snapshot(
@@ -46,7 +46,7 @@ class RuntimeSnapshotsCreateMixin:
             return {"success": False, "message": str(e)}
 
 
-class RuntimeSnapshotsDeleteMixin:
+class SandboxSnapshotsDeleteMixin:
     """
     Mixin class that provides snapshot deletion functionality.
     """
@@ -81,7 +81,7 @@ class RuntimeSnapshotsDeleteMixin:
             return {"success": False, "message": str(e)}
 
 
-class RuntimeSnapshotsListMixin:
+class SandboxSnapshotsListMixin:
     """
     Mixin class to provide functionality for listing snapshots.
     """
@@ -104,8 +104,8 @@ class RuntimeSnapshotsListMixin:
             return {"success": False, "message": str(e)}
 
 
-class RuntimeSnapshotsMixin(
-    RuntimeSnapshotsCreateMixin, RuntimeSnapshotsDeleteMixin, RuntimeSnapshotsListMixin
+class SandboxSnapshotsMixin(
+    SandboxSnapshotsCreateMixin, SandboxSnapshotsDeleteMixin, SandboxSnapshotsListMixin
 ):
     """
     Mixin class that provides snapshot management functionality.

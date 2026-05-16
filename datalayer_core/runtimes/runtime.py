@@ -16,13 +16,13 @@ import requests
 from jupyter_kernel_client import KernelClient
 
 from datalayer_core.mixins.authn import AuthnMixin
-from datalayer_core.mixins.sandbox_snapshots import RuntimeSnapshotsMixin
+from datalayer_core.mixins.sandbox_snapshots import SandboxSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.runtimes.sandbox_snapshot import (
-    RuntimeSnapshotModel,
-    as_runtime_snapshots,
+    SandboxSnapshotModel,
+    as_sandbox_snapshots,
     create_snapshot,
 )
 from datalayer_core.utils.defaults import (
@@ -38,7 +38,7 @@ from datalayer_core.utils.types import (
 from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
 
 
-class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
+class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
     """
     Service for managing Datalayer runtime operations.
 
@@ -678,7 +678,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotModel":
+    ) -> "SandboxSnapshotModel":
         """
         Create a new snapshot from the current state.
 
@@ -693,7 +693,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
 
         Returns
         -------
-        RuntimeSnapshot
+        SandboxSnapshot
             A new snapshot object.
         """
         if self.model.pod_name is None:
@@ -720,8 +720,8 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                 pass
 
         response = self._list_snapshots()
-        snapshot_objects = as_runtime_snapshots(response)
-        snapshot: Optional[RuntimeSnapshotModel] = None
+        snapshot_objects = as_sandbox_snapshots(response)
+        snapshot: Optional[SandboxSnapshotModel] = None
         max_poll_attempts = max(
             1,
             int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
@@ -736,14 +736,14 @@ class RuntimeService(AuthnMixin, RuntimesMixin, RuntimeSnapshotsMixin):
                 break
             time.sleep(poll_interval_seconds)
             response = self._list_snapshots()
-            snapshot_objects = as_runtime_snapshots(response)
+            snapshot_objects = as_sandbox_snapshots(response)
 
         if snapshot is None:
             raise RuntimeError(
                 f"Snapshot '{name}' was created but not found in snapshot listing"
             )
 
-        return RuntimeSnapshotModel(
+        return SandboxSnapshotModel(
             uid=snapshot.uid,
             name=name,
             description=description,

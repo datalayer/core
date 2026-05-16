@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 from .authn import AuthnMixin
 from .environments import EnvironmentsMixin
-from .sandbox_snapshots import RuntimeSnapshotsMixin
+from .sandbox_snapshots import SandboxSnapshotsMixin
 from .runtimes import RuntimesMixin
 from .secrets import SecretsMixin
 from .tokens import TokensMixin
@@ -12,7 +12,7 @@ from .whoami import WhoamiAppMixin
 __all__ = [
     "AuthnMixin",
     "EnvironmentsMixin",
-    "RuntimeSnapshotsMixin",
+    "SandboxSnapshotsMixin",
     "RuntimesMixin",
     "SecretsMixin",
     "TokensMixin",

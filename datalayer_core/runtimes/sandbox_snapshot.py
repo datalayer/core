@@ -10,7 +10,7 @@ Provides runtime snapshot management and operations in Datalayer environments.
 import uuid
 from typing import Any, List, Optional, Tuple
 
-from datalayer_core.models.sandbox_snapshot import RuntimeSnapshotModel
+from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 
 
 def create_snapshot(name: Optional[str], description: Optional[str]) -> Tuple[str, str]:
@@ -39,9 +39,9 @@ def create_snapshot(name: Optional[str], description: Optional[str]) -> Tuple[st
     return name, description
 
 
-def as_runtime_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotModel"]:
+def as_sandbox_snapshots(response: dict[str, Any]) -> List["SandboxSnapshotModel"]:
     """
-    Parse API response and create RuntimeSnapshot objects.
+    Parse API response and create SandboxSnapshot objects.
 
     Parameters
     ----------
@@ -50,15 +50,15 @@ def as_runtime_snapshots(response: dict[str, Any]) -> List["RuntimeSnapshotModel
 
     Returns
     -------
-    List[RuntimeSnapshot]
-        List of RuntimeSnapshot objects parsed from the response.
+    List[SandboxSnapshot]
+        List of SandboxSnapshot objects parsed from the response.
     """
     snapshot_objects = []
     if response["success"]:
         snapshots = response["snapshots"]
         for snapshot in snapshots:
             snapshot_objects.append(
-                RuntimeSnapshotModel(
+                SandboxSnapshotModel(
                     uid=snapshot["uid"],
                     name=snapshot["name"],
                     description=snapshot["description"],

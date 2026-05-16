@@ -9,7 +9,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
 import { RuntimeDTO } from '../../models/RuntimeDTO';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
-import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
+import { SandboxSnapshotDTO } from '../../models/SandboxSnapshotDTO';
 import { SpaceDTO } from '../../models/SpaceDTO';
 import { NotebookDTO } from '../../models/NotebookDTO';
 import { LexicalDTO } from '../../models/LexicalDTO';
@@ -45,7 +45,7 @@ describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
   let testNotebook: NotebookDTO | null = null;
   let testLexical: LexicalDTO | null = null;
   let testRuntime: RuntimeDTO | null = null;
-  let testSnapshot: RuntimeSnapshotDTO | null = null;
+  let testSnapshot: SandboxSnapshotDTO | null = null;
 
   beforeAll(async () => {
     if (!testConfig.hasToken()) {
@@ -288,7 +288,7 @@ describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
           'Test snapshot from model test',
         );
 
-        expect(testSnapshot).toBeInstanceOf(RuntimeSnapshotDTO);
+        expect(testSnapshot).toBeInstanceOf(SandboxSnapshotDTO);
         // Snapshots don't have a podName property
         // Instead, check that the snapshot was created successfully
         expect(testSnapshot.uid).toBeDefined();

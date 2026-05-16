@@ -12,7 +12,7 @@ import { getRuntimes } from '../../stateful/runtimes';
 import type { IRuntimesConfiguration } from '../../config';
 import type {
   IRuntimePod,
-  IRuntimeSnapshot,
+  ISandboxSnapshot,
   IRuntimeModel,
 } from '../../models';
 import { coreStore } from './CoreState';
@@ -68,19 +68,19 @@ export type RuntimesState = {
   /**
    * Runtime snapshots.
    */
-  runtimeSnapshots: readonly IRuntimeSnapshot[];
+  runtimeSnapshots: readonly ISandboxSnapshot[];
   /**
    * Add a runtime snapshot.
    */
-  addRuntimeSnapshot: (snapshot: IRuntimeSnapshot) => void;
+  addSandboxSnapshot: (snapshot: ISandboxSnapshot) => void;
   /**
    * Remove a Runtime Snapshot.
    */
-  removeRuntimeSnapshot: (id: string) => void;
+  removeSandboxSnapshot: (id: string) => void;
   /**
    * Set Runtime Snapshots.
    */
-  setRuntimeSnapshots: (snapshots: IRuntimeSnapshot[]) => void;
+  setSandboxSnapshots: (snapshots: ISandboxSnapshot[]) => void;
   /**
    * Package version.
    */
@@ -173,7 +173,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
     /**
      * Add a Kernel Snapshot
      */
-    addRuntimeSnapshot: (snapshot: IRuntimeSnapshot) => {
+    addSandboxSnapshot: (snapshot: ISandboxSnapshot) => {
       const snapshots = get().runtimeSnapshots;
       const index = snapshots.findIndex(s => s.id === snapshot.id);
       if (index < 0) {
@@ -188,7 +188,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
     /**
      * Remove a Kernel Snapshot.
      */
-    removeRuntimeSnapshot: (id: string) => {
+    removeSandboxSnapshot: (id: string) => {
       const snapshots = get().runtimeSnapshots;
       const index = snapshots.findIndex(s => s.id === id);
       if (index >= 0) {
@@ -200,7 +200,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
     /**
      * Set Kernel Snapshots.
      */
-    setRuntimeSnapshots: (snapshots: IRuntimeSnapshot[]) => {
+    setSandboxSnapshots: (snapshots: ISandboxSnapshot[]) => {
       if (!JSONExt.deepEqual(get().runtimeSnapshots as any, snapshots as any)) {
         set({ runtimeSnapshots: [...snapshots] });
       }

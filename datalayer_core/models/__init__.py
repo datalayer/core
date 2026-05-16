@@ -81,7 +81,7 @@ from .iam import (
     UserSettingsModel,
 )
 from .runtime import RuntimeModel
-from .sandbox_snapshot import RuntimeSnapshotModel
+from .sandbox_snapshot import SandboxSnapshotModel
 from .secret import SecretModel, SecretVariant
 from .token import TokenModel, TokenType
 
@@ -137,7 +137,7 @@ __all__ = [
     "ResourceRequirements",
     "Response",
     "RuntimeModel",
-    "RuntimeSnapshotModel",
+    "SandboxSnapshotModel",
     "SecretModel",
     "SecretModel",
     "SecretVariant",

@@ -12,7 +12,7 @@ from typing import Any, Dict
 from pydantic import BaseModel, Field
 
 
-class RuntimeSnapshotModel(BaseModel):
+class SandboxSnapshotModel(BaseModel):
     """
     Pydantic model representing a snapshot of a Datalayer runtime state.
 
@@ -32,6 +32,6 @@ class RuntimeSnapshotModel(BaseModel):
 
     def __repr__(self) -> str:
         return (
-            f"RuntimeSnapshotModel(uid='{self.uid}', name='{self.name}', "
+            f"SandboxSnapshotModel(uid='{self.uid}', name='{self.name}', "
             f"description='{self.description}', environment='{self.environment}')"
         )

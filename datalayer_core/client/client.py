@@ -17,7 +17,7 @@ from typing import Any, Optional, Union
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
 from datalayer_core.mixins.events import EventsMixin
-from datalayer_core.mixins.sandbox_snapshots import RuntimeSnapshotsMixin
+from datalayer_core.mixins.sandbox_snapshots import SandboxSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.tokens import TokensMixin
@@ -25,12 +25,12 @@ from datalayer_core.mixins.usage import UsageMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import UserModel
 from datalayer_core.models.environment import EnvironmentModel
-from datalayer_core.models.sandbox_snapshot import RuntimeSnapshotModel
+from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
 from datalayer_core.runtimes.runtime import RuntimeService
 from datalayer_core.runtimes.sandbox_snapshot import (
-    as_runtime_snapshots,
+    as_sandbox_snapshots,
     create_snapshot,
 )
 from datalayer_core.utils.defaults import (
@@ -49,7 +49,7 @@ class DatalayerClient(
     EnvironmentsMixin,
     EventsMixin,
     SecretsMixin,
-    RuntimeSnapshotsMixin,
+    SandboxSnapshotsMixin,
     TokensMixin,
     UsageMixin,
     WhoamiAppMixin,
@@ -511,7 +511,7 @@ class DatalayerClient(
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotModel":
+    ) -> "SandboxSnapshotModel":
         """
         Create a snapshot of the current runtime state.
 
@@ -530,7 +530,7 @@ class DatalayerClient(
 
         Returns
         -------
-        RuntimeSnapshotModel
+        SandboxSnapshotModel
             The created snapshot object.
         """
         if pod_name is None and runtime is None:
@@ -556,7 +556,7 @@ class DatalayerClient(
             raise RuntimeError(
                 f"Failed to create snapshot '{name}': {response.get('message', 'unknown error')}"
             )
-        snapshot: Optional[RuntimeSnapshotModel] = None
+        snapshot: Optional[SandboxSnapshotModel] = None
         max_poll_attempts = max(
             1,
             int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
@@ -577,7 +577,7 @@ class DatalayerClient(
                 f"Snapshot '{name}' was created but not found in snapshot listing"
             )
 
-        return RuntimeSnapshotModel(
+        return SandboxSnapshotModel(
             uid=snapshot.uid,
             name=name,
             description=description,
@@ -585,28 +585,28 @@ class DatalayerClient(
             metadata=response,
         )
 
-    def list_snapshots(self) -> list[RuntimeSnapshotModel]:
+    def list_snapshots(self) -> list[SandboxSnapshotModel]:
         """
         List all snapshots.
 
         Returns
         -------
-        list[RuntimeSnapshotModel]
+        list[SandboxSnapshotModel]
             A list of snapshots associated with the user.
         """
         response = self._list_snapshots()
-        snapshot_objects = as_runtime_snapshots(response)
+        snapshot_objects = as_sandbox_snapshots(response)
         return snapshot_objects
 
     def delete_snapshot(
-        self, snapshot: Union[str, RuntimeSnapshotModel]
+        self, snapshot: Union[str, SandboxSnapshotModel]
     ) -> dict[str, str]:
         """
         Delete a specific snapshot.
 
         Parameters
         ----------
-        snapshot : Union[str, RuntimeSnapshotModel]
+        snapshot : Union[str, SandboxSnapshotModel]
             Snapshot object or UID string to delete.
 
         Returns
@@ -615,7 +615,7 @@ class DatalayerClient(
             The result of the deletion operation.
         """
         snapshot_uid = (
-            snapshot.uid if isinstance(snapshot, RuntimeSnapshotModel) else snapshot
+            snapshot.uid if isinstance(snapshot, SandboxSnapshotModel) else snapshot
         )
         return self._delete_snapshot(snapshot_uid)
 

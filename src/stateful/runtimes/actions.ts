@@ -14,10 +14,10 @@ import {
   requestDatalayerAPI,
   type RunResponseError,
 } from '../../api';
-import { asRuntimeSnapshot } from '../../models';
+import { asSandboxSnapshot } from '../../models';
 import type {
-  IRuntimeSnapshot,
-  IAPIRuntimeSnapshot,
+  ISandboxSnapshot,
+  IAPISandboxSnapshot,
   IDatalayerEnvironment,
   IRuntimePod,
 } from '../../models';
@@ -170,11 +170,11 @@ export async function snapshotRuntime(options: {
    * Whether to stop the runtime after the snapshot completion or not.
    */
   stop?: boolean;
-}): Promise<IRuntimeSnapshot> {
+}): Promise<ISandboxSnapshot> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshot?: IAPIRuntimeSnapshot;
+    snapshot?: IAPISandboxSnapshot;
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -194,17 +194,17 @@ export async function snapshotRuntime(options: {
       `Failed to take the runtime snapshot ${options.id} - ${data}`,
     );
   }
-  return asRuntimeSnapshot(data.snapshot);
+  return asSandboxSnapshot(data.snapshot);
 }
 
 /**
  * Get Runtime Snapshots.
  */
-export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
+export async function getSandboxSnapshots(): Promise<ISandboxSnapshot[]> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshots?: IAPIRuntimeSnapshot[];
+    snapshots?: IAPISandboxSnapshot[];
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -216,13 +216,13 @@ export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
     console.error('Failed to fetch runtime snapshots.', data);
     return [];
   }
-  return (data.snapshots ?? []).map(asRuntimeSnapshot);
+  return (data.snapshots ?? []).map(asSandboxSnapshot);
 }
 
 /**
  * Load a Runtime Snapshot within a Runtime.
  */
-export async function loadRuntimeSnapshot(options: {
+export async function loadSandboxSnapshot(options: {
   /**
    * Runtime ID
    */
@@ -259,7 +259,7 @@ export async function loadRuntimeSnapshot(options: {
  * @param id Snapshot UID to download
  * @returns The download URL
  */
-export function createRuntimeSnapshotDownloadURL(id: string): string {
+export function createSandboxSnapshotDownloadURL(id: string): string {
   return (
     URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -277,8 +277,8 @@ export function createRuntimeSnapshotDownloadURL(id: string): string {
  *
  * @param id Runtime snapshot UID to download
  */
-export function exportRuntimeSnapshot(id: string): void {
-  const url = createRuntimeSnapshotDownloadURL(id);
+export function exportSandboxSnapshot(id: string): void {
+  const url = createSandboxSnapshotDownloadURL(id);
   const element = document.createElement('a');
   element.href = url;
   element.download = '';
@@ -290,11 +290,11 @@ export function exportRuntimeSnapshot(id: string): void {
 /**
  * Delete a Runtime Snapshot.
  */
-export async function deleteRuntimeSnapshot(id: string): Promise<void> {
+export async function deleteSandboxSnapshot(id: string): Promise<void> {
   await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshots?: IAPIRuntimeSnapshot[];
+    snapshots?: IAPISandboxSnapshot[];
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -313,7 +313,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
       const response = await requestDatalayerAPI<{
         success: boolean;
         message: string;
-        snapshots?: IAPIRuntimeSnapshot[];
+        snapshots?: IAPISandboxSnapshot[];
       }>({
         url: URLExt.join(
           runtimesStore.getState().runtimesRunUrl,
@@ -340,7 +340,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
 /**
  * Update Runtime Snapshot metadata.
  */
-export async function updateRuntimeSnapshot(
+export async function updateSandboxSnapshot(
   id: string,
   metadata: { name?: string; description?: string },
 ): Promise<void> {
@@ -348,7 +348,7 @@ export async function updateRuntimeSnapshot(
     await requestDatalayerAPI<{
       success: boolean;
       message: string;
-      snapshot?: IAPIRuntimeSnapshot;
+      snapshot?: IAPISandboxSnapshot;
     }>({
       url: URLExt.join(
         runtimesStore.getState().runtimesRunUrl,
@@ -366,7 +366,7 @@ export async function updateRuntimeSnapshot(
  *
  * Note: The promise will be rejected if the runtime state is empty.
  */
-export async function uploadRuntimeSnapshot(options: {
+export async function uploadSandboxSnapshot(options: {
   file: File | Blob;
   metadata: { filename: string; [key: string]: string };
   onProgress?: (bytesUploaded: number, bytesTotal: number) => void;

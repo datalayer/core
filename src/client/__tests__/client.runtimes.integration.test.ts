@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
 import { RuntimeDTO } from '../../models/RuntimeDTO';
-import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
+import { SandboxSnapshotDTO } from '../../models/SandboxSnapshotDTO';
 import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
@@ -39,7 +39,7 @@ const resolveEnvironmentName = async (
 describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
   let client: DatalayerClient;
   let createdRuntime: RuntimeDTO | null = null;
-  let createdSnapshot: RuntimeSnapshotDTO | null = null;
+  let createdSnapshot: SandboxSnapshotDTO | null = null;
 
   const ensureRuntime = async (): Promise<RuntimeDTO> => {
     if (createdRuntime) {
@@ -56,7 +56,7 @@ describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
     return createdRuntime;
   };
 
-  const ensureSnapshot = async (): Promise<RuntimeSnapshotDTO> => {
+  const ensureSnapshot = async (): Promise<SandboxSnapshotDTO> => {
     if (createdSnapshot) {
       return createdSnapshot;
     }
@@ -219,7 +219,7 @@ describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
           'Test snapshot from Client',
         );
 
-        expect(snapshot).toBeInstanceOf(RuntimeSnapshotDTO);
+        expect(snapshot).toBeInstanceOf(SandboxSnapshotDTO);
         expect(snapshot.uid).toBeDefined();
         expect(snapshot.name).toContain('client-test-snapshot');
 
@@ -239,7 +239,7 @@ describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
 
         const found = snapshots.find(s => s.uid === snapshotRef.uid);
         expect(found).toBeDefined();
-        expect(found).toBeInstanceOf(RuntimeSnapshotDTO);
+        expect(found).toBeInstanceOf(SandboxSnapshotDTO);
 
         console.log(`Found ${snapshots.length} snapshot(s)`);
         console.log(`Created snapshot found in list: ${found!.uid}`);
@@ -251,7 +251,7 @@ describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
         console.log('Getting snapshot details...');
         const snapshot = await client.getSnapshot(snapshotRef.uid);
 
-        expect(snapshot).toBeInstanceOf(RuntimeSnapshotDTO);
+        expect(snapshot).toBeInstanceOf(SandboxSnapshotDTO);
         expect(snapshot.uid).toBe(snapshotRef.uid);
         expect(snapshot.environment).toBe(snapshotRef.environment);
 

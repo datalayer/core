@@ -6,7 +6,7 @@
 /**
  * Snapshot domain model for the Datalayer Client.
  *
- * @module models/RuntimeSnapshotDTO
+ * @module models/SandboxSnapshotDTO
  */
 
 import type { DatalayerClient } from '../index';
@@ -16,9 +16,9 @@ import { validateJSON } from '../api/utils/validation';
 
 /**
  * Represents a runthime snapshot of a runtime's state and files.
- * @interface RuntimeSnapshotData
+ * @interface SandboxSnapshotData
  */
-export interface RuntimeSnapshotData {
+export interface SandboxSnapshotData {
   /** Unique identifier for the snapshot */
   uid: string;
   /** Name of the snapshot */
@@ -44,7 +44,7 @@ export interface RuntimeSnapshotData {
   /** ISO 8601 timestamp when the snapshot was last updated */
   updated_at: string;
   /** List of files included in the snapshot */
-  files?: any[]; // Simplified - RuntimeSnapshotFile type removed
+  files?: any[]; // Simplified - SandboxSnapshotFile type removed
 }
 
 /**
@@ -52,7 +52,7 @@ export interface RuntimeSnapshotData {
  * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
-export interface RuntimeSnapshotJSON {
+export interface SandboxSnapshotJSON {
   /** Unique identifier for the snapshot */
   uid: string;
   /** Name of the snapshot */
@@ -67,9 +67,9 @@ export interface RuntimeSnapshotJSON {
 
 /**
  * Request payload for creating a runtime snapshot
- * @interface CreateRuntimeSnapshotRequest
+ * @interface CreateSandboxSnapshotRequest
  */
-export interface CreateRuntimeSnapshotRequest {
+export interface CreateSandboxSnapshotRequest {
   /** Pod name of the runtime to snapshot */
   pod_name: string;
   /** Name for the snapshot */
@@ -82,41 +82,41 @@ export interface CreateRuntimeSnapshotRequest {
 
 /**
  * Response for getting a specific runtime snapshot
- * @interface GetRuntimeSnapshotResponse
+ * @interface GetSandboxSnapshotResponse
  */
-export interface GetRuntimeSnapshotResponse {
+export interface GetSandboxSnapshotResponse {
   /** Indicates if the request was successful */
   success: boolean;
   /** Response message */
   message: string;
   /** The snapshot details */
-  snapshot: RuntimeSnapshotData;
+  snapshot: SandboxSnapshotData;
 }
 
 /**
  * Response for creating a runtime snapshot
- * @interface CreateRuntimeSnapshotResponse
+ * @interface CreateSandboxSnapshotResponse
  */
-export interface CreateRuntimeSnapshotResponse {
+export interface CreateSandboxSnapshotResponse {
   /** Indicates if the request was successful */
   success: boolean;
   /** Response message */
   message: string;
   /** The created snapshot details */
-  snapshot: RuntimeSnapshotData;
+  snapshot: SandboxSnapshotData;
 }
 
 /**
  * Response from listing runtime snapshots
- * @interface RuntimeSnapshotsListResponse
+ * @interface SandboxSnapshotsListResponse
  */
-export interface ListRuntimeSnapshotsResponse {
+export interface ListSandboxSnapshotsResponse {
   /** Whether the request was successful */
   success: boolean;
   /** Response message from the server */
   message: string;
   /** Array of runtime snapshots */
-  snapshots: RuntimeSnapshotData[];
+  snapshots: SandboxSnapshotData[];
 }
 
 /**
@@ -129,8 +129,8 @@ export interface ListRuntimeSnapshotsResponse {
  * const runtime = await snapshot.restore();
  * ```
  */
-export class RuntimeSnapshotDTO {
-  protected _data: RuntimeSnapshotData;
+export class SandboxSnapshotDTO {
+  protected _data: SandboxSnapshotData;
   private _client: DatalayerClient;
   private _deleted: boolean = false;
 
@@ -140,7 +140,7 @@ export class RuntimeSnapshotDTO {
    * @param data - Snapshot data from API
    * @param client - Client instance
    */
-  constructor(data: RuntimeSnapshotData, client: DatalayerClient) {
+  constructor(data: SandboxSnapshotData, client: DatalayerClient) {
     this._data = data;
     this._client = client;
   }
@@ -240,7 +240,7 @@ export class RuntimeSnapshotDTO {
    *
    * @returns Core snapshot data with camelCase properties
    */
-  toJSON(): RuntimeSnapshotJSON {
+  toJSON(): SandboxSnapshotJSON {
     this._checkDeleted();
     const obj = {
       uid: this.uid,
@@ -259,7 +259,7 @@ export class RuntimeSnapshotDTO {
    *
    * @returns Raw snapshot data from API
    */
-  rawData(): RuntimeSnapshotData {
+  rawData(): SandboxSnapshotData {
     this._checkDeleted();
     return this._data;
   }

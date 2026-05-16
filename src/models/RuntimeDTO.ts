@@ -11,7 +11,7 @@
 
 import { updateRuntime } from '../api/runtimes/runtimes';
 import type { DatalayerClient } from '../index';
-import { RuntimeSnapshotDTO } from './RuntimeSnapshotDTO';
+import { SandboxSnapshotDTO } from './SandboxSnapshotDTO';
 import { validateJSON } from '../api/utils/validation';
 
 /**
@@ -273,7 +273,7 @@ export class RuntimeDTO {
     name: string,
     description?: string,
     stop?: boolean,
-  ): Promise<RuntimeSnapshotDTO> {
+  ): Promise<SandboxSnapshotDTO> {
     this._checkDeleted();
     return await (this._client as any).createSnapshot(
       this.podName,

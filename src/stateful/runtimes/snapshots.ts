@@ -5,7 +5,7 @@
 
 import { KernelExecutor } from '@datalayer/jupyter-react';
 import { Kernel } from '@jupyterlab/services';
-import { createRuntimeSnapshotDownloadURL, uploadRuntimeSnapshot } from '.';
+import { createSandboxSnapshotDownloadURL, uploadSandboxSnapshot } from '.';
 
 type Props = {
   connection: Kernel.IKernelConnection;
@@ -21,7 +21,7 @@ type Props = {
  *
  * Note: You should use this only for browser runtimes.
  */
-export async function createRuntimeSnapshot(props: Props): Promise<void> {
+export async function createSandboxSnapshot(props: Props): Promise<void> {
   const { connection, metadata, onUploadProgress } = props;
   const dump = await new KernelExecutor({ connection }).execute(
     GET_RUNTIME_SNAPSHOT_SNIPPET,
@@ -34,7 +34,7 @@ export async function createRuntimeSnapshot(props: Props): Promise<void> {
   // Convert the data to blob.
   const bytes = base64ToBytes(serializedData);
   const file = new Blob([bytes.buffer]);
-  return uploadRuntimeSnapshot({
+  return uploadSandboxSnapshot({
     file,
     metadata,
     onProgress: onUploadProgress,
@@ -53,20 +53,20 @@ function base64ToBytes(base64: string) {
  *
  * Note: You should use this only for browser kernels.
  */
-export async function loadBrowserRuntimeSnapshot({
+export async function loadBrowserSandboxSnapshot({
   connection,
   id,
 }: {
   connection: Kernel.IKernelConnection;
   id: string;
 }): Promise<void> {
-  const downloadURL = createRuntimeSnapshotDownloadURL(id);
+  const downloadURL = createSandboxSnapshotDownloadURL(id);
   const response = await fetch(downloadURL);
   const buffer = await response.arrayBuffer();
   const base64 = bytesToBase64(new Uint8Array(buffer));
   await new KernelExecutor({
     connection,
-  }).execute(getLoadRuntimeSnapshotSnippet(base64), {
+  }).execute(getLoadSandboxSnapshotSnippet(base64), {
     storeHistory: false,
     silent: true,
   });
@@ -132,7 +132,7 @@ _create_snapshot()
 del _create_snapshot
 `;
 
-function getLoadRuntimeSnapshotSnippet(content: string) {
+function getLoadSandboxSnapshotSnippet(content: string) {
   return `async def _load_snapshot():
     import os
     import logging

@@ -14,11 +14,11 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
-  CreateRuntimeSnapshotRequest,
-  ListRuntimeSnapshotsResponse,
-  GetRuntimeSnapshotResponse,
-  CreateRuntimeSnapshotResponse,
-} from '../../models/RuntimeSnapshotDTO';
+  CreateSandboxSnapshotRequest,
+  ListSandboxSnapshotsResponse,
+  GetSandboxSnapshotResponse,
+  CreateSandboxSnapshotResponse,
+} from '../../models/SandboxSnapshotDTO';
 import { validateToken, validateRequiredString } from '../utils/validation';
 
 /**
@@ -31,12 +31,12 @@ import { validateToken, validateRequiredString } from '../utils/validation';
  */
 export const createSnapshot = async (
   token: string,
-  data: CreateRuntimeSnapshotRequest,
+  data: CreateSandboxSnapshotRequest,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<CreateRuntimeSnapshotResponse> => {
+): Promise<CreateSandboxSnapshotResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<CreateRuntimeSnapshotResponse>({
+  return requestDatalayerAPI<CreateSandboxSnapshotResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots`,
     method: 'POST',
     token,
@@ -54,10 +54,10 @@ export const createSnapshot = async (
 export const listSnapshots = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<ListRuntimeSnapshotsResponse> => {
+): Promise<ListSandboxSnapshotsResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<ListRuntimeSnapshotsResponse>({
+  return requestDatalayerAPI<ListSandboxSnapshotsResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots`,
     method: 'GET',
     token,
@@ -77,11 +77,11 @@ export const getSnapshot = async (
   token: string,
   snapshotId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<GetRuntimeSnapshotResponse> => {
+): Promise<GetSandboxSnapshotResponse> => {
   validateToken(token);
   validateRequiredString(snapshotId, 'Snapshot ID');
 
-  return requestDatalayerAPI<GetRuntimeSnapshotResponse>({
+  return requestDatalayerAPI<GetSandboxSnapshotResponse>({
     url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots/${snapshotId}`,
     method: 'GET',
     token,
