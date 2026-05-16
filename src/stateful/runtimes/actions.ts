@@ -178,7 +178,7 @@ export async function snapshotRuntime(options: {
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/runtime-snapshots',
+      'api/runtimes/v1/sandbox-snapshots',
     ),
     method: 'POST',
     body: {
@@ -208,7 +208,7 @@ export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/runtime-snapshots',
+      'api/runtimes/v1/sandbox-snapshots',
     ),
     token: iamStore.getState().token,
   });
@@ -263,7 +263,7 @@ export function createRuntimeSnapshotDownloadURL(id: string): string {
   return (
     URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      `api/runtimes/v1/runtime-snapshots/${id}`,
+      `api/runtimes/v1/sandbox-snapshots/${id}`,
     ) +
     URLExt.objectToQueryString({
       download: '1',
@@ -298,7 +298,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      `api/runtimes/v1/runtime-snapshots/${id}`,
+      `api/runtimes/v1/sandbox-snapshots/${id}`,
     ),
     method: 'DELETE',
     token: iamStore.getState().token,
@@ -317,7 +317,7 @@ export async function deleteRuntimeSnapshot(id: string): Promise<void> {
       }>({
         url: URLExt.join(
           runtimesStore.getState().runtimesRunUrl,
-          `api/runtimes/v1/runtime-snapshots/${id}`,
+          `api/runtimes/v1/sandbox-snapshots/${id}`,
         ),
         token: iamStore.getState().token,
       });
@@ -352,7 +352,7 @@ export async function updateRuntimeSnapshot(
     }>({
       url: URLExt.join(
         runtimesStore.getState().runtimesRunUrl,
-        `api/runtimes/v1/runtime-snapshots/${id}`,
+        `api/runtimes/v1/sandbox-snapshots/${id}`,
       ),
       method: 'PATCH',
       body: { ...metadata },
@@ -378,7 +378,7 @@ export async function uploadRuntimeSnapshot(options: {
   // Create a new tus upload.
   const upload = new Upload(options.file, {
     // Endpoint is the upload creation URL from your tus server.
-    endpoint: `${runtimesStore.getState().runtimesRunUrl}/api/runtimes/v1/runtime-snapshots/upload`,
+    endpoint: `${runtimesStore.getState().runtimesRunUrl}/api/runtimes/v1/sandbox-snapshots/upload`,
     headers: { Authorization: `Bearer ${iamStore.getState().token}` },
     // Retry delays will enable tus-js-client to automatically retry on errors.
     // retryDelays: [0, 3000, 5000, 10000, 20000],

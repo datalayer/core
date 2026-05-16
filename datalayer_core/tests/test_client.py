@@ -11,7 +11,7 @@ import pytest
 from dotenv import load_dotenv
 
 from datalayer_core import DatalayerClient
-from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
+from datalayer_core.models.sandbox_snapshot import RuntimeSnapshotModel
 
 load_dotenv()
 

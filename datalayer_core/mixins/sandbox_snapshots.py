@@ -37,7 +37,7 @@ class RuntimeSnapshotsCreateMixin:
         }
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.urls.runtimes_url),  # type: ignore
+                "{}/api/runtimes/v1/sandbox-snapshots".format(self.urls.runtimes_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -67,7 +67,7 @@ class RuntimeSnapshotsDeleteMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots/{}".format(
+                "{}/api/runtimes/v1/sandbox-snapshots/{}".format(
                     self.urls.runtimes_url,  # type: ignore
                     snapshot_uid,
                 ),
@@ -97,7 +97,7 @@ class RuntimeSnapshotsListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.urls.runtimes_url),  # type: ignore
+                "{}/api/runtimes/v1/sandbox-snapshots".format(self.urls.runtimes_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:

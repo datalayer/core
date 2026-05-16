@@ -37,7 +37,7 @@ export const createSnapshot = async (
   validateToken(token);
 
   return requestDatalayerAPI<CreateRuntimeSnapshotResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots`,
     method: 'POST',
     token,
     body: data,
@@ -58,7 +58,7 @@ export const listSnapshots = async (
   validateToken(token);
 
   return requestDatalayerAPI<ListRuntimeSnapshotsResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots`,
     method: 'GET',
     token,
   });
@@ -82,7 +82,7 @@ export const getSnapshot = async (
   validateRequiredString(snapshotId, 'Snapshot ID');
 
   return requestDatalayerAPI<GetRuntimeSnapshotResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots/${snapshotId}`,
     method: 'GET',
     token,
   });
@@ -106,7 +106,7 @@ export const deleteSnapshot = async (
   validateRequiredString(snapshotId, 'Snapshot ID');
 
   return requestDatalayerAPI<void>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots/${snapshotId}`,
     method: 'DELETE',
     token,
   });

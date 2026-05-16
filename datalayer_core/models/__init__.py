@@ -81,7 +81,7 @@ from .iam import (
     UserSettingsModel,
 )
 from .runtime import RuntimeModel
-from .runtime_snapshot import RuntimeSnapshotModel
+from .sandbox_snapshot import RuntimeSnapshotModel
 from .secret import SecretModel, SecretVariant
 from .token import TokenModel, TokenType
 

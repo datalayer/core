@@ -27,8 +27,8 @@ from datalayer_core.cli.commands.runtime_checkpoints import (
     checkpoints_list,
     checkpoints_ls,
 )
-from datalayer_core.cli.commands.runtime_snapshots import app as snapshots_app
-from datalayer_core.cli.commands.runtime_snapshots import snapshots_list, snapshots_ls
+from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
+from datalayer_core.cli.commands.sandbox_snapshots import snapshots_list, snapshots_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app
 from datalayer_core.cli.commands.runtimes import runtimes_list, runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app

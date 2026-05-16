@@ -9,7 +9,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
-import { CameraIcon } from '@datalayer/icons-react';
+import { DeviceCameraIcon } from '@primer/octicons-react';
 import { Kernel } from '@jupyterlab/services';
 import {
   ActionList,
@@ -194,7 +194,7 @@ export function RuntimeSnapshotMenu({
     <>
       <ActionMenu>
         <ActionMenu.Button
-          leadingVisual={CameraIcon}
+          leadingVisual={DeviceCameraIcon}
           variant="invisible"
           size="small"
           disabled={loadingRuntimeSnapshot || takingRuntimeSnapshot || disabled}

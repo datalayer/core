@@ -10,7 +10,7 @@ Provides runtime snapshot management and operations in Datalayer environments.
 import uuid
 from typing import Any, List, Optional, Tuple
 
-from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
+from datalayer_core.models.sandbox_snapshot import RuntimeSnapshotModel
 
 
 def create_snapshot(name: Optional[str], description: Optional[str]) -> Tuple[str, str]:

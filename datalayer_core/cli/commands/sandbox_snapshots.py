@@ -9,11 +9,11 @@ import typer
 from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
+from datalayer_core.displays.sandbox_snapshots import display_runtime_snapshots
 
 # Create a Typer app for snapshot commands
 app = typer.Typer(
-    name="runtime-snapshots",
+    name="sandbox-snapshots",
     help="Runtime snapshots management commands",
     invoke_without_command=True,
 )

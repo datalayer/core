@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 from .authn import AuthnMixin
 from .environments import EnvironmentsMixin
-from .runtime_snapshots import RuntimeSnapshotsMixin
+from .sandbox_snapshots import RuntimeSnapshotsMixin
 from .runtimes import RuntimesMixin
 from .secrets import SecretsMixin
 from .tokens import TokensMixin
