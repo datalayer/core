@@ -2402,15 +2402,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // Datasource, Secret, Token Hooks
   // ============================================================================
 
+  type AccountScopeOptions = {
+    accountUid?: string;
+  };
+
   /**
    * Get all datasources
    */
-  const useDatasources = () => {
+  const useDatasources = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useQuery({
-      queryKey: queryKeys.datasources.all(),
+      queryKey: [...queryKeys.datasources.all(), accountUid || 'self'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+            accountUid,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.datasources) {
@@ -2437,11 +2445,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create datasource
    */
-  const useCreateDatasource = () => {
+  const useCreateDatasource = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useMutation({
       mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+            accountUid,
+          ),
           method: 'POST',
           body: { ...datasource },
         });
@@ -2467,12 +2479,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // but this prevented useSecret from fetching fresh data (e.g., the value field).
   // Consider re-adding cache pre-population if the list endpoint returns full secret data,
   // or use a different query key pattern for partial vs full secret data.
-  const useSecrets = () => {
+  const useSecrets = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useQuery({
-      queryKey: queryKeys.secrets.all(),
+      queryKey: [...queryKeys.secrets.all(), accountUid || 'self'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+            accountUid,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.secrets) {
@@ -2491,11 +2507,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create secret
    */
-  const useCreateSecret = () => {
+  const useCreateSecret = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useMutation({
       mutationFn: async (secret: Omit<ISecret, 'id'>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+            accountUid,
+          ),
           method: 'POST',
           body: { ...secret },
         });
@@ -2515,11 +2535,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Delete secret
    */
-  const useDeleteSecret = () => {
+  const useDeleteSecret = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useMutation({
       mutationFn: async (secretId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+            accountUid,
+          ),
           method: 'DELETE',
         });
       },
@@ -2813,12 +2837,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get single datasource by ID
    */
-  const useDatasource = (datasourceId: string) => {
+  const useDatasource = (datasourceId: string, options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useQuery({
-      queryKey: queryKeys.datasources.detail(datasourceId),
+      queryKey: [...queryKeys.datasources.detail(datasourceId), accountUid || 'self'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
+            accountUid,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.datasource) {
@@ -2834,11 +2862,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Update datasource
    */
-  const useUpdateDatasource = () => {
+  const useUpdateDatasource = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useMutation({
       mutationFn: async (datasource: IDatasource) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
+            accountUid,
+          ),
           method: 'PUT',
           body: { ...datasource },
         });
@@ -2863,17 +2895,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const useSecret = (
     secretId: string,
     options?: {
+      accountUid?: string;
       enabled?: boolean;
       refetchOnMount?: boolean | 'always';
       staleTime?: number;
       gcTime?: number;
     },
   ) => {
+    const accountUid = options?.accountUid;
     return useQuery({
-      queryKey: queryKeys.secrets.detail(secretId),
+      queryKey: [...queryKeys.secrets.detail(secretId), accountUid || 'self'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+            accountUid,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.secret) {
@@ -2893,11 +2930,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Update secret
    */
-  const useUpdateSecret = () => {
+  const useUpdateSecret = (options?: AccountScopeOptions) => {
+    const accountUid = options?.accountUid;
     return useMutation({
       mutationFn: async (secret: ISecret) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
+            accountUid,
+          ),
           method: 'PUT',
           body: { ...secret },
         });

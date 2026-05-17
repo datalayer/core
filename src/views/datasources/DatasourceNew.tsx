@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import {
   PageLayout,
   FormControl,
@@ -42,16 +43,22 @@ export type DatasourceNewProps = {
   datasourcesListRoute?: string;
   /** Route to navigate to the secrets page. Defaults to '/settings/iam/secrets'. */
   secretsRoute?: string;
+  /** Optional account uid used to scope datasource creation. */
+  accountUid?: string;
+  /** Optional contextual principal summary rendered below the page intro. */
+  accountPrincipal?: ReactNode;
 };
 
 export const DatasourceNew = ({
   datasourcesListRoute = '/settings/integrations/datasources',
   secretsRoute = '/settings/iam/secrets',
+  accountUid,
+  accountPrincipal,
 }: DatasourceNewProps = {}) => {
   const runStore = useRunStore();
   const { useCreateDatasource } = useCache();
 
-  const createDatasourceMutation = useCreateDatasource();
+  const createDatasourceMutation = useCreateDatasource({ accountUid });
 
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
@@ -187,6 +194,7 @@ export const DatasourceNew = ({
             <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
               Create a datasource and configure required secrets for the selected provider.
             </Text>
+            {accountPrincipal && <Box sx={{ mt: 2 }}>{accountPrincipal}</Box>}
           </Box>
           <Flash variant="warning" sx={{ mb: 3 }}>
             {formValues.variant === 'athena' && (

@@ -24,16 +24,20 @@ export type DatasourcesProps = {
   newDatasourceRoute?: string;
   /** Base route for the datasources list (used for edit navigation). Defaults to current relative path. */
   datasourcesListRoute?: string;
+  /** Optional account uid used to scope datasource reads. */
+  accountUid?: string;
 };
 
 const DatasourcesTable = ({
   datasourcesListRoute,
+  accountUid,
 }: {
   datasourcesListRoute?: string;
+  accountUid?: string;
 }) => {
   const { useDatasources } = useCache();
 
-  const datasourcesQuery = useDatasources();
+  const datasourcesQuery = useDatasources({ accountUid });
 
   const navigate = useNavigate();
   const [datasources, setDatasources] = useState<IDatasource[]>([]);
@@ -101,6 +105,7 @@ const DatasourcesTable = ({
 export const Datasources = ({
   newDatasourceRoute = '/new/datasource',
   datasourcesListRoute,
+  accountUid,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -139,7 +144,10 @@ export const Datasources = ({
               New datasource
             </Button>
           </Box>
-          <DatasourcesTable datasourcesListRoute={datasourcesListRoute} />
+          <DatasourcesTable
+            datasourcesListRoute={datasourcesListRoute}
+            accountUid={accountUid}
+          />
         </Box>
       </PageLayout.Content>
     </PageLayout>

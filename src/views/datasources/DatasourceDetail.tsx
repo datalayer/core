@@ -33,14 +33,19 @@ interface FormData {
   description: string;
 }
 
-export const DatasourceDetail = () => {
+export type DatasourceDetailProps = {
+  /** Optional account uid used to scope datasource reads/updates. */
+  accountUid?: string;
+};
+
+export const DatasourceDetail = ({ accountUid }: DatasourceDetailProps = {}) => {
   const { datasourceId } = useParams();
   const runStore = useRunStore();
   const { enqueueToast } = useToast();
   const { useUpdateDatasource, useDatasource } = useCache();
 
-  const updateDatasourceMutation = useUpdateDatasource();
-  const datasourceQuery = useDatasource(datasourceId ?? '');
+  const updateDatasourceMutation = useUpdateDatasource({ accountUid });
+  const datasourceQuery = useDatasource(datasourceId ?? '', { accountUid });
 
   const [datasource, setDatasource] = useState<AnyDatasource>();
   const [formValues, setFormValues] = useState<FormData>({

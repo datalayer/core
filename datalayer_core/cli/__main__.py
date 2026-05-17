@@ -20,6 +20,7 @@ from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
 from datalayer_core.cli.commands.envs import envs_list, envs_ls
+from datalayer_core.cli.commands.evals import app as evals_app
 from datalayer_core.cli.commands.exec import main as exec_main
 from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
@@ -81,6 +82,7 @@ app.add_typer(checkpoints_app)
 app.add_typer(config_app)
 app.add_typer(console_app)
 app.add_typer(envs_app)
+app.add_typer(evals_app)
 app.add_typer(otel_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
