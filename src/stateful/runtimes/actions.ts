@@ -12,7 +12,6 @@ import { Upload } from 'tus-js-client';
 import {
   IRuntimeOptions,
   requestDatalayerAPI,
-  type RunResponseError,
 } from '../../api';
 import { asSandboxSnapshot } from '../../models';
 import type {
@@ -22,7 +21,6 @@ import type {
   IRuntimePod,
 } from '../../models';
 import { iamStore, runtimesStore } from '../../state';
-import { sleep } from '../../utils';
 
 /**
  * Get available Environments.
@@ -170,7 +168,7 @@ export async function snapshotRuntime(options: {
    * Whether to stop the runtime after the snapshot completion or not.
    */
   stop?: boolean;
-}): Promise<ISandboxSnapshot> {
+}): Promise<ISandboxSnapshot | undefined> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
@@ -189,11 +187,18 @@ export async function snapshotRuntime(options: {
     },
     token: iamStore.getState().token,
   });
-  if (!data.success || !data.snapshot) {
+  if (!data.success) {
     throw new Error(
       `Failed to take the runtime snapshot ${options.id} - ${data}`,
     );
   }
+
+  // Runtimes service can return 202 Accepted without inline snapshot payload
+  // while the snapshot lifecycle completes asynchronously via pub-sub events.
+  if (!data.snapshot) {
+    return undefined;
+  }
+
   return asSandboxSnapshot(data.snapshot);
 }
 
@@ -303,38 +308,6 @@ export async function deleteSandboxSnapshot(id: string): Promise<void> {
     method: 'DELETE',
     token: iamStore.getState().token,
   });
-
-  // Poll Runtime Snapshot state up-to its deletion.
-  try {
-    let sleepTimeout = 1000;
-    while (true) {
-      await sleep(sleepTimeout);
-      sleepTimeout *= 2;
-      const response = await requestDatalayerAPI<{
-        success: boolean;
-        message: string;
-        snapshots?: IAPISandboxSnapshot[];
-      }>({
-        url: URLExt.join(
-          runtimesStore.getState().runtimesRunUrl,
-          `api/runtimes/v1/sandbox-snapshots/${id}`,
-        ),
-        token: iamStore.getState().token,
-      });
-      if (response.success === false) {
-        throw new Error(response.message);
-      }
-    }
-  } catch (error) {
-    if (
-      (error as RunResponseError).name === 'RunResponseError' &&
-      (error as RunResponseError).response.status === 404
-    ) {
-      // Expected not found
-    } else {
-      throw error;
-    }
-  }
 }
 
 /**

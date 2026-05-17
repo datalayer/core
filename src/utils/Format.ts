@@ -31,6 +31,28 @@ export function formatForDisplay(
 }
 
 /**
+ * Format a byte size value using a human-friendly unit.
+ *
+ * Examples: 0 B, 532 B, 1.2 KB, 24 MB, 1.45 GB
+ */
+export function formatByteSize(numBytes: number | string | null | undefined): string {
+  const normalizedNumBytes =
+    typeof numBytes === 'string' ? Number(numBytes) : numBytes;
+
+  if (!Number.isFinite(normalizedNumBytes) || !normalizedNumBytes || normalizedNumBytes < 0) {
+    return '0 B';
+  }
+
+  const [value, unit] = convertToLargestUnit(normalizedNumBytes);
+  const decimals = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+  const formattedValue = value
+    .toFixed(decimals)
+    .replace(/\.0+$|(\.[0-9]*[1-9])0+$/, '$1');
+
+  return `${formattedValue} ${unit}`;
+}
+
+/**
  * Given a number of bytes, convert to the most human-readable
  * format, (GB, TB, etc).
  * If "units" is given, convert to that scale
