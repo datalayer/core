@@ -13,7 +13,7 @@ This example showcases:
 - **Function Decoration**: Transform regular functions into distributed computations using `@datalayer`
 - **Remote Execution**: Execute functions on cloud-based runtimes with different environments
 - **Variable Management**: Pass inputs and retrieve outputs from remote execution contexts
-- **Snapshot Integration**: Use pre-configured runtime snapshots for consistent environments
+- **Snapshot Integration**: Use pre-configured code sandbox snapshots for consistent environments
 - **Error Handling**: Timeout configuration and debug mode for development
 
 ## Features

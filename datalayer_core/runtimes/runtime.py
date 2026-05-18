@@ -22,7 +22,7 @@ from datalayer_core.models import ExecutionResponse
 from datalayer_core.models.runtime import RuntimeModel
 from datalayer_core.runtimes.sandbox_snapshot import (
     SandboxSnapshotModel,
-    as_sandbox_snapshots,
+    as_code_sandbox_snapshots,
     create_snapshot,
 )
 from datalayer_core.utils.defaults import (
@@ -720,7 +720,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
                 pass
 
         response = self._list_snapshots()
-        snapshot_objects = as_sandbox_snapshots(response)
+        snapshot_objects = as_code_sandbox_snapshots(response)
         snapshot: Optional[SandboxSnapshotModel] = None
         max_poll_attempts = max(
             1,
@@ -736,7 +736,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
                 break
             time.sleep(poll_interval_seconds)
             response = self._list_snapshots()
-            snapshot_objects = as_sandbox_snapshots(response)
+            snapshot_objects = as_code_sandbox_snapshots(response)
 
         if snapshot is None:
             raise RuntimeError(

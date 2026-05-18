@@ -31,7 +31,7 @@ from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
 from datalayer_core.runtimes.runtime import RuntimeService
 from datalayer_core.runtimes.sandbox_snapshot import (
-    as_sandbox_snapshots,
+    as_code_sandbox_snapshots,
     create_snapshot,
 )
 from datalayer_core.utils.defaults import (
@@ -597,7 +597,7 @@ class DatalayerClient(
             A list of snapshots associated with the user.
         """
         response = self._list_snapshots()
-        snapshot_objects = as_sandbox_snapshots(response)
+        snapshot_objects = as_code_sandbox_snapshots(response)
         return snapshot_objects
 
     def delete_snapshot(

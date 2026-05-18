@@ -4,7 +4,7 @@
 """
 Snapshot services for Datalayer.
 
-Provides runtime snapshot management and operations in Datalayer environments.
+Provides code sandbox snapshot management and operations in Datalayer environments.
 """
 
 import uuid
@@ -39,7 +39,7 @@ def create_snapshot(name: Optional[str], description: Optional[str]) -> Tuple[st
     return name, description
 
 
-def as_sandbox_snapshots(response: dict[str, Any]) -> List["SandboxSnapshotModel"]:
+def as_code_sandbox_snapshots(response: dict[str, Any]) -> List["SandboxSnapshotModel"]:
     """
     Parse API response and create SandboxSnapshot objects.
 

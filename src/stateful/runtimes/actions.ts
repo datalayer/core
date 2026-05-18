@@ -13,10 +13,10 @@ import {
   IRuntimeOptions,
   requestDatalayerAPI,
 } from '../../api';
-import { asSandboxSnapshot } from '../../models';
+import { asCodeSandboxSnapshot } from '../../models';
 import type {
-  ISandboxSnapshot,
-  IAPISandboxSnapshot,
+  ICodeSandboxSnapshot,
+  IAPICodeSandboxSnapshot,
   IDatalayerEnvironment,
   IRuntimePod,
 } from '../../models';
@@ -168,11 +168,11 @@ export async function snapshotRuntime(options: {
    * Whether to stop the runtime after the snapshot completion or not.
    */
   stop?: boolean;
-}): Promise<ISandboxSnapshot | undefined> {
+}): Promise<ICodeSandboxSnapshot | undefined> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshot?: IAPISandboxSnapshot;
+    snapshot?: IAPICodeSandboxSnapshot;
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -189,7 +189,7 @@ export async function snapshotRuntime(options: {
   });
   if (!data.success) {
     throw new Error(
-      `Failed to take the runtime snapshot ${options.id} - ${data}`,
+      `Failed to take the code sandbox snapshot ${options.id} - ${data}`,
     );
   }
 
@@ -199,17 +199,17 @@ export async function snapshotRuntime(options: {
     return undefined;
   }
 
-  return asSandboxSnapshot(data.snapshot);
+  return asCodeSandboxSnapshot(data.snapshot);
 }
 
 /**
  * Get Runtime Snapshots.
  */
-export async function getSandboxSnapshots(): Promise<ISandboxSnapshot[]> {
+export async function getSandboxSnapshots(): Promise<ICodeSandboxSnapshot[]> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshots?: IAPISandboxSnapshot[];
+    snapshots?: IAPICodeSandboxSnapshot[];
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -218,10 +218,10 @@ export async function getSandboxSnapshots(): Promise<ISandboxSnapshot[]> {
     token: iamStore.getState().token,
   });
   if (!data.success) {
-    console.error('Failed to fetch runtime snapshots.', data);
+    console.error('Failed to fetch code sandbox snapshots.', data);
     return [];
   }
-  return (data.snapshots ?? []).map(asSandboxSnapshot);
+  return (data.snapshots ?? []).map(asCodeSandboxSnapshot);
 }
 
 /**
@@ -254,7 +254,7 @@ export async function loadSandboxSnapshot(options: {
   });
 
   if (!data.success) {
-    throw new Error(`Failed to load the runtime snapshot; ${data.message}`);
+    throw new Error(`Failed to load the code sandbox snapshot; ${data.message}`);
   }
 }
 
@@ -295,11 +295,11 @@ export function exportSandboxSnapshot(id: string): void {
 /**
  * Delete a Runtime Snapshot.
  */
-export async function deleteSandboxSnapshot(id: string): Promise<void> {
+export async function deleteCodeSandboxSnapshot(id: string): Promise<void> {
   await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshots?: IAPISandboxSnapshot[];
+    snapshots?: IAPICodeSandboxSnapshot[];
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
@@ -313,7 +313,7 @@ export async function deleteSandboxSnapshot(id: string): Promise<void> {
 /**
  * Update Runtime Snapshot metadata.
  */
-export async function updateSandboxSnapshot(
+export async function updateCodeSandboxSnapshot(
   id: string,
   metadata: { name?: string; description?: string },
 ): Promise<void> {
@@ -321,7 +321,7 @@ export async function updateSandboxSnapshot(
     await requestDatalayerAPI<{
       success: boolean;
       message: string;
-      snapshot?: IAPISandboxSnapshot;
+      snapshot?: IAPICodeSandboxSnapshot;
     }>({
       url: URLExt.join(
         runtimesStore.getState().runtimesRunUrl,
@@ -339,7 +339,7 @@ export async function updateSandboxSnapshot(
  *
  * Note: The promise will be rejected if the runtime state is empty.
  */
-export async function uploadSandboxSnapshot(options: {
+export async function uploadCodeSandboxSnapshot(options: {
   file: File | Blob;
   metadata: { filename: string; [key: string]: string };
   onProgress?: (bytesUploaded: number, bytesTotal: number) => void;

@@ -26,7 +26,7 @@ import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
 import type { IRemoteServicesManager } from '../../stateful/runtimes';
 import type { RunResponseError } from '../../api/DatalayerApi';
-import type { ISandboxSnapshot, IRuntimeDesc } from '../../models';
+import type { ICodeSandboxSnapshot, IRuntimeDesc } from '../../models';
 import { iamStore, useCoreStore, useIAMStore } from '../../state';
 import { createNotebook, sleep } from '../../utils';
 import { Markdown } from '../display';
@@ -88,7 +88,7 @@ export interface IRuntimeLauncherDialogProps {
    * If provided the kernel will be started and will
    * restore the provided snapshot in the kernel.
    */
-  kernelSnapshot?: ISandboxSnapshot;
+  kernelSnapshot?: ICodeSandboxSnapshot;
 
   /**
    * HTML sanitizer

@@ -12,11 +12,11 @@ import * as environments from '../../api/runtimes/environments';
 import * as runtimes from '../../api/runtimes/runtimes';
 import * as snapshots from '../../api/runtimes/snapshots';
 import type { CreateRuntimeRequest } from '../../models/RuntimeDTO';
-import type { CreateSandboxSnapshotRequest } from '../../models/SandboxSnapshotDTO';
+import type { CreateCodeSandboxSnapshotRequest } from '../../models/CodeSandboxSnapshotDTO';
 import type { Constructor } from '../utils/mixins';
 import { EnvironmentDTO } from '../../models/EnvironmentDTO';
 import { RuntimeDTO } from '../../models/RuntimeDTO';
-import { SandboxSnapshotDTO } from '../../models/SandboxSnapshotDTO';
+import { CodeSandboxSnapshotDTO } from '../../models/CodeSandboxSnapshotDTO';
 import { HealthCheck } from '../../models/HealthCheck';
 
 /** Options for ensuring a runtime is available. */
@@ -51,7 +51,7 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
     }
 
     _extractSnapshotId(
-      snapshotIdOrInstance: string | SandboxSnapshotDTO,
+      snapshotIdOrInstance: string | CodeSandboxSnapshotDTO,
     ): string {
       return typeof snapshotIdOrInstance === 'string'
         ? snapshotIdOrInstance
@@ -212,11 +212,11 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
       name: string,
       description: string,
       stop: boolean = false,
-    ): Promise<SandboxSnapshotDTO> {
+    ): Promise<CodeSandboxSnapshotDTO> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
 
-      const data: CreateSandboxSnapshotRequest = {
+      const data: CreateCodeSandboxSnapshotRequest = {
         pod_name: podName,
         name,
         description,
@@ -228,19 +228,19 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
         data,
         runtimesRunUrl,
       );
-      return new SandboxSnapshotDTO(response.snapshot, this as any);
+      return new CodeSandboxSnapshotDTO(response.snapshot, this as any);
     }
 
     /**
-     * List all runtime snapshots.
+     * List all code sandbox snapshots.
      * @returns Array of snapshots
      */
-    async listSnapshots(): Promise<SandboxSnapshotDTO[]> {
+    async listSnapshots(): Promise<CodeSandboxSnapshotDTO[]> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const response = await snapshots.listSnapshots(token, runtimesRunUrl);
       return response.snapshots.map(
-        s => new SandboxSnapshotDTO(s, this as any),
+        s => new CodeSandboxSnapshotDTO(s, this as any),
       );
     }
 
@@ -249,11 +249,11 @@ export function RuntimesMixin<TBase extends Constructor>(Base: TBase) {
      * @param id - Snapshot ID
      * @returns Snapshot details
      */
-    async getSnapshot(id: string): Promise<SandboxSnapshotDTO> {
+    async getSnapshot(id: string): Promise<CodeSandboxSnapshotDTO> {
       const token = (this as any).getToken();
       const runtimesRunUrl = (this as any).getRuntimesRunUrl();
       const response = await snapshots.getSnapshot(token, id, runtimesRunUrl);
-      return new SandboxSnapshotDTO(response.snapshot, this as any);
+      return new CodeSandboxSnapshotDTO(response.snapshot, this as any);
     }
 
     /**

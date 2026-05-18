@@ -101,7 +101,7 @@ def test_runtime_create_execute_and_list() -> None:
     not bool(TEST_DATALAYER_API_KEY),
     reason="TEST_DATALAYER_API_KEY is not set, skipping secret tests.",
 )
-def test_sandbox_snapshot_create_and_delete() -> None:
+def test_code_sandbox_snapshot_create_and_delete() -> None:
     """
     Test the creation and deletion of runtime.
     """

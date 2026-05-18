@@ -5,7 +5,7 @@
 
 import { KernelExecutor } from '@datalayer/jupyter-react';
 import { Kernel } from '@jupyterlab/services';
-import { createSandboxSnapshotDownloadURL, uploadSandboxSnapshot } from '.';
+import { createSandboxSnapshotDownloadURL, uploadCodeSandboxSnapshot } from '.';
 
 type Props = {
   connection: Kernel.IKernelConnection;
@@ -34,7 +34,7 @@ export async function createSandboxSnapshot(props: Props): Promise<void> {
   // Convert the data to blob.
   const bytes = base64ToBytes(serializedData);
   const file = new Blob([bytes.buffer]);
-  return uploadSandboxSnapshot({
+  return uploadCodeSandboxSnapshot({
     file,
     metadata,
     onProgress: onUploadProgress,

@@ -22,7 +22,7 @@ import {
 import { Dialog } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { useToast } from '../../hooks';
-import { type ISandboxSnapshot } from '../../models';
+import { type ICodeSandboxSnapshot } from '../../models';
 import {
   createSandboxSnapshot,
   getSandboxSnapshots,
@@ -36,7 +36,7 @@ import { createSandboxSnapshotName } from '../../utils';
 /**
  * Runtime snapshot menu component properties
  */
-type ISandboxSnapshotMenu = {
+type ICodeSandboxSnapshotMenu = {
   /**
    * Application multi service manager.
    */
@@ -68,7 +68,7 @@ export function SandboxSnapshotMenu({
   podName,
   multiServiceManager,
   disabled = false,
-}: PropsWithChildren<ISandboxSnapshotMenu>): JSX.Element {
+}: PropsWithChildren<ICodeSandboxSnapshotMenu>): JSX.Element {
   const {
     addSandboxSnapshot,
     runtimesRunUrl,
@@ -127,7 +127,7 @@ export function SandboxSnapshotMenu({
   const onTakeSandboxSnapshot = useCallback(async () => {
     try {
       setTakingSandboxSnapshot(true);
-      let snapshot: ISandboxSnapshot | undefined;
+      let snapshot: ICodeSandboxSnapshot | undefined;
       let task: Promise<any> | undefined;
       let ref = '';
       let snapshotName = '';
@@ -207,13 +207,13 @@ export function SandboxSnapshotMenu({
               onSelect={onLoadSandboxSnapshot}
               disabled={loadingSandboxSnapshot || runtimeSnapshots.length === 0}
             >
-              Load a runtime snapshot…
+              Load a code sandbox snapshot…
             </ActionList.Item>
             <ActionList.Item
               onSelect={onTakeSandboxSnapshot}
               disabled={takingSandboxSnapshot}
             >
-              Take a runtime snapshot
+              Take a code sandbox snapshot
             </ActionList.Item>
           </ActionList>
         </ActionMenu.Overlay>
@@ -222,7 +222,7 @@ export function SandboxSnapshotMenu({
         <Dialog
           title={
             <span style={{ color: 'var(--fgColor-default)' }}>
-              Choose a runtime snapshot to load
+              Choose a code sandbox snapshot to load
             </span>
           }
           onClose={() => {
@@ -263,7 +263,7 @@ export function SandboxSnapshotMenu({
                         podName,
                       });
                     } else {
-                      setError('No runtime snapshot found.');
+                      setError('No code sandbox snapshot found.');
                     }
                   } finally {
                     setLoadingSandboxSnapshot(false);
