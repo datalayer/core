@@ -20,11 +20,11 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="evals",
-    help="Launch and monitor SaaS eval datasets, experiments, runs, and live monitoring.",
+    help="Launch and monitor SaaS evals, experiments, runs, and live monitoring.",
     invoke_without_command=True,
 )
 
-datasets_app = typer.Typer(name="datasets", help="Manage eval datasets.")
+evals_app = typer.Typer(name="evals", help="Manage evals.")
 experiments_app = typer.Typer(name="experiments", help="Manage eval experiments.")
 runs_app = typer.Typer(name="runs", help="Launch and monitor eval runs.")
 live_app = typer.Typer(name="live", help="Inspect live eval monitoring.")
@@ -91,8 +91,8 @@ def evals_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@datasets_app.command(name="list")
-def datasets_list(
+@evals_app.command(name="list")
+def evals_list(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
@@ -103,9 +103,9 @@ def datasets_list(
     offset: int = typer.Option(0, "--offset", min=0),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
-    """List eval datasets."""
+    """List evals."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
-    payload = client.evals_list_datasets(
+    payload = client.evals_list_evals(
         source=source,
         kind=kind,
         q=q,
@@ -117,15 +117,15 @@ def datasets_list(
         console.print(payload)
         return
 
-    datasets = payload.get("eval_datasets") or []
-    table = Table(title=f"Eval Datasets ({len(datasets)})")
+    evals = payload.get("evals") or []
+    table = Table(title=f"Evals ({len(evals)})")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="white")
     table.add_column("Source", style="white")
     table.add_column("Kind", style="white")
     table.add_column("Cases", style="white")
     table.add_column("Updated", style="white")
-    for item in datasets:
+    for item in evals:
         table.add_row(
             str(item.get("id", "")),
             str(item.get("name", "")),
@@ -137,12 +137,12 @@ def datasets_list(
     console.print(table)
 
 
-@datasets_app.command(name="create")
-def datasets_create(
-    name: str = typer.Argument(..., help="Eval dataset name."),
+@evals_app.command(name="create")
+def evals_create(
+    name: str = typer.Argument(..., help="Eval name."),
     description: str = typer.Option("", "--description", help="Description."),
-    source: str = typer.Option("hosted", "--source", help="Dataset source."),
-    kind: str = typer.Option("offline", "--kind", help="Dataset kind."),
+    source: str = typer.Option("hosted", "--source", help="Eval source."),
+    kind: str = typer.Option("offline", "--kind", help="Eval kind."),
     schema_json: Optional[str] = typer.Option(None, "--schema-json", help="Schema JSON object."),
     metadata_json: Optional[str] = typer.Option(None, "--metadata-json", help="Metadata JSON object."),
     cases_file: Optional[str] = typer.Option(None, "--cases-file", help="Path to JSON array of cases."),
@@ -151,7 +151,7 @@ def datasets_create(
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
 ) -> None:
-    """Create an eval dataset."""
+    """Create an eval."""
     schema = _parse_json_value(schema_json, "--schema-json")
     metadata = _parse_json_value(metadata_json, "--metadata-json")
     cases: list[dict[str, Any]] = []
@@ -163,7 +163,7 @@ def datasets_create(
         cases = [case for case in decoded if isinstance(case, dict)]
 
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
-    payload = client.evals_create_dataset(
+    payload = client.evals_create_eval(
         name=name,
         description=description,
         source=source,
@@ -174,23 +174,23 @@ def datasets_create(
         cases=cases,
         account_uid=account_uid,
     )
-    dataset = payload.get("eval_dataset") or {}
-    console.print(f"[green]Eval dataset created:[/green] {dataset.get('id', '')} ({dataset.get('name', '')})")
+    eval_record = payload.get("eval") or {}
+    console.print(f"[green]Eval created:[/green] {eval_record.get('id', '')} ({eval_record.get('name', '')})")
 
 
-@datasets_app.command(name="delete")
-def datasets_delete(
-    dataset_id: str = typer.Argument(..., help="Eval dataset ID."),
+@evals_app.command(name="delete")
+def evals_delete(
+    eval_id: str = typer.Argument(..., help="Eval ID."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
 ) -> None:
-    """Delete an eval dataset (cascade delete runs/experiments)."""
+    """Delete an eval (cascade delete runs/experiments)."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
-    payload = client.evals_delete_dataset(dataset_id, account_uid=account_uid)
+    payload = client.evals_delete_eval(eval_id, account_uid=account_uid)
     cascade = payload.get("cascade") or {}
     console.print(
-        "[green]Eval dataset deleted.[/green] "
+        "[green]Eval deleted.[/green] "
         f"experiments={cascade.get('experiments_deleted', 0)} "
         f"runs={cascade.get('runs_deleted', 0)} "
         f"cases={cascade.get('cases_deleted', 0)}"
@@ -199,7 +199,7 @@ def datasets_delete(
 
 @experiments_app.command(name="list")
 def experiments_list(
-    dataset_id: Optional[str] = typer.Option(None, "--dataset-id", help="Filter by eval dataset ID."),
+    eval_id: Optional[str] = typer.Option(None, "--eval-id", help="Filter by eval ID."),
     status: Optional[str] = typer.Option(None, "--status", help="Filter by status."),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
     offset: int = typer.Option(0, "--offset", min=0),
@@ -211,7 +211,7 @@ def experiments_list(
     """List eval experiments."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_list_experiments(
-        dataset_id=dataset_id,
+        eval_id=eval_id,
         status=status,
         limit=limit,
         offset=offset,
@@ -224,7 +224,7 @@ def experiments_list(
     table = Table(title=f"Eval Experiments ({len(experiments)})")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="white")
-    table.add_column("Dataset", style="white")
+    table.add_column("Eval", style="white")
     table.add_column("Status", style="white")
     table.add_column("Updated", style="white")
     for item in experiments:
@@ -232,7 +232,7 @@ def experiments_list(
         table.add_row(
             str(item.get("id", "")),
             str(item.get("name", "")),
-            str(item.get("dataset_id", "")),
+            str(item.get("eval_id", "")),
             f"[{_status_style(status_value)}]{status_value}[/{_status_style(status_value)}]",
             str(item.get("updated_at", "")),
         )
@@ -242,7 +242,7 @@ def experiments_list(
 @experiments_app.command(name="create")
 def experiments_create(
     name: str = typer.Argument(..., help="Experiment name."),
-    dataset_id: Optional[str] = typer.Option(None, "--dataset-id", help="Eval dataset ID."),
+    eval_id: Optional[str] = typer.Option(None, "--eval-id", help="Eval ID."),
     description: str = typer.Option("", "--description", help="Description."),
     status: str = typer.Option("draft", "--status", help="Initial status."),
     config_json: Optional[str] = typer.Option(None, "--config-json", help="Config JSON object."),
@@ -256,7 +256,7 @@ def experiments_create(
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_create_experiment(
         name=name,
-        dataset_id=dataset_id,
+        eval_id=eval_id,
         description=description,
         status=status,
         config=_parse_json_value(config_json, "--config-json"),
@@ -468,7 +468,7 @@ def live_targets(
     console.print(table)
 
 
-app.add_typer(datasets_app)
+app.add_typer(evals_app)
 app.add_typer(experiments_app)
 app.add_typer(runs_app)
 app.add_typer(live_app)

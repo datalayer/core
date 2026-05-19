@@ -1,9 +1,9 @@
 # Datalayer Evals CLI Examples
 
 This example walks you through the **`datalayer evals`** CLI step by step.
-You will create an eval dataset, attach an experiment, launch a run, and watch
+You will create an eval, attach an experiment, launch a run, and watch
 it to completion — all from your terminal, mirroring the Pydantic Evals mental
-model (`Dataset` -> `Case` -> `Experiment` -> `Run` -> `Report`).
+model (`Eval` -> `Case` -> `Experiment` -> `Run` -> `Report`).
 
 The runs you launch here will also show up in the Datalayer UI at
 `/agents/evals`, on the **Experiment Insights** panel with pass-rate trend,
@@ -24,13 +24,13 @@ Sanity check:
 datalayer evals --help
 ```
 
-You should see four sub-commands: `datasets`, `experiments`, `runs`, `live`.
+You should see four sub-commands: `evals`, `experiments`, `runs`, `live`.
 
 ## How This Example Is Wired
 
 - All commands run through `make` targets defined in [`Makefile`](./Makefile).
 - IDs are persisted between targets in a local `.evals.env` file
-  (`DATASET_ID`, `EXPERIMENT_ID`, `RUN_ID`).
+  (`EVAL_ID`, `EXPERIMENT_ID`, `RUN_ID`).
 - An end-to-end Python equivalent of the flow lives in
   [`launch_and_monitor.py`](./launch_and_monitor.py).
 
@@ -44,40 +44,40 @@ make help
 
 Lists every Make target with a one-line description. Use this as your menu.
 
-### 2. List existing eval datasets
+### 2. List existing evals
 
 ```bash
-make list-datasets
+make list-evals
 ```
 
-Calls `datalayer evals datasets list --limit 20`. This is the hosted view of
-your `EvalDataset` objects (equivalent to Logfire's **Eval Datasets** page).
+Calls `datalayer evals evals list --limit 20`. This is the hosted view of
+your hosted eval objects (equivalent to Logfire's **Evals** page).
 
-### 3. Create a hosted eval dataset
+### 3. Create a hosted eval
 
 ```bash
-make create-dataset
+make create-eval
 ```
 
-- Runs `datalayer evals datasets create <name>` with a date-stamped name.
-- Parses the new dataset UUID from the CLI output.
-- Writes `DATASET_ID=<uuid>` into `.evals.env`.
+- Runs `datalayer evals evals create <name>` with a date-stamped name.
+- Parses the new eval UUID from the CLI output.
+- Writes `EVAL_ID=<uuid>` into `.evals.env`.
 
-Maps to Pydantic Evals: this creates the empty **`Dataset`** that will hold
+Maps to Pydantic Evals: this creates the empty **`Eval`** that will hold
 your `Case`s. You can later add cases through the UI (`/agents/evals` ->
-Dataset detail -> Add Case) or via API.
+Eval detail -> Add Case) or via API.
 
-### 4. Create an experiment bound to the dataset
+### 4. Create an experiment bound to the eval
 
 ```bash
 make create-experiment
 ```
 
-- Requires `DATASET_ID` (Step 3).
-- Runs `datalayer evals experiments create <name> --dataset-id $DATASET_ID`.
+- Requires `EVAL_ID` (Step 3).
+- Runs `datalayer evals experiments create <name> --eval-id $EVAL_ID`.
 - Persists `EXPERIMENT_ID` into `.evals.env`.
 
-An **Experiment** groups one or more `Run`s of the same dataset under a
+An **Experiment** groups one or more `Run`s of the same eval under a
 shared configuration (think "v1", "v2" iterations of a prompt or agent).
 
 ### 5. Launch a run
@@ -107,7 +107,7 @@ Polls `datalayer evals runs watch $RUN_ID --interval 3 --timeout 600` and
 prints status transitions until the run reaches a terminal state
 (`completed`, `failed`, `cancelled`) or the timeout expires.
 
-This is the offline-eval equivalent of waiting for `Dataset.evaluate(...)`
+This is the offline-eval equivalent of waiting for `eval.evaluate(...)`
 to finish locally — the SaaS engine does the work and the CLI reports
 status.
 
@@ -138,13 +138,13 @@ make clean
 ```
 
 Removes `.evals.env`. The hosted resources stay; delete those via the UI or
-`datalayer evals datasets delete <id>` / `experiments delete <id>` if you
+`datalayer evals evals delete <id>` / `experiments delete <id>` if you
 want a full cleanup.
 
 ## Verifying in the UI
 
 1. Open `/agents/evals` in Datalayer.
-2. Switch to the **Eval Datasets** pane.
+2. Switch to the **Evals** pane.
 3. Pick your CLI-created experiment (or let it auto-select).
 4. The **Experiment Insights** panel will show:
    - **Pass-rate trend** — sparkline over recent runs with per-run tooltips
@@ -167,7 +167,7 @@ Prefer Python over Make? Run:
 python launch_and_monitor.py
 ```
 
-This uses `DatalayerClient` directly (`EvalsMixin`) to create dataset +
+This uses `DatalayerClient` directly (`EvalsMixin`) to create eval +
 experiment + run and poll until terminal status — handy if you want to embed
 the workflow in a larger script.
 
@@ -175,18 +175,18 @@ the workflow in a larger script.
 
 | Concept (Pydantic Evals / Logfire) | This Example                                         |
 | ---------------------------------- | ---------------------------------------------------- |
-| `Dataset`                          | `make create-dataset`                                |
-| `Case` (input/expected/metadata)   | Added via UI or API after `create-dataset`           |
+| `Eval`                             | `make create-eval`                                   |
+| `Case` (input/expected/metadata)   | Added via UI or API after `create-eval`              |
 | Evaluators                         | Configured on the experiment / case                  |
 | Experiment iteration               | `make create-experiment`                             |
-| `Dataset.evaluate(...)` (offline)  | `make launch-run` + `make watch-run`                 |
+| `eval.evaluate(...)` (offline)     | `make launch-run` + `make watch-run`                 |
 | Online evaluator events            | `make live-targets`                                  |
 | Report metrics / drift             | UI **Experiment Insights** panel (trend + drift)     |
 
 ## Troubleshooting
 
-- **`Could not extract DATASET_ID`** — the CLI output did not contain a UUID.
-  Run the underlying command manually (`datalayer evals datasets create ...`)
+- **`Could not extract EVAL_ID`** — the CLI output did not contain a UUID.
+  Run the underlying command manually (`datalayer evals evals create ...`)
   to inspect the error.
 - **`401 Unauthorized`** — confirm `DATALAYER_API_KEY` is set and valid.
 - **`Run never leaves queued`** — verify the experiment is wired to a runtime

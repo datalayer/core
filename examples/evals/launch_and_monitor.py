@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Create dataset/experiment/run and monitor run status with datalayer_core eval APIs."""
+"""Create eval/experiment/run and monitor run status with datalayer_core eval APIs."""
 
 from __future__ import annotations
 
@@ -23,9 +23,9 @@ def main() -> None:
     urls = DatalayerURLs.from_environment(ai_agents_url=ai_agents_url)
     client = DatalayerClient(urls=urls, token=token)
 
-    ds_payload = client.evals_create_dataset(
-        name="python-cli-demo-dataset",
-        description="Dataset created from examples/evals/launch_and_monitor.py",
+    ds_payload = client.evals_create_eval(
+        name="python-cli-demo-eval",
+        description="Eval created from examples/evals/launch_and_monitor.py",
         source="hosted",
         kind="offline",
         cases=[
@@ -38,13 +38,13 @@ def main() -> None:
         ],
         account_uid=account_uid,
     )
-    dataset = ds_payload.get("eval_dataset") or {}
-    dataset_id = str(dataset.get("id"))
-    print(f"Created dataset: {dataset_id}")
+    eval_record = ds_payload.get("eval") or {}
+    eval_id = str(eval_record.get("id"))
+    print(f"Created eval: {eval_id}")
 
     ex_payload = client.evals_create_experiment(
         name="python-cli-demo-experiment",
-        dataset_id=dataset_id,
+        eval_id=eval_id,
         description="Experiment created by launch_and_monitor.py",
         status="draft",
         config={"execution_mode": "offline"},

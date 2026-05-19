@@ -14,9 +14,9 @@ This directory contains practical examples demonstrating how to use the Datalaye
 
 Beginner-friendly walkthrough for launching and monitoring SaaS evals with `datalayer evals`.
 
-- **Use Case**: Run eval datasets/experiments from CLI and track in the SaaS UI
+- **Use Case**: Run evals/experiments from CLI and track in the SaaS UI
 - **Technologies**: Datalayer Core CLI, AI Agents eval APIs
-- **Features**: Dataset/experiment/run creation, run watching, live target inspection, make targets for quick onboarding
+- **Features**: Eval/experiment/run creation, run watching, live target inspection, make targets for quick onboarding
 
 ### 🎭 [Datalayer Decorator](./decorator/README.md)
 

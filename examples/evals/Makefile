@@ -3,7 +3,7 @@ SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 CLI ?= datalayer
-DATASET_NAME ?= cli-eval-dataset-$(shell date +%Y%m%d)
+EVAL_NAME ?= cli-eval-$(shell date +%Y%m%d)
 EXPERIMENT_NAME ?= cli-eval-experiment-$(shell date +%H%M%S)
 STATUS ?= queued
 WINDOW ?= 24h
@@ -19,27 +19,27 @@ define run_cli
 	$${DATALAYER_ACCOUNT_UID:+--account-uid $$DATALAYER_ACCOUNT_UID}
 endef
 
-.PHONY: help list-datasets create-dataset create-experiment launch-run watch-run list-runs live-targets clean
+.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Usage: make <target>\n"} /^[a-zA-Z_-]+:.*?##/ {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-list-datasets: ## List eval datasets
-	@$(call run_cli,datasets list --limit 20)
+list-evals: ## List evals
+	@$(call run_cli,evals list --limit 20)
 
-create-dataset: ## Create a hosted eval dataset and persist DATASET_ID to .evals.env
-	@out="$$( $(call run_cli,datasets create "$(DATASET_NAME)" --description "Dataset created from core/examples/evals") )"; \
+create-eval: ## Create a hosted eval and persist EVAL_ID to .evals.env
+	@out="$$( $(call run_cli,evals create "$(EVAL_NAME)" --description "Eval created from core/examples/evals") )"; \
 	echo "$$out"; \
-	dataset_id="$$(echo "$$out" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27,}' | head -n1)"; \
-	if [[ -z "$$dataset_id" ]]; then echo "Could not extract DATASET_ID"; exit 1; fi; \
-	grep -v '^DATASET_ID=' $(ENV_FILE) 2>/dev/null > $(ENV_FILE).tmp || true; \
-	echo "DATASET_ID=$$dataset_id" >> $(ENV_FILE).tmp; \
+	eval_id="$$(echo "$$out" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27,}' | head -n1)"; \
+	if [[ -z "$$eval_id" ]]; then echo "Could not extract EVAL_ID"; exit 1; fi; \
+	grep -v '^EVAL_ID=' $(ENV_FILE) 2>/dev/null > $(ENV_FILE).tmp || true; \
+	echo "EVAL_ID=$$eval_id" >> $(ENV_FILE).tmp; \
 	mv $(ENV_FILE).tmp $(ENV_FILE); \
-	echo "Saved DATASET_ID=$$dataset_id to $(ENV_FILE)"
+	echo "Saved EVAL_ID=$$eval_id to $(ENV_FILE)"
 
-create-experiment: ## Create experiment from DATASET_ID and persist EXPERIMENT_ID
-	@if [[ -z "$(DATASET_ID)" ]]; then echo "DATASET_ID missing. Run: make create-dataset"; exit 1; fi
-	@out="$$( $(call run_cli,experiments create "$(EXPERIMENT_NAME)" --dataset-id "$(DATASET_ID)") )"; \
+create-experiment: ## Create experiment from EVAL_ID and persist EXPERIMENT_ID
+	@if [[ -z "$(EVAL_ID)" ]]; then echo "EVAL_ID missing. Run: make create-eval"; exit 1; fi
+	@out="$$( $(call run_cli,experiments create "$(EXPERIMENT_NAME)" --eval-id "$(EVAL_ID)") )"; \
 	echo "$$out"; \
 	experiment_id="$$(echo "$$out" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27,}' | head -n1)"; \
 	if [[ -z "$$experiment_id" ]]; then echo "Could not extract EXPERIMENT_ID"; exit 1; fi; \

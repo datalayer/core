@@ -42,7 +42,7 @@ def _delete_all_runtimes(secs: int = 5) -> None:
         (["--version"], "1."),
         (["--help"], "The Datalayer CLI application"),
         (["about"], "About"),
-        (["evals", "--help"], "Launch and monitor SaaS eval datasets"),
+        (["evals", "--help"], "Launch and monitor SaaS evals"),
     ],
 )
 def test_cli(args: List[str], expected_output: str) -> None:
