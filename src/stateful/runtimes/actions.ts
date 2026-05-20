@@ -203,7 +203,7 @@ export async function snapshotRuntime(options: {
 }
 
 /**
- * Get Runtime Snapshots.
+ * Get Code Sandbox Snapshots.
  */
 export async function getSandboxSnapshots(): Promise<ICodeSandboxSnapshot[]> {
   const data = await requestDatalayerAPI<{
@@ -225,7 +225,7 @@ export async function getSandboxSnapshots(): Promise<ICodeSandboxSnapshot[]> {
 }
 
 /**
- * Load a Runtime Snapshot within a Runtime.
+ * Load a Code Sandbox Snapshot within a Runtime.
  */
 export async function loadSandboxSnapshot(options: {
   /**
@@ -259,7 +259,7 @@ export async function loadSandboxSnapshot(options: {
 }
 
 /**
- * Returns the Runtime Snapshot download URL.
+ * Returns the Code Sandbox Snapshot download URL.
  *
  * @param id Snapshot UID to download
  * @returns The download URL
@@ -278,11 +278,11 @@ export function createSandboxSnapshotDownloadURL(id: string): string {
 }
 
 /**
- * Export a Runtime Snapshot.
+ * Export a Code Sandbox Snapshot.
  *
- * @param id Runtime snapshot UID to download
+ * @param id Code Sandbox snapshot UID to download
  */
-export function exportSandboxSnapshot(id: string): void {
+export function exportCodeSandboxSnapshot(id: string): void {
   const url = createSandboxSnapshotDownloadURL(id);
   const element = document.createElement('a');
   element.href = url;
@@ -293,7 +293,7 @@ export function exportSandboxSnapshot(id: string): void {
 }
 
 /**
- * Delete a Runtime Snapshot.
+ * Delete a Code Sandbox Snapshot.
  */
 export async function deleteCodeSandboxSnapshot(id: string): Promise<void> {
   await requestDatalayerAPI<{
@@ -311,7 +311,7 @@ export async function deleteCodeSandboxSnapshot(id: string): Promise<void> {
 }
 
 /**
- * Update Runtime Snapshot metadata.
+ * Update Code Sandbox Snapshot metadata.
  */
 export async function updateCodeSandboxSnapshot(
   id: string,
@@ -335,7 +335,7 @@ export async function updateCodeSandboxSnapshot(
 }
 
 /**
- * Upload a Runtime Snapshot.
+ * Upload a Code Sandbox Snapshot.
  *
  * Note: The promise will be rejected if the runtime state is empty.
  */
@@ -345,7 +345,7 @@ export async function uploadCodeSandboxSnapshot(options: {
   onProgress?: (bytesUploaded: number, bytesTotal: number) => void;
 }): Promise<void> {
   if (options.file.size === 0) {
-    return Promise.reject('Empty Runtime Snapshot.');
+    return Promise.reject('Empty Code Sandbox Snapshot.');
   }
   const tracker = new PromiseDelegate<void>();
   // Create a new tus upload.

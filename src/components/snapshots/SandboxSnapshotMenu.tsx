@@ -34,7 +34,7 @@ import { useRuntimesStore } from '../../state';
 import { createSandboxSnapshotName } from '../../utils';
 
 /**
- * Runtime snapshot menu component properties
+ * Code Sandbox snapshot menu component properties
  */
 type ICodeSandboxSnapshotMenu = {
   /**
@@ -60,7 +60,7 @@ type ICodeSandboxSnapshotMenu = {
 };
 
 /**
- * Runtime Snapshot menu component.
+ * Code Sandbox Snapshot menu component.
  */
 export function SandboxSnapshotMenu({
   children,
@@ -112,12 +112,12 @@ export function SandboxSnapshotMenu({
     }) => {
       if (podName) {
         await loadSandboxSnapshot({ id: podName, from: id });
-        enqueueToast(`Runtime snapshot ${podName} is loaded.`, {
+        enqueueToast(`Code Sandbox snapshot ${podName} is loaded.`, {
           variant: 'success',
         });
       } else if (connection) {
         await loadBrowserSandboxSnapshot({ connection, id });
-        enqueueToast(`Runtime snapshot ${id} is loaded.`, {
+        enqueueToast(`Code Sandbox snapshot ${id} is loaded.`, {
           variant: 'success',
         });
       }

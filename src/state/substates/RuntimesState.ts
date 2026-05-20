@@ -66,7 +66,7 @@ export type RuntimesState = {
   showDisclaimer: boolean;
   setShowDisclaimer: (showDisclaimer: boolean) => void;
   /**
-   * Runtime snapshots.
+   * Code Sandbox snapshots.
    */
   runtimeSnapshots: readonly ICodeSandboxSnapshot[];
   /**
@@ -74,11 +74,11 @@ export type RuntimesState = {
    */
   addSandboxSnapshot: (snapshot: ICodeSandboxSnapshot) => void;
   /**
-   * Remove a Runtime Snapshot.
+   * Remove a Code Sandbox Snapshot.
    */
   removeSandboxSnapshot: (id: string) => void;
   /**
-   * Set Runtime Snapshots.
+   * Set Code Sandbox Snapshots.
    */
   setSandboxSnapshots: (snapshots: ICodeSandboxSnapshot[]) => void;
   /**

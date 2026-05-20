@@ -4,7 +4,7 @@
  */
 
 /**
- * Runtime snapshots API functions for the Datalayer platform.
+ * Code Sandbox snapshots API functions for the Datalayer platform.
  *
  * Provides functions for managing code sandbox snapshots (saved runtime states).
  *

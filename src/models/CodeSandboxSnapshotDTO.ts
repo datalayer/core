@@ -135,7 +135,7 @@ export class CodeSandboxSnapshotDTO {
   private _deleted: boolean = false;
 
   /**
-   * Create a Runtime Snapshot instance.
+   * Create a Code Sandbox Snapshot instance.
    *
    * @param data - Snapshot data from API
    * @param client - Client instance

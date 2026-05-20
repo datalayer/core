@@ -4,7 +4,7 @@
  */
 
 /**
- * Runtime snapshot from API.
+ * Code Sandbox snapshot from API.
  */
 export interface IAPICodeSandboxSnapshot {
   /**
@@ -50,7 +50,7 @@ export interface IAPICodeSandboxSnapshot {
 }
 
 /**
- * Runtime snapshot model.
+ * Code Sandbox snapshot model.
  */
 export interface ICodeSandboxSnapshot {
   /**
