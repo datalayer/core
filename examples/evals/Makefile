@@ -19,7 +19,7 @@ define run_cli
 	$${DATALAYER_ACCOUNT_UID:+--account-uid $$DATALAYER_ACCOUNT_UID}
 endef
 
-.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets clean
+.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets python-quickstart python-feature-tour clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Usage: make <target>\n"} /^[a-zA-Z_-]+:.*?##/ {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -69,6 +69,12 @@ list-runs: ## List runs for EXPERIMENT_ID
 
 live-targets: ## List live monitoring targets
 	@$(call run_cli,live targets --window "$(WINDOW)" --limit 20)
+
+python-quickstart: ## Run beginner Python quickstart (single eval/experiment/run)
+	@python launch_and_monitor.py --execution-mode sdk --run-status completed --timeout 60 --interval 2
+
+python-feature-tour: ## Run Python feature tour (multi-experiment, drift, run compare)
+	@python feature_tour.py --runs-per-experiment 5 --compare-limit 2 --status completed
 
 clean: ## Remove generated environment state
 	rm -f $(ENV_FILE)

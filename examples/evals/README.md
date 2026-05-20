@@ -1,205 +1,222 @@
-# Datalayer Evals CLI Examples
+# Datalayer Evals Examples (Beginner Guide)
 
-This example walks you through the **`datalayer evals`** CLI step by step.
-You will create an eval, attach an experiment, launch a run, and watch
-it to completion — all from your terminal, mirroring the Pydantic Evals mental
-model (`Eval` -> `Case` -> `Experiment` -> `Run` -> `Report`).
+This folder gives you two ways to learn Evals from scratch:
 
-The runs you launch here will also show up in the Datalayer UI at
-`/agents/evals`, on the **Experiment Insights** panel with pass-rate trend,
-performance, and drift plots.
+1. Quickstart path: one eval, one experiment, one run.
+2. Feature tour path: multiple experiments and runs so UI charts (drift + comparison) are meaningful.
+
+If you are new, do both in order.
+
+## What You Will Learn
+
+After running the examples, you will understand how to:
+
+- Create hosted evals.
+- Create experiments inside the same eval.
+- Launch runs with metrics.
+- Compare runs and experiments.
+- Interpret drift in pass-rate trends.
+- Validate everything in the `/evals` UI.
+
+## Files In This Folder
+
+- `Makefile`: CLI + Python helper targets.
+- `launch_and_monitor.py`: beginner quickstart script.
+- `feature_tour.py`: richer dataset for comparison and drift charts.
 
 ## Prerequisites
 
-- Python 3.10+ with `datalayer_core` installed.
-- A Datalayer API token exported in one of:
-  - `DATALAYER_API_KEY`
-  - `TEST_DATALAYER_API_KEY`
-- (Optional) `DATALAYER_AI_AGENTS_URL` for non-default SaaS environments.
-- (Optional) `DATALAYER_ACCOUNT_UID` to scope everything to an organization.
+- Python 3.10+
+- `datalayer_core` installed
+- Environment token set:
+  - `DATALAYER_API_KEY` (or `TEST_DATALAYER_API_KEY`)
+- Optional:
+  - `DATALAYER_AI_AGENTS_URL` for non-default environments
+  - `DATALAYER_ACCOUNT_UID` for organization scoping
 
-Sanity check:
+Sanity checks:
 
 ```bash
 datalayer evals --help
-```
-
-You should see four sub-commands: `evals`, `experiments`, `runs`, `live`.
-
-## How This Example Is Wired
-
-- All commands run through `make` targets defined in [`Makefile`](./Makefile).
-- IDs are persisted between targets in a local `.evals.env` file
-  (`EVAL_ID`, `EXPERIMENT_ID`, `RUN_ID`).
-- An end-to-end Python equivalent of the flow lives in
-  [`launch_and_monitor.py`](./launch_and_monitor.py).
-
-## Step-by-Step Walkthrough
-
-### 1. Discover the available targets
-
-```bash
 make help
 ```
 
-Lists every Make target with a one-line description. Use this as your menu.
+## Quickstart (Newbies Start Here)
 
-### 2. List existing evals
+This path gives you a minimal success first.
+
+### Option A: one command
+
+```bash
+make python-quickstart
+```
+
+### Option B: explicit script call
+
+```bash
+python launch_and_monitor.py \
+  --eval-name newbie-eval \
+  --experiment-name newbie-experiment \
+  --execution-mode sdk \
+  --run-status completed \
+  --pass-rate 0.92 \
+  --total-cases 10 \
+  --trace-backend trace-hub \
+  --model-name openai:gpt-5-mini \
+  --prompt-version v1
+```
+
+What this script does:
+
+1. Creates eval.
+2. Creates experiment.
+3. Creates run with your pass-rate metrics.
+4. Polls until terminal status.
+
+Then open `/evals` and confirm your run appears.
+
+## Feature Tour (Comparison + Drift)
+
+This path creates enough runs to populate charts and comparison views.
+
+### Option A: one command
+
+```bash
+make python-feature-tour
+```
+
+### Option B: explicit script call
+
+```bash
+python feature_tour.py \
+  --eval-name feature-tour-eval \
+  --experiment-names baseline,candidate \
+  --runs-per-experiment 5 \
+  --status completed \
+  --execution-mode sdk \
+  --trace-backend trace-hub \
+  --model-name openai:gpt-5-mini \
+  --prompt-version v2
+```
+
+What this script does:
+
+1. Creates one eval.
+2. Creates multiple experiments inside that eval.
+3. Creates multiple runs per experiment with different pass-rate curves.
+4. Computes and prints drift per experiment.
+5. Calls run comparison API for latest runs.
+
+This is the easiest way to verify the new charts in the UI.
+
+## CLI Path (Step-by-Step)
+
+If you want to learn raw CLI first:
 
 ```bash
 make list-evals
-```
-
-Calls `datalayer evals evals list --limit 20`. This is the hosted view of
-your hosted eval objects (equivalent to Logfire's **Evals** page).
-
-### 3. Create a hosted eval
-
-```bash
 make create-eval
-```
-
-- Runs `datalayer evals evals create <name>` with a date-stamped name.
-- Parses the new eval UUID from the CLI output.
-- Writes `EVAL_ID=<uuid>` into `.evals.env`.
-
-Maps to Pydantic Evals: this creates the empty **`Eval`** that will hold
-your `Case`s. You can later add cases through the UI (`/agents/evals` ->
-Eval detail -> Add Case) or via API.
-
-### 4. Create an experiment bound to the eval
-
-```bash
 make create-experiment
-```
-
-- Requires `EVAL_ID` (Step 3).
-- Runs `datalayer evals experiments create <name> --eval-id $EVAL_ID`.
-- Persists `EXPERIMENT_ID` into `.evals.env`.
-
-An **Experiment** groups one or more `Run`s of the same eval under a
-shared configuration (think "v1", "v2" iterations of a prompt or agent).
-
-### 5. Launch a run
-
-```bash
 make launch-run
-```
-
-- Requires `EXPERIMENT_ID`.
-- Runs `datalayer evals runs launch --experiment-id $EXPERIMENT_ID --status queued`.
-- The CLI automatically writes provenance metadata into `summary`:
-  - `summary.launch_source = "datalayer-cli"`
-  - `summary.launched_at = "<ISO timestamp>"`
-- Persists `RUN_ID` into `.evals.env`.
-
-In the Datalayer UI these CLI-launched runs are highlighted in the
-**Experiment Insights** panel under the **CLI Only** filter and counted in
-the `CLI launched` KPI.
-
-### 6. Watch the run
-
-```bash
 make watch-run
-```
-
-Polls `datalayer evals runs watch $RUN_ID --interval 3 --timeout 600` and
-prints status transitions until the run reaches a terminal state
-(`completed`, `failed`, `cancelled`) or the timeout expires.
-
-This is the offline-eval equivalent of waiting for `eval.evaluate(...)`
-to finish locally — the SaaS engine does the work and the CLI reports
-status.
-
-### 7. List runs for the experiment
-
-```bash
 make list-runs
-```
-
-Shows all runs (CLI- or UI-launched) for the current `EXPERIMENT_ID`. Useful
-for confirming that the run you just launched is visible alongside any
-others and for grabbing the IDs you want to compare in the UI.
-
-### 8. Inspect live monitoring targets
-
-```bash
 make live-targets
 ```
 
-Calls `datalayer evals live targets --window 24h --limit 20` and shows the
-agents/runtimes that have produced live evaluator events recently. This is
-the read side of Logfire's **Live Monitoring** experience.
+Notes:
 
-### 9. Tear down local state
+- IDs are persisted in `.evals.env`.
+- `make clean` removes local `.evals.env` state only.
 
-```bash
-make clean
-```
+## Verify Features In UI
 
-Removes `.evals.env`. The hosted resources stay; delete those via the UI or
-`datalayer evals evals delete <id>` / `experiments delete <id>` if you
-want a full cleanup.
+Open `/evals`, choose your eval, then confirm:
 
-## Verifying in the UI
+### Experiment Insights (single experiment)
 
-1. Open `/agents/evals` in Datalayer.
-2. Switch to the **Evals** pane.
-3. Pick your CLI-created experiment (or let it auto-select).
-4. The **Experiment Insights** panel will show:
-   - **Pass-rate trend** — sparkline over recent runs with per-run tooltips
-     (id, timestamp, status, source, pass/fail/total).
-   - **Status distribution** — bar chart of `completed`/`failed`/`running`.
-   - **Performance** — line chart toggleable between `Avg Score` and
-     `Duration` (segmented control above the chart).
-   - **Drift** — pass-rate delta of the latest run vs the baseline (average
-     of the earliest runs).
-   - **KPI box** — `Runs shown`, `Total runs`, `CLI launched`, `UI launched`,
-     `Avg pass rate`.
-5. Use the **CLI Only / UI Only / All Sources** segmented control to isolate
-   runs by provenance.
+- Pass-rate trend chart
+- Status distribution chart
+- Performance chart (Avg Score / Duration)
+- Drift card (latest vs baseline)
+- Source filtering (All / CLI / UI)
 
-## End-to-End Python Variant
+### Compare Experiments In This Eval
 
-Prefer Python over Make? Run:
+- Latest pass rate chart across experiments
+- Drift delta chart across experiments
+- Trend overlay chart for selected experiments
+- Summary list (runs, latest pass-rate, drift points)
 
-```bash
-python launch_and_monitor.py
-```
+### Run Comparison
 
-This uses `DatalayerClient` directly (`EvalsMixin`) to create eval +
-experiment + run and poll until terminal status — handy if you want to embed
-the workflow in a larger script.
+- Select run A and B
+- Compare pass-rate and status deltas
 
-## Mapping to Pydantic Evals / Logfire
+## Feature Coverage Matrix
 
-| Concept (Pydantic Evals / Logfire) | This Example                                         |
-| ---------------------------------- | ---------------------------------------------------- |
-| `Eval`                             | `make create-eval`                                   |
-| `Case` (input/expected/metadata)   | Added via UI or API after `create-eval`              |
-| Evaluators                         | Configured on the experiment / case                  |
-| Experiment iteration               | `make create-experiment`                             |
-| `eval.evaluate(...)` (offline)     | `make launch-run` + `make watch-run`                 |
-| Online evaluator events            | `make live-targets`                                  |
-| Report metrics / drift             | UI **Experiment Insights** panel (trend + drift)     |
+| Feature | launch_and_monitor.py | feature_tour.py | CLI Make targets |
+| --- | --- | --- | --- |
+| Create eval | Yes | Yes | `create-eval` |
+| Create experiment | Yes | Yes (multiple) | `create-experiment` |
+| Create run | Yes | Yes (multiple) | `launch-run` |
+| Watch run | Yes | No (runs are created terminal) | `watch-run` |
+| Drift data generation | Limited | Yes | Manual |
+| Experiment-to-experiment comparison data | Limited | Yes | Manual |
+| Live targets query | No | No | `live-targets` |
+
+## Second-Pass Coverage: Advanced Agent + Tracing Features
+
+This section maps key advanced evaluation and observability capabilities to
+assets in this folder.
+
+### Evaluation and agent coverage
+
+- Eval lifecycle mental model (`Eval` -> `Experiment` -> `Run`): covered in
+  `launch_and_monitor.py` and `feature_tour.py`.
+- Drift and multi-run behavior: covered in `feature_tour.py`
+  (`--runs-per-experiment`).
+- Experiment comparison in the same eval: covered by `feature_tour.py`
+  + `/evals` UI charts.
+- Experiment metadata discipline (`model`, `prompt_version`): covered by
+  CLI flags in both Python scripts.
+- Online telemetry semantics (`trace_backend`, `otel_service` markers):
+  covered by both scripts for beginner observability.
+
+### Tracing and scoring coverage
+
+- Trace/session identity markers (`trace_id`, `session_id`): generated in run summaries.
+- Trace backend labeling (`trace_backend=trace-hub`): supported by both scripts.
+- Dataset/experiment workflow patterns:
+  quickstart + feature tour scripts.
+- Beginner-ready recipes for:
+  - offline dataset runs
+  - online evaluation hooks
+  - tracing and scoring patterns
+
+### Quick confidence checklist
+
+1. Run `make python-quickstart` and confirm one run appears in `/evals`.
+2. Run `make python-feature-tour` and confirm compare+drift charts populate.
+3. Open run details and verify summary includes `model`, `prompt_version`, and `trace_backend`.
+4. Reuse the script metadata fields to wire your real agent app.
 
 ## Troubleshooting
 
-- **`Could not extract EVAL_ID`** — the CLI output did not contain a UUID.
-  Run the underlying command manually (`datalayer evals evals create ...`)
-  to inspect the error.
-- **`401 Unauthorized`** — confirm `DATALAYER_API_KEY` is set and valid.
-- **`Run never leaves queued`** — verify the experiment is wired to a runtime
-  pod (online evals require `runtime_pod_name` + `environment_name` on the
-  run). Use the UI to launch an online run if you don't have those values
-  handy from the terminal.
-- **Run not visible in UI** — confirm `DATALAYER_ACCOUNT_UID` matches the
-  account context you are viewing in the UI.
+- `401 Unauthorized`: token missing/invalid.
+- Empty UI page for your data: check `DATALAYER_ACCOUNT_UID` matches current account context.
+- Run stuck in `queued`: for true online execution, runtime/environment wiring is required.
+- `Could not extract EVAL_ID`: run the CLI command directly and inspect stderr.
 
-## Related
+## Suggested Learning Sequence
 
-- `services/ai-agents/datalayer_ai_agents/api/v1/endpoints/evals.py` — the
-  authoritative API surface.
-- `core/datalayer_core/mixins/evals.py` — the `EvalsMixin` powering this CLI.
-- `core/datalayer_core/cli/commands/evals.py` — Typer command definitions.
-- `ui/src/views/evals/AIEvals.tsx` — the UI consuming the same endpoints.
+1. `make python-quickstart`
+2. `make python-feature-tour`
+3. Open `/evals` and inspect all chart sections
+4. Repeat `feature_tour.py` with different experiment names and run counts
+
+## Related Source Files
+
+- `datalayer_core/mixins/evals.py`
+- `datalayer_core/cli/commands/evals.py`
+- `services/ai-agents/datalayer_ai_agents/api/v1/endpoints/evals.py`
+- `ui/src/views/evals/AIEvals.tsx`
