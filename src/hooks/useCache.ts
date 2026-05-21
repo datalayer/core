@@ -145,6 +145,9 @@ export const queryKeys = {
     list: (filters?: string) =>
       [...queryKeys.users.lists(), { filters }] as const,
     details: () => [...queryKeys.users.all(), 'detail'] as const,
+            teamId: (space as any).teamId || (space as any).team?.id || null,
+            teamHandle:
+              (space as any).teamHandle || (space as any).team?.handle || null,
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
     byHandle: (handle: string) =>
       [...queryKeys.users.all(), 'handle', handle] as const,
@@ -1724,12 +1727,37 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get user spaces
    */
-  const useUserSpaces = () => {
+  const useUserSpaces = (scope?: {
+    selectedUserUid?: string;
+    selectedOrganizationUid?: string;
+    selectedTeamUid?: string;
+    selectedAgentUid?: string;
+  }) => {
     return useQuery({
-      queryKey: queryKeys.spaces.userSpaces(),
+      queryKey: [
+        ...queryKeys.spaces.userSpaces(),
+        scope?.selectedUserUid || '',
+        scope?.selectedOrganizationUid || '',
+        scope?.selectedTeamUid || '',
+        scope?.selectedAgentUid || '',
+      ],
       queryFn: async () => {
+        const params = new URLSearchParams();
+        if (scope?.selectedUserUid) {
+          params.set('selected_user_uid', scope.selectedUserUid);
+        }
+        if (scope?.selectedOrganizationUid) {
+          params.set('selected_organization_uid', scope.selectedOrganizationUid);
+        }
+        if (scope?.selectedTeamUid) {
+          params.set('selected_team_uid', scope.selectedTeamUid);
+        }
+        if (scope?.selectedAgentUid) {
+          params.set('selected_agent_uid', scope.selectedAgentUid);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.spaces) {

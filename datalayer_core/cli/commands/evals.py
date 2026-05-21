@@ -96,7 +96,7 @@ def evals_list(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
-    source: Optional[str] = typer.Option(None, "--source", help="Filter by source (hosted/local)."),
+    run_environment: Optional[str] = typer.Option(None, "--run-environment", help="Filter by run environment (cloud/local)."),
     kind: Optional[str] = typer.Option(None, "--kind", help="Filter by kind (offline/online)."),
     q: Optional[str] = typer.Option(None, "--q", help="Search query."),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
@@ -106,7 +106,7 @@ def evals_list(
     """List evals."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_list_evals(
-        source=source,
+        run_environment=run_environment,
         kind=kind,
         q=q,
         limit=limit,
@@ -121,7 +121,7 @@ def evals_list(
     table = Table(title=f"Evals ({len(evals)})")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="white")
-    table.add_column("Source", style="white")
+    table.add_column("Run Environment", style="white")
     table.add_column("Kind", style="white")
     table.add_column("Cases", style="white")
     table.add_column("Updated", style="white")
@@ -129,7 +129,7 @@ def evals_list(
         table.add_row(
             str(item.get("id", "")),
             str(item.get("name", "")),
-            str(item.get("source", "")),
+            str(item.get("run_environment", "")),
             str(item.get("kind", "")),
             str(len(item.get("cases") or [])),
             str(item.get("updated_at", "")),
@@ -141,7 +141,7 @@ def evals_list(
 def evals_create(
     name: str = typer.Argument(..., help="Eval name."),
     description: str = typer.Option("", "--description", help="Description."),
-    source: str = typer.Option("hosted", "--source", help="Eval source."),
+    run_environment: str = typer.Option("cloud", "--run-environment", help="Eval run environment."),
     kind: str = typer.Option("offline", "--kind", help="Eval kind."),
     schema_json: Optional[str] = typer.Option(None, "--schema-json", help="Schema JSON object."),
     metadata_json: Optional[str] = typer.Option(None, "--metadata-json", help="Metadata JSON object."),
@@ -166,7 +166,7 @@ def evals_create(
     payload = client.evals_create_eval(
         name=name,
         description=description,
-        source=source,
+        run_environment=run_environment,
         kind=kind,
         schema=schema,
         metadata=metadata,
@@ -294,7 +294,7 @@ def runs_list(
     table.add_column("Run", style="cyan")
     table.add_column("Status", style="white")
     table.add_column("Pass Rate", style="white")
-    table.add_column("Source", style="white")
+    table.add_column("Run Environment", style="white")
     table.add_column("Created", style="white")
     for run in runs:
         status_value = str(run.get("status", ""))
@@ -305,12 +305,12 @@ def runs_list(
             pass_rate_text = f"{float(pass_rate) * 100:.1f}%"
         else:
             pass_rate_text = "n/a"
-        source = str(summary.get("launch_source") or summary.get("source") or "")
+        run_environment = str(summary.get("run_environment") or summary.get("launch_source") or "")
         table.add_row(
             str(run.get("id", "")),
             f"[{_status_style(status_value)}]{status_value}[/{_status_style(status_value)}]",
             pass_rate_text,
-            source,
+            run_environment,
             str(run.get("created_at", "")),
         )
     console.print(table)
@@ -320,7 +320,7 @@ def runs_list(
 def runs_launch(
     experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment ID."),
     status: str = typer.Option("queued", "--status", help="Initial run status."),
-    execution_mode: Optional[str] = typer.Option(None, "--execution-mode", help="Execution mode hint (online/offline)."),
+    run_mode: Optional[str] = typer.Option(None, "--run-mode", help="Run mode hint (online/offline/sdk)."),
     runtime_pod_name: Optional[str] = typer.Option(None, "--runtime-pod-name", help="Runtime pod for online execution."),
     submitted_code_file: Optional[str] = typer.Option(None, "--submitted-code-file", help="Python file to execute in online mode."),
     metrics_json: Optional[str] = typer.Option(None, "--metrics-json", help="Inline metrics JSON object."),
@@ -340,8 +340,8 @@ def runs_launch(
         "launch_source": "datalayer-cli",
         "launched_at": _now_iso(),
     }
-    if execution_mode:
-        cli_summary["execution_mode"] = execution_mode
+    if run_mode:
+        cli_summary["run_mode"] = run_mode
     if runtime_pod_name:
         cli_summary["runtime_pod_name"] = runtime_pod_name
     if submitted_code_file:

@@ -1,4 +1,10 @@
-# Datalayer Evals Examples (Beginner Guide)
+[![Datalayer](https://assets.datalayer.tech/datalayer-25.svg)](https://datalayer.io)
+
+[![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
+
+# Datalayer Evals Examples
+
+> Beginner Guide
 
 This folder gives you two ways to learn Evals from scratch:
 
@@ -11,32 +17,82 @@ If you are new, do both in order.
 
 After running the examples, you will understand how to:
 
-- Create hosted evals.
+- Create cloud evals.
 - Create experiments inside the same eval.
 - Launch runs with metrics.
 - Compare runs and experiments.
 - Interpret drift in pass-rate trends.
 - Validate everything in the `/evals` UI.
 
-## Hosted vs SDK (Important)
+## Cloud vs Local (Important)
 
-In the `/evals` UI, the **Hosted** and **SDK** tabs are driven by `eval.source`:
+In the `/evals` UI, the **Cloud** and **Local** tabs are driven by `eval.run_environment`:
 
-- **Hosted tab**: `source="hosted"`
-- **SDK tab**: `source="local"` (displayed as SDK in UI)
+- **Cloud tab**: `run_environment="cloud"`
+- **Local tab**: `run_environment="local"`
 
-The `execution_mode` (`offline` / `online` / `sdk`) is different from source:
+The `run_mode` (`offline` / `online` / `sdk`) is different from run environment:
 
 - It describes how runs execute.
-- It does **not** decide whether an eval appears in Hosted or SDK tab.
+- It does **not** decide whether an eval appears in Cloud or Local tab.
 
-If you want your eval to appear in SDK tab, create it with `--eval-source local`.
+Execution mode quick definitions:
+
+- `offline`: run evaluation logic in a non-interactive batch style. Best when you evaluate a fixed set of eval cases and want reproducible, asynchronous-style processing.
+- `online`: evaluate live traffic or near-real-time events as they happen. Best for continuous monitoring and production feedback loops.
+- `sdk`: run via SDK-driven orchestration from client code/scripts (for example these Python examples), where you control run creation and metadata programmatically.
+
+Rule of thumb:
+
+- `run_environment` controls **where an eval is run and listed** (Cloud or Local).
+- `run_mode` controls **how the run is executed**.
+
+## Scope of These Examples
+
+The examples are **not** limited to sdk mode.
+
+- Quickstart and feature-tour commands default to `run_mode=sdk` because that is the easiest beginner path.
+- The same scripts support `offline`, `online`, and `sdk` execution modes.
+- You can choose any mode with `--run-mode` in direct Python commands.
+
+Ready-to-run mode targets are provided:
+
+- `make python-quickstart-local-offline`
+- `make python-quickstart-local-online`
+- `make python-quickstart-sdk`
+- `make python-feature-tour-local-offline`
+- `make python-feature-tour-local-online`
+- `make python-feature-tour-sdk`
+
+If you use local service URLs, equivalent `-local` targets are also available:
+
+- `make python-quickstart-local-offline-local`
+- `make python-quickstart-local-online-local`
+- `make python-feature-tour-local-offline-local`
+- `make python-feature-tour-local-online-local`
+
+### Run Environment × Run Mode Matrix
+
+This matrix clarifies what is supported and what each axis controls.
+
+| `run_environment` value | Tab in `/evals` UI | Supported `run_mode` values in examples |
+| --- | --- | --- |
+| `cloud` | Cloud | `offline`, `online`, `sdk` |
+| `local` | Local | `offline`, `online`, `sdk` |
+
+Interpretation:
+
+- The `run_environment` column affects UI placement (Cloud vs Local tab).
+- The `run_mode` column affects run behavior.
+- These two dimensions are independent in the example scripts.
+
+If you want your eval to appear in Local tab, create it with `--run-environment local`.
 
 ## Files In This Folder
 
 - `Makefile`: CLI + Python helper targets.
 - `launch_and_monitor.py`: beginner quickstart script.
-- `feature_tour.py`: richer dataset for comparison and drift charts.
+- `feature_tour.py`: richer eval data for comparison and drift charts.
 
 ## Prerequisites
 
@@ -77,10 +133,10 @@ This target passes these flags directly to the script:
 - `--runtimes-url http://localhost:9500/api/runtimes/`
 - `--ai-agents-url http://localhost:4400/api/ai-agents/`
 
-### Option C: hosted vs sdk explicit targets
+### Option C: cloud vs local explicit targets
 
 ```bash
-make python-quickstart-hosted
+make python-quickstart-cloud
 make python-quickstart-sdk
 ```
 
@@ -90,8 +146,8 @@ make python-quickstart-sdk
 python launch_and_monitor.py \
   --eval-name newbie-eval \
   --experiment-name newbie-experiment \
-  --eval-source local \
-  --execution-mode sdk \
+  --run-environment local \
+  --run-mode sdk \
   --run-status completed \
   --pass-rate 0.92 \
   --total-cases 10 \
@@ -131,10 +187,10 @@ This target passes these flags directly to the script:
 - `--runtimes-url http://localhost:9500/api/runtimes/`
 - `--ai-agents-url http://localhost:4400/api/ai-agents/`
 
-### Option B: hosted vs sdk explicit targets
+### Option B: cloud vs local explicit targets
 
 ```bash
-make python-feature-tour-hosted
+make python-feature-tour-cloud
 make python-feature-tour-sdk
 ```
 
@@ -144,10 +200,10 @@ make python-feature-tour-sdk
 python feature_tour.py \
   --eval-name feature-tour-eval \
   --experiment-names baseline,candidate \
-  --eval-source local \
+  --run-environment local \
   --runs-per-experiment 5 \
   --status completed \
-  --execution-mode sdk \
+  --run-mode sdk \
   --trace-backend trace-hub \
   --model-name openai:gpt-5-mini \
   --prompt-version v2
@@ -200,9 +256,9 @@ make launch-run-local
 make watch-run-local
 make list-runs-local
 make live-targets-local
-make python-quickstart-hosted-local
+make python-quickstart-cloud-local
 make python-quickstart-sdk-local
-make python-feature-tour-hosted-local
+make python-feature-tour-cloud-local
 make python-feature-tour-sdk-local
 ```
 
@@ -231,7 +287,7 @@ Open `/evals`, choose your eval, then confirm:
 - Status distribution chart
 - Performance chart (Avg Score / Duration)
 - Drift card (latest vs baseline)
-- Source filtering (All / CLI / UI)
+- Launch-origin filtering (All / CLI / UI)
 
 ### Compare Experiments In This Eval
 
@@ -299,10 +355,10 @@ assets in this folder.
 
 - Trace/session identity markers (`trace_id`, `session_id`): generated in run summaries.
 - Trace backend labeling (`trace_backend=trace-hub`): supported by both scripts.
-- Dataset/experiment workflow patterns:
+- Eval/experiment workflow patterns:
   quickstart + feature tour scripts.
 - Beginner-ready recipes for:
-  - offline dataset runs
+  - offline eval runs
   - online evaluation hooks
   - tracing and scoring patterns
 
@@ -327,7 +383,7 @@ assets in this folder.
 3. Open `/evals` and inspect all chart sections
 4. Repeat `feature_tour.py` with different experiment names and run counts
 
-## Related Source Files
+## Related Files
 
 - `datalayer_core/mixins/evals.py`
 - `datalayer_core/cli/commands/evals.py`

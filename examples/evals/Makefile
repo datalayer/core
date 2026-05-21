@@ -23,7 +23,7 @@ define run_cli
 	$${DATALAYER_ACCOUNT_UID:+--account-uid $$DATALAYER_ACCOUNT_UID}
 endef
 
-.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart-hosted python-quickstart-sdk python-feature-tour-hosted python-feature-tour-sdk python-quickstart-hosted-local python-quickstart-sdk-local python-feature-tour-hosted-local python-feature-tour-sdk-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local clean
+.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart-cloud python-quickstart-sdk python-feature-tour-cloud python-feature-tour-sdk python-quickstart-cloud-local python-quickstart-sdk-local python-feature-tour-cloud-local python-feature-tour-sdk-local python-quickstart-local-offline python-quickstart-local-online python-feature-tour-local-offline python-feature-tour-local-online python-quickstart-local-offline-local python-quickstart-local-online-local python-feature-tour-local-offline-local python-feature-tour-local-online-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Usage: make <target>\n"} /^[a-zA-Z_-]+:.*?##/ {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -31,7 +31,7 @@ help: ## Show available targets
 list-evals: ## List evals
 	@$(call run_cli,evals list --limit 20)
 
-create-eval: ## Create a hosted eval and persist EVAL_ID to .evals.env
+create-eval: ## Create a cloud eval and persist EVAL_ID to .evals.env
 	@out="$$( $(call run_cli,evals create "$(EVAL_NAME)" --description "Eval created from core/examples/evals") )"; \
 	echo "$$out"; \
 	eval_id="$$(echo "$$out" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27,}' | head -n1)"; \
@@ -95,22 +95,34 @@ list-runs-local: ## Local equivalent of list-runs (uses LOCAL_AI_AGENTS_URL)
 live-targets-local: ## Local equivalent of live-targets (uses LOCAL_AI_AGENTS_URL)
 	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) live-targets
 
-python-quickstart-hosted: ## Quickstart with source=hosted (shows in Hosted tab)
-	@python launch_and_monitor.py --eval-source hosted --execution-mode sdk --run-status completed --timeout 60 --interval 2
+python-quickstart-cloud: ## Quickstart with run_environment=cloud (shows in Cloud tab)
+	@python launch_and_monitor.py --run-environment cloud --run-mode sdk --run-status completed --timeout 60 --interval 2
 
-python-quickstart-sdk: ## Quickstart with source=local + execution_mode=sdk (shows in SDK tab)
-	@python launch_and_monitor.py --eval-source local --execution-mode sdk --run-status completed --timeout 60 --interval 2
+python-quickstart-sdk: ## Quickstart with run_environment=local + run_mode=sdk (shows in Local tab)
+	@python launch_and_monitor.py --run-environment local --run-mode sdk --run-status completed --timeout 60 --interval 2
 
-python-feature-tour-hosted: ## Feature tour with source=hosted (shows in Hosted tab)
-	@python feature_tour.py --eval-source hosted --runs-per-experiment 5 --compare-limit 2 --status completed --execution-mode sdk
+python-quickstart-local-offline: ## Quickstart with run_environment=local + run_mode=offline (shows in Local tab)
+	@python launch_and_monitor.py --run-environment local --run-mode offline --run-status completed --timeout 60 --interval 2
 
-python-feature-tour-sdk: ## Feature tour with source=local + execution_mode=sdk (shows in SDK tab)
-	@python feature_tour.py --eval-source local --runs-per-experiment 5 --compare-limit 2 --status completed --execution-mode sdk
+python-quickstart-local-online: ## Quickstart with run_environment=local + run_mode=online (shows in Local tab)
+	@python launch_and_monitor.py --run-environment local --run-mode online --run-status completed --timeout 60 --interval 2
 
-python-quickstart-hosted-local: ## Local quickstart hosted source
+python-feature-tour-cloud: ## Feature tour with run_environment=cloud (shows in Cloud tab)
+	@python feature_tour.py --run-environment cloud --runs-per-experiment 5 --compare-limit 2 --status completed --run-mode sdk
+
+python-feature-tour-sdk: ## Feature tour with run_environment=local + run_mode=sdk (shows in Local tab)
+	@python feature_tour.py --run-environment local --runs-per-experiment 5 --compare-limit 2 --status completed --run-mode sdk
+
+python-feature-tour-local-offline: ## Feature tour with run_environment=local + run_mode=offline (shows in Local tab)
+	@python feature_tour.py --run-environment local --runs-per-experiment 5 --compare-limit 2 --status completed --run-mode offline
+
+python-feature-tour-local-online: ## Feature tour with run_environment=local + run_mode=online (shows in Local tab)
+	@python feature_tour.py --run-environment local --runs-per-experiment 5 --compare-limit 2 --status completed --run-mode online
+
+python-quickstart-cloud-local: ## Local quickstart with run_environment=cloud
 	@python launch_and_monitor.py \
-		--eval-source hosted \
-		--execution-mode sdk \
+		--run-environment cloud \
+		--run-mode sdk \
 		--run-status completed \
 		--timeout 60 \
 		--interval 2 \
@@ -118,10 +130,10 @@ python-quickstart-hosted-local: ## Local quickstart hosted source
 		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
 		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
 
-python-quickstart-sdk-local: ## Local quickstart SDK source
+python-quickstart-sdk-local: ## Local quickstart (run_environment=local)
 	@python launch_and_monitor.py \
-		--eval-source local \
-		--execution-mode sdk \
+		--run-environment local \
+		--run-mode sdk \
 		--run-status completed \
 		--timeout 60 \
 		--interval 2 \
@@ -129,24 +141,68 @@ python-quickstart-sdk-local: ## Local quickstart SDK source
 		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
 		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
 
-python-feature-tour-hosted-local: ## Local feature tour hosted source
-	@python feature_tour.py \
-		--eval-source hosted \
-		--runs-per-experiment 5 \
-		--compare-limit 2 \
-		--status completed \
-		--execution-mode sdk \
+python-quickstart-local-offline-local: ## Local quickstart with run_environment=local + run_mode=offline
+	@python launch_and_monitor.py \
+		--run-environment local \
+		--run-mode offline \
+		--run-status completed \
+		--timeout 60 \
+		--interval 2 \
 		--iam-url "$(LOCAL_IAM_URL)" \
 		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
 		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
 
-python-feature-tour-sdk-local: ## Local feature tour SDK source
+python-quickstart-local-online-local: ## Local quickstart with run_environment=local + run_mode=online
+	@python launch_and_monitor.py \
+		--run-environment local \
+		--run-mode online \
+		--run-status completed \
+		--timeout 60 \
+		--interval 2 \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-cloud-local: ## Local feature tour with run_environment=cloud
 	@python feature_tour.py \
-		--eval-source local \
+		--run-environment cloud \
 		--runs-per-experiment 5 \
 		--compare-limit 2 \
 		--status completed \
-		--execution-mode sdk \
+		--run-mode sdk \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-sdk-local: ## Local feature tour (run_environment=local)
+	@python feature_tour.py \
+		--run-environment local \
+		--runs-per-experiment 5 \
+		--compare-limit 2 \
+		--status completed \
+		--run-mode sdk \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-local-offline-local: ## Local feature tour with run_environment=local + run_mode=offline
+	@python feature_tour.py \
+		--run-environment local \
+		--runs-per-experiment 5 \
+		--compare-limit 2 \
+		--status completed \
+		--run-mode offline \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-local-online-local: ## Local feature tour with run_environment=local + run_mode=online
+	@python feature_tour.py \
+		--run-environment local \
+		--runs-per-experiment 5 \
+		--compare-limit 2 \
+		--status completed \
+		--run-mode online \
 		--iam-url "$(LOCAL_IAM_URL)" \
 		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
 		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"

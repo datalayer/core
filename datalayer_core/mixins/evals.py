@@ -35,7 +35,7 @@ class EvalsMixin:
         self,
         *,
         kind: Optional[str] = None,
-        source: Optional[str] = None,
+        run_environment: Optional[str] = None,
         q: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
@@ -44,8 +44,8 @@ class EvalsMixin:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
         if kind:
             params["kind"] = kind
-        if source:
-            params["source"] = source
+        if run_environment:
+            params["run_environment"] = run_environment
         if q:
             params["q"] = q
         return self._evals_request(
@@ -60,7 +60,7 @@ class EvalsMixin:
         *,
         name: str,
         description: str = "",
-        source: str = "hosted",
+        run_environment: str = "cloud",
         kind: str = "offline",
         schema: Optional[dict[str, Any]] = None,
         tags: Optional[list[str]] = None,
@@ -71,7 +71,7 @@ class EvalsMixin:
         body = {
             "name": name,
             "description": description,
-            "source": source,
+            "run_environment": run_environment,
             "kind": kind,
             "schema": schema or {},
             "tags": tags or [],
