@@ -18,6 +18,20 @@ After running the examples, you will understand how to:
 - Interpret drift in pass-rate trends.
 - Validate everything in the `/evals` UI.
 
+## Hosted vs SDK (Important)
+
+In the `/evals` UI, the **Hosted** and **SDK** tabs are driven by `eval.source`:
+
+- **Hosted tab**: `source="hosted"`
+- **SDK tab**: `source="local"` (displayed as SDK in UI)
+
+The `execution_mode` (`offline` / `online` / `sdk`) is different from source:
+
+- It describes how runs execute.
+- It does **not** decide whether an eval appears in Hosted or SDK tab.
+
+If you want your eval to appear in SDK tab, create it with `--eval-source local`.
+
 ## Files In This Folder
 
 - `Makefile`: CLI + Python helper targets.
@@ -48,13 +62,13 @@ This path gives you a minimal success first.
 ### Option A: one command
 
 ```bash
-make python-quickstart
+make python-quickstart-sdk
 ```
 
 ### Option B: run against local services (explicit URL flags)
 
 ```bash
-make python-quickstart-local
+make python-quickstart-sdk-local
 ```
 
 This target passes these flags directly to the script:
@@ -63,12 +77,20 @@ This target passes these flags directly to the script:
 - `--runtimes-url http://localhost:9500/api/runtimes/`
 - `--ai-agents-url http://localhost:4400/api/ai-agents/`
 
-### Option C: explicit script call
+### Option C: hosted vs sdk explicit targets
+
+```bash
+make python-quickstart-hosted
+make python-quickstart-sdk
+```
+
+### Option D: explicit script call
 
 ```bash
 python launch_and_monitor.py \
   --eval-name newbie-eval \
   --experiment-name newbie-experiment \
+  --eval-source local \
   --execution-mode sdk \
   --run-status completed \
   --pass-rate 0.92 \
@@ -94,13 +116,13 @@ This path creates enough runs to populate charts and comparison views.
 ### Option A: one command
 
 ```bash
-make python-feature-tour
+make python-feature-tour-sdk
 ```
 
 ### Option C: run against local services (explicit URL flags)
 
 ```bash
-make python-feature-tour-local
+make python-feature-tour-sdk-local
 ```
 
 This target passes these flags directly to the script:
@@ -109,12 +131,20 @@ This target passes these flags directly to the script:
 - `--runtimes-url http://localhost:9500/api/runtimes/`
 - `--ai-agents-url http://localhost:4400/api/ai-agents/`
 
-### Option B: explicit script call
+### Option B: hosted vs sdk explicit targets
+
+```bash
+make python-feature-tour-hosted
+make python-feature-tour-sdk
+```
+
+### Option D: explicit script call
 
 ```bash
 python feature_tour.py \
   --eval-name feature-tour-eval \
   --experiment-names baseline,candidate \
+  --eval-source local \
   --runs-per-experiment 5 \
   --status completed \
   --execution-mode sdk \
@@ -170,8 +200,10 @@ make launch-run-local
 make watch-run-local
 make list-runs-local
 make live-targets-local
-make python-quickstart-local
-make python-feature-tour-local
+make python-quickstart-hosted-local
+make python-quickstart-sdk-local
+make python-feature-tour-hosted-local
+make python-feature-tour-sdk-local
 ```
 
 Note on URL format:
@@ -212,6 +244,26 @@ Open `/evals`, choose your eval, then confirm:
 
 - Select run A and B
 - Compare pass-rate and status deltas
+
+### Live Monitoring (What You Can Do)
+
+- Track online evaluator activity by target (`target_id`, `target_type`).
+- Filter by time window (`1h`, `6h`, `24h`, `7d`, `30d`).
+- Inspect per-target metrics:
+  - total events
+  - passed events
+  - pass-rate
+  - average value
+  - last event timestamp
+- Drill into recent events and filter by evaluator name.
+- Use paging to inspect older events.
+
+Practical uses:
+
+- Verify your online evaluators are receiving traffic.
+- Spot sudden pass-rate drops after deployment.
+- Check which evaluator is failing most often.
+- Validate that your target emits events in expected volume.
 
 ## Feature Coverage Matrix
 

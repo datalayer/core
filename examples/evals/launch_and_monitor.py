@@ -47,6 +47,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--experiment-name', default='python-cli-demo-experiment')
     parser.add_argument('--run-status', default='completed', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
     parser.add_argument('--execution-mode', default='offline', choices=['offline', 'online', 'sdk'])
+    parser.add_argument(
+        '--eval-source',
+        default='hosted',
+        choices=['hosted', 'local'],
+        help='Eval source. Use local for SDK-tab visibility in UI.',
+    )
     parser.add_argument('--timeout', type=int, default=60)
     parser.add_argument('--interval', type=int, default=2)
     parser.add_argument('--pass-rate', type=float, default=1.0, help='Run metric pass_rate (0.0-1.0).')
@@ -111,7 +117,7 @@ def main() -> None:
     ds_payload = client.evals_create_eval(
         name=args.eval_name,
         description="Eval created from examples/evals/launch_and_monitor.py",
-        source="hosted",
+        source=args.eval_source,
         kind="offline",
         cases=[
             {

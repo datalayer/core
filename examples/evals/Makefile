@@ -23,7 +23,7 @@ define run_cli
 	$${DATALAYER_ACCOUNT_UID:+--account-uid $$DATALAYER_ACCOUNT_UID}
 endef
 
-.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local clean
+.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart-hosted python-quickstart-sdk python-feature-tour-hosted python-feature-tour-sdk python-quickstart-hosted-local python-quickstart-sdk-local python-feature-tour-hosted-local python-feature-tour-sdk-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Usage: make <target>\n"} /^[a-zA-Z_-]+:.*?##/ {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -95,14 +95,21 @@ list-runs-local: ## Local equivalent of list-runs (uses LOCAL_AI_AGENTS_URL)
 live-targets-local: ## Local equivalent of live-targets (uses LOCAL_AI_AGENTS_URL)
 	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) live-targets
 
-python-quickstart: ## Run beginner Python quickstart (single eval/experiment/run)
-	@python launch_and_monitor.py --execution-mode sdk --run-status completed --timeout 60 --interval 2
+python-quickstart-hosted: ## Quickstart with source=hosted (shows in Hosted tab)
+	@python launch_and_monitor.py --eval-source hosted --execution-mode sdk --run-status completed --timeout 60 --interval 2
 
-python-feature-tour: ## Run Python feature tour (multi-experiment, drift, run compare)
-	@python feature_tour.py --runs-per-experiment 5 --compare-limit 2 --status completed
+python-quickstart-sdk: ## Quickstart with source=local + execution_mode=sdk (shows in SDK tab)
+	@python launch_and_monitor.py --eval-source local --execution-mode sdk --run-status completed --timeout 60 --interval 2
 
-python-quickstart-local: ## Run quickstart against local IAM/Runtimes/AI-Agents URLs
+python-feature-tour-hosted: ## Feature tour with source=hosted (shows in Hosted tab)
+	@python feature_tour.py --eval-source hosted --runs-per-experiment 5 --compare-limit 2 --status completed --execution-mode sdk
+
+python-feature-tour-sdk: ## Feature tour with source=local + execution_mode=sdk (shows in SDK tab)
+	@python feature_tour.py --eval-source local --runs-per-experiment 5 --compare-limit 2 --status completed --execution-mode sdk
+
+python-quickstart-hosted-local: ## Local quickstart hosted source
 	@python launch_and_monitor.py \
+		--eval-source hosted \
 		--execution-mode sdk \
 		--run-status completed \
 		--timeout 60 \
@@ -111,14 +118,51 @@ python-quickstart-local: ## Run quickstart against local IAM/Runtimes/AI-Agents 
 		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
 		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
 
-python-feature-tour-local: ## Run feature tour against local IAM/Runtimes/AI-Agents URLs
-	@python feature_tour.py \
-		--runs-per-experiment 5 \
-		--compare-limit 2 \
-		--status completed \
+python-quickstart-sdk-local: ## Local quickstart SDK source
+	@python launch_and_monitor.py \
+		--eval-source local \
+		--execution-mode sdk \
+		--run-status completed \
+		--timeout 60 \
+		--interval 2 \
 		--iam-url "$(LOCAL_IAM_URL)" \
 		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
 		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-hosted-local: ## Local feature tour hosted source
+	@python feature_tour.py \
+		--eval-source hosted \
+		--runs-per-experiment 5 \
+		--compare-limit 2 \
+		--status completed \
+		--execution-mode sdk \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-sdk-local: ## Local feature tour SDK source
+	@python feature_tour.py \
+		--eval-source local \
+		--runs-per-experiment 5 \
+		--compare-limit 2 \
+		--status completed \
+		--execution-mode sdk \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+# Compatibility aliases
+python-quickstart: ## Alias of python-quickstart-sdk
+	@$(MAKE) python-quickstart-sdk
+
+python-feature-tour: ## Alias of python-feature-tour-sdk
+	@$(MAKE) python-feature-tour-sdk
+
+python-quickstart-local: ## Alias of python-quickstart-sdk-local
+	@$(MAKE) python-quickstart-sdk-local
+
+python-feature-tour-local: ## Alias of python-feature-tour-sdk-local
+	@$(MAKE) python-feature-tour-sdk-local
 
 clean: ## Remove generated environment state
 	rm -f $(ENV_FILE)
