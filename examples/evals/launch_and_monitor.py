@@ -23,6 +23,22 @@ from datalayer_core import DatalayerClient
 from datalayer_core.utils.urls import DatalayerURLs
 
 
+def _normalize_service_url(raw_url: str | None, service_suffix: str) -> str | None:
+    """Normalize service endpoints to base URL expected by DatalayerURLs.
+
+    Examples:
+    - http://localhost:4400/api/ai-agents/ -> http://localhost:4400
+    - http://localhost:9500/api/runtimes -> http://localhost:9500
+    """
+    if not raw_url:
+        return None
+    value = raw_url.strip().rstrip('/')
+    suffix = service_suffix.rstrip('/')
+    if value.endswith(suffix):
+        value = value[: -len(suffix)].rstrip('/')
+    return value
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Create one eval, one experiment, one run, then monitor status.'
@@ -43,6 +59,26 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument('--model-name', default='openai:gpt-5-mini')
     parser.add_argument('--prompt-version', default='v1')
+    parser.add_argument(
+        '--iam-url',
+        default=None,
+        help='IAM base URL override (falls back to DATALAYER_IAM_URL/env defaults).',
+    )
+    parser.add_argument(
+        '--runtimes-url',
+        default=None,
+        help='Runtimes base URL override (falls back to DATALAYER_RUNTIMES_URL/env defaults).',
+    )
+    parser.add_argument(
+        '--ai-agents-url',
+        default=None,
+        help='AI Agents base URL override (falls back to DATALAYER_AI_AGENTS_URL/env defaults).',
+    )
+    parser.add_argument(
+        '--ui-url',
+        default=None,
+        help='UI base URL for printed navigation links (defaults to DATALAYER_UI_URL or localhost for local runs).',
+    )
     return parser.parse_args()
 
 
@@ -53,14 +89,22 @@ def main() -> None:
         raise RuntimeError("Set DATALAYER_API_KEY or TEST_DATALAYER_API_KEY first.")
 
     account_uid = os.environ.get("DATALAYER_ACCOUNT_UID")
-    ai_agents_url = os.environ.get("DATALAYER_AI_AGENTS_URL")
 
     pass_rate = min(1.0, max(0.0, float(args.pass_rate)))
     total_cases = max(1, int(args.total_cases))
     passed_cases = int(round(pass_rate * total_cases))
     failed_cases = max(0, total_cases - passed_cases)
 
-    urls = DatalayerURLs.from_environment(ai_agents_url=ai_agents_url)
+    urls = DatalayerURLs.from_environment(
+        iam_url=_normalize_service_url(args.iam_url, '/api/iam'),
+        runtimes_url=_normalize_service_url(args.runtimes_url, '/api/runtimes'),
+        ai_agents_url=_normalize_service_url(args.ai_agents_url, '/api/ai-agents'),
+    )
+    ui_url = (
+        args.ui_url
+        or os.environ.get('DATALAYER_UI_URL')
+        or ('http://localhost:3063' if 'localhost' in urls.ai_agents_url or '127.0.0.1' in urls.ai_agents_url else urls.ai_agents_url)
+    ).rstrip('/')
     client = DatalayerClient(urls=urls, token=token)
 
     print('[1/4] Creating eval...')
@@ -150,7 +194,7 @@ def main() -> None:
         time.sleep(max(1, args.interval))
 
     print('Done.')
-    print(f"Track in UI: {urls.ai_agents_url}/evals")
+    print(f"Track in UI: {ui_url}/evals")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,17 @@ from datalayer_core.utils.urls import DatalayerURLs
 TERMINAL_STATUSES = {"completed", "failed", "error", "cancelled"}
 
 
+def _normalize_service_url(raw_url: str | None, service_suffix: str) -> str | None:
+    """Normalize service endpoints to base URL expected by DatalayerURLs."""
+    if not raw_url:
+        return None
+    value = raw_url.strip().rstrip('/')
+    suffix = service_suffix.rstrip('/')
+    if value.endswith(suffix):
+        value = value[: -len(suffix)].rstrip('/')
+    return value
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Create multi-experiment eval data to showcase comparisons and drift."
@@ -74,6 +85,26 @@ def parse_args() -> argparse.Namespace:
         default="v1",
         help="Prompt version marker written into run summary metadata.",
     )
+    parser.add_argument(
+        "--iam-url",
+        default=None,
+        help="IAM base URL override (falls back to DATALAYER_IAM_URL/env defaults).",
+    )
+    parser.add_argument(
+        "--runtimes-url",
+        default=None,
+        help="Runtimes base URL override (falls back to DATALAYER_RUNTIMES_URL/env defaults).",
+    )
+    parser.add_argument(
+        "--ai-agents-url",
+        default=None,
+        help="AI Agents base URL override (falls back to DATALAYER_AI_AGENTS_URL/env defaults).",
+    )
+    parser.add_argument(
+        "--ui-url",
+        default=None,
+        help="UI base URL for printed navigation links (defaults to DATALAYER_UI_URL or localhost for local runs).",
+    )
     return parser.parse_args()
 
 
@@ -106,13 +137,21 @@ def compute_pass_rate(experiment_index: int, run_index: int, total_runs: int) ->
     return round(min(0.99, max(0.45, base + swing)), 4)
 
 
-def make_client() -> tuple[DatalayerClient, str, str | None]:
+def make_client(args: argparse.Namespace) -> tuple[DatalayerClient, str, str | None, str]:
     token = require_token()
     account_uid = os.environ.get("DATALAYER_ACCOUNT_UID")
-    ai_agents_url = os.environ.get("DATALAYER_AI_AGENTS_URL")
-    urls = DatalayerURLs.from_environment(ai_agents_url=ai_agents_url)
+    urls = DatalayerURLs.from_environment(
+        iam_url=_normalize_service_url(args.iam_url, '/api/iam'),
+        runtimes_url=_normalize_service_url(args.runtimes_url, '/api/runtimes'),
+        ai_agents_url=_normalize_service_url(args.ai_agents_url, '/api/ai-agents'),
+    )
+    ui_url = (
+        args.ui_url
+        or os.environ.get('DATALAYER_UI_URL')
+        or ('http://localhost:3063' if 'localhost' in urls.ai_agents_url or '127.0.0.1' in urls.ai_agents_url else urls.ai_agents_url)
+    ).rstrip('/')
     client = DatalayerClient(urls=urls, token=token)
-    return client, urls.ai_agents_url, account_uid
+    return client, urls.ai_agents_url, account_uid, ui_url
 
 
 def create_eval(client: DatalayerClient, eval_name: str, account_uid: str | None) -> str:
@@ -261,7 +300,7 @@ def main() -> None:
     if args.runs_per_experiment < 2:
         raise RuntimeError("--runs-per-experiment must be at least 2 to show drift.")
 
-    client, ai_agents_url, account_uid = make_client()
+    client, ai_agents_url, account_uid, ui_url = make_client(args)
 
     print("[1/5] Creating eval...")
     eval_id = create_eval(client, args.eval_name, account_uid)
@@ -339,7 +378,7 @@ def main() -> None:
         print("  not enough runs available for run comparison")
 
     print("\nDone.")
-    print(f"Open UI: {ai_agents_url}/evals")
+    print(f"Open UI: {ui_url}/evals")
     print("In UI, open your eval and check:")
     print("- Experiment Insights (trend + drift)")
     print("- Compare Experiments In This Eval (latest, drift, overlay)")

@@ -7,6 +7,10 @@ EVAL_NAME ?= cli-eval-$(shell date +%Y%m%d)
 EXPERIMENT_NAME ?= cli-eval-experiment-$(shell date +%H%M%S)
 STATUS ?= queued
 WINDOW ?= 24h
+LOCAL_IAM_URL ?= http://localhost:9700/api/iam/
+LOCAL_RUNTIMES_URL ?= http://localhost:9500/api/runtimes/
+LOCAL_AI_AGENTS_URL ?= http://localhost:4400/api/ai-agents/
+LOCAL_AI_AGENTS_BASE_URL ?= $(shell printf '%s' "$(LOCAL_AI_AGENTS_URL)" | sed -E 's#/api/ai-agents/?$$##')
 
 ENV_FILE := .evals.env
 
@@ -19,7 +23,7 @@ define run_cli
 	$${DATALAYER_ACCOUNT_UID:+--account-uid $$DATALAYER_ACCOUNT_UID}
 endef
 
-.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets python-quickstart python-feature-tour clean
+.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Usage: make <target>\n"} /^[a-zA-Z_-]+:.*?##/ {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -70,11 +74,51 @@ list-runs: ## List runs for EXPERIMENT_ID
 live-targets: ## List live monitoring targets
 	@$(call run_cli,live targets --window "$(WINDOW)" --limit 20)
 
+list-evals-local: ## Local equivalent of list-evals (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) list-evals
+
+create-eval-local: ## Local equivalent of create-eval (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) create-eval
+
+create-experiment-local: ## Local equivalent of create-experiment (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) create-experiment
+
+launch-run-local: ## Local equivalent of launch-run (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) launch-run
+
+watch-run-local: ## Local equivalent of watch-run (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) watch-run
+
+list-runs-local: ## Local equivalent of list-runs (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) list-runs
+
+live-targets-local: ## Local equivalent of live-targets (uses LOCAL_AI_AGENTS_URL)
+	@DATALAYER_AI_AGENTS_URL="$(LOCAL_AI_AGENTS_BASE_URL)" $(MAKE) live-targets
+
 python-quickstart: ## Run beginner Python quickstart (single eval/experiment/run)
 	@python launch_and_monitor.py --execution-mode sdk --run-status completed --timeout 60 --interval 2
 
 python-feature-tour: ## Run Python feature tour (multi-experiment, drift, run compare)
 	@python feature_tour.py --runs-per-experiment 5 --compare-limit 2 --status completed
+
+python-quickstart-local: ## Run quickstart against local IAM/Runtimes/AI-Agents URLs
+	@python launch_and_monitor.py \
+		--execution-mode sdk \
+		--run-status completed \
+		--timeout 60 \
+		--interval 2 \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
+
+python-feature-tour-local: ## Run feature tour against local IAM/Runtimes/AI-Agents URLs
+	@python feature_tour.py \
+		--runs-per-experiment 5 \
+		--compare-limit 2 \
+		--status completed \
+		--iam-url "$(LOCAL_IAM_URL)" \
+		--runtimes-url "$(LOCAL_RUNTIMES_URL)" \
+		--ai-agents-url "$(LOCAL_AI_AGENTS_URL)"
 
 clean: ## Remove generated environment state
 	rm -f $(ENV_FILE)

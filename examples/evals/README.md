@@ -51,7 +51,19 @@ This path gives you a minimal success first.
 make python-quickstart
 ```
 
-### Option B: explicit script call
+### Option B: run against local services (explicit URL flags)
+
+```bash
+make python-quickstart-local
+```
+
+This target passes these flags directly to the script:
+
+- `--iam-url http://localhost:9700/api/iam/`
+- `--runtimes-url http://localhost:9500/api/runtimes/`
+- `--ai-agents-url http://localhost:4400/api/ai-agents/`
+
+### Option C: explicit script call
 
 ```bash
 python launch_and_monitor.py \
@@ -84,6 +96,18 @@ This path creates enough runs to populate charts and comparison views.
 ```bash
 make python-feature-tour
 ```
+
+### Option C: run against local services (explicit URL flags)
+
+```bash
+make python-feature-tour-local
+```
+
+This target passes these flags directly to the script:
+
+- `--iam-url http://localhost:9700/api/iam/`
+- `--runtimes-url http://localhost:9500/api/runtimes/`
+- `--ai-agents-url http://localhost:4400/api/ai-agents/`
 
 ### Option B: explicit script call
 
@@ -127,6 +151,43 @@ Notes:
 
 - IDs are persisted in `.evals.env`.
 - `make clean` removes local `.evals.env` state only.
+
+## Local Services Setup (Separate Section)
+
+If you run services locally, use these endpoints:
+
+- IAM: `http://localhost:9700/api/iam/`
+- Runtimes: `http://localhost:9500/api/runtimes/`
+- AI Agents: `http://localhost:4400/api/ai-agents/`
+
+Use the dedicated Make targets:
+
+```bash
+make list-evals-local
+make create-eval-local
+make create-experiment-local
+make launch-run-local
+make watch-run-local
+make list-runs-local
+make live-targets-local
+make python-quickstart-local
+make python-feature-tour-local
+```
+
+Note on URL format:
+
+- You can pass either service URLs (for example `http://localhost:4400/api/ai-agents/`) or plain base URLs (`http://localhost:4400`).
+- The Python examples normalize `--iam-url`, `--runtimes-url`, and `--ai-agents-url` to avoid duplicated path segments such as `/api/ai-agents/api/ai-agents/...`.
+- CLI local targets normalize `LOCAL_AI_AGENTS_URL` to a base URL before calling `datalayer evals ...`.
+
+You can override defaults per run:
+
+```bash
+make python-quickstart-local \
+  LOCAL_IAM_URL=http://localhost:9700/api/iam/ \
+  LOCAL_RUNTIMES_URL=http://localhost:9500/api/runtimes/ \
+  LOCAL_AI_AGENTS_URL=http://localhost:4400/api/ai-agents/
+```
 
 ## Verify Features In UI
 
