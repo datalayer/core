@@ -23,7 +23,7 @@ define run_cli
 	$${DATALAYER_ACCOUNT_UID:+--account-uid $$DATALAYER_ACCOUNT_UID}
 endef
 
-.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart-cloud python-quickstart-sdk python-feature-tour-cloud python-feature-tour-sdk python-quickstart-cloud-local python-quickstart-sdk-local python-feature-tour-cloud-local python-feature-tour-sdk-local python-quickstart-local-offline python-quickstart-local-online python-feature-tour-local-offline python-feature-tour-local-online python-quickstart-local-offline-local python-quickstart-local-online-local python-feature-tour-local-offline-local python-feature-tour-local-online-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local clean
+.PHONY: help list-evals create-eval create-experiment launch-run watch-run list-runs live-targets list-evals-local create-eval-local create-experiment-local launch-run-local watch-run-local list-runs-local live-targets-local python-quickstart-cloud python-quickstart-sdk python-feature-tour-cloud python-feature-tour-sdk python-quickstart-cloud-local python-quickstart-sdk-local python-feature-tour-cloud-local python-feature-tour-sdk-local python-quickstart-local-offline python-quickstart-local-online python-feature-tour-local-offline python-feature-tour-local-online python-quickstart-local-offline-local python-quickstart-local-online-local python-feature-tour-local-offline-local python-feature-tour-local-online-local python-quickstart python-feature-tour python-quickstart-local python-feature-tour-local python-quickstart-local-services python-feature-tour-local-services clean
 
 help: ## Show available targets
 	@awk 'BEGIN {FS = ":.*##"; print "Usage: make <target>\n"} /^[a-zA-Z_-]+:.*?##/ {printf "%-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -214,10 +214,16 @@ python-quickstart: ## Alias of python-quickstart-sdk
 python-feature-tour: ## Alias of python-feature-tour-sdk
 	@$(MAKE) python-feature-tour-sdk
 
-python-quickstart-local: ## Alias of python-quickstart-sdk-local
+python-quickstart-local: ## Alias of python-quickstart-sdk (run_environment=local)
+	@$(MAKE) python-quickstart-sdk
+
+python-feature-tour-local: ## Alias of python-feature-tour-sdk (run_environment=local)
+	@$(MAKE) python-feature-tour-sdk
+
+python-quickstart-local-services: ## Alias of python-quickstart-sdk-local (local service URLs)
 	@$(MAKE) python-quickstart-sdk-local
 
-python-feature-tour-local: ## Alias of python-feature-tour-sdk-local
+python-feature-tour-local-services: ## Alias of python-feature-tour-sdk-local (local service URLs)
 	@$(MAKE) python-feature-tour-sdk-local
 
 clean: ## Remove generated environment state

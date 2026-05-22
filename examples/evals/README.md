@@ -24,69 +24,25 @@ After running the examples, you will understand how to:
 - Interpret drift in pass-rate trends.
 - Validate everything in the `/evals` UI.
 
-## Cloud vs Local (Important)
+## Evals Concepts In Docs
 
-In the `/evals` UI, the **Cloud** and **Local** tabs are driven by `eval.run_environment`:
+Conceptual Evals documentation lives in the docs site:
 
-- **Cloud tab**: `run_environment="cloud"`
-- **Local tab**: `run_environment="local"`
+- [Evals](/docs/evals)
+- [Evals SDK](/docs/evals-sdk)
+- [Evals Run Modes](/docs/evals-run-modes)
+- [Evals AgentSpecs](/docs/evals-agentspecs)
 
-The `run_mode` (`offline` / `online` / `sdk`) is different from run environment:
+This README stays focused on the practical workflow in this folder: Make targets,
+script commands, and how to inspect results in the UI.
 
-- It describes how runs execute.
-- It does **not** decide whether an eval appears in Cloud or Local tab.
+## Ready-To-Run Target Families
 
-Execution mode quick definitions:
-
-- `offline`: run evaluation logic in a non-interactive batch style. Best when you evaluate a fixed set of eval cases and want reproducible, asynchronous-style processing.
-- `online`: evaluate live traffic or near-real-time events as they happen. Best for continuous monitoring and production feedback loops.
-- `sdk`: run via SDK-driven orchestration from client code/scripts (for example these Python examples), where you control run creation and metadata programmatically.
-
-Rule of thumb:
-
-- `run_environment` controls **where an eval is run and listed** (Cloud or Local).
-- `run_mode` controls **how the run is executed**.
-
-## Scope of These Examples
-
-The examples are **not** limited to sdk mode.
-
-- Quickstart and feature-tour commands default to `run_mode=sdk` because that is the easiest beginner path.
-- The same scripts support `offline`, `online`, and `sdk` execution modes.
-- You can choose any mode with `--run-mode` in direct Python commands.
-
-Ready-to-run mode targets are provided:
-
-- `make python-quickstart-local-offline`
-- `make python-quickstart-local-online`
-- `make python-quickstart-sdk`
-- `make python-feature-tour-local-offline`
-- `make python-feature-tour-local-online`
-- `make python-feature-tour-sdk`
-
-If you use local service URLs, equivalent `-local` targets are also available:
-
-- `make python-quickstart-local-offline-local`
-- `make python-quickstart-local-online-local`
-- `make python-feature-tour-local-offline-local`
-- `make python-feature-tour-local-online-local`
-
-### Run Environment × Run Mode Matrix
-
-This matrix clarifies what is supported and what each axis controls.
-
-| `run_environment` value | Tab in `/evals` UI | Supported `run_mode` values in examples |
-| --- | --- | --- |
-| `cloud` | Cloud | `offline`, `online`, `sdk` |
-| `local` | Local | `offline`, `online`, `sdk` |
-
-Interpretation:
-
-- The `run_environment` column affects UI placement (Cloud vs Local tab).
-- The `run_mode` column affects run behavior.
-- These two dimensions are independent in the example scripts.
-
-If you want your eval to appear in Local tab, create it with `--run-environment local`.
+- Local tab defaults: `python-quickstart-local`, `python-feature-tour-local`
+- Cloud tab defaults: `python-quickstart-cloud`, `python-feature-tour-cloud`
+- Local services URLs: `python-quickstart-local-services`, `python-feature-tour-local-services`
+- Local run modes: `python-quickstart-local-offline`, `python-quickstart-local-online`
+- Feature tour run modes: `python-feature-tour-local-offline`, `python-feature-tour-local-online`
 
 ## Files In This Folder
 
@@ -118,14 +74,20 @@ This path gives you a minimal success first.
 ### Option A: one command
 
 ```bash
-make python-quickstart-sdk
+make python-quickstart-local
 ```
+
+This default quickstart writes `run_environment=local`, so results appear in the **Local** tab.
+
+Equivalent legacy target: `make python-quickstart-sdk`.
 
 ### Option B: run against local services (explicit URL flags)
 
 ```bash
-make python-quickstart-sdk-local
+make python-quickstart-local-services
 ```
+
+Equivalent legacy target: `make python-quickstart-sdk-local`.
 
 This target passes these flags directly to the script:
 
@@ -133,12 +95,17 @@ This target passes these flags directly to the script:
 - `--runtimes-url http://localhost:9500/api/runtimes/`
 - `--ai-agents-url http://localhost:4400/api/ai-agents/`
 
-### Option C: cloud vs local explicit targets
+### Option C: choose where the eval appears (Cloud vs Local)
 
 ```bash
 make python-quickstart-cloud
-make python-quickstart-sdk
+make python-quickstart-local
 ```
+
+Use this when you want to be explicit about UI placement:
+
+- `python-quickstart-cloud` -> `run_environment=cloud` (Cloud tab)
+- `python-quickstart-local` -> `run_environment=local` (Local tab)
 
 ### Option D: explicit script call
 
@@ -165,6 +132,9 @@ What this script does:
 
 Then open `/evals` and confirm your run appears.
 
+If you still do not see it, check the active account context in the UI
+(user vs organization). The run is listed under the account that created it.
+
 ## Feature Tour (Comparison + Drift)
 
 This path creates enough runs to populate charts and comparison views.
@@ -172,27 +142,38 @@ This path creates enough runs to populate charts and comparison views.
 ### Option A: one command
 
 ```bash
-make python-feature-tour-sdk
+make python-feature-tour-local
 ```
+
+This default feature tour writes `run_environment=local`, so results appear in the **Local** tab.
+
+Equivalent legacy target: `make python-feature-tour-sdk`.
+
+### Option B: choose where the eval appears (Cloud vs Local)
+
+```bash
+make python-feature-tour-cloud
+make python-feature-tour-local
+```
+
+Use this when you want to be explicit about UI placement:
+
+- `python-feature-tour-cloud` -> `run_environment=cloud` (Cloud tab)
+- `python-feature-tour-local` -> `run_environment=local` (Local tab)
 
 ### Option C: run against local services (explicit URL flags)
 
 ```bash
-make python-feature-tour-sdk-local
+make python-feature-tour-local-services
 ```
+
+Equivalent legacy target: `make python-feature-tour-sdk-local`.
 
 This target passes these flags directly to the script:
 
 - `--iam-url http://localhost:9700/api/iam/`
 - `--runtimes-url http://localhost:9500/api/runtimes/`
 - `--ai-agents-url http://localhost:4400/api/ai-agents/`
-
-### Option B: cloud vs local explicit targets
-
-```bash
-make python-feature-tour-cloud
-make python-feature-tour-sdk
-```
 
 ### Option D: explicit script call
 
@@ -257,9 +238,9 @@ make watch-run-local
 make list-runs-local
 make live-targets-local
 make python-quickstart-cloud-local
-make python-quickstart-sdk-local
+make python-quickstart-local-services
 make python-feature-tour-cloud-local
-make python-feature-tour-sdk-local
+make python-feature-tour-local-services
 ```
 
 Note on URL format:
@@ -271,7 +252,7 @@ Note on URL format:
 You can override defaults per run:
 
 ```bash
-make python-quickstart-local \
+make python-quickstart-local-services \
   LOCAL_IAM_URL=http://localhost:9700/api/iam/ \
   LOCAL_RUNTIMES_URL=http://localhost:9500/api/runtimes/ \
   LOCAL_AI_AGENTS_URL=http://localhost:4400/api/ai-agents/

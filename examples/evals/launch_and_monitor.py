@@ -46,9 +46,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--eval-name', default='python-cli-demo-eval')
     parser.add_argument('--experiment-name', default='python-cli-demo-experiment')
     parser.add_argument('--run-status', default='completed', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
-        parser.add_argument('--run-mode', default='offline', choices=['offline', 'online', 'sdk'])
+    parser.add_argument('--run-mode', default='offline', choices=['offline', 'online', 'sdk'])
     parser.add_argument(
-            '--run-environment',
+        '--run-environment',
         default='cloud',
         choices=['cloud', 'local'],
         help='Eval run environment. Use local for Local tab visibility in UI.',
