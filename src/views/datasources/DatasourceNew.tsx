@@ -43,8 +43,10 @@ export type DatasourceNewProps = {
   datasourcesListRoute?: string;
   /** Route to navigate to the secrets page. Defaults to '/settings/iam/secrets'. */
   secretsRoute?: string;
-  /** Optional account uid used to scope datasource creation. */
-  accountUid?: string;
+  /** Optional principal uid used to scope datasource creation. */
+  principalUid?: string;
+  /** Optional principal kind used to scope datasource creation. */
+  principalKind?: 'user' | 'organization' | 'team';
   /** Optional contextual principal summary rendered below the page intro. */
   accountPrincipal?: ReactNode;
 };
@@ -52,13 +54,17 @@ export type DatasourceNewProps = {
 export const DatasourceNew = ({
   datasourcesListRoute = '/settings/integrations/datasources',
   secretsRoute = '/settings/iam/secrets',
-  accountUid,
+  principalUid,
+  principalKind,
   accountPrincipal,
 }: DatasourceNewProps = {}) => {
   const runStore = useRunStore();
   const { useCreateDatasource } = useCache();
 
-  const createDatasourceMutation = useCreateDatasource({ accountUid });
+  const createDatasourceMutation = useCreateDatasource({
+    principalUid,
+    principalKind,
+  });
 
   const navigate = useNavigate();
   const { enqueueToast } = useToast();

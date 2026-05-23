@@ -24,20 +24,24 @@ export type DatasourcesProps = {
   newDatasourceRoute?: string;
   /** Base route for the datasources list (used for edit navigation). Defaults to current relative path. */
   datasourcesListRoute?: string;
-  /** Optional account uid used to scope datasource reads. */
-  accountUid?: string;
+  /** Optional principal uid used to scope datasource reads. */
+  principalUid?: string;
+  /** Optional principal kind used to scope datasource reads. */
+  principalKind?: 'user' | 'organization' | 'team';
 };
 
 const DatasourcesTable = ({
   datasourcesListRoute,
-  accountUid,
+  principalUid,
+  principalKind,
 }: {
   datasourcesListRoute?: string;
-  accountUid?: string;
+  principalUid?: string;
+  principalKind?: 'user' | 'organization' | 'team';
 }) => {
   const { useDatasources } = useCache();
 
-  const datasourcesQuery = useDatasources({ accountUid });
+  const datasourcesQuery = useDatasources({ principalUid, principalKind });
 
   const navigate = useNavigate();
   const [datasources, setDatasources] = useState<IDatasource[]>([]);
@@ -105,7 +109,8 @@ const DatasourcesTable = ({
 export const Datasources = ({
   newDatasourceRoute = '/new/datasource',
   datasourcesListRoute,
-  accountUid,
+  principalUid,
+  principalKind,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -146,7 +151,8 @@ export const Datasources = ({
           </Box>
           <DatasourcesTable
             datasourcesListRoute={datasourcesListRoute}
-            accountUid={accountUid}
+            principalUid={principalUid}
+            principalKind={principalKind}
           />
         </Box>
       </PageLayout.Content>

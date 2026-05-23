@@ -5,11 +5,9 @@
 
 /**
  * TanStack Query-based cache hook for Datalayer API
+ * for automatic cache management, background refetching,
+ * and optimistic updates.
  *
- * This is a modernized replacement for useCache.tsx that leverages TanStack Query
- * for automatic cache management, background refetching, and optimistic updates.
- *
- * Key improvements over useCache:
  * - Automatic cache management (no manual Map objects)
  * - Built-in loading/error states
  * - Automatic refetching and deduplication
@@ -145,9 +143,6 @@ export const queryKeys = {
     list: (filters?: string) =>
       [...queryKeys.users.lists(), { filters }] as const,
     details: () => [...queryKeys.users.all(), 'detail'] as const,
-            teamId: (space as any).teamId || (space as any).team?.id || null,
-            teamHandle:
-              (space as any).teamHandle || (space as any).team?.handle || null,
     detail: (id: string) => [...queryKeys.users.details(), id] as const,
     byHandle: (handle: string) =>
       [...queryKeys.users.all(), 'handle', handle] as const,
@@ -1728,32 +1723,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Get user spaces
    */
   const useUserSpaces = (scope?: {
-    selectedUserUid?: string;
-    selectedOrganizationUid?: string;
-    selectedTeamUid?: string;
-    selectedAgentUid?: string;
+    selectedPrincipalUid?: string;
+    selectedPrincipalKind?: 'user' | 'organization' | 'team';
   }) => {
     return useQuery({
       queryKey: [
         ...queryKeys.spaces.userSpaces(),
-        scope?.selectedUserUid || '',
-        scope?.selectedOrganizationUid || '',
-        scope?.selectedTeamUid || '',
-        scope?.selectedAgentUid || '',
+        scope?.selectedPrincipalUid || '',
+        scope?.selectedPrincipalKind || '',
       ],
       queryFn: async () => {
         const params = new URLSearchParams();
-        if (scope?.selectedUserUid) {
-          params.set('selected_user_uid', scope.selectedUserUid);
+        if (scope?.selectedPrincipalUid) {
+          params.set('selected_principal_uid', scope.selectedPrincipalUid);
         }
-        if (scope?.selectedOrganizationUid) {
-          params.set('selected_organization_uid', scope.selectedOrganizationUid);
-        }
-        if (scope?.selectedTeamUid) {
-          params.set('selected_team_uid', scope.selectedTeamUid);
-        }
-        if (scope?.selectedAgentUid) {
-          params.set('selected_agent_uid', scope.selectedAgentUid);
+        if (scope?.selectedPrincipalKind) {
+          params.set('selected_principal_kind', scope.selectedPrincipalKind);
         }
         const query = params.toString();
         const resp = await requestDatalayer({
@@ -1787,9 +1772,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async ({
         space,
         organization,
+        team,
       }: {
         space: Partial<IAnySpace>;
         organization?: IAnyOrganization;
+        team?: {
+          id?: string;
+          handle?: string;
+        };
       }) => {
         const seedSpaceId =
           space.variant === 'course'
@@ -1805,6 +1795,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             public: space.public,
             spaceHandle: space.handle,
             organizationId: organization?.id,
+            organizationHandle: organization?.handle,
+            teamId: team?.id,
+            teamHandle: team?.handle,
             seedSpaceId,
           },
         });
@@ -2318,12 +2311,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get all pages
    */
-  const usePages = () => {
+  const usePages = (scope?: {
+    selectedPrincipalUid?: string;
+    selectedPrincipalKind?: 'user' | 'organization' | 'team';
+  }) => {
     return useQuery({
-      queryKey: queryKeys.pages.all(),
+      queryKey: [
+        ...queryKeys.pages.all(),
+        scope?.selectedPrincipalUid || '',
+        scope?.selectedPrincipalKind || '',
+      ],
       queryFn: async () => {
+        const params = new URLSearchParams();
+        if (scope?.selectedPrincipalUid) {
+          params.set('selected_principal_uid', scope.selectedPrincipalUid);
+        }
+        if (scope?.selectedPrincipalKind) {
+          params.set('selected_principal_kind', scope.selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages`,
+          url: `${configuration.libraryRunUrl}/api/library/v1/pages${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.pages) {
@@ -2430,22 +2438,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // Datasource, Secret, Token Hooks
   // ============================================================================
 
-  type AccountScopeOptions = {
-    accountUid?: string;
+  type PrincipalScopeOptions = {
+    principalUid?: string;
+    principalKind?: 'user' | 'organization' | 'team';
   };
 
   /**
    * Get all datasources
    */
-  const useDatasources = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useDatasources = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.datasources.all(), accountUid || 'self'],
+      queryKey: [...queryKeys.datasources.all(), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'GET',
         });
@@ -2473,14 +2484,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create datasource
    */
-  const useCreateDatasource = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useCreateDatasource = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
         return requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'POST',
           body: { ...datasource },
@@ -2507,15 +2520,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // but this prevented useSecret from fetching fresh data (e.g., the value field).
   // Consider re-adding cache pre-population if the list endpoint returns full secret data,
   // or use a different query key pattern for partial vs full secret data.
-  const useSecrets = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useSecrets = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.secrets.all(), accountUid || 'self'],
+      queryKey: [...queryKeys.secrets.all(), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'GET',
         });
@@ -2535,14 +2550,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create secret
    */
-  const useCreateSecret = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useCreateSecret = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (secret: Omit<ISecret, 'id'>) => {
         return requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'POST',
           body: { ...secret },
@@ -2563,14 +2580,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Delete secret
    */
-  const useDeleteSecret = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useDeleteSecret = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (secretId: string) => {
         return requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'DELETE',
         });
@@ -2865,15 +2884,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get single datasource by ID
    */
-  const useDatasource = (datasourceId: string, options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useDatasource = (datasourceId: string, options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.datasources.detail(datasourceId), accountUid || 'self'],
+      queryKey: [...queryKeys.datasources.detail(datasourceId), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'GET',
         });
@@ -2890,14 +2911,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Update datasource
    */
-  const useUpdateDatasource = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useUpdateDatasource = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (datasource: IDatasource) => {
         return requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'PUT',
           body: { ...datasource },
@@ -2923,21 +2946,24 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const useSecret = (
     secretId: string,
     options?: {
-      accountUid?: string;
+      principalUid?: string;
+      principalKind?: 'user' | 'organization' | 'team';
       enabled?: boolean;
       refetchOnMount?: boolean | 'always';
       staleTime?: number;
       gcTime?: number;
     },
   ) => {
-    const accountUid = options?.accountUid;
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.secrets.detail(secretId), accountUid || 'self'],
+      queryKey: [...queryKeys.secrets.detail(secretId), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'GET',
         });
@@ -2958,14 +2984,16 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Update secret
    */
-  const useUpdateSecret = (options?: AccountScopeOptions) => {
-    const accountUid = options?.accountUid;
+  const useUpdateSecret = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (secret: ISecret) => {
         return requestDatalayer({
-          url: withAccountUidQuery(
+          url: withSelectedPrincipalQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
-            accountUid,
+            principalUid,
+            principalKind,
           ),
           method: 'PUT',
           body: { ...secret },
@@ -5505,12 +5533,40 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     accountUid?: string;
   };
 
-  const withAccountUidQuery = (url: string, accountUid?: string) => {
+  const withAccountUidQuery = (
+    url: string,
+    accountUid?: string,
+    accountKind?: string,
+  ) => {
     if (!accountUid) {
       return url;
     }
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}account_uid=${encodeURIComponent(accountUid)}`;
+    const parts = [`billable_account_uid=${encodeURIComponent(accountUid)}`];
+    if (accountKind) {
+      parts.push(`billable_account_kind=${encodeURIComponent(accountKind)}`);
+    }
+    return `${url}${separator}${parts.join('&')}`;
+  };
+
+  const withSelectedPrincipalQuery = (
+    url: string,
+    principalUid?: string,
+    principalKind?: 'user' | 'organization' | 'team',
+  ) => {
+    if (!principalUid) {
+      return url;
+    }
+    const separator = url.includes('?') ? '&' : '?';
+    const parts = [
+      `selected_principal_uid=${encodeURIComponent(principalUid)}`,
+    ];
+    if (principalKind) {
+      parts.push(
+        `selected_principal_kind=${encodeURIComponent(principalKind)}`,
+      );
+    }
+    return `${url}${separator}${parts.join('&')}`;
   };
 
   const useTopUpPrices = (

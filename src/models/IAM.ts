@@ -126,6 +126,33 @@ export interface MembershipsResponse {
   memberships: any[];
 }
 
+/**
+ * A principal (self / member organization / member team) the authenticated
+ * user can share artifacts with.
+ */
+export interface ShareablePrincipal {
+  kind: 'user' | 'organization' | 'team';
+  uid: string;
+  handle: string;
+  name?: string | null;
+  description?: string | null;
+  email?: string | null;
+  avatar_url?: string | null;
+  /** Parent organization UID — set when kind === 'team'. */
+  organization_uid?: string | null;
+  /** Parent organization handle — set when kind === 'team'. */
+  organization_handle?: string | null;
+}
+
+/**
+ * Response from the /principals/shareable endpoint.
+ */
+export interface ShareablePrincipalsResponse {
+  success: boolean;
+  message?: string;
+  principals: ShareablePrincipal[];
+}
+
 export interface PrincipalSearchUser {
   uid: string;
   handle_s: string;
