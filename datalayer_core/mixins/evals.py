@@ -227,6 +227,44 @@ class EvalsMixin:
             account_uid=account_uid,
         )
 
+    def evals_create_live_event(
+        self,
+        *,
+        target_id: str,
+        target_type: str = "agent",
+        evaluator_name: Optional[str] = None,
+        metric_name: Optional[str] = None,
+        value_num: Optional[float] = None,
+        label: Optional[str] = None,
+        passed: Optional[bool] = None,
+        attributes: Optional[dict[str, Any]] = None,
+        created_at: Optional[str] = None,
+        account_uid: Optional[str] = None,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            "target_id": target_id,
+            "target_type": target_type,
+            "attributes": attributes or {},
+        }
+        if evaluator_name is not None:
+            body["evaluator_name"] = evaluator_name
+        if metric_name is not None:
+            body["metric_name"] = metric_name
+        if value_num is not None:
+            body["value_num"] = value_num
+        if label is not None:
+            body["label"] = label
+        if passed is not None:
+            body["passed"] = passed
+        if created_at is not None:
+            body["created_at"] = created_at
+        return self._evals_request(
+            "/live/events",
+            method="POST",
+            json_body=body,
+            account_uid=account_uid,
+        )
+
     def evals_list_live_targets(
         self,
         *,

@@ -26,7 +26,9 @@ Use this repository path as the canonical source of examples:
 - `evals_interactive_example.py`: create evalset -> 5 experiments -> 3 runs per experiment in interactive mode.
 - `Makefile`: convenience targets for sdk/sdk-proxy runs and proxy service URLs.
 
-Each script seeds multiple representative cases and creates three runs per experiment so trend, drift, and run-comparison views are populated.
+By default, each script now creates experiments configured for real agent execution metadata (cloud/local target + agent spec), then launches three runs per experiment.
+
+Use `--no-agent` to keep the previous synthetic behavior (seeded metrics/statuses) for testing and demos.
 
 Each script currently creates 5 experiments and 3 runs per experiment.
 
@@ -53,9 +55,15 @@ Default local proxy endpoints used by examples for `sdk-proxy`:
 make help
 make evals-batch-sdk
 make evals-batch-sdk-proxy
+make evals-batch-sdk-proxy NO_AGENT=1
+make evals-batch-sdk-proxy-no-agent
 make evals-interactive-sdk
 make evals-interactive-sdk-proxy
+make evals-interactive-sdk-proxy NO_AGENT=1
+make evals-interactive-sdk-proxy-no-agent
 ```
+
+Note: GNU make parses `--no-agent` as a make option, so use `NO_AGENT=1` or the `*-no-agent` targets.
 
 ## Direct Commands
 
@@ -65,9 +73,91 @@ Batch mode:
 python evals_batch_example.py \
   --eval-name batch-demo \
   --run-environment sdk-proxy \
+  --execution-target cloud \
+  --agentspec-id eval-experiment-runner \
   --run-status completed \
   --clean
 ```
+
+Batch cloud note:
+
+- Batch cloud mode now launches a runtime pod and submits code for execution.
+- Runs should transition to terminal states (`completed`/`failed`) instead of staying queued.
+- If your environment has no runtime capacity, creation can still fail before execution starts.
+
+### Cloud execution check
+
+Use this checklist to validate that SDK batch runs are really executed by a cloud agent runtime.
+
+1. Run batch cloud mode:
+
+```bash
+make evals-batch-sdk-proxy
+```
+
+2. Pick one created run ID, then inspect execution evidence:
+
+```bash
+python - <<'PY'
+import os
+from datalayer_core import DatalayerClient
+from datalayer_core.utils.urls import DatalayerURLs
+
+RUN_ID = '<replace_with_run_id>'
+
+urls = DatalayerURLs.from_environment(
+  iam_url='http://localhost:9700',
+  runtimes_url='http://localhost:9500',
+  ai_agents_url='http://localhost:4400',
+)
+token = os.environ.get('DATALAYER_API_KEY') or os.environ.get('TEST_DATALAYER_API_KEY')
+client = DatalayerClient(urls=urls, token=token)
+
+run = (client.evals_get_run(RUN_ID).get('run') or {})
+summary = run.get('summary') or {}
+print('status=', run.get('status'))
+print('launch_source=', summary.get('launch_source'))
+print('run_mode=', summary.get('run_mode'))
+print('runtime_pod_name=', summary.get('runtime_pod_name'))
+print('execution_url=', summary.get('execution_url'))
+print('execution_error=', summary.get('execution_error'))
+print('metrics=', run.get('metrics'))
+PY
+```
+
+Expected success signals:
+
+- `launch_source=ai-agents-batch-executor`
+- `runtime_pod_name` is non-empty
+- `execution_url` is set
+- `status` becomes `completed` or `failed` with populated metrics
+
+If you see HTTP 404 in `execution_error`, runtime routing is not wired correctly yet.
+
+Required wiring for local sdk-proxy setups:
+
+- Start the agent-runtimes service with a Vercel AI route (default in Makefile):
+
+```bash
+cd /home/echarles/Content/datalayer-osp/src/ai/agent-runtimes
+make agent-serve
+```
+
+- Optional protocol override when needed:
+
+```bash
+make agent-serve AGENT_SERVE_PROTOCOL=ag-ui
+```
+
+- Set `DATALAYER_AGENT_RUNTIMES_URL` in the ai-agents service environment to the reachable agent-runtimes base URL.
+- Restart ai-agents so it picks up updated environment values.
+- Re-run `make evals-batch-sdk-proxy`.
+
+Notes from local verification:
+
+- Batch cloud execution path is invoked (`launch_source=ai-agents-batch-executor`).
+- Interactive no-agent monitoring path is working and emits live targets/events.
+- If agent-runtimes URL is unresolved, batch execution can fail with endpoint 404.
 
 Interactive mode:
 
@@ -75,7 +165,21 @@ Interactive mode:
 python evals_interactive_example.py \
   --eval-name interactive-demo \
   --run-environment sdk-proxy \
+  --execution-target local \
+  --local-agent-base-url http://127.0.0.1:8000 \
+  --local-agent-id default \
+  --agentspec-id eval-experiment-runner \
   --run-status running \
+  --clean
+```
+
+Legacy synthetic test mode:
+
+```bash
+python evals_interactive_example.py \
+  --eval-name interactive-dry-run \
+  --run-environment sdk-proxy \
+  --no-agent \
   --clean
 ```
 
@@ -134,33 +238,22 @@ Useful options:
 - `--raw` to print JSON report output.
 - `--ai-agents-url <url>` and `--token <token>` for explicit endpoint/auth.
 
-## Agent Invocation: What Is Executed In These Examples
+## Agent Invocation Modes
 
-These two scripts are **dataset-and-run seeding examples**, not agent execution runners.
+The examples now support two modes:
 
-What the scripts do:
+- **Default (no `--no-agent`)**: experiments are configured with explicit execution metadata:
+  - `execution_target` (`cloud` or `local`)
+  - `agent_spec_id` (set with `--agentspec-id`; defaults to `eval-experiment-runner` if omitted)
+  - runtime settings (`environment_name`) or local settings (`local_agent_base_url`, `local_agent_id`)
+- **`--no-agent`**: keeps previous synthetic metrics/status behavior for fast tests and UI demos.
 
-- create one evalset with a rich schema
-- create five experiments per evalset (`...-experiment-1`, `...-experiment-2`, `...-experiment-3`, `...-experiment-4`, `...-experiment-5`)
-- create three runs per experiment
-- create evaluation records and per-run summaries so `/evals` comparison, trend, and drift UI sections are populated
+Flag note:
 
-What the scripts do not do:
+- Use `--agentspec-id <id>` as the primary flag.
+- `--agent-spec-id <id>` is also accepted as an alias.
 
-- they do **not** invoke your target application/agent endpoint
-- they do **not** execute model inference per case at runtime
-
-So where is the "agent" in these examples?
-
-- The agent/model behavior is represented by the seeded run/evaluation outputs.
-- This is intentional so the examples are deterministic and immediately useful for UI/CLI walkthroughs.
-
-If you want real agent invocation:
-
-- run your app/agent yourself for each case and write outputs/metrics back through the evals APIs, or
-- use launch/runner workflows (for example via CLI compare/report flows) that execute submitted code or connected runtime logic.
-
-In short: these examples showcase the eval data model and analysis workflow end-to-end; they are not a live executor for your agent.
+This allows exercising the same experiment/run model while keeping a deterministic test fallback.
 
 ## Notes
 
@@ -173,7 +266,7 @@ In short: these examples showcase the eval data model and analysis workflow end-
 
 ## Monitoring Tab: How To Trigger Content And What To Expect
 
-Use the interactive example to trigger monitoring content intentionally.
+Use the interactive example with **agent-enabled** settings to trigger monitoring content intentionally.
 
 Trigger steps:
 
@@ -183,6 +276,10 @@ Trigger steps:
 python evals_interactive_example.py \
   --eval-name monitoring-demo \
   --run-environment sdk-proxy \
+  --execution-target local \
+  --local-agent-base-url http://127.0.0.1:8000 \
+  --local-agent-id default \
+  --agentspec-id eval-experiment-runner \
   --run-status running \
   --clean
 ```
@@ -196,6 +293,33 @@ What to expect:
 - You should see interactive run monitoring signals (run status evolution, pass-rate-oriented run summaries).
 - If your runtime pipeline emits live eval events, live target rows will populate with event counts, pass rate, avg value, and last-event time.
 - If live targets are empty while runs are present, that typically means no live events were emitted yet (this is normal).
+
+No-agent note:
+
+- `--no-agent` is useful for deterministic regression tests.
+- In interactive no-agent mode, the example now writes synthetic live events so Monitoring has visible content.
+
+Quick monitoring verification command:
+
+```bash
+python - <<'PY'
+import os
+from datalayer_core import DatalayerClient
+from datalayer_core.utils.urls import DatalayerURLs
+
+urls = DatalayerURLs.from_environment(
+  iam_url='http://localhost:9700',
+  runtimes_url='http://localhost:9500',
+  ai_agents_url='http://localhost:4400',
+)
+token = os.environ.get('DATALAYER_API_KEY') or os.environ.get('TEST_DATALAYER_API_KEY')
+client = DatalayerClient(urls=urls, token=token)
+payload = client.evals_list_live_targets(window='24h', limit=20)
+print('targets=', len(payload.get('targets') or []))
+for target in (payload.get('targets') or [])[:10]:
+  print(target.get('target_type'), target.get('target_id'), target.get('event_count'), target.get('pass_rate'))
+PY
+```
 
 ## Schema In The Examples
 
