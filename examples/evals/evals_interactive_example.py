@@ -2,7 +2,7 @@
 
 """Interactive eval example for Datalayer.
 
-Creates one evalset, one experiment, and one run using run_mode=interactive.
+Creates one evalset, five experiments, and three runs per experiment using run_mode=interactive.
 """
 
 from __future__ import annotations
@@ -143,7 +143,7 @@ def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Create one evalset, two experiments, and runs in interactive mode.'
+        description='Create one evalset, five experiments, and three runs per experiment in interactive mode.'
     )
     parser.add_argument('--eval-name', default='')
     parser.add_argument('--run-status', default='running', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
@@ -160,7 +160,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--interval', type=int, default=2)
     parser.add_argument('--pass-rate', type=float, default=0.85)
     parser.add_argument('--total-cases', type=int, default=10)
-    parser.add_argument('--runs', type=int, default=3, help='Number of runs to create for the experiment.')
     parser.add_argument('--model-name', default='openai:gpt-5-mini')
     parser.add_argument('--prompt-version', default='v1')
     parser.add_argument('--iam-url', default=None)
@@ -179,7 +178,7 @@ def main() -> None:
     account_uid = os.environ.get('DATALAYER_ACCOUNT_UID')
     backend_run_environment, iam_url, runtimes_url, ai_agents_url = _resolve_environment(args)
     pass_rate = min(1.0, max(0.0, float(args.pass_rate)))
-    run_count = max(1, int(args.runs))
+    run_count = 3
     total_cases = max(1, int(args.total_cases))
 
     urls = DatalayerURLs.from_environment(
@@ -215,6 +214,9 @@ def main() -> None:
     experiment_specs = [
         {'name': 'interactive-experiment-1', 'index': 1},
         {'name': 'interactive-experiment-2', 'index': 2},
+        {'name': 'interactive-experiment-3', 'index': 3},
+        {'name': 'interactive-experiment-4', 'index': 4},
+        {'name': 'interactive-experiment-5', 'index': 5},
     ]
     experiment_ids: list[tuple[str, str, int]] = []
     for spec in experiment_specs:
@@ -238,7 +240,7 @@ def main() -> None:
         if not experiment_id:
             raise RuntimeError(f'Unexpected experiment response: {experiment_payload}')
         experiment_ids.append((spec['name'], experiment_id, spec['index']))
-        print(f"Created experiment {spec['index']}/2: {experiment_id} ({spec['name']})")
+        print(f"Created experiment {spec['index']}/5: {experiment_id} ({spec['name']})")
 
     print(f'[3/4] Creating {run_count} run(s) per experiment...')
     if run_count >= 3:

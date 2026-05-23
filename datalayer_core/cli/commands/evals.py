@@ -84,6 +84,37 @@ def _status_style(status: str) -> str:
     return "white"
 
 
+def _run_pass_rate(run: dict[str, Any]) -> float | None:
+    metrics = run.get("metrics") or {}
+    raw = metrics.get("pass_rate")
+    if isinstance(raw, (int, float)):
+        value = float(raw)
+        if value < 0:
+            return 0.0
+        if value > 1:
+            return 1.0
+        return value
+    return None
+
+
+def _fmt_pct(raw: float | None) -> str:
+    if raw is None:
+        return "n/a"
+    return f"{raw * 100:.1f}%"
+
+
+def _compute_baseline_and_drift(runs: list[dict[str, Any]]) -> tuple[float | None, float | None, float | None]:
+    pass_rates = [rate for rate in (_run_pass_rate(run) for run in runs) if rate is not None]
+    if not pass_rates:
+        return None, None, None
+    baseline_size = min(3, max(1, len(pass_rates) // 2))
+    baseline_slice = pass_rates[:baseline_size]
+    baseline = sum(baseline_slice) / baseline_size
+    latest = pass_rates[-1]
+    drift = latest - baseline
+    return baseline, latest, drift
+
+
 @app.callback()
 def evals_callback(ctx: typer.Context) -> None:
     """Evals command group."""
@@ -195,6 +226,115 @@ def evals_delete(
         f"runs={cascade.get('runs_deleted', 0)} "
         f"cases={cascade.get('cases_deleted', 0)}"
     )
+
+
+@evals_app.command(name="compare-report")
+def evals_compare_report(
+    evalset_id: str = typer.Argument(..., help="Evalset ID to compare."),
+    run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
+    token: Optional[str] = typer.Option(None, "--token", help="API token."),
+    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    raw: bool = typer.Option(False, "--raw", help="Print raw JSON report output."),
+) -> None:
+    """Generate a full comparison report for a specific evalset.
+
+    The report includes:
+    - Experiment-level summary (run count, latest pass rate, baseline, drift)
+    - Per-experiment latest-two run comparison (A-B) using compare API
+    """
+    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    experiments_payload = client.evals_list_experiments(
+        evalset_id=evalset_id,
+        limit=200,
+        offset=0,
+        account_uid=account_uid,
+    )
+    experiments = experiments_payload.get("experiments") or []
+    if not experiments:
+        console.print(f"[yellow]No experiments found for evalset[/yellow] {evalset_id}")
+        raise typer.Exit(0)
+
+    report: dict[str, Any] = {
+        "evalset_id": evalset_id,
+        "generated_at": _now_iso(),
+        "experiments": [],
+    }
+
+    summary_table = Table(title=f"Evalset Comparison Report ({evalset_id})")
+    summary_table.add_column("Experiment", style="cyan")
+    summary_table.add_column("Runs", style="white")
+    summary_table.add_column("Latest", style="white")
+    summary_table.add_column("Baseline", style="white")
+    summary_table.add_column("Drift", style="white")
+    summary_table.add_column("Latest 2 Delta (A-B)", style="white")
+
+    for experiment in experiments:
+        experiment_id = str(experiment.get("id", ""))
+        experiment_name = str(experiment.get("name", experiment_id))
+
+        runs_payload = client.evals_list_runs(
+            experiment_id,
+            limit=run_limit,
+            offset=0,
+            account_uid=account_uid,
+        )
+        runs = runs_payload.get("runs") or []
+        total_runs = int(runs_payload.get("total") or len(runs))
+        baseline, latest, drift = _compute_baseline_and_drift(runs)
+
+        latest_two_delta: float | None = None
+        latest_two_run_ids: list[str] = []
+        if len(runs) >= 2:
+            latest_two_run_ids = [str(runs[0].get("id", "")), str(runs[1].get("id", ""))]
+            compare_payload = client.evals_compare_runs(
+                latest_two_run_ids,
+                account_uid=account_uid,
+            )
+            compared_runs = compare_payload.get("runs") or []
+            compared_by_id = {
+                str(run.get("id", "")): run
+                for run in compared_runs
+                if isinstance(run, dict)
+            }
+            run_a = compared_by_id.get(latest_two_run_ids[0], runs[0])
+            run_b = compared_by_id.get(latest_two_run_ids[1], runs[1])
+            pass_a = _run_pass_rate(run_a)
+            pass_b = _run_pass_rate(run_b)
+            if pass_a is not None and pass_b is not None:
+                latest_two_delta = pass_a - pass_b
+
+        drift_text = "n/a" if drift is None else f"{drift * 100:+.1f} pts"
+        latest_two_text = "n/a" if latest_two_delta is None else f"{latest_two_delta * 100:+.1f} pts"
+
+        summary_table.add_row(
+            experiment_name,
+            str(total_runs),
+            _fmt_pct(latest),
+            _fmt_pct(baseline),
+            drift_text,
+            latest_two_text,
+        )
+
+        report["experiments"].append(
+            {
+                "id": experiment_id,
+                "name": experiment_name,
+                "runs_total": total_runs,
+                "latest_pass_rate": latest,
+                "baseline_pass_rate": baseline,
+                "drift_delta": drift,
+                "latest_two_run_ids": latest_two_run_ids,
+                "latest_two_delta": latest_two_delta,
+            }
+        )
+
+    if raw:
+        console.print(report)
+        return
+
+    console.print(summary_table)
+    console.print("[dim]Notes: drift = latest - baseline (baseline is avg of first runs in fetched window); latest-2 delta = A - B.[/dim]")
 
 
 @experiments_app.command(name="list")
