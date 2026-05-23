@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 from datalayer_core import DatalayerClient
@@ -119,8 +120,17 @@ def _build_eval_schema(kind: str) -> dict[str, Any]:
     }
 
 
+def _generated_evalset_name(source: str, mode: str) -> str:
+    stamp = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')
+    return f'evalset-{source}-{mode}-{stamp}'
+
+
 def _run_status_for_index(index: int) -> str:
     return 'running' if index == 0 else ('completed' if index == 1 else 'failed')
+
+
+def _is_intentional_failure(index: int, run_status: str) -> bool:
+    return index >= 2 and run_status == 'failed'
 
 
 def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
@@ -133,10 +143,9 @@ def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Create one evalset, one experiment, one run in interactive mode.'
+        description='Create one evalset, two experiments, and runs in interactive mode.'
     )
-    parser.add_argument('--eval-name', default='interactive-eval')
-    parser.add_argument('--experiment-name', default='interactive-experiment')
+    parser.add_argument('--eval-name', default='')
     parser.add_argument('--run-status', default='running', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
     parser.add_argument(
         '--run-environment',
@@ -185,10 +194,11 @@ def main() -> None:
     ).rstrip('/')
 
     client = DatalayerClient(urls=urls, token=token)
+    evalset_name = args.eval_name.strip() or _generated_evalset_name('sdk', 'interactive')
 
     print('[1/4] Creating evalset...')
     evalset_payload = client.evals_create_eval(
-        name=args.eval_name,
+        name=evalset_name,
         description='Eval created by evals_interactive_example.py',
         run_environment=backend_run_environment,
         kind='interactive',
@@ -199,64 +209,85 @@ def main() -> None:
     evalset_id = str((evalset_payload.get('evalset') or {}).get('id') or '')
     if not evalset_id:
         raise RuntimeError(f'Unexpected evalset response: {evalset_payload}')
-    print(f'Created evalset: {evalset_id}')
+    print(f'Created evalset: {evalset_id} ({evalset_name})')
 
-    print('[2/4] Creating experiment...')
-    experiment_payload = client.evals_create_experiment(
-        name=args.experiment_name,
-        evalset_id=evalset_id,
-        description='Experiment created by evals_interactive_example.py',
-        status='draft',
-        config={
-            'run_mode': 'interactive',
-            'model': args.model_name,
-            'prompt_version': args.prompt_version,
-        },
-        summary={'launch_source': 'python-interactive-example'},
-        account_uid=account_uid,
-    )
-    experiment_id = str((experiment_payload.get('experiment') or {}).get('id') or '')
-    if not experiment_id:
-        raise RuntimeError(f'Unexpected experiment response: {experiment_payload}')
-    print(f'Created experiment: {experiment_id}')
-
-    print(f'[3/4] Creating {run_count} run(s)...')
-    run_ids: list[str] = []
-    for index in range(run_count):
-        run_status = args.run_status if index == 0 else _run_status_for_index(index)
-        run_pass_rate = _pass_rate_for_index(pass_rate, index)
-        run_passed_cases = int(round(run_pass_rate * total_cases))
-        run_failed_cases = max(0, total_cases - run_passed_cases)
-
-        run_payload = client.evals_create_run(
-            experiment_id,
-            status=run_status,
-            metrics={
-                'pass_rate': run_pass_rate,
-                'total_cases': total_cases,
-                'passed': run_passed_cases,
-                'failed': run_failed_cases,
-                'avg_score': round(run_pass_rate * 0.9 + 0.08, 4),
+    print('[2/4] Creating experiments...')
+    experiment_specs = [
+        {'name': 'interactive-experiment-1', 'index': 1},
+        {'name': 'interactive-experiment-2', 'index': 2},
+    ]
+    experiment_ids: list[tuple[str, str, int]] = []
+    for spec in experiment_specs:
+        experiment_payload = client.evals_create_experiment(
+            name=spec['name'],
+            evalset_id=evalset_id,
+            description='Experiment created by evals_interactive_example.py',
+            status='draft',
+            config={
+                'run_mode': 'interactive',
+                'model': args.model_name,
+                'prompt_version': args.prompt_version,
             },
             summary={
                 'launch_source': 'python-interactive-example',
-                'run_mode': 'interactive',
-                'run_environment': args.run_environment,
-                'backend_run_environment': backend_run_environment,
-                'model': args.model_name,
-                'prompt_version': args.prompt_version,
-                'submission_mode': 'interactive',
-                'run_index': index + 1,
-                'scenario': 'live-monitoring',
+                'experiment_index': spec['index'],
             },
-            report={'note': f'interactive example run {index + 1}'},
             account_uid=account_uid,
         )
-        run_id = str((run_payload.get('run') or {}).get('id') or '')
-        if not run_id:
-            raise RuntimeError(f'Unexpected run response: {run_payload}')
-        run_ids.append(run_id)
-        print(f'Launched run {index + 1}/{run_count}: {run_id} ({run_status})')
+        experiment_id = str((experiment_payload.get('experiment') or {}).get('id') or '')
+        if not experiment_id:
+            raise RuntimeError(f'Unexpected experiment response: {experiment_payload}')
+        experiment_ids.append((spec['name'], experiment_id, spec['index']))
+        print(f"Created experiment {spec['index']}/2: {experiment_id} ({spec['name']})")
+
+    print(f'[3/4] Creating {run_count} run(s) per experiment...')
+    if run_count >= 3:
+        print('Note: run 3+ are intentionally marked as failed in this demo to show interactive monitoring of regressions.')
+    run_ids: list[str] = []
+    last_run_expected_failure = False
+    for experiment_name, experiment_id, experiment_index in experiment_ids:
+        print(f'Creating runs for {experiment_name}...')
+        for index in range(run_count):
+            run_status = args.run_status if index == 0 else _run_status_for_index(index)
+            intentional_failure = _is_intentional_failure(index, run_status)
+            run_pass_rate = _pass_rate_for_index(pass_rate, index)
+            run_passed_cases = int(round(run_pass_rate * total_cases))
+            run_failed_cases = max(0, total_cases - run_passed_cases)
+
+            run_payload = client.evals_create_run(
+                experiment_id,
+                status=run_status,
+                metrics={
+                    'pass_rate': run_pass_rate,
+                    'total_cases': total_cases,
+                    'passed': run_passed_cases,
+                    'failed': run_failed_cases,
+                    'avg_score': round(run_pass_rate * 0.9 + 0.08, 4),
+                },
+                summary={
+                    'launch_source': 'python-interactive-example',
+                    'run_mode': 'interactive',
+                    'run_environment': args.run_environment,
+                    'backend_run_environment': backend_run_environment,
+                    'model': args.model_name,
+                    'prompt_version': args.prompt_version,
+                    'submission_mode': 'interactive',
+                    'experiment_name': experiment_name,
+                    'experiment_index': experiment_index,
+                    'run_index': index + 1,
+                    'scenario': 'live-monitoring',
+                },
+                report={'note': f'interactive example run {index + 1} ({experiment_name})'},
+                account_uid=account_uid,
+            )
+            run_id = str((run_payload.get('run') or {}).get('id') or '')
+            if not run_id:
+                raise RuntimeError(f'Unexpected run response: {run_payload}')
+            run_ids.append(run_id)
+            print(f'Launched run {index + 1}/{run_count} for {experiment_name}: {run_id} ({run_status})')
+            if intentional_failure:
+                print('  Expected demo outcome: this run is intentionally failed.')
+            last_run_expected_failure = intentional_failure
 
     print('[4/4] Watching run status...')
     timeout_seconds = max(1, args.timeout)
@@ -266,6 +297,8 @@ def main() -> None:
         snapshot: dict[str, Any] = client.evals_get_run(run_id, account_uid=account_uid)
         status = str((snapshot.get('run') or {}).get('status') or '')
         print(f'Run status: {status}')
+        if status.lower() == 'failed' and last_run_expected_failure:
+            print('Run status note: failed is expected for this demo scenario.')
         if status.lower() in {'completed', 'failed', 'error', 'cancelled'}:
             break
         if time.time() - started > timeout_seconds:

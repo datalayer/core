@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 from datalayer_core import DatalayerClient
@@ -92,35 +93,119 @@ def _build_eval_schema(kind: str) -> dict[str, Any]:
     return {
         'schema_version': '1.0',
         'kind': kind,
+        'title': 'Text Normalization Evalset',
+        'description': (
+            'Showcases input/output/metadata schemas with constraints, enums, '
+            'defaults, formats, and examples for a text-normalization task.'
+        ),
         'input_schema': {
+            '$schema': 'https://json-schema.org/draft/2020-12/schema',
+            'title': 'NormalizationInput',
+            'description': 'Payload supplied to the agent for one evaluation case.',
             'type': 'object',
             'required': ['text'],
             'properties': {
-                'text': {'type': 'string', 'minLength': 1, 'maxLength': 4000},
-                'language': {'type': 'string', 'default': 'en'},
+                'text': {
+                    'type': 'string',
+                    'description': 'Raw text to normalize. Leading/trailing whitespace is stripped.',
+                    'minLength': 1,
+                    'maxLength': 4000,
+                    'examples': ['hello world', '  Paris  '],
+                },
+                'language': {
+                    'type': 'string',
+                    'description': 'BCP-47 language tag of the input text.',
+                    'enum': ['en', 'fr', 'es', 'de', 'it'],
+                    'default': 'en',
+                },
+                'mode': {
+                    'type': 'string',
+                    'description': 'Normalization variant to apply.',
+                    'enum': ['uppercase', 'lowercase', 'titlecase'],
+                    'default': 'uppercase',
+                },
+                'preserve_punctuation': {
+                    'type': 'boolean',
+                    'description': 'Keep punctuation characters in the output.',
+                    'default': True,
+                },
             },
             'additionalProperties': False,
         },
         'output_schema': {
+            '$schema': 'https://json-schema.org/draft/2020-12/schema',
+            'title': 'NormalizationOutput',
+            'description': 'Structured response produced by the agent.',
             'type': 'object',
             'required': ['text'],
             'properties': {
-                'text': {'type': 'string', 'minLength': 1},
-                'confidence': {'type': 'number', 'minimum': 0, 'maximum': 1},
+                'text': {
+                    'type': 'string',
+                    'description': 'Normalized text returned by the agent.',
+                    'minLength': 1,
+                    'examples': ['HELLO WORLD', 'PARIS'],
+                },
+                'confidence': {
+                    'type': 'number',
+                    'description': 'Model self-reported confidence between 0 and 1.',
+                    'minimum': 0,
+                    'maximum': 1,
+                },
+                'detected_language': {
+                    'type': 'string',
+                    'description': 'Language inferred from the input text.',
+                    'enum': ['en', 'fr', 'es', 'de', 'it', 'unknown'],
+                },
+                'tokens': {
+                    'type': 'array',
+                    'description': 'Tokenized form of the normalized text.',
+                    'items': {'type': 'string'},
+                    'minItems': 0,
+                },
             },
             'additionalProperties': True,
         },
         'metadata_schema': {
+            '$schema': 'https://json-schema.org/draft/2020-12/schema',
+            'title': 'CaseMetadata',
+            'description': 'Authoring metadata attached to each case.',
             'type': 'object',
             'properties': {
-                'category': {'type': 'string'},
-                'difficulty': {'type': 'string', 'enum': ['easy', 'medium', 'hard']},
-                'owner': {'type': 'string'},
-                'tags': {'type': 'array', 'items': {'type': 'string'}},
+                'category': {
+                    'type': 'string',
+                    'description': 'Functional grouping for analytics.',
+                    'enum': ['normalization', 'formatting', 'unicode', 'mixed-content'],
+                },
+                'difficulty': {
+                    'type': 'string',
+                    'description': 'Authoring difficulty estimate.',
+                    'enum': ['easy', 'medium', 'hard'],
+                },
+                'owner': {
+                    'type': 'string',
+                    'description': 'Email of the case author.',
+                    'format': 'email',
+                },
+                'tags': {
+                    'type': 'array',
+                    'description': 'Free-form labels for filtering.',
+                    'items': {'type': 'string'},
+                    'uniqueItems': True,
+                },
+                'created_at': {
+                    'type': 'string',
+                    'description': 'ISO 8601 timestamp when the case was authored.',
+                    'format': 'date-time',
+                },
             },
             'additionalProperties': True,
         },
     }
+
+
+def _generated_evalset_name(source: str, mode: str) -> str:
+    stamp = datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')
+    return f'evalset-{source}-{mode}-{stamp}'
 
 
 def _run_status_for_index(index: int) -> str:
@@ -141,10 +226,9 @@ def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Create one evalset, one experiment, one run in batch mode.'
+        description='Create one evalset, two experiments, and runs in batch mode.'
     )
-    parser.add_argument('--eval-name', default='batch-eval')
-    parser.add_argument('--experiment-name', default='batch-experiment')
+    parser.add_argument('--eval-name', default='')
     parser.add_argument('--run-status', default='completed', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
     parser.add_argument(
         '--run-environment',
@@ -193,10 +277,11 @@ def main() -> None:
     ).rstrip('/')
 
     client = DatalayerClient(urls=urls, token=token)
+    evalset_name = args.eval_name.strip() or _generated_evalset_name('sdk', 'batch')
 
     print('[1/4] Creating evalset...')
     evalset_payload = client.evals_create_eval(
-        name=args.eval_name,
+        name=evalset_name,
         description='Eval created by evals_batch_example.py',
         run_environment=backend_run_environment,
         kind='batch',
@@ -207,69 +292,85 @@ def main() -> None:
     evalset_id = str((evalset_payload.get('evalset') or {}).get('id') or '')
     if not evalset_id:
         raise RuntimeError(f'Unexpected evalset response: {evalset_payload}')
-    print(f'Created evalset: {evalset_id}')
+    print(f'Created evalset: {evalset_id} ({evalset_name})')
 
-    print('[2/4] Creating experiment...')
-    experiment_payload = client.evals_create_experiment(
-        name=args.experiment_name,
-        evalset_id=evalset_id,
-        description='Experiment created by evals_batch_example.py',
-        status='draft',
-        config={
-            'run_mode': 'batch',
-            'model': args.model_name,
-            'prompt_version': args.prompt_version,
-        },
-        summary={'launch_source': 'python-batch-example'},
-        account_uid=account_uid,
-    )
-    experiment_id = str((experiment_payload.get('experiment') or {}).get('id') or '')
-    if not experiment_id:
-        raise RuntimeError(f'Unexpected experiment response: {experiment_payload}')
-    print(f'Created experiment: {experiment_id}')
+    print('[2/4] Creating experiments...')
+    experiment_specs = [
+        {'name': 'batch-experiment-1', 'index': 1},
+        {'name': 'batch-experiment-2', 'index': 2},
+    ]
+    experiment_ids: list[tuple[str, str, int]] = []
+    for spec in experiment_specs:
+        experiment_payload = client.evals_create_experiment(
+            name=spec['name'],
+            evalset_id=evalset_id,
+            description='Experiment created by evals_batch_example.py',
+            status='draft',
+            config={
+                'run_mode': 'batch',
+                'model': args.model_name,
+                'prompt_version': args.prompt_version,
+            },
+            summary={
+                'launch_source': 'python-batch-example',
+                'experiment_index': spec['index'],
+            },
+            account_uid=account_uid,
+        )
+        experiment_id = str((experiment_payload.get('experiment') or {}).get('id') or '')
+        if not experiment_id:
+            raise RuntimeError(f'Unexpected experiment response: {experiment_payload}')
+        experiment_ids.append((spec['name'], experiment_id, spec['index']))
+        print(f"Created experiment {spec['index']}/2: {experiment_id} ({spec['name']})")
 
-    print(f'[3/4] Creating {run_count} run(s)...')
+    print(f'[3/4] Creating {run_count} run(s) per experiment...')
     if run_count >= 3:
         print('Note: run 3+ are intentionally marked as failed in this demo to show status distribution and regression signals.')
     run_ids: list[str] = []
     last_run_expected_failure = False
-    for index in range(run_count):
-        run_status = args.run_status if index == 0 else _run_status_for_index(index)
-        intentional_failure = _is_intentional_failure(index, run_status)
-        run_pass_rate = _pass_rate_for_index(pass_rate, index)
-        run_passed_cases = int(round(run_pass_rate * total_cases))
-        run_failed_cases = max(0, total_cases - run_passed_cases)
+    for experiment_name, experiment_id, experiment_index in experiment_ids:
+        print(f'Creating runs for {experiment_name}...')
+        for index in range(run_count):
+            run_status = args.run_status if index == 0 else _run_status_for_index(index)
+            intentional_failure = _is_intentional_failure(index, run_status)
+            run_pass_rate = _pass_rate_for_index(pass_rate, index)
+            run_passed_cases = int(round(run_pass_rate * total_cases))
+            run_failed_cases = max(0, total_cases - run_passed_cases)
 
-        run_payload = client.evals_create_run(
-            experiment_id,
-            status=run_status,
-            metrics={
-                'pass_rate': run_pass_rate,
-                'total_cases': total_cases,
-                'passed': run_passed_cases,
-                'failed': run_failed_cases,
-                'avg_score': round(run_pass_rate * 0.9 + 0.08, 4),
-            },
-            summary={
-                'launch_source': 'python-batch-example',
-                'run_mode': 'batch',
-                'run_environment': args.run_environment,
-                'backend_run_environment': backend_run_environment,
-                'model': args.model_name,
-                'prompt_version': args.prompt_version,
-                'run_index': index + 1,
-                'scenario': 'regression-suite',
-            },
-            report={'note': f'batch example run {index + 1}'},
-            account_uid=account_uid,
-        )
-        run_id = str((run_payload.get('run') or {}).get('id') or '')
-        if not run_id:
-            raise RuntimeError(f'Unexpected run response: {run_payload}')
-        run_ids.append(run_id)
-        run_log_suffix = ' [expected demo failure]' if intentional_failure else ''
-        print(f'Launched run {index + 1}/{run_count}: {run_id} ({run_status}){run_log_suffix}')
-        if index == run_count - 1:
+            run_payload = client.evals_create_run(
+                experiment_id,
+                status=run_status,
+                metrics={
+                    'pass_rate': run_pass_rate,
+                    'total_cases': total_cases,
+                    'passed': run_passed_cases,
+                    'failed': run_failed_cases,
+                    'avg_score': round(run_pass_rate * 0.9 + 0.08, 4),
+                },
+                summary={
+                    'launch_source': 'python-batch-example',
+                    'run_mode': 'batch',
+                    'run_environment': args.run_environment,
+                    'backend_run_environment': backend_run_environment,
+                    'model': args.model_name,
+                    'prompt_version': args.prompt_version,
+                    'experiment_name': experiment_name,
+                    'experiment_index': experiment_index,
+                    'run_index': index + 1,
+                    'scenario': 'regression-suite',
+                },
+                report={'note': f'batch example run {index + 1} ({experiment_name})'},
+                account_uid=account_uid,
+            )
+            run_id = str((run_payload.get('run') or {}).get('id') or '')
+            if not run_id:
+                raise RuntimeError(f'Unexpected run response: {run_payload}')
+            run_ids.append(run_id)
+            run_log_suffix = ' [expected demo failure]' if intentional_failure else ''
+            print(
+                f'Launched run {index + 1}/{run_count} for {experiment_name}: '
+                f'{run_id} ({run_status}){run_log_suffix}'
+            )
             last_run_expected_failure = intentional_failure
 
     print('[4/4] Watching run status...')

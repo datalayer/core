@@ -49,10 +49,10 @@ Default local proxy endpoints used by examples for `sdk-proxy`:
 
 ```bash
 make help
-make python-batch-sdk
-make python-batch-sdk-proxy
-make python-interactive-sdk
-make python-interactive-sdk-proxy
+make evals-batch-sdk
+make evals-batch-sdk-proxy
+make evals-interactive-sdk
+make evals-interactive-sdk-proxy
 ```
 
 ## Direct Commands
