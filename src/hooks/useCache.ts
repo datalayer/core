@@ -2453,7 +2453,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: [...queryKeys.datasources.all(), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources`,
             principalUid,
             principalKind,
@@ -2490,7 +2490,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
         return requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources`,
             principalUid,
             principalKind,
@@ -2527,7 +2527,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: [...queryKeys.secrets.all(), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets`,
             principalUid,
             principalKind,
@@ -2556,7 +2556,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (secret: Omit<ISecret, 'id'>) => {
         return requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets`,
             principalUid,
             principalKind,
@@ -2586,7 +2586,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (secretId: string) => {
         return requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
             principalUid,
             principalKind,
@@ -2891,7 +2891,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: [...queryKeys.datasources.detail(datasourceId), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
             principalUid,
             principalKind,
@@ -2917,7 +2917,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (datasource: IDatasource) => {
         return requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
             principalUid,
             principalKind,
@@ -2960,7 +2960,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: [...queryKeys.secrets.detail(secretId), principalUid || 'self', principalKind || ''],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
             principalUid,
             principalKind,
@@ -2990,7 +2990,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (secret: ISecret) => {
         return requestDatalayer({
-          url: withSelectedPrincipalQuery(
+          url: withAccountUidQuery(
             `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
             principalUid,
             principalKind,
@@ -5545,26 +5545,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const parts = [`billable_account_uid=${encodeURIComponent(accountUid)}`];
     if (accountKind) {
       parts.push(`billable_account_kind=${encodeURIComponent(accountKind)}`);
-    }
-    return `${url}${separator}${parts.join('&')}`;
-  };
-
-  const withSelectedPrincipalQuery = (
-    url: string,
-    principalUid?: string,
-    principalKind?: 'user' | 'organization' | 'team',
-  ) => {
-    if (!principalUid) {
-      return url;
-    }
-    const separator = url.includes('?') ? '&' : '?';
-    const parts = [
-      `selected_principal_uid=${encodeURIComponent(principalUid)}`,
-    ];
-    if (principalKind) {
-      parts.push(
-        `selected_principal_kind=${encodeURIComponent(principalKind)}`,
-      );
     }
     return `${url}${separator}${parts.join('&')}`;
   };
