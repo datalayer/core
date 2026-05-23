@@ -49,7 +49,7 @@ class EvalsMixin:
         if q:
             params["q"] = q
         return self._evals_request(
-            "/eval-datasets",
+            "/evalsets",
             method="GET",
             params=params,
             account_uid=account_uid,
@@ -60,7 +60,7 @@ class EvalsMixin:
         *,
         name: str,
         description: str = "",
-        run_environment: str = "cloud",
+        run_environment: str = "sdk",
         kind: str = "batch",
         schema: Optional[dict[str, Any]] = None,
         tags: Optional[list[str]] = None,
@@ -79,7 +79,7 @@ class EvalsMixin:
             "cases": cases or [],
         }
         return self._evals_request(
-            "/eval-datasets",
+            "/evalsets",
             method="POST",
             json_body=body,
             account_uid=account_uid,
@@ -87,12 +87,12 @@ class EvalsMixin:
 
     def evals_delete_eval(
         self,
-        eval_dataset_id: str,
+        evalset_id: str,
         *,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
-            f"/eval-datasets/{eval_dataset_id}",
+            f"/evalsets/{evalset_id}",
             method="DELETE",
             account_uid=account_uid,
         )
@@ -100,15 +100,15 @@ class EvalsMixin:
     def evals_list_experiments(
         self,
         *,
-        eval_dataset_id: Optional[str] = None,
+        evalset_id: Optional[str] = None,
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
-        if eval_dataset_id:
-            params["eval_dataset_id"] = eval_dataset_id
+        if evalset_id:
+            params["evalset_id"] = evalset_id
         if status:
             params["status"] = status
         return self._evals_request(
@@ -122,7 +122,7 @@ class EvalsMixin:
         self,
         *,
         name: str,
-        eval_dataset_id: Optional[str] = None,
+        evalset_id: Optional[str] = None,
         description: str = "",
         status: str = "draft",
         config: Optional[dict[str, Any]] = None,
@@ -132,7 +132,7 @@ class EvalsMixin:
     ) -> dict[str, Any]:
         body = {
             "name": name,
-            "eval_dataset_id": eval_dataset_id,
+            "evalset_id": evalset_id,
             "description": description,
             "status": status,
             "config": config or {},

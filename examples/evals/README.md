@@ -2,19 +2,17 @@
 
 # Datalayer Evals Examples
 
-This folder contains two Python examples, one per supported `run_mode`:
+This folder contains two Python SDK examples, one per supported `run_mode`:
 
 - `evals_batch_example.py` uses `run_mode=batch`
 - `evals_interactive_example.py` uses `run_mode=interactive`
 
-`run_environment` now supports three explicit execution options:
+These examples are intentionally **SDK-lane only** (`run_environment=sdk`).
 
-- `cloud`: cloud endpoints + backend `run_environment=cloud`
-- `cloud-proxy`: local proxy endpoints + backend `run_environment=cloud`
-- `local`: cloud endpoints + backend `run_environment=local`
-- `local-proxy`: local proxy endpoints + backend `run_environment=local`
+- `sdk`: direct endpoints + backend `run_environment=sdk`
+- `sdk-proxy`: local proxy endpoints + backend `run_environment=sdk`
 
-`proxy` is still accepted by the scripts as a deprecated alias of `cloud-proxy`.
+If you need evalsets in the UI lane (`run_environment=ui`), create them from the Evals UI.
 
 ## Examples Source
 
@@ -24,9 +22,9 @@ Use this repository path as the canonical source of examples:
 
 ## Files
 
-- `evals_batch_example.py`: create eval dataset -> experiment -> multiple runs in batch mode.
-- `evals_interactive_example.py`: create eval dataset -> experiment -> multiple runs in interactive mode.
-- `Makefile`: convenience targets for cloud/proxy runs and proxy service URLs.
+- `evals_batch_example.py`: create evalset -> experiment -> multiple runs in batch mode.
+- `evals_interactive_example.py`: create evalset -> experiment -> multiple runs in interactive mode.
+- `Makefile`: convenience targets for sdk/sdk-proxy runs and proxy service URLs.
 
 Each script seeds multiple representative cases and creates multiple runs by default (`--runs 3`) so trend, drift, and run-comparison views are populated.
 
@@ -41,7 +39,7 @@ Optional:
 - `DATALAYER_ACCOUNT_UID` for organization scoping
 - local proxy service URLs (`LOCAL_IAM_URL`, `LOCAL_RUNTIMES_URL`, `LOCAL_AI_AGENTS_URL`)
 
-Default local proxy endpoints used by examples for `cloud-proxy` and `local-proxy`:
+Default local proxy endpoints used by examples for `sdk-proxy`:
 
 - `LOCAL_IAM_URL=http://localhost:9700/api/iam/`
 - `LOCAL_RUNTIMES_URL=http://localhost:9500/api/runtimes/`
@@ -51,14 +49,10 @@ Default local proxy endpoints used by examples for `cloud-proxy` and `local-prox
 
 ```bash
 make help
-make python-batch-cloud
-make python-batch-cloud-proxy
-make python-batch-local
-make python-batch-local-proxy
-make python-interactive-cloud
-make python-interactive-cloud-proxy
-make python-interactive-local
-make python-interactive-local-proxy
+make python-batch-sdk
+make python-batch-sdk-proxy
+make python-interactive-sdk
+make python-interactive-sdk-proxy
 ```
 
 ## Direct Commands
@@ -69,7 +63,7 @@ Batch mode:
 python evals_batch_example.py \
   --eval-name batch-demo \
   --experiment-name batch-experiment \
-  --run-environment cloud-proxy \
+  --run-environment sdk-proxy \
   --runs 3 \
   --run-status completed
 ```
@@ -80,43 +74,43 @@ Interactive mode:
 python evals_interactive_example.py \
   --eval-name interactive-demo \
   --experiment-name interactive-experiment \
-  --run-environment cloud-proxy \
+  --run-environment sdk-proxy \
   --runs 3 \
   --run-status running
 ```
 
-Pure local mode with direct cloud endpoints (no localhost proxy):
+Direct endpoint mode (no localhost proxy):
 
 ```bash
 python evals_batch_example.py \
-  --eval-name local-batch-demo \
-  --experiment-name local-batch-experiment \
-  --run-environment local \
+  --eval-name sdk-batch-demo \
+  --experiment-name sdk-batch-experiment \
+  --run-environment sdk \
   --runs 3 \
   --run-status completed
 
 python evals_interactive_example.py \
-  --eval-name local-interactive-demo \
-  --experiment-name local-interactive-experiment \
-  --run-environment local \
+  --eval-name sdk-interactive-demo \
+  --experiment-name sdk-interactive-experiment \
+  --run-environment sdk \
   --runs 3 \
   --run-status running
 ```
 
-Local mode through proxy services (local endpoints + backend local mode):
+SDK mode through proxy services (local endpoints + backend sdk mode):
 
 ```bash
 python evals_batch_example.py \
-  --eval-name local-batch-demo \
-  --experiment-name local-batch-experiment \
-  --run-environment local-proxy \
+  --eval-name sdk-batch-demo \
+  --experiment-name sdk-batch-experiment \
+  --run-environment sdk-proxy \
   --runs 3 \
   --run-status completed
 
 python evals_interactive_example.py \
-  --eval-name local-interactive-demo \
-  --experiment-name local-interactive-experiment \
-  --run-environment local-proxy \
+  --eval-name sdk-interactive-demo \
+  --experiment-name sdk-interactive-experiment \
+  --run-environment sdk-proxy \
   --runs 3 \
   --run-status running
 ```
@@ -127,13 +121,12 @@ python evals_interactive_example.py \
 - Interactive mode is intended for live or near-real-time evaluation workflows.
 - Batch example cases cover normalization, formatting, mixed-content, and lightweight unicode scenarios.
 - Interactive example cases cover latency expectations, safety/refusal behavior, concise response quality, and JSON formatting requirements.
-- Open `/evals` in UI and use the Cloud/Local tab to match backend mode:
-  - `cloud` and `cloud-proxy` map to backend `cloud`
-  - `local` and `local-proxy` map to backend `local`
+- Open `/evals` in UI and use the SDK tab to view records created by these examples.
+- The UI tab is a separate lane intended for evalsets authored from the web UI.
 
 ## Schema In The Examples
 
-Both examples create eval datasets with a richer schema object (not just `{ "type": "object" }`).
+Both examples create evalsets with a richer schema object (not just `{ "type": "object" }`).
 
 The schema includes:
 
@@ -181,10 +174,10 @@ Example shape:
 
 1. **Run one example**
   - Action: launch either batch or interactive script.
-  - UI: a new eval dataset appears in the Cloud/Local tab selected by `run_environment`.
+  - UI: a new evalset appears in the SDK tab (`run_environment=sdk`).
 
-2. **Open the eval dataset**
-  - Action: inspect the eval dataset details and case list.
+2. **Open the evalset**
+  - Action: inspect the evalset details and case list.
   - UI: you should see multiple representative cases seeded by the example.
 
 2.1 **Inspect schemas**

@@ -2,7 +2,7 @@
 
 """Batch eval example for Datalayer.
 
-Creates one eval, one experiment, and one run using run_mode=batch.
+Creates one evalset, one experiment, and one run using run_mode=batch.
 """
 
 from __future__ import annotations
@@ -33,36 +33,18 @@ def _normalize_service_url(raw_url: str | None, service_suffix: str) -> str | No
 
 def _resolve_environment(args: argparse.Namespace) -> tuple[str, str, str, str]:
     requested = args.run_environment.strip().lower()
-    if requested == 'proxy':
-        requested = 'cloud-proxy'
 
-    if requested == 'cloud':
+    if requested == 'sdk':
         return (
-            'cloud',
+            'sdk',
             args.iam_url,
             args.runtimes_url,
             args.ai_agents_url,
         )
 
-    if requested == 'cloud-proxy':
+    if requested == 'sdk-proxy':
         return (
-            'cloud',
-            args.iam_url or DEFAULT_LOCAL_IAM_URL,
-            args.runtimes_url or DEFAULT_LOCAL_RUNTIMES_URL,
-            args.ai_agents_url or DEFAULT_LOCAL_AI_AGENTS_URL,
-        )
-
-    if requested == 'local':
-        return (
-            'local',
-            args.iam_url,
-            args.runtimes_url,
-            args.ai_agents_url,
-        )
-
-    if requested == 'local-proxy':
-        return (
-            'local',
+            'sdk',
             args.iam_url or DEFAULT_LOCAL_IAM_URL,
             args.runtimes_url or DEFAULT_LOCAL_RUNTIMES_URL,
             args.ai_agents_url or DEFAULT_LOCAL_AI_AGENTS_URL,
@@ -145,6 +127,10 @@ def _run_status_for_index(index: int) -> str:
     return 'completed' if index < 2 else 'failed'
 
 
+def _is_intentional_failure(index: int, run_status: str) -> bool:
+    return index >= 2 and run_status == 'failed'
+
+
 def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
     if index == 0:
         return max(0.0, min(1.0, base_pass_rate - 0.08))
@@ -155,21 +141,18 @@ def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Create one eval, one experiment, one run in batch mode.'
+        description='Create one evalset, one experiment, one run in batch mode.'
     )
     parser.add_argument('--eval-name', default='batch-eval')
     parser.add_argument('--experiment-name', default='batch-experiment')
     parser.add_argument('--run-status', default='completed', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
     parser.add_argument(
         '--run-environment',
-        default='cloud',
-        choices=['cloud', 'cloud-proxy', 'local', 'local-proxy', 'proxy'],
+        default='sdk',
+        choices=['sdk', 'sdk-proxy'],
         help=(
-            'cloud uses cloud endpoints and cloud backend run_environment; '
-            'cloud-proxy uses local proxy endpoints but keeps backend run_environment=cloud; '
-            'local uses cloud endpoints with backend run_environment=local; '
-            'local-proxy uses local proxy endpoints with backend run_environment=local. '
-            'proxy is a deprecated alias of cloud-proxy.'
+            'sdk uses direct endpoints with backend run_environment=sdk; '
+            'sdk-proxy uses local proxy endpoints while keeping backend run_environment=sdk.'
         ),
     )
     parser.add_argument('--timeout', type=int, default=60)
@@ -197,8 +180,6 @@ def main() -> None:
     pass_rate = min(1.0, max(0.0, float(args.pass_rate)))
     run_count = max(1, int(args.runs))
     total_cases = max(1, int(args.total_cases))
-    passed_cases = int(round(pass_rate * total_cases))
-    failed_cases = max(0, total_cases - passed_cases)
 
     urls = DatalayerURLs.from_environment(
         iam_url=_normalize_service_url(iam_url, '/api/iam'),
@@ -213,8 +194,8 @@ def main() -> None:
 
     client = DatalayerClient(urls=urls, token=token)
 
-    print('[1/4] Creating eval dataset...')
-    eval_dataset_payload = client.evals_create_eval(
+    print('[1/4] Creating evalset...')
+    evalset_payload = client.evals_create_eval(
         name=args.eval_name,
         description='Eval created by evals_batch_example.py',
         run_environment=backend_run_environment,
@@ -223,15 +204,15 @@ def main() -> None:
         cases=_build_batch_cases(),
         account_uid=account_uid,
     )
-    eval_dataset_id = str((eval_dataset_payload.get('eval_dataset') or {}).get('id') or '')
-    if not eval_dataset_id:
-        raise RuntimeError(f'Unexpected eval dataset response: {eval_dataset_payload}')
-    print(f'Created eval dataset: {eval_dataset_id}')
+    evalset_id = str((evalset_payload.get('evalset') or {}).get('id') or '')
+    if not evalset_id:
+        raise RuntimeError(f'Unexpected evalset response: {evalset_payload}')
+    print(f'Created evalset: {evalset_id}')
 
     print('[2/4] Creating experiment...')
     experiment_payload = client.evals_create_experiment(
         name=args.experiment_name,
-        eval_dataset_id=eval_dataset_id,
+        evalset_id=evalset_id,
         description='Experiment created by evals_batch_example.py',
         status='draft',
         config={
@@ -248,9 +229,13 @@ def main() -> None:
     print(f'Created experiment: {experiment_id}')
 
     print(f'[3/4] Creating {run_count} run(s)...')
+    if run_count >= 3:
+        print('Note: run 3+ are intentionally marked as failed in this demo to show status distribution and regression signals.')
     run_ids: list[str] = []
+    last_run_expected_failure = False
     for index in range(run_count):
         run_status = args.run_status if index == 0 else _run_status_for_index(index)
+        intentional_failure = _is_intentional_failure(index, run_status)
         run_pass_rate = _pass_rate_for_index(pass_rate, index)
         run_passed_cases = int(round(run_pass_rate * total_cases))
         run_failed_cases = max(0, total_cases - run_passed_cases)
@@ -282,7 +267,10 @@ def main() -> None:
         if not run_id:
             raise RuntimeError(f'Unexpected run response: {run_payload}')
         run_ids.append(run_id)
-        print(f'Launched run {index + 1}/{run_count}: {run_id} ({run_status})')
+        run_log_suffix = ' [expected demo failure]' if intentional_failure else ''
+        print(f'Launched run {index + 1}/{run_count}: {run_id} ({run_status}){run_log_suffix}')
+        if index == run_count - 1:
+            last_run_expected_failure = intentional_failure
 
     print('[4/4] Watching run status...')
     timeout_seconds = max(1, args.timeout)
@@ -291,7 +279,10 @@ def main() -> None:
     while True:
         snapshot: dict[str, Any] = client.evals_get_run(run_id, account_uid=account_uid)
         status = str((snapshot.get('run') or {}).get('status') or '')
-        print(f'Run status: {status}')
+        if status.lower() == 'failed' and last_run_expected_failure:
+            print('Run status: failed (expected demo failure)')
+        else:
+            print(f'Run status: {status}')
         if status.lower() in {'completed', 'failed', 'error', 'cancelled'}:
             break
         if time.time() - started > timeout_seconds:

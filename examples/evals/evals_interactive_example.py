@@ -2,7 +2,7 @@
 
 """Interactive eval example for Datalayer.
 
-Creates one eval, one experiment, and one run using run_mode=interactive.
+Creates one evalset, one experiment, and one run using run_mode=interactive.
 """
 
 from __future__ import annotations
@@ -33,36 +33,18 @@ def _normalize_service_url(raw_url: str | None, service_suffix: str) -> str | No
 
 def _resolve_environment(args: argparse.Namespace) -> tuple[str, str, str, str]:
     requested = args.run_environment.strip().lower()
-    if requested == 'proxy':
-        requested = 'cloud-proxy'
 
-    if requested == 'cloud':
+    if requested == 'sdk':
         return (
-            'cloud',
+            'sdk',
             args.iam_url,
             args.runtimes_url,
             args.ai_agents_url,
         )
 
-    if requested == 'cloud-proxy':
+    if requested == 'sdk-proxy':
         return (
-            'cloud',
-            args.iam_url or DEFAULT_LOCAL_IAM_URL,
-            args.runtimes_url or DEFAULT_LOCAL_RUNTIMES_URL,
-            args.ai_agents_url or DEFAULT_LOCAL_AI_AGENTS_URL,
-        )
-
-    if requested == 'local':
-        return (
-            'local',
-            args.iam_url,
-            args.runtimes_url,
-            args.ai_agents_url,
-        )
-
-    if requested == 'local-proxy':
-        return (
-            'local',
+            'sdk',
             args.iam_url or DEFAULT_LOCAL_IAM_URL,
             args.runtimes_url or DEFAULT_LOCAL_RUNTIMES_URL,
             args.ai_agents_url or DEFAULT_LOCAL_AI_AGENTS_URL,
@@ -151,21 +133,18 @@ def _pass_rate_for_index(base_pass_rate: float, index: int) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description='Create one eval, one experiment, one run in interactive mode.'
+        description='Create one evalset, one experiment, one run in interactive mode.'
     )
     parser.add_argument('--eval-name', default='interactive-eval')
     parser.add_argument('--experiment-name', default='interactive-experiment')
     parser.add_argument('--run-status', default='running', choices=['queued', 'running', 'completed', 'failed', 'cancelled'])
     parser.add_argument(
         '--run-environment',
-        default='cloud',
-        choices=['cloud', 'cloud-proxy', 'local', 'local-proxy', 'proxy'],
+        default='sdk',
+        choices=['sdk', 'sdk-proxy'],
         help=(
-            'cloud uses cloud endpoints and cloud backend run_environment; '
-            'cloud-proxy uses local proxy endpoints but keeps backend run_environment=cloud; '
-            'local uses cloud endpoints with backend run_environment=local; '
-            'local-proxy uses local proxy endpoints with backend run_environment=local. '
-            'proxy is a deprecated alias of cloud-proxy.'
+            'sdk uses direct endpoints with backend run_environment=sdk; '
+            'sdk-proxy uses local proxy endpoints while keeping backend run_environment=sdk.'
         ),
     )
     parser.add_argument('--timeout', type=int, default=60)
@@ -193,8 +172,6 @@ def main() -> None:
     pass_rate = min(1.0, max(0.0, float(args.pass_rate)))
     run_count = max(1, int(args.runs))
     total_cases = max(1, int(args.total_cases))
-    passed_cases = int(round(pass_rate * total_cases))
-    failed_cases = max(0, total_cases - passed_cases)
 
     urls = DatalayerURLs.from_environment(
         iam_url=_normalize_service_url(iam_url, '/api/iam'),
@@ -209,8 +186,8 @@ def main() -> None:
 
     client = DatalayerClient(urls=urls, token=token)
 
-    print('[1/4] Creating eval dataset...')
-    eval_dataset_payload = client.evals_create_eval(
+    print('[1/4] Creating evalset...')
+    evalset_payload = client.evals_create_eval(
         name=args.eval_name,
         description='Eval created by evals_interactive_example.py',
         run_environment=backend_run_environment,
@@ -219,15 +196,15 @@ def main() -> None:
         cases=_build_interactive_cases(),
         account_uid=account_uid,
     )
-    eval_dataset_id = str((eval_dataset_payload.get('eval_dataset') or {}).get('id') or '')
-    if not eval_dataset_id:
-        raise RuntimeError(f'Unexpected eval dataset response: {eval_dataset_payload}')
-    print(f'Created eval dataset: {eval_dataset_id}')
+    evalset_id = str((evalset_payload.get('evalset') or {}).get('id') or '')
+    if not evalset_id:
+        raise RuntimeError(f'Unexpected evalset response: {evalset_payload}')
+    print(f'Created evalset: {evalset_id}')
 
     print('[2/4] Creating experiment...')
     experiment_payload = client.evals_create_experiment(
         name=args.experiment_name,
-        eval_dataset_id=eval_dataset_id,
+        evalset_id=evalset_id,
         description='Experiment created by evals_interactive_example.py',
         status='draft',
         config={

@@ -20,14 +20,14 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="evals",
-    help="Launch and monitor SaaS eval datasets, experiments, runs, and live monitoring.",
+    help="Launch and monitor SaaS evalsets, experiments, runs, and live monitoring.",
     invoke_without_command=True,
 )
 
-evals_app = typer.Typer(name="evals", help="Manage eval datasets.")
-experiments_app = typer.Typer(name="experiments", help="Manage eval dataset experiments.")
-runs_app = typer.Typer(name="runs", help="Launch and monitor eval dataset runs.")
-live_app = typer.Typer(name="live", help="Inspect live eval dataset monitoring.")
+evals_app = typer.Typer(name="evals", help="Manage evalsets.")
+experiments_app = typer.Typer(name="experiments", help="Manage evalset experiments.")
+runs_app = typer.Typer(name="runs", help="Launch and monitor evalset runs.")
+live_app = typer.Typer(name="live", help="Inspect live evalset monitoring.")
 
 console = Console()
 
@@ -96,14 +96,14 @@ def evals_list(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
-    run_environment: Optional[str] = typer.Option(None, "--run-environment", help="Filter by run environment (cloud/local)."),
+    run_environment: Optional[str] = typer.Option(None, "--run-environment", help="Filter by run environment (ui/sdk)."),
     kind: Optional[str] = typer.Option(None, "--kind", help="Filter by kind (batch/interactive)."),
     q: Optional[str] = typer.Option(None, "--q", help="Search query."),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
     offset: int = typer.Option(0, "--offset", min=0),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
-    """List eval datasets."""
+    """List evalsets."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_list_evals(
         run_environment=run_environment,
@@ -117,15 +117,15 @@ def evals_list(
         console.print(payload)
         return
 
-    eval_datasets = payload.get("eval_datasets") or []
-    table = Table(title=f"Evals ({len(eval_datasets)})")
+    evalsets = payload.get("evalsets") or []
+    table = Table(title=f"Evals ({len(evalsets)})")
     table.add_column("ID", style="cyan")
     table.add_column("Name", style="white")
     table.add_column("Run Environment", style="white")
     table.add_column("Kind", style="white")
     table.add_column("Cases", style="white")
     table.add_column("Updated", style="white")
-    for item in eval_datasets:
+    for item in evalsets:
         table.add_row(
             str(item.get("id", "")),
             str(item.get("name", "")),
@@ -139,10 +139,10 @@ def evals_list(
 
 @evals_app.command(name="create")
 def evals_create(
-    name: str = typer.Argument(..., help="Eval dataset name."),
-    description: str = typer.Option("", "--description", help="Eval dataset description."),
-    run_environment: str = typer.Option("cloud", "--run-environment", help="Eval dataset run environment."),
-    kind: str = typer.Option("batch", "--kind", help="Eval dataset kind (batch/interactive)."),
+    name: str = typer.Argument(..., help="Evalset name."),
+    description: str = typer.Option("", "--description", help="Evalset description."),
+    run_environment: str = typer.Option("sdk", "--run-environment", help="Evalset run environment (ui/sdk)."),
+    kind: str = typer.Option("batch", "--kind", help="Evalset kind (batch/interactive)."),
     schema_json: Optional[str] = typer.Option(None, "--schema-json", help="Schema JSON object."),
     metadata_json: Optional[str] = typer.Option(None, "--metadata-json", help="Metadata JSON object."),
     cases_file: Optional[str] = typer.Option(None, "--cases-file", help="Path to JSON array of cases."),
@@ -151,7 +151,7 @@ def evals_create(
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
 ) -> None:
-    """Create an eval dataset."""
+    """Create an evalset."""
     schema = _parse_json_value(schema_json, "--schema-json")
     metadata = _parse_json_value(metadata_json, "--metadata-json")
     cases: list[dict[str, Any]] = []
@@ -174,20 +174,20 @@ def evals_create(
         cases=cases,
         account_uid=account_uid,
     )
-    eval_record = payload.get("eval_dataset") or {}
+    eval_record = payload.get("evalset") or {}
     console.print(f"[green]Eval created:[/green] {eval_record.get('id', '')} ({eval_record.get('name', '')})")
 
 
 @evals_app.command(name="delete")
 def evals_delete(
-    eval_dataset_id: str = typer.Argument(..., help="Eval dataset ID."),
+    evalset_id: str = typer.Argument(..., help="Evalset ID."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
 ) -> None:
-    """Delete an eval dataset (cascade delete runs/experiments)."""
+    """Delete an evalset (cascade delete runs/experiments)."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
-    payload = client.evals_delete_eval(eval_dataset_id, account_uid=account_uid)
+    payload = client.evals_delete_eval(evalset_id, account_uid=account_uid)
     cascade = payload.get("cascade") or {}
     console.print(
         "[green]Eval deleted.[/green] "
@@ -199,7 +199,7 @@ def evals_delete(
 
 @experiments_app.command(name="list")
 def experiments_list(
-    eval_dataset_id: Optional[str] = typer.Option(None, "--eval-dataset-id", help="Filter by eval dataset ID."),
+    evalset_id: Optional[str] = typer.Option(None, "--evalset-id", help="Filter by evalset ID."),
     status: Optional[str] = typer.Option(None, "--status", help="Filter by status."),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
     offset: int = typer.Option(0, "--offset", min=0),
@@ -208,10 +208,10 @@ def experiments_list(
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
-    """List eval dataset experiments."""
+    """List evalset experiments."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_list_experiments(
-        eval_dataset_id=eval_dataset_id,
+        evalset_id=evalset_id,
         status=status,
         limit=limit,
         offset=offset,
@@ -232,7 +232,7 @@ def experiments_list(
         table.add_row(
             str(item.get("id", "")),
             str(item.get("name", "")),
-            str(item.get("eval_dataset_id", "")),
+            str(item.get("evalset_id", "")),
             f"[{_status_style(status_value)}]{status_value}[/{_status_style(status_value)}]",
             str(item.get("updated_at", "")),
         )
@@ -242,7 +242,7 @@ def experiments_list(
 @experiments_app.command(name="create")
 def experiments_create(
     name: str = typer.Argument(..., help="Experiment name."),
-    eval_dataset_id: Optional[str] = typer.Option(None, "--eval-dataset-id", help="Eval dataset ID."),
+    evalset_id: Optional[str] = typer.Option(None, "--evalset-id", help="Evalset ID."),
     description: str = typer.Option("", "--description", help="Description."),
     status: str = typer.Option("draft", "--status", help="Initial status."),
     config_json: Optional[str] = typer.Option(None, "--config-json", help="Config JSON object."),
@@ -252,11 +252,11 @@ def experiments_create(
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
 ) -> None:
-    """Create an eval dataset experiment."""
+    """Create an evalset experiment."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_create_experiment(
         name=name,
-        eval_dataset_id=eval_dataset_id,
+        evalset_id=evalset_id,
         description=description,
         status=status,
         config=_parse_json_value(config_json, "--config-json"),
@@ -335,7 +335,7 @@ def runs_launch(
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
 ) -> None:
-    """Launch an eval dataset run on SaaS and tag it as CLI-launched."""
+    """Launch an evalset run on SaaS and tag it as CLI-launched."""
     cli_summary: dict[str, Any] = {
         "launch_source": "datalayer-cli",
         "launched_at": _now_iso(),
