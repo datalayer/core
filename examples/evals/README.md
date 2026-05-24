@@ -255,6 +255,30 @@ Flag note:
 
 This allows exercising the same experiment/run model while keeping a deterministic test fallback.
 
+## UI vs SDK Agent Target Rules
+
+- UI-launched evals (`run_environment=ui`) are cloud-agent only.
+- SDK-launched evals (`run_environment=sdk`) support both cloud and local agent execution targets.
+- Cloud runtimes are intentionally user-managed in these examples and in the UI flow. They are not auto-terminated.
+
+Execution details in these examples:
+
+- `--execution-target cloud` + no `--no-agent`: launches a runtime pod, submits code, and persists run results.
+- `--execution-target local` + no `--no-agent`: calls the local agent eval endpoint (`/api/v1/agents/{agent_id}/evals/run`) and persists the returned metrics.
+- `--no-agent`: does not launch an agent and writes synthetic run data for deterministic demos.
+
+When using cloud target, stop runtime resources explicitly when you are done.
+
+## Batch vs Interactive At A Glance
+
+| Dimension | Batch (`run_mode=batch`) | Interactive (`run_mode=interactive`) |
+|---|---|---|
+| Evaluation source | Fixed, versioned case set | Event/live-window driven behavior |
+| Primary goal | Deterministic regression comparison | Operational monitoring and drift visibility |
+| Typical interpretation | Compare runs on identical baseline | Track changes over time windows and targets |
+| Monitoring live targets | Not primary | Primary |
+| Good for CI gates | Yes | Usually complementary, not replacement |
+
 ## Notes
 
 - Batch mode is intended for deterministic case-based execution.

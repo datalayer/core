@@ -8,10 +8,13 @@ Creates one evalset, five experiments, and three runs per experiment using run_m
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import time
 from datetime import datetime, timezone
 from typing import Any
+from urllib import error as urlerror
+from urllib import request as urlrequest
 
 from datalayer_core import DatalayerClient
 from datalayer_core.utils.urls import DatalayerURLs
@@ -261,6 +264,64 @@ def _launch_cloud_runtime(client: DatalayerClient, environment_name: str, evalse
     return pod_name
 
 
+def _build_local_eval_spec(cases: list[dict[str, Any]], run_mode: str) -> list[dict[str, Any]]:
+    spec: list[dict[str, Any]] = []
+    for item in cases:
+        spec.append(
+            {
+                'name': item.get('name'),
+                'inputs': item.get('inputs') or {},
+                'expected_output': item.get('expected_output'),
+                'metadata': {
+                    **(item.get('metadata') or {}),
+                    'run_mode': run_mode,
+                },
+            }
+        )
+    return spec
+
+
+def _run_local_agent_eval(
+    *,
+    base_url: str,
+    local_agent_id: str,
+    token: str,
+    eval_spec: list[dict[str, Any]],
+) -> dict[str, Any]:
+    endpoint = f"{base_url.rstrip('/')}/api/v1/agents/{local_agent_id}/evals/run"
+    payload = {
+        'eval_spec': eval_spec,
+        'agent_system_prompt': None,
+        'tool_schemas': None,
+    }
+    req = urlrequest.Request(
+        endpoint,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}',
+        },
+        method='POST',
+    )
+    try:
+        with urlrequest.urlopen(req, timeout=300) as response:
+            raw = response.read().decode('utf-8')
+    except urlerror.HTTPError as exc:
+        body = exc.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f'Local agent eval failed ({exc.code}): {body or "unknown error"}') from exc
+    except urlerror.URLError as exc:
+        raise RuntimeError(f'Local agent eval request failed: {exc.reason}') from exc
+
+    try:
+        parsed = json.loads(raw) if raw else {}
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f'Local agent eval returned invalid JSON: {raw[:400]}') from exc
+
+    if not isinstance(parsed, dict):
+        raise RuntimeError('Local agent eval response must be a JSON object.')
+    return parsed
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='Create one evalset, five experiments, and three runs per experiment in batch mode.'
@@ -395,10 +456,17 @@ def main() -> None:
     if args.no_agent and run_count >= 3:
         print('Note: run 3+ are intentionally marked as failed in this demo to show status distribution and regression signals.')
     runtime_pod_name = ''
+    local_eval_spec = _build_local_eval_spec(_build_batch_cases(), 'batch')
     if not args.no_agent and args.execution_target == 'cloud':
         print('Launching cloud runtime for batch execution...')
         runtime_pod_name = _launch_cloud_runtime(client, args.environment_name, evalset_name)
         print(f'Using runtime pod: {runtime_pod_name}')
+        print('Note: cloud runtime termination is user-managed; stop it explicitly when finished.')
+    if not args.no_agent and args.execution_target == 'local':
+        print(
+            f'Using local agent execution at {args.local_agent_base_url.rstrip("/")} '
+            f'(agent: {args.local_agent_id}).'
+        )
     run_ids: list[str] = []
     last_run_expected_failure = False
     for experiment_name, experiment_id, experiment_index in experiment_ids:
@@ -417,10 +485,34 @@ def main() -> None:
                     'failed': run_failed_cases,
                     'avg_score': round(run_pass_rate * 0.9 + 0.08, 4),
                 }
+                run_report: dict[str, Any] = {}
             else:
-                run_status = 'running' if args.execution_target == 'cloud' else 'queued'
-                intentional_failure = False
-                metrics = {}
+                if args.execution_target == 'cloud':
+                    run_status = 'running'
+                    metrics = {}
+                    run_report = {}
+                    intentional_failure = False
+                else:
+                    local_report = _run_local_agent_eval(
+                        base_url=args.local_agent_base_url,
+                        local_agent_id=args.local_agent_id,
+                        token=token,
+                        eval_spec=local_eval_spec,
+                    )
+                    total_cases_local = int(local_report.get('total_cases') or total_cases)
+                    passed_local = int(local_report.get('passed') or 0)
+                    failed_local = int(local_report.get('failed') or max(0, total_cases_local - passed_local))
+                    run_status = 'failed' if failed_local > 0 else 'completed'
+                    intentional_failure = False
+                    metrics = {
+                        'pass_rate': (passed_local / total_cases_local) if total_cases_local > 0 else 0.0,
+                        'total_cases': total_cases_local,
+                        'passed': passed_local,
+                        'failed': failed_local,
+                        'avg_score': local_report.get('avg_score') if isinstance(local_report.get('avg_score'), (int, float)) else None,
+                        'duration_ms': local_report.get('duration_ms') if isinstance(local_report.get('duration_ms'), (int, float)) else None,
+                    }
+                    run_report = {'local_report': local_report}
 
             submitted_code = None
             if not args.no_agent and args.execution_target == 'cloud':
@@ -449,9 +541,13 @@ def main() -> None:
                     'run_index': index + 1,
                     'scenario': 'regression-suite',
                     'runtime_pod_name': runtime_pod_name or None,
+                    'runtime_termination_policy': 'user_managed' if args.execution_target == 'cloud' else None,
                     'submitted_code': submitted_code,
                 },
-                report={'note': f'batch example run {index + 1} ({experiment_name})'},
+                report={
+                    'note': f'batch example run {index + 1} ({experiment_name})',
+                    **run_report,
+                },
                 account_uid=account_uid,
             )
             run_id = str((run_payload.get('run') or {}).get('id') or '')
