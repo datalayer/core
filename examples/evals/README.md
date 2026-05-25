@@ -48,20 +48,42 @@ Default local proxy endpoints used by examples for `sdk-proxy`:
 - `LOCAL_IAM_URL=http://localhost:9700/api/iam/`
 - `LOCAL_RUNTIMES_URL=http://localhost:9500/api/runtimes/`
 - `LOCAL_AI_AGENTS_URL=http://localhost:4400/api/ai-agents/`
+- `LOCAL_AGENT_BASE_URL=http://localhost:8765`
+- `LOCAL_AGENT_ID=default`
+
+For `sdk-proxy` local target runs, start `agent-runtimes` first. Example:
+
+```bash
+agent-runtimes serve --host 127.0.0.1 --port 8765 --agent-id eval-experiment-runner --agent-name default
+```
+
+Also ensure local ai-agents proxy is reachable (default `http://localhost:4400`).
+If not, start local services first (for example `p pf-local`).
 
 ## Make Targets
 
 ```bash
 make help
-make evals-batch-sdk
-make evals-batch-sdk-proxy
-make evals-batch-sdk-proxy NO_AGENT=1
+make evals-batch-sdk-local
+make evals-batch-sdk-cloud
+make evals-batch-sdk-proxy-local
+make evals-batch-sdk-proxy-cloud
+make evals-batch-sdk-proxy-local NO_AGENT=1
 make evals-batch-sdk-proxy-no-agent
-make evals-interactive-sdk
-make evals-interactive-sdk-proxy
-make evals-interactive-sdk-proxy NO_AGENT=1
+make evals-interactive-sdk-local
+make evals-interactive-sdk-cloud
+make evals-interactive-sdk-proxy-local
+make evals-interactive-sdk-proxy-cloud
+make evals-interactive-sdk-proxy-local NO_AGENT=1
 make evals-interactive-sdk-proxy-no-agent
 ```
+
+Target behavior:
+
+- `evals-*-sdk-local` uses local execution target.
+- `evals-*-sdk-cloud` uses cloud execution target.
+- `evals-*-sdk-proxy-local` uses local execution target and auto-starts an `agent-runtimes` server on a random free port, then bootstraps the local agent (via `POST /api/v1/agents`).
+- `evals-*-sdk-proxy-cloud` keeps sdk-proxy endpoints but forces cloud execution target.
 
 Note: GNU make parses `--no-agent` as a make option, so use `NO_AGENT=1` or the `*-no-agent` targets.
 
@@ -92,7 +114,7 @@ Use this checklist to validate that SDK batch runs are really executed by a clou
 1. Run batch cloud mode:
 
 ```bash
-make evals-batch-sdk-proxy
+make evals-batch-sdk-proxy-cloud
 ```
 
 2. Pick one created run ID, then inspect execution evidence:
@@ -151,7 +173,7 @@ make agent-serve AGENT_SERVE_PROTOCOL=ag-ui
 
 - Set `DATALAYER_AGENT_RUNTIMES_URL` in the ai-agents service environment to the reachable agent-runtimes base URL.
 - Restart ai-agents so it picks up updated environment values.
-- Re-run `make evals-batch-sdk-proxy`.
+- Re-run `make evals-batch-sdk-proxy-cloud`.
 
 Notes from local verification:
 
@@ -264,8 +286,15 @@ This allows exercising the same experiment/run model while keeping a determinist
 Execution details in these examples:
 
 - `--execution-target cloud` + no `--no-agent`: launches a runtime pod, submits code, and persists run results.
-- `--execution-target local` + no `--no-agent`: calls the local agent eval endpoint (`/api/v1/agents/{agent_id}/evals/run`) and persists the returned metrics.
-- `--no-agent`: does not launch an agent and writes synthetic run data for deterministic demos.
+- `--execution-target local` + no `--no-agent` (SDK examples): executes directly from Python against the local agent API (`POST /api/v1/agents/{agent_id}/evals/run`) and persists interaction artifacts.
+- UI-created runs trigger the ai-agents run API (`POST /evals/experiments/{experiment_id}/runs`), which executes against the configured cloud runtime agent.
+- `--no-agent`: does not call any agent API and writes synthetic run data for deterministic demos.
+
+Run interaction artifacts now persisted for UI inspection:
+
+- Prompt sent to the agent (`summary.agent_prompt` / `report.agent_prompt`)
+- Output received from the agent (`summary.agent_output` / `report.agent_output`)
+- Raw response excerpt when available (`summary.agent_output_text` / `report.agent_output_text`)
 
 When using cloud target, stop runtime resources explicitly when you are done.
 

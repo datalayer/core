@@ -115,6 +115,22 @@ def _compute_baseline_and_drift(runs: list[dict[str, Any]]) -> tuple[float | Non
     return baseline, latest, drift
 
 
+def _run_detail_record(run: dict[str, Any]) -> dict[str, Any]:
+    metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+    summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
+    report = run.get("report") if isinstance(run.get("report"), dict) else {}
+    return {
+        "id": str(run.get("id", "")),
+        "status": str(run.get("status", "")),
+        "created_at": str(run.get("created_at", "")),
+        "updated_at": str(run.get("updated_at", "")),
+        "pass_rate": _run_pass_rate(run),
+        "metrics": metrics,
+        "summary": summary,
+        "report": report,
+    }
+
+
 @app.callback()
 def evals_callback(ctx: typer.Context) -> None:
     """Evals command group."""
@@ -241,7 +257,8 @@ def evals_compare_report(
 
     The report includes:
     - Experiment-level summary (run count, latest pass rate, baseline, drift)
-    - Per-experiment latest-two run comparison (A-B) using compare API
+    - Full fetched run details per experiment
+    - Per-experiment run comparisons (latest-two and consecutive run deltas)
     """
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     experiments_payload = client.evals_list_experiments(
@@ -285,6 +302,7 @@ def evals_compare_report(
 
         latest_two_delta: float | None = None
         latest_two_run_ids: list[str] = []
+        latest_two_compare: dict[str, Any] | None = None
         if len(runs) >= 2:
             latest_two_run_ids = [str(runs[0].get("id", "")), str(runs[1].get("id", ""))]
             compare_payload = client.evals_compare_runs(
@@ -303,6 +321,33 @@ def evals_compare_report(
             pass_b = _run_pass_rate(run_b)
             if pass_a is not None and pass_b is not None:
                 latest_two_delta = pass_a - pass_b
+            latest_two_compare = {
+                "run_ids": latest_two_run_ids,
+                "run_a": _run_detail_record(run_a),
+                "run_b": _run_detail_record(run_b),
+                "delta_pass_rate": latest_two_delta,
+            }
+
+        consecutive_comparisons: list[dict[str, Any]] = []
+        for idx in range(max(0, len(runs) - 1)):
+            run_a = runs[idx]
+            run_b = runs[idx + 1]
+            pass_a = _run_pass_rate(run_a)
+            pass_b = _run_pass_rate(run_b)
+            delta = None
+            if pass_a is not None and pass_b is not None:
+                delta = pass_a - pass_b
+            consecutive_comparisons.append(
+                {
+                    "run_a_id": str(run_a.get("id", "")),
+                    "run_b_id": str(run_b.get("id", "")),
+                    "run_a_status": str(run_a.get("status", "")),
+                    "run_b_status": str(run_b.get("status", "")),
+                    "run_a_pass_rate": pass_a,
+                    "run_b_pass_rate": pass_b,
+                    "delta_pass_rate": delta,
+                }
+            )
 
         drift_text = "n/a" if drift is None else f"{drift * 100:+.1f} pts"
         latest_two_text = "n/a" if latest_two_delta is None else f"{latest_two_delta * 100:+.1f} pts"
@@ -321,11 +366,15 @@ def evals_compare_report(
                 "id": experiment_id,
                 "name": experiment_name,
                 "runs_total": total_runs,
+                "runs_fetched": len(runs),
                 "latest_pass_rate": latest,
                 "baseline_pass_rate": baseline,
                 "drift_delta": drift,
                 "latest_two_run_ids": latest_two_run_ids,
                 "latest_two_delta": latest_two_delta,
+                "latest_two_comparison": latest_two_compare,
+                "runs": [_run_detail_record(run) for run in runs],
+                "consecutive_comparisons": consecutive_comparisons,
             }
         )
 
@@ -334,6 +383,60 @@ def evals_compare_report(
         return
 
     console.print(summary_table)
+    for experiment_report in report.get("experiments", []):
+        experiment_name = str(experiment_report.get("name", ""))
+        runs_fetched = int(experiment_report.get("runs_fetched") or 0)
+        runs_total = int(experiment_report.get("runs_total") or 0)
+
+        run_details_table = Table(
+            title=(
+                f"Run Details - {experiment_name} "
+                f"(fetched {runs_fetched} of {runs_total})"
+            )
+        )
+        run_details_table.add_column("Run", style="cyan")
+        run_details_table.add_column("Status", style="white")
+        run_details_table.add_column("Pass Rate", style="white")
+        run_details_table.add_column("Launch Source", style="white")
+        run_details_table.add_column("Execution Target", style="white")
+        run_details_table.add_column("Created", style="white")
+
+        for run in experiment_report.get("runs") or []:
+            summary = run.get("summary") or {}
+            status_value = str(run.get("status", ""))
+            run_details_table.add_row(
+                str(run.get("id", "")),
+                f"[{_status_style(status_value)}]{status_value}[/{_status_style(status_value)}]",
+                _fmt_pct(run.get("pass_rate") if isinstance(run.get("pass_rate"), (int, float)) else None),
+                str(summary.get("launch_source") or ""),
+                str(summary.get("execution_target") or ""),
+                str(run.get("created_at") or ""),
+            )
+        console.print(run_details_table)
+
+        comparisons = experiment_report.get("consecutive_comparisons") or []
+        if comparisons:
+            compare_table = Table(title=f"Run Comparisons - {experiment_name} (A-B, consecutive)")
+            compare_table.add_column("Run A", style="cyan")
+            compare_table.add_column("Run B", style="cyan")
+            compare_table.add_column("A Status", style="white")
+            compare_table.add_column("B Status", style="white")
+            compare_table.add_column("A Pass", style="white")
+            compare_table.add_column("B Pass", style="white")
+            compare_table.add_column("Delta", style="white")
+            for item in comparisons:
+                delta = item.get("delta_pass_rate")
+                compare_table.add_row(
+                    str(item.get("run_a_id", "")),
+                    str(item.get("run_b_id", "")),
+                    str(item.get("run_a_status", "")),
+                    str(item.get("run_b_status", "")),
+                    _fmt_pct(item.get("run_a_pass_rate") if isinstance(item.get("run_a_pass_rate"), (int, float)) else None),
+                    _fmt_pct(item.get("run_b_pass_rate") if isinstance(item.get("run_b_pass_rate"), (int, float)) else None),
+                    "n/a" if not isinstance(delta, (int, float)) else f"{float(delta) * 100:+.1f} pts",
+                )
+            console.print(compare_table)
+
     console.print("[dim]Notes: drift = latest - baseline (baseline is avg of first runs in fetched window); latest-2 delta = A - B.[/dim]")
 
 
