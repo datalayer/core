@@ -14,9 +14,9 @@ These examples are intentionally **SDK-lane only** (`run_environment=sdk`).
 
 If you need evalsets in the UI lane (`run_environment=ui`), create them from the Evals UI.
 
-## Examples Source
+## Examples Location
 
-Use this repository path as the canonical source of examples:
+Use this repository path as the canonical location of examples:
 
 - https://github.com/datalayer/core/tree/main/examples/evals
 
@@ -28,7 +28,7 @@ Use this repository path as the canonical source of examples:
 
 By default, each script now creates experiments configured for real agent execution metadata (cloud/local target + agent spec), then launches three runs per experiment.
 
-Use `--no-agent` to keep the previous synthetic behavior (seeded metrics/statuses) for testing and demos.
+Use `--synthetic` to keep deterministic synthetic behavior (seeded metrics/statuses) for testing and demos.
 
 Each script currently creates 5 experiments and 3 runs per experiment.
 
@@ -50,11 +50,13 @@ Default local proxy endpoints used by examples for `sdk-proxy`:
 - `LOCAL_AI_AGENTS_URL=http://localhost:4400/api/ai-agents/`
 - `LOCAL_AGENT_BASE_URL=http://localhost:8765`
 - `LOCAL_AGENT_ID=default`
+- `LOCAL_AGENT_EVALS_MODE=interactive`
+- `LOCAL_AGENT_EVALS_EMIT_LIVE_EVENTS=true`
 
 For `sdk-proxy` local target runs, start `agent-runtimes` first. Example:
 
 ```bash
-agent-runtimes serve --host 127.0.0.1 --port 8765 --agent-id eval-experiment-runner --agent-name default
+agent-runtimes serve --host 127.0.0.1 --port 8765 --agent-id demo-evals --agent-name default
 ```
 
 Also ensure local ai-agents proxy is reachable (default `http://localhost:4400`).
@@ -68,24 +70,24 @@ make evals-batch-sdk-local
 make evals-batch-sdk-cloud
 make evals-batch-sdk-proxy-local
 make evals-batch-sdk-proxy-cloud
-make evals-batch-sdk-proxy-local NO_AGENT=1
-make evals-batch-sdk-proxy-no-agent
+make evals-batch-sdk-proxy-local SYNTHETIC=1
+make evals-batch-sdk-proxy-synthetic
 make evals-interactive-sdk-local
 make evals-interactive-sdk-cloud
 make evals-interactive-sdk-proxy-local
 make evals-interactive-sdk-proxy-cloud
-make evals-interactive-sdk-proxy-local NO_AGENT=1
-make evals-interactive-sdk-proxy-no-agent
+make evals-interactive-sdk-proxy-local SYNTHETIC=1
+make evals-interactive-sdk-proxy-synthetic
 ```
 
 Target behavior:
 
 - `evals-*-sdk-local` uses local execution target.
 - `evals-*-sdk-cloud` uses cloud execution target.
-- `evals-*-sdk-proxy-local` uses local execution target and auto-starts an `agent-runtimes` server on a random free port, then bootstraps the local agent (via `POST /api/v1/agents`).
+- `evals-*-sdk-proxy-local` uses local execution target and auto-starts an `agent-runtimes` server on a random free port, then bootstraps the local agent (via `POST /api/v1/agents`). These make targets export `DATALAYER_EVALS_MODE=$(LOCAL_AGENT_EVALS_MODE)` and `DATALAYER_EVALS_EMIT_LIVE_EVENTS=$(LOCAL_AGENT_EVALS_EMIT_LIVE_EVENTS)` so local runtime eval emission is enabled by default.
 - `evals-*-sdk-proxy-cloud` keeps sdk-proxy endpoints but forces cloud execution target.
 
-Note: GNU make parses `--no-agent` as a make option, so use `NO_AGENT=1` or the `*-no-agent` targets.
+Note: GNU make parses flags like `--synthetic` as make options, so use `SYNTHETIC=1` or the `*-synthetic` targets.
 
 ## Direct Commands
 
@@ -96,7 +98,7 @@ python evals_batch_example.py \
   --eval-name batch-demo \
   --run-environment sdk-proxy \
   --execution-target cloud \
-  --agentspec-id eval-experiment-runner \
+  --agentspec-id demo-evals \
   --run-status completed \
   --clean
 ```
@@ -178,7 +180,7 @@ make agent-serve AGENT_SERVE_PROTOCOL=ag-ui
 Notes from local verification:
 
 - Batch cloud execution path is invoked (`launch_source=ai-agents-batch-executor`).
-- Interactive no-agent monitoring path is working and emits live targets/events.
+- Interactive synthetic monitoring path is working and emits live targets/events.
 - If agent-runtimes URL is unresolved, batch execution can fail with endpoint 404.
 
 Interactive mode:
@@ -190,18 +192,18 @@ python evals_interactive_example.py \
   --execution-target local \
   --local-agent-base-url http://127.0.0.1:8000 \
   --local-agent-id default \
-  --agentspec-id eval-experiment-runner \
+  --agentspec-id demo-evals \
   --run-status running \
   --clean
 ```
 
-Legacy synthetic test mode:
+Synthetic test mode:
 
 ```bash
 python evals_interactive_example.py \
   --eval-name interactive-dry-run \
   --run-environment sdk-proxy \
-  --no-agent \
+  --synthetic \
   --clean
 ```
 
@@ -264,11 +266,11 @@ Useful options:
 
 The examples now support two modes:
 
-- **Default (no `--no-agent`)**: experiments are configured with explicit execution metadata:
+- **Default (no `--synthetic`)**: experiments are configured with explicit execution metadata:
   - `execution_target` (`cloud` or `local`)
-  - `agent_spec_id` (set with `--agentspec-id`; defaults to `eval-experiment-runner` if omitted)
+  - `agent_spec_id` (set with `--agentspec-id`; defaults to `demo-evals` if omitted)
   - runtime settings (`environment_name`) or local settings (`local_agent_base_url`, `local_agent_id`)
-- **`--no-agent`**: keeps previous synthetic metrics/status behavior for fast tests and UI demos.
+- **`--synthetic`**: uses synthetic metrics/status behavior without requiring synthetic agent-spec defaults.
 
 Flag note:
 
@@ -285,10 +287,10 @@ This allows exercising the same experiment/run model while keeping a determinist
 
 Execution details in these examples:
 
-- `--execution-target cloud` + no `--no-agent`: launches a runtime pod, submits code, and persists run results.
-- `--execution-target local` + no `--no-agent` (SDK examples): executes directly from Python against the local agent API (`POST /api/v1/agents/{agent_id}/evals/run`) and persists interaction artifacts.
+- `--execution-target cloud` + no `--synthetic`: launches a runtime pod, submits code, and persists run results.
+- `--execution-target local` + no `--synthetic` (SDK examples): executes directly from Python against the local Vercel AI chat API (`POST /api/v1/vercel-ai/{agent_id}`) and persists interaction artifacts.
 - UI-created runs trigger the ai-agents run API (`POST /evals/experiments/{experiment_id}/runs`), which executes against the configured cloud runtime agent.
-- `--no-agent`: does not call any agent API and writes synthetic run data for deterministic demos.
+- `--synthetic`: does not call any agent API and writes synthetic run data for deterministic demos.
 
 Run interaction artifacts now persisted for UI inspection:
 
@@ -302,7 +304,7 @@ When using cloud target, stop runtime resources explicitly when you are done.
 
 | Dimension | Batch (`run_mode=batch`) | Interactive (`run_mode=interactive`) |
 |---|---|---|
-| Evaluation source | Fixed, versioned case set | Event/live-window driven behavior |
+| Evaluation target scope | Fixed, versioned case set | Event/live-window driven behavior |
 | Primary goal | Deterministic regression comparison | Operational monitoring and drift visibility |
 | Typical interpretation | Compare runs on identical baseline | Track changes over time windows and targets |
 | Monitoring live targets | Not primary | Primary |
@@ -332,7 +334,7 @@ python evals_interactive_example.py \
   --execution-target local \
   --local-agent-base-url http://127.0.0.1:8000 \
   --local-agent-id default \
-  --agentspec-id eval-experiment-runner \
+  --agentspec-id demo-evals \
   --run-status running \
   --clean
 ```
@@ -344,13 +346,24 @@ python evals_interactive_example.py \
 What to expect:
 
 - You should see interactive run monitoring signals (run status evolution, pass-rate-oriented run summaries).
-- If your runtime pipeline emits live eval events, live target rows will populate with event counts, pass rate, avg value, and last-event time.
+- Interactive local-agent runs emit live evaluator events directly from the example flow, so live target rows should populate with event counts, pass rate, avg value, and last-event time.
+- Interactive cloud runs still depend on runtime-side event emission timing.
 - If live targets are empty while runs are present, that typically means no live events were emitted yet (this is normal).
 
-No-agent note:
+Synthetic mode note:
 
-- `--no-agent` is useful for deterministic regression tests.
-- In interactive no-agent mode, the example now writes synthetic live events so Monitoring has visible content.
+- `--synthetic` is useful for deterministic regression tests.
+- In interactive synthetic mode, the example now writes synthetic live events so Monitoring has visible content.
+
+## Interactive and Online Evals Semantics
+
+In Datalayer, `run_mode=interactive` is the online-evaluation lane:
+
+- target: evaluated runtime target (for example an experiment)
+- evaluator: scorer attached to the target
+- event: each evaluator result emitted over time
+
+This aligns with event-driven online-evals systems where monitoring focuses on rolling windows, target/evaluator drill-down, and operational feedback rather than deterministic replay.
 
 Quick monitoring verification command:
 

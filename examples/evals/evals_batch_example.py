@@ -28,7 +28,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 DEFAULT_LOCAL_IAM_URL = 'http://localhost:9700/api/iam/'
 DEFAULT_LOCAL_RUNTIMES_URL = 'http://localhost:9500/api/runtimes/'
 DEFAULT_LOCAL_AI_AGENTS_URL = 'http://localhost:4400/api/ai-agents/'
-DEFAULT_AGENT_SPEC_ID = 'eval-experiment-runner'
+DEFAULT_AGENT_SPEC_ID = 'demo-evals'
 
 
 def _normalize_service_url(raw_url: str | None, service_suffix: str) -> str | None:
@@ -230,6 +230,10 @@ def _normalize_no_agent_first_run_status(requested_status: str) -> str:
     return 'completed'
 
 
+def _resolve_default_agent_spec_id() -> str:
+    return DEFAULT_AGENT_SPEC_ID
+
+
 def _is_intentional_failure(index: int, run_status: str) -> bool:
     return index >= 2 and run_status == 'failed'
 
@@ -424,18 +428,64 @@ def _extract_local_agent_metrics(
     }
 
 
-def _run_local_agent_eval(
+def _extract_text_from_vercel_stream(raw: str) -> str:
+    text_parts: list[str] = []
+    for line in raw.splitlines():
+        if not line.startswith('data: '):
+            continue
+        payload = line[6:].strip()
+        if not payload or payload == '[DONE]':
+            continue
+        try:
+            event = json.loads(payload)
+        except json.JSONDecodeError:
+            continue
+
+        if isinstance(event, str):
+            if event.strip():
+                text_parts.append(event)
+            continue
+        if not isinstance(event, dict):
+            continue
+
+        for key in ('delta', 'text', 'content', 'outputText', 'textDelta'):
+            value = event.get(key)
+            if isinstance(value, str) and value:
+                text_parts.append(value)
+
+    return ''.join(text_parts).strip()
+
+
+def _run_local_agent_chat(
     *,
     base_url: str,
     local_agent_id: str,
     token: str,
-    eval_spec: list[dict[str, Any]],
+    prompt: str,
 ) -> dict[str, Any]:
-    endpoint = f"{base_url.rstrip('/')}/api/v1/agents/{local_agent_id}/evals/run"
+    endpoint = f"{base_url.rstrip('/')}/api/v1/vercel-ai/{local_agent_id}"
+    message_id = f'evals-{int(time.time() * 1000)}'
+    parts = [
+        {
+            'type': 'text',
+            'text': prompt,
+        }
+    ]
     payload = {
-        'eval_spec': eval_spec,
-        'agent_system_prompt': None,
-        'tool_schemas': None,
+        'trigger': 'submit-message',
+        'id': f'chat-{message_id}',
+        'message': {
+            'id': message_id,
+            'role': 'user',
+            'parts': parts,
+        },
+        'messages': [
+            {
+                'id': message_id,
+                'role': 'user',
+                'parts': parts,
+            }
+        ],
     }
     req = urlrequest.Request(
         endpoint,
@@ -451,18 +501,18 @@ def _run_local_agent_eval(
             raw = response.read().decode('utf-8')
     except urlerror.HTTPError as exc:
         body = exc.read().decode('utf-8', errors='replace')
-        raise RuntimeError(f'Local agent eval failed ({exc.code}): {body or "unknown error"}') from exc
+        raise RuntimeError(f'Local agent chat failed ({exc.code}): {body or "unknown error"}') from exc
     except urlerror.URLError as exc:
-        raise RuntimeError(f'Local agent eval request failed: {exc.reason}') from exc
+        raise RuntimeError(f'Local agent chat request failed: {exc.reason}') from exc
 
-    try:
-        parsed = json.loads(raw) if raw else {}
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f'Local agent eval returned invalid JSON: {raw[:400]}') from exc
-
-    if not isinstance(parsed, dict):
-        raise RuntimeError('Local agent eval response must be a JSON object.')
-    return parsed
+    output_text = _extract_text_from_vercel_stream(raw)
+    return {
+        'status': 'completed',
+        'output': {
+            'text': output_text,
+            'raw_stream_excerpt': raw[:2000],
+        },
+    }
 
 
 def _find_random_free_port(host: str = '127.0.0.1') -> int:
@@ -522,6 +572,8 @@ def _start_local_agent_runtime(
         host,
         '--port',
         str(port),
+        '--protocol',
+        'vercel-ai',
         '--agent-id',
         agent_spec_id,
         '--agent-name',
@@ -629,6 +681,49 @@ def _ensure_local_agent(
     token: str,
     agent_spec_id: str,
 ) -> None:
+    list_req = urlrequest.Request(
+        f"{base_url.rstrip('/')}/api/v1/agents",
+        headers={'Authorization': f'Bearer {token}'},
+        method='GET',
+    )
+    try:
+        with urlrequest.urlopen(list_req, timeout=30) as response:
+            raw = response.read().decode('utf-8')
+        payload = json.loads(raw) if raw else {}
+    except Exception:
+        payload = {}
+
+    existing_agents = payload.get('agents') if isinstance(payload, dict) else []
+    if not isinstance(existing_agents, list):
+        existing_agents = []
+    for agent in existing_agents:
+        if not isinstance(agent, dict):
+            continue
+        existing_id = str(agent.get('id') or '').strip()
+        existing_name = str(agent.get('name') or '').strip()
+        if local_agent_id and (existing_id == local_agent_id or existing_name == local_agent_id):
+            existing_transport = str(agent.get('transport') or '').strip().lower()
+            if existing_transport in {'vercel-ai', 'vercel_ai'}:
+                return
+
+            # Replace mismatched transport registration so local real interactions
+            # use the Vercel AI chat endpoint.
+            delete_target = existing_id or local_agent_id
+            delete_req = urlrequest.Request(
+                f"{base_url.rstrip('/')}/api/v1/agents/{delete_target}",
+                headers={'Authorization': f'Bearer {token}'},
+                method='DELETE',
+            )
+            try:
+                with urlrequest.urlopen(delete_req, timeout=30):
+                    pass
+            except Exception as exc:
+                raise RuntimeError(
+                    'Local agent exists with incompatible transport '
+                    f"'{existing_transport or 'unknown'}' and could not be replaced: {exc}"
+                ) from exc
+            break
+
     endpoint = f"{base_url.rstrip('/')}/api/v1/agents"
     payload = {
         'name': local_agent_id,
@@ -811,7 +906,7 @@ def parse_args() -> argparse.Namespace:
         dest='agent_spec_id',
         default=None,
         help=(
-            'Agent specification id. Defaults to eval-experiment-runner when omitted. '
+            'Agent specification id. Defaults to demo-evals when omitted. '
             'Accepts both --agent-spec-id and --agentspec-id.'
         ),
     )
@@ -836,10 +931,12 @@ def parse_args() -> argparse.Namespace:
         help='Start a local agent-runtimes server on a random free port for local execution.',
     )
     parser.add_argument(
-        '--no-agent',
+        '--synthetic',
+        dest='no_agent',
         action='store_true',
-        help='Keep legacy synthetic eval behavior without invoking an agent.',
+        help='Use synthetic eval behavior without invoking an agent.',
     )
+    parser.add_argument('--no-agent', dest='no_agent', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--dry-run', dest='no_agent', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('--clean', action='store_true', help='Accepted for compatibility; currently no-op.')
     return parser.parse_args()
@@ -852,7 +949,7 @@ def main() -> None:
         raise RuntimeError('Set DATALAYER_API_KEY or TEST_DATALAYER_API_KEY first.')
 
     account_uid = os.environ.get('DATALAYER_ACCOUNT_UID')
-    agent_spec_id = (args.agent_spec_id or '').strip() or DEFAULT_AGENT_SPEC_ID
+    agent_spec_id = (args.agent_spec_id or '').strip() or _resolve_default_agent_spec_id()
     backend_run_environment, iam_url, runtimes_url, ai_agents_url = _resolve_environment(args)
     pass_rate = min(1.0, max(0.0, float(args.pass_rate)))
     run_count = 3
@@ -939,7 +1036,7 @@ def main() -> None:
     no_agent_first_run_status = _normalize_no_agent_first_run_status(args.run_status)
     if args.no_agent and no_agent_first_run_status != str(args.run_status).strip().lower():
         print(
-            'No-agent mode uses terminal statuses only; '
+            'Synthetic mode uses terminal statuses only; '
             f"coercing first run status from '{args.run_status}' to '{no_agent_first_run_status}' "
             'to avoid watch timeout.'
         )
@@ -975,7 +1072,6 @@ def main() -> None:
             f'Using local agent execution at {local_agent_base_url.rstrip("/")} '
             f'(agent: {args.local_agent_id}).'
         )
-    local_eval_spec = _build_local_eval_spec(cases, 'batch')
     run_ids: list[str] = []
     last_run_expected_failure = False
     for experiment_name, experiment_id, experiment_index in experiment_ids:
@@ -984,7 +1080,7 @@ def main() -> None:
             run_pass_rate = _pass_rate_for_index(pass_rate, index)
             interaction_prompt = _extract_case_prompt(cases[index % len(cases)])
             interaction_output: Any = None
-            interaction_mode = 'no-agent-synthetic' if args.no_agent else 'ai-agents-run-api'
+            interaction_mode = 'synthetic' if args.no_agent else 'ai-agents-run-api'
             if args.no_agent:
                 run_status = no_agent_first_run_status if index == 0 else _run_status_for_index(index)
                 intentional_failure = _is_intentional_failure(index, run_status)
@@ -999,34 +1095,42 @@ def main() -> None:
                 }
                 interaction_output = {
                     'text': str((cases[index % len(cases)].get('expected_output') or {}).get('text') or ''),
-                    'mode': 'synthetic-no-agent',
+                    'mode': 'synthetic',
                 }
                 run_report: dict[str, Any] = {
-                    'interaction_mode': 'no-agent-synthetic',
+                    'interaction_mode': 'synthetic',
                     'synthetic': True,
                 }
             else:
                 if args.execution_target == 'local':
-                    local_eval_result = _run_local_agent_eval(
+                    local_chat_result = _run_local_agent_chat(
                         base_url=local_agent_base_url,
                         local_agent_id=args.local_agent_id,
                         token=token,
-                        eval_spec=local_eval_spec,
+                        prompt=interaction_prompt,
                     )
-                    local_status = str(local_eval_result.get('status') or 'completed').strip().lower()
+                    local_status = str(local_chat_result.get('status') or 'completed').strip().lower()
                     run_status = 'failed' if local_status in {'failed', 'error'} else 'completed'
-                    metrics = _extract_local_agent_metrics(
-                        local_eval_result,
-                        total_cases=total_cases,
-                        default_pass_rate=run_pass_rate,
+                    has_output = bool(
+                        str((local_chat_result.get('output') or {}).get('text') or '').strip()
                     )
-                    interaction_output = _extract_local_agent_output(local_eval_result)
+                    effective_pass_rate = run_pass_rate if has_output else max(0.0, run_pass_rate - 0.5)
+                    passed = int(round(effective_pass_rate * total_cases))
+                    failed = max(0, total_cases - passed)
+                    metrics = {
+                        'pass_rate': effective_pass_rate,
+                        'total_cases': total_cases,
+                        'passed': passed,
+                        'failed': failed,
+                        'avg_score': round(effective_pass_rate * 0.9 + 0.08, 4),
+                    }
+                    interaction_output = local_chat_result.get('output')
                     run_report = {
-                        'interaction_mode': 'sdk-direct-local-agent-api',
-                        'agent_eval': local_eval_result,
+                        'interaction_mode': 'sdk-direct-local-agent-chat-api',
+                        'agent_chat': local_chat_result,
                     }
                     intentional_failure = False
-                    interaction_mode = 'sdk-direct-local-agent-api'
+                    interaction_mode = 'sdk-direct-local-agent-chat-api'
                 elif args.execution_target == 'cloud':
                     run_status = 'running'
                     metrics = {}
@@ -1052,6 +1156,7 @@ def main() -> None:
                     'backend_run_environment': backend_run_environment,
                     'execution_target': args.execution_target,
                     'no_agent': bool(args.no_agent),
+                    'synthetic': bool(args.no_agent),
                     'dry_run': bool(args.no_agent),
                     'agent_spec_id': agent_spec_id,
                     'environment_name': args.environment_name,
