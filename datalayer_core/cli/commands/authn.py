@@ -10,6 +10,7 @@ import time
 from typing import Optional
 
 import questionary
+import requests
 import typer
 from rich.console import Console
 
@@ -31,6 +32,26 @@ def auth_callback(ctx: typer.Context) -> None:
     """Authentication commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
+
+
+def _fetch_memberships(iam_url: str, token: Optional[str]) -> Optional[list[dict]]:
+    """Fetch the authenticated user's organization/team memberships."""
+    if not token:
+        return None
+    try:
+        response = requests.get(
+            f"{iam_url}/api/iam/v1/memberships",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        if response.status_code != 200:
+            return None
+        data = response.json()
+        if not data.get("success", True):
+            return None
+        return data.get("memberships") or []
+    except Exception:
+        return None
 
 
 @app.command()
@@ -433,6 +454,46 @@ def whoami(
                     console.print(
                         f"\n💳 Credits Customer: {user.get('stripe_customer_id_s')}"
                     )
+
+                # Memberships (organizations + teams)
+                memberships = _fetch_memberships(urls.iam_url, access_token)
+                if memberships is not None:
+                    orgs = [m for m in memberships if (m.get("type") or "").lower() == "organization"]
+                    teams = [m for m in memberships if (m.get("type") or "").lower() == "team"]
+                    org_by_uid = {m.get("uid"): m for m in orgs}
+
+                    if orgs:
+                        console.print("\n[bold]🏢 Organizations:[/bold]")
+                        for org in orgs:
+                            handle = org.get("handle") or org.get("uid") or "unknown"
+                            name = org.get("name") or ""
+                            roles = ", ".join(org.get("roles_ss") or []) or "-"
+                            label = f"  • [cyan]{handle}[/cyan]"
+                            if name and name != handle:
+                                label += f" ({name})"
+                            label += f"  uid={org.get('uid')}  roles={roles}"
+                            console.print(label)
+
+                    if teams:
+                        console.print("\n[bold]👥 Teams:[/bold]")
+                        for team in teams:
+                            handle = team.get("handle") or team.get("uid") or "unknown"
+                            name = team.get("name") or ""
+                            roles = ", ".join(team.get("roles_ss") or []) or "-"
+                            org_uid = team.get("organization_uid")
+                            parent = org_by_uid.get(org_uid) if org_uid else None
+                            parent_label = (
+                                parent.get("handle") if parent else (org_uid or "unknown")
+                            )
+                            label = f"  • [cyan]{handle}[/cyan]"
+                            if name and name != handle:
+                                label += f" ({name})"
+                            label += f"  in [magenta]{parent_label}[/magenta]"
+                            label += f"  uid={team.get('uid')}  roles={roles}"
+                            console.print(label)
+
+                    if not orgs and not teams:
+                        console.print("\n[dim]No organization or team memberships.[/dim]")
         else:
             console.print("[yellow]Not authenticated[/yellow]")
             console.print("Run 'datalayer login' to authenticate")

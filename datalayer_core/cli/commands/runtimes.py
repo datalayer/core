@@ -129,6 +129,21 @@ def create_runtime(
         "--time-reservation",
         help="Time reservation in minutes for the runtime",
     ),
+    billable_account_uid: Optional[str] = typer.Option(
+        None,
+        "--billable-account-uid",
+        help="Account UID to bill the runtime to (org/team). Defaults to the authenticated user.",
+    ),
+    billable_account_type: Optional[str] = typer.Option(
+        None,
+        "--billable-account-type",
+        help="Billable account type: user, organization, or team.",
+    ),
+    billable_account_handle: Optional[str] = typer.Option(
+        None,
+        "--billable-account-handle",
+        help="Billable account handle (informational).",
+    ),
     token: Optional[str] = typer.Option(
         None,
         "--token",
@@ -184,6 +199,9 @@ def create_runtime(
             name=given_name,
             environment=environment,
             time_reservation=final_time_reservation,
+            billable_account_uid=billable_account_uid,
+            billable_account_type=billable_account_type,
+            billable_account_handle=billable_account_handle,
         )
 
         console.print(

@@ -39,6 +39,9 @@ class RuntimesCreateMixin:
         given_name: Optional[str] = None,
         credits_limit: Optional[float] = None,
         from_snapshot_uid: Optional[str] = None,
+        billable_account_uid: Optional[str] = None,
+        billable_account_type: Optional[str] = None,
+        billable_account_handle: Optional[str] = None,
     ) -> dict[str, Any]:
         """
         Create a Runtime with the given environment name.
@@ -107,6 +110,13 @@ class RuntimesCreateMixin:
 
             if from_snapshot_uid:
                 body["from"] = from_snapshot_uid
+
+            if billable_account_uid:
+                body["billable_account_uid"] = billable_account_uid
+            if billable_account_type:
+                body["billable_account_type"] = billable_account_type
+            if billable_account_handle:
+                body["billable_account_handle"] = billable_account_handle
 
             runtime_url = "{}/api/runtimes/v1/runtimes".format(self.urls.runtimes_url)  # type: ignore
             logger.debug(

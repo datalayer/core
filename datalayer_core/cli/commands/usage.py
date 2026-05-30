@@ -17,7 +17,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 app = typer.Typer(
     name="usage", help="Usage and credits commands", invoke_without_command=True
 )
-console = Console()
+console = Console(width=200)
 
 
 def _normalize_value(value: Any, fallback: str = "n/a") -> str:
@@ -140,6 +140,11 @@ def usage_records(
         help="Optional account kind scope: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of usage records."),
+    group_by_billable: bool = typer.Option(
+        False,
+        "--group-by-billable",
+        help="Render one table per billable account.",
+    ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload from IAM."),
 ) -> None:
     """Show detailed usage records for the authenticated account scope."""
@@ -163,17 +168,19 @@ def usage_records(
             console.print(response)
             return
 
-        table = Table(title="Usage Records")
-        table.add_column("Resource", style="cyan")
-        table.add_column("Type", style="white")
-        table.add_column("State", style="white")
-        table.add_column("Start", style="white")
-        table.add_column("End", style="white")
-        table.add_column("Duration(s)", style="white", justify="right")
-        table.add_column("Credits", style="white", justify="right")
-        table.add_column("Burn/s", style="white", justify="right")
+        def _add_columns(table: Table) -> None:
+            table.add_column("Resource", style="cyan", no_wrap=True)
+            table.add_column("Type", style="white", no_wrap=True)
+            table.add_column("State", style="white", no_wrap=True)
+            table.add_column("Creator", style="dim", no_wrap=True)
+            table.add_column("Billable", style="dim", no_wrap=True)
+            table.add_column("Start", style="white", no_wrap=True)
+            table.add_column("End", style="white", no_wrap=True)
+            table.add_column("Duration(s)", style="white", justify="right", no_wrap=True)
+            table.add_column("Credits", style="yellow", justify="right", no_wrap=True)
+            table.add_column("Burn/s", style="white", justify="right", no_wrap=True)
 
-        for usage in usages:
+        def _row_for(usage: dict[str, Any]) -> tuple[str, ...]:
             metadata = usage.get("metadata") or {}
             resource = (
                 usage.get("resource_given_name")
@@ -183,7 +190,12 @@ def usage_records(
             )
             start = usage.get("start_date")
             end = usage.get("end_date")
-            table.add_row(
+            creator = usage.get("account_uid")
+            billable = (
+                usage.get("billable_account_uid")
+                or usage.get("account_uid")
+            )
+            return (
                 _normalize_value(resource),
                 _normalize_value(usage.get("resource_type")),
                 _normalize_value(
@@ -191,13 +203,48 @@ def usage_records(
                     or usage.get("state")
                     or metadata.get("resource_state")
                 ),
+                _normalize_value(creator),
+                _normalize_value(billable),
                 _normalize_value(start),
                 _normalize_value(end),
                 _format_duration_seconds(start, end),
                 _normalize_value(usage.get("credits"), fallback="0"),
                 _normalize_value(usage.get("burning_rate"), fallback="0"),
             )
-        console.print(table)
+
+        if group_by_billable:
+            groups: dict[str, list[dict[str, Any]]] = {}
+            for usage in usages:
+                key = (
+                    usage.get("billable_account_uid")
+                    or usage.get("account_uid")
+                    or "unknown"
+                )
+                groups.setdefault(key, []).append(usage)
+            for billable_uid, group_usages in sorted(groups.items()):
+                total_credits = 0.0
+                for u in group_usages:
+                    try:
+                        total_credits += float(u.get("credits") or 0)
+                    except (TypeError, ValueError):
+                        pass
+                table = Table(
+                    title=(
+                        f"Billable Account [bold]{billable_uid}[/bold] "
+                        f"— {len(group_usages)} record(s), "
+                        f"{total_credits:.4f} credits"
+                    )
+                )
+                _add_columns(table)
+                for usage in group_usages:
+                    table.add_row(*_row_for(usage))
+                console.print(table)
+        else:
+            table = Table(title="Usage Records")
+            _add_columns(table)
+            for usage in usages:
+                table.add_row(*_row_for(usage))
+            console.print(table)
     except Exception as e:
         console.print(f"[red]Error fetching usage records: {e}[/red]")
         raise typer.Exit(1)

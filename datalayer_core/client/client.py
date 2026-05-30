@@ -262,6 +262,9 @@ class DatalayerClient(
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         snapshot_name: Optional[str] = None,
+        billable_account_uid: Optional[str] = None,
+        billable_account_type: Optional[str] = None,
+        billable_account_handle: Optional[str] = None,
     ) -> RuntimeService:
         """
         Create a new runtime (kernel) for code execution.
@@ -323,6 +326,9 @@ class DatalayerClient(
                 environment_name=environment,
                 from_snapshot_uid=snapshot_uid,
                 credits_limit=credits_limit,
+                billable_account_uid=billable_account_uid,
+                billable_account_type=billable_account_type,
+                billable_account_handle=billable_account_handle,
             )
         else:
             # Create runtime without snapshot
@@ -330,6 +336,9 @@ class DatalayerClient(
                 given_name=name,
                 environment_name=environment,
                 credits_limit=credits_limit,
+                billable_account_uid=billable_account_uid,
+                billable_account_type=billable_account_type,
+                billable_account_handle=billable_account_handle,
             )
 
         # Process the response and create RuntimesService object

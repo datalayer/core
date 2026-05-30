@@ -26,6 +26,7 @@ from datalayer_core.cli.commands.envs import app as envs_app
 from datalayer_core.cli.commands.envs import envs_list, envs_ls
 from datalayer_core.cli.commands.evals import app as evals_app
 from datalayer_core.cli.commands.exec import main as exec_main
+from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
 from datalayer_core.cli.commands.runtime_checkpoints import (
@@ -44,6 +45,8 @@ from datalayer_core.cli.commands.tokens import app as tokens_app
 from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
+from datalayer_core.cli.commands.plans import app as plans_app
+from datalayer_core.cli.commands.plans import plans_root
 from datalayer_core.cli.commands.users import app as users_app
 from datalayer_core.cli.commands.web import app as web_app
 
@@ -177,6 +180,7 @@ app.add_typer(config_app)
 app.add_typer(console_app)
 app.add_typer(envs_app)
 app.add_typer(evals_app)
+app.add_typer(memberships_app)
 app.add_typer(otel_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
@@ -185,6 +189,7 @@ app.add_typer(subscription_app)
 app.add_typer(tokens_app)
 app.add_typer(users_app)
 app.add_typer(usage_app)
+app.add_typer(plans_app)
 app.add_typer(web_app)
 
 # Add exec command directly to root level
@@ -195,6 +200,7 @@ app.command(name="login")(login_root)
 app.command(name="logout")(logout_root)
 app.command(name="whoami")(whoami_root)
 app.command(name="usage")(usage_root)
+app.command(name="plans")(plans_root)
 app.command(name="subscription")(subscription_root)
 
 # Add convenient aliases at root level
