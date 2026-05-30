@@ -23,8 +23,8 @@ import {
 } from '@primer/react';
 import { useToast } from '../../hooks';
 import { useCoreStore, useIAMStore } from '../../state';
-import { PrincipalAvatar } from './PrincipalAvatar';
-import { PrincipalBadge } from './PrincipalBadge';
+import { PrincipalAvatar } from '../principal/PrincipalAvatar';
+import { PrincipalBadge } from '../principal/PrincipalBadge';
 
 // ---------------------------------------------------------------------------
 // Public types (do not break callers).

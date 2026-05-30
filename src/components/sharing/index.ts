@@ -3,14 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './Principal';
-export * from './PrincipalAvatar';
-export * from './PrincipalBadge';
-export * from './PrincipalBanner';
+export * from '../principal/Principal';
+export * from '../principal/PrincipalAvatar';
+export * from '../principal/PrincipalBadge';
+export * from '../principal/PrincipalBanner';
 export {
   buildPrincipalProfilePath,
   PrincipalDetailsOverlay,
-} from './PrincipalDetailsOverlay';
-export type { PrincipalDetailsOverlayProps } from './PrincipalDetailsOverlay';
-export * from './PrincipalSwitcherMenu';
+} from '../principal/PrincipalDetailsOverlay';
+export type { PrincipalDetailsOverlayProps } from '../principal/PrincipalDetailsOverlay';
+export * from '../principal/PrincipalSwitcherMenu';
 export * from './ShareAccessDialog';

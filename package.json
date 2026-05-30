@@ -147,7 +147,6 @@
     "diff": "^8.0.2",
     "echarts": "^5.5.0",
     "echarts-for-react": "^3.0.2",
-    "fuse.js": "^7.0.0",
     "html2canvas": "^1.4.1",
     "jwt-decode": "^2.2.0",
     "localforage": "^1.10.0",
