@@ -3,10 +3,14 @@
 
 """Command line interface for Datalayer based on Typer."""
 
+import os
+
 import typer
 
 from datalayer_core.__version__ import __version__
 from datalayer_core.cli.commands.about import app as about_app
+from datalayer_core.cli.commands.agent_nodes import app as agent_nodes_app
+from datalayer_core.cli.commands.agent_nodes import agent_nodes_list, agent_nodes_ls
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
@@ -69,13 +73,103 @@ def main_callback(
         is_eager=True,
         help="Show version and exit",
     ),
+    run_url: str | None = typer.Option(
+        None,
+        "--run-url",
+        help="Override DATALAYER_RUN_URL for this CLI invocation.",
+    ),
+    iam_url: str | None = typer.Option(
+        None,
+        "--iam-url",
+        help="Override DATALAYER_IAM_URL for this CLI invocation.",
+    ),
+    runtimes_url: str | None = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Override DATALAYER_RUNTIMES_URL for this CLI invocation.",
+    ),
+    spacer_url: str | None = typer.Option(
+        None,
+        "--spacer-url",
+        "--space-url",
+        help="Override DATALAYER_SPACER_URL for this CLI invocation.",
+    ),
+    library_url: str | None = typer.Option(
+        None,
+        "--library-url",
+        help="Override DATALAYER_LIBRARY_URL for this CLI invocation.",
+    ),
+    manager_url: str | None = typer.Option(
+        None,
+        "--manager-url",
+        help="Override DATALAYER_MANAGER_URL for this CLI invocation.",
+    ),
+    ai_agents_url: str | None = typer.Option(
+        None,
+        "--ai-agents-url",
+        help="Override DATALAYER_AI_AGENTS_URL for this CLI invocation.",
+    ),
+    ai_inference_url: str | None = typer.Option(
+        None,
+        "--ai-inference-url",
+        help="Override DATALAYER_AI_INFERENCE_URL for this CLI invocation.",
+    ),
+    growth_url: str | None = typer.Option(
+        None,
+        "--growth-url",
+        help="Override DATALAYER_GROWTH_URL for this CLI invocation.",
+    ),
+    otel_url: str | None = typer.Option(
+        None,
+        "--otel-url",
+        help="Override DATALAYER_OTEL_URL for this CLI invocation.",
+    ),
+    success_url: str | None = typer.Option(
+        None,
+        "--success-url",
+        help="Override DATALAYER_SUCCESS_URL for this CLI invocation.",
+    ),
+    status_url: str | None = typer.Option(
+        None,
+        "--status-url",
+        help="Override DATALAYER_STATUS_URL for this CLI invocation.",
+    ),
+    support_url: str | None = typer.Option(
+        None,
+        "--support-url",
+        help="Override DATALAYER_SUPPORT_URL for this CLI invocation.",
+    ),
+    mcp_server_url: str | None = typer.Option(
+        None,
+        "--mcp-server-url",
+        help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
+    ),
 ) -> None:
     """Main callback to handle global options."""
-    pass
+    overrides = {
+        "DATALAYER_RUN_URL": run_url,
+        "DATALAYER_IAM_URL": iam_url,
+        "DATALAYER_RUNTIMES_URL": runtimes_url,
+        "DATALAYER_SPACER_URL": spacer_url,
+        "DATALAYER_LIBRARY_URL": library_url,
+        "DATALAYER_MANAGER_URL": manager_url,
+        "DATALAYER_AI_AGENTS_URL": ai_agents_url,
+        "DATALAYER_AI_INFERENCE_URL": ai_inference_url,
+        "DATALAYER_GROWTH_URL": growth_url,
+        "DATALAYER_OTEL_URL": otel_url,
+        "DATALAYER_SUCCESS_URL": success_url,
+        "DATALAYER_STATUS_URL": status_url,
+        "DATALAYER_SUPPORT_URL": support_url,
+        "DATALAYER_MCP_SERVER_URL": mcp_server_url,
+    }
+    for env_name, value in overrides.items():
+        if value is not None:
+            os.environ[env_name] = value.rstrip("/")
 
 
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)
+app.add_typer(agent_nodes_app)
 app.add_typer(auth_app)
 app.add_typer(benchmarks_app)
 app.add_typer(checkpoints_app)
@@ -116,6 +210,8 @@ app.command(name="checkpoints-list")(checkpoints_list)
 app.command(name="checkpoints-ls")(checkpoints_ls)
 app.command(name="tokens-list")(tokens_list)
 app.command(name="tokens-ls")(tokens_ls)
+app.command(name="agent-nodes-list")(agent_nodes_list)
+app.command(name="agent-nodes-ls")(agent_nodes_ls)
 
 
 def main() -> None:

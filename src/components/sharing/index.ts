@@ -3,6 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './auth';
-export * from './sharing';
-export * from './sparklines';
+export * from './PrincipalAvatar';
+export * from './ShareAccessDialog';
