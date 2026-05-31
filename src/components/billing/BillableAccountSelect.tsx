@@ -13,7 +13,7 @@
  * resolved account via `onSelectedAccountChange`.
  */
 
-import { useEffect, useMemo, Fragment } from 'react';
+import { useCallback, useEffect, useMemo, Fragment } from 'react';
 import {
   ActionList,
   ActionMenu,
@@ -65,10 +65,33 @@ export type BillableAccountSelectProps = {
   emptyMessage?: string;
   flashMessage?: string;
   width?: string | number;
+  preferOrganizationDefault?: boolean;
 };
 
 const PLAN_FREE_TERMS = ['free', 'starter'];
 const PLAN_PRO_TERMS = ['pro', 'paid', 'team', 'enterprise', 'business'];
+
+const BILLABLE_ACCOUNT_COOKIE = 'datalayer-billable-account-uid';
+const BILLABLE_ACCOUNT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+function readBillableAccountCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const escaped = BILLABLE_ACCOUNT_COOKIE.replace(
+    /[.$?*|{}()[\]\\/+^]/g,
+    '\\$&',
+  );
+  const match = document.cookie.match(
+    new RegExp('(?:^|; )' + escaped + '=([^;]*)'),
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function writeBillableAccountCookie(value: string): void {
+  if (typeof document === 'undefined') return;
+  document.cookie =
+    `${BILLABLE_ACCOUNT_COOKIE}=${encodeURIComponent(value)};` +
+    ` path=/; max-age=${BILLABLE_ACCOUNT_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
 
 const planContains = (value: string, terms: string[]) =>
   terms.some(term => value.includes(term));
@@ -98,6 +121,7 @@ export function BillableAccountSelect({
   emptyMessage = 'No billable accounts available',
   flashMessage = 'Runs and credits are charged to the selected billable account. Wallet credits of that account are consumed; LLM token usage is tracked for visibility only. Accounts without an eligible plan or wallet balance are disabled.',
   width = 'min(100%, 520px)',
+  preferOrganizationDefault = false,
 }: BillableAccountSelectProps): JSX.Element {
   const { user } = useIAMStore();
   const {
@@ -302,7 +326,18 @@ export function BillableAccountSelect({
   const hasEligibleAccount = eligibleBillable.length > 0;
   const isLoading = eligibleAccountsLoading || detailsLoading;
 
+  const storedBillableAccountUid = useMemo(
+    () => readBillableAccountCookie(),
+    [],
+  );
+
   const preferredEligible = useMemo(() => {
+    const fromCookie = storedBillableAccountUid
+      ? eligibleBillable.find(
+          account => account.accountUid === storedBillableAccountUid,
+        )
+      : undefined;
+    if (fromCookie) return fromCookie;
     const byPrincipal = selectedPrincipalUid
       ? eligibleBillable.find(account => {
           if (account.accountUid !== selectedPrincipalUid) return false;
@@ -321,13 +356,24 @@ export function BillableAccountSelect({
     const firstOrg = eligibleBillable.find(
       a => a.accountType === 'organization',
     );
+    if (preferOrganizationDefault && firstOrg) return firstOrg;
     return firstOrg || eligibleBillable[0];
   }, [
+    storedBillableAccountUid,
     eligibleBillable,
     personalAccountUid,
+    preferOrganizationDefault,
     selectedPrincipalKind,
     selectedPrincipalUid,
   ]);
+
+  const handleAccountSelect = useCallback(
+    (accountUid: string) => {
+      writeBillableAccountCookie(accountUid);
+      onChange(accountUid);
+    },
+    [onChange],
+  );
 
   // Auto-select a sensible default when current value is empty/ineligible.
   useEffect(() => {
@@ -500,7 +546,7 @@ export function BillableAccountSelect({
                           disabled={!account.isEligible}
                           onSelect={() => {
                             if (account.isEligible) {
-                              onChange(account.accountUid);
+                              handleAccountSelect(account.accountUid);
                             }
                           }}
                         >
