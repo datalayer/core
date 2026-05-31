@@ -43,7 +43,7 @@ type SharingPayload = {
   access?: Partial<Record<ItemAccessLevel, SharingLevelPayload>>;
 };
 
-export type ShareAccessDialogProps = {
+export type ShareAccessComponentProps = {
   isOpen: boolean;
   requestUrl?: string;
   resourceLabel: string;
@@ -707,7 +707,7 @@ function AccessPrincipalRow({
 // Main component.
 // ---------------------------------------------------------------------------
 
-export function ShareAccessDialog({
+export function ShareAccessComponent({
   isOpen,
   requestUrl,
   resourceLabel,
@@ -718,7 +718,7 @@ export function ShareAccessDialog({
   principalKinds = DEFAULT_PRINCIPAL_KINDS,
   displayMode = 'dialog',
   onClose,
-}: ShareAccessDialogProps): JSX.Element | null {
+}: ShareAccessComponentProps): JSX.Element | null {
   void _resourceDescription;
   const { token, user } = useIAMStore();
   const { configuration } = useCoreStore();
@@ -2239,4 +2239,8 @@ export function ShareAccessDialog({
   );
 }
 
-export default ShareAccessDialog;
+export default ShareAccessComponent;
+
+// Backward-compatible aliases (deprecated: use ShareAccessComponent).
+export const ShareAccessDialog = ShareAccessComponent;
+export type ShareAccessDialogProps = ShareAccessComponentProps;
