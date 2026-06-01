@@ -338,6 +338,12 @@ export function BillableAccountSelect({
         )
       : undefined;
     if (fromCookie) return fromCookie;
+
+    const personalEligible = eligibleBillable.find(
+      a => a.accountType === 'user' && a.accountUid === personalAccountUid,
+    );
+    if (personalEligible) return personalEligible;
+
     const byPrincipal = selectedPrincipalUid
       ? eligibleBillable.find(account => {
           if (account.accountUid !== selectedPrincipalUid) return false;
@@ -349,10 +355,7 @@ export function BillableAccountSelect({
         })
       : undefined;
     if (byPrincipal) return byPrincipal;
-    const personalEligible = eligibleBillable.find(
-      a => a.accountType === 'user' && a.accountUid === personalAccountUid,
-    );
-    if (personalEligible) return personalEligible;
+
     const firstOrg = eligibleBillable.find(
       a => a.accountType === 'organization',
     );
@@ -384,6 +387,7 @@ export function BillableAccountSelect({
     }
     const current = accounts.find(a => a.accountUid === value);
     if (!current || !current.isEligible) {
+      writeBillableAccountCookie(preferredEligible.accountUid);
       onChange(preferredEligible.accountUid);
     }
   }, [isLoading, preferredEligible, accounts, value, onChange]);
