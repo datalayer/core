@@ -13,7 +13,7 @@
  * resolved account via `onSelectedAccountChange`.
  */
 
-import { useCallback, useEffect, useMemo, Fragment } from 'react';
+import { useCallback, useEffect, useMemo, useRef, Fragment } from 'react';
 import {
   ActionList,
   ActionMenu,
@@ -378,9 +378,43 @@ export function BillableAccountSelect({
     [onChange],
   );
 
+  // Apply persisted selection (cookie) once accounts are resolved. Runs once
+  // per mount so users can still change selection afterwards; falls back to
+  // personal user account when the stored uid is unknown/ineligible.
+  const initialSelectionAppliedRef = useRef(false);
+  useEffect(() => {
+    if (isLoading) return;
+    if (initialSelectionAppliedRef.current) return;
+    if (eligibleBillable.length === 0 && accounts.length === 0) return;
+    initialSelectionAppliedRef.current = true;
+
+    const storedAccount = storedBillableAccountUid
+      ? eligibleBillable.find(a => a.accountUid === storedBillableAccountUid)
+      : undefined;
+    const personalAccount = eligibleBillable.find(
+      a => a.accountType === 'user' && a.accountUid === personalAccountUid,
+    );
+    const target = storedAccount || personalAccount || preferredEligible;
+    if (!target) return;
+    if (target.accountUid !== value) {
+      writeBillableAccountCookie(target.accountUid);
+      onChange(target.accountUid);
+    }
+  }, [
+    isLoading,
+    accounts,
+    eligibleBillable,
+    storedBillableAccountUid,
+    personalAccountUid,
+    preferredEligible,
+    value,
+    onChange,
+  ]);
+
   // Auto-select a sensible default when current value is empty/ineligible.
   useEffect(() => {
     if (isLoading) return;
+    if (!initialSelectionAppliedRef.current) return;
     if (!preferredEligible) {
       if (value) onChange('');
       return;
