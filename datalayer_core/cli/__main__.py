@@ -20,6 +20,7 @@ from datalayer_core.cli.commands.authn import (
     whoami_root,
 )
 from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
+from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
@@ -176,6 +177,7 @@ app.add_typer(agent_nodes_app)
 app.add_typer(auth_app)
 app.add_typer(benchmarks_app)
 app.add_typer(checkpoints_app)
+app.add_typer(cluster_app)
 app.add_typer(config_app)
 app.add_typer(console_app)
 app.add_typer(envs_app)
