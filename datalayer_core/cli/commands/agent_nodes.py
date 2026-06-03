@@ -65,7 +65,7 @@ def agent_nodes_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_agent_nodes(
     token: Optional[str] = typer.Option(
         None,
@@ -91,23 +91,6 @@ def list_agent_nodes(
     except Exception as e:
         console.print(f"[red]Error listing agent nodes: {e}[/red]")
         raise typer.Exit(1)
-
-
-@app.command(name="ls")
-def list_agent_nodes_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-    runtimes_url: Optional[str] = typer.Option(
-        None,
-        "--runtimes-url",
-        help="Datalayer Runtimes server URL",
-    ),
-) -> None:
-    """List registered agent nodes (alias for list)."""
-    list_agent_nodes(token=token, runtimes_url=runtimes_url)
 
 
 def agent_nodes_list(

@@ -27,7 +27,7 @@ def tokens_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_tokens(
     token: Optional[str] = typer.Option(
         None,
@@ -57,18 +57,6 @@ def list_tokens(
     except Exception as e:
         console.print(f"[red]Error listing tokens: {e}[/red]")
         raise typer.Exit(1)
-
-
-@app.command(name="ls")
-def list_tokens_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-) -> None:
-    """List all tokens (alias for list)."""
-    list_tokens(token=token)
 
 
 @app.command(name="create")

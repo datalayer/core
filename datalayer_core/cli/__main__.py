@@ -10,7 +10,7 @@ import typer
 from datalayer_core.__version__ import __version__
 from datalayer_core.cli.commands.about import app as about_app
 from datalayer_core.cli.commands.agent_nodes import app as agent_nodes_app
-from datalayer_core.cli.commands.agent_nodes import agent_nodes_list, agent_nodes_ls
+from datalayer_core.cli.commands.agent_nodes import agent_nodes_ls
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
@@ -24,26 +24,26 @@ from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.console import app as console_app
 from datalayer_core.cli.commands.envs import app as envs_app
-from datalayer_core.cli.commands.envs import envs_list, envs_ls
+from datalayer_core.cli.commands.envs import envs_ls
 from datalayer_core.cli.commands.evals import app as evals_app
 from datalayer_core.cli.commands.exec import main as exec_main
 from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.otel import app as otel_app
+from datalayer_core.cli.commands.pools import app as pools_app
 from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
 from datalayer_core.cli.commands.runtime_checkpoints import (
-    checkpoints_list,
     checkpoints_ls,
 )
 from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
-from datalayer_core.cli.commands.sandbox_snapshots import snapshots_list, snapshots_ls
+from datalayer_core.cli.commands.sandbox_snapshots import snapshots_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app
-from datalayer_core.cli.commands.runtimes import runtimes_list, runtimes_ls
+from datalayer_core.cli.commands.runtimes import runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app
-from datalayer_core.cli.commands.secrets import secrets_list, secrets_ls
+from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
 from datalayer_core.cli.commands.tokens import app as tokens_app
-from datalayer_core.cli.commands.tokens import tokens_list, tokens_ls
+from datalayer_core.cli.commands.tokens import tokens_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
 from datalayer_core.cli.commands.plans import app as plans_app
@@ -184,6 +184,7 @@ app.add_typer(envs_app)
 app.add_typer(evals_app)
 app.add_typer(memberships_app)
 app.add_typer(otel_app)
+app.add_typer(pools_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
@@ -206,19 +207,12 @@ app.command(name="plans")(plans_root)
 app.command(name="subscription")(subscription_root)
 
 # Add convenient aliases at root level
-app.command(name="envs-list")(envs_list)
 app.command(name="envs-ls")(envs_ls)
-app.command(name="runtimes-list")(runtimes_list)
 app.command(name="runtimes-ls")(runtimes_ls)
-app.command(name="secrets-list")(secrets_list)
 app.command(name="secrets-ls")(secrets_ls)
-app.command(name="snapshots-list")(snapshots_list)
 app.command(name="snapshots-ls")(snapshots_ls)
-app.command(name="checkpoints-list")(checkpoints_list)
 app.command(name="checkpoints-ls")(checkpoints_ls)
-app.command(name="tokens-list")(tokens_list)
 app.command(name="tokens-ls")(tokens_ls)
-app.command(name="agent-nodes-list")(agent_nodes_list)
 app.command(name="agent-nodes-ls")(agent_nodes_ls)
 
 

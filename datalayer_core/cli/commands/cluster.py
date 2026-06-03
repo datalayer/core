@@ -240,6 +240,8 @@ def show_cluster(
                 action_id = str((req or {}).get("action_id") or "")
                 operation = str((req or {}).get("operation") or "-")
                 status = str((req or {}).get("status") or "-")
+                phase = str((req or {}).get("phase") or "")
+                elapsed = (req or {}).get("elapsed_seconds")
                 requested = (req or {}).get("requested_delta_nodes")
                 applied = (req or {}).get("applied_delta_nodes")
                 target_workers = (req or {}).get("target_workers")
@@ -262,6 +264,14 @@ def show_cluster(
                     f"target_workers={target_workers if target_workers is not None else '-'}\n",
                     style="yellow",
                 )
+                if phase or elapsed is not None:
+                    requests_text.append(
+                        "  state: "
+                        + (phase if phase else "-")
+                        + " "
+                        + f"elapsed={elapsed if elapsed is not None else '-'}s\n",
+                        style="magenta",
+                    )
                 if reason:
                     requests_text.append(f"  reason: {reason}\n", style="dim")
             console.print(Panel(requests_text, title="Node Requests", border_style="cyan"))

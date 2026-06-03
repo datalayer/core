@@ -37,7 +37,7 @@ def _make_client(
     return DatalayerClient(urls=urls, token=token)
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_runtimes(
     token: Optional[str] = typer.Option(
         None,
@@ -87,28 +87,6 @@ def list_runtimes(
     except Exception as e:
         console.print(f"[red]Error listing runtimes: {e}[/red]")
         raise typer.Exit(1)
-
-
-@app.command(name="ls")
-def list_runtimes_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
-    runtimes_url: Optional[str] = typer.Option(
-        None,
-        "--runtimes-url",
-        help="Datalayer Runtimes server URL",
-    ),
-) -> None:
-    """List running runtimes (alias for list)."""
-    list_runtimes(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
 
 
 @app.command(name="create")

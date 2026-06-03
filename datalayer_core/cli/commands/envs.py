@@ -37,7 +37,7 @@ def envs_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_environments(
     token: Optional[str] = typer.Option(
         None,
@@ -92,28 +92,6 @@ def list_environments(
     except Exception as e:
         console.print(f"[red]Error listing environments: {e}[/red]")
         raise typer.Exit(1)
-
-
-@app.command(name="ls")
-def list_environments_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
-    runtimes_url: Optional[str] = typer.Option(
-        None,
-        "--runtimes-url",
-        help="Datalayer Runtimes server URL",
-    ),
-) -> None:
-    """List available environments (alias for list)."""
-    list_environments(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
 
 
 # Root level commands for convenience
