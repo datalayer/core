@@ -23,7 +23,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: conda-incubator/setup-miniconda@v3.3.0
+      - uses: conda-incubator/setup-miniconda@v4.0.1
         with:
           miniforge-variant: Miniforge3
           miniforge-version: latest
