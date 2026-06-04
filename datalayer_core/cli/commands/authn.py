@@ -4,10 +4,13 @@
 """Authentication commands for Datalayer CLI - Refactored to use Client."""
 
 import asyncio
+import base64
+import json
 import os
 import threading
 import time
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Optional, Any
 
 import questionary
 import requests
@@ -52,6 +55,75 @@ def _fetch_memberships(iam_url: str, token: Optional[str]) -> Optional[list[dict
         return data.get("memberships") or []
     except Exception:
         return None
+
+
+def _decode_jwt_claims(token: str) -> Optional[dict]:
+    """Decode JWT claims without verifying signature (display purpose only)."""
+    try:
+        parts = token.split(".")
+        if len(parts) < 2:
+            return None
+        payload = parts[1]
+        padding = "=" * (-len(payload) % 4)
+        decoded = base64.urlsafe_b64decode(payload + padding)
+        claims = json.loads(decoded.decode("utf-8"))
+        return claims if isinstance(claims, dict) else None
+    except Exception:
+        return None
+
+
+def _coerce_unix_timestamp(value: Any) -> Optional[int]:
+    try:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            return int(float(value.strip()))
+    except Exception:
+        return None
+    return None
+
+
+def _format_unix_timestamp(ts: Optional[int]) -> str:
+    if ts is None:
+        return "unknown"
+    try:
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:
+        return "unknown"
+
+
+def _format_duration(seconds: int) -> str:
+    seconds = max(0, seconds)
+    days, remainder = divmod(seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+    chunks = []
+    if days:
+        chunks.append(f"{days}d")
+    if hours:
+        chunks.append(f"{hours}h")
+    if minutes or not chunks:
+        chunks.append(f"{minutes}m")
+    return " ".join(chunks)
+
+
+def _expiration_status(exp_ts: Optional[int]) -> str:
+    if exp_ts is None:
+        return "[red]unknown[/red]"
+
+    now = int(time.time())
+    remaining = exp_ts - now
+    if remaining <= 0:
+        return f"[red]expired { _format_duration(abs(remaining)) } ago[/red]"
+    if remaining <= 900:
+        return f"[red]{_format_duration(remaining)} remaining[/red]"
+    if remaining <= 86400:
+        return f"[yellow]{_format_duration(remaining)} remaining[/yellow]"
+    return f"[green]{_format_duration(remaining)} remaining[/green]"
 
 
 @app.command()
@@ -428,6 +500,30 @@ def whoami(
                     console.print(f"📅 Created: {user.get('creation_ts_dt')}")
                 if user.get("last_update_ts_dt"):
                     console.print(f"🔄 Last Updated: {user.get('last_update_ts_dt')}")
+
+                # JWT token details
+                token_for_details = access_token or auth.current_token or auth.get_stored_token()
+                if token_for_details:
+                    claims = _decode_jwt_claims(token_for_details)
+                    if claims:
+                        subject = claims.get("sub")
+                        if isinstance(subject, dict):
+                            subject = subject.get("uid") or subject
+                        exp_ts = _coerce_unix_timestamp(claims.get("exp"))
+                        iat_ts = _coerce_unix_timestamp(claims.get("iat"))
+
+                        console.print("\n[bold]JWT Token:[/bold]")
+                        if claims.get("jti"):
+                            console.print(f"  🪪 JTI: {claims.get('jti')}")
+                        if subject is not None:
+                            console.print(f"  👤 Subject: {subject}")
+                        if claims.get("iss"):
+                            console.print(f"  🏷️  Issuer: {claims.get('iss')}")
+                        if iat_ts is not None:
+                            console.print(f"  🕒 Issued At: {_format_unix_timestamp(iat_ts)}")
+                        if exp_ts is not None:
+                            console.print(f"  ⏰ Expires At: {_format_unix_timestamp(exp_ts)}")
+                        console.print(f"  ⌛ Time to Expiration: {_expiration_status(exp_ts)}")
 
                 # IAM Providers
                 iam_providers = user.get("iam_providers", [])

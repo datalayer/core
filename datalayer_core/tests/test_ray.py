@@ -33,6 +33,13 @@ def test_urls_resolve_ray_url_from_environment(monkeypatch):
     assert urls.ray_url == "https://ray-from-env.example"
 
 
+def test_urls_resolve_ray_url_from_cluster_alias(monkeypatch):
+    monkeypatch.delenv("DATALAYER_RAY_URL", raising=False)
+    monkeypatch.setenv("DATALAYER_RAY_CLUSTER_URL", "https://ray-cluster-env.example/")
+    urls = DatalayerURLs.from_environment()
+    assert urls.ray_url == "https://ray-cluster-env.example"
+
+
 def test_ray_mixin_job_logs_and_events_paths():
     client = _FakeRayClient()
 
