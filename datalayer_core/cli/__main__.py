@@ -30,6 +30,7 @@ from datalayer_core.cli.commands.exec import main as exec_main
 from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.pools import app as pools_app
+from datalayer_core.cli.commands.ray import app as ray_app
 from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
 from datalayer_core.cli.commands.runtime_checkpoints import (
     checkpoints_ls,
@@ -148,6 +149,11 @@ def main_callback(
         "--mcp-server-url",
         help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
     ),
+    ray_url: str | None = typer.Option(
+        None,
+        "--ray-url",
+        help="Override DATALAYER_RAY_URL for this CLI invocation.",
+    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
@@ -165,6 +171,7 @@ def main_callback(
         "DATALAYER_STATUS_URL": status_url,
         "DATALAYER_SUPPORT_URL": support_url,
         "DATALAYER_MCP_SERVER_URL": mcp_server_url,
+        "DATALAYER_RAY_URL": ray_url,
     }
     for env_name, value in overrides.items():
         if value is not None:
@@ -185,6 +192,7 @@ app.add_typer(evals_app)
 app.add_typer(memberships_app)
 app.add_typer(otel_app)
 app.add_typer(pools_app)
+app.add_typer(ray_app)
 app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)

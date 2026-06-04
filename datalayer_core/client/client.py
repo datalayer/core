@@ -18,6 +18,7 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
 from datalayer_core.mixins.evals import EvalsMixin
 from datalayer_core.mixins.events import EventsMixin
+from datalayer_core.mixins.ray import RayMixin
 from datalayer_core.mixins.sandbox_snapshots import SandboxSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
@@ -50,6 +51,7 @@ class DatalayerClient(
     EnvironmentsMixin,
     EvalsMixin,
     EventsMixin,
+    RayMixin,
     SecretsMixin,
     SandboxSnapshotsMixin,
     TokensMixin,
