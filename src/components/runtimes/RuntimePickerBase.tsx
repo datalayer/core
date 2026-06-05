@@ -256,43 +256,45 @@ export function RuntimePickerBase(
                 ([group, runtimeDescs]) => (
                   <ActionList.Group key={group}>
                     <ActionList.GroupHeading>{group}</ActionList.GroupHeading>
-                    {runtimeDescs.map(runtimeDesc => {
-                      const annotation = runtimeDesc.podName
-                        ? ` - ${runtimeDesc.podName.split('-', 2).reverse()[0]}`
-                        : runtimeDesc.kernelId
-                          ? ` - ${runtimeDesc.kernelId}`
+                    {runtimeDescs.map(candidateRuntimeDesc => {
+                      const annotation = candidateRuntimeDesc.podName
+                        ? ` - ${candidateRuntimeDesc.podName.split('-', 2).reverse()[0]}`
+                        : candidateRuntimeDesc.kernelId
+                          ? ` - ${candidateRuntimeDesc.kernelId}`
                           : '';
                       const fullDisplayName =
-                        (runtimeDesc.displayName ?? '') + annotation;
+                        (candidateRuntimeDesc.displayName ?? '') + annotation;
                       const displayName =
-                        (runtimeDesc.displayName?.length ?? 0) >
+                        (candidateRuntimeDesc.displayName?.length ?? 0) >
                         RUNTIME_DISPLAY_NAME_MAX_LENGTH
-                          ? runtimeDesc.displayName!.slice(
+                          ? candidateRuntimeDesc.displayName!.slice(
                               0,
                               RUNTIME_DISPLAY_NAME_MAX_LENGTH,
                             ) + '…'
-                          : (runtimeDesc.displayName ?? '');
+                          : (candidateRuntimeDesc.displayName ?? '');
                       return (
                         <ActionList.Item
-                          key={runtimeDesc.name}
+                          key={candidateRuntimeDesc.name}
                           title={fullDisplayName}
                           selected={
-                            (runtimeDesc.location === runtimeDesc?.location ||
-                              (isRuntimeRemote(runtimeDesc.location) &&
+                            (candidateRuntimeDesc.location ===
+                              runtimeDesc?.location ||
+                              (isRuntimeRemote(candidateRuntimeDesc.location) &&
                                 isRuntimeRemote(
                                   runtimeDesc?.location ?? 'local',
                                 ))) &&
-                            (runtimeDesc.kernelId ?? runtimeDesc.name) ===
+                            (candidateRuntimeDesc.kernelId ??
+                              candidateRuntimeDesc.name) ===
                               (runtimeDesc?.kernelId ?? runtimeDesc?.name)
                           }
                           onSelect={() => {
-                            setRuntimeDesc(runtimeDesc);
+                            setRuntimeDesc(candidateRuntimeDesc);
                           }}
                         >
                           <ActionList.LeadingVisual>
-                            {runtimeDesc.location === 'local' ? (
+                            {candidateRuntimeDesc.location === 'local' ? (
                               <LaptopSimpleIcon />
-                            ) : runtimeDesc.location === 'browser' ? (
+                            ) : candidateRuntimeDesc.location === 'browser' ? (
                               <BrowserIcon />
                             ) : (
                               <CloudUploadIcon />
@@ -337,9 +339,11 @@ export function RuntimePickerBase(
                                 setRuntimeDesc(k);
                               }}
                               checked={
-                                (k.location === k?.location ||
+                                (k.location === runtimeDesc?.location ||
                                   (isRuntimeRemote(k.location) &&
-                                    isRuntimeRemote(k?.location ?? 'local'))) &&
+                                    isRuntimeRemote(
+                                      runtimeDesc?.location ?? 'local',
+                                    ))) &&
                                 (k.kernelId ?? k.name) ===
                                   (runtimeDesc?.kernelId ?? runtimeDesc?.name)
                               }
