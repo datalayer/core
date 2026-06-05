@@ -40,6 +40,9 @@ export type IPage = {
   screenCapture?: string;
   creator?: IUser;
   creatorId?: string;
+  selectedPrincipalUid?: string;
+  selectedPrincipalKind?: 'user' | 'organization' | 'team';
+  selectedOrganizationUid?: string;
   kernelSnapshot?: ICodeSandboxSnapshot;
   kernelSnapshotId?: string;
   createdAt?: string;
