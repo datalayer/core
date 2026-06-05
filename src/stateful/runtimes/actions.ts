@@ -9,10 +9,7 @@
 import { URLExt } from '@jupyterlab/coreutils';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Upload } from 'tus-js-client';
-import {
-  IRuntimeOptions,
-  requestDatalayerAPI,
-} from '../../api';
+import { IRuntimeOptions, requestDatalayerAPI } from '../../api';
 import { asCodeSandboxSnapshot } from '../../models';
 import type {
   ICodeSandboxSnapshot,
@@ -51,6 +48,16 @@ export async function createRuntime(
   options: IRuntimeOptions,
 ): Promise<IRuntimePod> {
   const { externalToken, token } = iamStore.getState();
+  if (
+    typeof options.creditsLimit !== 'number' ||
+    !Number.isFinite(options.creditsLimit) ||
+    options.creditsLimit <= 0
+  ) {
+    throw new Error(
+      `Invalid runtime creditsLimit for environment ${options.environmentName}. ` +
+        'A positive number is required.',
+    );
+  }
   const body: Record<string, unknown> = {
     environment_name: options.environmentName,
     type: options.type ?? 'notebook',
@@ -254,7 +261,9 @@ export async function loadSandboxSnapshot(options: {
   });
 
   if (!data.success) {
-    throw new Error(`Failed to load the code sandbox snapshot; ${data.message}`);
+    throw new Error(
+      `Failed to load the code sandbox snapshot; ${data.message}`,
+    );
   }
 }
 

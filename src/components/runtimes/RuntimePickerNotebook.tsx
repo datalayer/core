@@ -76,12 +76,10 @@ export function RuntimePickerNotebook(
 ): JSX.Element {
   const { multiServiceManager, sessionContext, setValue, translator } = props;
   const { configuration } = useCoreStore();
-  const { credits, refreshCredits, token } = useIAMStore();
+  const { credits, refreshCredits, token, user } = useIAMStore();
   const [selectedRuntimeDesc, setSelectedRuntimeDesc] =
     useState<IRuntimeDesc>();
-  const [timeLimit, setTimeLimit] = useState<number>(
-    Math.min(credits?.available ?? 0, 10),
-  );
+  const [timeLimit, setTimeLimit] = useState<number>(10);
   const [userStorage, setUserStorage] = useState(false);
   const [canTransferFrom, setTransferFrom] = useState<boolean>(false);
   const [canTransferTo, setTransferTo] = useState<boolean>(false);
@@ -192,42 +190,124 @@ export function RuntimePickerNotebook(
     [userStorage],
   );
   useEffect((): void => {
+    const resolvedBurningRate =
+      selectedRuntimeDesc?.burningRate ??
+      multiServiceManager.remote?.environments
+        .get()
+        .find(env => env.name === selectedRuntimeDesc?.name)?.burning_rate;
+    const includedRuns =
+      user?.subscription?.usage?.included_runs ??
+      user?.subscription?.included_runs;
+    const currentRuns =
+      user?.subscription?.usage?.current_runs ??
+      user?.subscription?.current_runs ??
+      user?.subscription?.used_runs;
+    const hasKnownRunAllowance = typeof includedRuns === 'number';
+    const hasRemainingRuns =
+      hasKnownRunAllowance &&
+      typeof currentRuns === 'number' &&
+      includedRuns > 0 &&
+      currentRuns < includedRuns;
+    const hasKnownCredits = typeof credits?.available === 'number';
+    const maxMinutes =
+      selectedRuntimeDesc?.location === 'remote' && resolvedBurningRate
+        ? Math.floor((credits?.available ?? 0) / resolvedBurningRate / 60.0)
+        : undefined;
+    const effectiveTimeLimit =
+      selectedRuntimeDesc?.location === 'remote'
+        ? Math.max(
+            1,
+            Math.min(timeLimit, maxMinutes && maxMinutes > 0 ? maxMinutes : 10),
+          )
+        : timeLimit;
     const creditsLimit =
-      selectedRuntimeDesc?.location === 'remote' &&
-      selectedRuntimeDesc.burningRate
-        ? Math.min(timeLimit, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES) *
-          selectedRuntimeDesc.burningRate *
+      selectedRuntimeDesc?.location === 'remote' && resolvedBurningRate
+        ? Math.min(
+            effectiveTimeLimit,
+            MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES,
+          ) *
+          resolvedBurningRate *
           60
         : undefined;
-    setValue(
-      creditsLimit !== 0
-        ? {
-            runtime: selectedRuntimeDesc
-              ? ({
-                  environmentName: ['browser', 'remote'].includes(
-                    selectedRuntimeDesc.location,
-                  )
-                    ? `${selectedRuntimeDesc.location}-${selectedRuntimeDesc.name}`
-                    : selectedRuntimeDesc.name,
-                  id: selectedRuntimeDesc.kernelId,
-                  creditsLimit,
-                  capabilities: userStorage ? ['user_storage'] : undefined,
-                } satisfies Partial<
-                  Omit<IRuntimeOptions, 'kernelType'> & { id: string }
-                > | null)
-              : null,
-            selectedVariables: toTransfer,
-          }
-        : new Error('Credits limit must be strictly positive.'),
-    );
-  }, [selectedRuntimeDesc, userStorage, toTransfer, timeLimit]);
+    const requiresRuntimeStart =
+      !!selectedRuntimeDesc && !selectedRuntimeDesc.kernelId;
+    if (requiresRuntimeStart && selectedRuntimeDesc.location === 'remote') {
+      if (!resolvedBurningRate || !Number.isFinite(resolvedBurningRate)) {
+        setValue({ runtime: null, selectedVariables: toTransfer });
+        return;
+      }
+      if (
+        hasKnownCredits &&
+        hasKnownRunAllowance &&
+        !hasRemainingRuns &&
+        (!creditsLimit || creditsLimit <= 0)
+      ) {
+        setValue({ runtime: null, selectedVariables: toTransfer });
+        return;
+      }
+    }
+    setValue({
+      runtime: selectedRuntimeDesc
+        ? ({
+            environmentName: ['browser', 'remote'].includes(
+              selectedRuntimeDesc.location,
+            )
+              ? `${selectedRuntimeDesc.location}-${selectedRuntimeDesc.name}`
+              : selectedRuntimeDesc.name,
+            id: selectedRuntimeDesc.kernelId,
+            creditsLimit,
+            capabilities: userStorage ? ['user_storage'] : undefined,
+          } satisfies Partial<
+            Omit<IRuntimeOptions, 'kernelType'> & { id: string }
+          > | null)
+        : null,
+      selectedVariables: toTransfer,
+    });
+  }, [
+    selectedRuntimeDesc,
+    userStorage,
+    toTransfer,
+    timeLimit,
+    multiServiceManager.remote,
+    credits?.available,
+    user,
+  ]);
   const {
     kernelPreference: { canStart },
   } = sessionContext;
-  const max = Math.floor(
-    (credits?.available ?? 0) / (selectedRuntimeDesc?.burningRate ?? -1) / 60.0,
-  );
-  const outOfCredits = !credits?.available || max < Number.EPSILON;
+  const resolvedBurningRate =
+    selectedRuntimeDesc?.burningRate ??
+    multiServiceManager.remote?.environments
+      .get()
+      .find(env => env.name === selectedRuntimeDesc?.name)?.burning_rate;
+  const maxFromCredits = resolvedBurningRate
+    ? Math.floor((credits?.available ?? 0) / resolvedBurningRate / 60.0)
+    : -1;
+  const includedRuns =
+    user?.subscription?.usage?.included_runs ??
+    user?.subscription?.included_runs;
+  const currentRuns =
+    user?.subscription?.usage?.current_runs ??
+    user?.subscription?.current_runs ??
+    user?.subscription?.used_runs;
+  const hasKnownRunAllowance = typeof includedRuns === 'number';
+  const hasRemainingRuns =
+    hasKnownRunAllowance &&
+    typeof currentRuns === 'number' &&
+    includedRuns > 0 &&
+    currentRuns < includedRuns;
+  const hasKnownCredits = typeof credits?.available === 'number';
+  const effectiveMaxMinutes =
+    selectedRuntimeDesc?.location === 'remote'
+      ? hasKnownCredits && hasKnownRunAllowance && !hasRemainingRuns
+        ? Math.max(1, maxFromCredits)
+        : Math.max(10, maxFromCredits > 0 ? maxFromCredits : 0)
+      : Math.max(1, maxFromCredits);
+  const outOfCredits =
+    hasKnownCredits &&
+    hasKnownRunAllowance &&
+    !hasRemainingRuns &&
+    maxFromCredits < Number.EPSILON;
   return (
     <Box as="form" className="dla-Runtimes-picker">
       <Box sx={{ padding: 'var(--stack-padding-condensed) 0' }}>
@@ -279,11 +359,11 @@ export function RuntimePickerNotebook(
                 outOfCredits || selectedRuntimeDesc?.location !== 'remote'
               }
               label={'Time reservation'}
-              max={max < 0 ? 1 : max}
+              max={effectiveMaxMinutes}
               time={timeLimit}
               onTimeChange={setTimeLimit}
               error={
-                outOfCredits && max >= 0
+                outOfCredits && maxFromCredits >= 0
                   ? 'You must add credits to your account.'
                   : timeLimit === 0
                     ? 'You must set a time limit.'
