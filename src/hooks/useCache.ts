@@ -8658,6 +8658,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     jobName: string,
     namespace = 'default',
     tailLines = 200,
+    enabled = true,
   ) => {
     return useQuery({
       queryKey: queryKeys.ray.logs(namespace, jobName),
@@ -8668,6 +8669,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await requestDatalayer({
           url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}/logs?${params.toString()}`,
           method: 'GET',
+          // Logs naturally 404 once a job is deleted; never surface a toast.
+          notifyOnError: false,
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to fetch Ray job logs');
@@ -8678,7 +8681,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         };
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: Boolean(configuration.runtimesRunUrl) && Boolean(jobName),
+      enabled:
+        Boolean(configuration.runtimesRunUrl) && Boolean(jobName) && enabled,
+      refetchOnMount: 'always',
+      refetchInterval: query => {
+        const status = String(
+          (query.state.data as { status?: string } | undefined)?.status || '',
+        ).toLowerCase();
+        const terminal = [
+          'succeeded',
+          'failed',
+          'stopped',
+          'completed',
+        ].includes(status);
+        return terminal ? false : 3000;
+      },
     });
   };
 
