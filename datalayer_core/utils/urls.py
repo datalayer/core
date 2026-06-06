@@ -175,7 +175,6 @@ class DatalayerURLs:
             then fallback to DEFAULT_DATALAYER_MCP_SERVER_URL.
         ray_url : Optional[str]
             Override for the Ray URL. If None, will check DATALAYER_RAY_URL env var
-            then DATALAYER_RAY_CLUSTER_URL env var (legacy/alias)
             then fallback to DEFAULT_DATALAYER_RAY_URL.
 
         Returns
@@ -289,7 +288,6 @@ class DatalayerURLs:
         resolved_ray_url = (
             ray_url
             or os.environ.get("DATALAYER_RAY_URL")
-            or os.environ.get("DATALAYER_RAY_CLUSTER_URL")
             or base_url_for_services
             or DEFAULT_DATALAYER_RAY_URL
         )

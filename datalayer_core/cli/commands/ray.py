@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import ast
 import json
-import os
 from pathlib import Path
 import re
 import shlex
@@ -24,7 +23,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="ray",
-    help="Manage Ray clusters and Ray jobs through the Datalayer Ray addon.",
+    help="Manage Ray clusters and Ray jobs through the Datalayer runtimes service.",
     invoke_without_command=True,
 )
 
@@ -67,22 +66,10 @@ def jobs_callback(ctx: typer.Context) -> None:
 
 def _make_client(
     token: Optional[str] = None,
-    ray_url: Optional[str] = None,
 ) -> DatalayerClient:
-    effective_ray_url = (
-        ray_url
-        or os.environ.get("DATALAYER_RAY_URL")
-        or os.environ.get("DATALAYER_RAY_CLUSTER_URL")
-    )
-    if effective_ray_url:
-        # Align token lookup with the Ray endpoint host instead of default run_url.
-        urls = DatalayerURLs.from_environment(
-            run_url=effective_ray_url,
-            iam_url=effective_ray_url,
-            ray_url=effective_ray_url,
-        )
-    else:
-        urls = DatalayerURLs.from_environment(ray_url=ray_url)
+    urls = DatalayerURLs.from_environment()
+    # Ray CLI is intentionally routed via runtimes, never directly to ray_url.
+    urls.ray_url = urls.runtimes_url
     return DatalayerClient(urls=urls, token=token)
 
 
@@ -165,14 +152,9 @@ def _normalize_logs_text(value: Any) -> str:
 def clusters_list(
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON."),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     payload = client.ray_list_clusters(namespace=namespace)
     if raw:
         _print_json(payload)
@@ -216,11 +198,6 @@ def clusters_create(
         help="Optional full RayCluster spec JSON object.",
     ),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
     custom_spec = _load_json(custom_spec_json, "--custom-spec-json")
     payload: dict[str, Any] = {
@@ -235,7 +212,7 @@ def clusters_create(
     if custom_spec:
         payload["custom_spec"] = custom_spec
 
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     result = client.ray_create_cluster(payload)
     cluster = result.get("cluster") or {}
     metadata = cluster.get("metadata") or {}
@@ -251,13 +228,8 @@ def clusters_get(
     name: str = typer.Argument(..., help="RayCluster name."),
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     payload = client.ray_get_cluster(name, namespace=namespace)
     _print_json(payload)
 
@@ -267,13 +239,8 @@ def clusters_delete(
     name: str = typer.Argument(..., help="RayCluster name."),
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     client.ray_delete_cluster(name, namespace=namespace)
     console.print(f"[green]Cluster deleted:[/green] {name} (ns={namespace})")
 
@@ -298,11 +265,6 @@ def jobs_submit(
     shutdown_after_job_finishes: bool = typer.Option(True, "--shutdown-after-job-finishes/--keep-cluster"),
     ttl_seconds_after_finished: Optional[int] = typer.Option(3600, "--ttl-seconds-after-finished", min=0),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
     resolved_python_inline = _resolve_python_inline(python_inline)
 
@@ -329,7 +291,7 @@ def jobs_submit(
     if runtime_env_yaml:
         payload["runtime_env_yaml"] = runtime_env_yaml
 
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     result = client.ray_submit_job(cluster_name, payload)
     job = result.get("job") or {}
     metadata = job.get("metadata") or {}
@@ -351,14 +313,9 @@ def jobs_list(
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     cluster_name: Optional[str] = typer.Option(None, "--cluster-name", help="Filter by cluster label."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON."),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     payload = client.ray_list_jobs(namespace=namespace, cluster_name=cluster_name)
     if raw:
         _print_json(payload)
@@ -390,13 +347,8 @@ def jobs_status(
     name: str = typer.Argument(..., help="RayJob name."),
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     payload = client.ray_get_job(name, namespace=namespace)
     _print_json(payload)
 
@@ -406,13 +358,8 @@ def jobs_delete(
     name: str = typer.Argument(..., help="RayJob name."),
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     client.ray_delete_job(name, namespace=namespace)
     console.print(f"[green]Job deleted:[/green] {name} (ns={namespace})")
 
@@ -425,13 +372,8 @@ def jobs_logs(
     container: Optional[str] = typer.Option(None, "--container", help="Optional pod container name."),
     tail_lines: int = typer.Option(200, "--tail-lines", min=1, max=5000),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     payload = client.ray_get_job_logs(
         name,
         namespace=namespace,
@@ -452,14 +394,9 @@ def jobs_events(
     namespace: str = typer.Option("default", "--namespace", help="Kubernetes namespace."),
     limit: int = typer.Option(100, "--limit", min=1, max=1000),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON."),
 ) -> None:
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     payload = client.ray_get_job_events(name, namespace=namespace, limit=limit)
     if raw:
         _print_json(payload)
@@ -498,14 +435,9 @@ def jobs_monitor(
     timeout_seconds: int = typer.Option(600, "--timeout-seconds", min=1, help="Maximum time to wait before exiting."),
     show_events: bool = typer.Option(False, "--show-events", help="Show latest events on each poll."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ray_url: Optional[str] = typer.Option(
-        None,
-        "--ray-url",
-        help="Ray addon base URL (defaults to https://prod1.datalayer.run).",
-    ),
 ) -> None:
     """Monitor RayJob status until it reaches a terminal state."""
-    client = _make_client(token=token, ray_url=ray_url)
+    client = _make_client(token=token)
     started = time.time()
     last_status: Optional[str] = None
     terminal_statuses = {"SUCCEEDED", "FAILED", "STOPPED"}

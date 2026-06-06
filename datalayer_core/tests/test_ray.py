@@ -33,11 +33,10 @@ def test_urls_resolve_ray_url_from_environment(monkeypatch):
     assert urls.ray_url == "https://ray-from-env.example"
 
 
-def test_urls_resolve_ray_url_from_cluster_alias(monkeypatch):
+def test_urls_resolve_ray_url_from_default(monkeypatch):
     monkeypatch.delenv("DATALAYER_RAY_URL", raising=False)
-    monkeypatch.setenv("DATALAYER_RAY_CLUSTER_URL", "https://ray-cluster-env.example/")
     urls = DatalayerURLs.from_environment()
-    assert urls.ray_url == "https://ray-cluster-env.example"
+    assert urls.ray_url == "https://prod1.datalayer.run"
 
 
 def test_ray_mixin_job_logs_and_events_paths():
@@ -56,7 +55,7 @@ def test_ray_mixin_job_logs_and_events_paths():
     assert events_payload["success"] is True
 
     logs_url, logs_kwargs = client.calls[0]
-    assert logs_url.endswith("/api/ray/v1/jobs/job-1/logs")
+    assert logs_url.endswith("/api/runtimes/v1/ray/jobs/job-1/logs")
     assert logs_kwargs["params"] == {
         "namespace": "team-a",
         "tail_lines": 50,
@@ -65,8 +64,31 @@ def test_ray_mixin_job_logs_and_events_paths():
     }
 
     events_url, events_kwargs = client.calls[1]
-    assert events_url.endswith("/api/ray/v1/jobs/job-1/events")
+    assert events_url.endswith("/api/runtimes/v1/ray/jobs/job-1/events")
     assert events_kwargs["params"] == {
         "namespace": "team-a",
         "limit": 25,
     }
+
+
+def test_ray_mixin_uses_runtimes_path_by_default():
+    client = _FakeRayClient()
+
+    payload = client.ray_list_clusters(namespace="default")
+
+    assert payload["success"] is True
+    assert len(client.calls) == 1
+    first_url, _ = client.calls[0]
+    assert first_url.endswith("/api/runtimes/v1/ray/clusters")
+
+
+def test_ray_mixin_uses_addon_path_in_direct_mode():
+    client = _FakeRayClient()
+    client._ray_direct_addon = True
+
+    payload = client.ray_list_clusters(namespace="default")
+
+    assert payload["success"] is True
+    assert len(client.calls) == 1
+    first_url, _ = client.calls[0]
+    assert first_url.endswith("/api/ray/v1/clusters")

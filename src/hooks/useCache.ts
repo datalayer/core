@@ -448,6 +448,25 @@ export const queryKeys = {
     kpi: () => ['growth', 'kpi'] as const,
   },
 
+  // Ray (Runtimes)
+  ray: {
+    all: () => ['ray'] as const,
+    clusters: () => [...queryKeys.ray.all(), 'clusters'] as const,
+    cluster: (namespace: string, clusterName: string) =>
+      [...queryKeys.ray.all(), 'cluster', namespace, clusterName] as const,
+    jobs: (namespace: string, clusterName?: string) =>
+      [
+        ...queryKeys.ray.all(),
+        'jobs',
+        namespace,
+        clusterName || 'all',
+      ] as const,
+    job: (namespace: string, jobName: string) =>
+      [...queryKeys.ray.all(), 'job', namespace, jobName] as const,
+    logs: (namespace: string, jobName: string) =>
+      [...queryKeys.ray.job(namespace, jobName), 'logs'] as const,
+  },
+
   // OAuth2
   oauth2: {
     authorizationUrl: (queryArgs: Record<string, string>) =>
@@ -2450,7 +2469,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const principalUid = options?.principalUid;
     const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.datasources.all(), principalUid || 'self', principalKind || ''],
+      queryKey: [
+        ...queryKeys.datasources.all(),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
@@ -2524,7 +2547,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const principalUid = options?.principalUid;
     const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.secrets.all(), principalUid || 'self', principalKind || ''],
+      queryKey: [
+        ...queryKeys.secrets.all(),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
@@ -2884,11 +2911,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get single datasource by ID
    */
-  const useDatasource = (datasourceId: string, options?: PrincipalScopeOptions) => {
+  const useDatasource = (
+    datasourceId: string,
+    options?: PrincipalScopeOptions,
+  ) => {
     const principalUid = options?.principalUid;
     const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.datasources.detail(datasourceId), principalUid || 'self', principalKind || ''],
+      queryKey: [
+        ...queryKeys.datasources.detail(datasourceId),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
@@ -2957,7 +2991,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const principalUid = options?.principalUid;
     const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: [...queryKeys.secrets.detail(secretId), principalUid || 'self', principalKind || ''],
+      queryKey: [
+        ...queryKeys.secrets.detail(secretId),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
@@ -8481,6 +8519,142 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
+  // Ray (Runtimes) Hooks
+  // ============================================================================
+
+  const useRayClusters = () => {
+    return useQuery({
+      queryKey: queryKeys.ray.clusters(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray clusters');
+        }
+        return {
+          clusters: asArray(resp.clusters),
+          namespaces: asArray(resp.namespaces)
+            .map(value => String(value))
+            .filter(Boolean),
+        };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.runtimesRunUrl),
+    });
+  };
+
+  const useCreateRayCluster = () => {
+    return useMutation({
+      mutationFn: async (payload: Record<string, unknown>) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
+          method: 'POST',
+          body: payload,
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useDeleteRayCluster = (namespace = 'default') => {
+    return useMutation({
+      mutationFn: async (clusterName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useRayJobs = (namespace = 'default', clusterName?: string) => {
+    return useQuery({
+      queryKey: queryKeys.ray.jobs(namespace, clusterName),
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        params.set('namespace', namespace);
+        if (clusterName) {
+          params.set('cluster_name', clusterName);
+        }
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs?${params.toString()}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray jobs');
+        }
+        return asArray(resp.jobs);
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.runtimesRunUrl),
+    });
+  };
+
+  const useSubmitRayJob = (clusterName: string) => {
+    return useMutation({
+      mutationFn: async (payload: Record<string, unknown>) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}/jobs`,
+          method: 'POST',
+          body: payload,
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useDeleteRayJob = (namespace = 'default') => {
+    return useMutation({
+      mutationFn: async (jobName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}?namespace=${encodeURIComponent(namespace)}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useRayJobLogs = (
+    jobName: string,
+    namespace = 'default',
+    tailLines = 200,
+  ) => {
+    return useQuery({
+      queryKey: queryKeys.ray.logs(namespace, jobName),
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        params.set('namespace', namespace);
+        params.set('tail_lines', String(tailLines));
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}/logs?${params.toString()}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray job logs');
+        }
+        return {
+          logs: String(resp.logs || ''),
+          status: String(resp.status || ''),
+        };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.runtimesRunUrl) && Boolean(jobName),
+    });
+  };
+
+  // ============================================================================
   // Return all methods grouped by category
   // ============================================================================
 
@@ -8797,6 +8971,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUserSurveys,
     useGrowthKPI,
     useGrowthContactsKPI,
+
+    // Ray (Runtimes)
+    useRayClusters,
+    useCreateRayCluster,
+    useDeleteRayCluster,
+    useRayJobs,
+    useSubmitRayJob,
+    useDeleteRayJob,
+    useRayJobLogs,
 
     // Query keys for manual operations
     queryKeys,

@@ -4,6 +4,7 @@
 """Command line interface for Datalayer based on Typer."""
 
 import os
+import sys
 
 import typer
 
@@ -149,11 +150,6 @@ def main_callback(
         "--mcp-server-url",
         help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
     ),
-    ray_url: str | None = typer.Option(
-        None,
-        "--ray-url",
-        help="Override DATALAYER_RAY_URL for this CLI invocation.",
-    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
@@ -171,7 +167,6 @@ def main_callback(
         "DATALAYER_STATUS_URL": status_url,
         "DATALAYER_SUPPORT_URL": support_url,
         "DATALAYER_MCP_SERVER_URL": mcp_server_url,
-        "DATALAYER_RAY_URL": ray_url,
     }
     for env_name, value in overrides.items():
         if value is not None:
@@ -224,6 +219,77 @@ app.command(name="tokens-ls")(tokens_ls)
 app.command(name="agent-nodes-ls")(agent_nodes_ls)
 
 
+_GLOBAL_OPTIONS_WITH_VALUES = {
+    "--run-url",
+    "--iam-url",
+    "--runtimes-url",
+    "--spacer-url",
+    "--space-url",
+    "--library-url",
+    "--manager-url",
+    "--ai-agents-url",
+    "--ai-inference-url",
+    "--growth-url",
+    "--otel-url",
+    "--success-url",
+    "--status-url",
+    "--support-url",
+    "--mcp-server-url",
+}
+
+_GLOBAL_OPTIONS_NO_VALUES = {
+    "--version",
+}
+
+
+def _normalize_global_options(argv: list[str]) -> list[str]:
+    """Hoist supported global options so they work at any argument position."""
+    if len(argv) <= 1:
+        return argv
+
+    extracted: list[str] = []
+    remaining: list[str] = []
+    i = 1
+    while i < len(argv):
+        token = argv[i]
+
+        if token == "--":
+            remaining.extend(argv[i:])
+            break
+
+        if token in _GLOBAL_OPTIONS_NO_VALUES:
+            extracted.append(token)
+            i += 1
+            continue
+
+        matched_equals = next(
+            (
+                option
+                for option in _GLOBAL_OPTIONS_WITH_VALUES
+                if token.startswith(f"{option}=")
+            ),
+            None,
+        )
+        if matched_equals:
+            extracted.append(token)
+            i += 1
+            continue
+
+        if token in _GLOBAL_OPTIONS_WITH_VALUES:
+            extracted.append(token)
+            if i + 1 < len(argv):
+                extracted.append(argv[i + 1])
+                i += 2
+            else:
+                i += 1
+            continue
+
+        remaining.append(token)
+        i += 1
+
+    return [argv[0], *extracted, *remaining]
+
+
 def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
-    app()
+    app(args=_normalize_global_options(sys.argv)[1:])
