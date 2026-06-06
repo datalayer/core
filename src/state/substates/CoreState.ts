@@ -44,7 +44,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
     logoUrl: 'https://assets.datalayer.tech/datalayer-25.svg',
     logoSquareUrl: 'https://assets.datalayer.tech/datalayer-square.png',
     copyright: '© 2025 Datalayer, Inc',
-    docsUrl: 'https://docs.datalayer.ai',
+    docsUrl: 'https://datalayer.ai/docs',
     supportUrl: 'https://datalayer.ai/support',
     termsUrl: 'https://datalayer.ai/terms',
     pricingUrl: 'https://datalayer.ai/pricing',

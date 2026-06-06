@@ -147,6 +147,17 @@ def _normalize_logs_text(value: Any) -> str:
     return text
 
 
+def _format_scope_label(kind: str, handle: str, uid: str, fallback_kind: str) -> str:
+    scope_kind = (kind or fallback_kind).strip()
+    scope_handle = (handle or "").strip()
+    scope_uid = (uid or "").strip()
+    if scope_handle:
+        return f"{scope_kind}: @{scope_handle}"
+    if scope_uid:
+        return f"{scope_kind}: {scope_uid}"
+    return ""
+
+
 @clusters_app.command(name="list")
 @clusters_app.command(name="ls")
 def clusters_list(
@@ -166,18 +177,35 @@ def clusters_list(
     table.add_column("Namespace")
     table.add_column("State")
     table.add_column("Workers")
+    table.add_column("Principal")
+    table.add_column("Billable")
 
     for item in items:
         metadata = item.get("metadata") or {}
         status = item.get("status") or {}
+        ownership = item.get("ownership") or {}
         desired = status.get("desiredWorkerReplicas")
         available = status.get("availableWorkerReplicas")
         workers = f"{available}/{desired}" if desired is not None else str(available or "")
+        principal = _format_scope_label(
+            str(item.get("principal_kind") or ownership.get("principal_kind") or ""),
+            str(item.get("principal_handle") or ownership.get("principal_handle") or ""),
+            str(item.get("principal_uid") or ownership.get("principal_uid") or ""),
+            "principal",
+        )
+        billable = _format_scope_label(
+            str(item.get("billable_account_kind") or ownership.get("billable_account_kind") or ""),
+            str(item.get("billable_account_handle") or ownership.get("billable_account_handle") or ""),
+            str(item.get("billable_account_uid") or ownership.get("billable_account_uid") or ""),
+            "account",
+        )
         table.add_row(
             str(metadata.get("name", "")),
             str(metadata.get("namespace", namespace)),
             str(status.get("state", "")),
             workers,
+            principal,
+            billable,
         )
 
     console.print(table)

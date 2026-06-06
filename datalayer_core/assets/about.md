@@ -1,5 +1,5 @@
 ## About
 
-Datalayer provides a command line tool allowing to list, create, terminate and open a console with runtimes.
+Datalayer is a managed AI agents platform for collaborative data analysis, designed to eliminate vendor lock-in.
 
-Read more on https://docs.datalayer.app
+Read more on https://datalayer.ai/docs

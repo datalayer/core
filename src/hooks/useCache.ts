@@ -8541,7 +8541,29 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         };
       },
       ...DEFAULT_QUERY_OPTIONS,
+      refetchOnMount: true,
       enabled: Boolean(configuration.runtimesRunUrl),
+    });
+  };
+
+  const useRayCluster = (namespace = 'default', clusterName = '') => {
+    return useQuery({
+      queryKey: queryKeys.ray.cluster(namespace, clusterName),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray cluster');
+        }
+        return resp.cluster || null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled:
+        Boolean(configuration.runtimesRunUrl) &&
+        Boolean(namespace) &&
+        Boolean(clusterName),
     });
   };
 
@@ -8974,6 +8996,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
     // Ray (Runtimes)
     useRayClusters,
+    useRayCluster,
     useCreateRayCluster,
     useDeleteRayCluster,
     useRayJobs,

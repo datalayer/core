@@ -205,7 +205,7 @@ npm run lint
 
 ## Resources
 
-- [Datalayer Documentation](https://docs.datalayer.ai/)
+- [Datalayer Documentation](https://datalayer.ai/docs/)
 - [Jupyter React Components](https://jupyter-react.datalayer.tech/)
 - [TypeScript API Reference](https://core.datalayer.tech/typescript/)
 - [Platform API Reference](https://prod1.datalayer.run/api/runtimes/v1/ui/)
