@@ -3,6 +3,17 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import {
+  adjectives,
+  animals,
+  uniqueNamesGenerator,
+} from 'unique-names-generator';
+
+const RANDOM_TIMESTAMP_NAME_CONFIGURATION = {
+  dictionaries: [adjectives, animals],
+  separator: '-',
+};
+
 export const asDisplayName = (givenName: string, familyName: string) => {
   return givenName
     ? familyName
@@ -37,4 +48,8 @@ export const toFriendlyName = (firstName?: string, lastName?: string) => {
     return lastName;
   }
   return '';
+};
+
+export const createRandomTimestampName = () => {
+  return `${uniqueNamesGenerator(RANDOM_TIMESTAMP_NAME_CONFIGURATION)}-${Date.now()}`;
 };

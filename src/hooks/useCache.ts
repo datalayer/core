@@ -8570,11 +8570,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const useCreateRayCluster = () => {
     return useMutation({
       mutationFn: async (payload: Record<string, unknown>) => {
-        return requestDatalayer({
+        const resp = await requestDatalayer({
           url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
           method: 'POST',
           body: payload,
         });
+        if (resp?.success === false) {
+          throw new Error(
+            resp?.message || resp?.reason || 'Failed to create Ray cluster',
+          );
+        }
+        return resp;
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });

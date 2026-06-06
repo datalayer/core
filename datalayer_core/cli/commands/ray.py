@@ -242,6 +242,11 @@ def clusters_create(
 
     client = _make_client(token=token)
     result = client.ray_create_cluster(payload)
+    if result.get("success") is False:
+        reason = str(result.get("message") or result.get("reason") or "Unable to create cluster")
+        console.print(f"[red]Cluster creation failed:[/red] {reason}")
+        raise typer.Exit(code=1)
+
     cluster = result.get("cluster") or {}
     metadata = cluster.get("metadata") or {}
     console.print(
