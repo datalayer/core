@@ -70,7 +70,7 @@ def checkpoints_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def checkpoints_list(
     runtime_uid: Optional[str] = typer.Option(
         None,
@@ -108,7 +108,6 @@ def checkpoints_list(
         raise typer.Exit(1)
 
 
-@app.command(name="ls")
 def checkpoints_ls(
     runtime_uid: Optional[str] = typer.Option(
         None,
@@ -127,7 +126,7 @@ def checkpoints_ls(
         help="Datalayer Runtimes server URL.",
     ),
 ) -> None:
-    """List runtime checkpoints (alias for list)."""
+    """List runtime checkpoints (root command alias)."""
     checkpoints_list(runtime_uid=runtime_uid, token=token, runtimes_url=runtimes_url)
 
 

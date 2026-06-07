@@ -61,7 +61,7 @@ export default function Footer() {
             <Box as="ul" sx={{ listStyle: 'none', pl: 0 }}>
               <Box as="li" sx={{ mb: 2 }}>
                 <Link
-                  href="https://docs.datalayer.app/"
+                  href="https://datalayer.ai/docs/"
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{

@@ -15,6 +15,7 @@ export * from './DownloadFile';
 export * from './Env';
 export * from './File';
 export * from './Format';
+export * from './Handles';
 export * from './Ids';
 export * from './Jwt';
 export * from './Jupyter';

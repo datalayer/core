@@ -9,7 +9,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
-import { CameraIcon } from '@datalayer/icons-react';
+import { DeviceCameraIcon } from '@primer/octicons-react';
 import { Kernel } from '@jupyterlab/services';
 import {
   ActionList,
@@ -22,21 +22,21 @@ import {
 import { Dialog } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { useToast } from '../../hooks';
-import { type IRuntimeSnapshot } from '../../models';
+import { type ICodeSandboxSnapshot } from '../../models';
 import {
-  createRuntimeSnapshot,
-  getRuntimeSnapshots,
-  loadBrowserRuntimeSnapshot,
-  loadRuntimeSnapshot,
+  createSandboxSnapshot,
+  getSandboxSnapshots,
+  loadBrowserSandboxSnapshot,
+  loadSandboxSnapshot,
   IMultiServiceManager,
 } from '../../stateful/runtimes';
 import { useRuntimesStore } from '../../state';
-import { createRuntimeSnapshotName } from '../../utils';
+import { createSandboxSnapshotName } from '../../utils';
 
 /**
- * Runtime snapshot menu component properties
+ * Code Sandbox snapshot menu component properties
  */
-type IRuntimeSnapshotMenu = {
+type ICodeSandboxSnapshotMenu = {
   /**
    * Application multi service manager.
    */
@@ -60,31 +60,31 @@ type IRuntimeSnapshotMenu = {
 };
 
 /**
- * Runtime Snapshot menu component.
+ * Code Sandbox Snapshot menu component.
  */
-export function RuntimeSnapshotMenu({
+export function SandboxSnapshotMenu({
   children,
   connection,
   podName,
   multiServiceManager,
   disabled = false,
-}: PropsWithChildren<IRuntimeSnapshotMenu>): JSX.Element {
+}: PropsWithChildren<ICodeSandboxSnapshotMenu>): JSX.Element {
   const {
-    addRuntimeSnapshot,
+    addSandboxSnapshot,
     runtimesRunUrl,
     runtimeSnapshots,
-    setRuntimeSnapshots,
+    setSandboxSnapshots,
   } = useRuntimesStore();
   const { enqueueToast, trackAsyncTask } = useToast();
   const [openLoadDialog, setOpenLoadDialog] = useState(false);
-  const [loadingRuntimeSnapshot, setLoadingRuntimeSnapshot] = useState(false);
-  const [takingRuntimeSnapshot, setTakingRuntimeSnapshot] = useState(false);
+  const [loadingSandboxSnapshot, setLoadingSandboxSnapshot] = useState(false);
+  const [takingSandboxSnapshot, setTakingSandboxSnapshot] = useState(false);
   const [selection, setSelection] = useState(runtimeSnapshots[0]?.id ?? '');
   const [error, setError] = useState<string>();
   useEffect(() => {
-    getRuntimeSnapshots()
+    getSandboxSnapshots()
       .then(snapshots => {
-        setRuntimeSnapshots(snapshots);
+        setSandboxSnapshots(snapshots);
         if (!selection && snapshots.length > 0) {
           setSelection(snapshots[0].id);
         }
@@ -93,14 +93,14 @@ export function RuntimeSnapshotMenu({
         console.error(`Failed to fetch remote kernel snapshots; ${reason}`);
       });
   }, [runtimesRunUrl]);
-  const onLoadRuntimeSnapshot = useCallback(() => {
+  const onLoadSandboxSnapshot = useCallback(() => {
     setError(undefined);
     setOpenLoadDialog(true);
   }, []);
-  const onRuntimeSnapshotChanged = useCallback(event => {
+  const onSandboxSnapshotChanged = useCallback(event => {
     setSelection(event.target.value);
   }, []);
-  const onLoadRuntimeSnapshotSubmit = useCallback(
+  const onLoadSandboxSnapshotSubmit = useCallback(
     async ({
       id,
       connection,
@@ -111,28 +111,28 @@ export function RuntimeSnapshotMenu({
       podName?: string;
     }) => {
       if (podName) {
-        await loadRuntimeSnapshot({ id: podName, from: id });
-        enqueueToast(`Runtime snapshot ${podName} is loaded.`, {
+        await loadSandboxSnapshot({ id: podName, from: id });
+        enqueueToast(`Code Sandbox snapshot ${podName} is loaded.`, {
           variant: 'success',
         });
       } else if (connection) {
-        await loadBrowserRuntimeSnapshot({ connection, id });
-        enqueueToast(`Runtime snapshot ${id} is loaded.`, {
+        await loadBrowserSandboxSnapshot({ connection, id });
+        enqueueToast(`Code Sandbox snapshot ${id} is loaded.`, {
           variant: 'success',
         });
       }
     },
     [],
   );
-  const onTakeRuntimeSnapshot = useCallback(async () => {
+  const onTakeSandboxSnapshot = useCallback(async () => {
     try {
-      setTakingRuntimeSnapshot(true);
-      let snapshot: IRuntimeSnapshot | undefined;
+      setTakingSandboxSnapshot(true);
+      let snapshot: ICodeSandboxSnapshot | undefined;
       let task: Promise<any> | undefined;
       let ref = '';
       let snapshotName = '';
       if (podName && multiServiceManager?.remote) {
-        snapshotName = createRuntimeSnapshotName('cloud');
+        snapshotName = createSandboxSnapshotName('cloud');
         task = multiServiceManager.remote.runtimesManager.snapshotRuntime({
           podName,
           name: snapshotName,
@@ -146,9 +146,9 @@ export function RuntimeSnapshotMenu({
       } else if (connection && multiServiceManager?.browser) {
         const model = connection.model;
         ref = model.id;
-        snapshotName = createRuntimeSnapshotName('browser');
+        snapshotName = createSandboxSnapshotName('browser');
         let isPending = true;
-        task = createRuntimeSnapshot({
+        task = createSandboxSnapshot({
           connection: multiServiceManager.browser.kernels.connectTo({
             model,
           }),
@@ -157,7 +157,7 @@ export function RuntimeSnapshotMenu({
             if (isPending) {
               isPending = false;
               // Get the kernel snapshot uid.
-              getRuntimeSnapshots().then(snapshots => {
+              getSandboxSnapshots().then(snapshots => {
                 snapshot = snapshots.find(s => s.name === snapshotName);
               });
             }
@@ -183,37 +183,37 @@ export function RuntimeSnapshotMenu({
         });
         await task;
         if (snapshot) {
-          addRuntimeSnapshot(snapshot);
+          addSandboxSnapshot(snapshot);
         }
       }
     } finally {
-      setTakingRuntimeSnapshot(false);
+      setTakingSandboxSnapshot(false);
     }
   }, [connection, podName, multiServiceManager]);
   return (
     <>
       <ActionMenu>
         <ActionMenu.Button
-          leadingVisual={CameraIcon}
+          leadingVisual={DeviceCameraIcon}
           variant="invisible"
           size="small"
-          disabled={loadingRuntimeSnapshot || takingRuntimeSnapshot || disabled}
+          disabled={loadingSandboxSnapshot || takingSandboxSnapshot || disabled}
         >
           {children}
         </ActionMenu.Button>
         <ActionMenu.Overlay>
           <ActionList>
             <ActionList.Item
-              onSelect={onLoadRuntimeSnapshot}
-              disabled={loadingRuntimeSnapshot || runtimeSnapshots.length === 0}
+              onSelect={onLoadSandboxSnapshot}
+              disabled={loadingSandboxSnapshot || runtimeSnapshots.length === 0}
             >
-              Load a runtime snapshot…
+              Load a code sandbox snapshot…
             </ActionList.Item>
             <ActionList.Item
-              onSelect={onTakeRuntimeSnapshot}
-              disabled={takingRuntimeSnapshot}
+              onSelect={onTakeSandboxSnapshot}
+              disabled={takingSandboxSnapshot}
             >
-              Take a runtime snapshot
+              Take a code sandbox snapshot
             </ActionList.Item>
           </ActionList>
         </ActionMenu.Overlay>
@@ -222,7 +222,7 @@ export function RuntimeSnapshotMenu({
         <Dialog
           title={
             <span style={{ color: 'var(--fgColor-default)' }}>
-              Choose a runtime snapshot to load
+              Choose a code sandbox snapshot to load
             </span>
           }
           onClose={() => {
@@ -241,32 +241,32 @@ export function RuntimeSnapshotMenu({
             },
             {
               buttonType: 'primary',
-              content: loadingRuntimeSnapshot ? (
+              content: loadingSandboxSnapshot ? (
                 <Spinner size="small" />
               ) : (
                 'Load'
               ),
-              disabled: loadingRuntimeSnapshot,
+              disabled: loadingSandboxSnapshot,
               onClick: async event => {
                 if (!event.defaultPrevented) {
                   event.preventDefault();
-                  setLoadingRuntimeSnapshot(true);
+                  setLoadingSandboxSnapshot(true);
                   try {
                     setError(undefined);
                     const snapshot = runtimeSnapshots.find(
                       s => s.id === selection,
                     );
                     if (snapshot && (connection || podName)) {
-                      await onLoadRuntimeSnapshotSubmit({
+                      await onLoadSandboxSnapshotSubmit({
                         connection,
                         id: snapshot.id,
                         podName,
                       });
                     } else {
-                      setError('No runtime snapshot found.');
+                      setError('No code sandbox snapshot found.');
                     }
                   } finally {
-                    setLoadingRuntimeSnapshot(false);
+                    setLoadingSandboxSnapshot(false);
                     setOpenLoadDialog(false);
                   }
                 }
@@ -281,7 +281,7 @@ export function RuntimeSnapshotMenu({
               <Select
                 name="snapshot"
                 value={selection}
-                onChange={onRuntimeSnapshotChanged}
+                onChange={onSandboxSnapshotChanged}
                 block
               >
                 {runtimeSnapshots.map(s => (

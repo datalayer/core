@@ -9,7 +9,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
 import { RuntimeDTO } from '../../models/RuntimeDTO';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
-import { RuntimeSnapshotDTO } from '../../models/RuntimeSnapshotDTO';
+import { CodeSandboxSnapshotDTO } from '../../models/CodeSandboxSnapshotDTO';
 import { SpaceDTO } from '../../models/SpaceDTO';
 import { NotebookDTO } from '../../models/NotebookDTO';
 import { LexicalDTO } from '../../models/LexicalDTO';
@@ -45,7 +45,7 @@ describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
   let testNotebook: NotebookDTO | null = null;
   let testLexical: LexicalDTO | null = null;
   let testRuntime: RuntimeDTO | null = null;
-  let testSnapshot: RuntimeSnapshotDTO | null = null;
+  let testSnapshot: CodeSandboxSnapshotDTO | null = null;
 
   beforeAll(async () => {
     if (!testConfig.hasToken()) {
@@ -288,7 +288,7 @@ describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
           'Test snapshot from model test',
         );
 
-        expect(testSnapshot).toBeInstanceOf(RuntimeSnapshotDTO);
+        expect(testSnapshot).toBeInstanceOf(CodeSandboxSnapshotDTO);
         // Snapshots don't have a podName property
         // Instead, check that the snapshot was created successfully
         expect(testSnapshot.uid).toBeDefined();
@@ -297,7 +297,7 @@ describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
         console.log(`Created snapshot ${testSnapshot.uid} from runtime`);
       });
 
-      it('should list runtime snapshots', async () => {
+      it('should list code sandbox snapshots', async () => {
         if (!testRuntime) {
           const environmentName = await resolveEnvironmentName(client);
           testRuntime = await client.createRuntime(
@@ -315,7 +315,7 @@ describe.skipIf(skipInCi)('Client Models Integration Tests', () => {
           );
         }
 
-        console.log('Testing runtime snapshot listing...');
+        console.log('Testing code sandbox snapshot listing...');
 
         // List all snapshots
         const snapshots = await client.listSnapshots();

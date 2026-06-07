@@ -4,12 +4,16 @@
 """Authentication commands for Datalayer CLI - Refactored to use Client."""
 
 import asyncio
+import base64
+import json
 import os
 import threading
 import time
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Optional, Any
 
 import questionary
+import requests
 import typer
 from rich.console import Console
 
@@ -31,6 +35,95 @@ def auth_callback(ctx: typer.Context) -> None:
     """Authentication commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
+
+
+def _fetch_memberships(iam_url: str, token: Optional[str]) -> Optional[list[dict]]:
+    """Fetch the authenticated user's organization/team memberships."""
+    if not token:
+        return None
+    try:
+        response = requests.get(
+            f"{iam_url}/api/iam/v1/memberships",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        if response.status_code != 200:
+            return None
+        data = response.json()
+        if not data.get("success", True):
+            return None
+        return data.get("memberships") or []
+    except Exception:
+        return None
+
+
+def _decode_jwt_claims(token: str) -> Optional[dict]:
+    """Decode JWT claims without verifying signature (display purpose only)."""
+    try:
+        parts = token.split(".")
+        if len(parts) < 2:
+            return None
+        payload = parts[1]
+        padding = "=" * (-len(payload) % 4)
+        decoded = base64.urlsafe_b64decode(payload + padding)
+        claims = json.loads(decoded.decode("utf-8"))
+        return claims if isinstance(claims, dict) else None
+    except Exception:
+        return None
+
+
+def _coerce_unix_timestamp(value: Any) -> Optional[int]:
+    try:
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return None
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            return int(float(value.strip()))
+    except Exception:
+        return None
+    return None
+
+
+def _format_unix_timestamp(ts: Optional[int]) -> str:
+    if ts is None:
+        return "unknown"
+    try:
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    except Exception:
+        return "unknown"
+
+
+def _format_duration(seconds: int) -> str:
+    seconds = max(0, seconds)
+    days, remainder = divmod(seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, _ = divmod(remainder, 60)
+    chunks = []
+    if days:
+        chunks.append(f"{days}d")
+    if hours:
+        chunks.append(f"{hours}h")
+    if minutes or not chunks:
+        chunks.append(f"{minutes}m")
+    return " ".join(chunks)
+
+
+def _expiration_status(exp_ts: Optional[int]) -> str:
+    if exp_ts is None:
+        return "[red]unknown[/red]"
+
+    now = int(time.time())
+    remaining = exp_ts - now
+    if remaining <= 0:
+        return f"[red]expired { _format_duration(abs(remaining)) } ago[/red]"
+    if remaining <= 900:
+        return f"[red]{_format_duration(remaining)} remaining[/red]"
+    if remaining <= 86400:
+        return f"[yellow]{_format_duration(remaining)} remaining[/yellow]"
+    return f"[green]{_format_duration(remaining)} remaining[/green]"
 
 
 @app.command()
@@ -408,6 +501,30 @@ def whoami(
                 if user.get("last_update_ts_dt"):
                     console.print(f"🔄 Last Updated: {user.get('last_update_ts_dt')}")
 
+                # JWT token details
+                token_for_details = access_token or auth.current_token or auth.get_stored_token()
+                if token_for_details:
+                    claims = _decode_jwt_claims(token_for_details)
+                    if claims:
+                        subject = claims.get("sub")
+                        if isinstance(subject, dict):
+                            subject = subject.get("uid") or subject
+                        exp_ts = _coerce_unix_timestamp(claims.get("exp"))
+                        iat_ts = _coerce_unix_timestamp(claims.get("iat"))
+
+                        console.print("\n[bold]JWT Token:[/bold]")
+                        if claims.get("jti"):
+                            console.print(f"  🪪 JTI: {claims.get('jti')}")
+                        if subject is not None:
+                            console.print(f"  👤 Subject: {subject}")
+                        if claims.get("iss"):
+                            console.print(f"  🏷️  Issuer: {claims.get('iss')}")
+                        if iat_ts is not None:
+                            console.print(f"  🕒 Issued At: {_format_unix_timestamp(iat_ts)}")
+                        if exp_ts is not None:
+                            console.print(f"  ⏰ Expires At: {_format_unix_timestamp(exp_ts)}")
+                        console.print(f"  ⌛ Time to Expiration: {_expiration_status(exp_ts)}")
+
                 # IAM Providers
                 iam_providers = user.get("iam_providers", [])
                 if iam_providers:
@@ -429,10 +546,50 @@ def whoami(
                             console.print(f"  🔗 {provider_name.capitalize()}")
 
                 # Customer UID
-                if user.get("credits_customer_uid"):
+                if user.get("stripe_customer_id_s"):
                     console.print(
-                        f"\n💳 Credits Customer: {user.get('credits_customer_uid')}"
+                        f"\n💳 Credits Customer: {user.get('stripe_customer_id_s')}"
                     )
+
+                # Memberships (organizations + teams)
+                memberships = _fetch_memberships(urls.iam_url, access_token)
+                if memberships is not None:
+                    orgs = [m for m in memberships if (m.get("type") or "").lower() == "organization"]
+                    teams = [m for m in memberships if (m.get("type") or "").lower() == "team"]
+                    org_by_uid = {m.get("uid"): m for m in orgs}
+
+                    if orgs:
+                        console.print("\n[bold]🏢 Organizations:[/bold]")
+                        for org in orgs:
+                            handle = org.get("handle") or org.get("uid") or "unknown"
+                            name = org.get("name") or ""
+                            roles = ", ".join(org.get("roles_ss") or []) or "-"
+                            label = f"  • [cyan]{handle}[/cyan]"
+                            if name and name != handle:
+                                label += f" ({name})"
+                            label += f"  uid={org.get('uid')}  roles={roles}"
+                            console.print(label)
+
+                    if teams:
+                        console.print("\n[bold]👥 Teams:[/bold]")
+                        for team in teams:
+                            handle = team.get("handle") or team.get("uid") or "unknown"
+                            name = team.get("name") or ""
+                            roles = ", ".join(team.get("roles_ss") or []) or "-"
+                            org_uid = team.get("organization_uid")
+                            parent = org_by_uid.get(org_uid) if org_uid else None
+                            parent_label = (
+                                parent.get("handle") if parent else (org_uid or "unknown")
+                            )
+                            label = f"  • [cyan]{handle}[/cyan]"
+                            if name and name != handle:
+                                label += f" ({name})"
+                            label += f"  in [magenta]{parent_label}[/magenta]"
+                            label += f"  uid={team.get('uid')}  roles={roles}"
+                            console.print(label)
+
+                    if not orgs and not teams:
+                        console.print("\n[dim]No organization or team memberships.[/dim]")
         else:
             console.print("[yellow]Not authenticated[/yellow]")
             console.print("Run 'datalayer login' to authenticate")

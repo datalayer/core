@@ -556,7 +556,7 @@ describe.skipIf(skipTests || skipInCi)(
         }
       });
 
-      it('should successfully list runtime snapshots', async () => {
+      it('should successfully list code sandbox snapshots', async () => {
         console.log('Testing list snapshots endpoint...');
 
         const response = await snapshots.listSnapshots(
@@ -564,7 +564,7 @@ describe.skipIf(skipTests || skipInCi)(
           BASE_URL,
         );
 
-        console.log(`Found ${response.snapshots.length} runtime snapshots`);
+        console.log(`Found ${response.snapshots.length} code sandbox snapshots`);
 
         expect(response).toBeDefined();
         expect(response).toHaveProperty('success');

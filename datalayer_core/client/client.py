@@ -16,8 +16,10 @@ from typing import Any, Optional, Union
 
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
+from datalayer_core.mixins.evals import EvalsMixin
 from datalayer_core.mixins.events import EventsMixin
-from datalayer_core.mixins.runtime_snapshots import RuntimeSnapshotsMixin
+from datalayer_core.mixins.ray import RayMixin
+from datalayer_core.mixins.sandbox_snapshots import SandboxSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.tokens import TokensMixin
@@ -25,12 +27,12 @@ from datalayer_core.mixins.usage import UsageMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import UserModel
 from datalayer_core.models.environment import EnvironmentModel
-from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
+from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.models.token import TokenModel, TokenType
 from datalayer_core.runtimes.runtime import RuntimeService
-from datalayer_core.runtimes.runtime_snapshot import (
-    as_runtime_snapshots,
+from datalayer_core.runtimes.sandbox_snapshot import (
+    as_code_sandbox_snapshots,
     create_snapshot,
 )
 from datalayer_core.utils.defaults import (
@@ -47,9 +49,11 @@ class DatalayerClient(
     AuthnMixin,
     RuntimesMixin,
     EnvironmentsMixin,
+    EvalsMixin,
     EventsMixin,
+    RayMixin,
     SecretsMixin,
-    RuntimeSnapshotsMixin,
+    SandboxSnapshotsMixin,
     TokensMixin,
     UsageMixin,
     WhoamiAppMixin,
@@ -260,6 +264,11 @@ class DatalayerClient(
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         snapshot_name: Optional[str] = None,
+        agent_spec_id: Optional[str] = None,
+        agent_spec: Optional[dict[str, Any]] = None,
+        billable_account_uid: Optional[str] = None,
+        billable_account_type: Optional[str] = None,
+        billable_account_handle: Optional[str] = None,
     ) -> RuntimeService:
         """
         Create a new runtime (kernel) for code execution.
@@ -320,20 +329,43 @@ class DatalayerClient(
                 given_name=name,
                 environment_name=environment,
                 from_snapshot_uid=snapshot_uid,
+                agent_spec_id=agent_spec_id,
+                agent_spec=agent_spec,
                 credits_limit=credits_limit,
+                billable_account_uid=billable_account_uid,
+                billable_account_type=billable_account_type,
+                billable_account_handle=billable_account_handle,
             )
         else:
             # Create runtime without snapshot
             response = self._create_runtime(
                 given_name=name,
                 environment_name=environment,
+                agent_spec_id=agent_spec_id,
+                agent_spec=agent_spec,
                 credits_limit=credits_limit,
+                billable_account_uid=billable_account_uid,
+                billable_account_type=billable_account_type,
+                billable_account_handle=billable_account_handle,
             )
 
         # Process the response and create RuntimesService object
         if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            context_parts = [f"environment='{environment}'"]
+            if agent_spec_id:
+                context_parts.append(f"agent_spec_id='{agent_spec_id}'")
+            if agent_spec:
+                context_parts.append("agent_spec=<inline>")
+            reason = response.get("reason")
+            if reason:
+                context_parts.append(f"reason='{reason}'")
+            retry_after = response.get("retry_after_seconds")
+            if retry_after:
+                context_parts.append(f"retry_after_seconds={retry_after}")
+            context = ", ".join(context_parts)
             raise RuntimeError(
-                f"Runtime creation failed: {response.get('message', 'Unknown error')}"
+                f"Runtime creation failed ({context}): {message}"
             )
 
         runtime_data = response["runtime"]
@@ -421,6 +453,91 @@ class DatalayerClient(
             return self._terminate_runtime(pod_name)["success"]
         else:
             return False
+
+    def get_runtime(self, runtime: Union[RuntimeService, str]) -> RuntimeService:
+        """
+        Get a single running Runtime by pod name.
+
+        Parameters
+        ----------
+        runtime : Union[Runtime, str]
+            Runtime object or pod name string to fetch.
+
+        Returns
+        -------
+        Runtime
+            The Runtime object matching the pod name.
+
+        Raises
+        ------
+        RuntimeError
+            If the runtime cannot be retrieved.
+        """
+        pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
+        if not pod_name:
+            raise RuntimeError("A pod name is required to get a runtime.")
+
+        response = self._get_runtime(pod_name)
+        if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            raise RuntimeError(f"Failed to get runtime '{pod_name}': {message}")
+
+        runtime_data = response.get("runtime")
+        if not isinstance(runtime_data, dict):
+            raise RuntimeError(
+                f"Failed to get runtime '{pod_name}': missing 'runtime' field in response"
+            )
+
+        return RuntimeService(
+            name=runtime_data.get("given_name", pod_name),
+            environment=runtime_data.get("environment_name", ""),
+            pod_name=runtime_data.get("pod_name", pod_name),
+            token=self._token,
+            ingress=runtime_data.get("ingress"),
+            reservation_id=runtime_data.get("reservation_id"),
+            uid=runtime_data.get("uid"),
+            burning_rate=runtime_data.get("burning_rate"),
+            jupyter_token=runtime_data.get("token"),
+            run_url=self._urls.run_url,
+            iam_url=self._urls.iam_url,
+            started_at=runtime_data.get("started_at"),
+            expired_at=runtime_data.get("expired_at"),
+        )
+
+    def update_runtime(
+        self,
+        runtime: Union[RuntimeService, str],
+        capabilities: list[str],
+    ) -> bool:
+        """
+        Update a running Runtime's capabilities.
+
+        Parameters
+        ----------
+        runtime : Union[Runtime, str]
+            Runtime object or pod name string to update.
+        capabilities : list[str]
+            New capabilities to apply to the runtime.
+
+        Returns
+        -------
+        bool
+            True if the update succeeded.
+
+        Raises
+        ------
+        RuntimeError
+            If the update fails.
+        """
+        pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
+        if not pod_name:
+            raise RuntimeError("A pod name is required to update a runtime.")
+
+        response = self._update_runtime(pod_name, capabilities)
+        if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            raise RuntimeError(f"Failed to update runtime '{pod_name}': {message}")
+        return True
 
     def list_secrets(self) -> list[SecretModel]:
         """
@@ -511,7 +628,7 @@ class DatalayerClient(
         name: Optional[str] = None,
         description: Optional[str] = None,
         stop: bool = True,
-    ) -> "RuntimeSnapshotModel":
+    ) -> "SandboxSnapshotModel":
         """
         Create a snapshot of the current runtime state.
 
@@ -530,7 +647,7 @@ class DatalayerClient(
 
         Returns
         -------
-        RuntimeSnapshotModel
+        SandboxSnapshotModel
             The created snapshot object.
         """
         if pod_name is None and runtime is None:
@@ -556,7 +673,7 @@ class DatalayerClient(
             raise RuntimeError(
                 f"Failed to create snapshot '{name}': {response.get('message', 'unknown error')}"
             )
-        snapshot: Optional[RuntimeSnapshotModel] = None
+        snapshot: Optional[SandboxSnapshotModel] = None
         max_poll_attempts = max(
             1,
             int(os.getenv("DATALAYER_SNAPSHOT_POLL_ATTEMPTS", "30")),
@@ -577,7 +694,7 @@ class DatalayerClient(
                 f"Snapshot '{name}' was created but not found in snapshot listing"
             )
 
-        return RuntimeSnapshotModel(
+        return SandboxSnapshotModel(
             uid=snapshot.uid,
             name=name,
             description=description,
@@ -585,28 +702,28 @@ class DatalayerClient(
             metadata=response,
         )
 
-    def list_snapshots(self) -> list[RuntimeSnapshotModel]:
+    def list_snapshots(self) -> list[SandboxSnapshotModel]:
         """
         List all snapshots.
 
         Returns
         -------
-        list[RuntimeSnapshotModel]
+        list[SandboxSnapshotModel]
             A list of snapshots associated with the user.
         """
         response = self._list_snapshots()
-        snapshot_objects = as_runtime_snapshots(response)
+        snapshot_objects = as_code_sandbox_snapshots(response)
         return snapshot_objects
 
     def delete_snapshot(
-        self, snapshot: Union[str, RuntimeSnapshotModel]
+        self, snapshot: Union[str, SandboxSnapshotModel]
     ) -> dict[str, str]:
         """
         Delete a specific snapshot.
 
         Parameters
         ----------
-        snapshot : Union[str, RuntimeSnapshotModel]
+        snapshot : Union[str, SandboxSnapshotModel]
             Snapshot object or UID string to delete.
 
         Returns
@@ -615,7 +732,7 @@ class DatalayerClient(
             The result of the deletion operation.
         """
         snapshot_uid = (
-            snapshot.uid if isinstance(snapshot, RuntimeSnapshotModel) else snapshot
+            snapshot.uid if isinstance(snapshot, SandboxSnapshotModel) else snapshot
         )
         return self._delete_snapshot(snapshot_uid)
 

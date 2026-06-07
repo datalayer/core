@@ -86,7 +86,7 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 
 ## Support
 
-- **Documentation**: [Datalayer Platform Documentation](https://docs.datalayer.app/)
+- **Documentation**: [Datalayer Platform Documentation](https://datalayer.ai/docs/)
 - **Issues**: [GitHub Issues](https://github.com/datalayer/core/issues)
 - **Community**: [Datalayer Platform](https://datalayer.app/)
 

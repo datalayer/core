@@ -12,7 +12,7 @@ import {
 /**
  * Kernel snapshot description configuration.
  */
-const KERNEL_SNAPSHOT_DESCRIPTION_CONFIGURATION = {
+const CODE_SANDBOX_SNAPSHOT_DESCRIPTION_CONFIGURATION = {
   dictionaries: [adjectives, animals],
   separator: '-',
 };
@@ -23,6 +23,6 @@ const KERNEL_SNAPSHOT_DESCRIPTION_CONFIGURATION = {
  * @param suffix Name prefix
  * @returns The kernel snapshot name
  */
-export function createRuntimeSnapshotName(suffix: string): string {
-  return `${uniqueNamesGenerator(KERNEL_SNAPSHOT_DESCRIPTION_CONFIGURATION)}-${suffix}`;
+export function createSandboxSnapshotName(suffix: string): string {
+  return `${uniqueNamesGenerator(CODE_SANDBOX_SNAPSHOT_DESCRIPTION_CONFIGURATION)}-${suffix}`;
 }

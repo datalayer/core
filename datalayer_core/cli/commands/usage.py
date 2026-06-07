@@ -3,6 +3,7 @@
 
 """Usage/credits commands for Datalayer CLI."""
 
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 import typer
@@ -11,11 +12,12 @@ from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.usage import display_usage
+from datalayer_core.utils.urls import DatalayerURLs
 
 app = typer.Typer(
     name="usage", help="Usage and credits commands", invoke_without_command=True
 )
-console = Console()
+console = Console(width=200)
 
 
 def _normalize_value(value: Any, fallback: str = "n/a") -> str:
@@ -39,6 +41,39 @@ def _iam_post(
     ).json()
 
 
+def _make_client(
+    token: Optional[str] = None,
+    iam_url: Optional[str] = None,
+) -> DatalayerClient:
+    urls = DatalayerURLs.from_environment(iam_url=iam_url)
+    return DatalayerClient(urls=urls, token=token)
+
+
+def _parse_iso_dt(value: Any) -> datetime | None:
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        normalized = text.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def _format_duration_seconds(start: Any, end: Any) -> str:
+    start_dt = _parse_iso_dt(start)
+    end_dt = _parse_iso_dt(end)
+    if start_dt is None or end_dt is None:
+        return "n/a"
+    duration = max(0.0, (end_dt - start_dt).total_seconds())
+    return f"{duration:.3f}"
+
+
 @app.callback()
 def usage_callback(ctx: typer.Context) -> None:
     """Usage and credits commands."""
@@ -53,6 +88,11 @@ def usage_show(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     raw: bool = typer.Option(
         False,
         "--raw",
@@ -61,7 +101,7 @@ def usage_show(
 ) -> None:
     """Show credits usage and reservations."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         usage = client.get_usage_credits()
         if not usage.get("success", True):
             console.print(f"[red]Error: {usage.get('message', 'Unknown error')}[/red]")
@@ -77,6 +117,246 @@ def usage_show(
         raise typer.Exit(1)
 
 
+@app.command(name="records")
+def usage_records(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
+    billable_account_uid: Optional[str] = typer.Option(
+        None,
+        "--billable-account-uid",
+        help="Optional account UID scope. Defaults to the authenticated account.",
+    ),
+    billable_account_kind: Optional[str] = typer.Option(
+        None,
+        "--billable-account-kind",
+        help="Optional account kind scope: user or organization.",
+    ),
+    limit: int = typer.Option(20, "--limit", help="Maximum number of usage records."),
+    group_by_billable: bool = typer.Option(
+        False,
+        "--group-by-billable",
+        help="Render one table per billable account.",
+    ),
+    raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload from IAM."),
+) -> None:
+    """Show detailed usage records for the authenticated account scope."""
+    try:
+        client = _make_client(token=token, iam_url=iam_url)
+        params: list[str] = []
+        if billable_account_uid:
+            params.append(f"billable_account_uid={billable_account_uid}")
+        if billable_account_kind:
+            params.append(f"billable_account_kind={billable_account_kind}")
+        query_suffix = f"?{'&'.join(params)}" if params else ""
+        response = _iam_get(client, f"/api/iam/v1/usage/user{query_suffix}")
+        if not response.get("success", True):
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
+            raise typer.Exit(1)
+
+        usages = (response.get("usages") or [])[: max(1, limit)]
+        if raw:
+            console.print(response)
+            return
+
+        def _add_columns(table: Table) -> None:
+            table.add_column("Resource", style="cyan", no_wrap=True)
+            table.add_column("Type", style="white", no_wrap=True)
+            table.add_column("State", style="white", no_wrap=True)
+            table.add_column("Creator", style="dim", no_wrap=True)
+            table.add_column("Billable", style="dim", no_wrap=True)
+            table.add_column("Start", style="white", no_wrap=True)
+            table.add_column("End", style="white", no_wrap=True)
+            table.add_column("Duration(s)", style="white", justify="right", no_wrap=True)
+            table.add_column("Credits", style="yellow", justify="right", no_wrap=True)
+            table.add_column("Burn/s", style="white", justify="right", no_wrap=True)
+
+        def _row_for(usage: dict[str, Any]) -> tuple[str, ...]:
+            metadata = usage.get("metadata") or {}
+            resource = (
+                usage.get("resource_given_name")
+                or usage.get("resource_uid")
+                or usage.get("id")
+                or "-"
+            )
+            start = usage.get("start_date")
+            end = usage.get("end_date")
+            creator = usage.get("account_uid")
+            billable = (
+                usage.get("billable_account_uid")
+                or usage.get("account_uid")
+            )
+            return (
+                _normalize_value(resource),
+                _normalize_value(usage.get("resource_type")),
+                _normalize_value(
+                    usage.get("resource_state")
+                    or usage.get("state")
+                    or metadata.get("resource_state")
+                ),
+                _normalize_value(creator),
+                _normalize_value(billable),
+                _normalize_value(start),
+                _normalize_value(end),
+                _format_duration_seconds(start, end),
+                _normalize_value(usage.get("credits"), fallback="0"),
+                _normalize_value(usage.get("burning_rate"), fallback="0"),
+            )
+
+        if group_by_billable:
+            groups: dict[str, list[dict[str, Any]]] = {}
+            for usage in usages:
+                key = (
+                    usage.get("billable_account_uid")
+                    or usage.get("account_uid")
+                    or "unknown"
+                )
+                groups.setdefault(key, []).append(usage)
+            for billable_uid, group_usages in sorted(groups.items()):
+                total_credits = 0.0
+                for u in group_usages:
+                    try:
+                        total_credits += float(u.get("credits") or 0)
+                    except (TypeError, ValueError):
+                        pass
+                table = Table(
+                    title=(
+                        f"Billable Account [bold]{billable_uid}[/bold] "
+                        f"— {len(group_usages)} record(s), "
+                        f"{total_credits:.4f} credits"
+                    )
+                )
+                _add_columns(table)
+                for usage in group_usages:
+                    table.add_row(*_row_for(usage))
+                console.print(table)
+        else:
+            table = Table(title="Usage Records")
+            _add_columns(table)
+            for usage in usages:
+                table.add_row(*_row_for(usage))
+            console.print(table)
+    except Exception as e:
+        console.print(f"[red]Error fetching usage records: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command(name="reservations")
+def usage_reservations(
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
+    reservation_type: Optional[str] = typer.Option(
+        None,
+        "--type",
+        help="Optional reservation type filter.",
+    ),
+    billable_account_uid: Optional[str] = typer.Option(
+        None,
+        "--billable-account-uid",
+        help="Optional account UID scope for fallback credits view.",
+    ),
+    billable_account_kind: Optional[str] = typer.Option(
+        None,
+        "--billable-account-kind",
+        help="Optional account kind scope for fallback credits view: user or organization.",
+    ),
+    limit: int = typer.Option(20, "--limit", help="Maximum number of reservations."),
+    raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload from IAM."),
+) -> None:
+    """Show reservations from IAM reservations endpoint."""
+    try:
+        client = _make_client(token=token, iam_url=iam_url)
+        query_suffix = f"?type={reservation_type}" if reservation_type else ""
+        response = _iam_get(client, f"/api/iam/v1/usage/reservations{query_suffix}")
+        if not response.get("success", True):
+            console.print(
+                f"[red]Error: {response.get('message', 'Unknown error')}[/red]"
+            )
+            raise typer.Exit(1)
+
+        data = response.get("data") or {}
+        reservations = data.get("reservations") or []
+        source = "usage/reservations"
+
+        if not reservations:
+            params: list[str] = []
+            if billable_account_uid:
+                params.append(f"billable_account_uid={billable_account_uid}")
+            if billable_account_kind:
+                params.append(f"billable_account_kind={billable_account_kind}")
+            credits_query = f"?{'&'.join(params)}" if params else ""
+            credits_response = _iam_get(
+                client,
+                f"/api/iam/v1/usage/credits{credits_query}",
+            )
+            if credits_response.get("success", True):
+                reservations = credits_response.get("reservations") or []
+                source = "usage/credits"
+
+        reservations = reservations[: max(1, limit)]
+        if raw:
+            console.print(response)
+            return
+
+        if source == "usage/credits":
+            console.print(
+                "[yellow]No reservations from /usage/reservations; showing active reservations from /usage/credits.[/yellow]"
+            )
+
+        table = Table(title="Reservations")
+        table.add_column("Reservation", style="cyan")
+        table.add_column("Resource", style="white")
+        table.add_column("Type", style="white")
+        table.add_column("Credits", style="white", justify="right")
+        table.add_column("Burn/s", style="white", justify="right")
+        table.add_column("Start", style="white")
+        table.add_column("Last Update", style="white")
+
+        for reservation in reservations:
+            table.add_row(
+                _normalize_value(reservation.get("id")),
+                _normalize_value(
+                    reservation.get("resource")
+                    or reservation.get("resource_uid")
+                    or reservation.get("resource_given_name")
+                ),
+                _normalize_value(reservation.get("resource_type")),
+                _normalize_value(
+                    reservation.get("credits")
+                    or reservation.get("credits_limit"),
+                    fallback="0",
+                ),
+                _normalize_value(reservation.get("burning_rate"), fallback="0"),
+                _normalize_value(reservation.get("start_date")),
+                _normalize_value(
+                    reservation.get("last_update")
+                    or reservation.get("updated_at")
+                    or reservation.get("last_update_ts_dt")
+                ),
+            )
+        console.print(table)
+    except Exception as e:
+        console.print(f"[red]Error fetching reservations: {e}[/red]")
+        raise typer.Exit(1)
+
+
 @app.command(name="org-overview")
 def usage_org_overview(
     organization_uid: str = typer.Option(
@@ -89,11 +369,16 @@ def usage_org_overview(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload."),
 ) -> None:
     """Show organization/team credits allocation overview."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/overview",
@@ -155,11 +440,16 @@ def usage_team_overview(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload."),
 ) -> None:
     """Show team/member credits allocation overview."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/overview",
@@ -211,11 +501,16 @@ def usage_org_history(
         ..., "--organization-uid", help="Organization UID."
     ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     limit: int = typer.Option(20, "--limit", help="Max events to print."),
 ) -> None:
     """Show organization/team credits transfer history."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/history",
@@ -249,11 +544,16 @@ def usage_org_history(
 def usage_team_history(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     limit: int = typer.Option(20, "--limit", help="Max events to print."),
 ) -> None:
     """Show team/member credits transfer history."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/history",
@@ -289,13 +589,18 @@ def usage_org_monitor(
         ..., "--organization-uid", help="Organization UID."
     ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     window_hours: int = typer.Option(
         24, "--window-hours", help="Monitoring window in hours."
     ),
 ) -> None:
     """Show organization/team credits monitoring metrics and recommendations."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/monitoring?window_hours={max(1, window_hours)}",
@@ -372,13 +677,18 @@ def usage_org_monitor(
 def usage_team_monitor(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     window_hours: int = typer.Option(
         24, "--window-hours", help="Monitoring window in hours."
     ),
 ) -> None:
     """Show team/member credits monitoring metrics and recommendations."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/monitoring?window_hours={max(1, window_hours)}",
@@ -458,10 +768,15 @@ def usage_org_allocate_team(
         ..., "--amount", help="Amount of credits to allocate."
     ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Allocate credits from organization to team."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/teams/{team_uid}",
@@ -487,10 +802,15 @@ def usage_org_revoke_team(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Revoke credits from team back to organization."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/teams/{team_uid}/revoke",
@@ -516,10 +836,15 @@ def usage_team_allocate_member(
         ..., "--amount", help="Amount of credits to allocate."
     ),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Allocate credits from team to member."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/members/{member_uid}",
@@ -543,10 +868,15 @@ def usage_team_revoke_member(
     member_uid: str = typer.Option(..., "--member-uid", help="Member UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
     token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Revoke credits from member back to team."""
     try:
-        client = DatalayerClient(token=token)
+        client = _make_client(token=token, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/members/{member_uid}/revoke",
@@ -573,6 +903,11 @@ def usage_root(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
 ) -> None:
     """Show credits usage and reservations (root command)."""
-    usage_show(token=token)
+    usage_show(token=token, iam_url=iam_url)

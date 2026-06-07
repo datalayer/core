@@ -7,7 +7,7 @@
  * Runtime checkpoints API functions for the Datalayer platform.
  *
  * Provides functions for managing CRIU full-pod checkpoints.
- * These are distinct from runtime snapshots (Jupyter sandbox snapshots).
+ * These are distinct from code sandbox snapshots (Jupyter sandbox snapshots).
  *
  * @module api/runtimes/checkpoints
  */

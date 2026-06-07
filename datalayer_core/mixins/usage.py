@@ -37,7 +37,7 @@ class UsageMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/subscription".format(self.urls.iam_url),  # type: ignore
+                "{}/api/iam/v1/plans".format(self.urls.iam_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:
@@ -54,7 +54,7 @@ class UsageMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/subscription/cancel".format(self.urls.iam_url),  # type: ignore
+                "{}/api/iam/v1/plans/cancel".format(self.urls.iam_url),  # type: ignore
                 method="POST",
             )
             return response.json()
@@ -72,7 +72,7 @@ class UsageMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/subscription/plans".format(self.urls.iam_url),  # type: ignore
+                    "{}/api/iam/v1/plans/catalog".format(self.urls.iam_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:

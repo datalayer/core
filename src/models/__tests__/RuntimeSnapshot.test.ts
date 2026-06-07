@@ -5,9 +5,9 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  RuntimeSnapshotDTO,
-  RuntimeSnapshotData,
-} from '../../models/RuntimeSnapshotDTO';
+  CodeSandboxSnapshotDTO,
+  CodeSandboxSnapshotData,
+} from '../../models/CodeSandboxSnapshotDTO';
 import type { DatalayerClient } from '../../client/index';
 import { snapshots } from '../../api/runtimes';
 
@@ -18,7 +18,7 @@ vi.mock('../../api/runtimes', () => ({
 }));
 
 describe('Snapshot Model', () => {
-  const mockSnapshotData: RuntimeSnapshotData = {
+  const mockSnapshotData: CodeSandboxSnapshotData = {
     uid: 'snapshot-123',
     name: 'Test Snapshot',
     description: 'Test snapshot description',
@@ -27,7 +27,7 @@ describe('Snapshot Model', () => {
   };
 
   let mockClient: Partial<DatalayerClient>;
-  let snapshot: RuntimeSnapshotDTO;
+  let snapshot: CodeSandboxSnapshotDTO;
 
   beforeEach(() => {
     mockClient = {
@@ -37,7 +37,7 @@ describe('Snapshot Model', () => {
         .mockReturnValue('https://runtimes.example.com'),
       createRuntime: vi.fn(),
     } as any;
-    snapshot = new RuntimeSnapshotDTO(
+    snapshot = new CodeSandboxSnapshotDTO(
       mockSnapshotData,
       mockClient as DatalayerClient,
     );
@@ -66,13 +66,13 @@ describe('Snapshot Model', () => {
     });
 
     it('should handle missing optional fields', () => {
-      const minimalData: RuntimeSnapshotData = {
+      const minimalData: CodeSandboxSnapshotData = {
         uid: 'snapshot-456',
         name: 'Minimal',
         environment: 'python-gpu',
         updated_at: '2023-01-01T10:00:00Z',
       };
-      const minimalSnapshot = new RuntimeSnapshotDTO(
+      const minimalSnapshot = new CodeSandboxSnapshotDTO(
         minimalData,
         mockClient as DatalayerClient,
       );

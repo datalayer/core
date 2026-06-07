@@ -48,7 +48,7 @@ def datalayer(
     output : str, optional
         The name of the output variable for the function.
     snapshot_name : str, optional
-        The name of the runtime snapshot to use.
+        The name of the code sandbox snapshot to use.
     token : str, optional
         Authentication token. If not provided, will be resolved from env/keyring.
     debug : bool

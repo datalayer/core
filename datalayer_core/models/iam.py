@@ -449,6 +449,40 @@ class MembershipsModel(BaseModel):
         return cls(memberships=memberships)
 
 
+# Shareable Principals Models
+class ShareablePrincipalModel(BaseModel):
+    """Principal a user can share artifacts with.
+
+    Always one of: self (user), an organization the user is a member of,
+    or a team the user is a member of (with its parent organization info).
+    """
+
+    kind: str = Field(..., description="Principal kind: 'user' | 'organization' | 'team'")
+    uid: str = Field(..., description="Principal UID")
+    handle: str = Field(..., description="Principal handle")
+    name: Optional[str] = Field(None, description="Display name")
+    description: Optional[str] = Field(None, description="Description (org/team)")
+    email: Optional[str] = Field(None, description="Email (user only)")
+    avatar_url: Optional[str] = Field(None, description="Avatar URL")
+    organization_uid: Optional[str] = Field(
+        None, description="Parent organization UID (team only)"
+    )
+    organization_handle: Optional[str] = Field(
+        None, description="Parent organization handle (team only)"
+    )
+
+
+class ShareablePrincipalsResponse(BaseModel):
+    """Response for principals-shareable-with endpoint."""
+
+    success: bool = Field(default=True)
+    message: Optional[str] = Field(default=None)
+    principals: List[ShareablePrincipalModel] = Field(
+        default_factory=list,
+        description="Self + member organizations + member teams",
+    )
+
+
 # Credits and Reservations Models
 class ResourceRequirements(BaseModel):
     """Kubernetes pod resource requirements."""

@@ -24,16 +24,24 @@ export type DatasourcesProps = {
   newDatasourceRoute?: string;
   /** Base route for the datasources list (used for edit navigation). Defaults to current relative path. */
   datasourcesListRoute?: string;
+  /** Optional principal uid used to scope datasource reads. */
+  principalUid?: string;
+  /** Optional principal kind used to scope datasource reads. */
+  principalKind?: 'user' | 'organization' | 'team';
 };
 
 const DatasourcesTable = ({
   datasourcesListRoute,
+  principalUid,
+  principalKind,
 }: {
   datasourcesListRoute?: string;
+  principalUid?: string;
+  principalKind?: 'user' | 'organization' | 'team';
 }) => {
   const { useDatasources } = useCache();
 
-  const datasourcesQuery = useDatasources();
+  const datasourcesQuery = useDatasources({ principalUid, principalKind });
 
   const navigate = useNavigate();
   const [datasources, setDatasources] = useState<IDatasource[]>([]);
@@ -101,6 +109,8 @@ const DatasourcesTable = ({
 export const Datasources = ({
   newDatasourceRoute = '/new/datasource',
   datasourcesListRoute,
+  principalUid,
+  principalKind,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -139,7 +149,11 @@ export const Datasources = ({
               New datasource
             </Button>
           </Box>
-          <DatasourcesTable datasourcesListRoute={datasourcesListRoute} />
+          <DatasourcesTable
+            datasourcesListRoute={datasourcesListRoute}
+            principalUid={principalUid}
+            principalKind={principalKind}
+          />
         </Box>
       </PageLayout.Content>
     </PageLayout>

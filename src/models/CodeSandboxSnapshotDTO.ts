@@ -6,7 +6,7 @@
 /**
  * Snapshot domain model for the Datalayer Client.
  *
- * @module models/RuntimeSnapshotDTO
+ * @module models/CodeSandboxSnapshotDTO
  */
 
 import type { DatalayerClient } from '../index';
@@ -16,9 +16,9 @@ import { validateJSON } from '../api/utils/validation';
 
 /**
  * Represents a runthime snapshot of a runtime's state and files.
- * @interface RuntimeSnapshotData
+ * @interface CodeSandboxSnapshotData
  */
-export interface RuntimeSnapshotData {
+export interface CodeSandboxSnapshotData {
   /** Unique identifier for the snapshot */
   uid: string;
   /** Name of the snapshot */
@@ -44,7 +44,7 @@ export interface RuntimeSnapshotData {
   /** ISO 8601 timestamp when the snapshot was last updated */
   updated_at: string;
   /** List of files included in the snapshot */
-  files?: any[]; // Simplified - RuntimeSnapshotFile type removed
+  files?: any[]; // Simplified - SandboxSnapshotFile type removed
 }
 
 /**
@@ -52,7 +52,7 @@ export interface RuntimeSnapshotData {
  * This is the contract that Client consumers can rely on.
  * The raw API may change, but this interface remains stable.
  */
-export interface RuntimeSnapshotJSON {
+export interface CodeSandboxSnapshotJSON {
   /** Unique identifier for the snapshot */
   uid: string;
   /** Name of the snapshot */
@@ -66,10 +66,10 @@ export interface RuntimeSnapshotJSON {
 }
 
 /**
- * Request payload for creating a runtime snapshot
- * @interface CreateRuntimeSnapshotRequest
+ * Request payload for creating a code sandbox snapshot
+ * @interface CreateCodeSandboxSnapshotRequest
  */
-export interface CreateRuntimeSnapshotRequest {
+export interface CreateCodeSandboxSnapshotRequest {
   /** Pod name of the runtime to snapshot */
   pod_name: string;
   /** Name for the snapshot */
@@ -81,47 +81,47 @@ export interface CreateRuntimeSnapshotRequest {
 }
 
 /**
- * Response for getting a specific runtime snapshot
- * @interface GetRuntimeSnapshotResponse
+ * Response for getting a specific code snapshot snapshot
+ * @interface GetCodeSandboxSnapshotResponse
  */
-export interface GetRuntimeSnapshotResponse {
+export interface GetCodeSandboxSnapshotResponse {
   /** Indicates if the request was successful */
   success: boolean;
   /** Response message */
   message: string;
   /** The snapshot details */
-  snapshot: RuntimeSnapshotData;
+  snapshot: CodeSandboxSnapshotData;
 }
 
 /**
- * Response for creating a runtime snapshot
- * @interface CreateRuntimeSnapshotResponse
+ * Response for creating a code sandbox snapshot
+ * @interface CreateCodeSandboxSnapshotResponse
  */
-export interface CreateRuntimeSnapshotResponse {
+export interface CreateCodeSandboxSnapshotResponse {
   /** Indicates if the request was successful */
   success: boolean;
   /** Response message */
   message: string;
   /** The created snapshot details */
-  snapshot: RuntimeSnapshotData;
+  snapshot: CodeSandboxSnapshotData;
 }
 
 /**
- * Response from listing runtime snapshots
- * @interface RuntimeSnapshotsListResponse
+ * Response from listing code sandbox snapshots
+ * @interface ListCodeSandboxSnapshotsResponse
  */
-export interface ListRuntimeSnapshotsResponse {
+export interface ListCodeSandboxSnapshotsResponse {
   /** Whether the request was successful */
   success: boolean;
   /** Response message from the server */
   message: string;
-  /** Array of runtime snapshots */
-  snapshots: RuntimeSnapshotData[];
+  /** Array of code sandbox snapshots */
+  snapshots: CodeSandboxSnapshotData[];
 }
 
 /**
  * Snapshot domain model that wraps API responses with convenient methods.
- * Provides runtime snapshot management with data refresh and lifecycle operations.
+ * Provides code sandbox snapshot management with data refresh and lifecycle operations.
  *
  * @example
  * ```typescript
@@ -129,18 +129,18 @@ export interface ListRuntimeSnapshotsResponse {
  * const runtime = await snapshot.restore();
  * ```
  */
-export class RuntimeSnapshotDTO {
-  protected _data: RuntimeSnapshotData;
+export class CodeSandboxSnapshotDTO {
+  protected _data: CodeSandboxSnapshotData;
   private _client: DatalayerClient;
   private _deleted: boolean = false;
 
   /**
-   * Create a Runtime Snapshot instance.
+   * Create a Code Sandbox Snapshot instance.
    *
    * @param data - Snapshot data from API
    * @param client - Client instance
    */
-  constructor(data: RuntimeSnapshotData, client: DatalayerClient) {
+  constructor(data: CodeSandboxSnapshotData, client: DatalayerClient) {
     this._data = data;
     this._client = client;
   }
@@ -212,7 +212,7 @@ export class RuntimeSnapshotDTO {
   }
 
   /**
-   * Create a runtime from this snapshot (restore functionality).
+   * Create a code sandbox from this snapshot (restore functionality).
    *
    * @param minutesLimit - Time limit in minutes for the restored runtime
    * @returns Created Runtime instance
@@ -233,14 +233,14 @@ export class RuntimeSnapshotDTO {
   // ========================================================================
 
   /**
-   * Get snapshot data in camelCase format.
+   * Get code snapshot snapshot data in camelCase format.
    * Returns only the core fields that consumers need.
    * This provides a stable interface regardless of API changes.
    * Note: Returns current cached state - call getStatus() first if you need fresh data.
    *
-   * @returns Core snapshot data with camelCase properties
+   * @returns Core code snapshot snapshot data with camelCase properties
    */
-  toJSON(): RuntimeSnapshotJSON {
+  toJSON(): CodeSandboxSnapshotJSON {
     this._checkDeleted();
     const obj = {
       uid: this.uid,
@@ -259,7 +259,7 @@ export class RuntimeSnapshotDTO {
    *
    * @returns Raw snapshot data from API
    */
-  rawData(): RuntimeSnapshotData {
+  rawData(): CodeSandboxSnapshotData {
     this._checkDeleted();
     return this._data;
   }

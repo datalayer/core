@@ -77,7 +77,7 @@ export class User implements IUser {
     this.origin = u.origin_s;
     this.joinDate = u.join_ts_dt ? new Date(u.join_ts_dt) : undefined;
     this.credits = u.credits_i ? Number(u.credits_i) : 0;
-    this.creditsCustomerId = u.credits_customer_uid;
+    this.creditsCustomerId = u.stripe_customer_id_s;
     this.roles = u.roles_ss ?? [];
     let iamProviders = [];
     try {

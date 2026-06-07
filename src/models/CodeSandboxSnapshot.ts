@@ -4,9 +4,9 @@
  */
 
 /**
- * Runtime snapshot from API.
+ * Code Sandbox snapshot from API.
  */
-export interface IAPIRuntimeSnapshot {
+export interface IAPICodeSandboxSnapshot {
   /**
    * Snapshot UID
    */
@@ -50,9 +50,9 @@ export interface IAPIRuntimeSnapshot {
 }
 
 /**
- * Runtime snapshot model.
+ * Code Sandbox snapshot model.
  */
-export interface IRuntimeSnapshot {
+export interface ICodeSandboxSnapshot {
   /**
    * Snapshot UID
    */
@@ -96,7 +96,7 @@ export interface IRuntimeSnapshot {
   status: string;
 }
 
-export function asRuntimeSnapshot(s: IAPIRuntimeSnapshot): IRuntimeSnapshot {
+export function asCodeSandboxSnapshot(s: IAPICodeSandboxSnapshot): ICodeSandboxSnapshot {
   const { uid, updated_at, format_version, ...others } = s;
   return {
     ...others,

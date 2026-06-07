@@ -4,7 +4,7 @@
 from typing import Any
 
 
-class RuntimeSnapshotsCreateMixin:
+class SandboxSnapshotsCreateMixin:
     """Mixin class for creating snapshots."""
 
     def _create_snapshot(
@@ -37,7 +37,7 @@ class RuntimeSnapshotsCreateMixin:
         }
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.urls.runtimes_url),  # type: ignore
+                "{}/api/runtimes/v1/sandbox-snapshots".format(self.urls.runtimes_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -46,7 +46,7 @@ class RuntimeSnapshotsCreateMixin:
             return {"success": False, "message": str(e)}
 
 
-class RuntimeSnapshotsDeleteMixin:
+class SandboxSnapshotsDeleteMixin:
     """
     Mixin class that provides snapshot deletion functionality.
     """
@@ -67,7 +67,7 @@ class RuntimeSnapshotsDeleteMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots/{}".format(
+                "{}/api/runtimes/v1/sandbox-snapshots/{}".format(
                     self.urls.runtimes_url,  # type: ignore
                     snapshot_uid,
                 ),
@@ -81,7 +81,7 @@ class RuntimeSnapshotsDeleteMixin:
             return {"success": False, "message": str(e)}
 
 
-class RuntimeSnapshotsListMixin:
+class SandboxSnapshotsListMixin:
     """
     Mixin class to provide functionality for listing snapshots.
     """
@@ -97,15 +97,15 @@ class RuntimeSnapshotsListMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/runtimes/v1/runtime-snapshots".format(self.urls.runtimes_url),  # type: ignore
+                "{}/api/runtimes/v1/sandbox-snapshots".format(self.urls.runtimes_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:
             return {"success": False, "message": str(e)}
 
 
-class RuntimeSnapshotsMixin(
-    RuntimeSnapshotsCreateMixin, RuntimeSnapshotsDeleteMixin, RuntimeSnapshotsListMixin
+class SandboxSnapshotsMixin(
+    SandboxSnapshotsCreateMixin, SandboxSnapshotsDeleteMixin, SandboxSnapshotsListMixin
 ):
     """
     Mixin class that provides snapshot management functionality.

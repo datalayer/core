@@ -14,7 +14,7 @@ import { ReactWidget } from '@jupyterlab/ui-components';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Widget } from '@lumino/widgets';
 import { FocusKeys } from '@primer/behaviors';
-import { Checkbox, FormControl, useFocusZone } from '@primer/react';
+import { Checkbox, FormControl, Spinner, useFocusZone } from '@primer/react';
 import {
   DialogButtonProps,
   DialogProps,
@@ -93,6 +93,13 @@ export interface IDialogWrapperOptions<T> {
    * The top level text for the dialog.
    */
   title: string;
+  /**
+   * Optional async hook called before an accept button closes the dialog.
+   * Return false to keep the dialog open.
+   */
+  onWillAccept: (
+    result: Dialog.IResult<T>,
+  ) => Promise<boolean | void> | boolean | void;
 }
 
 /**
@@ -106,6 +113,10 @@ export class JupyterDialog<T> extends ReactWidget {
   protected buttons: Dialog.IButton[];
   protected host: HTMLElement;
   protected dialogTitle?: string;
+  protected onWillAccept?: (
+    result: Dialog.IResult<T>,
+  ) => Promise<boolean | void> | boolean | void;
+  private _pendingButtonIndex: number | null = null;
   private _closing = new PromiseDelegate<void>();
   private _result: Dialog.IResult<T> = {
     button: null as any,
@@ -126,6 +137,7 @@ export class JupyterDialog<T> extends ReactWidget {
       Dialog.okButton(),
     ];
     this.dialogTitle = options.title;
+    this.onWillAccept = options.onWillAccept;
   }
 
   private _renderBody = (props: PropsWithChildren<DialogProps>) => (
@@ -156,7 +168,11 @@ export class JupyterDialog<T> extends ReactWidget {
               {this.dialogTitle}
             </span>
           }
-          onClose={this.close}
+          onClose={() => {
+            if (this._pendingButtonIndex === null) {
+              this.close();
+            }
+          }}
           renderBody={this._renderBody}
           renderFooter={this._renderFooter}
           footerButtons={this.buttons.map((but, idx) => {
@@ -170,8 +186,14 @@ export class JupyterDialog<T> extends ReactWidget {
               onClick: () => {
                 this.handleButton(idx);
               },
-              content: but.label,
+              content:
+                this._pendingButtonIndex === idx ? (
+                  <Spinner size="small" />
+                ) : (
+                  but.label
+                ),
               'aria-label': but.ariaLabel,
+              disabled: this._pendingButtonIndex !== null,
               autoFocus: but.accept,
             };
             return footerButton;
@@ -192,8 +214,29 @@ export class JupyterDialog<T> extends ReactWidget {
     return this._result;
   }
 
-  protected handleButton = (idx: number): void => {
-    this.setButton(this.buttons[idx]);
+  protected handleButton = async (idx: number): Promise<void> => {
+    if (this._pendingButtonIndex !== null) {
+      return;
+    }
+    const button = this.buttons[idx];
+    this.setButton(button);
+    if (button.accept && this.onWillAccept) {
+      this._pendingButtonIndex = idx;
+      this.update();
+      try {
+        const shouldClose = await this.onWillAccept(this._result);
+        if (shouldClose === false) {
+          this._pendingButtonIndex = null;
+          this.update();
+          return;
+        }
+      } catch (error) {
+        this._pendingButtonIndex = null;
+        this.update();
+        throw error;
+      }
+    }
+    this._pendingButtonIndex = null;
     this.close();
   };
 
@@ -214,6 +257,9 @@ export class JupyterDialog<T> extends ReactWidget {
   };
 
   close = (): void => {
+    if (this._pendingButtonIndex !== null) {
+      return;
+    }
     Widget.detach(this);
     this._closing.resolve();
   };

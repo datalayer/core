@@ -11,7 +11,7 @@ import { ServiceManager, Kernel, ServerConnection } from '@jupyterlab/services';
 import { IDisposable } from '@lumino/disposable';
 import { ISignal } from '@lumino/signaling';
 import type {
-  IRuntimeSnapshot,
+  ICodeSandboxSnapshot,
   IRuntimeCapabilities,
   IRuntimeModel,
   IDatalayerEnvironment,
@@ -235,14 +235,14 @@ export interface IRemoteRuntimesManager extends IDisposable {
      * Whether to stop the kernel after the snapshot completion or not.
      */
     stop?: boolean;
-  }): Promise<IRuntimeSnapshot | undefined>;
+  }): Promise<ICodeSandboxSnapshot | undefined>;
 
   /**
    * Load a snapshot within a runtim
    *
    * The runtime may be given by its `id` or `podName`.
    */
-  loadRuntimeSnapshot(options: {
+  loadSandboxSnapshot(options: {
     /**
      * The kernel id
      */

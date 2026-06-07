@@ -160,7 +160,7 @@ module.exports = {
             },
             {
               label: 'Datalayer Docs',
-              href: 'https://docs.datalayer.app',
+              href: 'https://datalayer.ai/docs',
             },
             {
               label: 'Datalayer Blog',

@@ -9,20 +9,15 @@
 import { URLExt } from '@jupyterlab/coreutils';
 import { PromiseDelegate } from '@lumino/coreutils';
 import { Upload } from 'tus-js-client';
-import {
-  IRuntimeOptions,
-  requestDatalayerAPI,
-  type RunResponseError,
-} from '../../api';
-import { asRuntimeSnapshot } from '../../models';
+import { IRuntimeOptions, requestDatalayerAPI } from '../../api';
+import { asCodeSandboxSnapshot } from '../../models';
 import type {
-  IRuntimeSnapshot,
-  IAPIRuntimeSnapshot,
+  ICodeSandboxSnapshot,
+  IAPICodeSandboxSnapshot,
   IDatalayerEnvironment,
   IRuntimePod,
 } from '../../models';
 import { iamStore, runtimesStore } from '../../state';
-import { sleep } from '../../utils';
 
 /**
  * Get available Environments.
@@ -53,6 +48,16 @@ export async function createRuntime(
   options: IRuntimeOptions,
 ): Promise<IRuntimePod> {
   const { externalToken, token } = iamStore.getState();
+  if (
+    typeof options.creditsLimit !== 'number' ||
+    !Number.isFinite(options.creditsLimit) ||
+    options.creditsLimit <= 0
+  ) {
+    throw new Error(
+      `Invalid runtime creditsLimit for environment ${options.environmentName}. ` +
+        'A positive number is required.',
+    );
+  }
   const body: Record<string, unknown> = {
     environment_name: options.environmentName,
     type: options.type ?? 'notebook',
@@ -170,15 +175,15 @@ export async function snapshotRuntime(options: {
    * Whether to stop the runtime after the snapshot completion or not.
    */
   stop?: boolean;
-}): Promise<IRuntimeSnapshot> {
+}): Promise<ICodeSandboxSnapshot | undefined> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshot?: IAPIRuntimeSnapshot;
+    snapshot?: IAPICodeSandboxSnapshot;
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/runtime-snapshots',
+      'api/runtimes/v1/sandbox-snapshots',
     ),
     method: 'POST',
     body: {
@@ -189,40 +194,47 @@ export async function snapshotRuntime(options: {
     },
     token: iamStore.getState().token,
   });
-  if (!data.success || !data.snapshot) {
+  if (!data.success) {
     throw new Error(
-      `Failed to take the runtime snapshot ${options.id} - ${data}`,
+      `Failed to take the code sandbox snapshot ${options.id} - ${data}`,
     );
   }
-  return asRuntimeSnapshot(data.snapshot);
+
+  // Runtimes service can return 202 Accepted without inline snapshot payload
+  // while the snapshot lifecycle completes asynchronously via pub-sub events.
+  if (!data.snapshot) {
+    return undefined;
+  }
+
+  return asCodeSandboxSnapshot(data.snapshot);
 }
 
 /**
- * Get Runtime Snapshots.
+ * Get Code Sandbox Snapshots.
  */
-export async function getRuntimeSnapshots(): Promise<IRuntimeSnapshot[]> {
+export async function getSandboxSnapshots(): Promise<ICodeSandboxSnapshot[]> {
   const data = await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshots?: IAPIRuntimeSnapshot[];
+    snapshots?: IAPICodeSandboxSnapshot[];
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      'api/runtimes/v1/runtime-snapshots',
+      'api/runtimes/v1/sandbox-snapshots',
     ),
     token: iamStore.getState().token,
   });
   if (!data.success) {
-    console.error('Failed to fetch runtime snapshots.', data);
+    console.error('Failed to fetch code sandbox snapshots.', data);
     return [];
   }
-  return (data.snapshots ?? []).map(asRuntimeSnapshot);
+  return (data.snapshots ?? []).map(asCodeSandboxSnapshot);
 }
 
 /**
- * Load a Runtime Snapshot within a Runtime.
+ * Load a Code Sandbox Snapshot within a Runtime.
  */
-export async function loadRuntimeSnapshot(options: {
+export async function loadSandboxSnapshot(options: {
   /**
    * Runtime ID
    */
@@ -249,21 +261,23 @@ export async function loadRuntimeSnapshot(options: {
   });
 
   if (!data.success) {
-    throw new Error(`Failed to load the runtime snapshot; ${data.message}`);
+    throw new Error(
+      `Failed to load the code sandbox snapshot; ${data.message}`,
+    );
   }
 }
 
 /**
- * Returns the Runtime Snapshot download URL.
+ * Returns the Code Sandbox Snapshot download URL.
  *
  * @param id Snapshot UID to download
  * @returns The download URL
  */
-export function createRuntimeSnapshotDownloadURL(id: string): string {
+export function createSandboxSnapshotDownloadURL(id: string): string {
   return (
     URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      `api/runtimes/v1/runtime-snapshots/${id}`,
+      `api/runtimes/v1/sandbox-snapshots/${id}`,
     ) +
     URLExt.objectToQueryString({
       download: '1',
@@ -273,12 +287,12 @@ export function createRuntimeSnapshotDownloadURL(id: string): string {
 }
 
 /**
- * Export a Runtime Snapshot.
+ * Export a Code Sandbox Snapshot.
  *
- * @param id Runtime snapshot UID to download
+ * @param id Code Sandbox snapshot UID to download
  */
-export function exportRuntimeSnapshot(id: string): void {
-  const url = createRuntimeSnapshotDownloadURL(id);
+export function exportCodeSandboxSnapshot(id: string): void {
+  const url = createSandboxSnapshotDownloadURL(id);
   const element = document.createElement('a');
   element.href = url;
   element.download = '';
@@ -288,59 +302,27 @@ export function exportRuntimeSnapshot(id: string): void {
 }
 
 /**
- * Delete a Runtime Snapshot.
+ * Delete a Code Sandbox Snapshot.
  */
-export async function deleteRuntimeSnapshot(id: string): Promise<void> {
+export async function deleteCodeSandboxSnapshot(id: string): Promise<void> {
   await requestDatalayerAPI<{
     success: boolean;
     message: string;
-    snapshots?: IAPIRuntimeSnapshot[];
+    snapshots?: IAPICodeSandboxSnapshot[];
   }>({
     url: URLExt.join(
       runtimesStore.getState().runtimesRunUrl,
-      `api/runtimes/v1/runtime-snapshots/${id}`,
+      `api/runtimes/v1/sandbox-snapshots/${id}`,
     ),
     method: 'DELETE',
     token: iamStore.getState().token,
   });
-
-  // Poll Runtime Snapshot state up-to its deletion.
-  try {
-    let sleepTimeout = 1000;
-    while (true) {
-      await sleep(sleepTimeout);
-      sleepTimeout *= 2;
-      const response = await requestDatalayerAPI<{
-        success: boolean;
-        message: string;
-        snapshots?: IAPIRuntimeSnapshot[];
-      }>({
-        url: URLExt.join(
-          runtimesStore.getState().runtimesRunUrl,
-          `api/runtimes/v1/runtime-snapshots/${id}`,
-        ),
-        token: iamStore.getState().token,
-      });
-      if (response.success === false) {
-        throw new Error(response.message);
-      }
-    }
-  } catch (error) {
-    if (
-      (error as RunResponseError).name === 'RunResponseError' &&
-      (error as RunResponseError).response.status === 404
-    ) {
-      // Expected not found
-    } else {
-      throw error;
-    }
-  }
 }
 
 /**
- * Update Runtime Snapshot metadata.
+ * Update Code Sandbox Snapshot metadata.
  */
-export async function updateRuntimeSnapshot(
+export async function updateCodeSandboxSnapshot(
   id: string,
   metadata: { name?: string; description?: string },
 ): Promise<void> {
@@ -348,11 +330,11 @@ export async function updateRuntimeSnapshot(
     await requestDatalayerAPI<{
       success: boolean;
       message: string;
-      snapshot?: IAPIRuntimeSnapshot;
+      snapshot?: IAPICodeSandboxSnapshot;
     }>({
       url: URLExt.join(
         runtimesStore.getState().runtimesRunUrl,
-        `api/runtimes/v1/runtime-snapshots/${id}`,
+        `api/runtimes/v1/sandbox-snapshots/${id}`,
       ),
       method: 'PATCH',
       body: { ...metadata },
@@ -362,23 +344,23 @@ export async function updateRuntimeSnapshot(
 }
 
 /**
- * Upload a Runtime Snapshot.
+ * Upload a Code Sandbox Snapshot.
  *
  * Note: The promise will be rejected if the runtime state is empty.
  */
-export async function uploadRuntimeSnapshot(options: {
+export async function uploadCodeSandboxSnapshot(options: {
   file: File | Blob;
   metadata: { filename: string; [key: string]: string };
   onProgress?: (bytesUploaded: number, bytesTotal: number) => void;
 }): Promise<void> {
   if (options.file.size === 0) {
-    return Promise.reject('Empty Runtime Snapshot.');
+    return Promise.reject('Empty Code Sandbox Snapshot.');
   }
   const tracker = new PromiseDelegate<void>();
   // Create a new tus upload.
   const upload = new Upload(options.file, {
     // Endpoint is the upload creation URL from your tus server.
-    endpoint: `${runtimesStore.getState().runtimesRunUrl}/api/runtimes/v1/runtime-snapshots/upload`,
+    endpoint: `${runtimesStore.getState().runtimesRunUrl}/api/runtimes/v1/sandbox-snapshots/upload`,
     headers: { Authorization: `Bearer ${iamStore.getState().token}` },
     // Retry delays will enable tus-js-client to automatically retry on errors.
     // retryDelays: [0, 3000, 5000, 10000, 20000],

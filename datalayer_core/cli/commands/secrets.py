@@ -27,7 +27,7 @@ def secrets_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_secrets(
     token: Optional[str] = typer.Option(
         None,
@@ -57,18 +57,6 @@ def list_secrets(
     except Exception as e:
         console.print(f"[red]Error listing secrets: {e}[/red]")
         raise typer.Exit(1)
-
-
-@app.command(name="ls")
-def list_secrets_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-) -> None:
-    """List all secrets (alias for list)."""
-    list_secrets(token=token)
 
 
 @app.command(name="create")

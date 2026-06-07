@@ -8,9 +8,16 @@ from pathlib import Path
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.text import Text
 
 # Create a Typer app for the about command
 app = typer.Typer()
+
+FOOTER_ANSI = (
+    "\n"
+    "\033[0;32m☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷☷\033[0m "
+    "\033[1;93m☰ DATA\033[0m\033[1;92mLAYER\033[0m"
+)
 
 
 @app.command()
@@ -24,6 +31,7 @@ def about() -> None:
         with open(about_file_path) as readme:
             markdown = Markdown(readme.read())
         console.print(markdown)
+        console.print(Text.from_ansi(FOOTER_ANSI))
     except FileNotFoundError:
         console.print(f"[red]Error: Could not find about.md at {about_file_path}[/red]")
         raise typer.Exit(1)

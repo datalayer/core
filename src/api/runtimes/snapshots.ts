@@ -4,9 +4,9 @@
  */
 
 /**
- * Runtime snapshots API functions for the Datalayer platform.
+ * Code Sandbox snapshots API functions for the Datalayer platform.
  *
- * Provides functions for managing runtime snapshots (saved runtime states).
+ * Provides functions for managing code sandbox snapshots (saved runtime states).
  *
  * @module api/runtimes/snapshots
  */
@@ -14,11 +14,11 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
-  CreateRuntimeSnapshotRequest,
-  ListRuntimeSnapshotsResponse,
-  GetRuntimeSnapshotResponse,
-  CreateRuntimeSnapshotResponse,
-} from '../../models/RuntimeSnapshotDTO';
+  CreateCodeSandboxSnapshotRequest,
+  ListCodeSandboxSnapshotsResponse,
+  GetCodeSandboxSnapshotResponse,
+  CreateCodeSandboxSnapshotResponse,
+} from '../../models/CodeSandboxSnapshotDTO';
 import { validateToken, validateRequiredString } from '../utils/validation';
 
 /**
@@ -31,13 +31,13 @@ import { validateToken, validateRequiredString } from '../utils/validation';
  */
 export const createSnapshot = async (
   token: string,
-  data: CreateRuntimeSnapshotRequest,
+  data: CreateCodeSandboxSnapshotRequest,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<CreateRuntimeSnapshotResponse> => {
+): Promise<CreateCodeSandboxSnapshotResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<CreateRuntimeSnapshotResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
+  return requestDatalayerAPI<CreateCodeSandboxSnapshotResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots`,
     method: 'POST',
     token,
     body: data,
@@ -45,7 +45,7 @@ export const createSnapshot = async (
 };
 
 /**
- * List all runtime snapshots.
+ * List all code sandbox snapshots.
  * @param token - Authentication token
  * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
  * @returns Promise resolving to list of snapshots
@@ -54,18 +54,18 @@ export const createSnapshot = async (
 export const listSnapshots = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<ListRuntimeSnapshotsResponse> => {
+): Promise<ListCodeSandboxSnapshotsResponse> => {
   validateToken(token);
 
-  return requestDatalayerAPI<ListRuntimeSnapshotsResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots`,
+  return requestDatalayerAPI<ListCodeSandboxSnapshotsResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots`,
     method: 'GET',
     token,
   });
 };
 
 /**
- * Get details for a specific runtime snapshot.
+ * Get details for a specific code sandbox snapshot.
  * @param token - Authentication token
  * @param snapshotId - The unique identifier of the snapshot
  * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
@@ -77,19 +77,19 @@ export const getSnapshot = async (
   token: string,
   snapshotId: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.RUNTIMES,
-): Promise<GetRuntimeSnapshotResponse> => {
+): Promise<GetCodeSandboxSnapshotResponse> => {
   validateToken(token);
   validateRequiredString(snapshotId, 'Snapshot ID');
 
-  return requestDatalayerAPI<GetRuntimeSnapshotResponse>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
+  return requestDatalayerAPI<GetCodeSandboxSnapshotResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots/${snapshotId}`,
     method: 'GET',
     token,
   });
 };
 
 /**
- * Delete a runtime snapshot.
+ * Delete a code sandbox snapshot.
  * @param token - Authentication token
  * @param snapshotId - The unique identifier of the snapshot to delete
  * @param baseUrl - Base URL for the API (defaults to production Runtimes URL)
@@ -106,7 +106,7 @@ export const deleteSnapshot = async (
   validateRequiredString(snapshotId, 'Snapshot ID');
 
   return requestDatalayerAPI<void>({
-    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/runtime-snapshots/${snapshotId}`,
+    url: `${baseUrl}${API_BASE_PATHS.RUNTIMES}/sandbox-snapshots/${snapshotId}`,
     method: 'DELETE',
     token,
   });

@@ -15,7 +15,7 @@
  * @module views/profile
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Box, Text } from '@primer/react';
 import {
   parseJwtPayload,
@@ -48,6 +48,11 @@ export interface UserBadgeProps {
    * Defaults to ``10_800_000`` (3 hours).
    */
   expirationWarningMs?: number;
+  /**
+   * Optional callback fired when the claims popover is open and the token is
+   * already expired.
+   */
+  onTokenExpired?: () => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────
@@ -57,6 +62,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   variant = 'full',
   showExpandToggle = true,
   expirationWarningMs = 3 * 60 * 60 * 1000,
+  onTokenExpired,
 }) => {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -94,6 +100,15 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
     : expiringSoon
       ? 'attention.fg'
       : 'fg.muted';
+
+  const expiredNotifiedForTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!onTokenExpired || !open || !expired) return;
+    if (expiredNotifiedForTokenRef.current === token) return;
+    expiredNotifiedForTokenRef.current = token;
+    onTokenExpired();
+  }, [expired, onTokenExpired, open, token]);
 
   return (
     <Box

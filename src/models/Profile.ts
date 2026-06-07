@@ -48,7 +48,7 @@ export interface Profile {
   /** Customer UID */
   customer_uid?: string | null;
   /** Credits customer UID for billing */
-  credits_customer_uid?: string | null;
+  stripe_customer_id_s?: string | null;
   /** Email unsubscription status */
   unsubscribed_from_outbounds_b?: boolean;
   /** Linked contact UID */

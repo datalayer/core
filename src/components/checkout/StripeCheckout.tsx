@@ -58,6 +58,10 @@ export interface IPrice {
    * Computational credits to receive
    */
   credits: number;
+  /**
+   * Whether this price is the server-selected default option
+   */
+  default?: boolean;
 }
 
 export interface ISubscriptionPlan {
@@ -69,11 +73,23 @@ export interface ISubscriptionPlan {
   included_runs?: number;
 }
 
+type TopUpConfirmation = {
+  purchasedCredits: number;
+  oldWalletBalance: number;
+  newWalletBalance: number;
+  oldAvailableCredits: number;
+  newAvailableCredits: number;
+};
+
 export type StripeCheckoutProps = {
   checkoutPortal: ICheckoutPortal | null;
   appearance?: StripeElementsOptions['appearance'];
   accountUid?: string;
   showStatusUsageSummary?: boolean;
+  onCheckoutSuccess?: (event: {
+    checkoutType: 'topup' | 'subscription' | 'resume';
+    purchasedCredits?: number;
+  }) => void;
 };
 
 const PLAN_INCLUDED_RUNS_DEFAULTS: Record<string, number> = {
@@ -311,12 +327,12 @@ export function StripeCheckout({
   checkoutPortal,
   appearance,
   accountUid,
-  showStatusUsageSummary = true,
+  showStatusUsageSummary = false,
+  onCheckoutSuccess,
 }: StripeCheckoutProps) {
   const {
     useCreateTopUpPaymentIntent,
     useCreateSubscriptionPaymentIntent,
-    useCreateResumeSetupIntent,
     useSubscriptionPlans,
     useTopUpPrices,
     useSubscriptionStatus,
@@ -335,11 +351,37 @@ export function StripeCheckout({
     'topup' | 'subscription' | 'resume'
   >('topup');
   const [cancelViewOpen, setCancelViewOpen] = useState(false);
+  const [isConfirmingCancel, setIsConfirmingCancel] = useState(false);
+  const [isResumingTransition, setIsResumingTransition] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
+  const [resumeConfirmationMessage, setResumeConfirmationMessage] = useState<
+    string | null
+  >(null);
+  const [isReturningFromCheckout, setIsReturningFromCheckout] = useState(false);
+  const [topUpConfirmation, setTopUpConfirmation] =
+    useState<TopUpConfirmation | null>(null);
+  const [pendingTopUpTarget, setPendingTopUpTarget] = useState<{
+    targetWalletBalance: number;
+  } | null>(null);
+  const topUpPurchaseRef = useRef<{
+    purchasedCredits: number;
+    oldWalletBalance: number;
+    oldAvailableCredits: number;
+  } | null>(null);
 
   // Get Stripe prices using TanStack Query hook
-  const { data: pricesData } = useTopUpPrices();
-  const items = (pricesData as IPrice[] | undefined) ?? null;
+  const {
+    data: pricesData,
+    isPending: isTopUpPricesPending,
+    isError: isTopUpPricesError,
+    error: topUpPricesError,
+  } = useTopUpPrices();
+  const items = useMemo(() => {
+    if (Array.isArray(pricesData)) {
+      return pricesData as IPrice[];
+    }
+    return [];
+  }, [pricesData]);
   const sortedTopUpItems = useMemo(
     () =>
       [...(items ?? [])].sort(
@@ -368,7 +410,6 @@ export function StripeCheckout({
   const subscriptionPaymentIntentMutation = useCreateSubscriptionPaymentIntent({
     accountUid,
   });
-  const resumeSetupIntentMutation = useCreateResumeSetupIntent({ accountUid });
 
   // Load stripe API
   useEffect(() => {
@@ -407,12 +448,14 @@ export function StripeCheckout({
     setProduct(null);
     setSubscriptionPlan(null);
     setPaymentMessage(null);
+    setIsReturningFromCheckout(true);
     if (checkoutType === 'resume') {
       try {
         const resp = await resumeSubscriptionMutation.mutateAsync();
         setPaymentMessage(
           resp?.message || 'Payment confirmed and plan resumed successfully.',
         );
+        onCheckoutSuccess?.({ checkoutType: 'resume' });
       } catch (error) {
         setPaymentMessage(
           error instanceof Error
@@ -420,6 +463,7 @@ export function StripeCheckout({
             : 'Payment confirmed, but unable to resume your plan right now.',
         );
       }
+      setIsReturningFromCheckout(false);
       return;
     }
     if (checkoutType === 'subscription') {
@@ -438,14 +482,55 @@ export function StripeCheckout({
       setPaymentMessage(
         'Plan payment confirmed. Your plan status may take a few seconds to refresh.',
       );
+      onCheckoutSuccess?.({ checkoutType: 'subscription' });
     } else {
+      const topUpPurchase = topUpPurchaseRef.current;
+      const purchasedCredits = topUpPurchase?.purchasedCredits || 0;
+      if (topUpPurchase && topUpPurchase.purchasedCredits > 0) {
+        const targetWalletBalance =
+          topUpPurchase.oldWalletBalance + topUpPurchase.purchasedCredits;
+        setTopUpConfirmation({
+          purchasedCredits: topUpPurchase.purchasedCredits,
+          oldWalletBalance: topUpPurchase.oldWalletBalance,
+          newWalletBalance: targetWalletBalance,
+          oldAvailableCredits: topUpPurchase.oldAvailableCredits,
+          newAvailableCredits:
+            topUpPurchase.oldAvailableCredits + topUpPurchase.purchasedCredits,
+        });
+        setPendingTopUpTarget({
+          targetWalletBalance,
+        });
+      }
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          await refetchSubscriptionStatus();
+        } catch {
+          // Keep confirmation visible even if refresh fails transiently.
+        }
+        if (attempt < 4) {
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+      }
+
       setPaymentMessage(
         'Payment confirmed. Credits update may take a few seconds.',
       );
+      onCheckoutSuccess?.({
+        checkoutType: 'topup',
+        purchasedCredits,
+      });
+      topUpPurchaseRef.current = null;
     }
-  }, [checkoutType, refetchSubscriptionStatus, resumeSubscriptionMutation]);
+    setIsReturningFromCheckout(false);
+  }, [
+    checkoutType,
+    onCheckoutSuccess,
+    refetchSubscriptionStatus,
+    resumeSubscriptionMutation,
+  ]);
 
-  const subscription = subscriptionResp?.subscription || null;
+  const subscription = subscriptionResp?.plan || null;
   const availablePlans = useMemo<ISubscriptionPlan[]>(() => {
     const byId = new Map<string, ISubscriptionPlan>();
     const add = (plan: any) => {
@@ -466,9 +551,9 @@ export function StripeCheckout({
       });
     };
     plans.forEach(add);
-    (subscriptionResp?.available_subscriptions || []).forEach(add);
+    (subscriptionResp?.available_plans || []).forEach(add);
     return Array.from(byId.values());
-  }, [plans, subscriptionResp?.available_subscriptions]);
+  }, [plans, subscriptionResp?.available_plans]);
 
   const subscriptionStatus = subscription?.status || 'unknown';
   const normalizedSubscriptionStatus = String(subscriptionStatus).toLowerCase();
@@ -638,6 +723,12 @@ export function StripeCheckout({
   const walletBalance = walletIsQuota
     ? Math.max(0, remainingCredits)
     : Math.max(0, walletBalanceRaw);
+  const displayedWalletBalance = pendingTopUpTarget
+    ? Math.max(walletBalance, pendingTopUpTarget.targetWalletBalance)
+    : walletBalance;
+  const displayedAvailableCredits = pendingTopUpTarget
+    ? Math.max(remainingCredits, pendingTopUpTarget.targetWalletBalance)
+    : remainingCredits;
   const isRunsOverQuota = runsTotal > 0 && usedRuns > runsTotal;
 
   const hasBillablePlan = useMemo(() => {
@@ -686,6 +777,18 @@ export function StripeCheckout({
     return !nonCancelable;
   }, [hasBillablePlan, subscriptionStatus, isCancellationScheduled]);
 
+  const isCancelActionPending =
+    cancelSubscriptionMutation.isPending || isConfirmingCancel;
+  const isResumeActionPending =
+    resumeSubscriptionMutation.isPending || isResumingTransition;
+  const showResumeAction = isCancellationScheduled && !isCancelActionPending;
+
+  useEffect(() => {
+    if (isResumingTransition && !isCancellationScheduled) {
+      setIsResumingTransition(false);
+    }
+  }, [isCancellationScheduled, isResumingTransition]);
+
   useEffect(() => {
     if (isPaidSubscription && paymentMessage) {
       setPaymentMessage(null);
@@ -700,9 +803,20 @@ export function StripeCheckout({
 
   useEffect(() => {
     if (!product && sortedTopUpItems.length > 0) {
-      setProduct(sortedTopUpItems[sortedTopUpItems.length - 1]);
+      const secondCard =
+        sortedTopUpItems.length > 1 ? sortedTopUpItems[1] : sortedTopUpItems[0];
+      setProduct(secondCard);
     }
   }, [product, sortedTopUpItems]);
+
+  useEffect(() => {
+    if (!pendingTopUpTarget) {
+      return;
+    }
+    if (walletBalance >= pendingTopUpTarget.targetWalletBalance) {
+      setPendingTopUpTarget(null);
+    }
+  }, [pendingTopUpTarget, walletBalance]);
 
   // Auto-open the in-app cancel/downgrade view when the page is opened with
   // `?action=downgrade` (e.g. from the Plan Overview "Downgrade" CTA).
@@ -734,6 +848,12 @@ export function StripeCheckout({
     if (!product) {
       return;
     }
+    topUpPurchaseRef.current = {
+      purchasedCredits: Math.max(0, Number(product.credits || 0)),
+      oldWalletBalance: displayedWalletBalance,
+      oldAvailableCredits: displayedAvailableCredits,
+    };
+    setTopUpConfirmation(null);
     setPaymentMessage(null);
     setCheckoutType('topup');
     setCheckout(true);
@@ -755,11 +875,17 @@ export function StripeCheckout({
         error instanceof Error
           ? error.message
           : 'Unable to initialize Stripe checkout. Please try again.';
+      topUpPurchaseRef.current = null;
       setPaymentClientSecret(null);
       setCheckout(false);
       setPaymentMessage(detail);
     }
-  }, [topUpPaymentIntentMutation, product]);
+  }, [
+    displayedAvailableCredits,
+    displayedWalletBalance,
+    topUpPaymentIntentMutation,
+    product,
+  ]);
 
   const startSubscriptionCheckout = useCallback(
     async (planOverride?: ISubscriptionPlan | null) => {
@@ -831,6 +957,7 @@ export function StripeCheckout({
 
   const onCancelSubscription = useCallback(() => {
     setPaymentMessage(null);
+    setResumeConfirmationMessage(null);
     setCancelViewOpen(true);
   }, []);
 
@@ -840,25 +967,13 @@ export function StripeCheckout({
 
   const onConfirmCancelSubscription = useCallback(async () => {
     setPaymentMessage(null);
+    setIsConfirmingCancel(true);
     try {
       const resp = await cancelSubscriptionMutation.mutateAsync();
       if (resp?.success === false) {
         throw new Error(
           resp?.message || 'Unable to update your plan right now.',
         );
-      }
-
-      // Refresh plan status so stale "incomplete" snapshots disappear
-      // as soon as cancellation is applied upstream.
-      for (let attempt = 0; attempt < 5; attempt += 1) {
-        try {
-          await refetchSubscriptionStatus();
-        } catch {
-          // Ignore transient refetch errors and keep trying.
-        }
-        if (attempt < 4) {
-          await new Promise(resolve => setTimeout(resolve, 800));
-        }
       }
 
       const responseStatus = String(resp?.status || '').toLowerCase();
@@ -878,7 +993,23 @@ export function StripeCheckout({
           'Plan change requested successfully.',
       );
       setCancelViewOpen(false);
+      setIsConfirmingCancel(false);
+
+      // Refresh plan status in the background so UI feedback is immediate.
+      void (async () => {
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          try {
+            await refetchSubscriptionStatus();
+          } catch {
+            // Ignore transient refetch errors and keep trying.
+          }
+          if (attempt < 4) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+        }
+      })();
     } catch (error) {
+      setIsConfirmingCancel(false);
       setPaymentMessage(
         error instanceof Error
           ? error.message
@@ -893,28 +1024,54 @@ export function StripeCheckout({
 
   const onResumeSubscription = useCallback(async () => {
     setPaymentMessage(null);
+    setResumeConfirmationMessage(null);
+    setIsResumingTransition(true);
     try {
-      const clientSecret = await resumeSetupIntentMutation.mutateAsync();
-      if (!clientSecret) {
-        setCheckout(false);
-        setPaymentClientSecret(null);
-        setPaymentMessage(
-          'Unable to initialize Stripe checkout. Please try again.',
+      const resp = await resumeSubscriptionMutation.mutateAsync();
+      if (resp?.success === false) {
+        throw new Error(
+          resp?.message || 'Unable to resume your plan right now.',
         );
-        return;
       }
-      setCheckoutType('resume');
-      setPaymentClientSecret(clientSecret);
-      setCheckout(true);
+
+      setCheckout(false);
+      setPaymentClientSecret(null);
       setPaymentMessage(null);
+      const periodEndText =
+        subscriptionPeriodEndLabel && subscriptionPeriodEndLabel !== 'N/A'
+          ? ` through ${subscriptionPeriodEndLabel}`
+          : '';
+      setResumeConfirmationMessage(
+        `Resume complete. Your plan remains active${periodEndText} and will renew automatically after that date.`,
+      );
+      setIsResumingTransition(false);
+
+      // Refresh plan status in the background so success feedback appears fast.
+      void (async () => {
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          try {
+            await refetchSubscriptionStatus();
+          } catch {
+            // Ignore transient refetch errors and keep trying.
+          }
+          if (attempt < 4) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+          }
+        }
+      })();
     } catch (error) {
+      setIsResumingTransition(false);
       setPaymentMessage(
         error instanceof Error
           ? error.message
-          : 'Unable to initialize resume checkout right now.',
+          : 'Unable to resume your plan right now.',
       );
     }
-  }, [resumeSetupIntentMutation]);
+  }, [
+    refetchSubscriptionStatus,
+    resumeSubscriptionMutation,
+    subscriptionPeriodEndLabel,
+  ]);
 
   const onRefreshSubscriptionStatus = useCallback(async () => {
     setPaymentMessage(null);
@@ -947,10 +1104,6 @@ export function StripeCheckout({
       return `${product.name} (${amount}, ${product.credits} credits)`;
     }
 
-    if (checkoutType === 'resume') {
-      return 'Plan resume (card update required)';
-    }
-
     return null;
   }, [checkoutType, product, subscriptionPlan]);
 
@@ -960,7 +1113,10 @@ export function StripeCheckout({
     marginBottom: 'var(--stack-gap-normal)',
   } as const;
 
-  const monthlySubscriptionSection = (
+  const shouldShowMonthlySubscriptionSection =
+    !isPaidSubscription || isIncompleteSubscription;
+
+  const monthlySubscriptionSection = shouldShowMonthlySubscriptionSection ? (
     <Box
       sx={{
         borderTop: 'none',
@@ -971,10 +1127,37 @@ export function StripeCheckout({
         Choose a monthly plan
       </Text>
       {isIncompleteSubscription ? (
-        <Text as="p" sx={{ color: 'fg.muted' }}>
-          A pending plan change already exists. Complete payment or cancel it
-          from the billing portal before creating a new one.
-        </Text>
+        <>
+          <Text as="p" sx={{ color: 'fg.muted' }}>
+            A pending plan change already exists. Complete payment or cancel it
+            from the billing portal before creating a new one.
+          </Text>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 'var(--stack-gap-condensed)',
+              flexWrap: 'wrap',
+              marginTop: 'var(--stack-gap-normal)',
+            }}
+          >
+            <Button
+              variant="primary"
+              onClick={startPendingSubscriptionCheckout}
+              disabled={
+                subscriptionPaymentIntentMutation.isPending ||
+                checkout ||
+                !pendingSubscriptionPlan
+              }
+            >
+              {subscriptionPaymentIntentMutation.isPending
+                ? 'Preparing checkout...'
+                : 'Continue pending payment'}
+            </Button>
+            <Button variant="danger" onClick={onCancelSubscription}>
+              Cancel pending plan change
+            </Button>
+          </Box>
+        </>
       ) : !isPaidSubscription ? (
         <>
           <Box
@@ -1046,15 +1229,9 @@ export function StripeCheckout({
               : 'Update to Team Plan'}
           </Button>
         </>
-      ) : (
-        <Text as="p" sx={{ color: 'fg.muted' }}>
-          {isCancellationScheduled
-            ? `Your monthly plan will cancel on ${subscriptionPeriodEndLabel}.`
-            : 'Your monthly plan is active. You can manage plan details from plan controls.'}
-        </Text>
-      )}
+      ) : null}
     </Box>
-  );
+  ) : null;
 
   const topUpSection = (
     <Box>
@@ -1130,344 +1307,523 @@ export function StripeCheckout({
           ? 'Preparing top-up checkout...'
           : 'Checkout'}
       </Button>
+      {topUpConfirmation ? (
+        <Flash variant="success" sx={{ mt: 3 }}>
+          <Text as="p" sx={{ fontWeight: 'bold' }}>
+            Top-up confirmed: +
+            {topUpConfirmation.purchasedCredits.toLocaleString()} credits
+          </Text>
+          <Text as="p">
+            {`Wallet balance: ${topUpConfirmation.oldWalletBalance.toLocaleString()} to ${topUpConfirmation.newWalletBalance.toLocaleString()}`}
+          </Text>
+          <Text as="p">
+            {`Available credits: ${topUpConfirmation.oldAvailableCredits.toLocaleString()} to ${topUpConfirmation.newAvailableCredits.toLocaleString()}`}
+          </Text>
+        </Flash>
+      ) : null}
     </Box>
   );
 
-  const topCards = showStatusUsageSummary ? (
-    <Box
-      sx={{
-        marginBottom: 'var(--stack-gap-normal)',
-        border: '1px solid',
-        borderColor: 'border.default',
-        borderRadius: 'var(--borderRadius-medium)',
-        backgroundColor: 'canvas.default',
-        padding: 'var(--stack-padding-normal)',
-        display: 'grid',
-        gap: 'var(--stack-gap-normal)',
-      }}
-    >
+  const topCards =
+    showStatusUsageSummary && !isPaidSubscription ? (
       <Box
         sx={{
+          marginBottom: 'var(--stack-gap-normal)',
+          border: '1px solid',
+          borderColor: 'border.default',
+          borderRadius: 'var(--borderRadius-medium)',
+          backgroundColor: 'canvas.default',
+          padding: 'var(--stack-padding-normal)',
           display: 'grid',
           gap: 'var(--stack-gap-normal)',
-          gridTemplateColumns: ['1fr'],
-          alignItems: 'start',
         }}
       >
-        <Box>
-          <Text
-            as="h3"
-            sx={{
-              fontWeight: 'bold',
-              marginBottom: 'var(--stack-gap-condensed)',
-            }}
-          >
-            Plan status
-          </Text>
-          <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
-          {isPendingSubscriptionCheckout && (
-            <Flash
-              variant="warning"
-              sx={{ marginTop: 'var(--stack-gap-condensed)' }}
-            >
-              Upgrade pending payment. Your Team plan is not active until card
-              payment succeeds.
-            </Flash>
-          )}
-          {currentPlanPriceLabel !== 'N/A' && (
-            <Text as="p">Price: {currentPlanPriceLabel}</Text>
-          )}
-          {displaySubscriptionStatus && (
-            <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
-              Status: {displaySubscriptionStatus}
-            </Text>
-          )}
-          <Box
-            sx={{
-              marginBottom: 'var(--stack-gap-normal)',
-              border: '1px solid',
-              borderColor: 'border.muted',
-              borderRadius: 'var(--borderRadius-medium)',
-              backgroundColor: 'canvas.subtle',
-              padding: 'var(--stack-padding-condensed)',
-              display: 'grid',
-              gap: 'var(--stack-gap-condensed)',
-            }}
-          >
-            <Box
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 'var(--stack-gap-normal)',
+            gridTemplateColumns: ['1fr'],
+            alignItems: 'start',
+          }}
+        >
+          <Box>
+            <Text
+              as="h3"
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2,
+                fontWeight: 'bold',
+                marginBottom: 'var(--stack-gap-condensed)',
               }}
             >
-              <Text as="h4" sx={{ fontWeight: 'bold' }}>
-                Current usage
-              </Text>
-              <Label size="small">{String(currentSubscriptionPlan)}</Label>
-            </Box>
-
-            <Box>
-              <Text
-                as="p"
-                sx={{
-                  marginBottom: 'var(--stack-gap-condensed)',
-                  color: isRunsOverQuota ? 'danger.fg' : 'fg.default',
-                  fontWeight: isRunsOverQuota ? 'bold' : 'normal',
-                }}
+              Plan status
+            </Text>
+            <Text as="p">Plan: {String(currentSubscriptionPlan)}</Text>
+            {isPendingSubscriptionCheckout && (
+              <Flash
+                variant="warning"
+                sx={{ marginTop: 'var(--stack-gap-condensed)' }}
               >
-                Runs: {usedRuns.toLocaleString()} / {runsTotal.toLocaleString()}
+                Upgrade pending payment. Your Team plan is not active until card
+                payment succeeds.
+              </Flash>
+            )}
+            {currentPlanPriceLabel !== 'N/A' && (
+              <Text as="p">Price: {currentPlanPriceLabel}</Text>
+            )}
+            {displaySubscriptionStatus && (
+              <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
+                Status: {displaySubscriptionStatus}
               </Text>
-              <ProgressBar
-                barSize="small"
-                aria-label="Runs usage"
-                aria-valuenow={runsSegments.inQuotaPct + runsSegments.overPct}
-              >
-                <ProgressBar.Item
-                  progress={runsSegments.inQuotaPct}
-                  style={{ backgroundColor: 'var(--bgColor-success-emphasis)' }}
-                  aria-label={`Used in quota: ${runsSegments.inQuotaPct.toFixed(1)}%`}
-                />
-                <ProgressBar.Item
-                  progress={runsSegments.remainingPct}
-                  style={{ backgroundColor: 'var(--bgColor-accent-emphasis)' }}
-                  aria-label={`Remaining: ${runsSegments.remainingPct.toFixed(1)}%`}
-                />
-                <ProgressBar.Item
-                  progress={runsSegments.overPct}
-                  style={{ backgroundColor: 'var(--bgColor-danger-emphasis)' }}
-                  aria-label={`Over quota: ${runsSegments.overPct.toFixed(1)}%`}
-                />
-              </ProgressBar>
+            )}
+            <Box
+              sx={{
+                marginBottom: 'var(--stack-gap-normal)',
+                border: '1px solid',
+                borderColor: 'border.muted',
+                borderRadius: 'var(--borderRadius-medium)',
+                backgroundColor: 'canvas.subtle',
+                padding: 'var(--stack-padding-condensed)',
+                display: 'grid',
+                gap: 'var(--stack-gap-condensed)',
+              }}
+            >
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 3,
-                  mt: 1,
-                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  gap: 2,
                 }}
               >
-                <Box
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+                <Text as="h4" sx={{ fontWeight: 'bold' }}>
+                  Current usage
+                </Text>
+                <Label size="small">{String(currentSubscriptionPlan)}</Label>
+              </Box>
+
+              <Box>
+                <Text
+                  as="p"
+                  sx={{
+                    marginBottom: 'var(--stack-gap-condensed)',
+                    color: isRunsOverQuota ? 'danger.fg' : 'fg.default',
+                    fontWeight: isRunsOverQuota ? 'bold' : 'normal',
+                  }}
                 >
-                  <DotFillIcon fill="var(--bgColor-success-emphasis)" />
-                  <Text sx={{ fontSize: 0 }}>Used in quota</Text>
-                </Box>
-                <Box
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+                  Runs: {usedRuns.toLocaleString()} /{' '}
+                  {runsTotal.toLocaleString()}
+                </Text>
+                <ProgressBar
+                  barSize="small"
+                  aria-label="Runs usage"
+                  aria-valuenow={runsSegments.inQuotaPct + runsSegments.overPct}
                 >
-                  <DotFillIcon fill="var(--bgColor-accent-emphasis)" />
-                  <Text sx={{ fontSize: 0 }}>Remaining</Text>
-                </Box>
+                  <ProgressBar.Item
+                    progress={runsSegments.inQuotaPct}
+                    style={{
+                      backgroundColor: 'var(--bgColor-success-emphasis)',
+                    }}
+                    aria-label={`Used in quota: ${runsSegments.inQuotaPct.toFixed(1)}%`}
+                  />
+                  <ProgressBar.Item
+                    progress={runsSegments.remainingPct}
+                    style={{
+                      backgroundColor: 'var(--bgColor-accent-emphasis)',
+                    }}
+                    aria-label={`Remaining: ${runsSegments.remainingPct.toFixed(1)}%`}
+                  />
+                  <ProgressBar.Item
+                    progress={runsSegments.overPct}
+                    style={{
+                      backgroundColor: 'var(--bgColor-danger-emphasis)',
+                    }}
+                    aria-label={`Over quota: ${runsSegments.overPct.toFixed(1)}%`}
+                  />
+                </ProgressBar>
                 <Box
-                  sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    mt: 1,
+                    flexWrap: 'wrap',
+                  }}
                 >
-                  <DotFillIcon fill="var(--bgColor-danger-emphasis)" />
-                  <Text sx={{ fontSize: 0 }}>Over quota</Text>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <DotFillIcon fill="var(--bgColor-success-emphasis)" />
+                    <Text sx={{ fontSize: 0 }}>Used in quota</Text>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <DotFillIcon fill="var(--bgColor-accent-emphasis)" />
+                    <Text sx={{ fontSize: 0 }}>Remaining</Text>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <DotFillIcon fill="var(--bgColor-danger-emphasis)" />
+                    <Text sx={{ fontSize: 0 }}>Over quota</Text>
+                  </Box>
                 </Box>
               </Box>
-            </Box>
 
-            {periodProgress ? (
+              {periodProgress ? (
+                <Box>
+                  <Text
+                    as="p"
+                    sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
+                  >
+                    Usage period days: {periodProgress.elapsedDays} /{' '}
+                    {periodProgress.totalDays}
+                  </Text>
+                  <ProgressBar
+                    barSize="small"
+                    aria-label="Usage period progress"
+                    aria-valuenow={periodProgress.elapsedPct}
+                  >
+                    <ProgressBar.Item
+                      progress={periodProgress.elapsedPct}
+                      style={{
+                        backgroundColor: 'var(--bgColor-success-emphasis)',
+                      }}
+                      aria-label={`Elapsed: ${periodProgress.elapsedPct.toFixed(1)}%`}
+                    />
+                    <ProgressBar.Item
+                      progress={periodProgress.remainingPct}
+                      style={{
+                        backgroundColor: 'var(--bgColor-accent-emphasis)',
+                      }}
+                      aria-label={`Remaining: ${periodProgress.remainingPct.toFixed(1)}%`}
+                    />
+                  </ProgressBar>
+                  <Text
+                    as="p"
+                    sx={{
+                      color: 'fg.muted',
+                      fontSize: 0,
+                      marginTop: 'var(--stack-gap-condensed)',
+                    }}
+                  >
+                    {periodProgress.remainingDays} day(s) remaining in current
+                    period
+                  </Text>
+                </Box>
+              ) : null}
+
               <Box>
                 <Text
                   as="p"
                   sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
                 >
-                  Usage period days: {periodProgress.elapsedDays} /{' '}
-                  {periodProgress.totalDays}
+                  Wallet balance: {displayedWalletBalance.toLocaleString()}
                 </Text>
-                <ProgressBar
-                  barSize="small"
-                  aria-label="Usage period progress"
-                  aria-valuenow={periodProgress.elapsedPct}
-                >
-                  <ProgressBar.Item
-                    progress={periodProgress.elapsedPct}
-                    style={{
-                      backgroundColor: 'var(--bgColor-success-emphasis)',
-                    }}
-                    aria-label={`Elapsed: ${periodProgress.elapsedPct.toFixed(1)}%`}
-                  />
-                  <ProgressBar.Item
-                    progress={periodProgress.remainingPct}
-                    style={{
-                      backgroundColor: 'var(--bgColor-accent-emphasis)',
-                    }}
-                    aria-label={`Remaining: ${periodProgress.remainingPct.toFixed(1)}%`}
-                  />
-                </ProgressBar>
-                <Text
-                  as="p"
-                  sx={{
-                    color: 'fg.muted',
-                    fontSize: 0,
-                    marginTop: 'var(--stack-gap-condensed)',
-                  }}
-                >
-                  {periodProgress.remainingDays} day(s) remaining in current
-                  period
+                <Text as="p" sx={{ color: 'fg.muted' }}>
+                  Spent credits in current period:{' '}
+                  {usedCredits.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+                <Text as="p" sx={{ color: 'fg.muted' }}>
+                  Wallet credits are additive on renewal and top-ups.
                 </Text>
               </Box>
-            ) : null}
-
-            <Box>
-              <Text as="p" sx={{ marginBottom: 'var(--stack-gap-condensed)' }}>
-                Wallet balance: {walletBalance.toLocaleString()}
-              </Text>
-              <Text as="p" sx={{ color: 'fg.muted' }}>
-                Spent credits in current period:{' '}
-                {usedCredits.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Text>
-              <Text as="p" sx={{ color: 'fg.muted' }}>
-                Wallet credits are additive on renewal and top-ups.
-              </Text>
             </Box>
-          </Box>
-          {isCancellationScheduled && (
-            <Flash
-              variant="warning"
-              sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
-            >
-              Plan will switch to Free at the end of the current period on{' '}
-              {subscriptionPeriodEndLabel}.
-            </Flash>
-          )}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 'var(--stack-gap-condensed)',
-              flexWrap: 'wrap',
-            }}
-          >
-            {subscriptionPortalUrl && (
-              <Button
-                variant="default"
-                onClick={() => openPortal(subscriptionPortalUrl)}
-              >
-                Open Stripe billing portal
-              </Button>
-            )}
-            <Button
-              variant="default"
-              onClick={() => void onRefreshSubscriptionStatus()}
-              disabled={isSubscriptionStatusRefreshing}
-            >
-              {isSubscriptionStatusRefreshing
-                ? 'Refreshing status...'
-                : 'Refresh status'}
-            </Button>
-            {canCancelSubscription && !cancelViewOpen && (
-              <Button variant="danger" onClick={onCancelSubscription}>
-                Downgrade to Free Plan
-              </Button>
-            )}
-            {isIncompleteSubscription && !cancelViewOpen && (
-              <>
-                <Button
-                  variant="primary"
-                  onClick={startPendingSubscriptionCheckout}
-                  disabled={
-                    subscriptionPaymentIntentMutation.isPending ||
-                    checkout ||
-                    !pendingSubscriptionPlan
-                  }
-                >
-                  {subscriptionPaymentIntentMutation.isPending
-                    ? 'Preparing checkout...'
-                    : 'Continue pending payment'}
-                </Button>
-                <Button variant="danger" onClick={onCancelSubscription}>
-                  Cancel pending plan change
-                </Button>
-              </>
-            )}
             {isCancellationScheduled && (
-              <Button
-                variant="primary"
-                onClick={() => void onResumeSubscription()}
-                disabled={resumeSubscriptionMutation.isPending}
+              <Flash
+                variant="warning"
+                sx={{ marginBottom: 'var(--stack-gap-condensed)' }}
               >
-                {resumeSubscriptionMutation.isPending
-                  ? 'Resuming...'
-                  : 'Resume plan'}
-              </Button>
+                Plan will switch to Free at the end of the current period on{' '}
+                {subscriptionPeriodEndLabel}.
+              </Flash>
             )}
-          </Box>
-          <Text
-            as="p"
-            sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
-          >
-            Next step:{' '}
-            {isCancellationScheduled
-              ? 'Your plan is already scheduled to switch at period end. You can keep using it until then.'
-              : isIncompleteSubscription
-                ? 'Your payment is pending. Open the in-app cancel view below to cancel this plan change or continue with payment.'
-                : isPaidSubscription
-                  ? 'Keep your plan active. You can top-up credits any time.'
-                  : 'Top-up credits are available on Free and Team plans.'}
-          </Text>
-          {cancelViewOpen && (
             <Box
               sx={{
-                marginTop: 'var(--stack-gap-normal)',
-                border: '1px solid',
-                borderColor: 'border.default',
-                borderRadius: 'var(--borderRadius-medium)',
-                backgroundColor: 'canvas.subtle',
-                padding: 'var(--stack-padding-normal)',
-                display: 'grid',
+                display: 'flex',
                 gap: 'var(--stack-gap-condensed)',
+                flexWrap: 'wrap',
               }}
             >
-              <Text as="h4" sx={{ fontWeight: 'bold' }}>
-                {isIncompleteSubscription
-                  ? 'Cancel pending plan change'
-                  : 'Downgrade to Free Plan'}
-              </Text>
-              <Text as="p" sx={{ color: 'fg.muted' }}>
-                {isIncompleteSubscription
-                  ? 'This pending plan change will be canceled immediately.'
-                  : 'Your plan will switch at the end of the current usage period.'}
-              </Text>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 'var(--stack-gap-condensed)',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <Button
-                  variant="danger"
-                  onClick={() => void onConfirmCancelSubscription()}
-                  disabled={cancelSubscriptionMutation.isPending}
-                >
-                  {cancelSubscriptionMutation.isPending
-                    ? isIncompleteSubscription
-                      ? 'Canceling pending plan change...'
-                      : 'Downgrading...'
-                    : isIncompleteSubscription
-                      ? 'Confirm cancel pending plan change'
-                      : 'Confirm downgrade'}
-                </Button>
+              {subscriptionPortalUrl && (
                 <Button
                   variant="default"
-                  onClick={onAbortCancelView}
-                  disabled={cancelSubscriptionMutation.isPending}
+                  onClick={() => openPortal(subscriptionPortalUrl)}
                 >
-                  {isIncompleteSubscription
-                    ? 'Keep pending plan change'
-                    : 'Keep current plan'}
+                  Open Stripe billing portal
                 </Button>
-              </Box>
+              )}
+              <Button
+                variant="default"
+                onClick={() => void onRefreshSubscriptionStatus()}
+                disabled={isSubscriptionStatusRefreshing}
+              >
+                {isSubscriptionStatusRefreshing
+                  ? 'Refreshing status...'
+                  : 'Refresh status'}
+              </Button>
+              {canCancelSubscription && !cancelViewOpen && (
+                <Button variant="danger" onClick={onCancelSubscription}>
+                  Downgrade to Free Plan
+                </Button>
+              )}
+              {isIncompleteSubscription && !cancelViewOpen && (
+                <>
+                  <Button
+                    variant="primary"
+                    onClick={startPendingSubscriptionCheckout}
+                    disabled={
+                      subscriptionPaymentIntentMutation.isPending ||
+                      checkout ||
+                      !pendingSubscriptionPlan
+                    }
+                  >
+                    {subscriptionPaymentIntentMutation.isPending
+                      ? 'Preparing checkout...'
+                      : 'Continue pending payment'}
+                  </Button>
+                  <Button variant="danger" onClick={onCancelSubscription}>
+                    Cancel pending plan change
+                  </Button>
+                </>
+              )}
+              {showResumeAction && (
+                <Button
+                  variant="primary"
+                  onClick={() => void onResumeSubscription()}
+                  disabled={isResumeActionPending}
+                  leadingVisual={() =>
+                    isResumeActionPending ? <Spinner size="small" /> : undefined
+                  }
+                >
+                  {isResumeActionPending ? 'Resuming...' : 'Resume plan'}
+                </Button>
+              )}
             </Box>
+            <Text
+              as="p"
+              sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-normal)' }}
+            >
+              Next step:{' '}
+              {isCancellationScheduled
+                ? 'Your plan is already scheduled to switch at period end. You can keep using it until then.'
+                : isIncompleteSubscription
+                  ? 'Your payment is pending. Open the in-app cancel view below to cancel this plan change or continue with payment.'
+                  : isPaidSubscription
+                    ? 'Keep your plan active. You can top-up credits any time.'
+                    : 'Top-up credits are available on Free and Team plans.'}
+            </Text>
+            {cancelViewOpen && (
+              <Box
+                sx={{
+                  marginTop: 'var(--stack-gap-normal)',
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  borderRadius: 'var(--borderRadius-medium)',
+                  backgroundColor: 'canvas.subtle',
+                  padding: 'var(--stack-padding-normal)',
+                  display: 'grid',
+                  gap: 'var(--stack-gap-condensed)',
+                }}
+              >
+                <Text as="h4" sx={{ fontWeight: 'bold' }}>
+                  {isIncompleteSubscription
+                    ? 'Cancel pending plan change'
+                    : 'Downgrade to Free Plan'}
+                </Text>
+                <Text as="p" sx={{ color: 'fg.muted' }}>
+                  {isIncompleteSubscription
+                    ? 'This pending plan change will be canceled immediately.'
+                    : 'Your plan will switch at the end of the current usage period.'}
+                </Text>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 'var(--stack-gap-condensed)',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Button
+                    variant="danger"
+                    onClick={() => void onConfirmCancelSubscription()}
+                    disabled={isCancelActionPending}
+                    leadingVisual={() =>
+                      isCancelActionPending ? (
+                        <Spinner size="small" />
+                      ) : undefined
+                    }
+                  >
+                    {isCancelActionPending
+                      ? isIncompleteSubscription
+                        ? 'Canceling pending plan change...'
+                        : 'Waiting for confirmation...'
+                      : isIncompleteSubscription
+                        ? 'Confirm cancel pending plan change'
+                        : 'Confirm downgrade'}
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={onAbortCancelView}
+                    disabled={isCancelActionPending}
+                  >
+                    {isIncompleteSubscription
+                      ? 'Keep pending plan change'
+                      : 'Keep current plan'}
+                  </Button>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Box>
+    ) : null;
+
+  const currentPlanSection = isPaidSubscription ? (
+    <Box
+      sx={{
+        borderRight: ['none', '1px solid'],
+        borderColor: 'border.muted',
+        paddingRight: ['0', 'var(--stack-gap-normal)'],
+        alignSelf: 'stretch',
+      }}
+    >
+      <Box
+        sx={{
+          borderTop: 'none',
+          paddingTop: 0,
+          display: 'grid',
+          gap: 'var(--stack-gap-condensed)',
+        }}
+      >
+        <Text as="h3" sx={sectionTitleSx}>
+          Current plan
+        </Text>
+        <Text as="h4" sx={{ fontSize: 3, fontWeight: 'bold' }}>
+          {String(currentSubscriptionPlan)}
+        </Text>
+        <Text as="p" sx={{ color: 'fg.muted' }}>
+          You are currently on {String(currentSubscriptionPlan)}.
+        </Text>
+        {currentPlanPriceLabel !== 'N/A' && (
+          <Text as="p" sx={{ fontWeight: 'bold', fontSize: 2 }}>
+            {currentPlanPriceLabel}
+          </Text>
+        )}
+        {displaySubscriptionStatus && (
+          <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
+            <Label variant="success">{displaySubscriptionStatus}</Label>
+          </Box>
+        )}
+
+        {isCancellationScheduled ? (
+          <Flash
+            variant="warning"
+            sx={{ marginTop: 'var(--stack-gap-condensed)' }}
+          >
+            Your downgrade to Free Plan is scheduled at period end on{' '}
+            {subscriptionPeriodEndLabel}.
+          </Flash>
+        ) : null}
+
+        {!isCancellationScheduled || showResumeAction ? (
+          <Text
+            as="p"
+            sx={{ color: 'fg.muted', marginTop: 'var(--stack-gap-condensed)' }}
+          >
+            {showResumeAction
+              ? 'Possible action: Resume Team Plan.'
+              : 'Possible action: Downgrade to Free Plan.'}
+          </Text>
+        ) : null}
+
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 'var(--stack-gap-condensed)',
+            flexWrap: 'wrap',
+          }}
+        >
+          {canCancelSubscription && !cancelViewOpen && (
+            <Button variant="danger" onClick={onCancelSubscription}>
+              Downgrade to Free Plan
+            </Button>
+          )}
+          {showResumeAction && (
+            <Button
+              variant="primary"
+              onClick={() => void onResumeSubscription()}
+              disabled={isResumeActionPending}
+              leadingVisual={() =>
+                isResumeActionPending ? <Spinner size="small" /> : undefined
+              }
+            >
+              {isResumeActionPending ? 'Resuming...' : 'Resume plan'}
+            </Button>
           )}
         </Box>
+
+        {cancelViewOpen && (
+          <Box
+            sx={{
+              marginTop: 'var(--stack-gap-normal)',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 'var(--borderRadius-medium)',
+              backgroundColor: 'canvas.subtle',
+              padding: 'var(--stack-padding-normal)',
+              display: 'grid',
+              gap: 'var(--stack-gap-condensed)',
+            }}
+          >
+            <Text as="h4" sx={{ fontWeight: 'bold' }}>
+              Downgrade to Free Plan
+            </Text>
+            <Text as="p" sx={{ color: 'fg.muted' }}>
+              Your plan will switch at the end of the current usage period.
+            </Text>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 'var(--stack-gap-condensed)',
+                flexWrap: 'wrap',
+              }}
+            >
+              <Button
+                variant="danger"
+                onClick={() => void onConfirmCancelSubscription()}
+                disabled={isCancelActionPending}
+                leadingVisual={() =>
+                  isCancelActionPending ? <Spinner size="small" /> : undefined
+                }
+              >
+                {isCancelActionPending
+                  ? 'Waiting for confirmation...'
+                  : 'Confirm downgrade'}
+              </Button>
+              <Button
+                variant="default"
+                onClick={onAbortCancelView}
+                disabled={isCancelActionPending}
+              >
+                Keep current plan
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   ) : null;
@@ -1540,13 +1896,7 @@ export function StripeCheckout({
             'Cancel',
           ),
         ),
-        checkoutType === 'resume'
-          ? createElement(
-              Flash,
-              { variant: 'warning' },
-              'Enter a new payment card to resume your plan.',
-            )
-          : null,
+        null,
         createElement(
           Elements,
           {
@@ -1603,7 +1953,47 @@ export function StripeCheckout({
         </Box>
       );
     }
-  } else if (items) {
+  } else if (isReturningFromCheckout) {
+    view = (
+      <Box sx={{ flex: '1 1 auto', display: 'grid', gap: 3 }}>
+        <Box
+          sx={{
+            border: '1px solid',
+            borderColor: 'border.default',
+            borderRadius: 'var(--borderRadius-medium)',
+            backgroundColor: 'canvas.default',
+            padding: 'var(--stack-padding-normal)',
+            display: 'flex',
+            gap: 'var(--stack-gap-normal)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Spinner size="small" />
+          <Text as="p">Refreshing plan status…</Text>
+        </Box>
+        {disabledTopCards}
+      </Box>
+    );
+  } else if (isTopUpPricesPending) {
+    view = (
+      <Box sx={{ minHeight: '40px', display: 'grid', placeItems: 'center' }}>
+        <Spinner />
+      </Box>
+    );
+  } else if (isTopUpPricesError) {
+    view = (
+      <Box>
+        {topCards}
+        <Flash variant="danger">
+          {topUpPricesError instanceof Error
+            ? topUpPricesError.message
+            : 'Unable to fetch the available products. Please try again later.'}
+        </Flash>
+      </Box>
+    );
+  } else {
     view = items.length ? (
       <Box
         sx={{ flex: '1 1 auto' }}
@@ -1623,22 +2013,32 @@ export function StripeCheckout({
             padding: 'var(--stack-padding-normal)',
             display: 'grid',
             gap: 'var(--stack-gap-normal)',
-            gridTemplateColumns: ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)'],
-            alignItems: 'start',
+            gridTemplateColumns:
+              shouldShowMonthlySubscriptionSection || currentPlanSection
+                ? ['1fr', 'minmax(0, 1fr) minmax(0, 1fr)']
+                : ['1fr'],
+            alignItems: 'stretch',
           }}
         >
+          {shouldShowMonthlySubscriptionSection ? (
+            <Box
+              sx={{
+                borderRight: ['none', '1px solid'],
+                borderColor: 'border.muted',
+                paddingRight: ['0', 'var(--stack-gap-normal)'],
+                alignSelf: 'stretch',
+              }}
+            >
+              {monthlySubscriptionSection}
+            </Box>
+          ) : null}
+          {currentPlanSection}
           <Box
             sx={{
-              borderRight: ['none', '1px solid'],
-              borderColor: 'border.muted',
-              paddingRight: ['0', 'var(--stack-gap-normal)'],
-            }}
-          >
-            {monthlySubscriptionSection}
-          </Box>
-          <Box
-            sx={{
-              paddingLeft: ['0', 'var(--stack-gap-normal)'],
+              paddingLeft:
+                shouldShowMonthlySubscriptionSection || currentPlanSection
+                  ? ['0', 'var(--stack-gap-normal)']
+                  : 0,
             }}
           >
             {topUpSection}
@@ -1656,7 +2056,12 @@ export function StripeCheckout({
             </Box>
           ) : null}
         </Box>
-        {paymentMessage && (
+        {resumeConfirmationMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {resumeConfirmationMessage}
+          </Flash>
+        )}
+        {paymentMessage && !resumeConfirmationMessage && (
           <Flash variant="success" sx={{ mt: 3 }}>
             {paymentMessage}
           </Flash>
@@ -1665,10 +2070,18 @@ export function StripeCheckout({
       </Box>
     ) : (
       <Box>
+        {resumeConfirmationMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {resumeConfirmationMessage}
+          </Flash>
+        )}
+        {paymentMessage && !resumeConfirmationMessage && (
+          <Flash variant="success" sx={{ mt: 3 }}>
+            {paymentMessage}
+          </Flash>
+        )}
         {topCards}
-        <Flash variant="danger">
-          Unable to fetch the available products. Please try again later.
-        </Flash>
+        <Flash variant="default">No products are available yet.</Flash>
       </Box>
     );
   }

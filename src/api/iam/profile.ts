@@ -15,6 +15,7 @@ import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import {
   MembershipsResponse,
+  ShareablePrincipalsResponse,
   UserMeResponse,
   WhoAmIResponse,
 } from '../../models/IAM';
@@ -72,6 +73,26 @@ export const memberships = async (
 
   return requestDatalayerAPI<MembershipsResponse>({
     url: `${baseUrl}${API_BASE_PATHS.IAM}/memberships`,
+    method: 'GET',
+    token,
+  });
+};
+
+/**
+ * Get the set of principals the authenticated user can share artifacts with
+ * (self + member organizations + member teams).
+ *
+ * @param token - Authentication token (required)
+ * @param baseUrl - Base URL for the API (defaults to production IAM URL)
+ */
+export const principalsShareable = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.IAM,
+): Promise<ShareablePrincipalsResponse> => {
+  validateToken(token);
+
+  return requestDatalayerAPI<ShareablePrincipalsResponse>({
+    url: `${baseUrl}${API_BASE_PATHS.IAM}/principals/shareable`,
     method: 'GET',
     token,
   });

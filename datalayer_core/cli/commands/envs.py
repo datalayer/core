@@ -22,10 +22,11 @@ console = Console()
 
 def _make_client(
     token: Optional[str] = None,
+    iam_url: Optional[str] = None,
     runtimes_url: Optional[str] = None,
 ) -> DatalayerClient:
     """Create a DatalayerClient with optional runtimes URL override."""
-    urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
+    urls = DatalayerURLs.from_environment(iam_url=iam_url, runtimes_url=runtimes_url)
     return DatalayerClient(urls=urls, token=token)
 
 
@@ -36,12 +37,17 @@ def envs_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_environments(
     token: Optional[str] = typer.Option(
         None,
         "--token",
         help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,
@@ -51,7 +57,11 @@ def list_environments(
 ) -> None:
     """List available environments."""
     try:
-        client = _make_client(token=token, runtimes_url=runtimes_url)
+        client = _make_client(
+            token=token,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+        )
         environments = client.list_environments()
 
         # Convert to dict format for display_environments
@@ -84,29 +94,17 @@ def list_environments(
         raise typer.Exit(1)
 
 
-@app.command(name="ls")
-def list_environments_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-    runtimes_url: Optional[str] = typer.Option(
-        None,
-        "--runtimes-url",
-        help="Datalayer Runtimes server URL",
-    ),
-) -> None:
-    """List available environments (alias for list)."""
-    list_environments(token=token, runtimes_url=runtimes_url)
-
-
 # Root level commands for convenience
 def envs_list(
     token: Optional[str] = typer.Option(
         None,
         "--token",
         help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,
@@ -115,7 +113,7 @@ def envs_list(
     ),
 ) -> None:
     """List available environments (root command)."""
-    list_environments(token=token, runtimes_url=runtimes_url)
+    list_environments(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
 
 
 def envs_ls(
@@ -124,6 +122,11 @@ def envs_ls(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     runtimes_url: Optional[str] = typer.Option(
         None,
         "--runtimes-url",
@@ -131,4 +134,4 @@ def envs_ls(
     ),
 ) -> None:
     """List available environments (root command alias)."""
-    list_environments(token=token, runtimes_url=runtimes_url)
+    list_environments(token=token, iam_url=iam_url, runtimes_url=runtimes_url)

@@ -245,7 +245,8 @@ export function RuntimePickerCell(props: IRuntimePickerCellProps): JSX.Element {
         <RuntimeLauncherDialog
           manager={multiServiceManager.remote!}
           onSubmit={onStartRemote}
-          startRuntime={false}
+          startRuntime={'defer'}
+          submitLabel="Assign"
           markdownParser={markdownParser}
           sanitizer={sanitizer}
         />

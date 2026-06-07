@@ -5,11 +5,9 @@
 
 /**
  * TanStack Query-based cache hook for Datalayer API
+ * for automatic cache management, background refetching,
+ * and optimistic updates.
  *
- * This is a modernized replacement for useCache.tsx that leverages TanStack Query
- * for automatic cache management, background refetching, and optimistic updates.
- *
- * Key improvements over useCache:
  * - Automatic cache management (no manual Map objects)
  * - Built-in loading/error states
  * - Automatic refetching and deduplication
@@ -448,6 +446,25 @@ export const queryKeys = {
   // Growth
   growth: {
     kpi: () => ['growth', 'kpi'] as const,
+  },
+
+  // Ray (Runtimes)
+  ray: {
+    all: () => ['ray'] as const,
+    clusters: () => [...queryKeys.ray.all(), 'clusters'] as const,
+    cluster: (namespace: string, clusterName: string) =>
+      [...queryKeys.ray.all(), 'cluster', namespace, clusterName] as const,
+    jobs: (namespace: string, clusterName?: string) =>
+      [
+        ...queryKeys.ray.all(),
+        'jobs',
+        namespace,
+        clusterName || 'all',
+      ] as const,
+    job: (namespace: string, jobName: string) =>
+      [...queryKeys.ray.all(), 'job', namespace, jobName] as const,
+    logs: (namespace: string, jobName: string) =>
+      [...queryKeys.ray.job(namespace, jobName), 'logs'] as const,
   },
 
   // OAuth2
@@ -1724,12 +1741,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get user spaces
    */
-  const useUserSpaces = () => {
+  const useUserSpaces = (scope?: {
+    selectedPrincipalUid?: string;
+    selectedPrincipalKind?: 'user' | 'organization' | 'team';
+  }) => {
     return useQuery({
-      queryKey: queryKeys.spaces.userSpaces(),
+      queryKey: [
+        ...queryKeys.spaces.userSpaces(),
+        scope?.selectedPrincipalUid || '',
+        scope?.selectedPrincipalKind || '',
+      ],
       queryFn: async () => {
+        const params = new URLSearchParams();
+        if (scope?.selectedPrincipalUid) {
+          params.set('selected_principal_uid', scope.selectedPrincipalUid);
+        }
+        if (scope?.selectedPrincipalKind) {
+          params.set('selected_principal_kind', scope.selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.spaces) {
@@ -1759,9 +1791,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async ({
         space,
         organization,
+        team,
       }: {
         space: Partial<IAnySpace>;
         organization?: IAnyOrganization;
+        team?: {
+          id?: string;
+          handle?: string;
+        };
       }) => {
         const seedSpaceId =
           space.variant === 'course'
@@ -1777,6 +1814,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             public: space.public,
             spaceHandle: space.handle,
             organizationId: organization?.id,
+            organizationHandle: organization?.handle,
+            teamId: team?.id,
+            teamHandle: team?.handle,
             seedSpaceId,
           },
         });
@@ -2290,12 +2330,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get all pages
    */
-  const usePages = () => {
+  const usePages = (scope?: {
+    selectedPrincipalUid?: string;
+    selectedPrincipalKind?: 'user' | 'organization' | 'team';
+  }) => {
     return useQuery({
-      queryKey: queryKeys.pages.all(),
+      queryKey: [
+        ...queryKeys.pages.all(),
+        scope?.selectedPrincipalUid || '',
+        scope?.selectedPrincipalKind || '',
+      ],
       queryFn: async () => {
+        const params = new URLSearchParams();
+        if (scope?.selectedPrincipalUid) {
+          params.set('selected_principal_uid', scope.selectedPrincipalUid);
+        }
+        if (scope?.selectedPrincipalKind) {
+          params.set('selected_principal_kind', scope.selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages`,
+          url: `${configuration.libraryRunUrl}/api/library/v1/pages${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.pages) {
@@ -2402,15 +2457,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // Datasource, Secret, Token Hooks
   // ============================================================================
 
+  type PrincipalScopeOptions = {
+    principalUid?: string;
+    principalKind?: 'user' | 'organization' | 'team';
+  };
+
   /**
    * Get all datasources
    */
-  const useDatasources = () => {
+  const useDatasources = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: queryKeys.datasources.all(),
+      queryKey: [
+        ...queryKeys.datasources.all(),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+            principalUid,
+            principalKind,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.datasources) {
@@ -2437,11 +2507,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create datasource
    */
-  const useCreateDatasource = () => {
+  const useCreateDatasource = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+            principalUid,
+            principalKind,
+          ),
           method: 'POST',
           body: { ...datasource },
         });
@@ -2467,12 +2543,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // but this prevented useSecret from fetching fresh data (e.g., the value field).
   // Consider re-adding cache pre-population if the list endpoint returns full secret data,
   // or use a different query key pattern for partial vs full secret data.
-  const useSecrets = () => {
+  const useSecrets = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: queryKeys.secrets.all(),
+      queryKey: [
+        ...queryKeys.secrets.all(),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+            principalUid,
+            principalKind,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.secrets) {
@@ -2491,11 +2577,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Create secret
    */
-  const useCreateSecret = () => {
+  const useCreateSecret = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (secret: Omit<ISecret, 'id'>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+            principalUid,
+            principalKind,
+          ),
           method: 'POST',
           body: { ...secret },
         });
@@ -2515,11 +2607,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Delete secret
    */
-  const useDeleteSecret = () => {
+  const useDeleteSecret = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (secretId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+            principalUid,
+            principalKind,
+          ),
           method: 'DELETE',
         });
       },
@@ -2813,12 +2911,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get single datasource by ID
    */
-  const useDatasource = (datasourceId: string) => {
+  const useDatasource = (
+    datasourceId: string,
+    options?: PrincipalScopeOptions,
+  ) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: queryKeys.datasources.detail(datasourceId),
+      queryKey: [
+        ...queryKeys.datasources.detail(datasourceId),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
+            principalUid,
+            principalKind,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.datasource) {
@@ -2834,11 +2945,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Update datasource
    */
-  const useUpdateDatasource = () => {
+  const useUpdateDatasource = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (datasource: IDatasource) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
+            principalUid,
+            principalKind,
+          ),
           method: 'PUT',
           body: { ...datasource },
         });
@@ -2863,17 +2980,29 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const useSecret = (
     secretId: string,
     options?: {
+      principalUid?: string;
+      principalKind?: 'user' | 'organization' | 'team';
       enabled?: boolean;
       refetchOnMount?: boolean | 'always';
       staleTime?: number;
       gcTime?: number;
     },
   ) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useQuery({
-      queryKey: queryKeys.secrets.detail(secretId),
+      queryKey: [
+        ...queryKeys.secrets.detail(secretId),
+        principalUid || 'self',
+        principalKind || '',
+      ],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+            principalUid,
+            principalKind,
+          ),
           method: 'GET',
         });
         if (resp.success && resp.secret) {
@@ -2893,11 +3022,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Update secret
    */
-  const useUpdateSecret = () => {
+  const useUpdateSecret = (options?: PrincipalScopeOptions) => {
+    const principalUid = options?.principalUid;
+    const principalKind = options?.principalKind;
     return useMutation({
       mutationFn: async (secret: ISecret) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
+          url: withAccountUidQuery(
+            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
+            principalUid,
+            principalKind,
+          ),
           method: 'PUT',
           body: { ...secret },
         });
@@ -5436,25 +5571,88 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     accountUid?: string;
   };
 
-  const withAccountUidQuery = (url: string, accountUid?: string) => {
+  const withAccountUidQuery = (
+    url: string,
+    accountUid?: string,
+    accountKind?: string,
+  ) => {
     if (!accountUid) {
       return url;
     }
     const separator = url.includes('?') ? '&' : '?';
-    return `${url}${separator}account_uid=${encodeURIComponent(accountUid)}`;
+    const parts = [`billable_account_uid=${encodeURIComponent(accountUid)}`];
+    if (accountKind) {
+      parts.push(`billable_account_kind=${encodeURIComponent(accountKind)}`);
+    }
+    return `${url}${separator}${parts.join('&')}`;
   };
 
   const useTopUpPrices = (
     options?: Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>,
   ) => {
     return useQuery({
-      queryKey: ['stripe', 'topup', 'prices'],
+      queryKey: ['stripe', 'plans', 'prices'],
       queryFn: async () => {
+        const normalizeTopUpPrices = (raw: unknown[]): unknown[] => {
+          const prices = raw.map((item: any) => ({
+            ...item,
+            default: item?.default === true,
+          }));
+
+          const explicitDefaultIndex = prices.findIndex(
+            item => item.default === true,
+          );
+          if (explicitDefaultIndex >= 0) {
+            return prices.map((item, index) => ({
+              ...item,
+              default: index === explicitDefaultIndex,
+            }));
+          }
+
+          if (prices.length === 0) {
+            return prices;
+          }
+
+          let fallbackDefaultIndex = 0;
+          let fallbackDefaultAmount = Number(prices[0]?.amount || 0);
+          for (let index = 1; index < prices.length; index += 1) {
+            const amount = Number(prices[index]?.amount || 0);
+            if (amount > fallbackDefaultAmount) {
+              fallbackDefaultAmount = amount;
+              fallbackDefaultIndex = index;
+            }
+          }
+
+          return prices.map((item, index) => ({
+            ...item,
+            default: index === fallbackDefaultIndex,
+          }));
+        };
+
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/prices`,
+          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/plans/prices`,
           method: 'GET',
         });
-        return resp.prices || [];
+
+        if (resp?.success === false) {
+          throw new Error(
+            resp?.message || 'Unable to fetch available top-up products.',
+          );
+        }
+
+        if (Array.isArray(resp?.prices)) {
+          return normalizeTopUpPrices(resp.prices);
+        }
+
+        if (Array.isArray(resp)) {
+          return normalizeTopUpPrices(resp);
+        }
+
+        if (resp && Object.keys(resp).length === 0) {
+          return [];
+        }
+
+        throw new Error('Unable to fetch available top-up products.');
       },
       ...options,
     });
@@ -5496,7 +5694,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription/plans`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans/catalog`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -5561,7 +5759,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -5581,11 +5779,43 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'eligible-accounts'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/eligible-accounts`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/eligible-accounts`,
           method: 'GET',
         });
         return resp.accounts || [];
       },
+      ...options,
+    });
+  };
+
+  /**
+   * Get subscription details + eligibility for a batch of account UIDs.
+   */
+  const useSubscriptionAccountsDetails = (
+    accountUids: string[],
+    options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn' | 'enabled'>,
+  ) => {
+    const normalizedAccountUids = Array.from(
+      new Set(
+        (accountUids || [])
+          .map(uid => String(uid || '').trim())
+          .filter(Boolean),
+      ),
+    );
+
+    return useQuery({
+      queryKey: ['subscription', 'accounts-details', normalizedAccountUids],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/accounts/details`,
+          method: 'POST',
+          body: {
+            account_uids: normalizedAccountUids,
+          },
+        });
+        return resp.accounts || [];
+      },
+      enabled: normalizedAccountUids.length > 0,
       ...options,
     });
   };
@@ -5600,7 +5830,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription/cancel`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans/cancel`,
             scope?.accountUid,
           ),
           method: 'POST',
@@ -5624,7 +5854,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/subscription/resume`,
+            `${configuration.iamRunUrl}/api/iam/v1/plans/resume`,
             scope?.accountUid,
           ),
           method: 'POST',
@@ -5649,7 +5879,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'admin', userId],
       queryFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/admin/${userId}`,
           method: 'GET',
         });
       },
@@ -5667,7 +5897,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/subscription/admin/${userId}/reset`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/plans/admin/${userId}/reset`,
           method: 'POST',
         });
       },
@@ -7136,6 +7366,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     });
   };
 
+  /**
+   * Get growth contacts KPIs.
+   */
+  const useGrowthContactsKPI = (
+    options?: Omit<UseQueryOptions<unknown>, 'queryKey' | 'queryFn'>,
+  ) => {
+    return useQuery({
+      queryKey: ['growth', 'contacts-kpi'],
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.growthRunUrl}/api/growth/v1/kpis/contacts`,
+          method: 'GET',
+        });
+        return resp;
+      },
+      ...options,
+    });
+  };
+
   // ============================================================================
   // Refresh Operations & Additional Methods
   // ============================================================================
@@ -8270,6 +8519,187 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
+  // Ray (Runtimes) Hooks
+  // ============================================================================
+
+  const useRayClusters = () => {
+    return useQuery({
+      queryKey: queryKeys.ray.clusters(),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray clusters');
+        }
+        return {
+          clusters: asArray(resp.clusters),
+          namespaces: asArray(resp.namespaces)
+            .map(value => String(value))
+            .filter(Boolean),
+        };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      refetchOnMount: true,
+      enabled: Boolean(configuration.runtimesRunUrl),
+    });
+  };
+
+  const useRayCluster = (namespace = 'default', clusterName = '') => {
+    return useQuery({
+      queryKey: queryKeys.ray.cluster(namespace, clusterName),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray cluster');
+        }
+        return resp.cluster || null;
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled:
+        Boolean(configuration.runtimesRunUrl) &&
+        Boolean(namespace) &&
+        Boolean(clusterName),
+    });
+  };
+
+  const useCreateRayCluster = () => {
+    return useMutation({
+      mutationFn: async (payload: Record<string, unknown>) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
+          method: 'POST',
+          body: payload,
+        });
+        if (resp?.success === false) {
+          throw new Error(
+            resp?.message || resp?.reason || 'Failed to create Ray cluster',
+          );
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useDeleteRayCluster = (namespace = 'default') => {
+    return useMutation({
+      mutationFn: async (clusterName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useRayJobs = (namespace = 'default', clusterName?: string) => {
+    return useQuery({
+      queryKey: queryKeys.ray.jobs(namespace, clusterName),
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        params.set('namespace', namespace);
+        if (clusterName) {
+          params.set('cluster_name', clusterName);
+        }
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs?${params.toString()}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray jobs');
+        }
+        return asArray(resp.jobs);
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled: Boolean(configuration.runtimesRunUrl),
+    });
+  };
+
+  const useSubmitRayJob = (clusterName: string) => {
+    return useMutation({
+      mutationFn: async (payload: Record<string, unknown>) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}/jobs`,
+          method: 'POST',
+          body: payload,
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useDeleteRayJob = (namespace = 'default') => {
+    return useMutation({
+      mutationFn: async (jobName: string) => {
+        return requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}?namespace=${encodeURIComponent(namespace)}`,
+          method: 'DELETE',
+        });
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.ray.all() });
+      },
+    });
+  };
+
+  const useRayJobLogs = (
+    jobName: string,
+    namespace = 'default',
+    tailLines = 200,
+    enabled = true,
+  ) => {
+    return useQuery({
+      queryKey: queryKeys.ray.logs(namespace, jobName),
+      queryFn: async () => {
+        const params = new URLSearchParams();
+        params.set('namespace', namespace);
+        params.set('tail_lines', String(tailLines));
+        const resp = await requestDatalayer({
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}/logs?${params.toString()}`,
+          method: 'GET',
+          // Logs naturally 404 once a job is deleted; never surface a toast.
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to fetch Ray job logs');
+        }
+        return {
+          logs: String(resp.logs || ''),
+          status: String(resp.status || ''),
+        };
+      },
+      ...DEFAULT_QUERY_OPTIONS,
+      enabled:
+        Boolean(configuration.runtimesRunUrl) && Boolean(jobName) && enabled,
+      refetchOnMount: 'always',
+      refetchInterval: query => {
+        const status = String(
+          (query.state.data as { status?: string } | undefined)?.status || '',
+        ).toLowerCase();
+        const terminal = [
+          'succeeded',
+          'failed',
+          'stopped',
+          'completed',
+        ].includes(status);
+        return terminal ? false : 3000;
+      },
+    });
+  };
+
+  // ============================================================================
   // Return all methods grouped by category
   // ============================================================================
 
@@ -8572,6 +9002,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useSubscriptionStatus,
     useSubscriptionPlans,
     useEligibleSubscriptionAccounts,
+    useSubscriptionAccountsDetails,
     useCancelSubscription,
     useResumeSubscription,
     useUserSubscription,
@@ -8584,6 +9015,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRequestPlatformSupport2,
     useUserSurveys,
     useGrowthKPI,
+    useGrowthContactsKPI,
+
+    // Ray (Runtimes)
+    useRayClusters,
+    useRayCluster,
+    useCreateRayCluster,
+    useDeleteRayCluster,
+    useRayJobs,
+    useSubmitRayJob,
+    useDeleteRayJob,
+    useRayJobLogs,
 
     // Query keys for manual operations
     queryKeys,

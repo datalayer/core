@@ -301,10 +301,35 @@ async function handleAxiosRedirection(
 ): Promise<any> {
   let redirect = response.headers.location;
   if (redirect) {
-    const parsedURL = URLExt.parse(originalConfig.url!);
-    const baseUrl = parsedURL.protocol + '//' + parsedURL.hostname;
-    if (!redirect.startsWith(baseUrl)) {
-      redirect = URLExt.join(baseUrl, redirect);
+    const baseUrl = originalConfig.url ?? '';
+    const normalizedRedirect = String(redirect).replace(
+      /^([a-z][a-z0-9+.-]*):\/(?!\/)/i,
+      '$1://',
+    );
+
+    try {
+      const resolved = new URL(normalizedRedirect, baseUrl);
+      const base = new URL(baseUrl, typeof window !== 'undefined' ? window.location.origin : undefined);
+
+      // If a proxy emits an http Location for the same host while the
+      // original request is https, force https to avoid mixed-content errors
+      // that browsers often report as CORS/network failures.
+      if (
+        base.protocol === 'https:' &&
+        resolved.protocol === 'http:' &&
+        resolved.hostname === base.hostname
+      ) {
+        resolved.protocol = 'https:';
+        if (resolved.port === '80') {
+          resolved.port = '';
+        }
+      }
+
+      redirect = resolved.toString();
+    } catch {
+      const parsedURL = URLExt.parse(baseUrl);
+      const fallbackBase = parsedURL.protocol + '//' + parsedURL.hostname;
+      redirect = URLExt.join(fallbackBase, normalizedRedirect);
     }
   }
 

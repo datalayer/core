@@ -12,7 +12,7 @@ import { getRuntimes } from '../../stateful/runtimes';
 import type { IRuntimesConfiguration } from '../../config';
 import type {
   IRuntimePod,
-  IRuntimeSnapshot,
+  ICodeSandboxSnapshot,
   IRuntimeModel,
 } from '../../models';
 import { coreStore } from './CoreState';
@@ -66,21 +66,21 @@ export type RuntimesState = {
   showDisclaimer: boolean;
   setShowDisclaimer: (showDisclaimer: boolean) => void;
   /**
-   * Runtime snapshots.
+   * Code Sandbox snapshots.
    */
-  runtimeSnapshots: readonly IRuntimeSnapshot[];
+  runtimeSnapshots: readonly ICodeSandboxSnapshot[];
   /**
-   * Add a runtime snapshot.
+   * Add a code sandbox snapshot.
    */
-  addRuntimeSnapshot: (snapshot: IRuntimeSnapshot) => void;
+  addSandboxSnapshot: (snapshot: ICodeSandboxSnapshot) => void;
   /**
-   * Remove a Runtime Snapshot.
+   * Remove a Code Sandbox Snapshot.
    */
-  removeRuntimeSnapshot: (id: string) => void;
+  removeSandboxSnapshot: (id: string) => void;
   /**
-   * Set Runtime Snapshots.
+   * Set Code Sandbox Snapshots.
    */
-  setRuntimeSnapshots: (snapshots: IRuntimeSnapshot[]) => void;
+  setSandboxSnapshots: (snapshots: ICodeSandboxSnapshot[]) => void;
   /**
    * Package version.
    */
@@ -173,7 +173,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
     /**
      * Add a Kernel Snapshot
      */
-    addRuntimeSnapshot: (snapshot: IRuntimeSnapshot) => {
+    addSandboxSnapshot: (snapshot: ICodeSandboxSnapshot) => {
       const snapshots = get().runtimeSnapshots;
       const index = snapshots.findIndex(s => s.id === snapshot.id);
       if (index < 0) {
@@ -188,7 +188,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
     /**
      * Remove a Kernel Snapshot.
      */
-    removeRuntimeSnapshot: (id: string) => {
+    removeSandboxSnapshot: (id: string) => {
       const snapshots = get().runtimeSnapshots;
       const index = snapshots.findIndex(s => s.id === id);
       if (index >= 0) {
@@ -200,7 +200,7 @@ export const runtimesStore = createStore<RuntimesState>((set, get) => {
     /**
      * Set Kernel Snapshots.
      */
-    setRuntimeSnapshots: (snapshots: IRuntimeSnapshot[]) => {
+    setSandboxSnapshots: (snapshots: ICodeSandboxSnapshot[]) => {
       if (!JSONExt.deepEqual(get().runtimeSnapshots as any, snapshots as any)) {
         set({ runtimeSnapshots: [...snapshots] });
       }

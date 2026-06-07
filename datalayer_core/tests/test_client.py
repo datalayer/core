@@ -11,7 +11,7 @@ import pytest
 from dotenv import load_dotenv
 
 from datalayer_core import DatalayerClient
-from datalayer_core.models.runtime_snapshot import RuntimeSnapshotModel
+from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 
 load_dotenv()
 
@@ -101,7 +101,7 @@ def test_runtime_create_execute_and_list() -> None:
     not bool(TEST_DATALAYER_API_KEY),
     reason="TEST_DATALAYER_API_KEY is not set, skipping secret tests.",
 )
-def test_runtime_snapshot_create_and_delete() -> None:
+def test_code_sandbox_snapshot_create_and_delete() -> None:
     """
     Test the creation and deletion of runtime.
     """
@@ -114,7 +114,7 @@ def test_runtime_snapshot_create_and_delete() -> None:
 
     def _delete_with_retry(
         client: DatalayerClient,
-        snap: RuntimeSnapshotModel,
+        snap: SandboxSnapshotModel,
         retries: int = 10,
         delay: float = 5.0,
     ) -> None:

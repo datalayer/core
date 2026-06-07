@@ -10,6 +10,14 @@ This directory contains practical examples demonstrating how to use the Datalaye
 
 ## 🎯 Client Fundamentals
 
+### 📈 [Evals CLI Workflows](./evals/README.md)
+
+Beginner-friendly walkthrough for launching and monitoring SaaS evals with `datalayer evals`.
+
+- **Use Case**: Run evals/experiments from CLI and track in the SaaS UI
+- **Technologies**: Datalayer Core CLI, AI Agents eval APIs
+- **Features**: Eval/experiment/run creation, run watching, live target inspection, make targets for quick onboarding
+
 ### 🎭 [Datalayer Decorator](./decorator/README.md)
 
 Comprehensive examples demonstrating the `@datalayer` decorator for seamless remote function execution.
@@ -79,7 +87,7 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 
 ## Support
 
-- **Documentation**: [Datalayer Platform Documentation](https://docs.datalayer.app/)
+- **Documentation**: [Datalayer Platform Documentation](https://datalayer.ai/docs/)
 - **Issues**: [GitHub Issues](https://github.com/datalayer/core/issues)
 - **Community**: [Datalayer Platform](https://datalayer.app/)
 

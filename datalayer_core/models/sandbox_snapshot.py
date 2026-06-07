@@ -4,7 +4,7 @@
 """
 Runtime snapshot model for Datalayer.
 
-Provides data structures for runtime snapshot management in Datalayer environments.
+Provides data structures for code sandbox snapshot management in Datalayer environments.
 """
 
 from typing import Any, Dict
@@ -12,12 +12,12 @@ from typing import Any, Dict
 from pydantic import BaseModel, Field
 
 
-class RuntimeSnapshotModel(BaseModel):
+class SandboxSnapshotModel(BaseModel):
     """
     Pydantic model representing a snapshot of a Datalayer runtime state.
 
     This model contains all the data fields and configuration parameters
-    for a runtime snapshot, separate from the service logic.
+    for a code sandbox snapshot, separate from the service logic.
     """
 
     uid: str = Field(..., description="Unique identifier for the snapshot")
@@ -32,6 +32,6 @@ class RuntimeSnapshotModel(BaseModel):
 
     def __repr__(self) -> str:
         return (
-            f"RuntimeSnapshotModel(uid='{self.uid}', name='{self.name}', "
+            f"SandboxSnapshotModel(uid='{self.uid}', name='{self.name}', "
             f"description='{self.description}', environment='{self.environment}')"
         )

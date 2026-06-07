@@ -12,7 +12,7 @@
   <a href="https://pypi.org/project/datalayer-core/"><img src="https://img.shields.io/pypi/v/datalayer-core.svg" alt="PyPI version"></img></a>
   <a href="https://pypi.org/project/datalayer-core/"><img src="https://img.shields.io/pypi/pyversions/datalayer-core.svg" alt="Python versions"></img></a>
   <a href="https://github.com/datalayer/core/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-BSD%203--Clause-blue.svg" alt="License"></img></a>
-  <a href="https://docs.datalayer.app/"><img src="https://img.shields.io/badge/docs-datalayer.app-blue" alt="Documentation"></img></a>
+  <a href="https://datalayer.ai/docs/"><img src="https://img.shields.io/badge/docs-datalayer.app-blue" alt="Documentation"></img></a>
   <a href="https://github.com/datalayer/core/actions/workflows/py-tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/py-tests.yml/badge.svg" alt="Units Tests"></img></a><a href="https://github.com/datalayer/core/actions/workflows/ts-tests.yml"><img src="https://github.com/datalayer/core/actions/workflows/ts-tests.yml/badge.svg" alt="Units Tests"></img></a>
 </p>
 
@@ -217,10 +217,10 @@ Key platform features accessible through this Client and CLI:
 
 ## Documentation
 
-- **Command Line Interface (CLI)**: [https://docs.datalayer.app/cli/](https://docs.datalayer.app/cli/)
+- **Command Line Interface (CLI)**: [https://datalayer.ai/docs/cli/](https://datalayer.ai/docs/cli/)
 - **Core Python Client**: [core.datalayer.tech/python/](https://core.datalayer.tech/python/)
-- **Platform Documentation**: [docs.datalayer.app](https://docs.datalayer.app/)
-- **API Reference**: [API documentation](https://docs.datalayer.app/api/)
+- **Platform Documentation**: [docs.datalayer.app](https://datalayer.ai/docs/)
+- **API Reference**: [API documentation](https://datalayer.ai/docs/api/)
 
 ## Development
 
@@ -317,7 +317,7 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 
 ## Support
 
-- **Documentation**: [Datalayer Platform Documentation](https://docs.datalayer.app/)
+- **Documentation**: [Datalayer Platform Documentation](https://datalayer.ai/docs/)
 - **Issues**: [GitHub Issues](https://github.com/datalayer/core/issues)
 - **Community**: [Datalayer Platform](https://datalayer.app/)
 

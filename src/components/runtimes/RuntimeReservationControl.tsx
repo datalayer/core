@@ -69,7 +69,22 @@ export function RuntimeReservationControl(
     onTimeChange,
     time,
   } = props;
-  const max = Math.min(maxProps, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES);
+  const max = Math.max(
+    1,
+    Math.min(maxProps, MAXIMAL_RUNTIME_TIME_RESERVATION_MINUTES),
+  );
+  const displayedTime = Number.isFinite(time)
+    ? Math.min(max, Math.max(1, time))
+    : 1;
+  const handleTimeChange = (valueOrEvent: any) => {
+    const rawValue =
+      typeof valueOrEvent === 'number'
+        ? valueOrEvent
+        : parseFloat(valueOrEvent?.target?.value);
+    if (Number.isFinite(rawValue)) {
+      onTimeChange(Math.min(max, Math.max(1, rawValue)));
+    }
+  };
   // Temporary workaround to not show disabled components.
   const hidden = disabled;
   return !hidden ? (
@@ -91,8 +106,8 @@ export function RuntimeReservationControl(
           step={1}
           min={1}
           max={max}
-          value={time}
-          onChange={onTimeChange}
+          value={displayedTime}
+          onChange={handleTimeChange}
           disabled={disabled}
           label=""
           displayValue={false}
@@ -103,10 +118,8 @@ export function RuntimeReservationControl(
           min="1"
           max={max}
           disabled={disabled}
-          value={Math.min(max, time).toFixed(2)}
-          onChange={event => {
-            onTimeChange(parseFloat(event.target.value));
-          }}
+          value={displayedTime.toFixed(2)}
+          onChange={handleTimeChange}
         />
         {(max === 0 || max > Number.EPSILON) && (
           <>

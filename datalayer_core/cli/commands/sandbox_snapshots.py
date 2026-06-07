@@ -9,11 +9,11 @@ import typer
 from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.runtime_snapshots import display_runtime_snapshots
+from datalayer_core.displays.sandbox_snapshots import display_code_sandbox_snapshots
 
 # Create a Typer app for snapshot commands
 app = typer.Typer(
-    name="runtime-snapshots",
+    name="sandbox-snapshots",
     help="Runtime snapshots management commands",
     invoke_without_command=True,
 )
@@ -28,7 +28,7 @@ def snapshots_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_snapshots(
     token: Optional[str] = typer.Option(
         None,
@@ -54,23 +54,11 @@ def list_snapshots(
                 }
             )
 
-        display_runtime_snapshots(snapshot_dicts)
+        display_code_sandbox_snapshots(snapshot_dicts)
 
     except Exception as e:
         console.print(f"[red]Error listing snapshots: {e}[/red]")
         raise typer.Exit(1)
-
-
-@app.command(name="ls")
-def list_snapshots_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-) -> None:
-    """List all snapshots (alias for list)."""
-    list_snapshots(token=token)
 
 
 @app.command(name="create")
@@ -121,7 +109,7 @@ def create_snapshot(
             "metadata": snapshot.metadata,
         }
 
-        display_runtime_snapshots([snapshot_dict])
+        display_code_sandbox_snapshots([snapshot_dict])
         console.print(
             f"[green]Snapshot '{snapshot.name}' created successfully![/green]"
         )

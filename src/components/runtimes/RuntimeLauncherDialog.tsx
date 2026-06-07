@@ -26,7 +26,7 @@ import { useNavigate } from '../../hooks';
 import { NO_RUNTIME_AVAILABLE_LABEL } from '../../i18n';
 import type { IRemoteServicesManager } from '../../stateful/runtimes';
 import type { RunResponseError } from '../../api/DatalayerApi';
-import type { IRuntimeSnapshot, IRuntimeDesc } from '../../models';
+import type { ICodeSandboxSnapshot, IRuntimeDesc } from '../../models';
 import { iamStore, useCoreStore, useIAMStore } from '../../state';
 import { createNotebook, sleep } from '../../utils';
 import { Markdown } from '../display';
@@ -88,7 +88,7 @@ export interface IRuntimeLauncherDialogProps {
    * If provided the kernel will be started and will
    * restore the provided snapshot in the kernel.
    */
-  kernelSnapshot?: IRuntimeSnapshot;
+  kernelSnapshot?: ICodeSandboxSnapshot;
 
   /**
    * HTML sanitizer
@@ -99,6 +99,11 @@ export interface IRuntimeLauncherDialogProps {
    * Upgrade subscription URL
    */
   upgradeSubscription?: string;
+
+  /**
+   * Optional submit button label override.
+   */
+  submitLabel?: string;
 }
 
 /**
@@ -115,10 +120,12 @@ export function RuntimeLauncherDialog(
     markdownParser,
     sanitizer,
     upgradeSubscription,
+    submitLabel,
     startRuntime = true,
   } = props;
 
   const hasExample = startRuntime === 'with-example';
+  const shouldStartRuntime = startRuntime !== 'defer';
 
   const user = iamStore.getState().user;
   const environments = manager.environments.get();
@@ -141,9 +148,7 @@ export function RuntimeLauncherDialog(
   const [selection, setSelection] = useState(
     (kernelSnapshot?.environment || environments[0]?.name) ?? '',
   );
-  const [timeLimit, setTimeLimit] = useState<number>(
-    Math.min(credits?.available ?? 0, 10),
-  );
+  const [timeLimit, setTimeLimit] = useState<number>(10);
   const [runtimeName, setRuntimeName] = useState(
     environments[0]?.runtime?.givenNameTemplate || environments[0]?.title || '',
   );
@@ -156,10 +161,10 @@ export function RuntimeLauncherDialog(
   const [flashLevel, setFlashLevel] = useState<'danger' | 'warning'>('danger');
   const isMounted = useIsMounted();
   useEffect(() => {
-    if (startRuntime) {
+    if (shouldStartRuntime) {
       refreshCredits();
     }
-  }, [startRuntime]);
+  }, [shouldStartRuntime]);
   const spec = useMemo(
     () => environments.find(spec => spec.name === selection),
     [environments, selection],
@@ -167,9 +172,33 @@ export function RuntimeLauncherDialog(
   const description = spec?.description ?? '';
   const burningRate = spec?.burning_rate ?? 1;
   const creditsToMinutes = 1.0 / burningRate / 60.0;
-  const max = Math.floor((credits?.available ?? 0) * creditsToMinutes);
+  const includedRuns =
+    user?.subscription?.usage?.included_runs ??
+    user?.subscription?.included_runs;
+  const currentRuns =
+    user?.subscription?.usage?.current_runs ??
+    user?.subscription?.current_runs ??
+    user?.subscription?.used_runs;
+  const hasKnownRunAllowance = typeof includedRuns === 'number';
+  const hasRemainingRuns =
+    hasKnownRunAllowance &&
+    typeof currentRuns === 'number' &&
+    includedRuns > 0 &&
+    currentRuns < includedRuns;
+  const hasKnownCredits = typeof credits?.available === 'number';
+  const maxFromCredits = hasKnownCredits
+    ? Math.floor((credits.available ?? 0) * creditsToMinutes)
+    : 10;
+  const effectiveMaxMinutes =
+    hasKnownCredits && hasKnownRunAllowance && !hasRemainingRuns
+      ? Math.max(1, maxFromCredits)
+      : Math.max(10, maxFromCredits > 0 ? maxFromCredits : 0);
   const outOfCredits =
-    startRuntime && (!credits?.available || max < Number.EPSILON);
+    shouldStartRuntime &&
+    hasKnownCredits &&
+    hasKnownRunAllowance &&
+    !hasRemainingRuns &&
+    ((credits.available ?? 0) <= 0 || maxFromCredits < Number.EPSILON);
   const handleSelectionChange = useCallback(
     (e: any) => {
       const selection = (e.target as HTMLSelectElement).value;
@@ -184,7 +213,7 @@ export function RuntimeLauncherDialog(
   const handleSubmitRuntime = useCallback(async () => {
     if (selection) {
       setError(undefined);
-      setWaitingForRuntime(true);
+      setWaitingForRuntime(shouldStartRuntime);
       const spec = environments.find(s => s.name === selection);
       const desc: IRuntimeDesc = {
         name: selection,
@@ -203,7 +232,7 @@ export function RuntimeLauncherDialog(
         desc.params['capabilities'] = ['user_storage'];
       }
       let success = true;
-      if (startRuntime && startRuntime !== 'defer') {
+      if (shouldStartRuntime) {
         success = false;
         let availableTrial = 1;
         let retryDelay = NOT_AVAILABLE_INIT_RETRY;
@@ -299,6 +328,9 @@ export function RuntimeLauncherDialog(
         success = await startNewKernel();
       }
       if (success && isMounted()) {
+        if (!shouldStartRuntime) {
+          setWaitingForRuntime(false);
+        }
         onSubmit(desc);
       }
     }
@@ -312,6 +344,7 @@ export function RuntimeLauncherDialog(
     openExample,
     jupyterLabAdapter,
     timeLimit,
+    shouldStartRuntime,
     isMounted,
   ]);
   const handleUserStorageChange = useCallback(
@@ -365,13 +398,10 @@ export function RuntimeLauncherDialog(
           onClick: handleSubmitRuntime,
           content: waitingForRuntime ? (
             <Spinner size="small" />
-          ) : (startRuntime ?? true) ? (
-            'Launch'
           ) : (
-            'Assign from the Environment'
+            (submitLabel ?? ((startRuntime ?? true) ? 'Launch' : 'Assign'))
           ),
-          disabled:
-            waitingForRuntime || outOfCredits || timeLimit < Number.EPSILON,
+          disabled: waitingForRuntime || !selection || outOfCredits,
           autoFocus: true,
         },
       ]}
@@ -457,7 +487,7 @@ export function RuntimeLauncherDialog(
             }
             disabled={outOfCredits}
             label={'Time reservation'}
-            max={max}
+            max={effectiveMaxMinutes}
             time={timeLimit}
             burningRate={burningRate}
             onTimeChange={setTimeLimit}

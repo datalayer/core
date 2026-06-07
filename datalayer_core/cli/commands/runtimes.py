@@ -29,19 +29,25 @@ def runtimes_callback(ctx: typer.Context) -> None:
 
 def _make_client(
     token: Optional[str] = None,
+    iam_url: Optional[str] = None,
     runtimes_url: Optional[str] = None,
 ) -> DatalayerClient:
     """Create a DatalayerClient with optional runtimes URL override."""
-    urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
+    urls = DatalayerURLs.from_environment(iam_url=iam_url, runtimes_url=runtimes_url)
     return DatalayerClient(urls=urls, token=token)
 
 
-@app.command(name="list")
+@app.command(name="ls")
 def list_runtimes(
     token: Optional[str] = typer.Option(
         None,
         "--token",
         help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,
@@ -51,7 +57,11 @@ def list_runtimes(
 ) -> None:
     """List running runtimes."""
     try:
-        client = _make_client(token=token, runtimes_url=runtimes_url)
+        client = _make_client(
+            token=token,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+        )
         runtimes = client.list_runtimes()
 
         # Convert to dict format for display_runtimes
@@ -79,23 +89,6 @@ def list_runtimes(
         raise typer.Exit(1)
 
 
-@app.command(name="ls")
-def list_runtimes_alias(
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
-    ),
-    runtimes_url: Optional[str] = typer.Option(
-        None,
-        "--runtimes-url",
-        help="Datalayer Runtimes server URL",
-    ),
-) -> None:
-    """List running runtimes (alias for list)."""
-    list_runtimes(token=token, runtimes_url=runtimes_url)
-
-
 @app.command(name="create")
 def create_runtime(
     environment: Optional[str] = typer.Argument(None, help="Environment name"),
@@ -114,10 +107,30 @@ def create_runtime(
         "--time-reservation",
         help="Time reservation in minutes for the runtime",
     ),
+    billable_account_uid: Optional[str] = typer.Option(
+        None,
+        "--billable-account-uid",
+        help="Account UID to bill the runtime to (org/team). Defaults to the authenticated user.",
+    ),
+    billable_account_type: Optional[str] = typer.Option(
+        None,
+        "--billable-account-type",
+        help="Billable account type: user, organization, or team.",
+    ),
+    billable_account_handle: Optional[str] = typer.Option(
+        None,
+        "--billable-account-handle",
+        help="Billable account handle (informational).",
+    ),
     token: Optional[str] = typer.Option(
         None,
         "--token",
         help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,
@@ -129,7 +142,11 @@ def create_runtime(
     import questionary
 
     try:
-        client = _make_client(token=token, runtimes_url=runtimes_url)
+        client = _make_client(
+            token=token,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+        )
 
         if environment is None:
             # List environments and let the user pick one
@@ -160,6 +177,9 @@ def create_runtime(
             name=given_name,
             environment=environment,
             time_reservation=final_time_reservation,
+            billable_account_uid=billable_account_uid,
+            billable_account_type=billable_account_type,
+            billable_account_handle=billable_account_handle,
         )
 
         console.print(
@@ -185,6 +205,11 @@ def terminate_runtime(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     runtimes_url: Optional[str] = typer.Option(
         None,
         "--runtimes-url",
@@ -195,7 +220,11 @@ def terminate_runtime(
     import questionary
 
     try:
-        client = _make_client(token=token, runtimes_url=runtimes_url)
+        client = _make_client(
+            token=token,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+        )
 
         if pod_name is None:
             # List runtimes and let the user pick one
@@ -247,6 +276,11 @@ def runtimes_list(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     runtimes_url: Optional[str] = typer.Option(
         None,
         "--runtimes-url",
@@ -254,7 +288,7 @@ def runtimes_list(
     ),
 ) -> None:
     """List running runtimes (root command)."""
-    list_runtimes(token=token, runtimes_url=runtimes_url)
+    list_runtimes(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
 
 
 def runtimes_ls(
@@ -263,6 +297,11 @@ def runtimes_ls(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
     runtimes_url: Optional[str] = typer.Option(
         None,
         "--runtimes-url",
@@ -270,4 +309,4 @@ def runtimes_ls(
     ),
 ) -> None:
     """List running runtimes (root command alias)."""
-    list_runtimes(token=token, runtimes_url=runtimes_url)
+    list_runtimes(token=token, iam_url=iam_url, runtimes_url=runtimes_url)

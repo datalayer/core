@@ -25,7 +25,7 @@ import {
 } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { Blankslate, Dialog } from '@primer/react/experimental';
-import { CounterClockWiseIcon } from '@datalayer/icons-react';
+import { SyncIcon } from '@primer/octicons-react';
 import { useIsMounted } from 'usehooks-ts';
 import { useToast } from '../../hooks';
 import { UploadIconButton } from '../buttons';
@@ -327,7 +327,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
             variant="invisible"
             aria-label={'Refresh contents browser.'}
             title={'Refresh contents browser.'}
-            icon={CounterClockWiseIcon}
+            icon={SyncIcon}
             onClick={refresh}
           />
           <UploadIconButton label={'Upload a file'} multiple upload={upload} />

@@ -39,6 +39,11 @@ class RuntimesCreateMixin:
         given_name: Optional[str] = None,
         credits_limit: Optional[float] = None,
         from_snapshot_uid: Optional[str] = None,
+        agent_spec_id: Optional[str] = None,
+        agent_spec: Optional[dict[str, Any]] = None,
+        billable_account_uid: Optional[str] = None,
+        billable_account_type: Optional[str] = None,
+        billable_account_handle: Optional[str] = None,
     ) -> dict[str, Any]:
         """
         Create a Runtime with the given environment name.
@@ -107,6 +112,18 @@ class RuntimesCreateMixin:
 
             if from_snapshot_uid:
                 body["from"] = from_snapshot_uid
+
+            if agent_spec_id:
+                body["agent_spec_id"] = agent_spec_id
+            if agent_spec:
+                body["agent_spec"] = agent_spec
+
+            if billable_account_uid:
+                body["billable_account_uid"] = billable_account_uid
+            if billable_account_type:
+                body["billable_account_type"] = billable_account_type
+            if billable_account_handle:
+                body["billable_account_handle"] = billable_account_handle
 
             runtime_url = "{}/api/runtimes/v1/runtimes".format(self.urls.runtimes_url)  # type: ignore
             logger.debug(
@@ -277,9 +294,127 @@ class RuntimesTerminateMixin:
             return {"success": False, "message": error_msg}
 
 
+class RuntimesGetMixin:
+    """Mixin for reading a single Datalayer runtime."""
+
+    def _get_runtime(self: Any, pod_name: str) -> dict[str, Any]:
+        """
+        Get a single Runtime by pod name.
+
+        Parameters
+        ----------
+        pod_name : str
+            The pod name of the runtime to fetch.
+
+        Returns
+        -------
+        dict[str, Any]
+            Response containing the runtime payload.
+        """
+        try:
+            response = self._fetch(
+                "{}/api/runtimes/v1/runtimes/{}".format(
+                    self.urls.runtimes_url, pod_name
+                ),
+            )
+
+            if response.status_code != 200:
+                error_msg = f"Failed to get runtime: HTTP {response.status_code}"
+                logger.error(error_msg)
+                try:
+                    error_details = response.json()
+                    if "message" in error_details:
+                        error_msg += f" - {error_details['message']}"
+                except Exception:
+                    pass
+                return {"success": False, "message": error_msg}
+
+            try:
+                result = response.json()
+                if "success" in result and not result["success"]:
+                    error_msg = f"Get runtime failed: {result.get('message', 'Unknown error')}"
+                    logger.error(error_msg)
+                    return {"success": False, "message": error_msg}
+                return result
+            except Exception as e:
+                error_msg = f"Failed to parse runtime response: {str(e)}"
+                logger.error(error_msg)
+                return {"success": False, "message": error_msg}
+
+        except Exception as e:
+            error_msg = f"Unexpected error getting runtime {pod_name}: {str(e)}"
+            logger.error(error_msg)
+            return {"success": False, "message": error_msg}
+
+
+class RuntimesUpdateMixin:
+    """Mixin for updating a Datalayer runtime."""
+
+    def _update_runtime(
+        self: Any,
+        pod_name: str,
+        capabilities: list[str],
+    ) -> dict[str, Any]:
+        """
+        Update a Runtime's capabilities.
+
+        Parameters
+        ----------
+        pod_name : str
+            The pod name of the runtime to update.
+        capabilities : list[str]
+            New capabilities to apply to the runtime.
+
+        Returns
+        -------
+        dict[str, Any]
+            Response containing the update status.
+        """
+        try:
+            response = self._fetch(
+                "{}/api/runtimes/v1/runtimes/{}".format(
+                    self.urls.runtimes_url, pod_name
+                ),
+                method="PUT",
+                json={"capabilities": capabilities},
+            )
+
+            if response.status_code not in [200, 201, 202]:
+                error_msg = f"Failed to update runtime: HTTP {response.status_code}"
+                logger.error(error_msg)
+                try:
+                    error_details = response.json()
+                    if "message" in error_details:
+                        error_msg += f" - {error_details['message']}"
+                    elif "detail" in error_details:
+                        error_msg += f" - {error_details['detail']}"
+                except Exception:
+                    pass
+                return {"success": False, "message": error_msg}
+
+            try:
+                result = response.json()
+                if "success" in result and not result["success"]:
+                    error_msg = f"Update runtime failed: {result.get('message', 'Unknown error')}"
+                    logger.error(error_msg)
+                    return {"success": False, "message": error_msg}
+                return result
+            except Exception as e:
+                error_msg = f"Failed to parse runtime update response: {str(e)}"
+                logger.error(error_msg)
+                return {"success": False, "message": error_msg}
+
+        except Exception as e:
+            error_msg = f"Unexpected error updating runtime {pod_name}: {str(e)}"
+            logger.error(error_msg)
+            return {"success": False, "message": error_msg}
+
+
 class RuntimesMixin(
     RuntimesCreateMixin,
     RuntimesListMixin,
+    RuntimesGetMixin,
+    RuntimesUpdateMixin,
     RuntimesTerminateMixin,
 ):
     """
