@@ -229,7 +229,7 @@
     "typescript-eslint": "^8.34.1",
     "vite": "^7.0.0",
     "vite-plugin-treat-umd-as-commonjs": "^0.1.4",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.8"
   },
   "overrides": {
     "@microsoft/fast-colors": "5.3.1",
