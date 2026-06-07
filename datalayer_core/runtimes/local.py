@@ -371,6 +371,62 @@ def delete_local_agents(*, base_url: str, token: str) -> tuple[int, int]:
     return (len(agents), deleted)
 
 
+def delete_local_agent(*, base_url: str, token: str, agent_name: str) -> bool:
+    """Delete a single locally-registered agent by id or name.
+
+    Parameters
+    ----------
+    base_url : str
+        Local agent-runtimes base URL.
+    token : str
+        Bearer token used for local API calls.
+    agent_name : str
+        Agent id or name to delete.
+
+    Returns
+    -------
+    bool
+        ``True`` when a matching agent was found and delete accepted.
+    """
+    target_name = str(agent_name or "").strip()
+    if not target_name:
+        return False
+
+    base = base_url.rstrip("/")
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        response = requests.get(f"{base}/api/v1/agents", headers=headers, timeout=30)
+        payload = response.json() if response.content else {}
+    except Exception as exc:
+        logger.warning("Unable to list local agents for cleanup: %s", exc)
+        return False
+
+    agents = payload.get("agents") if isinstance(payload, dict) else []
+    if not isinstance(agents, list):
+        return False
+
+    for agent in agents:
+        if not isinstance(agent, dict):
+            continue
+        agent_id = str(agent.get("id") or "").strip()
+        name = str(agent.get("name") or "").strip()
+        if target_name not in {agent_id, name}:
+            continue
+        delete_target = agent_id or target_name
+        try:
+            response = requests.delete(
+                f"{base}/api/v1/agents/{delete_target}",
+                headers=headers,
+                timeout=30,
+            )
+            return response.status_code < 400
+        except Exception as exc:
+            logger.warning("Unable to delete local agent %s: %s", delete_target, exc)
+            return False
+
+    return False
+
+
 def extract_vercel_stream_text(raw: str) -> str:
     """Extract concatenated text deltas from a Vercel AI SSE stream."""
     text_parts: list[str] = []

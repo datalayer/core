@@ -125,6 +125,9 @@ def create_cloud_agent_runtime(
     agent_spec: Optional[dict[str, Any]] = None,
     credits_limit: Optional[float] = None,
     time_reservation: Optional[int] = None,
+    billable_account_uid: Optional[str] = None,
+    billable_account_type: Optional[str] = None,
+    billable_account_handle: Optional[str] = None,
 ) -> Any:
     """Create a cloud agent runtime via the core client.
 
@@ -149,6 +152,12 @@ def create_cloud_agent_runtime(
         latter is not supplied.
     time_reservation : Optional[int]
         Explicit time reservation in minutes.
+    billable_account_uid : Optional[str]
+        Optional billable account UID used for runtime billing attribution.
+    billable_account_type : Optional[str]
+        Optional billable account type (user, organization, team).
+    billable_account_handle : Optional[str]
+        Optional billable account handle.
 
     Returns
     -------
@@ -180,6 +189,9 @@ def create_cloud_agent_runtime(
             time_reservation=int(time_reservation),
             agent_spec_id=None if agent_spec else agent_spec_id,
             agent_spec=agent_spec,
+            billable_account_uid=billable_account_uid,
+            billable_account_type=billable_account_type,
+            billable_account_handle=billable_account_handle,
         )
     except Exception as exc:
         spec_hint = "inline spec payload" if agent_spec else (agent_spec_id or "<none>")
@@ -192,3 +204,97 @@ def create_cloud_agent_runtime(
     if not pod_name:
         raise RuntimeError("Runtime creation succeeded but pod_name is missing.")
     return runtime
+
+
+def terminate_cloud_agent_runtime(
+    client: Any,
+    runtime_or_pod_name: Any,
+    *,
+    raise_on_error: bool = False,
+) -> bool:
+    """Terminate a cloud runtime created for agent execution.
+
+    Parameters
+    ----------
+    client : DatalayerClient
+        An authenticated client exposing ``terminate_runtime``.
+    runtime_or_pod_name : Any
+        Runtime object (with ``pod_name``) or raw pod-name string.
+    raise_on_error : bool
+        When ``True``, raise :class:`RuntimeError` if termination fails.
+
+    Returns
+    -------
+    bool
+        ``True`` when the runtime was terminated, otherwise ``False``.
+    """
+    if isinstance(runtime_or_pod_name, str):
+        pod_name = runtime_or_pod_name.strip()
+    else:
+        pod_name = str(getattr(runtime_or_pod_name, "pod_name", "") or "").strip()
+
+    if not pod_name:
+        if raise_on_error:
+            raise RuntimeError("Cannot terminate cloud runtime: pod_name is missing.")
+        return False
+
+    try:
+        success = bool(client.terminate_runtime(pod_name))
+    except Exception as exc:
+        if raise_on_error:
+            raise RuntimeError(
+                f"Cloud runtime termination failed for pod {pod_name}: {exc}"
+            ) from exc
+        return False
+
+    if not success and raise_on_error:
+        raise RuntimeError(f"Cloud runtime termination returned unsuccessful for pod {pod_name}.")
+    return success
+
+
+def teardown_agent_execution_resources(
+    client: Any,
+    *,
+    execution_target: str,
+    cloud_runtime_or_pod_name: Any = None,
+    local_base_url: Optional[str] = None,
+    local_agent_name: Optional[str] = None,
+    token: Optional[str] = None,
+    local_runtime: Any = None,
+) -> dict[str, bool]:
+    """Teardown resources used by agent execution.
+
+    Handles both cloud and local cleanup using a single API so consumers
+    (examples, GitHub Actions) don't duplicate teardown logic.
+    """
+    result = {
+        "cloud_runtime_terminated": False,
+        "local_agent_deleted": False,
+        "local_runtime_terminated": False,
+    }
+
+    target = str(execution_target or "").strip().lower()
+    if target == "cloud":
+        if cloud_runtime_or_pod_name:
+            result["cloud_runtime_terminated"] = terminate_cloud_agent_runtime(
+                client,
+                cloud_runtime_or_pod_name,
+            )
+        return result
+
+    if target == "local":
+        if local_base_url and token and local_agent_name:
+            from datalayer_core.runtimes.local import delete_local_agent
+
+            result["local_agent_deleted"] = delete_local_agent(
+                base_url=local_base_url,
+                token=token,
+                agent_name=local_agent_name,
+            )
+        if local_runtime is not None:
+            from datalayer_core.runtimes.local import terminate_local_agent_runtime
+
+            terminate_local_agent_runtime(local_runtime)
+            result["local_runtime_terminated"] = True
+
+    return result
