@@ -264,6 +264,8 @@ class DatalayerClient(
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
         snapshot_name: Optional[str] = None,
+        agent_spec_id: Optional[str] = None,
+        agent_spec: Optional[dict[str, Any]] = None,
         billable_account_uid: Optional[str] = None,
         billable_account_type: Optional[str] = None,
         billable_account_handle: Optional[str] = None,
@@ -327,6 +329,8 @@ class DatalayerClient(
                 given_name=name,
                 environment_name=environment,
                 from_snapshot_uid=snapshot_uid,
+                agent_spec_id=agent_spec_id,
+                agent_spec=agent_spec,
                 credits_limit=credits_limit,
                 billable_account_uid=billable_account_uid,
                 billable_account_type=billable_account_type,
@@ -337,6 +341,8 @@ class DatalayerClient(
             response = self._create_runtime(
                 given_name=name,
                 environment_name=environment,
+                agent_spec_id=agent_spec_id,
+                agent_spec=agent_spec,
                 credits_limit=credits_limit,
                 billable_account_uid=billable_account_uid,
                 billable_account_type=billable_account_type,
@@ -345,8 +351,21 @@ class DatalayerClient(
 
         # Process the response and create RuntimesService object
         if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            context_parts = [f"environment='{environment}'"]
+            if agent_spec_id:
+                context_parts.append(f"agent_spec_id='{agent_spec_id}'")
+            if agent_spec:
+                context_parts.append("agent_spec=<inline>")
+            reason = response.get("reason")
+            if reason:
+                context_parts.append(f"reason='{reason}'")
+            retry_after = response.get("retry_after_seconds")
+            if retry_after:
+                context_parts.append(f"retry_after_seconds={retry_after}")
+            context = ", ".join(context_parts)
             raise RuntimeError(
-                f"Runtime creation failed: {response.get('message', 'Unknown error')}"
+                f"Runtime creation failed ({context}): {message}"
             )
 
         runtime_data = response["runtime"]
@@ -434,6 +453,91 @@ class DatalayerClient(
             return self._terminate_runtime(pod_name)["success"]
         else:
             return False
+
+    def get_runtime(self, runtime: Union[RuntimeService, str]) -> RuntimeService:
+        """
+        Get a single running Runtime by pod name.
+
+        Parameters
+        ----------
+        runtime : Union[Runtime, str]
+            Runtime object or pod name string to fetch.
+
+        Returns
+        -------
+        Runtime
+            The Runtime object matching the pod name.
+
+        Raises
+        ------
+        RuntimeError
+            If the runtime cannot be retrieved.
+        """
+        pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
+        if not pod_name:
+            raise RuntimeError("A pod name is required to get a runtime.")
+
+        response = self._get_runtime(pod_name)
+        if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            raise RuntimeError(f"Failed to get runtime '{pod_name}': {message}")
+
+        runtime_data = response.get("runtime")
+        if not isinstance(runtime_data, dict):
+            raise RuntimeError(
+                f"Failed to get runtime '{pod_name}': missing 'runtime' field in response"
+            )
+
+        return RuntimeService(
+            name=runtime_data.get("given_name", pod_name),
+            environment=runtime_data.get("environment_name", ""),
+            pod_name=runtime_data.get("pod_name", pod_name),
+            token=self._token,
+            ingress=runtime_data.get("ingress"),
+            reservation_id=runtime_data.get("reservation_id"),
+            uid=runtime_data.get("uid"),
+            burning_rate=runtime_data.get("burning_rate"),
+            jupyter_token=runtime_data.get("token"),
+            run_url=self._urls.run_url,
+            iam_url=self._urls.iam_url,
+            started_at=runtime_data.get("started_at"),
+            expired_at=runtime_data.get("expired_at"),
+        )
+
+    def update_runtime(
+        self,
+        runtime: Union[RuntimeService, str],
+        capabilities: list[str],
+    ) -> bool:
+        """
+        Update a running Runtime's capabilities.
+
+        Parameters
+        ----------
+        runtime : Union[Runtime, str]
+            Runtime object or pod name string to update.
+        capabilities : list[str]
+            New capabilities to apply to the runtime.
+
+        Returns
+        -------
+        bool
+            True if the update succeeded.
+
+        Raises
+        ------
+        RuntimeError
+            If the update fails.
+        """
+        pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
+        if not pod_name:
+            raise RuntimeError("A pod name is required to update a runtime.")
+
+        response = self._update_runtime(pod_name, capabilities)
+        if not response.get("success", True):
+            message = response.get("message", "Unknown error")
+            raise RuntimeError(f"Failed to update runtime '{pod_name}': {message}")
+        return True
 
     def list_secrets(self) -> list[SecretModel]:
         """

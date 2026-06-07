@@ -10,6 +10,8 @@ import typer
 
 from datalayer_core.__version__ import __version__
 from datalayer_core.cli.commands.about import app as about_app
+from datalayer_core.cli.commands.agents import agents_ls
+from datalayer_core.cli.commands.agents import app as agents_app
 from datalayer_core.cli.commands.agent_nodes import app as agent_nodes_app
 from datalayer_core.cli.commands.agent_nodes import agent_nodes_ls
 from datalayer_core.cli.commands.authn import (
@@ -175,6 +177,7 @@ def main_callback(
 
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)
+app.add_typer(agents_app)
 app.add_typer(agent_nodes_app)
 app.add_typer(auth_app)
 app.add_typer(benchmarks_app)
@@ -217,6 +220,7 @@ app.command(name="snapshots-ls")(snapshots_ls)
 app.command(name="checkpoints-ls")(checkpoints_ls)
 app.command(name="tokens-ls")(tokens_ls)
 app.command(name="agent-nodes-ls")(agent_nodes_ls)
+app.command(name="agents-ls")(agents_ls)
 
 
 _GLOBAL_OPTIONS_WITH_VALUES = {

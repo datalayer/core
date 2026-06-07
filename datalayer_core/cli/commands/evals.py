@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import csv
 import json
 import math
+import re
 import time
 from pathlib import Path
 from typing import Any, Optional
@@ -133,6 +134,49 @@ def _compute_baseline_and_drift(runs: list[dict[str, Any]]) -> tuple[float | Non
     return baseline, latest, drift
 
 
+def _classify_legacy_failure(message: str) -> dict[str, Any]:
+    """Infer a structured stage/type/url from a free-form legacy error message.
+
+    Older runs (and any path that only persisted a plain error string) lack a
+    structured ``failure_cause``. Rather than rendering ``unknown`` /
+    ``legacy_error`` with an empty detail excerpt, classify the most common
+    error shapes so the report stays actionable.
+    """
+    text = message.strip()
+    lowered = text.lower()
+
+    url_match = re.search(r"https?://[^\s]+", text)
+    execution_url = url_match.group(0).rstrip(".,)") if url_match else ""
+
+    stage = "unknown"
+    failure_type = "legacy_error"
+    if "all connection attempts failed" in lowered or "connection refused" in lowered or "request failed" in lowered:
+        stage = "runtime_execution"
+        failure_type = "runtime_unreachable"
+    elif "returned http" in lowered or re.search(r"\bhttp\s*[45]\d\d\b", lowered):
+        stage = "runtime_execution"
+        failure_type = "runtime_http_error"
+    elif "traceback" in lowered:
+        stage = "runtime_execution"
+        failure_type = "runtime_traceback"
+    elif "no submitted code" in lowered or "missing" in lowered and "code" in lowered:
+        stage = "run_preparation"
+        failure_type = "missing_submitted_code"
+    elif "no interactive runtime url" in lowered or "not configured" in lowered:
+        stage = "runtime_resolution"
+        failure_type = "no_runtime_url"
+
+    cause: dict[str, Any] = {
+        "stage": stage,
+        "type": failure_type,
+        "message": text,
+        "detail_excerpt": text,
+    }
+    if execution_url:
+        cause["execution_url"] = execution_url
+    return cause
+
+
 def _extract_failure_cause(run: dict[str, Any]) -> dict[str, Any] | None:
     """Extract a structured failure cause from a run's report/summary payload."""
     for container_key in ("report", "summary"):
@@ -141,7 +185,7 @@ def _extract_failure_cause(run: dict[str, Any]) -> dict[str, Any] | None:
             cause = container.get("failure_cause")
             if isinstance(cause, dict) and cause:
                 return cause
-    # Fallback: synthesize a cause from legacy error fields.
+    # Fallback: synthesize a structured cause from legacy error fields.
     summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
     report = run.get("report") if isinstance(run.get("report"), dict) else {}
     message = (
@@ -150,11 +194,7 @@ def _extract_failure_cause(run: dict[str, Any]) -> dict[str, Any] | None:
         or report.get("error")
     )
     if isinstance(message, str) and message.strip():
-        return {
-            "stage": "unknown",
-            "type": "legacy_error",
-            "message": message.strip(),
-        }
+        return _classify_legacy_failure(message)
     return None
 
 
@@ -1344,10 +1384,11 @@ def evals_list(
 
 @evals_app.command(name="create")
 def evals_create(
-    name: str = typer.Argument(..., help="Evalset name."),
-    description: str = typer.Option("", "--description", help="Evalset description."),
-    run_environment: str = typer.Option("sdk", "--run-environment", help="Evalset run environment (ui/sdk)."),
-    kind: str = typer.Option("batch", "--kind", help="Evalset kind (batch/interactive)."),
+    name: Optional[str] = typer.Argument(None, help="Evalset name."),
+    description: Optional[str] = typer.Option(None, "--description", help="Evalset description."),
+    run_environment: Optional[str] = typer.Option(None, "--run-environment", help="Evalset run environment (ui/sdk)."),
+    kind: Optional[str] = typer.Option(None, "--kind", help="Evalset kind (batch/interactive)."),
+    spec_file: Optional[str] = typer.Option(None, "--spec-file", help="Path to evalset spec JSON file."),
     schema_json: Optional[str] = typer.Option(None, "--schema-json", help="Schema JSON object."),
     metadata_json: Optional[str] = typer.Option(None, "--metadata-json", help="Metadata JSON object."),
     cases_file: Optional[str] = typer.Option(None, "--cases-file", help="Path to JSON array of cases."),
@@ -1355,11 +1396,22 @@ def evals_create(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """Create an evalset."""
-    schema = _parse_json_value(schema_json, "--schema-json")
-    metadata = _parse_json_value(metadata_json, "--metadata-json")
+    spec = _parse_json_file(spec_file, "--spec-file")
+    schema = _merge_dicts(
+        spec.get("schema") if isinstance(spec.get("schema"), dict) else {},
+        _parse_json_value(schema_json, "--schema-json"),
+    )
+    metadata = _merge_dicts(
+        spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {},
+        _parse_json_value(metadata_json, "--metadata-json"),
+    )
+
     cases: list[dict[str, Any]] = []
+    if isinstance(spec.get("cases"), list):
+        cases = [case for case in spec.get("cases") if isinstance(case, dict)]
     if cases_file:
         text = Path(cases_file).read_text(encoding="utf-8")
         decoded = json.loads(text)
@@ -1367,18 +1419,31 @@ def evals_create(
             raise typer.BadParameter("--cases-file must contain a JSON array")
         cases = [case for case in decoded if isinstance(case, dict)]
 
+    resolved_name = str(name or spec.get("name") or "").strip()
+    if not resolved_name:
+        raise typer.BadParameter("name argument is required unless provided in --spec-file")
+    resolved_description = str(description if description is not None else spec.get("description") or "")
+    resolved_run_environment = str(run_environment if run_environment is not None else spec.get("run_environment") or "sdk")
+    resolved_kind = str(kind if kind is not None else spec.get("kind") or "batch")
+
+    spec_tags = spec.get("tags") if isinstance(spec.get("tags"), list) else []
+    resolved_tags = tags if tags else [str(tag) for tag in spec_tags if str(tag).strip()]
+
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_create_eval(
-        name=name,
-        description=description,
-        run_environment=run_environment,
-        kind=kind,
+        name=resolved_name,
+        description=resolved_description,
+        run_environment=resolved_run_environment,
+        kind=resolved_kind,
         schema=schema,
         metadata=metadata,
-        tags=tags,
+        tags=resolved_tags,
         cases=cases,
         account_uid=account_uid,
     )
+    if raw:
+        typer.echo(json.dumps(payload))
+        return
     eval_record = payload.get("evalset") or {}
     console.print(f"[green]Eval created:[/green] {eval_record.get('id', '')} ({eval_record.get('name', '')})")
 
@@ -1403,7 +1468,7 @@ def evals_delete(
 
 
 def _render_report(
-    evalset_id: str = typer.Argument(..., help="Evalset ID to compare."),
+    evalset_id: Optional[str],
     run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
@@ -1414,15 +1479,38 @@ def _render_report(
 ) -> None:
     """Generate a full evalset report with cross-experiment comparisons."""
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_evalset_id = (evalset_id or "").strip()
+    if not resolved_evalset_id:
+        payload = client.evals_list_evals(
+            limit=200,
+            offset=0,
+            account_uid=account_uid,
+        )
+        evalsets = [item for item in (payload.get("evalsets") or []) if isinstance(item, dict)]
+        if not evalsets:
+            raise typer.BadParameter("No evalsets found. Provide <evalset_id> explicitly.")
+
+        def _updated_key(item: dict[str, Any]) -> str:
+            return str(item.get("updated_at") or item.get("created_at") or "")
+
+        latest_evalset = max(evalsets, key=_updated_key)
+        resolved_evalset_id = str(latest_evalset.get("id") or "").strip()
+        if not resolved_evalset_id:
+            raise typer.BadParameter("Latest evalset does not contain an id.")
+        console.print(
+            f"[yellow]No evalset id provided.[/yellow] Using latest evalset: "
+            f"[cyan]{resolved_evalset_id}[/cyan]"
+        )
+
     report = _report_data(
         client=client,
-        evalset_id=evalset_id,
+        evalset_id=resolved_evalset_id,
         run_limit=run_limit,
         account_uid=account_uid,
     )
     experiments = report.get("experiments") or []
     if not experiments:
-        console.print(f"[yellow]No experiments found for evalset[/yellow] {evalset_id}")
+        console.print(f"[yellow]No experiments found for evalset[/yellow] {resolved_evalset_id}")
         raise typer.Exit(0)
 
     if raw:
@@ -1447,7 +1535,7 @@ def _render_report(
 
 @app.command(name="report")
 def evals_report(
-    evalset_id: str = typer.Argument(..., help="Evalset ID to report."),
+    evalset_id: Optional[str] = typer.Argument(None, help="Evalset ID to report. Defaults to latest updated evalset."),
     run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
@@ -1471,7 +1559,7 @@ def evals_report(
 
 @evals_app.command(name="compare-report")
 def evals_compare_report_compat(
-    evalset_id: str = typer.Argument(..., help="Evalset ID to report."),
+    evalset_id: Optional[str] = typer.Argument(None, help="Evalset ID to report. Defaults to latest updated evalset."),
     run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
@@ -1538,29 +1626,53 @@ def experiments_list(
 
 @experiments_app.command(name="create")
 def experiments_create(
-    name: str = typer.Argument(..., help="Experiment name."),
+    name: Optional[str] = typer.Argument(None, help="Experiment name."),
     evalset_id: Optional[str] = typer.Option(None, "--evalset-id", help="Evalset ID."),
-    description: str = typer.Option("", "--description", help="Description."),
-    status: str = typer.Option("draft", "--status", help="Initial status."),
+    description: Optional[str] = typer.Option(None, "--description", help="Description."),
+    status: Optional[str] = typer.Option(None, "--status", help="Initial status."),
+    spec_file: Optional[str] = typer.Option(None, "--spec-file", help="Path to experiment spec JSON file."),
     config_json: Optional[str] = typer.Option(None, "--config-json", help="Config JSON object."),
     summary_json: Optional[str] = typer.Option(None, "--summary-json", help="Summary JSON object."),
     tags: list[str] = typer.Option([], "--tag", help="Repeatable tag."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
     account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """Create an evalset experiment."""
+    spec = _parse_json_file(spec_file, "--spec-file")
+
+    resolved_name = str(name or spec.get("name") or "").strip()
+    if not resolved_name:
+        raise typer.BadParameter("name argument is required unless provided in --spec-file")
+    resolved_evalset_id = str(evalset_id or spec.get("evalset_id") or "").strip() or None
+    resolved_description = str(description if description is not None else spec.get("description") or "")
+    resolved_status = str(status if status is not None else spec.get("status") or "draft")
+    resolved_config = _merge_dicts(
+        spec.get("config") if isinstance(spec.get("config"), dict) else {},
+        _parse_json_value(config_json, "--config-json"),
+    )
+    resolved_summary = _merge_dicts(
+        spec.get("summary") if isinstance(spec.get("summary"), dict) else {},
+        _parse_json_value(summary_json, "--summary-json"),
+    )
+    spec_tags = spec.get("tags") if isinstance(spec.get("tags"), list) else []
+    resolved_tags = tags if tags else [str(tag) for tag in spec_tags if str(tag).strip()]
+
     client = _make_client(token=token, ai_agents_url=ai_agents_url)
     payload = client.evals_create_experiment(
-        name=name,
-        evalset_id=evalset_id,
-        description=description,
-        status=status,
-        config=_parse_json_value(config_json, "--config-json"),
-        summary=_parse_json_value(summary_json, "--summary-json"),
-        tags=tags,
+        name=resolved_name,
+        evalset_id=resolved_evalset_id,
+        description=resolved_description,
+        status=resolved_status,
+        config=resolved_config,
+        summary=resolved_summary,
+        tags=resolved_tags,
         account_uid=account_uid,
     )
+    if raw:
+        typer.echo(json.dumps(payload))
+        return
     experiment = payload.get("experiment") or {}
     console.print(f"[green]Experiment created:[/green] {experiment.get('id', '')} ({experiment.get('name', '')})")
 
