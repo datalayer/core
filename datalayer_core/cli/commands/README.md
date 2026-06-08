@@ -10,22 +10,32 @@ Execute a Python file or Jupyter notebook on a Datalayer runtime.
 
 **Usage:**
 ```bash
-dla exec <filename> --runtime <runtime-name> [options]
+dla exec <filename> [options]
+dla exec --example-py [options]
+dla exec --example-notebook [options]
 ```
 
 **Arguments:**
-- `filename`: Path to the Python file (.py) or Jupyter notebook (.ipynb) to execute
+- `filename`: Path to the Python file (.py) or Jupyter notebook (.ipynb) to execute (optional when using `--example-py` or `--example-notebook`)
 
 **Options:**
 - `--runtime, -r`: Name of the runtime to execute on (required)
 - `--verbose, -v`: Show all cell outputs (default: false, outputs are suppressed)
 - `--timeout, -t`: Execution timeout for each cell in seconds
 - `--raise`: Stop executing if an exception occurs (default: continue on errors)
+- `--example-py`: Create and execute a temporary example Python file
+- `--example-notebook`: Create and execute a temporary example notebook
 
 **Examples:**
 ```bash
 # Execute a Python script on a runtime
 dla exec script.py --runtime my-runtime
+
+# Execute an auto-generated Python example
+dla exec --example-py --runtime my-runtime
+
+# Execute an auto-generated notebook example
+dla exec --example-notebook
 
 # Execute a Jupyter notebook with verbose output
 dla exec notebook.ipynb --runtime my-runtime --verbose

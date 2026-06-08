@@ -8,8 +8,11 @@ from __future__ import annotations
 import json
 import signal
 import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+from uuid import uuid4
 
 import typer
 from rich.console import Console
@@ -225,7 +228,10 @@ class RuntimesExecService:
 # Main execution function decorated as the default command
 @app.command()
 def main(
-    filename: str = typer.Argument(..., help="Path to the file or notebook to execute"),
+    filename: Optional[str] = typer.Argument(
+        None,
+        help="Path to the file or notebook to execute",
+    ),
     runtime: Optional[str] = typer.Option(
         None,
         "--runtime",
@@ -246,59 +252,142 @@ def main(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    example_notebook: bool = typer.Option(
+        False,
+        "--example-notebook",
+        help="Create a temporary example notebook, execute it, then remove it.",
+    ),
+    example_py: bool = typer.Option(
+        False,
+        "--example-py",
+        help="Create a temporary example Python file, execute it, then remove it.",
+    ),
 ) -> None:
     """Execute a Python file or Jupyter notebook on a Datalayer runtime."""
 
-    # Resolve file path
-    filepath = Path(filename).expanduser().resolve()
-
-    # Check if file exists and is readable
-    if not filepath.exists():
-        console.print(f"[red]Error: File '{filepath}' does not exist[/red]")
+    if example_notebook and example_py:
+        console.print(
+            "[red]Error: --example-notebook and --example-py are mutually exclusive[/red]"
+        )
         raise typer.Exit(1)
 
-    if not filepath.is_file():
-        console.print(f"[red]Error: '{filepath}' is not a file[/red]")
+    if filename and (example_notebook or example_py):
+        console.print(
+            "[red]Error: provide either a filename or one --example-* flag, not both[/red]"
+        )
         raise typer.Exit(1)
+
+    if not filename and not example_notebook and not example_py:
+        console.print(
+            "[red]Error: missing FILE_PATH or an --example-* option[/red]"
+        )
+        raise typer.Exit(1)
+
+    generated_example = False
+    filepath: Path
+    if example_notebook:
+        filepath = _create_example_notebook_file()
+        generated_example = True
+        console.print(f"[blue]Generated example notebook: {filepath}[/blue]")
+    elif example_py:
+        filepath = _create_example_python_file()
+        generated_example = True
+        console.print(f"[blue]Generated example Python file: {filepath}[/blue]")
+    else:
+        # Resolve file path
+        filepath = Path(str(filename)).expanduser().resolve()
 
     try:
-        with filepath.open("rb"):
-            pass
-    except Exception as e:
-        console.print(
-            f"[red]Error: Could not open file '{filepath}' for reading: {e}[/red]"
-        )
-        raise typer.Exit(1)
+        # Check if file exists and is readable
+        if not filepath.exists():
+            console.print(f"[red]Error: File '{filepath}' does not exist[/red]")
+            raise typer.Exit(1)
 
-    # Check file extension
-    if filepath.suffix not in [".py", ".ipynb"]:
-        console.print(
-            f"[yellow]Warning: File extension '{filepath.suffix}' is not .py or .ipynb[/yellow]"
-        )
+        if not filepath.is_file():
+            console.print(f"[red]Error: '{filepath}' is not a file[/red]")
+            raise typer.Exit(1)
 
-    # Determine which runtime to use
-    selected_runtime = runtime
-    if selected_runtime is None:
-        selected_runtime = _select_runtime(token=token)
+        try:
+            with filepath.open("rb"):
+                pass
+        except Exception as e:
+            console.print(
+                f"[red]Error: Could not open file '{filepath}' for reading: {e}[/red]"
+            )
+            raise typer.Exit(1)
 
-    # Create exec service and execute
-    exec_service = RuntimesExecService(token=token)
+        # Check file extension
+        if filepath.suffix not in [".py", ".ipynb"]:
+            console.print(
+                f"[yellow]Warning: File extension '{filepath.suffix}' is not .py or .ipynb[/yellow]"
+            )
 
-    try:
-        # Initialize connection to runtime
-        exec_service.init_kernel_manager(selected_runtime)
+        # Determine which runtime to use
+        selected_runtime = runtime
+        if selected_runtime is None:
+            selected_runtime = _select_runtime(token=token)
 
-        # Execute the file
-        exec_service.execute_file(
-            filepath=filepath,
-            silent=not verbose,
-            timeout=timeout,
-            raise_exceptions=raise_exceptions,
-        )
+        # Create exec service and execute
+        exec_service = RuntimesExecService(token=token)
 
+        try:
+            # Initialize connection to runtime
+            exec_service.init_kernel_manager(selected_runtime)
+
+            # Execute the file
+            exec_service.execute_file(
+                filepath=filepath,
+                silent=not verbose,
+                timeout=timeout,
+                raise_exceptions=raise_exceptions,
+            )
+
+        finally:
+            # Always cleanup
+            exec_service.cleanup()
     finally:
-        # Always cleanup
-        exec_service.cleanup()
+        if generated_example:
+            try:
+                filepath.unlink(missing_ok=True)
+            except Exception as e:
+                console.print(
+                    f"[yellow]Warning: could not remove temporary example file '{filepath}': {e}[/yellow]"
+                )
+
+
+def _example_file_path(suffix: str) -> Path:
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    name = f"datalayer-exec-example-{ts}-{uuid4().hex[:8]}{suffix}"
+    return Path(tempfile.gettempdir()) / name
+
+
+def _create_example_python_file() -> Path:
+    path = _example_file_path(".py")
+    path.write_text(
+        "print('Hello from datalayer exec --example-py')\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _create_example_notebook_file() -> Path:
+    path = _example_file_path(".ipynb")
+    notebook_payload = {
+        "cells": [
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": ["print('Hello from datalayer exec --example-notebook')"],
+            }
+        ],
+        "metadata": {},
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    path.write_text(json.dumps(notebook_payload), encoding="utf-8")
+    return path
 
 
 def _select_runtime(token: Optional[str] = None) -> str:

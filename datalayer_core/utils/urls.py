@@ -8,6 +8,7 @@ Provides environment variable support with fallback to defaults.
 """
 
 import os
+from dataclasses import asdict
 from dataclasses import dataclass
 from typing import Optional
 
@@ -362,3 +363,47 @@ class DatalayerURLs:
         self.mcp_server_url = self.mcp_server_url.rstrip("/")
         self.ray_url = self.ray_url.rstrip("/")
         self.scheduler_url = self.scheduler_url.rstrip("/")
+
+    def as_dict(self) -> dict[str, str]:
+        """Return all resolved service URLs as a dictionary."""
+        return asdict(self)
+
+    @classmethod
+    def get_all_urls(
+        cls,
+        run_url: Optional[str] = None,
+        iam_url: Optional[str] = None,
+        runtimes_url: Optional[str] = None,
+        spacer_url: Optional[str] = None,
+        library_url: Optional[str] = None,
+        manager_url: Optional[str] = None,
+        ai_agents_url: Optional[str] = None,
+        ai_inference_url: Optional[str] = None,
+        otel_url: Optional[str] = None,
+        growth_url: Optional[str] = None,
+        success_url: Optional[str] = None,
+        status_url: Optional[str] = None,
+        support_url: Optional[str] = None,
+        mcp_server_url: Optional[str] = None,
+        ray_url: Optional[str] = None,
+        scheduler_url: Optional[str] = None,
+    ) -> dict[str, str]:
+        """Resolve and return all service URLs with optional overrides."""
+        return cls.from_environment(
+            run_url=run_url,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+            spacer_url=spacer_url,
+            library_url=library_url,
+            manager_url=manager_url,
+            ai_agents_url=ai_agents_url,
+            ai_inference_url=ai_inference_url,
+            otel_url=otel_url,
+            growth_url=growth_url,
+            success_url=success_url,
+            status_url=status_url,
+            support_url=support_url,
+            mcp_server_url=mcp_server_url,
+            ray_url=ray_url,
+            scheduler_url=scheduler_url,
+        ).as_dict()
