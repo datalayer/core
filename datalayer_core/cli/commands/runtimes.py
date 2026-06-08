@@ -7,9 +7,11 @@ from typing import Optional
 
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.runtimes import display_runtimes
+from datalayer_core.utils.network import fetch
 from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for runtime commands
@@ -310,3 +312,85 @@ def runtimes_ls(
 ) -> None:
     """List running runtimes (root command alias)."""
     list_runtimes(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
+
+
+@app.command(name="health")
+def runtime_health(
+    runtime: Optional[str] = typer.Option(
+        None,
+        "--runtime",
+        "-r",
+        help="Runtime identifier (pod name, uid, or given name). Defaults to first running runtime.",
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
+) -> None:
+    """Check health/reachability of a runtime endpoint."""
+    try:
+        client = _make_client(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
+        runtimes = client.list_runtimes()
+        if not runtimes:
+            console.print("[yellow]No running runtimes found.[/yellow]")
+            raise typer.Exit(1)
+
+        selected = None
+        if runtime:
+            for candidate in runtimes:
+                if runtime in {candidate.pod_name, candidate.uid, candidate.name}:
+                    selected = candidate
+                    break
+            if selected is None:
+                console.print(f"[red]Runtime '{runtime}' not found.[/red]")
+                raise typer.Exit(1)
+        else:
+            selected = runtimes[0]
+
+        pod_name = selected.pod_name or ""
+        refreshed = client.get_runtime(pod_name)
+
+        endpoint = str(refreshed.ingress or "").rstrip("/")
+        runtime_token = str(refreshed.jupyter_token or "")
+        health_status = "unreachable"
+        detail = "Missing ingress URL"
+
+        if endpoint:
+            try:
+                response = fetch(f"{endpoint}/api/kernels", token=runtime_token, timeout=15)
+                kernels = response.json() if response.content else []
+                kernel_count = len(kernels) if isinstance(kernels, list) else "n/a"
+                health_status = "alive"
+                detail = f"Jupyter API reachable (kernels={kernel_count})"
+            except Exception as e:
+                detail = str(e)
+
+        table = Table(title="Runtime Health")
+        table.add_column("Field", style="cyan")
+        table.add_column("Value")
+        table.add_row("Runtime", str(refreshed.name or pod_name))
+        table.add_row("Pod", str(pod_name))
+        table.add_row("UID", str(refreshed.uid or ""))
+        table.add_row("Ingress", endpoint or "n/a")
+        table.add_row("Status", health_status)
+        table.add_row("Detail", detail)
+        console.print(table)
+
+        if health_status != "alive":
+            raise typer.Exit(1)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Error checking runtime health: {e}[/red]")
+        raise typer.Exit(1)

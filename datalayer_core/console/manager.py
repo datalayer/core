@@ -200,7 +200,7 @@ class RuntimeManager(KernelHttpManager):
                 runtimes = self._client.list_runtimes()
 
             # Use the first available runtime
-            if runtimes:
+            if runtime is None and runtimes:
                 r = runtimes[0]
                 runtime = {
                     "pod_name": r.pod_name,
@@ -216,37 +216,8 @@ class RuntimeManager(KernelHttpManager):
         self.server_url = runtime["ingress"]
         self.token = runtime.get("token", "")
 
-        # Get runtime information.
-        from datalayer_core.utils.network import fetch
-
-        response = None
-        max_attempts = 4
-        for attempt in range(1, max_attempts + 1):
-            try:
-                response = fetch(f"{self.server_url}/api/kernels", token=self.token)
-                break
-            except requests.exceptions.HTTPError as e:
-                status = (
-                    e.response.status_code
-                    if getattr(e, "response", None) is not None
-                    else None
-                )
-                if status in (502, 503, 504) and attempt < max_attempts:
-                    time.sleep(2 ** (attempt - 1))
-                    continue
-                raise
-            except requests.exceptions.ConnectionError:
-                if attempt < max_attempts:
-                    time.sleep(2 ** (attempt - 1))
-                    continue
-                raise
-
-        if response is None:
-            raise RuntimeError("Failed to query kernel endpoint for runtime")
-
-        kernels = response.json()
-        if kernels:
-            self._kernel_id = kernels[0]["id"]
+        # Ensure runtime endpoint is ready and a usable kernel exists.
+        self._kernel_id = self._ensure_kernel_id()
 
         kernel_model = self.refresh_model()
         msg = f"RuntimeManager using existing runtime {runtime_name}"
@@ -256,3 +227,95 @@ class RuntimeManager(KernelHttpManager):
         self.log.info(msg)
 
         return kernel_model
+
+    def _ensure_kernel_id(self) -> str:
+        """Return a usable kernel id, creating one if needed."""
+        from datalayer_core.utils.network import fetch
+
+        response = None
+        max_attempts = 8
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = fetch(
+                    f"{self.server_url.rstrip('/')}/api/kernels",
+                    token=self.token,
+                    timeout=20,
+                )
+                break
+            except requests.exceptions.HTTPError as e:
+                status = (
+                    e.response.status_code
+                    if getattr(e, "response", None) is not None
+                    else None
+                )
+                if status in (404, 502, 503, 504) and attempt < max_attempts:
+                    time.sleep(min(2.0, 0.5 * attempt))
+                    continue
+                raise
+            except requests.exceptions.ConnectionError:
+                if attempt < max_attempts:
+                    time.sleep(min(2.0, 0.5 * attempt))
+                    continue
+                raise
+
+        if response is None:
+            raise RuntimeError("Failed to query kernel endpoint for runtime")
+
+        kernels = response.json() if response.content else []
+        if isinstance(kernels, list) and kernels:
+            kernel_id = kernels[0].get("id")
+            if kernel_id:
+                return str(kernel_id)
+
+        # No running kernels yet: create one and wait for it to become reachable.
+        kernel_name = self._get_default_kernel_name() or "python3"
+        create_response = fetch(
+            f"{self.server_url.rstrip('/')}/api/kernels",
+            token=self.token,
+            method="POST",
+            json={"name": kernel_name},
+            timeout=30,
+        )
+        created = create_response.json() if create_response.content else {}
+        kernel_id = str(created.get("id") or "")
+        if not kernel_id:
+            raise RuntimeError("Runtime returned no kernel id after kernel creation")
+
+        max_checks = 10
+        for attempt in range(1, max_checks + 1):
+            try:
+                fetch(
+                    f"{self.server_url.rstrip('/')}/api/kernels/{kernel_id}",
+                    token=self.token,
+                    timeout=20,
+                )
+                return kernel_id
+            except Exception:
+                if attempt == max_checks:
+                    raise
+                time.sleep(min(2.0, 0.3 * attempt))
+
+        return kernel_id
+
+    def _get_default_kernel_name(self) -> str:
+        """Best-effort resolution of the runtime default kernelspec name."""
+        from datalayer_core.utils.network import fetch
+
+        try:
+            response = fetch(
+                f"{self.server_url.rstrip('/')}/api/kernelspecs",
+                token=self.token,
+                timeout=20,
+            )
+            payload = response.json() if response.content else {}
+            default_name = str(payload.get("default") or "").strip()
+            if default_name:
+                return default_name
+
+            specs = payload.get("kernelspecs")
+            if isinstance(specs, dict) and specs:
+                return str(next(iter(specs.keys())))
+        except Exception:
+            return ""
+
+        return ""
