@@ -21,6 +21,7 @@ from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.console.manager import RuntimeManager
+from datalayer_core.utils.defaults import DEFAULT_ENVIRONMENT
 from datalayer_core.utils.network import fetch
 from datalayer_core.utils.notebook import get_cells
 
@@ -823,7 +824,8 @@ def _select_runtime(token: Optional[str] = None) -> str:
     """
     Select a runtime to use for execution.
 
-    Returns the first available runtime, or prompts to create one if none exist.
+    Returns the first available runtime, or interactively provisions one when
+    no runtime is available.
 
     Parameters
     ----------
@@ -840,20 +842,112 @@ def _select_runtime(token: Optional[str] = None) -> str:
         runtimes = client.list_runtimes()
 
         if not runtimes:
-            environment_hint = "<ENVIRONMENT_NAME>"
-            try:
-                environments = client.list_environments()
-                if environments:
-                    environment_hint = str(environments[0].name or environment_hint)
-            except Exception:
-                pass
+            console.print("[yellow]No Runtime running.[/yellow]")
 
-            console.print("[red]No Runtime running.[/red]")
-            console.print("[yellow]Launch one with:[/yellow]")
-            console.print(
-                f"[yellow]  datalayer runtimes create {environment_hint} --time-reservation 10[/yellow]"
+            should_create = typer.confirm(
+                "No runtime is available. Create one now?",
+                default=True,
             )
-            raise typer.Exit(1)
+            if not should_create:
+                console.print("[red]Execution aborted: no runtime selected.[/red]")
+                raise typer.Exit(1)
+
+            environment = DEFAULT_ENVIRONMENT
+            burn_rate = _get_environment_burning_rate(client, environment)
+            remaining_credits = _get_remaining_credits_after_reservations(client)
+            default_seconds = _default_runtime_seconds(
+                remaining_credits=remaining_credits,
+                burn_rate=burn_rate,
+            )
+
+            console.print(
+                f"[blue]Environment: {environment} (burning_rate={burn_rate:.6f} credits/s)[/blue]"
+            )
+            console.print(
+                f"[blue]Remaining credits (after reservations): {remaining_credits:.6f}[/blue]"
+            )
+            console.print(
+                f"[blue]Suggested runtime duration: {default_seconds:.2f} seconds (33% of remaining credits)[/blue]"
+            )
+
+            requested_seconds = typer.prompt(
+                "Runtime duration in seconds",
+                type=float,
+                default=default_seconds,
+                show_default=True,
+            )
+            if requested_seconds <= 0:
+                console.print("[red]Runtime duration must be greater than 0 seconds.[/red]")
+                raise typer.Exit(1)
+
+            requested_credits = burn_rate * requested_seconds
+            time_reservation_minutes = requested_seconds / 60.0
+            console.print(
+                f"[blue]Requested reservation: {requested_seconds:.2f}s -> {requested_credits:.6f} credits[/blue]"
+            )
+
+            created_runtime = client.create_runtime(
+                environment=environment,
+                time_reservation=time_reservation_minutes,
+            )
+
+            runtime_name = str(created_runtime.name or "")
+            runtime_uid = str(created_runtime.uid or "")
+            runtime_pod = str(created_runtime.pod_name or "")
+            runtime_ingress = str(created_runtime.ingress or "").rstrip("/")
+            runtime_token = str(
+                created_runtime.jupyter_token or client._get_token() or ""
+            )
+
+            if not runtime_ingress or not runtime_token:
+                console.print(
+                    "[red]Runtime created but ingress/token is not available for inspection.[/red]"
+                )
+                raise typer.Exit(1)
+
+            pre_confirm_kernel_id = _inspect_runtime_kernels_unique(
+                runtime_name=runtime_name or runtime_pod or runtime_uid,
+                runtime_uid=runtime_uid,
+                runtime_pod=runtime_pod,
+                runtime_ingress=runtime_ingress,
+                runtime_token=runtime_token,
+                inspection_label="post-create",
+            )
+
+            proceed = typer.confirm(
+                "Proceed with execution on this runtime?",
+                default=True,
+            )
+            if not proceed:
+                console.print("[red]Execution aborted by user.[/red]")
+                raise typer.Exit(1)
+
+            post_confirm_kernel_id = _inspect_runtime_kernels_unique(
+                runtime_name=runtime_name or runtime_pod or runtime_uid,
+                runtime_uid=runtime_uid,
+                runtime_pod=runtime_pod,
+                runtime_ingress=runtime_ingress,
+                runtime_token=runtime_token,
+                inspection_label="pre-exec confirmation",
+            )
+
+            if post_confirm_kernel_id != pre_confirm_kernel_id:
+                console.print(
+                    "[red]Kernel changed between inspections. Failing fast before execution.[/red]"
+                )
+                raise typer.Exit(1)
+
+            selected_name = runtime_uid or runtime_name or runtime_pod
+            if not selected_name:
+                console.print(
+                    "[red]Runtime created but no runtime identifier is available.[/red]"
+                )
+                raise typer.Exit(1)
+
+            console.print(
+                f"[green]Using newly created runtime: {selected_name}#{post_confirm_kernel_id}[/green]"
+            )
+            return selected_name
 
         # Use the first available runtime
         selected = runtimes[0]
@@ -894,6 +988,126 @@ def _select_runtime(token: Optional[str] = None) -> str:
             "[yellow]Hint: Make sure you're authenticated with 'dla login'[/yellow]"
         )
         raise typer.Exit(1)
+
+
+def _get_environment_burning_rate(client: DatalayerClient, environment: str) -> float:
+    """Get environment burning rate in credits/second."""
+    environments = client.list_environments()
+    for env in environments:
+        if str(env.name or "") == environment:
+            burn_rate = float(env.burning_rate or 0.0)
+            if burn_rate <= 0:
+                raise RuntimeError(
+                    f"Environment '{environment}' has invalid burning rate: {burn_rate}"
+                )
+            return burn_rate
+    raise RuntimeError(
+        f"Environment '{environment}' not found. Available environments: {[str(env.name or '') for env in environments]}"
+    )
+
+
+def _to_float(value: Any, default: float = 0.0) -> float:
+    """Safely parse a float-like value."""
+    try:
+        if value is None:
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def _get_remaining_credits_after_reservations(client: DatalayerClient) -> float:
+    """Compute remaining credits after reservations from usage payload."""
+    usage = client.get_usage_credits()
+    if not usage.get("success", True):
+        raise RuntimeError(
+            f"Failed to load usage credits: {usage.get('message', 'Unknown error')}"
+        )
+
+    credits = usage.get("credits", {}) or {}
+    reservations = usage.get("reservations", []) or []
+
+    credits_value = _to_float(credits.get("credits"), 0.0)
+    quota = credits.get("quota")
+
+    if quota is None:
+        available_before_reservations = credits_value
+    else:
+        available_before_reservations = _to_float(quota, 0.0) - credits_value
+
+    reserved_total = 0.0
+    for reservation in reservations:
+        if not isinstance(reservation, dict):
+            continue
+        reserved_total += _to_float(reservation.get("credits"), 0.0)
+
+    remaining = available_before_reservations - reserved_total
+    return max(0.0, remaining)
+
+
+def _default_runtime_seconds(remaining_credits: float, burn_rate: float) -> float:
+    """Suggest runtime duration in seconds using 33% of remaining credits."""
+    proposed_credits = max(0.0, remaining_credits * 0.33)
+    if burn_rate <= 0:
+        raise RuntimeError("Burning rate must be positive to compute duration")
+    seconds = proposed_credits / burn_rate
+    # Keep a practical positive default even when credits are very low.
+    return max(10.0, seconds)
+
+
+def _inspect_runtime_kernels_unique(
+    runtime_name: str,
+    runtime_uid: str,
+    runtime_pod: str,
+    runtime_ingress: str,
+    runtime_token: str,
+    inspection_label: str,
+) -> str:
+    """Inspect runtime kernels and return the unique kernel id.
+
+    Fails fast if the runtime does not expose exactly one kernel.
+    """
+    response = fetch(f"{runtime_ingress}/api/kernels", token=runtime_token, timeout=15)
+    kernels = response.json() if response.content else []
+    if not isinstance(kernels, list):
+        kernels = []
+
+    summary = Table(title=f"Runtime Inspection ({inspection_label})")
+    summary.add_column("Field", style="cyan")
+    summary.add_column("Value")
+    summary.add_row("Runtime", runtime_name)
+    summary.add_row("Pod", runtime_pod)
+    summary.add_row("UID", runtime_uid)
+    summary.add_row("Ingress", runtime_ingress)
+    summary.add_row("Kernels", str(len(kernels)))
+    console.print(summary)
+
+    kernels_table = Table(title="Available Kernels")
+    kernels_table.add_column("ID", style="green")
+    kernels_table.add_column("Name")
+    kernels_table.add_column("State")
+    kernels_table.add_column("Connections")
+    kernels_table.add_column("Last Activity")
+    for kernel in kernels:
+        kernels_table.add_row(
+            str((kernel or {}).get("id") or ""),
+            str((kernel or {}).get("name") or ""),
+            str((kernel or {}).get("execution_state") or ""),
+            str((kernel or {}).get("connections") or "0"),
+            str((kernel or {}).get("last_activity") or ""),
+        )
+    if kernels:
+        console.print(kernels_table)
+
+    if len(kernels) != 1:
+        raise RuntimeError(
+            f"Runtime inspection requires exactly one kernel; found {len(kernels)}"
+        )
+
+    kernel_id = str((kernels[0] or {}).get("id") or "").strip()
+    if not kernel_id:
+        raise RuntimeError("Runtime inspection returned a kernel without an id")
+    return kernel_id
 
 
 if __name__ == "__main__":
