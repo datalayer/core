@@ -48,6 +48,8 @@ DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_RUN_URL
 
 DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_RUN_URL
 
+DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_RUN_URL
+
 
 @dataclass
 class DatalayerURLs:
@@ -89,6 +91,8 @@ class DatalayerURLs:
         The Datalayer MCP server service URL
     ray_url : str
         The Datalayer Ray service URL
+    scheduler_url : str
+        The Datalayer scheduler service URL
     """
 
     run_url: str
@@ -106,6 +110,7 @@ class DatalayerURLs:
     support_url: str
     mcp_server_url: str
     ray_url: str
+    scheduler_url: str
 
     @classmethod
     def from_environment(
@@ -125,6 +130,7 @@ class DatalayerURLs:
         support_url: Optional[str] = None,
         mcp_server_url: Optional[str] = None,
         ray_url: Optional[str] = None,
+        scheduler_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
         Create DatalayerURLs instance from environment variables and parameters.
@@ -176,6 +182,9 @@ class DatalayerURLs:
         ray_url : Optional[str]
             Override for the Ray URL. If None, will check DATALAYER_RAY_URL env var
             then fallback to DEFAULT_DATALAYER_RAY_URL.
+        scheduler_url : Optional[str]
+            Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
+            then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
 
         Returns
         -------
@@ -291,6 +300,12 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_RAY_URL
         )
+        resolved_scheduler_url = (
+            scheduler_url
+            or os.environ.get("DATALAYER_SCHEDULER_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_SCHEDULER_URL
+        )
 
         # Strip trailing slashes for consistency
         resolved_run_url = resolved_run_url.rstrip("/")
@@ -308,6 +323,7 @@ class DatalayerURLs:
         resolved_support_url = resolved_support_url.rstrip("/")
         resolved_mcp_server_url = resolved_mcp_server_url.rstrip("/")
         resolved_ray_url = resolved_ray_url.rstrip("/")
+        resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
 
         return cls(
             run_url=resolved_run_url,
@@ -325,6 +341,7 @@ class DatalayerURLs:
             support_url=resolved_support_url,
             mcp_server_url=resolved_mcp_server_url,
             ray_url=resolved_ray_url,
+            scheduler_url=resolved_scheduler_url,
         )
 
     def __post_init__(self) -> None:
@@ -344,3 +361,4 @@ class DatalayerURLs:
         self.support_url = self.support_url.rstrip("/")
         self.mcp_server_url = self.mcp_server_url.rstrip("/")
         self.ray_url = self.ray_url.rstrip("/")
+        self.scheduler_url = self.scheduler_url.rstrip("/")

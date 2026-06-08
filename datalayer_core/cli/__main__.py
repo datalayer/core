@@ -42,6 +42,7 @@ from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
 from datalayer_core.cli.commands.sandbox_snapshots import snapshots_ls
 from datalayer_core.cli.commands.runtimes import app as runtimes_app
 from datalayer_core.cli.commands.runtimes import runtimes_ls
+from datalayer_core.cli.commands.schedules import app as schedules_app
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
@@ -152,6 +153,11 @@ def main_callback(
         "--mcp-server-url",
         help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
     ),
+    scheduler_url: str | None = typer.Option(
+        None,
+        "--scheduler-url",
+        help="Override DATALAYER_SCHEDULER_URL for this CLI invocation.",
+    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
@@ -169,6 +175,7 @@ def main_callback(
         "DATALAYER_STATUS_URL": status_url,
         "DATALAYER_SUPPORT_URL": support_url,
         "DATALAYER_MCP_SERVER_URL": mcp_server_url,
+        "DATALAYER_SCHEDULER_URL": scheduler_url,
     }
     for env_name, value in overrides.items():
         if value is not None:
@@ -192,6 +199,7 @@ app.add_typer(otel_app)
 app.add_typer(pools_app)
 app.add_typer(ray_app)
 app.add_typer(runtimes_app)
+app.add_typer(schedules_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
 app.add_typer(subscription_app)
@@ -239,6 +247,7 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--status-url",
     "--support-url",
     "--mcp-server-url",
+    "--scheduler-url",
 }
 
 _GLOBAL_OPTIONS_NO_VALUES = {
