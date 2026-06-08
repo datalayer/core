@@ -20,6 +20,7 @@ export * from './Ids';
 export * from './Jwt';
 export * from './Jupyter';
 export * from './Lazy';
+export * from './Logger';
 export * from './Msc';
 export * from './Name';
 export * from './Notebook';

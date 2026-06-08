@@ -17,6 +17,7 @@ from uuid import uuid4
 
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.console.manager import RuntimeManager
@@ -32,8 +33,9 @@ app = typer.Typer(
 
 console = Console()
 
-KERNEL_READY_TIMEOUT_SECONDS = 1.0
-KERNEL_PROBE_TIMEOUT_SECONDS = 1.0
+KERNEL_READY_TIMEOUT_SECONDS = 20.0
+KERNEL_PROBE_TIMEOUT_SECONDS = 20.0
+DEFAULT_EXEC_TIMEOUT_SECONDS = 10.0
 
 
 @app.callback()
@@ -103,6 +105,10 @@ class RuntimesExecService:
 
                 # Start kernel and get client
                 self.kernel_manager.start_kernel(name=runtime_name or "")
+
+                if bool(getattr(self.kernel_manager, "runtime_created_in_start", False)):
+                    self._inspect_created_runtime_kernels()
+
                 self.kernel_client = self.kernel_manager.client
 
                 if not self.kernel_client:
@@ -114,9 +120,18 @@ class RuntimesExecService:
                 # the first execute call.
                 self.kernel_client.wait_for_ready(timeout=KERNEL_READY_TIMEOUT_SECONDS)
                 self._probe_kernel_execution()
-                console.print(
-                    f"[green]Connected to runtime: {runtime_name or 'auto-selected'}[/green]"
-                )
+                manager_runtime_name = str(getattr(self.kernel_manager, "runtime_name", "") or runtime_name or "auto-selected")
+                manager_runtime_uid = str(getattr(self.kernel_manager, "runtime_uid", "") or "")
+                manager_kernel_id = str(getattr(self.kernel_manager, "_kernel_id", "") or "")
+                if manager_runtime_uid or manager_kernel_id:
+                    runtime_ref = f"{manager_runtime_uid}#{manager_kernel_id}".strip("#")
+                    console.print(
+                        f"[green]Connected to runtime: {manager_runtime_name} ({runtime_ref})[/green]"
+                    )
+                else:
+                    console.print(
+                        f"[green]Connected to runtime: {runtime_name or 'auto-selected'}[/green]"
+                    )
                 return
             except Exception as e:
                 last_error = e
@@ -153,15 +168,68 @@ class RuntimesExecService:
         finally:
             raise typer.Exit(1)
 
+    def _inspect_created_runtime_kernels(self) -> None:
+        """Inspect kernels after runtime auto-creation and fail fast when count != 1."""
+        if not self.kernel_manager:
+            raise RuntimeError("Runtime manager is not initialized")
+
+        server_url = str(getattr(self.kernel_manager, "server_url", "") or "").rstrip("/")
+        runtime_token = str(getattr(self.kernel_manager, "token", "") or "")
+        runtime_name = str(getattr(self.kernel_manager, "runtime_name", "") or "")
+        runtime_uid = str(getattr(self.kernel_manager, "runtime_uid", "") or "")
+        runtime_pod = str(getattr(self.kernel_manager, "runtime_pod_name", "") or "")
+
+        response = fetch(f"{server_url}/api/kernels", token=runtime_token, timeout=15)
+        kernels = response.json() if response.content else []
+        if not isinstance(kernels, list):
+            kernels = []
+
+        summary = Table(title="Runtime Inspection (auto-created by exec)")
+        summary.add_column("Field", style="cyan")
+        summary.add_column("Value")
+        summary.add_row("Runtime", runtime_name or runtime_pod)
+        summary.add_row("Pod", runtime_pod)
+        summary.add_row("UID", runtime_uid)
+        summary.add_row("Ingress", server_url)
+        summary.add_row("Kernels", str(len(kernels)))
+        console.print(summary)
+
+        kernels_table = Table(title="Available Kernels")
+        kernels_table.add_column("ID", style="green")
+        kernels_table.add_column("Name")
+        kernels_table.add_column("State")
+        kernels_table.add_column("Connections")
+        kernels_table.add_column("Last Activity")
+        for kernel in kernels:
+            kernels_table.add_row(
+                str((kernel or {}).get("id") or ""),
+                str((kernel or {}).get("name") or ""),
+                str((kernel or {}).get("execution_state") or ""),
+                str((kernel or {}).get("connections") or "0"),
+                str((kernel or {}).get("last_activity") or ""),
+            )
+        if kernels:
+            console.print(kernels_table)
+
+        if len(kernels) != 1:
+            raise RuntimeError(
+                f"Auto-created runtime expected exactly one kernel, found {len(kernels)}"
+            )
+
     def _probe_kernel_execution(self) -> None:
         """Validate the kernel can execute a trivial statement before running user code."""
         if not self.kernel_client:
             raise RuntimeError("Kernel client not initialized")
 
+        def _noop_output_hook(msg: dict[str, Any]) -> None:
+            # A stream-based probe validates the same IOPub path used by cells.
+            _ = msg
+
         self.kernel_client.execute_interactive(
-            "1+1",
-            silent=True,
+            "print('__datalayer_probe__')",
+            silent=False,
             timeout=KERNEL_PROBE_TIMEOUT_SECONDS,
+            output_hook=_noop_output_hook,
         )
 
     def execute_file(
@@ -200,6 +268,7 @@ class RuntimesExecService:
             # Guardrail: ensure the selected runtime endpoint is reachable
             # before submitting any execute requests.
             self._assert_runtime_alive()
+            self._prepare_kernel_before_execution()
 
             # Get cells from the file
             cells = list(get_cells(filepath))
@@ -211,7 +280,11 @@ class RuntimesExecService:
             total_cells = len(cells)
             console.print(f"[blue]Found {total_cells} cell(s) to execute[/blue]")
             failed_cells = 0
-            effective_timeout = float(timeout) if timeout is not None else None
+            effective_timeout = (
+                float(timeout)
+                if timeout is not None
+                else DEFAULT_EXEC_TIMEOUT_SECONDS
+            )
 
             # Execute each cell
             for i, (cell_id, cell_source) in enumerate(cells, 1):
@@ -219,6 +292,7 @@ class RuntimesExecService:
                     continue
 
                 console.print(f"[blue]Executing cell {i}/{total_cells}...[/blue]")
+                self._print_cell_source(i, cell_source)
                 captured_outputs: list[dict[str, Any]] = []
 
                 def output_hook(msg: dict[str, Any]) -> None:
@@ -386,6 +460,13 @@ class RuntimesExecService:
 
             console.print(json.dumps(output, ensure_ascii=False))
 
+    def _print_cell_source(self, cell_index: int, source: str) -> None:
+        """Print the source code that will be sent to the kernel for execution."""
+        console.print(f"[cyan]Cell {cell_index} source:[/cyan]")
+        console.print("[dim]<code>[/dim]")
+        console.print(source.rstrip("\n"))
+        console.print("[dim]</code>[/dim]")
+
     def _assert_runtime_alive(self) -> None:
         """Fail early when the selected runtime endpoint is not reachable."""
         if not self.kernel_manager:
@@ -412,6 +493,57 @@ class RuntimesExecService:
         raise RuntimeError(
             f"Runtime health check failed for '{server_url}': {last_error}"
         ) from last_error
+
+    def _prepare_kernel_before_execution(self) -> None:
+        """List kernels visible on the runtime before execution starts."""
+        kernels = self._fetch_runtime_kernels()
+        self._print_available_kernels(
+            title="Kernels available before execution:",
+            kernels=kernels,
+        )
+
+    def _fetch_runtime_kernels(self) -> list[dict[str, Any]]:
+        """Fetch kernels from the current runtime."""
+        if not self.kernel_manager:
+            return []
+
+        server_url = str(getattr(self.kernel_manager, "server_url", "") or "").rstrip("/")
+        runtime_token = str(getattr(self.kernel_manager, "token", "") or "")
+        if not server_url:
+            return []
+
+        response = fetch(f"{server_url}/api/kernels", token=runtime_token, timeout=15)
+        kernels = response.json() if response.content else []
+        if not isinstance(kernels, list):
+            return []
+        return [kernel for kernel in kernels if isinstance(kernel, dict)]
+
+    def _print_available_kernels(
+        self,
+        title: str,
+        kernels: list[dict[str, Any]],
+    ) -> None:
+        """Print kernels currently visible on the runtime."""
+        selected_kernel_id = str(getattr(self.kernel_manager, "_kernel_id", "") or "")
+
+        if not kernels:
+            console.print(f"[yellow]{title} none[/yellow]")
+            return
+
+        console.print(f"[blue]{title}[/blue]")
+        for kernel in sorted(
+            kernels,
+            key=lambda kernel: str((kernel or {}).get("id") or ""),
+        ):
+            kernel_id = str((kernel or {}).get("id") or "")
+            kernel_name = str((kernel or {}).get("name") or "")
+            execution_state = str((kernel or {}).get("execution_state") or "")
+            connections = (kernel or {}).get("connections")
+            last_activity = str((kernel or {}).get("last_activity") or "")
+            marker = "*" if selected_kernel_id and kernel_id == selected_kernel_id else " "
+            console.print(
+                f"  [{marker}] id={kernel_id} name={kernel_name} state={execution_state} connections={connections} last_activity={last_activity}"
+            )
 
     def cleanup(self) -> None:
         """Clean up resources."""
@@ -708,14 +840,48 @@ def _select_runtime(token: Optional[str] = None) -> str:
         runtimes = client.list_runtimes()
 
         if not runtimes:
-            # Return an empty runtime name to trigger RuntimeManager's built-in
-            # interactive flow that can launch a runtime from an environment.
-            return ""
+            environment_hint = "<ENVIRONMENT_NAME>"
+            try:
+                environments = client.list_environments()
+                if environments:
+                    environment_hint = str(environments[0].name or environment_hint)
+            except Exception:
+                pass
+
+            console.print("[red]No Runtime running.[/red]")
+            console.print("[yellow]Launch one with:[/yellow]")
+            console.print(
+                f"[yellow]  datalayer runtimes create {environment_hint} --time-reservation 10[/yellow]"
+            )
+            raise typer.Exit(1)
 
         # Use the first available runtime
         selected = runtimes[0]
+        runtime_uid = str(selected.uid or "")
+        kernel_id = ""
+        try:
+            runtime_token = str(getattr(selected, "jupyter_token", "") or client._get_token() or "")
+            ingress = str(getattr(selected, "ingress", "") or "").rstrip("/")
+            if ingress and runtime_token:
+                response = fetch(f"{ingress}/api/kernels", token=runtime_token, timeout=10)
+                kernels = response.json() if response.content else []
+                if isinstance(kernels, list) and kernels:
+                    ordered = sorted(
+                        (
+                            str((kernel or {}).get("id") or "")
+                            for kernel in kernels
+                        )
+                    )
+                    kernel_id = ordered[0] if ordered else ""
+        except Exception:
+            kernel_id = ""
+
+        runtime_ref = runtime_uid
+        if runtime_uid and kernel_id:
+            runtime_ref = f"{runtime_uid}#{kernel_id}"
+
         console.print(
-            f"[blue]No runtime specified, using: {selected.name} ({selected.uid})[/blue]"
+            f"[blue]No runtime specified, using: {selected.name} ({runtime_ref})[/blue]"
         )
         return selected.name or selected.uid or ""
 

@@ -6,7 +6,7 @@
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { IDatalayerCoreConfig } from '../../config/Configuration';
-import { configLogger } from '../../utils/logger';
+import { configLogger } from '../../utils/Logger';
 
 let loadConfigurationFromServer = true;
 

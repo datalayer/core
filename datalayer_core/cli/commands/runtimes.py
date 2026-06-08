@@ -314,6 +314,100 @@ def runtimes_ls(
     list_runtimes(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
 
 
+@app.command(name="inspect")
+def inspect_runtime(
+    runtime: Optional[str] = typer.Option(
+        None,
+        "--runtime",
+        "-r",
+        help="Runtime identifier (pod name, uid, or given name). Defaults to first running runtime.",
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
+) -> None:
+    """Inspect a runtime and list available kernels."""
+    try:
+        client = _make_client(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
+        runtimes = client.list_runtimes()
+        if not runtimes:
+            console.print("[yellow]No running runtimes found.[/yellow]")
+            raise typer.Exit(1)
+
+        selected = None
+        if runtime:
+            for candidate in runtimes:
+                if runtime in {candidate.pod_name, candidate.uid, candidate.name}:
+                    selected = candidate
+                    break
+            if selected is None:
+                console.print(f"[red]Runtime '{runtime}' not found.[/red]")
+                raise typer.Exit(1)
+        else:
+            selected = runtimes[0]
+
+        pod_name = selected.pod_name or ""
+        refreshed = client.get_runtime(pod_name)
+        endpoint = str(refreshed.ingress or "").rstrip("/")
+        runtime_token = str(refreshed.jupyter_token or client._get_token() or "")
+        if not endpoint:
+            console.print("[red]Runtime has no ingress endpoint.[/red]")
+            raise typer.Exit(1)
+
+        response = fetch(f"{endpoint}/api/kernels", token=runtime_token, timeout=15)
+        kernels = response.json() if response.content else []
+        if not isinstance(kernels, list):
+            kernels = []
+
+        summary = Table(title="Runtime Inspection")
+        summary.add_column("Field", style="cyan")
+        summary.add_column("Value")
+        summary.add_row("Runtime", str(refreshed.name or pod_name))
+        summary.add_row("Pod", str(pod_name))
+        summary.add_row("UID", str(refreshed.uid or ""))
+        summary.add_row("Ingress", endpoint)
+        summary.add_row("Kernels", str(len(kernels)))
+        console.print(summary)
+
+        kernels_table = Table(title="Available Kernels")
+        kernels_table.add_column("ID", style="green")
+        kernels_table.add_column("Name")
+        kernels_table.add_column("State")
+        kernels_table.add_column("Connections")
+        kernels_table.add_column("Last Activity")
+
+        for kernel in kernels:
+            kernels_table.add_row(
+                str((kernel or {}).get("id") or ""),
+                str((kernel or {}).get("name") or ""),
+                str((kernel or {}).get("execution_state") or ""),
+                str((kernel or {}).get("connections") or "0"),
+                str((kernel or {}).get("last_activity") or ""),
+            )
+
+        if kernels:
+            console.print(kernels_table)
+        else:
+            console.print("[yellow]No kernels returned by runtime API.[/yellow]")
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]Error inspecting runtime: {e}[/red]")
+        raise typer.Exit(1)
+
+
 @app.command(name="health")
 def runtime_health(
     runtime: Optional[str] = typer.Option(

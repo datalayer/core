@@ -14,7 +14,6 @@ from jupyter_kernel_client.manager import REQUEST_TIMEOUT, KernelHttpManager
 from jupyter_server.utils import url_path_join
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.runtimes import display_runtimes
 from datalayer_core.utils.date import timestamp_to_local_date
 from datalayer_core.utils.urls import DatalayerURLs
 
@@ -57,6 +56,10 @@ class RuntimeManager(KernelHttpManager):
         _ = kwargs.pop("kernel_id", None)  # kernel_id not supported
         super().__init__(server_url="", token="", username=username, **kwargs)
         self._kernel_id = ""
+        self.runtime_uid = ""
+        self.runtime_name = ""
+        self.runtime_pod_name = ""
+        self.runtime_created_in_start = False
         self.run_url = run_url
         self.run_token = token
         self.username = username
@@ -114,101 +117,56 @@ class RuntimeManager(KernelHttpManager):
                 "A kernel is already started. Shutdown it before starting a new one."
             )
 
+        # Reset per-start state markers.
+        self.runtime_created_in_start = False
+
         runtime_name = name
         runtime = None
 
-        # Use DatalayerClient to get runtime information
-        if runtime_name:
-            # Get specific runtime by name
-            runtimes = self._client.list_runtimes()
-            for r in runtimes:
-                if r.name == runtime_name:
-                    runtime = {
-                        "pod_name": r.pod_name,
-                        "ingress": r.ingress,
-                        "token": r.jupyter_token,
-                        "expired_at": r.expired_at,
-                    }
-                    break
-        else:
+        # Use DatalayerClient to get runtime information.
+        runtimes = self._client.list_runtimes()
+
+        if not runtime_name:
             self.log.debug(
                 "No Runtime name provided. Picking the first available Runtime…"
             )
-            # Get list of available runtimes
-            runtimes = self._client.list_runtimes()
-
-            # If no runtime is running, let the user decide to start one from the first environment
             if not runtimes:
-                environments = self._client.list_environments()
-                if not environments:
-                    raise RuntimeError(
-                        "No environments available to create a runtime from."
-                    )
-
-                first_environment = environments[0]
-                first_environment_name = first_environment.name
-
-                # Calculate credits limit based on environment
-                credits_limit = (
-                    first_environment.burning_rate * 60.0 * 10.0
-                )  # 10 minutes default
-
-                user_input = (
-                    input(
-                        f"No Runtime running.\nDo you want to launch a runtime from the environment {first_environment_name} with {credits_limit:.2f} reserved credits? (yes/no) [default: yes]: "
-                    )
-                    or "yes"
-                )
-                if user_input.lower() != "yes":
-                    raise RuntimeError(
-                        "No Runtime running. Please start one Runtime using `datalayer runtimes create <ENV_ID>`."
-                    )
-
-                # Create new runtime using the client
-                new_runtime = self._client.create_runtime(
-                    name=f"console-runtime-{first_environment_name}",
-                    environment=first_environment_name,
-                    time_reservation=10.0,  # 10 minutes default
+                raise RuntimeError(
+                    "No Runtime running. Start one first with: `d runtimes create <ENVIRONMENT_NAME> --time-reservation 10`"
                 )
 
-                # Start the runtime to get connection details
-                new_runtime._start()
+            selected = self._pick_accessible_runtime(runtimes)
 
-                runtime = {
-                    "pod_name": new_runtime.pod_name,
-                    "ingress": new_runtime.ingress,
-                    "token": new_runtime.jupyter_token,
-                    "expired_at": new_runtime.expired_at,
-                }
+            if selected is None:
+                raise RuntimeError("No accessible Runtime found after startup")
 
-                # Display the created runtime
-                runtime_dict = {
-                    "given_name": new_runtime.name,
-                    "environment_name": new_runtime.environment,
-                    "pod_name": new_runtime.pod_name,
-                    "ingress": new_runtime.ingress,
-                    "reservation_id": getattr(new_runtime, "reservation_id", ""),
-                    "uid": new_runtime.uid,
-                    "burning_rate": getattr(new_runtime, "burning_rate", 0.0),
-                    "token": new_runtime.jupyter_token,
-                    "started_at": getattr(new_runtime, "started_at", ""),
-                    "expired_at": new_runtime.expired_at,
-                }
-                display_runtimes([runtime_dict])
-
-                # Refresh runtime list
-                runtimes = self._client.list_runtimes()
-
-            # Use the first available runtime
-            if runtime is None and runtimes:
-                r = runtimes[0]
-                runtime = {
-                    "pod_name": r.pod_name,
-                    "ingress": r.ingress,
-                    "token": r.jupyter_token,
-                    "expired_at": r.expired_at,
-                }
-                runtime_name = r.pod_name or ""
+            runtime_name = selected.name or selected.uid or selected.pod_name or ""
+            self.runtime_uid = str(selected.uid or "")
+            self.runtime_name = str(selected.name or runtime_name or "")
+            self.runtime_pod_name = str(selected.pod_name or "")
+            runtime = {
+                "pod_name": selected.pod_name,
+                "ingress": selected.ingress,
+                "token": selected.jupyter_token or self.run_token,
+                "expired_at": selected.expired_at,
+            }
+        else:
+            selected = None
+            for r in runtimes:
+                if r.name == runtime_name or r.uid == runtime_name:
+                    selected = r
+                    break
+            if selected is None:
+                raise RuntimeError(f"Runtime '{runtime_name}' not found")
+            self.runtime_uid = str(selected.uid or "")
+            self.runtime_name = str(selected.name or runtime_name or "")
+            self.runtime_pod_name = str(selected.pod_name or "")
+            runtime = {
+                "pod_name": selected.pod_name,
+                "ingress": selected.ingress,
+                "token": selected.jupyter_token or self.run_token,
+                "expired_at": selected.expired_at,
+            }
 
         if runtime is None:
             raise RuntimeError("Unable to find a Runtime.")
@@ -228,94 +186,111 @@ class RuntimeManager(KernelHttpManager):
 
         return kernel_model
 
-    def _ensure_kernel_id(self) -> str:
-        """Return a usable kernel id, creating one if needed."""
+    def _pick_accessible_runtime(self, runtimes: list[Any]) -> Optional[Any]:
+        """Return first runtime that responds on /api/kernels with its runtime token."""
+        for runtime in runtimes:
+            if self._runtime_is_accessible(runtime):
+                return runtime
+        return None
+
+    def _wait_for_listed_accessible_runtime(self, preferred_uid: str) -> Optional[Any]:
+        """Wait for a launched runtime to be listed and reachable before use."""
+        attempts = 30
+        for _ in range(attempts):
+            runtimes = self._client.list_runtimes()
+
+            if preferred_uid:
+                for runtime in runtimes:
+                    if str(runtime.uid or "") == preferred_uid and self._runtime_is_accessible(runtime):
+                        return runtime
+
+            selected = self._pick_accessible_runtime(runtimes)
+            if selected is not None:
+                return selected
+
+            time.sleep(1.0)
+
+        return None
+
+    def _runtime_is_accessible(self, runtime: Any) -> bool:
+        """Best-effort HTTP accessibility check for runtime ingress and token."""
+        ingress = str(getattr(runtime, "ingress", "") or "").rstrip("/")
+        token = str(getattr(runtime, "jupyter_token", "") or self.run_token or "")
+        if not ingress or not token:
+            return False
+
         from datalayer_core.utils.network import fetch
 
-        response = None
-        max_attempts = 8
+        try:
+            fetch(f"{ingress}/api/kernels", token=token, timeout=10)
+            return True
+        except Exception:
+            return False
+
+    def _ensure_kernel_id(self) -> str:
+        """Return the runtime's existing kernel id.
+
+        Datalayer runtimes are provisioned with a kernel already running and
+        wired to the runtime ingress. We must connect to that existing kernel
+        instead of creating a new one: a freshly created kernel id is not the
+        one the ingress routes to, which leads to no execution output and 404
+        responses on kernel endpoints (e.g. /interrupt).
+        """
+        from datalayer_core.utils.network import fetch
+
+        kernels_url = f"{self.server_url.rstrip('/')}/api/kernels"
+        max_attempts = 30
+        last_error: Exception | None = None
         for attempt in range(1, max_attempts + 1):
             try:
-                response = fetch(
-                    f"{self.server_url.rstrip('/')}/api/kernels",
-                    token=self.token,
-                    timeout=20,
-                )
-                break
+                response = fetch(kernels_url, token=self.token, timeout=20)
+                kernels = response.json() if response.content else []
+                if isinstance(kernels, list) and kernels:
+                    # Freshly launched runtimes can briefly expose stale kernel IDs
+                    # in the list endpoint; verify a kernel can be read directly
+                    # before selecting it.
+                    ordered_kernels = sorted(
+                        kernels,
+                        key=lambda kernel: str((kernel or {}).get("id") or ""),
+                    )
+                    for kernel in ordered_kernels:
+                        kernel_id = str((kernel or {}).get("id") or "")
+                        if not kernel_id:
+                            continue
+                        try:
+                            fetch(
+                                f"{kernels_url}/{kernel_id}",
+                                token=self.token,
+                                timeout=20,
+                            )
+                            return kernel_id
+                        except requests.exceptions.HTTPError as e:
+                            status = (
+                                e.response.status_code
+                                if getattr(e, "response", None) is not None
+                                else None
+                            )
+                            if status in (404, 410):
+                                # Kernel disappeared while ingress was warming.
+                                continue
+                            last_error = e
+                        except requests.exceptions.ConnectionError as e:
+                            last_error = e
             except requests.exceptions.HTTPError as e:
                 status = (
                     e.response.status_code
                     if getattr(e, "response", None) is not None
                     else None
                 )
-                if status in (404, 502, 503, 504) and attempt < max_attempts:
-                    time.sleep(min(2.0, 0.5 * attempt))
-                    continue
-                raise
-            except requests.exceptions.ConnectionError:
-                if attempt < max_attempts:
-                    time.sleep(min(2.0, 0.5 * attempt))
-                    continue
-                raise
-
-        if response is None:
-            raise RuntimeError("Failed to query kernel endpoint for runtime")
-
-        kernels = response.json() if response.content else []
-        if isinstance(kernels, list) and kernels:
-            kernel_id = kernels[0].get("id")
-            if kernel_id:
-                return str(kernel_id)
-
-        # No running kernels yet: create one and wait for it to become reachable.
-        kernel_name = self._get_default_kernel_name() or "python3"
-        create_response = fetch(
-            f"{self.server_url.rstrip('/')}/api/kernels",
-            token=self.token,
-            method="POST",
-            json={"name": kernel_name},
-            timeout=30,
-        )
-        created = create_response.json() if create_response.content else {}
-        kernel_id = str(created.get("id") or "")
-        if not kernel_id:
-            raise RuntimeError("Runtime returned no kernel id after kernel creation")
-
-        max_checks = 10
-        for attempt in range(1, max_checks + 1):
-            try:
-                fetch(
-                    f"{self.server_url.rstrip('/')}/api/kernels/{kernel_id}",
-                    token=self.token,
-                    timeout=20,
-                )
-                return kernel_id
-            except Exception:
-                if attempt == max_checks:
+                if status not in (404, 502, 503, 504):
                     raise
-                time.sleep(min(2.0, 0.3 * attempt))
+                last_error = e
+            except requests.exceptions.ConnectionError as e:
+                last_error = e
 
-        return kernel_id
+            # The kernel may still be registering on a freshly launched runtime.
+            time.sleep(1.0)
 
-    def _get_default_kernel_name(self) -> str:
-        """Best-effort resolution of the runtime default kernelspec name."""
-        from datalayer_core.utils.network import fetch
-
-        try:
-            response = fetch(
-                f"{self.server_url.rstrip('/')}/api/kernelspecs",
-                token=self.token,
-                timeout=20,
-            )
-            payload = response.json() if response.content else {}
-            default_name = str(payload.get("default") or "").strip()
-            if default_name:
-                return default_name
-
-            specs = payload.get("kernelspecs")
-            if isinstance(specs, dict) and specs:
-                return str(next(iter(specs.keys())))
-        except Exception:
-            return ""
-
-        return ""
+        raise RuntimeError(
+            f"Runtime has no available kernel at '{kernels_url}': {last_error}"
+        )

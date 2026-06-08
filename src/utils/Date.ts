@@ -95,25 +95,66 @@ export const formatRelativeTime = (
     return typeof value === 'string' ? value : undefined;
   }
 
-  const diffMs = Math.max(0, now.getTime() - ts);
-  const seconds = Math.floor(diffMs / 1000);
+  const diffMs = ts - now.getTime();
+  const inFuture = diffMs > 0;
+  const absSeconds = Math.floor(Math.abs(diffMs) / 1000);
 
-  if (seconds < 60) return 'just now';
+  if (absSeconds < 30) return inFuture ? 'in a few seconds' : 'just now';
 
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  const withDirection = (value: number, unit: string): string => {
+    return inFuture ? `in ${value}${unit}` : `${value}${unit} ago`;
+  };
+
+  if (absSeconds < 60) return withDirection(absSeconds, 's');
+
+  const minutes = Math.floor(absSeconds / 60);
+  if (minutes < 60) return withDirection(minutes, 'm');
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return withDirection(hours, 'h');
 
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return withDirection(days, 'd');
 
   const weeks = Math.floor(days / 7);
-  if (weeks < 52) return `${weeks}w ago`;
+  if (weeks < 52) return withDirection(weeks, 'w');
 
   const years = Math.floor(days / 365);
-  return `${years}y ago`;
+  return withDirection(years, 'y');
+};
+
+/**
+ * Build a detailed datetime string suitable for tooltips.
+ *
+ * Example:
+ * "2026-06-08T16:15:32.531Z • Jun 8, 2026, 6:15:32 PM CEST (Europe/Paris)"
+ */
+export const formatDateTimeDetails = (
+  value?: Date | string | number,
+): string | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const date =
+    value instanceof Date
+      ? value
+      : typeof value === 'number'
+        ? new Date(value)
+        : new Date(value);
+
+  const ts = date.getTime();
+  if (Number.isNaN(ts)) {
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  const iso = date.toISOString();
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local';
+  const local = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'long',
+  }).format(date);
+  return `${iso} • ${local} (${zone})`;
 };
 
 /**
