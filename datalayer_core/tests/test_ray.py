@@ -19,7 +19,7 @@ class _FakeResponse:
 
 class _FakeRayClient(RayMixin):
     def __init__(self):
-        self.urls = DatalayerURLs.from_environment(ray_url="https://ray.example")
+        self.urls = DatalayerURLs.from_environment(runtimes_url="https://ray.example")
         self.calls = []
 
     def _fetch(self, url: str, **kwargs):
@@ -27,16 +27,16 @@ class _FakeRayClient(RayMixin):
         return _FakeResponse({"success": True, "url": url, "kwargs": kwargs})
 
 
-def test_urls_resolve_ray_url_from_environment(monkeypatch):
-    monkeypatch.setenv("DATALAYER_RAY_URL", "https://ray-from-env.example/")
+def test_urls_resolve_runtimes_url_from_environment(monkeypatch):
+    monkeypatch.setenv("DATALAYER_RUNTIMES_URL", "https://runtimes-from-env.example/")
     urls = DatalayerURLs.from_environment()
-    assert urls.ray_url == "https://ray-from-env.example"
+    assert urls.runtimes_url == "https://runtimes-from-env.example"
 
 
-def test_urls_resolve_ray_url_from_default(monkeypatch):
-    monkeypatch.delenv("DATALAYER_RAY_URL", raising=False)
+def test_urls_resolve_runtimes_url_from_default(monkeypatch):
+    monkeypatch.delenv("DATALAYER_RUNTIMES_URL", raising=False)
     urls = DatalayerURLs.from_environment()
-    assert urls.ray_url == "https://prod1.datalayer.run"
+    assert urls.runtimes_url == "https://r1.datalayer.run"
 
 
 def test_ray_mixin_job_logs_and_events_paths():

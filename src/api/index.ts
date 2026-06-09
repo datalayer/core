@@ -24,6 +24,7 @@ export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
 export * as iam from './iam';
 export * as otel from './otel';
 export * as runtimes from './runtimes';
+export * as scheduler from './scheduler';
 export * as spacer from './spacer';
 
 /**

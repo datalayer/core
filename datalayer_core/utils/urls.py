@@ -35,8 +35,6 @@ DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_RUN_URL
 
 DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_RUN_URL
 
-DEFAULT_DATALAYER_RAY_URL = DEFAULT_DATALAYER_RUN_URL
-
 DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_RUN_URL
 
 DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_RUN_URL
@@ -90,8 +88,6 @@ class DatalayerURLs:
         The Datalayer support service URL
     mcp_server_url : str
         The Datalayer MCP server service URL
-    ray_url : str
-        The Datalayer Ray service URL
     scheduler_url : str
         The Datalayer scheduler service URL
     """
@@ -110,7 +106,6 @@ class DatalayerURLs:
     status_url: str
     support_url: str
     mcp_server_url: str
-    ray_url: str
     scheduler_url: str
 
     @classmethod
@@ -130,7 +125,6 @@ class DatalayerURLs:
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
         mcp_server_url: Optional[str] = None,
-        ray_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
@@ -180,9 +174,6 @@ class DatalayerURLs:
         mcp_server_url : Optional[str]
             Override for the MCP server URL. If None, will check DATALAYER_MCP_SERVER_URL env var
             then fallback to DEFAULT_DATALAYER_MCP_SERVER_URL.
-        ray_url : Optional[str]
-            Override for the Ray URL. If None, will check DATALAYER_RAY_URL env var
-            then fallback to DEFAULT_DATALAYER_RAY_URL.
         scheduler_url : Optional[str]
             Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
             then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
@@ -295,12 +286,6 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_MCP_SERVERS_URL
         )
-        resolved_ray_url = (
-            ray_url
-            or os.environ.get("DATALAYER_RAY_URL")
-            or base_url_for_services
-            or DEFAULT_DATALAYER_RAY_URL
-        )
         resolved_scheduler_url = (
             scheduler_url
             or os.environ.get("DATALAYER_SCHEDULER_URL")
@@ -323,7 +308,6 @@ class DatalayerURLs:
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
         resolved_mcp_server_url = resolved_mcp_server_url.rstrip("/")
-        resolved_ray_url = resolved_ray_url.rstrip("/")
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
 
         return cls(
@@ -341,7 +325,6 @@ class DatalayerURLs:
             status_url=resolved_status_url,
             support_url=resolved_support_url,
             mcp_server_url=resolved_mcp_server_url,
-            ray_url=resolved_ray_url,
             scheduler_url=resolved_scheduler_url,
         )
 
@@ -361,7 +344,6 @@ class DatalayerURLs:
         self.status_url = self.status_url.rstrip("/")
         self.support_url = self.support_url.rstrip("/")
         self.mcp_server_url = self.mcp_server_url.rstrip("/")
-        self.ray_url = self.ray_url.rstrip("/")
         self.scheduler_url = self.scheduler_url.rstrip("/")
 
     def as_dict(self) -> dict[str, str]:
@@ -385,7 +367,6 @@ class DatalayerURLs:
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
         mcp_server_url: Optional[str] = None,
-        ray_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
@@ -404,6 +385,5 @@ class DatalayerURLs:
             status_url=status_url,
             support_url=support_url,
             mcp_server_url=mcp_server_url,
-            ray_url=ray_url,
             scheduler_url=scheduler_url,
         ).as_dict()

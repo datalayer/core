@@ -30,7 +30,7 @@ class RayMixin:
         prefixes = self._get_ray_api_prefixes()
         prefix = prefixes[0]
         response = self._fetch(  # type: ignore
-            f"{self.urls.ray_url}{prefix}{path}",  # type: ignore
+            f"{self.urls.runtimes_url}{prefix}{path}",  # type: ignore
             method=method,
             params=params,
             json=json_body,

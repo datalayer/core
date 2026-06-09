@@ -39,13 +39,25 @@ jobs_app = typer.Typer(
 )
 
 console = Console()
+_RAY_RUNTIMES_URL_OVERRIDE: Optional[str] = None
 
 _ANSI_ESCAPE_RE = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
 
 
 @app.callback()
-def ray_callback(ctx: typer.Context) -> None:
+def ray_callback(
+    ctx: typer.Context,
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL.",
+    ),
+) -> None:
     """Ray management commands."""
+    global _RAY_RUNTIMES_URL_OVERRIDE
+    _RAY_RUNTIMES_URL_OVERRIDE = (
+        str(runtimes_url).strip().rstrip("/") if runtimes_url else None
+    )
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
 
@@ -67,9 +79,7 @@ def jobs_callback(ctx: typer.Context) -> None:
 def _make_client(
     token: Optional[str] = None,
 ) -> DatalayerClient:
-    urls = DatalayerURLs.from_environment()
-    # Ray CLI is intentionally routed via runtimes, never directly to ray_url.
-    urls.ray_url = urls.runtimes_url
+    urls = DatalayerURLs.from_environment(runtimes_url=_RAY_RUNTIMES_URL_OVERRIDE)
     return DatalayerClient(urls=urls, token=token)
 
 
