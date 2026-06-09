@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActionList,
   ActionMenu,
@@ -79,6 +79,8 @@ const SCHEDULE_PRESETS: Array<{
   { id: 'daily', label: 'Every day', cron: '0 0 * * *' },
 ];
 
+const DEFAULT_CRON_EXPRESSION = '* * * * *';
+
 const presetFromCron = (cronExpression: string): SchedulePreset => {
   const normalized = cronExpression.trim();
   const preset = SCHEDULE_PRESETS.find(item => item.cron === normalized);
@@ -103,23 +105,37 @@ export const ScheduleMenu = ({
   iconColor,
   ariaLabel = 'Schedule execution',
   initialPreset = 'every-minute',
-  initialCronExpression = '* * * * *',
+  initialCronExpression,
   onSaved,
   onDeleted,
   onError,
 }: ScheduleMenuProps) => {
-  const initialCron =
-    initialCronExpression ||
-    SCHEDULE_PRESETS.find(item => item.id === initialPreset)?.cron ||
-    '* * * * *';
+  const providedInitialCron = (initialCronExpression || '').trim();
+  const hasProvidedInitialCron = providedInitialCron.length > 0;
+  const initialCron = hasProvidedInitialCron
+    ? providedInitialCron
+    : DEFAULT_CRON_EXPRESSION;
   const [cronExpression, setCronExpression] = useState<string>(initialCron);
+  const [hasExplicitCron, setHasExplicitCron] = useState(
+    hasProvidedInitialCron,
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmUid, setDeleteConfirmUid] = useState('');
+
+  useEffect(() => {
+    const nextProvidedCron = (initialCronExpression || '').trim();
+    const nextHasExplicitCron = nextProvidedCron.length > 0;
+    setHasExplicitCron(nextHasExplicitCron);
+    setCronExpression(
+      nextHasExplicitCron ? nextProvidedCron : DEFAULT_CRON_EXPRESSION,
+    );
+  }, [initialCronExpression, scheduleUid, notebookUid]);
+
   const preset = useMemo(
-    () => presetFromCron(cronExpression),
-    [cronExpression],
+    () => (hasExplicitCron ? presetFromCron(cronExpression) : 'custom'),
+    [cronExpression, hasExplicitCron],
   );
 
   const isEnabled =
@@ -130,6 +146,9 @@ export const ScheduleMenu = ({
     !isDeleting;
 
   const selectedPresetDescription = useMemo(() => {
+    if (!hasExplicitCron) {
+      return 'Not scheduled';
+    }
     const selected = SCHEDULE_PRESETS.find(
       item => item.cron === cronExpression.trim(),
     );
@@ -137,7 +156,7 @@ export const ScheduleMenu = ({
       return `${selected.label} (${selected.cron})`;
     }
     return `Custom (${cronExpression || 'Cron expression not set'})`;
-  }, [cronExpression]);
+  }, [cronExpression, hasExplicitCron]);
 
   const saveSchedule = async (nextPreset: SchedulePreset, nextCron: string) => {
     const cron = nextCron.trim();
@@ -184,6 +203,7 @@ export const ScheduleMenu = ({
     if (!next) {
       return;
     }
+    setHasExplicitCron(true);
     setCronExpression(next.cron);
     void saveSchedule(nextPreset, next.cron);
   };
@@ -266,7 +286,11 @@ export const ScheduleMenu = ({
             </Text>
             <TextInput
               value={cronExpression}
-              onChange={event => setCronExpression(event.currentTarget.value)}
+              onChange={event => {
+                const value = event.currentTarget.value;
+                setHasExplicitCron(value.trim().length > 0);
+                setCronExpression(value);
+              }}
               placeholder="* * * * *"
               aria-label="Cron expression"
               block
