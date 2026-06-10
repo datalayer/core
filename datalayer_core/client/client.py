@@ -269,6 +269,7 @@ class DatalayerClient(
         billable_account_uid: Optional[str] = None,
         billable_account_type: Optional[str] = None,
         billable_account_handle: Optional[str] = None,
+        api_key: Optional[str] = None,
     ) -> RuntimeService:
         """
         Create a new runtime (kernel) for code execution.
@@ -312,6 +313,10 @@ class DatalayerClient(
 
         # print(f"Runtime {name}")
 
+        client_for_request = self
+        if api_key:
+            client_for_request = DatalayerClient(urls=self._urls, token=api_key)
+
         if snapshot_name is not None:
             snapshots = self.list_snapshots()
             snapshot_uid = None
@@ -325,7 +330,7 @@ class DatalayerClient(
                     f"Snapshot '{snapshot_name}' not found. Available snapshots: {[s.name for s in snapshots]}"
                 )
 
-            response = self._create_runtime(
+            response = client_for_request._create_runtime(
                 given_name=name,
                 environment_name=environment,
                 from_snapshot_uid=snapshot_uid,
@@ -338,7 +343,7 @@ class DatalayerClient(
             )
         else:
             # Create runtime without snapshot
-            response = self._create_runtime(
+            response = client_for_request._create_runtime(
                 given_name=name,
                 environment_name=environment,
                 agent_spec_id=agent_spec_id,
@@ -374,7 +379,7 @@ class DatalayerClient(
             environment=runtime_data["environment_name"],
             run_url=self._urls.run_url,
             iam_url=self._urls.iam_url,
-            token=self._token,
+            token=api_key or self._token,
             ingress=runtime_data["ingress"],
             jupyter_token=runtime_data["token"],
             pod_name=runtime_data["pod_name"],
@@ -434,7 +439,11 @@ class DatalayerClient(
             )
         return runtime_services
 
-    def terminate_runtime(self, runtime: Union[RuntimeService, str]) -> bool:
+    def terminate_runtime(
+        self,
+        runtime: Union[RuntimeService, str],
+        api_key: Optional[str] = None,
+    ) -> bool:
         """
         Terminate a running Runtime.
 
@@ -450,6 +459,9 @@ class DatalayerClient(
         """
         pod_name = runtime.pod_name if isinstance(runtime, RuntimeService) else runtime
         if pod_name is not None:
+            if api_key:
+                client_for_request = DatalayerClient(urls=self._urls, token=api_key)
+                return client_for_request._terminate_runtime(pod_name).get("success", False)
             return self._terminate_runtime(pod_name)["success"]
         else:
             return False

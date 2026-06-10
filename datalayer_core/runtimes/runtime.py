@@ -60,6 +60,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
         run_url: str = DEFAULT_DATALAYER_RUN_URL,
         iam_url: Optional[str] = None,
         token: Optional[str] = None,
+        api_key: Optional[str] = None,
         pod_name: Optional[str] = None,
         ingress: Optional[str] = None,
         reservation_id: Optional[str] = None,
@@ -86,6 +87,8 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
             Datalayer IAM server URL. If not provided, defaults to run_url.
         token : Optional[str]
             Authentication token (can also be set via DATALAYER_API_KEY env var).
+        api_key : Optional[str]
+            Authentication API key alias for ``token``.
         pod_name : Optional[str]
             Name of the pod running the runtime.
         ingress : Optional[str]
@@ -110,7 +113,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
             time_reservation=time_reservation,
             run_url=run_url,
             iam_url=iam_url or run_url,
-            token=token,
+            token=token or api_key,
             external_token=None,
             pod_name=pod_name,
             ingress=ingress,

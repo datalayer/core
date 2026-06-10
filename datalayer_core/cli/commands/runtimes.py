@@ -31,12 +31,13 @@ def runtimes_callback(ctx: typer.Context) -> None:
 
 def _make_client(
     token: Optional[str] = None,
+    api_key: Optional[str] = None,
     iam_url: Optional[str] = None,
     runtimes_url: Optional[str] = None,
 ) -> DatalayerClient:
     """Create a DatalayerClient with optional runtimes URL override."""
     urls = DatalayerURLs.from_environment(iam_url=iam_url, runtimes_url=runtimes_url)
-    return DatalayerClient(urls=urls, token=token)
+    return DatalayerClient(urls=urls, token=token or api_key)
 
 
 @app.command(name="ls")
@@ -129,6 +130,11 @@ def create_runtime(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        "--api-key",
+        help="Authentication API key (alias for --token).",
+    ),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -146,6 +152,7 @@ def create_runtime(
     try:
         client = _make_client(
             token=token,
+            api_key=api_key,
             iam_url=iam_url,
             runtimes_url=runtimes_url,
         )
@@ -207,6 +214,11 @@ def terminate_runtime(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        "--api-key",
+        help="Authentication API key (alias for --token).",
+    ),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -224,6 +236,7 @@ def terminate_runtime(
     try:
         client = _make_client(
             token=token,
+            api_key=api_key,
             iam_url=iam_url,
             runtimes_url=runtimes_url,
         )

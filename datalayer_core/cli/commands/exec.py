@@ -585,6 +585,11 @@ def main(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        "--api-key",
+        help="Authentication API key (alias for --token).",
+    ),
     example_notebook: bool = typer.Option(
         False,
         "--example-notebook",
@@ -602,6 +607,8 @@ def main(
     ),
 ) -> None:
     """Execute a Python file or Jupyter notebook on a Datalayer runtime."""
+
+    auth_token = token or api_key
 
     if example_notebook and example_py:
         console.print(
@@ -663,10 +670,10 @@ def main(
         # Determine which runtime to use
         selected_runtime = runtime
         if selected_runtime is None:
-            selected_runtime = _select_runtime(token=token)
+            selected_runtime = _select_runtime(token=auth_token)
 
         # Create exec service and execute
-        exec_service = RuntimesExecService(token=token)
+        exec_service = RuntimesExecService(token=auth_token)
 
         try:
             # Initialize connection to runtime
