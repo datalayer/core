@@ -14,6 +14,8 @@ import uuid
 from functools import lru_cache
 from typing import Any, Optional, Union
 
+from jupyter_kernel_client import KernelClient
+
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.environments import EnvironmentsMixin
 from datalayer_core.mixins.evals import EvalsMixin
@@ -550,6 +552,111 @@ class DatalayerClient(
             message = response.get("message", "Unknown error")
             raise RuntimeError(f"Failed to update runtime '{pod_name}': {message}")
         return True
+
+    def check_runtime_health(
+        self,
+        runtime: Union[RuntimeService, str],
+        probe_code: str = "print('datalayer runtime health probe')",
+        timeout: float = 20.0,
+        api_key: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Check runtime reachability and execute a probe on the sandbox.
+
+        Parameters
+        ----------
+        runtime : Union[RuntimeService, str]
+            Runtime object or runtime identifier (pod name/uid/name).
+        probe_code : str
+            Python code to execute as health probe on the sandbox.
+        timeout : float
+            Probe execution timeout in seconds.
+        api_key : Optional[str]
+            Optional API key override used for runtime lookup.
+
+        Returns
+        -------
+        dict[str, Any]
+            Health result with success flag and diagnostics.
+        """
+        client_for_request = self
+        if api_key:
+            client_for_request = DatalayerClient(urls=self._urls, token=api_key)
+
+        runtime_service = (
+            runtime if isinstance(runtime, RuntimeService) else client_for_request.get_runtime(runtime)
+        )
+
+        endpoint = str(runtime_service.ingress or "").rstrip("/")
+        runtime_token = str(
+            runtime_service.jupyter_token
+            or client_for_request._get_token()
+            or ""
+        ).strip()
+
+        result: dict[str, Any] = {
+            "success": False,
+            "runtime_uid": runtime_service.uid,
+            "runtime_pod_name": runtime_service.pod_name,
+            "runtime_name": runtime_service.name,
+            "ingress": endpoint,
+            "probe_mode": "sandbox_execute_code",
+        }
+
+        if not endpoint:
+            result["message"] = "runtime ingress is missing"
+            return result
+        if not runtime_token:
+            result["message"] = "runtime token is missing"
+            return result
+
+        kernel_client: Optional[KernelClient] = None
+        try:
+            kernel_client = KernelClient(server_url=endpoint, token=runtime_token)
+            kernel_client.start()
+            reply = kernel_client.execute(probe_code, timeout=timeout)
+            outputs = reply.get("outputs", [])
+            if not isinstance(outputs, list):
+                outputs = []
+
+            error_outputs = [
+                output
+                for output in outputs
+                if isinstance(output, dict)
+                and str(output.get("output_type") or "") == "error"
+            ]
+
+            if error_outputs:
+                first_error = error_outputs[0]
+                result["message"] = "sandbox probe execution failed"
+                result["error_name"] = first_error.get("ename")
+                result["error_value"] = first_error.get("evalue")
+                traceback_lines = first_error.get("traceback")
+                if isinstance(traceback_lines, list):
+                    result["traceback_tail"] = "\n".join(
+                        [str(line) for line in traceback_lines if line is not None]
+                    )[-4000:]
+                return result
+
+            stream_text_parts = []
+            for output in outputs:
+                if not isinstance(output, dict):
+                    continue
+                if str(output.get("output_type") or "") == "stream":
+                    stream_text_parts.append(str(output.get("text") or ""))
+
+            result["success"] = True
+            result["message"] = "runtime reachable and sandbox probe executed"
+            result["stdout_tail"] = "".join(stream_text_parts)[-1000:]
+            return result
+        except Exception as exc:
+            result["message"] = f"runtime health probe exception: {exc}"
+            return result
+        finally:
+            if kernel_client is not None:
+                try:
+                    kernel_client.stop()
+                except Exception:
+                    pass
 
     def list_secrets(self) -> list[SecretModel]:
         """

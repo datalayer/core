@@ -434,6 +434,11 @@ def runtime_health(
         "--token",
         help="Authentication token (Bearer token for API requests).",
     ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        "--api-key",
+        help="Authentication API key (alias for --token).",
+    ),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -445,9 +450,14 @@ def runtime_health(
         help="Datalayer Runtimes server URL",
     ),
 ) -> None:
-    """Check health/reachability of a runtime endpoint."""
+    """Check runtime health by executing a probe on the sandbox."""
     try:
-        client = _make_client(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
+        client = _make_client(
+            token=token,
+            api_key=api_key,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+        )
         runtimes = client.list_runtimes()
         if not runtimes:
             console.print("[yellow]No running runtimes found.[/yellow]")
@@ -465,23 +475,16 @@ def runtime_health(
         else:
             selected = runtimes[0]
 
-        pod_name = selected.pod_name or ""
+        pod_name = selected.pod_name or selected.uid or selected.name or ""
         refreshed = client.get_runtime(pod_name)
+        health = client.check_runtime_health(
+            pod_name,
+            api_key=api_key,
+        )
 
-        endpoint = str(refreshed.ingress or "").rstrip("/")
-        runtime_token = str(refreshed.jupyter_token or "")
-        health_status = "unreachable"
-        detail = "Missing ingress URL"
-
-        if endpoint:
-            try:
-                response = fetch(f"{endpoint}/api/kernels", token=runtime_token, timeout=15)
-                kernels = response.json() if response.content else []
-                kernel_count = len(kernels) if isinstance(kernels, list) else "n/a"
-                health_status = "alive"
-                detail = f"Jupyter API reachable (kernels={kernel_count})"
-            except Exception as e:
-                detail = str(e)
+        health_status = "alive" if bool(health.get("success")) else "unreachable"
+        detail = str(health.get("message") or "health probe failed")
+        probe_mode = str(health.get("probe_mode") or "n/a")
 
         table = Table(title="Runtime Health")
         table.add_column("Field", style="cyan")
@@ -489,10 +492,15 @@ def runtime_health(
         table.add_row("Runtime", str(refreshed.name or pod_name))
         table.add_row("Pod", str(pod_name))
         table.add_row("UID", str(refreshed.uid or ""))
-        table.add_row("Ingress", endpoint or "n/a")
+        table.add_row("Ingress", str(refreshed.ingress or "n/a"))
+        table.add_row("Probe", probe_mode)
         table.add_row("Status", health_status)
         table.add_row("Detail", detail)
         console.print(table)
+
+        stdout_tail = str(health.get("stdout_tail") or "").strip()
+        if stdout_tail:
+            console.print(f"[dim]Probe stdout: {stdout_tail}[/dim]")
 
         if health_status != "alive":
             raise typer.Exit(1)

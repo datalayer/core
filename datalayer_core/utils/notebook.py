@@ -32,6 +32,10 @@ def get_cells(filepath: Path) -> t.Iterator[tuple[Optional[str], str]]:
             return
         for cell in nb.cells:
             if cell.cell_type == "code":
-                yield cell.id, cell.source
+                # Some notebooks do not include a cell id; keep execution robust.
+                cell_id = getattr(cell, "id", None)
+                if cell_id is None and isinstance(cell, dict):
+                    cell_id = cell.get("id")
+                yield (str(cell_id) if cell_id is not None else None), cell.source
     else:
         yield None, filepath.read_text(encoding="utf-8")
