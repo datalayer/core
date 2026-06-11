@@ -171,21 +171,21 @@ export default function WelcomePage() {
             }}
           >
             <Text as="p" sx={{ fontSize: 1, color: 'fg.muted', mb: 2 }}>
-              Don&apos;t have a token yet?
+              Don&apos;t have an API key yet?
             </Text>
             <Link
-              href="https://datalayer.app/settings/iam/tokens"
+              href="https://datalayer.app/settings/iam/api-keys"
               target="_blank"
               sx={{ fontSize: 1 }}
             >
-              <LinkExternalIcon size={16} /> Create a token on Datalayer
+              <LinkExternalIcon size={16} /> Create an API key on Datalayer
             </Link>
           </Box>
         </Box>
 
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Text as="p" sx={{ fontSize: 0, color: 'fg.subtle' }}>
-            Your token is stored locally and used to authenticate with
+            Your API key is stored locally and used to authenticate with
             Datalayer&apos;s API
           </Text>
         </Box>

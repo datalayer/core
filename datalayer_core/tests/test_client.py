@@ -185,9 +185,9 @@ def test_profile() -> None:
     not bool(TEST_DATALAYER_API_KEY),
     reason="TEST_DATALAYER_API_KEY is not set, skipping secret tests.",
 )
-def test_tokens_list() -> None:
+def test_api_keys_list() -> None:
     """
-    Test the listing of tokens
+    Test the listing of API keys.
     """
     client = DatalayerClient(token=TEST_DATALAYER_API_KEY)
-    assert client.list_tokens()
+    assert isinstance(client.list_api_keys(), list)

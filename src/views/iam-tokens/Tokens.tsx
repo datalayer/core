@@ -29,63 +29,63 @@ const TokensTable = () => {
   const { useTokens, useDeleteToken } = useCache();
   const { enqueueToast } = useToast();
 
-  const getTokensQuery = useTokens();
+  const getApiKeysQuery = useTokens();
   const deleteTokenMutation = useDeleteToken();
 
   const navigate = useNavigate();
-  const [tokens, setTokens] = useState<IIAMToken[]>([]);
+  const [apiKeys, setApiKeys] = useState<IIAMToken[]>([]);
   const [deletingToken, setDeletingToken] = useState<IIAMToken | null>(null);
   const returnFocusRef = useRef(null);
   useEffect(() => {
-    if (getTokensQuery.data) {
-      setTokens(getTokensQuery.data);
+    if (getApiKeysQuery.data) {
+      setApiKeys(getApiKeysQuery.data);
     }
-  }, [getTokensQuery.data]);
+  }, [getApiKeysQuery.data]);
   const handleDeleteConfirm = () => {
     if (!deletingToken) return;
     deleteTokenMutation.mutate(deletingToken.id, {
       onSuccess: (resp: any) => {
         if (resp.success) {
-          enqueueToast(`Token "${deletingToken.name}" deleted.`, {
+          enqueueToast(`API key "${deletingToken.name}" deleted.`, {
             variant: 'success',
           });
         } else {
-          enqueueToast(resp.message || 'Failed to delete token.', {
+          enqueueToast(resp.message || 'Failed to delete API key.', {
             variant: 'error',
           });
         }
       },
       onError: () => {
-        enqueueToast('Failed to delete token.', { variant: 'error' });
+        enqueueToast('Failed to delete API key.', { variant: 'error' });
       },
       onSettled: () => setDeletingToken(null),
     });
   };
-  return tokens.length === 0 ? (
+  return apiKeys.length === 0 ? (
     <Blankslate border spacious>
-      <Blankslate.Heading>Tokens</Blankslate.Heading>
+      <Blankslate.Heading>API Keys</Blankslate.Heading>
       <Blankslate.Description>
-        <Text sx={{ textAlign: 'center' }}>No Tokens found.</Text>
+        <Text sx={{ textAlign: 'center' }}>No API Keys found.</Text>
       </Blankslate.Description>
     </Blankslate>
   ) : (
     <>
       <Table.Container>
-        <Table.Title as="h2" id="tokens">
-          Tokens
+        <Table.Title as="h2" id="api-keys">
+          API Keys
         </Table.Title>
-        <Table.Subtitle as="p" id="tokens-subtitle">
-          Your tokens.
+        <Table.Subtitle as="p" id="api-keys-subtitle">
+          Your API keys.
         </Table.Subtitle>
         <DataTable
-          aria-labelledby="teams"
-          aria-describedby="teams-subtitle"
-          data={tokens}
+          aria-labelledby="api-keys"
+          aria-describedby="api-keys-subtitle"
+          data={apiKeys}
           columns={[
             {
               header: 'Type',
               field: 'variant',
-              renderCell: token => <Label>{token.variant}</Label>,
+              renderCell: apiKey => <Label>{apiKey.variant}</Label>,
             },
             {
               header: 'Name',
@@ -99,21 +99,21 @@ const TokensTable = () => {
             {
               header: 'Expiration date',
               field: 'expirationDate',
-              renderCell: token => (
-                <RelativeTime date={new Date(token.expirationDate)} />
+              renderCell: apiKey => (
+                <RelativeTime date={new Date(apiKey.expirationDate)} />
               ),
             },
             {
               header: '',
               field: 'id',
-              renderCell: token => (
+              renderCell: apiKey => (
                 <Box display="flex" sx={{ gap: 1 }}>
                   <IconButton
                     icon={EditIcon}
                     aria-label="Edit"
                     size="small"
                     variant="invisible"
-                    onClick={e => navigate(`${token.id}`, e)}
+                    onClick={e => navigate(`${apiKey.id}`, e)}
                   />
                   <IconButton
                     ref={returnFocusRef}
@@ -122,7 +122,7 @@ const TokensTable = () => {
                     size="small"
                     variant="invisible"
                     sx={{ color: 'danger.fg' }}
-                    onClick={() => setDeletingToken(token)}
+                    onClick={() => setDeletingToken(apiKey)}
                   />
                 </Box>
               ),
@@ -132,7 +132,7 @@ const TokensTable = () => {
       </Table.Container>
       {deletingToken && (
         <ConfirmationDialog
-          title="Delete token"
+          title="Delete API key"
           onClose={gesture => {
             if (gesture === 'confirm') handleDeleteConfirm();
             else setDeletingToken(null);
@@ -140,7 +140,7 @@ const TokensTable = () => {
           confirmButtonContent="Delete"
           confirmButtonType="danger"
         >
-          Are you sure you want to delete the token{' '}
+          Are you sure you want to delete the API key{' '}
           <strong>{deletingToken.name}</strong>? This action cannot be undone.
         </ConfirmationDialog>
       )}
@@ -159,15 +159,15 @@ export const Tokens = () => {
       <PageLayout.Header>
         <PageHeader>
           <PageHeader.TitleArea variant="large">
-            <PageHeader.Title>Tokens</PageHeader.Title>
+            <PageHeader.Title>API Keys</PageHeader.Title>
           </PageHeader.TitleArea>
           <PageHeader.Actions>
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/tokens/new', e)}
+              onClick={e => navigate('/api-keys/new', e)}
             >
-              New token
+              New API key
             </Button>
           </PageHeader.Actions>
         </PageHeader>

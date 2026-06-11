@@ -24,14 +24,14 @@ from datalayer_core.mixins.ray import RayMixin
 from datalayer_core.mixins.sandbox_snapshots import SandboxSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.mixins.secrets import SecretsMixin
-from datalayer_core.mixins.tokens import TokensMixin
+from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.usage import UsageMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import UserModel
+from datalayer_core.models.api_key import ApiKeyModel, ApiKeyType
 from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
-from datalayer_core.models.token import TokenModel, TokenType
 from datalayer_core.runtimes.runtime import RuntimeService
 from datalayer_core.runtimes.sandbox_snapshot import (
     as_code_sandbox_snapshots,
@@ -56,7 +56,7 @@ class DatalayerClient(
     RayMixin,
     SecretsMixin,
     SandboxSnapshotsMixin,
-    TokensMixin,
+    ApiKeysMixin,
     UsageMixin,
     WhoamiAppMixin,
 ):
@@ -855,76 +855,77 @@ class DatalayerClient(
         )
         return self._delete_snapshot(snapshot_uid)
 
-    def create_token(
+    def create_api_key(
         self,
         name: str,
         description: str,
         expiration_date: int = 0,
-        token_type: Union[str, TokenType] = TokenType.USER,
+        api_key_type: Union[str, ApiKeyType] = ApiKeyType.USER,
     ) -> dict[str, Any]:
         """
-        Create a new token.
+        Create a new API key.
 
         Parameters
         ----------
         name : str
-            Name of the token.
+            Name of the API key.
         description : str
-            Description of the token.
+            Description of the API key.
         expiration_date : int, default 0
-            Expiration date of the token in seconds since epoch.
-        token_type : Union[str, TokenType], default TokenType.USER
-            Type of the token (e.g., "user", "admin").
+            Expiration date of the API key in seconds since epoch.
+        api_key_type : Union[str, ApiKeyType], default ApiKeyType.USER
+            Type of the API key (e.g., "user", "admin").
 
         Returns
         -------
         dict[str, Any]
-            A dictionary containing the created token and its details.
+            A dictionary containing the created API key and its details.
         """
-        return self._create_token(
+        return self._create_api_key(
             name=name,
             description=description,
             expiration_date=expiration_date,
-            token_type=token_type,
+            api_key_type=api_key_type,
         )
 
-    def list_tokens(self) -> list[TokenModel]:
+    def list_api_keys(self) -> list[ApiKeyModel]:
         """
-        List all tokens.
+        List all API keys.
 
         Returns
         -------
-        list[Token]
-            A list of tokens associated with the user.
+        list[ApiKeyModel]
+            A list of API keys associated with the user.
         """
-        response = self._list_tokens()
-        if response.get("success") and "tokens" in response:
-            token_objects = []
-            for token_data in response["tokens"]:
-                token = TokenModel(
-                    uid=token_data["uid"],
-                    name=token_data.get("name_s", ""),
-                    description=token_data.get("description_t", ""),
-                    token_type=token_data.get("variant_s", "user"),
+        response = self._list_api_keys()
+        if response.get("success"):
+            payload = response.get("api_keys", response.get("tokens", []))
+            api_key_objects = []
+            for api_key_data in payload:
+                api_key = ApiKeyModel(
+                    uid=api_key_data["uid"],
+                    name=api_key_data.get("name_s", ""),
+                    description=api_key_data.get("description_t", ""),
+                    api_key_type=api_key_data.get("variant_s", "user"),
                 )
-                token_objects.append(token)
-            return token_objects
+                api_key_objects.append(api_key)
+            return api_key_objects
         return []
 
-    def delete_token(self, token: Union[str, TokenModel]) -> bool:
+    def delete_api_key(self, api_key: Union[str, ApiKeyModel]) -> bool:
         """
-        Delete a specific token.
+        Delete a specific API key.
 
         Parameters
         ----------
-        token : Union[str, Token]
-            Token object or UID string to delete.
+        api_key : Union[str, ApiKeyModel]
+            API key object or UID string to delete.
 
         Returns
         -------
         bool
             The result of the deletion operation.
         """
-        token_uid = token.uid if isinstance(token, TokenModel) else token
-        response = self._delete_token(token_uid)
+        api_key_uid = api_key.uid if isinstance(api_key, ApiKeyModel) else api_key
+        response = self._delete_api_key(api_key_uid)
         return response.get("success", False)

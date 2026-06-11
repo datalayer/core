@@ -2638,7 +2638,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.tokens.all(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/tokens`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys`,
           method: 'GET',
         });
         if (resp.success && resp.tokens) {
@@ -2670,7 +2670,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: Omit<IIAMToken, 'id' | 'value'>) => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/tokens`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys`,
           method: 'POST',
           body: {
             ...token,
@@ -3057,7 +3057,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.tokens.detail(tokenId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/tokens/${tokenId}`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${tokenId}`,
           method: 'GET',
         });
         if (resp.success && resp.token) {
@@ -3077,7 +3077,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: IIAMToken) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/tokens/${token.id}`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${token.id}`,
           method: 'PUT',
           body: { ...token },
         });
@@ -3101,7 +3101,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (tokenId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/tokens/${tokenId}`,
+          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${tokenId}`,
           method: 'DELETE',
         });
       },

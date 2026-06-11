@@ -3,22 +3,22 @@
 
 from typing import Any, Union
 
-from datalayer_core.models.token import TokenType
+from datalayer_core.models.api_key import ApiKeyType
 from datalayer_core.utils import btoa
 
 
-class TokensCreateMixin:
-    """Mixin for creating tokens in Datalayer."""
+class ApiKeysCreateMixin:
+    """Mixin for creating API keys in Datalayer."""
 
-    def _create_token(
+    def _create_api_key(
         self,
         name: str,
         description: str,
         expiration_date: int = 0,
-        token_type: Union[str, TokenType] = TokenType.USER,
+        api_key_type: Union[str, ApiKeyType] = ApiKeyType.USER,
     ) -> dict[str, Any]:
         """
-        Create a Token with the given parameters.
+        Create an API key with the given parameters.
 
         Parameters
         ----------
@@ -27,10 +27,10 @@ class TokensCreateMixin:
         description : str
             Description of the secret.
         expiration_date : float
-            Expiration date of the token.
-        token_type : str, TokenType
-            Variant or type of the token. Defaults to "user_token".
-            Type of the token (e.g., "user").
+            Expiration date of the API key.
+        api_key_type : str, ApiKeyType
+            Variant or type of the API key. Defaults to "user_token".
+            Type of the API key (e.g., "user").
 
         Returns
         -------
@@ -40,14 +40,14 @@ class TokensCreateMixin:
         body = {
             "name": name,
             "description": btoa(description),
-            "variant": token_type.value
-            if isinstance(token_type, TokenType)
-            else token_type,
+            "variant": api_key_type.value
+            if isinstance(api_key_type, ApiKeyType)
+            else api_key_type,
             "expiration_date": expiration_date,
         }
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens".format(self.urls.iam_url),  # type: ignore
+                "{}/api/iam/v1/api-keys".format(self.urls.iam_url),  # type: ignore
                 method="POST",
                 json=body,
             )
@@ -56,17 +56,17 @@ class TokensCreateMixin:
             return {"success": False, "message": str(e)}
 
 
-class TokensDeleteMixin:
-    """Mixin for deleting tokens in Datalayer."""
+class ApiKeysDeleteMixin:
+    """Mixin for deleting API keys in Datalayer."""
 
-    def _delete_token(self, token_uid: str) -> dict[str, Any]:
+    def _delete_api_key(self, api_key_uid: str) -> dict[str, Any]:
         """
-        Delete a token by its unique identifier.
+        Delete an API key by its unique identifier.
 
         Parameters
         ----------
-        token_uid : str
-            Unique identifier of the token to delete.
+        api_key_uid : str
+            Unique identifier of the API key to delete.
 
         Returns
         -------
@@ -75,7 +75,7 @@ class TokensDeleteMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens/{}".format(self.urls.iam_url, token_uid),  # type: ignore
+                "{}/api/iam/v1/api-keys/{}".format(self.urls.iam_url, api_key_uid),  # type: ignore
                 method="DELETE",
             )
             return response.json()
@@ -83,21 +83,21 @@ class TokensDeleteMixin:
             return {"success": False, "message": str(e)}
 
 
-class TokensListMixin:
-    """Mixin class for listing tokens."""
+class ApiKeysListMixin:
+    """Mixin class for listing API keys."""
 
-    def _list_tokens(self) -> dict[str, Any]:
+    def _list_api_keys(self) -> dict[str, Any]:
         """
-        List all tokens in the Datalayer environment.
+        List all API keys in the Datalayer environment.
 
         Returns
         -------
         dict[str, Any]
-            Dictionary containing tokens information.
+            Dictionary containing API key information.
         """
         try:
             response = self._fetch(  # type: ignore
-                "{}/api/iam/v1/tokens".format(self.urls.iam_url),  # type: ignore
+                "{}/api/iam/v1/api-keys".format(self.urls.iam_url),  # type: ignore
                 method="GET",
             )
             return response.json()
@@ -105,5 +105,5 @@ class TokensListMixin:
             return {"sucess": False, "error": str(e)}
 
 
-class TokensMixin(TokensCreateMixin, TokensDeleteMixin, TokensListMixin):
-    """A mixin that combines create, delete, and list functionalities for tokens."""
+class ApiKeysMixin(ApiKeysCreateMixin, ApiKeysDeleteMixin, ApiKeysListMixin):
+    """A mixin that combines create, delete, and list functionalities for API keys."""

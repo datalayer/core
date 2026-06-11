@@ -74,8 +74,8 @@ def test_cli(args: List[str], expected_output: str) -> None:
         # TODO Disabled for now, we need to create a stable test account
         #        (["snapshots", "list", "--token", TEST_DATALAYER_API_KEY], "Snapshots"),
         #        (["snapshots", "ls", "--token", TEST_DATALAYER_API_KEY], "Snapshots"),
-        (["tokens", "list", "--token", TEST_DATALAYER_API_KEY], "Tokens"),
-        (["tokens", "ls", "--token", TEST_DATALAYER_API_KEY], "Tokens"),
+        (["api-keys", "list", "--token", TEST_DATALAYER_API_KEY], "API Keys"),
+        (["api-keys", "ls", "--token", TEST_DATALAYER_API_KEY], "API Keys"),
         (["whoami", "--token", TEST_DATALAYER_API_KEY], "User:"),
         (["logout"], "Stored token cleared"),
     ],

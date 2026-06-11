@@ -47,8 +47,8 @@ from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
-from datalayer_core.cli.commands.tokens import app as tokens_app
-from datalayer_core.cli.commands.tokens import tokens_ls
+from datalayer_core.cli.commands.api_keys import app as api_keys_app
+from datalayer_core.cli.commands.api_keys import api_keys_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
 from datalayer_core.cli.commands.plans import app as plans_app
@@ -203,7 +203,7 @@ app.add_typer(schedules_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
 app.add_typer(subscription_app)
-app.add_typer(tokens_app)
+app.add_typer(api_keys_app)
 app.add_typer(users_app)
 app.add_typer(usage_app)
 app.add_typer(plans_app)
@@ -226,7 +226,7 @@ app.command(name="runtimes-ls")(runtimes_ls)
 app.command(name="secrets-ls")(secrets_ls)
 app.command(name="snapshots-ls")(snapshots_ls)
 app.command(name="checkpoints-ls")(checkpoints_ls)
-app.command(name="tokens-ls")(tokens_ls)
+app.command(name="api-keys-ls")(api_keys_ls)
 app.command(name="agent-nodes-ls")(agent_nodes_ls)
 app.command(name="agents-ls")(agents_ls)
 

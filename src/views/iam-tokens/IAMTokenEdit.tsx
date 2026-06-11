@@ -34,12 +34,12 @@ interface FormData {
 }
 
 export type IAMTokenEditProps = {
-  /** Route to navigate after delete. Defaults to '/settings/iam/tokens'. */
+  /** Route to navigate after delete. Defaults to '/settings/iam/api-keys'. */
   tokensListRoute?: string;
 };
 
 export const IAMTokenEdit = ({
-  tokensListRoute = '/settings/iam/tokens',
+  tokensListRoute = '/settings/iam/api-keys',
 }: IAMTokenEditProps = {}) => {
   const { tokenId } = useParams();
   const runStore = useRunStore();

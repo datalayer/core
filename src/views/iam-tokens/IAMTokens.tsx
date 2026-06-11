@@ -26,9 +26,9 @@ import { IIAMToken } from '../../models';
 import { useCache, useNavigate, useToast } from '../../hooks';
 
 export type IAMTokensProps = {
-  /** Route to navigate when clicking "New API Key" button. Defaults to '/new/token'. */
+  /** Route to navigate when clicking "New API Key" button. Defaults to '/new/api-key'. */
   newTokenRoute?: string;
-  /** Base route for the tokens list (used for edit navigation). Defaults to current relative path. */
+  /** Base route for the API keys list (used for edit navigation). Defaults to current relative path. */
   tokensListRoute?: string;
   /** Whether to display view titles/headings. Defaults to true. */
   showTitle?: boolean;
@@ -46,39 +46,39 @@ const TokensTable = ({
   const { useTokens, useDeleteToken } = useCache();
   const { enqueueToast } = useToast();
 
-  const getTokensQuery = useTokens();
+  const getApiKeysQuery = useTokens();
   const deleteTokenMutation = useDeleteToken();
 
   const navigate = useNavigate();
-  const [tokens, setTokens] = useState<IIAMToken[]>([]);
+  const [apiKeys, setApiKeys] = useState<IIAMToken[]>([]);
   const [deletingToken, setDeletingToken] = useState<IIAMToken | null>(null);
   const returnFocusRef = useRef(null);
   useEffect(() => {
-    if (getTokensQuery.data) {
-      setTokens(getTokensQuery.data);
+    if (getApiKeysQuery.data) {
+      setApiKeys(getApiKeysQuery.data);
     }
-  }, [getTokensQuery.data]);
+  }, [getApiKeysQuery.data]);
   const handleDeleteConfirm = () => {
     if (!deletingToken) return;
     deleteTokenMutation.mutate(deletingToken.id, {
       onSuccess: (resp: any) => {
         if (resp.success) {
-          enqueueToast(`Token "${deletingToken.name}" deleted.`, {
+          enqueueToast(`API key "${deletingToken.name}" deleted.`, {
             variant: 'success',
           });
         } else {
-          enqueueToast(resp.message || 'Failed to delete token.', {
+          enqueueToast(resp.message || 'Failed to delete API key.', {
             variant: 'error',
           });
         }
       },
       onError: () => {
-        enqueueToast('Failed to delete token.', { variant: 'error' });
+        enqueueToast('Failed to delete API key.', { variant: 'error' });
       },
       onSettled: () => setDeletingToken(null),
     });
   };
-  return tokens.length === 0 ? (
+  return apiKeys.length === 0 ? (
     <Blankslate border spacious>
       {showTitle && <Blankslate.Heading>API Keys</Blankslate.Heading>}
       <Blankslate.Description>
@@ -90,23 +90,23 @@ const TokensTable = ({
       <Table.Container>
         {showTitle && (
           <>
-            <Table.Title as="h2" id="tokens">
+            <Table.Title as="h2" id="api-keys">
               API Keys
             </Table.Title>
-            <Table.Subtitle as="p" id="tokens-subtitle">
-              Your tokens.
+            <Table.Subtitle as="p" id="api-keys-subtitle">
+              Your API keys.
             </Table.Subtitle>
           </>
         )}
         <DataTable
-          aria-labelledby="teams"
-          aria-describedby="teams-subtitle"
-          data={tokens}
+          aria-labelledby="api-keys"
+          aria-describedby="api-keys-subtitle"
+          data={apiKeys}
           columns={[
             {
               header: 'Type',
               field: 'variant',
-              renderCell: token => <Label>{token.variant}</Label>,
+              renderCell: apiKey => <Label>{apiKey.variant}</Label>,
             },
             {
               header: 'Name',
@@ -120,14 +120,14 @@ const TokensTable = ({
             {
               header: 'Expiration date',
               field: 'expirationDate',
-              renderCell: token => (
-                <RelativeTime date={new Date(token.expirationDate)} />
+              renderCell: apiKey => (
+                <RelativeTime date={new Date(apiKey.expirationDate)} />
               ),
             },
             {
               header: '',
               field: 'id',
-              renderCell: token => (
+              renderCell: apiKey => (
                 <Box display="flex" sx={{ gap: 1 }}>
                   <IconButton
                     icon={EditIcon}
@@ -137,8 +137,8 @@ const TokensTable = ({
                     onClick={e =>
                       navigate(
                         tokensListRoute
-                          ? `${tokensListRoute}/${token.id}`
-                          : `${token.id}`,
+                          ? `${tokensListRoute}/${apiKey.id}`
+                          : `${apiKey.id}`,
                         e,
                       )
                     }
@@ -150,7 +150,7 @@ const TokensTable = ({
                     size="small"
                     variant="invisible"
                     sx={{ color: 'danger.fg' }}
-                    onClick={() => setDeletingToken(token)}
+                    onClick={() => setDeletingToken(apiKey)}
                   />
                 </Box>
               ),
@@ -160,7 +160,7 @@ const TokensTable = ({
       </Table.Container>
       {deletingToken && (
         <ConfirmationDialog
-          title="Delete token"
+          title="Delete API key"
           onClose={gesture => {
             if (gesture === 'confirm') handleDeleteConfirm();
             else setDeletingToken(null);
@@ -168,7 +168,7 @@ const TokensTable = ({
           confirmButtonContent="Delete"
           confirmButtonType="danger"
         >
-          Are you sure you want to delete the token{' '}
+          Are you sure you want to delete the API key{' '}
           <strong>{deletingToken.name}</strong>? This action cannot be undone.
         </ConfirmationDialog>
       )}
@@ -177,7 +177,7 @@ const TokensTable = ({
 };
 
 export const IAMTokens = ({
-  newTokenRoute = '/new/token',
+  newTokenRoute = '/new/api-key',
   tokensListRoute,
   showTitle = true,
   showNewButton = true,

@@ -36,14 +36,14 @@ interface ValidationData {
 }
 
 export type IAMTokenNewProps = {
-  /** Route to navigate when clicking "List my Tokens". Defaults to '/settings/iam/tokens'. */
+  /** Route to navigate when clicking "List my API keys". Defaults to '/settings/iam/api-keys'. */
   tokensListRoute?: string;
   /** Whether to render the "New API Key" title header in create mode. Defaults to true. */
   showTitle?: boolean;
 };
 
 export const IAMTokenNew = ({
-  tokensListRoute = '/settings/iam/tokens',
+  tokensListRoute = '/settings/iam/api-keys',
   showTitle = true,
 }: IAMTokenNewProps = {}) => {
   const runStore = useRunStore();

@@ -32,7 +32,7 @@ This example showcases:
 
 - Node.js 20+
 - npm
-- Datalayer account and API token ([Create one here](https://datalayer.app/settings/iam/tokens))
+- Datalayer account and API key ([Create one here](https://datalayer.app/settings/iam/api-keys))
 
 ## Installation
 

@@ -5,7 +5,7 @@ from .environments import EnvironmentsMixin
 from .sandbox_snapshots import SandboxSnapshotsMixin
 from .runtimes import RuntimesMixin
 from .secrets import SecretsMixin
-from .tokens import TokensMixin
+from .api_keys import ApiKeysMixin
 from .usage import UsageMixin
 from .whoami import WhoamiAppMixin
 
@@ -15,7 +15,7 @@ __all__ = [
     "SandboxSnapshotsMixin",
     "RuntimesMixin",
     "SecretsMixin",
-    "TokensMixin",
+    "ApiKeysMixin",
     "UsageMixin",
     "WhoamiAppMixin",
 ]
