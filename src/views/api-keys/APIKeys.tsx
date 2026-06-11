@@ -8,13 +8,14 @@ import {
   PageLayout,
   Button,
   IconButton,
+  TextInput,
   Text,
   Label,
   RelativeTime,
-  ConfirmationDialog,
 } from '@primer/react';
 import {
   Blankslate,
+  Dialog,
   PageHeader,
   Table,
   DataTable,
@@ -22,52 +23,65 @@ import {
 import { Box } from '@datalayer/primer-addons';
 import { EditIcon } from '@datalayer/icons-react';
 import { TrashIcon } from '@primer/octicons-react';
-import { IIAMToken } from '../../models';
+import { IIAMToken as IAPIKey } from '../../models';
 import { useCache, useNavigate, useToast } from '../../hooks';
 
-export type IAMTokensProps = {
+export type APIKeysProps = {
   /** Route to navigate when clicking "New API Key" button. Defaults to '/new/api-key'. */
-  newTokenRoute?: string;
+  newAPIKeyRoute?: string;
   /** Base route for the API keys list (used for edit navigation). Defaults to current relative path. */
-  tokensListRoute?: string;
+  apiKeysListRoute?: string;
   /** Whether to display view titles/headings. Defaults to true. */
   showTitle?: boolean;
   /** Whether to render the "New API Key" button in this component header. Defaults to true. */
   showNewButton?: boolean;
 };
 
-const TokensTable = ({
-  tokensListRoute,
+const APIKeysTable = ({
+  apiKeysListRoute,
   showTitle = true,
 }: {
-  tokensListRoute?: string;
+  apiKeysListRoute?: string;
   showTitle?: boolean;
 }) => {
-  const { useTokens, useDeleteToken } = useCache();
+  const { useTokens: useAPIKeys, useDeleteToken: useDeleteAPIKey } = useCache();
   const { enqueueToast } = useToast();
 
-  const getApiKeysQuery = useTokens();
-  const deleteTokenMutation = useDeleteToken();
+  const getAPIKeysQuery = useAPIKeys();
+  const deleteAPIKeyMutation = useDeleteAPIKey();
 
   const navigate = useNavigate();
-  const [apiKeys, setApiKeys] = useState<IIAMToken[]>([]);
-  const [deletingToken, setDeletingToken] = useState<IIAMToken | null>(null);
+  const [apiKeys, setApiKeys] = useState<IAPIKey[]>([]);
+  const [deletingAPIKey, setDeletingAPIKey] = useState<IAPIKey | null>(null);
+  const [deleteNameConfirm, setDeleteNameConfirm] = useState('');
   const returnFocusRef = useRef(null);
   useEffect(() => {
-    if (getApiKeysQuery.data) {
-      setApiKeys(getApiKeysQuery.data);
+    if (getAPIKeysQuery.data) {
+      const normalized = getAPIKeysQuery.data.filter(
+        (apiKey): apiKey is IAPIKey => Boolean(apiKey),
+      );
+      setApiKeys(normalized);
     }
-  }, [getApiKeysQuery.data]);
-  const handleDeleteConfirm = () => {
-    if (!deletingToken) return;
-    deleteTokenMutation.mutate(deletingToken.id, {
-      onSuccess: (resp: any) => {
-        if (resp.success) {
-          enqueueToast(`API key "${deletingToken.name}" deleted.`, {
+  }, [getAPIKeysQuery.data]);
+  const confirmDeleteAPIKey = () => {
+    if (!deletingAPIKey) return;
+    if (deleteNameConfirm.trim() !== deletingAPIKey.name) {
+      enqueueToast(
+        'Please type the API key name exactly to confirm deletion.',
+        {
+          variant: 'error',
+        },
+      );
+      return;
+    }
+    deleteAPIKeyMutation.mutate(deletingAPIKey.id, {
+      onSuccess: (resp: { success?: boolean; message?: string }) => {
+        if (resp?.success) {
+          enqueueToast(`API key "${deletingAPIKey.name}" deleted.`, {
             variant: 'success',
           });
         } else {
-          enqueueToast(resp.message || 'Failed to delete API key.', {
+          enqueueToast(resp?.message || 'Failed to delete API key.', {
             variant: 'error',
           });
         }
@@ -75,7 +89,10 @@ const TokensTable = ({
       onError: () => {
         enqueueToast('Failed to delete API key.', { variant: 'error' });
       },
-      onSettled: () => setDeletingToken(null),
+      onSettled: () => {
+        setDeletingAPIKey(null);
+        setDeleteNameConfirm('');
+      },
     });
   };
   return apiKeys.length === 0 ? (
@@ -136,8 +153,8 @@ const TokensTable = ({
                     variant="invisible"
                     onClick={e =>
                       navigate(
-                        tokensListRoute
-                          ? `${tokensListRoute}/${apiKey.id}`
+                        apiKeysListRoute
+                          ? `${apiKeysListRoute}/${apiKey.id}`
                           : `${apiKey.id}`,
                         e,
                       )
@@ -150,7 +167,10 @@ const TokensTable = ({
                     size="small"
                     variant="invisible"
                     sx={{ color: 'danger.fg' }}
-                    onClick={() => setDeletingToken(apiKey)}
+                    onClick={() => {
+                      setDeletingAPIKey(apiKey);
+                      setDeleteNameConfirm('');
+                    }}
                   />
                 </Box>
               ),
@@ -158,30 +178,60 @@ const TokensTable = ({
           ]}
         />
       </Table.Container>
-      {deletingToken && (
-        <ConfirmationDialog
+      {deletingAPIKey && (
+        <Dialog
           title="Delete API key"
-          onClose={gesture => {
-            if (gesture === 'confirm') handleDeleteConfirm();
-            else setDeletingToken(null);
+          onClose={() => {
+            setDeletingAPIKey(null);
+            setDeleteNameConfirm('');
           }}
-          confirmButtonContent="Delete"
-          confirmButtonType="danger"
+          footerButtons={[
+            {
+              buttonType: 'default',
+              content: 'Cancel',
+              onClick: () => {
+                setDeletingAPIKey(null);
+                setDeleteNameConfirm('');
+              },
+            },
+            {
+              buttonType: 'danger',
+              content: 'Delete',
+              disabled: deleteNameConfirm.trim() !== deletingAPIKey.name,
+              onClick: event => {
+                if (!event.defaultPrevented) {
+                  event.preventDefault();
+                  confirmDeleteAPIKey();
+                }
+              },
+            },
+          ]}
         >
           Are you sure you want to delete the API key{' '}
-          <strong>{deletingToken.name}</strong>? This action cannot be undone.
-        </ConfirmationDialog>
+          <strong>{deletingAPIKey.name}</strong>? This action cannot be undone.
+          <Text sx={{ mt: 3, display: 'block', color: 'fg.muted' }}>
+            Type <strong>{deletingAPIKey.name}</strong> to confirm deletion.
+          </Text>
+          <TextInput
+            block
+            value={deleteNameConfirm}
+            onChange={e => setDeleteNameConfirm(e.target.value)}
+            placeholder="Retype API key name"
+            sx={{ mt: 2 }}
+            autoFocus
+          />
+        </Dialog>
       )}
     </>
   );
 };
 
-export const IAMTokens = ({
-  newTokenRoute = '/new/api-key',
-  tokensListRoute,
+export const APIKeys = ({
+  newAPIKeyRoute = '/new/api-key',
+  apiKeysListRoute,
   showTitle = true,
   showNewButton = true,
-}: IAMTokensProps = {}) => {
+}: APIKeysProps = {}) => {
   const navigate = useNavigate();
   return (
     <PageLayout
@@ -202,7 +252,7 @@ export const IAMTokens = ({
                 <Button
                   size="small"
                   variant="primary"
-                  onClick={e => navigate(newTokenRoute, e)}
+                  onClick={e => navigate(newAPIKeyRoute, e)}
                 >
                   New API Key
                 </Button>
@@ -213,8 +263,8 @@ export const IAMTokens = ({
       ) : null}
       <PageLayout.Content>
         <Box>
-          <TokensTable
-            tokensListRoute={tokensListRoute}
+          <APIKeysTable
+            apiKeysListRoute={apiKeysListRoute}
             showTitle={showTitle}
           />
         </Box>
@@ -223,4 +273,4 @@ export const IAMTokens = ({
   );
 };
 
-export default IAMTokens;
+export default APIKeys;

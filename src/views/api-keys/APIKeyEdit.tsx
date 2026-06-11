@@ -17,7 +17,7 @@ import {
 } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { BoringAvatar } from '../../components/avatars';
-import { IIAMToken as AnyToken } from '../../models';
+import { IIAMToken as IAPIKey } from '../../models';
 import { useCache, useNavigate, useToast } from '../../hooks';
 import { useRunStore } from '../../state';
 
@@ -33,29 +33,33 @@ interface FormData {
   description: string;
 }
 
-export type IAMTokenEditProps = {
+export type APIKeyEditProps = {
   /** Route to navigate after delete. Defaults to '/settings/iam/api-keys'. */
-  tokensListRoute?: string;
+  apiKeysListRoute?: string;
 };
 
-export const IAMTokenEdit = ({
-  tokensListRoute = '/settings/iam/api-keys',
-}: IAMTokenEditProps = {}) => {
-  const { tokenId } = useParams();
+export const APIKeyEdit = ({
+  apiKeysListRoute = '/settings/iam/api-keys',
+}: APIKeyEditProps = {}) => {
+  const { tokenId: apiKeyId } = useParams();
   const runStore = useRunStore();
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
-  const { useUpdateToken, useToken, useDeleteToken } = useCache();
+  const {
+    useUpdateToken: useUpdateAPIKey,
+    useToken: useAPIKey,
+    useDeleteToken: useDeleteAPIKey,
+  } = useCache();
 
-  const getTokenQuery = useToken(tokenId!);
-  const updateTokenMutation = useUpdateToken();
-  const deleteTokenMutation = useDeleteToken();
+  const getAPIKeyQuery = useAPIKey(apiKeyId!);
+  const updateAPIKeyMutation = useUpdateAPIKey();
+  const deleteAPIKeyMutation = useDeleteAPIKey();
 
-  const [token, setToken] = useState<AnyToken>();
+  const [apiKey, setAPIKey] = useState<IAPIKey>();
   const [formValues, setFormValues] = useState<FormData>({
-    name: token?.name!,
+    name: apiKey?.name!,
     nameConfirm: '',
-    description: token?.description!,
+    description: apiKey?.description!,
   });
   const [validationResult, setValidationResult] = useState<ValidationData>({
     name: undefined,
@@ -63,12 +67,12 @@ export const IAMTokenEdit = ({
     description: undefined,
   });
   useEffect(() => {
-    if (getTokenQuery.data) {
-      const token = getTokenQuery.data;
-      setToken(token);
-      setFormValues({ ...token, nameConfirm: '' });
+    if (getAPIKeyQuery.data) {
+      const key = getAPIKeyQuery.data;
+      setAPIKey(key);
+      setFormValues({ ...key, nameConfirm: '' });
     }
-  }, [getTokenQuery.data]);
+  }, [getAPIKeyQuery.data]);
   const nameNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormValues(prevFormValues => ({
       ...prevFormValues,
@@ -98,7 +102,7 @@ export const IAMTokenEdit = ({
           : formValues.name.length > 2
             ? true
             : false,
-      nameConfirm: formValues.nameConfirm === token?.name ? true : false,
+      nameConfirm: formValues.nameConfirm === apiKey?.name ? true : false,
       description:
         formValues.description === undefined
           ? undefined
@@ -107,20 +111,20 @@ export const IAMTokenEdit = ({
             : false,
     });
   }, [formValues]);
-  const nameSubmit = async () => {
+  const submitAPIKey = async () => {
     runStore.layout().showBackdrop();
-    const updatedToken = {
-      ...token!,
+    const updatedAPIKey = {
+      ...apiKey!,
       name: formValues.name,
       description: formValues.description,
     };
-    updateTokenMutation.mutate(updatedToken, {
+    updateAPIKeyMutation.mutate(updatedAPIKey, {
       onSuccess: (resp: any) => {
         if (resp.success) {
-          enqueueToast('The token is successfully updated.', {
+          enqueueToast('The API key was updated successfully.', {
             variant: 'success',
           });
-          setToken(updatedToken);
+          setAPIKey(updatedAPIKey);
         }
       },
       onSettled: () => {
@@ -128,23 +132,23 @@ export const IAMTokenEdit = ({
       },
     });
   };
-  const handleDelete = async () => {
-    runStore.layout().showBackdrop('Deleting the token...');
-    deleteTokenMutation.mutate(token!.id, {
+  const deleteAPIKey = async () => {
+    runStore.layout().showBackdrop('Deleting the API key...');
+    deleteAPIKeyMutation.mutate(apiKey!.id, {
       onSuccess: (resp: any) => {
         if (resp.success) {
-          enqueueToast('The token is successfully deleted.', {
+          enqueueToast('The API key was deleted successfully.', {
             variant: 'success',
           });
-          navigate(tokensListRoute);
+          navigate(apiKeysListRoute);
         } else {
-          enqueueToast(resp.message || 'Failed to delete token.', {
+          enqueueToast(resp.message || 'Failed to delete API key.', {
             variant: 'error',
           });
         }
       },
       onError: () => {
-        enqueueToast('Failed to delete token.', { variant: 'error' });
+        enqueueToast('Failed to delete API key.', { variant: 'error' });
       },
       onSettled: () => {
         runStore.layout().hideBackdrop();
@@ -159,15 +163,15 @@ export const IAMTokenEdit = ({
       <Box display="flex">
         <Box>
           <BoringAvatar
-            displayName={token?.name}
+            displayName={apiKey?.name}
             size={100}
             style={{ paddingRight: 10 }}
           />
           <Text as="h2" sx={{ paddingTop: 3 }}>
-            {token?.name}
+            {apiKey?.name}
           </Text>
           <Box mt={3}>
-            <Label size="large">{token?.variant}</Label>
+            <Label size="large">{apiKey?.variant}</Label>
           </Box>
         </Box>
         <Box ml={10}>
@@ -203,7 +207,7 @@ export const IAMTokenEdit = ({
               <FormControl.Label>Expiration date</FormControl.Label>
               <TextInput
                 block
-                value={token?.expirationDate.toLocaleDateString()}
+                value={apiKey?.expirationDate.toLocaleDateString()}
                 onChange={nameNameChange}
                 disabled
               />
@@ -212,9 +216,9 @@ export const IAMTokenEdit = ({
               variant="primary"
               disabled={!validationResult.name || !validationResult.description}
               sx={{ marginTop: 3 }}
-              onClick={nameSubmit}
+              onClick={submitAPIKey}
             >
-              Update token
+              Update API key
             </Button>
           </Box>
           <Box sx={{ marginTop: 3 }}>
@@ -245,7 +249,7 @@ export const IAMTokenEdit = ({
                 <Text
                   sx={{ fontSize: 1, fontWeight: 'bold', color: 'danger.fg' }}
                 >
-                  Confirm the token name to delete
+                  Confirm the API key name to delete
                 </Text>
                 <FormControl>
                   <TextInput
@@ -261,9 +265,9 @@ export const IAMTokenEdit = ({
               <Button
                 variant="danger"
                 disabled={!validationResult.nameConfirm}
-                onClick={handleDelete}
+                onClick={deleteAPIKey}
               >
-                Delete token
+                Delete API key
               </Button>
             </Box>
           </Box>
@@ -273,4 +277,4 @@ export const IAMTokenEdit = ({
   );
 };
 
-export default IAMTokenEdit;
+export default APIKeyEdit;

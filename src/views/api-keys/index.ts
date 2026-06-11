@@ -3,6 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './IAMTokenEdit';
-export * from './IAMTokenNew';
-export * from './IAMTokens';
+export * from './APIKeyEdit';
+export * from './APIKeyNew';
+export * from './APIKeys';

@@ -18,11 +18,14 @@ import { Box } from '@datalayer/primer-addons';
 import { CopyIcon } from '@primer/octicons-react';
 import { Calendar, defaultCalendarStrings } from '@fluentui/react';
 import { useCache, useNavigate, useToast } from '../../hooks';
-import { IIAMToken, IIAMTokenVariant } from '../../models';
+import {
+  IIAMToken as IAPIKey,
+  IIAMTokenVariant as IAPIKeyVariant,
+} from '../../models';
 import { useRunStore } from '../../state';
 
 interface FormData {
-  variant: IIAMTokenVariant;
+  variant: IAPIKeyVariant;
   name?: string;
   description?: string;
   expirationDate?: Date;
@@ -35,26 +38,26 @@ interface ValidationData {
   expirationDate?: boolean;
 }
 
-export type IAMTokenNewProps = {
+export type APIKeyNewProps = {
   /** Route to navigate when clicking "List my API keys". Defaults to '/settings/iam/api-keys'. */
-  tokensListRoute?: string;
+  apiKeysListRoute?: string;
   /** Whether to render the "New API Key" title header in create mode. Defaults to true. */
   showTitle?: boolean;
 };
 
-export const IAMTokenNew = ({
-  tokensListRoute = '/settings/iam/api-keys',
+export const APIKeyNew = ({
+  apiKeysListRoute = '/settings/iam/api-keys',
   showTitle = true,
-}: IAMTokenNewProps = {}) => {
+}: APIKeyNewProps = {}) => {
   const runStore = useRunStore();
-  const { useCreateToken } = useCache();
-  const createTokenMutation = useCreateToken();
+  const { useCreateToken: useCreateAPIKey } = useCache();
+  const createAPIKeyMutation = useCreateAPIKey();
 
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
   const [today, _] = useState<Date>(new Date());
-  const [showToken, setShowToken] = useState(false);
-  const [token, setToken] = useState<IIAMToken>();
+  const [showAPIKey, setShowAPIKey] = useState(false);
+  const [apiKey, setAPIKey] = useState<IAPIKey>();
   const [formValues, setFormValues] = useState<FormData>({
     variant: 'user_token',
     name: undefined,
@@ -70,7 +73,7 @@ export const IAMTokenNew = ({
   const valueVariantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setFormValues(prevFormValues => ({
       ...prevFormValues,
-      variant: event.target.value as IIAMTokenVariant,
+      variant: event.target.value as IAPIKeyVariant,
     }));
   };
   const valueNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,9 +119,9 @@ export const IAMTokenNew = ({
             : false,
     });
   }, [formValues]);
-  const valueSubmit = () => {
-    runStore.layout().showBackdrop('Creating an token...');
-    createTokenMutation.mutate(
+  const submitAPIKey = () => {
+    runStore.layout().showBackdrop('Creating an API key...');
+    createAPIKeyMutation.mutate(
       {
         name: formValues.name!,
         variant: formValues.variant,
@@ -129,8 +132,8 @@ export const IAMTokenNew = ({
         onSuccess: (resp: any) => {
           if (resp.success && resp.token) {
             enqueueToast(resp.message, { variant: 'success' });
-            setToken(resp.token);
-            setShowToken(true);
+            setAPIKey(resp.token);
+            setShowAPIKey(true);
           }
         },
         onSettled: () => {
@@ -141,51 +144,94 @@ export const IAMTokenNew = ({
   };
   return (
     <Box>
-      {showToken ? (
+      {showAPIKey ? (
         <>
           <PageHeader>
             <PageHeader.TitleArea variant="large">
-              <PageHeader.Title>Your API Key is created</PageHeader.Title>
+              <PageHeader.Title>Your API Key Is Created</PageHeader.Title>
             </PageHeader.TitleArea>
           </PageHeader>
-          <Box>
-            <Text>
-              Take note of the API Key value, you will not be able to see it
-              after.
+
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'accent.muted',
+              borderRadius: 2,
+              p: 3,
+              bg: 'canvas.subtle',
+              mb: 3,
+            }}
+          >
+            <Text sx={{ fontWeight: 600, color: 'accent.fg' }}>Important</Text>
+            <Text as="p" sx={{ mt: 1, color: 'fg.muted' }}>
+              Save this API key now. You will not be able to see the full value
+              again after leaving this page.
             </Text>
           </Box>
-          <Box>
-            <Text>Name: {token?.name}</Text>
-          </Box>
-          <Box>
-            <Text>Description: {token?.description}</Text>
-          </Box>
-          <Box>
-            <Text>Expiration date: {token?.expirationDate.toISOString()}</Text>
-          </Box>
-          <Box>
-            <Text mb={2}>Value: </Text>
-            <Box display="flex" sx={{ alignItems: 'center', gap: 2 }}>
+
+          <Box
+            sx={{
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 2,
+              p: 3,
+              bg: 'canvas.default',
+            }}
+          >
+            <Box
+              display="grid"
+              gridTemplateColumns="minmax(120px, 180px) 1fr"
+              sx={{ rowGap: 2, columnGap: 3, mb: 3 }}
+            >
+              <Text sx={{ color: 'fg.muted' }}>Name</Text>
+              <Text sx={{ fontWeight: 600 }}>{apiKey?.name || '-'}</Text>
+
+              <Text sx={{ color: 'fg.muted' }}>Description</Text>
+              <Text>{apiKey?.description || '-'}</Text>
+
+              <Text sx={{ color: 'fg.muted' }}>Expiration date</Text>
+              <Text>
+                {apiKey?.expirationDate
+                  ? `${apiKey.expirationDate.toLocaleString()} (${apiKey.expirationDate.toISOString()})`
+                  : '-'}
+              </Text>
+            </Box>
+
+            <Text sx={{ color: 'fg.muted', mb: 2 }}>API key value</Text>
+            <Box
+              display="flex"
+              sx={{
+                alignItems: 'flex-start',
+                gap: 2,
+              }}
+            >
               <Text
                 as="code"
                 sx={{
-                  color: 'fg.onEmphasis',
-                  bg: 'neutral.emphasis',
+                  color: 'fg.default',
+                  bg: 'canvas.inset',
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  borderRadius: 2,
                   p: 2,
                   overflowWrap: 'anywhere',
+                  fontSize: 0,
+                  lineHeight: '20px',
                   flex: 1,
+                  maxHeight: 140,
+                  overflowY: 'auto',
                 }}
               >
-                {token?.value}
+                {apiKey?.value}
               </Text>
               <IconButton
-                aria-label="Copy token to clipboard"
+                aria-label="Copy API key to clipboard"
                 icon={CopyIcon}
                 size="small"
                 onClick={() => {
-                  if (token?.value) {
-                    navigator.clipboard.writeText(token.value);
-                    enqueueToast('Token copied to clipboard', {
+                  if (apiKey?.value) {
+                    navigator.clipboard.writeText(apiKey.value);
+                    enqueueToast('API key copied to clipboard', {
                       variant: 'success',
                     });
                   }
@@ -193,8 +239,9 @@ export const IAMTokenNew = ({
               />
             </Box>
           </Box>
+
           <Box mt={3}>
-            <Button onClick={e => navigate(tokensListRoute, e)}>
+            <Button onClick={e => navigate(apiKeysListRoute, e)}>
               List my API Keys
             </Button>
           </Box>
@@ -212,7 +259,7 @@ export const IAMTokenNew = ({
             <Box>
               <Box sx={{ label: { marginTop: 2 } }}>
                 <FormControl required>
-                  <FormControl.Label>Token type</FormControl.Label>
+                  <FormControl.Label>Type</FormControl.Label>
                   <Select
                     name="type"
                     value={formValues.variant}
@@ -284,10 +331,10 @@ export const IAMTokenNew = ({
                   sx={{ marginTop: 2 }}
                   onClick={e => {
                     e.preventDefault();
-                    valueSubmit();
+                    submitAPIKey();
                   }}
                 >
-                  Create a token
+                  Create an API key
                 </Button>
               </Box>
             </Box>
@@ -298,4 +345,4 @@ export const IAMTokenNew = ({
   );
 };
 
-export default IAMTokenNew;
+export default APIKeyNew;

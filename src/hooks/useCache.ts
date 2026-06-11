@@ -2641,8 +2641,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/api-keys`,
           method: 'GET',
         });
-        if (resp.success && resp.tokens) {
-          const tokens = resp.tokens
+        const tokenItems = asArray(
+          resp?.apiKeys ?? resp?.api_keys ?? resp?.tokens,
+        );
+        if (resp.success && tokenItems.length > 0) {
+          const tokens = tokenItems
             .map((t: unknown) => {
               const token = toToken(t);
               if (token) {
@@ -2678,8 +2681,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         });
         // Transform the token in the response
-        if (resp.success && resp.token) {
-          resp.token = toToken(resp.token);
+        const tokenPayload = resp?.apiKey ?? resp?.api_key ?? resp?.token;
+        if (resp.success && tokenPayload) {
+          resp.token = toToken(tokenPayload);
         }
         return resp;
       },
@@ -3060,8 +3064,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${tokenId}`,
           method: 'GET',
         });
-        if (resp.success && resp.token) {
-          return toToken(resp.token);
+        const tokenPayload = resp?.apiKey ?? resp?.api_key ?? resp?.token;
+        if (resp.success && tokenPayload) {
+          return toToken(tokenPayload);
         }
         return null;
       },
@@ -3083,8 +3088,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: resp => {
-        if (resp.success && resp.token) {
-          const tok = toToken(resp.token);
+        const tokenPayload = resp?.apiKey ?? resp?.api_key ?? resp?.token;
+        if (resp.success && tokenPayload) {
+          const tok = toToken(tokenPayload);
           if (tok) {
             queryClient.setQueryData(queryKeys.tokens.detail(tok.id), tok);
           }
