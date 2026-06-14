@@ -36,10 +36,13 @@ interface FormData {
 export type APIKeyEditProps = {
   /** Route to navigate after delete. Defaults to '/settings/iam/api-keys'. */
   apiKeysListRoute?: string;
+  /** Whether to render the local edit title header. Defaults to true. */
+  showTitle?: boolean;
 };
 
 export const APIKeyEdit = ({
   apiKeysListRoute = '/settings/iam/api-keys',
+  showTitle = true,
 }: APIKeyEditProps = {}) => {
   const { tokenId: apiKeyId } = useParams();
   const runStore = useRunStore();
@@ -157,9 +160,11 @@ export const APIKeyEdit = ({
   };
   return (
     <>
-      <PageHeader>
-        <Heading sx={{ fontSize: 3 }}>API Key</Heading>
-      </PageHeader>
+      {showTitle && (
+        <PageHeader>
+          <Heading sx={{ fontSize: 3 }}>API Key</Heading>
+        </PageHeader>
+      )}
       <Box display="flex">
         <Box>
           <BoringAvatar
