@@ -3,7 +3,7 @@
 
 """The Datalayer Core Server application."""
 
-import os
+from pathlib import Path
 
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
 from jupyter_server.utils import url_path_join
@@ -18,9 +18,9 @@ from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 from datalayer_core.utils.urls import DEFAULT_DATALAYER_IAM_URL
 
-DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
-
-DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./templates")
+_PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_STATIC_FILES_PATH = str(_PACKAGE_ROOT / "static")
+DEFAULT_TEMPLATE_FILES_PATH = str(_PACKAGE_ROOT / "templates")
 
 
 class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):

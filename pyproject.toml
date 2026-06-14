@@ -100,12 +100,16 @@ path = "datalayer_core/__version__.py"
 [tool.hatch.build.targets.sdist]
 artifacts = [
     "datalayer_core/assets/about.md",
+    "datalayer_core/templates/*.html",
+    "datalayer_core/static/**",
 ]
 exclude = [".github", "binder"]
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
     "datalayer_core/assets/about.md",
+    "datalayer_core/templates/*.html",
+    "datalayer_core/static/**",
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]

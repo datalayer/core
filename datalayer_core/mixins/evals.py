@@ -16,13 +16,15 @@ class EvalsMixin:
         path: str,
         *,
         method: str,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
         params: Optional[dict[str, Any]] = None,
         json_body: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         query: dict[str, Any] = dict(params or {})
-        if account_uid:
-            query["account_uid"] = account_uid
+        resolved_account_uid = billable_account_uid or account_uid
+        if resolved_account_uid:
+            query["account_uid"] = resolved_account_uid
         response = self._fetch(  # type: ignore
             f"{self.urls.ai_agents_url}/api/ai-agents/v1/evals{path}",  # type: ignore
             method=method,
@@ -39,6 +41,7 @@ class EvalsMixin:
         q: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
@@ -52,6 +55,7 @@ class EvalsMixin:
             "/evalsets",
             method="GET",
             params=params,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -66,6 +70,7 @@ class EvalsMixin:
         tags: Optional[list[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
         cases: Optional[list[dict[str, Any]]] = None,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         body = {
@@ -82,6 +87,7 @@ class EvalsMixin:
             "/evalsets",
             method="POST",
             json_body=body,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -89,11 +95,13 @@ class EvalsMixin:
         self,
         evalset_id: str,
         *,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
             f"/evalsets/{evalset_id}",
             method="DELETE",
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -104,6 +112,7 @@ class EvalsMixin:
         status: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
@@ -115,6 +124,7 @@ class EvalsMixin:
             "/experiments",
             method="GET",
             params=params,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -128,6 +138,7 @@ class EvalsMixin:
         config: Optional[dict[str, Any]] = None,
         summary: Optional[dict[str, Any]] = None,
         tags: Optional[list[str]] = None,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         body = {
@@ -143,6 +154,7 @@ class EvalsMixin:
             "/experiments",
             method="POST",
             json_body=body,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -150,11 +162,13 @@ class EvalsMixin:
         self,
         experiment_id: str,
         *,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
             f"/experiments/{experiment_id}",
             method="DELETE",
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -164,12 +178,14 @@ class EvalsMixin:
         *,
         limit: int = 50,
         offset: int = 0,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
             f"/experiments/{experiment_id}/runs",
             method="GET",
             params={"limit": limit, "offset": offset},
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -183,6 +199,7 @@ class EvalsMixin:
         metrics: Optional[dict[str, Any]] = None,
         summary: Optional[dict[str, Any]] = None,
         report: Optional[dict[str, Any]] = None,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
@@ -199,6 +216,7 @@ class EvalsMixin:
             f"/experiments/{experiment_id}/runs",
             method="POST",
             json_body=body,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -206,11 +224,13 @@ class EvalsMixin:
         self,
         run_id: str,
         *,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
             f"/runs/{run_id}",
             method="GET",
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -218,12 +238,14 @@ class EvalsMixin:
         self,
         run_ids: list[str],
         *,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
             "/runs/compare",
             method="POST",
             json_body={"run_ids": run_ids},
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -239,6 +261,7 @@ class EvalsMixin:
         passed: Optional[bool] = None,
         attributes: Optional[dict[str, Any]] = None,
         created_at: Optional[str] = None,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
@@ -262,6 +285,7 @@ class EvalsMixin:
             "/live/events",
             method="POST",
             json_body=body,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -270,12 +294,14 @@ class EvalsMixin:
         *,
         window: str = "24h",
         limit: int = 50,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         return self._evals_request(
             "/live/targets",
             method="GET",
             params={"window": window, "limit": limit},
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )
 
@@ -288,6 +314,7 @@ class EvalsMixin:
         evaluator_name: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
+        billable_account_uid: Optional[str] = None,
         account_uid: Optional[str] = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
@@ -303,5 +330,6 @@ class EvalsMixin:
             "/live/events",
             method="GET",
             params=params,
+            billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )

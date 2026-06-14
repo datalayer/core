@@ -80,10 +80,18 @@ def _merge_dicts(*parts: dict[str, Any]) -> dict[str, Any]:
 
 def _make_client(
     token: Optional[str] = None,
-    ai_agents_url: Optional[str] = None,
+    api_key: Optional[str] = None,
 ) -> DatalayerClient:
-    urls = DatalayerURLs.from_environment(ai_agents_url=ai_agents_url)
-    return DatalayerClient(urls=urls, token=token)
+    urls = DatalayerURLs.from_environment()
+    return DatalayerClient(urls=urls, token=(token or api_key))
+
+
+def _resolve_billable_account_uid(
+    billable_account_uid: Optional[str],
+    account_uid: Optional[str],
+) -> Optional[str]:
+    """Resolve billable account UID with backwards-compatible fallback."""
+    return billable_account_uid or account_uid
 
 
 def _status_style(status: str) -> str:
@@ -1237,8 +1245,9 @@ def evals_callback(ctx: typer.Context) -> None:
 @app.command(name="ls")
 def evals_ls(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     run_environment: Optional[str] = typer.Option(None, "--run-environment", help="Filter by run environment (ui/sdk)."),
     kind: Optional[str] = typer.Option(None, "--kind", help="Filter by kind (batch/interactive)."),
     q: Optional[str] = typer.Option(None, "--q", help="Search query."),
@@ -1247,14 +1256,15 @@ def evals_ls(
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """List all evalsets and their experiments."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     evalsets_payload = client.evals_list_evals(
         run_environment=run_environment,
         kind=kind,
         q=q,
         limit=limit,
         offset=offset,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     evalsets = [item for item in (evalsets_payload.get("evalsets") or []) if isinstance(item, dict)]
 
@@ -1267,7 +1277,7 @@ def evals_ls(
             evalset_id=evalset_id,
             limit=200,
             offset=0,
-            account_uid=account_uid,
+            account_uid=resolved_account_uid,
         )
         experiments_by_evalset[evalset_id] = [
             item
@@ -1316,8 +1326,9 @@ def evals_delete_top(
     evalset_id: str = typer.Argument(..., help="Evalset UID to delete."),
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip the confirmation prompt."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
 ) -> None:
     """Delete an evalset and its associated experiments, runs, and cases."""
     if not yes:
@@ -1325,8 +1336,9 @@ def evals_delete_top(
             f"Delete evalset {evalset_id} and all associated experiments, runs, and cases?",
             abort=True,
         )
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
-    payload = client.evals_delete_eval(evalset_id, account_uid=account_uid)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
+    payload = client.evals_delete_eval(evalset_id, account_uid=resolved_account_uid)
     cascade = payload.get("cascade") or {}
     console.print(
         f"[green]Eval deleted:[/green] {evalset_id} "
@@ -1339,8 +1351,9 @@ def evals_delete_top(
 @evals_app.command(name="ls")
 def evals_list(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     run_environment: Optional[str] = typer.Option(None, "--run-environment", help="Filter by run environment (ui/sdk)."),
     kind: Optional[str] = typer.Option(None, "--kind", help="Filter by kind (batch/interactive)."),
     q: Optional[str] = typer.Option(None, "--q", help="Search query."),
@@ -1349,14 +1362,15 @@ def evals_list(
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """List evalsets."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_list_evals(
         run_environment=run_environment,
         kind=kind,
         q=q,
         limit=limit,
         offset=offset,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     if raw:
         console.print(payload)
@@ -1394,8 +1408,9 @@ def evals_create(
     cases_file: Optional[str] = typer.Option(None, "--cases-file", help="Path to JSON array of cases."),
     tags: list[str] = typer.Option([], "--tag", help="Repeatable tag."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """Create an evalset."""
@@ -1429,7 +1444,8 @@ def evals_create(
     spec_tags = spec.get("tags") if isinstance(spec.get("tags"), list) else []
     resolved_tags = tags if tags else [str(tag) for tag in spec_tags if str(tag).strip()]
 
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_create_eval(
         name=resolved_name,
         description=resolved_description,
@@ -1439,7 +1455,7 @@ def evals_create(
         metadata=metadata,
         tags=resolved_tags,
         cases=cases,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     if raw:
         typer.echo(json.dumps(payload))
@@ -1452,12 +1468,14 @@ def evals_create(
 def evals_delete(
     evalset_id: str = typer.Argument(..., help="Evalset ID."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
 ) -> None:
     """Delete an evalset (cascade delete runs/experiments)."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
-    payload = client.evals_delete_eval(evalset_id, account_uid=account_uid)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
+    payload = client.evals_delete_eval(evalset_id, account_uid=resolved_account_uid)
     cascade = payload.get("cascade") or {}
     console.print(
         "[green]Eval deleted.[/green] "
@@ -1471,20 +1489,22 @@ def _render_report(
     evalset_id: Optional[str],
     run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     output_file: Optional[str] = typer.Option(None, "--output", help="Write markdown report to file."),
     export: bool = typer.Option(False, "--export", help="Export timestamped report files report-<timestamp>.md and report-<timestamp>.csv."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON report output."),
 ) -> None:
     """Generate a full evalset report with cross-experiment comparisons."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     resolved_evalset_id = (evalset_id or "").strip()
     if not resolved_evalset_id:
         payload = client.evals_list_evals(
             limit=200,
             offset=0,
-            account_uid=account_uid,
+            account_uid=resolved_account_uid,
         )
         evalsets = [item for item in (payload.get("evalsets") or []) if isinstance(item, dict)]
         if not evalsets:
@@ -1506,7 +1526,7 @@ def _render_report(
         client=client,
         evalset_id=resolved_evalset_id,
         run_limit=run_limit,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     experiments = report.get("experiments") or []
     if not experiments:
@@ -1538,8 +1558,9 @@ def evals_report(
     evalset_id: Optional[str] = typer.Argument(None, help="Evalset ID to report. Defaults to latest updated evalset."),
     run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     output_file: Optional[str] = typer.Option(None, "--output", help="Write markdown report to file."),
     export: bool = typer.Option(False, "--export", help="Export timestamped report files report-<timestamp>.md and report-<timestamp>.csv."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON report output."),
@@ -1549,7 +1570,8 @@ def evals_report(
         evalset_id=evalset_id,
         run_limit=run_limit,
         token=token,
-        ai_agents_url=ai_agents_url,
+        api_key=api_key,
+        billable_account_uid=billable_account_uid,
         account_uid=account_uid,
         output_file=output_file,
         export=export,
@@ -1562,8 +1584,9 @@ def evals_compare_report_compat(
     evalset_id: Optional[str] = typer.Argument(None, help="Evalset ID to report. Defaults to latest updated evalset."),
     run_limit: int = typer.Option(50, "--run-limit", min=2, max=200, help="Runs fetched per experiment."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     output_file: Optional[str] = typer.Option(None, "--output", help="Write markdown report to file."),
     export: bool = typer.Option(False, "--export", help="Export timestamped report files report-<timestamp>.md and report-<timestamp>.csv."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON report output."),
@@ -1574,7 +1597,8 @@ def evals_compare_report_compat(
         evalset_id=evalset_id,
         run_limit=run_limit,
         token=token,
-        ai_agents_url=ai_agents_url,
+        api_key=api_key,
+        billable_account_uid=billable_account_uid,
         account_uid=account_uid,
         output_file=output_file,
         export=export,
@@ -1589,18 +1613,20 @@ def experiments_list(
     limit: int = typer.Option(50, "--limit", min=1, max=200),
     offset: int = typer.Option(0, "--offset", min=0),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """List evalset experiments."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_list_experiments(
         evalset_id=evalset_id,
         status=status,
         limit=limit,
         offset=offset,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     if raw:
         console.print(payload)
@@ -1635,8 +1661,9 @@ def experiments_create(
     summary_json: Optional[str] = typer.Option(None, "--summary-json", help="Summary JSON object."),
     tags: list[str] = typer.Option([], "--tag", help="Repeatable tag."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """Create an evalset experiment."""
@@ -1659,7 +1686,8 @@ def experiments_create(
     spec_tags = spec.get("tags") if isinstance(spec.get("tags"), list) else []
     resolved_tags = tags if tags else [str(tag) for tag in spec_tags if str(tag).strip()]
 
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_create_experiment(
         name=resolved_name,
         evalset_id=resolved_evalset_id,
@@ -1668,7 +1696,7 @@ def experiments_create(
         config=resolved_config,
         summary=resolved_summary,
         tags=resolved_tags,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     if raw:
         typer.echo(json.dumps(payload))
@@ -1683,17 +1711,19 @@ def runs_list(
     limit: int = typer.Option(50, "--limit", min=1, max=200),
     offset: int = typer.Option(0, "--offset", min=0),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """List runs for an experiment."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_list_runs(
         experiment_id,
         limit=limit,
         offset=offset,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     if raw:
         console.print(payload)
@@ -1741,8 +1771,9 @@ def runs_launch(
     started_at: Optional[str] = typer.Option(None, "--started-at", help="ISO timestamp override."),
     ended_at: Optional[str] = typer.Option(None, "--ended-at", help="ISO timestamp override."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
 ) -> None:
     """Launch an evalset run on SaaS and tag it as CLI-launched."""
     cli_summary: dict[str, Any] = {
@@ -1773,7 +1804,8 @@ def runs_launch(
         _parse_json_value(report_json, "--report-json"),
     )
 
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_create_run(
         experiment_id,
         status=status,
@@ -1782,7 +1814,7 @@ def runs_launch(
         metrics=metrics,
         summary=summary,
         report=report,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     run = payload.get("run") or {}
     run_id = str(run.get("id", ""))
@@ -1797,16 +1829,18 @@ def runs_watch(
     interval_seconds: float = typer.Option(3.0, "--interval", min=0.5, help="Polling interval."),
     timeout_seconds: int = typer.Option(600, "--timeout", min=5, help="Timeout in seconds."),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
 ) -> None:
     """Watch a run until completion/failure."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     started = time.time()
     last_status = ""
 
     while True:
-        payload = client.evals_get_run(run_id, account_uid=account_uid)
+        payload = client.evals_get_run(run_id, account_uid=resolved_account_uid)
         run = payload.get("run") or {}
         status = str(run.get("status", "unknown"))
         if status != last_status:
@@ -1837,16 +1871,18 @@ def live_targets(
     window: str = typer.Option("24h", "--window", help="Window: 1h, 6h, 24h, 7d, 30d."),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
-    ai_agents_url: Optional[str] = typer.Option(None, "--ai-agents-url", help="AI Agents base URL."),
-    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Organization/account UID context."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Authentication API key (alias for --token)."),
+    billable_account_uid: Optional[str] = typer.Option(None, "--billable-account-uid", help="Billable account UID context (organization/team/user)."),
+    account_uid: Optional[str] = typer.Option(None, "--account-uid", help="Deprecated alias for --billable-account-uid."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON output."),
 ) -> None:
     """List live monitoring targets."""
-    client = _make_client(token=token, ai_agents_url=ai_agents_url)
+    resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
+    client = _make_client(token=token, api_key=api_key)
     payload = client.evals_list_live_targets(
         window=window,
         limit=limit,
-        account_uid=account_uid,
+        account_uid=resolved_account_uid,
     )
     if raw:
         console.print(payload)
