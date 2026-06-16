@@ -1,0 +1,168 @@
+title: API Keys
+---
+
+import DocCardList from '@theme/DocCardList';
+
+The API Keys module provides authentication credential management for the Datalayer platform. API keys are used for API authentication, service-to-service communication, and secure access to Datalayer resources with configurable expiration and access control.
+
+## Overview
+
+API keys in Datalayer provide secure, time-limited access to platform resources. They serve as authentication credentials for API calls, runtime access, and service integrations. All API keys are cryptographically secure and can be configured with expiration dates for enhanced security.
+
+### Key Features
+
+- **Secure Authentication**: Cryptographically secure API keys for API access
+- **Configurable Expiration**: Set custom expiration dates for API key lifecycle management
+- **Access Control**: Role-based access control integrated with API key permissions
+- **API Integration**: Seamless integration with Datalayer APIs and services
+- **Audit Trail**: Complete audit logging of API key creation, usage, and deletion
+
+## API Key Class
+
+The `ApiKey` model represents an authentication API key with the following attributes:
+
+- **uid**: Unique identifier for the API key
+- **name**: Human-readable name of the API key
+- **description**: Description of the API key's purpose
+- **token_type**: Type of API key (e.g. `secret`)
+
+
+## Creating API Keys
+
+### Basic API Key Creation
+
+Create a simple secret API key for API authentication:
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+token_response = client.create_token(
+    name="API_ACCESS_TOKEN",
+    description="API key for automated API access"
+)
+
+print(f"API key created: {token_response['name']}")
+print(f"API key value: {token_response['token']}")  # Store securely!
+print(f"API key UID: {token_response['uid']}")
+```
+
+### API Key with Expiration
+
+Create API keys with custom expiration dates:
+
+```python
+from datalayer_core import DatalayerClient
+import time
+
+client = DatalayerClient()
+
+# Create API key that expires in 30 days
+expiration_timestamp = int(time.time()) + (30 * 24 * 60 * 60)  # 30 days from now
+
+token_response = client.create_token(
+    name="TEMPORARY_ACCESS_TOKEN",
+    description="30-day temporary access API key",
+    expiration_date=expiration_timestamp
+)
+
+print(f"API key created with expiration: {token_response['name']}")
+print(f"Expires at: {time.ctime(expiration_timestamp)}")
+```
+
+### Typed API Key Creation
+
+Create API keys with specific types:
+
+```python
+from datalayer_core import DatalayerClient
+from datalayer_core.models import ApiKeyType
+
+client = DatalayerClient()
+
+# Create secret API key (default type)
+user_token = client.create_token(
+    name="USER_API_TOKEN",
+    description="User API access key",
+    token_type=ApiKeyType.SECRET
+)
+
+print(f"Created {user_token['type']} API key: {user_token['name']}")
+```
+
+## Listing and Managing API Keys
+
+### List All API Keys
+
+View all API keys associated with your account:
+
+```python
+from datalayer_core import DatalayerClient
+import time
+
+client = DatalayerClient()
+tokens = client.list_tokens()
+
+print(f"Found {len(tokens)} API keys:")
+for token in tokens:
+    print(f"  - {token.name}")
+    print(f"    UID: {token.uid}")
+    print(f"    Type: {token.token_type}")
+    print(f"    Description: {token.description}")
+    print("---")
+```
+
+### Search API Keys
+
+Find API keys by name or description:
+
+```python
+from datalayer_core import DatalayerClient
+
+def find_tokens(client, search_term):
+    """Find API keys by name or description."""
+    all_tokens = client.list_tokens()
+    matching_tokens = []
+    
+    for token in all_tokens:
+        if (search_term.lower() in token.name.lower() or 
+            search_term.lower() in token.description.lower()):
+            matching_tokens.append(token)
+    
+    return matching_tokens
+```
+
+## Deleting API Keys
+
+### Delete Single API Key
+
+Remove an API key by UID or API key object:
+
+```python
+from datalayer_core import DatalayerClient
+
+client = DatalayerClient()
+
+# Delete by UID
+success = client.delete_token("token-uid-12345")
+print(f"API key deletion successful: {success}")
+
+# Delete by Token object
+tokens = client.list_tokens()
+if tokens:
+    old_token = tokens[0]  # Delete the first API key
+    success = client.delete_token(old_token)
+    print(f"Deleted API key '{old_token.name}': {success}")
+```
+
+## Notes
+
+- **Security**: All API keys are cryptographically secure and should be treated as sensitive credentials
+- **Storage**: Never hardcode API keys in source code; use secure storage mechanisms
+- **Expiration**: Always set appropriate expiration dates for enhanced security
+- **Rotation**: Implement regular API key rotation as part of security best practices
+- **Monitoring**: Regularly audit and monitor API key usage for security compliance
+- **Access Control**: API keys inherit the permissions of the user who created them
+- **API Usage**: API keys can be used for both Client authentication and direct API calls
+- **Cleanup**: Regularly clean up expired and unused API keys to maintain security hygiene
+

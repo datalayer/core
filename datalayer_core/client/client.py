@@ -860,7 +860,7 @@ class DatalayerClient(
         name: str,
         description: str,
         expiration_date: int = 0,
-        api_key_type: Union[str, ApiKeyType] = ApiKeyType.USER,
+        api_key_type: Union[str, ApiKeyType] = ApiKeyType.SECRET,
     ) -> dict[str, Any]:
         """
         Create a new API key.
@@ -873,8 +873,8 @@ class DatalayerClient(
             Description of the API key.
         expiration_date : int, default 0
             Expiration date of the API key in seconds since epoch.
-        api_key_type : Union[str, ApiKeyType], default ApiKeyType.USER
-            Type of the API key (e.g., "user", "admin").
+        api_key_type : Union[str, ApiKeyType], default ApiKeyType.SECRET
+            Type of the API key (secret, publishable, restricted, temporary).
 
         Returns
         -------
@@ -906,7 +906,7 @@ class DatalayerClient(
                     uid=api_key_data["uid"],
                     name=api_key_data.get("name_s", ""),
                     description=api_key_data.get("description_t", ""),
-                    api_key_type=api_key_data.get("variant_s", "user"),
+                    api_key_type=api_key_data.get("variant_s", "secret"),
                 )
                 api_key_objects.append(api_key)
             return api_key_objects

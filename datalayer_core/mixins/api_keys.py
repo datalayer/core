@@ -15,7 +15,7 @@ class ApiKeysCreateMixin:
         name: str,
         description: str,
         expiration_date: int = 0,
-        api_key_type: Union[str, ApiKeyType] = ApiKeyType.USER,
+        api_key_type: Union[str, ApiKeyType] = ApiKeyType.SECRET,
     ) -> dict[str, Any]:
         """
         Create an API key with the given parameters.
@@ -29,8 +29,8 @@ class ApiKeysCreateMixin:
         expiration_date : float
             Expiration date of the API key.
         api_key_type : str, ApiKeyType
-            Variant or type of the API key. Defaults to "user_token".
-            Type of the API key (e.g., "user").
+            Variant or type of the API key. Defaults to "secret".
+            Type of the API key (secret, publishable, restricted, temporary).
 
         Returns
         -------

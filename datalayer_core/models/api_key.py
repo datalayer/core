@@ -16,7 +16,10 @@ from pydantic import BaseModel, Field
 class ApiKeyType(str, Enum):
     """Enum for API key variants."""
 
-    USER = "user_token"
+    SECRET = "secret"
+    PUBLISHABLE = "publishable"
+    RESTRICTED = "restricted"
+    TEMPORARY = "temporary"
 
 
 class ApiKeyModel(BaseModel):
@@ -28,8 +31,8 @@ class ApiKeyModel(BaseModel):
     name: str = Field(..., description="Name of the API key")
     description: str = Field(..., description="Description of the API key")
     api_key_type: Union[str, ApiKeyType] = Field(
-        default=ApiKeyType.USER,
-        description='Type of the API key (e.g., "user", "admin")',
+        default=ApiKeyType.SECRET,
+        description='Type of the API key (secret, publishable, restricted, temporary)',
     )
     kwargs: Dict[str, Any] = Field(
         default_factory=dict, description="Additional keyword arguments"

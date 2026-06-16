@@ -83,9 +83,9 @@ def create_api_key(
         help="Expiration date in seconds since epoch (0 for no expiration)",
     ),
     api_key_type: str = typer.Option(
-        ApiKeyType.USER,
+        ApiKeyType.SECRET.value,
         "--api-key-type",
-        help="Type of the API key (user, admin)",
+        help="Type of the API key (secret, publishable, restricted, temporary)",
     ),
     token: Optional[str] = typer.Option(
         None,

@@ -14,7 +14,11 @@ export const asToken = (s: any): IIAMToken => {
   };
 };
 
-export type IIAMTokenVariant = 'user_token';
+export type IIAMTokenVariant =
+  | 'secret'
+  | 'publishable'
+  | 'restricted'
+  | 'temporary';
 
 export type IIAMToken = {
   id: string;

@@ -59,7 +59,7 @@ export const APIKeyNew = ({
   const [showAPIKey, setShowAPIKey] = useState(false);
   const [apiKey, setAPIKey] = useState<IAPIKey>();
   const [formValues, setFormValues] = useState<FormData>({
-    variant: 'user_token',
+    variant: 'secret',
     name: undefined,
     description: undefined,
     expirationDate: undefined,
@@ -265,10 +265,19 @@ export const APIKeyNew = ({
                     value={formValues.variant}
                     onChange={valueVariantChange}
                   >
-                    <Select.Option value="user_token">User Token</Select.Option>
+                    <Select.Option value="secret">Secret</Select.Option>
+                    <Select.Option value="publishable" disabled>
+                      Publishable (coming soon)
+                    </Select.Option>
+                    <Select.Option value="restricted" disabled>
+                      Restricted (coming soon)
+                    </Select.Option>
+                    <Select.Option value="temporary" disabled>
+                      Temporary (coming soon)
+                    </Select.Option>
                   </Select>
                   <FormControl.Caption>
-                    Pick the most appropriate token type.
+                    Secret is currently available. Additional API key types are coming soon.
                   </FormControl.Caption>
                 </FormControl>
                 <FormControl required>
