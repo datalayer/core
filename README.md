@@ -159,7 +159,7 @@ Use comma-separated agentspec ids to create one experiment per agentspec variant
 # Creates one experiment per agentspec in the list
 datalayer evals experiments create my-exp \
   --evalset-id <evalset_id> \
-  --agent-spec-ids example-evals,example-evals-nocodmode,example-custom
+  --agent-spec-ids example-evals,example-evals-nocodemode,example-custom
 ```
 
 Generate a comparison report:

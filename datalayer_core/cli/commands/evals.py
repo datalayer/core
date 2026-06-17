@@ -121,6 +121,22 @@ def _evalset_runs_url(evalset_id: str, run_environment: str) -> str:
     return f"{WEB_APP_BASE_URL}/evals/experiments?evalset_id={encoded_evalset_id}"
 
 
+def _run_overlay_url(evalset_runs_url: str, run_id: str) -> str:
+    """Build a deep link that opens the run-details overlay directly.
+
+    The experiments page reads the ``run`` query parameter and opens the
+    run-details dialog for that run, so the same overlay shown by the in-app
+    "Details" button is reachable straight from the CLI report.
+    """
+    base = str(evalset_runs_url or "").strip()
+    run_value = str(run_id or "").strip()
+    if not base or not run_value:
+        return base
+    separator = "&" if "?" in base else "?"
+    return f"{base}{separator}run={quote(run_value, safe='')}"
+
+
+
 def _style_text(value: str, style: str | None, colorize: bool) -> str:
     if not colorize or not style:
         return value
@@ -604,10 +620,10 @@ def _fmt_delta(value: float | None, *, colorize: bool = False) -> str:
         return "n/a"
     rendered = f"{value * 100:+.1f} pts"
     if value > 0:
-        return _style_text(rendered, "green", colorize)
+        return f"🟢 {_style_text(rendered, 'green', colorize)}"
     if value < 0:
-        return _style_text(rendered, "red", colorize)
-    return _style_text(rendered, "yellow", colorize)
+        return f"🔴 {_style_text(rendered, 'red', colorize)}"
+    return f"⚪ {_style_text(rendered, 'yellow', colorize)}"
 
 
 def _sparkline(values: list[float], *, colorize: bool = False) -> str:
@@ -836,6 +852,144 @@ def _compact_json(value: Any, max_len: int = 140) -> str:
     return text[: max_len - 3] + "..."
 
 
+def _aggregate_case_outcomes(
+    experiments: list[dict[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    """Aggregate per-case pass/score stats across every fetched run.
+
+    Returns ``(case_stats, agentspec_names)`` where ``case_stats`` maps a case
+    name to ``{"runs", "passed", "score_sum", "score_count", "by_spec"}`` and
+    ``by_spec`` maps an agentspec label to ``{"runs", "passed"}``.
+    """
+    case_stats: dict[str, dict[str, Any]] = {}
+    case_order: list[str] = []
+    agentspec_names: list[str] = []
+    for experiment in experiments:
+        spec_label = str(
+            experiment.get("agent_spec_name")
+            or experiment.get("agent_spec_id")
+            or "-"
+        )
+        if spec_label not in agentspec_names:
+            agentspec_names.append(spec_label)
+        for run in experiment.get("runs") or []:
+            if not isinstance(run, dict):
+                continue
+            metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+            case_results = metrics.get("case_results")
+            if not isinstance(case_results, list):
+                continue
+            for case_result in case_results:
+                if not isinstance(case_result, dict):
+                    continue
+                name = str(case_result.get("name") or "-")
+                if name not in case_stats:
+                    case_stats[name] = {
+                        "runs": 0,
+                        "passed": 0,
+                        "score_sum": 0.0,
+                        "score_count": 0,
+                        "by_spec": {},
+                    }
+                    case_order.append(name)
+                stat = case_stats[name]
+                passed = bool(case_result.get("passed"))
+                stat["runs"] += 1
+                stat["passed"] += 1 if passed else 0
+                score = case_result.get("score")
+                if isinstance(score, (int, float)):
+                    stat["score_sum"] += float(score)
+                    stat["score_count"] += 1
+                spec_entry = stat["by_spec"].setdefault(
+                    spec_label, {"runs": 0, "passed": 0}
+                )
+                spec_entry["runs"] += 1
+                spec_entry["passed"] += 1 if passed else 0
+    ordered = {name: case_stats[name] for name in case_order}
+    return ordered, agentspec_names
+
+
+def _per_case_outcome_lines(
+    experiments: list[dict[str, Any]],
+    *,
+    colorize: bool = False,
+) -> list[str]:
+    """Render the per-case outcomes section (pass rate per case across runs)."""
+    lines: list[str] = []
+    lines.append("## Per-Case Outcomes")
+    lines.append("")
+    case_stats, agentspec_names = _aggregate_case_outcomes(experiments)
+    if not case_stats:
+        lines.append(
+            "No per-case results were recorded on the fetched runs. Runs that "
+            "store `case_results` in their metrics populate this section."
+        )
+        lines.append("")
+        return lines
+
+    lines.append(
+        "Pass rate for each case across every fetched run (all experiments and "
+        "agentspecs combined). This reveals which cases are reliable and which "
+        "ones regress, instead of only the aggregate run pass rate."
+    )
+    lines.append("")
+    overall_rows: list[list[str]] = []
+    for name, stat in case_stats.items():
+        runs = int(stat["runs"])
+        passed = int(stat["passed"])
+        pass_rate = (passed / runs) if runs else None
+        avg_score = (
+            stat["score_sum"] / stat["score_count"] if stat["score_count"] else None
+        )
+        overall_rows.append(
+            [
+                name,
+                str(runs),
+                f"{passed}/{runs}",
+                _fmt_pct(pass_rate),
+                "n/a" if avg_score is None else f"{avg_score:.3f}",
+            ]
+        )
+    lines.extend(
+        _markdown_table(
+            ["Case", "Runs", "Passed", "Pass Rate", "Avg Score"],
+            overall_rows,
+            ["left", "right", "right", "right", "right"],
+        )
+    )
+    lines.append("")
+
+    if len(agentspec_names) > 1:
+        lines.append("### Per-Case Pass Rate By Agentspec")
+        lines.append("")
+        lines.append(
+            "Compare how each case performs across agentspecs (for example "
+            "codemode vs no-codemode)."
+        )
+        lines.append("")
+        spec_rows: list[list[str]] = []
+        for name, stat in case_stats.items():
+            row = [name]
+            for spec_label in agentspec_names:
+                spec_entry = stat["by_spec"].get(spec_label)
+                if not spec_entry or not spec_entry.get("runs"):
+                    row.append("n/a")
+                    continue
+                spec_pass = spec_entry["passed"] / spec_entry["runs"]
+                row.append(_fmt_pct(spec_pass))
+            spec_rows.append(row)
+        lines.extend(
+            _markdown_table(
+                ["Case", *agentspec_names],
+                spec_rows,
+                ["left", *["right"] * len(agentspec_names)],
+            )
+        )
+        lines.append("")
+
+    return lines
+
+
 def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool = False) -> str:
     evalset_id = str(report.get("evalset_id", ""))
     run_environment = str(report.get("run_environment") or "")
@@ -843,6 +997,16 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
     experiments = [item for item in (report.get("experiments") or []) if isinstance(item, dict)]
     agentspecs = [item for item in (report.get("agentspecs") or []) if isinstance(item, dict)]
     cases = [item for item in (report.get("cases") or []) if isinstance(item, dict)]
+    case_by_name: dict[str, dict[str, Any]] = {}
+    representative_case_name: str | None = None
+    for case in cases:
+        name = str(case.get("name") or "")
+        if not name:
+            continue
+        if representative_case_name is None:
+            representative_case_name = name
+        if name not in case_by_name:
+            case_by_name[name] = case
     evalset_runs_url = _evalset_runs_url(evalset_id, run_environment)
 
     lines: list[str] = []
@@ -913,6 +1077,8 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
     else:
         lines.append("No cases returned for this evalset.")
     lines.append("")
+
+    lines.extend(_per_case_outcome_lines(experiments, colorize=colorize))
 
     lines.append("## Experiment Overview")
     lines.append("")
@@ -1210,10 +1376,11 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
             pass_rate = run.get("pass_rate") if isinstance(run.get("pass_rate"), (int, float)) else None
             cause_text = _format_failure_cause(run.get("failure_cause"))
             run_id = str(run.get('id', ''))
+            run_link = _run_overlay_url(evalset_runs_url, run_id)
             run_rows.append(
                 [
                     str(idx),
-                    (f"[{run_id}]({evalset_runs_url})" if evalset_runs_url and run_id else run_id),
+                    (f"[{run_id}]({run_link})" if run_link and run_id else run_id),
                     str(run.get('status', '')),
                     _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else 'n/a',
                     f"`{_ascii_bar(float(pass_rate), full_blocks=True, colorize=colorize) if isinstance(pass_rate, (int, float)) else '-'}`",
@@ -1310,7 +1477,435 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
     lines.append("- Latest-2 delta uses the latest two runs returned in the fetched window.")
     lines.append("")
 
+    lines.extend(
+        _report_appendix_lines(
+            experiments,
+            evalset_runs_url,
+            case_by_name=case_by_name,
+            representative_case_name=representative_case_name,
+        )
+    )
+
     return "\n".join(lines)
+
+
+def _appendix_metric_int(metrics: dict[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = metrics.get(key)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)):
+            return str(int(value))
+    return "-"
+
+
+def _appendix_metric_float(metrics: dict[str, Any], *keys: str) -> str:
+    for key in keys:
+        value = metrics.get(key)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)):
+            return f"{float(value):.3f}"
+    return "-"
+
+
+# Candidate paths mirror the in-app run-details overlay
+# (`getRunInteractionDetails` in AIEvals.tsx) so the report renders the same
+# prompt/output the UI shows.
+_PROMPT_CANDIDATE_PATHS: tuple[tuple[str, str], ...] = (
+    ("summary", "agent_prompt"),
+    ("summary", "sent_prompt"),
+    ("summary", "prompt"),
+    ("report", "agent_prompt"),
+    ("report", "sent_prompt"),
+    ("report", "prompt"),
+)
+
+_OUTPUT_CANDIDATE_PATHS: tuple[tuple[str, str], ...] = (
+    ("summary", "agent_output"),
+    ("summary", "output"),
+    ("report", "agent_output"),
+    ("report", "output"),
+    ("report", "parsed"),
+    ("summary", "agent_output_text"),
+    ("report", "agent_output_text"),
+    ("report", "raw_excerpt"),
+)
+
+
+def _run_interaction_value(
+    run: dict[str, Any], paths: tuple[tuple[str, str], ...]
+) -> Any:
+    """Return the first non-empty value found along the candidate paths."""
+    for container_key, field in paths:
+        container = run.get(container_key)
+        if isinstance(container, dict):
+            value = container.get(field)
+            if value is not None:
+                return value
+    return None
+
+
+def _format_display_value(value: Any) -> tuple[str, str]:
+    """Render a value the way the UI overlay does.
+
+    Returns a ``(language, text)`` tuple so callers can fence the content
+    with the right code-block language hint.
+    """
+    if value is None:
+        return "text", "(none)"
+    if isinstance(value, str):
+        return "text", value
+    try:
+        return "json", json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
+    except Exception:
+        return "text", str(value)
+
+
+def _fenced_block(language: str, text: str) -> list[str]:
+    """Emit a fenced code block, guarding against backtick collisions."""
+    body = text if text != "" else "(empty)"
+    return [f"```{language}", *body.splitlines(), "```"]
+
+
+def _extract_case_prompt(case_record: dict[str, Any] | None) -> Any:
+    if not isinstance(case_record, dict):
+        return None
+    inputs = case_record.get("inputs")
+    if not isinstance(inputs, dict):
+        return None
+    for key in ("prompt", "text", "query", "message"):
+        value = inputs.get(key)
+        if value is not None:
+            return value
+    return inputs
+
+
+def _extract_case_prompt_from_result(case_result: dict[str, Any]) -> Any:
+    for key in ("prompt", "input", "inputs", "case_input"):
+        value = case_result.get(key)
+        if value is not None:
+            return value
+    return None
+
+
+def _extract_case_output_from_result(case_result: dict[str, Any]) -> Any:
+    for key in ("output", "actual_output", "response", "result"):
+        value = case_result.get(key)
+        if value is not None:
+            return value
+    return None
+
+
+def _is_synthetic_run(run: dict[str, Any]) -> bool:
+    summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
+    report = run.get("report") if isinstance(run.get("report"), dict) else {}
+    if summary.get("synthetic") is True or report.get("synthetic") is True:
+        return True
+    output = summary.get("agent_output")
+    if isinstance(output, dict):
+        if output.get("synthetic") is True:
+            return True
+        if output.get("mode") == "synthetic":
+            return True
+    return False
+
+
+def _synthetic_case_output(
+    run: dict[str, Any],
+    case_record: dict[str, Any] | None,
+    case_result: dict[str, Any],
+    *,
+    representative_case_name: str | None,
+    case_name: str,
+) -> Any:
+    """Build per-case output for synthetic runs to mirror UI case switching."""
+    run_output = _run_interaction_value(run, _OUTPUT_CANDIDATE_PATHS)
+    if representative_case_name and case_name == representative_case_name:
+        return run_output
+    if case_result.get("passed"):
+        if isinstance(case_record, dict) and "expected_output" in case_record:
+            return case_record.get("expected_output")
+        return None
+    if isinstance(case_record, dict):
+        inputs = case_record.get("inputs")
+        if isinstance(inputs, dict):
+            return (
+                inputs.get("text")
+                or inputs.get("prompt")
+                or inputs.get("query")
+                or inputs.get("message")
+                or "(no usable answer — regressed run)"
+            )
+    return "(no usable answer — regressed run)"
+
+
+def _run_detail_block_lines(
+    idx: int,
+    run: dict[str, Any],
+    case_by_name: dict[str, dict[str, Any]],
+    *,
+    representative_case_name: str | None,
+) -> list[str]:
+    """Render the full per-run detail shown by the in-app overlay.
+
+    Mirrors the run-details dialog in AIEvals.tsx: prompt sent, agent output
+    received, run summary, and run report.
+    """
+    run_id = str(run.get("id", "") or "")
+    status = str(run.get("status", "") or "unknown")
+    created = str(run.get("created_at", "") or "-")
+    pass_rate = run.get("pass_rate")
+    pass_text = (
+        _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else "n/a"
+    )
+
+    lines: list[str] = []
+    summary_label = run_id or f"run {idx}"
+    lines.append(
+        f"<details><summary>Run {idx} — {summary_label} "
+        f"(status: {status}, pass rate: {pass_text})</summary>"
+    )
+    lines.append("")
+    lines.append(f"- Run ID: `{run_id or '-'}`")
+    lines.append(f"- Status: {status}")
+    lines.append(f"- Pass rate: {pass_text}")
+    lines.append(f"- Created: {created}")
+    lines.append("")
+
+    metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+    case_results = metrics.get("case_results")
+    if isinstance(case_results, list) and case_results:
+        lines.append("**Per-Case Results**")
+        lines.append("")
+        case_rows: list[list[str]] = []
+        for case_result in case_results:
+            if not isinstance(case_result, dict):
+                continue
+            score = case_result.get("score")
+            case_rows.append(
+                [
+                    str(case_result.get("name") or "-"),
+                    "✅ pass" if case_result.get("passed") else "❌ fail",
+                    f"{float(score):.3f}" if isinstance(score, (int, float)) else "-",
+                    str(case_result.get("category") or "-"),
+                    str(case_result.get("difficulty") or "-"),
+                ]
+            )
+        if case_rows:
+            lines.extend(
+                _markdown_table(
+                    ["Case", "Result", "Score", "Category", "Difficulty"],
+                    case_rows,
+                    ["left", "left", "right", "left", "left"],
+                )
+            )
+            lines.append("")
+
+        lines.append("**Per-Case Prompts and Outputs**")
+        lines.append("")
+        synthetic_run = _is_synthetic_run(run)
+        for case_result in case_results:
+            if not isinstance(case_result, dict):
+                continue
+            case_name = str(case_result.get("name") or "-")
+            case_record = case_by_name.get(case_name)
+            prompt_value = _extract_case_prompt(case_record)
+            if prompt_value is None:
+                prompt_value = _extract_case_prompt_from_result(case_result)
+            if synthetic_run:
+                output_value = _synthetic_case_output(
+                    run,
+                    case_record,
+                    case_result,
+                    representative_case_name=representative_case_name,
+                    case_name=case_name,
+                )
+            else:
+                output_value = _extract_case_output_from_result(case_result)
+                if output_value is None:
+                    output_value = "(per-case output not captured for this run)"
+            expected_value = (
+                case_record.get("expected_output") if isinstance(case_record, dict) else None
+            )
+            metadata_value = (
+                case_record.get("metadata") if isinstance(case_record, dict) else None
+            )
+            prompt_lang, prompt_text = _format_display_value(prompt_value)
+            output_lang, output_text = _format_display_value(output_value)
+            expected_lang, expected_text = _format_display_value(expected_value)
+            metadata_lang, metadata_text = _format_display_value(metadata_value)
+            result_text = "pass" if case_result.get("passed") else "fail"
+            score = case_result.get("score")
+            score_text = f"{float(score):.3f}" if isinstance(score, (int, float)) else "-"
+            category_text = str(case_result.get("category") or "-")
+            difficulty_text = str(case_result.get("difficulty") or "-")
+            lines.append(
+                f"<details><summary>Case {case_name} ({result_text}, score: {score_text})</summary>"
+            )
+            lines.append("")
+            lines.append(f"- Category: {category_text}")
+            lines.append(f"- Difficulty: {difficulty_text}")
+            lines.append("")
+            lines.append("**Prompt**")
+            lines.append("")
+            lines.extend(_fenced_block(prompt_lang, prompt_text))
+            lines.append("")
+            lines.append("**Output**")
+            lines.append("")
+            lines.extend(_fenced_block(output_lang, output_text))
+            lines.append("")
+            lines.append("**Expected Output**")
+            lines.append("")
+            lines.extend(_fenced_block(expected_lang, expected_text))
+            lines.append("")
+            lines.append("**Case Metadata**")
+            lines.append("")
+            lines.extend(_fenced_block(metadata_lang, metadata_text))
+            lines.append("")
+            lines.append("</details>")
+            lines.append("")
+
+    prompt_lang, prompt_text = _format_display_value(
+        _run_interaction_value(run, _PROMPT_CANDIDATE_PATHS)
+    )
+    lines.append("**Prompt Sent**")
+    lines.append("")
+    lines.extend(_fenced_block(prompt_lang, prompt_text))
+    lines.append("")
+
+    output_lang, output_text = _format_display_value(
+        _run_interaction_value(run, _OUTPUT_CANDIDATE_PATHS)
+    )
+    lines.append("**Agent Output Received**")
+    lines.append("")
+    lines.extend(_fenced_block(output_lang, output_text))
+    lines.append("")
+
+    summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
+    summary_lang, summary_text = _format_display_value(summary)
+    lines.append("**Run Summary**")
+    lines.append("")
+    lines.extend(_fenced_block(summary_lang, summary_text))
+    lines.append("")
+
+    report = run.get("report") if isinstance(run.get("report"), dict) else {}
+    report_lang, report_text = _format_display_value(report)
+    lines.append("**Run Report**")
+    lines.append("")
+    lines.extend(_fenced_block(report_lang, report_text))
+    lines.append("")
+
+    cause = run.get("failure_cause")
+    if isinstance(cause, dict) and cause:
+        detail_lines = _failure_cause_detail_lines(cause)
+        if detail_lines:
+            lines.append("**Failure Cause**")
+            lines.append("")
+            lines.extend(detail_lines)
+            lines.append("")
+
+    lines.append("</details>")
+    lines.append("")
+    return lines
+
+
+def _report_appendix_lines(
+    experiments: list[dict[str, Any]],
+    evalset_runs_url: str,
+    *,
+    case_by_name: dict[str, dict[str, Any]] | None = None,
+    representative_case_name: str | None = None,
+) -> list[str]:
+    """Render an appendix that lists every fetched run with its details.
+
+    Each Run ID links back to the experiments page with a ``run`` query
+    parameter, which opens the run-details overlay directly.
+    """
+    lines: list[str] = []
+    lines.append("## Appendix: Run Details")
+    lines.append("")
+    lines.append(
+        "Per-run detail for every run fetched in the window above. "
+        "Each Run ID opens the run-details overlay directly in Datalayer, and "
+        "the collapsible blocks below reproduce the same prompt, agent output, "
+        "summary, and report shown by the in-app run-details dialog."
+    )
+    lines.append("")
+
+    any_runs = False
+    case_by_name = case_by_name or {}
+    for experiment in experiments:
+        runs = [run for run in (experiment.get("runs") or []) if isinstance(run, dict)]
+        if not runs:
+            continue
+        any_runs = True
+        agent_spec_label = str(
+            experiment.get("agent_spec_name")
+            or experiment.get("agent_spec_id")
+            or "-"
+        )
+        lines.append(f"### {experiment.get('name', '')}")
+        lines.append("")
+        lines.append(f"Agentspec: {agent_spec_label}")
+        lines.append("")
+        run_rows: list[list[str]] = []
+        for idx, run in enumerate(runs, start=1):
+            metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+            run_id = str(run.get("id", ""))
+            run_link = _run_overlay_url(evalset_runs_url, run_id)
+            pass_rate = run.get("pass_rate")
+            passed = _appendix_metric_int(metrics, "passed", "passed_cases")
+            total = _appendix_metric_int(metrics, "total_cases", "total", "cases")
+            cases_cell = (
+                f"{passed}/{total}" if passed != "-" or total != "-" else "-"
+            )
+            run_rows.append(
+                [
+                    str(idx),
+                    (f"[{run_id}]({run_link})" if run_link and run_id else (run_id or "-")),
+                    str(run.get("status", "") or "-"),
+                    _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else "n/a",
+                    cases_cell,
+                    _appendix_metric_float(metrics, "avg_score", "average_score"),
+                    str(run.get("created_at", "") or "-"),
+                    _format_failure_cause(run.get("failure_cause")) or "-",
+                ]
+            )
+        lines.extend(
+            _markdown_table(
+                [
+                    "#",
+                    "Run ID",
+                    "Status",
+                    "Pass Rate",
+                    "Cases (pass/total)",
+                    "Avg Score",
+                    "Created",
+                    "Failure Cause",
+                ],
+                run_rows,
+                ["right", "left", "left", "right", "right", "right", "left", "left"],
+            )
+        )
+        lines.append("")
+        lines.append("#### Full Run Detail (as shown in the UI)")
+        lines.append("")
+        for idx, run in enumerate(runs, start=1):
+            lines.extend(
+                _run_detail_block_lines(
+                    idx,
+                    run,
+                    case_by_name,
+                    representative_case_name=representative_case_name,
+                )
+            )
+
+    if not any_runs:
+        lines.append("No runs were fetched for any experiment.")
+        lines.append("")
+
+    return lines
 
 
 def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
@@ -1339,6 +1934,11 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
         "failure_stage",
         "failure_type",
         "failure_message",
+        "case_name",
+        "case_status",
+        "case_score",
+        "case_category",
+        "case_difficulty",
         "generated_at",
     ]
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1409,6 +2009,46 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
                         "generated_at": str(report.get("generated_at", "")),
                     }
                 )
+                run_metrics = (
+                    run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+                )
+                case_results = run_metrics.get("case_results")
+                if isinstance(case_results, list):
+                    for case_result in case_results:
+                        if not isinstance(case_result, dict):
+                            continue
+                        writer.writerow(
+                            {
+                                "row_type": "case",
+                                "evalset_id": evalset_id,
+                                "evalset_runs_url": evalset_runs_url,
+                                "agent_spec_id": agent_spec_id,
+                                "agent_spec_name": str(
+                                    experiment.get("agent_spec_name", "")
+                                ),
+                                "agent_spec_url": _agentspec_details_url(agent_spec_id),
+                                "experiment_id": str(experiment.get("id", "")),
+                                "experiment_name": str(experiment.get("name", "")),
+                                "run_index": idx,
+                                "run_id": str(run.get("id", "")),
+                                "run_status": str(run.get("status", "")),
+                                "run_pass_rate": run.get("pass_rate"),
+                                "case_name": str(case_result.get("name", "")),
+                                "case_status": (
+                                    "passed"
+                                    if case_result.get("passed")
+                                    else "failed"
+                                ),
+                                "case_score": case_result.get("score"),
+                                "case_category": str(
+                                    case_result.get("category") or ""
+                                ),
+                                "case_difficulty": str(
+                                    case_result.get("difficulty") or ""
+                                ),
+                                "generated_at": str(report.get("generated_at", "")),
+                            }
+                        )
 
 
 def _print_report_console(report: dict[str, Any], run_limit: int) -> None:
