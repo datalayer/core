@@ -2,7 +2,6 @@
 # Distributed under the terms of the Modified BSD License.
 
 """Environment commands for Datalayer CLI."""
-
 from typing import Any, Dict, Optional
 
 import typer
@@ -67,25 +66,26 @@ def list_environments(
         # Convert to dict format for display_environments
         env_dicts: list[Dict[str, Any]] = []
         for env in environments:
-            env_dicts.append(
-                {
-                    "name": env.name,
-                    "title": env.title,
-                    "burning_rate": env.burning_rate,
-                    "language": env.language,
-                    "owner": env.owner,
-                    "visibility": env.visibility,
-                    **(env.metadata or {}),
-                }
-            )
+            env_dict: Dict[str, Any] = {
+                "name": env.name,
+                "title": env.title,
+                "burning_rate": env.burning_rate,
+                "language": env.language,
+                "owner": env.owner,
+                "visibility": env.visibility,
+            }
+            for key, value in (env.metadata or {}).items():
+                if key not in env_dict:
+                    env_dict[key] = value
+            env_dicts.append(env_dict)
 
         display_environments(env_dicts)
 
         if len(env_dicts) > 0:
-            console.print("\n[dim]Create a Runtime with e.g.[/dim]")
+            console.print("\n[dim]Create an Agent with e.g.[/dim]")
             for env_dict in env_dicts:
                 console.print(
-                    f"[dim]datalayer runtimes create --given-name my-runtime --credits-limit 3 {env_dict['name']}[/dim]"
+                    f"[dim]datalayer agents create --given-name my-agent {env_dict['name']}[/dim]"
                 )
             console.print()
 

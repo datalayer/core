@@ -40,8 +40,6 @@ from datalayer_core.cli.commands.runtime_checkpoints import (
 )
 from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
 from datalayer_core.cli.commands.sandbox_snapshots import snapshots_ls
-from datalayer_core.cli.commands.runtimes import app as runtimes_app
-from datalayer_core.cli.commands.runtimes import runtimes_ls
 from datalayer_core.cli.commands.schedules import app as schedules_app
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
@@ -198,7 +196,6 @@ app.add_typer(memberships_app)
 app.add_typer(otel_app)
 app.add_typer(pools_app)
 app.add_typer(ray_app)
-app.add_typer(runtimes_app)
 app.add_typer(schedules_app)
 app.add_typer(secrets_app)
 app.add_typer(snapshots_app)
@@ -222,7 +219,6 @@ app.command(name="subscription")(subscription_root)
 
 # Add convenient aliases at root level
 app.command(name="envs-ls")(envs_ls)
-app.command(name="runtimes-ls")(runtimes_ls)
 app.command(name="secrets-ls")(secrets_ls)
 app.command(name="snapshots-ls")(snapshots_ls)
 app.command(name="checkpoints-ls")(checkpoints_ls)

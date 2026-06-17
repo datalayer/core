@@ -19,9 +19,9 @@ from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.sandbox_snapshots import SandboxSnapshotsMixin
 from datalayer_core.mixins.runtimes import RuntimesMixin
 from datalayer_core.models import ExecutionResponse
+from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 from datalayer_core.models.runtime import RuntimeModel
-from datalayer_core.runtimes.sandbox_snapshot import (
-    SandboxSnapshotModel,
+from datalayer_core.sandboxes.code_sandbox_snapshots import (
     as_code_sandbox_snapshots,
     create_snapshot,
 )

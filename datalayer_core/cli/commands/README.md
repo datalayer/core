@@ -1,12 +1,12 @@
 # Exec Module
 
-The `exec` module provides functionality to execute Python files and Jupyter notebooks on Datalayer runtimes.
+The `exec` module provides functionality to execute Python files and Jupyter notebooks on Datalayer code sandboxes.
 
 ## Commands
 
 ### `dla exec`
 
-Execute a Python file or Jupyter notebook on a Datalayer runtime.
+Execute a Python file or Jupyter notebook on a Datalayer code sandbox.
 
 **Usage:**
 ```bash
@@ -19,7 +19,7 @@ dla exec --example-notebook [options]
 - `filename`: Path to the Python file (.py) or Jupyter notebook (.ipynb) to execute (optional when using `--example-py` or `--example-notebook`)
 
 **Options:**
-- `--runtime, -r`: Name of the runtime to execute on (required)
+- `--sandbox, -s`: Name of the code sandbox to execute on (optional)
 - `--verbose, -v`: Show all cell outputs (default: false, outputs are suppressed)
 - `--timeout, -t`: Execution timeout for each cell in seconds
 - `--raise`: Stop executing if an exception occurs (default: continue on errors)
@@ -28,20 +28,20 @@ dla exec --example-notebook [options]
 
 **Examples:**
 ```bash
-# Execute a Python script on a runtime
-dla exec script.py --runtime my-runtime
+# Execute a Python script on a code sandbox
+dla exec script.py --sandbox my-sandbox
 
 # Execute an auto-generated Python example
-dla exec --example-py --runtime my-runtime
+dla exec --example-py --sandbox my-sandbox
 
 # Execute an auto-generated notebook example
 dla exec --example-notebook
 
 # Execute a Jupyter notebook with verbose output
-dla exec notebook.ipynb --runtime my-runtime --verbose
+dla exec notebook.ipynb --sandbox my-sandbox --verbose
 
 # Execute with timeout and stop on errors
-dla exec script.py --runtime my-runtime --timeout 30 --raise
+dla exec script.py --sandbox my-sandbox --timeout 30 --raise
 ```
 
 ## File Support
@@ -51,11 +51,11 @@ The exec module supports:
 - **Python files (.py)**: The entire file content is executed as a single cell
 - **Jupyter notebooks (.ipynb)**: Each code cell is executed sequentially, markdown cells are skipped
 
-## Runtime Connection
+## Code Sandbox Connection
 
 The exec module uses the modern `DatalayerClient` and `RuntimeManager` to:
 
-1. Connect to the specified runtime
+1. Connect to the specified code sandbox
 2. Start a kernel session
 3. Execute cells sequentially
 4. Handle interrupts (Ctrl+C) gracefully
@@ -64,7 +64,7 @@ The exec module uses the modern `DatalayerClient` and `RuntimeManager` to:
 ## Error Handling
 
 - File validation (existence, readability)
-- Runtime connection errors
+- Code sandbox connection errors
 - Cell execution errors (can continue or stop based on `--raise` flag)
 - Proper cleanup on interruption or failure
 
@@ -73,5 +73,5 @@ The exec module uses the modern `DatalayerClient` and `RuntimeManager` to:
 The exec functionality is implemented in:
 - `datalayer_core/cli/exec/exec.py`: Main Typer-based CLI commands
 - Uses `datalayer_core/utils/notebook.get_cells()` for file parsing
-- Uses `datalayer_core/cli/console/manager.RuntimeManager` for runtime connection
+- Uses `datalayer_core/cli/console/manager.RuntimeManager` for code sandbox connection
 - Integrates with the main CLI via `datalayer_core/cli/__main__.py`

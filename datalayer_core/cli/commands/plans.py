@@ -51,7 +51,7 @@ def _make_client(
 def plans_callback(ctx: typer.Context) -> None:
     """Plans and subscription commands."""
     if ctx.invoked_subcommand is None:
-        ctx.invoke(plans_show)
+        plans_show(token=None, iam_url=None, raw=False)
 
 
 def _format_number(value: Any, fallback: str = "-") -> str:

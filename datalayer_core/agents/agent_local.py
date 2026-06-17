@@ -122,6 +122,7 @@ def start_local_agent_runtime(
     protocol: str = DEFAULT_LOCAL_PROTOCOL,
     log_level: str = DEFAULT_LOCAL_LOG_LEVEL,
     wait: bool = True,
+    disable_tool_approvals: bool = False,
 ) -> LocalAgentRuntime:
     """Launch a local ``agent-runtimes`` server as a subprocess.
 
@@ -172,6 +173,8 @@ def start_local_agent_runtime(
         "--log-level",
         log_level,
     ]
+    if disable_tool_approvals:
+        command.append("--disable-tool-approvals")
 
     runtime_env, mapped_targets = build_agent_runtime_env()
     if mapped_targets:
@@ -238,6 +241,7 @@ def ensure_local_agent(
     enable_skills: bool = True,
     description: Optional[str] = None,
     timeout: int = 120,
+    disable_tool_approvals: bool = False,
 ) -> None:
     """Ensure a local agent with the expected transport is registered.
 
@@ -298,6 +302,7 @@ def ensure_local_agent(
         "agent_spec_id": agent_spec_id,
         "enable_skills": enable_skills,
         "tools": [],
+        "disableToolApprovals": disable_tool_approvals,
     }
     try:
         response = requests.post(

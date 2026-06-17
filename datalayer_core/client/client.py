@@ -32,8 +32,8 @@ from datalayer_core.models.api_key import ApiKeyModel, ApiKeyType
 from datalayer_core.models.environment import EnvironmentModel
 from datalayer_core.models.sandbox_snapshot import SandboxSnapshotModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
-from datalayer_core.runtimes.runtime import RuntimeService
-from datalayer_core.runtimes.sandbox_snapshot import (
+from datalayer_core.agents.agent_cloud import RuntimeService
+from datalayer_core.sandboxes.code_sandbox_snapshots import (
     as_code_sandbox_snapshots,
     create_snapshot,
 )

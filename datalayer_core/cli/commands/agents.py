@@ -16,7 +16,7 @@ from rich.console import Console
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.runtimes import display_runtimes
-from datalayer_core.runtimes.local import (
+from datalayer_core.agents.agent_local import (
     DEFAULT_LOCAL_AGENT_NAME,
     DEFAULT_LOCAL_HOST,
     DEFAULT_LOCAL_LOG_LEVEL,
@@ -272,7 +272,12 @@ def create_agent_runtime(
     local: bool = typer.Option(
         False,
         "--local",
-        help="Launch the agent as a local agent-runtimes server instead of a cloud runtime.",
+        help="Launch the agent as a local agent-runtimes server.",
+    ),
+    cloud: bool = typer.Option(
+        False,
+        "--cloud",
+        help="Launch the agent as a cloud runtime.",
     ),
     host: str = typer.Option(
         DEFAULT_LOCAL_HOST,
@@ -297,8 +302,8 @@ def create_agent_runtime(
 ) -> None:
     """Create a new runtime preloaded with an agent spec.
 
-    By default creates a cloud runtime. With ``--local`` it launches a local
-    ``agent-runtimes`` server and serves until interrupted (Ctrl+C).
+    By default creates a cloud runtime. Use ``--local`` for a local
+    ``agent-runtimes`` server, or ``--cloud`` to be explicit.
     """
     import questionary
 
@@ -307,6 +312,9 @@ def create_agent_runtime(
             raise typer.BadParameter(
                 "Use either --agentspec-id or --agentspec, not both."
             )
+
+        if local and cloud:
+            raise typer.BadParameter("Use only one of --local or --cloud.")
 
         if local:
             if spec:

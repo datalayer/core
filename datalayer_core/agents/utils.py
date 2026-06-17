@@ -284,7 +284,7 @@ def teardown_agent_execution_resources(
 
     if target == "local":
         if local_base_url and token and local_agent_name:
-            from datalayer_core.runtimes.local import delete_local_agent
+            from datalayer_core.agents.agent_local import delete_local_agent
 
             result["local_agent_deleted"] = delete_local_agent(
                 base_url=local_base_url,
@@ -292,7 +292,7 @@ def teardown_agent_execution_resources(
                 agent_name=local_agent_name,
             )
         if local_runtime is not None:
-            from datalayer_core.runtimes.local import terminate_local_agent_runtime
+            from datalayer_core.agents.agent_local import terminate_local_agent_runtime
 
             terminate_local_agent_runtime(local_runtime)
             result["local_runtime_terminated"] = True

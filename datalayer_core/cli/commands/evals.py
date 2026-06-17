@@ -20,7 +20,13 @@ from rich.table import Table
 from rich.tree import Tree
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.utils.urls import DatalayerURLs
+from datalayer_core.evals.evals import (
+    make_client as _make_client,
+    merge_dicts as _merge_dicts,
+    parse_json_file as _parse_json_file,
+    parse_json_value as _parse_json_value,
+    resolve_billable_account_uid as _resolve_billable_account_uid,
+)
 
 app = typer.Typer(
     name="evals",
@@ -47,51 +53,6 @@ def _timestamp_slug(raw_iso: str) -> str:
     if cleaned.endswith("Z"):
         return cleaned
     return f"{cleaned}Z"
-
-
-def _parse_json_value(raw: Optional[str], flag_name: str) -> dict[str, Any]:
-    if not raw:
-        return {}
-    try:
-        parsed = json.loads(raw)
-    except Exception as exc:
-        raise typer.BadParameter(f"Invalid JSON for {flag_name}: {exc}") from exc
-    if not isinstance(parsed, dict):
-        raise typer.BadParameter(f"{flag_name} must decode to an object")
-    return parsed
-
-
-def _parse_json_file(path_value: Optional[str], flag_name: str) -> dict[str, Any]:
-    if not path_value:
-        return {}
-    path = Path(path_value)
-    if not path.exists():
-        raise typer.BadParameter(f"File not found for {flag_name}: {path}")
-    text = path.read_text(encoding="utf-8")
-    return _parse_json_value(text, flag_name)
-
-
-def _merge_dicts(*parts: dict[str, Any]) -> dict[str, Any]:
-    merged: dict[str, Any] = {}
-    for part in parts:
-        merged.update(part)
-    return merged
-
-
-def _make_client(
-    token: Optional[str] = None,
-    api_key: Optional[str] = None,
-) -> DatalayerClient:
-    urls = DatalayerURLs.from_environment()
-    return DatalayerClient(urls=urls, token=(token or api_key))
-
-
-def _resolve_billable_account_uid(
-    billable_account_uid: Optional[str],
-    account_uid: Optional[str],
-) -> Optional[str]:
-    """Resolve billable account UID with backwards-compatible fallback."""
-    return billable_account_uid or account_uid
 
 
 def _status_style(status: str) -> str:
@@ -315,6 +276,18 @@ def _report_data(
     run_limit: int,
     account_uid: Optional[str],
 ) -> dict[str, Any]:
+    evalset_record: dict[str, Any] = {}
+    evalsets_payload = client.evals_list_evals(
+        q=evalset_id,
+        limit=200,
+        offset=0,
+        account_uid=account_uid,
+    )
+    for item in (evalsets_payload.get("evalsets") or []):
+        if isinstance(item, dict) and str(item.get("id") or "") == evalset_id:
+            evalset_record = item
+            break
+
     experiments_payload = client.evals_list_experiments(
         evalset_id=evalset_id,
         limit=200,
@@ -325,7 +298,11 @@ def _report_data(
 
     report: dict[str, Any] = {
         "evalset_id": evalset_id,
+        "evalset_name": str(evalset_record.get("name") or ""),
         "generated_at": _now_iso(),
+        "cases": [
+            case for case in (evalset_record.get("cases") or []) if isinstance(case, dict)
+        ],
         "experiments": [],
     }
 
@@ -554,6 +531,121 @@ def _sparkline(values: list[float], *, colorize: bool = False) -> str:
     return _style_text(base, style, True)
 
 
+def _clamp_unit(value: float) -> float:
+    return max(0.0, min(1.0, value))
+
+
+def _heat_char(value: float) -> str:
+    shades = "░▒▓█"
+    bounded = _clamp_unit(value)
+    idx = int(round(bounded * (len(shades) - 1)))
+    return shades[idx]
+
+
+def _fit_label(text: str, width: int = 20) -> str:
+    raw = str(text or "")
+    if len(raw) <= width:
+        return raw.ljust(width)
+    if width <= 3:
+        return raw[:width]
+    return (raw[: width - 3] + "...")
+
+
+def _ascii_passrate_heatmap(
+    experiments: list[dict[str, Any]],
+    *,
+    max_columns: int = 12,
+    colorize: bool = False,
+) -> list[str]:
+    if not experiments:
+        return ["n/a"]
+
+    max_columns = max(1, max_columns)
+    header = f"{'Experiment':<20} | " + " ".join(
+        f"r{idx:02d}" for idx in range(1, max_columns + 1)
+    )
+    lines = [header, "-" * len(header)]
+
+    for experiment in experiments:
+        runs = [run for run in (experiment.get("runs") or []) if isinstance(run, dict)]
+        cells: list[str] = []
+        for idx in range(max_columns):
+            value: float | None = None
+            if idx < len(runs):
+                raw = runs[idx].get("pass_rate")
+                if isinstance(raw, (int, float)):
+                    value = float(raw)
+            if value is None:
+                cells.append(" ")
+                continue
+
+            token = _heat_char(value)
+            if colorize:
+                if value >= 0.85:
+                    token = _style_text(token, "green", True)
+                elif value >= 0.75:
+                    token = _style_text(token, "yellow", True)
+                else:
+                    token = _style_text(token, "red", True)
+            cells.append(token)
+
+        label = _fit_label(str(experiment.get("name", "")), width=20)
+        lines.append(f"{label} | " + " ".join(cells))
+
+    lines.append("Legend: low='░' .. high='█' (r01=latest fetched run, blank=no run)")
+    return lines
+
+
+def _ascii_drift_heatmap(
+    experiments: list[dict[str, Any]],
+    *,
+    max_columns: int = 12,
+    colorize: bool = False,
+) -> list[str]:
+    if not experiments:
+        return ["n/a"]
+
+    max_columns = max(1, max_columns)
+    header = f"{'Experiment':<20} | " + " ".join(
+        f"d{idx:02d}" for idx in range(1, max_columns + 1)
+    )
+    lines = [header, "-" * len(header)]
+
+    for experiment in experiments:
+        comparisons = [
+            item for item in (experiment.get("consecutive_comparisons") or [])
+            if isinstance(item, dict)
+        ]
+        cells: list[str] = []
+        for idx in range(max_columns):
+            delta: float | None = None
+            if idx < len(comparisons):
+                raw = comparisons[idx].get("delta_pass_rate")
+                if isinstance(raw, (int, float)):
+                    delta = float(raw)
+            if delta is None:
+                cells.append("  ")
+                continue
+
+            sign = "+" if delta >= 0 else "-"
+            magnitude = _heat_char(abs(delta))
+            token = f"{sign}{magnitude}"
+            if colorize:
+                if delta > 0:
+                    token = _style_text(token, "green", True)
+                elif delta < 0:
+                    token = _style_text(token, "red", True)
+                else:
+                    token = _style_text(token, "yellow", True)
+            cells.append(token)
+
+        label = _fit_label(str(experiment.get("name", "")), width=20)
+        lines.append(f"{label} | " + " ".join(cells))
+
+    lines.append("Legend: dNN are consecutive deltas (A-B), sign shows direction, magnitude uses '░'..'█'")
+    return lines
+
+
 def _pairwise_latest_deltas(experiments: list[dict[str, Any]]) -> list[dict[str, Any]]:
     pairs: list[dict[str, Any]] = []
     for idx, left in enumerate(experiments):
@@ -606,17 +698,65 @@ def _markdown_table(headers: list[str], rows: list[list[str]], aligns: list[str]
     return [header_line, sep_line, *body_lines]
 
 
+def _compact_json(value: Any, max_len: int = 140) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, str):
+        text = value
+    else:
+        try:
+            text = json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        except Exception:
+            text = str(value)
+    text = " ".join(text.split())
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 3] + "..."
+
+
 def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool = False) -> str:
     evalset_id = str(report.get("evalset_id", ""))
     generated_at = str(report.get("generated_at", ""))
     experiments = [item for item in (report.get("experiments") or []) if isinstance(item, dict)]
+    cases = [item for item in (report.get("cases") or []) if isinstance(item, dict)]
 
     lines: list[str] = []
     lines.append(f"# Evals Report: {evalset_id}")
     lines.append("")
     lines.append(f"- Generated at: {generated_at}")
     lines.append(f"- Experiments: {len(experiments)}")
+    lines.append(f"- Cases: {len(cases)}")
     lines.append(f"- Run window per experiment: {run_limit}")
+    lines.append("")
+
+    lines.append("## Evalset Cases")
+    lines.append("")
+    lines.append(f"{len(cases)} case(s) in this evalset.")
+    lines.append("")
+    if cases:
+        case_rows: list[list[str]] = []
+        for case in cases:
+            expected_output = case.get("expected_output")
+            if expected_output is None:
+                expected_output = case.get("expected")
+            case_rows.append(
+                [
+                    str(case.get("name") or "-"),
+                    str(case.get("id") or "-"),
+                    _compact_json(case.get("inputs")),
+                    _compact_json(expected_output),
+                    _compact_json(case.get("metadata")),
+                ]
+            )
+        lines.extend(
+            _markdown_table(
+                ["Case", "ID", "Inputs", "Expected Output", "Metadata"],
+                case_rows,
+                ["left", "left", "left", "left", "left"],
+            )
+        )
+    else:
+        lines.append("No cases returned for this evalset.")
     lines.append("")
 
     lines.append("## Experiment Overview")
@@ -760,6 +900,21 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         drift_palette=True,
     ):
         lines.append(f"`{hist_line}`")
+    lines.append("")
+
+    lines.append("### ASCII Heatmaps")
+    lines.append("")
+    lines.append("Pass-rate heatmap by experiment and run window:")
+    lines.append("")
+    lines.append("```text")
+    lines.extend(_ascii_passrate_heatmap(experiments, max_columns=12, colorize=False))
+    lines.append("```")
+    lines.append("")
+    lines.append("Consecutive delta heatmap (A-B) by experiment:")
+    lines.append("")
+    lines.append("```text")
+    lines.extend(_ascii_drift_heatmap(experiments, max_columns=12, colorize=False))
+    lines.append("```")
     lines.append("")
 
     lines.append("### Insight Highlights")
@@ -1124,6 +1279,13 @@ def _print_report_console(report: dict[str, Any], run_limit: int) -> None:
     if not pairwise:
         pairwise_table.add_row("n/a", "n/a", "n/a", "n/a")
     console.print(pairwise_table)
+
+    console.print("[bold]Pass-rate heatmap (r01=latest fetched run):[/bold]")
+    for line in _ascii_passrate_heatmap(experiments, max_columns=12, colorize=True):
+        console.print(line)
+    console.print("[bold]Consecutive delta heatmap (A-B):[/bold]")
+    for line in _ascii_drift_heatmap(experiments, max_columns=12, colorize=True):
+        console.print(line)
 
     if ranked_latest:
         console.print(

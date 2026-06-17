@@ -1,7 +1,7 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Execution application for running code in Datalayer runtimes."""
+"""Execution application for running code in Datalayer code sandboxes."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ from datalayer_core.utils.notebook import get_cells
 # Create the main Typer app for exec functionality
 app = typer.Typer(
     name="exec",
-    help="Execute files or notebooks on runtimes",
+    help="Execute files or notebooks on code sandboxes",
     invoke_without_command=True,
 )
 
@@ -41,13 +41,13 @@ DEFAULT_EXEC_TIMEOUT_SECONDS = 10.0
 
 @app.callback()
 def exec_callback(ctx: typer.Context) -> None:
-    """Execute files or notebooks on runtimes."""
+    """Execute files or notebooks on code sandboxes."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
 
 
-class RuntimesExecService:
-    """Service for executing files on Datalayer runtimes."""
+class CodeSandboxExecService:
+    """Service for executing files on Datalayer code sandboxes."""
 
     def __init__(self, token: Optional[str] = None) -> None:
         """Initialize the exec service."""
@@ -71,8 +71,8 @@ class RuntimesExecService:
             # so that the interact loop advances, and prompt is redrawn, etc.
             raise KeyboardInterrupt
 
-    def init_kernel_manager(self, runtime_name: str) -> None:
-        """Initialize the kernel manager and connect to runtime."""
+    def init_kernel_manager(self, sandbox_name: str) -> None:
+        """Initialize the kernel manager and connect to a code sandbox."""
         max_attempts = 2
         last_error: Exception | None = None
         # Set up signal handler once.
@@ -80,19 +80,19 @@ class RuntimesExecService:
 
         for attempt in range(1, max_attempts + 1):
             try:
-                # Validate runtime only when explicitly provided.
-                # Empty runtime name delegates selection/creation to RuntimeManager.start_kernel.
-                if runtime_name:
+                # Validate sandbox only when explicitly provided.
+                # Empty sandbox name delegates selection/creation to RuntimeManager.start_kernel.
+                if sandbox_name:
                     runtimes = self._client.list_runtimes()
-                    target_runtime = None
+                    target_sandbox = None
 
                     for runtime in runtimes:
-                        if runtime.name == runtime_name or runtime.uid == runtime_name:
-                            target_runtime = runtime
+                        if runtime.name == sandbox_name or runtime.uid == sandbox_name:
+                            target_sandbox = runtime
                             break
 
-                    if target_runtime is None:
-                        raise RuntimeError(f"Runtime '{runtime_name}' not found")
+                    if target_sandbox is None:
+                        raise RuntimeError(f"Code sandbox '{sandbox_name}' not found")
 
                 # Get token using the same method as DatalayerClient
                 token = self._client._get_token()
@@ -105,10 +105,10 @@ class RuntimesExecService:
                 )
 
                 # Start kernel and get client
-                self.kernel_manager.start_kernel(name=runtime_name or "")
+                self.kernel_manager.start_kernel(name=sandbox_name or "")
 
                 if bool(getattr(self.kernel_manager, "runtime_created_in_start", False)):
-                    self._inspect_created_runtime_kernels()
+                    self._inspect_created_code_sandbox_kernels()
 
                 self.kernel_client = self.kernel_manager.client
 
@@ -121,17 +121,17 @@ class RuntimesExecService:
                 # the first execute call.
                 self.kernel_client.wait_for_ready(timeout=KERNEL_READY_TIMEOUT_SECONDS)
                 self._probe_kernel_execution()
-                manager_runtime_name = str(getattr(self.kernel_manager, "runtime_name", "") or runtime_name or "auto-selected")
+                manager_runtime_name = str(getattr(self.kernel_manager, "runtime_name", "") or sandbox_name or "auto-selected")
                 manager_runtime_uid = str(getattr(self.kernel_manager, "runtime_uid", "") or "")
                 manager_kernel_id = str(getattr(self.kernel_manager, "_kernel_id", "") or "")
                 if manager_runtime_uid or manager_kernel_id:
                     runtime_ref = f"{manager_runtime_uid}#{manager_kernel_id}".strip("#")
                     console.print(
-                        f"[green]Connected to runtime: {manager_runtime_name} ({runtime_ref})[/green]"
+                        f"[green]Connected to code sandbox: {manager_runtime_name} ({runtime_ref})[/green]"
                     )
                 else:
                     console.print(
-                        f"[green]Connected to runtime: {runtime_name or 'auto-selected'}[/green]"
+                        f"[green]Connected to code sandbox: {sandbox_name or 'auto-selected'}[/green]"
                     )
                 return
             except Exception as e:
@@ -148,12 +148,12 @@ class RuntimesExecService:
                 break
 
         if last_error is None:
-            last_error = RuntimeError("Unknown runtime initialization failure")
+            last_error = RuntimeError("Unknown code sandbox initialization failure")
 
         e = last_error
         try:
             console.print(
-                f"[red]Failed to connect to runtime '{runtime_name}': {e}[/red]"
+                f"[red]Failed to connect to code sandbox '{sandbox_name}': {e}[/red]"
             )
 
             # Provide helpful authentication guidance
@@ -169,28 +169,28 @@ class RuntimesExecService:
         finally:
             raise typer.Exit(1)
 
-    def _inspect_created_runtime_kernels(self) -> None:
-        """Inspect kernels after runtime auto-creation and fail fast when count != 1."""
+    def _inspect_created_code_sandbox_kernels(self) -> None:
+        """Inspect kernels after sandbox auto-creation and fail fast when count != 1."""
         if not self.kernel_manager:
-            raise RuntimeError("Runtime manager is not initialized")
+            raise RuntimeError("Code sandbox manager is not initialized")
 
         server_url = str(getattr(self.kernel_manager, "server_url", "") or "").rstrip("/")
-        runtime_token = str(getattr(self.kernel_manager, "token", "") or "")
-        runtime_name = str(getattr(self.kernel_manager, "runtime_name", "") or "")
-        runtime_uid = str(getattr(self.kernel_manager, "runtime_uid", "") or "")
-        runtime_pod = str(getattr(self.kernel_manager, "runtime_pod_name", "") or "")
+        sandbox_token = str(getattr(self.kernel_manager, "token", "") or "")
+        sandbox_name = str(getattr(self.kernel_manager, "runtime_name", "") or "")
+        sandbox_uid = str(getattr(self.kernel_manager, "runtime_uid", "") or "")
+        sandbox_pod = str(getattr(self.kernel_manager, "runtime_pod_name", "") or "")
 
-        response = fetch(f"{server_url}/api/kernels", token=runtime_token, timeout=15)
+        response = fetch(f"{server_url}/api/kernels", token=sandbox_token, timeout=15)
         kernels = response.json() if response.content else []
         if not isinstance(kernels, list):
             kernels = []
 
-        summary = Table(title="Runtime Inspection (auto-created by exec)")
+        summary = Table(title="Code Sandbox Inspection (auto-created by exec)")
         summary.add_column("Field", style="cyan")
         summary.add_column("Value")
-        summary.add_row("Runtime", runtime_name or runtime_pod)
-        summary.add_row("Pod", runtime_pod)
-        summary.add_row("UID", runtime_uid)
+        summary.add_row("Code Sandbox", sandbox_name or sandbox_pod)
+        summary.add_row("Pod", sandbox_pod)
+        summary.add_row("UID", sandbox_uid)
         summary.add_row("Ingress", server_url)
         summary.add_row("Kernels", str(len(kernels)))
         console.print(summary)
@@ -214,7 +214,7 @@ class RuntimesExecService:
 
         if len(kernels) != 1:
             raise RuntimeError(
-                f"Auto-created runtime expected exactly one kernel, found {len(kernels)}"
+                f"Auto-created code sandbox expected exactly one kernel, found {len(kernels)}"
             )
 
     def _probe_kernel_execution(self) -> None:
@@ -241,7 +241,7 @@ class RuntimesExecService:
         raise_exceptions: bool = False,
     ) -> dict[str, Any]:
         """
-        Execute a file or notebook on the connected runtime.
+        Execute a file or notebook on the connected code sandbox.
 
         Parameters
         ----------
@@ -266,9 +266,9 @@ class RuntimesExecService:
             self._executing = True
             console.print(f"[blue]Executing file: {filepath}[/blue]")
 
-            # Guardrail: ensure the selected runtime endpoint is reachable
+            # Guardrail: ensure the selected code sandbox endpoint is reachable
             # before submitting any execute requests.
-            self._assert_runtime_alive()
+            self._assert_code_sandbox_alive()
             self._prepare_kernel_before_execution()
 
             # Get cells from the file
@@ -468,21 +468,21 @@ class RuntimesExecService:
         console.print(source.rstrip("\n"))
         console.print("[dim]</code>[/dim]")
 
-    def _assert_runtime_alive(self) -> None:
-        """Fail early when the selected runtime endpoint is not reachable."""
+    def _assert_code_sandbox_alive(self) -> None:
+        """Fail early when the selected code sandbox endpoint is not reachable."""
         if not self.kernel_manager:
-            raise RuntimeError("Runtime manager is not initialized")
+            raise RuntimeError("Code sandbox manager is not initialized")
 
         server_url = str(getattr(self.kernel_manager, "server_url", "") or "").rstrip("/")
-        runtime_token = str(getattr(self.kernel_manager, "token", "") or "")
+        sandbox_token = str(getattr(self.kernel_manager, "token", "") or "")
         if not server_url:
-            raise RuntimeError("Runtime endpoint is not available")
+            raise RuntimeError("Code sandbox endpoint is not available")
 
         attempts = 5
         last_error: Exception | None = None
         for attempt in range(1, attempts + 1):
             try:
-                fetch(f"{server_url}/api/kernels", token=runtime_token, timeout=15)
+                fetch(f"{server_url}/api/kernels", token=sandbox_token, timeout=15)
                 return
             except Exception as e:
                 last_error = e
@@ -492,28 +492,28 @@ class RuntimesExecService:
                 break
 
         raise RuntimeError(
-            f"Runtime health check failed for '{server_url}': {last_error}"
+                f"Code sandbox health check failed for '{server_url}': {last_error}"
         ) from last_error
 
     def _prepare_kernel_before_execution(self) -> None:
-        """List kernels visible on the runtime before execution starts."""
-        kernels = self._fetch_runtime_kernels()
+        """List kernels visible on the code sandbox before execution starts."""
+        kernels = self._fetch_code_sandbox_kernels()
         self._print_available_kernels(
             title="Kernels available before execution:",
             kernels=kernels,
         )
 
-    def _fetch_runtime_kernels(self) -> list[dict[str, Any]]:
-        """Fetch kernels from the current runtime."""
+    def _fetch_code_sandbox_kernels(self) -> list[dict[str, Any]]:
+        """Fetch kernels from the current code sandbox."""
         if not self.kernel_manager:
             return []
 
         server_url = str(getattr(self.kernel_manager, "server_url", "") or "").rstrip("/")
-        runtime_token = str(getattr(self.kernel_manager, "token", "") or "")
+        sandbox_token = str(getattr(self.kernel_manager, "token", "") or "")
         if not server_url:
             return []
 
-        response = fetch(f"{server_url}/api/kernels", token=runtime_token, timeout=15)
+        response = fetch(f"{server_url}/api/kernels", token=sandbox_token, timeout=15)
         kernels = response.json() if response.content else []
         if not isinstance(kernels, list):
             return []
@@ -524,7 +524,7 @@ class RuntimesExecService:
         title: str,
         kernels: list[dict[str, Any]],
     ) -> None:
-        """Print kernels currently visible on the runtime."""
+        """Print kernels currently visible on the code sandbox."""
         selected_kernel_id = str(getattr(self.kernel_manager, "_kernel_id", "") or "")
 
         if not kernels:
@@ -562,11 +562,11 @@ def main(
         None,
         help="Path to the file or notebook to execute",
     ),
-    runtime: Optional[str] = typer.Option(
+    sandbox: Optional[str] = typer.Option(
         None,
-        "--runtime",
-        "-r",
-        help="Name of the runtime to execute on (uses first available if not specified)",
+        "--sandbox",
+        "-s",
+        help="Name of the code sandbox to execute on (uses first available if not specified)",
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Show all cell outputs"
@@ -606,7 +606,7 @@ def main(
         help="Output report filename/path. Defaults to <input-name>.out.json next to the input file.",
     ),
 ) -> None:
-    """Execute a Python file or Jupyter notebook on a Datalayer runtime."""
+    """Execute a Python file or Jupyter notebook on a Datalayer code sandbox."""
 
     auth_token = token or api_key
 
@@ -667,17 +667,17 @@ def main(
                 f"[yellow]Warning: File extension '{filepath.suffix}' is not .py or .ipynb[/yellow]"
             )
 
-        # Determine which runtime to use
-        selected_runtime = runtime
-        if selected_runtime is None:
-            selected_runtime = _select_runtime(token=auth_token)
+        # Determine which code sandbox to use
+        selected_sandbox = sandbox
+        if selected_sandbox is None:
+            selected_sandbox = _select_code_sandbox(token=auth_token)
 
         # Create exec service and execute
-        exec_service = RuntimesExecService(token=auth_token)
+        exec_service = CodeSandboxExecService(token=auth_token)
 
         try:
-            # Initialize connection to runtime
-            exec_service.init_kernel_manager(selected_runtime)
+            # Initialize connection to code sandbox
+            exec_service.init_kernel_manager(selected_sandbox)
 
             # Execute the file
             execution_report = exec_service.execute_file(
@@ -827,12 +827,12 @@ def _resolve_output_report_path(filepath: Path, output_name: Optional[str]) -> P
     return filepath.with_suffix(".out.json")
 
 
-def _select_runtime(token: Optional[str] = None) -> str:
+def _select_code_sandbox(token: Optional[str] = None) -> str:
     """
-    Select a runtime to use for execution.
+    Select a code sandbox to use for execution.
 
-    Returns the first available runtime, or interactively provisions one when
-    no runtime is available.
+    Returns the first available code sandbox, or interactively provisions one when
+    no code sandbox is available.
 
     Parameters
     ----------
@@ -842,27 +842,27 @@ def _select_runtime(token: Optional[str] = None) -> str:
     Returns
     -------
     str
-        The name/ID of the runtime to use.
+        The name/ID of the code sandbox to use.
     """
     try:
         client = DatalayerClient(token=token)
         runtimes = client.list_runtimes()
 
         if not runtimes:
-            console.print("[yellow]No Runtime running.[/yellow]")
+            console.print("[yellow]No code sandbox is running.[/yellow]")
 
             should_create = typer.confirm(
-                "No runtime is available. Create one now?",
+                "No code sandbox is available. Create one now?",
                 default=True,
             )
             if not should_create:
-                console.print("[red]Execution aborted: no runtime selected.[/red]")
+                console.print("[red]Execution aborted: no code sandbox selected.[/red]")
                 raise typer.Exit(1)
 
             environment = DEFAULT_ENVIRONMENT
             burn_rate = _get_environment_burning_rate(client, environment)
             remaining_credits = _get_remaining_credits_after_reservations(client)
-            default_seconds = _default_runtime_seconds(
+            default_seconds = _default_code_sandbox_seconds(
                 remaining_credits=remaining_credits,
                 burn_rate=burn_rate,
             )
@@ -874,17 +874,17 @@ def _select_runtime(token: Optional[str] = None) -> str:
                 f"[blue]Remaining credits (after reservations): {remaining_credits:.6f}[/blue]"
             )
             console.print(
-                f"[blue]Suggested runtime duration: {default_seconds:.2f} seconds (33% of remaining credits)[/blue]"
+                f"[blue]Suggested code sandbox duration: {default_seconds:.2f} seconds (33% of remaining credits)[/blue]"
             )
 
             requested_seconds = typer.prompt(
-                "Runtime duration in seconds",
+                "Code sandbox duration in seconds",
                 type=float,
                 default=default_seconds,
                 show_default=True,
             )
             if requested_seconds <= 0:
-                console.print("[red]Runtime duration must be greater than 0 seconds.[/red]")
+                console.print("[red]Code sandbox duration must be greater than 0 seconds.[/red]")
                 raise typer.Exit(1)
 
             requested_credits = burn_rate * requested_seconds
@@ -898,43 +898,43 @@ def _select_runtime(token: Optional[str] = None) -> str:
                 time_reservation=time_reservation_minutes,
             )
 
-            runtime_name = str(created_runtime.name or "")
-            runtime_uid = str(created_runtime.uid or "")
-            runtime_pod = str(created_runtime.pod_name or "")
-            runtime_ingress = str(created_runtime.ingress or "").rstrip("/")
-            runtime_token = str(
+            sandbox_name = str(created_runtime.name or "")
+            sandbox_uid = str(created_runtime.uid or "")
+            sandbox_pod = str(created_runtime.pod_name or "")
+            sandbox_ingress = str(created_runtime.ingress or "").rstrip("/")
+            sandbox_token = str(
                 created_runtime.jupyter_token or client._get_token() or ""
             )
 
-            if not runtime_ingress or not runtime_token:
+            if not sandbox_ingress or not sandbox_token:
                 console.print(
-                    "[red]Runtime created but ingress/token is not available for inspection.[/red]"
+                    "[red]Code sandbox created but ingress/token is not available for inspection.[/red]"
                 )
                 raise typer.Exit(1)
 
-            pre_confirm_kernel_id = _inspect_runtime_kernels_unique(
-                runtime_name=runtime_name or runtime_pod or runtime_uid,
-                runtime_uid=runtime_uid,
-                runtime_pod=runtime_pod,
-                runtime_ingress=runtime_ingress,
-                runtime_token=runtime_token,
+            pre_confirm_kernel_id = _inspect_code_sandbox_kernels_unique(
+                sandbox_name=sandbox_name or sandbox_pod or sandbox_uid,
+                sandbox_uid=sandbox_uid,
+                sandbox_pod=sandbox_pod,
+                sandbox_ingress=sandbox_ingress,
+                sandbox_token=sandbox_token,
                 inspection_label="post-create",
             )
 
             proceed = typer.confirm(
-                "Proceed with execution on this runtime?",
+                "Proceed with execution on this code sandbox?",
                 default=True,
             )
             if not proceed:
                 console.print("[red]Execution aborted by user.[/red]")
                 raise typer.Exit(1)
 
-            post_confirm_kernel_id = _inspect_runtime_kernels_unique(
-                runtime_name=runtime_name or runtime_pod or runtime_uid,
-                runtime_uid=runtime_uid,
-                runtime_pod=runtime_pod,
-                runtime_ingress=runtime_ingress,
-                runtime_token=runtime_token,
+            post_confirm_kernel_id = _inspect_code_sandbox_kernels_unique(
+                sandbox_name=sandbox_name or sandbox_pod or sandbox_uid,
+                sandbox_uid=sandbox_uid,
+                sandbox_pod=sandbox_pod,
+                sandbox_ingress=sandbox_ingress,
+                sandbox_token=sandbox_token,
                 inspection_label="pre-exec confirmation",
             )
 
@@ -944,21 +944,21 @@ def _select_runtime(token: Optional[str] = None) -> str:
                 )
                 raise typer.Exit(1)
 
-            selected_name = runtime_uid or runtime_name or runtime_pod
+            selected_name = sandbox_uid or sandbox_name or sandbox_pod
             if not selected_name:
                 console.print(
-                    "[red]Runtime created but no runtime identifier is available.[/red]"
+                    "[red]Code sandbox created but no code sandbox identifier is available.[/red]"
                 )
                 raise typer.Exit(1)
 
             console.print(
-                f"[green]Using newly created runtime: {selected_name}#{post_confirm_kernel_id}[/green]"
+                f"[green]Using newly created code sandbox: {selected_name}#{post_confirm_kernel_id}[/green]"
             )
             return selected_name
 
-        # Use the first available runtime
+        # Use the first available code sandbox
         selected = runtimes[0]
-        runtime_uid = str(selected.uid or "")
+        sandbox_uid = str(selected.uid or "")
         kernel_id = ""
         try:
             runtime_token = str(getattr(selected, "jupyter_token", "") or client._get_token() or "")
@@ -977,12 +977,12 @@ def _select_runtime(token: Optional[str] = None) -> str:
         except Exception:
             kernel_id = ""
 
-        runtime_ref = runtime_uid
-        if runtime_uid and kernel_id:
-            runtime_ref = f"{runtime_uid}#{kernel_id}"
+        sandbox_ref = sandbox_uid
+        if sandbox_uid and kernel_id:
+            sandbox_ref = f"{sandbox_uid}#{kernel_id}"
 
         console.print(
-            f"[blue]No runtime specified, using: {selected.name} ({runtime_ref})[/blue]"
+            f"[blue]No code sandbox specified, using: {selected.name} ({sandbox_ref})[/blue]"
         )
         return selected.name or selected.uid or ""
 
@@ -990,7 +990,7 @@ def _select_runtime(token: Optional[str] = None) -> str:
         # Re-raise typer.Exit without modification
         raise
     except Exception as e:
-        console.print(f"[red]Error checking available runtimes: {e}[/red]")
+        console.print(f"[red]Error checking available code sandboxes: {e}[/red]")
         console.print(
             "[yellow]Hint: Make sure you're authenticated with 'dla login'[/yellow]"
         )
@@ -1052,8 +1052,8 @@ def _get_remaining_credits_after_reservations(client: DatalayerClient) -> float:
     return max(0.0, remaining)
 
 
-def _default_runtime_seconds(remaining_credits: float, burn_rate: float) -> float:
-    """Suggest runtime duration in seconds using 33% of remaining credits."""
+def _default_code_sandbox_seconds(remaining_credits: float, burn_rate: float) -> float:
+    """Suggest code sandbox duration in seconds using 33% of remaining credits."""
     proposed_credits = max(0.0, remaining_credits * 0.33)
     if burn_rate <= 0:
         raise RuntimeError("Burning rate must be positive to compute duration")
@@ -1062,30 +1062,30 @@ def _default_runtime_seconds(remaining_credits: float, burn_rate: float) -> floa
     return max(10.0, seconds)
 
 
-def _inspect_runtime_kernels_unique(
-    runtime_name: str,
-    runtime_uid: str,
-    runtime_pod: str,
-    runtime_ingress: str,
-    runtime_token: str,
+def _inspect_code_sandbox_kernels_unique(
+    sandbox_name: str,
+    sandbox_uid: str,
+    sandbox_pod: str,
+    sandbox_ingress: str,
+    sandbox_token: str,
     inspection_label: str,
 ) -> str:
-    """Inspect runtime kernels and return the unique kernel id.
+    """Inspect code sandbox kernels and return the unique kernel id.
 
-    Fails fast if the runtime does not expose exactly one kernel.
+    Fails fast if the code sandbox does not expose exactly one kernel.
     """
-    response = fetch(f"{runtime_ingress}/api/kernels", token=runtime_token, timeout=15)
+    response = fetch(f"{sandbox_ingress}/api/kernels", token=sandbox_token, timeout=15)
     kernels = response.json() if response.content else []
     if not isinstance(kernels, list):
         kernels = []
 
-    summary = Table(title=f"Runtime Inspection ({inspection_label})")
+    summary = Table(title=f"Code Sandbox Inspection ({inspection_label})")
     summary.add_column("Field", style="cyan")
     summary.add_column("Value")
-    summary.add_row("Runtime", runtime_name)
-    summary.add_row("Pod", runtime_pod)
-    summary.add_row("UID", runtime_uid)
-    summary.add_row("Ingress", runtime_ingress)
+    summary.add_row("Code Sandbox", sandbox_name)
+    summary.add_row("Pod", sandbox_pod)
+    summary.add_row("UID", sandbox_uid)
+    summary.add_row("Ingress", sandbox_ingress)
     summary.add_row("Kernels", str(len(kernels)))
     console.print(summary)
 
@@ -1108,12 +1108,12 @@ def _inspect_runtime_kernels_unique(
 
     if len(kernels) != 1:
         raise RuntimeError(
-            f"Runtime inspection requires exactly one kernel; found {len(kernels)}"
+            f"Code sandbox inspection requires exactly one kernel; found {len(kernels)}"
         )
 
     kernel_id = str((kernels[0] or {}).get("id") or "").strip()
     if not kernel_id:
-        raise RuntimeError("Runtime inspection returned a kernel without an id")
+        raise RuntimeError("Code sandbox inspection returned a kernel without an id")
     return kernel_id
 
 
