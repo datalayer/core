@@ -13,6 +13,7 @@ import re
 import time
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote
 
 import typer
 from rich.console import Console
@@ -40,6 +41,8 @@ runs_app = typer.Typer(name="runs", help="Launch and monitor evalset runs.")
 live_app = typer.Typer(name="live", help="Inspect live evalset monitoring.")
 
 console = Console()
+
+WEB_APP_BASE_URL = "https://datalayer.ai"
 
 
 def _now_iso() -> str:
@@ -83,6 +86,39 @@ def _fmt_pct(raw: float | None) -> str:
     if raw is None:
         return "n/a"
     return f"{raw * 100:.1f}%"
+
+
+def _parse_csv_values(raw: str | None) -> list[str]:
+    if raw is None:
+        return []
+    values: list[str] = []
+    seen: set[str] = set()
+    for token in str(raw).split(","):
+        item = token.strip()
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        values.append(item)
+    return values
+
+
+def _agentspec_details_url(agent_spec_id: str) -> str:
+    value = str(agent_spec_id or "").strip()
+    if not value:
+        return ""
+    return f"{WEB_APP_BASE_URL}/settings/agentspecs/{quote(value, safe='')}"
+
+
+def _evalset_runs_url(evalset_id: str, run_environment: str) -> str:
+    evalset_value = str(evalset_id or "").strip()
+    if not evalset_value:
+        return ""
+    encoded_evalset_id = quote(evalset_value, safe='')
+    env_value = str(run_environment or "").strip()
+    if env_value:
+        encoded_env = quote(env_value, safe='')
+        return f"{WEB_APP_BASE_URL}/evals/experiments/{encoded_env}/{encoded_evalset_id}"
+    return f"{WEB_APP_BASE_URL}/evals/experiments?evalset_id={encoded_evalset_id}"
 
 
 def _style_text(value: str, style: str | None, colorize: bool) -> str:
@@ -270,6 +306,59 @@ def _run_detail_record(run: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _extract_experiment_agentspec(experiment: dict[str, Any], runs: list[dict[str, Any]]) -> tuple[str, str]:
+    config = experiment.get("config") if isinstance(experiment.get("config"), dict) else {}
+    summary = experiment.get("summary") if isinstance(experiment.get("summary"), dict) else {}
+    run_summaries = [
+        run.get("summary")
+        for run in runs
+        if isinstance(run, dict) and isinstance(run.get("summary"), dict)
+    ]
+
+    id_candidates: list[Any] = [
+        config.get("agent_spec_id"),
+        config.get("agentSpecId"),
+        summary.get("agent_spec_id"),
+        summary.get("agentSpecId"),
+    ]
+    name_candidates: list[Any] = [
+        config.get("agent_spec_name"),
+        config.get("agentSpecName"),
+        summary.get("agent_spec_name"),
+        summary.get("agentSpecName"),
+    ]
+    for run_summary in run_summaries:
+        assert isinstance(run_summary, dict)
+        id_candidates.extend(
+            [
+                run_summary.get("agent_spec_id"),
+                run_summary.get("agentSpecId"),
+            ]
+        )
+        name_candidates.extend(
+            [
+                run_summary.get("agent_spec_name"),
+                run_summary.get("agentSpecName"),
+            ]
+        )
+
+    agent_spec_id = ""
+    for candidate in id_candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            agent_spec_id = candidate.strip()
+            break
+
+    agent_spec_name = ""
+    for candidate in name_candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            agent_spec_name = candidate.strip()
+            break
+
+    if not agent_spec_name and agent_spec_id:
+        agent_spec_name = agent_spec_id
+    return agent_spec_id, agent_spec_name
+
+
 def _report_data(
     client: DatalayerClient,
     evalset_id: str,
@@ -299,12 +388,15 @@ def _report_data(
     report: dict[str, Any] = {
         "evalset_id": evalset_id,
         "evalset_name": str(evalset_record.get("name") or ""),
+        "run_environment": str(evalset_record.get("run_environment") or ""),
         "generated_at": _now_iso(),
+        "agentspecs": [],
         "cases": [
             case for case in (evalset_record.get("cases") or []) if isinstance(case, dict)
         ],
         "experiments": [],
     }
+    agentspec_by_id: dict[str, dict[str, Any]] = {}
 
     for experiment in experiments:
         experiment_id = str(experiment.get("id", ""))
@@ -317,6 +409,17 @@ def _report_data(
             account_uid=account_uid,
         )
         runs = runs_payload.get("runs") or []
+        agent_spec_id, agent_spec_name = _extract_experiment_agentspec(experiment, runs)
+        if agent_spec_id and agent_spec_id not in agentspec_by_id:
+            agentspec_by_id[agent_spec_id] = {
+                "id": agent_spec_id,
+                "name": agent_spec_name or agent_spec_id,
+                "experiments": 0,
+                "runs": 0,
+            }
+        if agent_spec_id:
+            agentspec_by_id[agent_spec_id]["experiments"] += 1
+            agentspec_by_id[agent_spec_id]["runs"] += len(runs)
         total_runs = int(runs_payload.get("total") or len(runs))
         baseline, latest, drift = _compute_baseline_and_drift(runs)
 
@@ -387,6 +490,8 @@ def _report_data(
                 "name": experiment_name,
                 "runs_total": total_runs,
                 "runs_fetched": len(runs),
+                "agent_spec_id": agent_spec_id,
+                "agent_spec_name": agent_spec_name,
                 "latest_pass_rate": latest,
                 "baseline_pass_rate": baseline,
                 "drift_delta": drift,
@@ -399,6 +504,7 @@ def _report_data(
                 "consecutive_comparisons": consecutive_comparisons,
             }
         )
+    report["agentspecs"] = list(agentspec_by_id.values())
     return report
 
 
@@ -576,7 +682,7 @@ def _ascii_passrate_heatmap(
                 if isinstance(raw, (int, float)):
                     value = float(raw)
             if value is None:
-                cells.append(" ")
+                cells.append("·")
                 continue
 
             token = _heat_char(value)
@@ -592,7 +698,7 @@ def _ascii_passrate_heatmap(
         label = _fit_label(str(experiment.get("name", "")), width=20)
         lines.append(f"{label} | " + " ".join(cells))
 
-    lines.append("Legend: low='░' .. high='█' (r01=latest fetched run, blank=no run)")
+    lines.append("Legend: low='░' .. high='█' (r01=latest fetched run, '·'=no run)")
     return lines
 
 
@@ -624,7 +730,7 @@ def _ascii_drift_heatmap(
                 if isinstance(raw, (int, float)):
                     delta = float(raw)
             if delta is None:
-                cells.append("  ")
+                cells.append("··")
                 continue
 
             sign = "+" if delta >= 0 else "-"
@@ -642,7 +748,7 @@ def _ascii_drift_heatmap(
         label = _fit_label(str(experiment.get("name", "")), width=20)
         lines.append(f"{label} | " + " ".join(cells))
 
-    lines.append("Legend: dNN are consecutive deltas (A-B), sign shows direction, magnitude uses '░'..'█'")
+    lines.append("Legend: dNN are consecutive deltas (A-B), sign shows direction, magnitude uses '░'..'█', '··'=no comparison")
     return lines
 
 
@@ -652,17 +758,33 @@ def _pairwise_latest_deltas(experiments: list[dict[str, Any]]) -> list[dict[str,
         left_latest = left.get("latest_pass_rate")
         if not isinstance(left_latest, (int, float)):
             continue
+        left_agent_spec_id = str(left.get("agent_spec_id") or "")
+        left_agent_spec_name = str(left.get("agent_spec_name") or left_agent_spec_id or "")
         for right in experiments[idx + 1 :]:
             right_latest = right.get("latest_pass_rate")
             if not isinstance(right_latest, (int, float)):
                 continue
+            right_agent_spec_id = str(right.get("agent_spec_id") or "")
+            right_agent_spec_name = str(right.get("agent_spec_name") or right_agent_spec_id or "")
+            comparison_group = (
+                "within_agentspec"
+                if left_agent_spec_id and right_agent_spec_id and left_agent_spec_id == right_agent_spec_id
+                else "cross_agentspec"
+            )
             pairs.append(
                 {
+                    "left_id": str(left.get("id", "")),
                     "left": str(left.get("name", "")),
+                    "left_agent_spec_id": left_agent_spec_id,
+                    "left_agent_spec_name": left_agent_spec_name,
+                    "right_id": str(right.get("id", "")),
                     "right": str(right.get("name", "")),
+                    "right_agent_spec_id": right_agent_spec_id,
+                    "right_agent_spec_name": right_agent_spec_name,
                     "left_latest": float(left_latest),
                     "right_latest": float(right_latest),
                     "delta": float(left_latest) - float(right_latest),
+                    "group": comparison_group,
                 }
             )
     pairs.sort(key=lambda item: abs(item["delta"]), reverse=True)
@@ -716,17 +838,50 @@ def _compact_json(value: Any, max_len: int = 140) -> str:
 
 def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool = False) -> str:
     evalset_id = str(report.get("evalset_id", ""))
+    run_environment = str(report.get("run_environment") or "")
     generated_at = str(report.get("generated_at", ""))
     experiments = [item for item in (report.get("experiments") or []) if isinstance(item, dict)]
+    agentspecs = [item for item in (report.get("agentspecs") or []) if isinstance(item, dict)]
     cases = [item for item in (report.get("cases") or []) if isinstance(item, dict)]
+    evalset_runs_url = _evalset_runs_url(evalset_id, run_environment)
 
     lines: list[str] = []
     lines.append(f"# Evals Report: {evalset_id}")
     lines.append("")
     lines.append(f"- Generated at: {generated_at}")
     lines.append(f"- Experiments: {len(experiments)}")
+    lines.append(f"- Agentspecs: {len(agentspecs)}")
     lines.append(f"- Cases: {len(cases)}")
     lines.append(f"- Run window per experiment: {run_limit}")
+    if evalset_runs_url:
+        lines.append(f"- Evalset run details: [Open in Datalayer]({evalset_runs_url})")
+    lines.append("")
+
+    lines.append("## Agentspec Coverage")
+    lines.append("")
+    if agentspecs:
+        agentspec_rows: list[list[str]] = []
+        for item in agentspecs:
+            agent_spec_id = str(item.get("id") or "")
+            agent_spec_link = _agentspec_details_url(agent_spec_id)
+            agentspec_rows.append(
+                [
+                    agent_spec_id,
+                    str(item.get("name") or item.get("id") or ""),
+                    str(int(item.get("experiments") or 0)),
+                    str(int(item.get("runs") or 0)),
+                    f"[Open]({agent_spec_link})" if agent_spec_link else "-",
+                ]
+            )
+        lines.extend(
+            _markdown_table(
+                ["Agentspec ID", "Agentspec", "Experiments", "Runs", "Details"],
+                agentspec_rows,
+                ["left", "left", "right", "right", "left"],
+            )
+        )
+    else:
+        lines.append("No agentspec metadata found in experiment/run payloads.")
     lines.append("")
 
     lines.append("## Evalset Cases")
@@ -768,6 +923,7 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         overview_rows.append(
             [
                 f"{experiment.get('name', '')}",
+                str(experiment.get('agent_spec_name') or experiment.get('agent_spec_id') or '-'),
                 f"{runs_fetched}/{runs_total}",
                 _fmt_pct(experiment.get('latest_pass_rate') if isinstance(experiment.get('latest_pass_rate'), (int, float)) else None),
                 _fmt_pct(experiment.get('baseline_pass_rate') if isinstance(experiment.get('baseline_pass_rate'), (int, float)) else None),
@@ -777,9 +933,9 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         )
     lines.extend(
         _markdown_table(
-            ["Experiment", "Runs (fetched/total)", "Latest", "Baseline", "Drift", "Latest-2 Delta"],
+            ["Experiment", "Agentspec", "Runs (fetched/total)", "Latest", "Baseline", "Drift", "Latest-2 Delta"],
             overview_rows,
-            ["left", "right", "right", "right", "right", "right"],
+            ["left", "left", "right", "right", "right", "right", "right"],
         )
     )
     lines.append("")
@@ -867,6 +1023,12 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
     lines.append("")
 
     pairwise = _pairwise_latest_deltas(experiments)
+    within_agentspec_pairs = [
+        pair for pair in pairwise if str(pair.get("group") or "") == "within_agentspec"
+    ]
+    cross_agentspec_pairs = [
+        pair for pair in pairwise if str(pair.get("group") or "") == "cross_agentspec"
+    ]
     lines.append("### Pairwise Latest-Pass Deltas")
     lines.append("")
     pair_rows: list[list[str]] = []
@@ -902,7 +1064,54 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         lines.append(f"`{hist_line}`")
     lines.append("")
 
-    lines.append("### ASCII Heatmaps")
+    lines.append("### Within-Agentspec Pairwise Latest-Pass Deltas")
+    lines.append("")
+    within_pair_rows: list[list[str]] = []
+    for pair in within_agentspec_pairs:
+        within_pair_rows.append(
+            [
+                f"{pair['left']} vs {pair['right']}",
+                str(pair.get('left_agent_spec_name') or pair.get('left_agent_spec_id') or '-'),
+                _fmt_pct(pair['left_latest']),
+                _fmt_pct(pair['right_latest']),
+                _fmt_delta(pair['delta'], colorize=colorize),
+            ]
+        )
+    if not within_pair_rows:
+        within_pair_rows.append(["n/a", "n/a", "n/a", "n/a", "n/a"])
+    lines.extend(
+        _markdown_table(
+            ["Pair", "Agentspec", "Left Latest", "Right Latest", "Delta (Left-Right)"],
+            within_pair_rows,
+            ["left", "left", "right", "right", "right"],
+        )
+    )
+    lines.append("")
+
+    lines.append("### Cross-Agentspec Pairwise Latest-Pass Deltas")
+    lines.append("")
+    cross_pair_rows: list[list[str]] = []
+    for pair in cross_agentspec_pairs:
+        cross_pair_rows.append(
+            [
+                f"{pair['left']} ({pair.get('left_agent_spec_name') or pair.get('left_agent_spec_id') or '-'}) vs {pair['right']} ({pair.get('right_agent_spec_name') or pair.get('right_agent_spec_id') or '-'})",
+                _fmt_pct(pair['left_latest']),
+                _fmt_pct(pair['right_latest']),
+                _fmt_delta(pair['delta'], colorize=colorize),
+            ]
+        )
+    if not cross_pair_rows:
+        cross_pair_rows.append(["n/a", "n/a", "n/a", "n/a"])
+    lines.extend(
+        _markdown_table(
+            ["Pair", "Left Latest", "Right Latest", "Delta (Left-Right)"],
+            cross_pair_rows,
+            ["left", "right", "right", "right"],
+        )
+    )
+    lines.append("")
+
+    lines.append("### Heatmaps")
     lines.append("")
     lines.append("Pass-rate heatmap by experiment and run window:")
     lines.append("")
@@ -983,6 +1192,16 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
     for experiment in experiments:
         lines.append(f"### {experiment.get('name', '')}")
         lines.append("")
+        agent_spec_id = str(experiment.get("agent_spec_id") or "")
+        agent_spec_label = str(experiment.get('agent_spec_name') or agent_spec_id or '-')
+        agent_spec_link = _agentspec_details_url(agent_spec_id)
+        if agent_spec_link:
+            lines.append(f"Agentspec: [{agent_spec_label}]({agent_spec_link})")
+        else:
+            lines.append(f"Agentspec: {agent_spec_label}")
+        if evalset_runs_url:
+            lines.append(f"Evalset run details: [Open run page]({evalset_runs_url})")
+        lines.append("")
         lines.append("#### Run Timeline")
         lines.append("")
         run_rows: list[list[str]] = []
@@ -990,10 +1209,11 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         for idx, run in enumerate(runs, start=1):
             pass_rate = run.get("pass_rate") if isinstance(run.get("pass_rate"), (int, float)) else None
             cause_text = _format_failure_cause(run.get("failure_cause"))
+            run_id = str(run.get('id', ''))
             run_rows.append(
                 [
                     str(idx),
-                    str(run.get('id', '')),
+                    (f"[{run_id}]({evalset_runs_url})" if evalset_runs_url and run_id else run_id),
                     str(run.get('status', '')),
                     _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else 'n/a',
                     f"`{_ascii_bar(float(pass_rate), full_blocks=True, colorize=colorize) if isinstance(pass_rate, (int, float)) else '-'}`",
@@ -1098,6 +1318,10 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
     fieldnames = [
         "row_type",
         "evalset_id",
+        "evalset_runs_url",
+        "agent_spec_id",
+        "agent_spec_name",
+        "agent_spec_url",
         "experiment_id",
         "experiment_name",
         "run_index",
@@ -1121,11 +1345,19 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
     with output_path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fieldnames)
         writer.writeheader()
+        evalset_id = str(report.get("evalset_id", ""))
+        run_environment = str(report.get("run_environment") or "")
+        evalset_runs_url = _evalset_runs_url(evalset_id, run_environment)
         for experiment in experiments:
+            agent_spec_id = str(experiment.get("agent_spec_id", ""))
             writer.writerow(
                 {
                     "row_type": "experiment",
-                    "evalset_id": str(report.get("evalset_id", "")),
+                    "evalset_id": evalset_id,
+                    "evalset_runs_url": evalset_runs_url,
+                    "agent_spec_id": agent_spec_id,
+                    "agent_spec_name": str(experiment.get("agent_spec_name", "")),
+                    "agent_spec_url": _agentspec_details_url(agent_spec_id),
                     "experiment_id": str(experiment.get("id", "")),
                     "experiment_name": str(experiment.get("name", "")),
                     "run_index": "",
@@ -1152,7 +1384,11 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
                 writer.writerow(
                     {
                         "row_type": "run",
-                        "evalset_id": str(report.get("evalset_id", "")),
+                        "evalset_id": evalset_id,
+                        "evalset_runs_url": evalset_runs_url,
+                        "agent_spec_id": agent_spec_id,
+                        "agent_spec_name": str(experiment.get("agent_spec_name", "")),
+                        "agent_spec_url": _agentspec_details_url(agent_spec_id),
                         "experiment_id": str(experiment.get("id", "")),
                         "experiment_name": str(experiment.get("name", "")),
                         "run_index": idx,
@@ -1177,16 +1413,37 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
 
 def _print_report_console(report: dict[str, Any], run_limit: int) -> None:
     evalset_id = str(report.get("evalset_id", ""))
+    run_environment = str(report.get("run_environment") or "")
     generated_at = str(report.get("generated_at", ""))
     experiments = [item for item in (report.get("experiments") or []) if isinstance(item, dict)]
+    agentspecs = [item for item in (report.get("agentspecs") or []) if isinstance(item, dict)]
+    evalset_runs_url = _evalset_runs_url(evalset_id, run_environment)
 
     console.rule(f"[bold cyan]Evals Report[/bold cyan] {evalset_id}")
     console.print(f"Generated at: {generated_at}")
     console.print(f"Experiments: {len(experiments)} | Run window per experiment: {run_limit}")
+    if evalset_runs_url:
+        console.print(f"Evalset run details: {evalset_runs_url}")
     console.print("")
+
+    if agentspecs:
+        agentspec_table = Table(title="Agentspec Coverage")
+        agentspec_table.add_column("Agentspec ID", style="cyan")
+        agentspec_table.add_column("Agentspec", style="white")
+        agentspec_table.add_column("Experiments", justify="right")
+        agentspec_table.add_column("Runs", justify="right")
+        for item in agentspecs:
+            agentspec_table.add_row(
+                str(item.get("id") or ""),
+                str(item.get("name") or item.get("id") or ""),
+                str(int(item.get("experiments") or 0)),
+                str(int(item.get("runs") or 0)),
+            )
+        console.print(agentspec_table)
 
     overview = Table(title="Experiment Overview")
     overview.add_column("Experiment", style="white")
+    overview.add_column("Agentspec", style="white")
     overview.add_column("Runs", justify="right")
     overview.add_column("Latest", justify="right")
     overview.add_column("Baseline", justify="right")
@@ -1195,6 +1452,7 @@ def _print_report_console(report: dict[str, Any], run_limit: int) -> None:
     for experiment in experiments:
         overview.add_row(
             str(experiment.get("name", "")),
+            str(experiment.get("agent_spec_name") or experiment.get("agent_spec_id") or "-"),
             f"{int(experiment.get('runs_fetched') or 0)}/{int(experiment.get('runs_total') or 0)}",
             _fmt_pct(experiment.get("latest_pass_rate") if isinstance(experiment.get("latest_pass_rate"), (int, float)) else None),
             _fmt_pct(experiment.get("baseline_pass_rate") if isinstance(experiment.get("baseline_pass_rate"), (int, float)) else None),
@@ -1279,6 +1537,50 @@ def _print_report_console(report: dict[str, Any], run_limit: int) -> None:
     if not pairwise:
         pairwise_table.add_row("n/a", "n/a", "n/a", "n/a")
     console.print(pairwise_table)
+
+    within_agentspec_pairs = [
+        pair for pair in pairwise if str(pair.get("group") or "") == "within_agentspec"
+    ]
+    cross_agentspec_pairs = [
+        pair for pair in pairwise if str(pair.get("group") or "") == "cross_agentspec"
+    ]
+
+    within_table = Table(title="Within-Agentspec Pairwise Latest-Pass Deltas")
+    within_table.add_column("Pair", style="white")
+    within_table.add_column("Agentspec", style="white")
+    within_table.add_column("Left", justify="right", no_wrap=True)
+    within_table.add_column("Right", justify="right", no_wrap=True)
+    within_table.add_column("Delta", justify="right", no_wrap=True)
+    for pair in within_agentspec_pairs:
+        within_table.add_row(
+            f"{pair['left']} vs {pair['right']}",
+            str(pair.get("left_agent_spec_name") or pair.get("left_agent_spec_id") or "-"),
+            _fmt_pct(pair["left_latest"]),
+            _fmt_pct(pair["right_latest"]),
+            _fmt_delta(pair["delta"], colorize=True),
+        )
+    if not within_agentspec_pairs:
+        within_table.add_row("n/a", "n/a", "n/a", "n/a", "n/a")
+    console.print(within_table)
+
+    cross_table = Table(title="Cross-Agentspec Pairwise Latest-Pass Deltas")
+    cross_table.add_column("Pair", style="white")
+    cross_table.add_column("Left", justify="right", no_wrap=True)
+    cross_table.add_column("Right", justify="right", no_wrap=True)
+    cross_table.add_column("Delta", justify="right", no_wrap=True)
+    for pair in cross_agentspec_pairs:
+        cross_table.add_row(
+            (
+                f"{pair['left']} ({pair.get('left_agent_spec_name') or pair.get('left_agent_spec_id') or '-'}) "
+                f"vs {pair['right']} ({pair.get('right_agent_spec_name') or pair.get('right_agent_spec_id') or '-'})"
+            ),
+            _fmt_pct(pair["left_latest"]),
+            _fmt_pct(pair["right_latest"]),
+            _fmt_delta(pair["delta"], colorize=True),
+        )
+    if not cross_agentspec_pairs:
+        cross_table.add_row("n/a", "n/a", "n/a", "n/a")
+    console.print(cross_table)
 
     console.print("[bold]Pass-rate heatmap (r01=latest fetched run):[/bold]")
     for line in _ascii_passrate_heatmap(experiments, max_columns=12, colorize=True):
@@ -1819,6 +2121,8 @@ def experiments_create(
     description: Optional[str] = typer.Option(None, "--description", help="Description."),
     status: Optional[str] = typer.Option(None, "--status", help="Initial status."),
     spec_file: Optional[str] = typer.Option(None, "--spec-file", help="Path to experiment spec JSON file."),
+    agent_spec_id: Optional[str] = typer.Option(None, "--agent-spec-id", help="Single agentspec id."),
+    agent_spec_ids: Optional[str] = typer.Option(None, "--agent-spec-ids", help="Comma-separated agentspec ids for multi-experiment creation."),
     config_json: Optional[str] = typer.Option(None, "--config-json", help="Config JSON object."),
     summary_json: Optional[str] = typer.Option(None, "--summary-json", help="Summary JSON object."),
     tags: list[str] = typer.Option([], "--tag", help="Repeatable tag."),
@@ -1848,23 +2152,64 @@ def experiments_create(
     spec_tags = spec.get("tags") if isinstance(spec.get("tags"), list) else []
     resolved_tags = tags if tags else [str(tag) for tag in spec_tags if str(tag).strip()]
 
+    selected_agent_specs = _parse_csv_values(agent_spec_ids)
+    if agent_spec_id:
+        selected_agent_specs = [str(agent_spec_id).strip(), *selected_agent_specs]
+    selected_agent_specs = [value for value in _parse_csv_values(",".join(selected_agent_specs)) if value]
+
     resolved_account_uid = _resolve_billable_account_uid(billable_account_uid, account_uid)
     client = _make_client(token=token, api_key=api_key)
-    payload = client.evals_create_experiment(
-        name=resolved_name,
-        evalset_id=resolved_evalset_id,
-        description=resolved_description,
-        status=resolved_status,
-        config=resolved_config,
-        summary=resolved_summary,
-        tags=resolved_tags,
-        account_uid=resolved_account_uid,
-    )
+    payloads: list[dict[str, Any]] = []
+    targets = selected_agent_specs or [""]
+    for spec_index, target_agent_spec_id in enumerate(targets, start=1):
+        config_payload = dict(resolved_config)
+        summary_payload = dict(resolved_summary)
+        experiment_name = resolved_name
+        if target_agent_spec_id:
+            config_payload["agent_spec_id"] = target_agent_spec_id
+            if not str(config_payload.get("agent_spec_name") or "").strip():
+                config_payload["agent_spec_name"] = target_agent_spec_id
+            summary_payload["agent_spec_id"] = target_agent_spec_id
+            if not str(summary_payload.get("agent_spec_name") or "").strip():
+                summary_payload["agent_spec_name"] = str(config_payload.get("agent_spec_name") or target_agent_spec_id)
+            if len(targets) > 1:
+                experiment_name = f"{resolved_name}-{target_agent_spec_id}"
+                summary_payload["agentspec_variant_index"] = spec_index
+
+        payload = client.evals_create_experiment(
+            name=experiment_name,
+            evalset_id=resolved_evalset_id,
+            description=resolved_description,
+            status=resolved_status,
+            config=config_payload,
+            summary=summary_payload,
+            tags=resolved_tags,
+            account_uid=resolved_account_uid,
+        )
+        payloads.append(payload)
+
     if raw:
-        typer.echo(json.dumps(payload))
+        typer.echo(json.dumps({"experiments": [item.get("experiment") for item in payloads]}))
         return
-    experiment = payload.get("experiment") or {}
-    console.print(f"[green]Experiment created:[/green] {experiment.get('id', '')} ({experiment.get('name', '')})")
+
+    if len(payloads) == 1:
+        experiment = payloads[0].get("experiment") or {}
+        console.print(f"[green]Experiment created:[/green] {experiment.get('id', '')} ({experiment.get('name', '')})")
+        return
+
+    table = Table(title=f"Experiments Created ({len(payloads)})")
+    table.add_column("ID", style="cyan")
+    table.add_column("Name", style="white")
+    table.add_column("Agentspec", style="white")
+    for payload in payloads:
+        experiment = payload.get("experiment") or {}
+        config = experiment.get("config") if isinstance(experiment.get("config"), dict) else {}
+        table.add_row(
+            str(experiment.get("id", "")),
+            str(experiment.get("name", "")),
+            str(config.get("agent_spec_id") or "-"),
+        )
+    console.print(table)
 
 
 @runs_app.command(name="ls")

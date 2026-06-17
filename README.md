@@ -151,6 +151,29 @@ datalayer usage team-allocate-member --team-uid <team_uid> --member-uid <member_
 datalayer usage team-revoke-member --team-uid <team_uid> --member-uid <member_uid> --amount 5
 ```
 
+### 5. Evals CLI (Multi-Agentspec)
+
+Use comma-separated agentspec ids to create one experiment per agentspec variant:
+
+```bash
+# Creates one experiment per agentspec in the list
+datalayer evals experiments create my-exp \
+  --evalset-id <evalset_id> \
+  --agent-spec-ids example-evals,example-evals-nocodmode,example-custom
+```
+
+Generate a comparison report:
+
+```bash
+datalayer evals report <evalset_id> --run-limit 50 --export
+```
+
+How to interpret grouped comparisons in the report:
+
+- `Within-Agentspec Pairwise Latest-Pass Deltas`: compares experiments using the same agentspec id.
+- `Cross-Agentspec Pairwise Latest-Pass Deltas`: compares experiments using different agentspec ids.
+- Pairwise sections compute all combinations for the selected experiments, not just two agentspecs.
+
 ## Examples
 
 ### Python Examples
