@@ -1188,6 +1188,54 @@ export function StripeCheckout({
               Cancel pending plan change
             </Button>
           </Box>
+          {cancelViewOpen && (
+            <Box
+              sx={{
+                marginTop: 'var(--stack-gap-normal)',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'var(--borderRadius-medium)',
+                backgroundColor: 'canvas.subtle',
+                padding: 'var(--stack-padding-normal)',
+                display: 'grid',
+                gap: 'var(--stack-gap-condensed)',
+              }}
+            >
+              <Text as="h4" sx={{ fontWeight: 'bold' }}>
+                Cancel pending plan change
+              </Text>
+              <Text as="p" sx={{ color: 'fg.muted' }}>
+                This pending plan change will be canceled immediately.
+              </Text>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 'var(--stack-gap-condensed)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Button
+                  variant="danger"
+                  onClick={() => void onConfirmCancelSubscription()}
+                  disabled={isCancelActionPending}
+                  leadingVisual={() =>
+                    isCancelActionPending ? <Spinner size="small" /> : undefined
+                  }
+                >
+                  {isCancelActionPending
+                    ? 'Canceling pending plan change...'
+                    : 'Confirm cancel pending plan change'}
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={onAbortCancelView}
+                  disabled={isCancelActionPending}
+                >
+                  Keep pending plan change
+                </Button>
+              </Box>
+            </Box>
+          )}
         </>
       ) : !isPaidSubscription ? (
         <>

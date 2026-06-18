@@ -80,7 +80,7 @@ def display_environments(environments: list[dict[str, Any]]) -> None:
     """Display environments with a full-width detail line per environment."""
     console = Console()
 
-    headers = ("ID", "Cost", "Name", "Language", "Resources")
+    headers = ("ID", "Credits/Second", "Name", "Language", "Resources")
     rows: list[tuple[str, str, str, str, str, str]] = []
     for env in environments:
         env_id = str(env.get("name") or "")
@@ -101,7 +101,7 @@ def display_environments(environments: list[dict[str, Any]]) -> None:
     lang_width = max(len(headers[3]), *(len(r[3]) for r in rows)) if rows else len(headers[3])
 
     id_width = max(12, min(id_width, 28))
-    cost_width = max(6, min(cost_width, 10))
+    cost_width = max(6, min(cost_width, 16))
     name_width = max(18, min(name_width, 32))
     lang_width = max(8, min(lang_width, 16))
 
@@ -192,6 +192,13 @@ def display_environments(environments: list[dict[str, Any]]) -> None:
     )
 
     for index, (env_id, cost, name, language, resources, desc_text) in enumerate(rows):
+        span_width = inner_total - 2
+        for line in _wrap_lines(desc_text, span_width):
+            console.print("│ " + _pad_cell(line, span_width))
+
+        # Thin line between full-width detail line and the summary line.
+        console.print("├" + "─" * inner_total + "┤")
+
         console.print(
             "│ "
             + _pad_cell(env_id, id_width)
@@ -205,13 +212,6 @@ def display_environments(environments: list[dict[str, Any]]) -> None:
             + _pad_cell(resources, resources_width)
             + " │"
         )
-
-        # Thin line between the summary line and full-width detail line.
-        console.print("├" + "─" * inner_total + "┤")
-
-        span_width = inner_total - 2
-        for line in _wrap_lines(desc_text, span_width):
-            console.print("│ " + _pad_cell(line, span_width) + " │")
 
         if index < len(rows) - 1:
             console.print("├" + "─" * inner_total + "┤")

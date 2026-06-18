@@ -449,10 +449,39 @@ def whoami(
         "--details",
         help="Show detailed user information",
     ),
+    urls_only: bool = typer.Option(
+        False,
+        "--urls",
+        help="Show only resolved Datalayer service URLs",
+    ),
 ) -> None:
     """Show current authenticated user."""
     try:
         urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+
+        if urls_only:
+            url_items = [
+                ("DATALAYER_RUN_URL", urls.run_url),
+                ("DATALAYER_IAM_URL", urls.iam_url),
+                ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
+                ("DATALAYER_SPACER_URL", urls.spacer_url),
+                ("DATALAYER_LIBRARY_URL", urls.library_url),
+                ("DATALAYER_MANAGER_URL", urls.manager_url),
+                ("DATALAYER_AI_AGENTS_URL", urls.ai_agents_url),
+                ("DATALAYER_AI_INFERENCE_URL", urls.ai_inference_url),
+                ("DATALAYER_OTEL_URL", urls.otel_url),
+                ("DATALAYER_GROWTH_URL", urls.growth_url),
+                ("DATALAYER_SUCCESS_URL", urls.success_url),
+                ("DATALAYER_STATUS_URL", urls.status_url),
+                ("DATALAYER_SUPPORT_URL", urls.support_url),
+                ("DATALAYER_MCP_SERVER_URL", urls.mcp_server_url),
+                ("DATALAYER_SCHEDULER_URL", urls.scheduler_url),
+            ]
+            console.print("[bold]Defined URLs:[/bold]")
+            for env_name, value in url_items:
+                console.print(f"  🌐 {env_name}: [green]{value}[/green]")
+            return
+
         auth = AuthenticationManager(urls.iam_url)
 
         # If token provided, store it temporarily for whoami
@@ -469,10 +498,28 @@ def whoami(
             console.print(f"👤 User: [cyan]{handle}[/cyan]")
             if email:
                 console.print(f"📧 Email: {email}")
-            console.print(f"🌐 Server: [green]{urls.run_url}[/green]")
+            console.print(f"🌐 Datalayer RUN URL: [green]{urls.run_url}[/green]")
 
             if details:
                 console.print("\n[bold]Detailed Information:[/bold]")
+
+                url_items = [
+                    ("DATALAYER_RUN_URL", urls.run_url),
+                    ("DATALAYER_IAM_URL", urls.iam_url),
+                    ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
+                    ("DATALAYER_SPACER_URL", urls.spacer_url),
+                    ("DATALAYER_LIBRARY_URL", urls.library_url),
+                    ("DATALAYER_MANAGER_URL", urls.manager_url),
+                    ("DATALAYER_AI_AGENTS_URL", urls.ai_agents_url),
+                    ("DATALAYER_AI_INFERENCE_URL", urls.ai_inference_url),
+                    ("DATALAYER_OTEL_URL", urls.otel_url),
+                    ("DATALAYER_GROWTH_URL", urls.growth_url),
+                    ("DATALAYER_SUCCESS_URL", urls.success_url),
+                    ("DATALAYER_STATUS_URL", urls.status_url),
+                    ("DATALAYER_SUPPORT_URL", urls.support_url),
+                    ("DATALAYER_MCP_SERVER_URL", urls.mcp_server_url),
+                    ("DATALAYER_SCHEDULER_URL", urls.scheduler_url),
+                ]
 
                 # Full name
                 first_name = user.get("first_name_t", "")
@@ -558,20 +605,22 @@ def whoami(
                     teams = [m for m in memberships if (m.get("type") or "").lower() == "team"]
                     org_by_uid = {m.get("uid"): m for m in orgs}
 
+                    console.print("\n[bold]👥 Memberships:[/bold]")
+
                     if orgs:
-                        console.print("\n[bold]🏢 Organizations:[/bold]")
+                        console.print("  [bold]🏢 Organizations:[/bold]")
                         for org in orgs:
                             handle = org.get("handle") or org.get("uid") or "unknown"
                             name = org.get("name") or ""
                             roles = ", ".join(org.get("roles_ss") or []) or "-"
-                            label = f"  • [cyan]{handle}[/cyan]"
+                            label = f"    • [cyan]{handle}[/cyan]"
                             if name and name != handle:
                                 label += f" ({name})"
                             label += f"  uid={org.get('uid')}  roles={roles}"
                             console.print(label)
 
                     if teams:
-                        console.print("\n[bold]👥 Teams:[/bold]")
+                        console.print("  [bold]👥 Teams:[/bold]")
                         for team in teams:
                             handle = team.get("handle") or team.get("uid") or "unknown"
                             name = team.get("name") or ""
@@ -581,7 +630,7 @@ def whoami(
                             parent_label = (
                                 parent.get("handle") if parent else (org_uid or "unknown")
                             )
-                            label = f"  • [cyan]{handle}[/cyan]"
+                            label = f"    • [cyan]{handle}[/cyan]"
                             if name and name != handle:
                                 label += f" ({name})"
                             label += f"  in [magenta]{parent_label}[/magenta]"
@@ -589,7 +638,11 @@ def whoami(
                             console.print(label)
 
                     if not orgs and not teams:
-                        console.print("\n[dim]No organization or team memberships.[/dim]")
+                        console.print("  [dim]No organization or team memberships.[/dim]")
+
+                console.print("\n[bold]Defined URLs:[/bold]")
+                for env_name, value in url_items:
+                    console.print(f"  🌐 {env_name}: [green]{value}[/green]")
         else:
             console.print("[yellow]Not authenticated[/yellow]")
             console.print("Run 'datalayer login' to authenticate")
@@ -684,8 +737,19 @@ def whoami_root(
         "--details",
         help="Show detailed user information",
     ),
+    urls_only: bool = typer.Option(
+        False,
+        "--urls",
+        help="Show only resolved Datalayer service URLs",
+    ),
 ) -> None:
     """
     Show current authenticated user.
     """
-    whoami(run_url=run_url, iam_url=iam_url, token=token, details=details)
+    whoami(
+        run_url=run_url,
+        iam_url=iam_url,
+        token=token,
+        details=details,
+        urls_only=urls_only,
+    )

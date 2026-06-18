@@ -112,7 +112,29 @@ def _build_anomalies_panel(nodes_with_pods: list[Any], unassigned: list[Any]) ->
         if bool((pod or {}).get("unschedulable")):
             unschedulable_pods += 1
 
+    yellow_total = pending_pods + len(unassigned) + pending_scale_up_nodes + pending_scale_down_nodes
+    red_total = unschedulable_pods + failed_pods + not_ready_nodes
+
+    if red_total > 0:
+        summary_label = "FAILURES"
+        summary_style = "red"
+        border_style = "red"
+    elif yellow_total > 0:
+        summary_label = "WARNING"
+        summary_style = "yellow"
+        border_style = "yellow"
+    else:
+        summary_label = "OK"
+        summary_style = "green"
+        border_style = "green"
+
     lines = Text()
+    lines.append("summary: ", style="bold")
+    lines.append(summary_label, style=f"bold {summary_style}")
+    lines.append("\n", style=summary_style)
+    lines.append(f"yellow flags: {yellow_total}\n", style="yellow")
+    lines.append(f"red flags: {red_total}\n", style="red")
+    lines.append("----------------------------------------\n", style="dim")
     lines.append("Pods\n", style="bold")
     lines.append(f"pending pods: {pending_pods}\n", style="yellow")
     lines.append(f"unschedulable pods: {unschedulable_pods}\n", style="red")
@@ -124,7 +146,7 @@ def _build_anomalies_panel(nodes_with_pods: list[Any], unassigned: list[Any]) ->
     lines.append(f"pending scale-up nodes: {pending_scale_up_nodes}\n", style="cyan")
     lines.append(f"pending scale-down nodes: {pending_scale_down_nodes}", style="cyan")
 
-    return Panel(lines, title="Anomalies", border_style="yellow")
+    return Panel(lines, title="Anomalies", border_style=border_style)
 
 
 @app.callback()

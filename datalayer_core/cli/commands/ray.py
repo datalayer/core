@@ -358,31 +358,50 @@ def jobs_list(
     token: Optional[str] = typer.Option(None, "--token", help="API token."),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON."),
 ) -> None:
-    client = _make_client(token=token)
-    payload = client.ray_list_jobs(namespace=namespace, cluster_name=cluster_name)
-    if raw:
-        _print_json(payload)
-        return
+    try:
+        client = _make_client(token=token)
+        payload = client.ray_list_jobs(namespace=namespace, cluster_name=cluster_name)
+        if raw:
+            _print_json(payload)
+            return
 
-    items = payload.get("jobs") or []
-    table = Table(title=f"Ray Jobs ({len(items)})")
-    table.add_column("Name", style="cyan")
-    table.add_column("Namespace")
-    table.add_column("Cluster")
-    table.add_column("Status")
+        items = payload.get("jobs") or []
+        table = Table(title=f"Ray Jobs ({len(items)})")
+        table.add_column("Name", style="cyan")
+        table.add_column("Namespace")
+        table.add_column("Cluster")
+        table.add_column("Status")
 
-    for item in items:
-        metadata = item.get("metadata") or {}
-        labels = metadata.get("labels") or {}
-        status = item.get("status") or {}
-        table.add_row(
-            str(metadata.get("name", "")),
-            str(metadata.get("namespace", namespace)),
-            str(labels.get("ray.io/cluster", "")),
-            str(status.get("jobStatus", "")),
-        )
+        for item in items:
+            metadata = item.get("metadata") or {}
+            labels = metadata.get("labels") or {}
+            status = item.get("status") or {}
+            table.add_row(
+                str(metadata.get("name", "")),
+                str(metadata.get("namespace", namespace)),
+                str(labels.get("ray.io/cluster", "")),
+                str(status.get("jobStatus", "")),
+            )
 
-    console.print(table)
+        console.print(table)
+    except Exception as exc:
+        message = str(exc).strip() or "Unknown Ray jobs error"
+        lowered = message.lower()
+
+        if "no ray provider registered" in lowered:
+            console.print("[red]Unable to list Ray jobs:[/red] No Ray provider registered.")
+            console.print(
+                "[yellow]Hint:[/yellow] Start or register a Ray provider in the runtimes service, then retry [bold]d ray jobs ls[/bold]."
+            )
+        elif "status=503" in lowered:
+            console.print("[red]Unable to list Ray jobs:[/red] Ray service unavailable (503).")
+            console.print(
+                "[yellow]Hint:[/yellow] Check runtimes/operator health and Ray provider registration."
+            )
+        else:
+            console.print(f"[red]Unable to list Ray jobs:[/red] {message}")
+
+        raise typer.Exit(code=1)
 
 
 @jobs_app.command(name="status")
