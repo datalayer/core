@@ -547,7 +547,7 @@ def _load_agentspec_registry() -> tuple[dict[str, Any], Any]:
 def _agentspec_registry_details(agent_spec_id: str) -> dict[str, Any]:
     """Look up rich agentspec metadata from the agent_runtimes catalog.
 
-    Uses the bundled agent specification registry (the Python equivalent of
+    Uses the bundled agentspecification registry (the Python equivalent of
     the in-app ``listAgentspecs``) to enrich the report with the canonical
     name, description, version, model, tags, and display metadata for an
     agentspec id. Returns an empty dict when the catalog or id is
@@ -3047,7 +3047,7 @@ def experiments_create(
     evalset_id: Optional[str] = typer.Option(None, "--evalset-id", help="Evalset ID."),
     description: Optional[str] = typer.Option(None, "--description", help="Description."),
     status: Optional[str] = typer.Option(None, "--status", help="Initial status."),
-    spec_file: Optional[str] = typer.Option(None, "--spec-file", help="Path to experiment spec JSON file."),
+    spec_file: Optional[str] = typer.Option(None, "--spec-file", help="Path to experimentspec JSON file."),
     agent_spec_id: Optional[str] = typer.Option(None, "--agent-spec-id", help="Single agentspec id."),
     agent_spec_ids: Optional[str] = typer.Option(None, "--agent-spec-ids", help="Comma-separated agentspec ids for multi-experiment creation."),
     config_json: Optional[str] = typer.Option(None, "--config-json", help="Config JSON object."),
@@ -3194,7 +3194,7 @@ def runs_launch(
     experiment_id: str = typer.Option(..., "--experiment-id", help="Experiment ID."),
     status: str = typer.Option("queued", "--status", help="Initial run status."),
     run_mode: Optional[str] = typer.Option(None, "--run-mode", help="Run mode hint (batch/interactive)."),
-    runtime_pod_name: Optional[str] = typer.Option(None, "--runtime-pod-name", help="Runtime pod for interactive execution."),
+    agent_pod_name: Optional[str] = typer.Option(None, "--agent-pod-name", help="Agent pod for interactive execution."),
     submitted_code_file: Optional[str] = typer.Option(None, "--submitted-code-file", help="Python file to execute in interactive mode."),
     metrics_json: Optional[str] = typer.Option(None, "--metrics-json", help="Inline metrics JSON object."),
     summary_json: Optional[str] = typer.Option(None, "--summary-json", help="Inline summary JSON object."),
@@ -3216,8 +3216,8 @@ def runs_launch(
     }
     if run_mode:
         cli_summary["run_mode"] = run_mode
-    if runtime_pod_name:
-        cli_summary["runtime_pod_name"] = runtime_pod_name
+    if agent_pod_name:
+        cli_summary["runtime_pod_name"] = agent_pod_name
     if submitted_code_file:
         path = Path(submitted_code_file)
         if not path.exists():

@@ -3,6 +3,7 @@
 
 """Plans commands for Datalayer CLI."""
 
+import os
 from typing import Any, Optional
 
 import typer
@@ -323,7 +324,8 @@ def plans_catalog(
         help="Datalayer IAM server URL",
     ),
     billable_account_uid: Optional[str] = typer.Option(
-        None,
+        os.environ.get("DATALAYER_ACCOUNT_UID")
+        or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID"),
         "--billable-account-uid",
         help="Optional billable account UID scope.",
     ),

@@ -5,10 +5,12 @@
 
 import os
 import sys
+from typing import Optional
 
 import typer
 
 from datalayer_core.__version__ import __version__
+from datalayer_core.authn import AuthenticationManager
 from datalayer_core.cli.commands.about import app as about_app
 from datalayer_core.cli.commands.agents import agents_ls
 from datalayer_core.cli.commands.agents import app as agents_app
@@ -34,8 +36,8 @@ from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.pools import app as pools_app
 from datalayer_core.cli.commands.ray import app as ray_app
-from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
-from datalayer_core.cli.commands.runtime_checkpoints import (
+from datalayer_core.cli.commands.checkpoints import app as checkpoints_app
+from datalayer_core.cli.commands.checkpoints import (
     checkpoints_ls,
 )
 from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
@@ -60,6 +62,48 @@ def version_callback(value: bool) -> None:
     if value:
         typer.echo(f"datalayer_core: {__version__}")
         raise typer.Exit()
+
+
+def _lookup_billable_account_uid_by_handle(
+    *, iam_url: str, access_token: str, account_handle: str
+) -> Optional[str]:
+    """Resolve an account handle to UID using IAM APIs."""
+    import requests
+
+    handle = str(account_handle or "").strip().lower()
+    if not handle:
+        return None
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    # 1) Directly match the authenticated user's own handle.
+    whoami_response = requests.get(
+        f"{iam_url.rstrip('/')}/api/iam/v1/whoami",
+        headers=headers,
+        timeout=10,
+    )
+    if whoami_response.status_code == 200:
+        payload = whoami_response.json()
+        profile = payload.get("profile") or {}
+        profile_handle = str(profile.get("handle") or "").strip().lower()
+        if profile_handle == handle:
+            return str(profile.get("uid") or "").strip() or None
+
+    # 2) Match organizations and teams from memberships.
+    memberships_response = requests.get(
+        f"{iam_url.rstrip('/')}/api/iam/v1/memberships",
+        headers=headers,
+        timeout=10,
+    )
+    if memberships_response.status_code != 200:
+        return None
+    memberships_payload = memberships_response.json()
+    memberships = memberships_payload.get("memberships") or []
+    for membership in memberships:
+        membership_handle = str(membership.get("handle") or "").strip().lower()
+        if membership_handle == handle:
+            return str(membership.get("uid") or "").strip() or None
+    return None
 
 
 # Create the main Typer app
@@ -156,6 +200,30 @@ def main_callback(
         "--scheduler-url",
         help="Override DATALAYER_SCHEDULER_URL for this CLI invocation.",
     ),
+    api_key: str | None = typer.Option(
+        None,
+        "--api-key",
+        help=(
+            "Auth token for backend calls. Falls back to DATALAYER_API_KEY when "
+            "omitted; otherwise built-in auth resolution is used."
+        ),
+    ),
+    billable_account_uid: str | None = typer.Option(
+        None,
+        "--billable-account-uid",
+        help=(
+            "Billable account UID context. Falls back to DATALAYER_ACCOUNT_UID "
+            "when omitted."
+        ),
+    ),
+    billable_account_handle: str | None = typer.Option(
+        None,
+        "--billable-account-handle",
+        help=(
+            "Billable account handle context. Falls back to DATALAYER_ACCOUNT_HANDLE "
+            "when omitted and is resolved to UID via IAM lookup."
+        ),
+    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
@@ -178,6 +246,56 @@ def main_callback(
     for env_name, value in overrides.items():
         if value is not None:
             os.environ[env_name] = value.rstrip("/")
+
+    # Global auth option: explicit flag overrides env; when omitted keep normal
+    # command behavior (env var token or stored auth token).
+    if api_key is not None:
+        normalized_api_key = str(api_key).strip()
+        if normalized_api_key:
+            os.environ["DATALAYER_API_KEY"] = normalized_api_key
+
+    # Global billable context defaults.
+    resolved_uid = str(billable_account_uid or "").strip() or str(
+        os.environ.get("DATALAYER_ACCOUNT_UID") or ""
+    ).strip()
+    resolved_handle = str(billable_account_handle or "").strip() or str(
+        os.environ.get("DATALAYER_ACCOUNT_HANDLE") or ""
+    ).strip()
+
+    # Convert handle -> uid only when uid is not already known.
+    if not resolved_uid and resolved_handle:
+        effective_iam_url = str(os.environ.get("DATALAYER_IAM_URL") or "").strip()
+        if not effective_iam_url:
+            effective_iam_url = "http://localhost:9700"
+
+        resolved_token = str(os.environ.get("DATALAYER_API_KEY") or "").strip()
+        if not resolved_token:
+            auth = AuthenticationManager(iam_url=effective_iam_url)
+            resolved_token = str(auth.get_stored_token() or "").strip()
+
+        if not resolved_token:
+            raise typer.BadParameter(
+                "Cannot resolve --billable-account-handle without authentication. "
+                "Pass --api-key, set DATALAYER_API_KEY, or login first."
+            )
+
+        resolved_from_handle = _lookup_billable_account_uid_by_handle(
+            iam_url=effective_iam_url,
+            access_token=resolved_token,
+            account_handle=resolved_handle,
+        )
+        if not resolved_from_handle:
+            raise typer.BadParameter(
+                f"Could not resolve billable account handle '{resolved_handle}' to a UID."
+            )
+        resolved_uid = resolved_from_handle
+
+    if resolved_uid:
+        os.environ["DATALAYER_ACCOUNT_UID"] = resolved_uid
+        # Keep backward compatibility with existing scripts.
+        os.environ["DATALAYER_BILLABLE_ACCOUNT_UID"] = resolved_uid
+    if resolved_handle:
+        os.environ["DATALAYER_ACCOUNT_HANDLE"] = resolved_handle
 
 
 # Register commands (without name to add them at the top level)
@@ -244,6 +362,9 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--support-url",
     "--mcp-server-url",
     "--scheduler-url",
+    "--api-key",
+    "--billable-account-uid",
+    "--billable-account-handle",
 }
 
 _GLOBAL_OPTIONS_NO_VALUES = {

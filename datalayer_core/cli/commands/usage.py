@@ -4,6 +4,7 @@
 """Usage/credits commands for Datalayer CLI."""
 
 from datetime import datetime, timezone
+import os
 from typing import Any, Optional
 
 import typer
@@ -130,7 +131,8 @@ def usage_records(
         help="Datalayer IAM server URL",
     ),
     billable_account_uid: Optional[str] = typer.Option(
-        None,
+        os.environ.get("DATALAYER_ACCOUNT_UID")
+        or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID"),
         "--billable-account-uid",
         help="Optional account UID scope. Defaults to the authenticated account.",
     ),
@@ -268,7 +270,8 @@ def usage_reservations(
         help="Optional reservation type filter.",
     ),
     billable_account_uid: Optional[str] = typer.Option(
-        None,
+        os.environ.get("DATALAYER_ACCOUNT_UID")
+        or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID"),
         "--billable-account-uid",
         help="Optional account UID scope for fallback credits view.",
     ),

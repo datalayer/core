@@ -118,7 +118,7 @@ datalayer runtime list
 datalayer runtime create ai-env --given-name my-runtime-123
 
 # Execute a script in a runtime
-datalayer runtime exec my-script.py --runtime <runtime-id>
+datalayer runtime exec my-script.py --agent <agent-id>
 
 # Create a snapshot from a runtime but do not terminate the runtime
 datalayer snapshots create <pod-name> my-snapshot 'AI work!' False

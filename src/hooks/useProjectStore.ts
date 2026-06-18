@@ -23,7 +23,7 @@ export type ProjectRuntimeEntry = {
   agentName?: string;
   /** Agent runtime status (running, starting, terminated, etc.). */
   agentStatus?: string;
-  /** The agent spec ID used to create the runtime. */
+  /** The agentspec ID used to create the runtime. */
   agentSpecId?: string;
 };
 

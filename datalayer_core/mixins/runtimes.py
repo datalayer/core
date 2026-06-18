@@ -4,6 +4,7 @@
 """Runtime management module for Datalayer Core."""
 
 import logging
+import os
 import sys
 import time
 from typing import Any, Optional
@@ -69,6 +70,15 @@ class RuntimesCreateMixin:
             "environment_name": environment_name,
         }
 
+        resolved_billable_account_uid = (
+            billable_account_uid
+            or os.environ.get("DATALAYER_ACCOUNT_UID")
+            or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID")
+        )
+        resolved_billable_account_handle = (
+            billable_account_handle or os.environ.get("DATALAYER_ACCOUNT_HANDLE")
+        )
+
         if given_name:
             body["given_name"] = given_name
 
@@ -118,12 +128,12 @@ class RuntimesCreateMixin:
             if agent_spec:
                 body["agent_spec"] = agent_spec
 
-            if billable_account_uid:
-                body["billable_account_uid"] = billable_account_uid
+            if resolved_billable_account_uid:
+                body["billable_account_uid"] = resolved_billable_account_uid
             if billable_account_type:
                 body["billable_account_type"] = billable_account_type
-            if billable_account_handle:
-                body["billable_account_handle"] = billable_account_handle
+            if resolved_billable_account_handle:
+                body["billable_account_handle"] = resolved_billable_account_handle
 
             runtime_url = "{}/api/runtimes/v1/runtimes".format(self.urls.runtimes_url)  # type: ignore
             logger.debug(

@@ -129,7 +129,7 @@ def start_local_agent_runtime(
     Parameters
     ----------
     agent_spec_id : str
-        Agent spec id to boot the runtime with.
+        Agentspec id to boot the runtime with.
     agent_name : str
         Registered agent name/id served by the runtime.
     host : str
@@ -611,7 +611,7 @@ def runtime_route_candidates(
 
     The ``agent-runtimes`` server inside a cloud runtime may register its agent
     under different names depending on how it was launched. Trying a few known
-    candidates (explicit agent name, agent spec id, pod name, then the default
+    candidates (explicit agent name, agentspec id, pod name, then the default
     route) makes cloud execution resilient.
     """
     candidates: list[str] = []

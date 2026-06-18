@@ -13,9 +13,10 @@ import requests
 import typer
 import yaml
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.displays.runtimes import display_runtimes
 from datalayer_core.agents.agent_local import (
     DEFAULT_LOCAL_AGENT_NAME,
     DEFAULT_LOCAL_HOST,
@@ -25,6 +26,8 @@ from datalayer_core.agents.agent_local import (
     start_local_agent_runtime,
     terminate_local_agent_runtime,
 )
+from datalayer_core.utils.network import fetch
+from datalayer_core.utils.date import timestamp_to_local_date
 from datalayer_core.utils.urls import DatalayerURLs
 
 DEFAULT_AGENT_SPEC_ID = "example-simple"
@@ -98,6 +101,127 @@ def _load_agent_spec(spec_source: str) -> dict[str, Any]:
     return parsed
 
 
+def _resolve_billable_account_details(
+    *,
+    client: DatalayerClient,
+    billable_account_uid: str,
+) -> dict[str, str]:
+    """Resolve account metadata from IAM whoami/memberships payloads.
+
+    When no explicit billable account UID is provided by the runtime payload,
+    fall back to the authenticated user profile from whoami.
+    """
+
+    resolved_token = str(client._get_token() or "").strip()
+    if not resolved_token:
+        return {"uid": billable_account_uid} if billable_account_uid else {}
+
+    iam_base = str(client.urls.iam_url).rstrip("/")
+    headers = {"Authorization": f"Bearer {resolved_token}"}
+
+    try:
+        whoami_response = requests.get(
+            f"{iam_base}/api/iam/v1/whoami",
+            headers=headers,
+            timeout=10,
+        )
+    except Exception:
+        whoami_response = None
+
+    if whoami_response is not None and whoami_response.status_code == 200:
+        payload = whoami_response.json()
+        profile = payload.get("profile") or {}
+        profile_uid = str(profile.get("uid") or "").strip()
+        if profile_uid and (not billable_account_uid or profile_uid == billable_account_uid):
+            full_name = str(profile.get("name") or "").strip()
+            if not full_name:
+                first_name = str(profile.get("first_name") or "").strip()
+                last_name = str(profile.get("last_name") or "").strip()
+                full_name = " ".join(p for p in [first_name, last_name] if p)
+            return {
+                "uid": profile_uid,
+                "handle": str(profile.get("handle") or "").strip(),
+                "type": str(profile.get("type") or "user").strip() or "user",
+                "name": full_name,
+                "description": str(profile.get("description") or "").strip(),
+            }
+
+    try:
+        memberships_response = requests.get(
+            f"{iam_base}/api/iam/v1/memberships",
+            headers=headers,
+            timeout=10,
+        )
+    except Exception:
+        memberships_response = None
+
+    if memberships_response is not None and memberships_response.status_code == 200:
+        memberships_payload = memberships_response.json()
+        memberships = memberships_payload.get("memberships") or []
+        for membership in memberships:
+            uid = str((membership or {}).get("uid") or "").strip()
+            if uid == billable_account_uid:
+                return {
+                    "uid": billable_account_uid,
+                    "handle": str((membership or {}).get("handle") or "").strip(),
+                    "type": str((membership or {}).get("type") or "").strip(),
+                    "name": str((membership or {}).get("name") or "").strip(),
+                    "description": str(
+                        (membership or {}).get("description") or ""
+                    ).strip(),
+                }
+
+    return {"uid": billable_account_uid} if billable_account_uid else {}
+
+
+def _resolve_agentspec_label(runtime_payload: dict[str, Any]) -> str:
+    """Best-effort extraction of agentspec identifier from runtime payload."""
+    candidates = [
+        runtime_payload.get("agent_spec_id"),
+        runtime_payload.get("agentspec_id"),
+        runtime_payload.get("agentSpecId"),
+    ]
+    for candidate in candidates:
+        value = str(candidate or "").strip()
+        if value:
+            return value
+    return "n/a"
+
+
+def _billable_uid_label(
+    *,
+    billable_uid: str,
+    authenticated_uid: str,
+    rich: bool = False,
+) -> str:
+    """Human label for billable UID in text/raw outputs."""
+    if billable_uid and authenticated_uid and billable_uid == authenticated_uid:
+        return "[bold green]me[/bold green]" if rich else "me"
+    return billable_uid or "n/a"
+
+
+def _print_runtime_summary_panel(
+    *,
+    title: str,
+    identifier: str,
+    agentspec: str,
+    url: str,
+) -> None:
+    """Render a compact runtime summary panel."""
+    lines = [
+        f"Identifier: {identifier}",
+        f"Agentspec: {agentspec}",
+        f"URL: {url}",
+    ]
+    console.print(
+        Panel(
+            "\n".join(lines),
+            title=title,
+            border_style="green",
+        )
+    )
+
+
 def _create_local_agent_runtime(
     *,
     agent_spec_id: str,
@@ -150,7 +274,7 @@ def _create_local_agent_runtime(
             f"[green]Local agent runtime '{agent_name}' started![/green]"
         )
         console.print(f"Base URL: {runtime.base_url}")
-        console.print(f"Agent spec id: {agent_spec_id}")
+        console.print(f"Agentspec id: {agent_spec_id}")
         console.print(f"Chat endpoint: {runtime.chat_endpoint}")
         console.print("[dim]Press Ctrl+C to stop the local runtime.[/dim]")
 
@@ -186,23 +310,62 @@ def list_agents(
     try:
         client = _make_client(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
         runtimes = client.list_runtimes()
-        runtime_dicts: list[dict[str, Any]] = []
+
+        authenticated_uid = str(
+            _resolve_billable_account_details(
+                client=client,
+                billable_account_uid="",
+            ).get("uid")
+            or ""
+        ).strip()
+
+        table = Table(title="Agents")
+        table.add_column("ID", style="cyan", no_wrap=True)
+        table.add_column("Name", style="cyan", no_wrap=True)
+        table.add_column("Environment", style="cyan", no_wrap=True)
+        table.add_column("Billable Account UID", style="cyan", no_wrap=True)
+        table.add_column("Expired At", style="cyan", no_wrap=True)
+
         for runtime in runtimes:
-            runtime_dicts.append(
-                {
-                    "given_name": runtime.name,
-                    "environment_name": runtime.environment,
-                    "pod_name": runtime.pod_name,
-                    "ingress": runtime.ingress,
-                    "reservation_id": runtime.reservation_id,
-                    "uid": runtime.uid,
-                    "burning_rate": runtime.burning_rate,
-                    "token": runtime.jupyter_token,
-                    "started_at": runtime.started_at,
-                    "expired_at": runtime.expired_at,
-                }
+            runtime_payload: dict[str, Any] = {}
+            ownership_payload: dict[str, Any] = {}
+            pod_name = str(runtime.pod_name or "")
+            if pod_name:
+                try:
+                    runtime_response = client._get_runtime(pod_name)
+                    runtime_payload = runtime_response.get("runtime") or {}
+                    ownership_payload = runtime_payload.get("ownership") or {}
+                except Exception:
+                    runtime_payload = {}
+                    ownership_payload = {}
+
+            billable_uid = str(
+                runtime_payload.get("billable_account_uid")
+                or ownership_payload.get("billable_account_uid")
+                or getattr(runtime, "billable_account_uid", "")
+                or ""
+            ).strip()
+            if not billable_uid and authenticated_uid:
+                billable_uid = authenticated_uid
+
+            display_billable_uid = _billable_uid_label(
+                billable_uid=billable_uid,
+                authenticated_uid=authenticated_uid,
+                rich=True,
             )
-        display_runtimes(runtime_dicts)
+
+            expired_at = runtime.expired_at
+            table.add_row(
+                pod_name,
+                str(runtime.name or ""),
+                str(runtime.environment or ""),
+                display_billable_uid,
+                "Never"
+                if expired_at is None
+                else timestamp_to_local_date(expired_at),
+            )
+
+        console.print(table)
     except Exception as exc:
         console.print(f"[red]Error listing agent runtimes: {exc}[/red]")
         raise typer.Exit(1)
@@ -220,14 +383,14 @@ def create_agent_runtime(
         None,
         "--agentspec-id",
         help=(
-            "Agent spec id for runtime bootstrap. "
+            "Agentspec id for runtime bootstrap. "
             f"Defaults to {DEFAULT_AGENT_SPEC_ID} when --agentspec is omitted."
         ),
     ),
     spec: Optional[str] = typer.Option(
         None,
         "--agentspec",
-        help="Agent spec source as YAML/JSON URL or local file path.",
+        help="Agentspec source as YAML/JSON URL or local file path.",
     ),
     time_reservation: Optional[float] = typer.Option(
         10.0,
@@ -300,7 +463,7 @@ def create_agent_runtime(
         help="Log level for the local runtime process (only with --local).",
     ),
 ) -> None:
-    """Create a new runtime preloaded with an agent spec.
+    """Create a new runtime preloaded with an agentspec.
 
     By default creates a cloud runtime. Use ``--local`` for a local
     ``agent-runtimes`` server, or ``--cloud`` to be explicit.
@@ -374,6 +537,35 @@ def create_agent_runtime(
             billable_account_handle=billable_account_handle,
         )
 
+        authenticated_uid = str(
+            _resolve_billable_account_details(
+                client=client,
+                billable_account_uid="",
+            ).get("uid")
+            or ""
+        ).strip()
+
+        created_runtime_payload: dict[str, Any] = {}
+        ownership_payload: dict[str, Any] = {}
+        created_pod_name = str(runtime.pod_name or "")
+        if created_pod_name:
+            try:
+                created_runtime_response = client._get_runtime(created_pod_name)
+                created_runtime_payload = created_runtime_response.get("runtime") or {}
+                ownership_payload = created_runtime_payload.get("ownership") or {}
+            except Exception:
+                created_runtime_payload = {}
+                ownership_payload = {}
+
+        billable_uid = str(
+            created_runtime_payload.get("billable_account_uid")
+            or ownership_payload.get("billable_account_uid")
+            or billable_account_uid
+            or ""
+        ).strip()
+        if not billable_uid and authenticated_uid:
+            billable_uid = authenticated_uid
+
         if raw:
             payload = {
                 "success": True,
@@ -387,6 +579,11 @@ def create_agent_runtime(
                     "burning_rate": runtime.burning_rate,
                     "started_at": runtime.started_at,
                     "expired_at": runtime.expired_at,
+                    "billable_account_uid": billable_uid or None,
+                    "billable_account_uid_label": _billable_uid_label(
+                        billable_uid=billable_uid,
+                        authenticated_uid=authenticated_uid,
+                    ),
                 },
                 "agent_spec_id": resolved_spec_id,
                 "agent_spec_source": spec or "",
@@ -394,15 +591,15 @@ def create_agent_runtime(
             console.print(json.dumps(payload, ensure_ascii=False))
             return
 
-        console.print(f"[green]Agent runtime '{runtime.name}' created successfully![/green]")
-        if runtime.pod_name:
-            console.print(f"Pod: {runtime.pod_name}")
-        if runtime.ingress:
-            console.print(f"Ingress: {runtime.ingress}")
-        if resolved_spec_id:
-            console.print(f"Agent spec id: {resolved_spec_id}")
-        elif spec:
-            console.print(f"Agent spec source: {spec}")
+        spec_label = resolved_spec_id or spec or "n/a"
+        identifier = str(runtime.pod_name or runtime.uid or runtime.name or "")
+        url = str(runtime.ingress or "")
+        _print_runtime_summary_panel(
+            title="Agent Runtime Created",
+            identifier=identifier,
+            agentspec=spec_label,
+            url=url,
+        )
 
     except typer.Exit:
         raise
@@ -467,7 +664,28 @@ def get_agent_runtime(
                 raise typer.Exit(0)
             pod_name = selected
 
+        runtime_response = client._get_runtime(pod_name)
+        runtime_payload = runtime_response.get("runtime") or {}
+        ownership_payload = runtime_payload.get("ownership") or {}
         runtime = client.get_runtime(pod_name)
+
+        authenticated_uid = str(
+            _resolve_billable_account_details(
+                client=client,
+                billable_account_uid="",
+            ).get("uid")
+            or ""
+        ).strip()
+
+        billable_uid = str(
+            runtime_payload.get("billable_account_uid")
+            or ownership_payload.get("billable_account_uid")
+            or getattr(runtime, "billable_account_uid", "")
+            or ""
+        ).strip()
+        if not billable_uid and authenticated_uid:
+            billable_uid = authenticated_uid
+
         runtime_dict = {
             "given_name": runtime.name,
             "environment_name": runtime.environment,
@@ -479,6 +697,11 @@ def get_agent_runtime(
             "token": runtime.jupyter_token,
             "started_at": runtime.started_at,
             "expired_at": runtime.expired_at,
+            "billable_account_uid": billable_uid or None,
+            "billable_account_uid_label": _billable_uid_label(
+                billable_uid=billable_uid,
+                authenticated_uid=authenticated_uid,
+            ),
         }
 
         if raw:
@@ -489,7 +712,12 @@ def get_agent_runtime(
             )
             return
 
-        display_runtimes([runtime_dict])
+        _print_runtime_summary_panel(
+            title="Agent Runtime",
+            identifier=str(runtime.pod_name or runtime.uid or runtime.name or ""),
+            agentspec=_resolve_agentspec_label(runtime_payload),
+            url=str(runtime.ingress or ""),
+        )
 
     except typer.Exit:
         raise
@@ -673,3 +901,306 @@ def agents_ls(
 ) -> None:
     """List running agent runtimes (root command alias)."""
     list_agents(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
+
+
+@app.command(name="inspect")
+def inspect_agent_runtime(
+    agent: Optional[str] = typer.Option(
+        None,
+        "--agent",
+        "-a",
+        help="Agent identifier (pod name, uid, or given name). Defaults to first running runtime.",
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
+) -> None:
+    """Inspect an agent runtime and list available kernels."""
+    try:
+        client = _make_client(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
+        runtimes = client.list_runtimes()
+        if not runtimes:
+            console.print("[yellow]No running runtimes found.[/yellow]")
+            raise typer.Exit(1)
+
+        selected = None
+        if agent:
+            for candidate in runtimes:
+                if agent in {candidate.pod_name, candidate.uid, candidate.name}:
+                    selected = candidate
+                    break
+            if selected is None:
+                console.print(f"[red]Agent '{agent}' not found.[/red]")
+                raise typer.Exit(1)
+        else:
+            selected = runtimes[0]
+
+        pod_name = selected.pod_name or ""
+        runtime_response = client._get_runtime(pod_name)
+        runtime_payload = runtime_response.get("runtime") or {}
+        ownership_payload = runtime_payload.get("ownership") or {}
+
+        refreshed = client.get_runtime(pod_name)
+        endpoint = str(refreshed.ingress or "").rstrip("/")
+        runtime_token = str(refreshed.jupyter_token or client._get_token() or "")
+        if not endpoint:
+            console.print("[red]Runtime has no ingress endpoint.[/red]")
+            raise typer.Exit(1)
+
+        billable_account_uid = str(
+            runtime_payload.get("billable_account_uid")
+            or ownership_payload.get("billable_account_uid")
+            or ""
+        ).strip()
+        billable_account_handle = str(
+            runtime_payload.get("billable_account_handle")
+            or ownership_payload.get("billable_account_handle")
+            or ""
+        ).strip()
+        billable_account_kind = str(
+            runtime_payload.get("billable_account_kind")
+            or ownership_payload.get("billable_account_kind")
+            or runtime_payload.get("billable_account_type")
+            or ownership_payload.get("billable_account_type")
+            or ""
+        ).strip()
+
+        account_details = _resolve_billable_account_details(
+            client=client,
+            billable_account_uid=billable_account_uid,
+        )
+        authenticated_uid = str(
+            _resolve_billable_account_details(
+                client=client,
+                billable_account_uid="",
+            ).get("uid")
+            or ""
+        ).strip()
+        billable_account_uid = str(
+            account_details.get("uid") or billable_account_uid or ""
+        ).strip()
+        display_billable_uid = _billable_uid_label(
+            billable_uid=billable_account_uid,
+            authenticated_uid=authenticated_uid,
+            rich=True,
+        )
+        resolved_handle = str(
+            account_details.get("handle") or billable_account_handle or ""
+        ).strip()
+        resolved_kind = str(
+            account_details.get("type") or billable_account_kind or ""
+        ).strip()
+        resolved_name = str(account_details.get("name") or "").strip()
+        resolved_description = str(account_details.get("description") or "").strip()
+
+        kernel_endpoints = [f"{endpoint}/api/kernels"]
+        if "/jupyter/server/" in endpoint:
+            host_prefix, remainder = endpoint.split("/jupyter/server/", 1)
+            path_parts = [part for part in remainder.split("/") if part]
+            if path_parts:
+                pool = path_parts[0]
+                kernel_endpoints.append(
+                    f"{host_prefix}/jupyter/server/{pool}/api/kernels"
+                )
+            kernel_endpoints.append(f"{host_prefix}/jupyter/api/kernels")
+        kernel_endpoints.append(f"{endpoint}/jupyter/api/kernels")
+
+        # Deduplicate while preserving order.
+        deduped_kernel_endpoints: list[str] = []
+        seen_endpoints: set[str] = set()
+        for kernel_url in kernel_endpoints:
+            if kernel_url not in seen_endpoints:
+                seen_endpoints.add(kernel_url)
+                deduped_kernel_endpoints.append(kernel_url)
+        kernel_endpoints = deduped_kernel_endpoints
+
+        kernels: list[Any] = []
+        kernel_endpoint_used = ""
+        kernel_lookup_error = ""
+        for kernel_url in kernel_endpoints:
+            try:
+                response = fetch(kernel_url, token=runtime_token, timeout=15)
+                payload = response.json() if response.content else []
+                if isinstance(payload, list):
+                    kernels = payload
+                else:
+                    kernels = []
+                kernel_endpoint_used = kernel_url
+                kernel_lookup_error = ""
+                break
+            except Exception as exc:
+                kernel_lookup_error = str(exc)
+
+        if not isinstance(kernels, list):
+            kernels = []
+
+        _print_runtime_summary_panel(
+            title="Agent Runtime Inspection",
+            identifier=str(refreshed.pod_name or refreshed.uid or refreshed.name or ""),
+            agentspec=_resolve_agentspec_label(runtime_payload),
+            url=endpoint,
+        )
+
+        summary = Table(title="Agent Runtime Inspection")
+        summary.add_column("Field", style="cyan")
+        summary.add_column("Value")
+        summary.add_row("Runtime", str(refreshed.name or pod_name))
+        summary.add_row("Pod", str(pod_name))
+        summary.add_row("UID", str(refreshed.uid or ""))
+        summary.add_row("Ingress", endpoint)
+        summary.add_row("Billable Account UID", display_billable_uid)
+        if kernel_endpoint_used:
+            summary.add_row("Kernels", str(len(kernels)))
+            summary.add_row("Kernel API", kernel_endpoint_used)
+        else:
+            summary.add_row("Kernels", "unavailable")
+            summary.add_row("Kernel API", "not exposed via ingress")
+        console.print(summary)
+
+        account_table = Table(title="Billable Account")
+        account_table.add_column("Field", style="cyan")
+        account_table.add_column("Value")
+        account_table.add_row("UID", display_billable_uid)
+        account_table.add_row("Handle", resolved_handle or "n/a")
+        account_table.add_row("Type", resolved_kind or "n/a")
+        account_table.add_row("Name", resolved_name or "n/a")
+        account_table.add_row("Description", resolved_description or "n/a")
+        console.print(account_table)
+
+        kernels_table = Table(title="Available Kernels")
+        kernels_table.add_column("ID", style="green")
+        kernels_table.add_column("Name")
+        kernels_table.add_column("State")
+        kernels_table.add_column("Connections")
+        kernels_table.add_column("Last Activity")
+
+        for kernel in kernels:
+            kernels_table.add_row(
+                str((kernel or {}).get("id") or ""),
+                str((kernel or {}).get("name") or ""),
+                str((kernel or {}).get("execution_state") or ""),
+                str((kernel or {}).get("connections") or "0"),
+                str((kernel or {}).get("last_activity") or ""),
+            )
+
+        if kernels:
+            console.print(kernels_table)
+        else:
+            if kernel_lookup_error:
+                console.print(
+                    "[yellow]Kernel list unavailable (all probed endpoints failed).[/yellow]"
+                )
+                console.print(
+                    "[dim]Probed endpoints:[/dim]"
+                )
+                for kernel_url in kernel_endpoints:
+                    console.print(f"[dim]- {kernel_url}[/dim]")
+                console.print(f"[dim]Last error: {kernel_lookup_error}[/dim]")
+            else:
+                console.print("[yellow]No kernels returned by runtime API.[/yellow]")
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        console.print(f"[red]Error inspecting agent runtime: {exc}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command(name="health")
+def health_agent_runtime(
+    agent: Optional[str] = typer.Option(
+        None,
+        "--agent",
+        "-a",
+        help="Agent identifier (pod name, uid, or given name). Defaults to first running runtime.",
+    ),
+    token: Optional[str] = typer.Option(
+        None,
+        "--token",
+        help="Authentication token (Bearer token for API requests).",
+    ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        "--api-key",
+        help="Authentication API key (alias for --token).",
+    ),
+    iam_url: Optional[str] = typer.Option(
+        None,
+        "--iam-url",
+        help="Datalayer IAM server URL",
+    ),
+    runtimes_url: Optional[str] = typer.Option(
+        None,
+        "--runtimes-url",
+        help="Datalayer Runtimes server URL",
+    ),
+) -> None:
+    """Check agent runtime health by executing a probe on the sandbox."""
+    try:
+        client = _make_client(
+            token=token or api_key,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+        )
+        runtimes = client.list_runtimes()
+        if not runtimes:
+            console.print("[yellow]No running runtimes found.[/yellow]")
+            raise typer.Exit(1)
+
+        selected = None
+        if agent:
+            for candidate in runtimes:
+                if agent in {candidate.pod_name, candidate.uid, candidate.name}:
+                    selected = candidate
+                    break
+            if selected is None:
+                console.print(f"[red]Agent '{agent}' not found.[/red]")
+                raise typer.Exit(1)
+        else:
+            selected = runtimes[0]
+
+        pod_name = selected.pod_name or selected.uid or selected.name or ""
+        refreshed = client.get_runtime(pod_name)
+        health = client.check_runtime_health(
+            pod_name,
+            api_key=api_key,
+        )
+
+        health_status = "alive" if bool(health.get("success")) else "unreachable"
+        detail = str(health.get("message") or "health probe failed")
+        probe_mode = str(health.get("probe_mode") or "n/a")
+
+        table = Table(title="Agent Runtime Health")
+        table.add_column("Field", style="cyan")
+        table.add_column("Value")
+        table.add_row("Runtime", str(refreshed.name or pod_name))
+        table.add_row("Pod", str(pod_name))
+        table.add_row("UID", str(refreshed.uid or ""))
+        table.add_row("Ingress", str(refreshed.ingress or "n/a"))
+        table.add_row("Probe", probe_mode)
+        table.add_row("Status", health_status)
+        table.add_row("Detail", detail)
+        console.print(table)
+
+        stdout_tail = str(health.get("stdout_tail") or "").strip()
+        if stdout_tail:
+            console.print(f"[dim]Probe stdout: {stdout_tail}[/dim]")
+
+        if health_status != "alive":
+            raise typer.Exit(1)
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        console.print(f"[red]Error checking agent runtime health: {exc}[/red]")
+        raise typer.Exit(1)

@@ -119,7 +119,7 @@ export class ProjectDTO {
     return this._data.attached_agent_pod_name_s || undefined;
   }
 
-  /** Attached agent spec ID (e.g., 'data-acquisition'), if any. */
+  /** Attached agentspec ID (e.g., 'data-acquisition'), if any. */
   get attachedAgentSpecId(): string | undefined {
     this._checkDeleted();
     return this._data.attached_agent_spec_id_s || undefined;

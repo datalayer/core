@@ -30,7 +30,7 @@ def _new_runtime_checkpoints_table(title: str = "Runtime Checkpoints") -> Table:
     table = Table(title=title)
     table.add_column("ID", style="cyan", no_wrap=True)
     table.add_column("Runtime", style="green", no_wrap=True)
-    table.add_column("Agent Spec", style="magenta", no_wrap=True)
+    table.add_column("Agentspec", style="magenta", no_wrap=True)
     table.add_column("Name", style="cyan", no_wrap=True)
     table.add_column("Status", style="yellow", no_wrap=True)
     table.add_column("Updated", style="dim", no_wrap=True)

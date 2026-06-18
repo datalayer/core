@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import os
+
 from typing import Any, Optional
 
 
@@ -22,7 +24,12 @@ class EvalsMixin:
         json_body: Optional[dict[str, Any]] = None,
     ) -> dict[str, Any]:
         query: dict[str, Any] = dict(params or {})
-        resolved_account_uid = billable_account_uid or account_uid
+        resolved_account_uid = (
+            billable_account_uid
+            or account_uid
+            or os.environ.get("DATALAYER_ACCOUNT_UID")
+            or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID")
+        )
         if resolved_account_uid:
             query["account_uid"] = resolved_account_uid
         response = self._fetch(  # type: ignore

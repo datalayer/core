@@ -41,7 +41,7 @@ datalayer_flags.update(
 aliases = dict(datalayer_aliases)
 aliases.update(
     {
-        "runtime": "RuntimesConsoleApp.runtime_name",
+        "agent": "RuntimesConsoleApp.runtime_name",
     }
 )
 

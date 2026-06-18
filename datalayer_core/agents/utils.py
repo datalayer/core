@@ -144,9 +144,9 @@ def create_cloud_agent_runtime(
     name : Optional[str]
         Optional runtime name.
     agent_spec_id : Optional[str]
-        Registered agent spec id (ignored when ``agent_spec`` is provided).
+        Registered agentspec id (ignored when ``agent_spec`` is provided).
     agent_spec : Optional[dict[str, Any]]
-        Inline agent spec payload (takes precedence over ``agent_spec_id``).
+        Inline agentspec payload (takes precedence over ``agent_spec_id``).
     credits_limit : Optional[float]
         Target credits budget used to derive ``time_reservation`` when the
         latter is not supplied.

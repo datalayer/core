@@ -30,9 +30,9 @@ export interface RuntimeCheckpointData {
   description: string;
   /** Runtime that was checkpointed */
   runtime_uid: string;
-  /** Agent spec identifier (e.g. "mocks/monitor-sales-kpis") */
+  /** Agentspec identifier (e.g. "mocks/monitor-sales-kpis") */
   agent_spec_id: string;
-  /** Full agent spec payload */
+  /** Full agentspec payload */
   agentspec: Record<string, any>;
   /** Additional metadata */
   metadata: Record<string, any>;
@@ -58,9 +58,9 @@ export interface CreateRuntimeCheckpointRequest {
   name?: string;
   /** Checkpoint description */
   description?: string;
-  /** Agent spec identifier */
+  /** Agentspec identifier */
   agentspec_id?: string;
-  /** Full agent spec payload to persist */
+  /** Full agentspec payload to persist */
   agentspec?: Record<string, any>;
   /** Additional metadata */
   metadata?: Record<string, any>;

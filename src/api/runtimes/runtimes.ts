@@ -254,9 +254,9 @@ export interface PauseRuntimeBody {
   name?: string;
   /** Checkpoint description */
   description?: string;
-  /** Agent spec identifier */
+  /** Agentspec identifier */
   agent_spec_id?: string;
-  /** Full agent spec payload to persist with the checkpoint */
+  /** Full agentspec payload to persist with the checkpoint */
   agentspec?: Record<string, any>;
   /** Additional metadata */
   metadata?: Record<string, any>;
@@ -305,7 +305,7 @@ export interface ResumeRuntimeBody {
   checkpoint_mode?: 'criu' | 'light';
   /** Explicit checkpoint identifier */
   checkpoint_id?: string;
-  /** Agent spec identifier (required by the operator for restore) */
+  /** Agentspec identifier (required by the operator for restore) */
   agent_spec_id?: string;
   /** Specific checkpoint timestamp to restore from */
   checkpoint_timestamp?: string;

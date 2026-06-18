@@ -72,11 +72,11 @@ def checkpoints_callback(ctx: typer.Context) -> None:
 
 @app.command(name="ls")
 def checkpoints_list(
-    runtime_uid: Optional[str] = typer.Option(
+    agent_uid: Optional[str] = typer.Option(
         None,
-        "--runtime",
-        "-r",
-        help="Filter checkpoints by runtime UID (pod name). If omitted, lists all checkpoints.",
+        "--agent",
+        "-a",
+        help="Filter checkpoints by agent UID (pod name). If omitted, lists all checkpoints.",
     ),
     token: Optional[str] = typer.Option(
         None,
@@ -91,8 +91,8 @@ def checkpoints_list(
 ) -> None:
     """List runtime checkpoints."""
     try:
-        if runtime_uid:
-            path = f"/runtime-checkpoints/{runtime_uid}"
+        if agent_uid:
+            path = f"/runtime-checkpoints/{agent_uid}"
         else:
             path = "/runtime-checkpoints"
         data = _fetch_api(path, token=token, runtimes_url=runtimes_url)
@@ -109,11 +109,11 @@ def checkpoints_list(
 
 
 def checkpoints_ls(
-    runtime_uid: Optional[str] = typer.Option(
+    agent_uid: Optional[str] = typer.Option(
         None,
-        "--runtime",
-        "-r",
-        help="Filter checkpoints by runtime UID (pod name). If omitted, lists all checkpoints.",
+        "--agent",
+        "-a",
+        help="Filter checkpoints by agent UID (pod name). If omitted, lists all checkpoints.",
     ),
     token: Optional[str] = typer.Option(
         None,
@@ -127,17 +127,17 @@ def checkpoints_ls(
     ),
 ) -> None:
     """List runtime checkpoints (root command alias)."""
-    checkpoints_list(runtime_uid=runtime_uid, token=token, runtimes_url=runtimes_url)
+    checkpoints_list(agent_uid=agent_uid, token=token, runtimes_url=runtimes_url)
 
 
 @app.command(name="delete")
 def checkpoints_delete(
     checkpoint_uid: str = typer.Argument(..., help="Checkpoint UID to delete"),
-    runtime_uid: Optional[str] = typer.Option(
+    agent_uid: Optional[str] = typer.Option(
         None,
-        "--runtime",
-        "-r",
-        help="Runtime UID that owns the checkpoint. If omitted, will be looked up automatically.",
+        "--agent",
+        "-a",
+        help="Agent UID that owns the checkpoint. If omitted, will be looked up automatically.",
     ),
     token: Optional[str] = typer.Option(
         None,
@@ -158,8 +158,8 @@ def checkpoints_delete(
 ) -> None:
     """Delete a runtime checkpoint."""
     try:
-        # If runtime_uid not provided, look up the checkpoint first.
-        if not runtime_uid:
+        # If agent_uid not provided, look up the checkpoint first.
+        if not agent_uid:
             # List all checkpoints and find the one matching the uid.
             data = _fetch_api(
                 "/runtime-checkpoints", token=token, runtimes_url=runtimes_url
@@ -169,16 +169,16 @@ def checkpoints_delete(
             if not match:
                 console.print(f"[red]Checkpoint {checkpoint_uid} not found.[/red]")
                 raise typer.Exit(1)
-            runtime_uid = match["runtime_uid"]
+            agent_uid = match["runtime_uid"]
 
         if not yes:
             typer.confirm(
-                f"Delete checkpoint {checkpoint_uid} from runtime {runtime_uid}?",
+                f"Delete checkpoint {checkpoint_uid} from agent {agent_uid}?",
                 abort=True,
             )
 
         _fetch_api(
-            f"/runtime-checkpoints/{runtime_uid}/{checkpoint_uid}",
+            f"/runtime-checkpoints/{agent_uid}/{checkpoint_uid}",
             method="DELETE",
             token=token,
             runtimes_url=runtimes_url,

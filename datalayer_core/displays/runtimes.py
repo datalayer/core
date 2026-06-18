@@ -13,7 +13,7 @@ from rich.table import Table
 from datalayer_core.utils.date import timestamp_to_local_date
 
 
-def _new_runtime_table(title: str = "Runtimes") -> Table:
+def _new_runtime_table(title: str = "Agents") -> Table:
     """
     Create a new table for displaying runtimes.
 
@@ -64,7 +64,7 @@ def display_runtimes(runtimes: list[dict[str, Any]]) -> None:
     runtimes : list[dict[str, Any]]
         List of runtime dictionaries to display.
     """
-    table = _new_runtime_table(title="Runtimes")
+    table = _new_runtime_table(title="Agents")
     for runtime in runtimes:
         _add_runtime_to_table(table, runtime)
     console = Console()

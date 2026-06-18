@@ -14,7 +14,7 @@ from datalayer_core.utils.urls import DatalayerURLs
 
 # Create a Typer app for console commands
 app = typer.Typer(
-    name="console", help="Runtime console commands", invoke_without_command=True
+    name="console", help="Agent console commands", invoke_without_command=True
 )
 
 console = Console()
@@ -22,7 +22,7 @@ console = Console()
 
 @app.callback()
 def console_callback(ctx: typer.Context) -> None:
-    """Runtime console commands."""
+    """Agent console commands."""
     if ctx.invoked_subcommand is None:
         typer.echo(ctx.get_help())
 
@@ -31,8 +31,8 @@ def console_callback(ctx: typer.Context) -> None:
 def console_connect(
     runtime_name: Optional[str] = typer.Option(
         None,
-        "--runtime",
-        help="The name of the Runtime to connect to",
+        "--agent",
+        help="The name of the Agent to connect to",
     ),
     run_url: Optional[str] = typer.Option(
         None,
@@ -73,22 +73,22 @@ def console_connect(
         None, help="Additional arguments to pass to the console application"
     ),
 ) -> None:
-    """Connect to a Datalayer runtime console."""
+    """Connect to a Datalayer agent console."""
     try:
         # Get URLs configuration
         urls = DatalayerURLs.from_environment(run_url=run_url)
 
-        console.print("[green]Starting Datalayer runtime console...[/green]")
+        console.print("[green]Starting Datalayer agent console...[/green]")
         console.print(f"Run URL: {urls.run_url}")
         if runtime_name:
-            console.print(f"Runtime: {runtime_name}")
+            console.print(f"Agent: {runtime_name}")
         console.print("[yellow]Press Ctrl+D or Ctrl+C to exit the console[/yellow]")
 
         # Prepare sys.argv for the RuntimesConsoleApp
         args = []
 
         if runtime_name:
-            args.extend(["--runtime", runtime_name])
+            args.extend(["--agent", runtime_name])
         if urls.run_url:
             args.extend(["--run-url", urls.run_url])
         if token:
@@ -124,7 +124,7 @@ def console_connect(
     except KeyboardInterrupt:
         console.print("\n[yellow]Console session ended.[/yellow]")
     except Exception as e:
-        console.print(f"[red]Error connecting to runtime console: {e}[/red]")
+        console.print(f"[red]Error connecting to agent console: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -134,8 +134,8 @@ def console_callback_default(
     ctx: typer.Context,
     runtime_name: Optional[str] = typer.Option(
         None,
-        "--runtime",
-        help="The name of the Runtime to connect to",
+        "--agent",
+        help="The name of the Agent to connect to",
     ),
     run_url: Optional[str] = typer.Option(
         None,
@@ -173,7 +173,7 @@ def console_callback_default(
         help="Connect to an existing kernel instead of starting a new one",
     ),
 ) -> None:
-    """Connect to a Datalayer runtime console (default behavior)."""
+    """Connect to a Datalayer agent console (default behavior)."""
     if ctx.invoked_subcommand is None:
         # Get any remaining arguments that weren't parsed
         extra_args: list[str] = []

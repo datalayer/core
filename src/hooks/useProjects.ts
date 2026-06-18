@@ -72,7 +72,7 @@ export type ProjectData = {
   isPublic: boolean;
   /** Attached agent (runtime) pod name, if any */
   attachedAgentPodName?: string;
-  /** Attached agent spec ID (e.g. 'data-acquisition'), if any */
+  /** Attached agentspec ID (e.g. 'data-acquisition'), if any */
   attachedAgentSpecId?: string;
 };
 
@@ -84,7 +84,7 @@ export type CreateProjectRequest = {
   name: string;
   /** Project description */
   description?: string;
-  /** Agent spec to attach (creates agent on project creation) */
+  /** Agentspec to attach (creates agent on project creation) */
   agentSpecId?: string;
 };
 
