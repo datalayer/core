@@ -375,6 +375,220 @@ def _extract_experiment_agentspec(experiment: dict[str, Any], runs: list[dict[st
     return agent_spec_id, agent_spec_name
 
 
+def _first_str(*candidates: Any) -> str:
+    """Return the first non-empty stripped string from the candidates."""
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip():
+            return candidate.strip()
+    return ""
+
+
+def _normalize_tags(value: Any) -> list[str]:
+    """Normalize a tags value (list or comma-separated string) to a list."""
+    if isinstance(value, (list, tuple)):
+        tags = [str(item).strip() for item in value if str(item).strip()]
+    elif isinstance(value, str):
+        tags = [token.strip() for token in value.split(",") if token.strip()]
+    else:
+        return []
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for tag in tags:
+        if tag not in seen:
+            seen.add(tag)
+            ordered.append(tag)
+    return ordered
+
+
+def _extract_experiment_agentspec_details(
+    experiment: dict[str, Any], runs: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Extract rich agentspec metadata from experiment/run payloads.
+
+    Mirrors the fields surfaced by the in-app Agentspec Details dialog
+    (name, description, version, model, tags, icon/emoji/color) by
+    inspecting the experiment config/summary, any inline ``agent_spec``
+    object, and the most recent run summaries.
+    """
+    config = experiment.get("config") if isinstance(experiment.get("config"), dict) else {}
+    summary = experiment.get("summary") if isinstance(experiment.get("summary"), dict) else {}
+    run_summaries = [
+        run.get("summary")
+        for run in runs
+        if isinstance(run, dict) and isinstance(run.get("summary"), dict)
+    ]
+
+    # Inline agent_spec objects can live under several keys/scopes.
+    inline_specs: list[dict[str, Any]] = []
+    for scope in (config, summary, *run_summaries):
+        if not isinstance(scope, dict):
+            continue
+        for key in ("agent_spec", "agentSpec", "agentspec"):
+            candidate = scope.get(key)
+            if isinstance(candidate, dict):
+                inline_specs.append(candidate)
+
+    def _pick(field: str, camel: str) -> str:
+        candidates: list[Any] = []
+        for spec in inline_specs:
+            candidates.extend([spec.get(field), spec.get(camel)])
+        for scope in (config, summary, *run_summaries):
+            if isinstance(scope, dict):
+                candidates.extend(
+                    [
+                        scope.get(f"agent_spec_{field}"),
+                        scope.get(f"agentSpec{camel[0].upper()}{camel[1:]}"),
+                    ]
+                )
+        return _first_str(*candidates)
+
+    tags_candidates: list[Any] = []
+    for spec in inline_specs:
+        tags_candidates.extend([spec.get("tags")])
+    for scope in (config, summary, *run_summaries):
+        if isinstance(scope, dict):
+            tags_candidates.extend(
+                [scope.get("agent_spec_tags"), scope.get("agentSpecTags")]
+            )
+    tags: list[str] = []
+    for candidate in tags_candidates:
+        tags = _normalize_tags(candidate)
+        if tags:
+            break
+
+    return {
+        "description": _pick("description", "description"),
+        "version": _pick("version", "version"),
+        "model": _pick("model", "model"),
+        "icon": _pick("icon", "icon"),
+        "emoji": _pick("emoji", "emoji"),
+        "color": _pick("color", "color"),
+        "tags": tags,
+    }
+
+
+def _merge_agentspec_details(target: dict[str, Any], details: dict[str, Any]) -> None:
+    """Merge non-empty agentspec detail fields into the aggregate record."""
+    for key in ("description", "version", "model", "icon", "emoji", "color"):
+        value = details.get(key)
+        if isinstance(value, str) and value.strip() and not str(target.get(key) or "").strip():
+            target[key] = value.strip()
+    incoming_tags = details.get("tags")
+    if isinstance(incoming_tags, list) and incoming_tags:
+        existing = target.get("tags")
+        if not isinstance(existing, list) or not existing:
+            target["tags"] = list(incoming_tags)
+
+
+_AGENTSPEC_REGISTRY_LOOKUP: Any = None
+_AGENTSPEC_REGISTRY_LOADED = False
+_AGENTSPEC_REGISTRY_MAP: dict[str, Any] | None = None
+
+
+def _load_agentspec_registry() -> tuple[dict[str, Any], Any]:
+    """Load the agent_runtimes agentspec catalog once and cache it.
+
+    Returns a tuple of ``(catalog_by_id, get_agent_spec)`` where the first is a
+    mapping built from ``list_agentspecs`` (the Python equivalent of the
+    in-app ``listAgentspecs``) keyed by both the full id and the id without a
+    trailing ``:version`` segment, and the second is a per-id lookup callable.
+    Either component may be empty/``None`` when ``agent_runtimes`` (or a given
+    API surface) is unavailable, so the report degrades gracefully.
+    """
+    global _AGENTSPEC_REGISTRY_LOADED, _AGENTSPEC_REGISTRY_LOOKUP, _AGENTSPEC_REGISTRY_MAP
+    if _AGENTSPEC_REGISTRY_LOADED:
+        return (_AGENTSPEC_REGISTRY_MAP or {}, _AGENTSPEC_REGISTRY_LOOKUP)
+    _AGENTSPEC_REGISTRY_LOADED = True
+
+    module = None
+    for module_name in ("agent_runtimes.specs.agents", "agent_runtimes"):
+        try:
+            module = __import__(module_name, fromlist=["*"])
+            break
+        except Exception:
+            module = None
+    if module is None:
+        return ({}, None)
+
+    # Per-id lookup (handles version suffixes) is available on both the new
+    # and legacy package layouts.
+    _AGENTSPEC_REGISTRY_LOOKUP = getattr(module, "get_agent_spec", None)
+
+    # Build a full catalog map from the list accessor, mirroring the UI which
+    # calls listAgentspecs() and indexes the result by id.
+    catalog: dict[str, Any] = {}
+    list_fn = getattr(module, "list_agentspecs", None) or getattr(
+        module, "list_agent_specs", None
+    )
+    specs: list[Any] = []
+    if callable(list_fn):
+        try:
+            specs = list(list_fn() or [])
+        except Exception:
+            specs = []
+    if not specs:
+        registry = getattr(module, "AGENTSPECS", None) or getattr(
+            module, "AGENT_SPECS", None
+        )
+        if isinstance(registry, dict):
+            specs = list(registry.values())
+    for spec in specs:
+        spec_id = str(getattr(spec, "id", "") or "").strip()
+        if not spec_id:
+            continue
+        catalog[spec_id] = spec
+        base = spec_id.rpartition(":")[0]
+        if base and base not in catalog:
+            catalog[base] = spec
+    _AGENTSPEC_REGISTRY_MAP = catalog
+    return (catalog, _AGENTSPEC_REGISTRY_LOOKUP)
+
+
+def _agentspec_registry_details(agent_spec_id: str) -> dict[str, Any]:
+    """Look up rich agentspec metadata from the agent_runtimes catalog.
+
+    Uses the bundled agent specification registry (the Python equivalent of
+    the in-app ``listAgentspecs``) to enrich the report with the canonical
+    name, description, version, model, tags, and display metadata for an
+    agentspec id. Returns an empty dict when the catalog or id is
+    unavailable, so the report still works without ``agent_runtimes``.
+    """
+    value = str(agent_spec_id or "").strip()
+    if not value:
+        return {}
+    catalog, lookup = _load_agentspec_registry()
+    spec = catalog.get(value)
+    if spec is None:
+        base = value.rpartition(":")[0]
+        if base:
+            spec = catalog.get(base)
+    if spec is None and callable(lookup):
+        try:
+            spec = lookup(value)
+        except Exception:
+            spec = None
+    if spec is None:
+        return {}
+
+    def _attr(*names: str) -> str:
+        for name in names:
+            candidate = getattr(spec, name, None)
+            if isinstance(candidate, str) and candidate.strip():
+                return candidate.strip()
+        return ""
+
+    return {
+        "name": _attr("name"),
+        "description": _attr("description"),
+        "version": _attr("version"),
+        "model": _attr("model"),
+        "icon": _attr("icon"),
+        "emoji": _attr("emoji"),
+        "color": _attr("color"),
+        "tags": _normalize_tags(getattr(spec, "tags", None)),
+    }
+
+
 def _report_data(
     client: DatalayerClient,
     evalset_id: str,
@@ -426,16 +640,36 @@ def _report_data(
         )
         runs = runs_payload.get("runs") or []
         agent_spec_id, agent_spec_name = _extract_experiment_agentspec(experiment, runs)
+        registry_details = (
+            _agentspec_registry_details(agent_spec_id) if agent_spec_id else {}
+        )
+        registry_name = str(registry_details.get("name") or "").strip()
+        if registry_name:
+            agent_spec_name = registry_name
         if agent_spec_id and agent_spec_id not in agentspec_by_id:
             agentspec_by_id[agent_spec_id] = {
                 "id": agent_spec_id,
                 "name": agent_spec_name or agent_spec_id,
                 "experiments": 0,
                 "runs": 0,
+                "experiment_names": [],
             }
         if agent_spec_id:
-            agentspec_by_id[agent_spec_id]["experiments"] += 1
-            agentspec_by_id[agent_spec_id]["runs"] += len(runs)
+            record = agentspec_by_id[agent_spec_id]
+            record["experiments"] += 1
+            record["runs"] += len(runs)
+            if experiment_name:
+                names = record.setdefault("experiment_names", [])
+                if experiment_name not in names:
+                    names.append(experiment_name)
+            # The agent_runtimes catalog is authoritative; fall back to any
+            # metadata embedded in the experiment/run payloads for fields the
+            # catalog does not provide (or when the catalog is unavailable).
+            _merge_agentspec_details(record, registry_details)
+            _merge_agentspec_details(
+                record,
+                _extract_experiment_agentspec_details(experiment, runs),
+            )
         total_runs = int(runs_payload.get("total") or len(runs))
         baseline, latest, drift = _compute_baseline_and_drift(runs)
 
@@ -1032,6 +1266,8 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
                 [
                     agent_spec_id,
                     str(item.get("name") or item.get("id") or ""),
+                    str(item.get("model") or "-"),
+                    str(item.get("version") or "-"),
                     str(int(item.get("experiments") or 0)),
                     str(int(item.get("runs") or 0)),
                     f"[Open]({agent_spec_link})" if agent_spec_link else "-",
@@ -1039,11 +1275,58 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
             )
         lines.extend(
             _markdown_table(
-                ["Agentspec ID", "Agentspec", "Experiments", "Runs", "Details"],
+                [
+                    "Agentspec ID",
+                    "Agentspec",
+                    "Model",
+                    "Version",
+                    "Experiments",
+                    "Runs",
+                    "Details",
+                ],
                 agentspec_rows,
-                ["left", "left", "right", "right", "left"],
+                ["left", "left", "left", "left", "right", "right", "left"],
             )
         )
+        lines.append("")
+        lines.append("### Agentspec Details")
+        lines.append("")
+        for item in agentspecs:
+            agent_spec_id = str(item.get("id") or "")
+            agent_spec_link = _agentspec_details_url(agent_spec_id)
+            display_name = str(item.get("name") or agent_spec_id or "-")
+            emoji = str(item.get("emoji") or "").strip()
+            heading = f"{emoji} {display_name}".strip()
+            lines.append(f"#### {heading}")
+            lines.append("")
+            lines.append(f"- ID: `{agent_spec_id or '-'}`")
+            description = str(item.get("description") or "").strip()
+            if description:
+                lines.append(f"- Description: {description}")
+            model = str(item.get("model") or "").strip()
+            if model:
+                lines.append(f"- Model: {model}")
+            version = str(item.get("version") or "").strip()
+            if version:
+                lines.append(f"- Version: {version}")
+            color = str(item.get("color") or "").strip()
+            if color:
+                lines.append(f"- Color: {color}")
+            tags = item.get("tags")
+            if isinstance(tags, list) and tags:
+                lines.append(f"- Tags: {', '.join(str(tag) for tag in tags)}")
+            experiment_names = item.get("experiment_names")
+            if isinstance(experiment_names, list) and experiment_names:
+                lines.append(
+                    f"- Experiments ({len(experiment_names)}): "
+                    + ", ".join(str(name) for name in experiment_names)
+                )
+            lines.append(
+                f"- Runs analysed: {int(item.get('runs') or 0)}"
+            )
+            if agent_spec_link:
+                lines.append(f"- Details: [Open in Datalayer]({agent_spec_link})")
+            lines.append("")
     else:
         lines.append("No agentspec metadata found in experiment/run payloads.")
     lines.append("")
@@ -2070,12 +2353,16 @@ def _print_report_console(report: dict[str, Any], run_limit: int) -> None:
         agentspec_table = Table(title="Agentspec Coverage")
         agentspec_table.add_column("Agentspec ID", style="cyan")
         agentspec_table.add_column("Agentspec", style="white")
+        agentspec_table.add_column("Model", style="white")
+        agentspec_table.add_column("Version", style="white")
         agentspec_table.add_column("Experiments", justify="right")
         agentspec_table.add_column("Runs", justify="right")
         for item in agentspecs:
             agentspec_table.add_row(
                 str(item.get("id") or ""),
                 str(item.get("name") or item.get("id") or ""),
+                str(item.get("model") or "-"),
+                str(item.get("version") or "-"),
                 str(int(item.get("experiments") or 0)),
                 str(int(item.get("runs") or 0)),
             )

@@ -942,6 +942,37 @@ export function StripeCheckout({
     void startSubscriptionCheckout(pendingSubscriptionPlan);
   }, [pendingSubscriptionPlan, startSubscriptionCheckout]);
 
+  // Auto-open the subscription checkout when the page is opened with
+  // `?upgrade` or `?action=upgrade` (e.g. from the Plan Overview
+  // "Upgrade to Team Plan" CTA).
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (autoActionTriggeredRef.current) {
+      return;
+    }
+    if (isPaidSubscription || isCancellationScheduled) {
+      return;
+    }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const action = String(params.get('action') || '').toLowerCase();
+      const shouldAutoUpgrade = params.has('upgrade') || action === 'upgrade';
+      if (shouldAutoUpgrade && pendingSubscriptionPlan) {
+        autoActionTriggeredRef.current = true;
+        startPendingSubscriptionCheckout();
+      }
+    } catch (_error) {
+      // Ignore malformed URLs.
+    }
+  }, [
+    isPaidSubscription,
+    isCancellationScheduled,
+    pendingSubscriptionPlan,
+    startPendingSubscriptionCheckout,
+  ]);
+
   const openPortal = useCallback((url?: string) => {
     if (!url) {
       return;
@@ -1226,7 +1257,7 @@ export function StripeCheckout({
           >
             {subscriptionPaymentIntentMutation.isPending
               ? 'Preparing Team plan checkout...'
-              : 'Update to Team Plan'}
+              : 'Upgrade to Team Plan'}
           </Button>
         </>
       ) : null}

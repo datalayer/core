@@ -26,6 +26,7 @@ classifiers = [
 ]
 # TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
+    "agent_runtimes",
     "httpx",
     "jupyter-console",
     "jupyter-kernel-client",
@@ -35,7 +36,7 @@ dependencies = [
     "mcp",
     "pydantic-settings",
     "pydantic[email]",
-    "pyyaml>=6.0",  # Require newer PyYAML that builds on Python 3.12+
+    "pyyaml>=6.0",
     "questionary",
     "requests>=2.33.0",
     "pygments>=2.20.0",
