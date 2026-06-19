@@ -385,6 +385,7 @@ def _failure_cause_detail_lines(cause: dict[str, Any]) -> list[str]:
         ("stage", "Stage"),
         ("type", "Type"),
         ("runtime_pod_name", "Runtime pod"),
+        ("runtime_id", "Runtime ID"),
         ("environment_name", "Environment"),
         ("execution_url", "Execution URL"),
     ):
@@ -2329,6 +2330,9 @@ def _run_detail_block_lines(
     runtime_pod = str(summary_for_header.get("runtime_pod_name") or "").strip()
     if runtime_pod:
         lines.append(f"- Runtime: `{runtime_pod}`")
+    runtime_id = str(summary_for_header.get("runtime_id") or "").strip()
+    if runtime_id:
+        lines.append(f"- Runtime ID: `{runtime_id}`")
     lines.append("")
 
     metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}

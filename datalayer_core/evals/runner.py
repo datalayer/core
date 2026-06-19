@@ -239,7 +239,8 @@ def execute_evalset_spec(
                 runtimes_by_spec[spec_id] = runtime
                 _emit(
                     f"Launched runtime for agentspec {spec_id}: "
-                    f"{getattr(runtime, 'pod_name', '')}"
+                    f"pod={getattr(runtime, 'pod_name', '')} "
+                    f"runtime_id={getattr(runtime, 'uid', '')}"
                 )
         elif auto_start_local_agent_runtime:
             local_runtime = start_local_agent_runtime(
@@ -282,10 +283,12 @@ def execute_evalset_spec(
 
             ingress = ""
             pod_name = ""
+            runtime_id = ""
             if target == "cloud":
                 runtime = runtimes_by_spec[spec_id]
                 ingress = str(getattr(runtime, "ingress", "") or "").strip()
                 pod_name = str(getattr(runtime, "pod_name", "") or "").strip()
+                runtime_id = str(getattr(runtime, "uid", "") or "").strip()
                 if not ingress or not pod_name:
                     raise RuntimeError(
                         f"Runtime missing ingress/pod for agentspec {spec_id}"
@@ -375,11 +378,14 @@ def execute_evalset_spec(
 
                 run_status = "failed" if failed_cases > 0 else "completed"
                 if target == "cloud":
-                    # Surface the runtime uid on every failure cause so the
-                    # report's failure-cause block (and UI) can show which pod
-                    # produced the failure for easier debugging.
+                    # Surface the runtime pod name and runtime id on every
+                    # failure cause so the report's failure-cause block (and UI)
+                    # can show which runtime produced the failure for easier
+                    # debugging.
                     for cause in failure_causes:
                         cause.setdefault("runtime_pod_name", pod_name)
+                        if runtime_id:
+                            cause.setdefault("runtime_id", runtime_id)
                 summary: dict[str, Any] = {
                     "launch_source": launch_source,
                     "run_mode": "batch",
@@ -393,6 +399,8 @@ def execute_evalset_spec(
                 }
                 if target == "cloud":
                     summary["runtime_pod_name"] = pod_name
+                    if runtime_id:
+                        summary["runtime_id"] = runtime_id
                 else:
                     summary["local_agent_base_url"] = local_base_url
                     summary["local_agent_id"] = agent_name
@@ -405,6 +413,8 @@ def execute_evalset_spec(
                 }
                 if target == "cloud":
                     report["runtime_pod_name"] = pod_name
+                    if runtime_id:
+                        report["runtime_id"] = runtime_id
                 else:
                     report["local_agent_base_url"] = local_base_url
                     report["local_agent_id"] = agent_name
