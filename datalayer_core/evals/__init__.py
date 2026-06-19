@@ -32,6 +32,7 @@ from datalayer_core.evals.report import (
     collect_report_failures,
     iter_report_runs,
 )
+from datalayer_core.evals.runner import execute_evalset_spec
 
 __all__ = [
     "average_latest_pass_rate",
@@ -39,6 +40,7 @@ __all__ = [
     "collect_report_failures",
     "evaluate_evalset",
     "evaluate_run",
+    "execute_evalset_spec",
     "iter_report_runs",
     "load_evalset_spec",
     "make_client",
