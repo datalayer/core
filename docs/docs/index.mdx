@@ -4,18 +4,202 @@ title: Datalayer Core
 slug: /
 ---
 
-import HomepageRow1 from '@site/src/components/HomepageRow1';
-import HomepageRow2 from '@site/src/components/HomepageRow2';
-import HomepageRow3 from '@site/src/components/HomepageRow3';
-import DocCardList from '@theme/DocCardList';
-import { useDocsSidebar } from '@docusaurus/plugin-content-docs/client';
-
 # Datalayer Core
 
-Datalayer Core is a solution to scale AI without losing the user's local productivity.
+Datalayer Core provides TypeScript and Python clients plus a CLI for authentication, runtime management, notebooks/documents, eval workflows, and operational APIs.
 
-<DocCardList items={useDocsSidebar().items.filter(i => (i.label !== 'Datalayer Core'))} />
+This page is the main API entrypoint and consolidates the previous API reference content.
 
-<HomepageRow1 />
-<HomepageRow2 />
-<HomepageRow3 />
+## Installation
+
+```bash
+npm install @datalayer/core
+```
+
+## Initialize The TypeScript Client
+
+```typescript
+import { DatalayerClient } from '@datalayer/core/client';
+import { DEFAULT_SERVICE_URLS } from '@datalayer/core/api/constants';
+
+const client = new DatalayerClient({
+	token: 'bearer-token-123',
+	iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
+	runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+	spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+});
+```
+
+## Handlers Pattern
+
+Use lifecycle handlers for logging, UX state, and centralized error handling.
+
+```typescript
+const client = new DatalayerClient({
+	token: 'bearer-token-123',
+	handlers: {
+		beforeCall: async (methodName, args) => {
+			console.log(`[Client] ${methodName}`, args);
+		},
+		afterCall: async (methodName) => {
+			console.log(`[Client] ${methodName} completed`);
+		},
+		onError: async (methodName, error) => {
+			console.error(`[Client] ${methodName} failed`, error);
+		},
+	},
+});
+```
+
+## Authentication
+
+```typescript
+const user = await client.whoami();
+console.log(user.uid, user.email);
+
+await client.login('new-bearer-token');
+const credits = await client.getCredits();
+const iamHealth = await client.checkIAMHealth();
+await client.logout();
+```
+
+## Runtime Management
+
+`createRuntime` currently uses minutes (not raw credits) and converts using environment burn rate.
+
+```typescript
+const environments = await client.listEnvironments();
+
+const runtime = await client.createRuntime(
+	'ai-agents-env',
+	'notebook',
+	'my-runtime',
+	30,
+);
+
+await runtime.waitUntilReady(60_000);
+
+const reused = await client.ensureRuntime(
+	'ai-agents-env',
+	50,
+	true,
+	60_000,
+	true,
+);
+
+const snapshot = await client.createSnapshot(
+	runtime.podName,
+	'checkpoint-1',
+	'Before major change',
+	false,
+);
+
+await client.deleteSnapshot(snapshot.uid);
+await client.deleteRuntime(runtime.podName);
+
+const runtimesHealth = await client.checkRuntimesHealth();
+```
+
+## Notebook And Document Management
+
+```typescript
+const spaces = await client.getMySpaces();
+const space = spaces[0];
+
+const notebook = await client.createNotebook(
+	space.uid,
+	'Analysis Notebook',
+	'Q4 analysis',
+);
+
+const updatedNotebook = await client.updateNotebook(
+	notebook.id,
+	'Analysis Notebook v2',
+	'Updated description',
+);
+
+const lexical = await client.createLexical(
+	space.uid,
+	'Project Notes',
+	'Working notes',
+);
+
+await client.updateLexical(lexical.id, 'Project Notes v2', 'Refined notes');
+
+const items = await client.getSpaceItems(space.uid);
+await client.deleteSpaceItem(notebook.id);
+await client.deleteSpaceItem(lexical.id);
+
+const spacerHealth = await client.checkSpacerHealth();
+```
+
+## Secrets And Datasources
+
+```typescript
+const secret = await client.createSecret({
+	name: 'AWS_ACCESS_KEY_ID',
+	description: 'Bedrock access key',
+	value: '***',
+});
+
+await client.updateSecret(secret.id, { description: 'Updated description' });
+await client.listSecrets();
+await client.deleteSecret(secret.id);
+
+const ds = await client.createDatasource({
+	name: 'warehouse',
+	variant: 'postgres',
+	configuration: { host: 'db.internal', port: 5432 },
+});
+
+await client.getDatasource(ds.id);
+```
+
+## Model Classes
+
+Client methods return rich model instances with helpers:
+
+- `RuntimeDTO`: `waitUntilReady`, `getState`, `createSnapshot`, `delete`
+- `CodeSandboxSnapshotDTO`: `getStatus`, `getSize`, `restore`, `delete`
+- `NotebookDTO` / `LexicalDTO`: metadata + content helper methods
+- `SpaceDTO` / `ProjectDTO`: item composition and workspace-level operations
+
+## Error Handling
+
+```typescript
+try {
+	const runtime = await client.createRuntime('ai-agents-env', 'notebook', 'r1', 10);
+	await runtime.waitUntilReady(30_000);
+} catch (error) {
+	console.error('Runtime provisioning failed', error);
+}
+```
+
+## Best Practices
+
+- Prefer environment variables or secure token storage over hard-coded tokens.
+- Reuse runtimes when possible (`ensureRuntime`) to reduce startup overhead.
+- Persist checkpoints before destructive steps.
+- Use handlers for observability and UX state transitions.
+- Validate service health (`checkIAMHealth`, `checkRuntimesHealth`, `checkSpacerHealth`) in production workflows.
+
+## CLI Quick Reference
+
+The CLI supports global overrides and auth defaults:
+
+```bash
+datalayer --api-key "$DATALAYER_API_KEY" --ai-agents-url https://... evals ls
+```
+
+Key command groups:
+
+- `auth`, `login`, `logout`, `whoami`
+- `agents`, `envs`, `secrets`, `exec`, `console`
+- `evals`, `usage`, `otel`, `api-keys`, `subscription`, `plans`
+
+## Related
+
+- API source examples: `API.md` in repository root
+- CLI reference: Datalayer platform docs
+- Package README: repository root
+
