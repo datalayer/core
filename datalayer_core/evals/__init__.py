@@ -32,13 +32,12 @@ from datalayer_core.evals.report import (
     collect_report_failures,
     iter_report_runs,
 )
-from datalayer_core.evals.runner import EvalExecutionTimeout, execute_evalset_spec
+from datalayer_core.evals.runner import execute_evalset_spec
 
 __all__ = [
     "average_latest_pass_rate",
     "build_eval_report",
     "collect_report_failures",
-    "EvalExecutionTimeout",
     "evaluate_evalset",
     "evaluate_run",
     "execute_evalset_spec",

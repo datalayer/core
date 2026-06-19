@@ -16,7 +16,6 @@ grade outputs -> persist runs -> teardown runtimes).
 from __future__ import annotations
 
 import json
-import time
 import uuid
 from typing import Any, Callable, Optional
 from urllib.parse import urlparse
@@ -42,21 +41,11 @@ from datalayer_core.evals.evaluators import evaluate_evalset
 DEFAULT_ENVIRONMENT_NAME = "ai-agents-env"
 DEFAULT_AGENT_NAME = "default"
 DEFAULT_LOCAL_AGENT_BASE_URL = "http://localhost:8765"
-# Maximum wall-clock time (seconds) a single execute_evalset_spec call may spend
-# running cases before it aborts and tears down its runtimes. Bounding this in
-# the runner guarantees cloud runtimes are released even when an agent hangs,
-# instead of relying on the CI job being cancelled (which skips teardown).
-DEFAULT_MAX_RUNTIME_SECONDS = 180.0
-# Default per-request timeout (seconds) for a single agent chat call.
-DEFAULT_REQUEST_TIMEOUT_SECONDS = 300
-
-
-class EvalExecutionTimeout(TimeoutError):
-    """Raised when execute_evalset_spec exceeds its max runtime budget.
-
-    The enclosing runner always tears down launched runtimes before this
-    propagates, so callers can treat it as a clean (but failed) execution.
-    """
+# Default per-request timeout (seconds) for a single agent chat call. Bounding
+# each call guarantees a hung agent cannot block the run forever: the call is
+# aborted, the case is marked failed, execution continues, and the enclosing
+# runner always tears down its cloud runtimes before returning.
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 180
 
 
 def _case_prompt(case: dict[str, Any]) -> str:
@@ -105,7 +94,6 @@ def execute_evalset_spec(
     local_agent_base_url: str = DEFAULT_LOCAL_AGENT_BASE_URL,
     auto_start_local_agent_runtime: bool = False,
     local_agent_log_level: str = "info",
-    max_runtime_seconds: float = DEFAULT_MAX_RUNTIME_SECONDS,
     request_timeout_seconds: int = DEFAULT_REQUEST_TIMEOUT_SECONDS,
     log: Optional[Callable[[str], None]] = print,
 ) -> dict[str, Any]:
@@ -157,15 +145,12 @@ def execute_evalset_spec(
         server on a free port and tear it down afterwards.
     local_agent_log_level : str
         Log level for an auto-started local ``agent-runtimes`` server.
-    max_runtime_seconds : float
-        Maximum wall-clock budget (seconds) for running cases. When the budget
-        is exhausted the runner aborts, tears down all launched runtimes, and
-        raises :class:`EvalExecutionTimeout`. Values ``<= 0`` disable the
-        deadline. Defaults to ``180`` (3 minutes).
     request_timeout_seconds : int
-        Per-request timeout (seconds) for a single agent chat call. Each call is
-        additionally clamped to the remaining ``max_runtime_seconds`` budget so a
-        hanging agent cannot run past the overall deadline.
+        Per-request timeout (seconds) for a single agent chat call. When an
+        agent does not respond within this window the call is aborted, the case
+        is recorded as failed, and execution continues with the next case. This
+        bounds hung agents without killing legitimately slow multi-agentspec
+        runs. Defaults to ``180`` (3 minutes per call).
     log : Optional[Callable[[str], None]]
         Optional logging callback (defaults to ``print``; pass ``None`` to
         silence progress output).
@@ -209,27 +194,7 @@ def execute_evalset_spec(
 
     run_limit = max(1, int(run_limit))
 
-    deadline: Optional[float] = None
-    if max_runtime_seconds and float(max_runtime_seconds) > 0:
-        deadline = time.monotonic() + float(max_runtime_seconds)
-
-    def _check_deadline() -> None:
-        if deadline is not None and time.monotonic() >= deadline:
-            raise EvalExecutionTimeout(
-                f"Execution exceeded max_runtime_seconds={max_runtime_seconds}; "
-                "aborting and tearing down runtimes."
-            )
-
-    def _next_request_timeout() -> int:
-        if deadline is None:
-            return max(1, int(request_timeout_seconds))
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise EvalExecutionTimeout(
-                f"Execution exceeded max_runtime_seconds={max_runtime_seconds}; "
-                "aborting and tearing down runtimes."
-            )
-        return max(1, int(min(int(request_timeout_seconds), remaining)))
+    case_request_timeout = max(1, int(request_timeout_seconds))
 
     resolved_name = str(
         evalset_name
@@ -339,7 +304,6 @@ def execute_evalset_spec(
                 )
 
             for run_index in range(run_limit):
-                _check_deadline()
                 outputs: list[dict[str, Any]] = []
                 full_outputs: list[dict[str, Any]] = []
                 case_statuses: list[str] = []
@@ -348,10 +312,8 @@ def execute_evalset_spec(
                 failure_causes: list[dict[str, Any]] = []
 
                 for case in cases:
-                    _check_deadline()
                     prompt = _case_prompt(case)
                     case_prompts.append(prompt)
-                    case_timeout = _next_request_timeout()
                     if target == "cloud":
                         result = run_cloud_agent_chat(
                             ingress=ingress,
@@ -362,7 +324,7 @@ def execute_evalset_spec(
                                 agent_spec_id=spec_id,
                                 pod_name=pod_name,
                             ),
-                            timeout=case_timeout,
+                            timeout=case_request_timeout,
                         )
                     else:
                         result = run_local_agent_chat(
@@ -370,7 +332,7 @@ def execute_evalset_spec(
                             agent_name=agent_name,
                             token=token,
                             prompt=prompt,
-                            timeout=case_timeout,
+                            timeout=case_request_timeout,
                         )
                     status = str(result.get("status") or "completed").strip().lower()
                     case_statuses.append(status)
