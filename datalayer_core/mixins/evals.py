@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import os
-
 from typing import Any, Optional
 
 
@@ -77,6 +76,8 @@ class EvalsMixin:
         run_environment: str = "sdk",
         kind: str = "batch",
         schema: Optional[dict[str, Any]] = None,
+        evalset_evaluators: Optional[list[dict[str, Any]]] = None,
+        report_evaluators: Optional[list[dict[str, Any]]] = None,
         tags: Optional[list[str]] = None,
         metadata: Optional[dict[str, Any]] = None,
         cases: Optional[list[dict[str, Any]]] = None,
@@ -89,6 +90,8 @@ class EvalsMixin:
             "run_environment": run_environment,
             "kind": kind,
             "schema": schema or {},
+            "evalset_evaluators": evalset_evaluators or [],
+            "report_evaluators": report_evaluators or [],
             "tags": tags or [],
             "metadata": metadata or {},
             "cases": cases or [],
@@ -97,6 +100,58 @@ class EvalsMixin:
             "/evalsets",
             method="POST",
             json_body=body,
+            billable_account_uid=billable_account_uid,
+            account_uid=account_uid,
+        )
+
+    def evals_create_eval_from_spec(
+        self,
+        *,
+        spec: dict[str, Any],
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+        run_environment: Optional[str] = None,
+        kind: Optional[str] = None,
+        billable_account_uid: Optional[str] = None,
+        account_uid: Optional[str] = None,
+    ) -> dict[str, Any]:
+        if not isinstance(spec, dict):
+            raise ValueError("spec must be a JSON object")
+
+        resolved_name = str(name if name is not None else spec.get("name") or "").strip()
+        if not resolved_name:
+            raise ValueError("spec.name is required when name is not provided")
+
+        resolved_description = str(
+            description if description is not None else spec.get("description") or ""
+        )
+        resolved_run_environment = str(
+            run_environment if run_environment is not None else spec.get("run_environment") or "sdk"
+        )
+        resolved_kind = str(kind if kind is not None else spec.get("kind") or "batch")
+
+        schema = spec.get("schema") if isinstance(spec.get("schema"), dict) else {}
+        metadata = spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {}
+        tags = [str(tag) for tag in (spec.get("tags") or []) if str(tag).strip()]
+        evalset_evaluators = [
+            item for item in (spec.get("evalset_evaluators") or []) if isinstance(item, dict)
+        ]
+        report_evaluators = [
+            item for item in (spec.get("report_evaluators") or []) if isinstance(item, dict)
+        ]
+        cases = [item for item in (spec.get("cases") or []) if isinstance(item, dict)]
+
+        return self.evals_create_eval(
+            name=resolved_name,
+            description=resolved_description,
+            run_environment=resolved_run_environment,
+            kind=resolved_kind,
+            schema=schema,
+            evalset_evaluators=evalset_evaluators,
+            report_evaluators=report_evaluators,
+            tags=tags,
+            metadata=metadata,
+            cases=cases,
             billable_account_uid=billable_account_uid,
             account_uid=account_uid,
         )

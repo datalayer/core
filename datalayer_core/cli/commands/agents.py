@@ -930,7 +930,7 @@ def inspect_agent_runtime(
         help="Datalayer Runtimes server URL",
     ),
 ) -> None:
-    """Inspect an agent runtime and list available kernels."""
+    """Inspect an agent runtime and list available code sandboxes."""
     try:
         client = _make_client(token=token, iam_url=iam_url, runtimes_url=runtimes_url)
         runtimes = client.list_runtimes()
@@ -1082,15 +1082,15 @@ def inspect_agent_runtime(
         account_table.add_row("Description", resolved_description or "n/a")
         console.print(account_table)
 
-        kernels_table = Table(title="Available Kernels")
-        kernels_table.add_column("ID", style="green")
-        kernels_table.add_column("Name")
-        kernels_table.add_column("State")
-        kernels_table.add_column("Connections")
-        kernels_table.add_column("Last Activity")
+        code_sandboxes_table = Table(title="Available Code Sandboxes")
+        code_sandboxes_table.add_column("ID", style="green")
+        code_sandboxes_table.add_column("Name")
+        code_sandboxes_table.add_column("State")
+        code_sandboxes_table.add_column("Connections")
+        code_sandboxes_table.add_column("Last Activity")
 
         for kernel in kernels:
-            kernels_table.add_row(
+            code_sandboxes_table.add_row(
                 str((kernel or {}).get("id") or ""),
                 str((kernel or {}).get("name") or ""),
                 str((kernel or {}).get("execution_state") or ""),
@@ -1099,7 +1099,7 @@ def inspect_agent_runtime(
             )
 
         if kernels:
-            console.print(kernels_table)
+            console.print(code_sandboxes_table)
         else:
             if kernel_lookup_error:
                 console.print(

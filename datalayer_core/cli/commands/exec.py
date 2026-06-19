@@ -195,14 +195,14 @@ class CodeSandboxExecService:
         summary.add_row("Kernels", str(len(kernels)))
         console.print(summary)
 
-        kernels_table = Table(title="Available Kernels")
-        kernels_table.add_column("ID", style="green")
-        kernels_table.add_column("Name")
-        kernels_table.add_column("State")
-        kernels_table.add_column("Connections")
-        kernels_table.add_column("Last Activity")
+        code_sandboxes_table = Table(title="Available Code Sandboxes")
+        code_sandboxes_table.add_column("ID", style="green")
+        code_sandboxes_table.add_column("Name")
+        code_sandboxes_table.add_column("State")
+        code_sandboxes_table.add_column("Connections")
+        code_sandboxes_table.add_column("Last Activity")
         for kernel in kernels:
-            kernels_table.add_row(
+            code_sandboxes_table.add_row(
                 str((kernel or {}).get("id") or ""),
                 str((kernel or {}).get("name") or ""),
                 str((kernel or {}).get("execution_state") or ""),
@@ -210,7 +210,7 @@ class CodeSandboxExecService:
                 str((kernel or {}).get("last_activity") or ""),
             )
         if kernels:
-            console.print(kernels_table)
+            console.print(code_sandboxes_table)
 
         if len(kernels) != 1:
             raise RuntimeError(
@@ -1086,17 +1086,17 @@ def _inspect_code_sandbox_kernels_unique(
     summary.add_row("Pod", sandbox_pod)
     summary.add_row("UID", sandbox_uid)
     summary.add_row("Ingress", sandbox_ingress)
-    summary.add_row("Kernels", str(len(kernels)))
+    summary.add_row("Code Sandboxes", str(len(kernels)))
     console.print(summary)
 
-    kernels_table = Table(title="Available Kernels")
-    kernels_table.add_column("ID", style="green")
-    kernels_table.add_column("Name")
-    kernels_table.add_column("State")
-    kernels_table.add_column("Connections")
-    kernels_table.add_column("Last Activity")
+    code_sandboxes_table = Table(title="Available Code Sandboxes")
+    code_sandboxes_table.add_column("ID", style="green")
+    code_sandboxes_table.add_column("Name")
+    code_sandboxes_table.add_column("State")
+    code_sandboxes_table.add_column("Connections")
+    code_sandboxes_table.add_column("Last Activity")
     for kernel in kernels:
-        kernels_table.add_row(
+        code_sandboxes_table.add_row(
             str((kernel or {}).get("id") or ""),
             str((kernel or {}).get("name") or ""),
             str((kernel or {}).get("execution_state") or ""),
@@ -1104,7 +1104,7 @@ def _inspect_code_sandbox_kernels_unique(
             str((kernel or {}).get("last_activity") or ""),
         )
     if kernels:
-        console.print(kernels_table)
+        console.print(code_sandboxes_table)
 
     if len(kernels) != 1:
         raise RuntimeError(

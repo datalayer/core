@@ -43,7 +43,7 @@ import {
 const NOT_AVAILABLE_INIT_RETRY = 10_000;
 
 /**
- * Number of trials in case of unavailable kernels
+ * Number of trials in case of unavailable code sandboxes
  */
 const NOT_AVAILABLE_RETRIES = 5;
 
