@@ -2323,6 +2323,12 @@ def _run_detail_block_lines(
     lines.append(f"- Status: {status}")
     lines.append(f"- Pass rate: {pass_text}")
     lines.append(f"- Created: {created}")
+    summary_for_header = (
+        run.get("summary") if isinstance(run.get("summary"), dict) else {}
+    )
+    runtime_pod = str(summary_for_header.get("runtime_pod_name") or "").strip()
+    if runtime_pod:
+        lines.append(f"- Runtime: `{runtime_pod}`")
     lines.append("")
 
     metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}

@@ -464,6 +464,39 @@ def extract_vercel_stream_text(raw: str) -> str:
     return "".join(text_parts).strip()
 
 
+def _vercel_ai_error_message(raw: str) -> Optional[str]:
+    """Detect a non-stream error body returned with an HTTP 200 status.
+
+    The ``agent-runtimes`` server answers an unknown agent route with HTTP 200
+    and a JSON error body (for example
+    ``{"error": "Agent '...' not found", "message": "No agent registered ..."}``)
+    instead of an SSE stream. Such a body must NOT be treated as a successful
+    completion, otherwise route-candidate fallback stops at the first wrong
+    route and an empty answer is recorded.
+
+    Returns
+    -------
+    Optional[str]
+        The error message when the body is an error payload (or an empty body),
+        otherwise ``None`` when the body is a genuine SSE stream.
+    """
+    text = (raw or "").strip()
+    if not text:
+        return "Empty response body"
+    # A genuine Vercel AI response is an SSE stream of ``data:`` lines.
+    if "data:" in text:
+        return None
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    if isinstance(payload, dict):
+        error = payload.get("error") or payload.get("message")
+        if error:
+            return str(error)
+    return None
+
+
 def _post_vercel_ai_chat(
     *,
     endpoint: str,
@@ -536,6 +569,23 @@ def _post_vercel_ai_chat(
         }
 
     output_text = extract_vercel_stream_text(raw)
+    if not output_text:
+        error_message = _vercel_ai_error_message(raw)
+        if error_message is not None:
+            message_text = (
+                f"{source_label} chat returned no output: {error_message}"
+            )
+            return {
+                "status": "failed",
+                "output": {"text": "", "raw_stream_excerpt": raw[:2000]},
+                "failure_cause": {
+                    "stage": "runtime_execution",
+                    "type": "runtime_agent_unavailable",
+                    "message": message_text,
+                    "detail_excerpt": raw[:2000] or message_text,
+                    "execution_url": endpoint,
+                },
+            }
     return {
         "status": "completed",
         "output": {

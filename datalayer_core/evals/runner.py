@@ -358,6 +358,12 @@ def execute_evalset_spec(
                 ]
 
                 run_status = "failed" if failed_cases > 0 else "completed"
+                if target == "cloud":
+                    # Surface the runtime uid on every failure cause so the
+                    # report's failure-cause block (and UI) can show which pod
+                    # produced the failure for easier debugging.
+                    for cause in failure_causes:
+                        cause.setdefault("runtime_pod_name", pod_name)
                 summary: dict[str, Any] = {
                     "launch_source": launch_source,
                     "run_mode": "batch",
@@ -381,6 +387,11 @@ def execute_evalset_spec(
                     "interaction": interaction,
                     "failure_causes": failure_causes,
                 }
+                if target == "cloud":
+                    report["runtime_pod_name"] = pod_name
+                else:
+                    report["local_agent_base_url"] = local_base_url
+                    report["local_agent_id"] = agent_name
 
                 run_payload = client.evals_create_run(
                     experiment_id,
