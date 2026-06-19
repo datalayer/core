@@ -56,18 +56,41 @@ def _evaluate_equals_expected(
 def _evaluate_contains(
     output: Any, expected: Any, arguments: dict[str, Any]
 ) -> dict[str, Any]:
-    expected_text = _coerce_text(expected)
     output_text = _coerce_text(output)
-    if not expected_text:
-        return {"passed": True, "score": 1.0, "reason": "no expected substring"}
-    if arguments.get("case_sensitive"):
-        passed = expected_text in output_text
+    case_sensitive = bool(arguments.get("case_sensitive"))
+
+    # Prefer explicit ``tokens`` (or a single ``substring``/``value``) from the
+    # evaluator arguments; fall back to the case ``expected_output`` text only
+    # when no needles are configured.
+    tokens = arguments.get("tokens")
+    if isinstance(tokens, (list, tuple)) and tokens:
+        needles = [str(token) for token in tokens]
     else:
-        passed = expected_text.lower() in output_text.lower()
+        single = arguments.get("substring", arguments.get("value"))
+        if single is not None:
+            needles = [str(single)]
+        else:
+            needles = [_coerce_text(expected)]
+
+    needles = [needle for needle in needles if needle]
+    if not needles:
+        return {"passed": True, "score": 1.0, "reason": "no expected substring"}
+
+    haystack = output_text if case_sensitive else output_text.lower()
+    missing = [
+        needle
+        for needle in needles
+        if (needle if case_sensitive else needle.lower()) not in haystack
+    ]
+    passed = not missing
     return {
         "passed": passed,
         "score": 1.0 if passed else 0.0,
-        "reason": "substring found" if passed else "substring missing",
+        "reason": (
+            "all tokens found"
+            if passed
+            else f"missing tokens: {', '.join(missing)}"
+        ),
     }
 
 
@@ -196,9 +219,11 @@ def evaluate_run(
         case_evaluators = [
             item for item in (case.get("evaluators") or []) if isinstance(item, dict)
         ]
-        merged = case_evaluators + evalset_evaluators
+        # Per-case evaluators override the evalset-level defaults; the evalset
+        # evaluators only apply to cases that do not declare their own.
+        applicable = case_evaluators or evalset_evaluators
         outcome = run_case_evaluators(
-            output=output, expected=expected, evaluators=merged
+            output=output, expected=expected, evaluators=applicable
         )
         passed = bool(outcome.get("passed"))
         score = float(outcome.get("score", 0.0))
@@ -222,7 +247,18 @@ def evaluate_run(
         name = str(evaluator.get("name") or "evaluator")
         passed_cases = 0
         scores: list[float] = []
+        applicable_cases = 0
         for idx, case in enumerate(cases):
+            # Skip cases that override the evalset default with their own
+            # per-case evaluators so the summary reflects only where this
+            # evalset evaluator actually applies.
+            if [
+                item
+                for item in (case.get("evaluators") or [])
+                if isinstance(item, dict)
+            ]:
+                continue
+            applicable_cases += 1
             expected = _expected_for(case)
             output = outputs[idx] if idx < len(outputs) else None
             single = run_case_evaluators(
@@ -235,16 +271,16 @@ def evaluate_run(
             if ok:
                 passed_cases += 1
             scores.append(float(single.get("score", 0.0)) if ok else 0.0)
-        mean_score = round(sum(scores) / total, 4) if total else None
+        mean_score = round(sum(scores) / len(scores), 4) if scores else None
         evaluator_results.append(
             {
                 "name": name,
                 "scope": "evalset",
                 "score": mean_score,
-                "passed": total > 0 and passed_cases == total,
+                "passed": applicable_cases > 0 and passed_cases == applicable_cases,
                 "passed_cases": passed_cases,
-                "total_cases": total,
-                "summary": f"{passed_cases}/{total} cases passed {name}",
+                "total_cases": applicable_cases,
+                "summary": f"{passed_cases}/{applicable_cases} cases passed {name}",
             }
         )
 
