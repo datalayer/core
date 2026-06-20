@@ -2452,6 +2452,44 @@ def _run_detail_block_lines(
     lines.extend(_fenced_block(output_lang, output_text))
     lines.append("")
 
+    usage = _extract_run_usage(run)
+    if usage:
+        lines.append("**Pydantic AI Usage**")
+        lines.append("")
+        preferred_keys = [
+            "source",
+            "provider",
+            "model",
+            "requests",
+            "prompt_tokens",
+            "completion_tokens",
+            "total_tokens",
+            "input_cached_tokens",
+            "tool_calls",
+            "duration_ms",
+            "credits_consumed",
+            "captured_at",
+            "reservation_id",
+            "runtime_pod_name",
+        ]
+        usage_rows: list[list[str]] = []
+        for key in preferred_keys:
+            if key not in usage:
+                continue
+            usage_rows.append([key, str(usage.get(key) or "-")])
+        for key in sorted(str(k) for k in usage.keys()):
+            if key in preferred_keys:
+                continue
+            usage_rows.append([key, str(usage.get(key) or "-")])
+        if usage_rows:
+            lines.extend(_markdown_table(["Metric", "Value"], usage_rows, ["left", "left"]))
+            lines.append("")
+        usage_lang, usage_text = _format_display_value(usage)
+        lines.append("Raw usage payload:")
+        lines.append("")
+        lines.extend(_fenced_block(usage_lang, usage_text))
+        lines.append("")
+
     summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
     summary_lang, summary_text = _format_display_value(summary)
     lines.append("**Run Summary**")
@@ -2478,6 +2516,20 @@ def _run_detail_block_lines(
     lines.append("</details>")
     lines.append("")
     return lines
+
+
+def _extract_run_usage(run: dict[str, Any]) -> dict[str, Any]:
+    metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+    usage = metrics.get("pydantic_ai_usage") if isinstance(metrics.get("pydantic_ai_usage"), dict) else {}
+    if usage:
+        return usage
+
+    report_payload = run.get("report") if isinstance(run.get("report"), dict) else {}
+    report_usage = report_payload.get("usage") if isinstance(report_payload.get("usage"), dict) else {}
+    fallback_usage = report_usage.get("pydantic_ai_usage")
+    if isinstance(fallback_usage, dict):
+        return fallback_usage
+    return {}
 
 
 def _report_appendix_lines(
@@ -2522,6 +2574,7 @@ def _report_appendix_lines(
         run_rows: list[list[str]] = []
         for idx, run in enumerate(runs, start=1):
             metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
+            usage = _extract_run_usage(run)
             run_id = str(run.get("id", ""))
             run_link = _run_overlay_url(evalset_runs_url, run_id)
             pass_rate = run.get("pass_rate")
@@ -2538,6 +2591,8 @@ def _report_appendix_lines(
                     _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else "n/a",
                     cases_cell,
                     _appendix_metric_float(metrics, "avg_score", "average_score"),
+                    str(usage.get("total_tokens") or "-"),
+                    str(usage.get("credits_consumed") or "-"),
                     str(run.get("created_at", "") or "-"),
                     _format_failure_cause(run.get("failure_cause")) or "-",
                 ]
@@ -2551,11 +2606,13 @@ def _report_appendix_lines(
                     "Pass Rate",
                     "Cases (pass/total)",
                     "Avg Score",
+                    "Total Tokens",
+                    "Credits",
                     "Created",
                     "Failure Cause",
                 ],
                 run_rows,
-                ["right", "left", "left", "right", "right", "right", "left", "left"],
+                ["right", "left", "left", "right", "right", "right", "right", "right", "left", "left"],
             )
         )
         lines.append("")
@@ -2580,6 +2637,24 @@ def _report_appendix_lines(
 
 def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
     experiments = [item for item in (report.get("experiments") or []) if isinstance(item, dict)]
+
+    def _run_usage_fields(run: dict[str, Any]) -> dict[str, Any]:
+        usage = _extract_run_usage(run)
+        return {
+            "usage_source": usage.get("source"),
+            "usage_provider": usage.get("provider"),
+            "usage_model": usage.get("model"),
+            "usage_requests": usage.get("requests"),
+            "usage_prompt_tokens": usage.get("prompt_tokens"),
+            "usage_completion_tokens": usage.get("completion_tokens"),
+            "usage_total_tokens": usage.get("total_tokens"),
+            "usage_input_cached_tokens": usage.get("input_cached_tokens"),
+            "usage_tool_calls": usage.get("tool_calls"),
+            "usage_duration_ms": usage.get("duration_ms"),
+            "usage_credits_consumed": usage.get("credits_consumed"),
+            "usage_captured_at": usage.get("captured_at"),
+        }
+
     fieldnames = [
         "row_type",
         "evalset_id",
@@ -2604,6 +2679,18 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
         "failure_stage",
         "failure_type",
         "failure_message",
+        "usage_source",
+        "usage_provider",
+        "usage_model",
+        "usage_requests",
+        "usage_prompt_tokens",
+        "usage_completion_tokens",
+        "usage_total_tokens",
+        "usage_input_cached_tokens",
+        "usage_tool_calls",
+        "usage_duration_ms",
+        "usage_credits_consumed",
+        "usage_captured_at",
         "case_name",
         "case_status",
         "case_score",
@@ -2652,12 +2739,25 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
                     "failure_stage": "",
                     "failure_type": "",
                     "failure_message": "",
+                    "usage_source": "",
+                    "usage_provider": "",
+                    "usage_model": "",
+                    "usage_requests": "",
+                    "usage_prompt_tokens": "",
+                    "usage_completion_tokens": "",
+                    "usage_total_tokens": "",
+                    "usage_input_cached_tokens": "",
+                    "usage_tool_calls": "",
+                    "usage_duration_ms": "",
+                    "usage_credits_consumed": "",
+                    "usage_captured_at": "",
                     "generated_at": str(report.get("generated_at", "")),
                 }
             )
             runs = [run for run in (experiment.get("runs") or []) if isinstance(run, dict)]
             for idx, run in enumerate(runs, start=1):
                 cause = run.get("failure_cause") if isinstance(run.get("failure_cause"), dict) else {}
+                usage_fields = _run_usage_fields(run)
                 writer.writerow(
                     {
                         "row_type": "run",
@@ -2683,6 +2783,7 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
                         "failure_stage": str(cause.get("stage", "")),
                         "failure_type": str(cause.get("type", "")),
                         "failure_message": str(cause.get("message", "")),
+                        **usage_fields,
                         "generated_at": str(report.get("generated_at", "")),
                     }
                 )
@@ -2723,6 +2824,7 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
                                 "case_difficulty": str(
                                     case_result.get("difficulty") or ""
                                 ),
+                                **usage_fields,
                                 "generated_at": str(report.get("generated_at", "")),
                             }
                         )
@@ -2745,6 +2847,18 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
                     "evaluator_mean_score": item.get("mean_score"),
                     "evaluator_latest_score": item.get("latest_score"),
                     "evaluator_latest_passed": bool(item.get("latest_passed")),
+                    "usage_source": "",
+                    "usage_provider": "",
+                    "usage_model": "",
+                    "usage_requests": "",
+                    "usage_prompt_tokens": "",
+                    "usage_completion_tokens": "",
+                    "usage_total_tokens": "",
+                    "usage_input_cached_tokens": "",
+                    "usage_tool_calls": "",
+                    "usage_duration_ms": "",
+                    "usage_credits_consumed": "",
+                    "usage_captured_at": "",
                     "generated_at": str(report.get("generated_at", "")),
                 }
             )

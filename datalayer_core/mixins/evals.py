@@ -170,6 +170,32 @@ class EvalsMixin:
             account_uid=account_uid,
         )
 
+    def evals_set_eval_public(
+        self,
+        evalset_id: str,
+        *,
+        is_public: bool,
+        billable_account_uid: Optional[str] = None,
+        account_uid: Optional[str] = None,
+    ) -> dict[str, Any]:
+        return self._evals_request(
+            f"/evalsets/{evalset_id}/public",
+            method="PATCH",
+            json_body={"is_public": bool(is_public)},
+            billable_account_uid=billable_account_uid,
+            account_uid=account_uid,
+        )
+
+    def evals_get_public_eval(
+        self,
+        evalset_id: str,
+    ) -> dict[str, Any]:
+        response = self._fetch(  # type: ignore
+            f"{self.urls.ai_agents_url}/api/ai-agents/v1/evals/public/evalsets/{evalset_id}",  # type: ignore
+            method="GET",
+        )
+        return response.json()
+
     def evals_list_experiments(
         self,
         *,

@@ -16,6 +16,7 @@ grade outputs -> persist runs -> teardown runtimes).
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from typing import Any, Callable, Optional
 from urllib.parse import urlparse
@@ -33,9 +34,10 @@ from datalayer_core.agents.agent_local import (
     run_cloud_agent_chat,
     run_local_agent_chat,
     runtime_route_candidates,
+    wait_for_local_runtime,
 )
 from datalayer_core.client.client import DatalayerClient
-from datalayer_core.evals.evals import now_iso, timestamp_slug
+from datalayer_core.evals.evals import now_iso, timestamp_slug, write_eval_reports
 from datalayer_core.evals.evaluators import evaluate_evalset
 
 DEFAULT_ENVIRONMENT_NAME = "ai-agents-env"
@@ -62,6 +64,21 @@ def _case_prompt(case: dict[str, Any]) -> str:
     return ""
 
 
+def _compose_case_prompt(case: dict[str, Any], *, preamble: str = "") -> str:
+    """Build the effective case prompt with an optional preamble.
+
+    ``preamble`` lets a spec enforce task instructions (for example output
+    format/constraints) without mutating every individual case input.
+    """
+    base_prompt = _case_prompt(case)
+    normalized_preamble = str(preamble or "").strip()
+    if not normalized_preamble:
+        return base_prompt
+    if not base_prompt:
+        return normalized_preamble
+    return f"{normalized_preamble}\n\nInput:\n{base_prompt}"
+
+
 def _extract_text(payload: Any) -> str:
     """Coerce an agent output payload into a plain text answer."""
     if isinstance(payload, dict):
@@ -81,6 +98,8 @@ def execute_evalset_spec(
     *,
     spec: dict[str, Any],
     agentspec_ids: list[str],
+    run_evalset: bool = True,
+    create_report: bool = False,
     run_limit: int = 1,
     run_environment: str = "sdk",
     environment_name: str = DEFAULT_ENVIRONMENT_NAME,
@@ -115,6 +134,12 @@ def execute_evalset_spec(
     agentspec_ids : list[str]
         Agentspec ids to execute. One experiment is created per id (plus one
         cloud runtime per id when ``execution_target='cloud'``).
+    run_evalset : bool
+        Whether to execute the evalset after creating it. Defaults to ``True``.
+        When ``False``, this function only creates the evalset and returns.
+    create_report : bool
+        Whether to generate markdown/CSV reports via
+        :func:`write_eval_reports` before returning. Defaults to ``False``.
     run_limit : int
         Number of runs to create per experiment (minimum 1).
     run_environment : str
@@ -142,7 +167,9 @@ def execute_evalset_spec(
         when ``auto_start_local_agent_runtime`` starts a new server.
     auto_start_local_agent_runtime : bool
         When ``execution_target='local'``, start a local ``agent-runtimes``
-        server on a free port and tear it down afterwards.
+        server on a free port and tear it down afterwards. When ``False``, the
+        runner first attempts to reuse ``local_agent_base_url`` and will
+        auto-start a local runtime only if that server is unreachable.
     local_agent_log_level : str
         Log level for an auto-started local ``agent-runtimes`` server.
     request_timeout_seconds : int
@@ -158,7 +185,8 @@ def execute_evalset_spec(
     Returns
     -------
     dict[str, Any]
-        ``{"evalset_id", "evalset_name", "experiment_ids", "run_ids"}``.
+        ``{"evalset_id", "evalset_name", "experiment_ids", "run_ids", "view_url"}``
+        plus optional report paths when ``create_report=True``.
 
     Raises
     ------
@@ -192,6 +220,9 @@ def execute_evalset_spec(
     if not cases:
         raise ValueError("Evalset spec has no cases; cannot execute real runs.")
 
+    metadata = spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {}
+    prompt_preamble = str(metadata.get("prompt_preamble") or "").strip()
+
     run_limit = max(1, int(run_limit))
 
     case_request_timeout = max(1, int(request_timeout_seconds))
@@ -211,6 +242,30 @@ def execute_evalset_spec(
     if not evalset_id:
         raise RuntimeError(f"Unable to create evalset from spec: {evalset_payload}")
     _emit(f"Created evalset: {evalset_id} ({resolved_name})")
+
+    ui_base = str(os.environ.get("DATALAYER_UI_URL") or "http://localhost:3063").strip().rstrip("/")
+    view_url = f"{ui_base}/evals/experiments/{run_environment}/{evalset_id}"
+
+    result: dict[str, Any] = {
+        "evalset_id": evalset_id,
+        "evalset_name": resolved_name,
+        "experiment_ids": [],
+        "run_ids": [],
+        "view_url": view_url,
+    }
+
+    if not bool(run_evalset):
+        _emit(f"Skipped eval execution for evalset: {evalset_id}")
+        if bool(create_report):
+            reports = write_eval_reports(
+                client,
+                evalset_id,
+                account_uid=account_uid,
+            )
+            result["report_markdown_path"] = str(reports.get("markdown_path") or "")
+            if reports.get("csv_path") is not None:
+                result["report_csv_path"] = str(reports.get("csv_path") or "")
+        return result
 
     experiment_ids: list[str] = []
     run_ids: list[str] = []
@@ -242,16 +297,28 @@ def execute_evalset_spec(
                     f"pod={getattr(runtime, 'pod_name', '')} "
                     f"runtime_id={getattr(runtime, 'uid', '')}"
                 )
-        elif auto_start_local_agent_runtime:
-            local_runtime = start_local_agent_runtime(
-                agent_spec_id=normalized_specs[0],
-                agent_name=agent_name,
-                host=urlparse(local_base_url).hostname or "127.0.0.1",
-                log_level=local_agent_log_level,
-                disable_tool_approvals=True,
-            )
-            local_base_url = local_runtime.base_url
-            _emit(f"Started local agent-runtimes server at {local_base_url}")
+        elif target == "local":
+            local_host = urlparse(local_base_url).hostname or "127.0.0.1"
+            should_start_local_runtime = bool(auto_start_local_agent_runtime)
+            if not should_start_local_runtime:
+                try:
+                    wait_for_local_runtime(local_base_url, timeout_seconds=2)
+                except Exception:
+                    should_start_local_runtime = True
+                    _emit(
+                        "No local agent-runtimes server reachable at "
+                        f"{local_base_url}; starting one automatically."
+                    )
+            if should_start_local_runtime:
+                local_runtime = start_local_agent_runtime(
+                    agent_spec_id=normalized_specs[0],
+                    agent_name=agent_name,
+                    host=local_host,
+                    log_level=local_agent_log_level,
+                    disable_tool_approvals=True,
+                )
+                local_base_url = local_runtime.base_url
+                _emit(f"Started local agent-runtimes server at {local_base_url}")
 
         for spec_id in normalized_specs:
             experiment_payload = client.evals_create_experiment(
@@ -315,10 +382,10 @@ def execute_evalset_spec(
                 failure_causes: list[dict[str, Any]] = []
 
                 for case in cases:
-                    prompt = _case_prompt(case)
+                    prompt = _compose_case_prompt(case, preamble=prompt_preamble)
                     case_prompts.append(prompt)
                     if target == "cloud":
-                        result = run_cloud_agent_chat(
+                        chat_result = run_cloud_agent_chat(
                             ingress=ingress,
                             token=token,
                             prompt=prompt,
@@ -330,16 +397,16 @@ def execute_evalset_spec(
                             timeout=case_request_timeout,
                         )
                     else:
-                        result = run_local_agent_chat(
+                        chat_result = run_local_agent_chat(
                             base_url=local_base_url,
                             agent_name=agent_name,
                             token=token,
                             prompt=prompt,
                             timeout=case_request_timeout,
                         )
-                    status = str(result.get("status") or "completed").strip().lower()
+                    status = str(chat_result.get("status") or "completed").strip().lower()
                     case_statuses.append(status)
-                    output_payload = result.get("output") or {}
+                    output_payload = chat_result.get("output") or {}
                     outputs.append({"text": _extract_text(output_payload)})
                     full_outputs.append(
                         output_payload
@@ -348,7 +415,7 @@ def execute_evalset_spec(
                     )
                     if status in {"failed", "error"}:
                         failed_cases += 1
-                        failure = result.get("failure_cause")
+                        failure = chat_result.get("failure_cause")
                         if isinstance(failure, dict):
                             failure_causes.append(failure)
 
@@ -437,12 +504,18 @@ def execute_evalset_spec(
                 )
 
         _emit(f"Executed evalset: {evalset_id}")
-        return {
-            "evalset_id": evalset_id,
-            "evalset_name": resolved_name,
-            "experiment_ids": experiment_ids,
-            "run_ids": run_ids,
-        }
+        result["experiment_ids"] = experiment_ids
+        result["run_ids"] = run_ids
+        if bool(create_report):
+            reports = write_eval_reports(
+                client,
+                evalset_id,
+                account_uid=account_uid,
+            )
+            result["report_markdown_path"] = str(reports.get("markdown_path") or "")
+            if reports.get("csv_path") is not None:
+                result["report_csv_path"] = str(reports.get("csv_path") or "")
+        return result
     finally:
         if target == "cloud":
             for spec_id, runtime in runtimes_by_spec.items():

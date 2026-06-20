@@ -33,6 +33,11 @@ LOCAL_RUNTIMES_URL = os.environ.get(
 )
 
 
+def _is_insufficient_credits_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "insufficient_credits" in message or "insufficient credits" in message
+
+
 def _build_test_client() -> DatalayerClient:
     return DatalayerClient(
         token=TEST_DATALAYER_API_KEY,
@@ -201,13 +206,18 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     runtime_name = f"test_usage_{account_case}_{uuid.uuid4().hex[:8]}"
 
     try:
-        runtime = client.create_runtime(
-            name=runtime_name,
-            time_reservation=1,
-            billable_account_uid=account["uid"],
-            billable_account_type=account["kind"],
-            billable_account_handle=account["handle"] or None,
-        )
+        try:
+            runtime = client.create_runtime(
+                name=runtime_name,
+                time_reservation=1,
+                billable_account_uid=account["uid"],
+                billable_account_type=account["kind"],
+                billable_account_handle=account["handle"] or None,
+            )
+        except RuntimeError as exc:
+            if account_case == "team" and _is_insufficient_credits_error(exc):
+                pytest.skip("Team account has insufficient credits for runtime launch in this environment.")
+            raise
 
         # Creation coverage.
         assert runtime.pod_name, "Runtime pod_name should be set after creation"

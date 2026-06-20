@@ -864,6 +864,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  const toEvalset = (raw_evalset: any): any => {
+    const owner = toItemOwner(raw_evalset);
+    return {
+      id: raw_evalset.uid,
+      type: 'evalset',
+      name: raw_evalset.name_t,
+      description: raw_evalset.description_t,
+      public: raw_evalset.public_b ?? false,
+      creationDate: raw_evalset.creation_ts_dt
+        ? new Date(raw_evalset.creation_ts_dt)
+        : undefined,
+      lastUpdateDate: raw_evalset.last_update_ts_dt
+        ? new Date(raw_evalset.last_update_ts_dt)
+        : undefined,
+      tags: Array.isArray(raw_evalset.tags_ss) ? raw_evalset.tags_ss : [],
+      owner,
+    };
+  };
+
   const toItem = (item: any): any => {
     if (!item.type_s) {
       console.error('No type_s found on item', item);
@@ -886,6 +905,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toNotebook(item);
       case 'page':
         return toPage(item);
+      case 'evalset':
+        return toEvalset(item);
       default:
         return {};
     }
@@ -6984,16 +7005,24 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         q,
-        types = ['notebook', 'document', 'lesson'],
+        types = ['notebook', 'document', 'cell', 'page', 'lesson', 'evalset'],
         max = 100,
       }: {
         q?: string;
         types?: string[];
         max?: number;
       }) => {
+        const normalizedTypes = Array.from(
+          new Set(
+            (types || [])
+              .map(type => String(type || '').trim().toLowerCase())
+              .filter(Boolean)
+              .map(type => (type === 'eval' ? 'evalset' : type))
+          )
+        );
         const queryString = Object.entries({
           q: q || '*',
-          types: types.join(' '),
+          types: (normalizedTypes.length > 0 ? normalizedTypes : ['notebook', 'document', 'cell', 'page', 'lesson', 'evalset']).join(' '),
           max: max.toString(),
           public: 'true',
         })
