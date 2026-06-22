@@ -638,7 +638,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       path: raw_dataset.s3_path_s,
       cdnUrl: raw_dataset.cdn_url_s,
       creationDate: new Date(raw_dataset.creation_ts_dt),
-      public: raw_dataset.public_b ?? false,
+      public: raw_dataset.is_public_b ?? false,
       lastPublicationDate: raw_dataset.creation_ts_dt
         ? new Date(raw_dataset.creation_ts_dt)
         : undefined,
@@ -662,7 +662,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       description: cl.description_t,
       source: cl.source_t,
       creationDate: new Date(cl.creation_ts_dt),
-      public: cl.public_b ?? false,
+      public: cl.is_public_b ?? false,
       lastPublicationDate: cl.last_publication_ts_dt
         ? new Date(cl.last_publication_ts_dt)
         : undefined,
@@ -689,7 +689,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       nbformat: raw_notebook.model_s
         ? JSON.parse(raw_notebook.model_s)
         : undefined,
-      public: raw_notebook.public_b ?? false,
+      public: raw_notebook.is_public_b ?? false,
       creationDate: new Date(raw_notebook.creation_ts_dt),
       lastUpdateDate: raw_notebook.last_update_ts_dt
         ? new Date(raw_notebook.last_update_ts_dt)
@@ -717,7 +717,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       name: doc.name_t,
       description: doc.description_t,
       model: doc.model_s ? JSON.parse(doc.model_s) : undefined,
-      public: doc.public_b ?? false,
+      public: doc.is_public_b ?? false,
       creationDate: new Date(doc.creation_ts_dt),
       lastUpdateDate: doc.last_update_ts_dt
         ? new Date(doc.last_update_ts_dt)
@@ -744,7 +744,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       name: raw_lesson.name_t,
       description: raw_lesson.description_t,
       nbformat: raw_lesson.model_s ? JSON.parse(raw_lesson.model_s) : undefined,
-      public: raw_lesson.public_b ?? false,
+      public: raw_lesson.is_public_b ?? false,
       creationDate: new Date(raw_lesson.creation_ts_dt),
       lastUpdateDate: raw_lesson.last_update_ts_dt
         ? new Date(raw_lesson.last_update_ts_dt)
@@ -776,7 +776,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       codeQuestion: ex.code_question_t,
       codeSolution: ex.code_solution_t,
       codeTest: ex.code_test_t,
-      public: ex.public_b ?? false,
+      public: ex.is_public_b ?? false,
       creationDate: new Date(ex.creation_ts_dt),
       lastUpdateDate: ex.last_update_ts_dt
         ? new Date(ex.last_update_ts_dt)
@@ -820,7 +820,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       nbformat: raw_assignment.model_s
         ? JSON.parse(raw_assignment.model_s)
         : undefined,
-      public: raw_assignment.public_b ?? false,
+      public: raw_assignment.is_public_b ?? false,
       creationDate: new Date(raw_assignment.creation_ts_dt),
       lastUpdateDate: raw_assignment.last_update_ts_dt
         ? new Date(raw_assignment.last_update_ts_dt)
@@ -871,7 +871,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'evalset',
       name: raw_evalset.name_t,
       description: raw_evalset.description_t,
-      public: raw_evalset.public_b ?? false,
+      public: raw_evalset.is_public_b ?? false,
       creationDate: raw_evalset.creation_ts_dt
         ? new Date(raw_evalset.creation_ts_dt)
         : undefined,
@@ -4344,7 +4344,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (itemId: string) => {
         return requestDatalayer({
           url: `${configuration.libraryRunUrl}/api/library/v1/items/${itemId}/public`,
-          method: 'PUT',
+          method: 'PATCH',
+          body: { is_public: true },
         });
       },
       onSuccess: () => {
@@ -4360,8 +4361,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (itemId: string) => {
         return requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/items/${itemId}/private`,
-          method: 'PUT',
+          url: `${configuration.libraryRunUrl}/api/library/v1/items/${itemId}/public`,
+          method: 'PATCH',
+          body: { is_public: false },
         });
       },
       onSuccess: () => {
@@ -7005,7 +7007,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         q,
-        types = ['notebook', 'document', 'cell', 'page', 'lesson', 'evalset'],
+        types = ['notebook', 'document', 'cell', 'lesson', 'evalset'],
         max = 100,
       }: {
         q?: string;
@@ -7015,16 +7017,22 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const normalizedTypes = Array.from(
           new Set(
             (types || [])
-              .map(type => String(type || '').trim().toLowerCase())
+              .map(type =>
+                String(type || '')
+                  .trim()
+                  .toLowerCase(),
+              )
               .filter(Boolean)
-              .map(type => (type === 'eval' ? 'evalset' : type))
-          )
+              .map(type => (type === 'eval' ? 'evalset' : type)),
+          ),
         );
         const queryString = Object.entries({
           q: q || '*',
-          types: (normalizedTypes.length > 0 ? normalizedTypes : ['notebook', 'document', 'cell', 'page', 'lesson', 'evalset']).join(' '),
+          types: (normalizedTypes.length > 0
+            ? normalizedTypes
+            : ['notebook', 'document', 'cell', 'lesson', 'evalset']
+          ).join(' '),
           max: max.toString(),
-          public: 'true',
         })
           .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
           .join('&');
@@ -7866,10 +7874,38 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.items.public(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/items/public`,
+          url: `${configuration.libraryRunUrl}/api/library/v1/search?q=*&max=-1`,
           method: 'GET',
         });
-        return resp;
+        return {
+          ...resp,
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+        };
+      },
+      ...options,
+    });
+  };
+
+  /**
+   * Get the current user's own public items (publications).
+   * @param options - Query options
+   */
+  const usePublications = (options?: UseQueryOptions<unknown, Error>) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.all(), 'publications'] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryRunUrl}/api/library/v1/publications`,
+          method: 'GET',
+        });
+        return {
+          ...resp,
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+        };
       },
       ...options,
     });
@@ -7887,10 +7923,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/items/public`,
+          url: `${configuration.libraryRunUrl}/api/library/v1/search?q=*&max=-1`,
           method: 'GET',
         });
-        return resp;
+        return {
+          ...resp,
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+        };
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.items.public() });
@@ -8258,6 +8299,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.items.public() });
+        queryClient.invalidateQueries({
+          queryKey: [...queryKeys.items.all(), 'publications'] as const,
+        });
       },
       ...options,
     });
@@ -8946,6 +8990,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useMakeItemPrivate,
     useSearchPublicItems,
     usePublicItems,
+    usePublications,
     useRefreshPublicItems,
     useRefreshSpaceItems,
     useClearCachedPublicItems,
