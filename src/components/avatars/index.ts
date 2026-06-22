@@ -5,4 +5,5 @@
 
 export * from './BoringAvatar';
 export * from './DLAvatar';
+export * from './UserAvatar';
 export * from './UserProfileAvatar';
