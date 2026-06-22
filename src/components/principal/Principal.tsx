@@ -14,6 +14,7 @@
 import * as React from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { useCache } from '../../hooks';
+import { useIAMStore } from '../../state';
 import { PrincipalAvatar, PrincipalAvatarKind } from './PrincipalAvatar';
 import { PrincipalDetailsOverlay } from './PrincipalDetailsOverlay';
 
@@ -54,20 +55,87 @@ export const Principal: React.FC<PrincipalProps> = ({
   square = false,
   sx,
 }) => {
-  const { useUser, useOrganization } = useCache();
+  const {
+    useUser,
+    useOrganization,
+    useUserPublicProfileByHandle,
+    useOrganizationPublicProfileByHandle,
+  } = useCache();
+
+  // When no user is authenticated (anonymous visitor, e.g. public pages), the
+  // authenticated `useUser` / `useOrganization` endpoints return 401, which
+  // triggers a global logout + redirect to sign-in. For anonymous visitors we
+  // resolve the principal through the public-by-handle endpoints instead, which
+  // are anonymous-accessible and therefore never redirect.
+  const { user: authenticatedUser } = useIAMStore();
+  const isAnonymous = !authenticatedUser;
+
+  const principalHandle = String(
+    principal.handle || principal.accountHandle || '',
+  ).trim();
 
   const hydratedUserQuery = useUser(
-    principal.kind === 'user' ? String(principal.uid || '') : '',
+    !isAnonymous && principal.kind === 'user'
+      ? String(principal.uid || '')
+      : '',
   );
   const hydratedOrgQuery = useOrganization(
-    principal.kind === 'organization' ? String(principal.uid || '') : '',
+    !isAnonymous && principal.kind === 'organization'
+      ? String(principal.uid || '')
+      : '',
   );
+  const hydratedPublicUserQuery = useUserPublicProfileByHandle(
+    isAnonymous && principal.kind === 'user' ? principalHandle : '',
+  );
+  const hydratedPublicOrgQuery = useOrganizationPublicProfileByHandle(
+    isAnonymous && principal.kind === 'organization' ? principalHandle : '',
+  );
+
+  // Normalise the public (snake_case) profile payloads into the same camelCase
+  // shape the authenticated entities expose, so downstream logic is uniform.
+  const normalizedPublicUser = React.useMemo(() => {
+    const profile = hydratedPublicUserQuery.data as any;
+    if (!profile) {
+      return undefined;
+    }
+    const displayName = String(
+      profile.display_name ||
+        [profile.first_name, profile.last_name].filter(Boolean).join(' ') ||
+        '',
+    ).trim();
+    return {
+      displayName,
+      firstName: profile.first_name,
+      lastName: profile.last_name,
+      handle: profile.handle,
+      avatarUrl: profile.avatar_url,
+      origin: profile.origin,
+      email: profile.email,
+    };
+  }, [hydratedPublicUserQuery.data]);
+
+  const normalizedPublicOrg = React.useMemo(() => {
+    const profile = hydratedPublicOrgQuery.data as any;
+    if (!profile) {
+      return undefined;
+    }
+    return {
+      displayName: String(profile.display_name || profile.name || '').trim(),
+      name: profile.name,
+      handle: profile.handle,
+      avatarUrl: profile.avatar_url,
+    };
+  }, [hydratedPublicOrgQuery.data]);
 
   const hydratedEntity =
     principal.kind === 'user'
-      ? hydratedUserQuery.data
+      ? isAnonymous
+        ? normalizedPublicUser
+        : hydratedUserQuery.data
       : principal.kind === 'organization'
-        ? hydratedOrgQuery.data
+        ? isAnonymous
+          ? normalizedPublicOrg
+          : hydratedOrgQuery.data
         : undefined;
 
   const hydratedDisplayName =
