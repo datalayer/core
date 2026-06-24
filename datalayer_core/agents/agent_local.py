@@ -464,6 +464,96 @@ def extract_vercel_stream_text(raw: str) -> str:
     return "".join(text_parts).strip()
 
 
+def _coerce_usage_payload(candidate: Any) -> dict[str, Any]:
+    if not isinstance(candidate, dict) or not candidate:
+        return {}
+    nested = candidate.get("usage")
+    if isinstance(nested, dict) and nested:
+        merged = dict(nested)
+        for key, value in candidate.items():
+            if key == "usage":
+                continue
+            merged.setdefault(str(key), value)
+        return merged
+    return dict(candidate)
+
+
+def _usage_payload_score(payload: dict[str, Any]) -> int:
+    if not payload:
+        return 0
+    token_keys = {
+        "prompt_tokens",
+        "promptTokens",
+        "input_tokens",
+        "inputTokens",
+        "completion_tokens",
+        "completionTokens",
+        "output_tokens",
+        "outputTokens",
+        "total_tokens",
+        "totalTokens",
+        "tokens_total",
+        "token_total",
+    }
+    score = len(payload)
+    if any(key in payload for key in token_keys):
+        score += 100
+    if any(
+        key in payload
+        for key in (
+            "credits_consumed",
+            "creditsConsumed",
+            "credits",
+            "total_credits",
+            "cost_credits",
+        )
+    ):
+        score += 10
+    return score
+
+
+def extract_vercel_stream_usage(raw: str) -> dict[str, Any]:
+    """Extract best-effort pydantic usage metadata from a Vercel AI SSE stream."""
+    best: dict[str, Any] = {}
+    best_score = 0
+    for line in raw.splitlines():
+        if not line.startswith("data: "):
+            continue
+        payload = line[6:].strip()
+        if not payload or payload == "[DONE]":
+            continue
+        try:
+            event = json.loads(payload)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict):
+            continue
+
+        candidates: list[dict[str, Any]] = []
+        message_metadata = event.get("messageMetadata")
+        if isinstance(message_metadata, dict):
+            candidates.extend(
+                [
+                    _coerce_usage_payload(message_metadata.get("pydantic_ai")),
+                    _coerce_usage_payload(message_metadata.get("pydanticAI")),
+                    _coerce_usage_payload(message_metadata.get("usage")),
+                ]
+            )
+        candidates.extend(
+            [
+                _coerce_usage_payload(event.get("pydantic_ai_usage")),
+                _coerce_usage_payload(event.get("pydantic_ai")),
+                _coerce_usage_payload(event.get("usage")),
+            ]
+        )
+        for candidate in candidates:
+            score = _usage_payload_score(candidate)
+            if score > best_score:
+                best = candidate
+                best_score = score
+    return best
+
+
 def _vercel_ai_error_message(raw: str) -> Optional[str]:
     """Detect a non-stream error body returned with an HTTP 200 status.
 
@@ -569,6 +659,7 @@ def _post_vercel_ai_chat(
         }
 
     output_text = extract_vercel_stream_text(raw)
+    usage = extract_vercel_stream_usage(raw)
     if not output_text:
         error_message = _vercel_ai_error_message(raw)
         if error_message is not None:
@@ -586,13 +677,18 @@ def _post_vercel_ai_chat(
                     "execution_url": endpoint,
                 },
             }
-    return {
-        "status": "completed",
-        "output": {
-            "text": output_text,
-            "raw_stream_excerpt": raw[:2000],
-        },
+    output: dict[str, Any] = {
+        "text": output_text,
+        "raw_stream_excerpt": raw[:2000],
     }
+    result: dict[str, Any] = {
+        "status": "completed",
+        "output": output,
+    }
+    if usage:
+        output["pydantic_ai_usage"] = usage
+        result["usage"] = usage
+    return result
 
 
 def run_local_agent_chat(

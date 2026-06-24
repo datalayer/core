@@ -93,6 +93,154 @@ def _extract_text(payload: Any) -> str:
     return json.dumps(payload, ensure_ascii=True)
 
 
+def _usage_number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return float(text)
+        except Exception:
+            return None
+    return None
+
+
+def _usage_pick_number(usage: dict[str, Any], *keys: str) -> float | None:
+    for key in keys:
+        number = _usage_number(usage.get(key))
+        if number is not None:
+            return number
+    return None
+
+
+def _extract_case_usage(chat_result: dict[str, Any]) -> dict[str, Any]:
+    direct = chat_result.get("usage")
+    if isinstance(direct, dict) and direct:
+        return dict(direct)
+    output = chat_result.get("output") if isinstance(chat_result.get("output"), dict) else {}
+    nested = output.get("pydantic_ai_usage") or output.get("usage")
+    if isinstance(nested, dict) and nested:
+        return dict(nested)
+    return {}
+
+
+def _merge_run_usage(aggregate: dict[str, Any], case_usage: dict[str, Any]) -> dict[str, Any]:
+    if not case_usage:
+        return aggregate
+
+    prompt_tokens = _usage_pick_number(
+        case_usage,
+        "prompt_tokens",
+        "promptTokens",
+        "input_tokens",
+        "inputTokens",
+    )
+    completion_tokens = _usage_pick_number(
+        case_usage,
+        "completion_tokens",
+        "completionTokens",
+        "output_tokens",
+        "outputTokens",
+    )
+    total_tokens = _usage_pick_number(
+        case_usage,
+        "total_tokens",
+        "totalTokens",
+        "tokens_total",
+        "token_total",
+    )
+    if total_tokens is None and prompt_tokens is not None and completion_tokens is not None:
+        total_tokens = prompt_tokens + completion_tokens
+
+    numeric_fields: list[tuple[str, float | None]] = [
+        ("prompt_tokens", prompt_tokens),
+        ("completion_tokens", completion_tokens),
+        ("total_tokens", total_tokens),
+        (
+            "input_cached_tokens",
+            _usage_pick_number(
+                case_usage,
+                "input_cached_tokens",
+                "inputCachedTokens",
+                "cached_input_tokens",
+                "cachedInputTokens",
+            ),
+        ),
+        (
+            "tool_calls",
+            _usage_pick_number(
+                case_usage,
+                "tool_calls",
+                "toolCalls",
+                "tool_call_count",
+                "toolCallCount",
+            ),
+        ),
+        (
+            "requests",
+            _usage_pick_number(
+                case_usage,
+                "requests",
+                "request_count",
+                "requestCount",
+            ),
+        ),
+        (
+            "duration_ms",
+            _usage_pick_number(
+                case_usage,
+                "duration_ms",
+                "durationMs",
+                "latency_ms",
+                "latencyMs",
+            ),
+        ),
+        (
+            "credits_consumed",
+            _usage_pick_number(
+                case_usage,
+                "credits_consumed",
+                "creditsConsumed",
+                "credits",
+                "total_credits",
+                "cost_credits",
+            ),
+        ),
+    ]
+    for key, value in numeric_fields:
+        if value is None:
+            continue
+        current = _usage_number(aggregate.get(key)) or 0.0
+        summed = current + value
+        if key in {"credits_consumed"}:
+            aggregate[key] = round(summed, 6)
+        else:
+            aggregate[key] = int(round(summed))
+
+    for key in (
+        "source",
+        "provider",
+        "model",
+        "billable_account_kind",
+        "billable_account_uid",
+        "requester_kind",
+        "requester_uid",
+        "captured_at",
+        "timestamp",
+    ):
+        value = case_usage.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        aggregate.setdefault(key, value)
+    return aggregate
+
+
 def execute_evalset_spec(
     client: DatalayerClient,
     *,
@@ -383,6 +531,7 @@ def execute_evalset_spec(
                 full_outputs: list[dict[str, Any]] = []
                 case_statuses: list[str] = []
                 case_prompts: list[Any] = []
+                aggregated_usage: dict[str, Any] = {}
                 failed_cases = 0
                 failure_causes: list[dict[str, Any]] = []
 
@@ -423,6 +572,9 @@ def execute_evalset_spec(
                         failure = chat_result.get("failure_cause")
                         if isinstance(failure, dict):
                             failure_causes.append(failure)
+
+                    case_usage = _extract_case_usage(chat_result)
+                    aggregated_usage = _merge_run_usage(aggregated_usage, case_usage)
 
                 metrics = evaluate_evalset(spec, outputs, statuses=case_statuses)
                 # Persist per-case prompts/outputs onto the graded case results so
@@ -483,6 +635,13 @@ def execute_evalset_spec(
                     "interaction": interaction,
                     "failure_causes": failure_causes,
                 }
+                if aggregated_usage:
+                    metrics = {
+                        **metrics,
+                        "pydantic_ai_usage": aggregated_usage,
+                    }
+                    summary["usage"] = {"pydantic_ai_usage": aggregated_usage}
+                    report["usage"] = {"pydantic_ai_usage": aggregated_usage}
                 if target == "cloud":
                     report["runtime_pod_name"] = pod_name
                     if runtime_id:
