@@ -452,6 +452,7 @@ def _run_detail_record(run: dict[str, Any]) -> dict[str, Any]:
     metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
     summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
     report = run.get("report") if isinstance(run.get("report"), dict) else {}
+    usage = _extract_run_usage(run)
     return {
         "id": str(run.get("id", "")),
         "status": str(run.get("status", "")),
@@ -461,6 +462,7 @@ def _run_detail_record(run: dict[str, Any]) -> dict[str, Any]:
         "metrics": metrics,
         "summary": summary,
         "report": report,
+        "usage": usage,
         "failure_cause": _extract_failure_cause(run),
     }
 
@@ -2519,17 +2521,106 @@ def _run_detail_block_lines(
 
 
 def _extract_run_usage(run: dict[str, Any]) -> dict[str, Any]:
+    def _coerce_usage(candidate: Any) -> dict[str, Any]:
+        if not isinstance(candidate, dict) or not candidate:
+            return {}
+        nested = candidate.get("pydantic_ai_usage")
+        if isinstance(nested, dict) and nested:
+            merged = dict(nested)
+            for key, value in candidate.items():
+                if key == "pydantic_ai_usage":
+                    continue
+                merged.setdefault(str(key), value)
+            return merged
+        return dict(candidate)
+
+    # Prefer usage already normalized onto run detail records.
+    direct_usage = _coerce_usage(run.get("usage"))
+    if direct_usage:
+        return direct_usage
+
     metrics = run.get("metrics") if isinstance(run.get("metrics"), dict) else {}
-    usage = metrics.get("pydantic_ai_usage") if isinstance(metrics.get("pydantic_ai_usage"), dict) else {}
-    if usage:
-        return usage
+    for key in ("pydantic_ai_usage", "usage"):
+        usage = _coerce_usage(metrics.get(key))
+        if usage:
+            return usage
+
+    summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
+    for key in ("pydantic_ai_usage", "usage"):
+        usage = _coerce_usage(summary.get(key))
+        if usage:
+            return usage
 
     report_payload = run.get("report") if isinstance(run.get("report"), dict) else {}
-    report_usage = report_payload.get("usage") if isinstance(report_payload.get("usage"), dict) else {}
-    fallback_usage = report_usage.get("pydantic_ai_usage")
-    if isinstance(fallback_usage, dict):
-        return fallback_usage
+    report_usage = _coerce_usage(report_payload.get("usage"))
+    if report_usage:
+        return report_usage
     return {}
+
+
+def _usage_pick(usage: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        value = usage.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        return value
+    return None
+
+
+def _usage_number(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return float(text)
+        except Exception:
+            return None
+    return None
+
+
+def _usage_total_tokens_value(usage: dict[str, Any]) -> str:
+    total_value = _usage_number(
+        _usage_pick(
+            usage,
+            "total_tokens",
+            "totalTokens",
+            "tokens_total",
+            "token_total",
+        )
+    )
+    if total_value is None:
+        prompt = _usage_number(_usage_pick(usage, "prompt_tokens", "promptTokens", "input_tokens", "inputTokens"))
+        completion = _usage_number(
+            _usage_pick(usage, "completion_tokens", "completionTokens", "output_tokens", "outputTokens")
+        )
+        if prompt is not None and completion is not None:
+            total_value = prompt + completion
+    if total_value is None:
+        return "-"
+    return str(int(round(total_value)))
+
+
+def _usage_credits_value(usage: dict[str, Any]) -> str:
+    credits = _usage_number(
+        _usage_pick(
+            usage,
+            "credits_consumed",
+            "creditsConsumed",
+            "credits",
+            "total_credits",
+            "cost_credits",
+        )
+    )
+    if credits is None:
+        return "-"
+    return f"{credits:.6f}".rstrip("0").rstrip(".")
 
 
 def _report_appendix_lines(
@@ -2591,8 +2682,8 @@ def _report_appendix_lines(
                     _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else "n/a",
                     cases_cell,
                     _appendix_metric_float(metrics, "avg_score", "average_score"),
-                    str(usage.get("total_tokens") or "-"),
-                    str(usage.get("credits_consumed") or "-"),
+                    _usage_total_tokens_value(usage),
+                    _usage_credits_value(usage),
                     str(run.get("created_at", "") or "-"),
                     _format_failure_cause(run.get("failure_cause")) or "-",
                 ]
@@ -2641,18 +2732,18 @@ def _write_report_csv(report: dict[str, Any], output_path: Path) -> None:
     def _run_usage_fields(run: dict[str, Any]) -> dict[str, Any]:
         usage = _extract_run_usage(run)
         return {
-            "usage_source": usage.get("source"),
-            "usage_provider": usage.get("provider"),
-            "usage_model": usage.get("model"),
-            "usage_requests": usage.get("requests"),
-            "usage_prompt_tokens": usage.get("prompt_tokens"),
-            "usage_completion_tokens": usage.get("completion_tokens"),
-            "usage_total_tokens": usage.get("total_tokens"),
-            "usage_input_cached_tokens": usage.get("input_cached_tokens"),
-            "usage_tool_calls": usage.get("tool_calls"),
-            "usage_duration_ms": usage.get("duration_ms"),
-            "usage_credits_consumed": usage.get("credits_consumed"),
-            "usage_captured_at": usage.get("captured_at"),
+            "usage_source": _usage_pick(usage, "source"),
+            "usage_provider": _usage_pick(usage, "provider"),
+            "usage_model": _usage_pick(usage, "model"),
+            "usage_requests": _usage_pick(usage, "requests"),
+            "usage_prompt_tokens": _usage_pick(usage, "prompt_tokens", "promptTokens", "input_tokens", "inputTokens"),
+            "usage_completion_tokens": _usage_pick(usage, "completion_tokens", "completionTokens", "output_tokens", "outputTokens"),
+            "usage_total_tokens": _usage_total_tokens_value(usage),
+            "usage_input_cached_tokens": _usage_pick(usage, "input_cached_tokens", "inputCachedTokens"),
+            "usage_tool_calls": _usage_pick(usage, "tool_calls", "toolCalls"),
+            "usage_duration_ms": _usage_pick(usage, "duration_ms", "durationMs"),
+            "usage_credits_consumed": _usage_credits_value(usage),
+            "usage_captured_at": _usage_pick(usage, "captured_at", "capturedAt"),
         }
 
     fieldnames = [

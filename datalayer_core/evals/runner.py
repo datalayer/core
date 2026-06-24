@@ -221,6 +221,11 @@ def execute_evalset_spec(
         raise ValueError("Evalset spec has no cases; cannot execute real runs.")
 
     metadata = spec.get("metadata") if isinstance(spec.get("metadata"), dict) else {}
+    run_mode = str(spec.get("kind") or "batch").strip().lower() or "batch"
+    if run_mode not in {"batch", "interactive"}:
+        raise ValueError(
+            f"Evalset spec kind must be 'batch' or 'interactive', got {run_mode!r}."
+        )
     prompt_preamble = str(metadata.get("prompt_preamble") or "").strip()
 
     run_limit = max(1, int(run_limit))
@@ -235,7 +240,7 @@ def execute_evalset_spec(
         spec=spec,
         name=resolved_name,
         run_environment=backend_run_environment,
-        kind="batch",
+        kind=run_mode,
         account_uid=account_uid,
     )
     evalset_id = str((evalset_payload.get("evalset") or {}).get("id") or "")
@@ -327,7 +332,7 @@ def execute_evalset_spec(
                 description="Eval execution via datalayer-core runner.",
                 status="running",
                 config={
-                    "run_mode": "batch",
+                    "run_mode": run_mode,
                     "execution_target": target,
                     "agent_spec_id": spec_id,
                     "environment_name": environment_name,
@@ -455,7 +460,7 @@ def execute_evalset_spec(
                             cause.setdefault("runtime_id", runtime_id)
                 summary: dict[str, Any] = {
                     "launch_source": launch_source,
-                    "run_mode": "batch",
+                    "run_mode": run_mode,
                     "run_environment": run_environment,
                     "execution_target": target,
                     "agent_spec_id": spec_id,
@@ -474,7 +479,7 @@ def execute_evalset_spec(
                 if failure_causes:
                     summary["failure_cause"] = failure_causes[0]
                 report = {
-                    "note": "real agent execution via datalayer-core runner",
+                    "note": f"real agent execution via datalayer-core runner ({run_mode})",
                     "interaction": interaction,
                     "failure_causes": failure_causes,
                 }
