@@ -461,7 +461,7 @@ def whoami(
 
         if urls_only:
             url_items = [
-                ("DATALAYER_RUN_URL", urls.run_url),
+                ("DATALAYER_URL", urls.run_url),
                 ("DATALAYER_IAM_URL", urls.iam_url),
                 ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
                 ("DATALAYER_SPACER_URL", urls.spacer_url),
@@ -504,7 +504,7 @@ def whoami(
                 console.print("\n[bold]Detailed Information:[/bold]")
 
                 url_items = [
-                    ("DATALAYER_RUN_URL", urls.run_url),
+                    ("DATALAYER_URL", urls.run_url),
                     ("DATALAYER_IAM_URL", urls.iam_url),
                     ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
                     ("DATALAYER_SPACER_URL", urls.spacer_url),

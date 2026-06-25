@@ -127,7 +127,7 @@ def main_callback(
     run_url: str | None = typer.Option(
         None,
         "--run-url",
-        help="Override DATALAYER_RUN_URL for this CLI invocation.",
+        help="Override DATALAYER_URL for this CLI invocation.",
     ),
     iam_url: str | None = typer.Option(
         None,
@@ -227,7 +227,7 @@ def main_callback(
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
-        "DATALAYER_RUN_URL": run_url,
+        "DATALAYER_URL": run_url,
         "DATALAYER_IAM_URL": iam_url,
         "DATALAYER_RUNTIMES_URL": runtimes_url,
         "DATALAYER_SPACER_URL": spacer_url,

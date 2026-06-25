@@ -102,10 +102,14 @@ export function PrincipalDetailsOverlay({
     'Principal';
   const normalizedHandle = normalize(handle);
   const normalizedUid = normalize(uid);
+  const resolvedHandle =
+    normalizedHandle && normalizedHandle !== normalizedUid
+      ? normalizedHandle
+      : '';
   const targetPath = buildPrincipalProfilePath({
     kind,
     uid: normalizedUid,
-    handle: normalizedHandle,
+    handle: resolvedHandle,
     accountHandle,
     isAdmin,
   });
@@ -146,9 +150,9 @@ export function PrincipalDetailsOverlay({
               <Text sx={{ fontWeight: 'semibold' }}>
                 {normalizedDisplayName}
               </Text>
-              {normalizedHandle ? (
+              {resolvedHandle ? (
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                  @{normalizedHandle}
+                  @{resolvedHandle}
                 </Text>
               ) : null}
             </Box>
@@ -163,10 +167,10 @@ export function PrincipalDetailsOverlay({
           >
             <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Type</Text>
             <Text sx={{ fontSize: 1 }}>{kind}</Text>
-            {normalizedHandle ? (
+            {resolvedHandle ? (
               <>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
-                <Text sx={{ fontSize: 1 }}>@{normalizedHandle}</Text>
+                <Text sx={{ fontSize: 1 }}>@{resolvedHandle}</Text>
               </>
             ) : null}
             {normalizedUid ? (
@@ -207,7 +211,7 @@ export function PrincipalDetailsOverlay({
               }}
               disabled={!targetPath}
             >
-              View profile
+              View Profile
             </Button>
           </Box>
         </Box>

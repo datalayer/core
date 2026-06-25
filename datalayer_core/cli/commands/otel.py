@@ -75,7 +75,7 @@ def _otel_base_url(url: str | None) -> str:
     return (
         url
         or os.environ.get("DATALAYER_OTEL_RUN_URL")
-        or os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
+        or os.environ.get("DATALAYER_URL", "https://prod1.datalayer.run")
     )
 
 

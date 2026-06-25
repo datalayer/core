@@ -1833,6 +1833,53 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
     lines.extend(_markdown_table(["Rank", "Experiment", "StdDev", "Mean"], stability_rows, ["right", "left", "right", "right"]))
     lines.append("")
 
+    lines.append("### Token Usage Across Runs By Experiment")
+    lines.append("")
+    lines.append(
+        "Total tokens across fetched runs for each experiment. Trends are ordered oldest to newest run."
+    )
+    lines.append("")
+    token_rows: list[list[str]] = []
+    for experiment in experiments:
+        experiment_name = str(experiment.get("name") or "")
+        runs = [run for run in (experiment.get("runs") or []) if isinstance(run, dict)]
+        runs_sorted = sorted(
+            runs,
+            key=lambda run: datetime.fromisoformat(
+                str(run.get("created_at") or "").replace("Z", "+00:00")
+            )
+            if str(run.get("created_at") or "").strip()
+            else datetime.min.replace(tzinfo=timezone.utc),
+        )
+        token_values = [
+            float(tokens)
+            for tokens in (_run_total_tokens(run) for run in runs_sorted)
+            if isinstance(tokens, (int, float))
+        ]
+        latest_tokens = token_values[-1] if token_values else None
+        mean_tokens = (sum(token_values) / len(token_values)) if token_values else None
+        total_tokens = sum(token_values) if token_values else None
+        token_rows.append(
+            [
+                experiment_name,
+                f"{len(token_values)}/{len(runs_sorted)}",
+                (f"{int(round(latest_tokens)):,}" if isinstance(latest_tokens, (int, float)) else "-"),
+                (f"{int(round(mean_tokens)):,}" if isinstance(mean_tokens, (int, float)) else "-"),
+                (f"{int(round(total_tokens)):,}" if isinstance(total_tokens, (int, float)) else "-"),
+                f"`{_sparkline(token_values, colorize=colorize) if token_values else 'n/a'}`",
+            ]
+        )
+    if not token_rows:
+        token_rows.append(["n/a", "0/0", "-", "-", "-", "`n/a`"])
+    lines.extend(
+        _markdown_table(
+            ["Experiment", "Runs With Tokens", "Latest Tokens", "Mean Tokens", "Total Tokens", "Token Trend"],
+            token_rows,
+            ["left", "right", "right", "right", "right", "left"],
+        )
+    )
+    lines.append("")
+
     pairwise = _pairwise_latest_deltas(experiments)
     within_agentspec_pairs = [
         pair for pair in pairwise if str(pair.get("group") or "") == "within_agentspec"
@@ -2017,8 +2064,12 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         appendix_lines.append("")
         run_rows: list[list[str]] = []
         runs = [run for run in (experiment.get("runs") or []) if isinstance(run, dict)]
+        token_timeline_values: list[float] = []
         for idx, run in enumerate(runs, start=1):
             pass_rate = run.get("pass_rate") if isinstance(run.get("pass_rate"), (int, float)) else None
+            total_tokens = _run_total_tokens(run)
+            if isinstance(total_tokens, (int, float)):
+                token_timeline_values.append(float(total_tokens))
             cause_text = _format_failure_cause(run.get("failure_cause"))
             run_id = str(run.get('id', ''))
             run_link = _run_overlay_url(evalset_runs_url, run_id)
@@ -2028,13 +2079,20 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
                     (f"[{run_id}]({run_link})" if run_link and run_id else run_id),
                     str(run.get('status', '')),
                     _fmt_pct(float(pass_rate)) if isinstance(pass_rate, (int, float)) else 'n/a',
+                    (f"{int(round(total_tokens)):,}" if isinstance(total_tokens, (int, float)) else "-"),
                     f"`{_ascii_bar(float(pass_rate), full_blocks=True, colorize=colorize) if isinstance(pass_rate, (int, float)) else '-'}`",
                     cause_text or "-",
                 ]
             )
         if not runs:
-            run_rows.append(["1", "n/a", "n/a", "n/a", "`-`", "-"])
-        appendix_lines.extend(_markdown_table(["#", "Run ID", "Status", "Pass Rate", "ASCII Trend", "Failure Cause"], run_rows, ["right", "left", "left", "right", "left", "left"]))
+            run_rows.append(["1", "n/a", "n/a", "n/a", "-", "`-`", "-"])
+        appendix_lines.extend(
+            _markdown_table(
+                ["#", "Run ID", "Status", "Pass Rate", "Total Tokens", "ASCII Trend", "Failure Cause"],
+                run_rows,
+                ["right", "left", "left", "right", "right", "left", "left"],
+            )
+        )
         appendix_lines.append("")
         failure_rows: list[list[str]] = []
         for idx, run in enumerate(runs, start=1):
@@ -2087,6 +2145,10 @@ def _report_markdown(report: dict[str, Any], run_limit: int, *, colorize: bool =
         appendix_lines.append(
             "Pass-rate sparkline: "
             + f"`{_sparkline(timeline_values, colorize=colorize) if timeline_values else 'n/a'}`"
+        )
+        appendix_lines.append(
+            "Token usage sparkline: "
+            + f"`{_sparkline(token_timeline_values, colorize=colorize) if token_timeline_values else 'n/a'}`"
         )
         appendix_lines.append("")
 
@@ -2621,6 +2683,31 @@ def _usage_credits_value(usage: dict[str, Any]) -> str:
     if credits is None:
         return "-"
     return f"{credits:.6f}".rstrip("0").rstrip(".")
+
+
+def _run_total_tokens(run: dict[str, Any]) -> float | None:
+    usage = _extract_run_usage(run)
+    if not usage:
+        return None
+    total_value = _usage_number(
+        _usage_pick(
+            usage,
+            "total_tokens",
+            "totalTokens",
+            "tokens_total",
+            "token_total",
+        )
+    )
+    if total_value is None:
+        prompt = _usage_number(
+            _usage_pick(usage, "prompt_tokens", "promptTokens", "input_tokens", "inputTokens")
+        )
+        completion = _usage_number(
+            _usage_pick(usage, "completion_tokens", "completionTokens", "output_tokens", "outputTokens")
+        )
+        if prompt is not None and completion is not None:
+            total_value = prompt + completion
+    return total_value
 
 
 def _report_appendix_lines(

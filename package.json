@@ -89,7 +89,7 @@
     "watch:lib:src": "tsc -b -w",
     "type-check:watch": "tsc -b -w --noEmit",
     "examples": "run-p jupyter:start examples:vite",
-    "examples:vite": "VITE_DATALAYER_RUN_URL=http://localhost:8888 vite --config vite.examples.config.ts",
+    "examples:vite": "VITE_DATALAYER_URL=http://localhost:8888 vite --config vite.examples.config.ts",
     "examples:nextjs": "npm run dev --workspace=nextjj-example",
     "jupyter:start": "./dev/sh/start-jupyter-server.sh",
     "prepare": "husky || true",

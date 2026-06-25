@@ -25,7 +25,7 @@ TEST_DATALAYER_API_KEY = os.environ.get("TEST_DATALAYER_API_KEY") or os.environ.
     "DATALAYER_API_KEY"
 )
 
-LOCAL_RUN_URL = os.environ.get("TEST_DATALAYER_RUN_URL", "http://localhost:9700")
+LOCAL_RUN_URL = os.environ.get("TEST_DATALAYER_URL", "http://localhost:9700")
 LOCAL_IAM_URL = os.environ.get("TEST_DATALAYER_IAM_URL", "http://localhost:9700")
 LOCAL_RUNTIMES_URL = os.environ.get(
     "TEST_DATALAYER_RUNTIMES_URL",

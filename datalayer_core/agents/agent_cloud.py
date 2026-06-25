@@ -35,7 +35,7 @@ from datalayer_core.utils.types import (
     Minutes,
     Seconds,
 )
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL, DatalayerURLs
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_URL, DatalayerURLs
 
 
 class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
@@ -57,7 +57,7 @@ class RuntimeService(AuthnMixin, RuntimesMixin, SandboxSnapshotsMixin):
         name: str,
         environment: str = DEFAULT_ENVIRONMENT,
         time_reservation: Minutes = DEFAULT_TIME_RESERVATION,
-        run_url: str = DEFAULT_DATALAYER_RUN_URL,
+        run_url: str = DEFAULT_DATALAYER_URL,
         iam_url: Optional[str] = None,
         token: Optional[str] = None,
         api_key: Optional[str] = None,

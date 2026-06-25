@@ -87,7 +87,7 @@ class OTelEmitter:
                 or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
                 or (
                     (
-                        os.environ.get("DATALAYER_RUN_URL")
+                        os.environ.get("DATALAYER_URL")
                         or "https://prod1.datalayer.run"
                     ).rstrip("/")
                     + "/api/otel/v1/otlp"

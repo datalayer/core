@@ -19,7 +19,7 @@ from datalayer_core.utils.types import (
     CreditsPerSecond,
     Minutes,
 )
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_RUN_URL
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_URL
 
 
 class RuntimeModel(BaseModel):
@@ -43,7 +43,7 @@ class RuntimeModel(BaseModel):
 
     # Service URLs
     run_url: str = Field(
-        default=DEFAULT_DATALAYER_RUN_URL,
+        default=DEFAULT_DATALAYER_URL,
         description="Runtime service URL (default: 'https://api.datalayer.run')",
     )
     iam_url: Optional[str] = Field(default=None, description="IAM service URL")
@@ -92,7 +92,7 @@ class RuntimeModel(BaseModel):
 
     # Legacy compatibility (keeping for backward compatibility)
     url: str = Field(
-        default=DEFAULT_DATALAYER_RUN_URL,
+        default=DEFAULT_DATALAYER_URL,
         description="Runtime service URL (alias for run_url)",
     )
     credits_per_second: CreditsPerSecond = Field(

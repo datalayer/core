@@ -70,8 +70,22 @@ export const Principal: React.FC<PrincipalProps> = ({
   const { user: authenticatedUser } = useIAMStore();
   const isAnonymous = !authenticatedUser;
 
+  const normalizedUid = String(principal.uid || '').trim();
+  const normalizedProvidedHandle = String(principal.handle || '').trim();
+  const normalizedProvidedAccountHandle = String(principal.accountHandle || '').trim();
+  const providedHandleIsUidPlaceholder =
+    !!normalizedProvidedHandle &&
+    !!normalizedUid &&
+    normalizedProvidedHandle === normalizedUid;
+  const providedAccountHandleIsUidPlaceholder =
+    !!normalizedProvidedAccountHandle &&
+    !!normalizedUid &&
+    normalizedProvidedAccountHandle === normalizedUid;
+
   const principalHandle = String(
-    principal.handle || principal.accountHandle || '',
+    (!providedHandleIsUidPlaceholder ? principal.handle : '') ||
+      (!providedAccountHandleIsUidPlaceholder ? principal.accountHandle : '') ||
+      '',
   ).trim();
 
   const hydratedUserQuery = useUser(
@@ -165,11 +179,11 @@ export const Principal: React.FC<PrincipalProps> = ({
       principal.uid ||
       'Unknown',
     handle:
-      principal.handle ||
+      (!providedHandleIsUidPlaceholder ? principal.handle : undefined) ||
       String((hydratedEntity as any)?.handle || '').trim() ||
       undefined,
     accountHandle:
-      principal.accountHandle ||
+      (!providedAccountHandleIsUidPlaceholder ? principal.accountHandle : undefined) ||
       String((hydratedEntity as any)?.handle || '').trim() ||
       undefined,
     avatarUrl:

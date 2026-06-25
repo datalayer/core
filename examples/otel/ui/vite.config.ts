@@ -6,8 +6,8 @@
 import { defineConfig, ConfigEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// Default platform URL – overridden by DATALAYER_RUN_URL env var.
-const RUN_URL = process.env.DATALAYER_RUN_URL || 'https://prod1.datalayer.run';
+// Default platform URL – overridden by DATALAYER_URL env var.
+const RUN_URL = process.env.DATALAYER_URL || 'https://prod1.datalayer.run';
 // OTEL service URL – falls back to RUN_URL so no local proxy is needed.
 const OTEL_URL = process.env.DATALAYER_OTEL_RUN_URL || RUN_URL;
 
