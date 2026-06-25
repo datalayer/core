@@ -4574,12 +4574,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get dataset by ID
    */
-  const useDataset = (datasetId: string) => {
+  const useDataset = (
+    datasetId: string,
+    scope?: {
+      selectedPrincipalUid?: string;
+      selectedPrincipalKind?: 'user' | 'organization' | 'team';
+    },
+  ) => {
     return useQuery({
-      queryKey: queryKeys.datasets.detail(datasetId),
+      queryKey: [
+        ...queryKeys.datasets.detail(datasetId),
+        scope?.selectedPrincipalUid || '',
+        scope?.selectedPrincipalKind || '',
+      ],
       queryFn: async () => {
+        const params = new URLSearchParams();
+        if (scope?.selectedPrincipalUid) {
+          params.set('selected_principal_uid', scope.selectedPrincipalUid);
+        }
+        if (scope?.selectedPrincipalKind) {
+          params.set('selected_principal_kind', scope.selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${datasetId}`,
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.item) {
@@ -4595,12 +4613,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Get datasets by space
    */
-  const useDatasetsBySpace = (spaceId: string) => {
+  const useDatasetsBySpace = (
+    spaceId: string,
+    scope?: {
+      selectedPrincipalUid?: string;
+      selectedPrincipalKind?: 'user' | 'organization' | 'team';
+    },
+  ) => {
     return useQuery({
-      queryKey: queryKeys.datasets.bySpace(spaceId),
+      queryKey: [
+        ...queryKeys.datasets.bySpace(spaceId),
+        scope?.selectedPrincipalUid || '',
+        scope?.selectedPrincipalKind || '',
+      ],
       queryFn: async () => {
+        const params = new URLSearchParams();
+        if (scope?.selectedPrincipalUid) {
+          params.set('selected_principal_uid', scope.selectedPrincipalUid);
+        }
+        if (scope?.selectedPrincipalKind) {
+          params.set('selected_principal_kind', scope.selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/dataset`,
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -4622,14 +4658,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         id,
         name,
         description,
+        selectedPrincipalUid,
+        selectedPrincipalKind,
       }: {
         id: string;
         name: string;
         description: string;
         spaceId?: string;
+        selectedPrincipalUid?: string;
+        selectedPrincipalKind?: 'user' | 'organization' | 'team';
       }) => {
+        const params = new URLSearchParams();
+        if (selectedPrincipalUid) {
+          params.set('selected_principal_uid', selectedPrincipalUid);
+        }
+        if (selectedPrincipalKind) {
+          params.set('selected_principal_kind', selectedPrincipalKind);
+        }
+        const query = params.toString();
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/datasets/${id}`,
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/datasets/${id}${query ? `?${query}` : ''}`,
           method: 'PUT',
           body: { name, description },
         });
@@ -7794,19 +7842,43 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshDataset = (
-    options?: UseMutationOptions<unknown, Error, string>,
+    options?: UseMutationOptions<
+      unknown,
+      Error,
+      string | {
+        datasetId: string;
+        selectedPrincipalUid?: string;
+        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+      }
+    >,
   ) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (datasetId: string) => {
+      mutationFn: async (variables: string | {
+        datasetId: string;
+        selectedPrincipalUid?: string;
+        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+      }) => {
+        const datasetId = typeof variables === 'string' ? variables : variables.datasetId;
+        const selectedPrincipalUid = typeof variables === 'string' ? undefined : variables.selectedPrincipalUid;
+        const selectedPrincipalKind = typeof variables === 'string' ? undefined : variables.selectedPrincipalKind;
+        const params = new URLSearchParams();
+        if (selectedPrincipalUid) {
+          params.set('selected_principal_uid', selectedPrincipalUid);
+        }
+        if (selectedPrincipalKind) {
+          params.set('selected_principal_kind', selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${datasetId}`,
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         return resp;
       },
-      onSuccess: (data, datasetId) => {
+      onSuccess: (data, variables) => {
+        const datasetId = typeof variables === 'string' ? variables : variables.datasetId;
         queryClient.invalidateQueries({
           queryKey: queryKeys.datasets.detail(datasetId),
         });
@@ -7820,19 +7892,43 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * @param options - Mutation options
    */
   const useRefreshSpaceDatasets = (
-    options?: UseMutationOptions<unknown, Error, string>,
+    options?: UseMutationOptions<
+      unknown,
+      Error,
+      string | {
+        spaceId: string;
+        selectedPrincipalUid?: string;
+        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+      }
+    >,
   ) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (spaceId: string) => {
+      mutationFn: async (variables: string | {
+        spaceId: string;
+        selectedPrincipalUid?: string;
+        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+      }) => {
+        const spaceId = typeof variables === 'string' ? variables : variables.spaceId;
+        const selectedPrincipalUid = typeof variables === 'string' ? undefined : variables.selectedPrincipalUid;
+        const selectedPrincipalKind = typeof variables === 'string' ? undefined : variables.selectedPrincipalKind;
+        const params = new URLSearchParams();
+        if (selectedPrincipalUid) {
+          params.set('selected_principal_uid', selectedPrincipalUid);
+        }
+        if (selectedPrincipalKind) {
+          params.set('selected_principal_kind', selectedPrincipalKind);
+        }
+        const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/dataset`,
+          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         return resp;
       },
-      onSuccess: (data, spaceId) => {
+      onSuccess: (data, variables) => {
+        const spaceId = typeof variables === 'string' ? variables : variables.spaceId;
         queryClient.invalidateQueries({
           queryKey: queryKeys.datasets.bySpace(spaceId),
         });
