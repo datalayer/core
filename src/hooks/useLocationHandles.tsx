@@ -9,7 +9,7 @@ import { useRunStore } from '../state';
 
 export const useLocationHandles = () => {
   const params = useParams();
-  const { accountHandle, spaceHandle } = params;
+  const { accountHandle, teamHandle, spaceHandle } = params;
   const { pathname } = useLocation();
   const runStore = useRunStore();
   if (pathname.startsWith('/public')) {
@@ -20,6 +20,7 @@ export const useLocationHandles = () => {
   }
   return {
     accountHandle,
+    teamHandle,
     spaceHandle,
   };
 };

@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { ActionMenu, Box, Button, Text } from '@primer/react';
+import { ActionMenu, Box, Button, Label, Text } from '@primer/react';
 import { useNavigate } from '../../hooks';
 import { PrincipalAvatar } from './PrincipalAvatar';
 
@@ -13,6 +13,8 @@ export type PrincipalDetailsOverlayProps = {
   kind: PrincipalKind;
   uid?: string;
   displayName: string;
+  name?: string;
+  description?: string;
   handle?: string;
   accountHandle?: string;
   firstName?: string;
@@ -84,6 +86,8 @@ export function PrincipalDetailsOverlay({
   kind,
   uid,
   displayName,
+  name,
+  description,
   handle,
   accountHandle,
   firstName,
@@ -102,6 +106,9 @@ export function PrincipalDetailsOverlay({
     'Principal';
   const normalizedHandle = normalize(handle);
   const normalizedUid = normalize(uid);
+  const normalizedName = normalize(name);
+  const normalizedDescription = normalize(description);
+  const normalizedOrigin = normalize(origin) || 'Datalayer';
   const resolvedHandle =
     normalizedHandle && normalizedHandle !== normalizedUid
       ? normalizedHandle
@@ -185,19 +192,51 @@ export function PrincipalDetailsOverlay({
                 <Text sx={{ fontSize: 1 }}>{firstName || 'N/A'}</Text>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Last name</Text>
                 <Text sx={{ fontSize: 1 }}>{lastName || 'N/A'}</Text>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
-                <Text sx={{ fontSize: 1 }}>{origin || 'Datalayer'}</Text>
                 {email ? (
                   <>
                     <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Email</Text>
                     <Text sx={{ fontSize: 1 }}>{email}</Text>
                   </>
                 ) : null}
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
+                <Label
+                  size="small"
+                  variant="secondary"
+                  title={normalizedOrigin}
+                  sx={{
+                    justifySelf: 'start',
+                    width: 'fit-content',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {normalizedOrigin}
+                </Label>
               </>
             ) : (
               <>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Name</Text>
+                <Text sx={{ fontSize: 1 }}>{normalizedName || normalizedDisplayName}</Text>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Description</Text>
+                <Text sx={{ fontSize: 1 }}>{normalizedDescription || 'N/A'}</Text>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
-                <Text sx={{ fontSize: 1 }}>{origin || 'Datalayer'}</Text>
+                <Label
+                  size="small"
+                  variant="secondary"
+                  title={normalizedOrigin}
+                  sx={{
+                    justifySelf: 'start',
+                    width: 'fit-content',
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {normalizedOrigin}
+                </Label>
               </>
             )}
           </Box>

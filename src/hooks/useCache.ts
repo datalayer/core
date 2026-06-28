@@ -4387,13 +4387,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         accountHandle,
+        teamHandle,
         spaceHandle,
       }: {
         accountHandle: string;
+        teamHandle?: string;
         spaceHandle?: string;
       }) => {
+        let path = `/api/spacer/v1/layouts/accounts/${accountHandle}`;
+        if (teamHandle !== undefined && spaceHandle !== undefined) {
+          path += `/teams/${teamHandle}/spaces/${spaceHandle}`;
+        } else if (spaceHandle !== undefined) {
+          path += `/spaces/${spaceHandle}`;
+        }
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/layouts/accounts/${accountHandle}${spaceHandle !== undefined ? '/spaces/' + spaceHandle : ''}`,
+          url: `${configuration.spacerRunUrl}${path}`,
           method: 'GET',
         });
       },
@@ -4404,6 +4412,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const transformedOrganization = resp.organization
             ? toOrganization(resp.organization)
             : undefined;
+          const transformedTeam =
+            resp.team && transformedOrganization
+              ? toTeam(resp.team, transformedOrganization.id)
+              : undefined;
           const transformedSpace = resp.space ? toSpace(resp.space) : undefined;
 
           // Set data directly into cache instead of just invalidating
@@ -4422,6 +4434,21 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             queryClient.invalidateQueries({
               queryKey: queryKeys.organizations.all(),
             });
+          }
+          if (transformedTeam) {
+            if (transformedTeam.id) {
+              queryClient.setQueryData(
+                queryKeys.teams.detail(transformedTeam.id),
+                transformedTeam,
+              );
+            }
+            if (variables.teamHandle) {
+              queryClient.setQueryData(
+                queryKeys.teams.byHandle(variables.teamHandle),
+                transformedTeam,
+              );
+            }
+            queryClient.invalidateQueries({ queryKey: queryKeys.teams.all() });
           }
           if (transformedSpace) {
             // Set both user and org space queries based on which type it is

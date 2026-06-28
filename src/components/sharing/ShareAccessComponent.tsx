@@ -5,6 +5,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ChevronDownIcon,
+  ChevronUpIcon,
   KeyIcon,
   PersonIcon,
   OrganizationIcon,
@@ -49,6 +51,7 @@ export type ShareAccessComponentProps = {
   resourceLabel: string;
   resourceName?: string;
   resourceDescription?: string;
+  expanded?: boolean;
   onSharingAccessRestrictedChange?: (
     restricted: boolean,
     message?: string,
@@ -197,7 +200,35 @@ function ensurePrincipalDisplayName(
       return candidate.trim();
     }
   }
-  return kind === 'organization' ? 'Organization' : 'Principal';
+  if (kind === 'organization') {
+    return 'Organization';
+  }
+  if (kind === 'team') {
+    return 'Team';
+  }
+  return 'Principal';
+}
+
+function formatPrincipalHandle(
+  kind: PrincipalKind,
+  handle?: string,
+  accountHandle?: string,
+): string {
+  const normalizedHandle = String(handle || '').trim();
+  const normalizedAccountHandle = String(accountHandle || '').trim();
+  if (!normalizedHandle) {
+    return '';
+  }
+  if (kind === 'team') {
+    if (normalizedHandle.includes('/')) {
+      return `@${normalizedHandle}`;
+    }
+    if (normalizedAccountHandle) {
+      return `@${normalizedAccountHandle}/${normalizedHandle}`;
+    }
+    return `@${normalizedHandle}`;
+  }
+  return `@${normalizedHandle}`;
 }
 
 function isSharingAuthorizationMessage(message?: string): boolean {
@@ -595,6 +626,11 @@ function OwnerPrincipalRow({
     ownerPrincipal.kind,
     ownerPrincipal.displayName,
     entry.displayName,
+    formatPrincipalHandle(
+      ownerPrincipal.kind,
+      resolvedHandle,
+      resolvedAccountHandle,
+    ),
     resolvedHandle,
     ownerPrincipal.handle,
     ownerPrincipal.accountHandle,
@@ -663,6 +699,7 @@ function AccessPrincipalRow({
   const resolvedDisplayName = ensurePrincipalDisplayName(
     entry.kind,
     cached.displayName,
+    formatPrincipalHandle(entry.kind, resolvedHandle, cached.accountHandle),
     resolvedHandle,
     entry.uid,
   );
@@ -713,6 +750,7 @@ export function ShareAccessComponent({
   resourceLabel,
   resourceName,
   resourceDescription: _resourceDescription,
+  expanded = false,
   onSharingAccessRestrictedChange,
   defaultAccessLevel = 'view',
   principalKinds = DEFAULT_PRINCIPAL_KINDS,
@@ -730,6 +768,7 @@ export function ShareAccessComponent({
   // ----- State -----
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(expanded);
   const [selectedAccessLevel, setSelectedAccessLevel] =
     useState<ItemAccessLevel>(defaultAccessLevel);
 
@@ -1043,7 +1082,14 @@ export function ShareAccessComponent({
         setShareablePrincipals(mapped);
         mapped.forEach(principal => {
           mergePrincipalCacheEntry(principal.kind, principal.uid, {
-            displayName: principal.name || principal.handle,
+            displayName:
+              principal.name ||
+              formatPrincipalHandle(
+                principal.kind,
+                principal.handle,
+                principal.organizationHandle || undefined,
+              ) ||
+              principal.handle,
             handle: principal.handle,
             avatarUrl: principal.avatarUrl || undefined,
             accountHandle: principal.organizationHandle || undefined,
@@ -1193,7 +1239,18 @@ export function ShareAccessComponent({
               uid,
               handle: handle || uid,
               displayName:
-                pickFirstString(entry?.name_t, entry?.name) || handle || uid,
+                pickFirstString(entry?.name_t, entry?.name) ||
+                formatPrincipalHandle(
+                  'team',
+                  handle || uid,
+                  pickFirstString(
+                    entry?.organization_handle_s,
+                    entry?.organizationHandle,
+                    entry?.organization_handle,
+                  ) || undefined,
+                ) ||
+                handle ||
+                uid,
               accountHandle:
                 pickFirstString(
                   entry?.organization_handle_s,
@@ -1216,7 +1273,10 @@ export function ShareAccessComponent({
               uid,
               handle: handle || uid,
               displayName:
-                pickFirstString(entry?.name_t, entry?.name) || handle || uid,
+                pickFirstString(entry?.name_t, entry?.name) ||
+                formatPrincipalHandle('organization', handle || uid) ||
+                handle ||
+                uid,
             };
           })
           .filter(Boolean) as PrincipalSearchItem[];
@@ -1641,6 +1701,12 @@ export function ShareAccessComponent({
     return { self, otherUsers, orgs, teams };
   }, [shareablePrincipals, principalKindsSet, user?.uid]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setIsExpanded(expanded);
+    }
+  }, [isOpen, expanded]);
+
   if (!isOpen) {
     return null;
   }
@@ -1841,16 +1907,27 @@ export function ShareAccessComponent({
             </Text>
           </Box>
           <ActionMenu>
-            <ActionMenu.Anchor>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+              <ActionMenu.Anchor>
+                <Button
+                  variant="default"
+                  size="small"
+                  leadingVisual={KeyIcon}
+                  disabled={isSaving || isReadOnly}
+                >
+                  Access: {ACCESS_LEVEL_LABELS[selectedAccessLevel]}
+                </Button>
+              </ActionMenu.Anchor>
               <Button
-                variant="default"
+                variant="invisible"
                 size="small"
-                leadingVisual={KeyIcon}
-                disabled={isSaving || isReadOnly}
+                leadingVisual={isExpanded ? ChevronUpIcon : ChevronDownIcon}
+                onClick={() => setIsExpanded(previous => !previous)}
+                aria-label={isExpanded ? 'Shrink sharing details' : 'Expand sharing details'}
               >
-                Access: {ACCESS_LEVEL_LABELS[selectedAccessLevel]}
+                {isExpanded ? 'Shrink details' : 'Expand details'}
               </Button>
-            </ActionMenu.Anchor>
+            </Box>
             <ActionMenu.Overlay width="small">
               <ActionList selectionVariant="single">
                 {ACCESS_LEVELS.map(level => (
@@ -1867,6 +1944,31 @@ export function ShareAccessComponent({
           </ActionMenu>
         </Box>
 
+        {!isExpanded && (
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              borderRadius: 2,
+              borderWidth: 1,
+              borderStyle: 'solid',
+              borderColor: 'border.default',
+              bg: 'canvas.default',
+              display: 'grid',
+              gap: 1,
+            }}
+          >
+            <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+              Sharing details are collapsed.
+            </Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              {aclEntries.length} principal{aclEntries.length === 1 ? '' : 's'} currently granted access.
+            </Text>
+          </Box>
+        )}
+
+        {isExpanded && (
+          <>
         {/* Owner */}
         <Box
           sx={{
@@ -2181,6 +2283,9 @@ export function ShareAccessComponent({
             )}
           </Box>
         </Box>
+
+          </>
+        )}
       </Box>
 
       <Box
