@@ -92,10 +92,16 @@ export const Principal: React.FC<PrincipalProps> = ({
       '',
   ).trim();
   const teamPathParts = principal.kind === 'team' ? principalHandle.split('/') : [];
-  const teamOrganizationHandle = String(teamPathParts[0] || '').trim();
+  const teamOrganizationHandleFromPath = String(teamPathParts[0] || '').trim();
+  const teamOrganizationHandleFromAccount =
+    principal.kind === 'team' && !providedAccountHandleIsUidPlaceholder
+      ? String(principal.accountHandle || '').trim()
+      : '';
+  const teamOrganizationHandle =
+    teamOrganizationHandleFromPath || teamOrganizationHandleFromAccount;
 
   const hydratedUserQuery = useUser(
-    !isAnonymous && principal.kind === 'user'
+    !isAnonymous && principal.kind === 'personal'
       ? String(principal.uid || '')
       : '',
   );
@@ -114,7 +120,7 @@ export const Principal: React.FC<PrincipalProps> = ({
       : '',
   );
   const hydratedPublicUserQuery = useUserPublicProfileByHandle(
-    isAnonymous && principal.kind === 'user' ? principalHandle : '',
+    isAnonymous && principal.kind === 'personal' ? principalHandle : '',
   );
   const hydratedPublicOrgQuery = useOrganizationPublicProfileByHandle(
     isAnonymous && principal.kind === 'organization' ? principalHandle : '',
@@ -158,7 +164,7 @@ export const Principal: React.FC<PrincipalProps> = ({
   }, [hydratedPublicOrgQuery.data]);
 
   const hydratedEntity =
-    principal.kind === 'user'
+    principal.kind === 'personal'
       ? isAnonymous
         ? normalizedPublicUser
         : hydratedUserQuery.data
@@ -171,7 +177,7 @@ export const Principal: React.FC<PrincipalProps> = ({
           : undefined;
 
   const hydratedDisplayName =
-    principal.kind === 'user'
+    principal.kind === 'personal'
       ? String(
           (hydratedEntity as any)?.displayName ||
             [

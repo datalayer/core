@@ -7,7 +7,7 @@ import { ActionMenu, Box, Button, Label, Text } from '@primer/react';
 import { useNavigate } from '../../hooks';
 import { PrincipalAvatar } from './PrincipalAvatar';
 
-export type PrincipalKind = 'user' | 'team' | 'organization';
+export type PrincipalKind = 'personal' | 'team' | 'organization';
 
 export type PrincipalDetailsOverlayProps = {
   kind: PrincipalKind;
@@ -50,7 +50,7 @@ export function buildPrincipalProfilePath({
       ? normalizedHandle
       : '';
 
-  if (kind === 'user') {
+  if (kind === 'personal') {
     if (isAdmin && normalizedUid) {
       return `/admin/management/iam/users/${normalizedUid}`;
     }
@@ -186,7 +186,7 @@ export function PrincipalDetailsOverlay({
                 <Text sx={{ fontSize: 1 }}>{normalizedUid}</Text>
               </>
             ) : null}
-            {kind === 'user' ? (
+            {kind === 'personal' ? (
               <>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>First name</Text>
                 <Text sx={{ fontSize: 1 }}>{firstName || 'N/A'}</Text>

@@ -27,7 +27,7 @@ export type DatasourcesProps = {
   /** Optional principal uid used to scope datasource reads. */
   principalUid?: string;
   /** Optional principal kind used to scope datasource reads. */
-  principalKind?: 'user' | 'organization' | 'team';
+  principalKind?: 'personal' | 'organization' | 'team';
 };
 
 const DatasourcesTable = ({
@@ -37,7 +37,7 @@ const DatasourcesTable = ({
 }: {
   datasourcesListRoute?: string;
   principalUid?: string;
-  principalKind?: 'user' | 'organization' | 'team';
+  principalKind?: 'personal' | 'organization' | 'team';
 }) => {
   const { useDatasources } = useCache();
 

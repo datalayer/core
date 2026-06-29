@@ -33,7 +33,7 @@ import { PrincipalBadge } from '../principal/PrincipalBadge';
 // ---------------------------------------------------------------------------
 
 export type ItemAccessLevel = 'view' | 'update' | 'execute';
-type PrincipalKind = 'user' | 'team' | 'organization';
+type PrincipalKind = 'personal' | 'team' | 'organization';
 
 type SharingLevelPayload = {
   userUids?: string[];
@@ -128,7 +128,7 @@ type PrincipalCache = Record<string, PrincipalCacheEntry>;
 
 const ACCESS_LEVELS: ItemAccessLevel[] = ['view', 'update', 'execute'];
 const DEFAULT_PRINCIPAL_KINDS: readonly PrincipalKind[] = [
-  'user',
+  'personal',
   'team',
   'organization',
 ];
@@ -160,7 +160,7 @@ function normalizePrincipalKind(kindRaw?: string): PrincipalKind {
   if (kind === 'organization' || kind === 'org') {
     return 'organization';
   }
-  return 'user';
+  return 'personal';
 }
 
 function toTitleCase(value: string): string {
@@ -359,7 +359,7 @@ function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
       if (typeof entry === 'string') {
         const uid = entry.trim();
         return uid
-          ? { kind: 'user', uid, handle: uid, displayName: uid }
+          ? { kind: 'personal', uid, handle: uid, displayName: uid }
           : null;
       }
       const uid = pickFirstString(entry?.uid, entry?.owner_uid, entry?.id);
@@ -412,7 +412,7 @@ function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
       }
       const normalizedUid = uid.trim();
       return {
-        kind: 'user',
+        kind: 'personal',
         uid: normalizedUid,
         handle: normalizedUid,
         displayName: normalizedUid,
@@ -451,7 +451,7 @@ function emptyAccessByLevel(): AccessByLevel {
 function bucketFor(
   kind: PrincipalKind,
 ): 'userUids' | 'teamUids' | 'organizationUids' {
-  return kind === 'user'
+  return kind === 'personal'
     ? 'userUids'
     : kind === 'team'
       ? 'teamUids'
@@ -530,7 +530,7 @@ function buildAclEntries(
     }
   };
   for (const level of ACCESS_LEVELS) {
-    state[level].userUids.forEach(uid => upsert('user', uid, level));
+    state[level].userUids.forEach(uid => upsert('personal', uid, level));
     state[level].teamUids.forEach(uid => upsert('team', uid, level));
     state[level].organizationUids.forEach(uid =>
       upsert('organization', uid, level),
@@ -640,7 +640,7 @@ function OwnerPrincipalRow({
   const resolvedOrigin =
     ownerPrincipal.origin ||
     entry.origin ||
-    (ownerPrincipal.kind === 'user' ? 'Datalayer' : undefined);
+    (ownerPrincipal.kind === 'personal' ? 'Datalayer' : undefined);
 
   return (
     <Box
@@ -669,7 +669,7 @@ function OwnerPrincipalRow({
           }}
           showPrincipalLabel={false}
           showApplyingToText={false}
-          showOriginLabel={ownerPrincipal.kind === 'user'}
+          showOriginLabel={ownerPrincipal.kind === 'personal'}
           isAdmin={isPlatformAdmin}
           sx={{ px: 0, py: 0, border: 'none', bg: 'transparent' }}
         />
@@ -731,7 +731,7 @@ function AccessPrincipalRow({
           }}
           showPrincipalLabel={false}
           showApplyingToText={false}
-          showOriginLabel={entry.kind === 'user'}
+          showOriginLabel={entry.kind === 'personal'}
           isAdmin={isPlatformAdmin}
           sx={{ px: 0, py: 0, border: 'none', bg: 'transparent' }}
         />
@@ -981,7 +981,7 @@ export function ShareAccessComponent({
             handle: owner.handle || owner.uid,
             avatarUrl: owner.avatarUrl,
             accountHandle: owner.accountHandle,
-            origin: owner.kind === 'user' ? owner.origin : undefined,
+            origin: owner.kind === 'personal' ? owner.origin : undefined,
           });
         });
         setAccess(hydrated);
@@ -1093,7 +1093,7 @@ export function ShareAccessComponent({
             handle: principal.handle,
             avatarUrl: principal.avatarUrl || undefined,
             accountHandle: principal.organizationHandle || undefined,
-            origin: principal.kind === 'user' ? 'Datalayer' : undefined,
+            origin: principal.kind === 'personal' ? 'Datalayer' : undefined,
           });
         });
       } catch (error) {
@@ -1217,7 +1217,7 @@ export function ShareAccessComponent({
               entry?.avatar_url,
             );
             return {
-              kind: 'user',
+              kind: 'personal',
               uid,
               handle: handle || uid,
               displayName: displayName || handle || uid,
@@ -1293,7 +1293,7 @@ export function ShareAccessComponent({
             handle: result.handle,
             avatarUrl: result.avatarUrl,
             accountHandle: result.accountHandle,
-            origin: result.kind === 'user' ? result.origin : undefined,
+            origin: result.kind === 'personal' ? result.origin : undefined,
           });
         });
 
@@ -1338,11 +1338,11 @@ export function ShareAccessComponent({
     const userUids = Array.from(
       new Set([
         ...aclEntries
-          .filter(e => e.kind === 'user')
+          .filter(e => e.kind === 'personal')
           .map(e => e.uid)
           .filter(Boolean),
         ...ownerPrincipals
-          .filter(o => o.kind === 'user')
+          .filter(o => o.kind === 'personal')
           .map(o => o.uid)
           .filter(Boolean),
       ]),
@@ -1351,7 +1351,7 @@ export function ShareAccessComponent({
       if (!uid || userHydrationMissesRef.current.has(uid)) {
         return false;
       }
-      const cached = principalCache[principalKey('user', uid)] || {};
+      const cached = principalCache[principalKey('personal', uid)] || {};
       return (
         !cached.displayName ||
         !cached.avatarUrl ||
@@ -1418,7 +1418,7 @@ export function ShareAccessComponent({
           const origin = normalizeUserOrigin(
             pickFirstString(entry?.origin, entry?.origin_s, entry?.origin_t),
           );
-          mergePrincipalCacheEntry('user', uid, {
+          mergePrincipalCacheEntry('personal', uid, {
             displayName,
             handle,
             avatarUrl: avatarUrl || undefined,
@@ -1692,9 +1692,9 @@ export function ShareAccessComponent({
       principalKindsSet.has(p.kind),
     );
     const selfUid = pickFirstString(user?.uid);
-    const self = filtered.filter(p => p.kind === 'user' && p.uid === selfUid);
+    const self = filtered.filter(p => p.kind === 'personal' && p.uid === selfUid);
     const otherUsers = filtered.filter(
-      p => p.kind === 'user' && p.uid !== selfUid,
+      p => p.kind === 'personal' && p.uid !== selfUid,
     );
     const orgs = filtered.filter(p => p.kind === 'organization');
     const teams = filtered.filter(p => p.kind === 'team');
@@ -1730,7 +1730,7 @@ export function ShareAccessComponent({
     const displayName =
       principal.name || cached.displayName || principal.handle || principal.uid;
     const Icon =
-      principal.kind === 'user'
+      principal.kind === 'personal'
         ? PersonIcon
         : principal.kind === 'organization'
           ? OrganizationIcon
@@ -1794,7 +1794,7 @@ export function ShareAccessComponent({
               }}
             >
               <Text sx={{ fontWeight: 'semibold' }}>{displayName}</Text>
-              {principal.kind === 'user' &&
+              {principal.kind === 'personal' &&
                 user?.uid &&
                 principal.uid === user.uid && (
                   <Label size="small" variant="accent">
@@ -2000,7 +2000,7 @@ export function ShareAccessComponent({
                     ownerPrincipal={ownerPrincipal}
                     cache={principalCache}
                     showAvatarSkeleton={
-                      ownerPrincipal.kind === 'user' &&
+                      ownerPrincipal.kind === 'personal' &&
                       Boolean(hydratingUserUids[ownerPrincipal.uid])
                     }
                     isPlatformAdmin={isPlatformAdmin}
@@ -2173,10 +2173,10 @@ export function ShareAccessComponent({
                           }}
                         >
                           <Text>{result.displayName}</Text>
-                          {result.kind === 'user' && (
+                          {result.kind === 'personal' && (
                             <Label size="small" variant="secondary">
                               {result.origin ||
-                                principalCache[principalKey('user', result.uid)]
+                                principalCache[principalKey('personal', result.uid)]
                                   ?.origin ||
                                 'Datalayer'}
                             </Label>
@@ -2250,7 +2250,7 @@ export function ShareAccessComponent({
                       entry={entry}
                       cache={principalCache}
                       showAvatarSkeleton={
-                        entry.kind === 'user' &&
+                        entry.kind === 'personal' &&
                         Boolean(hydratingUserUids[entry.uid])
                       }
                       isPlatformAdmin={isPlatformAdmin}

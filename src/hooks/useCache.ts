@@ -957,10 +957,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     }
 
     let itemIds = new Array<string>();
-    let raw_item_uids: string = raw_course.item_uids_s;
-    if (raw_item_uids && raw_item_uids !== '()') {
-      raw_item_uids = raw_item_uids.replace('(', '').replace(')', '');
-      itemIds = raw_item_uids.split(' ');
+    const rawItemUids = raw_course.item_uids_s;
+    if (Array.isArray(rawItemUids)) {
+      itemIds = Array.from(
+        new Set(
+          rawItemUids
+            .map(uid => String(uid || '').trim())
+            .filter(Boolean),
+        ),
+      );
+    } else if (typeof rawItemUids === 'string' && rawItemUids !== '()') {
+      itemIds = Array.from(
+        new Set(
+          rawItemUids
+            .replace('(', ' ')
+            .replace(')', ' ')
+            .split(/[\s,]+/g)
+            .map(uid => uid.trim())
+            .filter(Boolean),
+        ),
+      );
     }
 
     const items = new Array<ISpaceItem>();
@@ -1764,7 +1780,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useUserSpaces = (scope?: {
     selectedPrincipalUid?: string;
-    selectedPrincipalKind?: 'user' | 'organization' | 'team';
+    selectedPrincipalKind?: 'personal' | 'organization' | 'team';
   }) => {
     return useQuery({
       queryKey: [
@@ -2003,6 +2019,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         file?: File;
       }) => {
         const formData = new FormData();
+        formData.append('space_id', spaceId);
+        // Backward compatibility for endpoints still expecting camelCase.
         formData.append('spaceId', spaceId);
         formData.append('notebookType', notebookType);
         formData.append('name', name);
@@ -2353,7 +2371,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const usePages = (scope?: {
     selectedPrincipalUid?: string;
-    selectedPrincipalKind?: 'user' | 'organization' | 'team';
+    selectedPrincipalKind?: 'personal' | 'organization' | 'team';
   }) => {
     return useQuery({
       queryKey: [
@@ -2480,7 +2498,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   type PrincipalScopeOptions = {
     principalUid?: string;
-    principalKind?: 'user' | 'organization' | 'team';
+    principalKind?: 'personal' | 'organization' | 'team';
   };
 
   /**
@@ -3006,7 +3024,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     secretId: string,
     options?: {
       principalUid?: string;
-      principalKind?: 'user' | 'organization' | 'team';
+      principalKind?: 'personal' | 'organization' | 'team';
       enabled?: boolean;
       refetchOnMount?: boolean | 'always';
       staleTime?: number;
@@ -4605,7 +4623,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     datasetId: string,
     scope?: {
       selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'user' | 'organization' | 'team';
+      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
     },
   ) => {
     return useQuery({
@@ -4644,7 +4662,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     spaceId: string,
     scope?: {
       selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'user' | 'organization' | 'team';
+      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
     },
   ) => {
     return useQuery({
@@ -4693,7 +4711,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         description: string;
         spaceId?: string;
         selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
       }) => {
         const params = new URLSearchParams();
         if (selectedPrincipalUid) {
@@ -7875,7 +7893,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       string | {
         datasetId: string;
         selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
       }
     >,
   ) => {
@@ -7885,7 +7903,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (variables: string | {
         datasetId: string;
         selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
       }) => {
         const datasetId = typeof variables === 'string' ? variables : variables.datasetId;
         const selectedPrincipalUid = typeof variables === 'string' ? undefined : variables.selectedPrincipalUid;
@@ -7925,7 +7943,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       string | {
         spaceId: string;
         selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
       }
     >,
   ) => {
@@ -7935,7 +7953,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (variables: string | {
         spaceId: string;
         selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'user' | 'organization' | 'team';
+        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
       }) => {
         const spaceId = typeof variables === 'string' ? variables : variables.spaceId;
         const selectedPrincipalUid = typeof variables === 'string' ? undefined : variables.selectedPrincipalUid;

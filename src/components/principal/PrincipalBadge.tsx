@@ -104,7 +104,7 @@ export const PrincipalBadge = ({
         kind: 'team',
         uid: selectedPrincipalUid,
         handle: `${orgHandle}/${teamHandle}`,
-        accountHandle: teamHandle,
+        accountHandle: orgHandle,
         displayName: `@${formatFriendlyHandle(orgHandle)}/${formatFriendlyHandle(teamHandle)}`,
         origin: 'Datalayer',
       };
@@ -120,7 +120,7 @@ export const PrincipalBadge = ({
       : '@me';
 
     return {
-      kind: 'user',
+      kind: 'personal',
       uid: user?.id || selectedPrincipalUid,
       displayName: fullName || fallbackHandle,
       handle: resolvedHandle,
@@ -147,7 +147,7 @@ export const PrincipalBadge = ({
   ]);
 
   const userLookupUid =
-    basePrincipal.kind === 'user' ? String(basePrincipal.uid || '') : '';
+    basePrincipal.kind === 'personal' ? String(basePrincipal.uid || '') : '';
   const organizationLookupUid =
     basePrincipal.kind === 'organization'
       ? String(basePrincipal.uid || '')
@@ -218,7 +218,7 @@ export const PrincipalBadge = ({
     );
 
     return {
-      kind: 'user',
+      kind: 'personal',
       uid: resolvedUser?.uid || basePrincipal.uid,
       displayName: resolvedDisplayName,
       handle: resolvedHandle,

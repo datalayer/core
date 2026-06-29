@@ -37,7 +37,7 @@ export type DatasourceDetailProps = {
   /** Optional principal uid used to scope datasource reads/updates. */
   principalUid?: string;
   /** Optional principal kind used to scope datasource reads/updates. */
-  principalKind?: 'user' | 'organization' | 'team';
+  principalKind?: 'personal' | 'organization' | 'team';
 };
 
 export const DatasourceDetail = ({

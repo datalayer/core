@@ -66,8 +66,8 @@ export function PrincipalSwitcherMenu({
   const [teams, setTeams] = useState<TeamMembership[]>([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
 
-  const selectUserPrincipal = usePrincipalStore(
-    state => state.selectUserPrincipal,
+  const selectPersonalPrincipal = usePrincipalStore(
+    state => state.selectPersonalPrincipal,
   );
   const selectOrganizationPrincipal = usePrincipalStore(
     state => state.selectOrganizationPrincipal,
@@ -90,7 +90,7 @@ export function PrincipalSwitcherMenu({
   const personalHandle = user?.handle || '';
 
   const selectUser = (uid: string, handle: string) => {
-    selectUserPrincipal(uid, handle);
+    selectPersonalPrincipal(uid, handle);
     setBillableAccount({ kind: 'user', uid, handle });
   };
 
@@ -203,7 +203,7 @@ export function PrincipalSwitcherMenu({
       return;
     }
     if (
-      selectedPrincipalKind === 'user' &&
+      selectedPrincipalKind === 'personal' &&
       selectedPrincipalUid !== personalUid
     ) {
       selectUser(personalUid, personalHandle);
@@ -271,7 +271,7 @@ export function PrincipalSwitcherMenu({
     maxLabelChars,
   );
 
-  const isCurrentUserPrincipal = selectedPrincipalKind === 'user';
+  const isCurrentUserPrincipal = selectedPrincipalKind === 'personal';
   const selectedItemSx = {
     bg: 'accent.subtle',
     borderColor: 'accent.muted',

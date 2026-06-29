@@ -7,7 +7,7 @@ import { Box } from '@datalayer/primer-addons';
 import { OrganizationIcon, PeopleIcon } from '@primer/octicons-react';
 import { UserAvatar } from '../avatars';
 
-export type PrincipalAvatarKind = 'user' | 'team' | 'organization';
+export type PrincipalAvatarKind = 'personal' | 'team' | 'organization';
 
 export type PrincipalAvatarProps = {
   kind: PrincipalAvatarKind;
@@ -28,7 +28,7 @@ export function PrincipalAvatar({
   size = 20,
   square = false,
 }: PrincipalAvatarProps): JSX.Element {
-  if (kind === 'user') {
+  if (kind === 'personal') {
     return (
       <UserAvatar
         avatarUrl={avatarUrl}

@@ -33,7 +33,7 @@ export function useSelectedPrincipal() {
     selectedPrincipalHandle,
     selectedTeamParentOrganizationUid,
     selectedTeamParentOrganizationHandle,
-    isUserSelected: selectedPrincipalKind === 'user',
+    isUserSelected: selectedPrincipalKind === 'personal',
     isOrganizationSelected: selectedPrincipalKind === 'organization',
     isTeamSelected: selectedPrincipalKind === 'team',
   };

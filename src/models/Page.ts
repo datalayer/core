@@ -41,7 +41,7 @@ export type IPage = {
   creator?: IUser;
   creatorId?: string;
   selectedPrincipalUid?: string;
-  selectedPrincipalKind?: 'user' | 'organization' | 'team';
+  selectedPrincipalKind?: 'personal' | 'organization' | 'team';
   selectedOrganizationUid?: string;
   kernelSnapshot?: ICodeSandboxSnapshot;
   kernelSnapshotId?: string;
