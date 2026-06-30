@@ -4,11 +4,12 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ActionList, ActionMenu, Box, Text } from '@primer/react';
+import { ActionList, ActionMenu, Box, Button, Label, Text } from '@primer/react';
 import {
   OrganizationIcon,
   PeopleIcon,
   PersonIcon,
+  TriangleDownIcon,
 } from '@primer/octicons-react';
 import { useCache, useAuthorization } from '../../hooks';
 import { useCoreStore } from '../../state';
@@ -188,18 +189,10 @@ export function PrincipalSwitcherMenu({
       selectUser(personalUid, personalHandle);
       return;
     }
-    if (selectedPrincipalKind === 'organization' && isOrganizationsLoading) {
-      return;
-    }
-    if (selectedPrincipalKind === 'organization' && !selectedOrganization) {
-      selectUser(personalUid, personalHandle);
-      return;
-    }
-    if (selectedPrincipalKind === 'team' && teamsLoading) {
-      return;
-    }
-    if (selectedPrincipalKind === 'team' && !selectedTeam) {
-      selectUser(personalUid, personalHandle);
+    // Keep explicit organization/team selections stable across route transitions,
+    // even while memberships/organizations are still loading or temporarily
+    // unavailable for a given view.
+    if (selectedPrincipalKind === 'organization' || selectedPrincipalKind === 'team') {
       return;
     }
     if (
@@ -279,87 +272,165 @@ export function PrincipalSwitcherMenu({
     fontWeight: 'semibold',
   } as const;
   const adminBadgeSx = {
-    ml: 'auto',
-    px: 1,
-    py: '2px',
-    borderRadius: 999,
     bg: 'attention.subtle',
     color: 'attention.fg',
-    fontSize: 0,
-    fontWeight: 'semibold',
-    lineHeight: 1.2,
     textTransform: 'lowercase',
+    lineHeight: 1.2,
   } as const;
 
   return (
     <ActionMenu>
       <ActionMenu.Anchor>
-        <Box
-          as="button"
-          type="button"
-          aria-label="Switch principal"
-          sx={{
-            width: fullWidth ? '100%' : 'auto',
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            bg: showClosedBorder ? 'canvas.subtle' : 'transparent',
-            border: showClosedBorder ? '1px solid' : 'none',
-            borderColor: showClosedBorder ? 'border.default' : 'transparent',
-            borderRadius: 2,
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
-        >
+        {showClosedBorder ? (
           <Box
+            as="button"
+            type="button"
+            aria-label="Switch principal"
             sx={{
-              display: 'inline-flex',
+              width: fullWidth ? '100%' : 'auto',
+              boxSizing: 'border-box',
+              px: 2,
+              py: 2,
+              fontSize: 0,
+              display: 'flex',
               alignItems: 'center',
-              color: 'fg.muted',
-              flexShrink: 0,
+              justifyContent: 'space-between',
+              gap: 2,
+              bg: 'canvas.subtle',
+              border: '1px solid',
+              borderColor: 'border.default',
+              borderRadius: 2,
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background-color 120ms ease',
+              ':hover': {
+                bg: 'canvas.subtle',
+              },
+              ':focus-visible': {
+                bg: 'canvas.subtle',
+                outline: '2px solid',
+                outlineColor: 'accent.emphasis',
+                outlineOffset: '2px',
+              },
             }}
           >
-            {selectedPrincipalKind === 'organization' ? (
-              <OrganizationIcon size={16} />
-            ) : selectedPrincipalKind === 'team' ? (
-              <PeopleIcon size={16} />
-            ) : (
-              <PersonIcon size={16} />
-            )}
-          </Box>
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Text
-              sx={{
-                display: 'block',
-                color: 'accent.fg',
-                fontWeight: 'semibold',
-                fontSize: 1,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
-              }}
-            >
-              {selectedPrincipalLabelClosed}
-            </Text>
-          </Box>
-          {isPlatformAdmin && isCurrentUserPrincipal ? (
             <Box
               sx={{
-                ml: 'auto',
-                flexShrink: 0,
                 display: 'inline-flex',
                 alignItems: 'center',
+                color: 'fg.muted',
+                flexShrink: 0,
               }}
             >
-              <Box as="span" sx={adminBadgeSx}>
-                admin
-              </Box>
+              {selectedPrincipalKind === 'organization' ? (
+                <OrganizationIcon size={16} />
+              ) : selectedPrincipalKind === 'team' ? (
+                <PeopleIcon size={16} />
+              ) : (
+                <PersonIcon size={16} />
+              )}
             </Box>
-          ) : null}
-        </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Text
+                sx={{
+                  display: 'block',
+                  color: 'accent.fg',
+                  fontWeight: 'semibold',
+                  fontSize: 'inherit',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '100%',
+                }}
+              >
+                {selectedPrincipalLabelClosed}
+              </Text>
+            </Box>
+            {isPlatformAdmin && isCurrentUserPrincipal ? (
+              <Box
+                sx={{
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                <Label variant="secondary" size="small" sx={adminBadgeSx}>
+                  admin
+                </Label>
+              </Box>
+            ) : null}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: 'fg.muted',
+                flexShrink: 0,
+                ml: isPlatformAdmin && isCurrentUserPrincipal ? 1 : 0,
+              }}
+            >
+              <TriangleDownIcon size={12} />
+            </Box>
+          </Box>
+        ) : (
+          <Button
+            variant="invisible"
+            size="small"
+            aria-label="Switch principal"
+            trailingVisual={TriangleDownIcon}
+            sx={{
+              maxWidth: fullWidth ? '100%' : ['200px', '260px', '360px'],
+              width: fullWidth ? '100%' : 'auto',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                minWidth: 0,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'fg.muted',
+                  flexShrink: 0,
+                }}
+              >
+                {selectedPrincipalKind === 'organization' ? (
+                  <OrganizationIcon size={16} />
+                ) : selectedPrincipalKind === 'team' ? (
+                  <PeopleIcon size={16} />
+                ) : (
+                  <PersonIcon size={16} />
+                )}
+              </Box>
+              <Box
+                sx={{
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Text
+                  sx={{
+                    color: 'accent.fg',
+                    fontWeight: 'semibold',
+                  }}
+                >
+                  {selectedPrincipalLabelClosed}
+                </Text>
+              </Box>
+              {isPlatformAdmin && isCurrentUserPrincipal ? (
+                <Label variant="secondary" size="small" sx={adminBadgeSx}>
+                  admin
+                </Label>
+              ) : null}
+            </Box>
+          </Button>
+        )}
       </ActionMenu.Anchor>
       <ActionMenu.Overlay width="medium">
         <ActionList>
@@ -384,9 +455,9 @@ export function PrincipalSwitcherMenu({
               @{formatFriendlyHandle(personalHandle || 'me')}
               {isPlatformAdmin ? (
                 <ActionList.TrailingVisual>
-                  <Box as="span" sx={adminBadgeSx}>
+                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
                     admin
-                  </Box>
+                  </Label>
                 </ActionList.TrailingVisual>
               ) : null}
             </ActionList.Item>
@@ -426,7 +497,19 @@ export function PrincipalSwitcherMenu({
                     <ActionList.LeadingVisual>
                       <OrganizationIcon />
                     </ActionList.LeadingVisual>
-                    @{organization.handle}
+                    <Box
+                      as="span"
+                      title={`@${organization.handle}`}
+                      sx={{
+                        display: 'block',
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      @{organization.handle}
+                    </Box>
                   </ActionList.Item>
                 );
               })
@@ -461,8 +544,20 @@ export function PrincipalSwitcherMenu({
                     <ActionList.LeadingVisual>
                       <PeopleIcon />
                     </ActionList.LeadingVisual>
-                    @{formatFriendlyHandle(orgHandle)}/
-                    {formatFriendlyHandle(team.handle)}
+                    <Box
+                      as="span"
+                      title={`@${formatFriendlyHandle(orgHandle)}/${formatFriendlyHandle(team.handle)}`}
+                      sx={{
+                        display: 'block',
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      @{formatFriendlyHandle(orgHandle)}/
+                      {formatFriendlyHandle(team.handle)}
+                    </Box>
                   </ActionList.Item>
                 );
               })

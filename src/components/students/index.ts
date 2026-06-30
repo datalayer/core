@@ -4,3 +4,4 @@
  */
 
 export * from './StudentItemStatus';
+export * from './StudentResultCircle';

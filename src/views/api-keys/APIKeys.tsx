@@ -8,6 +8,7 @@ import {
   PageLayout,
   Button,
   IconButton,
+  Spinner,
   TextInput,
   Text,
   Label,
@@ -55,6 +56,13 @@ const APIKeysTable = ({
   const [deletingAPIKey, setDeletingAPIKey] = useState<IAPIKey | null>(null);
   const [deleteNameConfirm, setDeleteNameConfirm] = useState('');
   const returnFocusRef = useRef(null);
+  const showInitialSpinner =
+    apiKeys.length === 0
+    && (
+      getAPIKeysQuery.isLoading
+      || getAPIKeysQuery.isFetching
+      || !Array.isArray(getAPIKeysQuery.data)
+    );
   useEffect(() => {
     if (getAPIKeysQuery.data) {
       const normalized = getAPIKeysQuery.data.filter(
@@ -97,10 +105,25 @@ const APIKeysTable = ({
   };
   return apiKeys.length === 0 ? (
     <Blankslate border spacious>
-      {showTitle && <Blankslate.Heading>API Keys</Blankslate.Heading>}
-      <Blankslate.Description>
-        <Text sx={{ textAlign: 'center' }}>No API Keys found.</Text>
-      </Blankslate.Description>
+      {showInitialSpinner ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '40px',
+          }}
+        >
+          <Spinner />
+        </Box>
+      ) : (
+        <>
+          {showTitle && <Blankslate.Heading>API Keys</Blankslate.Heading>}
+          <Blankslate.Description>
+            <Text sx={{ textAlign: 'center' }}>No API Keys found.</Text>
+          </Blankslate.Description>
+        </>
+      )}
     </Blankslate>
   ) : (
     <>

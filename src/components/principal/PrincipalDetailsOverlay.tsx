@@ -172,7 +172,7 @@ export function PrincipalDetailsOverlay({
               alignItems: 'baseline',
             }}
           >
-            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Type</Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
             <Text sx={{ fontSize: 1 }}>{kind}</Text>
             {resolvedHandle ? (
               <>

@@ -8,6 +8,7 @@ import {
   PageLayout,
   Button,
   IconButton,
+  Spinner,
   Text,
   Label,
   Heading,
@@ -46,6 +47,14 @@ const DatasourcesTable = ({
   const navigate = useNavigate();
   const [datasources, setDatasources] = useState<IDatasource[]>([]);
 
+  const showInitialSpinner =
+    datasources.length === 0
+    && (
+      datasourcesQuery.isLoading
+      || datasourcesQuery.isFetching
+      || !Array.isArray(datasourcesQuery.data)
+    );
+
   useEffect(() => {
     if (datasourcesQuery.data) {
       setDatasources((datasourcesQuery.data as any) || []);
@@ -53,10 +62,25 @@ const DatasourcesTable = ({
   }, [datasourcesQuery.data]);
   return datasources.length === 0 ? (
     <Blankslate border spacious>
-      <Blankslate.Heading>Datasources</Blankslate.Heading>
-      <Blankslate.Description>
-        <Text sx={{ textAlign: 'center' }}>No Datasources found.</Text>
-      </Blankslate.Description>
+      {showInitialSpinner ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '40px',
+          }}
+        >
+          <Spinner />
+        </Box>
+      ) : (
+        <>
+          <Blankslate.Heading>Datasources</Blankslate.Heading>
+          <Blankslate.Description>
+            <Text sx={{ textAlign: 'center' }}>No Datasources found.</Text>
+          </Blankslate.Description>
+        </>
+      )}
     </Blankslate>
   ) : (
     <Table.Container>

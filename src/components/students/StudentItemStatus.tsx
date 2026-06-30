@@ -3,14 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useMemo } from 'react';
-import { useTheme, Tooltip, Button } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { IStudent, IStudentItem } from '../../models';
+import { StudentResultCircle } from './StudentResultCircle';
 
-const getExercisePoints = (studentItem?: IStudentItem) => {
-  if (studentItem && studentItem.points) {
-    return studentItem.points;
+const getExerciseScore = (studentItem?: IStudentItem) => {
+  if (studentItem && studentItem.score) {
+    return studentItem.score;
   }
   return 0;
 };
@@ -21,101 +20,81 @@ type Props = {
 };
 
 export const StudentItemStatus = (props: Props) => {
-  const { student, studentItem } = props;
-  const { theme } = useTheme();
-  const okColor = useMemo(
-    () => theme?.colorSchemes.light.colors.success.muted,
-    [],
-  );
-  const nokColor = useMemo(
-    () => theme?.colorSchemes.light.colors.severe.muted,
-    [],
-  );
-  if (student && studentItem) {
-    switch (studentItem.itemType) {
-      case 'dataset': {
-        const datasetColor = studentItem?.completed ? okColor : nokColor;
-        return (
-          <Box
-            sx={{
-              backgroundColor: datasetColor,
-              width: '14px',
-              height: '14px',
-              borderRadius: 3,
-            }}
-            ml={1}
-          />
-        );
+  const { studentItem } = props;
+  if (!studentItem) {
+    return <StudentResultCircle status="none" label="No result yet" />;
+  }
+  switch (studentItem.itemType) {
+    case 'dataset': {
+      if (studentItem.completed === undefined) {
+        return <StudentResultCircle status="none" label="Dataset not started" />;
       }
-      case 'lesson': {
-        const lessonColor = studentItem?.completed ? okColor : nokColor;
-        return (
-          <Box
-            sx={{
-              backgroundColor: lessonColor,
-              width: '14px',
-              height: '14px',
-              borderRadius: 3,
-            }}
-            ml={1}
-          />
-        );
+      const completed = Boolean(studentItem.completed);
+      return (
+        <StudentResultCircle
+          status={completed ? 'pass' : 'fail'}
+          label={completed ? 'Dataset completed' : 'Dataset not completed'}
+        />
+      );
+    }
+    case 'lesson': {
+      if (studentItem.completed === undefined) {
+        return <StudentResultCircle status="none" label="Lesson not started" />;
       }
-      case 'exercise': {
-        const exerciseColor =
-          getExercisePoints(studentItem) > 0 ? okColor : nokColor;
-        return (
-          <Box
-            sx={{
-              backgroundColor: exerciseColor,
-              width: '14px',
-              height: '14px',
-              borderRadius: 3,
-            }}
-            ml={1}
-          />
-        );
+      const completed = Boolean(studentItem.completed);
+      return (
+        <StudentResultCircle
+          status={completed ? 'pass' : 'fail'}
+          label={completed ? 'Lesson completed' : 'Lesson not completed'}
+        />
+      );
+    }
+    case 'exercise': {
+      const hasResult =
+        Boolean(studentItem.id) ||
+        Boolean(studentItem.codeStudent) ||
+        studentItem.score !== undefined;
+      if (!hasResult) {
+        return <StudentResultCircle status="none" label="Exercise not started" />;
       }
-      case 'assignment':
-        return (
-          <Box display="flex">
-            {studentItem.nbgradesTotalScore !== undefined &&
-              studentItem.nbgradesTotalPoints !== undefined && (
-                <Box>
-                  {studentItem.nbgradesTotalScore} /{' '}
-                  {studentItem.nbgradesTotalPoints}
-                </Box>
-              )}
-            {studentItem.nbgrades && (
-              <Box display="flex" ml={3}>
-                {studentItem?.nbgrades.map(grade => {
-                  const gradeColor =
-                    grade.score_f === grade.points_f ? okColor : nokColor;
-                  return (
-                    <Tooltip text={grade.grade_id_s}>
-                      <Button variant="invisible">
-                        <Box
-                          sx={{
-                            backgroundColor: gradeColor,
-                            width: '14px',
-                            height: '14px',
-                            borderRadius: 3,
-                          }}
-                          ml={1}
-                        />
-                      </Button>
-                    </Tooltip>
-                  );
-                })}
+      const passed = getExerciseScore(studentItem) > 0;
+      return (
+        <StudentResultCircle
+          status={passed ? 'pass' : 'fail'}
+          label={passed ? 'Exercise passed' : 'Exercise failed'}
+        />
+      );
+    }
+    case 'assignment':
+      if (!studentItem.nbgrades || studentItem.nbgrades.length === 0) {
+        return <StudentResultCircle status="none" label="Assignment not graded" />;
+      }
+      return (
+        <Box display="flex" alignItems="center">
+          {studentItem.nbgradesTotalScore !== undefined &&
+            studentItem.nbgradesTotalPoints !== undefined && (
+              <Box>
+                {studentItem.nbgradesTotalScore} /{' '}
+                {studentItem.nbgradesTotalPoints}
               </Box>
             )}
+          <Box display="flex" ml={3}>
+            {studentItem.nbgrades.map(grade => {
+              const passed = grade.score_f === grade.points_f;
+              return (
+                <StudentResultCircle
+                  key={grade.grade_id_s}
+                  status={passed ? 'pass' : 'fail'}
+                  label={`${grade.grade_id_s}: ${grade.score_f} / ${grade.points_f}`}
+                />
+              );
+            })}
           </Box>
-        );
-      default:
-        return <></>;
-    }
+        </Box>
+      );
+    default:
+      return <StudentResultCircle status="none" label="No result yet" />;
   }
-  return <></>;
 };
 
 export default StudentItemStatus;

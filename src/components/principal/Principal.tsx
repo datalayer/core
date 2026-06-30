@@ -21,6 +21,37 @@ import { PrincipalDetailsOverlay } from './PrincipalDetailsOverlay';
 type PrincipalKind = PrincipalAvatarKind;
 
 /**
+ * Default maximum length applied to the placeholder shown before a principal's
+ * real display name has been resolved. The placeholder (derived from the given
+ * handle or uid) is truncated to this many characters.
+ */
+const DEFAULT_PLACEHOLDER_MAX_LENGTH = 10;
+
+/**
+ * Generic, non-informative display names that callers pass while the real
+ * entity is still loading. When the provided display name is one of these we
+ * prefer a handle/uid-derived placeholder instead.
+ */
+const GENERIC_PLACEHOLDER_DISPLAY_NAMES = new Set([
+  'unknown',
+  'principal',
+  'personal',
+  'team',
+  'organization',
+  'billable account',
+]);
+
+/** Truncate a placeholder string to `maxLength`, appending an ellipsis. */
+function truncatePlaceholder(value: string, maxLength: number): string {
+  const trimmed = value.trim();
+  if (maxLength <= 0 || trimmed.length <= maxLength) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, maxLength)}\u2026`;
+}
+
+
+/**
  * Normalised actor descriptor used by all caching resolvers. Views are
  * expected to produce one of these out of their raw API data so the
  * common component can render consistently.
@@ -46,6 +77,11 @@ export type PrincipalProps = {
   avatarSize?: number;
   gap?: number;
   square?: boolean;
+  /**
+   * Maximum length of the placeholder (handle or uid) shown before the real
+   * display name resolves. Defaults to {@link DEFAULT_PLACEHOLDER_MAX_LENGTH}.
+   */
+  placeholderMaxLength?: number;
   sx?: any;
 };
 
@@ -55,11 +91,11 @@ export const Principal: React.FC<PrincipalProps> = ({
   avatarSize = 20,
   gap = 2,
   square = false,
+  placeholderMaxLength = DEFAULT_PLACEHOLDER_MAX_LENGTH,
   sx,
 }) => {
   const {
     useUser,
-    useOrganization,
     useOrganizationByHandle,
     useTeam,
     useUserPublicProfileByHandle,
@@ -105,9 +141,16 @@ export const Principal: React.FC<PrincipalProps> = ({
       ? String(principal.uid || '')
       : '',
   );
-  const hydratedOrgQuery = useOrganization(
+  // Authenticated organizations are fetched by handle via the accounts
+  // endpoint (`/api/iam/v1/accounts/{handle}`). The by-uid organization
+  // endpoint (`/api/iam/v1/organizations/{uid}`) is not served and 404s, so we
+  // never look an organization up by uid here.
+  const organizationLookupHandle = String(principalHandle || '')
+    .replace(/^@+/, '')
+    .trim();
+  const hydratedOrgQuery = useOrganizationByHandle(
     !isAnonymous && principal.kind === 'organization'
-      ? String(principal.uid || '')
+      ? organizationLookupHandle
       : '',
   );
   const teamOrganizationQuery = useOrganizationByHandle(
@@ -198,10 +241,26 @@ export const Principal: React.FC<PrincipalProps> = ({
     ...principal,
     displayName:
       hydratedDisplayName ||
-      principal.displayName ||
-      principal.handle ||
-      principal.uid ||
-      'Unknown',
+      (() => {
+        const providedDisplayName = String(principal.displayName || '').trim();
+        const providedIsGenericPlaceholder =
+          !providedDisplayName ||
+          GENERIC_PLACEHOLDER_DISPLAY_NAMES.has(
+            providedDisplayName.toLowerCase(),
+          ) ||
+          (!!normalizedUid && providedDisplayName === normalizedUid);
+        // While the real display name is unresolved, prefer the given handle
+        // (or uid) as a placeholder, truncated to a maximum length. Only fall
+        // back to the caller-provided display name when it is meaningful.
+        const placeholder = truncatePlaceholder(
+          principalHandle || normalizedProvidedHandle || normalizedUid || '',
+          placeholderMaxLength,
+        );
+        if (providedIsGenericPlaceholder) {
+          return placeholder || providedDisplayName || 'Unknown';
+        }
+        return providedDisplayName || placeholder || 'Unknown';
+      })(),
     handle:
       (!providedHandleIsUidPlaceholder ? principal.handle : undefined) ||
       String((hydratedEntity as any)?.handle || '').trim() ||

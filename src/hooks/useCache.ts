@@ -40,6 +40,7 @@
 
 import {
   useQuery,
+  useQueries,
   useMutation,
   useQueryClient,
   UseQueryOptions,
@@ -67,6 +68,7 @@ import {
   ISchool,
   ISecret,
   ISpaceItem,
+  IStudent,
   IStudentItem,
   ITeam,
   IUser,
@@ -532,6 +534,91 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     }
   };
 
+  const toStudent = (rawStudent: any): IStudent | undefined => {
+    if (!rawStudent) {
+      return undefined;
+    }
+    const baseUser = asUser(rawStudent) as IStudent;
+    const studentItems = new Map<string, IStudentItem>();
+    const rawItemsSource =
+      rawStudent.student_items ??
+      rawStudent.studentItems ??
+      rawStudent.items ??
+      rawStudent.course_items ??
+      rawStudent.student_items_by_uid ??
+      rawStudent.studentItemsByUid;
+    const rawItems = Array.isArray(rawItemsSource)
+      ? rawItemsSource
+      : rawItemsSource && typeof rawItemsSource === 'object'
+        ? Object.values(rawItemsSource)
+        : [];
+
+    rawItems.forEach((studentItem: any) => {
+      const itemId = String(
+        studentItem.item_uid ??
+          studentItem.item_uid_s ??
+          studentItem.itemId ??
+          studentItem.item_id ??
+          studentItem.item_id_s ??
+          '',
+      ).trim();
+      if (!itemId) {
+        return;
+      }
+      const completedRaw =
+        studentItem.completed_b ??
+        studentItem.completed ??
+        studentItem.is_completed_b ??
+        studentItem.isCompleted ??
+        studentItem.done_b ??
+        studentItem.done;
+      const completed =
+        typeof completedRaw === 'string'
+          ? ['true', '1', 'yes'].includes(completedRaw.toLowerCase())
+          : Boolean(completedRaw);
+      const passRaw =
+        studentItem.pass_b ??
+        studentItem.pass ??
+        studentItem.passed_b ??
+        studentItem.passed;
+      const pass =
+        typeof passRaw === 'string'
+          ? ['true', '1', 'yes'].includes(passRaw.toLowerCase())
+          : passRaw;
+      const mapped: IStudentItem = {
+        id: studentItem.uid ?? studentItem.id,
+        type: 'student_item',
+        itemId,
+        itemType:
+          studentItem.item_type_s ??
+          studentItem.itemType ??
+          studentItem.type_s ??
+          studentItem.type,
+        score:
+          studentItem.score_i ??
+          studentItem.score_f ??
+          studentItem.score ??
+          studentItem.total_score_f,
+        codeStudent: studentItem.code_student_t ?? studentItem.codeStudent,
+        completed,
+        pass,
+        nbgrades: studentItem.nbgrades ?? studentItem.grades,
+        nbgradesTotalPoints:
+          studentItem.nbgrades_total_points_f ??
+          studentItem.nbgradesTotalPoints ??
+          studentItem.total_points_f,
+        nbgradesTotalScore:
+          studentItem.nbgrades_total_score_f ??
+          studentItem.nbgradesTotalScore ??
+          studentItem.total_score_f,
+      };
+      studentItems.set(itemId, mapped);
+    });
+
+    baseUser.studentItems = studentItems;
+    return baseUser;
+  };
+
   const toOrganization = (org: any): IOrganization => {
     return asOrganization(org);
   };
@@ -945,11 +1032,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       };
     }
 
-    let students: Map<string, IUser> | undefined = undefined;
+    let students: Map<string, IStudent> | undefined = undefined;
     if (raw_course.students) {
-      students = new Map<string, IUser>();
+      students = new Map<string, IStudent>();
       raw_course.students.forEach((raw_stud: any) => {
-        const student = toUser(raw_stud);
+        const student = toStudent(raw_stud);
         if (student && students) {
           students.set(student.id, student);
         }
@@ -5234,25 +5321,27 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
 
   /**
-   * Grade an exercise by assigning points to student code
+   * Grade an exercise by assigning a score to student code
    */
-  const useUpdateExercisePoints = () => {
+  const useUpdateExerciseScore = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
       mutationFn: async ({
         exerciseId,
         codeStudent,
-        points,
+        score,
+        courseId,
       }: {
         exerciseId: string;
         codeStudent: string;
-        points: number;
+        score: number;
+        courseId?: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/exercises/${exerciseId}/points`,
+          url: `${configuration.spacerRunUrl}/api/spacer/v1/exercises/${exerciseId}/score`,
           method: 'PUT',
-          body: { codeStudent, points },
+          body: { codeStudent, score, courseId },
         });
       },
       onSuccess: (_, { exerciseId }) => {
@@ -5288,10 +5377,41 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to fetch student');
         }
-        return resp.student;
+        return toStudent(resp.student);
       },
       enabled: !!courseId && !!studentId,
       ...options,
+    });
+  };
+
+  /**
+   * Hydrate multiple students (with their student items) for a course.
+   *
+   * The course payload only carries the public member projection of each
+   * student (uid/handle/name) and intentionally omits the nested
+   * `student_items`. To compute per-item progress (e.g. in the course report)
+   * each student must be fetched individually through the enrollment endpoint,
+   * which returns the deep student document including its items.
+   */
+  const useStudents = (courseId: string, studentIds: Array<string>) => {
+    const uniqueStudentIds = Array.from(
+      new Set((studentIds || []).map(id => String(id || '').trim()).filter(Boolean)),
+    );
+    return useQueries({
+      queries: uniqueStudentIds.map(studentId => ({
+        queryKey: ['courses', courseId, 'students', studentId],
+        queryFn: async () => {
+          const resp = await requestDatalayer({
+            url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
+            method: 'GET',
+          });
+          if (!resp.success) {
+            throw new Error(resp.message || 'Failed to fetch student');
+          }
+          return toStudent(resp.student);
+        },
+        enabled: !!courseId && !!studentId,
+      })),
     });
   };
 
@@ -5325,6 +5445,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         queryClient.invalidateQueries({
           queryKey: ['courses', courseId, 'items'],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['courses', courseId, 'students'],
         });
       },
     });
@@ -9046,6 +9169,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useEnrollStudentToCourse,
     useRemoveStudentFromCourse,
     useStudent,
+    useStudents,
     useConfirmCourseItemCompletion,
     useSetCourseItems,
     useRefreshCourse,
@@ -9107,7 +9231,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useExercisesBySpace,
     useUpdateExercise,
     useCloneExercise,
-    useUpdateExercisePoints,
+    useUpdateExerciseScore,
     useRefreshExercise,
     useRefreshSpaceExercises,
 

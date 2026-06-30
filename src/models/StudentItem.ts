@@ -14,7 +14,7 @@ export type IStudentItem = {
   item?: ISpaceItem;
   itemId: string;
   itemType: IItemType;
-  points?: number;
+  score?: number;
   nbgrades?: any;
   nbgradesTotalPoints?: number;
   nbgradesTotalScore?: number;
