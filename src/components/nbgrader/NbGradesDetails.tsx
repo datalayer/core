@@ -9,27 +9,34 @@ import { IStudentItem } from '../../models';
 
 export const NbGradesDetails = (props: { studentItem?: IStudentItem }) => {
   const { studentItem } = props;
-  return studentItem && studentItem?.nbgrades ? (
+  const nbgrades = Array.isArray(studentItem?.nbgrades) ? studentItem.nbgrades : [];
+  const totalScore = studentItem?.nbgradesTotalScore ?? 0;
+  const totalPoints = studentItem?.nbgradesTotalPoints ?? 0;
+  return studentItem ? (
     <Box>
       <Box>
         <Heading sx={{ fontSize: 1 }}>Grades</Heading>
       </Box>
       <Box mt={3}>
-        {studentItem?.nbgrades.map(nb => {
-          return (
-            <Box>
-              <Text sx={{ fontSize: 'small' }}>
-                {nb.grade_id_s}: {nb.score_f}
-              </Text>
-            </Box>
-          );
-        })}
+        {nbgrades.length > 0 ? (
+          nbgrades.map(nb => {
+            return (
+              <Box>
+                <Text sx={{ fontSize: 'small' }}>
+                  {nb.grade_id_s}: {nb.score_f}
+                </Text>
+              </Box>
+            );
+          })
+        ) : (
+          <Text sx={{ fontSize: 'small' }}>No grade checks were returned.</Text>
+        )}
       </Box>
       <Box mt={3}>
         <Heading sx={{ fontSize: 1 }}>Total</Heading>
       </Box>
       <Box mt={3}>
-        {studentItem?.nbgradesTotalScore} / {studentItem?.nbgradesTotalPoints}
+        {totalScore} / {totalPoints}
       </Box>
     </Box>
   ) : (

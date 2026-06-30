@@ -602,15 +602,24 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         codeStudent: studentItem.code_student_t ?? studentItem.codeStudent,
         completed,
         pass,
-        nbgrades: studentItem.nbgrades ?? studentItem.grades,
+        nbgrades:
+          studentItem.nbgrades ??
+          studentItem.grades ??
+          [],
         nbgradesTotalPoints:
           studentItem.nbgrades_total_points_f ??
           studentItem.nbgradesTotalPoints ??
-          studentItem.total_points_f,
+          studentItem.total_points_f ??
+          ((studentItem.item_type_s ?? studentItem.itemType ?? studentItem.type_s ?? studentItem.type) === 'assignment'
+            ? 0
+            : undefined),
         nbgradesTotalScore:
           studentItem.nbgrades_total_score_f ??
           studentItem.nbgradesTotalScore ??
-          studentItem.total_score_f,
+          studentItem.total_score_f ??
+          ((studentItem.item_type_s ?? studentItem.itemType ?? studentItem.type_s ?? studentItem.type) === 'assignment'
+            ? 0
+            : undefined),
       };
       studentItems.set(itemId, mapped);
     });
@@ -5257,6 +5266,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({
           queryKey: ['assignments', assignmentId],
         });
+        queryClient.invalidateQueries({
+          queryKey: ['courses', 'detail', courseId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['courses', courseId, 'students'],
+        });
       },
     });
   };
@@ -5291,6 +5306,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         queryClient.invalidateQueries({
           queryKey: ['assignments', assignmentId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['courses', 'detail', courseId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['courses', courseId, 'students'],
         });
       },
     });

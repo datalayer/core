@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { useTheme, Tooltip } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 
-export type StudentResultStatus = 'pass' | 'fail' | 'none';
+export type StudentResultStatus = 'pass' | 'fail' | 'partial' | 'none';
 
 type Props = {
   /**
@@ -22,7 +22,7 @@ type Props = {
 };
 
 /**
- * A small green/red/neutral result circle with an explanatory tooltip.
+ * A small green/yellow/red/neutral result circle with an explanatory tooltip.
  *
  * Standalone component reused across the course progress and report views so
  * the meaning of the green (success) / red (failure) / empty (no result yet)
@@ -37,6 +37,10 @@ export const StudentResultCircle = (props: Props) => {
   );
   const nokColor = useMemo(
     () => theme?.colorSchemes.light.colors.severe.muted,
+    [theme],
+  );
+  const partialColor = useMemo(
+    () => theme?.colorSchemes.light.colors.attention.muted,
     [theme],
   );
   const isNone = status === 'none';
@@ -83,7 +87,9 @@ export const StudentResultCircle = (props: Props) => {
               ? 'transparent'
               : status === 'pass'
                 ? okColor
-                : nokColor,
+                : status === 'partial'
+                  ? partialColor
+                  : nokColor,
             border: isNone ? '1px solid' : 'none',
             borderColor: isNone ? 'border.default' : 'transparent',
           }}

@@ -3,7 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Box } from '@datalayer/primer-addons';
 import { IStudent, IStudentItem } from '../../models';
 import { StudentResultCircle } from './StudentResultCircle';
 
@@ -66,32 +65,37 @@ export const StudentItemStatus = (props: Props) => {
       );
     }
     case 'assignment':
-      if (!studentItem.nbgrades || studentItem.nbgrades.length === 0) {
-        return <StudentResultCircle status="none" label="Assignment not graded" />;
+      {
+        const hasRecordedAttempt =
+          Boolean(studentItem.id) ||
+          studentItem.nbgradesTotalScore !== undefined ||
+          studentItem.nbgradesTotalPoints !== undefined ||
+          Boolean(studentItem.nbgrades);
+        if (!hasRecordedAttempt) {
+          return <StudentResultCircle status="none" label="Assignment not graded" />;
+        }
+        const totalScore = studentItem.nbgradesTotalScore ?? 0;
+        const totalPoints = studentItem.nbgradesTotalPoints ?? 0;
+        const nbgrades = Array.isArray(studentItem.nbgrades) ? studentItem.nbgrades : [];
+        const status =
+          totalPoints === 0
+            ? 'pass'
+            : totalScore <= 0
+              ? 'fail'
+              : totalScore >= totalPoints
+                ? 'pass'
+                : 'partial';
+        const tooltip =
+          nbgrades.length > 0
+            ? `Assignment graded: ${totalScore} / ${totalPoints} (${nbgrades.length} checks)`
+            : `Assignment graded: ${totalScore} / ${totalPoints}`;
+        return (
+          <StudentResultCircle
+            status={status}
+            label={tooltip}
+          />
+        );
       }
-      return (
-        <Box display="flex" alignItems="center">
-          {studentItem.nbgradesTotalScore !== undefined &&
-            studentItem.nbgradesTotalPoints !== undefined && (
-              <Box>
-                {studentItem.nbgradesTotalScore} /{' '}
-                {studentItem.nbgradesTotalPoints}
-              </Box>
-            )}
-          <Box display="flex" ml={3}>
-            {studentItem.nbgrades.map(grade => {
-              const passed = grade.score_f === grade.points_f;
-              return (
-                <StudentResultCircle
-                  key={grade.grade_id_s}
-                  status={passed ? 'pass' : 'fail'}
-                  label={`${grade.grade_id_s}: ${grade.score_f} / ${grade.points_f}`}
-                />
-              );
-            })}
-          </Box>
-        </Box>
-      );
     default:
       return <StudentResultCircle status="none" label="No result yet" />;
   }
