@@ -39,7 +39,7 @@ jobs:
     needs: type-check
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Use Node.js 22
       uses: actions/setup-node@v6
