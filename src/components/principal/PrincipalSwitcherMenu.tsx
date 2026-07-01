@@ -435,7 +435,7 @@ export function PrincipalSwitcherMenu({
       <ActionMenu.Overlay width="medium">
         <ActionList>
           <ActionList.Group>
-            <ActionList.GroupHeading>User</ActionList.GroupHeading>
+            <ActionList.GroupHeading>Personal</ActionList.GroupHeading>
             <ActionList.Item
               disabled={isCurrentUserPrincipal}
               selected={isCurrentUserPrincipal}

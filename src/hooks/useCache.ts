@@ -989,6 +989,45 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toAssignment(item);
       case 'cell':
         return toCell(item);
+      case 'course':
+        return {
+          id: item.uid,
+          type: 'course',
+          name: item.name_t,
+          description: item.description_t,
+          tags: item.tags_ss ?? [],
+          handle: item.handle_s ?? item.handle,
+          handle_s: item.handle_s,
+          organization_handle_s: item.organization_handle_s,
+          owner_handle_s: item.owner_handle_s,
+          organization: {
+            handle: item.organization_handle_s,
+          },
+          owner: {
+            handle: item.owner_handle_s,
+          },
+        };
+      case 'space': {
+        const variant = (item.variant_s ?? item.variant ?? '').toLowerCase();
+        return {
+          id: item.uid,
+          type: variant === 'course' ? 'course' : 'space',
+          name: item.name_t,
+          description: item.description_t,
+          tags: item.tags_ss ?? [],
+          variant,
+          handle: item.handle_s ?? item.handle,
+          handle_s: item.handle_s,
+          organization_handle_s: item.organization_handle_s,
+          owner_handle_s: item.owner_handle_s,
+          organization: {
+            handle: item.organization_handle_s,
+          },
+          owner: {
+            handle: item.owner_handle_s,
+          },
+        };
+      }
       case 'dataset':
         return toDataset(item);
       case 'document':
@@ -7244,7 +7283,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({
         q,
-        types = ['notebook', 'document', 'cell', 'lesson', 'evalset'],
+        types = ['notebook', 'document', 'cell', 'lesson', 'evalset', 'course'],
         max = 100,
       }: {
         q?: string;
@@ -7267,7 +7306,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           q: q || '*',
           types: (normalizedTypes.length > 0
             ? normalizedTypes
-            : ['notebook', 'document', 'cell', 'lesson', 'evalset']
+            : ['notebook', 'document', 'cell', 'lesson', 'evalset', 'course']
           ).join(' '),
           max: max.toString(),
         })
