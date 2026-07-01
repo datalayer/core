@@ -85,7 +85,7 @@ import {
   asToken,
   asUser,
 } from '../models';
-import { useCoreStore, useIAMStore } from '../state';
+import { useCoreStore, useIAMStore, useSpaceStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
@@ -498,6 +498,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const coreStore = useCoreStore();
   const { configuration } = coreStore;
   const { user } = useIAMStore();
+  const { spaces, updateSpaces } = useSpaceStore();
   const queryClient = useQueryClient();
   const { requestDatalayer } = useDatalayer({ loginRoute });
   const { checkIsOrganizationMember } = useAuthorization();
@@ -2067,7 +2068,20 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'DELETE',
         });
       },
-      onSuccess: () => {
+      onSuccess: (_resp, deletedSpaceUid) => {
+        const deletedUid = String(deletedSpaceUid || '').trim();
+        if (deletedUid) {
+          const nextSpaces = (spaces || []).filter((space: any) => {
+            const uid = String(space?.uid ?? space?.id ?? '').trim();
+            return uid !== deletedUid;
+          });
+          updateSpaces(nextSpaces as any);
+        }
+
+        // Invalidate deleted space detail cache and all list queries.
+        queryClient.removeQueries({
+          queryKey: queryKeys.spaces.detail(deletedUid),
+        });
         // Invalidate all space queries
         queryClient.invalidateQueries({
           queryKey: queryKeys.spaces.all(),
@@ -4403,9 +4417,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'POST',
         });
       },
-      onSuccess: (_, { courseId }) => {
+      onSuccess: (_, { courseId, studentId }) => {
+        // Optimistically add the student to the cached course so enrollment
+        // dependent UI (e.g. the Progress tab) updates immediately. The Solr
+        // read model is eventually consistent, so an immediate refetch would
+        // return stale data; mark the detail query stale without refetching and
+        // let it reconcile on the next natural fetch.
+        const detailKey = ['courses', 'detail', courseId];
+        const cached = queryClient.getQueryData(detailKey) as any;
+        if (cached) {
+          const nextStudents =
+            cached.students instanceof Map
+              ? new Map(cached.students)
+              : new Map();
+          if (!nextStudents.has(studentId)) {
+            nextStudents.set(studentId, { id: studentId });
+          }
+          queryClient.setQueryData(detailKey, {
+            ...cached,
+            students: nextStudents,
+          });
+        }
         queryClient.invalidateQueries({
-          queryKey: ['courses', 'detail', courseId],
+          queryKey: detailKey,
+          refetchType: 'none',
         });
         queryClient.invalidateQueries({
           queryKey: ['courses', 'enrollments'],
@@ -4431,9 +4466,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           method: 'DELETE',
         });
       },
-      onSuccess: (_, { courseId }) => {
+      onSuccess: (_, { courseId, studentId }) => {
+        // Optimistically remove the student from the cached course so
+        // enrollment dependent UI (e.g. the Progress tab) updates immediately.
+        // The Solr read model is eventually consistent, so an immediate refetch
+        // would return stale data; mark the detail query stale without
+        // refetching and let it reconcile on the next natural fetch.
+        const detailKey = ['courses', 'detail', courseId];
+        const cached = queryClient.getQueryData(detailKey) as any;
+        if (cached && cached.students instanceof Map) {
+          const nextStudents = new Map(cached.students);
+          nextStudents.delete(studentId);
+          queryClient.setQueryData(detailKey, {
+            ...cached,
+            students: nextStudents,
+          });
+        }
         queryClient.invalidateQueries({
-          queryKey: ['courses', 'detail', courseId],
+          queryKey: detailKey,
+          refetchType: 'none',
         });
         queryClient.invalidateQueries({
           queryKey: ['courses', 'enrollments'],
