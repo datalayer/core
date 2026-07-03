@@ -18,7 +18,7 @@ import { memberships as fetchMemberships } from '../../api/iam/profile';
 import { usePrincipalStore } from '../../hooks/usePrincipalStore';
 import { useBillableAccountStore } from '../../hooks/useBillableAccountStore';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
-import { formatFriendlyHandle } from '../../utils/Handles';
+import { DisplayHandle, displayHandleText } from '../display/DisplayHandle';
 
 type TeamMembership = {
   uid: string;
@@ -257,8 +257,8 @@ export function PrincipalSwitcherMenu({
 
   const selectedPrincipalLabel =
     selectedPrincipalKind === 'team'
-      ? `@${formatFriendlyHandle(effectiveOrganizationHandle || personalHandle || 'organization')}/${formatFriendlyHandle(effectiveHandle)}`
-      : `@${formatFriendlyHandle(effectiveHandle)}`;
+      ? `${displayHandleText(effectiveOrganizationHandle || personalHandle || 'organization')}/${displayHandleText(effectiveHandle, { withAt: false })}`
+      : displayHandleText(effectiveHandle);
   const selectedPrincipalLabelClosed = truncatePrincipalLabel(
     selectedPrincipalLabel,
     maxLabelChars,
@@ -452,7 +452,7 @@ export function PrincipalSwitcherMenu({
               <ActionList.LeadingVisual>
                 <PersonIcon />
               </ActionList.LeadingVisual>
-              @{formatFriendlyHandle(personalHandle || 'me')}
+              <DisplayHandle handle={personalHandle || 'me'} />
               {isPlatformAdmin ? (
                 <ActionList.TrailingVisual>
                   <Label variant="secondary" size="small" sx={adminBadgeSx}>
@@ -499,7 +499,7 @@ export function PrincipalSwitcherMenu({
                     </ActionList.LeadingVisual>
                     <Box
                       as="span"
-                      title={`@${organization.handle}`}
+                      title={displayHandleText(organization.handle)}
                       sx={{
                         display: 'block',
                         minWidth: 0,
@@ -508,7 +508,7 @@ export function PrincipalSwitcherMenu({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      @{organization.handle}
+                      <DisplayHandle handle={organization.handle} />
                     </Box>
                   </ActionList.Item>
                 );
@@ -546,7 +546,7 @@ export function PrincipalSwitcherMenu({
                     </ActionList.LeadingVisual>
                     <Box
                       as="span"
-                      title={`@${formatFriendlyHandle(orgHandle)}/${formatFriendlyHandle(team.handle)}`}
+                      title={`${displayHandleText(orgHandle)}/${displayHandleText(team.handle, { withAt: false })}`}
                       sx={{
                         display: 'block',
                         minWidth: 0,
@@ -555,8 +555,8 @@ export function PrincipalSwitcherMenu({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      @{formatFriendlyHandle(orgHandle)}/
-                      {formatFriendlyHandle(team.handle)}
+                      <DisplayHandle handle={orgHandle} />/
+                      <DisplayHandle handle={team.handle} withAt={false} />
                     </Box>
                   </ActionList.Item>
                 );

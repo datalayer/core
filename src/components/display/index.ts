@@ -7,6 +7,7 @@ export * from './AvatarSkeleton';
 export * from './CenteredSpinner';
 export * from './CodePreview';
 export * from './DatalayerBox';
+export * from './DisplayHandle';
 export * from './HorizontalCenter';
 export * from './JupyterDialog';
 export * from './LiveRelativeTime';

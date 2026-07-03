@@ -28,6 +28,8 @@ export function formatFriendlyHandle(handle?: string): string {
       ? 'GitHub'
       : provider === 'google'
         ? 'Google'
+        : provider === 'linkedin'
+          ? 'LinkedIn'
         : providerRaw || 'External';
   const identifier = restParts.join(':').trim();
 
