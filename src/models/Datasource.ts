@@ -40,7 +40,7 @@ export default IDatasource;
 // ============================================================================
 
 import { validateJSON } from '../api/utils/validation';
-import type { DatalayerClient } from '../client';
+import type { DatalayerCoreClient } from '../client';
 
 /**
  * Datasource type matching UI and API.
@@ -186,7 +186,7 @@ export interface UpdateDatasourceResponse {
 export class DatasourceDTO {
   /** @internal */
   _data: DatasourceData;
-  private _client: DatalayerClient;
+  private _client: DatalayerCoreClient;
   private _deleted: boolean = false;
 
   /**
@@ -194,7 +194,7 @@ export class DatasourceDTO {
    * @param data - Datasource data from API
    * @param client - Client instance
    */
-  constructor(data: DatasourceData, client: DatalayerClient) {
+  constructor(data: DatasourceData, client: DatalayerCoreClient) {
     this._data = data;
     this._client = client;
   }

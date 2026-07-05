@@ -9,7 +9,6 @@
  */
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
-import { EnvironmentDTO } from '../base/models/EnvironmentDTO';
 import { AuthenticationManager } from './auth';
 import type { TokenStorage } from './auth/types';
 
@@ -49,8 +48,6 @@ export class DatalayerClientBase {
   public readonly spacerRunUrl: string;
   /** Authentication token */
   public token?: string;
-  /** Environments */
-  public readonly environments: EnvironmentDTO[] = [];
   /** Method lifecycle handlers */
   public readonly handlers?: ClientHandlers;
   /** Authentication manager */

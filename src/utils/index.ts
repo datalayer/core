@@ -8,7 +8,6 @@ export * from './Avatar';
 export * from './Browser';
 export * from './cli';
 export * from './Cookie';
-export * from './Cells';
 export * from './Date';
 export * from './Download';
 export * from './DownloadFile';

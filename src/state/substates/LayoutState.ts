@@ -6,12 +6,19 @@
 import { ReactPortal } from 'react';
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import {
-  IAnyOrganization,
-  IAnySpace,
-  IAnyTeam,
-  ISpaceItem,
-} from '../../models';
+import { IAnyOrganization, IAnyTeam } from '../../models';
+
+/**
+ * Structural placeholder for a space in the layout state. The concrete space
+ * models live in the runtime/content package (`@datalayer/agent-runtimes`);
+ * the core layout store keeps them loosely typed to avoid depending on the
+ * content models.
+ */
+type IAnySpace = Record<string, any>;
+/**
+ * Structural placeholder for a space item in the layout state. See IAnySpace.
+ */
+type ISpaceItem = Record<string, any>;
 
 export type BannerDisplayVariant = 'danger' | 'info' | 'success' | 'warning';
 

@@ -49,27 +49,14 @@ import {
 import {
   BOOTSTRAP_USER_ONBOARDING,
   IAnyOrganization,
-  IAnySpace,
-  IAssignment,
-  ICell,
   IContact,
-  ICourse,
-  IDataset,
   IDatasource,
-  IDocument,
-  IEnvironment,
-  IExercise,
   IIAMToken,
-  ILesson,
-  INotebook,
   IOrganization,
   IOrganizationMember,
-  IPage,
   ISchool,
   ISecret,
-  ISpaceItem,
   IStudent,
-  IStudentItem,
   ITeam,
   IUser,
   IUserOnboarding,
@@ -78,14 +65,29 @@ import {
   asDatasource,
   asInvite,
   asOrganization,
-  asPage,
   asSecret,
-  asSpace,
   asTeam,
   asToken,
   asUser,
 } from '../models';
-import { useCoreStore, useIAMStore, useSpaceStore } from '../state';
+// Content/runtime model types live in @datalayer/agent-runtimes. The core cache
+// still fetches this data over raw HTTP, so the types are kept loose here to
+// avoid depending on the content models.
+type IAnySpace = any;
+type IAssignment = any;
+type ICell = any;
+type ICourse = any;
+type IDataset = any;
+type IDocument = any;
+type IEnvironment = any;
+type IExercise = any;
+type ILesson = any;
+type INotebook = any;
+type IPage = any;
+type ISpaceItem = any;
+type IStudentItem = any;
+import { asPage, asSpace } from './cacheConverters';
+import { useCoreStore, useIAMStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
@@ -498,7 +500,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const coreStore = useCoreStore();
   const { configuration } = coreStore;
   const { user } = useIAMStore();
-  const { spaces, updateSpaces } = useSpaceStore();
   const queryClient = useQueryClient();
   const { requestDatalayer } = useDatalayer({ loginRoute });
   const { checkIsOrganizationMember } = useAuthorization();
@@ -2070,13 +2071,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: (_resp, deletedSpaceUid) => {
         const deletedUid = String(deletedSpaceUid || '').trim();
-        if (deletedUid) {
-          const nextSpaces = (spaces || []).filter((space: any) => {
-            const uid = String(space?.uid ?? space?.id ?? '').trim();
-            return uid !== deletedUid;
-          });
-          updateSpaces(nextSpaces as any);
-        }
 
         // Invalidate deleted space detail cache and all list queries.
         queryClient.removeQueries({

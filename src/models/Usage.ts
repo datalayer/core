@@ -3,7 +3,16 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IResources } from '../base/models/Environment';
+/**
+ * Compute resource shape (CPU / memory / GPU) associated with a usage record.
+ * Mirrors the runtime environment resource shape but is declared locally so
+ * the account/usage model does not depend on the runtime/content package.
+ */
+interface IResources {
+  cpu: string;
+  memory: string;
+  'nvidia.com/gpu'?: string;
+}
 
 export interface IRawUsage {
   account_uid: string;

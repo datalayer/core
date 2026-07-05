@@ -4,7 +4,6 @@
  */
 
 export * from './ConsumptionBar';
-export * from './CreditsIndicator';
 export * from './ProgressBar';
 export * from './ProgressRing';
 export * from './Timer';

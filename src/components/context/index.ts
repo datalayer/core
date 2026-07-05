@@ -4,4 +4,3 @@
  */
 
 export * from './OrganizationSelect';
-export * from './SpaceSelect';

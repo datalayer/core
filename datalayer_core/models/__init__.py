@@ -68,6 +68,12 @@ from .iam import (
     UserSearchRequest,
     UserSettingsModel,
 )
+from .inference import (
+    ChatRequest,
+    ChatResponseData,
+    CompletionRequest,
+    CompletionResponseData,
+)
 from .secret import SecretModel, SecretVariant
 
 __all__ = [
@@ -76,6 +82,10 @@ __all__ = [
     "ApiKeyType",
     "CheckoutPortalModel",
     "CheckoutPortalRequest",
+    "ChatRequest",
+    "ChatResponseData",
+    "CompletionRequest",
+    "CompletionResponseData",
     "Contact",
     "ContactRequest",
     "ContactSearchRequest",
