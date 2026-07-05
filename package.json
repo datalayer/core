@@ -51,8 +51,9 @@
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:dist": "rimraf dist",
     "clean:cache": "rimraf node_modules/.vite",
-    "build": "npm run clean && gulp resources-to-lib && tsc -b && vite build",
+    "build": "npm run clean && gulp resources-to-lib && tsc -b && vite build && vite build --config vite.cli-login.config.ts",
     "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs",
+    "build:cli-login": "vite build --config vite.cli-login.config.ts",
     "build:types": "npm run clean:lib && tsc -b",
     "build:nextjs": "npm run build --workspace=nextjj-example",
     "build:examples": "npm run build:nextjs",
@@ -102,6 +103,7 @@
     "rebuild:fresh": "npm run create:patches && npm install && npm run build && npm run clean:cache"
   },
   "dependencies": {
+    "@datalayer/design": "^1.0.0",
     "@datalayer/icons-react": "^1.0.7",
     "@datalayer/jupyter-lexical": "^1.0.16",
     "@datalayer/jupyter-react": "^2.0.7",

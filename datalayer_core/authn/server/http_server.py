@@ -46,6 +46,20 @@ USE_JUPYTER_SERVER_FOR_LOGIN: bool = False
 logger = logging.getLogger(__name__)
 
 
+def _normalize_navigation_target(candidate: str | None) -> str | None:
+    if candidate is None:
+        return None
+    value = str(candidate).strip()
+    if not value:
+        return None
+    parsed = urllib.parse.urlparse(value)
+    if parsed.scheme or parsed.netloc:
+        return None
+    if not value.startswith("/") or value.startswith("//"):
+        return None
+    return value
+
+
 class LoginRequestHandler(SimpleHTTPRequestHandler):
     """
     Handle HTTP requests for authentication flow.
@@ -83,22 +97,46 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
         user_raw = arguments.get("user", [""])[0]
         token = arguments.get("token", [""])[0]
+        navigation_candidate = (
+            arguments.get("navigate_to", [""])[0]
+            or arguments.get("navigation", [""])[0]
+            or arguments.get("post_auth_redirect", [""])[0]
+            or arguments.get("redirect_url", [""])[0]
+        )
+        navigation_target = _normalize_navigation_target(navigation_candidate)
 
         if not user_raw or not token:
             self.send_error(HTTPStatus.BAD_REQUEST, "User and token must be provided.")
 
         user = json.loads(urllib.parse.unquote(user_raw))
-        content = AUTH_SUCCESS_PAGE.format(
-            user_key=DATALAYER_IAM_USER_KEY,
-            uid=user.get("uid"),
-            handle=user["handle_s"],
-            first_name=user["first_name_t"],
-            last_name=user["last_name_t"],
-            email=user["email_s"],
-            display_name=" ".join((user["first_name_t"], user["last_name_t"])).strip(),
-            token_key=DATALAYER_IAM_TOKEN_KEY,
-            token=token,
-            base_url="/",
+        content = (
+            AUTH_SUCCESS_PAGE
+            .replace("__USER_KEY__", DATALAYER_IAM_USER_KEY)
+            .replace("__TOKEN_KEY__", DATALAYER_IAM_TOKEN_KEY)
+            .replace("__UID_JSON__", json.dumps(user.get("uid", "")))
+            .replace("__HANDLE_JSON__", json.dumps(user.get("handle_s", "")))
+            .replace(
+                "__FIRST_NAME_JSON__", json.dumps(user.get("first_name_t", ""))
+            )
+            .replace(
+                "__LAST_NAME_JSON__", json.dumps(user.get("last_name_t", ""))
+            )
+            .replace("__EMAIL_JSON__", json.dumps(user.get("email_s", "")))
+            .replace(
+                "__DISPLAY_NAME_JSON__",
+                json.dumps(
+                    " ".join(
+                        (
+                            user.get("first_name_t", ""),
+                            user.get("last_name_t", ""),
+                        )
+                    ).strip()
+                ),
+            )
+            .replace("__TOKEN_JSON__", json.dumps(token))
+            .replace(
+                "__NAVIGATION_TARGET_JSON__", json.dumps(navigation_target or "")
+            )
         ).encode("UTF-8", "replace")
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-type", "text/html")
@@ -112,14 +150,15 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         if path.strip("/").endswith("callback"):
             self._save_token(query)
         elif path in {"/", "/datalayer/login/cli"}:
-            content = LANDING_PAGE.format(
-                config=json.dumps(
-                    {
-                        "runUrl": self.server.run_url,  # type: ignore
-                        "iamRunUrl": self.server.iam_url,  # type: ignore
-                        "whiteLabel": False,
-                    }
-                )
+            config_json = json.dumps(
+                {
+                    "runUrl": self.server.run_url,  # type: ignore
+                    "iamRunUrl": self.server.iam_url,  # type: ignore
+                    "whiteLabel": False,
+                }
+            )
+            content = LANDING_PAGE.replace(
+                "__DATALAYER_CONFIG_JSON__", config_json
             ).encode("UTF-8", "replace")
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-type", "text/html")
@@ -203,16 +242,6 @@ class AuthHTTPServer(HTTPServer):
         bind_and_activate : bool, default True
             Whether to bind and activate the server.
         """
-        try:
-            import datalayer_ui  # noqa: F401
-        except Exception:
-            print("Sorry, I can not show the login page...")
-            print(
-                "Check the datalayer_ui python package is available in your environment"
-            )
-            import sys
-
-            sys.exit(-1)
         # Use DatalayerURLs for proper URL configuration
         self._urls = DatalayerURLs.from_environment(run_url=run_url)
         self.run_url = self._urls.run_url
@@ -246,14 +275,12 @@ class AuthHTTPServer(HTTPServer):
         client_address : str
             The client address.
         """
-        import datalayer_ui
-
-        DATALAYER_UI_PATH = Path(datalayer_ui.__file__).parent
+        datalayer_core_static_path = HERE.parent.parent / "static"
         self.RequestHandlerClass(
             request,
             client_address,
             self,  # type: ignore[arg-type]
-            directory=str(DATALAYER_UI_PATH / "static"),  # type: ignore[call-arg]
+            directory=str(datalayer_core_static_path),  # type: ignore[call-arg]
         )
 
 

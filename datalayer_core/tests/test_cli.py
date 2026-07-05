@@ -63,7 +63,7 @@ def test_cli(args: List[str], expected_output: str) -> None:
     [
         (
             ["login", "--token", TEST_DATALAYER_API_KEY],
-            "Token saved for future use",
+            "API key saved for future use",
         ),
         (["envs", "list", "--token", TEST_DATALAYER_API_KEY], "Environments"),
         (["envs", "ls", "--token", TEST_DATALAYER_API_KEY], "Environments"),
@@ -77,7 +77,7 @@ def test_cli(args: List[str], expected_output: str) -> None:
         (["api-keys", "list", "--token", TEST_DATALAYER_API_KEY], "API Keys"),
         (["api-keys", "ls", "--token", TEST_DATALAYER_API_KEY], "API Keys"),
         (["whoami", "--token", TEST_DATALAYER_API_KEY], "User:"),
-        (["logout"], "Stored token cleared"),
+        (["logout"], "Stored API key cleared"),
     ],
 )
 @pytest.mark.skipif(

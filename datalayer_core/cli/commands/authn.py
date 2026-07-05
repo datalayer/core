@@ -220,9 +220,11 @@ def login(
                 console.print("[yellow]CLI-only authentication selected[/yellow]")
                 credentials = _ask_credentials()
 
-                if credentials.get("credentials_type") == "token":
+                if credentials.get("credentials_type") == "api_key":
                     asyncio.run(
-                        _login_with_token(auth, credentials["token"], urls.run_url)
+                        _login_with_api_key(
+                            auth, credentials["api_key"], urls.run_url
+                        )
                     )
                 else:
                     asyncio.run(
@@ -236,7 +238,7 @@ def login(
             else:
                 # Browser-based OAuth
                 console.print(
-                    "[yellow]No token found. Starting browser-based authentication...[/yellow]"
+                    "[yellow]No API key found. Starting browser-based authentication...[/yellow]"
                 )
                 _authenticate_with_browser(auth, urls.run_url)
 
@@ -247,22 +249,22 @@ def login(
         raise typer.Exit(1)
 
 
-async def _login_with_token(
-    auth: AuthenticationManager, token: str, server_url: str
+async def _login_with_api_key(
+    auth: AuthenticationManager, api_key: str, server_url: str
 ) -> None:
-    """Login using token via Client."""
+    """Login using API key via Client."""
     try:
-        user, _ = await auth.login(token=token)
+        user, _ = await auth.login(token=api_key)
         user_handle = user.get("handle_s", user.get("handle", "unknown"))
 
         console.print(
             f"🎉 Successfully authenticated as [cyan]{user_handle}[/cyan] on [green]{server_url}[/green]"
         )
-        console.print("✅ Token saved for future use")
+        console.print("🔑 API key saved for future use")
 
     except Exception as e:
         console.print(f"[red]Authentication failed: {e}[/red]")
-        console.print("[yellow]Please check your token and try again.[/yellow]")
+        console.print("[yellow]Please check your API key and try again.[/yellow]")
         raise typer.Exit(1)
 
 
@@ -277,7 +279,7 @@ async def _login_with_credentials(
         console.print(
             f"🎉 Successfully authenticated as [cyan]{user_handle}[/cyan] on [green]{server_url}[/green]"
         )
-        console.print("✅ Token saved for future use")
+        console.print("🔑 API key saved for future use")
 
     except Exception as e:
         console.print(f"[red]Failed to authenticate as {handle} on {server_url}[/red]")
@@ -294,7 +296,7 @@ def _ask_credentials() -> dict[str, str]:
             "message": "How do you want to log in?",
             "choices": [
                 {"name": "Username/Password", "value": "password"},
-                {"name": "Token", "value": "token"},
+                {"name": "API key", "value": "api_key"},
             ],
         },
         {
@@ -315,11 +317,11 @@ def _ask_credentials() -> dict[str, str]:
         },
         {
             "type": "password",
-            "name": "token",
-            "message": "Token:",
-            "when": lambda x: x["credentials_type"] == "token",
+            "name": "api_key",
+            "message": "API key:",
+            "when": lambda x: x["credentials_type"] == "api_key",
             "validate": lambda x: (
-                True if len(x) >= 8 else "Token must have at least 8 characters"
+                True if len(x) >= 8 else "API key must have at least 8 characters"
             ),
         },
     ]
@@ -389,7 +391,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
         console.print(
             f"🎉 Successfully authenticated as [cyan]{user_handle}[/cyan] on [green]{server_url}[/green]"
         )
-        console.print("✅ Token saved for future use")
+        console.print("🔑 API key saved for future use")
 
     except KeyboardInterrupt:
         console.print("\n[yellow]Authentication cancelled by user[/yellow]")
@@ -420,7 +422,7 @@ def logout(
         asyncio.run(auth.logout())
 
         console.print(f"👋 Logged out from [green]{urls.run_url}[/green]")
-        console.print("✅ Stored token cleared")
+        console.print("✅ Stored API key cleared")
 
     except Exception as e:
         console.print(f"[red]Logout failed: {e}[/red]")
