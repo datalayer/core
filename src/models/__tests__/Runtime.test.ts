@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { RuntimeDTO, RuntimeData } from '../../models/RuntimeDTO';
+import { RuntimeDTO, RuntimeData } from '../../base/models/RuntimeDTO';
 import type { DatalayerClient } from '../../client/index';
 
 describe('Runtime Model', () => {

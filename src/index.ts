@@ -22,7 +22,7 @@ export {
 } from './api/DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './api/DatalayerApi';
 export { API_BASE_PATHS } from './api/constants';
-export * as runtimesApi from './api/runtimes';
+export * as runtimesApi from './base/api/runtimes';
 export * as iamApi from './api/iam';
 export * as spacerApi from './api/spacer';
 
@@ -230,7 +230,7 @@ export {
   snapshotRuntime,
   getSandboxSnapshots,
   loadSandboxSnapshot,
-} from './stateful/runtimes/actions';
+} from './base/stateful/runtimes/actions';
 
 // OTEL observability components, hooks, and types
 export * from './otel';

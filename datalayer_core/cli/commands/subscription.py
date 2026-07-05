@@ -138,8 +138,8 @@ def subscription_callback(ctx: typer.Context) -> None:
 def subscription_show(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     raw: bool = typer.Option(
         False,
@@ -243,8 +243,8 @@ def subscription_show(
 def subscription_available(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     raw: bool = typer.Option(
         False,
@@ -283,8 +283,8 @@ def subscription_available(
 def subscription_move(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     return_url: Optional[str] = typer.Option(
         None,
@@ -347,8 +347,8 @@ def subscription_move(
 def subscription_portal(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     open_browser: bool = typer.Option(
         True,
@@ -387,8 +387,8 @@ def subscription_portal(
 def subscription_cancel(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     open_browser: bool = typer.Option(
         True,
@@ -423,8 +423,8 @@ def subscription_cancel(
 def subscription_topups(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     raw: bool = typer.Option(
         False,
@@ -532,8 +532,8 @@ def subscription_topups(
 def subscription_stats(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     query: str = typer.Option(
         "",
@@ -614,8 +614,8 @@ def subscription_stats(
 def subscription_admin_users(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     query: str = typer.Option(
         "",
@@ -677,8 +677,8 @@ def subscription_admin_users(
 def subscription_dry_run(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     check_api: bool = typer.Option(
         True,
@@ -813,8 +813,8 @@ def subscription_dry_run(
 def subscription_root(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """Show subscription status (root command)."""

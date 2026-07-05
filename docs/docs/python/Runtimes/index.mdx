@@ -4,6 +4,12 @@ title: Runtimes
 
 import DocCardList from '@theme/DocCardList';
 
+:::note
+Runtime creation and code execution moved from `datalayer-core` to the
+[`agent-runtimes`](https://github.com/datalayer/agent-runtimes) package. Use
+`from agent_runtimes.client import RuntimeClient` as shown in the examples below.
+:::
+
 Runtimes provide scalable compute environments for executing Python code in the Datalayer platform. They offer isolated, managed execution contexts with access to CPU/GPU resources, persistent storage, and environment management capabilities.
 
 ## Overview
@@ -26,9 +32,9 @@ A Runtime represents a remote compute kernel that can execute Python code, manag
 Create a runtime using a context manager for automatic resource cleanup:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     response = runtime.execute("print('Hello from Datalayer!')")
     print(response.stdout)  # Output: Hello from Datalayer!
@@ -39,9 +45,9 @@ with client.create_runtime() as runtime:
 Configure runtime with specific environment, name, and timeout:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime(
     name="my-ai-runtime",
     environment="python-gpu-env",  # Use GPU environment
@@ -63,9 +69,9 @@ print(f"Generated dataset with {len(data)} rows")
 Restore a runtime from a previously saved snapshot:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime(
     name="restored-runtime",
     environment="ai-agents-env",
@@ -82,9 +88,9 @@ with client.create_runtime(
 Run Python code directly as strings:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Execute simple computation
     response = runtime.execute("result = 2 + 2")
@@ -110,9 +116,9 @@ print("Plot saved as sine_wave.png")
 Execute entire Python files remotely:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Execute a local Python file on the remote runtime
     response = runtime.execute_file("my_script.py")
@@ -130,9 +136,9 @@ with client.create_runtime() as runtime:
 Capture specific variables from code execution:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Execute code and return specific variable
     result = runtime.execute(
@@ -149,9 +155,9 @@ with client.create_runtime() as runtime:
 Set variables in the runtime before code execution:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Set single variable
     runtime.set_variable("name", "Alice")
@@ -180,9 +186,9 @@ print(f"Result: {result}")
 Retrieve variables from the runtime after execution:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Execute code that creates variables
     runtime.execute("""
@@ -214,9 +220,9 @@ count = len(data)
 Save runtime state for later restoration:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime(name="ml-runtime") as runtime:
     # Set up environment
     runtime.execute("""
@@ -253,9 +259,9 @@ print("Model trained successfully")
 Create snapshots directly from runtime:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Do some work
     runtime.execute("""
@@ -276,9 +282,9 @@ print("PyTorch model created")
 ### List and Manage Snapshots
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 
 # List all snapshots
 snapshots = client.list_snapshots()

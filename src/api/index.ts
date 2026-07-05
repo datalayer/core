@@ -23,8 +23,8 @@ export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
 // Domain-organized API exports
 export * as iam from './iam';
 export * as otel from './otel';
-export * as runtimes from './runtimes';
-export * as scheduler from './scheduler';
+export * as runtimes from '../base/api/runtimes';
+export * as scheduler from '../base/api/scheduler';
 export * as spacer from './spacer';
 
 /**
@@ -33,5 +33,5 @@ export * as spacer from './spacer';
  */
 
 export * from '../stateful/jupyter';
-export * from '../stateful/runtimes';
+export * from '../base/stateful/runtimes';
 export * from '../api/DatalayerApi';

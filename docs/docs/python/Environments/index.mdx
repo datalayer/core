@@ -4,6 +4,12 @@ title: Environments
 
 import DocCardList from '@theme/DocCardList';
 
+:::note
+Environment listing moved from `datalayer-core` to the
+[`agent-runtimes`](https://github.com/datalayer/agent-runtimes) package. Use
+`from agent_runtimes.client import RuntimeClient` as shown in the examples below.
+:::
+
 The Environments module manages computing environments in the Datalayer platform. Environments define the runtime context for code execution, including available packages, computational resources (CPU/GPU), programming languages, and system configurations.
 
 ## Overview
@@ -45,9 +51,9 @@ The `Environment` class represents a computing environment with the following at
 View all environments accessible to your account:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 environments = client.list_environments()
 
 print(f"Found {len(environments)} available environments:")
@@ -64,9 +70,9 @@ for env in environments:
 Get comprehensive details about each environment:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 environments = client.list_environments()
 
 for env in environments:

@@ -31,8 +31,8 @@ def secrets_callback(ctx: typer.Context) -> None:
 def list_secrets(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all secrets."""
@@ -71,8 +71,8 @@ def create_secret(
     ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """Create a new secret."""
@@ -107,8 +107,8 @@ def delete_secret(
     uid: str = typer.Argument(..., help="UID of the secret to delete"),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """Delete a secret."""
@@ -134,8 +134,8 @@ def delete_secret(
 def secrets_list(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all secrets (root command)."""
@@ -145,8 +145,8 @@ def secrets_list(
 def secrets_ls(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all secrets (root command alias)."""

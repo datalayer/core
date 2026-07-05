@@ -89,8 +89,8 @@ def memberships_root(
     ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="User access token",
+        "--api-key",
+        help="User API key",
     ),
     only: Optional[str] = typer.Option(
         None,
@@ -111,7 +111,7 @@ def memberships_root(
     access_token = token or os.environ.get("DATALAYER_API_KEY")
     if not access_token:
         console.print(
-            "[red]No access token available. Use --token or set DATALAYER_API_KEY.[/red]"
+            "[red]No access token available. Use --api-key or set DATALAYER_API_KEY.[/red]"
         )
         raise typer.Exit(1)
 

@@ -93,12 +93,16 @@ if client.authenticate():
 
 ### 2. Execute Code in a Runtime
 
-Use context managers to create runtimes and ensure proper resource cleanup:
+> **Note:** Runtime creation and code execution have moved to the
+> [`agent-runtimes`](https://github.com/datalayer/agent-runtimes) package. Use its
+> `RuntimeClient` (and the `@datalayer` decorator) for runtime workloads. The
+> `datalayer-core` `DatalayerClient` now focuses on account/platform operations
+> (authentication, secrets, API keys, usage, profile).
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 
 # Execute code in a managed runtime
 with client.create_runtime() as runtime:
@@ -157,7 +161,7 @@ Use comma-separated agentspec ids to create one experiment per agentspec variant
 
 ```bash
 # Creates one experiment per agentspec in the list
-datalayer evals experiments create my-exp \
+agent-runtimes evals experiments create my-exp \
   --evalset-id <evalset_id> \
   --agent-spec-ids example-evals,example-evals-nocodemode,example-custom
 ```
@@ -165,7 +169,7 @@ datalayer evals experiments create my-exp \
 Generate a comparison report:
 
 ```bash
-datalayer evals report <evalset_id> --run-limit 50 --export
+agent-runtimes evals report <evalset_id> --run-limit 50 --export
 ```
 
 How to interpret grouped comparisons in the report:
@@ -180,11 +184,9 @@ How to interpret grouped comparisons in the report:
 
 For comprehensive Python usage examples, see the [`examples/`](https://github.com/datalayer/core/tree/main/examples) directory which includes:
 
-- **FastAPI + scikit-learn**: Web application with ML models
-- **Streamlit + scikit-learn**: Interactive data science apps
-- **PyTorch GPU workloads**: High-performance computing examples
-- **Decorator patterns**: Remote function execution with `@datalayer`
-- **And more**: Complete examples with documentation and setup instructions
+- **OpenTelemetry observability**: Traces and metrics instrumentation with a visualization UI
+
+The framework and client examples (**FastAPI + scikit-learn**, **Streamlit + scikit-learn**, **PyTorch GPU workloads**, **`@datalayer` decorator patterns**, and **Next.js**) have moved to the [Agent Runtimes examples](https://github.com/datalayer/agent-runtimes/tree/main/examples).
 
 ### TypeScript/React Examples
 
@@ -212,21 +214,7 @@ Available at http://localhost:3000/:
 
 ### Next.js Application Example
 
-A complete Next.js application demonstrating platform integration:
-
-```bash
-cd examples/nextjj
-npm install
-npm run dev
-```
-
-Features:
-
-- Token authentication with Datalayer IAM
-- Browse and create notebooks from your workspace
-- Select compute environments for execution
-- Interactive notebook viewer with real-time outputs
-- Clean, responsive UI with GitHub Primer components
+The Next.js application example has moved to the [Agent Runtimes examples](https://github.com/datalayer/agent-runtimes/tree/main/examples/nextjs).
 
 ## Platform Integration
 

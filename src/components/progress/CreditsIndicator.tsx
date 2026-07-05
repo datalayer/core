@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { useNavigate } from '../../hooks/useNavigate';
-import type { IRemoteServicesManager } from '../../stateful/runtimes';
+import type { IRemoteServicesManager } from '../../base/stateful/runtimes';
 import type { IRuntimeModel } from '../../models';
 import { ConsumptionBar } from './ConsumptionBar';
 

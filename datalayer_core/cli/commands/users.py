@@ -32,8 +32,8 @@ def dump_user(
     uid: str = typer.Argument(..., help="User UID to query"),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """Dump raw JSON response for a user by UID."""

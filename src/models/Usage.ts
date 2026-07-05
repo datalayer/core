@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { IResources } from './Environment';
+import { IResources } from '../base/models/Environment';
 
 export interface IRawUsage {
   account_uid: string;

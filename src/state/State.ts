@@ -10,7 +10,7 @@ import { cellStore } from './substates/CellState';
 import { documentStore } from './substates/DocumentState';
 import { gradeStore } from './substates/GradeState';
 import { iamStore } from './substates/IAMState';
-import { runtimesStore } from './substates/RuntimesState';
+import { runtimesStore } from '../base/state/substates/RuntimesState';
 import { layoutStore } from './substates/LayoutState';
 import { nbformatStore } from './substates/NbformatState';
 import { organizationStore } from './substates/OrganizationState';

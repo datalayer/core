@@ -128,25 +128,15 @@ def _expiration_status(exp_ts: Optional[int]) -> str:
 
 @app.command()
 def login(
-    run_url: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="User access token",
+        "--api-key",
+        help="User API key",
     ),
     handle: Optional[str] = typer.Option(
         None,
         "--handle",
-        help="Username for credentials authentication",
+        help="Handle (username) for credentials authentication",
     ),
     password: Optional[str] = typer.Option(
         None,
@@ -166,7 +156,7 @@ def login(
     --------
     Token authentication::
 
-        datalayer login --token YOUR_TOKEN
+        datalayer login --api-key YOUR_TOKEN
 
     Credentials authentication::
 
@@ -182,13 +172,13 @@ def login(
     """
     try:
         # Use DatalayerURLs for proper URL configuration
-        urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        urls = DatalayerURLs.from_environment()
 
         # Initialize Client authentication manager
         auth = AuthenticationManager(urls.iam_url)
 
         # Determine authentication method
-        access_token = token or os.environ.get("DATALAYER_API_KEY")
+        access_token = api_key or os.environ.get("DATALAYER_API_KEY")
 
         if access_token:
             # Token-based authentication
@@ -266,6 +256,13 @@ async def _login_with_api_key(
         console.print(f"[red]Authentication failed: {e}[/red]")
         console.print("[yellow]Please check your API key and try again.[/yellow]")
         raise typer.Exit(1)
+
+
+async def _login_with_token(
+    auth: AuthenticationManager, token: str, server_url: str
+) -> None:
+    """Backward-compatible helper for token login path."""
+    await _login_with_api_key(auth, token, server_url)
 
 
 async def _login_with_credentials(
@@ -403,20 +400,10 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
 
 @app.command()
 def logout(
-    run_url: Optional[str] = typer.Option(
-        None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
 ) -> None:
     """Log out from Datalayer server."""
     try:
-        urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        urls = DatalayerURLs.from_environment()
         auth = AuthenticationManager(urls.iam_url)
 
         asyncio.run(auth.logout())
@@ -431,20 +418,10 @@ def logout(
 
 @app.command()
 def whoami(
-    run_url: Optional[str] = typer.Option(
-        None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="User access token",
+        "--api-key",
+        help="User API key",
     ),
     details: bool = typer.Option(
         False,
@@ -459,7 +436,7 @@ def whoami(
 ) -> None:
     """Show current authenticated user."""
     try:
-        urls = DatalayerURLs.from_environment(run_url=run_url, iam_url=iam_url)
+        urls = DatalayerURLs.from_environment()
 
         if urls_only:
             url_items = [
@@ -656,25 +633,15 @@ def whoami(
 
 # Root-level commands for backward compatibility with main CLI
 def login_root(
-    run_url: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
-    token: Optional[str] = typer.Option(
-        None,
-        "--token",
-        help="User access token",
+        "--api-key",
+        help="User API key",
     ),
     handle: Optional[str] = typer.Option(
         None,
         "--handle",
-        help="Username for credentials authentication",
+        help="Handle (username) for credentials authentication",
     ),
     password: Optional[str] = typer.Option(
         None,
@@ -691,9 +658,7 @@ def login_root(
     Log into a Datalayer server.
     """
     login(
-        run_url=run_url,
-        iam_url=iam_url,
-        token=token,
+        api_key=api_key,
         handle=handle,
         password=password,
         no_browser=no_browser,
@@ -701,38 +666,18 @@ def login_root(
 
 
 def logout_root(
-    run_url: Optional[str] = typer.Option(
-        None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
 ) -> None:
     """
     Log out of Datalayer server.
     """
-    logout(run_url=run_url, iam_url=iam_url)
+    logout()
 
 
 def whoami_root(
-    run_url: Optional[str] = typer.Option(
-        None,
-        "--run-url",
-        help="Datalayer server URL",
-    ),
-    iam_url: Optional[str] = typer.Option(
-        None,
-        "--iam-url",
-        help="Datalayer IAM server URL",
-    ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="User access token",
+        "--api-key",
+        help="User API key",
     ),
     details: bool = typer.Option(
         False,
@@ -749,8 +694,6 @@ def whoami_root(
     Show current authenticated user.
     """
     whoami(
-        run_url=run_url,
-        iam_url=iam_url,
         token=token,
         details=details,
         urls_only=urls_only,

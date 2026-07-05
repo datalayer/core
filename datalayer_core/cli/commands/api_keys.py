@@ -33,8 +33,8 @@ def api_keys_callback(ctx: typer.Context) -> None:
 def list_api_keys(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all API keys."""
@@ -65,8 +65,8 @@ def list_api_keys(
 def list_api_keys_verbose(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all API keys."""
@@ -89,8 +89,8 @@ def create_api_key(
     ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """Create a new API key."""
@@ -148,8 +148,8 @@ def delete_api_key(
     uid: str = typer.Argument(..., help="UID of the API key to delete"),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """Delete an API key."""
@@ -173,8 +173,8 @@ def delete_api_key(
 def api_keys_list(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all API keys (root command)."""
@@ -184,8 +184,8 @@ def api_keys_list(
 def api_keys_ls(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
 ) -> None:
     """List all API keys (root command alias)."""

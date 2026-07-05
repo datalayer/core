@@ -9,7 +9,7 @@ import { PageTagName } from './PageTag';
 import {
   asCodeSandboxSnapshot,
   ICodeSandboxSnapshot,
-} from './CodeSandboxSnapshot';
+} from '../base/models/CodeSandboxSnapshot';
 
 export type PageTheme = 'default';
 

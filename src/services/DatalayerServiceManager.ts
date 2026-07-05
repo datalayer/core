@@ -6,7 +6,7 @@
 import { ServerConnection, ServiceManager } from '@jupyterlab/services';
 import { coreStore } from '../state/substates/CoreState';
 import { DEFAULT_DATALAYER_CONFIG } from '../config/Configuration';
-import { createRuntime } from '../stateful/runtimes/actions';
+import { createRuntime } from '../base/stateful/runtimes/actions';
 
 /**
  * Creates a ServiceManager configured for Datalayer.

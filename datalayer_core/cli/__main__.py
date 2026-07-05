@@ -5,17 +5,11 @@
 
 import os
 import sys
-from typing import Optional
 
 import typer
 
 from datalayer_core.__version__ import __version__
-from datalayer_core.authn import AuthenticationManager
 from datalayer_core.cli.commands.about import app as about_app
-from datalayer_core.cli.commands.agents import agents_ls
-from datalayer_core.cli.commands.agents import app as agents_app
-from datalayer_core.cli.commands.agent_nodes import app as agent_nodes_app
-from datalayer_core.cli.commands.agent_nodes import agent_nodes_ls
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
@@ -24,25 +18,10 @@ from datalayer_core.cli.commands.authn import (
     logout_root,
     whoami_root,
 )
-from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
-from datalayer_core.cli.commands.console import app as console_app
-from datalayer_core.cli.commands.envs import app as envs_app
-from datalayer_core.cli.commands.envs import envs_ls
-from datalayer_core.cli.commands.evals import app as evals_app
-from datalayer_core.cli.commands.exec import main as exec_main
 from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.otel import app as otel_app
-from datalayer_core.cli.commands.pools import app as pools_app
-from datalayer_core.cli.commands.ray import app as ray_app
-from datalayer_core.cli.commands.checkpoints import app as checkpoints_app
-from datalayer_core.cli.commands.checkpoints import (
-    checkpoints_ls,
-)
-from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
-from datalayer_core.cli.commands.sandbox_snapshots import snapshots_ls
-from datalayer_core.cli.commands.schedules import app as schedules_app
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
@@ -64,48 +43,6 @@ def version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
-def _lookup_billable_account_uid_by_handle(
-    *, iam_url: str, access_token: str, account_handle: str
-) -> Optional[str]:
-    """Resolve an account handle to UID using IAM APIs."""
-    import requests
-
-    handle = str(account_handle or "").strip().lower()
-    if not handle:
-        return None
-
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    # 1) Directly match the authenticated user's own handle.
-    whoami_response = requests.get(
-        f"{iam_url.rstrip('/')}/api/iam/v1/whoami",
-        headers=headers,
-        timeout=10,
-    )
-    if whoami_response.status_code == 200:
-        payload = whoami_response.json()
-        profile = payload.get("profile") or {}
-        profile_handle = str(profile.get("handle") or "").strip().lower()
-        if profile_handle == handle:
-            return str(profile.get("uid") or "").strip() or None
-
-    # 2) Match organizations and teams from memberships.
-    memberships_response = requests.get(
-        f"{iam_url.rstrip('/')}/api/iam/v1/memberships",
-        headers=headers,
-        timeout=10,
-    )
-    if memberships_response.status_code != 200:
-        return None
-    memberships_payload = memberships_response.json()
-    memberships = memberships_payload.get("memberships") or []
-    for membership in memberships:
-        membership_handle = str(membership.get("handle") or "").strip().lower()
-        if membership_handle == handle:
-            return str(membership.get("uid") or "").strip() or None
-    return None
-
-
 # Create the main Typer app
 app = typer.Typer(
     name="dla",
@@ -123,6 +60,14 @@ def main_callback(
         callback=version_callback,
         is_eager=True,
         help="Show version and exit",
+    ),
+    api_key: str | None = typer.Option(
+        None,
+        "--api-key",
+        help=(
+            "Auth token for backend calls. Falls back to DATALAYER_API_KEY when "
+            "omitted; otherwise built-in auth resolution is used."
+        ),
     ),
     run_url: str | None = typer.Option(
         None,
@@ -200,30 +145,6 @@ def main_callback(
         "--scheduler-url",
         help="Override DATALAYER_SCHEDULER_URL for this CLI invocation.",
     ),
-    api_key: str | None = typer.Option(
-        None,
-        "--api-key",
-        help=(
-            "Auth token for backend calls. Falls back to DATALAYER_API_KEY when "
-            "omitted; otherwise built-in auth resolution is used."
-        ),
-    ),
-    billable_account_uid: str | None = typer.Option(
-        None,
-        "--billable-account-uid",
-        help=(
-            "Billable account UID context. Falls back to DATALAYER_ACCOUNT_UID "
-            "when omitted."
-        ),
-    ),
-    billable_account_handle: str | None = typer.Option(
-        None,
-        "--billable-account-handle",
-        help=(
-            "Billable account handle context. Falls back to DATALAYER_ACCOUNT_HANDLE "
-            "when omitted and is resolved to UID via IAM lookup."
-        ),
-    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
@@ -254,78 +175,21 @@ def main_callback(
         if normalized_api_key:
             os.environ["DATALAYER_API_KEY"] = normalized_api_key
 
-    # Global billable context defaults.
-    resolved_uid = str(billable_account_uid or "").strip() or str(
-        os.environ.get("DATALAYER_ACCOUNT_UID") or ""
-    ).strip()
-    resolved_handle = str(billable_account_handle or "").strip() or str(
-        os.environ.get("DATALAYER_ACCOUNT_HANDLE") or ""
-    ).strip()
-
-    # Convert handle -> uid only when uid is not already known.
-    if not resolved_uid and resolved_handle:
-        effective_iam_url = str(os.environ.get("DATALAYER_IAM_URL") or "").strip()
-        if not effective_iam_url:
-            effective_iam_url = "http://localhost:9700"
-
-        resolved_token = str(os.environ.get("DATALAYER_API_KEY") or "").strip()
-        if not resolved_token:
-            auth = AuthenticationManager(iam_url=effective_iam_url)
-            resolved_token = str(auth.get_stored_token() or "").strip()
-
-        if not resolved_token:
-            raise typer.BadParameter(
-                "Cannot resolve --billable-account-handle without authentication. "
-                "Pass --api-key, set DATALAYER_API_KEY, or login first."
-            )
-
-        resolved_from_handle = _lookup_billable_account_uid_by_handle(
-            iam_url=effective_iam_url,
-            access_token=resolved_token,
-            account_handle=resolved_handle,
-        )
-        if not resolved_from_handle:
-            raise typer.BadParameter(
-                f"Could not resolve billable account handle '{resolved_handle}' to a UID."
-            )
-        resolved_uid = resolved_from_handle
-
-    if resolved_uid:
-        os.environ["DATALAYER_ACCOUNT_UID"] = resolved_uid
-        # Keep backward compatibility with existing scripts.
-        os.environ["DATALAYER_BILLABLE_ACCOUNT_UID"] = resolved_uid
-    if resolved_handle:
-        os.environ["DATALAYER_ACCOUNT_HANDLE"] = resolved_handle
-
 
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)
-app.add_typer(agents_app)
-app.add_typer(agent_nodes_app)
 app.add_typer(auth_app)
-app.add_typer(benchmarks_app)
-app.add_typer(checkpoints_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
-app.add_typer(console_app)
-app.add_typer(envs_app)
-app.add_typer(evals_app)
 app.add_typer(memberships_app)
 app.add_typer(otel_app)
-app.add_typer(pools_app)
-app.add_typer(ray_app)
-app.add_typer(schedules_app)
 app.add_typer(secrets_app)
-app.add_typer(snapshots_app)
 app.add_typer(subscription_app)
 app.add_typer(api_keys_app)
 app.add_typer(users_app)
 app.add_typer(usage_app)
 app.add_typer(plans_app)
 app.add_typer(web_app)
-
-# Add exec command directly to root level
-app.command(name="exec")(exec_main)
 
 # Add individual auth commands at root level for convenience
 app.command(name="login")(login_root)
@@ -336,16 +200,12 @@ app.command(name="plans")(plans_root)
 app.command(name="subscription")(subscription_root)
 
 # Add convenient aliases at root level
-app.command(name="envs-ls")(envs_ls)
 app.command(name="secrets-ls")(secrets_ls)
-app.command(name="snapshots-ls")(snapshots_ls)
-app.command(name="checkpoints-ls")(checkpoints_ls)
 app.command(name="api-keys-ls")(api_keys_ls)
-app.command(name="agent-nodes-ls")(agent_nodes_ls)
-app.command(name="agents-ls")(agents_ls)
 
 
 _GLOBAL_OPTIONS_WITH_VALUES = {
+    "--api-key",
     "--run-url",
     "--iam-url",
     "--runtimes-url",
@@ -362,9 +222,6 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--support-url",
     "--mcp-server-url",
     "--scheduler-url",
-    "--api-key",
-    "--billable-account-uid",
-    "--billable-account-handle",
 }
 
 _GLOBAL_OPTIONS_NO_VALUES = {
@@ -423,3 +280,7 @@ def _normalize_global_options(argv: list[str]) -> list[str]:
 def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
     app(args=_normalize_global_options(sys.argv)[1:])
+
+
+if __name__ == "__main__":
+    main()

@@ -170,8 +170,8 @@ def _add_plan_columns(table: Table) -> None:
 def plans_show(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -315,8 +315,8 @@ def plans_show(
 def plans_catalog(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -383,8 +383,8 @@ def plans_catalog(
 def plans_root(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,

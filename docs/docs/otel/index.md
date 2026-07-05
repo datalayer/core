@@ -147,7 +147,7 @@ All query endpoints require a valid JWT token (same authentication as all Datala
 ### Methods (in priority order)
 
 1. **`DATALAYER_API_KEY` environment variable** — read automatically by the CLI and Python client
-2. **`--token` CLI flag** — pass directly to any CLI command
+2. **`--api-key` CLI flag** — pass directly to any CLI command
 3. **Constructor parameter** — pass `token=` to `OtelClient`
 
 ```bash
@@ -155,7 +155,7 @@ All query endpoints require a valid JWT token (same authentication as all Datala
 export DATALAYER_API_KEY="your-jwt-token"
 
 # Or pass explicitly
-datalayer otel traces --token "your-jwt-token"
+datalayer otel traces --api-key "your-jwt-token"
 ```
 
 ## Connecting to the Service

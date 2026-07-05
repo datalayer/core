@@ -86,8 +86,8 @@ def usage_callback(ctx: typer.Context) -> None:
 def usage_show(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -122,8 +122,8 @@ def usage_show(
 def usage_records(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -256,8 +256,8 @@ def usage_records(
 def usage_reservations(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -369,8 +369,8 @@ def usage_org_overview(
     ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -440,8 +440,8 @@ def usage_team_overview(
     ),
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -503,7 +503,7 @@ def usage_org_history(
     organization_uid: str = typer.Option(
         ..., "--organization-uid", help="Organization UID."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -546,7 +546,7 @@ def usage_org_history(
 @app.command(name="team-history")
 def usage_team_history(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -591,7 +591,7 @@ def usage_org_monitor(
     organization_uid: str = typer.Option(
         ..., "--organization-uid", help="Organization UID."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -679,7 +679,7 @@ def usage_org_monitor(
 @app.command(name="team-monitor")
 def usage_team_monitor(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -770,7 +770,7 @@ def usage_org_allocate_team(
     amount: float = typer.Option(
         ..., "--amount", help="Amount of credits to allocate."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -804,7 +804,7 @@ def usage_org_revoke_team(
     ),
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -838,7 +838,7 @@ def usage_team_allocate_member(
     amount: float = typer.Option(
         ..., "--amount", help="Amount of credits to allocate."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -870,7 +870,7 @@ def usage_team_revoke_member(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     member_uid: str = typer.Option(..., "--member-uid", help="Member UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    token: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -903,8 +903,8 @@ def usage_team_revoke_member(
 def usage_root(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     iam_url: Optional[str] = typer.Option(
         None,

@@ -26,15 +26,15 @@ import {
   type ClientHandlers,
 } from './base';
 import { IAMMixin } from './mixins/IAMMixin';
-import { RuntimesMixin } from './mixins/RuntimesMixin';
+import { RuntimesMixin } from '../base/client/mixins/RuntimesMixin';
 import { SpacerMixin } from './mixins/SpacerMixin';
 
 // Import model types for interface declaration
 import type { UserDTO } from './../models/UserDTO';
 import type { CreditsDTO } from '../models/CreditsDTO';
-import type { EnvironmentDTO } from '../models/EnvironmentDTO';
-import type { RuntimeDTO } from '../models/RuntimeDTO';
-import type { CodeSandboxSnapshotDTO } from '../models/CodeSandboxSnapshotDTO';
+import type { EnvironmentDTO } from '../base/models/EnvironmentDTO';
+import type { RuntimeDTO } from '../base/models/RuntimeDTO';
+import type { CodeSandboxSnapshotDTO } from '../base/models/CodeSandboxSnapshotDTO';
 import type { SpaceDTO } from '../models/SpaceDTO';
 import type { NotebookDTO } from '../models/NotebookDTO';
 import type { LexicalDTO } from '../models/LexicalDTO';
@@ -110,21 +110,21 @@ export { DatalayerClientBase };
 // Export models for use by consumers
 export { UserDTO as User } from './../models/UserDTO';
 export type { UserJSON, UserData } from './../models/UserDTO';
-export { RuntimeDTO as Runtime } from '../models/RuntimeDTO';
+export { RuntimeDTO as Runtime } from '../base/models/RuntimeDTO';
 export type {
   RuntimeJSON,
   RuntimeData,
   CreateRuntimeRequest,
   CreateRuntimeResponse,
   ListRuntimesResponse,
-} from '../models/RuntimeDTO';
-export { EnvironmentDTO as Environment } from '../models/EnvironmentDTO';
+} from '../base/models/RuntimeDTO';
+export { EnvironmentDTO as Environment } from '../base/models/EnvironmentDTO';
 export type {
   EnvironmentJSON,
   EnvironmentData,
   ListEnvironmentsResponse,
-} from '../models/EnvironmentDTO';
-export { CodeSandboxSnapshotDTO as Snapshot } from '../models/CodeSandboxSnapshotDTO';
+} from '../base/models/EnvironmentDTO';
+export { CodeSandboxSnapshotDTO as Snapshot } from '../base/models/CodeSandboxSnapshotDTO';
 export type {
   CodeSandboxSnapshotJSON,
   CodeSandboxSnapshotData,
@@ -132,7 +132,7 @@ export type {
   CreateCodeSandboxSnapshotResponse,
   GetCodeSandboxSnapshotResponse,
   ListCodeSandboxSnapshotsResponse,
-} from '../models/CodeSandboxSnapshotDTO';
+} from '../base/models/CodeSandboxSnapshotDTO';
 export { SpaceDTO as Space } from '../models/SpaceDTO';
 export type {
   SpaceJSON,
@@ -245,13 +245,13 @@ export type {
   IRuntimeType,
   IRuntimeLocation,
   IRuntimeCapabilities,
-} from '../models/Runtime';
-export type { ICodeSandboxSnapshot } from '../models/CodeSandboxSnapshot';
+} from '../base/models/Runtime';
+export type { ICodeSandboxSnapshot } from '../base/models/CodeSandboxSnapshot';
 export type {
   IDatalayerEnvironment,
   IResources,
   ISnippet,
-} from '../models/Environment';
+} from '../base/models/Environment';
 export type { IRole } from '../models/Role';
 export type { IAssignment } from '../models/Assignment';
 export type { IContact } from '../models/Contact';
@@ -262,7 +262,7 @@ export type { PageTagName } from '../models/PageTag';
 export type { ISecret, ISecretVariant } from '../models/Secret';
 export type { IIAMToken, IIAMTokenVariant } from '../models/IAMToken';
 export type { IDocument, IBaseDocument } from '../models/Document';
-export type { IEnvironment } from '../models/Environment';
+export type { IEnvironment } from '../base/models/Environment';
 export type { IExercise, ICode, IHelp } from '../models/Exercise';
 export type { IInvite } from '../models/Invite';
 export type { ILesson } from '../models/Lesson';
@@ -311,7 +311,7 @@ export type {
   IRemoteServicesManager,
   IEnvironmentsManager,
   IRemoteRuntimesManager,
-} from '../stateful/runtimes/apis';
+} from '../base/stateful/runtimes/apis';
 
 // Export state types
 export type {

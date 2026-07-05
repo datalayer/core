@@ -28,7 +28,6 @@ classifiers = [
 dependencies = [
     "httpx",
     "jupyter-console",
-    "jupyter-kernel-client",
     "jupyter-nbmodel-client",
     "jupyter-server>=2.10,<3",
     "keyring",

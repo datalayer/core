@@ -13,7 +13,7 @@ export * from './JupyterLabState';
 export * from './LayoutState';
 export * from './NbformatState';
 export * from './OrganizationState';
-export * from './RuntimesState';
+export * from '../../base/state/substates/RuntimesState';
 export * from './SpaceState';
 export * from './SurveysState';
 export * from './TeamState';

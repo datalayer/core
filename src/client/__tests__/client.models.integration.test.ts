@@ -7,9 +7,9 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
-import { RuntimeDTO } from '../../models/RuntimeDTO';
+import { RuntimeDTO } from '../../base/models/RuntimeDTO';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
-import { CodeSandboxSnapshotDTO } from '../../models/CodeSandboxSnapshotDTO';
+import { CodeSandboxSnapshotDTO } from '../../base/models/CodeSandboxSnapshotDTO';
 import { SpaceDTO } from '../../models/SpaceDTO';
 import { NotebookDTO } from '../../models/NotebookDTO';
 import { LexicalDTO } from '../../models/LexicalDTO';

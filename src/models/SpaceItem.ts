@@ -7,7 +7,7 @@ import { INotebook } from './Notebook';
 import { IDocument } from './Document';
 import { ICell } from './Cell';
 import { IDataset } from './Dataset';
-import { IEnvironment } from './Environment';
+import { IEnvironment } from '../base/models/Environment';
 import { ILesson } from './Lesson';
 import { IExercise } from './Exercise';
 import { IAssignment } from './Assignment';

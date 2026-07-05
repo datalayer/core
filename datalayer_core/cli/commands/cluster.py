@@ -50,7 +50,7 @@ def _fetch_api(
     resolved_token = _resolve_token(token)
     if not resolved_token:
         raise RuntimeError(
-            "No authentication token found. Pass --token, set DATALAYER_API_KEY, or run 'datalayer login'."
+            "No authentication token found. Pass --api-key, set DATALAYER_API_KEY, or run 'datalayer login'."
         )
 
     urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
@@ -160,8 +160,8 @@ def cluster_callback(ctx: typer.Context) -> None:
 def show_cluster(
     token: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="API key (Bearer token for API requests).",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,

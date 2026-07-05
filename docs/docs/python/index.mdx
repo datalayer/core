@@ -6,20 +6,24 @@ import DocCardList from '@theme/DocCardList';
 
 A simple, intuitive Client for AI engineers to work with the [Datalayer platform](https://datalayer.app/).
 
-This Client provides a unified interface for authentication, runtime creation, and
-code execution in Datalayer Runtimes.
+`datalayer-core` provides the **account and platform** client: authentication, secrets,
+API keys, usage, and profile. **Runtime creation and code execution** live in the
+[`agent-runtimes`](https://github.com/datalayer/agent-runtimes) package via its
+`RuntimeClient` (used throughout the runtime examples below).
 
 ## Features
 
 - **Simple Authentication**: Easy token-based authentication with environment variable support
-- **Runtime Management**: Create and manage compute runtimes (CPU/GPU) for code execution
+- **Account & Platform**: Secrets, API keys, usage, and profile via `datalayer-core`
+- **Runtime Management**: Create and manage compute runtimes (CPU/GPU) via `agent-runtimes` `RuntimeClient`
 - **Runtime Snapshot Management**: Create and manage compute snapshots of your runtimes
 - **Context Managers**: Clean resource management with Python context managers
 
 ## Installation
 
 ```bash
-pip install datalayer_core
+pip install datalayer_core   # account/platform client
+pip install agent-runtimes    # runtime creation and code execution
 ```
 
 ## Quick Start
@@ -48,9 +52,9 @@ You can use a context manager to create a Runtime and ensure it is correctly ter
 after code execution.
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     response = runtime.execute("Hello world!")
     print(response.stdout)
@@ -61,9 +65,9 @@ with client.create_runtime() as runtime:
 Runtime snapshots allow you to save the state of a runtime (including installed packages, files, and variables) for later reuse.
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 
 # Create a runtime and install some packages
 with client.create_runtime() as runtime:
@@ -102,9 +106,9 @@ client.delete_snapshot(snapshot)
 Secrets allow you to securely store and use sensitive information like API keys, passwords, and tokens in your runtimes.
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 
 # Create a new secret
 created_secret = client.create_secret(
@@ -142,7 +146,7 @@ print("Secret deleted successfully")
 The `@datalayer` decorator allows you to execute Python functions directly in Datalayer runtimes with minimal code changes:
 
 ```python
-from datalayer_core.client.decorators import datalayer
+from agent_runtimes.decorators.datalayer import datalayer
 
 @datalayer
 def process_data(x: float, y: float) -> float:
@@ -191,9 +195,9 @@ print(result)
 You can execute Python files directly in runtimes:
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 with client.create_runtime() as runtime:
     # Execute a Python file
     response = runtime.execute("/path/to/your/script.py")
@@ -211,9 +215,9 @@ with client.create_runtime() as runtime:
 ### Error Handling
 
 ```python
-from datalayer_core import DatalayerClient
+from agent_runtimes.client import RuntimeClient
 
-client = DatalayerClient()
+client = RuntimeClient()
 
 try:
     with client.create_runtime() as runtime:

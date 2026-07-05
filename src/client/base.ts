@@ -9,7 +9,7 @@
  */
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
-import { EnvironmentDTO } from '../models/EnvironmentDTO';
+import { EnvironmentDTO } from '../base/models/EnvironmentDTO';
 import { AuthenticationManager } from './auth';
 import type { TokenStorage } from './auth/types';
 

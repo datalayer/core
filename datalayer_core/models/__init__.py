@@ -9,18 +9,6 @@ All models are now implemented using Pydantic for better validation,
 serialization, and type safety.
 """
 
-from .ai_inference import (
-    ChatMessage,
-    ChatRequest,
-    ChatResponseData,
-    CompletionRequest,
-    CompletionResponseData,
-    EmbeddingData,
-    EmbeddingRequest,
-    EmbeddingResponseData,
-    HealthResponseData,
-    ModelsResponseData,
-)
 from .api_key import ApiKeyModel, ApiKeyType
 from .base import (
     BaseResponse,
@@ -29,7 +17,6 @@ from .base import (
     ExecutionResponse,
     ListResponse,
 )
-from .environment import EnvironmentModel
 from .growth import (
     Contact,
     ContactRequest,
@@ -81,21 +68,14 @@ from .iam import (
     UserSearchRequest,
     UserSettingsModel,
 )
-from .runtime import RuntimeModel
-from .sandbox_snapshot import SandboxSnapshotModel
 from .secret import SecretModel, SecretVariant
 
 __all__ = [
     "BaseResponse",
     "ApiKeyModel",
     "ApiKeyType",
-    "ChatMessage",
-    "ChatRequest",
-    "ChatResponseData",
     "CheckoutPortalModel",
     "CheckoutPortalRequest",
-    "CompletionRequest",
-    "CompletionResponseData",
     "Contact",
     "ContactRequest",
     "ContactSearchRequest",
@@ -106,13 +86,8 @@ __all__ = [
     "DatasourceModel",
     "EmailUpdateConfirm",
     "EmailUpdateRequest",
-    "EmbeddingData",
-    "EmbeddingRequest",
-    "EmbeddingResponseData",
-    "EnvironmentModel",
     "ErrorResponse",
     "ExecutionResponse",
-    "HealthResponseData",
     "InviteData",
     "InviteRequest",
     "InviteRequestPublic",
@@ -121,7 +96,6 @@ __all__ = [
     "ListResponse",
     "LoginRequest",
     "LoginResponseData",
-    "ModelsResponseData",
     "OrganizationModel",
     "OrganizationListResponseData",
     "OrganizationMember",
@@ -138,8 +112,6 @@ __all__ = [
     "ReservationRequest",
     "ResourceRequirements",
     "Response",
-    "RuntimeModel",
-    "SandboxSnapshotModel",
     "SecretModel",
     "SecretModel",
     "SecretVariant",

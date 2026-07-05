@@ -5,14 +5,23 @@
 
 import { IDean } from './Dean';
 import { IStudent } from './Student';
-import { ICourse } from './Course';
 import { IBaseOrganization } from './Organization';
 
-export type ISchool = IBaseOrganization & {
+/**
+ * A school organization.
+ *
+ * The `courses` field is generic over the course type. The concrete course
+ * model lives in the runtime/content package (`@datalayer/agent-runtimes`),
+ * so consumers that need the rich `ICourse` shape parameterize this type; the
+ * core package intentionally does not depend on the content models.
+ *
+ * @typeParam C - The course type carried by the `courses` array.
+ */
+export type ISchool<C = unknown> = IBaseOrganization & {
   type: 'school';
   dean?: IDean;
   students: Array<IStudent>;
-  courses: Array<ICourse>;
+  courses: Array<C>;
 };
 
 export default ISchool;
