@@ -7,7 +7,6 @@
 export * from './components';
 export * from './utils';
 export * from './state';
-export * from './collaboration';
 
 // Export navigation before hooks to avoid conflicts
 export * from './navigation';

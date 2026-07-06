@@ -10,7 +10,7 @@ from jupyter_server.utils import url_path_join
 from traitlets import Bool, CInt, Instance, Unicode, default
 from traitlets.config import Configurable
 
-from datalayer_core.__version__ import __version__
+from datalayer_core.__version import __version__
 from datalayer_core.authn.server.state import get_server_port
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler

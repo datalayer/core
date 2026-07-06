@@ -8,7 +8,7 @@ import sys
 
 import typer
 
-from datalayer_core.__version__ import __version__
+from datalayer_core.__version import __version__
 from datalayer_core.cli.commands.about import app as about_app
 from datalayer_core.cli.commands.authn import (
     app as auth_app,

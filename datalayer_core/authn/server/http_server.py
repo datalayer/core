@@ -20,7 +20,7 @@ from pathlib import Path
 from socketserver import BaseRequestHandler
 from typing import Optional, Union
 
-from datalayer_core.__version__ import __version__
+from datalayer_core.__version import __version__
 from datalayer_core.authn.server.keys import (
     DATALAYER_IAM_TOKEN_KEY,
     DATALAYER_IAM_USER_KEY,

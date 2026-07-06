@@ -409,7 +409,7 @@ def logout(
         asyncio.run(auth.logout())
 
         console.print(f"👋 Logged out from [green]{urls.run_url}[/green]")
-        console.print("✅ Stored API key cleared")
+        console.print("🧹 Stored API key cleared")
 
     except Exception as e:
         console.print(f"[red]Logout failed: {e}[/red]")
@@ -477,7 +477,7 @@ def whoami(
             console.print(f"👤 User: [cyan]{handle}[/cyan]")
             if email:
                 console.print(f"📧 Email: {email}")
-            console.print(f"🌐 Datalayer RUN URL: [green]{urls.run_url}[/green]")
+            console.print(f"🌐 Datalayer URL: [green]{urls.run_url}[/green]")
 
             if details:
                 console.print("\n[bold]Detailed Information:[/bold]")

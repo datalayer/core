@@ -15,9 +15,11 @@ import {
 import { SvgLinesLogo, SvgUsecasesHero } from '@datalayer/design';
 import { AppearanceControlsWithStore } from '@datalayer/primer-addons/lib/components/appearance';
 import { ConfettiSuccess } from './components/confetti';
+import { formatFriendlyHandle } from './utils/Handles';
 import { SignInSimple } from './views/iam/SignInSimple';
 
 const DATALAYER_IAM_USER_KEY = '@datalayer/iam:user';
+
 const DATALAYER_IAM_TOKEN_KEY = '@datalayer/iam:token';
 
 const useCliThemeStore = createThemeStore('datalayer-core-cli-theme-v2', {
@@ -48,8 +50,34 @@ const readStoredAuth = (): { token: string; userHandle: string } | null => {
 function SignInCLIApp() {
   const [state, setState] = useState<LoginState>('checking');
   const [message, setMessage] = useState('');
+  const [closeHelp, setCloseHelp] = useState('');
   const { colorMode, theme: themeVariant } = useCliThemeStore();
   const cfg = themeConfigs[themeVariant];
+
+  const handleCloseWindow = useCallback(() => {
+    setCloseHelp('');
+
+    // Browsers allow window.close() only for windows/tabs opened by script.
+    window.close();
+
+    setTimeout(() => {
+      if (!document.hidden) {
+        try {
+          // Some browsers require a same-tab self-target before closing.
+          window.open('', '_self');
+          window.close();
+        } catch {
+          // Ignore and show manual-close help below.
+        }
+      }
+
+      if (!document.hidden) {
+        setCloseHelp(
+          'Authentication is complete. Your browser blocked auto-close for this tab, so you can safely close it manually.',
+        );
+      }
+    }, 150);
+  }, []);
 
   const finalizeCliAuthentication = useCallback(async () => {
     const auth = readStoredAuth();
@@ -69,13 +97,17 @@ function SignInCLIApp() {
       const text = await response.text();
       throw new Error(text || 'Failed to finalize CLI authentication.');
     }
-    setMessage(`Successfully logged in as ${auth.userHandle}.`);
+    setMessage(
+      `Successfully logged in as ${formatFriendlyHandle(auth.userHandle)}.`,
+    );
     setState('success');
   }, []);
 
   useEffect(() => {
     finalizeCliAuthentication().catch((error: unknown) => {
-      setMessage(error instanceof Error ? error.message : 'Authentication failed.');
+      setMessage(
+        error instanceof Error ? error.message : 'Authentication failed.',
+      );
       setState('signin');
     });
   }, [finalizeCliAuthentication]);
@@ -178,14 +210,22 @@ function SignInCLIApp() {
               <SvgLinesLogo height={32} />
             </Box>
           </Box>
-          <Text as="h2" sx={{ display: 'block', fontSize: 3, fontWeight: 600, mb: 2 }}>
+          <Text
+            as="h2"
+            sx={{ display: 'block', fontSize: 3, fontWeight: 600, mb: 2 }}
+          >
             {message || 'Successfully logged in.'}
           </Text>
           <Text as="p" sx={{ color: 'fg.muted', mb: 3 }}>
             You can close this window.
           </Text>
+          {closeHelp && (
+            <Text as="p" sx={{ color: 'fg.accent', mb: 3 }}>
+              {closeHelp}
+            </Text>
+          )}
           <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Button onClick={() => window.close()}>Close this window</Button>
+            <Button onClick={handleCloseWindow}>Close this window</Button>
           </Box>
         </Box>
       </Box>,
@@ -219,7 +259,9 @@ function SignInCLIApp() {
         try {
           await finalizeCliAuthentication();
         } catch (error) {
-          setMessage(error instanceof Error ? error.message : 'Authentication failed.');
+          setMessage(
+            error instanceof Error ? error.message : 'Authentication failed.',
+          );
         }
       }}
     />,

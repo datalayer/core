@@ -2,7 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 
 [build-system]
-requires = ["hatchling==1.21.1"]
+requires = ["hatchling==1.21.1", "hatch-nodejs-version>=0.3.2", "pip>=26.1.2"]
 build-backend = "hatchling.build"
 
 [project]
@@ -93,8 +93,14 @@ datalayer-migrate = "datalayer_core.migrate:main"
 datalayer-server = "datalayer_core.serverapplication:main"
 datalayer-troubleshoot = "datalayer_core.troubleshoot:main"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.version]
-path = "datalayer_core/__version__.py"
+source = "nodejs"
+
+[tool.hatch.build.hooks.version]
+path = "datalayer_core/_version.py"
 
 [tool.hatch.build.targets.sdist]
 artifacts = [
@@ -114,9 +120,6 @@ artifacts = [
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyter-config/server-config" = "etc/jupyter/jupyter_server_config.d"
 "jupyter-config/nb-config" = "etc/jupyter/jupyter_notebook_config.d"
-
-[tool.hatch.build.hooks.version]
-path = "datalayer_core/_version.py"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"
