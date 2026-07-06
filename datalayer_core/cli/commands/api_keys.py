@@ -31,15 +31,15 @@ def api_keys_callback(ctx: typer.Context) -> None:
 
 @app.command(name="ls")
 def list_api_keys(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """List all API keys."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         api_keys = client.list_api_keys()
 
         # Convert to dict format for display_api_keys
@@ -63,14 +63,14 @@ def list_api_keys(
 
 @app.command(name="list")
 def list_api_keys_verbose(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """List all API keys."""
-    list_api_keys(token=token)
+    list_api_keys(api_key=api_key)
 
 
 @app.command(name="create")
@@ -87,15 +87,15 @@ def create_api_key(
         "--api-key-type",
         help="Type of the API key (secret, publishable, restricted, temporary)",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """Create a new API key."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
 
         result = client.create_api_key(
             name=name,
@@ -105,7 +105,7 @@ def create_api_key(
         )
 
         if result.get("success", False):
-            api_key_data = result.get("api_key", result.get("token", {}))
+            api_key_data = result.get("api_key", {})
             console.print(
                 f"[green]API key '{name}' created successfully![/green]"
             )
@@ -146,15 +146,15 @@ def create_api_key(
 @app.command(name="delete")
 def delete_api_key(
     uid: str = typer.Argument(..., help="UID of the API key to delete"),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """Delete an API key."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
 
         success = client.delete_api_key(uid)
 
@@ -171,22 +171,22 @@ def delete_api_key(
 
 # Root level commands for convenience
 def api_keys_list(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """List all API keys (root command)."""
-    list_api_keys(token=token)
+    list_api_keys(api_key=api_key)
 
 
 def api_keys_ls(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """List all API keys (root command alias)."""
-    list_api_keys(token=token)
+    list_api_keys(api_key=api_key)

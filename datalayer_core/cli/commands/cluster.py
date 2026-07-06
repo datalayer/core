@@ -25,9 +25,9 @@ app = typer.Typer(
 console = Console()
 
 
-def _resolve_token(token: Optional[str] = None) -> str:
-    if token:
-        return token
+def _resolve_token(api_key: Optional[str] = None) -> str:
+    if api_key:
+        return api_key
     env_token = os.environ.get("DATALAYER_API_KEY")
     if env_token:
         return env_token
@@ -35,7 +35,7 @@ def _resolve_token(token: Optional[str] = None) -> str:
         from datalayer_core.client.client import DatalayerClient
 
         client = DatalayerClient()
-        return client._get_token() or ""
+        return client._get_api_key() or ""
     except Exception:
         return ""
 
@@ -43,14 +43,14 @@ def _resolve_token(token: Optional[str] = None) -> str:
 def _fetch_api(
     path: str,
     *,
-    token: Optional[str] = None,
+    api_key: Optional[str] = None,
     runtimes_url: Optional[str] = None,
     params: Optional[dict[str, str]] = None,
 ) -> Any:
-    resolved_token = _resolve_token(token)
+    resolved_token = _resolve_token(api_key)
     if not resolved_token:
         raise RuntimeError(
-            "No authentication token found. Pass --api-key, set DATALAYER_API_KEY, or run 'datalayer login'."
+            "No authentication api_key found. Pass --api-key, set DATALAYER_API_KEY, or run 'datalayer login'."
         )
 
     urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
@@ -158,10 +158,10 @@ def cluster_callback(ctx: typer.Context) -> None:
 
 @app.command(name="show")
 def show_cluster(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,
@@ -188,7 +188,7 @@ def show_cluster(
     try:
         state_payload = _fetch_api(
             "/cluster/state",
-            token=token,
+            api_key=api_key,
             runtimes_url=runtimes_url,
             params={"phase": phase} if phase else None,
         )

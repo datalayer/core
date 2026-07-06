@@ -26,40 +26,40 @@ class AuthnMixin:
         """Return URLs property that must be implemented by the inheriting class."""
         raise NotImplementedError("Implementing class must provide urls property")
 
-    _token: Optional[str] = None
+    _api_key: Optional[str] = None
     _external_token: Optional[str] = None
 
-    def _get_token(self) -> Optional[str]:
+    def _get_api_key(self) -> Optional[str]:
         """
-        Get authentication token with fallback mechanisms.
+        Get the Datalayer API key with fallback mechanisms.
 
         Tries in this order:
-        1. Instance token (_token)
+        1. Instance API key (_api_key)
         2. Environment variable DATALAYER_API_KEY
         3. Environment variable TEST_DATALAYER_API_KEY
         4. External token environment variable
-        5. Keyring stored token
+        5. Keyring stored API key
 
         Returns
         -------
         Optional[str]
-            Authentication token if found, None otherwise.
+            Datalayer API key if found, None otherwise.
         """
-        # 1. Check instance token
-        if self._token:
-            return self._token
+        # 1. Check instance API key
+        if self._api_key:
+            return self._api_key
 
         # 2. Check environment variable
-        env_token = os.environ.get("DATALAYER_API_KEY")
-        if env_token:
-            self._token = env_token
-            return self._token
+        env_api_key = os.environ.get("DATALAYER_API_KEY")
+        if env_api_key:
+            self._api_key = env_api_key
+            return self._api_key
 
         # 3. Check test environment variable
-        test_env_token = os.environ.get("TEST_DATALAYER_API_KEY")
-        if test_env_token:
-            self._token = test_env_token
-            return self._token
+        test_env_api_key = os.environ.get("TEST_DATALAYER_API_KEY")
+        if test_env_api_key:
+            self._api_key = test_env_api_key
+            return self._api_key
 
         # 4. Check external token environment variable
         external_token = os.environ.get("DATALAYER_EXTERNAL_TOKEN")
@@ -67,14 +67,16 @@ class AuthnMixin:
             self._external_token = external_token
             return external_token
 
-        # 5. Try to get token from keyring
+        # 5. Try to get API key from keyring
         try:
             import keyring
 
-            stored_token = keyring.get_password(self.urls.datalayer_url, "access_token")
-            if stored_token:
-                self._token = stored_token
-                return self._token
+            stored_api_key = keyring.get_password(
+                self.urls.datalayer_url, "access_token"
+            )
+            if stored_api_key:
+                self._api_key = stored_api_key
+                return self._api_key
         except ImportError:
             # keyring not available
             pass
@@ -106,12 +108,12 @@ class AuthnMixin:
             If the request fails.
         """
         try:
-            # Get token using fallback mechanisms
-            token = self._get_token()
+            # Get the Datalayer API key using fallback mechanisms
+            api_key = self._get_api_key()
 
             return fetch(
                 request,
-                token=token,
+                token=api_key,
                 external_token=self._external_token,
                 **kwargs,
             )
@@ -144,12 +146,12 @@ class AuthnMixin:
         dict[str, Any]
             Authentication response containing success status and user info.
         """
-        token = self._get_token()
-        if not token:
+        api_key = self._get_api_key()
+        if not api_key:
             return {"success": False, "message": "No authentication token available"}
 
         body = {
-            "token": token,
+            "token": api_key,
         }
         try:
             response = self._fetch(

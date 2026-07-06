@@ -41,18 +41,18 @@ def _iam_post(
 
 
 def _make_client(
-    token: Optional[str] = None,
+    api_key: Optional[str] = None,
     iam_url: Optional[str] = None,
 ) -> DatalayerClient:
     urls = DatalayerURLs.from_environment(iam_url=iam_url)
-    return DatalayerClient(urls=urls, token=token)
+    return DatalayerClient(urls=urls, api_key=api_key)
 
 
 @app.callback()
 def plans_callback(ctx: typer.Context) -> None:
     """Plans and subscription commands."""
     if ctx.invoked_subcommand is None:
-        plans_show(token=None, iam_url=None, raw=False)
+        plans_show(api_key=None, iam_url=None, raw=False)
 
 
 def _format_number(value: Any, fallback: str = "-") -> str:
@@ -168,10 +168,10 @@ def _add_plan_columns(table: Table) -> None:
 
 @app.command(name="show")
 def plans_show(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -186,7 +186,7 @@ def plans_show(
 ) -> None:
     """Show the authenticated user's plan plus plans of org/team memberships."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
 
         # 1. Authenticated user plan.
         self_plan_response = _iam_get(client, "/api/iam/v1/plans")
@@ -313,10 +313,10 @@ def plans_show(
 
 @app.command(name="catalog")
 def plans_catalog(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -333,7 +333,7 @@ def plans_catalog(
 ) -> None:
     """List available plans from the catalog."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         suffix = (
             f"?billable_account_uid={billable_account_uid}"
             if billable_account_uid
@@ -381,10 +381,10 @@ def plans_catalog(
 
 
 def plans_root(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -393,4 +393,4 @@ def plans_root(
     ),
 ) -> None:
     """Show plans for the authenticated user and memberships (root command)."""
-    plans_show(token=token, iam_url=iam_url)
+    plans_show(api_key=api_key, iam_url=iam_url)

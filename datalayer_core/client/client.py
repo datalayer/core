@@ -42,14 +42,14 @@ class DatalayerClient(
     ----------
     urls : Optional[DatalayerURLs]
         Pre-configured URLs object for all Datalayer services.
-    token : Optional[str]
-        Authentication token (can also be set via DATALAYER_API_KEY env var).
+    api_key : Optional[str]
+        Datalayer API key (can also be set via DATALAYER_API_KEY env var).
     """
 
     def __init__(
         self,
         urls: Optional[DatalayerURLs] = None,
-        token: Optional[str] = None,
+        api_key: Optional[str] = None,
     ):
         """
         Initialize Datalayer.
@@ -58,8 +58,8 @@ class DatalayerClient(
         ----------
         urls : Optional[DatalayerURLs]
             Pre-configured URLs object. If not provided, will use environment variables or defaults.
-        token : Optional[str]
-            Authentication token (can also be set via DATALAYER_API_KEY env var).
+        api_key : Optional[str]
+            Datalayer API key (can also be set via DATALAYER_API_KEY env var).
         """
         # TODO: Check user and password login
 
@@ -69,17 +69,17 @@ class DatalayerClient(
         else:
             self._urls = DatalayerURLs.from_environment()
 
-        self._token = token  # Store the explicitly passed token
+        self._api_key = api_key  # Store the explicitly passed API key
         self._external_token = None
         self._user_handle = None
         self._kernel_client = None
         self._notebook_client = None
 
-        # Use the AuthnMixin token management to get token with fallbacks
-        resolved_token = self._get_token()
-        if not resolved_token:
+        # Use the AuthnMixin API key management to resolve with fallbacks
+        resolved_api_key = self._get_api_key()
+        if not resolved_api_key:
             raise ValueError(
-                "Token is required. Set it via parameter, `DATALAYER_API_KEY` environment variable, or authenticate with `datalayer login`"
+                "An API key is required. Set it via the `api_key` parameter, the `DATALAYER_API_KEY` environment variable, or authenticate with `datalayer login`"
             )
 
     @property

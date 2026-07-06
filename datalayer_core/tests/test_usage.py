@@ -40,7 +40,7 @@ def _is_insufficient_credits_error(exc: Exception) -> bool:
 
 def _build_test_client() -> DatalayerClient:
     return DatalayerClient(
-        token=TEST_DATALAYER_API_KEY,
+        api_key=TEST_DATALAYER_API_KEY,
         urls=DatalayerURLs.from_environment(
             datalayer_url=LOCAL_RUN_URL,
             iam_url=LOCAL_IAM_URL,

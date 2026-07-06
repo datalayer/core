@@ -87,7 +87,7 @@ def memberships_root(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
         help="User API key",
@@ -108,10 +108,10 @@ def memberships_root(
         return
 
     urls = DatalayerURLs.from_environment(iam_url=iam_url)
-    access_token = token or os.environ.get("DATALAYER_API_KEY")
+    access_token = api_key or os.environ.get("DATALAYER_API_KEY")
     if not access_token:
         console.print(
-            "[red]No access token available. Use --api-key or set DATALAYER_API_KEY.[/red]"
+            "[red]No API key available. Use --api-key or set DATALAYER_API_KEY.[/red]"
         )
         raise typer.Exit(1)
 

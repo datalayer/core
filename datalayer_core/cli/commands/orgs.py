@@ -62,15 +62,15 @@ def _print_organizations(memberships: list[dict]) -> None:
 
 def _run_orgs_ls(
     iam_url: Optional[str],
-    token: Optional[str],
+    api_key: Optional[str],
     as_json: bool,
 ) -> None:
     """Fetch memberships and print the user's organizations."""
     urls = DatalayerURLs.from_environment(iam_url=iam_url)
-    access_token = token or os.environ.get("DATALAYER_API_KEY")
+    access_token = api_key or os.environ.get("DATALAYER_API_KEY")
     if not access_token:
         console.print(
-            "[red]No access token available. Use --api-key or set DATALAYER_API_KEY.[/red]"
+            "[red]No API key available. Use --api-key or set DATALAYER_API_KEY.[/red]"
         )
         raise typer.Exit(1)
 
@@ -96,7 +96,7 @@ def orgs_ls(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
         help="User API key",
@@ -108,7 +108,7 @@ def orgs_ls(
     ),
 ) -> None:
     """List the organizations to which the authenticated user has access."""
-    _run_orgs_ls(iam_url=iam_url, token=token, as_json=as_json)
+    _run_orgs_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
 
 
 @app.command(name="list")
@@ -118,7 +118,7 @@ def orgs_list(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
         help="User API key",
@@ -130,7 +130,7 @@ def orgs_list(
     ),
 ) -> None:
     """List the organizations to which the authenticated user has access."""
-    _run_orgs_ls(iam_url=iam_url, token=token, as_json=as_json)
+    _run_orgs_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)
 
 
 @app.callback(invoke_without_command=True)
@@ -141,7 +141,7 @@ def orgs_root(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
         help="User API key",
@@ -155,4 +155,4 @@ def orgs_root(
     """List the organizations to which the authenticated user has access."""
     if ctx.invoked_subcommand is not None:
         return
-    _run_orgs_ls(iam_url=iam_url, token=token, as_json=as_json)
+    _run_orgs_ls(iam_url=iam_url, api_key=api_key, as_json=as_json)

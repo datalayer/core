@@ -83,7 +83,7 @@ from datalayer_core import DatalayerClient
 client = DatalayerClient()
 
 # Or pass token directly
-client = DatalayerClient(token="your-api-key-here")
+client = DatalayerClient(api_key="your-api-key-here")
 
 if client.authenticate():
     print("Successfully authenticated!")

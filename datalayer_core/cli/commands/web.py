@@ -32,7 +32,7 @@ def web_start(
     datalayer_url: Optional[str] = typer.Option(
         None,
         "--datalayer-url",
-        help="Datalayer Run URL",
+        help="Datalayer URL",
     ),
     disable_xsrf: bool = typer.Option(
         True,
@@ -54,7 +54,7 @@ def web_start(
         ]
 
         console.print("[green]Starting Datalayer web application...[/green]")
-        console.print(f"Run URL: {urls.datalayer_url}")
+        console.print(f"Datalayer URL: {urls.datalayer_url}")
         console.print("[yellow]Press Ctrl+C to stop the server[/yellow]")
 
         # Launch the Jupyter server
@@ -74,7 +74,7 @@ def web_callback_default(
     datalayer_url: Optional[str] = typer.Option(
         None,
         "--datalayer-url",
-        help="Datalayer Run URL",
+        help="Datalayer Datalayer URL",
     ),
     disable_xsrf: bool = typer.Option(
         True,

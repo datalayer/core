@@ -30,21 +30,21 @@ def users_callback(ctx: typer.Context) -> None:
 @app.command(name="dump-user")
 def dump_user(
     uid: str = typer.Argument(..., help="User UID to query"),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
-        help="API key (Bearer token for API requests).",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """Dump raw JSON response for a user by UID."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
 
         # Make direct API call to IAM endpoint
         url = f"{client.urls.iam_url}/api/iam/v1/users/{uid}"
 
-        # Get the token for authorization
-        auth_token = client._get_token()
+        # Get the api_key for authorization
+        auth_token = client._get_api_key()
 
         # Make request directly with requests to get full response details
         headers = {
