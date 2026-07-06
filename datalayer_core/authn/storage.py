@@ -60,7 +60,7 @@ class KeyringStorage(TokenStorage):
         """Initialize keyring storage.
 
         Args:
-            service_name: Service name for keyring entries (MUST be run_url for backwards compatibility)
+            service_name: Service name for keyring entries (MUST be datalayer_url for backwards compatibility)
         """
         self.service_name = service_name
         self._keyring: Any = None

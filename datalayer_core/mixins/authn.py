@@ -18,7 +18,7 @@ class AuthnMixin:
     Provide authentication methods for Datalayer client.
 
     This mixin expects the implementing class to provide:
-    - urls property: DatalayerURLs instance with run_url and iam_url
+    - urls property: DatalayerURLs instance with datalayer_url and iam_url
     """
 
     @property
@@ -71,7 +71,7 @@ class AuthnMixin:
         try:
             import keyring
 
-            stored_token = keyring.get_password(self.urls.run_url, "access_token")
+            stored_token = keyring.get_password(self.urls.datalayer_url, "access_token")
             if stored_token:
                 self._token = stored_token
                 return self._token

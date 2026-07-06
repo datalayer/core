@@ -33,9 +33,9 @@ describe('Client Spacer Integration Tests', () => {
 
     client = new DatalayerClient({
       token: testConfig.getToken(),
-      iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-      runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-      spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+      iamUrl: DEFAULT_SERVICE_URLS.IAM,
+      runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+      spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
     });
   });
 

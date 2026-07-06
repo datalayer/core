@@ -117,7 +117,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
     externalToken,
     iamProvidersAuthorizationURL,
     addIAMProviderAuthorizationURL,
-    iamRunUrl,
+    iamUrl,
     logout,
     checkIAMToken,
   } = useIAMStore();
@@ -178,7 +178,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
     if (!iamProvidersAuthorizationURL[IAMProvidersSpecs.LinkedIn.name]) {
       initIAMProvider(IAMProvidersSpecs.LinkedIn);
     }
-  }, [iamRunUrl, iamProvidersAuthorizationURL, addIAMProviderAuthorizationURL]);
+  }, [iamUrl, iamProvidersAuthorizationURL, addIAMProviderAuthorizationURL]);
   useEffect(() => {
     if (externalToken) {
       setLoadingWithToken(1);

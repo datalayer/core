@@ -183,12 +183,12 @@ def login(
         if access_token:
             # Token-based authentication
             console.print("🔑 Authenticating with provided token...")
-            asyncio.run(_login_with_token(auth, access_token, urls.run_url))
+            asyncio.run(_login_with_token(auth, access_token, urls.datalayer_url))
 
         elif handle and password:
             # Credentials-based authentication
             console.print(f"👤 Authenticating as {handle}...")
-            asyncio.run(_login_with_credentials(auth, handle, password, urls.run_url))
+            asyncio.run(_login_with_credentials(auth, handle, password, urls.datalayer_url))
 
         else:
             # Try stored token first
@@ -196,7 +196,7 @@ def login(
             if stored_token:
                 console.print("🔑 Found stored token, validating...")
                 try:
-                    asyncio.run(_login_with_token(auth, stored_token, urls.run_url))
+                    asyncio.run(_login_with_token(auth, stored_token, urls.datalayer_url))
                     return
                 except Exception:
                     console.print(
@@ -213,7 +213,7 @@ def login(
                 if credentials.get("credentials_type") == "api_key":
                     asyncio.run(
                         _login_with_api_key(
-                            auth, credentials["api_key"], urls.run_url
+                            auth, credentials["api_key"], urls.datalayer_url
                         )
                     )
                 else:
@@ -222,7 +222,7 @@ def login(
                             auth,
                             credentials["handle"],
                             credentials["password"],
-                            urls.run_url,
+                            urls.datalayer_url,
                         )
                     )
             else:
@@ -230,7 +230,7 @@ def login(
                 console.print(
                     "[yellow]No API key found. Starting browser-based authentication...[/yellow]"
                 )
-                _authenticate_with_browser(auth, urls.run_url)
+                _authenticate_with_browser(auth, urls.datalayer_url)
 
     except typer.Exit:
         raise
@@ -408,7 +408,7 @@ def logout(
 
         asyncio.run(auth.logout())
 
-        console.print(f"👋 Logged out from [green]{urls.run_url}[/green]")
+        console.print(f"👋 Logged out from [green]{urls.datalayer_url}[/green]")
         console.print("🧹 Stored API key cleared")
 
     except Exception as e:
@@ -440,7 +440,7 @@ def whoami(
 
         if urls_only:
             url_items = [
-                ("DATALAYER_URL", urls.run_url),
+                ("DATALAYER_URL", urls.datalayer_url),
                 ("DATALAYER_IAM_URL", urls.iam_url),
                 ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
                 ("DATALAYER_SPACER_URL", urls.spacer_url),
@@ -477,13 +477,13 @@ def whoami(
             console.print(f"👤 User: [cyan]{handle}[/cyan]")
             if email:
                 console.print(f"📧 Email: {email}")
-            console.print(f"🌐 Datalayer URL: [green]{urls.run_url}[/green]")
+            console.print(f"🌐 Datalayer URL: [green]{urls.datalayer_url}[/green]")
 
             if details:
                 console.print("\n[bold]Detailed Information:[/bold]")
 
                 url_items = [
-                    ("DATALAYER_URL", urls.run_url),
+                    ("DATALAYER_URL", urls.datalayer_url),
                     ("DATALAYER_IAM_URL", urls.iam_url),
                     ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
                     ("DATALAYER_SPACER_URL", urls.spacer_url),

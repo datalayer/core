@@ -63,7 +63,7 @@ async function otelFetch<T = unknown>(
 export interface OtelClientOptions {
   /**
    * Base URL of the OTEL service.
-   * Defaults to `configuration.otelRunUrl` from the Datalayer core config
+   * Defaults to `configuration.otelUrl` from the Datalayer core config
    * (i.e. `https://prod1.datalayer.run`).
    */
   baseUrl?: string;
@@ -193,7 +193,7 @@ export class OtelClient {
 
   constructor(options: OtelClientOptions) {
     this.baseUrl =
-      options.baseUrl ?? coreStore.getState().configuration.otelRunUrl;
+      options.baseUrl ?? coreStore.getState().configuration.otelUrl;
     const auth = resolveOtelAuth(options.token, options.userUid);
     this.token = auth.token;
     this.userUid = auth.userUid;
@@ -369,7 +369,7 @@ export class OtelClient {
 /**
  * Create a new `OtelClient`.
  *
- * The `baseUrl` defaults to `configuration.otelRunUrl` from the Datalayer core
+ * The `baseUrl` defaults to `configuration.otelUrl` from the Datalayer core
  * configuration store, so only pass it when you want to override the default.
  *
  * @example

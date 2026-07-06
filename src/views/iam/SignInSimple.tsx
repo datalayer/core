@@ -94,7 +94,7 @@ const OAUTH2_PROVIDERS: Record<OAuthProviderName, OAuthProviderSpec> = {
   },
 };
 
-const getIAMRunUrlFromDocumentConfig = (): string => {
+const getIAMUrlFromDocumentConfig = (): string => {
   if (typeof document === 'undefined') {
     return '';
   }
@@ -104,7 +104,7 @@ const getIAMRunUrlFromDocumentConfig = (): string => {
   }
   try {
     const config = JSON.parse(configScript.textContent);
-    return String(config?.iamRunUrl || '').replace(/\/$/, '');
+    return String(config?.iamUrl || '').replace(/\/$/, '');
   } catch {
     return '';
   }
@@ -203,8 +203,8 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
   const loginUrl = useMemo(() => {
     if (loginUrlProp) return loginUrlProp;
-    const iamRunUrl = getIAMRunUrlFromDocumentConfig();
-    return iamRunUrl ? `${iamRunUrl}/api/iam/v1/login` : '/api/iam/v1/login';
+    const iamUrl = getIAMUrlFromDocumentConfig();
+    return iamUrl ? `${iamUrl}/api/iam/v1/login` : '/api/iam/v1/login';
   }, [loginUrlProp]);
   const [handle, setHandle] = useState('');
   const [password, setPassword] = useState('');
@@ -244,7 +244,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
       setError(null);
       setSocialLoading(true);
       try {
-        const iamRunUrl = getIAMRunUrlFromDocumentConfig();
+        const iamUrl = getIAMUrlFromDocumentConfig();
         const params = new URLSearchParams({
           provider: providerSpec.name,
           callback_uri: buildCallbackURI(providerSpec),
@@ -266,7 +266,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         if (callbackNavigationTarget) {
           params.set('post_auth_redirect', callbackNavigationTarget);
         }
-        const endpointBase = iamRunUrl || '';
+        const endpointBase = iamUrl || '';
         const endpoint = `${endpointBase}/api/iam/v1/oauth2/authz/url?${params.toString()}`;
         const response = await fetch(endpoint);
         const payload = await response.json();

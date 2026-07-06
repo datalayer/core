@@ -60,7 +60,7 @@ class DatalayerURLs:
 
     Attributes
     ----------
-    run_url : str
+    datalayer_url : str
         The Datalayer runtime/service URL
     iam_url : str
         The Datalayer IAM service URL
@@ -92,7 +92,7 @@ class DatalayerURLs:
         The Datalayer scheduler service URL
     """
 
-    run_url: str
+    datalayer_url: str
     iam_url: str
     runtimes_url: str
     spacer_url: str
@@ -111,7 +111,7 @@ class DatalayerURLs:
     @classmethod
     def from_environment(
         cls,
-        run_url: Optional[str] = None,
+        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -132,7 +132,7 @@ class DatalayerURLs:
 
         Parameters
         ----------
-        run_url : Optional[str]
+        datalayer_url : Optional[str]
             Override for the run URL. If None, will check DATALAYER_URL env var
             then fallback to DEFAULT_DATALAYER_URL.
         iam_url : Optional[str]
@@ -189,8 +189,8 @@ class DatalayerURLs:
         unless explicitly overridden. This allows setting a single base URL for all services.
         """
         # Determine base URLs first
-        resolved_run_url = (
-            run_url or os.environ.get("DATALAYER_URL") or DEFAULT_DATALAYER_URL
+        resolved_datalayer_url = (
+            datalayer_url or os.environ.get("DATALAYER_URL") or DEFAULT_DATALAYER_URL
         )
         resolved_iam_url = (
             iam_url
@@ -294,7 +294,7 @@ class DatalayerURLs:
         )
 
         # Strip trailing slashes for consistency
-        resolved_run_url = resolved_run_url.rstrip("/")
+        resolved_datalayer_url = resolved_datalayer_url.rstrip("/")
         resolved_iam_url = resolved_iam_url.rstrip("/")
         resolved_runtimes_url = resolved_runtimes_url.rstrip("/")
         resolved_spacer_url = resolved_spacer_url.rstrip("/")
@@ -311,7 +311,7 @@ class DatalayerURLs:
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
 
         return cls(
-            run_url=resolved_run_url,
+            datalayer_url=resolved_datalayer_url,
             iam_url=resolved_iam_url,
             runtimes_url=resolved_runtimes_url,
             spacer_url=resolved_spacer_url,
@@ -330,7 +330,7 @@ class DatalayerURLs:
 
     def __post_init__(self) -> None:
         """Ensure URLs don't have trailing slashes."""
-        self.run_url = self.run_url.rstrip("/")
+        self.datalayer_url = self.datalayer_url.rstrip("/")
         self.iam_url = self.iam_url.rstrip("/")
         self.runtimes_url = self.runtimes_url.rstrip("/")
         self.spacer_url = self.spacer_url.rstrip("/")
@@ -353,7 +353,7 @@ class DatalayerURLs:
     @classmethod
     def get_all_urls(
         cls,
-        run_url: Optional[str] = None,
+        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -371,7 +371,7 @@ class DatalayerURLs:
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
         return cls.from_environment(
-            run_url=run_url,
+            datalayer_url=datalayer_url,
             iam_url=iam_url,
             runtimes_url=runtimes_url,
             spacer_url=spacer_url,

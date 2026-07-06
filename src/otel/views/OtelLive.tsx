@@ -89,7 +89,7 @@ function buildHistogram(
 // ── OtelLive ────────────────────────────────────────────────────────
 
 export const OtelLive: React.FC<OtelLiveProps> = ({
-  baseUrl = coreStore.getState().configuration.otelRunUrl,
+  baseUrl = coreStore.getState().configuration.otelUrl,
   wsBaseUrl,
   token,
   autoRefreshMs = 5000,

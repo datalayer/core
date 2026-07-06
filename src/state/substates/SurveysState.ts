@@ -19,7 +19,7 @@ import { coreStore } from './CoreState';
 import { iamStore } from './IAMState';
 
 export type ISuccessState = {
-  growthRunUrl: string;
+  growthUrl: string;
   surveys?: Map<string, ISurvey>;
 };
 
@@ -31,7 +31,7 @@ export type SuccessState = ISuccessState & {
 
 export const surveysStore = createStore<SuccessState>((set, get) => ({
   surveys: undefined,
-  growthRunUrl: coreStore.getState().configuration?.growthRunUrl,
+  growthUrl: coreStore.getState().configuration?.growthUrl,
   setSurveys: (s: Array<ISurvey>) => {
     const surveys = new Map<string, ISurvey>();
     s.forEach(survey => surveys.set(survey.name, survey));
@@ -39,10 +39,10 @@ export const surveysStore = createStore<SuccessState>((set, get) => ({
   },
   refreshSurveys: async () => {
     const { token } = iamStore.getState();
-    const { growthRunUrl } = get();
+    const { growthUrl } = get();
     try {
       const resp = await requestDatalayerAPI<IGetSurveysResponseType>({
-        url: `${growthRunUrl}/api/growth/v1/surveys`,
+        url: `${growthUrl}/api/growth/v1/surveys`,
         method: 'GET',
         token,
       });
@@ -66,11 +66,11 @@ export const surveysStore = createStore<SuccessState>((set, get) => ({
     }
   },
   createSurvey: async (name: string, form: any) => {
-    const { growthRunUrl } = get();
+    const { growthUrl } = get();
     const { token } = iamStore.getState();
     try {
       const resp = await requestDatalayerAPI<ICreateSurveyResponseType>({
-        url: `${growthRunUrl}/api/growth/v1/surveys`,
+        url: `${growthUrl}/api/growth/v1/surveys`,
         method: 'POST',
         body: {
           name,
@@ -107,12 +107,12 @@ export const surveysStore = createStore<SuccessState>((set, get) => ({
 
 coreStore.subscribe((state, prevState) => {
   if (
-    state.configuration.successRunUrl &&
-    state.configuration.successRunUrl !== prevState.configuration.successRunUrl
+    state.configuration.successUrl &&
+    state.configuration.successUrl !== prevState.configuration.successUrl
   ) {
-    const growthRunUrl = state.configuration.growthRunUrl;
-    console.log(`Updating growthRunUrl with new value ${growthRunUrl}`);
-    surveysStore.setState({ growthRunUrl });
+    const growthUrl = state.configuration.growthUrl;
+    console.log(`Updating growthUrl with new value ${growthUrl}`);
+    surveysStore.setState({ growthUrl });
   }
 });
 

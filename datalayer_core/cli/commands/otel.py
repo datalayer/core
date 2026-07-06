@@ -94,7 +94,7 @@ def traces(
         20, "--limit", "-n", help="Max number of traces to return."
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -163,7 +163,7 @@ def metrics(
     ),
     limit: int = typer.Option(20, "--limit", "-n", help="Max rows."),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -227,7 +227,7 @@ def logs(
     ),
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows."),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -286,7 +286,7 @@ def query(
         ..., help="SQL query to execute against the SQL Engine store."
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     raw: bool = typer.Option(
         False, "--raw", help="Output raw JSON instead of a table."
@@ -340,7 +340,7 @@ def admin_sql(
         help="Arbitrary SQL to execute (no user-scope filter). Platform admin only.",
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     raw: bool = typer.Option(
         False, "--raw", help="Output raw JSON instead of a table."
@@ -393,7 +393,7 @@ def admin_sql(
 @app.command()
 def stats(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -427,7 +427,7 @@ def stats(
 @app.command("services")
 def list_services(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -468,7 +468,7 @@ def list_services(
 @app.command()
 def flush(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -499,10 +499,10 @@ def smoke_test(
         None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-url>/api/otel/v1/otlp).",
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL query service run URL."
+        None, "--otel-url", help="OTEL query service run URL."
     ),
     service_name: str = typer.Option(
         "datalayer-otel-smoke", "--service", "-s", help="Service name for test data."
@@ -955,7 +955,7 @@ def load_test(
         None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-url>/api/otel/v1/otlp).",
     ),
     service_name: str = typer.Option(
         "datalayer-otel-load",
@@ -1203,7 +1203,7 @@ def logfire_test(
         None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-url>/api/otel/v1/otlp).",
     ),
     service_name: str = typer.Option(
         "datalayer-otel-logfire",
@@ -1401,7 +1401,7 @@ def logfire_test(
 @app.command("system")
 def system(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None,

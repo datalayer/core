@@ -20,7 +20,7 @@ export type IDatalayerCoreConfig = {
    * The base URL for the Datalayer platform API.
    * @example "https://prod1.datalayer.run"
    */
-  runUrl: string;
+  datalayerUrl: string;
 
   /**
    * Datalayer API authentication token.
@@ -59,51 +59,51 @@ export type IDatalayerCoreConfig = {
   /**
    * IAM API URL.
    */
-  iamRunUrl: string;
+  iamUrl: string;
   /**
    * Runtimes API URL.
    */
-  runtimesRunUrl: string;
+  runtimesUrl: string;
   /**
    * Spacer API URL.
    */
-  spacerRunUrl: string;
+  spacerUrl: string;
   /**
    * Library API URL.
    */
-  libraryRunUrl: string;
+  libraryUrl: string;
   /**
    * AI Agents API URL.
    */
-  aiagentsRunUrl: string;
+  aiAgentsUrl: string;
   /**
    * AI Inference API URL.
    */
-  aiinferenceRunUrl: string;
+  aiInferenceUrl: string;
   /**
    * MCP Servers API URL.
    */
-  mcpserversRunUrl: string;
+  mcpServersUrl: string;
   /**
    * OTEL (OpenTelemetry) API URL.
    */
-  otelRunUrl: string;
+  otelUrl: string;
   /**
    * Growth API URL.
    */
-  growthRunUrl: string;
+  growthUrl: string;
   /**
    * Inbounds API URL.
    */
-  inboundsRunUrl: string;
+  inboundsUrl: string;
   /**
    * Success API URL.
    */
-  successRunUrl: string;
+  successUrl: string;
   /**
    * Support API URL.
    */
-  supportRunUrl: string;
+  supportUrl: string;
   /**
    * Load configuration from server.
    */
@@ -193,7 +193,7 @@ export class DatalayerConfiguration {
  * Default configuration values for Datalayer
  */
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  runUrl: 'https://oss.datalayer.run',
+  datalayerUrl: 'https://oss.datalayer.run',
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
@@ -206,7 +206,7 @@ export function isDatalayerConfig(config: any): config is IDatalayerCoreConfig {
   return (
     config &&
     typeof config === 'object' &&
-    typeof config.runUrl === 'string' &&
+    typeof config.datalayerUrl === 'string' &&
     typeof config.token === 'string' &&
     typeof config.credits === 'number' &&
     typeof config.cpuEnvironment === 'string' &&
@@ -224,10 +224,10 @@ export function mergeConfigWithDefaults(
 ): Partial<IDatalayerCoreConfig> | undefined {
   if (!config) return undefined;
 
-  // If we have required fields (token and runUrl), merge with defaults for optional fields
-  if (config.token && config.runUrl) {
+  // If we have required fields (token and datalayerUrl), merge with defaults for optional fields
+  if (config.token && config.datalayerUrl) {
     return {
-      runUrl: config.runUrl,
+      datalayerUrl: config.datalayerUrl,
       token: config.token,
       credits: config.credits ?? DEFAULT_DATALAYER_CONFIG.credits!,
       cpuEnvironment:

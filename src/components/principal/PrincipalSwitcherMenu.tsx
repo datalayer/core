@@ -56,7 +56,7 @@ export function PrincipalSwitcherMenu({
   fullWidth = true,
   showClosedBorder = true,
 }: PrincipalSwitcherMenuProps): JSX.Element {
-  const { user, token, iamRunUrl } = useIAMStore();
+  const { user, token, iamUrl } = useIAMStore();
   const { configuration } = useCoreStore();
   const { checkIsPlatformAdmin } = useAuthorization();
   const { useUserOrganizations } = useCache();
@@ -142,7 +142,7 @@ export function PrincipalSwitcherMenu({
       }
       setTeamsLoading(true);
       try {
-        const baseUrl = iamRunUrl || configuration.iamRunUrl;
+        const baseUrl = iamUrl || configuration.iamUrl;
         const response = await fetchMemberships(token, baseUrl);
         const rawMemberships = Array.isArray((response as any)?.memberships)
           ? (response as any).memberships
@@ -179,7 +179,7 @@ export function PrincipalSwitcherMenu({
     return () => {
       cancelled = true;
     };
-  }, [token, iamRunUrl, configuration.iamRunUrl]);
+  }, [token, iamUrl, configuration.iamUrl]);
 
   useEffect(() => {
     if (!personalUid || !personalHandle) {

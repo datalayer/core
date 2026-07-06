@@ -237,7 +237,7 @@ export function useOtelTraces(options: {
 }) {
   const {
     token,
-    baseUrl = coreStore.getState().configuration.otelRunUrl,
+    baseUrl = coreStore.getState().configuration.otelUrl,
     serviceName,
     limit = 50,
     autoRefreshMs,
@@ -321,7 +321,7 @@ export function useOtelLogs(options: {
 }) {
   const {
     token,
-    baseUrl = coreStore.getState().configuration.otelRunUrl,
+    baseUrl = coreStore.getState().configuration.otelUrl,
     serviceName,
     severity,
     traceId,
@@ -376,7 +376,7 @@ export function useOtelMetrics(options: {
 }) {
   const {
     token,
-    baseUrl = coreStore.getState().configuration.otelRunUrl,
+    baseUrl = coreStore.getState().configuration.otelUrl,
     serviceName,
     metricName,
     limit = 50,
@@ -420,7 +420,7 @@ export function useOtelMetrics(options: {
 
 /** Fetch list of observed service names. */
 export function useOtelServices(options: { token?: string; baseUrl?: string }) {
-  const { token, baseUrl = coreStore.getState().configuration.otelRunUrl } =
+  const { token, baseUrl = coreStore.getState().configuration.otelUrl } =
     options;
   const [services, setServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -642,7 +642,7 @@ export function useOtelWebSocket(options: {
   callbacks?: OtelWsCallbacks;
 }) {
   const {
-    baseUrl = coreStore.getState().configuration.otelRunUrl,
+    baseUrl = coreStore.getState().configuration.otelUrl,
     token,
     userUid,
     autoReconnect = true,

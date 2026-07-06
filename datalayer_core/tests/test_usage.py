@@ -42,7 +42,7 @@ def _build_test_client() -> DatalayerClient:
     return DatalayerClient(
         token=TEST_DATALAYER_API_KEY,
         urls=DatalayerURLs.from_environment(
-            run_url=LOCAL_RUN_URL,
+            datalayer_url=LOCAL_RUN_URL,
             iam_url=LOCAL_IAM_URL,
             runtimes_url=LOCAL_RUNTIMES_URL,
         ),

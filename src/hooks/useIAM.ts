@@ -49,7 +49,7 @@ export const useIAM = (
   ): Promise<void> => {
     try {
       const resp = await requestDatalayerAPI<IIAMResponseType>({
-        url: `${iamStore.iamRunUrl}/api/iam/v1/login`,
+        url: `${iamStore.iamUrl}/api/iam/v1/login`,
         method: 'POST',
         body: { token },
       });

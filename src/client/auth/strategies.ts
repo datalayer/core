@@ -28,7 +28,7 @@ import { UserDTO } from '../../models/UserDTO';
  */
 abstract class BaseAuthStrategy implements AuthStrategy {
   constructor(
-    protected iamRunUrl: string,
+    protected iamUrl: string,
     protected storage?: TokenStorage,
   ) {}
 
@@ -39,7 +39,7 @@ abstract class BaseAuthStrategy implements AuthStrategy {
    * Validate a token by calling whoami
    */
   protected async validateToken(token: string): Promise<UserDTO> {
-    const response = await profile.whoami(token, this.iamRunUrl);
+    const response = await profile.whoami(token, this.iamUrl);
 
     if (!response || !response.profile) {
       throw new Error('Invalid response from profile API');
@@ -112,7 +112,7 @@ export class CredentialsAuthStrategy extends BaseAuthStrategy {
     // Call the login API
     const response = await authentication.login(
       { handle: options.handle, password: options.password },
-      this.iamRunUrl,
+      this.iamUrl,
     );
 
     if (!response || !response.success || !response.token) {
@@ -216,7 +216,7 @@ export class BrowserOAuthStrategy extends BaseAuthStrategy {
       const authzResponse = await getOAuth2AuthzUrl(
         provider,
         callbackUri,
-        this.iamRunUrl,
+        this.iamUrl,
         options.nonce,
       );
 

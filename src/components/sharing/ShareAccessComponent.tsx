@@ -830,8 +830,8 @@ export function ShareAccessComponent({
 
   // ----- Derived -----
   const canRequest = Boolean(requestUrl && token);
-  const canSearchPrincipals = Boolean(configuration?.iamRunUrl && token);
-  const iamRunUrl = configuration?.iamRunUrl;
+  const canSearchPrincipals = Boolean(configuration?.iamUrl && token);
+  const iamUrl = configuration?.iamUrl;
 
   const principalKindsSet = useMemo(
     () => new Set(principalKinds),
@@ -1019,7 +1019,7 @@ export function ShareAccessComponent({
 
   // ----- Fetch shareable principals on open -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       return;
     }
     let cancelled = false;
@@ -1027,7 +1027,7 @@ export function ShareAccessComponent({
       setIsLoadingShareable(true);
       try {
         const response = await fetch(
-          `${iamRunUrl}/api/iam/v1/principals/shareable`,
+          `${iamUrl}/api/iam/v1/principals/shareable`,
           {
             method: 'GET',
             headers: {
@@ -1115,7 +1115,7 @@ export function ShareAccessComponent({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, canSearchPrincipals, iamRunUrl, token, mergePrincipalCacheEntry]);
+  }, [isOpen, canSearchPrincipals, iamUrl, token, mergePrincipalCacheEntry]);
 
   // ----- Debounce search query -----
   useEffect(() => {
@@ -1129,7 +1129,7 @@ export function ShareAccessComponent({
 
   // ----- Run search against /principals/search -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       setSearchResults([]);
       return;
     }
@@ -1150,7 +1150,7 @@ export function ShareAccessComponent({
         let response: Response;
         let payload: any;
         try {
-          response = await fetch(`${iamRunUrl}/api/iam/v1/principals/search`, {
+          response = await fetch(`${iamUrl}/api/iam/v1/principals/search`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1321,7 +1321,7 @@ export function ShareAccessComponent({
   }, [
     isOpen,
     canSearchPrincipals,
-    iamRunUrl,
+    iamUrl,
     token,
     normalizedDebouncedSearch,
     principalKindsKey,
@@ -1332,7 +1332,7 @@ export function ShareAccessComponent({
 
   // ----- Hydrate ACL user uids in bulk -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       return;
     }
     const userUids = Array.from(
@@ -1375,7 +1375,7 @@ export function ShareAccessComponent({
         ),
       );
       try {
-        const response = await fetch(`${iamRunUrl}/api/iam/v1/users/bulk`, {
+        const response = await fetch(`${iamUrl}/api/iam/v1/users/bulk`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1445,7 +1445,7 @@ export function ShareAccessComponent({
   }, [
     isOpen,
     canSearchPrincipals,
-    iamRunUrl,
+    iamUrl,
     token,
     aclEntries,
     ownerPrincipals,
@@ -1455,7 +1455,7 @@ export function ShareAccessComponent({
 
   // ----- Hydrate ACL team uids individually -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       return;
     }
     const unknownTeams = aclEntries.filter(entry => {
@@ -1473,7 +1473,7 @@ export function ShareAccessComponent({
       unknownTeams.map(async entry => {
         try {
           const response = await fetch(
-            `${iamRunUrl}/api/iam/v1/teams/${encodeURIComponent(entry.uid)}`,
+            `${iamUrl}/api/iam/v1/teams/${encodeURIComponent(entry.uid)}`,
             {
               method: 'GET',
               headers: {
@@ -1514,7 +1514,7 @@ export function ShareAccessComponent({
   }, [
     isOpen,
     canSearchPrincipals,
-    iamRunUrl,
+    iamUrl,
     token,
     aclEntries,
     principalCache,

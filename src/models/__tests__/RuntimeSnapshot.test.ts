@@ -32,7 +32,7 @@ describe('Snapshot Model', () => {
   beforeEach(() => {
     mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
-      getRuntimesRunUrl: vi
+      getRuntimesUrl: vi
         .fn()
         .mockReturnValue('https://runtimes.example.com'),
       createRuntime: vi.fn(),

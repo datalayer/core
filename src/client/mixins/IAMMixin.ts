@@ -44,9 +44,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const token = (this as any).getToken();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      const response = await profile.whoami(token, iamRunUrl);
+      const response = await profile.whoami(token, iamUrl);
 
       // Handle the whoami response format
       let userData: ApiUser;
@@ -113,8 +113,8 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
     /** Log out the current user. */
     async logout(): Promise<void> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
-      await authentication.logout(token, iamRunUrl);
+      const iamUrl = (this as any).getIamUrl();
+      await authentication.logout(token, iamUrl);
       // Clear the token from the Client and cached user
       (this as any).setToken('');
       this.currentUserCache = undefined;
@@ -126,11 +126,11 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async getCredits(): Promise<CreditsDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
       const response: CreditsResponse = await usage.getCredits(
         token,
-        iamRunUrl,
+        iamUrl,
       );
 
       if (!response || !response.credits) {
@@ -249,9 +249,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async createSecret(data: CreateSecretRequest): Promise<SecretDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      const response = await secrets.createSecret(token, data, iamRunUrl);
+      const response = await secrets.createSecret(token, data, iamUrl);
       return new SecretDTO(response.secret, this as any);
     }
 
@@ -261,9 +261,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async listSecrets(): Promise<SecretDTO[]> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      const response = await secrets.listSecrets(token, iamRunUrl);
+      const response = await secrets.listSecrets(token, iamUrl);
       return response.secrets.map(s => new SecretDTO(s, this as any));
     }
 
@@ -274,9 +274,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async getSecret(secretId: string): Promise<SecretDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      const response = await secrets.getSecret(token, secretId, iamRunUrl);
+      const response = await secrets.getSecret(token, secretId, iamUrl);
       return new SecretDTO(response.secret, this as any);
     }
 
@@ -291,13 +291,13 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       updates: UpdateSecretRequest,
     ): Promise<SecretDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
       const response = await secrets.updateSecret(
         token,
         secretId,
         updates,
-        iamRunUrl,
+        iamUrl,
       );
       return new SecretDTO(response.secret, this as any);
     }
@@ -308,9 +308,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async deleteSecret(secretId: string): Promise<void> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      await secrets.deleteSecret(token, secretId, iamRunUrl);
+      await secrets.deleteSecret(token, secretId, iamUrl);
     }
 
     // ========================================================================
@@ -326,12 +326,12 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       data: CreateDatasourceRequest,
     ): Promise<DatasourceDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
       const response = await datasources.createDatasource(
         token,
         data,
-        iamRunUrl,
+        iamUrl,
       );
       return new DatasourceDTO(response.datasource, this as any);
     }
@@ -342,9 +342,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async listDatasources(): Promise<DatasourceDTO[]> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      const response = await datasources.listDatasources(token, iamRunUrl);
+      const response = await datasources.listDatasources(token, iamUrl);
       return response.datasources.map(d => new DatasourceDTO(d, this as any));
     }
 
@@ -355,12 +355,12 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async getDatasource(datasourceId: string): Promise<DatasourceDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
       const response = await datasources.getDatasource(
         token,
         datasourceId,
-        iamRunUrl,
+        iamUrl,
       );
       return new DatasourceDTO(response.datasource, this as any);
     }
@@ -376,13 +376,13 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       updates: UpdateDatasourceRequest,
     ): Promise<DatasourceDTO> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
       const response = await datasources.updateDatasource(
         token,
         datasourceId,
         updates,
-        iamRunUrl,
+        iamUrl,
       );
       return new DatasourceDTO(response.datasource, this as any);
     }
@@ -393,9 +393,9 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
      */
     async deleteDatasource(datasourceId: string): Promise<void> {
       const token = (this as any).getToken();
-      const iamRunUrl = (this as any).getIamRunUrl();
+      const iamUrl = (this as any).getIamUrl();
 
-      await datasources.deleteDatasource(token, datasourceId, iamRunUrl);
+      await datasources.deleteDatasource(token, datasourceId, iamUrl);
     }
   };
 }

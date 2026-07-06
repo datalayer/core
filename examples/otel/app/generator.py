@@ -52,12 +52,12 @@ def _otlp_endpoint() -> str:
     explicit = os.environ.get("DATALAYER_OTLP_URL")
     if explicit:
         return explicit.rstrip("/")
-    run_url = (
+    datalayer_url = (
         os.environ.get("DATALAYER_OTEL_RUN_URL")
         or os.environ.get("DATALAYER_URL")
         or "https://prod1.datalayer.run"
     )
-    return run_url.rstrip("/") + "/api/otel/v1/otlp"
+    return datalayer_url.rstrip("/") + "/api/otel/v1/otlp"
 
 
 def _otel_api_url() -> str:

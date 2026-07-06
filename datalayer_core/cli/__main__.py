@@ -21,11 +21,15 @@ from datalayer_core.cli.commands.authn import (
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.memberships import app as memberships_app
+from datalayer_core.cli.commands.orgs import app as orgs_app
+from datalayer_core.cli.commands.orgs import orgs_ls
 from datalayer_core.cli.commands.otel import app as otel_app
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
+from datalayer_core.cli.commands.teams import app as teams_app
+from datalayer_core.cli.commands.teams import teams_ls
 from datalayer_core.cli.commands.api_keys import app as api_keys_app
 from datalayer_core.cli.commands.api_keys import api_keys_ls
 from datalayer_core.cli.commands.usage import app as usage_app
@@ -69,9 +73,9 @@ def main_callback(
             "omitted; otherwise built-in auth resolution is used."
         ),
     ),
-    run_url: str | None = typer.Option(
+    datalayer_url: str | None = typer.Option(
         None,
-        "--run-url",
+        "--datalayer-url",
         help="Override DATALAYER_URL for this CLI invocation.",
     ),
     iam_url: str | None = typer.Option(
@@ -148,7 +152,7 @@ def main_callback(
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
-        "DATALAYER_URL": run_url,
+        "DATALAYER_URL": datalayer_url,
         "DATALAYER_IAM_URL": iam_url,
         "DATALAYER_RUNTIMES_URL": runtimes_url,
         "DATALAYER_SPACER_URL": spacer_url,
@@ -182,6 +186,8 @@ app.add_typer(auth_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
 app.add_typer(memberships_app)
+app.add_typer(orgs_app)
+app.add_typer(teams_app)
 app.add_typer(otel_app)
 app.add_typer(secrets_app)
 app.add_typer(subscription_app)
@@ -202,11 +208,13 @@ app.command(name="subscription")(subscription_root)
 # Add convenient aliases at root level
 app.command(name="secrets-ls")(secrets_ls)
 app.command(name="api-keys-ls")(api_keys_ls)
+app.command(name="orgs-ls")(orgs_ls)
+app.command(name="teams-ls")(teams_ls)
 
 
 _GLOBAL_OPTIONS_WITH_VALUES = {
     "--api-key",
-    "--run-url",
+    "--datalayer-url",
     "--iam-url",
     "--runtimes-url",
     "--spacer-url",

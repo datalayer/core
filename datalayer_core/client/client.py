@@ -317,7 +317,10 @@ class DatalayerClient(
         """
         response = self._list_api_keys()
         if response.get("success"):
-            payload = response.get("api_keys", response.get("tokens", []))
+            payload = response.get(
+                "apiKeys",
+                response.get("api_keys", response.get("tokens", [])),
+            )
             api_key_objects = []
             for api_key_data in payload:
                 api_key = ApiKeyModel(

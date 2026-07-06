@@ -152,8 +152,8 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         elif path in {"/", "/datalayer/login/cli"}:
             config_json = json.dumps(
                 {
-                    "runUrl": self.server.run_url,  # type: ignore
-                    "iamRunUrl": self.server.iam_url,  # type: ignore
+                    "datalayerUrl": self.server.datalayer_url,  # type: ignore
+                    "iamUrl": self.server.iam_url,  # type: ignore
                     "whiteLabel": False,
                 }
             )
@@ -170,12 +170,26 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self) -> None:
         """Handle POST requests with authentication data."""
-        content_length = int(self.headers["Content-Length"])
-        post_data = self.rfile.read(content_length)
-        response = post_data.decode("utf-8")
-        content = json.loads(response)
-        self.server.token = content["token"]  # type: ignore
-        self.server.user_handle = content["user_handle"]  # type: ignore
+        try:
+            content_length = int(self.headers.get("Content-Length", 0) or 0)
+            post_data = self.rfile.read(content_length) if content_length else b""
+            content = json.loads(post_data.decode("utf-8")) if post_data else {}
+        except (ValueError, json.JSONDecodeError):
+            content = {}
+
+        token = content.get("token") if isinstance(content, dict) else None
+        user_handle = content.get("user_handle") if isinstance(content, dict) else None
+
+        if not token:
+            # Ignore POST requests that do not carry a token (e.g. spurious,
+            # empty or malformed requests) instead of crashing the auth server.
+            self.send_response(HTTPStatus.BAD_REQUEST)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+
+        self.server.token = token  # type: ignore
+        self.server.user_handle = user_handle  # type: ignore
 
         self.send_response(HTTPStatus.CREATED)
         self.send_header("Content-Length", "0")
@@ -215,7 +229,7 @@ class AuthHTTPServer(HTTPServer):
         The server address and port.
     RequestHandlerClass : Callable
         The request handler class.
-    run_url : str
+    datalayer_url : str
         The runtime URL.
     bind_and_activate : bool, default True
         Whether to bind and activate the server.
@@ -225,7 +239,7 @@ class AuthHTTPServer(HTTPServer):
         self,
         server_address: tuple[Union[str, bytes, bytearray], int],
         RequestHandlerClass: t.Callable[[t.Any, t.Any, t.Self], BaseRequestHandler],
-        run_url: str,
+        datalayer_url: str,
         bind_and_activate: bool = True,
     ) -> None:
         """
@@ -237,14 +251,14 @@ class AuthHTTPServer(HTTPServer):
             The server address and port.
         RequestHandlerClass : Callable
             The request handler class.
-        run_url : str
+        datalayer_url : str
             The runtime URL.
         bind_and_activate : bool, default True
             Whether to bind and activate the server.
         """
         # Use DatalayerURLs for proper URL configuration
-        self._urls = DatalayerURLs.from_environment(run_url=run_url)
-        self.run_url = self._urls.run_url
+        self._urls = DatalayerURLs.from_environment(datalayer_url=datalayer_url)
+        self.datalayer_url = self._urls.datalayer_url
         self.iam_url = self._urls.iam_url
         self.user_handle = None
         self.token = None
@@ -285,14 +299,14 @@ class AuthHTTPServer(HTTPServer):
 
 
 def get_token(
-    run_url: str, port: Optional[int] = None, logger: logging.Logger = logger
+    datalayer_url: str, port: Optional[int] = None, logger: logging.Logger = logger
 ) -> Optional[tuple[str, str]]:
     """
     Get the user handle and token.
 
     Parameters
     ----------
-    run_url : str
+    datalayer_url : str
         The runtime URL.
     port : int or None, default None
         The port to use for the authentication server.
@@ -315,8 +329,8 @@ def get_token(
         )
         sys.argv = [
             "",
-            "--DatalayerExtensionApp.run_url",
-            run_url,
+            "--DatalayerExtensionApp.datalayer_url",
+            datalayer_url,
             "--ServerApp.disable_check_xsrf",
             "True",
         ]
@@ -325,7 +339,7 @@ def get_token(
         #        return None if httpd.token is None else (httpd.user_handle, httpd.token)
         return None
     else:
-        httpd = AuthHTTPServer(server_address, LoginRequestHandler, run_url)
+        httpd = AuthHTTPServer(server_address, LoginRequestHandler, datalayer_url)
         logger.info(
             f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n"
         )

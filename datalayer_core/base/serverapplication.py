@@ -36,9 +36,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    # run_url can be set set and None or ' ' (empty string).
-    # In that case, the consumer of those settings are free to consider run_url as null.
-    run_url = Unicode(
+    # datalayer_url can be set set and None or ' ' (empty string).
+    # In that case, the consumer of those settings are free to consider datalayer_url as null.
+    datalayer_url = Unicode(
         DEFAULT_DATALAYER_IAM_URL,
         config=True,
         allow_none=True,
@@ -189,7 +189,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             self.serverapp.port = port
 
         settings = dict(
-            run_url=self.run_url,
+            datalayer_url=self.datalayer_url,
             launcher={
                 "category": self.launcher.category,
                 "name": self.launcher.name,
@@ -215,7 +215,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.serverapp.jinja_template_vars.update(
             {
                 "datalayer_version": __version__,
-                "run_url": self.run_url,
+                "datalayer_url": self.datalayer_url,
             }
         )
 

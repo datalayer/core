@@ -28,7 +28,7 @@ describe('Runtime Model', () => {
   beforeEach(() => {
     mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
-      getRuntimesRunUrl: vi
+      getRuntimesUrl: vi
         .fn()
         .mockReturnValue('https://runtimes.example.com'),
       deleteRuntime: vi.fn().mockResolvedValue(undefined),

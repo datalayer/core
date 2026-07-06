@@ -511,7 +511,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     progress: notebookUploadProgress,
     reset: resetNotebookUpload,
   } = useUploadForm(
-    `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/notebooks`,
+    `${coreStore.configuration.spacerUrl}/api/spacer/v1/notebooks`,
   );
 
   // Hook for document upload/creation
@@ -521,7 +521,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     progress: documentUploadProgress,
     reset: resetDocumentUpload,
   } = useUploadForm(
-    `${coreStore.configuration.spacerRunUrl}/api/spacer/v1/lexicals`,
+    `${coreStore.configuration.spacerUrl}/api/spacer/v1/lexicals`,
   );
 
   // ============================================================================
@@ -1166,7 +1166,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         password: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/login`,
+          url: `${configuration.iamUrl}/api/iam/v1/login`,
           method: 'POST',
           body: { handle, password },
         });
@@ -1194,7 +1194,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/logout`,
+          url: `${configuration.iamUrl}/api/iam/v1/logout`,
           method: 'GET',
         });
       },
@@ -1217,7 +1217,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.auth.me(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/me`,
+          url: `${configuration.iamUrl}/api/iam/v1/me`,
           method: 'GET',
           token,
         });
@@ -1245,7 +1245,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         lastName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/me`,
+          url: `${configuration.iamUrl}/api/iam/v1/me`,
           method: 'PUT',
           body: { email, firstName, lastName },
         });
@@ -1264,7 +1264,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.auth.whoami(),
       queryFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/whoami`,
+          url: `${configuration.iamUrl}/api/iam/v1/whoami`,
           method: 'GET',
         });
       },
@@ -1289,7 +1289,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.users.detail(userId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/${userId}`,
           method: 'GET',
         });
         if (resp.success && resp.user) {
@@ -1321,7 +1321,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         // Implementation depends on your API
         // For now, using search as workaround
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/search`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/search`,
           method: 'POST',
           body: { namingPattern: handle },
         });
@@ -1355,7 +1355,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/public/${encodeURIComponent(normalizedHandle)}`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/public/${encodeURIComponent(normalizedHandle)}`,
           method: 'GET',
         });
 
@@ -1400,7 +1400,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.users.search(namingPattern),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/search`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/search`,
           method: 'POST',
           body: { namingPattern },
         });
@@ -1447,7 +1447,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/bulk`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/bulk`,
           method: 'POST',
           body: { userIds: normalizedUserIds },
         });
@@ -1483,7 +1483,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (onboarding: IUserOnboarding) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/onboardings`,
+          url: `${configuration.iamUrl}/api/iam/v1/onboardings`,
           method: 'PUT',
           body: { onboarding },
         });
@@ -1507,10 +1507,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         settings: IUserSettings;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/settings`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/${userId}/settings`,
           method: 'PUT',
           body: {
-            aiagents_url_s: settings.aiAgentsUrl,
+            aiAgents_url_s: settings.aiAgentsUrl,
             can_invite_b: settings.canInvite || false,
           },
         });
@@ -1535,7 +1535,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.organizations.detail(organizationId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}`,
           method: 'GET',
         });
         if (resp.success && resp.organization) {
@@ -1563,7 +1563,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         // Fetch via account endpoint
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/accounts/${handle}`,
+          url: `${configuration.iamUrl}/api/iam/v1/accounts/${handle}`,
           method: 'GET',
         });
         if (resp.success && resp.organization) {
@@ -1592,7 +1592,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/public/${encodeURIComponent(normalizedHandle)}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/public/${encodeURIComponent(normalizedHandle)}`,
           method: 'GET',
         });
 
@@ -1614,7 +1614,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.organizations.userOrgs(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations`,
           method: 'GET',
         });
         if (resp.success && resp.organizations) {
@@ -1649,7 +1649,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organization: Partial<IOrganization>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations`,
           method: 'POST',
           body: {
             handle: organization.handle,
@@ -1679,7 +1679,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organization: Partial<IAnyOrganization>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organization.id}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organization.id}`,
           method: 'PUT',
           body: {
             name: organization.name,
@@ -1713,7 +1713,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.teams.detail(teamId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${teamId}`,
           method: 'GET',
         });
         if (resp.success && resp.team) {
@@ -1736,7 +1736,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.teams.byOrganization(organizationId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/teams`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}/teams`,
           method: 'GET',
         });
         if (resp.success && resp.teams) {
@@ -1772,7 +1772,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         organization: IAnyOrganization;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams`,
           method: 'POST',
           body: {
             handle: team.handle,
@@ -1803,7 +1803,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (team: Partial<ITeam>) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${team.id}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${team.id}`,
           method: 'PUT',
           body: {
             name: team.name,
@@ -1837,7 +1837,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         // Note: This might need organization context
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}`,
           method: 'GET',
         });
         if (resp.success && resp.space) {
@@ -1868,7 +1868,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.spaces.detail(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}`,
           method: 'GET',
         });
         if (resp.success && resp.space) {
@@ -1894,7 +1894,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.spaces.byOrganization(organizationId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/organizations/${organizationId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/organizations/${organizationId}`,
           method: 'GET',
         });
         if (resp.success && resp.spaces) {
@@ -1935,7 +1935,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me${query ? `?${query}` : ''}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/users/me${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.spaces) {
@@ -1979,7 +1979,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             ? (space as ICourse).seedSpace?.id
             : undefined;
         const resp = await requestDatalayer<any>({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces`,
           method: 'POST',
           body: {
             name: space.name,
@@ -2035,7 +2035,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return requestDatalayer({
           // Use the canonical space update route. This keeps project runtime
           // assignment cleanup resilient when stale runtime links must be cleared.
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${id}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${id}`,
           method: 'PUT',
           body: {
             name,
@@ -2065,7 +2065,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceUid: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceUid}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceUid}`,
           method: 'DELETE',
         });
       },
@@ -2096,7 +2096,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.notebooks.detail(notebookId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${notebookId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${notebookId}`,
           method: 'GET',
         });
         if (resp.success && resp.notebook) {
@@ -2122,7 +2122,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.notebooks.bySpace(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/notebook`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/notebook`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -2209,7 +2209,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         description: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${id}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${id}`,
           method: 'PUT',
           body: { name, description },
         });
@@ -2242,7 +2242,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         nbformat: unknown;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${notebookId}/model`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${notebookId}/model`,
           method: 'PUT',
           body: { nbformat },
         });
@@ -2268,7 +2268,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (notebookId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${notebookId}/clone`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${notebookId}/clone`,
           method: 'POST',
         });
       },
@@ -2303,7 +2303,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.documents.detail(documentId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lexicals/${documentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${documentId}`,
           method: 'GET',
         });
         if (resp.success && resp.document) {
@@ -2332,7 +2332,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           return [];
         }
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/document`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/document`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -2365,7 +2365,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         description: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lexicals/${id}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${id}`,
           method: 'PUT',
           body: { name, description },
         });
@@ -2392,7 +2392,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({ id, model }: { id: string; model: unknown }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lexicals/${id}/model`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${id}/model`,
           method: 'PUT',
           body: { model },
         });
@@ -2464,7 +2464,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (documentId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lexicals/${documentId}/clone`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${documentId}/clone`,
           method: 'POST',
         });
       },
@@ -2496,7 +2496,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.pages.detail(pageId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages/${pageId}`,
+          url: `${configuration.libraryUrl}/api/library/v1/pages/${pageId}`,
           method: 'GET',
         });
         if (resp.success && resp.page) {
@@ -2532,7 +2532,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages${query ? `?${query}` : ''}`,
+          url: `${configuration.libraryUrl}/api/library/v1/pages${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.pages) {
@@ -2560,7 +2560,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (page: Omit<IPage, 'id'>) => {
         return requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages`,
+          url: `${configuration.libraryUrl}/api/library/v1/pages`,
           method: 'POST',
           body: { ...page },
         });
@@ -2590,7 +2590,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         page: Pick<IPage, 'id' | 'name' | 'description' | 'tags'>,
       ) => {
         return requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages/${page.id}`,
+          url: `${configuration.libraryUrl}/api/library/v1/pages/${page.id}`,
           method: 'PUT',
           body: {
             name: page.name,
@@ -2620,7 +2620,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (pageId: string) => {
         return requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/pages/${pageId}`,
+          url: `${configuration.libraryUrl}/api/library/v1/pages/${pageId}`,
           method: 'DELETE',
         });
       },
@@ -2659,7 +2659,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+            `${configuration.iamUrl}/api/iam/v1/datasources`,
             principalUid,
             principalKind,
           ),
@@ -2696,7 +2696,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/datasources`,
+            `${configuration.iamUrl}/api/iam/v1/datasources`,
             principalUid,
             principalKind,
           ),
@@ -2737,7 +2737,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+            `${configuration.iamUrl}/api/iam/v1/secrets`,
             principalUid,
             principalKind,
           ),
@@ -2766,7 +2766,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (secret: Omit<ISecret, 'id'>) => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/secrets`,
+            `${configuration.iamUrl}/api/iam/v1/secrets`,
             principalUid,
             principalKind,
           ),
@@ -2796,7 +2796,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (secretId: string) => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+            `${configuration.iamUrl}/api/iam/v1/secrets/${secretId}`,
             principalUid,
             principalKind,
           ),
@@ -2820,7 +2820,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.tokens.all(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys`,
+          url: `${configuration.iamUrl}/api/iam/v1/api-keys`,
           method: 'GET',
         });
         const tokenItems = asArray(
@@ -2855,7 +2855,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: Omit<IIAMToken, 'id' | 'value'>) => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys`,
+          url: `${configuration.iamUrl}/api/iam/v1/api-keys`,
           method: 'POST',
           body: {
             ...token,
@@ -2893,7 +2893,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.contacts.detail(contactId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}`,
           method: 'GET',
         });
         if (resp.success && resp.contact) {
@@ -2921,7 +2921,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.contacts.search(query),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/search`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/search`,
           method: 'POST',
           body: { query },
         });
@@ -2958,7 +2958,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (contact: IContact) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts`,
           method: 'POST',
           body: { contact },
         });
@@ -2995,7 +2995,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         contact: IContact;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}`,
           method: 'PUT',
           body: { contact },
         });
@@ -3020,7 +3020,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (contactId: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}`,
           method: 'DELETE',
         });
       },
@@ -3048,7 +3048,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (itemId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${itemId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${itemId}`,
           method: 'DELETE',
         });
       },
@@ -3112,7 +3112,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasourceId}`,
+            `${configuration.iamUrl}/api/iam/v1/datasources/${datasourceId}`,
             principalUid,
             principalKind,
           ),
@@ -3138,7 +3138,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (datasource: IDatasource) => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/datasources/${datasource.id}`,
+            `${configuration.iamUrl}/api/iam/v1/datasources/${datasource.id}`,
             principalUid,
             principalKind,
           ),
@@ -3185,7 +3185,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secretId}`,
+            `${configuration.iamUrl}/api/iam/v1/secrets/${secretId}`,
             principalUid,
             principalKind,
           ),
@@ -3215,7 +3215,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async (secret: ISecret) => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/secrets/${secret.id}`,
+            `${configuration.iamUrl}/api/iam/v1/secrets/${secret.id}`,
             principalUid,
             principalKind,
           ),
@@ -3243,7 +3243,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.tokens.detail(tokenId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${tokenId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/api-keys/${tokenId}`,
           method: 'GET',
         });
         const tokenPayload = resp?.apiKey ?? resp?.api_key ?? resp?.token;
@@ -3264,7 +3264,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: IIAMToken) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${token.id}`,
+          url: `${configuration.iamUrl}/api/iam/v1/api-keys/${token.id}`,
           method: 'PUT',
           body: { ...token },
         });
@@ -3289,7 +3289,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (tokenId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/api-keys/${tokenId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/api-keys/${tokenId}`,
           method: 'DELETE',
         });
       },
@@ -3310,7 +3310,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.contacts.byHandle(handle),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/handle/${handle}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/handle/${handle}`,
           method: 'GET',
         });
         if (resp.success && resp.contact) {
@@ -3338,7 +3338,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.teams.byHandle(handle),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/handle/${handle}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/handle/${handle}`,
           method: 'GET',
         });
         if (resp.success && resp.team) {
@@ -3366,7 +3366,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.spaces.orgSpaceByHandle(organizationId, handle),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/organizations/${organizationId}/spaces/handle/${handle}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/organizations/${organizationId}/spaces/handle/${handle}`,
           method: 'GET',
         });
         if (resp.success && resp.space) {
@@ -3396,7 +3396,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.spaces.detail(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}`,
           method: 'GET',
         });
         if (resp.success && resp.space) {
@@ -3427,7 +3427,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
         // If not in cache, fetch all user spaces which will populate it
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/users/me`,
           method: 'GET',
         });
 
@@ -3478,7 +3478,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         updates: Partial<IAnySpace>;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/organizations/${organizationId}/spaces/${spaceId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/organizations/${organizationId}/spaces/${spaceId}`,
           method: 'PUT',
           body: updates,
         });
@@ -3505,7 +3505,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/${userId}`,
           method: 'GET',
         });
       },
@@ -3535,7 +3535,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: [...queryKeys.users.detail(userId), 'credits'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/users/${userId}`,
           method: 'GET',
         });
         if (resp.success) {
@@ -3563,7 +3563,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         brand?: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/users/${userId}`,
           method: 'PUT',
           body: { credits, brand },
         });
@@ -3589,7 +3589,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}`,
           method: 'POST',
         });
       },
@@ -3617,7 +3617,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}`,
           method: 'DELETE',
         });
       },
@@ -3647,7 +3647,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         roleName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}/roles/${roleName}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}/roles/${roleName}`,
           method: 'POST',
         });
       },
@@ -3674,7 +3674,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         roleName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}/roles/${roleName}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}/members/${userId}/roles/${roleName}`,
           method: 'DELETE',
         });
       },
@@ -3699,7 +3699,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${teamId}/members/${userId}`,
           method: 'POST',
         });
       },
@@ -3727,7 +3727,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${teamId}/members/${userId}`,
           method: 'DELETE',
         });
       },
@@ -3757,7 +3757,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         roleName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}/roles/${roleName}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${teamId}/members/${userId}/roles/${roleName}`,
           method: 'POST',
         });
       },
@@ -3784,7 +3784,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         roleName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}/members/${userId}/roles/${roleName}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${teamId}/members/${userId}/roles/${roleName}`,
           method: 'DELETE',
         });
       },
@@ -3811,7 +3811,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         accountId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}/members/${accountId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}/members/${accountId}`,
           method: 'POST',
         });
       },
@@ -3841,7 +3841,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         accountId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}/members/${accountId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/organizations/${organizationId}/members/${accountId}`,
           method: 'DELETE',
         });
       },
@@ -3863,7 +3863,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/public`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/public`,
           method: 'PUT',
         });
       },
@@ -3882,7 +3882,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/private`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/private`,
           method: 'PUT',
         });
       },
@@ -3913,7 +3913,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         passwordConfirm: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/password`,
+          url: `${configuration.iamUrl}/api/iam/v1/password`,
           method: 'PUT',
           body: { handle, password, passwordConfirm },
         });
@@ -3928,7 +3928,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (email: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/me/email`,
+          url: `${configuration.iamUrl}/api/iam/v1/me/email`,
           method: 'PUT',
           body: { email },
         });
@@ -3943,7 +3943,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/me/email`,
+          url: `${configuration.iamUrl}/api/iam/v1/me/email`,
           method: 'POST',
           body: { token },
         });
@@ -3968,7 +3968,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         roleName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/roles/${roleName}`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/${userId}/roles/${roleName}`,
           method: 'POST',
         });
       },
@@ -3993,7 +3993,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         roleName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/users/${userId}/roles/${roleName}`,
+          url: `${configuration.iamUrl}/api/iam/v1/users/${userId}/roles/${roleName}`,
           method: 'DELETE',
         });
       },
@@ -4013,7 +4013,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['schools'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/schools`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/schools`,
           method: 'GET',
         });
         if (resp.success && resp.orgs) {
@@ -4049,7 +4049,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}`,
           method: 'GET',
         });
       },
@@ -4083,7 +4083,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations`,
           method: 'GET',
         });
       },
@@ -4125,7 +4125,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         organizationId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/teams/${teamId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/teams/${teamId}`,
           method: 'GET',
         });
       },
@@ -4156,7 +4156,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/${organizationId}/teams`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/${organizationId}/teams`,
           method: 'GET',
         });
       },
@@ -4195,7 +4195,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         spaceId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/organizations/${organizationId}/spaces/${spaceId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/organizations/${organizationId}/spaces/${spaceId}`,
           method: 'GET',
         });
       },
@@ -4220,7 +4220,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (organizationId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/organizations/${organizationId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/organizations/${organizationId}`,
           method: 'GET',
         });
       },
@@ -4250,7 +4250,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/users/me`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/users/me`,
           method: 'GET',
         });
       },
@@ -4285,7 +4285,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['courses', 'detail', courseId] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}`,
           method: 'GET',
         });
         if (resp.success && resp.course) {
@@ -4313,7 +4313,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         description: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}`,
           method: 'PUT',
           body: { name, description },
         });
@@ -4339,7 +4339,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['courses', 'public'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/courses/public`,
+          url: `${configuration.libraryUrl}/api/library/v1/courses/public`,
           method: 'GET',
         });
         if (resp.success && resp.courses) {
@@ -4359,7 +4359,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['courses', 'instructor', userId] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/instructors/${userId}/courses`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/instructors/${userId}/courses`,
           method: 'GET',
         });
         if (resp.success && resp.courses) {
@@ -4380,7 +4380,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['courses', 'enrollments', 'me'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/enrollments/me`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/enrollments/me`,
           method: 'GET',
         });
         if (resp.success && resp.enrollments) {
@@ -4407,7 +4407,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         studentId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
           method: 'POST',
         });
       },
@@ -4456,7 +4456,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         studentId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
           method: 'DELETE',
         });
       },
@@ -4495,7 +4495,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['spaces', spaceId, 'items'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -4518,7 +4518,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['spaces', spaceId, 'default-items'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/default-items`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/default-items`,
           method: 'GET',
         });
         if (resp.success) {
@@ -4541,7 +4541,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (itemId: string) => {
         return requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/items/${itemId}/public`,
+          url: `${configuration.libraryUrl}/api/library/v1/items/${itemId}/public`,
           method: 'PATCH',
           body: { is_public: true },
         });
@@ -4559,7 +4559,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (itemId: string) => {
         return requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/items/${itemId}/public`,
+          url: `${configuration.libraryUrl}/api/library/v1/items/${itemId}/public`,
           method: 'PATCH',
           body: { is_public: false },
         });
@@ -4599,7 +4599,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           path += `/spaces/${spaceHandle}`;
         }
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}${path}`,
+          url: `${configuration.spacerUrl}${path}`,
           method: 'GET',
         });
       },
@@ -4679,7 +4679,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/export`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/export`,
           method: 'GET',
         });
       },
@@ -4698,7 +4698,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.cells.detail(cellId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${cellId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${cellId}`,
           method: 'GET',
         });
         if (resp.success && resp.item) {
@@ -4722,7 +4722,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.cells.bySpace(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/cell`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/cell`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -4750,7 +4750,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         spaceId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/cells/${cell.id}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/cells/${cell.id}`,
           method: 'PUT',
           body: cell,
         });
@@ -4776,7 +4776,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (cellId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/cells/${cellId}/clone`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/cells/${cellId}/clone`,
           method: 'POST',
         });
       },
@@ -4822,7 +4822,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.item) {
@@ -4861,7 +4861,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -4902,7 +4902,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         return requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/datasets/${id}${query ? `?${query}` : ''}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/datasets/${id}${query ? `?${query}` : ''}`,
           method: 'PUT',
           body: { name, description },
         });
@@ -4931,7 +4931,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.environments.detail(environmentId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${environmentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${environmentId}`,
           method: 'GET',
         });
         if (resp.success && resp.item) {
@@ -4952,7 +4952,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.environments.bySpace(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/environment`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/environment`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -4973,7 +4973,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.lessons.detail(lessonId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lessons/${lessonId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lessons/${lessonId}`,
           method: 'GET',
         });
         if (resp.success && resp.lesson) {
@@ -4994,7 +4994,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.lessons.bySpace(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/lesson`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/lesson`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -5014,7 +5014,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (lessonId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${lessonId}/clone`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${lessonId}/clone`,
           method: 'POST',
         });
       },
@@ -5046,7 +5046,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.exercises.detail(exerciseId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${exerciseId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${exerciseId}`,
           method: 'GET',
         });
         if (resp.success && resp.item) {
@@ -5067,7 +5067,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.exercises.bySpace(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/exercise`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/exercise`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -5105,7 +5105,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         codeTest?: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/exercises/${id}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/exercises/${id}`,
           method: 'PUT',
           body: {
             name,
@@ -5134,7 +5134,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (exerciseId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/exercises/${exerciseId}/clone`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/exercises/${exerciseId}/clone`,
           method: 'POST',
         });
       },
@@ -5165,7 +5165,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.assignments.detail(assignmentId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}`,
           method: 'GET',
         });
         if (resp.success && resp.assignment) {
@@ -5186,7 +5186,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.assignments.bySpace(spaceId),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/assignment`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/assignment`,
           method: 'GET',
         });
         if (resp.success && resp.items) {
@@ -5206,7 +5206,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (assignmentId: string) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${assignmentId}/clone`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${assignmentId}/clone`,
           method: 'POST',
         });
       },
@@ -5237,7 +5237,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['invites', 'token', token] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites/tokens/${token}`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites/tokens/${token}`,
           method: 'GET',
         });
         if (resp.success && resp.invite) {
@@ -5258,7 +5258,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['invites', 'user', accountId] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites/users/${accountId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites/users/${accountId}`,
           method: 'GET',
         });
         if (resp.success && resp.invites) {
@@ -5278,7 +5278,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites/tokens/${token}`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites/tokens/${token}`,
           method: 'PUT',
         });
       },
@@ -5308,7 +5308,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['assignments', 'student', assignmentId, courseId, userId],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/courses/${courseId}/students/${userId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}/courses/${courseId}/students/${userId}`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -5339,7 +5339,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/reset`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}/reset`,
           method: 'POST',
         });
       },
@@ -5379,7 +5379,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         model: unknown;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/students/${userId}/grade`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}/students/${userId}/grade`,
           method: 'PUT',
           body: { model },
         });
@@ -5412,7 +5412,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['assignments', 'studentVersion', assignmentId],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/student_version`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}/student_version`,
           method: 'GET',
         });
         return resp;
@@ -5444,7 +5444,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         courseId?: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/exercises/${exerciseId}/score`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/exercises/${exerciseId}/score`,
           method: 'PUT',
           body: { codeStudent, score, courseId },
         });
@@ -5476,7 +5476,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['courses', courseId, 'students', studentId],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -5507,7 +5507,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryKey: ['courses', courseId, 'students', studentId],
         queryFn: async () => {
           const resp = await requestDatalayer({
-            url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
+            url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentId}`,
             method: 'GET',
           });
           if (!resp.success) {
@@ -5539,7 +5539,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         completed: boolean;
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${courseId}/types/${itemType}/items/${itemId}/complete`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${courseId}/types/${itemType}/items/${itemId}/complete`,
           method: 'PUT',
           body: { completed },
         });
@@ -5573,7 +5573,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         itemIds: string[];
       }) => {
         return requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/items`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}/items`,
           method: 'PUT',
           body: { itemIds },
         });
@@ -5603,7 +5603,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['inbounds'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.inboundsRunUrl}/api/inbounds/v1/inbounds`,
+          url: `${configuration.inboundsUrl}/api/inbounds/v1/inbounds`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -5626,7 +5626,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['outbounds', outboundId],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -5649,7 +5649,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['outbounds'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -5670,7 +5670,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (params: unknown) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/emails/bulk/draft`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/emails/bulk/draft`,
           method: 'POST',
           body: params,
         });
@@ -5697,7 +5697,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (outboundId: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}/try`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}/try`,
           method: 'POST',
           body: {},
         });
@@ -5720,7 +5720,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (outboundId: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}/launch`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}/launch`,
           method: 'POST',
           body: {},
         });
@@ -5754,7 +5754,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         content: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/email`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/email`,
           method: 'POST',
           body: { userId, recipient, subject, content },
         });
@@ -5771,7 +5771,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (outboundId: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}`,
           method: 'DELETE',
         });
       },
@@ -5798,7 +5798,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/outbounds/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/outbounds/users/${userId}`,
           method: 'PUT',
         });
       },
@@ -5812,7 +5812,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/outbounds/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/outbounds/users/${userId}`,
           method: 'DELETE',
         });
       },
@@ -5826,7 +5826,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (contactId: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/unsubscribe/${contactId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/unsubscribe/${contactId}`,
           method: 'GET',
         });
       },
@@ -5840,7 +5840,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/unsubscribe/${token}`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/unsubscribe/${token}`,
           method: 'GET',
         });
       },
@@ -5860,7 +5860,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/mfa`,
+          url: `${configuration.iamUrl}/api/iam/v1/mfa`,
           method: 'PUT',
         });
       },
@@ -5879,7 +5879,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/mfa`,
+          url: `${configuration.iamUrl}/api/iam/v1/mfa`,
           method: 'DELETE',
         });
       },
@@ -5902,7 +5902,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         code: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/mfa`,
+          url: `${configuration.iamUrl}/api/iam/v1/mfa`,
           method: 'POST',
           body: { userUid, code },
         });
@@ -5980,7 +5980,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         };
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/plans/prices`,
+          url: `${configuration.iamUrl}/api/iam/stripe/v1/plans/prices`,
           method: 'GET',
         });
 
@@ -6020,7 +6020,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         product: any;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/topup/payment-intent`,
+          url: `${configuration.iamUrl}/api/iam/stripe/v1/topup/payment-intent`,
           method: 'POST',
           body: {
             price_id: product?.id,
@@ -6044,7 +6044,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/plans/catalog`,
+            `${configuration.iamUrl}/api/iam/v1/plans/catalog`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -6069,7 +6069,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         plan: any;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/payment-intent`,
+          url: `${configuration.iamUrl}/api/iam/stripe/v1/subscription/payment-intent`,
           method: 'POST',
           body: {
             price_id: plan?.id,
@@ -6088,7 +6088,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/stripe/v1/subscription/resume/setup-intent`,
+          url: `${configuration.iamUrl}/api/iam/stripe/v1/subscription/resume/setup-intent`,
           method: 'POST',
           body: scope?.accountUid ? { account_uid: scope.accountUid } : {},
         });
@@ -6109,7 +6109,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/plans`,
+            `${configuration.iamUrl}/api/iam/v1/plans`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -6129,7 +6129,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'eligible-accounts'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/plans/eligible-accounts`,
+          url: `${configuration.iamUrl}/api/iam/v1/plans/eligible-accounts`,
           method: 'GET',
         });
         return resp.accounts || [];
@@ -6157,7 +6157,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'accounts-details', normalizedAccountUids],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/plans/accounts/details`,
+          url: `${configuration.iamUrl}/api/iam/v1/plans/accounts/details`,
           method: 'POST',
           body: {
             account_uids: normalizedAccountUids,
@@ -6180,7 +6180,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/plans/cancel`,
+            `${configuration.iamUrl}/api/iam/v1/plans/cancel`,
             scope?.accountUid,
           ),
           method: 'POST',
@@ -6204,7 +6204,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async () => {
         return requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/plans/resume`,
+            `${configuration.iamUrl}/api/iam/v1/plans/resume`,
             scope?.accountUid,
           ),
           method: 'POST',
@@ -6229,7 +6229,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['subscription', 'admin', userId],
       queryFn: async () => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/plans/admin/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/plans/admin/${userId}`,
           method: 'GET',
         });
       },
@@ -6247,7 +6247,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/plans/admin/${userId}/reset`,
+          url: `${configuration.iamUrl}/api/iam/v1/plans/admin/${userId}/reset`,
           method: 'POST',
         });
       },
@@ -6268,7 +6268,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (credits: number) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits`,
           method: 'DELETE',
           body: { credits },
         });
@@ -6300,7 +6300,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         brand: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.supportRunUrl}/api/support/v1/support/request`,
+          url: `${configuration.supportUrl}/api/support/v1/support/request`,
           method: 'POST',
           body: { subject, message, email, brand },
         });
@@ -6327,7 +6327,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         message: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.supportRunUrl}/api/support/v1/support/request2`,
+          url: `${configuration.supportUrl}/api/support/v1/support/request2`,
           method: 'POST',
           body: { accountHandle, firstName, lastName, email, message },
         });
@@ -6346,7 +6346,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['users', userId, 'surveys'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/surveys/users/${userId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/surveys/users/${userId}`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -6387,7 +6387,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         passwordConfirm: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/join/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/join/request`,
           method: 'POST',
           body: {
             handle,
@@ -6423,7 +6423,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         passwordConfirm: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/join/request/token`,
+          url: `${configuration.iamUrl}/api/iam/v1/join/request/token`,
           method: 'POST',
           body: {
             handle,
@@ -6452,7 +6452,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/join/invites/token`,
+          url: `${configuration.iamUrl}/api/iam/v1/join/invites/token`,
           method: 'POST',
           body: { ...formValues, token },
         });
@@ -6473,7 +6473,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/join/users/${userHandle}/tokens/${token}`,
+          url: `${configuration.iamUrl}/api/iam/v1/join/users/${userHandle}/tokens/${token}`,
           method: 'GET',
         });
       },
@@ -6499,7 +6499,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         passwordConfirm: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/password/token`,
+          url: `${configuration.iamUrl}/api/iam/v1/password/token`,
           method: 'POST',
           body: { handle, password, passwordConfirm },
         });
@@ -6522,7 +6522,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         passwordConfirm: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/password`,
+          url: `${configuration.iamUrl}/api/iam/v1/password`,
           method: 'PUT',
           body: { handle, password, passwordConfirm },
         });
@@ -6543,7 +6543,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/password/confirm/users/${userHandle}/tokens/${token}`,
+          url: `${configuration.iamUrl}/api/iam/v1/password/confirm/users/${userHandle}/tokens/${token}`,
           method: 'PUT',
         });
       },
@@ -6567,7 +6567,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           success: boolean;
           autorization_url: string;
         }>({
-          url: `${configuration.iamRunUrl}/api/iam/v1/oauth2/authz/url?${queryString}`,
+          url: `${configuration.iamUrl}/api/iam/v1/oauth2/authz/url?${queryString}`,
           notifyOnError: false,
         });
         return resp.autorization_url;
@@ -6588,7 +6588,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           success: boolean;
           autorization_url: string;
         }>({
-          url: `${configuration.iamRunUrl}/api/iam/v1/oauth2/authz/url/link?${queryString}`,
+          url: `${configuration.iamUrl}/api/iam/v1/oauth2/authz/url/link?${queryString}`,
         });
         return resp;
       },
@@ -6614,7 +6614,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         tagName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/tags/${tagName}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}/tags/${tagName}`,
           method: 'POST',
         });
       },
@@ -6642,7 +6642,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         tagName: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/tags/${tagName}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}/tags/${tagName}`,
           method: 'DELETE',
         });
       },
@@ -6668,7 +6668,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         message: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/invites`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/invites`,
           method: 'POST',
           body: { contactId, message },
         });
@@ -6691,7 +6691,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         useDomain: boolean;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/enrich/email?useDomain=${useDomain}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}/enrich/email?useDomain=${useDomain}`,
           method: 'GET',
         });
       },
@@ -6712,7 +6712,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (contactId: string) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/enrich/linkedin`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}/enrich/linkedin`,
           method: 'GET',
         });
       },
@@ -6739,7 +6739,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         message: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}/connect/linkedin`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}/connect/linkedin`,
           method: 'POST',
           body: { message },
         });
@@ -6771,7 +6771,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         contactId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
+          url: `${configuration.growthUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
           method: 'POST',
         });
       },
@@ -6801,7 +6801,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         contactId: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
+          url: `${configuration.growthUrl}/api/growth/v1/users/${userId}/contacts/${contactId}/link`,
           method: 'DELETE',
         });
       },
@@ -6828,7 +6828,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.credits.organizationOverview(organizationUid),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/overview`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/overview`,
           method: 'GET',
         });
         return resp.overview ?? { organization: null, teams: [] };
@@ -6846,7 +6846,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.credits.teamOverview(teamUid),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/overview`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/overview`,
           method: 'GET',
         });
         return resp.overview ?? { team: null, members: [] };
@@ -6864,7 +6864,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.credits.organizationHistory(organizationUid),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/history`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/history`,
           method: 'GET',
         });
         return (
@@ -6884,7 +6884,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.credits.teamHistory(teamUid),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/history`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/history`,
           method: 'GET',
         });
         return resp.history ?? { team_uid: teamUid, events: [] };
@@ -6909,7 +6909,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         amount: number;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}`,
           method: 'POST',
           body: { amount },
         });
@@ -6946,7 +6946,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         amount: number;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}`,
           method: 'POST',
           body: { amount },
         });
@@ -6977,7 +6977,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         amount: number;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}/revoke`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/organizations/${organizationUid}/teams/${teamUid}/revoke`,
           method: 'POST',
           body: { amount },
         });
@@ -7014,7 +7014,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         amount: number;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}/revoke`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/credits/allocations/teams/${teamUid}/members/${memberUid}/revoke`,
           method: 'POST',
           body: { amount },
         });
@@ -7045,7 +7045,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         quota?: number;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/quota`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/quota`,
           method: 'PUT',
           body: {
             user_uid: userId,
@@ -7148,7 +7148,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
         const resp = await requestDatalayer({
           url: withAccountUidQuery(
-            `${configuration.iamRunUrl}/api/iam/v1/usage/user`,
+            `${configuration.iamUrl}/api/iam/v1/usage/user`,
             scope?.accountUid,
           ),
           method: 'GET',
@@ -7228,7 +7228,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         };
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/users/${userId}`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/users/${userId}`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
@@ -7306,7 +7306,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         };
 
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/usage/platform`,
+          url: `${configuration.iamUrl}/api/iam/v1/usage/platform`,
           method: 'GET',
         });
         // Transform snake_case API response to camelCase IUsage interface
@@ -7359,7 +7359,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           .join('&');
 
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/search?${queryString}`,
+          url: `${configuration.libraryUrl}/api/library/v1/search?${queryString}`,
           method: 'GET',
         });
 
@@ -7424,7 +7424,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (accessToken: string) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
           method: 'POST',
           body: {
             request_method: 'GET',
@@ -7465,7 +7465,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         };
 
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
           method: 'POST',
           body: {
             request_method: 'POST',
@@ -7512,7 +7512,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           };
 
           const registerResp = await requestDatalayer({
-            url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+            url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
             method: 'POST',
             body: {
               request_method: 'POST',
@@ -7531,7 +7531,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
           // Step 2: Upload image
           await requestDatalayer({
-            url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+            url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
             method: 'POST',
             body: {
               request_method: 'PUT',
@@ -7585,7 +7585,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
 
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
           method: 'POST',
           body: {
             request_method: 'POST',
@@ -7609,7 +7609,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async ({ url, token }: { url: string; token: string }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
           method: 'POST',
           body: {
             request_method: 'GET',
@@ -7636,7 +7636,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
           method: 'POST',
           body: {
             request_method: 'POST',
@@ -7664,7 +7664,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         token: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/proxy/request`,
+          url: `${configuration.iamUrl}/api/iam/v1/proxy/request`,
           method: 'POST',
           body: {
             request_method: 'PUT',
@@ -7698,7 +7698,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         affiliation?: string;
       }) => {
         return requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/waitinglist/register`,
+          url: `${configuration.growthUrl}/api/growth/v1/waitinglist/register`,
           method: 'POST',
           body: {
             firstName,
@@ -7721,7 +7721,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['growth', 'kpi'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/kpis`,
+          url: `${configuration.growthUrl}/api/growth/v1/kpis`,
           method: 'GET',
         });
         return resp;
@@ -7740,7 +7740,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['growth', 'contacts-kpi'],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/kpis/contacts`,
+          url: `${configuration.growthUrl}/api/growth/v1/kpis/contacts`,
           method: 'GET',
         });
         return resp;
@@ -7777,7 +7777,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         spaceId: string;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/users/${userId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/users/${userId}`,
           method: 'GET',
         });
         return resp;
@@ -7807,7 +7807,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (courseId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}`,
           method: 'GET',
         });
         return resp;
@@ -7833,7 +7833,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/courses/public`,
+          url: `${configuration.libraryUrl}/api/library/v1/courses/public`,
           method: 'GET',
         });
         return resp;
@@ -7859,7 +7859,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/instructors/${user?.id}/courses`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/instructors/${user?.id}/courses`,
           method: 'GET',
         });
         return resp;
@@ -7885,7 +7885,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/enrollments/me`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/enrollments/me`,
           method: 'GET',
         });
         return resp;
@@ -7921,7 +7921,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         studentHandle: string;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentHandle}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/courses/${courseId}/enrollments/students/${studentHandle}`,
           method: 'GET',
         });
         return resp;
@@ -7950,7 +7950,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (notebookId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/notebooks/${notebookId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/notebooks/${notebookId}`,
           method: 'GET',
         });
         return resp;
@@ -7976,7 +7976,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/notebook`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/notebook`,
           method: 'GET',
         });
         return resp;
@@ -8018,7 +8018,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (documentId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lexicals/${documentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lexicals/${documentId}`,
           method: 'GET',
         });
         return resp;
@@ -8044,7 +8044,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/document`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/document`,
           method: 'GET',
         });
         return resp;
@@ -8070,7 +8070,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (cellId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${cellId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${cellId}`,
           method: 'GET',
         });
         return resp;
@@ -8096,7 +8096,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/cell`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/cell`,
           method: 'GET',
         });
         return resp;
@@ -8145,7 +8145,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         return resp;
@@ -8195,7 +8195,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         const query = params.toString();
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
           method: 'GET',
         });
         return resp;
@@ -8222,7 +8222,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.iamRunUrl}/api/iam/v1/organizations/schools`,
+          url: `${configuration.iamUrl}/api/iam/v1/organizations/schools`,
           method: 'GET',
         });
         return resp;
@@ -8243,7 +8243,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.items.public(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/search?q=*&max=-1`,
+          url: `${configuration.libraryUrl}/api/library/v1/search?q=*&max=-1`,
           method: 'GET',
         });
         return {
@@ -8266,7 +8266,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: [...queryKeys.items.all(), 'publications'] as const,
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/publications`,
+          url: `${configuration.libraryUrl}/api/library/v1/publications`,
           method: 'GET',
         });
         return {
@@ -8292,7 +8292,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryRunUrl}/api/library/v1/search?q=*&max=-1`,
+          url: `${configuration.libraryUrl}/api/library/v1/search?q=*&max=-1`,
           method: 'GET',
         });
         return {
@@ -8321,7 +8321,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items`,
           method: 'GET',
         });
         return resp;
@@ -8393,7 +8393,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (environmentId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${environmentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${environmentId}`,
           method: 'GET',
         });
         return resp;
@@ -8419,7 +8419,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/environment`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/environment`,
           method: 'GET',
         });
         return resp;
@@ -8445,7 +8445,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (lessonId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/lessons/${lessonId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/lessons/${lessonId}`,
           method: 'GET',
         });
         return resp;
@@ -8471,7 +8471,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/lesson`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/lesson`,
           method: 'GET',
         });
         return resp;
@@ -8497,7 +8497,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (exerciseId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/items/${exerciseId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/items/${exerciseId}`,
           method: 'GET',
         });
         return resp;
@@ -8523,7 +8523,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/exercise`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/exercise`,
           method: 'GET',
         });
         return resp;
@@ -8549,7 +8549,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (assignmentId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}`,
           method: 'GET',
         });
         return resp;
@@ -8587,7 +8587,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         assignmentId: string;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/assignments/${assignmentId}/courses/${courseId}/students/${userId}`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/assignments/${assignmentId}/courses/${courseId}/students/${userId}`,
           method: 'GET',
         });
         return resp;
@@ -8617,7 +8617,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (spaceId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.spacerRunUrl}/api/spacer/v1/spaces/${spaceId}/items/types/assignment`,
+          url: `${configuration.spacerUrl}/api/spacer/v1/spaces/${spaceId}/items/types/assignment`,
           method: 'GET',
         });
         return resp;
@@ -8709,7 +8709,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         socialUrl: string;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites/request`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites/request`,
           method: 'POST',
           body: {
             first_name: firstName,
@@ -8758,7 +8758,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         brand: string;
       }) => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites`,
           method: 'POST',
           body: {
             email,
@@ -8789,7 +8789,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (token: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites/tokens/${token}`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites/tokens/${token}`,
           method: 'GET',
         });
         return resp;
@@ -8813,7 +8813,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (accountId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/invites/users/${accountId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/invites/users/${accountId}`,
           method: 'GET',
         });
         return resp;
@@ -8858,7 +8858,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (contactId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/contacts/${contactId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/contacts/${contactId}`,
           method: 'GET',
         });
         return resp;
@@ -8885,7 +8885,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['inbounds', id],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.inboundsRunUrl}/api/inbounds/v1/inbounds/${id}`,
+          url: `${configuration.inboundsUrl}/api/inbounds/v1/inbounds/${id}`,
           method: 'GET',
         });
         return resp;
@@ -8907,7 +8907,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: ['inbounds', 'handle', handle],
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.inboundsRunUrl}/api/inbounds/v1/inbounds/handles/${handle}`,
+          url: `${configuration.inboundsUrl}/api/inbounds/v1/inbounds/handles/${handle}`,
           method: 'GET',
         });
         return resp;
@@ -8928,7 +8928,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (userId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.inboundsRunUrl}/api/inbounds/v1/inbounds/${userId}`,
+          url: `${configuration.inboundsUrl}/api/inbounds/v1/inbounds/${userId}`,
           method: 'GET',
         });
         return resp;
@@ -8953,7 +8953,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (outboundId: string) => {
         const resp = await requestDatalayer({
-          url: `${configuration.growthRunUrl}/api/growth/v1/outbounds/${outboundId}`,
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}`,
           method: 'GET',
         });
         return resp;
@@ -8975,7 +8975,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.ray.clusters(),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/clusters`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -8990,7 +8990,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       refetchOnMount: true,
-      enabled: Boolean(configuration.runtimesRunUrl),
+      enabled: Boolean(configuration.runtimesUrl),
     });
   };
 
@@ -8999,7 +8999,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKey: queryKeys.ray.cluster(namespace, clusterName),
       queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -9009,7 +9009,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       enabled:
-        Boolean(configuration.runtimesRunUrl) &&
+        Boolean(configuration.runtimesUrl) &&
         Boolean(namespace) &&
         Boolean(clusterName),
     });
@@ -9019,7 +9019,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (payload: Record<string, unknown>) => {
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/clusters`,
           method: 'POST',
           body: payload,
         });
@@ -9040,7 +9040,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (clusterName: string) => {
         return requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}?namespace=${encodeURIComponent(namespace)}`,
           method: 'DELETE',
         });
       },
@@ -9060,7 +9060,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           params.set('cluster_name', clusterName);
         }
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs?${params.toString()}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/jobs?${params.toString()}`,
           method: 'GET',
         });
         if (!resp.success) {
@@ -9069,7 +9069,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return asArray(resp.jobs);
       },
       ...DEFAULT_QUERY_OPTIONS,
-      enabled: Boolean(configuration.runtimesRunUrl),
+      enabled: Boolean(configuration.runtimesUrl),
     });
   };
 
@@ -9077,7 +9077,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (payload: Record<string, unknown>) => {
         return requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}/jobs`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/clusters/${encodeURIComponent(clusterName)}/jobs`,
           method: 'POST',
           body: payload,
         });
@@ -9092,7 +9092,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return useMutation({
       mutationFn: async (jobName: string) => {
         return requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}?namespace=${encodeURIComponent(namespace)}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}?namespace=${encodeURIComponent(namespace)}`,
           method: 'DELETE',
         });
       },
@@ -9115,7 +9115,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         params.set('namespace', namespace);
         params.set('tail_lines', String(tailLines));
         const resp = await requestDatalayer({
-          url: `${configuration.runtimesRunUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}/logs?${params.toString()}`,
+          url: `${configuration.runtimesUrl}/api/runtimes/v1/ray/jobs/${encodeURIComponent(jobName)}/logs?${params.toString()}`,
           method: 'GET',
           // Logs naturally 404 once a job is deleted; never surface a toast.
           notifyOnError: false,
@@ -9130,7 +9130,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       ...DEFAULT_QUERY_OPTIONS,
       enabled:
-        Boolean(configuration.runtimesRunUrl) && Boolean(jobName) && enabled,
+        Boolean(configuration.runtimesUrl) && Boolean(jobName) && enabled,
       refetchOnMount: 'always',
       refetchInterval: query => {
         const status = String(
