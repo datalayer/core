@@ -4,7 +4,15 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ActionList, ActionMenu, Box, Button, Label, Text } from '@primer/react';
+import {
+  ActionList,
+  ActionMenu,
+  Box,
+  Button,
+  Label,
+  Text,
+  ThemeProvider,
+} from '@primer/react';
 import {
   OrganizationIcon,
   PeopleIcon,
@@ -192,7 +200,10 @@ export function PrincipalSwitcherMenu({
     // Keep explicit organization/team selections stable across route transitions,
     // even while memberships/organizations are still loading or temporarily
     // unavailable for a given view.
-    if (selectedPrincipalKind === 'organization' || selectedPrincipalKind === 'team') {
+    if (
+      selectedPrincipalKind === 'organization' ||
+      selectedPrincipalKind === 'team'
+    ) {
       return;
     }
     if (
@@ -279,115 +290,40 @@ export function PrincipalSwitcherMenu({
   } as const;
 
   return (
-    <ActionMenu>
-      <ActionMenu.Anchor>
-        {showClosedBorder ? (
-          <Box
-            as="button"
-            type="button"
-            aria-label="Switch principal"
-            sx={{
-              width: fullWidth ? '100%' : 'auto',
-              boxSizing: 'border-box',
-              px: 2,
-              py: 2,
-              fontSize: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-              bg: 'canvas.subtle',
-              border: '1px solid',
-              borderColor: 'border.default',
-              borderRadius: 2,
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'background-color 120ms ease',
-              ':hover': {
+    <ThemeProvider>
+      <ActionMenu>
+        <ActionMenu.Anchor>
+          {showClosedBorder ? (
+            <Box
+              as="button"
+              type="button"
+              aria-label="Switch principal"
+              sx={{
+                width: fullWidth ? '100%' : 'auto',
+                boxSizing: 'border-box',
+                px: 2,
+                py: 2,
+                fontSize: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
                 bg: 'canvas.subtle',
-              },
-              ':focus-visible': {
-                bg: 'canvas.subtle',
-                outline: '2px solid',
-                outlineColor: 'accent.emphasis',
-                outlineOffset: '2px',
-              },
-            }}
-          >
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                color: 'fg.muted',
-                flexShrink: 0,
-              }}
-            >
-              {selectedPrincipalKind === 'organization' ? (
-                <OrganizationIcon size={16} />
-              ) : selectedPrincipalKind === 'team' ? (
-                <PeopleIcon size={16} />
-              ) : (
-                <PersonIcon size={16} />
-              )}
-            </Box>
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Text
-                sx={{
-                  display: 'block',
-                  color: 'accent.fg',
-                  fontWeight: 'semibold',
-                  fontSize: 'inherit',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%',
-                }}
-              >
-                {selectedPrincipalLabelClosed}
-              </Text>
-            </Box>
-            {isPlatformAdmin && isCurrentUserPrincipal ? (
-              <Box
-                sx={{
-                  flexShrink: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                }}
-              >
-                <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                  admin
-                </Label>
-              </Box>
-            ) : null}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                color: 'fg.muted',
-                flexShrink: 0,
-                ml: isPlatformAdmin && isCurrentUserPrincipal ? 1 : 0,
-              }}
-            >
-              <TriangleDownIcon size={12} />
-            </Box>
-          </Box>
-        ) : (
-          <Button
-            variant="invisible"
-            size="small"
-            aria-label="Switch principal"
-            trailingVisual={TriangleDownIcon}
-            sx={{
-              maxWidth: fullWidth ? '100%' : ['200px', '260px', '360px'],
-              width: fullWidth ? '100%' : 'auto',
-            }}
-          >
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 1,
-                minWidth: 0,
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 2,
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background-color 120ms ease',
+                ':hover': {
+                  bg: 'canvas.subtle',
+                },
+                ':focus-visible': {
+                  bg: 'canvas.subtle',
+                  outline: '2px solid',
+                  outlineColor: 'accent.emphasis',
+                  outlineOffset: '2px',
+                },
               }}
             >
               <Box
@@ -406,166 +342,243 @@ export function PrincipalSwitcherMenu({
                   <PersonIcon size={16} />
                 )}
               </Box>
-              <Box
-                sx={{
-                  minWidth: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+              <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Text
                   sx={{
+                    display: 'block',
                     color: 'accent.fg',
                     fontWeight: 'semibold',
+                    fontSize: 'inherit',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
                   }}
                 >
                   {selectedPrincipalLabelClosed}
                 </Text>
               </Box>
               {isPlatformAdmin && isCurrentUserPrincipal ? (
-                <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                  admin
-                </Label>
-              ) : null}
-            </Box>
-          </Button>
-        )}
-      </ActionMenu.Anchor>
-      <ActionMenu.Overlay width="medium">
-        <ActionList>
-          <ActionList.Group>
-            <ActionList.GroupHeading>Personal</ActionList.GroupHeading>
-            <ActionList.Item
-              disabled={isCurrentUserPrincipal}
-              selected={isCurrentUserPrincipal}
-              sx={isCurrentUserPrincipal ? selectedItemSx : undefined}
-              onSelect={() => {
-                if (isCurrentUserPrincipal) {
-                  return;
-                }
-                if (personalUid && personalHandle) {
-                  selectUser(personalUid, personalHandle);
-                }
-              }}
-            >
-              <ActionList.LeadingVisual>
-                <PersonIcon />
-              </ActionList.LeadingVisual>
-              <DisplayHandle handle={personalHandle || 'me'} />
-              {isPlatformAdmin ? (
-                <ActionList.TrailingVisual>
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                  }}
+                >
                   <Label variant="secondary" size="small" sx={adminBadgeSx}>
                     admin
                   </Label>
-                </ActionList.TrailingVisual>
+                </Box>
               ) : null}
-            </ActionList.Item>
-          </ActionList.Group>
-          <ActionList.Group>
-            <ActionList.GroupHeading>Organizations</ActionList.GroupHeading>
-            {organizations.length === 0 ? (
-              <ActionList.Item disabled>No organizations</ActionList.Item>
-            ) : (
-              organizations.map((organization: any) => {
-                const organizationUid = getOrganizationUid(organization);
-                const isCurrentOrganizationPrincipal =
-                  selectedPrincipalKind === 'organization' &&
-                  selectedPrincipalUid === organizationUid;
-                return (
-                  <ActionList.Item
-                    key={organizationUid}
-                    disabled={isCurrentOrganizationPrincipal}
-                    selected={isCurrentOrganizationPrincipal}
-                    sx={
-                      isCurrentOrganizationPrincipal
-                        ? selectedItemSx
-                        : undefined
-                    }
-                    onSelect={() => {
-                      if (isCurrentOrganizationPrincipal) {
-                        return;
-                      }
-                      if (organizationUid && organization.handle) {
-                        selectOrganization(
-                          organizationUid,
-                          organization.handle,
-                        );
-                      }
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'fg.muted',
+                  flexShrink: 0,
+                  ml: isPlatformAdmin && isCurrentUserPrincipal ? 1 : 0,
+                }}
+              >
+                <TriangleDownIcon size={12} />
+              </Box>
+            </Box>
+          ) : (
+            <Button
+              variant="invisible"
+              size="small"
+              aria-label="Switch principal"
+              trailingVisual={TriangleDownIcon}
+              sx={{
+                maxWidth: fullWidth ? '100%' : ['200px', '260px', '360px'],
+                width: fullWidth ? '100%' : 'auto',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    color: 'fg.muted',
+                    flexShrink: 0,
+                  }}
+                >
+                  {selectedPrincipalKind === 'organization' ? (
+                    <OrganizationIcon size={16} />
+                  ) : selectedPrincipalKind === 'team' ? (
+                    <PeopleIcon size={16} />
+                  ) : (
+                    <PersonIcon size={16} />
+                  )}
+                </Box>
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Text
+                    sx={{
+                      color: 'accent.fg',
+                      fontWeight: 'semibold',
                     }}
                   >
-                    <ActionList.LeadingVisual>
-                      <OrganizationIcon />
-                    </ActionList.LeadingVisual>
-                    <Box
-                      as="span"
-                      title={displayHandleText(organization.handle)}
-                      sx={{
-                        display: 'block',
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      <DisplayHandle handle={organization.handle} />
-                    </Box>
-                  </ActionList.Item>
-                );
-              })
-            )}
-          </ActionList.Group>
-          <ActionList.Group>
-            <ActionList.GroupHeading>Teams</ActionList.GroupHeading>
-            {teams.length === 0 ? (
-              <ActionList.Item disabled>No teams</ActionList.Item>
-            ) : (
-              teams.map(team => {
-                const isCurrentTeamPrincipal =
-                  selectedPrincipalKind === 'team' &&
-                  selectedPrincipalUid === team.uid;
-                const orgHandle =
-                  resolveTeamOrganizationHandle(team) ||
-                  personalHandle ||
-                  'organization';
-                return (
-                  <ActionList.Item
-                    key={team.uid}
-                    disabled={isCurrentTeamPrincipal}
-                    selected={isCurrentTeamPrincipal}
-                    sx={isCurrentTeamPrincipal ? selectedItemSx : undefined}
-                    onSelect={() => {
-                      if (isCurrentTeamPrincipal) {
-                        return;
+                    {selectedPrincipalLabelClosed}
+                  </Text>
+                </Box>
+                {isPlatformAdmin && isCurrentUserPrincipal ? (
+                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
+                    admin
+                  </Label>
+                ) : null}
+              </Box>
+            </Button>
+          )}
+        </ActionMenu.Anchor>
+        <ActionMenu.Overlay width="medium">
+          <ActionList>
+            <ActionList.Group>
+              <ActionList.GroupHeading>Personal</ActionList.GroupHeading>
+              <ActionList.Item
+                disabled={isCurrentUserPrincipal}
+                selected={isCurrentUserPrincipal}
+                sx={isCurrentUserPrincipal ? selectedItemSx : undefined}
+                onSelect={() => {
+                  if (isCurrentUserPrincipal) {
+                    return;
+                  }
+                  if (personalUid && personalHandle) {
+                    selectUser(personalUid, personalHandle);
+                  }
+                }}
+              >
+                <ActionList.LeadingVisual>
+                  <PersonIcon />
+                </ActionList.LeadingVisual>
+                <DisplayHandle handle={personalHandle || 'me'} />
+                {isPlatformAdmin ? (
+                  <ActionList.TrailingVisual>
+                    <Label variant="secondary" size="small" sx={adminBadgeSx}>
+                      admin
+                    </Label>
+                  </ActionList.TrailingVisual>
+                ) : null}
+              </ActionList.Item>
+            </ActionList.Group>
+            <ActionList.Group>
+              <ActionList.GroupHeading>Organizations</ActionList.GroupHeading>
+              {organizations.length === 0 ? (
+                <ActionList.Item disabled>No organizations</ActionList.Item>
+              ) : (
+                organizations.map((organization: any) => {
+                  const organizationUid = getOrganizationUid(organization);
+                  const isCurrentOrganizationPrincipal =
+                    selectedPrincipalKind === 'organization' &&
+                    selectedPrincipalUid === organizationUid;
+                  return (
+                    <ActionList.Item
+                      key={organizationUid}
+                      disabled={isCurrentOrganizationPrincipal}
+                      selected={isCurrentOrganizationPrincipal}
+                      sx={
+                        isCurrentOrganizationPrincipal
+                          ? selectedItemSx
+                          : undefined
                       }
-                      selectTeam(team, orgHandle);
-                    }}
-                  >
-                    <ActionList.LeadingVisual>
-                      <PeopleIcon />
-                    </ActionList.LeadingVisual>
-                    <Box
-                      as="span"
-                      title={`${displayHandleText(orgHandle)}/${displayHandleText(team.handle, { withAt: false })}`}
-                      sx={{
-                        display: 'block',
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                      onSelect={() => {
+                        if (isCurrentOrganizationPrincipal) {
+                          return;
+                        }
+                        if (organizationUid && organization.handle) {
+                          selectOrganization(
+                            organizationUid,
+                            organization.handle,
+                          );
+                        }
                       }}
                     >
-                      <DisplayHandle handle={orgHandle} />/
-                      <DisplayHandle handle={team.handle} withAt={false} />
-                    </Box>
-                  </ActionList.Item>
-                );
-              })
-            )}
-          </ActionList.Group>
-        </ActionList>
-      </ActionMenu.Overlay>
-    </ActionMenu>
+                      <ActionList.LeadingVisual>
+                        <OrganizationIcon />
+                      </ActionList.LeadingVisual>
+                      <Box
+                        as="span"
+                        title={displayHandleText(organization.handle)}
+                        sx={{
+                          display: 'block',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <DisplayHandle handle={organization.handle} />
+                      </Box>
+                    </ActionList.Item>
+                  );
+                })
+              )}
+            </ActionList.Group>
+            <ActionList.Group>
+              <ActionList.GroupHeading>Teams</ActionList.GroupHeading>
+              {teams.length === 0 ? (
+                <ActionList.Item disabled>No teams</ActionList.Item>
+              ) : (
+                teams.map(team => {
+                  const isCurrentTeamPrincipal =
+                    selectedPrincipalKind === 'team' &&
+                    selectedPrincipalUid === team.uid;
+                  const orgHandle =
+                    resolveTeamOrganizationHandle(team) ||
+                    personalHandle ||
+                    'organization';
+                  return (
+                    <ActionList.Item
+                      key={team.uid}
+                      disabled={isCurrentTeamPrincipal}
+                      selected={isCurrentTeamPrincipal}
+                      sx={isCurrentTeamPrincipal ? selectedItemSx : undefined}
+                      onSelect={() => {
+                        if (isCurrentTeamPrincipal) {
+                          return;
+                        }
+                        selectTeam(team, orgHandle);
+                      }}
+                    >
+                      <ActionList.LeadingVisual>
+                        <PeopleIcon />
+                      </ActionList.LeadingVisual>
+                      <Box
+                        as="span"
+                        title={`${displayHandleText(orgHandle)}/${displayHandleText(team.handle, { withAt: false })}`}
+                        sx={{
+                          display: 'block',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <DisplayHandle handle={orgHandle} />/
+                        <DisplayHandle handle={team.handle} withAt={false} />
+                      </Box>
+                    </ActionList.Item>
+                  );
+                })
+              )}
+            </ActionList.Group>
+          </ActionList>
+        </ActionMenu.Overlay>
+      </ActionMenu>
+    </ThemeProvider>
   );
 }
 

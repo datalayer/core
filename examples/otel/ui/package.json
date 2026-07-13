@@ -12,7 +12,7 @@
     "@datalayer/core": "file:../../",
     "@datalayer/icons-react": "^1.0.6",
     "@datalayer/primer-addons": "^1.0.12",
-    "@primer/octicons-react": "^19.15.1",
+    "@primer/octicons-react": "^19.29.1",
     "echarts": "^5.5.0",
     "echarts-for-react": "^3.0.2",
     "react": "^18.3.1",

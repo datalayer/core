@@ -3,7 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { ActionMenu, Box, Button, Label, Text } from '@primer/react';
+import {
+  ActionMenu,
+  Box,
+  Button,
+  Label,
+  Text,
+  ThemeProvider,
+} from '@primer/react';
 import { useNavigate } from '../../hooks';
 import { PrincipalAvatar } from './PrincipalAvatar';
 
@@ -122,140 +129,150 @@ export function PrincipalDetailsOverlay({
   });
 
   return (
-    <ActionMenu>
-      <ActionMenu.Anchor>
-        <Box
-          as="button"
-          type="button"
-          sx={{
-            fontWeight: 'semibold',
-            color: 'accent.fg',
-            textDecoration: 'underline',
-            background: 'transparent',
-            border: 0,
-            padding: 0,
-            margin: 0,
-            cursor: 'pointer',
-            ':hover': {
-              textDecoration: 'underline',
-            },
-          }}
-        >
-          {normalizedDisplayName}
-        </Box>
-      </ActionMenu.Anchor>
-      <ActionMenu.Overlay width="large">
-        <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 420 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <PrincipalAvatar
-              kind={kind}
-              avatarUrl={avatarUrl}
-              alt={normalizedDisplayName}
-              size={40}
-            />
-            <Box sx={{ display: 'grid', gap: 0.5 }}>
-              <Text sx={{ fontWeight: 'semibold' }}>
-                {normalizedDisplayName}
-              </Text>
-              {resolvedHandle ? (
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                  @{resolvedHandle}
-                </Text>
-              ) : null}
-            </Box>
-          </Box>
+    <ThemeProvider>
+      <ActionMenu>
+        <ActionMenu.Anchor>
           <Box
+            as="button"
+            type="button"
             sx={{
-              display: 'grid',
-              gridTemplateColumns: '110px 1fr',
-              gap: 1,
-              alignItems: 'baseline',
+              fontWeight: 'semibold',
+              color: 'accent.fg',
+              textDecoration: 'underline',
+              background: 'transparent',
+              border: 0,
+              padding: 0,
+              margin: 0,
+              cursor: 'pointer',
+              ':hover': {
+                textDecoration: 'underline',
+              },
             }}
           >
-            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
-            <Text sx={{ fontSize: 1 }}>{kind}</Text>
-            {resolvedHandle ? (
-              <>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
-                <Text sx={{ fontSize: 1 }}>@{resolvedHandle}</Text>
-              </>
-            ) : null}
-            {normalizedUid ? (
-              <>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>UID</Text>
-                <Text sx={{ fontSize: 1 }}>{normalizedUid}</Text>
-              </>
-            ) : null}
-            {kind === 'personal' ? (
-              <>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>First name</Text>
-                <Text sx={{ fontSize: 1 }}>{firstName || 'N/A'}</Text>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Last name</Text>
-                <Text sx={{ fontSize: 1 }}>{lastName || 'N/A'}</Text>
-                {email ? (
-                  <>
-                    <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Email</Text>
-                    <Text sx={{ fontSize: 1 }}>{email}</Text>
-                  </>
+            {normalizedDisplayName}
+          </Box>
+        </ActionMenu.Anchor>
+        <ActionMenu.Overlay width="large">
+          <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 420 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <PrincipalAvatar
+                kind={kind}
+                avatarUrl={avatarUrl}
+                alt={normalizedDisplayName}
+                size={40}
+              />
+              <Box sx={{ display: 'grid', gap: 0.5 }}>
+                <Text sx={{ fontWeight: 'semibold' }}>
+                  {normalizedDisplayName}
+                </Text>
+                {resolvedHandle ? (
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                    @{resolvedHandle}
+                  </Text>
                 ) : null}
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
-                <Label
-                  size="small"
-                  variant="secondary"
-                  title={normalizedOrigin}
-                  sx={{
-                    justifySelf: 'start',
-                    width: 'fit-content',
-                    maxWidth: '100%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {normalizedOrigin}
-                </Label>
-              </>
-            ) : (
-              <>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Name</Text>
-                <Text sx={{ fontSize: 1 }}>{normalizedName || normalizedDisplayName}</Text>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Description</Text>
-                <Text sx={{ fontSize: 1 }}>{normalizedDescription || 'N/A'}</Text>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
-                <Label
-                  size="small"
-                  variant="secondary"
-                  title={normalizedOrigin}
-                  sx={{
-                    justifySelf: 'start',
-                    width: 'fit-content',
-                    maxWidth: '100%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {normalizedOrigin}
-                </Label>
-              </>
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button
-              size="small"
-              onClick={() => {
-                if (targetPath) {
-                  navigate(targetPath);
-                }
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '110px 1fr',
+                gap: 1,
+                alignItems: 'baseline',
               }}
-              disabled={!targetPath}
             >
-              View Profile
-            </Button>
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
+              <Text sx={{ fontSize: 1 }}>{kind}</Text>
+              {resolvedHandle ? (
+                <>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
+                  <Text sx={{ fontSize: 1 }}>@{resolvedHandle}</Text>
+                </>
+              ) : null}
+              {normalizedUid ? (
+                <>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>UID</Text>
+                  <Text sx={{ fontSize: 1 }}>{normalizedUid}</Text>
+                </>
+              ) : null}
+              {kind === 'personal' ? (
+                <>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                    First name
+                  </Text>
+                  <Text sx={{ fontSize: 1 }}>{firstName || 'N/A'}</Text>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Last name</Text>
+                  <Text sx={{ fontSize: 1 }}>{lastName || 'N/A'}</Text>
+                  {email ? (
+                    <>
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Email</Text>
+                      <Text sx={{ fontSize: 1 }}>{email}</Text>
+                    </>
+                  ) : null}
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
+                  <Label
+                    size="small"
+                    variant="secondary"
+                    title={normalizedOrigin}
+                    sx={{
+                      justifySelf: 'start',
+                      width: 'fit-content',
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {normalizedOrigin}
+                  </Label>
+                </>
+              ) : (
+                <>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Name</Text>
+                  <Text sx={{ fontSize: 1 }}>
+                    {normalizedName || normalizedDisplayName}
+                  </Text>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                    Description
+                  </Text>
+                  <Text sx={{ fontSize: 1 }}>
+                    {normalizedDescription || 'N/A'}
+                  </Text>
+                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
+                  <Label
+                    size="small"
+                    variant="secondary"
+                    title={normalizedOrigin}
+                    sx={{
+                      justifySelf: 'start',
+                      width: 'fit-content',
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {normalizedOrigin}
+                  </Label>
+                </>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                size="small"
+                onClick={() => {
+                  if (targetPath) {
+                    navigate(targetPath);
+                  }
+                }}
+                disabled={!targetPath}
+              >
+                View Profile
+              </Button>
+            </Box>
           </Box>
-        </Box>
-      </ActionMenu.Overlay>
-    </ActionMenu>
+        </ActionMenu.Overlay>
+      </ActionMenu>
+    </ThemeProvider>
   );
 }
 

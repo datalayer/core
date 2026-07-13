@@ -83,27 +83,16 @@ class OTelEmitter:
 
         try:
             otlp_base = (
-                os.environ.get("DATALAYER_OTLP_URL")
-                or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-                or (
-                    (
-                        os.environ.get("DATALAYER_URL")
-                        or "https://prod1.datalayer.run"
-                    ).rstrip("/")
-                    + "/api/otel/v1/otlp"
-                )
+                (
+                    os.environ.get("DATALAYER_OTEL_URL")
+                    or os.environ.get("DATALAYER_URL")
+                    or "https://prod1.datalayer.run"
+                ).rstrip("/")
+                + "/api/otel/v1/otlp"
             ).rstrip("/")
 
-            metrics_endpoint = (
-                os.environ.get("DATALAYER_OTLP_METRICS_URL")
-                or os.environ.get("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT")
-                or f"{otlp_base}/v1/metrics"
-            )
-            traces_endpoint = (
-                os.environ.get("DATALAYER_OTLP_TRACES_URL")
-                or os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
-                or f"{otlp_base}/v1/traces"
-            )
+            metrics_endpoint = f"{otlp_base}/v1/metrics"
+            traces_endpoint = f"{otlp_base}/v1/traces"
 
             headers = {"Authorization": f"Bearer {resolved_token}"}
 
