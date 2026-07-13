@@ -76,12 +76,12 @@ export type BillableAccountSelectProps = {
 const PLAN_FREE_TERMS = ['free', 'starter'];
 const PLAN_PRO_TERMS = ['pro', 'paid', 'team', 'enterprise', 'business'];
 
-const BILLABLE_ACCOUNT_COOKIE = 'datalayer-billable-account-uid';
-const BILLABLE_ACCOUNT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const BILLABLE_PRINCIPAL_COOKIE = 'datalayer-billable-principal-uid';
+const BILLABLE_PRINCIPAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 function readBillableAccountCookie(): string | null {
   if (typeof document === 'undefined') return null;
-  const escaped = BILLABLE_ACCOUNT_COOKIE.replace(
+  const escaped = BILLABLE_PRINCIPAL_COOKIE.replace(
     /[.$?*|{}()[\]\\/+^]/g,
     '\\$&',
   );
@@ -94,8 +94,8 @@ function readBillableAccountCookie(): string | null {
 function writeBillableAccountCookie(value: string): void {
   if (typeof document === 'undefined') return;
   document.cookie =
-    `${BILLABLE_ACCOUNT_COOKIE}=${encodeURIComponent(value)};` +
-    ` path=/; max-age=${BILLABLE_ACCOUNT_COOKIE_MAX_AGE}; SameSite=Lax`;
+    `${BILLABLE_PRINCIPAL_COOKIE}=${encodeURIComponent(value)};` +
+    ` path=/; max-age=${BILLABLE_PRINCIPAL_COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
 const planContains = (value: string, terms: string[]) =>

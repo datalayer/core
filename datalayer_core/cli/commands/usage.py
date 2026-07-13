@@ -130,15 +130,15 @@ def usage_records(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    billable_account_uid: Optional[str] = typer.Option(
+    billable_principal_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID"),
-        "--billable-account-uid",
+        or os.environ.get("DATALAYER_BILLABLE_PRINCIPAL_UID"),
+        "--billable-principal-uid",
         help="Optional account UID scope. Defaults to the authenticated account.",
     ),
-    billable_account_kind: Optional[str] = typer.Option(
+    billable_principal_kind: Optional[str] = typer.Option(
         None,
-        "--billable-account-kind",
+        "--billable-principal-kind",
         help="Optional account kind scope: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of usage records."),
@@ -153,10 +153,10 @@ def usage_records(
     try:
         client = _make_client(api_key=api_key, iam_url=iam_url)
         params: list[str] = []
-        if billable_account_uid:
-            params.append(f"billable_account_uid={billable_account_uid}")
-        if billable_account_kind:
-            params.append(f"billable_account_kind={billable_account_kind}")
+        if billable_principal_uid:
+            params.append(f"billable_principal_uid={billable_principal_uid}")
+        if billable_principal_kind:
+            params.append(f"billable_principal_kind={billable_principal_kind}")
         query_suffix = f"?{'&'.join(params)}" if params else ""
         response = _iam_get(client, f"/api/iam/v1/usage/user{query_suffix}")
         if not response.get("success", True):
@@ -194,7 +194,7 @@ def usage_records(
             end = usage.get("end_date")
             creator = usage.get("account_uid")
             billable = (
-                usage.get("billable_account_uid")
+                usage.get("billable_principal_uid")
                 or usage.get("account_uid")
             )
             return (
@@ -218,7 +218,7 @@ def usage_records(
             groups: dict[str, list[dict[str, Any]]] = {}
             for usage in usages:
                 key = (
-                    usage.get("billable_account_uid")
+                    usage.get("billable_principal_uid")
                     or usage.get("account_uid")
                     or "unknown"
                 )
@@ -269,15 +269,15 @@ def usage_reservations(
         "--type",
         help="Optional reservation type filter.",
     ),
-    billable_account_uid: Optional[str] = typer.Option(
+    billable_principal_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BILLABLE_ACCOUNT_UID"),
-        "--billable-account-uid",
+        or os.environ.get("DATALAYER_BILLABLE_PRINCIPAL_UID"),
+        "--billable-principal-uid",
         help="Optional account UID scope for fallback credits view.",
     ),
-    billable_account_kind: Optional[str] = typer.Option(
+    billable_principal_kind: Optional[str] = typer.Option(
         None,
-        "--billable-account-kind",
+        "--billable-principal-kind",
         help="Optional account kind scope for fallback credits view: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of reservations."),
@@ -300,10 +300,10 @@ def usage_reservations(
 
         if not reservations:
             params: list[str] = []
-            if billable_account_uid:
-                params.append(f"billable_account_uid={billable_account_uid}")
-            if billable_account_kind:
-                params.append(f"billable_account_kind={billable_account_kind}")
+            if billable_principal_uid:
+                params.append(f"billable_principal_uid={billable_principal_uid}")
+            if billable_principal_kind:
+                params.append(f"billable_principal_kind={billable_principal_kind}")
             credits_query = f"?{'&'.join(params)}" if params else ""
             credits_response = _iam_get(
                 client,

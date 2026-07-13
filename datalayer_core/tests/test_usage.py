@@ -73,7 +73,7 @@ def _iam_get_json(client: DatalayerClient, path: str) -> dict[str, Any]:
     return payload
 
 
-def _resolve_billable_accounts(client: DatalayerClient) -> dict[str, dict[str, str]]:
+def _resolve_billable_principals(client: DatalayerClient) -> dict[str, dict[str, str]]:
     whoami_payload = _iam_get_json(client, "/api/iam/v1/whoami")
     profile = whoami_payload.get("profile") or {}
     if not profile.get("uid"):
@@ -127,11 +127,11 @@ def _fetch_usage_history(
     account_kind: str,
 ) -> list[dict[str, Any]]:
     query: dict[str, str] = {
-        "billable_account_uid": account_uid,
+        "billable_principal_uid": account_uid,
     }
     # API currently recognizes only user|organization kinds.
     if account_kind in {"user", "organization"}:
-        query["billable_account_kind"] = account_kind
+        query["billable_principal_kind"] = account_kind
 
     payload = _iam_get_json(
         client,
@@ -195,7 +195,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     - closed usage history row after manual stop
     """
     client = _build_test_client()
-    accounts = _resolve_billable_accounts(client)
+    accounts = _resolve_billable_principals(client)
 
     if account_case not in accounts:
         pytest.skip(f"No available account for case={account_case}")
@@ -210,9 +210,9 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             runtime = client.create_runtime(
                 name=runtime_name,
                 time_reservation=1,
-                billable_account_uid=account["uid"],
-                billable_account_type=account["kind"],
-                billable_account_handle=account["handle"] or None,
+                billable_principal_uid=account["uid"],
+                billable_principal_type=account["kind"],
+                billable_principal_handle=account["handle"] or None,
             )
         except RuntimeError as exc:
             if account_case == "team" and _is_insufficient_credits_error(exc):

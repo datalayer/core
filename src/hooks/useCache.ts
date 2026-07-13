@@ -604,22 +604,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         codeStudent: studentItem.code_student_t ?? studentItem.codeStudent,
         completed,
         pass,
-        nbgrades:
-          studentItem.nbgrades ??
-          studentItem.grades ??
-          [],
+        nbgrades: studentItem.nbgrades ?? studentItem.grades ?? [],
         nbgradesTotalPoints:
           studentItem.nbgrades_total_points_f ??
           studentItem.nbgradesTotalPoints ??
           studentItem.total_points_f ??
-          ((studentItem.item_type_s ?? studentItem.itemType ?? studentItem.type_s ?? studentItem.type) === 'assignment'
+          ((studentItem.item_type_s ??
+            studentItem.itemType ??
+            studentItem.type_s ??
+            studentItem.type) === 'assignment'
             ? 0
             : undefined),
         nbgradesTotalScore:
           studentItem.nbgrades_total_score_f ??
           studentItem.nbgradesTotalScore ??
           studentItem.total_score_f ??
-          ((studentItem.item_type_s ?? studentItem.itemType ?? studentItem.type_s ?? studentItem.type) === 'assignment'
+          ((studentItem.item_type_s ??
+            studentItem.itemType ??
+            studentItem.type_s ??
+            studentItem.type) === 'assignment'
             ? 0
             : undefined),
       };
@@ -1098,9 +1101,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     if (Array.isArray(rawItemUids)) {
       itemIds = Array.from(
         new Set(
-          rawItemUids
-            .map(uid => String(uid || '').trim())
-            .filter(Boolean),
+          rawItemUids.map(uid => String(uid || '').trim()).filter(Boolean),
         ),
       );
     } else if (typeof rawItemUids === 'string' && rawItemUids !== '()') {
@@ -5500,7 +5501,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    */
   const useStudents = (courseId: string, studentIds: Array<string>) => {
     const uniqueStudentIds = Array.from(
-      new Set((studentIds || []).map(id => String(id || '').trim()).filter(Boolean)),
+      new Set(
+        (studentIds || []).map(id => String(id || '').trim()).filter(Boolean),
+      ),
     );
     return useQueries({
       queries: uniqueStudentIds.map(studentId => ({
@@ -5930,9 +5933,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       return url;
     }
     const separator = url.includes('?') ? '&' : '?';
-    const parts = [`billable_account_uid=${encodeURIComponent(accountUid)}`];
+    const parts = [`billable_principal_uid=${encodeURIComponent(accountUid)}`];
     if (accountKind) {
-      parts.push(`billable_account_kind=${encodeURIComponent(accountKind)}`);
+      parts.push(`billable_principal_kind=${encodeURIComponent(accountKind)}`);
     }
     return `${url}${separator}${parts.join('&')}`;
   };
@@ -7076,11 +7079,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       typeof scopeOrOptions === 'object' &&
       'accountUid' in scopeOrOptions;
     const scope = (hasScope ? scopeOrOptions : undefined) as
-      | SubscriptionScopeOptions
-      | undefined;
+      SubscriptionScopeOptions | undefined;
     const queryOptions = (hasScope ? options : scopeOrOptions) as
-      | Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'>
-      | undefined;
+      Omit<UseQueryOptions<unknown[]>, 'queryKey' | 'queryFn'> | undefined;
 
     return useQuery({
       queryKey: ['usage', 'me', scope?.accountUid ?? 'self'],
@@ -8118,24 +8119,36 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     options?: UseMutationOptions<
       unknown,
       Error,
-      string | {
-        datasetId: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }
+      | string
+      | {
+          datasetId: string;
+          selectedPrincipalUid?: string;
+          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
+        }
     >,
   ) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (variables: string | {
-        datasetId: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }) => {
-        const datasetId = typeof variables === 'string' ? variables : variables.datasetId;
-        const selectedPrincipalUid = typeof variables === 'string' ? undefined : variables.selectedPrincipalUid;
-        const selectedPrincipalKind = typeof variables === 'string' ? undefined : variables.selectedPrincipalKind;
+      mutationFn: async (
+        variables:
+          | string
+          | {
+              datasetId: string;
+              selectedPrincipalUid?: string;
+              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
+            },
+      ) => {
+        const datasetId =
+          typeof variables === 'string' ? variables : variables.datasetId;
+        const selectedPrincipalUid =
+          typeof variables === 'string'
+            ? undefined
+            : variables.selectedPrincipalUid;
+        const selectedPrincipalKind =
+          typeof variables === 'string'
+            ? undefined
+            : variables.selectedPrincipalKind;
         const params = new URLSearchParams();
         if (selectedPrincipalUid) {
           params.set('selected_principal_uid', selectedPrincipalUid);
@@ -8151,7 +8164,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: (data, variables) => {
-        const datasetId = typeof variables === 'string' ? variables : variables.datasetId;
+        const datasetId =
+          typeof variables === 'string' ? variables : variables.datasetId;
         queryClient.invalidateQueries({
           queryKey: queryKeys.datasets.detail(datasetId),
         });
@@ -8168,24 +8182,36 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     options?: UseMutationOptions<
       unknown,
       Error,
-      string | {
-        spaceId: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }
+      | string
+      | {
+          spaceId: string;
+          selectedPrincipalUid?: string;
+          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
+        }
     >,
   ) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: async (variables: string | {
-        spaceId: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }) => {
-        const spaceId = typeof variables === 'string' ? variables : variables.spaceId;
-        const selectedPrincipalUid = typeof variables === 'string' ? undefined : variables.selectedPrincipalUid;
-        const selectedPrincipalKind = typeof variables === 'string' ? undefined : variables.selectedPrincipalKind;
+      mutationFn: async (
+        variables:
+          | string
+          | {
+              spaceId: string;
+              selectedPrincipalUid?: string;
+              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
+            },
+      ) => {
+        const spaceId =
+          typeof variables === 'string' ? variables : variables.spaceId;
+        const selectedPrincipalUid =
+          typeof variables === 'string'
+            ? undefined
+            : variables.selectedPrincipalUid;
+        const selectedPrincipalKind =
+          typeof variables === 'string'
+            ? undefined
+            : variables.selectedPrincipalKind;
         const params = new URLSearchParams();
         if (selectedPrincipalUid) {
           params.set('selected_principal_uid', selectedPrincipalUid);
@@ -8201,7 +8227,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: (data, variables) => {
-        const spaceId = typeof variables === 'string' ? variables : variables.spaceId;
+        const spaceId =
+          typeof variables === 'string' ? variables : variables.spaceId;
         queryClient.invalidateQueries({
           queryKey: queryKeys.datasets.bySpace(spaceId),
         });
