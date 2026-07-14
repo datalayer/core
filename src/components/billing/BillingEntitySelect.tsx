@@ -76,15 +76,12 @@ export type BillingEntitySelectProps = {
 const PLAN_FREE_TERMS = ['free', 'starter'];
 const PLAN_PRO_TERMS = ['pro', 'paid', 'team', 'enterprise', 'business'];
 
-const BIILING_PRINCIPAL_COOKIE = 'datalayer-billing-entity-uid';
-const BIILING_PRINCIPAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const BILLING_ENTITY_COOKIE = 'datalayer-billing-entity-uid';
+const BILLING_ENTITY_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 function readBillingEntityCookie(): string | null {
   if (typeof document === 'undefined') return null;
-  const escaped = BIILING_PRINCIPAL_COOKIE.replace(
-    /[.$?*|{}()[\]\\/+^]/g,
-    '\\$&',
-  );
+  const escaped = BILLING_ENTITY_COOKIE.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&');
   const match = document.cookie.match(
     new RegExp('(?:^|; )' + escaped + '=([^;]*)'),
   );
@@ -94,8 +91,8 @@ function readBillingEntityCookie(): string | null {
 function writeBillingEntityCookie(value: string): void {
   if (typeof document === 'undefined') return;
   document.cookie =
-    `${BIILING_PRINCIPAL_COOKIE}=${encodeURIComponent(value)};` +
-    ` path=/; max-age=${BIILING_PRINCIPAL_COOKIE_MAX_AGE}; SameSite=Lax`;
+    `${BILLING_ENTITY_COOKIE}=${encodeURIComponent(value)};` +
+    ` path=/; max-age=${BILLING_ENTITY_COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
 const planContains = (value: string, terms: string[]) =>

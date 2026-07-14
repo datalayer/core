@@ -46,7 +46,7 @@ export const useBillingEntityStore = create<BillingEntityState>()(
           }
           useUsageRefreshStore
             .getState()
-            .requestUsageRefresh('billing-account-changed');
+            .requestUsageRefresh('billing-entity-changed');
           return {
             billingEntityKind: kind,
             billingEntityUid: uid,
@@ -64,7 +64,7 @@ export const useBillingEntityStore = create<BillingEntityState>()(
           }
           useUsageRefreshStore
             .getState()
-            .requestUsageRefresh('billing-account-reset');
+            .requestUsageRefresh('billing-entity-reset');
           return {
             billingEntityKind: 'user',
             billingEntityUid: undefined,
@@ -73,7 +73,7 @@ export const useBillingEntityStore = create<BillingEntityState>()(
         }),
     }),
     {
-      name: 'datalayer-billing-account',
+      name: 'datalayer-billing-entity',
       storage: createJSONStorage(() => localStorage),
       partialize: state => ({
         billingEntityKind: state.billingEntityKind,

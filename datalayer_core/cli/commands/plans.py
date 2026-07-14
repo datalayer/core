@@ -325,7 +325,7 @@ def plans_catalog(
     ),
     billing_entity_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BIILING_PRINCIPAL_UID"),
+        or os.environ.get("DATALAYER_BILLING_ENTITY_UID"),
         "--billing-entity-uid",
         help="Optional billing entity UID scope.",
     ),

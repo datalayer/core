@@ -195,7 +195,7 @@ export function PrincipalDetailsOverlay({
                 <Text sx={{ fontWeight: 'semibold' }}>
                   {normalizedDisplayName}
                 </Text>
-                {resolvedHandle ? (
+                {resolvedHandle && kind !== 'team' ? (
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                     {displayHandleText(resolvedHandle)}
                   </Text>
@@ -212,7 +212,7 @@ export function PrincipalDetailsOverlay({
             >
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
               <Text sx={{ fontSize: 1 }}>{kind}</Text>
-              {resolvedHandle ? (
+              {resolvedHandle && kind !== 'team' ? (
                 <>
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
                   <Text sx={{ fontSize: 1 }}>

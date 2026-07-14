@@ -132,7 +132,7 @@ def usage_records(
     ),
     billing_entity_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BIILING_PRINCIPAL_UID"),
+        or os.environ.get("DATALAYER_BILLING_ENTITY_UID"),
         "--billing-entity-uid",
         help="Optional account UID scope. Defaults to the authenticated account.",
     ),
@@ -271,7 +271,7 @@ def usage_reservations(
     ),
     billing_entity_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BIILING_PRINCIPAL_UID"),
+        or os.environ.get("DATALAYER_BILLING_ENTITY_UID"),
         "--billing-entity-uid",
         help="Optional account UID scope for fallback credits view.",
     ),
