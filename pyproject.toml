@@ -24,7 +24,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-# TODO Unpin keyring https://github.com/datalayer/core/issues/36
 dependencies = [
     "httpx",
     "jupyter-console",
