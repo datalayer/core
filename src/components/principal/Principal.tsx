@@ -38,7 +38,7 @@ const GENERIC_PLACEHOLDER_DISPLAY_NAMES = new Set([
   'personal',
   'team',
   'organization',
-  'billable account',
+  'billing entity',
 ]);
 
 /** Truncate a placeholder string to `maxLength`, appending an ellipsis. */
@@ -49,7 +49,6 @@ function truncatePlaceholder(value: string, maxLength: number): string {
   }
   return `${trimmed.slice(0, maxLength)}\u2026`;
 }
-
 
 /**
  * Normalised actor descriptor used by all caching resolvers. Views are
@@ -112,7 +111,9 @@ export const Principal: React.FC<PrincipalProps> = ({
 
   const normalizedUid = String(principal.uid || '').trim();
   const normalizedProvidedHandle = String(principal.handle || '').trim();
-  const normalizedProvidedAccountHandle = String(principal.accountHandle || '').trim();
+  const normalizedProvidedAccountHandle = String(
+    principal.accountHandle || '',
+  ).trim();
   const providedHandleIsUidPlaceholder =
     !!normalizedProvidedHandle &&
     !!normalizedUid &&
@@ -127,7 +128,8 @@ export const Principal: React.FC<PrincipalProps> = ({
       (!providedAccountHandleIsUidPlaceholder ? principal.accountHandle : '') ||
       '',
   ).trim();
-  const teamPathParts = principal.kind === 'team' ? principalHandle.split('/') : [];
+  const teamPathParts =
+    principal.kind === 'team' ? principalHandle.split('/') : [];
   const teamOrganizationHandleFromPath = String(teamPathParts[0] || '').trim();
   const teamOrganizationHandleFromAccount =
     principal.kind === 'team' && !providedAccountHandleIsUidPlaceholder
@@ -266,7 +268,9 @@ export const Principal: React.FC<PrincipalProps> = ({
       String((hydratedEntity as any)?.handle || '').trim() ||
       undefined,
     accountHandle:
-      (!providedAccountHandleIsUidPlaceholder ? principal.accountHandle : undefined) ||
+      (!providedAccountHandleIsUidPlaceholder
+        ? principal.accountHandle
+        : undefined) ||
       String((hydratedEntity as any)?.handle || '').trim() ||
       undefined,
     name:

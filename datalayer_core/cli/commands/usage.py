@@ -130,22 +130,22 @@ def usage_records(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    billable_principal_uid: Optional[str] = typer.Option(
+    billing_entity_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BILLABLE_PRINCIPAL_UID"),
-        "--billable-principal-uid",
+        or os.environ.get("DATALAYER_BIILING_PRINCIPAL_UID"),
+        "--billing-entity-uid",
         help="Optional account UID scope. Defaults to the authenticated account.",
     ),
-    billable_principal_kind: Optional[str] = typer.Option(
+    billing_entity_kind: Optional[str] = typer.Option(
         None,
-        "--billable-principal-kind",
+        "--billing-entity-kind",
         help="Optional account kind scope: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of usage records."),
-    group_by_billable: bool = typer.Option(
+    group_by_billing: bool = typer.Option(
         False,
-        "--group-by-billable",
-        help="Render one table per billable account.",
+        "--group-by-billing",
+        help="Render one table per billing entity.",
     ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload from IAM."),
 ) -> None:
@@ -153,10 +153,10 @@ def usage_records(
     try:
         client = _make_client(api_key=api_key, iam_url=iam_url)
         params: list[str] = []
-        if billable_principal_uid:
-            params.append(f"billable_principal_uid={billable_principal_uid}")
-        if billable_principal_kind:
-            params.append(f"billable_principal_kind={billable_principal_kind}")
+        if billing_entity_uid:
+            params.append(f"billing_entity_uid={billing_entity_uid}")
+        if billing_entity_kind:
+            params.append(f"billing_entity_kind={billing_entity_kind}")
         query_suffix = f"?{'&'.join(params)}" if params else ""
         response = _iam_get(client, f"/api/iam/v1/usage/user{query_suffix}")
         if not response.get("success", True):
@@ -175,7 +175,7 @@ def usage_records(
             table.add_column("Type", style="white", no_wrap=True)
             table.add_column("State", style="white", no_wrap=True)
             table.add_column("Creator", style="dim", no_wrap=True)
-            table.add_column("Billable", style="dim", no_wrap=True)
+            table.add_column("Billing", style="dim", no_wrap=True)
             table.add_column("Start", style="white", no_wrap=True)
             table.add_column("End", style="white", no_wrap=True)
             table.add_column("Duration(s)", style="white", justify="right", no_wrap=True)
@@ -193,8 +193,8 @@ def usage_records(
             start = usage.get("start_date")
             end = usage.get("end_date")
             creator = usage.get("account_uid")
-            billable = (
-                usage.get("billable_principal_uid")
+            billing = (
+                usage.get("billing_entity_uid")
                 or usage.get("account_uid")
             )
             return (
@@ -206,7 +206,7 @@ def usage_records(
                     or metadata.get("resource_state")
                 ),
                 _normalize_value(creator),
-                _normalize_value(billable),
+                _normalize_value(billing),
                 _normalize_value(start),
                 _normalize_value(end),
                 _format_duration_seconds(start, end),
@@ -214,16 +214,16 @@ def usage_records(
                 _normalize_value(usage.get("burning_rate"), fallback="0"),
             )
 
-        if group_by_billable:
+        if group_by_billing:
             groups: dict[str, list[dict[str, Any]]] = {}
             for usage in usages:
                 key = (
-                    usage.get("billable_principal_uid")
+                    usage.get("billing_entity_uid")
                     or usage.get("account_uid")
                     or "unknown"
                 )
                 groups.setdefault(key, []).append(usage)
-            for billable_uid, group_usages in sorted(groups.items()):
+            for billing_uid, group_usages in sorted(groups.items()):
                 total_credits = 0.0
                 for u in group_usages:
                     try:
@@ -232,7 +232,7 @@ def usage_records(
                         pass
                 table = Table(
                     title=(
-                        f"Billable Account [bold]{billable_uid}[/bold] "
+                        f"Billing Entity [bold]{billing_uid}[/bold] "
                         f"— {len(group_usages)} record(s), "
                         f"{total_credits:.4f} credits"
                     )
@@ -269,15 +269,15 @@ def usage_reservations(
         "--type",
         help="Optional reservation type filter.",
     ),
-    billable_principal_uid: Optional[str] = typer.Option(
+    billing_entity_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BILLABLE_PRINCIPAL_UID"),
-        "--billable-principal-uid",
+        or os.environ.get("DATALAYER_BIILING_PRINCIPAL_UID"),
+        "--billing-entity-uid",
         help="Optional account UID scope for fallback credits view.",
     ),
-    billable_principal_kind: Optional[str] = typer.Option(
+    billing_entity_kind: Optional[str] = typer.Option(
         None,
-        "--billable-principal-kind",
+        "--billing-entity-kind",
         help="Optional account kind scope for fallback credits view: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of reservations."),
@@ -300,10 +300,10 @@ def usage_reservations(
 
         if not reservations:
             params: list[str] = []
-            if billable_principal_uid:
-                params.append(f"billable_principal_uid={billable_principal_uid}")
-            if billable_principal_kind:
-                params.append(f"billable_principal_kind={billable_principal_kind}")
+            if billing_entity_uid:
+                params.append(f"billing_entity_uid={billing_entity_uid}")
+            if billing_entity_kind:
+                params.append(f"billing_entity_kind={billing_entity_kind}")
             credits_query = f"?{'&'.join(params)}" if params else ""
             credits_response = _iam_get(
                 client,

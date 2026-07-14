@@ -5749,17 +5749,25 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId,
         recipient,
         subject,
+        htmlContent,
         content,
       }: {
         userId: string;
         recipient: string;
         subject: string;
+        htmlContent?: string;
         content: string;
       }) => {
         return requestDatalayer({
           url: `${configuration.growthUrl}/api/growth/v1/outbounds/email`,
           method: 'POST',
-          body: { userId, recipient, subject, content },
+          body: {
+            userId,
+            recipient,
+            subject,
+            content,
+            htmlContent: htmlContent || content,
+          },
         });
       },
     });
@@ -5933,9 +5941,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       return url;
     }
     const separator = url.includes('?') ? '&' : '?';
-    const parts = [`billable_principal_uid=${encodeURIComponent(accountUid)}`];
+    const parts = [`billing_entity_uid=${encodeURIComponent(accountUid)}`];
     if (accountKind) {
-      parts.push(`billable_principal_kind=${encodeURIComponent(accountKind)}`);
+      parts.push(`billing_entity_kind=${encodeURIComponent(accountKind)}`);
     }
     return `${url}${separator}${parts.join('&')}`;
   };

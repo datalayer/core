@@ -24,13 +24,15 @@ import { useCoreStore } from '../../state';
 import { useIAMStore } from '../../state/substates';
 import { memberships as fetchMemberships } from '../../api/iam/profile';
 import { usePrincipalStore } from '../../hooks/usePrincipalStore';
-import { useBillableAccountStore } from '../../hooks/useBillableAccountStore';
+import { useBillingEntityStore } from '../../hooks/useBillingEntityStore';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
 import { DisplayHandle, displayHandleText } from '../display/DisplayHandle';
 
 type TeamMembership = {
   uid: string;
   handle: string;
+  name?: string;
+  displayName?: string;
   organizationUid?: string;
   organizationHandle?: string;
 };
@@ -54,10 +56,10 @@ function truncatePrincipalLabel(label: string, maxChars: number): string {
 
 /**
  * PrincipalSwitcherMenu — the *only* component allowed to write to the
- * principal store and the billable account store. It keeps both stores in
+ * principal store and the billing entity store. It keeps both stores in
  * sync per the rule:
- *   - selecting a user/org principal → billable account = same user/org
- *   - selecting a team principal     → billable account = the team's parent org
+ *   - selecting a user/org principal → billing entity = same user/org
+ *   - selecting a team principal     → billing entity = the team's parent org
  */
 export function PrincipalSwitcherMenu({
   maxLabelChars = 48,
@@ -84,8 +86,8 @@ export function PrincipalSwitcherMenu({
   const selectTeamPrincipal = usePrincipalStore(
     state => state.selectTeamPrincipal,
   );
-  const setBillableAccount = useBillableAccountStore(
-    state => state.setBillableAccount,
+  const setBillingEntity = useBillingEntityStore(
+    state => state.setBillingEntity,
   );
 
   const {
@@ -100,12 +102,12 @@ export function PrincipalSwitcherMenu({
 
   const selectUser = (uid: string, handle: string) => {
     selectPersonalPrincipal(uid, handle);
-    setBillableAccount({ kind: 'user', uid, handle });
+    setBillingEntity({ kind: 'user', uid, handle });
   };
 
   const selectOrganization = (uid: string, handle: string) => {
     selectOrganizationPrincipal(uid, handle);
-    setBillableAccount({ kind: 'organization', uid, handle });
+    setBillingEntity({ kind: 'organization', uid, handle });
   };
 
   const selectTeam = (team: TeamMembership, orgHandle: string) => {
@@ -118,7 +120,7 @@ export function PrincipalSwitcherMenu({
       organizationUid: team.organizationUid,
       organizationHandle: orgHandle,
     });
-    setBillableAccount({
+    setBillingEntity({
       kind: 'organization',
       uid: team.organizationUid,
       handle: orgHandle,
@@ -160,6 +162,11 @@ export function PrincipalSwitcherMenu({
           .map((membership: any) => ({
             uid: String(membership?.uid || membership?.id || '').trim(),
             handle: String(membership?.handle || '').trim(),
+            name: String(membership?.name || '').trim() || undefined,
+            displayName:
+              String(
+                membership?.display_name || membership?.displayName || '',
+              ).trim() || undefined,
             organizationUid:
               String(membership?.organization_uid || '').trim() || undefined,
             organizationHandle:
@@ -335,9 +342,9 @@ export function PrincipalSwitcherMenu({
                 }}
               >
                 {selectedPrincipalKind === 'organization' ? (
-                  <OrganizationIcon size={16} />
-                ) : selectedPrincipalKind === 'team' ? (
                   <PeopleIcon size={16} />
+                ) : selectedPrincipalKind === 'team' ? (
+                  <OrganizationIcon size={16} />
                 ) : (
                   <PersonIcon size={16} />
                 )}
@@ -411,9 +418,9 @@ export function PrincipalSwitcherMenu({
                   }}
                 >
                   {selectedPrincipalKind === 'organization' ? (
-                    <OrganizationIcon size={16} />
-                  ) : selectedPrincipalKind === 'team' ? (
                     <PeopleIcon size={16} />
+                  ) : selectedPrincipalKind === 'team' ? (
+                    <OrganizationIcon size={16} />
                   ) : (
                     <PersonIcon size={16} />
                   )}
@@ -444,7 +451,7 @@ export function PrincipalSwitcherMenu({
             </Button>
           )}
         </ActionMenu.Anchor>
-        <ActionMenu.Overlay width="medium">
+        <ActionMenu.Overlay width="large">
           <ActionList>
             <ActionList.Group>
               <ActionList.GroupHeading>Personal</ActionList.GroupHeading>
@@ -464,7 +471,27 @@ export function PrincipalSwitcherMenu({
                 <ActionList.LeadingVisual>
                   <PersonIcon />
                 </ActionList.LeadingVisual>
-                <DisplayHandle handle={personalHandle || 'me'} />
+                <Box
+                  as="span"
+                  sx={{
+                    display: 'block',
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {String(
+                    user?.friendlyName ||
+                      user?.displayName ||
+                      personalHandle ||
+                      'Me',
+                  ).trim()}
+                  <Box as="span" sx={{ color: 'fg.muted' }}>
+                    {' '}
+                    · <DisplayHandle handle={personalHandle || 'me'} />
+                  </Box>
+                </Box>
                 {isPlatformAdmin ? (
                   <ActionList.TrailingVisual>
                     <Label variant="secondary" size="small" sx={adminBadgeSx}>
@@ -507,7 +534,7 @@ export function PrincipalSwitcherMenu({
                       }}
                     >
                       <ActionList.LeadingVisual>
-                        <OrganizationIcon />
+                        <PeopleIcon />
                       </ActionList.LeadingVisual>
                       <Box
                         as="span"
@@ -520,7 +547,17 @@ export function PrincipalSwitcherMenu({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        <DisplayHandle handle={organization.handle} />
+                        {String(
+                          organization?.display_name ||
+                            organization?.displayName ||
+                            organization?.name ||
+                            organization?.handle ||
+                            'Organization',
+                        ).trim()}
+                        <Box as="span" sx={{ color: 'fg.muted' }}>
+                          {' '}
+                          · <DisplayHandle handle={organization.handle} />
+                        </Box>
                       </Box>
                     </ActionList.Item>
                   );
@@ -554,7 +591,7 @@ export function PrincipalSwitcherMenu({
                       }}
                     >
                       <ActionList.LeadingVisual>
-                        <PeopleIcon />
+                        <OrganizationIcon />
                       </ActionList.LeadingVisual>
                       <Box
                         as="span"
@@ -567,8 +604,17 @@ export function PrincipalSwitcherMenu({
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        <DisplayHandle handle={orgHandle} />/
-                        <DisplayHandle handle={team.handle} withAt={false} />
+                        {String(
+                          team.displayName ||
+                            team.name ||
+                            team.handle ||
+                            'Team',
+                        ).trim()}
+                        <Box as="span" sx={{ color: 'fg.muted' }}>
+                          {' '}
+                          · <DisplayHandle handle={orgHandle} />/
+                          <DisplayHandle handle={team.handle} withAt={false} />
+                        </Box>
                       </Box>
                     </ActionList.Item>
                   );

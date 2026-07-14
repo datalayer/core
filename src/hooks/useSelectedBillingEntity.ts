@@ -3,21 +3,19 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useBillableAccountStore } from './useBillableAccountStore';
+import { useBillingEntityStore } from './useBillingEntityStore';
 import { useSelectedPrincipal } from './useSelectedPrincipal';
 
 /**
- * Read-only selector for the currently scoped billable account.
+ * Read-only selector for the currently scoped billing entity.
  *
  * Use this for billing, quotas, plans, credits, agents, and runtime capacity.
  * For visibility/creation/sharing scope, use {@link useSelectedPrincipal}.
  */
-export function useSelectedBillableAccount() {
-  const persistedUid = useBillableAccountStore(
-    state => state.billableAccountUid,
-  );
-  const persistedHandle = useBillableAccountStore(
-    state => state.billableAccountHandle,
+export function useSelectedBillingEntity() {
+  const persistedUid = useBillingEntityStore(state => state.billingEntityUid);
+  const persistedHandle = useBillingEntityStore(
+    state => state.billingEntityHandle,
   );
   const {
     selectedPrincipalKind,
@@ -27,30 +25,30 @@ export function useSelectedBillableAccount() {
     selectedTeamParentOrganizationHandle,
   } = useSelectedPrincipal();
 
-  const billableAccountKind =
+  const billingEntityKind =
     selectedPrincipalKind === 'team'
       ? 'organization'
       : selectedPrincipalKind === 'organization'
         ? 'organization'
         : 'user';
 
-  const billableAccountUid =
+  const billingEntityUid =
     selectedPrincipalKind === 'team'
       ? selectedTeamParentOrganizationUid || persistedUid
       : selectedPrincipalUid || persistedUid;
 
-  const billableAccountHandle =
+  const billingEntityHandle =
     selectedPrincipalKind === 'team'
       ? selectedTeamParentOrganizationHandle || persistedHandle
       : selectedPrincipalHandle || persistedHandle;
 
   return {
-    billableAccountKind,
-    billableAccountUid,
-    billableAccountHandle,
-    isUserAccount: billableAccountKind === 'user',
-    isOrganizationAccount: billableAccountKind === 'organization',
+    billingEntityKind,
+    billingEntityUid,
+    billingEntityHandle,
+    isUserAccount: billingEntityKind === 'user',
+    isOrganizationAccount: billingEntityKind === 'organization',
   };
 }
 
-export default useSelectedBillableAccount;
+export default useSelectedBillingEntity;

@@ -9,7 +9,7 @@ import { usePrincipalStore } from './usePrincipalStore';
  * Read-only selector for the currently selected principal (UI scope).
  *
  * Use this for visibility, creation, and sharing of artifacts.
- * For billing, quotas, plans, and agents, use {@link useSelectedBillableAccount}.
+ * For billing, quotas, plans, and agents, use {@link useSelectedBillingEntity}.
  */
 export function useSelectedPrincipal() {
   const selectedPrincipalKind = usePrincipalStore(

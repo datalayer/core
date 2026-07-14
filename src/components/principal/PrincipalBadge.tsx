@@ -17,6 +17,27 @@ function normalizeUserOrigin(originRaw?: string): string | undefined {
     return undefined;
   }
   const lower = value.toLowerCase();
+  const extPrefix = 'urn:dla:iam:ext::';
+  if (lower.startsWith(extPrefix)) {
+    const suffix = value.slice(extPrefix.length);
+    const provider = (suffix.split(':')[0] || '').trim().toLowerCase();
+    if (provider === 'github') {
+      return 'GitHub';
+    }
+    if (provider === 'google') {
+      return 'Google';
+    }
+    if (provider === 'linkedin') {
+      return 'LinkedIn';
+    }
+    if (provider === 'microsoft') {
+      return 'Microsoft';
+    }
+    if (provider) {
+      return provider.charAt(0).toUpperCase() + provider.slice(1);
+    }
+    return 'External';
+  }
   if (lower === 'github') {
     return 'GitHub';
   }

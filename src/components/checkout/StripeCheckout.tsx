@@ -731,7 +731,7 @@ export function StripeCheckout({
     : remainingCredits;
   const isRunsOverQuota = runsTotal > 0 && usedRuns > runsTotal;
 
-  const hasBillablePlan = useMemo(() => {
+  const hasBillingPlan = useMemo(() => {
     const normalizedPlan = String(currentSubscriptionPlan).toLowerCase();
     const freeLike =
       normalizedPlan.includes('free') ||
@@ -743,7 +743,7 @@ export function StripeCheckout({
 
   const isPaidSubscription = useMemo(() => {
     const normalizedStatus = String(subscriptionStatus).toLowerCase();
-    if (!hasBillablePlan) {
+    if (!hasBillingPlan) {
       return false;
     }
     if (
@@ -758,10 +758,10 @@ export function StripeCheckout({
     return ['active', 'trialing', 'past_due', 'paid'].includes(
       normalizedStatus,
     );
-  }, [hasBillablePlan, subscriptionStatus]);
+  }, [hasBillingPlan, subscriptionStatus]);
 
   const canCancelSubscription = useMemo(() => {
-    if (!hasBillablePlan) {
+    if (!hasBillingPlan) {
       return false;
     }
 
@@ -775,7 +775,7 @@ export function StripeCheckout({
       status === 'unknown';
 
     return !nonCancelable;
-  }, [hasBillablePlan, subscriptionStatus, isCancellationScheduled]);
+  }, [hasBillingPlan, subscriptionStatus, isCancellationScheduled]);
 
   const isCancelActionPending =
     cancelSubscriptionMutation.isPending || isConfirmingCancel;

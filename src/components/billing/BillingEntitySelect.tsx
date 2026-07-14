@@ -9,8 +9,8 @@
  */
 
 /**
- * BillableAccountSelect — self-contained dropdown that lets the user pick a
- * billable account (personal, organization, or eligible team) for runs that
+ * BillingEntitySelect — self-contained dropdown that lets the user pick a
+ * billing entity (personal, organization, or eligible team) for runs that
  * consume wallet credits.
  *
  * Encapsulates eligibility merge logic and account-detail fetching. Callers
@@ -39,11 +39,11 @@ import { useCache } from '../../hooks/useCache';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
 import { useIAMStore } from '../../state';
 
-export type BillableAccountType = 'user' | 'organization' | 'team';
+export type BillingEntityType = 'user' | 'organization' | 'team';
 
-export type BillableAccount = {
+export type BillingEntity = {
   accountUid: string;
-  accountType: BillableAccountType;
+  accountType: BillingEntityType;
   accountHandle: string;
   accountName: string;
   planName: string;
@@ -54,13 +54,13 @@ export type BillableAccount = {
   teamHandle?: string;
 };
 
-export type BillableAccountSelectProps = {
+export type BillingEntitySelectProps = {
   value: string;
   onChange: (accountUid: string) => void;
-  onSelectedAccountChange?: (account: BillableAccount | undefined) => void;
+  onSelectedAccountChange?: (account: BillingEntity | undefined) => void;
   onAccountsResolved?: (state: {
-    accounts: BillableAccount[];
-    eligibleAccounts: BillableAccount[];
+    accounts: BillingEntity[];
+    eligibleAccounts: BillingEntity[];
     isLoading: boolean;
     hasEligibleAccount: boolean;
   }) => void;
@@ -76,12 +76,12 @@ export type BillableAccountSelectProps = {
 const PLAN_FREE_TERMS = ['free', 'starter'];
 const PLAN_PRO_TERMS = ['pro', 'paid', 'team', 'enterprise', 'business'];
 
-const BILLABLE_PRINCIPAL_COOKIE = 'datalayer-billable-principal-uid';
-const BILLABLE_PRINCIPAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const BIILING_PRINCIPAL_COOKIE = 'datalayer-billing-entity-uid';
+const BIILING_PRINCIPAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-function readBillableAccountCookie(): string | null {
+function readBillingEntityCookie(): string | null {
   if (typeof document === 'undefined') return null;
-  const escaped = BILLABLE_PRINCIPAL_COOKIE.replace(
+  const escaped = BIILING_PRINCIPAL_COOKIE.replace(
     /[.$?*|{}()[\]\\/+^]/g,
     '\\$&',
   );
@@ -91,17 +91,17 @@ function readBillableAccountCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function writeBillableAccountCookie(value: string): void {
+function writeBillingEntityCookie(value: string): void {
   if (typeof document === 'undefined') return;
   document.cookie =
-    `${BILLABLE_PRINCIPAL_COOKIE}=${encodeURIComponent(value)};` +
-    ` path=/; max-age=${BILLABLE_PRINCIPAL_COOKIE_MAX_AGE}; SameSite=Lax`;
+    `${BIILING_PRINCIPAL_COOKIE}=${encodeURIComponent(value)};` +
+    ` path=/; max-age=${BIILING_PRINCIPAL_COOKIE_MAX_AGE}; SameSite=Lax`;
 }
 
 const planContains = (value: string, terms: string[]) =>
   terms.some(term => value.includes(term));
 
-export function resolveBillablePlanTier(value: unknown): 'free' | 'pro' {
+export function resolveBillingPlanTier(value: unknown): 'free' | 'pro' {
   const normalized = String(value ?? '').toLowerCase();
   if (!normalized || normalized === 'unknown') return 'free';
   if (planContains(normalized, PLAN_FREE_TERMS)) return 'free';
@@ -109,25 +109,23 @@ export function resolveBillablePlanTier(value: unknown): 'free' | 'pro' {
   return 'free';
 }
 
-export function formatBillableAccountPlanLabel(planName: string): string {
-  return resolveBillablePlanTier(planName) === 'pro'
-    ? 'Team Plan'
-    : 'Free Plan';
+export function formatBillingEntityPlanLabel(planName: string): string {
+  return resolveBillingPlanTier(planName) === 'pro' ? 'Team Plan' : 'Free Plan';
 }
 
-export function BillableAccountSelect({
+export function BillingEntitySelect({
   value,
   onChange,
   onSelectedAccountChange,
   onAccountsResolved,
   disabled = false,
   label = 'Run under',
-  caption = 'Personal, organization, and eligible team accounts can be selected for billable assignment. For team billing, runtime runs are attributed to the parent organization while credits are consumed from the selected team wallet.',
-  emptyMessage = 'No billable accounts available',
-  flashMessage = 'Runs and credits are charged to the selected billable account. Wallet credits of that account are consumed; LLM token usage is tracked for visibility only. Accounts without an eligible plan or wallet balance are disabled.',
+  caption = 'Personal, organization, and eligible team accounts can be selected for billing assignment. For team billing, runtime runs are attributed to the parent organization while credits are consumed from the selected team wallet.',
+  emptyMessage = 'No billing entitys available',
+  flashMessage = 'Runs and credits are charged to the selected billing entity. Wallet credits of that account are consumed; LLM token usage is tracked for visibility only. Accounts without an eligible plan or wallet balance are disabled.',
   width = 'min(100%, 520px)',
   preferOrganizationDefault = false,
-}: BillableAccountSelectProps): JSX.Element {
+}: BillingEntitySelectProps): JSX.Element {
   const { user } = useIAMStore();
   const {
     useEligibleSubscriptionAccounts,
@@ -242,7 +240,7 @@ export function BillableAccountSelect({
     [detailsRaw],
   );
 
-  const accounts = useMemo<BillableAccount[]>(() => {
+  const accounts = useMemo<BillingEntity[]>(() => {
     const accountMap = new Map<string, (typeof allContextAccounts)[number]>();
     for (const a of allContextAccounts) accountMap.set(a.accountUid, a);
     for (const a of eligibleAccounts) accountMap.set(a.accountUid, a);
@@ -255,7 +253,7 @@ export function BillableAccountSelect({
       const details = detailsByUid.get(account.accountUid);
       const accountType = String(
         details?.account_type || account.accountType || 'user',
-      ) as BillableAccountType;
+      ) as BillingEntityType;
       const accountHandle = String(
         details?.account_handle || account.accountHandle || '',
       );
@@ -311,7 +309,7 @@ export function BillableAccountSelect({
         ),
         planName,
         isEligible,
-        isPaidPlan: resolveBillablePlanTier(planName || 'free') === 'pro',
+        isPaidPlan: resolveBillingPlanTier(planName || 'free') === 'pro',
         sourceOrganizationUid,
         sourceOrganizationHandle,
         teamHandle: accountType === 'team' ? accountHandle : undefined,
@@ -324,33 +322,30 @@ export function BillableAccountSelect({
     detailsByUid,
   ]);
 
-  const eligibleBillable = useMemo(
+  const eligibleBilling = useMemo(
     () => accounts.filter(a => a.isEligible),
     [accounts],
   );
-  const hasEligibleAccount = eligibleBillable.length > 0;
+  const hasEligibleAccount = eligibleBilling.length > 0;
   const isLoading = eligibleAccountsLoading || detailsLoading;
 
-  const storedBillableAccountUid = useMemo(
-    () => readBillableAccountCookie(),
-    [],
-  );
+  const storedBillingEntityUid = useMemo(() => readBillingEntityCookie(), []);
 
   const preferredEligible = useMemo(() => {
-    const fromCookie = storedBillableAccountUid
-      ? eligibleBillable.find(
-          account => account.accountUid === storedBillableAccountUid,
+    const fromCookie = storedBillingEntityUid
+      ? eligibleBilling.find(
+          account => account.accountUid === storedBillingEntityUid,
         )
       : undefined;
     if (fromCookie) return fromCookie;
 
-    const personalEligible = eligibleBillable.find(
+    const personalEligible = eligibleBilling.find(
       a => a.accountType === 'user' && a.accountUid === personalAccountUid,
     );
     if (personalEligible) return personalEligible;
 
     const byPrincipal = selectedPrincipalUid
-      ? eligibleBillable.find(account => {
+      ? eligibleBilling.find(account => {
           if (account.accountUid !== selectedPrincipalUid) return false;
           if (selectedPrincipalKind === 'organization')
             return account.accountType === 'organization';
@@ -361,14 +356,14 @@ export function BillableAccountSelect({
       : undefined;
     if (byPrincipal) return byPrincipal;
 
-    const firstOrg = eligibleBillable.find(
+    const firstOrg = eligibleBilling.find(
       a => a.accountType === 'organization',
     );
     if (preferOrganizationDefault && firstOrg) return firstOrg;
-    return firstOrg || eligibleBillable[0];
+    return firstOrg || eligibleBilling[0];
   }, [
-    storedBillableAccountUid,
-    eligibleBillable,
+    storedBillingEntityUid,
+    eligibleBilling,
     personalAccountUid,
     preferOrganizationDefault,
     selectedPrincipalKind,
@@ -377,7 +372,7 @@ export function BillableAccountSelect({
 
   const handleAccountSelect = useCallback(
     (accountUid: string) => {
-      writeBillableAccountCookie(accountUid);
+      writeBillingEntityCookie(accountUid);
       onChange(accountUid);
     },
     [onChange],
@@ -390,26 +385,26 @@ export function BillableAccountSelect({
   useEffect(() => {
     if (isLoading) return;
     if (initialSelectionAppliedRef.current) return;
-    if (eligibleBillable.length === 0 && accounts.length === 0) return;
+    if (eligibleBilling.length === 0 && accounts.length === 0) return;
     initialSelectionAppliedRef.current = true;
 
-    const storedAccount = storedBillableAccountUid
-      ? eligibleBillable.find(a => a.accountUid === storedBillableAccountUid)
+    const storedAccount = storedBillingEntityUid
+      ? eligibleBilling.find(a => a.accountUid === storedBillingEntityUid)
       : undefined;
-    const personalAccount = eligibleBillable.find(
+    const personalAccount = eligibleBilling.find(
       a => a.accountType === 'user' && a.accountUid === personalAccountUid,
     );
     const target = storedAccount || personalAccount || preferredEligible;
     if (!target) return;
     if (target.accountUid !== value) {
-      writeBillableAccountCookie(target.accountUid);
+      writeBillingEntityCookie(target.accountUid);
       onChange(target.accountUid);
     }
   }, [
     isLoading,
     accounts,
-    eligibleBillable,
-    storedBillableAccountUid,
+    eligibleBilling,
+    storedBillingEntityUid,
     personalAccountUid,
     preferredEligible,
     value,
@@ -426,7 +421,7 @@ export function BillableAccountSelect({
     }
     const current = accounts.find(a => a.accountUid === value);
     if (!current || !current.isEligible) {
-      writeBillableAccountCookie(preferredEligible.accountUid);
+      writeBillingEntityCookie(preferredEligible.accountUid);
       onChange(preferredEligible.accountUid);
     }
   }, [isLoading, preferredEligible, accounts, value, onChange]);
@@ -443,13 +438,13 @@ export function BillableAccountSelect({
   useEffect(() => {
     onAccountsResolved?.({
       accounts,
-      eligibleAccounts: eligibleBillable,
+      eligibleAccounts: eligibleBilling,
       isLoading,
       hasEligibleAccount,
     });
   }, [
     accounts,
-    eligibleBillable,
+    eligibleBilling,
     isLoading,
     hasEligibleAccount,
     onAccountsResolved,
@@ -532,14 +527,14 @@ export function BillableAccountSelect({
                         selectedAccount.isPaidPlan ? 'success' : 'attention'
                       }
                     >
-                      {formatBillableAccountPlanLabel(selectedAccount.planName)}
+                      {formatBillingEntityPlanLabel(selectedAccount.planName)}
                     </Label>
                   </Box>
                 </Box>
               ) : !hasEligibleAccount ? (
                 emptyMessage
               ) : (
-                'Select a billable account'
+                'Select a billing entity'
               )}
             </Button>
           </ActionMenu.Anchor>
@@ -565,7 +560,7 @@ export function BillableAccountSelect({
                 <ActionList.Item disabled>{emptyMessage}</ActionList.Item>
               ) : (
                 (() => {
-                  const typeOrder: Record<BillableAccountType, number> = {
+                  const typeOrder: Record<BillingEntityType, number> = {
                     user: 0,
                     organization: 1,
                     team: 2,
@@ -653,9 +648,7 @@ export function BillableAccountSelect({
                                   account.isPaidPlan ? 'success' : 'attention'
                                 }
                               >
-                                {formatBillableAccountPlanLabel(
-                                  account.planName,
-                                )}
+                                {formatBillingEntityPlanLabel(account.planName)}
                               </Label>
                             </Box>
                           </Box>
@@ -681,4 +674,4 @@ export function BillableAccountSelect({
   );
 }
 
-export default BillableAccountSelect;
+export default BillingEntitySelect;

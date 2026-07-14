@@ -8,4 +8,4 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './BillableAccountSelect';
+export * from './BillingEntitySelect';

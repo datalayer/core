@@ -323,11 +323,11 @@ def plans_catalog(
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    billable_principal_uid: Optional[str] = typer.Option(
+    billing_entity_uid: Optional[str] = typer.Option(
         os.environ.get("DATALAYER_ACCOUNT_UID")
-        or os.environ.get("DATALAYER_BILLABLE_PRINCIPAL_UID"),
-        "--billable-principal-uid",
-        help="Optional billable account UID scope.",
+        or os.environ.get("DATALAYER_BIILING_PRINCIPAL_UID"),
+        "--billing-entity-uid",
+        help="Optional billing entity UID scope.",
     ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload."),
 ) -> None:
@@ -335,8 +335,8 @@ def plans_catalog(
     try:
         client = _make_client(api_key=api_key, iam_url=iam_url)
         suffix = (
-            f"?billable_principal_uid={billable_principal_uid}"
-            if billable_principal_uid
+            f"?billing_entity_uid={billing_entity_uid}"
+            if billing_entity_uid
             else ""
         )
         response = _iam_get(client, f"/api/iam/v1/plans/catalog{suffix}")

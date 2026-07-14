@@ -13,6 +13,7 @@ import {
 } from '@primer/react';
 import { useNavigate } from '../../hooks';
 import { PrincipalAvatar } from './PrincipalAvatar';
+import { displayHandleText } from '../display/DisplayHandle';
 
 export type PrincipalKind = 'personal' | 'team' | 'organization';
 
@@ -34,6 +35,35 @@ export type PrincipalDetailsOverlayProps = {
 
 function normalize(value?: string): string {
   return (value || '').trim();
+}
+
+function normalizeOriginLabel(origin?: string): string {
+  const normalized = normalize(origin);
+  if (!normalized) {
+    return 'Datalayer';
+  }
+
+  const lower = normalized.toLowerCase();
+  if (lower === 'google') return 'Google';
+  if (lower === 'github') return 'GitHub';
+  if (lower === 'linkedin') return 'LinkedIn';
+  if (lower === 'microsoft') return 'Microsoft';
+  if (lower === 'datalayer') return 'Datalayer';
+
+  const extPrefix = 'urn:dla:iam:ext::';
+  if (lower.startsWith(extPrefix)) {
+    const suffix = normalized.slice(extPrefix.length);
+    const provider = (suffix.split(':')[0] || '').trim().toLowerCase();
+    if (provider === 'google') return 'Google';
+    if (provider === 'github') return 'GitHub';
+    if (provider === 'linkedin') return 'LinkedIn';
+    if (provider === 'microsoft') return 'Microsoft';
+    if (provider) {
+      return provider.charAt(0).toUpperCase() + provider.slice(1);
+    }
+  }
+
+  return normalized;
 }
 
 export function buildPrincipalProfilePath({
@@ -115,7 +145,7 @@ export function PrincipalDetailsOverlay({
   const normalizedUid = normalize(uid);
   const normalizedName = normalize(name);
   const normalizedDescription = normalize(description);
-  const normalizedOrigin = normalize(origin) || 'Datalayer';
+  const normalizedOrigin = normalizeOriginLabel(origin);
   const resolvedHandle =
     normalizedHandle && normalizedHandle !== normalizedUid
       ? normalizedHandle
@@ -167,7 +197,7 @@ export function PrincipalDetailsOverlay({
                 </Text>
                 {resolvedHandle ? (
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    @{resolvedHandle}
+                    {displayHandleText(resolvedHandle)}
                   </Text>
                 ) : null}
               </Box>
@@ -185,7 +215,9 @@ export function PrincipalDetailsOverlay({
               {resolvedHandle ? (
                 <>
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
-                  <Text sx={{ fontSize: 1 }}>@{resolvedHandle}</Text>
+                  <Text sx={{ fontSize: 1 }}>
+                    {displayHandleText(resolvedHandle)}
+                  </Text>
                 </>
               ) : null}
               {normalizedUid ? (

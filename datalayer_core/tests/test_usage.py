@@ -4,7 +4,7 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Integration tests for usage history across billable account scopes."""
+"""Integration tests for usage history across billing entity scopes."""
 
 import os
 import time
@@ -73,7 +73,7 @@ def _iam_get_json(client: DatalayerClient, path: str) -> dict[str, Any]:
     return payload
 
 
-def _resolve_billable_principals(client: DatalayerClient) -> dict[str, dict[str, str]]:
+def _resolve_billing_entitys(client: DatalayerClient) -> dict[str, dict[str, str]]:
     whoami_payload = _iam_get_json(client, "/api/iam/v1/whoami")
     profile = whoami_payload.get("profile") or {}
     if not profile.get("uid"):
@@ -127,11 +127,11 @@ def _fetch_usage_history(
     account_kind: str,
 ) -> list[dict[str, Any]]:
     query: dict[str, str] = {
-        "billable_principal_uid": account_uid,
+        "billing_entity_uid": account_uid,
     }
     # API currently recognizes only user|organization kinds.
     if account_kind in {"user", "organization"}:
-        query["billable_principal_kind"] = account_kind
+        query["billing_entity_kind"] = account_kind
 
     payload = _iam_get_json(
         client,
@@ -185,9 +185,9 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     Validate usage lifecycle with a 1-minute reservation and manual stop at ~30s.
 
     Matrix:
-    - user billable account
-    - team billable account
-    - datalayer organization billable account
+    - user billing entity
+    - team billing entity
+    - datalayer organization billing entity
 
     Coverage:
     - runtime creation
@@ -195,7 +195,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     - closed usage history row after manual stop
     """
     client = _build_test_client()
-    accounts = _resolve_billable_principals(client)
+    accounts = _resolve_billing_entitys(client)
 
     if account_case not in accounts:
         pytest.skip(f"No available account for case={account_case}")
@@ -210,9 +210,9 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             runtime = client.create_runtime(
                 name=runtime_name,
                 time_reservation=1,
-                billable_principal_uid=account["uid"],
-                billable_principal_type=account["kind"],
-                billable_principal_handle=account["handle"] or None,
+                billing_entity_uid=account["uid"],
+                billing_entity_type=account["kind"],
+                billing_entity_handle=account["handle"] or None,
             )
         except RuntimeError as exc:
             if account_case == "team" and _is_insufficient_credits_error(exc):
