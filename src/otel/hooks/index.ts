@@ -11,7 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OtelSpan, OtelLog, OtelMetric, OtelQueryRow } from '../types';
-import { coreStore } from '../../state/substates/CoreState';
+import { getOtelConsumeUrl } from '../../state/substates/CoreState';
 import { buildOtelWebSocketUrl, resolveOtelAuth } from '../auth';
 
 // ── Global 401 handler ──────────────────────────────────────────────
@@ -237,7 +237,7 @@ export function useOtelTraces(options: {
 }) {
   const {
     token,
-    baseUrl = coreStore.getState().configuration.otelUrl,
+    baseUrl = getOtelConsumeUrl(),
     serviceName,
     limit = 50,
     autoRefreshMs,
@@ -321,7 +321,7 @@ export function useOtelLogs(options: {
 }) {
   const {
     token,
-    baseUrl = coreStore.getState().configuration.otelUrl,
+    baseUrl = getOtelConsumeUrl(),
     serviceName,
     severity,
     traceId,
@@ -376,7 +376,7 @@ export function useOtelMetrics(options: {
 }) {
   const {
     token,
-    baseUrl = coreStore.getState().configuration.otelUrl,
+    baseUrl = getOtelConsumeUrl(),
     serviceName,
     metricName,
     limit = 50,
@@ -420,8 +420,7 @@ export function useOtelMetrics(options: {
 
 /** Fetch list of observed service names. */
 export function useOtelServices(options: { token?: string; baseUrl?: string }) {
-  const { token, baseUrl = coreStore.getState().configuration.otelUrl } =
-    options;
+  const { token, baseUrl = getOtelConsumeUrl() } = options;
   const [services, setServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -642,7 +641,7 @@ export function useOtelWebSocket(options: {
   callbacks?: OtelWsCallbacks;
 }) {
   const {
-    baseUrl = coreStore.getState().configuration.otelUrl,
+    baseUrl = getOtelConsumeUrl(),
     token,
     userUid,
     autoReconnect = true,

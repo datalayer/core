@@ -29,16 +29,20 @@ export type DatasourcesProps = {
   principalUid?: string;
   /** Optional principal kind used to scope datasource reads. */
   principalKind?: 'personal' | 'organization' | 'team';
+  /** Show local inline spinner in empty state while loading. */
+  showInlineLoadingIndicator?: boolean;
 };
 
 const DatasourcesTable = ({
   datasourcesListRoute,
   principalUid,
   principalKind,
+  showInlineLoadingIndicator = true,
 }: {
   datasourcesListRoute?: string;
   principalUid?: string;
   principalKind?: 'personal' | 'organization' | 'team';
+  showInlineLoadingIndicator?: boolean;
 }) => {
   const { useDatasources } = useCache();
 
@@ -48,12 +52,10 @@ const DatasourcesTable = ({
   const [datasources, setDatasources] = useState<IDatasource[]>([]);
 
   const showInitialSpinner =
-    datasources.length === 0
-    && (
-      datasourcesQuery.isLoading
-      || datasourcesQuery.isFetching
-      || !Array.isArray(datasourcesQuery.data)
-    );
+    datasources.length === 0 &&
+    (datasourcesQuery.isLoading ||
+      datasourcesQuery.isFetching ||
+      !Array.isArray(datasourcesQuery.data));
 
   useEffect(() => {
     if (datasourcesQuery.data) {
@@ -62,7 +64,7 @@ const DatasourcesTable = ({
   }, [datasourcesQuery.data]);
   return datasources.length === 0 ? (
     <Blankslate border spacious>
-      {showInitialSpinner ? (
+      {showInitialSpinner && showInlineLoadingIndicator ? (
         <Box
           sx={{
             display: 'flex',
@@ -73,6 +75,13 @@ const DatasourcesTable = ({
         >
           <Spinner />
         </Box>
+      ) : showInitialSpinner ? (
+        <>
+          <Blankslate.Heading>Datasources</Blankslate.Heading>
+          <Blankslate.Description>
+            <Text sx={{ textAlign: 'center' }}>Loading datasources...</Text>
+          </Blankslate.Description>
+        </>
       ) : (
         <>
           <Blankslate.Heading>Datasources</Blankslate.Heading>
@@ -135,6 +144,7 @@ export const Datasources = ({
   datasourcesListRoute,
   principalUid,
   principalKind,
+  showInlineLoadingIndicator = true,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -177,6 +187,7 @@ export const Datasources = ({
             datasourcesListRoute={datasourcesListRoute}
             principalUid={principalUid}
             principalKind={principalKind}
+            showInlineLoadingIndicator={showInlineLoadingIndicator}
           />
         </Box>
       </PageLayout.Content>

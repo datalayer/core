@@ -28,6 +28,10 @@ let initialConfiguration: IDatalayerCoreConfig = {
   aiInferenceUrl: 'https://prod1.datalayer.run',
   mcpServersUrl: 'https://prod1.datalayer.run',
   otelUrl: 'https://prod1.datalayer.run',
+  // Defaults to prod so telemetry is consumed from the production OTEL service
+  // even when runtimes export elsewhere (see `getOtelConsumeUrl` and the
+  // `DATALAYER_OTEL_IN_URL` env var). Override to '' to consume from `otelUrl`.
+  otelInUrl: 'https://prod1.datalayer.run',
   growthUrl: 'https://prod1.datalayer.run',
   inboundsUrl: 'https://prod1.datalayer.run',
   successUrl: 'https://prod1.datalayer.run',
@@ -135,5 +139,20 @@ export function useCoreStore<T>(selector: (state: DatalayerCoreState) => T): T;
 export function useCoreStore<T>(selector?: (state: DatalayerCoreState) => T) {
   return useStore(coreStore, selector!);
 }
+
+/**
+ * Resolve the OTEL base URL used to *consume* (read/query) telemetry.
+ *
+ * Prefers `otelInUrl` when set, otherwise falls back to `otelUrl`. This allows
+ * local development to fetch telemetry from a remote (e.g. production) OTEL
+ * service even when the local runtime exports telemetry to a different endpoint.
+ *
+ * Mirrors the `DATALAYER_OTEL_IN_URL` (consume) / `DATALAYER_OTEL_URL` (export)
+ * split on the backend/build side.
+ */
+export const getOtelConsumeUrl = (): string => {
+  const cfg = coreStore.getState().configuration;
+  return cfg.otelInUrl || cfg.otelUrl;
+};
 
 export default useCoreStore;

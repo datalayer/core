@@ -14,6 +14,10 @@
 import * as React from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { useCache } from '../../hooks';
+import {
+  usePrincipalCacheStore,
+  principalCacheKey,
+} from '../../hooks/usePrincipalCacheStore';
 import { useIAMStore } from '../../state';
 import { PrincipalAvatar, PrincipalAvatarKind } from './PrincipalAvatar';
 import { PrincipalDetailsOverlay } from './PrincipalDetailsOverlay';
@@ -110,6 +114,20 @@ export const Principal: React.FC<PrincipalProps> = ({
   const isAnonymous = !authenticatedUser;
 
   const normalizedUid = String(principal.uid || '').trim();
+
+  // In-memory principal cache: seed the display from a previously resolved
+  // snapshot (keyed by uid) for an instant paint, and write freshly resolved
+  // data back so later renders anywhere reuse it. Network hooks below still
+  // refresh on demand per their staleTime.
+  const cachedPrincipal = usePrincipalCacheStore(state =>
+    normalizedUid
+      ? state.principals[principalCacheKey(principal.kind, normalizedUid)]
+      : undefined,
+  );
+  const upsertCachedPrincipal = usePrincipalCacheStore(
+    state => state.upsertPrincipal,
+  );
+
   const normalizedProvidedHandle = String(principal.handle || '').trim();
   const normalizedProvidedAccountHandle = String(
     principal.accountHandle || '',
@@ -239,10 +257,42 @@ export const Principal: React.FC<PrincipalProps> = ({
             '',
         ).trim();
 
+  // Team-specific enrichment: parent organization + membership + visibility,
+  // falling back to the in-memory cache when the network data isn't ready yet.
+  const hydratedTeam =
+    principal.kind === 'team' ? (hydratedTeamQuery.data as any) : undefined;
+  const teamMemberCount =
+    hydratedTeam && Array.isArray(hydratedTeam.members)
+      ? hydratedTeam.members.length
+      : cachedPrincipal?.memberCount;
+  const teamOrganizationHandleResolved =
+    principal.kind === 'team'
+      ? String(
+          (teamOrganizationQuery.data as any)?.handle ||
+            teamOrganizationHandle ||
+            cachedPrincipal?.organizationHandle ||
+            '',
+        ).trim() || undefined
+      : undefined;
+  const teamOrganizationNameResolved =
+    principal.kind === 'team'
+      ? String(
+          (teamOrganizationQuery.data as any)?.displayName ||
+            (teamOrganizationQuery.data as any)?.name ||
+            cachedPrincipal?.organizationName ||
+            '',
+        ).trim() || undefined
+      : undefined;
+  const resolvedIsPublic =
+    typeof (hydratedEntity as any)?.public === 'boolean'
+      ? (hydratedEntity as any).public
+      : cachedPrincipal?.isPublic;
+
   const resolvedPrincipal: PrincipalDescriptor = {
     ...principal,
     displayName:
       hydratedDisplayName ||
+      String(cachedPrincipal?.displayName || '').trim() ||
       (() => {
         const providedDisplayName = String(principal.displayName || '').trim();
         const providedIsGenericPlaceholder =
@@ -266,30 +316,101 @@ export const Principal: React.FC<PrincipalProps> = ({
     handle:
       (!providedHandleIsUidPlaceholder ? principal.handle : undefined) ||
       String((hydratedEntity as any)?.handle || '').trim() ||
+      cachedPrincipal?.handle ||
       undefined,
     accountHandle:
-      (!providedAccountHandleIsUidPlaceholder
-        ? principal.accountHandle
-        : undefined) ||
-      String((hydratedEntity as any)?.handle || '').trim() ||
-      undefined,
+      principal.kind === 'team'
+        ? (!providedAccountHandleIsUidPlaceholder
+            ? principal.accountHandle
+            : undefined) ||
+          teamOrganizationHandleResolved ||
+          cachedPrincipal?.accountHandle ||
+          undefined
+        : (!providedAccountHandleIsUidPlaceholder
+            ? principal.accountHandle
+            : undefined) ||
+          String((hydratedEntity as any)?.handle || '').trim() ||
+          cachedPrincipal?.accountHandle ||
+          undefined,
     name:
       principal.name ||
       String((hydratedEntity as any)?.name || '').trim() ||
+      cachedPrincipal?.name ||
       undefined,
     description:
       principal.description ||
       String((hydratedEntity as any)?.description || '').trim() ||
+      cachedPrincipal?.description ||
       undefined,
     avatarUrl:
-      principal.avatarUrl || (hydratedEntity as any)?.avatarUrl || undefined,
+      principal.avatarUrl ||
+      (hydratedEntity as any)?.avatarUrl ||
+      cachedPrincipal?.avatarUrl ||
+      undefined,
     firstName:
-      principal.firstName || (hydratedEntity as any)?.firstName || undefined,
+      principal.firstName ||
+      (hydratedEntity as any)?.firstName ||
+      cachedPrincipal?.firstName ||
+      undefined,
     lastName:
-      principal.lastName || (hydratedEntity as any)?.lastName || undefined,
-    email: principal.email || (hydratedEntity as any)?.email || undefined,
-    origin: principal.origin || (hydratedEntity as any)?.origin || undefined,
+      principal.lastName ||
+      (hydratedEntity as any)?.lastName ||
+      cachedPrincipal?.lastName ||
+      undefined,
+    email:
+      principal.email ||
+      (hydratedEntity as any)?.email ||
+      cachedPrincipal?.email ||
+      undefined,
+    origin:
+      principal.origin ||
+      (hydratedEntity as any)?.origin ||
+      cachedPrincipal?.origin ||
+      undefined,
   };
+
+  // Persist the freshly resolved snapshot so subsequent renders (here or in
+  // other views) paint instantly from memory. Refreshes still happen on demand
+  // through the underlying query hooks.
+  React.useEffect(() => {
+    if (!normalizedUid) {
+      return;
+    }
+    upsertCachedPrincipal({
+      kind: principal.kind,
+      uid: normalizedUid,
+      // Only cache a real, resolved display name — never a uid/handle
+      // placeholder — so cached names stay authoritative.
+      displayName:
+        hydratedDisplayName ||
+        String(cachedPrincipal?.displayName || '').trim() ||
+        undefined,
+      name: resolvedPrincipal.name,
+      description: resolvedPrincipal.description,
+      handle: resolvedPrincipal.handle,
+      accountHandle: resolvedPrincipal.accountHandle,
+      firstName: resolvedPrincipal.firstName,
+      lastName: resolvedPrincipal.lastName,
+      email: resolvedPrincipal.email,
+      origin: resolvedPrincipal.origin,
+      avatarUrl: resolvedPrincipal.avatarUrl,
+      organizationHandle: teamOrganizationHandleResolved,
+      organizationName: teamOrganizationNameResolved,
+      memberCount: teamMemberCount,
+      isPublic: resolvedIsPublic,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    normalizedUid,
+    principal.kind,
+    hydratedEntity,
+    hydratedDisplayName,
+    teamOrganizationHandleResolved,
+    teamOrganizationNameResolved,
+    teamMemberCount,
+    resolvedIsPublic,
+    upsertCachedPrincipal,
+  ]);
 
   return (
     <Box
@@ -321,6 +442,9 @@ export const Principal: React.FC<PrincipalProps> = ({
         email={resolvedPrincipal.email}
         origin={resolvedPrincipal.origin}
         avatarUrl={resolvedPrincipal.avatarUrl}
+        organizationName={teamOrganizationNameResolved}
+        memberCount={teamMemberCount}
+        isPublic={resolvedIsPublic}
         isAdmin={isAdmin}
       />
     </Box>

@@ -18,7 +18,7 @@
  * ```
  */
 
-import { coreStore } from '../../state/substates/CoreState';
+import { getOtelConsumeUrl } from '../../state/substates/CoreState';
 import type { OtelSpan, OtelLog, OtelMetric, OtelQueryResult } from '../types';
 import { resolveOtelAuth } from '../auth';
 import type {
@@ -192,8 +192,7 @@ export class OtelClient {
   private readonly userUid: string;
 
   constructor(options: OtelClientOptions) {
-    this.baseUrl =
-      options.baseUrl ?? coreStore.getState().configuration.otelUrl;
+    this.baseUrl = options.baseUrl ?? getOtelConsumeUrl();
     const auth = resolveOtelAuth(options.token, options.userUid);
     this.token = auth.token;
     this.userUid = auth.userUid;

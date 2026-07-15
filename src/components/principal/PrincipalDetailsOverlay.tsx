@@ -30,6 +30,12 @@ export type PrincipalDetailsOverlayProps = {
   email?: string;
   origin?: string;
   avatarUrl?: string;
+  /** Team-specific: parent organization display name. */
+  organizationName?: string;
+  /** Team-specific: number of members. */
+  memberCount?: number;
+  /** Team/organization visibility. */
+  isPublic?: boolean;
   isAdmin?: boolean;
 };
 
@@ -132,6 +138,9 @@ export function PrincipalDetailsOverlay({
   email,
   origin,
   avatarUrl,
+  organizationName,
+  memberCount,
+  isPublic,
   isAdmin = false,
 }: PrincipalDetailsOverlayProps): JSX.Element {
   const navigate = useNavigate();
@@ -146,6 +155,8 @@ export function PrincipalDetailsOverlay({
   const normalizedName = normalize(name);
   const normalizedDescription = normalize(description);
   const normalizedOrigin = normalizeOriginLabel(origin);
+  const normalizedAccountHandle = normalize(accountHandle);
+  const normalizedOrganizationName = normalize(organizationName);
   const resolvedHandle =
     normalizedHandle && normalizedHandle !== normalizedUid
       ? normalizedHandle
@@ -157,6 +168,22 @@ export function PrincipalDetailsOverlay({
     accountHandle,
     isAdmin,
   });
+  // For a team, extract the bare team handle (the last path segment) and the
+  // parent organization handle so we can present them separately.
+  const teamHandleOnly =
+    kind === 'team' && resolvedHandle.includes('/')
+      ? normalize(resolvedHandle.split('/').pop())
+      : resolvedHandle;
+  const teamOrganizationHandle =
+    kind === 'team'
+      ? normalizedAccountHandle ||
+        (resolvedHandle.includes('/')
+          ? normalize(resolvedHandle.split('/')[0])
+          : '')
+      : '';
+  const organizationPath = teamOrganizationHandle
+    ? `/${teamOrganizationHandle.replace(/^@+/, '')}`
+    : '';
 
   return (
     <ThemeProvider>
@@ -195,7 +222,16 @@ export function PrincipalDetailsOverlay({
                 <Text sx={{ fontWeight: 'semibold' }}>
                   {normalizedDisplayName}
                 </Text>
-                {resolvedHandle && kind !== 'team' ? (
+                {kind === 'team' ? (
+                  teamHandleOnly ? (
+                    <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                      {displayHandleText(teamHandleOnly)}
+                      {teamOrganizationHandle
+                        ? ` · @${teamOrganizationHandle.replace(/^@+/, '')}`
+                        : ''}
+                    </Text>
+                  ) : null
+                ) : resolvedHandle ? (
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                     {displayHandleText(resolvedHandle)}
                   </Text>
@@ -259,6 +295,30 @@ export function PrincipalDetailsOverlay({
                 </>
               ) : (
                 <>
+                  {kind === 'team' && teamHandleOnly ? (
+                    <>
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        Handle
+                      </Text>
+                      <Text sx={{ fontSize: 1 }}>
+                        {displayHandleText(teamHandleOnly)}
+                      </Text>
+                    </>
+                  ) : null}
+                  {kind === 'team' && teamOrganizationHandle ? (
+                    <>
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        Organization
+                      </Text>
+                      <Text sx={{ fontSize: 1 }}>
+                        {normalizedOrganizationName
+                          ? `${normalizedOrganizationName} (${displayHandleText(
+                              teamOrganizationHandle,
+                            )})`
+                          : displayHandleText(teamOrganizationHandle)}
+                      </Text>
+                    </>
+                  ) : null}
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Name</Text>
                   <Text sx={{ fontSize: 1 }}>
                     {normalizedName || normalizedDisplayName}
@@ -269,6 +329,30 @@ export function PrincipalDetailsOverlay({
                   <Text sx={{ fontSize: 1 }}>
                     {normalizedDescription || 'N/A'}
                   </Text>
+                  {kind === 'team' && typeof memberCount === 'number' ? (
+                    <>
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        Members
+                      </Text>
+                      <Text sx={{ fontSize: 1 }}>
+                        {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                      </Text>
+                    </>
+                  ) : null}
+                  {typeof isPublic === 'boolean' ? (
+                    <>
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        Visibility
+                      </Text>
+                      <Label
+                        size="small"
+                        variant={isPublic ? 'success' : 'secondary'}
+                        sx={{ justifySelf: 'start', width: 'fit-content' }}
+                      >
+                        {isPublic ? 'Public' : 'Private'}
+                      </Label>
+                    </>
+                  ) : null}
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
                   <Label
                     size="small"
@@ -288,7 +372,16 @@ export function PrincipalDetailsOverlay({
                 </>
               )}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              {kind === 'team' && organizationPath ? (
+                <Button
+                  size="small"
+                  variant="invisible"
+                  onClick={() => navigate(organizationPath)}
+                >
+                  View Organization
+                </Button>
+              ) : null}
               <Button
                 size="small"
                 onClick={() => {

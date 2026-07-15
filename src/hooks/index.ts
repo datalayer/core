@@ -34,6 +34,7 @@ export * from './useProjectStore';
 export * from './useMobile';
 export * from './useUsageRefreshStore';
 export * from './usePrincipalStore';
+export * from './usePrincipalCacheStore';
 export * from './useBillingEntityStore';
 export * from './useSelectedPrincipal';
 export * from './useSelectedBillingEntity';
