@@ -4,7 +4,7 @@
  */
 
 export * from './ConsumptionBar';
-export * from './ProgressBar';
+export * from './SpinnerBar';
 export * from './ProgressRing';
 export * from './Timer';
 export * from './consumption';

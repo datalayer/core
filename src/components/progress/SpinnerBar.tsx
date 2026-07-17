@@ -5,9 +5,9 @@
 
 import { useState } from 'react';
 import { useInterval } from 'usehooks-ts';
-import { ProgressBar as PrimerProgressBar } from '@primer/react';
+import { ProgressBar } from '@primer/react';
 
-export const ProgressBar = () => {
+export const SpinnerBar = () => {
   const [progress, setProgress] = useState(0);
   useInterval(() => {
     if (progress >= 100) {
@@ -16,7 +16,7 @@ export const ProgressBar = () => {
       setProgress(progress + 1);
     }
   }, 100);
-  return <PrimerProgressBar progress={progress} aria-label="" />;
+  return <ProgressBar progress={progress} aria-label="" />;
 };
 
-export default ProgressBar;
+export default SpinnerBar;

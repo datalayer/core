@@ -452,7 +452,7 @@ export function PrincipalSwitcherMenu({
           )}
         </ActionMenu.Anchor>
         <ActionMenu.Overlay width="large">
-          <ActionList>
+          <ActionList selectionVariant="single">
             <ActionList.Group>
               <ActionList.GroupHeading>Personal</ActionList.GroupHeading>
               <ActionList.Item

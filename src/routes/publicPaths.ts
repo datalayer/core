@@ -27,6 +27,7 @@ export const PUBLIC_PATH_PREFIXES: readonly string[] = [
   '/docs',
   '/events',
   '/features',
+  '/gallery',
   '/integrations',
   '/join/confirm/user',
   '/library',
