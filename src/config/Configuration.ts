@@ -211,7 +211,7 @@ export class DatalayerConfiguration {
  * Default configuration values for Datalayer
  */
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  datalayerUrl: 'https://oss.datalayer.run',
+  datalayerUrl: 'https://prod1.datalayer.run',
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
