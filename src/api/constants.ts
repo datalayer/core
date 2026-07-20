@@ -11,6 +11,7 @@ export const API_BASE_PATHS = {
   IAM: '/api/iam/v1',
   OTEL: '/api/otel/v1',
   RUNTIMES: '/api/runtimes/v1',
+  SCHEDULER: '/api/scheduler/v1',
   SPACER: '/api/spacer/v1',
 } as const;
 
@@ -26,6 +27,8 @@ export const DEFAULT_SERVICE_URLS = {
   OTEL: 'https://prod1.datalayer.run',
   /** Default URL for Runtimes service */
   RUNTIMES: 'https://r1.datalayer.run',
+  /** Default URL for Scheduler (cron schedules and runs) service */
+  SCHEDULER: 'https://prod1.datalayer.run',
   /** Default URL for Spacer (workspaces and collaboration) service */
   SPACER: 'https://prod1.datalayer.run',
 } as const;

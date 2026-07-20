@@ -7,8 +7,8 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DatalayerClient } from '..';
-import { RuntimeDTO } from '../../models/RuntimeDTO';
-import { CodeSandboxSnapshotDTO } from '../../models/CodeSandboxSnapshotDTO';
+import { RuntimeDTO } from '../../base/models/RuntimeDTO';
+import { CodeSandboxSnapshotDTO } from '../../base/models/CodeSandboxSnapshotDTO';
 import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 import { performCleanup } from '../../__tests__/shared/cleanup-shared';
@@ -78,9 +78,9 @@ describe.skipIf(skipInCi)('Client Runtimes Integration Tests', () => {
 
     client = new DatalayerClient({
       token: testConfig.getToken(),
-      iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-      runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-      spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+      iamUrl: DEFAULT_SERVICE_URLS.IAM,
+      runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+      spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
     });
   });
 

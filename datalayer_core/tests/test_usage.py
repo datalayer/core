@@ -1,7 +1,10 @@
+# Copyright (c) 2023-2025 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""Integration tests for usage history across billable account scopes."""
+"""Integration tests for usage history across billing entity scopes."""
 
 import os
 import time
@@ -22,7 +25,7 @@ TEST_DATALAYER_API_KEY = os.environ.get("TEST_DATALAYER_API_KEY") or os.environ.
     "DATALAYER_API_KEY"
 )
 
-LOCAL_RUN_URL = os.environ.get("TEST_DATALAYER_RUN_URL", "http://localhost:9700")
+LOCAL_RUN_URL = os.environ.get("TEST_DATALAYER_URL", "http://localhost:9700")
 LOCAL_IAM_URL = os.environ.get("TEST_DATALAYER_IAM_URL", "http://localhost:9700")
 LOCAL_RUNTIMES_URL = os.environ.get(
     "TEST_DATALAYER_RUNTIMES_URL",
@@ -30,11 +33,16 @@ LOCAL_RUNTIMES_URL = os.environ.get(
 )
 
 
+def _is_insufficient_credits_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "insufficient_credits" in message or "insufficient credits" in message
+
+
 def _build_test_client() -> DatalayerClient:
     return DatalayerClient(
-        token=TEST_DATALAYER_API_KEY,
+        api_key=TEST_DATALAYER_API_KEY,
         urls=DatalayerURLs.from_environment(
-            run_url=LOCAL_RUN_URL,
+            datalayer_url=LOCAL_RUN_URL,
             iam_url=LOCAL_IAM_URL,
             runtimes_url=LOCAL_RUNTIMES_URL,
         ),
@@ -65,7 +73,7 @@ def _iam_get_json(client: DatalayerClient, path: str) -> dict[str, Any]:
     return payload
 
 
-def _resolve_billable_accounts(client: DatalayerClient) -> dict[str, dict[str, str]]:
+def _resolve_billing_entitys(client: DatalayerClient) -> dict[str, dict[str, str]]:
     whoami_payload = _iam_get_json(client, "/api/iam/v1/whoami")
     profile = whoami_payload.get("profile") or {}
     if not profile.get("uid"):
@@ -119,11 +127,11 @@ def _fetch_usage_history(
     account_kind: str,
 ) -> list[dict[str, Any]]:
     query: dict[str, str] = {
-        "billable_account_uid": account_uid,
+        "billing_entity_uid": account_uid,
     }
     # API currently recognizes only user|organization kinds.
     if account_kind in {"user", "organization"}:
-        query["billable_account_kind"] = account_kind
+        query["billing_entity_kind"] = account_kind
 
     payload = _iam_get_json(
         client,
@@ -177,9 +185,9 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     Validate usage lifecycle with a 1-minute reservation and manual stop at ~30s.
 
     Matrix:
-    - user billable account
-    - team billable account
-    - datalayer organization billable account
+    - user billing entity
+    - team billing entity
+    - datalayer organization billing entity
 
     Coverage:
     - runtime creation
@@ -187,7 +195,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     - closed usage history row after manual stop
     """
     client = _build_test_client()
-    accounts = _resolve_billable_accounts(client)
+    accounts = _resolve_billing_entitys(client)
 
     if account_case not in accounts:
         pytest.skip(f"No available account for case={account_case}")
@@ -198,13 +206,18 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     runtime_name = f"test_usage_{account_case}_{uuid.uuid4().hex[:8]}"
 
     try:
-        runtime = client.create_runtime(
-            name=runtime_name,
-            time_reservation=1,
-            billable_account_uid=account["uid"],
-            billable_account_type=account["kind"],
-            billable_account_handle=account["handle"] or None,
-        )
+        try:
+            runtime = client.create_runtime(
+                name=runtime_name,
+                time_reservation=1,
+                billing_entity_uid=account["uid"],
+                billing_entity_type=account["kind"],
+                billing_entity_handle=account["handle"] or None,
+            )
+        except RuntimeError as exc:
+            if account_case == "team" and _is_insufficient_credits_error(exc):
+                pytest.skip("Team account has insufficient credits for runtime launch in this environment.")
+            raise
 
         # Creation coverage.
         assert runtime.pod_name, "Runtime pod_name should be set after creation"

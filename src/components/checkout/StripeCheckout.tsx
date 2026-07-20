@@ -731,7 +731,7 @@ export function StripeCheckout({
     : remainingCredits;
   const isRunsOverQuota = runsTotal > 0 && usedRuns > runsTotal;
 
-  const hasBillablePlan = useMemo(() => {
+  const hasBillingPlan = useMemo(() => {
     const normalizedPlan = String(currentSubscriptionPlan).toLowerCase();
     const freeLike =
       normalizedPlan.includes('free') ||
@@ -743,7 +743,7 @@ export function StripeCheckout({
 
   const isPaidSubscription = useMemo(() => {
     const normalizedStatus = String(subscriptionStatus).toLowerCase();
-    if (!hasBillablePlan) {
+    if (!hasBillingPlan) {
       return false;
     }
     if (
@@ -758,10 +758,10 @@ export function StripeCheckout({
     return ['active', 'trialing', 'past_due', 'paid'].includes(
       normalizedStatus,
     );
-  }, [hasBillablePlan, subscriptionStatus]);
+  }, [hasBillingPlan, subscriptionStatus]);
 
   const canCancelSubscription = useMemo(() => {
-    if (!hasBillablePlan) {
+    if (!hasBillingPlan) {
       return false;
     }
 
@@ -775,7 +775,7 @@ export function StripeCheckout({
       status === 'unknown';
 
     return !nonCancelable;
-  }, [hasBillablePlan, subscriptionStatus, isCancellationScheduled]);
+  }, [hasBillingPlan, subscriptionStatus, isCancellationScheduled]);
 
   const isCancelActionPending =
     cancelSubscriptionMutation.isPending || isConfirmingCancel;
@@ -941,6 +941,37 @@ export function StripeCheckout({
     }
     void startSubscriptionCheckout(pendingSubscriptionPlan);
   }, [pendingSubscriptionPlan, startSubscriptionCheckout]);
+
+  // Auto-open the subscription checkout when the page is opened with
+  // `?upgrade` or `?action=upgrade` (e.g. from the Plan Overview
+  // "Upgrade to Team Plan" CTA).
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    if (autoActionTriggeredRef.current) {
+      return;
+    }
+    if (isPaidSubscription || isCancellationScheduled) {
+      return;
+    }
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const action = String(params.get('action') || '').toLowerCase();
+      const shouldAutoUpgrade = params.has('upgrade') || action === 'upgrade';
+      if (shouldAutoUpgrade && pendingSubscriptionPlan) {
+        autoActionTriggeredRef.current = true;
+        startPendingSubscriptionCheckout();
+      }
+    } catch (_error) {
+      // Ignore malformed URLs.
+    }
+  }, [
+    isPaidSubscription,
+    isCancellationScheduled,
+    pendingSubscriptionPlan,
+    startPendingSubscriptionCheckout,
+  ]);
 
   const openPortal = useCallback((url?: string) => {
     if (!url) {
@@ -1157,6 +1188,54 @@ export function StripeCheckout({
               Cancel pending plan change
             </Button>
           </Box>
+          {cancelViewOpen && (
+            <Box
+              sx={{
+                marginTop: 'var(--stack-gap-normal)',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 'var(--borderRadius-medium)',
+                backgroundColor: 'canvas.subtle',
+                padding: 'var(--stack-padding-normal)',
+                display: 'grid',
+                gap: 'var(--stack-gap-condensed)',
+              }}
+            >
+              <Text as="h4" sx={{ fontWeight: 'bold' }}>
+                Cancel pending plan change
+              </Text>
+              <Text as="p" sx={{ color: 'fg.muted' }}>
+                This pending plan change will be canceled immediately.
+              </Text>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 'var(--stack-gap-condensed)',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Button
+                  variant="danger"
+                  onClick={() => void onConfirmCancelSubscription()}
+                  disabled={isCancelActionPending}
+                  leadingVisual={() =>
+                    isCancelActionPending ? <Spinner size="small" /> : undefined
+                  }
+                >
+                  {isCancelActionPending
+                    ? 'Canceling pending plan change...'
+                    : 'Confirm cancel pending plan change'}
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={onAbortCancelView}
+                  disabled={isCancelActionPending}
+                >
+                  Keep pending plan change
+                </Button>
+              </Box>
+            </Box>
+          )}
         </>
       ) : !isPaidSubscription ? (
         <>
@@ -1226,7 +1305,7 @@ export function StripeCheckout({
           >
             {subscriptionPaymentIntentMutation.isPending
               ? 'Preparing Team plan checkout...'
-              : 'Update to Team Plan'}
+              : 'Upgrade to Team Plan'}
           </Button>
         </>
       ) : null}

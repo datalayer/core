@@ -25,12 +25,10 @@ This package serves as the base foundation used by many other Datalayer packages
 ## Key Features
 
 - **🔐 Simple Authentication**: Easy token-based authentication with environment variable support
-- **⚡ Runtime Management**: Create and manage scalable compute runtimes (CPU/GPU) for code execution
-- **📸 Snapshot Management**: Create and manage compute snapshots of your runtimes for reproducible environments
 - **🔒 Secrets Management**: Securely handle sensitive data and credentials in your workflows
 - **🐍 Python Client**: Programmatic access to Datalayer platform with context managers and clean resource management
 - **🌐 TypeScript/React Client**: React components and services for building Jupyter-based applications
-- **💻 Command Line Interface**: CLI tools for managing runtimes, snapshots, and platform resources
+- **💻 Command Line Interface**: CLI tools for account and platform operations
 - **🔧 Base Classes**: Core application classes and configuration inherited by other Datalayer projects
 - **📓 Jupyter Integration**: ServiceManager and collaboration providers for notebook experiences
 - **🧭 Universal Navigation**: Smart navigation hooks that auto-detect and work with React Router, Next.js, or native browser
@@ -85,125 +83,27 @@ from datalayer_core import DatalayerClient
 client = DatalayerClient()
 
 # Or pass token directly
-client = DatalayerClient(token="your-token-here")
+client = DatalayerClient(api_key="your-api-key-here")
 
 if client.authenticate():
     print("Successfully authenticated!")
 ```
 
-### 2. Execute Code in a Runtime
+### 2. Runtime, Snapshots, and Evals
 
-Use context managers to create runtimes and ensure proper resource cleanup:
+Runtime execution, snapshot workflows, and evals CLI are now documented and maintained in:
 
-```python
-from datalayer_core import DatalayerClient
+- [agent-runtimes README](https://github.com/datalayer/agent-runtimes/blob/main/README.md)
+- [agent-runtimes CLI docs](https://agent-runtimes.datalayer.tech/cli)
 
-client = DatalayerClient()
-
-# Execute code in a managed runtime
-with client.create_runtime() as runtime:
-    response = runtime.execute("print('Hello from Datalayer!')")
-    print(response.stdout)
-```
-
-### 3. Using the CLI
-
-The CLI provides command-line access to Datalayer platform features:
-
-```bash
-# List available runtimes
-datalayer runtime list
-
-# Create a new runtime
-datalayer runtime create ai-env --given-name my-runtime-123
-
-# Execute a script in a runtime
-datalayer runtime exec my-script.py --runtime <runtime-id>
-
-# Create a snapshot from a runtime but do not terminate the runtime
-datalayer snapshots create <pod-name> my-snapshot 'AI work!' False
-```
-
-### 4. Subscription and Credits CLI
-
-Use these commands to inspect billing and manage credits distribution.
-
-```bash
-# End-user billing view
-datalayer subscriptions show
-datalayer subscriptions available
-datalayer subscriptions move
-datalayer subscriptions topups
-datalayer subscriptions dry-run
-
-# Organization and team credits visibility
-datalayer usage org-overview --organization-uid <org_uid>
-datalayer usage team-overview --team-uid <team_uid>
-
-# Monitoring-driven credit management
-datalayer usage org-monitor --organization-uid <org_uid> --window-hours 24
-datalayer usage team-monitor --team-uid <team_uid> --window-hours 24
-
-# Credits transfer operations (owners/admins)
-datalayer usage org-allocate-team --organization-uid <org_uid> --team-uid <team_uid> --amount 50
-datalayer usage org-revoke-team --organization-uid <org_uid> --team-uid <team_uid> --amount 20
-datalayer usage team-allocate-member --team-uid <team_uid> --member-uid <member_uid> --amount 15
-datalayer usage team-revoke-member --team-uid <team_uid> --member-uid <member_uid> --amount 5
-```
+Use `agent-runtimes` for runtime workloads (`RuntimeClient`, `@datalayer`, snapshots, and evals), and use `datalayer-core` for account/platform operations (authentication, secrets, API keys, usage, profile).
 
 ## Examples
 
-### Python Examples
+Examples have moved to Agent Runtimes:
 
-For comprehensive Python usage examples, see the [`examples/`](https://github.com/datalayer/core/tree/main/examples) directory which includes:
-
-- **FastAPI + scikit-learn**: Web application with ML models
-- **Streamlit + scikit-learn**: Interactive data science apps
-- **PyTorch GPU workloads**: High-performance computing examples
-- **Decorator patterns**: Remote function execution with `@datalayer`
-- **And more**: Complete examples with documentation and setup instructions
-
-### TypeScript/React Examples
-
-Run the interactive examples locally:
-
-```bash
-# Install dependencies
-npm install
-
-# Set your Datalayer API token in .env
-echo "VITE_DATALAYER_API_KEY=your-token-here" > .env
-
-# Start the examples server
-npm run examples
-```
-
-Available at http://localhost:3000/:
-
-- **DatalayerNotebookExample**: Full integration with Datalayer services and collaboration
-- **NotebookExample**: Basic Jupyter notebook in React
-- **CellExample**: Individual code cell execution
-- **ReactRouterAdvancedExample**: Comprehensive navigation demo with React Router integration
-- **ReactRouterNavigationExample**: Basic navigation with route parameters
-- **NativeNavigationExample**: Browser-native navigation fallback
-
-### Next.js Application Example
-
-A complete Next.js application demonstrating platform integration:
-
-```bash
-cd examples/nextjj
-npm install
-npm run dev
-```
-
-Features:
-
-- Token authentication with Datalayer IAM
-- Browse and create notebooks from your workspace
-- Select compute environments for execution
-- Interactive notebook viewer with real-time outputs
-- Clean, responsive UI with GitHub Primer components
+- [Agent Runtimes examples README](https://github.com/datalayer/agent-runtimes/blob/main/examples/README.md)
+- [Agent Runtimes examples directory](https://github.com/datalayer/agent-runtimes/tree/main/examples)
 
 ## Platform Integration
 

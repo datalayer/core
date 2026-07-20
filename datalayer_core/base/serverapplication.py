@@ -3,14 +3,14 @@
 
 """The Datalayer Core Server application."""
 
-import os
+from pathlib import Path
 
 from jupyter_server.extension.application import ExtensionApp, ExtensionAppJinjaMixin
 from jupyter_server.utils import url_path_join
 from traitlets import Bool, CInt, Instance, Unicode, default
 from traitlets.config import Configurable
 
-from datalayer_core.__version__ import __version__
+from datalayer_core.__version import __version__
 from datalayer_core.authn.server.state import get_server_port
 from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler
@@ -18,9 +18,9 @@ from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
 from datalayer_core.utils.urls import DEFAULT_DATALAYER_IAM_URL
 
-DEFAULT_STATIC_FILES_PATH = os.path.join(os.path.dirname(__file__), "./static")
-
-DEFAULT_TEMPLATE_FILES_PATH = os.path.join(os.path.dirname(__file__), "./templates")
+_PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_STATIC_FILES_PATH = str(_PACKAGE_ROOT / "static")
+DEFAULT_TEMPLATE_FILES_PATH = str(_PACKAGE_ROOT / "templates")
 
 
 class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
@@ -36,9 +36,9 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    # run_url can be set set and None or ' ' (empty string).
-    # In that case, the consumer of those settings are free to consider run_url as null.
-    run_url = Unicode(
+    # datalayer_url can be set set and None or ' ' (empty string).
+    # In that case, the consumer of those settings are free to consider datalayer_url as null.
+    datalayer_url = Unicode(
         DEFAULT_DATALAYER_IAM_URL,
         config=True,
         allow_none=True,
@@ -189,7 +189,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             self.serverapp.port = port
 
         settings = dict(
-            run_url=self.run_url,
+            datalayer_url=self.datalayer_url,
             launcher={
                 "category": self.launcher.category,
                 "name": self.launcher.name,
@@ -215,7 +215,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.serverapp.jinja_template_vars.update(
             {
                 "datalayer_version": __version__,
-                "run_url": self.run_url,
+                "datalayer_url": self.datalayer_url,
             }
         )
 

@@ -10,7 +10,7 @@
  * `{ handle, password }`, then calls `onSignIn(token, handle)` on
  * success so the caller can persist credentials as needed.
  *
- * @module views/signin
+ * @module views/iam
  */
 
 import React, {
@@ -20,6 +20,7 @@ import React, {
   useMemo,
   useEffect,
 } from 'react';
+import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import {
   Box,
   Button,
@@ -36,7 +37,98 @@ import {
   LinkExternalIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
-import { coreStore } from '../../state';
+import { GithubMarkIcon, LinkedInGreyIcon } from '@datalayer/icons-react';
+import { useToast } from '../../hooks';
+import { isInsideJupyterLab } from '../../utils/Jupyter';
+
+const GoogleIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    preserveAspectRatio="xMidYMid"
+    viewBox="0 0 256 262"
+    height="16px"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      fill="currentColor"
+      d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
+    />
+    <path
+      fill="currentColor"
+      d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"
+    />
+    <path
+      fill="currentColor"
+      d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"
+    />
+    <path
+      fill="currentColor"
+      d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
+    />
+  </svg>
+);
+
+type OAuthProviderName = 'github' | 'google' | 'linkedin';
+
+type OAuthProviderSpec = {
+  name: OAuthProviderName;
+  oauth2CallbackServerRoute: string;
+  oauth2CallbackUIRoute: string;
+};
+
+const OAUTH2_PROVIDERS: Record<OAuthProviderName, OAuthProviderSpec> = {
+  github: {
+    name: 'github',
+    oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
+    oauth2CallbackUIRoute: '/iam/oauth2/github/callback',
+  },
+  google: {
+    name: 'google',
+    oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
+    oauth2CallbackUIRoute: '/iam/oauth2/google/callback',
+  },
+  linkedin: {
+    name: 'linkedin',
+    oauth2CallbackServerRoute: 'jupyter_iam/oauth2/callback',
+    oauth2CallbackUIRoute: '/iam/oauth2/linkedin/callback',
+  },
+};
+
+const getIAMUrlFromDocumentConfig = (): string => {
+  if (typeof document === 'undefined') {
+    return '';
+  }
+  const configScript = document.getElementById('datalayer-config-data');
+  if (!configScript?.textContent) {
+    return '';
+  }
+  try {
+    const config = JSON.parse(configScript.textContent);
+    return String(config?.iamUrl || '').replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+};
+
+const getErrorMessage = (
+  error: unknown,
+  fallback = 'Unable to start social sign-in.',
+): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (typeof error === 'string' && error.trim()) {
+    return error;
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+  }
+  return fallback;
+};
 
 // ── Props ────────────────────────────────────────────────────────────
 
@@ -58,7 +150,12 @@ export interface SignInSimpleProps {
    */
   loginUrl?: string;
   /**
+   * Optional product/app name shown as heading.
+   */
+  name?: string;
+  /**
    * Optional heading text.  Defaults to `"Datalayer OTEL"`.
+   * @deprecated Use `name`.
    */
   title?: string;
   /**
@@ -66,10 +163,41 @@ export interface SignInSimpleProps {
    */
   description?: string;
   /**
+   * Optional icon element rendered next to the heading.
+   */
+  icon?: React.ReactNode;
+  /**
    * Leading icon element rendered next to the title.
    * Defaults to `<TelescopeIcon size={24} />`.
+   * @deprecated Use `icon`.
    */
   leadingIcon?: React.ReactNode;
+  /**
+   * Show GitHub OAuth sign-in button.
+   */
+  github?: boolean;
+  /**
+   * Show Google OAuth sign-in button.
+   */
+  google?: boolean;
+  /**
+   * Show LinkedIn OAuth sign-in button.
+   */
+  linkedin?: boolean;
+  /**
+   * Show API key sign-in button.
+   */
+  apiKey?: boolean;
+  /**
+   * Show sign up button.
+   */
+  signUp?: boolean;
+  /**
+   * Optional target route to navigate to after social sign-in callback.
+   * - `undefined` keeps current behavior (use current route when not `/`).
+   * - `null`/empty disables forwarding any callback navigation target.
+   */
+  socialSignInNavigationTarget?: string | null;
 }
 
 // ── Component ────────────────────────────────────────────────────────
@@ -78,25 +206,116 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   onSignIn,
   onApiKeySignIn,
   loginUrl: loginUrlProp,
+  name,
   title = 'Datalayer OTEL',
   description = 'Sign in to access the observability dashboard.',
+  icon,
   leadingIcon = <TelescopeIcon size={24} />,
+  github = false,
+  google = false,
+  linkedin = false,
+  apiKey = false,
+  signUp = true,
+  socialSignInNavigationTarget,
 }) => {
+  const headingText = name ?? title;
+  const headingIcon = icon ?? leadingIcon;
+
   const loginUrl = useMemo(() => {
     if (loginUrlProp) return loginUrlProp;
-    const iamRunUrl = coreStore.getState().configuration?.iamRunUrl;
-    return iamRunUrl ? `${iamRunUrl}/api/iam/v1/login` : '/api/iam/v1/login';
+    const iamUrl = getIAMUrlFromDocumentConfig();
+    return iamUrl ? `${iamUrl}/api/iam/v1/login` : '/api/iam/v1/login';
   }, [loginUrlProp]);
   const [handle, setHandle] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { enqueueToast } = useToast();
 
   // API Key dialog state
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [apiKeyValue, setApiKeyValue] = useState('');
   const apiKeyRef = useRef<HTMLTextAreaElement>(null);
+
+  const buildCallbackURI = useCallback(
+    (providerSpec: OAuthProviderSpec): string => {
+      if (isInsideJupyterLab()) {
+        return URLExt.join(
+          PageConfig.getBaseUrl(),
+          providerSpec.oauth2CallbackServerRoute,
+        );
+      }
+      return `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}${providerSpec.oauth2CallbackUIRoute}`;
+    },
+    [],
+  );
+
+  const currentRelativeRoute = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return '/';
+    }
+    const route = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    return route.startsWith('/') ? route : '/';
+  }, []);
+
+  const startOAuthSignIn = useCallback(
+    async (providerSpec: OAuthProviderSpec) => {
+      if (socialLoading) {
+        return;
+      }
+      setError(null);
+      setSocialLoading(true);
+      try {
+        const iamUrl = getIAMUrlFromDocumentConfig();
+        const params = new URLSearchParams({
+          provider: providerSpec.name,
+          callback_uri: buildCallbackURI(providerSpec),
+        });
+        const explicitNavigationTarget =
+          socialSignInNavigationTarget === undefined
+            ? undefined
+            : String(socialSignInNavigationTarget || '').trim();
+        const callbackNavigationTarget =
+          explicitNavigationTarget === undefined
+            ? currentRelativeRoute && currentRelativeRoute !== '/'
+              ? currentRelativeRoute
+              : undefined
+            : explicitNavigationTarget &&
+                explicitNavigationTarget.startsWith('/') &&
+                !explicitNavigationTarget.startsWith('//')
+              ? explicitNavigationTarget
+              : undefined;
+        if (callbackNavigationTarget) {
+          params.set('post_auth_redirect', callbackNavigationTarget);
+        }
+        const endpointBase = iamUrl || '';
+        const endpoint = `${endpointBase}/api/iam/v1/oauth2/authz/url?${params.toString()}`;
+        const response = await fetch(endpoint);
+        const payload = await response.json();
+        const authorizationURL = payload?.autorization_url;
+        if (!response.ok || !authorizationURL) {
+          throw new Error(
+            payload?.message || 'Unable to start social sign-in.',
+          );
+        }
+        window.location.assign(authorizationURL);
+      } catch (err: unknown) {
+        const message = getErrorMessage(err);
+        setError(message);
+        enqueueToast(message, { variant: 'error' });
+        setSocialLoading(false);
+      }
+    },
+    [
+      buildCallbackURI,
+      currentRelativeRoute,
+      enqueueToast,
+      socialLoading,
+      socialSignInNavigationTarget,
+    ],
+  );
 
   useEffect(() => {
     if (showApiKeyDialog) {
@@ -106,14 +325,14 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
   const closeApiKeyDialog = useCallback(() => {
     setShowApiKeyDialog(false);
-    setApiKey('');
+    setApiKeyValue('');
   }, []);
 
   const handleApiKeyAuthenticate = useCallback(() => {
-    if (!apiKey.trim() || !onApiKeySignIn) return;
-    onApiKeySignIn(apiKey.trim());
+    if (!apiKeyValue.trim() || !onApiKeySignIn) return;
+    onApiKeySignIn(apiKeyValue.trim());
     closeApiKeyDialog();
-  }, [apiKey, onApiKeySignIn, closeApiKeyDialog]);
+  }, [apiKeyValue, onApiKeySignIn, closeApiKeyDialog]);
 
   const handleSignUp = useCallback(() => {
     window.open('https://datalayer.ai/signup', '_blank', 'noopener,noreferrer');
@@ -183,8 +402,8 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
             justifyContent: 'center',
           }}
         >
-          {leadingIcon}
-          <Heading sx={{ fontSize: 3 }}>{title}</Heading>
+          {headingIcon}
+          <Heading sx={{ fontSize: 3 }}>{headingText}</Heading>
         </Box>
 
         <Text
@@ -247,19 +466,70 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
 
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
-          <Button
-            size="small"
-            variant="invisible"
-            leadingVisual={LinkExternalIcon}
-            onClick={handleSignUp}
-          >
-            Sign Up
-          </Button>
-        </Box>
+        {(github || google || linkedin) && (
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                my: 3,
+              }}
+            >
+              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>or</Text>
+              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+            </Box>
+            {github && (
+              <Button
+                block
+                leadingVisual={GithubMarkIcon}
+                disabled={socialLoading}
+                onClick={() => startOAuthSignIn(OAUTH2_PROVIDERS.github)}
+                sx={{ mb: 2 }}
+              >
+                Sign in with GitHub
+              </Button>
+            )}
+            {google && (
+              <Button
+                block
+                leadingVisual={GoogleIcon}
+                disabled={socialLoading}
+                onClick={() => startOAuthSignIn(OAUTH2_PROVIDERS.google)}
+                sx={{ mb: linkedin ? 2 : 0 }}
+              >
+                Sign in with Google
+              </Button>
+            )}
+            {linkedin && (
+              <Button
+                block
+                leadingVisual={LinkedInGreyIcon}
+                disabled={socialLoading}
+                onClick={() => startOAuthSignIn(OAUTH2_PROVIDERS.linkedin)}
+              >
+                Sign in with LinkedIn
+              </Button>
+            )}
+          </>
+        )}
+
+        {signUp && (
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              size="small"
+              variant="invisible"
+              leadingVisual={LinkExternalIcon}
+              onClick={handleSignUp}
+            >
+              Sign Up
+            </Button>
+          </Box>
+        )}
 
         {/* API Key */}
-        {onApiKeySignIn && (
+        {apiKey && onApiKeySignIn && (
           <>
             <Box
               sx={{
@@ -333,9 +603,9 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                       required
                       autoFocus
                       placeholder="Paste your API key here"
-                      value={apiKey}
+                      value={apiKeyValue}
                       onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setApiKey(e.target.value)
+                        setApiKeyValue(e.target.value)
                       }
                       ref={apiKeyRef}
                     />
@@ -354,7 +624,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                     <Button
                       type="submit"
                       variant="primary"
-                      disabled={!apiKey.trim()}
+                      disabled={!apiKeyValue.trim()}
                     >
                       Authenticate
                     </Button>

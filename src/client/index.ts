@@ -26,28 +26,16 @@ import {
   type ClientHandlers,
 } from './base';
 import { IAMMixin } from './mixins/IAMMixin';
-import { RuntimesMixin } from './mixins/RuntimesMixin';
-import { SpacerMixin } from './mixins/SpacerMixin';
 
 // Import model types for interface declaration
 import type { UserDTO } from './../models/UserDTO';
 import type { CreditsDTO } from '../models/CreditsDTO';
-import type { EnvironmentDTO } from '../models/EnvironmentDTO';
-import type { RuntimeDTO } from '../models/RuntimeDTO';
-import type { CodeSandboxSnapshotDTO } from '../models/CodeSandboxSnapshotDTO';
-import type { SpaceDTO } from '../models/SpaceDTO';
-import type { NotebookDTO } from '../models/NotebookDTO';
-import type { LexicalDTO } from '../models/LexicalDTO';
 import type { HealthCheck } from '../models/HealthCheck';
 import type { SecretDTO } from '../models/Secret';
 import type {
   CreateSecretRequest,
   UpdateSecretRequest,
 } from '../models/Secret';
-import type { ProjectDTO } from '../models/ProjectDTO';
-import type { ProjectDefaultItems } from '../models/ProjectDTO';
-import type { UpdateSpaceRequest } from '../models/SpaceDTO';
-// Note: ProjectDTO is standalone (no inheritance from SpaceDTO) to avoid circular deps
 import type { DatasourceDTO } from '../models/Datasource';
 import type {
   CreateDatasourceRequest,
@@ -65,33 +53,30 @@ function composeMixins(...mixins: Array<(base: any) => any>) {
   return mixins.reduce((base, mixin) => mixin(base), DatalayerClientBase);
 }
 
-// Apply mixins to the base class using the helper
-const DatalayerClientWithMixins = composeMixins(
-  IAMMixin,
-  RuntimesMixin,
-  SpacerMixin,
-);
+// Apply the IAM mixin to the base class. Runtime and content (Spacer) features
+// live in @datalayer/agent-runtimes, which composes AgentRuntimesClient on top
+// of this core client.
+const DatalayerCoreClientWithMixins = composeMixins(IAMMixin);
 
 /**
- * Main Datalayer Client providing unified access to all platform services.
- * Uses TypeScript mixins to provide a flat, discoverable API.
+ * Core Datalayer Client providing access to identity, plans and account
+ * services (IAM). Runtime and workspace/content features are provided by
+ * `AgentRuntimesClient` in `@datalayer/agent-runtimes`, which extends this
+ * class.
  *
  * @example
  * ```typescript
- * const client = new DatalayerClient({
+ * const client = new DatalayerCoreClient({
  *   token: 'your-token'
  * });
  *
  * const user = await client.whoami();
- * const runtime = await client.createRuntime({
- *   environment_name: 'ai-agents-env',
- *   credits_limit: 100
- * });
+ * const credits = await client.getCredits();
  * ```
  */
-export class DatalayerClient extends DatalayerClientWithMixins {
+export class DatalayerCoreClient extends DatalayerCoreClientWithMixins {
   /**
-   * Create a DatalayerClient instance.
+   * Create a DatalayerCoreClient instance.
    *
    * @param config - Client configuration options
    */
@@ -110,74 +95,12 @@ export { DatalayerClientBase };
 // Export models for use by consumers
 export { UserDTO as User } from './../models/UserDTO';
 export type { UserJSON, UserData } from './../models/UserDTO';
-export { RuntimeDTO as Runtime } from '../models/RuntimeDTO';
-export type {
-  RuntimeJSON,
-  RuntimeData,
-  CreateRuntimeRequest,
-  CreateRuntimeResponse,
-  ListRuntimesResponse,
-} from '../models/RuntimeDTO';
-export { EnvironmentDTO as Environment } from '../models/EnvironmentDTO';
-export type {
-  EnvironmentJSON,
-  EnvironmentData,
-  ListEnvironmentsResponse,
-} from '../models/EnvironmentDTO';
-export { CodeSandboxSnapshotDTO as Snapshot } from '../models/CodeSandboxSnapshotDTO';
-export type {
-  CodeSandboxSnapshotJSON,
-  CodeSandboxSnapshotData,
-  CreateCodeSandboxSnapshotRequest,
-  CreateCodeSandboxSnapshotResponse,
-  GetCodeSandboxSnapshotResponse,
-  ListCodeSandboxSnapshotsResponse,
-} from '../models/CodeSandboxSnapshotDTO';
-export { SpaceDTO as Space } from '../models/SpaceDTO';
-export type {
-  SpaceJSON,
-  SpaceData,
-  SpaceItem,
-  CreateSpaceRequest,
-  CreateSpaceResponse,
-  SpacesForUserResponse,
-  CollaborationSessionResponse,
-  DeleteSpaceItemResponse,
-  GetSpaceItemResponse,
-  GetSpaceItemsResponse,
-  CreateNotebookRequest,
-  CreateNotebookResponse,
-  GetNotebookResponse,
-  UpdateNotebookRequest,
-  UpdateNotebookResponse,
-  UpdateSpaceRequest,
-  GetSpaceResponse,
-  UpdateSpaceResponse,
-  DeleteSpaceResponse,
-  GetSpaceDefaultItemsResponse,
-  GetSpacesByTypeResponse,
-} from '../models/SpaceDTO';
-export { ProjectDTO as Project } from '../models/ProjectDTO';
-export type { ProjectJSON, ProjectDefaultItems } from '../models/ProjectDTO';
-export { NotebookDTO as Notebook } from '../models/NotebookDTO';
-export type { NotebookJSON, NotebookData } from '../models/NotebookDTO';
-export { LexicalDTO } from '../models/LexicalDTO';
-export type {
-  LexicalJSON,
-  LexicalData,
-  CreateLexicalRequest,
-  CreateLexicalResponse,
-  GetLexicalResponse,
-  UpdateLexicalRequest,
-  UpdateLexicalResponse,
-} from '../models/LexicalDTO';
 export { CreditsDTO as Credits } from '../models/CreditsDTO';
 export type {
   CreditsInfo,
   CreditReservation,
   CreditsResponse,
 } from '../models/CreditsDTO';
-export { ItemDTO as Item } from '../models/ItemDTO';
 export { HealthCheck } from '../models/HealthCheck';
 export type { HealthCheckJSON } from '../models/HealthCheck';
 export { SecretDTO as Secret } from './../models/Secret';
@@ -220,53 +143,23 @@ export type { HealthzPingResponse } from '../models/Common';
 // Export auth types
 export { AuthenticationManager } from './auth/AuthenticationManager';
 
-// Export models interfaces
+// Export models interfaces (IAM / plans / account / organization)
 export type { IUser, IBaseUser } from '../models/User';
-export type { ICell } from '../models/Cell';
 export type { IDatasource, IDatasourceVariant } from '../models/Datasource';
 export type { ICredits, ICreditsReservation } from '../models/Credits';
-export type { ISpaceItem } from '../models/SpaceItem';
 export type { ISurvey } from '../models/Survey';
-export type {
-  ISpace,
-  IBaseSpace,
-  IAnySpace,
-  ISpaceVariant,
-} from '../models/Space';
 export type { IBaseTeam, IAnyTeam } from '../models/Team';
 export type {
   IOrganization,
   IAnyOrganization,
   IBaseOrganization,
 } from '../models/Organization';
-export type {
-  IRuntimeModel,
-  IRuntimePod,
-  IRuntimeType,
-  IRuntimeLocation,
-  IRuntimeCapabilities,
-} from '../models/Runtime';
-export type { ICodeSandboxSnapshot } from '../models/CodeSandboxSnapshot';
-export type {
-  IDatalayerEnvironment,
-  IResources,
-  ISnippet,
-} from '../models/Environment';
 export type { IRole } from '../models/Role';
-export type { IAssignment } from '../models/Assignment';
 export type { IContact } from '../models/Contact';
-export type { ICourse } from '../models/Course';
 export type { IOrganizationMember } from '../models/OrganizationMember';
-export type { IPage, PageTheme, PageVariant } from '../models/Page';
-export type { PageTagName } from '../models/PageTag';
 export type { ISecret, ISecretVariant } from '../models/Secret';
 export type { IIAMToken, IIAMTokenVariant } from '../models/IAMToken';
-export type { IDocument, IBaseDocument } from '../models/Document';
-export type { IEnvironment } from '../models/Environment';
-export type { IExercise, ICode, IHelp } from '../models/Exercise';
 export type { IInvite } from '../models/Invite';
-export type { ILesson } from '../models/Lesson';
-export type { INotebook, IBaseNotebook } from '../models/Notebook';
 export type { ISchool } from '../models/School';
 export type { ITeam } from '../models/Team';
 export type { TeamMember } from '../models/TeamMember';
@@ -279,22 +172,16 @@ export type {
   ITourStatus,
 } from '../models/UserOnboarding';
 export type { IUserSettings } from '../models/UserSettings';
-export type { IDataset } from '../models/Dataset';
 export type { IUsage } from '../models/Usage';
-export type { IItem } from '../models/Item';
-export type { IItemType } from '../models/ItemType';
 export type { Member } from '../models/Member';
 export type { Profile } from '../models/Profile';
-export type { SpaceMember } from '../models/SpaceMember';
 export type { IContactEvent } from '../models/ContactEvent';
 export type { IContactIAMProvider } from '../models/ContactIAMProvider';
-export type { IStudentItem } from '../models/StudentItem';
 export type { Instructor } from '../models/Instructor';
 export type { IStudent } from '../models/Student';
 export type { IDean } from '../models/Dean';
 export type { IUserEvent } from '../models/UserEvent';
 export type { IIAMProviderLinked } from '../models/IAMProviderLinked';
-export type { IContent } from '../models/Content';
 
 // Export auth types
 export type {
@@ -303,15 +190,6 @@ export type {
   AuthOptions,
   TokenStorage,
 } from './auth/types';
-
-// Export runtime types
-export type {
-  IRuntimeOptions,
-  IMultiServiceManager,
-  IRemoteServicesManager,
-  IEnvironmentsManager,
-  IRemoteRuntimesManager,
-} from '../stateful/runtimes/apis';
 
 // Export state types
 export type {
@@ -331,7 +209,7 @@ export type { ItemType } from './constants';
 export * from './auth';
 
 // Interface declaration for TypeScript to recognize mixin methods
-export interface DatalayerClient {
+export interface DatalayerCoreClient {
   // Base Methods
   getToken(): string | undefined;
   setToken(token: string): Promise<void>;
@@ -367,107 +245,6 @@ export interface DatalayerClient {
     updates: UpdateDatasourceRequest,
   ): Promise<DatasourceDTO>;
   deleteDatasource(datasourceId: string): Promise<void>;
-
-  // Runtime Methods
-  listEnvironments(): Promise<EnvironmentDTO[]>;
-  ensureRuntime(
-    environmentName?: string,
-    creditsLimit?: number,
-    waitForReady?: boolean,
-    maxWaitTime?: number,
-    reuseExisting?: boolean,
-    snapshotId?: string,
-  ): Promise<RuntimeDTO>;
-  createRuntime(
-    environmentName: string,
-    type: 'notebook' | 'terminal' | 'job',
-    givenName: string,
-    minutesLimit: number,
-    fromSnapshotId?: string,
-  ): Promise<RuntimeDTO>;
-  listRuntimes(): Promise<RuntimeDTO[]>;
-  getRuntime(podName: string): Promise<RuntimeDTO>;
-  deleteRuntime(podName: string): Promise<void>;
-  terminateAllRuntimes(): Promise<PromiseSettledResult<void>[]>;
-  createSnapshot(
-    podName: string,
-    name: string,
-    description: string,
-    stop?: boolean,
-  ): Promise<CodeSandboxSnapshotDTO>;
-  listSnapshots(): Promise<CodeSandboxSnapshotDTO[]>;
-  getSnapshot(id: string): Promise<CodeSandboxSnapshotDTO>;
-  deleteSnapshot(id: string): Promise<void>;
-  checkRuntimesHealth(): Promise<HealthCheck>;
-
-  // Spacer Methods
-  getMySpaces(): Promise<SpaceDTO[]>;
-  createSpace(
-    name: string,
-    description: string,
-    variant: string,
-    spaceHandle: string,
-    organizationId: string,
-    seedSpaceId: string,
-    isPublic: boolean,
-  ): Promise<SpaceDTO>;
-  createNotebook(
-    spaceId: string,
-    name: string,
-    description: string,
-    file?: File | Blob,
-  ): Promise<NotebookDTO>;
-  getNotebook(id: string): Promise<NotebookDTO>;
-  updateNotebook(
-    id: string,
-    name?: string,
-    description?: string,
-  ): Promise<NotebookDTO>;
-  createLexical(
-    spaceId: string,
-    name: string,
-    description: string,
-    file?: File | Blob,
-  ): Promise<LexicalDTO>;
-  getLexical(id: string): Promise<LexicalDTO>;
-  updateLexical(
-    id: string,
-    name?: string,
-    description?: string,
-  ): Promise<LexicalDTO>;
-  getSpaceItems(spaceId: string): Promise<(NotebookDTO | LexicalDTO)[]>;
-  getSpaceItem(itemId: string): Promise<NotebookDTO | LexicalDTO>;
-  deleteSpaceItem(itemId: string): Promise<void>;
-  getCollaborationSessionId(documentId: string): Promise<string>;
-  getContent(itemId: string): Promise<any>;
-  checkSpacerHealth(): Promise<HealthCheck>;
-
-  // Additional Space Methods
-  getSpace(uid: string): Promise<SpaceDTO>;
-  updateSpace(uid: string, data: UpdateSpaceRequest): Promise<SpaceDTO>;
-  updateUserSpace(
-    uid: string,
-    userId: string,
-    data: UpdateSpaceRequest,
-  ): Promise<SpaceDTO>;
-  deleteSpace(uid: string): Promise<void>;
-  makeSpacePublic(uid: string): Promise<SpaceDTO>;
-  makeSpacePrivate(uid: string): Promise<SpaceDTO>;
-  exportSpace(uid: string): Promise<any>;
-  cloneNotebook(id: string): Promise<NotebookDTO>;
-  cloneLexical(id: string): Promise<LexicalDTO>;
-
-  // Project Methods
-  getProjects(): Promise<ProjectDTO[]>;
-  getProject(uid: string): Promise<ProjectDTO>;
-  createProject(name: string, description?: string): Promise<ProjectDTO>;
-  updateProject(uid: string, data: UpdateSpaceRequest): Promise<ProjectDTO>;
-  renameProject(
-    uid: string,
-    newName: string,
-    description?: string,
-  ): Promise<ProjectDTO>;
-  getProjectDefaultItems(uid: string): Promise<ProjectDefaultItems>;
 
   // Utility Methods
   calculateCreditsFromMinutes(minutes: number, burningRate: number): number;

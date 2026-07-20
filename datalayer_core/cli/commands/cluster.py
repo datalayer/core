@@ -25,9 +25,9 @@ app = typer.Typer(
 console = Console()
 
 
-def _resolve_token(token: Optional[str] = None) -> str:
-    if token:
-        return token
+def _resolve_token(api_key: Optional[str] = None) -> str:
+    if api_key:
+        return api_key
     env_token = os.environ.get("DATALAYER_API_KEY")
     if env_token:
         return env_token
@@ -35,7 +35,7 @@ def _resolve_token(token: Optional[str] = None) -> str:
         from datalayer_core.client.client import DatalayerClient
 
         client = DatalayerClient()
-        return client._get_token() or ""
+        return client._get_api_key() or ""
     except Exception:
         return ""
 
@@ -43,14 +43,14 @@ def _resolve_token(token: Optional[str] = None) -> str:
 def _fetch_api(
     path: str,
     *,
-    token: Optional[str] = None,
+    api_key: Optional[str] = None,
     runtimes_url: Optional[str] = None,
     params: Optional[dict[str, str]] = None,
 ) -> Any:
-    resolved_token = _resolve_token(token)
+    resolved_token = _resolve_token(api_key)
     if not resolved_token:
         raise RuntimeError(
-            "No authentication token found. Pass --token, set DATALAYER_API_KEY, or run 'datalayer login'."
+            "No authentication api_key found. Pass --api-key, set DATALAYER_API_KEY, or run 'datalayer login'."
         )
 
     urls = DatalayerURLs.from_environment(runtimes_url=runtimes_url)
@@ -112,7 +112,29 @@ def _build_anomalies_panel(nodes_with_pods: list[Any], unassigned: list[Any]) ->
         if bool((pod or {}).get("unschedulable")):
             unschedulable_pods += 1
 
+    yellow_total = pending_pods + len(unassigned) + pending_scale_up_nodes + pending_scale_down_nodes
+    red_total = unschedulable_pods + failed_pods + not_ready_nodes
+
+    if red_total > 0:
+        summary_label = "FAILURES"
+        summary_style = "red"
+        border_style = "red"
+    elif yellow_total > 0:
+        summary_label = "WARNING"
+        summary_style = "yellow"
+        border_style = "yellow"
+    else:
+        summary_label = "OK"
+        summary_style = "green"
+        border_style = "green"
+
     lines = Text()
+    lines.append("summary: ", style="bold")
+    lines.append(summary_label, style=f"bold {summary_style}")
+    lines.append("\n", style=summary_style)
+    lines.append(f"yellow flags: {yellow_total}\n", style="yellow")
+    lines.append(f"red flags: {red_total}\n", style="red")
+    lines.append("----------------------------------------\n", style="dim")
     lines.append("Pods\n", style="bold")
     lines.append(f"pending pods: {pending_pods}\n", style="yellow")
     lines.append(f"unschedulable pods: {unschedulable_pods}\n", style="red")
@@ -124,7 +146,7 @@ def _build_anomalies_panel(nodes_with_pods: list[Any], unassigned: list[Any]) ->
     lines.append(f"pending scale-up nodes: {pending_scale_up_nodes}\n", style="cyan")
     lines.append(f"pending scale-down nodes: {pending_scale_down_nodes}", style="cyan")
 
-    return Panel(lines, title="Anomalies", border_style="yellow")
+    return Panel(lines, title="Anomalies", border_style=border_style)
 
 
 @app.callback()
@@ -136,10 +158,10 @@ def cluster_callback(ctx: typer.Context) -> None:
 
 @app.command(name="show")
 def show_cluster(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     runtimes_url: Optional[str] = typer.Option(
         None,
@@ -166,7 +188,7 @@ def show_cluster(
     try:
         state_payload = _fetch_api(
             "/cluster/state",
-            token=token,
+            api_key=api_key,
             runtimes_url=runtimes_url,
             params={"phase": phase} if phase else None,
         )

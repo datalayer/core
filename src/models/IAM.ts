@@ -131,7 +131,7 @@ export interface MembershipsResponse {
  * user can share artifacts with.
  */
 export interface ShareablePrincipal {
-  kind: 'user' | 'organization' | 'team';
+  kind: 'personal' | 'organization' | 'team';
   uid: string;
   handle: string;
   name?: string | null;

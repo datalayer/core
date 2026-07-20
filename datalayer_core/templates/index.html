@@ -11,12 +11,12 @@
     <script id="datalayer-config-data" type="application/json">
       {
         "version": "{{ datalayer_version }}",
-        "runUrl": "{{ run_url }}",
-        "iamRunUrl": "{{ iam_url }}",
-        "jupyterRunUrl": {{ run_url }}",
+        "datalayerUrl": "{{ datalayer_url }}",
+        "iamUrl": "{{ iam_url }}",
+        "jupyterUrl": "{{ datalayer_url }}",
         "jupyterServerUrl": "http://localhost:8888{{ base_url }}",
-        "jupyterServerToken": "{{ token }}"
-        "jupyterServerless": "true",
+        "jupyterServerToken": "{{ token }}",
+        "jupyterServerless": "true"
       }
     </script>
     <script id="jupyter-config-data" type="application/json">
@@ -37,9 +37,13 @@
       href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAN1wAADdcBQiibeAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAC7SURBVFiF7ZU9CgIxEIXfTHbPopfYc+pJ9AALtmJnZSOIoJWFoCTzLHazxh/Ebpt5EPIxM8XXTCKTxYyMCYwJFhOYCo4JFiMuu317PZwaqEBUIar4YMmskL73DytGjgu4gAt4PDJdzkkzMBloBhqBgcu69XW+1I+rNSQESNDuaMEhdP/Fj/7oW+ACLuACHk/3F5BAfuMLBjm8/ZnxNvNtHmY4b7Ztut0bqStoVSHfWj9Z6mr8LXABF3CBB3nvkDfEVN6PAAAAAElFTkSuQmCC"
       type="image/x-icon"
     />
+    <link rel="stylesheet" href="{{ base_url }}static/datalayer_core/core.css" />
+    <script>
+      globalThis.process = globalThis.process || { env: { NODE_ENV: 'production' } };
+    </script>
     <script
       defer
-      src="{{ base_url }}static/datalayer_ui/cli.datalayer-ui.js"
+      src="{{ base_url }}static/datalayer_core/cli.datalayer-core.js"
     ></script>
   </head>
   <body>

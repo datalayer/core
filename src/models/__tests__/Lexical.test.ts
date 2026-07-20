@@ -30,7 +30,7 @@ describe('Lexical Model', () => {
   beforeEach(() => {
     mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
-      getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
+      getSpacerUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
     } as any;
     lexical = new LexicalDTO(mockLexicalData, mockClient as DatalayerClient);
     vi.clearAllMocks();

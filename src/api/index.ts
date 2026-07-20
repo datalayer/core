@@ -23,14 +23,4 @@ export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
 // Domain-organized API exports
 export * as iam from './iam';
 export * as otel from './otel';
-export * as runtimes from './runtimes';
-export * as spacer from './spacer';
-
-/**
- * @deprecated Please import directly from '@datalayer/core/stateful' instead.
- * This module provides backward compatibility for the moved apiv1 modules.
- */
-
-export * from '../stateful/jupyter';
-export * from '../stateful/runtimes';
 export * from '../api/DatalayerApi';

@@ -9,7 +9,7 @@
  * @module models/UserDTO
  */
 
-import type { DatalayerClient } from '../index';
+import type { DatalayerCoreClient } from '../client';
 import { validateJSON } from '../api/utils/validation';
 
 /**
@@ -67,7 +67,7 @@ export class UserDTO {
    * @param data - User data from API
    * @param client - Client instance (currently unused but kept for compatibility)
    */
-  constructor(data: UserData, client?: DatalayerClient) {
+  constructor(data: UserData, client?: DatalayerCoreClient) {
     this._data = data;
   }
 

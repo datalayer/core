@@ -46,7 +46,7 @@ export type DatasourceNewProps = {
   /** Optional principal uid used to scope datasource creation. */
   principalUid?: string;
   /** Optional principal kind used to scope datasource creation. */
-  principalKind?: 'user' | 'organization' | 'team';
+  principalKind?: 'personal' | 'organization' | 'team';
   /** Optional contextual principal summary rendered below the page intro. */
   accountPrincipal?: ReactNode;
 };

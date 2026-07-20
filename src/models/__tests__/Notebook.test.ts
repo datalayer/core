@@ -37,7 +37,7 @@ describe('Notebook Model', () => {
   beforeEach(() => {
     mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
-      getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
+      getSpacerUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
     } satisfies Partial<DatalayerClient>;
     notebook = new NotebookDTO(mockNotebookData, mockClient as DatalayerClient);
     vi.clearAllMocks();

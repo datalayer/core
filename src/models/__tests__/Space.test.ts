@@ -30,7 +30,7 @@ describe('Space Model', () => {
   beforeEach(() => {
     mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
-      getSpacerRunUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
+      getSpacerUrl: vi.fn().mockReturnValue('https://spacer.example.com'),
       createNotebook: vi.fn(),
       createLexical: vi.fn(),
     } as any;

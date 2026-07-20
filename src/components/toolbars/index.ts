@@ -3,6 +3,3 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-export * from './AssignmentEditorToolbar';
-export * from './DocumentEditorToolbar';
-export * from './NotebookEditorToolbar';

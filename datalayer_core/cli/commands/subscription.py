@@ -136,10 +136,10 @@ def subscription_callback(ctx: typer.Context) -> None:
 
 @app.command(name="show")
 def subscription_show(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     raw: bool = typer.Option(
         False,
@@ -149,7 +149,7 @@ def subscription_show(
 ) -> None:
     """Show current subscription status and billing details."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         response = client.get_subscription()
 
         if not response.get("success", True):
@@ -241,10 +241,10 @@ def subscription_show(
 
 @app.command(name="available")
 def subscription_available(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     raw: bool = typer.Option(
         False,
@@ -254,7 +254,7 @@ def subscription_available(
 ) -> None:
     """Show available subscription plans for the current user."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         response = client.get_subscription_plans()
 
         if not response.get("success", True):
@@ -281,10 +281,10 @@ def subscription_available(
 
 @app.command(name="move")
 def subscription_move(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     return_url: Optional[str] = typer.Option(
         None,
@@ -299,7 +299,7 @@ def subscription_move(
 ) -> None:
     """Start upgrade/downgrade flow via checkout portal."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         resolved_return_url = return_url or client.urls.iam_url
         response = client.create_checkout_portal(resolved_return_url)
 
@@ -345,10 +345,10 @@ def subscription_move(
 
 @app.command(name="portal")
 def subscription_portal(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     open_browser: bool = typer.Option(
         True,
@@ -358,7 +358,7 @@ def subscription_portal(
 ) -> None:
     """Print billing portal URL and optionally open it in a browser."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         response = client.get_subscription()
         if not response.get("success", True):
             console.print(
@@ -385,10 +385,10 @@ def subscription_portal(
 
 @app.command(name="cancel")
 def subscription_cancel(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     open_browser: bool = typer.Option(
         True,
@@ -398,7 +398,7 @@ def subscription_cancel(
 ) -> None:
     """Start subscription cancellation flow."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         response = client.cancel_subscription()
         if not response.get("success", True):
             console.print(
@@ -421,10 +421,10 @@ def subscription_cancel(
 
 @app.command(name="topups")
 def subscription_topups(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     raw: bool = typer.Option(
         False,
@@ -434,7 +434,7 @@ def subscription_topups(
 ) -> None:
     """Show top-up eligibility and available top-up prices."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         subscription_resp = client.get_subscription()
         usage_resp = client.get_usage_credits()
         prices_resp = client._fetch(
@@ -530,10 +530,10 @@ def subscription_topups(
 
 @app.command(name="stats")
 def subscription_stats(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     query: str = typer.Option(
         "",
@@ -543,7 +543,7 @@ def subscription_stats(
 ) -> None:
     """Show subscription aggregates (platform_admin only)."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         if not _is_platform_admin(client):
             console.print("[red]Access denied: platform_admin role required.[/red]")
             raise typer.Exit(1)
@@ -612,10 +612,10 @@ def subscription_stats(
 
 @app.command(name="admin-users")
 def subscription_admin_users(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     query: str = typer.Option(
         "",
@@ -630,7 +630,7 @@ def subscription_admin_users(
 ) -> None:
     """List users with subscription fields (platform_admin only)."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
         if not _is_platform_admin(client):
             console.print("[red]Access denied: platform_admin role required.[/red]")
             raise typer.Exit(1)
@@ -675,10 +675,10 @@ def subscription_admin_users(
 
 @app.command(name="dry-run")
 def subscription_dry_run(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     check_api: bool = typer.Option(
         True,
@@ -698,7 +698,7 @@ def subscription_dry_run(
 ) -> None:
     """Didactic dry-run for subscriptions and Stripe configuration."""
     try:
-        client = DatalayerClient(token=token)
+        client = DatalayerClient(api_key=api_key)
 
         console.rule("[bold]Datalayer Subscriptions Dry-Run[/bold]")
         console.print(
@@ -811,11 +811,11 @@ def subscription_dry_run(
 
 
 def subscription_root(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
 ) -> None:
     """Show subscription status (root command)."""
-    subscription_show(token=token)
+    subscription_show(api_key=api_key)

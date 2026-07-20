@@ -8,6 +8,7 @@ import {
   PageLayout,
   Button,
   IconButton,
+  Spinner,
   Text,
   Label,
   Heading,
@@ -27,17 +28,21 @@ export type DatasourcesProps = {
   /** Optional principal uid used to scope datasource reads. */
   principalUid?: string;
   /** Optional principal kind used to scope datasource reads. */
-  principalKind?: 'user' | 'organization' | 'team';
+  principalKind?: 'personal' | 'organization' | 'team';
+  /** Show local inline spinner in empty state while loading. */
+  showInlineLoadingIndicator?: boolean;
 };
 
 const DatasourcesTable = ({
   datasourcesListRoute,
   principalUid,
   principalKind,
+  showInlineLoadingIndicator = true,
 }: {
   datasourcesListRoute?: string;
   principalUid?: string;
-  principalKind?: 'user' | 'organization' | 'team';
+  principalKind?: 'personal' | 'organization' | 'team';
+  showInlineLoadingIndicator?: boolean;
 }) => {
   const { useDatasources } = useCache();
 
@@ -46,6 +51,12 @@ const DatasourcesTable = ({
   const navigate = useNavigate();
   const [datasources, setDatasources] = useState<IDatasource[]>([]);
 
+  const showInitialSpinner =
+    datasources.length === 0 &&
+    (datasourcesQuery.isLoading ||
+      datasourcesQuery.isFetching ||
+      !Array.isArray(datasourcesQuery.data));
+
   useEffect(() => {
     if (datasourcesQuery.data) {
       setDatasources((datasourcesQuery.data as any) || []);
@@ -53,10 +64,32 @@ const DatasourcesTable = ({
   }, [datasourcesQuery.data]);
   return datasources.length === 0 ? (
     <Blankslate border spacious>
-      <Blankslate.Heading>Datasources</Blankslate.Heading>
-      <Blankslate.Description>
-        <Text sx={{ textAlign: 'center' }}>No Datasources found.</Text>
-      </Blankslate.Description>
+      {showInitialSpinner && showInlineLoadingIndicator ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '40px',
+          }}
+        >
+          <Spinner />
+        </Box>
+      ) : showInitialSpinner ? (
+        <>
+          <Blankslate.Heading>Datasources</Blankslate.Heading>
+          <Blankslate.Description>
+            <Text sx={{ textAlign: 'center' }}>Loading datasources...</Text>
+          </Blankslate.Description>
+        </>
+      ) : (
+        <>
+          <Blankslate.Heading>Datasources</Blankslate.Heading>
+          <Blankslate.Description>
+            <Text sx={{ textAlign: 'center' }}>No Datasources found.</Text>
+          </Blankslate.Description>
+        </>
+      )}
     </Blankslate>
   ) : (
     <Table.Container>
@@ -111,6 +144,7 @@ export const Datasources = ({
   datasourcesListRoute,
   principalUid,
   principalKind,
+  showInlineLoadingIndicator = true,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
@@ -153,6 +187,7 @@ export const Datasources = ({
             datasourcesListRoute={datasourcesListRoute}
             principalUid={principalUid}
             principalKind={principalKind}
+            showInlineLoadingIndicator={showInlineLoadingIndicator}
           />
         </Box>
       </PageLayout.Content>

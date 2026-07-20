@@ -9,6 +9,5 @@ export * from './InviteMock';
 export * from './JupyterLabUserMock';
 export * from './OrganisationMock';
 export * from './SchoolMock';
-export * from './SpaceMock';
 export * from './TeamMock';
 export * from './UserMock';

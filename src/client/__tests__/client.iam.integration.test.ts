@@ -26,9 +26,9 @@ describe('Client IAM Integration Tests', () => {
 
     client = new DatalayerClient({
       token: testConfig.getToken(),
-      iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-      runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-      spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+      iamUrl: DEFAULT_SERVICE_URLS.IAM,
+      runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+      spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
     });
   });
 
@@ -99,9 +99,9 @@ describe('Client IAM Integration Tests', () => {
 
         const loginSdk = new DatalayerClient({
           token: testConfig.getToken(),
-          iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-          runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-          spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+          iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+          spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
 
         try {
@@ -122,9 +122,9 @@ describe('Client IAM Integration Tests', () => {
 
         const loginSdk = new DatalayerClient({
           token: testConfig.getToken(),
-          iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-          runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-          spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+          iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+          spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
 
         try {
@@ -159,9 +159,9 @@ describe('Client IAM Integration Tests', () => {
 
         const expiredSdk = new DatalayerClient({
           token: 'expired.invalid.token',
-          iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-          runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-          spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+          iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+          spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
 
         try {
@@ -181,9 +181,9 @@ describe('Client IAM Integration Tests', () => {
         // Create a separate Client instance for logout test
         const logoutSdk = new DatalayerClient({
           token: testConfig.getToken(),
-          iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-          runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-          spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+          iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+          spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
 
         // Verify we can make authenticated requests
@@ -206,9 +206,9 @@ describe('Client IAM Integration Tests', () => {
 
         const invalidSdk = new DatalayerClient({
           token: 'invalid-token',
-          iamRunUrl: DEFAULT_SERVICE_URLS.IAM,
-          runtimesRunUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
-          spacerRunUrl: DEFAULT_SERVICE_URLS.SPACER,
+          iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
+          spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
 
         try {

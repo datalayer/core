@@ -17,6 +17,27 @@ function normalizeUserOrigin(originRaw?: string): string | undefined {
     return undefined;
   }
   const lower = value.toLowerCase();
+  const extPrefix = 'urn:dla:iam:ext::';
+  if (lower.startsWith(extPrefix)) {
+    const suffix = value.slice(extPrefix.length);
+    const provider = (suffix.split(':')[0] || '').trim().toLowerCase();
+    if (provider === 'github') {
+      return 'GitHub';
+    }
+    if (provider === 'google') {
+      return 'Google';
+    }
+    if (provider === 'linkedin') {
+      return 'LinkedIn';
+    }
+    if (provider === 'microsoft') {
+      return 'Microsoft';
+    }
+    if (provider) {
+      return provider.charAt(0).toUpperCase() + provider.slice(1);
+    }
+    return 'External';
+  }
   if (lower === 'github') {
     return 'GitHub';
   }
@@ -104,7 +125,7 @@ export const PrincipalBadge = ({
         kind: 'team',
         uid: selectedPrincipalUid,
         handle: `${orgHandle}/${teamHandle}`,
-        accountHandle: teamHandle,
+        accountHandle: orgHandle,
         displayName: `@${formatFriendlyHandle(orgHandle)}/${formatFriendlyHandle(teamHandle)}`,
         origin: 'Datalayer',
       };
@@ -120,7 +141,7 @@ export const PrincipalBadge = ({
       : '@me';
 
     return {
-      kind: 'user',
+      kind: 'personal',
       uid: user?.id || selectedPrincipalUid,
       displayName: fullName || fallbackHandle,
       handle: resolvedHandle,
@@ -147,7 +168,7 @@ export const PrincipalBadge = ({
   ]);
 
   const userLookupUid =
-    basePrincipal.kind === 'user' ? String(basePrincipal.uid || '') : '';
+    basePrincipal.kind === 'personal' ? String(basePrincipal.uid || '') : '';
   const organizationLookupUid =
     basePrincipal.kind === 'organization'
       ? String(basePrincipal.uid || '')
@@ -218,7 +239,7 @@ export const PrincipalBadge = ({
     );
 
     return {
-      kind: 'user',
+      kind: 'personal',
       uid: resolvedUser?.uid || basePrincipal.uid,
       displayName: resolvedDisplayName,
       handle: resolvedHandle,

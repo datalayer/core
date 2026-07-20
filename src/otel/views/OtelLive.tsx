@@ -22,7 +22,7 @@ import React, {
 } from 'react';
 import { Box, Text, Button, Label } from '@primer/react';
 import { GitBranchIcon, ClockIcon } from '@primer/octicons-react';
-import { coreStore } from '../../state/substates/CoreState';
+import { getOtelConsumeUrl } from '../../state/substates/CoreState';
 import type {
   OtelLiveProps,
   OtelSpan,
@@ -89,7 +89,7 @@ function buildHistogram(
 // ── OtelLive ────────────────────────────────────────────────────────
 
 export const OtelLive: React.FC<OtelLiveProps> = ({
-  baseUrl = coreStore.getState().configuration.otelRunUrl,
+  baseUrl = getOtelConsumeUrl(),
   wsBaseUrl,
   token,
   autoRefreshMs = 5000,

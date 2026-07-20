@@ -11,7 +11,7 @@ from jupyter_server.extension.handler import (
 )
 from tornado.web import authenticated
 
-from datalayer_core.__version__ import __version__
+from datalayer_core.__version import __version__
 
 
 class ConfigHandler(ExtensionHandlerMixin, APIHandler):
@@ -22,7 +22,7 @@ class ConfigHandler(ExtensionHandlerMixin, APIHandler):
         """Return the configuration of the server extension."""
         settings = self.settings["datalayer"]
         configuration = dict(
-            run_url=settings.run_url,
+            datalayer_url=settings.datalayer_url,
             launcher={
                 "category": settings.launcher.category,
                 "name": settings.launcher.name,

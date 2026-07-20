@@ -8,12 +8,8 @@ import sys
 
 import typer
 
-from datalayer_core.__version__ import __version__
+from datalayer_core.__version import __version__
 from datalayer_core.cli.commands.about import app as about_app
-from datalayer_core.cli.commands.agents import agents_ls
-from datalayer_core.cli.commands.agents import app as agents_app
-from datalayer_core.cli.commands.agent_nodes import app as agent_nodes_app
-from datalayer_core.cli.commands.agent_nodes import agent_nodes_ls
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
@@ -22,32 +18,20 @@ from datalayer_core.cli.commands.authn import (
     logout_root,
     whoami_root,
 )
-from datalayer_core.cli.commands.benchmarks import app as benchmarks_app
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
-from datalayer_core.cli.commands.console import app as console_app
-from datalayer_core.cli.commands.envs import app as envs_app
-from datalayer_core.cli.commands.envs import envs_ls
-from datalayer_core.cli.commands.evals import app as evals_app
-from datalayer_core.cli.commands.exec import main as exec_main
 from datalayer_core.cli.commands.memberships import app as memberships_app
+from datalayer_core.cli.commands.orgs import app as orgs_app
+from datalayer_core.cli.commands.orgs import orgs_ls
 from datalayer_core.cli.commands.otel import app as otel_app
-from datalayer_core.cli.commands.pools import app as pools_app
-from datalayer_core.cli.commands.ray import app as ray_app
-from datalayer_core.cli.commands.runtime_checkpoints import app as checkpoints_app
-from datalayer_core.cli.commands.runtime_checkpoints import (
-    checkpoints_ls,
-)
-from datalayer_core.cli.commands.sandbox_snapshots import app as snapshots_app
-from datalayer_core.cli.commands.sandbox_snapshots import snapshots_ls
-from datalayer_core.cli.commands.runtimes import app as runtimes_app
-from datalayer_core.cli.commands.runtimes import runtimes_ls
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
-from datalayer_core.cli.commands.tokens import app as tokens_app
-from datalayer_core.cli.commands.tokens import tokens_ls
+from datalayer_core.cli.commands.teams import app as teams_app
+from datalayer_core.cli.commands.teams import teams_ls
+from datalayer_core.cli.commands.api_keys import app as api_keys_app
+from datalayer_core.cli.commands.api_keys import api_keys_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
 from datalayer_core.cli.commands.plans import app as plans_app
@@ -81,10 +65,18 @@ def main_callback(
         is_eager=True,
         help="Show version and exit",
     ),
-    run_url: str | None = typer.Option(
+    api_key: str | None = typer.Option(
         None,
-        "--run-url",
-        help="Override DATALAYER_RUN_URL for this CLI invocation.",
+        "--api-key",
+        help=(
+            "Auth token for backend calls. Falls back to DATALAYER_API_KEY when "
+            "omitted; otherwise built-in auth resolution is used."
+        ),
+    ),
+    datalayer_url: str | None = typer.Option(
+        None,
+        "--datalayer-url",
+        help="Override DATALAYER_URL for this CLI invocation.",
     ),
     iam_url: str | None = typer.Option(
         None,
@@ -152,10 +144,15 @@ def main_callback(
         "--mcp-server-url",
         help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
     ),
+    scheduler_url: str | None = typer.Option(
+        None,
+        "--scheduler-url",
+        help="Override DATALAYER_SCHEDULER_URL for this CLI invocation.",
+    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
-        "DATALAYER_RUN_URL": run_url,
+        "DATALAYER_URL": datalayer_url,
         "DATALAYER_IAM_URL": iam_url,
         "DATALAYER_RUNTIMES_URL": runtimes_url,
         "DATALAYER_SPACER_URL": spacer_url,
@@ -169,40 +166,36 @@ def main_callback(
         "DATALAYER_STATUS_URL": status_url,
         "DATALAYER_SUPPORT_URL": support_url,
         "DATALAYER_MCP_SERVER_URL": mcp_server_url,
+        "DATALAYER_SCHEDULER_URL": scheduler_url,
     }
     for env_name, value in overrides.items():
         if value is not None:
             os.environ[env_name] = value.rstrip("/")
 
+    # Global auth option: explicit flag overrides env; when omitted keep normal
+    # command behavior (env var token or stored auth token).
+    if api_key is not None:
+        normalized_api_key = str(api_key).strip()
+        if normalized_api_key:
+            os.environ["DATALAYER_API_KEY"] = normalized_api_key
+
 
 # Register commands (without name to add them at the top level)
 app.add_typer(about_app)
-app.add_typer(agents_app)
-app.add_typer(agent_nodes_app)
 app.add_typer(auth_app)
-app.add_typer(benchmarks_app)
-app.add_typer(checkpoints_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
-app.add_typer(console_app)
-app.add_typer(envs_app)
-app.add_typer(evals_app)
 app.add_typer(memberships_app)
+app.add_typer(orgs_app)
+app.add_typer(teams_app)
 app.add_typer(otel_app)
-app.add_typer(pools_app)
-app.add_typer(ray_app)
-app.add_typer(runtimes_app)
 app.add_typer(secrets_app)
-app.add_typer(snapshots_app)
 app.add_typer(subscription_app)
-app.add_typer(tokens_app)
+app.add_typer(api_keys_app)
 app.add_typer(users_app)
 app.add_typer(usage_app)
 app.add_typer(plans_app)
 app.add_typer(web_app)
-
-# Add exec command directly to root level
-app.command(name="exec")(exec_main)
 
 # Add individual auth commands at root level for convenience
 app.command(name="login")(login_root)
@@ -213,18 +206,15 @@ app.command(name="plans")(plans_root)
 app.command(name="subscription")(subscription_root)
 
 # Add convenient aliases at root level
-app.command(name="envs-ls")(envs_ls)
-app.command(name="runtimes-ls")(runtimes_ls)
 app.command(name="secrets-ls")(secrets_ls)
-app.command(name="snapshots-ls")(snapshots_ls)
-app.command(name="checkpoints-ls")(checkpoints_ls)
-app.command(name="tokens-ls")(tokens_ls)
-app.command(name="agent-nodes-ls")(agent_nodes_ls)
-app.command(name="agents-ls")(agents_ls)
+app.command(name="api-keys-ls")(api_keys_ls)
+app.command(name="orgs-ls")(orgs_ls)
+app.command(name="teams-ls")(teams_ls)
 
 
 _GLOBAL_OPTIONS_WITH_VALUES = {
-    "--run-url",
+    "--api-key",
+    "--datalayer-url",
     "--iam-url",
     "--runtimes-url",
     "--spacer-url",
@@ -239,6 +229,7 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--status-url",
     "--support-url",
     "--mcp-server-url",
+    "--scheduler-url",
 }
 
 _GLOBAL_OPTIONS_NO_VALUES = {
@@ -297,3 +288,7 @@ def _normalize_global_options(argv: list[str]) -> list[str]:
 def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
     app(args=_normalize_global_options(sys.argv)[1:])
+
+
+if __name__ == "__main__":
+    main()

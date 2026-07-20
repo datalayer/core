@@ -7,11 +7,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   CodeSandboxSnapshotDTO,
   CodeSandboxSnapshotData,
-} from '../../models/CodeSandboxSnapshotDTO';
+} from '../../base/models/CodeSandboxSnapshotDTO';
 import type { DatalayerClient } from '../../client/index';
-import { snapshots } from '../../api/runtimes';
+import { snapshots } from '../../base/api/runtimes';
 
-vi.mock('../../api/runtimes', () => ({
+vi.mock('../../base/api/runtimes', () => ({
   snapshots: {
     deleteSnapshot: vi.fn(),
   },
@@ -32,7 +32,7 @@ describe('Snapshot Model', () => {
   beforeEach(() => {
     mockClient = {
       getToken: vi.fn().mockReturnValue('mock-token'),
-      getRuntimesRunUrl: vi
+      getRuntimesUrl: vi
         .fn()
         .mockReturnValue('https://runtimes.example.com'),
       createRuntime: vi.fn(),

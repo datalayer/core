@@ -8,6 +8,7 @@ Provides environment variable support with fallback to defaults.
 """
 
 import os
+from dataclasses import asdict
 from dataclasses import dataclass
 from typing import Optional
 
@@ -18,35 +19,35 @@ from datalayer_core.base.user_config import (
     get_runtimes_url as _get_config_runtimes_url,
 )
 
-DEFAULT_DATALAYER_RUN_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_URL = "https://prod1.datalayer.run"
 
-DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_URL
 
 DEFAULT_DATALAYER_RUNTIMES_URL = "https://r1.datalayer.run"
 
-DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_RAY_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_URL
 
-DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_RUN_URL
+DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_URL
 
 
 @dataclass
@@ -59,7 +60,7 @@ class DatalayerURLs:
 
     Attributes
     ----------
-    run_url : str
+    datalayer_url : str
         The Datalayer runtime/service URL
     iam_url : str
         The Datalayer IAM service URL
@@ -87,11 +88,11 @@ class DatalayerURLs:
         The Datalayer support service URL
     mcp_server_url : str
         The Datalayer MCP server service URL
-    ray_url : str
-        The Datalayer Ray service URL
+    scheduler_url : str
+        The Datalayer scheduler service URL
     """
 
-    run_url: str
+    datalayer_url: str
     iam_url: str
     runtimes_url: str
     spacer_url: str
@@ -105,12 +106,12 @@ class DatalayerURLs:
     status_url: str
     support_url: str
     mcp_server_url: str
-    ray_url: str
+    scheduler_url: str
 
     @classmethod
     def from_environment(
         cls,
-        run_url: Optional[str] = None,
+        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -124,16 +125,16 @@ class DatalayerURLs:
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
         mcp_server_url: Optional[str] = None,
-        ray_url: Optional[str] = None,
+        scheduler_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
         Create DatalayerURLs instance from environment variables and parameters.
 
         Parameters
         ----------
-        run_url : Optional[str]
-            Override for the run URL. If None, will check DATALAYER_RUN_URL env var
-            then fallback to DEFAULT_DATALAYER_RUN_URL.
+        datalayer_url : Optional[str]
+            Override for the run URL. If None, will check DATALAYER_URL env var
+            then fallback to DEFAULT_DATALAYER_URL.
         iam_url : Optional[str]
             Override for the IAM URL. If None, will check DATALAYER_IAM_URL env var
             then fallback to DEFAULT_DATALAYER_IAM_URL.
@@ -173,9 +174,9 @@ class DatalayerURLs:
         mcp_server_url : Optional[str]
             Override for the MCP server URL. If None, will check DATALAYER_MCP_SERVER_URL env var
             then fallback to DEFAULT_DATALAYER_MCP_SERVER_URL.
-        ray_url : Optional[str]
-            Override for the Ray URL. If None, will check DATALAYER_RAY_URL env var
-            then fallback to DEFAULT_DATALAYER_RAY_URL.
+        scheduler_url : Optional[str]
+            Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
+            then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
 
         Returns
         -------
@@ -188,8 +189,8 @@ class DatalayerURLs:
         unless explicitly overridden. This allows setting a single base URL for all services.
         """
         # Determine base URLs first
-        resolved_run_url = (
-            run_url or os.environ.get("DATALAYER_RUN_URL") or DEFAULT_DATALAYER_RUN_URL
+        resolved_datalayer_url = (
+            datalayer_url or os.environ.get("DATALAYER_URL") or DEFAULT_DATALAYER_URL
         )
         resolved_iam_url = (
             iam_url
@@ -285,15 +286,15 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_MCP_SERVERS_URL
         )
-        resolved_ray_url = (
-            ray_url
-            or os.environ.get("DATALAYER_RAY_URL")
+        resolved_scheduler_url = (
+            scheduler_url
+            or os.environ.get("DATALAYER_SCHEDULER_URL")
             or base_url_for_services
-            or DEFAULT_DATALAYER_RAY_URL
+            or DEFAULT_DATALAYER_SCHEDULER_URL
         )
 
         # Strip trailing slashes for consistency
-        resolved_run_url = resolved_run_url.rstrip("/")
+        resolved_datalayer_url = resolved_datalayer_url.rstrip("/")
         resolved_iam_url = resolved_iam_url.rstrip("/")
         resolved_runtimes_url = resolved_runtimes_url.rstrip("/")
         resolved_spacer_url = resolved_spacer_url.rstrip("/")
@@ -307,10 +308,10 @@ class DatalayerURLs:
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
         resolved_mcp_server_url = resolved_mcp_server_url.rstrip("/")
-        resolved_ray_url = resolved_ray_url.rstrip("/")
+        resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
 
         return cls(
-            run_url=resolved_run_url,
+            datalayer_url=resolved_datalayer_url,
             iam_url=resolved_iam_url,
             runtimes_url=resolved_runtimes_url,
             spacer_url=resolved_spacer_url,
@@ -324,12 +325,12 @@ class DatalayerURLs:
             status_url=resolved_status_url,
             support_url=resolved_support_url,
             mcp_server_url=resolved_mcp_server_url,
-            ray_url=resolved_ray_url,
+            scheduler_url=resolved_scheduler_url,
         )
 
     def __post_init__(self) -> None:
         """Ensure URLs don't have trailing slashes."""
-        self.run_url = self.run_url.rstrip("/")
+        self.datalayer_url = self.datalayer_url.rstrip("/")
         self.iam_url = self.iam_url.rstrip("/")
         self.runtimes_url = self.runtimes_url.rstrip("/")
         self.spacer_url = self.spacer_url.rstrip("/")
@@ -343,4 +344,46 @@ class DatalayerURLs:
         self.status_url = self.status_url.rstrip("/")
         self.support_url = self.support_url.rstrip("/")
         self.mcp_server_url = self.mcp_server_url.rstrip("/")
-        self.ray_url = self.ray_url.rstrip("/")
+        self.scheduler_url = self.scheduler_url.rstrip("/")
+
+    def as_dict(self) -> dict[str, str]:
+        """Return all resolved service URLs as a dictionary."""
+        return asdict(self)
+
+    @classmethod
+    def get_all_urls(
+        cls,
+        datalayer_url: Optional[str] = None,
+        iam_url: Optional[str] = None,
+        runtimes_url: Optional[str] = None,
+        spacer_url: Optional[str] = None,
+        library_url: Optional[str] = None,
+        manager_url: Optional[str] = None,
+        ai_agents_url: Optional[str] = None,
+        ai_inference_url: Optional[str] = None,
+        otel_url: Optional[str] = None,
+        growth_url: Optional[str] = None,
+        success_url: Optional[str] = None,
+        status_url: Optional[str] = None,
+        support_url: Optional[str] = None,
+        mcp_server_url: Optional[str] = None,
+        scheduler_url: Optional[str] = None,
+    ) -> dict[str, str]:
+        """Resolve and return all service URLs with optional overrides."""
+        return cls.from_environment(
+            datalayer_url=datalayer_url,
+            iam_url=iam_url,
+            runtimes_url=runtimes_url,
+            spacer_url=spacer_url,
+            library_url=library_url,
+            manager_url=manager_url,
+            ai_agents_url=ai_agents_url,
+            ai_inference_url=ai_inference_url,
+            otel_url=otel_url,
+            growth_url=growth_url,
+            success_url=success_url,
+            status_url=status_url,
+            support_url=support_url,
+            mcp_server_url=mcp_server_url,
+            scheduler_url=scheduler_url,
+        ).as_dict()

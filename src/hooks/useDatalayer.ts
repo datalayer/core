@@ -9,6 +9,7 @@ import { useToast } from './useToast';
 // import { useRuMnock } from './../mocks';
 import { useIAMStore } from '../state';
 import { requestDatalayerAPI } from '../api/DatalayerApi';
+import { isPublicPath } from '../routes/publicPaths';
 import type {
   IRequestDatalayerAPIOptions,
   RunResponseError,
@@ -90,11 +91,12 @@ export function useDatalayer(props: IDatalayerRequestProps = {}) {
           if (responseError.response.status === 401) {
             console.log('Datalayer sent a 401 return code.');
             const resolvedLoginRoute = resolveLoginRoute(loginRoute_);
+            const isPublicRoute = isPublicPath(location.pathname || '');
             const alreadyOnLoginRoute =
               location.pathname === resolvedLoginRoute ||
               location.pathname.endsWith('/login');
 
-            if (!alreadyOnLoginRoute) {
+            if (!alreadyOnLoginRoute && !isPublicRoute) {
               iamStore.logout();
               navigate(resolvedLoginRoute);
             }

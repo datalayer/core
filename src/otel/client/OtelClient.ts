@@ -18,7 +18,7 @@
  * ```
  */
 
-import { coreStore } from '../../state/substates/CoreState';
+import { getOtelConsumeUrl } from '../../state/substates/CoreState';
 import type { OtelSpan, OtelLog, OtelMetric, OtelQueryResult } from '../types';
 import { resolveOtelAuth } from '../auth';
 import type {
@@ -63,7 +63,7 @@ async function otelFetch<T = unknown>(
 export interface OtelClientOptions {
   /**
    * Base URL of the OTEL service.
-   * Defaults to `configuration.otelRunUrl` from the Datalayer core config
+   * Defaults to `configuration.otelUrl` from the Datalayer core config
    * (i.e. `https://prod1.datalayer.run`).
    */
   baseUrl?: string;
@@ -89,12 +89,16 @@ export interface FetchMetricsOptions {
   serviceName?: string;
   metricName?: string;
   limit?: number;
+  /** Optional billing/account scope for account-scoped OTEL queries. */
+  accountUid?: string;
 }
 
 export interface FetchMetricTotalOptions {
   serviceName?: string;
   limit?: number;
   fallbackWithoutService?: boolean;
+  /** Optional billing/account scope for account-scoped OTEL queries. */
+  accountUid?: string;
 }
 
 function parseMetricValue(raw: Record<string, unknown>): number {
@@ -192,8 +196,7 @@ export class OtelClient {
   private readonly userUid: string;
 
   constructor(options: OtelClientOptions) {
-    this.baseUrl =
-      options.baseUrl ?? coreStore.getState().configuration.otelRunUrl;
+    this.baseUrl = options.baseUrl ?? getOtelConsumeUrl();
     const auth = resolveOtelAuth(options.token, options.userUid);
     this.token = auth.token;
     this.userUid = auth.userUid;
@@ -255,6 +258,7 @@ export class OtelClient {
     const params = new URLSearchParams({ limit: String(options.limit ?? 50) });
     if (options.serviceName) params.set('service_name', options.serviceName);
     if (options.metricName) params.set('metric_name', options.metricName);
+    if (options.accountUid) params.set('account_uid', options.accountUid);
     const resp = await otelFetch<{ data?: OtelMetric[] } | OtelMetric[]>(
       `${this.baseUrl}/api/otel/v1/metrics/?${params}`,
       this.token,
@@ -274,11 +278,17 @@ export class OtelClient {
     metricName: string,
     options: FetchMetricTotalOptions = {},
   ): Promise<number> {
-    const { serviceName, limit = 500, fallbackWithoutService = true } = options;
+    const {
+      serviceName,
+      limit = 500,
+      fallbackWithoutService = true,
+      accountUid,
+    } = options;
     const filtered = await this.fetchMetrics({
       metricName,
       serviceName,
       limit,
+      accountUid,
     });
     const filteredTotal = filtered.data.reduce(
       (sum, row) => sum + Number(row.value || 0),
@@ -288,7 +298,11 @@ export class OtelClient {
       return filteredTotal;
     }
 
-    const unfiltered = await this.fetchMetrics({ metricName, limit });
+    const unfiltered = await this.fetchMetrics({
+      metricName,
+      limit,
+      accountUid,
+    });
     return unfiltered.data.reduce(
       (sum, row) => sum + Number(row.value || 0),
       0,
@@ -369,7 +383,7 @@ export class OtelClient {
 /**
  * Create a new `OtelClient`.
  *
- * The `baseUrl` defaults to `configuration.otelRunUrl` from the Datalayer core
+ * The `baseUrl` defaults to `configuration.otelUrl` from the Datalayer core
  * configuration store, so only pass it when you want to override the default.
  *
  * @example

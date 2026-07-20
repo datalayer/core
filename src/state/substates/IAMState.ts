@@ -57,7 +57,7 @@ export type IIAMState = {
   /**
    * IAM server base URL.
    */
-  iamRunUrl: string;
+  iamUrl: string;
   /**
    * Mapping of IAM providers and the corresponding Authorization URL.
    */
@@ -127,7 +127,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
     externalToken: loadRefreshTokenFromCookie() ?? undefined,
     user: getStoredUser(),
     token: getStoredToken(),
-    iamRunUrl: coreStore.getState().configuration?.iamRunUrl,
+    iamUrl: coreStore.getState().configuration?.iamUrl,
     iamProvidersAuthorizationURL: {},
     version: '',
     isLoginInProgress: false,
@@ -143,12 +143,12 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }));
     },
     login: async (token: string) => {
-      const { refreshUserByToken, iamRunUrl, logout } = get();
+      const { refreshUserByToken, iamUrl, logout } = get();
       // Set flag to prevent interference from automatic token refresh
       set({ isLoginInProgress: true });
       try {
         const resp = await requestDatalayerAPI<IIAMResponseType>({
-          url: `${iamRunUrl}/api/iam/v1/login`,
+          url: `${iamUrl}/api/iam/v1/login`,
           method: 'POST',
           body: { token },
         });
@@ -227,7 +227,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
         return updatedState;
       }),
     refreshCredits: async () => {
-      const { externalToken, token, iamRunUrl, logout } = get();
+      const { externalToken, token, iamUrl, logout } = get();
       if (token) {
         try {
           const creditsRaw = await requestDatalayerAPI<
@@ -235,7 +235,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
               reservations: ICreditsReservation[];
             }
           >({
-            url: `${iamRunUrl}/api/iam/v1/usage/credits`,
+            url: `${iamUrl}/api/iam/v1/usage/credits`,
             token,
             headers: externalToken
               ? {
@@ -289,10 +289,10 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }
     },
     refreshUserByToken: async (token: string) => {
-      const { iamRunUrl, logout, isLoginInProgress } = get();
+      const { iamUrl, logout, isLoginInProgress } = get();
       try {
         const data = await requestDatalayerAPI({
-          url: `${iamRunUrl}/api/iam/v1/whoami`,
+          url: `${iamUrl}/api/iam/v1/whoami`,
           token,
         });
         const user = asUser(data.profile);
@@ -362,7 +362,7 @@ iamStore
     console.error('Failed to refresh to validate the stored token.', reason);
   })
   .finally(() => {
-    const { externalToken, iamRunUrl, checkIAMToken, token } =
+    const { externalToken, iamUrl, checkIAMToken, token } =
       iamStore.getState();
     // If the stored token is invalid and an external token exists, try authenticating with it.
     if (!token && externalToken) {
@@ -370,7 +370,7 @@ iamStore
         'Can not login with token - Trying with the external token.',
       );
       requestDatalayerAPI<{ token?: string }>({
-        url: `${iamRunUrl}/api/iam/v1/login`,
+        url: `${iamUrl}/api/iam/v1/login`,
         method: 'POST',
         body: { token: externalToken },
       })
@@ -418,12 +418,12 @@ iamStore
 // Connect the core store with the iam store.
 coreStore.subscribe((state, prevState) => {
   if (
-    state.configuration?.iamRunUrl &&
-    state.configuration.iamRunUrl !== prevState.configuration?.iamRunUrl
+    state.configuration?.iamUrl &&
+    state.configuration.iamUrl !== prevState.configuration?.iamUrl
   ) {
-    const iamRunUrl = state.configuration.iamRunUrl;
-    console.log('Updating iamRunUrl with new value', iamRunUrl);
-    iamStore.setState({ iamRunUrl });
+    const iamUrl = state.configuration.iamUrl;
+    console.log('Updating iamUrl with new value', iamUrl);
+    iamStore.setState({ iamUrl });
     // Check the token is valid with the new server.
     if (iamStore.getState().externalToken) {
       iamStore

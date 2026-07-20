@@ -4,6 +4,7 @@
 """Usage/credits commands for Datalayer CLI."""
 
 from datetime import datetime, timezone
+import os
 from typing import Any, Optional
 
 import typer
@@ -42,11 +43,11 @@ def _iam_post(
 
 
 def _make_client(
-    token: Optional[str] = None,
+    api_key: Optional[str] = None,
     iam_url: Optional[str] = None,
 ) -> DatalayerClient:
     urls = DatalayerURLs.from_environment(iam_url=iam_url)
-    return DatalayerClient(urls=urls, token=token)
+    return DatalayerClient(urls=urls, api_key=api_key)
 
 
 def _parse_iso_dt(value: Any) -> datetime | None:
@@ -83,10 +84,10 @@ def usage_callback(ctx: typer.Context) -> None:
 
 @app.command(name="show")
 def usage_show(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -101,7 +102,7 @@ def usage_show(
 ) -> None:
     """Show credits usage and reservations."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         usage = client.get_usage_credits()
         if not usage.get("success", True):
             console.print(f"[red]Error: {usage.get('message', 'Unknown error')}[/red]")
@@ -119,42 +120,43 @@ def usage_show(
 
 @app.command(name="records")
 def usage_records(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    billable_account_uid: Optional[str] = typer.Option(
-        None,
-        "--billable-account-uid",
+    billing_entity_uid: Optional[str] = typer.Option(
+        os.environ.get("DATALAYER_ACCOUNT_UID")
+        or os.environ.get("DATALAYER_BILLING_ENTITY_UID"),
+        "--billing-entity-uid",
         help="Optional account UID scope. Defaults to the authenticated account.",
     ),
-    billable_account_kind: Optional[str] = typer.Option(
+    billing_entity_kind: Optional[str] = typer.Option(
         None,
-        "--billable-account-kind",
+        "--billing-entity-kind",
         help="Optional account kind scope: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of usage records."),
-    group_by_billable: bool = typer.Option(
+    group_by_billing: bool = typer.Option(
         False,
-        "--group-by-billable",
-        help="Render one table per billable account.",
+        "--group-by-billing",
+        help="Render one table per billing entity.",
     ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload from IAM."),
 ) -> None:
     """Show detailed usage records for the authenticated account scope."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         params: list[str] = []
-        if billable_account_uid:
-            params.append(f"billable_account_uid={billable_account_uid}")
-        if billable_account_kind:
-            params.append(f"billable_account_kind={billable_account_kind}")
+        if billing_entity_uid:
+            params.append(f"billing_entity_uid={billing_entity_uid}")
+        if billing_entity_kind:
+            params.append(f"billing_entity_kind={billing_entity_kind}")
         query_suffix = f"?{'&'.join(params)}" if params else ""
         response = _iam_get(client, f"/api/iam/v1/usage/user{query_suffix}")
         if not response.get("success", True):
@@ -173,7 +175,7 @@ def usage_records(
             table.add_column("Type", style="white", no_wrap=True)
             table.add_column("State", style="white", no_wrap=True)
             table.add_column("Creator", style="dim", no_wrap=True)
-            table.add_column("Billable", style="dim", no_wrap=True)
+            table.add_column("Billing", style="dim", no_wrap=True)
             table.add_column("Start", style="white", no_wrap=True)
             table.add_column("End", style="white", no_wrap=True)
             table.add_column("Duration(s)", style="white", justify="right", no_wrap=True)
@@ -191,8 +193,8 @@ def usage_records(
             start = usage.get("start_date")
             end = usage.get("end_date")
             creator = usage.get("account_uid")
-            billable = (
-                usage.get("billable_account_uid")
+            billing = (
+                usage.get("billing_entity_uid")
                 or usage.get("account_uid")
             )
             return (
@@ -204,7 +206,7 @@ def usage_records(
                     or metadata.get("resource_state")
                 ),
                 _normalize_value(creator),
-                _normalize_value(billable),
+                _normalize_value(billing),
                 _normalize_value(start),
                 _normalize_value(end),
                 _format_duration_seconds(start, end),
@@ -212,16 +214,16 @@ def usage_records(
                 _normalize_value(usage.get("burning_rate"), fallback="0"),
             )
 
-        if group_by_billable:
+        if group_by_billing:
             groups: dict[str, list[dict[str, Any]]] = {}
             for usage in usages:
                 key = (
-                    usage.get("billable_account_uid")
+                    usage.get("billing_entity_uid")
                     or usage.get("account_uid")
                     or "unknown"
                 )
                 groups.setdefault(key, []).append(usage)
-            for billable_uid, group_usages in sorted(groups.items()):
+            for billing_uid, group_usages in sorted(groups.items()):
                 total_credits = 0.0
                 for u in group_usages:
                     try:
@@ -230,7 +232,7 @@ def usage_records(
                         pass
                 table = Table(
                     title=(
-                        f"Billable Account [bold]{billable_uid}[/bold] "
+                        f"Billing Entity [bold]{billing_uid}[/bold] "
                         f"— {len(group_usages)} record(s), "
                         f"{total_credits:.4f} credits"
                     )
@@ -252,10 +254,10 @@ def usage_records(
 
 @app.command(name="reservations")
 def usage_reservations(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -267,14 +269,15 @@ def usage_reservations(
         "--type",
         help="Optional reservation type filter.",
     ),
-    billable_account_uid: Optional[str] = typer.Option(
-        None,
-        "--billable-account-uid",
+    billing_entity_uid: Optional[str] = typer.Option(
+        os.environ.get("DATALAYER_ACCOUNT_UID")
+        or os.environ.get("DATALAYER_BILLING_ENTITY_UID"),
+        "--billing-entity-uid",
         help="Optional account UID scope for fallback credits view.",
     ),
-    billable_account_kind: Optional[str] = typer.Option(
+    billing_entity_kind: Optional[str] = typer.Option(
         None,
-        "--billable-account-kind",
+        "--billing-entity-kind",
         help="Optional account kind scope for fallback credits view: user or organization.",
     ),
     limit: int = typer.Option(20, "--limit", help="Maximum number of reservations."),
@@ -282,7 +285,7 @@ def usage_reservations(
 ) -> None:
     """Show reservations from IAM reservations endpoint."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         query_suffix = f"?type={reservation_type}" if reservation_type else ""
         response = _iam_get(client, f"/api/iam/v1/usage/reservations{query_suffix}")
         if not response.get("success", True):
@@ -297,10 +300,10 @@ def usage_reservations(
 
         if not reservations:
             params: list[str] = []
-            if billable_account_uid:
-                params.append(f"billable_account_uid={billable_account_uid}")
-            if billable_account_kind:
-                params.append(f"billable_account_kind={billable_account_kind}")
+            if billing_entity_uid:
+                params.append(f"billing_entity_uid={billing_entity_uid}")
+            if billing_entity_kind:
+                params.append(f"billing_entity_kind={billing_entity_kind}")
             credits_query = f"?{'&'.join(params)}" if params else ""
             credits_response = _iam_get(
                 client,
@@ -364,10 +367,10 @@ def usage_org_overview(
         "--organization-uid",
         help="Organization UID.",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -378,7 +381,7 @@ def usage_org_overview(
 ) -> None:
     """Show organization/team credits allocation overview."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/overview",
@@ -435,10 +438,10 @@ def usage_team_overview(
         "--team-uid",
         help="Team UID.",
     ),
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -449,7 +452,7 @@ def usage_team_overview(
 ) -> None:
     """Show team/member credits allocation overview."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/overview",
@@ -500,7 +503,7 @@ def usage_org_history(
     organization_uid: str = typer.Option(
         ..., "--organization-uid", help="Organization UID."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -510,7 +513,7 @@ def usage_org_history(
 ) -> None:
     """Show organization/team credits transfer history."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/history",
@@ -543,7 +546,7 @@ def usage_org_history(
 @app.command(name="team-history")
 def usage_team_history(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -553,7 +556,7 @@ def usage_team_history(
 ) -> None:
     """Show team/member credits transfer history."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/history",
@@ -588,7 +591,7 @@ def usage_org_monitor(
     organization_uid: str = typer.Option(
         ..., "--organization-uid", help="Organization UID."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -600,7 +603,7 @@ def usage_org_monitor(
 ) -> None:
     """Show organization/team credits monitoring metrics and recommendations."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/monitoring?window_hours={max(1, window_hours)}",
@@ -676,7 +679,7 @@ def usage_org_monitor(
 @app.command(name="team-monitor")
 def usage_team_monitor(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -688,7 +691,7 @@ def usage_team_monitor(
 ) -> None:
     """Show team/member credits monitoring metrics and recommendations."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_get(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/monitoring?window_hours={max(1, window_hours)}",
@@ -767,7 +770,7 @@ def usage_org_allocate_team(
     amount: float = typer.Option(
         ..., "--amount", help="Amount of credits to allocate."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -776,7 +779,7 @@ def usage_org_allocate_team(
 ) -> None:
     """Allocate credits from organization to team."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/teams/{team_uid}",
@@ -801,7 +804,7 @@ def usage_org_revoke_team(
     ),
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -810,7 +813,7 @@ def usage_org_revoke_team(
 ) -> None:
     """Revoke credits from team back to organization."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/organizations/{organization_uid}/teams/{team_uid}/revoke",
@@ -835,7 +838,7 @@ def usage_team_allocate_member(
     amount: float = typer.Option(
         ..., "--amount", help="Amount of credits to allocate."
     ),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -844,7 +847,7 @@ def usage_team_allocate_member(
 ) -> None:
     """Allocate credits from team to member."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/members/{member_uid}",
@@ -867,7 +870,7 @@ def usage_team_revoke_member(
     team_uid: str = typer.Option(..., "--team-uid", help="Team UID."),
     member_uid: str = typer.Option(..., "--member-uid", help="Member UID."),
     amount: float = typer.Option(..., "--amount", help="Amount of credits to revoke."),
-    token: Optional[str] = typer.Option(None, "--token", help="Authentication token."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="API key."),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
@@ -876,7 +879,7 @@ def usage_team_revoke_member(
 ) -> None:
     """Revoke credits from member back to team."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         response = _iam_post(
             client,
             f"/api/iam/v1/usage/credits/allocations/teams/{team_uid}/members/{member_uid}/revoke",
@@ -898,10 +901,10 @@ def usage_team_revoke_member(
 
 
 def usage_root(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -910,4 +913,4 @@ def usage_root(
     ),
 ) -> None:
     """Show credits usage and reservations (root command)."""
-    usage_show(token=token, iam_url=iam_url)
+    usage_show(api_key=api_key, iam_url=iam_url)

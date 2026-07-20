@@ -79,7 +79,7 @@ export type SignalType = 'traces' | 'logs' | 'metrics';
 /** Props for the main OtelLive orchestrator component. */
 export interface OtelLiveProps {
   /**
-   * OTEL API base URL. When omitted, falls back to `otelRunUrl` from the
+   * OTEL API base URL. When omitted, falls back to `otelUrl` from the
    * Datalayer core configuration (defaults to "https://prod1.datalayer.run").
    */
   baseUrl?: string;

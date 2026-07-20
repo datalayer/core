@@ -9,7 +9,6 @@
  */
 
 import { DEFAULT_SERVICE_URLS } from '../api/constants';
-import { EnvironmentDTO } from '../models/EnvironmentDTO';
 import { AuthenticationManager } from './auth';
 import type { TokenStorage } from './auth/types';
 
@@ -28,11 +27,11 @@ export interface DatalayerClientConfig {
   /** Authentication token for API requests */
   token?: string;
   /** URL for the IAM service */
-  iamRunUrl?: string;
+  iamUrl?: string;
   /** URL for the Runtimes service */
-  runtimesRunUrl?: string;
+  runtimesUrl?: string;
   /** URL for the Spacer service */
-  spacerRunUrl?: string;
+  spacerUrl?: string;
   /** Custom token storage backend (optional, defaults to auto-detected) */
   storage?: TokenStorage;
   /** Handlers for intercepting Client method calls */
@@ -42,15 +41,13 @@ export interface DatalayerClientConfig {
 /** Base Client class providing core configuration and token management. */
 export class DatalayerClientBase {
   /** URL for IAM service */
-  public readonly iamRunUrl: string;
+  public readonly iamUrl: string;
   /** URL for Runtimes service */
-  public readonly runtimesRunUrl: string;
+  public readonly runtimesUrl: string;
   /** URL for Spacer service */
-  public readonly spacerRunUrl: string;
+  public readonly spacerUrl: string;
   /** Authentication token */
   public token?: string;
-  /** Environments */
-  public readonly environments: EnvironmentDTO[] = [];
   /** Method lifecycle handlers */
   public readonly handlers?: ClientHandlers;
   /** Authentication manager */
@@ -61,15 +58,15 @@ export class DatalayerClientBase {
    * @param config - Client configuration options
    */
   constructor(config: DatalayerClientConfig) {
-    this.iamRunUrl = config.iamRunUrl || DEFAULT_SERVICE_URLS.IAM;
-    this.runtimesRunUrl =
-      config.runtimesRunUrl || DEFAULT_SERVICE_URLS.RUNTIMES;
-    this.spacerRunUrl = config.spacerRunUrl || DEFAULT_SERVICE_URLS.SPACER;
+    this.iamUrl = config.iamUrl || DEFAULT_SERVICE_URLS.IAM;
+    this.runtimesUrl =
+      config.runtimesUrl || DEFAULT_SERVICE_URLS.RUNTIMES;
+    this.spacerUrl = config.spacerUrl || DEFAULT_SERVICE_URLS.SPACER;
     this.token = config.token;
     this.handlers = config.handlers;
 
     // Initialize authentication manager with custom storage if provided
-    this.auth = new AuthenticationManager(this.iamRunUrl, config.storage);
+    this.auth = new AuthenticationManager(this.iamUrl, config.storage);
 
     // If a token was provided, store it in the auth manager
     if (this.token) {
@@ -83,26 +80,26 @@ export class DatalayerClientBase {
    */
   getConfig(): DatalayerClientConfig {
     return {
-      iamRunUrl: this.iamRunUrl,
-      runtimesRunUrl: this.runtimesRunUrl,
-      spacerRunUrl: this.spacerRunUrl,
+      iamUrl: this.iamUrl,
+      runtimesUrl: this.runtimesUrl,
+      spacerUrl: this.spacerUrl,
       token: this.token,
     };
   }
 
   /** Get the IAM service URL. */
-  public getIamRunUrl(): string {
-    return this.iamRunUrl;
+  public getIamUrl(): string {
+    return this.iamUrl;
   }
 
   /** Get the Runtimes service URL. */
-  public getRuntimesRunUrl(): string {
-    return this.runtimesRunUrl;
+  public getRuntimesUrl(): string {
+    return this.runtimesUrl;
   }
 
   /** Get the Spacer service URL. */
-  public getSpacerRunUrl(): string {
-    return this.spacerRunUrl;
+  public getSpacerUrl(): string {
+    return this.spacerUrl;
   }
 
   /** Get the current authentication token. */

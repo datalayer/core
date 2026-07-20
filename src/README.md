@@ -539,28 +539,28 @@ function AppHeader() {
 }
 ```
 
-### Organization & Space State
+### Organization & Space Cache Hooks
 
 ```tsx
-import { useOrganizationState, useSpaceState } from '@datalayer/core';
+import { useCache } from '@datalayer/core';
 
 function OrganizationDashboard() {
   const {
-    currentOrganization,
-    setCurrentOrganization,
-    organizations,
-    fetchOrganizations,
-  } = useOrganizationState();
+    useUserOrganizations,
+    useUserSpaces,
+    useCreateSpace,
+    useDeleteSpace,
+  } = useCache();
 
-  const { spaces, currentSpace, setCurrentSpace, createSpace, deleteSpace } =
-    useSpaceState();
+  const { data: organizations = [] } = useUserOrganizations();
+  const { data: spaces = [] } = useUserSpaces();
+  const createSpace = useCreateSpace();
+  const deleteSpace = useDeleteSpace();
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
+  const currentOrganization = organizations[0];
 
   const handleCreateSpace = async () => {
-    await createSpace({
+    await createSpace.mutateAsync({
       name: 'New Space',
       description: 'A new workspace',
       organizationId: currentOrganization?.id,

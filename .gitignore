@@ -3,6 +3,8 @@ datalayer_core/labextension
 docs/docs/python_api
 docs/docs/typescript_api
 
+datalayer_core/__version.py
+
 #
 yarn.lock
 *.bundle.*

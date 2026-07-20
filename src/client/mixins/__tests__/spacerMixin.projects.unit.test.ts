@@ -26,7 +26,7 @@ class MockBase {
   getToken() {
     return 'mock-token';
   }
-  getSpacerRunUrl() {
+  getSpacerUrl() {
     return 'https://spacer.example.com';
   }
   // Auth mock for updateProject userId resolution

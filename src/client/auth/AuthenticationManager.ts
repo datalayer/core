@@ -30,27 +30,27 @@ import { UserDTO } from '../../models/UserDTO';
 export class AuthenticationManager {
   private strategies: AuthStrategy[];
   private storage: TokenStorage;
-  private iamRunUrl: string;
+  private iamUrl: string;
   private currentUser?: UserDTO;
   private currentToken?: string;
 
   /**
    * Create an AuthenticationManager instance
-   * @param iamRunUrl - IAM service URL (e.g., "https://prod1.datalayer.run")
+   * @param iamUrl - IAM service URL (e.g., "https://prod1.datalayer.run")
    * @param storage - Token storage backend (optional, defaults to auto-detected)
    */
-  constructor(iamRunUrl: string, storage?: TokenStorage) {
-    this.iamRunUrl = iamRunUrl;
+  constructor(iamUrl: string, storage?: TokenStorage) {
+    this.iamUrl = iamUrl;
 
-    // Extract run_url (remove /api/iam/v1 if present)
-    const runUrl = iamRunUrl.replace('/api/iam/v1', '');
+    // Extract datalayer_url (remove /api/iam/v1 if present)
+    const datalayerUrl = iamUrl.replace('/api/iam/v1', '');
 
-    // CRITICAL: Pass runUrl to storage for keyring compatibility
+    // CRITICAL: Pass datalayerUrl to storage for keyring compatibility
     if (!storage) {
       if (typeof window !== 'undefined') {
         this.storage = new BrowserStorage();
       } else {
-        this.storage = new NodeStorage(runUrl); // Pass runUrl as serviceUrl
+        this.storage = new NodeStorage(datalayerUrl); // Pass datalayerUrl as serviceUrl
       }
     } else {
       this.storage = storage;
@@ -58,10 +58,10 @@ export class AuthenticationManager {
 
     // Initialize strategies
     this.strategies = [
-      new TokenAuthStrategy(this.iamRunUrl, this.storage),
-      new CredentialsAuthStrategy(this.iamRunUrl, this.storage),
-      new StorageAuthStrategy(this.iamRunUrl, this.storage),
-      new BrowserOAuthStrategy(this.iamRunUrl, this.storage),
+      new TokenAuthStrategy(this.iamUrl, this.storage),
+      new CredentialsAuthStrategy(this.iamUrl, this.storage),
+      new StorageAuthStrategy(this.iamUrl, this.storage),
+      new BrowserOAuthStrategy(this.iamUrl, this.storage),
     ];
   }
 
@@ -123,7 +123,7 @@ export class AuthenticationManager {
   async logout(): Promise<void> {
     if (this.currentToken) {
       try {
-        await authentication.logout(this.currentToken, this.iamRunUrl);
+        await authentication.logout(this.currentToken, this.iamUrl);
       } catch (error) {
         console.error('Error during logout API call:', error);
         // Continue with local cleanup even if API call fails

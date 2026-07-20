@@ -4,3 +4,4 @@
  */
 
 export * from './Routes';
+export * from './publicPaths';

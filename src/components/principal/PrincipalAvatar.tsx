@@ -3,12 +3,11 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { Box, useColorPalette } from '@datalayer/primer-addons';
+import { Box } from '@datalayer/primer-addons';
 import { OrganizationIcon, PeopleIcon } from '@primer/octicons-react';
-import { AlienIcon } from '@datalayer/icons-react';
-import { DLAvatar } from '../avatars';
+import { UserAvatar } from '../avatars';
 
-export type PrincipalAvatarKind = 'user' | 'team' | 'organization';
+export type PrincipalAvatarKind = 'personal' | 'team' | 'organization';
 
 export type PrincipalAvatarProps = {
   kind: PrincipalAvatarKind;
@@ -17,16 +16,6 @@ export type PrincipalAvatarProps = {
   size?: number;
   square?: boolean;
 };
-
-function hasRealAvatar(url?: string): boolean {
-  if (!url) {
-    return false;
-  }
-  if (url.startsWith('https://www.gravatar.com/avatar')) {
-    return false;
-  }
-  return true;
-}
 
 function getFallbackIconSize(size: number): number {
   return Math.max(12, Math.round(size * 0.62));
@@ -39,41 +28,19 @@ export function PrincipalAvatar({
   size = 20,
   square = false,
 }: PrincipalAvatarProps): JSX.Element {
-  const palette = useColorPalette();
-  if (kind === 'user' && hasRealAvatar(avatarUrl)) {
+  if (kind === 'personal') {
     return (
-      <DLAvatar
-        src={avatarUrl}
-        alt={alt || 'User'}
+      <UserAvatar
+        avatarUrl={avatarUrl}
         size={size}
         square={square}
+        iconSize={getFallbackIconSize(size)}
       />
     );
   }
 
   const iconSize = getFallbackIconSize(size);
   const borderRadius = square ? 2 : '50%';
-
-  if (kind === 'user') {
-    return (
-      <Box
-        sx={{
-          width: size,
-          height: size,
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bg: 'accent.subtle',
-          borderRadius,
-          overflow: 'hidden',
-          '--datalayer-icon-fg': palette.primary,
-        }}
-        aria-label={alt || 'User'}
-      >
-        <AlienIcon size={iconSize} />
-      </Box>
-    );
-  }
 
   const Icon = kind === 'team' ? PeopleIcon : OrganizationIcon;
 

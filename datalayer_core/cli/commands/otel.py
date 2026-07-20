@@ -8,6 +8,7 @@ Provides subcommands to query and interact with the Datalayer OTEL service::
 
     datalayer otel traces      # List / get traces
     datalayer otel metrics     # Query metrics
+    datalayer otel tokens      # Aggregate prompt-turn token usage
     datalayer otel logs        # Query logs
     datalayer otel query       # Run ad-hoc SQL via SQL Engine (user-scoped)
     datalayer otel sql         # Run arbitrary SQL as platform_admin (no user filter)
@@ -75,7 +76,7 @@ def _otel_base_url(url: str | None) -> str:
     return (
         url
         or os.environ.get("DATALAYER_OTEL_RUN_URL")
-        or os.environ.get("DATALAYER_RUN_URL", "https://prod1.datalayer.run")
+        or os.environ.get("DATALAYER_URL", "https://prod1.datalayer.run")
     )
 
 
@@ -94,7 +95,7 @@ def traces(
         20, "--limit", "-n", help="Max number of traces to return."
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -163,7 +164,7 @@ def metrics(
     ),
     limit: int = typer.Option(20, "--limit", "-n", help="Max rows."),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -211,6 +212,122 @@ def metrics(
     console.print(table)
 
 
+# ── tokens ───────────────────────────────────────────────────────────
+
+# Prompt-turn token counters emitted by agent-runtimes.
+_TOTAL_TOKENS_METRIC = "agent_runtimes.prompt.turn.total_tokens"
+_PROMPT_TOKENS_METRIC = "agent_runtimes.prompt.turn.prompt_tokens"
+_COMPLETION_TOKENS_METRIC = "agent_runtimes.prompt.turn.completion_tokens"
+
+
+@app.command()
+def tokens(
+    service_name: Optional[str] = typer.Option(
+        None, "--service", "-s", help="Filter by service name (e.g. a runtime id)."
+    ),
+    hours: float = typer.Option(
+        24.0,
+        "--hours",
+        "-H",
+        help="Time window in hours (0 = all time). Default 24h.",
+    ),
+    scoped: bool = typer.Option(
+        False,
+        "--scoped",
+        help="Use the user-scoped query endpoint instead of admin SQL.",
+    ),
+    base_url: Optional[str] = typer.Option(
+        None, "--otel-url", help="OTEL service run URL."
+    ),
+    raw: bool = typer.Option(
+        False, "--raw", help="Output raw JSON instead of a table."
+    ),
+    token: Optional[str] = typer.Option(
+        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+    ),
+) -> None:
+    """
+    Aggregate prompt-turn token usage from the OTEL metrics store.
+
+    Sums the ``agent_runtimes.prompt.turn.total_tokens`` counter, falling back
+    to ``prompt_tokens`` + ``completion_tokens`` when the total counter is
+    absent. This mirrors the UI's token-usage query so the CLI and dashboards
+    agree on a single number.
+    """
+    import httpx
+
+    url = _otel_base_url(base_url)
+    headers = _auth_headers(token)
+
+    filters = [
+        "metric_name IN ("
+        f"'{_TOTAL_TOKENS_METRIC}', "
+        f"'{_PROMPT_TOKENS_METRIC}', "
+        f"'{_COMPLETION_TOKENS_METRIC}')"
+    ]
+    if service_name:
+        safe_service = service_name.replace("'", "''")
+        filters.append(f"service_name = '{safe_service}'")
+    if hours and hours > 0:
+        filters.append(f"ingested_at >= now() - INTERVAL '{hours} hours'")
+    where_clause = " AND ".join(filters)
+
+    sql = (
+        "SELECT "
+        f"SUM(CASE WHEN metric_name = '{_TOTAL_TOKENS_METRIC}' "
+        "THEN COALESCE(value_int, value_double, 0) ELSE 0 END) AS total_tokens, "
+        f"SUM(CASE WHEN metric_name = '{_PROMPT_TOKENS_METRIC}' "
+        "THEN COALESCE(value_int, value_double, 0) ELSE 0 END) AS prompt_tokens, "
+        f"SUM(CASE WHEN metric_name = '{_COMPLETION_TOKENS_METRIC}' "
+        "THEN COALESCE(value_int, value_double, 0) ELSE 0 END) AS completion_tokens, "
+        "COUNT(*) AS sample_count "
+        f"FROM metrics WHERE {where_clause}"
+    )
+
+    endpoint = "/api/otel/v1/query/" if scoped else "/api/otel/v1/system/sql"
+    resp = httpx.post(
+        f"{url}{endpoint}",
+        json={"sql": sql},
+        headers=headers,
+        timeout=60,
+        follow_redirects=True,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    if raw:
+        rprint(json.dumps(data, indent=2))
+        return
+
+    rows = data.get("data", data.get("rows", []))
+    row = rows[0] if rows else {}
+
+    def _num(value: Any) -> int:
+        try:
+            return int(float(value)) if value is not None else 0
+        except (TypeError, ValueError):
+            return 0
+
+    total = _num(row.get("total_tokens"))
+    prompt = _num(row.get("prompt_tokens"))
+    completion = _num(row.get("completion_tokens"))
+    samples = _num(row.get("sample_count"))
+    effective = total if total > 0 else prompt + completion
+
+    window = "all time" if not hours or hours <= 0 else f"last {hours:g}h"
+    scope = service_name or "all services"
+
+    table = Table(title=f"Token Usage — {scope} ({window})")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Tokens", justify="right", style="yellow")
+    table.add_row("Total (effective)", f"{effective:,}")
+    table.add_row("total_tokens", f"{total:,}")
+    table.add_row("prompt_tokens", f"{prompt:,}")
+    table.add_row("completion_tokens", f"{completion:,}")
+    table.add_row("samples", f"{samples:,}")
+    console.print(table)
+
+
 # ── logs ─────────────────────────────────────────────────────────────
 
 
@@ -227,7 +344,7 @@ def logs(
     ),
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows."),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -286,7 +403,7 @@ def query(
         ..., help="SQL query to execute against the SQL Engine store."
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     raw: bool = typer.Option(
         False, "--raw", help="Output raw JSON instead of a table."
@@ -340,7 +457,7 @@ def admin_sql(
         help="Arbitrary SQL to execute (no user-scope filter). Platform admin only.",
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     raw: bool = typer.Option(
         False, "--raw", help="Output raw JSON instead of a table."
@@ -393,7 +510,7 @@ def admin_sql(
 @app.command()
 def stats(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -427,7 +544,7 @@ def stats(
 @app.command("services")
 def list_services(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -468,7 +585,7 @@ def list_services(
 @app.command()
 def flush(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
@@ -499,10 +616,10 @@ def smoke_test(
         None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-url>/api/otel/v1/otlp).",
     ),
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL query service run URL."
+        None, "--otel-url", help="OTEL query service run URL."
     ),
     service_name: str = typer.Option(
         "datalayer-otel-smoke", "--service", "-s", help="Service name for test data."
@@ -955,7 +1072,7 @@ def load_test(
         None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-url>/api/otel/v1/otlp).",
     ),
     service_name: str = typer.Option(
         "datalayer-otel-load",
@@ -1203,7 +1320,7 @@ def logfire_test(
         None,
         "--otlp-endpoint",
         "-e",
-        help="OTLP HTTP endpoint of the collector (defaults to <otel-run-url>/api/otel/v1/otlp).",
+        help="OTLP HTTP endpoint of the collector (defaults to <otel-url>/api/otel/v1/otlp).",
     ),
     service_name: str = typer.Option(
         "datalayer-otel-logfire",
@@ -1401,7 +1518,7 @@ def logfire_test(
 @app.command("system")
 def system(
     base_url: Optional[str] = typer.Option(
-        None, "--otel-run-url", help="OTEL service run URL."
+        None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
         None,

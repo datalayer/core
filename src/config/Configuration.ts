@@ -20,7 +20,7 @@ export type IDatalayerCoreConfig = {
    * The base URL for the Datalayer platform API.
    * @example "https://prod1.datalayer.run"
    */
-  runUrl: string;
+  datalayerUrl: string;
 
   /**
    * Datalayer API authentication token.
@@ -59,51 +59,69 @@ export type IDatalayerCoreConfig = {
   /**
    * IAM API URL.
    */
-  iamRunUrl: string;
+  iamUrl: string;
   /**
    * Runtimes API URL.
    */
-  runtimesRunUrl: string;
+  runtimesUrl: string;
   /**
    * Spacer API URL.
    */
-  spacerRunUrl: string;
+  spacerUrl: string;
   /**
    * Library API URL.
    */
-  libraryRunUrl: string;
+  libraryUrl: string;
   /**
    * AI Agents API URL.
    */
-  aiagentsRunUrl: string;
+  aiAgentsUrl: string;
   /**
    * AI Inference API URL.
    */
-  aiinferenceRunUrl: string;
+  aiInferenceUrl: string;
   /**
    * MCP Servers API URL.
    */
-  mcpserversRunUrl: string;
+  mcpServersUrl: string;
   /**
    * OTEL (OpenTelemetry) API URL.
+   *
+   * This is the endpoint runtimes/agents export telemetry to. In the browser
+   * it is also the default endpoint used to *consume* (query) telemetry, unless
+   * {@link otelInUrl} is provided.
    */
-  otelRunUrl: string;
+  otelUrl: string;
+  /**
+   * OTEL (OpenTelemetry) *consume* (read/query) API URL override.
+   *
+   * When set, the UI reads telemetry (metrics, traces, logs) from this URL
+   * instead of {@link otelUrl}. When empty/undefined, {@link otelUrl} is used.
+   *
+   * Primary use case: local development. When runtimes run in the cloud and
+   * export their telemetry to the production OTEL service, a local UI must fetch
+   * telemetry from production rather than from the local OTEL endpoint. Set this
+   * to e.g. `https://prod1.datalayer.run` while `otelUrl` stays local.
+   *
+   * Fed by the `DATALAYER_OTEL_IN_URL` environment variable at build/deploy time.
+   */
+  otelInUrl?: string;
   /**
    * Growth API URL.
    */
-  growthRunUrl: string;
+  growthUrl: string;
   /**
    * Inbounds API URL.
    */
-  inboundsRunUrl: string;
+  inboundsUrl: string;
   /**
    * Success API URL.
    */
-  successRunUrl: string;
+  successUrl: string;
   /**
    * Support API URL.
    */
-  supportRunUrl: string;
+  supportUrl: string;
   /**
    * Load configuration from server.
    */
@@ -193,7 +211,7 @@ export class DatalayerConfiguration {
  * Default configuration values for Datalayer
  */
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  runUrl: 'https://oss.datalayer.run',
+  datalayerUrl: 'https://prod1.datalayer.run',
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
@@ -206,7 +224,7 @@ export function isDatalayerConfig(config: any): config is IDatalayerCoreConfig {
   return (
     config &&
     typeof config === 'object' &&
-    typeof config.runUrl === 'string' &&
+    typeof config.datalayerUrl === 'string' &&
     typeof config.token === 'string' &&
     typeof config.credits === 'number' &&
     typeof config.cpuEnvironment === 'string' &&
@@ -224,10 +242,10 @@ export function mergeConfigWithDefaults(
 ): Partial<IDatalayerCoreConfig> | undefined {
   if (!config) return undefined;
 
-  // If we have required fields (token and runUrl), merge with defaults for optional fields
-  if (config.token && config.runUrl) {
+  // If we have required fields (token and datalayerUrl), merge with defaults for optional fields
+  if (config.token && config.datalayerUrl) {
     return {
-      runUrl: config.runUrl,
+      datalayerUrl: config.datalayerUrl,
       token: config.token,
       credits: config.credits ?? DEFAULT_DATALAYER_CONFIG.credits!,
       cpuEnvironment:

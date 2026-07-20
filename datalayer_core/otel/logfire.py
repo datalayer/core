@@ -22,7 +22,7 @@ The OTLP endpoint is resolved with the same priority as ``generator.py``:
 
 1. ``DATALAYER_OTLP_URL``              — explicit full base URL
 2. ``DATALAYER_OTEL_RUN_URL``          — run URL, appends ``/api/otel/v1/otlp``
-3. ``DATALAYER_RUN_URL``               — fallback run URL, appends ``/api/otel/v1/otlp``
+3. ``DATALAYER_URL``               — fallback run URL, appends ``/api/otel/v1/otlp``
 4. ``https://prod1.datalayer.run``     — production default
 
 Authentication reads ``DATALAYER_API_KEY`` as a Bearer token.  The JWT payload is
@@ -62,12 +62,12 @@ def otlp_endpoint() -> str:
     explicit = os.environ.get("DATALAYER_OTLP_URL")
     if explicit:
         return explicit.rstrip("/")
-    run_url = (
+    datalayer_url = (
         os.environ.get("DATALAYER_OTEL_RUN_URL")
-        or os.environ.get("DATALAYER_RUN_URL")
+        or os.environ.get("DATALAYER_URL")
         or "https://prod1.datalayer.run"
     )
-    return run_url.rstrip("/") + "/api/otel/v1/otlp"
+    return datalayer_url.rstrip("/") + "/api/otel/v1/otlp"
 
 
 def decode_user_uid(token: str) -> str | None:

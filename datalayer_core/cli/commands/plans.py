@@ -3,6 +3,7 @@
 
 """Plans commands for Datalayer CLI."""
 
+import os
 from typing import Any, Optional
 
 import typer
@@ -40,18 +41,18 @@ def _iam_post(
 
 
 def _make_client(
-    token: Optional[str] = None,
+    api_key: Optional[str] = None,
     iam_url: Optional[str] = None,
 ) -> DatalayerClient:
     urls = DatalayerURLs.from_environment(iam_url=iam_url)
-    return DatalayerClient(urls=urls, token=token)
+    return DatalayerClient(urls=urls, api_key=api_key)
 
 
 @app.callback()
 def plans_callback(ctx: typer.Context) -> None:
     """Plans and subscription commands."""
     if ctx.invoked_subcommand is None:
-        ctx.invoke(plans_show)
+        plans_show(api_key=None, iam_url=None, raw=False)
 
 
 def _format_number(value: Any, fallback: str = "-") -> str:
@@ -167,10 +168,10 @@ def _add_plan_columns(table: Table) -> None:
 
 @app.command(name="show")
 def plans_show(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -185,7 +186,7 @@ def plans_show(
 ) -> None:
     """Show the authenticated user's plan plus plans of org/team memberships."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
 
         # 1. Authenticated user plan.
         self_plan_response = _iam_get(client, "/api/iam/v1/plans")
@@ -312,29 +313,30 @@ def plans_show(
 
 @app.command(name="catalog")
 def plans_catalog(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
         "--iam-url",
         help="Datalayer IAM server URL",
     ),
-    billable_account_uid: Optional[str] = typer.Option(
-        None,
-        "--billable-account-uid",
-        help="Optional billable account UID scope.",
+    billing_entity_uid: Optional[str] = typer.Option(
+        os.environ.get("DATALAYER_ACCOUNT_UID")
+        or os.environ.get("DATALAYER_BILLING_ENTITY_UID"),
+        "--billing-entity-uid",
+        help="Optional billing entity UID scope.",
     ),
     raw: bool = typer.Option(False, "--raw", help="Print raw JSON payload."),
 ) -> None:
     """List available plans from the catalog."""
     try:
-        client = _make_client(token=token, iam_url=iam_url)
+        client = _make_client(api_key=api_key, iam_url=iam_url)
         suffix = (
-            f"?billable_account_uid={billable_account_uid}"
-            if billable_account_uid
+            f"?billing_entity_uid={billing_entity_uid}"
+            if billing_entity_uid
             else ""
         )
         response = _iam_get(client, f"/api/iam/v1/plans/catalog{suffix}")
@@ -379,10 +381,10 @@ def plans_catalog(
 
 
 def plans_root(
-    token: Optional[str] = typer.Option(
+    api_key: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="Authentication token (Bearer token for API requests).",
+        "--api-key",
+        help="Datalayer API key.",
     ),
     iam_url: Optional[str] = typer.Option(
         None,
@@ -391,4 +393,4 @@ def plans_root(
     ),
 ) -> None:
     """Show plans for the authenticated user and memberships (root command)."""
-    plans_show(token=token, iam_url=iam_url)
+    plans_show(api_key=api_key, iam_url=iam_url)

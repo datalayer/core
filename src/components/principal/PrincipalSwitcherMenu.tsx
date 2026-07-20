@@ -4,24 +4,35 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ActionList, ActionMenu, Box, Text } from '@primer/react';
+import {
+  ActionList,
+  ActionMenu,
+  Box,
+  Button,
+  Label,
+  Text,
+  ThemeProvider,
+} from '@primer/react';
 import {
   OrganizationIcon,
   PeopleIcon,
   PersonIcon,
+  TriangleDownIcon,
 } from '@primer/octicons-react';
 import { useCache, useAuthorization } from '../../hooks';
 import { useCoreStore } from '../../state';
 import { useIAMStore } from '../../state/substates';
 import { memberships as fetchMemberships } from '../../api/iam/profile';
 import { usePrincipalStore } from '../../hooks/usePrincipalStore';
-import { useBillableAccountStore } from '../../hooks/useBillableAccountStore';
+import { useBillingEntityStore } from '../../hooks/useBillingEntityStore';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
-import { formatFriendlyHandle } from '../../utils/Handles';
+import { DisplayHandle, displayHandleText } from '../display/DisplayHandle';
 
 type TeamMembership = {
   uid: string;
   handle: string;
+  name?: string;
+  displayName?: string;
   organizationUid?: string;
   organizationHandle?: string;
 };
@@ -45,17 +56,17 @@ function truncatePrincipalLabel(label: string, maxChars: number): string {
 
 /**
  * PrincipalSwitcherMenu — the *only* component allowed to write to the
- * principal store and the billable account store. It keeps both stores in
+ * principal store and the billing entity store. It keeps both stores in
  * sync per the rule:
- *   - selecting a user/org principal → billable account = same user/org
- *   - selecting a team principal     → billable account = the team's parent org
+ *   - selecting a user/org principal → billing entity = same user/org
+ *   - selecting a team principal     → billing entity = the team's parent org
  */
 export function PrincipalSwitcherMenu({
   maxLabelChars = 48,
   fullWidth = true,
   showClosedBorder = true,
 }: PrincipalSwitcherMenuProps): JSX.Element {
-  const { user, token, iamRunUrl } = useIAMStore();
+  const { user, token, iamUrl } = useIAMStore();
   const { configuration } = useCoreStore();
   const { checkIsPlatformAdmin } = useAuthorization();
   const { useUserOrganizations } = useCache();
@@ -66,8 +77,8 @@ export function PrincipalSwitcherMenu({
   const [teams, setTeams] = useState<TeamMembership[]>([]);
   const [teamsLoading, setTeamsLoading] = useState(false);
 
-  const selectUserPrincipal = usePrincipalStore(
-    state => state.selectUserPrincipal,
+  const selectPersonalPrincipal = usePrincipalStore(
+    state => state.selectPersonalPrincipal,
   );
   const selectOrganizationPrincipal = usePrincipalStore(
     state => state.selectOrganizationPrincipal,
@@ -75,8 +86,8 @@ export function PrincipalSwitcherMenu({
   const selectTeamPrincipal = usePrincipalStore(
     state => state.selectTeamPrincipal,
   );
-  const setBillableAccount = useBillableAccountStore(
-    state => state.setBillableAccount,
+  const setBillingEntity = useBillingEntityStore(
+    state => state.setBillingEntity,
   );
 
   const {
@@ -90,13 +101,13 @@ export function PrincipalSwitcherMenu({
   const personalHandle = user?.handle || '';
 
   const selectUser = (uid: string, handle: string) => {
-    selectUserPrincipal(uid, handle);
-    setBillableAccount({ kind: 'user', uid, handle });
+    selectPersonalPrincipal(uid, handle);
+    setBillingEntity({ kind: 'user', uid, handle });
   };
 
   const selectOrganization = (uid: string, handle: string) => {
     selectOrganizationPrincipal(uid, handle);
-    setBillableAccount({ kind: 'organization', uid, handle });
+    setBillingEntity({ kind: 'organization', uid, handle });
   };
 
   const selectTeam = (team: TeamMembership, orgHandle: string) => {
@@ -109,7 +120,7 @@ export function PrincipalSwitcherMenu({
       organizationUid: team.organizationUid,
       organizationHandle: orgHandle,
     });
-    setBillableAccount({
+    setBillingEntity({
       kind: 'organization',
       uid: team.organizationUid,
       handle: orgHandle,
@@ -141,7 +152,7 @@ export function PrincipalSwitcherMenu({
       }
       setTeamsLoading(true);
       try {
-        const baseUrl = iamRunUrl || configuration.iamRunUrl;
+        const baseUrl = iamUrl || configuration.iamUrl;
         const response = await fetchMemberships(token, baseUrl);
         const rawMemberships = Array.isArray((response as any)?.memberships)
           ? (response as any).memberships
@@ -151,6 +162,11 @@ export function PrincipalSwitcherMenu({
           .map((membership: any) => ({
             uid: String(membership?.uid || membership?.id || '').trim(),
             handle: String(membership?.handle || '').trim(),
+            name: String(membership?.name || '').trim() || undefined,
+            displayName:
+              String(
+                membership?.display_name || membership?.displayName || '',
+              ).trim() || undefined,
             organizationUid:
               String(membership?.organization_uid || '').trim() || undefined,
             organizationHandle:
@@ -178,7 +194,7 @@ export function PrincipalSwitcherMenu({
     return () => {
       cancelled = true;
     };
-  }, [token, iamRunUrl, configuration.iamRunUrl]);
+  }, [token, iamUrl, configuration.iamUrl]);
 
   useEffect(() => {
     if (!personalUid || !personalHandle) {
@@ -188,22 +204,17 @@ export function PrincipalSwitcherMenu({
       selectUser(personalUid, personalHandle);
       return;
     }
-    if (selectedPrincipalKind === 'organization' && isOrganizationsLoading) {
-      return;
-    }
-    if (selectedPrincipalKind === 'organization' && !selectedOrganization) {
-      selectUser(personalUid, personalHandle);
-      return;
-    }
-    if (selectedPrincipalKind === 'team' && teamsLoading) {
-      return;
-    }
-    if (selectedPrincipalKind === 'team' && !selectedTeam) {
-      selectUser(personalUid, personalHandle);
+    // Keep explicit organization/team selections stable across route transitions,
+    // even while memberships/organizations are still loading or temporarily
+    // unavailable for a given view.
+    if (
+      selectedPrincipalKind === 'organization' ||
+      selectedPrincipalKind === 'team'
+    ) {
       return;
     }
     if (
-      selectedPrincipalKind === 'user' &&
+      selectedPrincipalKind === 'personal' &&
       selectedPrincipalUid !== personalUid
     ) {
       selectUser(personalUid, personalHandle);
@@ -264,14 +275,14 @@ export function PrincipalSwitcherMenu({
 
   const selectedPrincipalLabel =
     selectedPrincipalKind === 'team'
-      ? `@${formatFriendlyHandle(effectiveOrganizationHandle || personalHandle || 'organization')}/${formatFriendlyHandle(effectiveHandle)}`
-      : `@${formatFriendlyHandle(effectiveHandle)}`;
+      ? `${displayHandleText(effectiveOrganizationHandle || personalHandle || 'organization')}/${displayHandleText(effectiveHandle, { withAt: false })}`
+      : displayHandleText(effectiveHandle);
   const selectedPrincipalLabelClosed = truncatePrincipalLabel(
     selectedPrincipalLabel,
     maxLabelChars,
   );
 
-  const isCurrentUserPrincipal = selectedPrincipalKind === 'user';
+  const isCurrentUserPrincipal = selectedPrincipalKind === 'personal';
   const selectedItemSx = {
     bg: 'accent.subtle',
     borderColor: 'accent.muted',
@@ -279,198 +290,341 @@ export function PrincipalSwitcherMenu({
     fontWeight: 'semibold',
   } as const;
   const adminBadgeSx = {
-    ml: 'auto',
-    px: 1,
-    py: '2px',
-    borderRadius: 999,
     bg: 'attention.subtle',
     color: 'attention.fg',
-    fontSize: 0,
-    fontWeight: 'semibold',
-    lineHeight: 1.2,
     textTransform: 'lowercase',
+    lineHeight: 1.2,
   } as const;
 
   return (
-    <ActionMenu>
-      <ActionMenu.Anchor>
-        <Box
-          as="button"
-          type="button"
-          aria-label="Switch principal"
-          sx={{
-            width: fullWidth ? '100%' : 'auto',
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-            bg: showClosedBorder ? 'canvas.subtle' : 'transparent',
-            border: showClosedBorder ? '1px solid' : 'none',
-            borderColor: showClosedBorder ? 'border.default' : 'transparent',
-            borderRadius: 2,
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              color: 'fg.muted',
-              flexShrink: 0,
-            }}
-          >
-            {selectedPrincipalKind === 'organization' ? (
-              <OrganizationIcon size={16} />
-            ) : selectedPrincipalKind === 'team' ? (
-              <PeopleIcon size={16} />
-            ) : (
-              <PersonIcon size={16} />
-            )}
-          </Box>
-          <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Text
-              sx={{
-                display: 'block',
-                color: 'accent.fg',
-                fontWeight: 'semibold',
-                fontSize: 1,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
-              }}
-            >
-              {selectedPrincipalLabelClosed}
-            </Text>
-          </Box>
-          {isPlatformAdmin && isCurrentUserPrincipal ? (
+    <ThemeProvider>
+      <ActionMenu>
+        <ActionMenu.Anchor>
+          {showClosedBorder ? (
             <Box
+              as="button"
+              type="button"
+              aria-label="Switch principal"
               sx={{
-                ml: 'auto',
-                flexShrink: 0,
-                display: 'inline-flex',
+                width: fullWidth ? '100%' : 'auto',
+                boxSizing: 'border-box',
+                px: 2,
+                py: 2,
+                fontSize: 0,
+                display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+                bg: 'canvas.subtle',
+                border: '1px solid',
+                borderColor: 'border.default',
+                borderRadius: 2,
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background-color 120ms ease',
+                ':hover': {
+                  bg: 'canvas.subtle',
+                },
+                ':focus-visible': {
+                  bg: 'canvas.subtle',
+                  outline: '2px solid',
+                  outlineColor: 'accent.emphasis',
+                  outlineOffset: '2px',
+                },
               }}
             >
-              <Box as="span" sx={adminBadgeSx}>
-                admin
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'fg.muted',
+                  flexShrink: 0,
+                }}
+              >
+                {selectedPrincipalKind === 'organization' ? (
+                  <PeopleIcon size={16} />
+                ) : selectedPrincipalKind === 'team' ? (
+                  <OrganizationIcon size={16} />
+                ) : (
+                  <PersonIcon size={16} />
+                )}
+              </Box>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Text
+                  sx={{
+                    display: 'block',
+                    color: 'accent.fg',
+                    fontWeight: 'semibold',
+                    fontSize: 'inherit',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                  }}
+                >
+                  {selectedPrincipalLabelClosed}
+                </Text>
+              </Box>
+              {isPlatformAdmin && isCurrentUserPrincipal ? (
+                <Box
+                  sx={{
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
+                    admin
+                  </Label>
+                </Box>
+              ) : null}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: 'fg.muted',
+                  flexShrink: 0,
+                  ml: isPlatformAdmin && isCurrentUserPrincipal ? 1 : 0,
+                }}
+              >
+                <TriangleDownIcon size={12} />
               </Box>
             </Box>
-          ) : null}
-        </Box>
-      </ActionMenu.Anchor>
-      <ActionMenu.Overlay width="medium">
-        <ActionList>
-          <ActionList.Group>
-            <ActionList.GroupHeading>User</ActionList.GroupHeading>
-            <ActionList.Item
-              disabled={isCurrentUserPrincipal}
-              selected={isCurrentUserPrincipal}
-              sx={isCurrentUserPrincipal ? selectedItemSx : undefined}
-              onSelect={() => {
-                if (isCurrentUserPrincipal) {
-                  return;
-                }
-                if (personalUid && personalHandle) {
-                  selectUser(personalUid, personalHandle);
-                }
+          ) : (
+            <Button
+              variant="invisible"
+              size="small"
+              aria-label="Switch principal"
+              trailingVisual={TriangleDownIcon}
+              sx={{
+                maxWidth: fullWidth ? '100%' : ['200px', '260px', '360px'],
+                width: fullWidth ? '100%' : 'auto',
               }}
             >
-              <ActionList.LeadingVisual>
-                <PersonIcon />
-              </ActionList.LeadingVisual>
-              @{formatFriendlyHandle(personalHandle || 'me')}
-              {isPlatformAdmin ? (
-                <ActionList.TrailingVisual>
-                  <Box as="span" sx={adminBadgeSx}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    color: 'fg.muted',
+                    flexShrink: 0,
+                  }}
+                >
+                  {selectedPrincipalKind === 'organization' ? (
+                    <PeopleIcon size={16} />
+                  ) : selectedPrincipalKind === 'team' ? (
+                    <OrganizationIcon size={16} />
+                  ) : (
+                    <PersonIcon size={16} />
+                  )}
+                </Box>
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Text
+                    sx={{
+                      color: 'accent.fg',
+                      fontWeight: 'semibold',
+                    }}
+                  >
+                    {selectedPrincipalLabelClosed}
+                  </Text>
+                </Box>
+                {isPlatformAdmin && isCurrentUserPrincipal ? (
+                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
                     admin
+                  </Label>
+                ) : null}
+              </Box>
+            </Button>
+          )}
+        </ActionMenu.Anchor>
+        <ActionMenu.Overlay width="large">
+          <ActionList selectionVariant="single">
+            <ActionList.Group>
+              <ActionList.GroupHeading>Personal</ActionList.GroupHeading>
+              <ActionList.Item
+                disabled={isCurrentUserPrincipal}
+                selected={isCurrentUserPrincipal}
+                sx={isCurrentUserPrincipal ? selectedItemSx : undefined}
+                onSelect={() => {
+                  if (isCurrentUserPrincipal) {
+                    return;
+                  }
+                  if (personalUid && personalHandle) {
+                    selectUser(personalUid, personalHandle);
+                  }
+                }}
+              >
+                <ActionList.LeadingVisual>
+                  <PersonIcon />
+                </ActionList.LeadingVisual>
+                <Box
+                  as="span"
+                  sx={{
+                    display: 'block',
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {String(
+                    user?.friendlyName ||
+                      user?.displayName ||
+                      personalHandle ||
+                      'Me',
+                  ).trim()}
+                  <Box as="span" sx={{ color: 'fg.muted' }}>
+                    {' '}
+                    · <DisplayHandle handle={personalHandle || 'me'} />
                   </Box>
-                </ActionList.TrailingVisual>
-              ) : null}
-            </ActionList.Item>
-          </ActionList.Group>
-          <ActionList.Group>
-            <ActionList.GroupHeading>Organizations</ActionList.GroupHeading>
-            {organizations.length === 0 ? (
-              <ActionList.Item disabled>No organizations</ActionList.Item>
-            ) : (
-              organizations.map((organization: any) => {
-                const organizationUid = getOrganizationUid(organization);
-                const isCurrentOrganizationPrincipal =
-                  selectedPrincipalKind === 'organization' &&
-                  selectedPrincipalUid === organizationUid;
-                return (
-                  <ActionList.Item
-                    key={organizationUid}
-                    disabled={isCurrentOrganizationPrincipal}
-                    selected={isCurrentOrganizationPrincipal}
-                    sx={
-                      isCurrentOrganizationPrincipal
-                        ? selectedItemSx
-                        : undefined
-                    }
-                    onSelect={() => {
-                      if (isCurrentOrganizationPrincipal) {
-                        return;
+                </Box>
+                {isPlatformAdmin ? (
+                  <ActionList.TrailingVisual>
+                    <Label variant="secondary" size="small" sx={adminBadgeSx}>
+                      admin
+                    </Label>
+                  </ActionList.TrailingVisual>
+                ) : null}
+              </ActionList.Item>
+            </ActionList.Group>
+            <ActionList.Group>
+              <ActionList.GroupHeading>Organizations</ActionList.GroupHeading>
+              {organizations.length === 0 ? (
+                <ActionList.Item disabled>No organizations</ActionList.Item>
+              ) : (
+                organizations.map((organization: any) => {
+                  const organizationUid = getOrganizationUid(organization);
+                  const isCurrentOrganizationPrincipal =
+                    selectedPrincipalKind === 'organization' &&
+                    selectedPrincipalUid === organizationUid;
+                  return (
+                    <ActionList.Item
+                      key={organizationUid}
+                      disabled={isCurrentOrganizationPrincipal}
+                      selected={isCurrentOrganizationPrincipal}
+                      sx={
+                        isCurrentOrganizationPrincipal
+                          ? selectedItemSx
+                          : undefined
                       }
-                      if (organizationUid && organization.handle) {
-                        selectOrganization(
-                          organizationUid,
-                          organization.handle,
-                        );
-                      }
-                    }}
-                  >
-                    <ActionList.LeadingVisual>
-                      <OrganizationIcon />
-                    </ActionList.LeadingVisual>
-                    @{organization.handle}
-                  </ActionList.Item>
-                );
-              })
-            )}
-          </ActionList.Group>
-          <ActionList.Group>
-            <ActionList.GroupHeading>Teams</ActionList.GroupHeading>
-            {teams.length === 0 ? (
-              <ActionList.Item disabled>No teams</ActionList.Item>
-            ) : (
-              teams.map(team => {
-                const isCurrentTeamPrincipal =
-                  selectedPrincipalKind === 'team' &&
-                  selectedPrincipalUid === team.uid;
-                const orgHandle =
-                  resolveTeamOrganizationHandle(team) ||
-                  personalHandle ||
-                  'organization';
-                return (
-                  <ActionList.Item
-                    key={team.uid}
-                    disabled={isCurrentTeamPrincipal}
-                    selected={isCurrentTeamPrincipal}
-                    sx={isCurrentTeamPrincipal ? selectedItemSx : undefined}
-                    onSelect={() => {
-                      if (isCurrentTeamPrincipal) {
-                        return;
-                      }
-                      selectTeam(team, orgHandle);
-                    }}
-                  >
-                    <ActionList.LeadingVisual>
-                      <PeopleIcon />
-                    </ActionList.LeadingVisual>
-                    @{formatFriendlyHandle(orgHandle)}/
-                    {formatFriendlyHandle(team.handle)}
-                  </ActionList.Item>
-                );
-              })
-            )}
-          </ActionList.Group>
-        </ActionList>
-      </ActionMenu.Overlay>
-    </ActionMenu>
+                      onSelect={() => {
+                        if (isCurrentOrganizationPrincipal) {
+                          return;
+                        }
+                        if (organizationUid && organization.handle) {
+                          selectOrganization(
+                            organizationUid,
+                            organization.handle,
+                          );
+                        }
+                      }}
+                    >
+                      <ActionList.LeadingVisual>
+                        <PeopleIcon />
+                      </ActionList.LeadingVisual>
+                      <Box
+                        as="span"
+                        title={displayHandleText(organization.handle)}
+                        sx={{
+                          display: 'block',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {String(
+                          organization?.display_name ||
+                            organization?.displayName ||
+                            organization?.name ||
+                            organization?.handle ||
+                            'Organization',
+                        ).trim()}
+                        <Box as="span" sx={{ color: 'fg.muted' }}>
+                          {' '}
+                          · <DisplayHandle handle={organization.handle} />
+                        </Box>
+                      </Box>
+                    </ActionList.Item>
+                  );
+                })
+              )}
+            </ActionList.Group>
+            <ActionList.Group>
+              <ActionList.GroupHeading>Teams</ActionList.GroupHeading>
+              {teams.length === 0 ? (
+                <ActionList.Item disabled>No teams</ActionList.Item>
+              ) : (
+                teams.map(team => {
+                  const isCurrentTeamPrincipal =
+                    selectedPrincipalKind === 'team' &&
+                    selectedPrincipalUid === team.uid;
+                  const orgHandle =
+                    resolveTeamOrganizationHandle(team) ||
+                    personalHandle ||
+                    'organization';
+                  return (
+                    <ActionList.Item
+                      key={team.uid}
+                      disabled={isCurrentTeamPrincipal}
+                      selected={isCurrentTeamPrincipal}
+                      sx={isCurrentTeamPrincipal ? selectedItemSx : undefined}
+                      onSelect={() => {
+                        if (isCurrentTeamPrincipal) {
+                          return;
+                        }
+                        selectTeam(team, orgHandle);
+                      }}
+                    >
+                      <ActionList.LeadingVisual>
+                        <OrganizationIcon />
+                      </ActionList.LeadingVisual>
+                      <Box
+                        as="span"
+                        title={`${displayHandleText(orgHandle)}/${displayHandleText(team.handle, { withAt: false })}`}
+                        sx={{
+                          display: 'block',
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {String(
+                          team.displayName ||
+                            team.name ||
+                            team.handle ||
+                            'Team',
+                        ).trim()}
+                        <Box as="span" sx={{ color: 'fg.muted' }}>
+                          {' '}
+                          · <DisplayHandle handle={orgHandle} />/
+                          <DisplayHandle handle={team.handle} withAt={false} />
+                        </Box>
+                      </Box>
+                    </ActionList.Item>
+                  );
+                })
+              )}
+            </ActionList.Group>
+          </ActionList>
+        </ActionMenu.Overlay>
+      </ActionMenu>
+    </ThemeProvider>
   );
 }
 

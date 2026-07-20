@@ -30,7 +30,7 @@ export default ISecret;
 // ============================================================================
 
 import { validateJSON } from '../api/utils/validation';
-import type { DatalayerClient } from '../client';
+import type { DatalayerCoreClient } from '../client';
 
 /**
  * Raw secret data from API (snake_case with suffixes).
@@ -163,7 +163,7 @@ export interface DeleteSecretResponse {
 export class SecretDTO {
   /** @internal */
   _data: SecretData;
-  private _client: DatalayerClient;
+  private _client: DatalayerCoreClient;
   private _deleted: boolean = false;
 
   /**
@@ -171,7 +171,7 @@ export class SecretDTO {
    * @param data - Secret data from API
    * @param client - Client instance
    */
-  constructor(data: SecretData, client: DatalayerClient) {
+  constructor(data: SecretData, client: DatalayerCoreClient) {
     this._data = data;
     this._client = client;
   }

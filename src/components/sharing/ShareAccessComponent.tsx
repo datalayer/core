@@ -5,6 +5,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ChevronDownIcon,
+  ChevronUpIcon,
   KeyIcon,
   PersonIcon,
   OrganizationIcon,
@@ -31,7 +33,7 @@ import { PrincipalBadge } from '../principal/PrincipalBadge';
 // ---------------------------------------------------------------------------
 
 export type ItemAccessLevel = 'view' | 'update' | 'execute';
-type PrincipalKind = 'user' | 'team' | 'organization';
+type PrincipalKind = 'personal' | 'team' | 'organization';
 
 type SharingLevelPayload = {
   userUids?: string[];
@@ -49,6 +51,7 @@ export type ShareAccessComponentProps = {
   resourceLabel: string;
   resourceName?: string;
   resourceDescription?: string;
+  expanded?: boolean;
   onSharingAccessRestrictedChange?: (
     restricted: boolean,
     message?: string,
@@ -125,7 +128,7 @@ type PrincipalCache = Record<string, PrincipalCacheEntry>;
 
 const ACCESS_LEVELS: ItemAccessLevel[] = ['view', 'update', 'execute'];
 const DEFAULT_PRINCIPAL_KINDS: readonly PrincipalKind[] = [
-  'user',
+  'personal',
   'team',
   'organization',
 ];
@@ -157,7 +160,7 @@ function normalizePrincipalKind(kindRaw?: string): PrincipalKind {
   if (kind === 'organization' || kind === 'org') {
     return 'organization';
   }
-  return 'user';
+  return 'personal';
 }
 
 function toTitleCase(value: string): string {
@@ -197,7 +200,35 @@ function ensurePrincipalDisplayName(
       return candidate.trim();
     }
   }
-  return kind === 'organization' ? 'Organization' : 'Principal';
+  if (kind === 'organization') {
+    return 'Organization';
+  }
+  if (kind === 'team') {
+    return 'Team';
+  }
+  return 'Principal';
+}
+
+function formatPrincipalHandle(
+  kind: PrincipalKind,
+  handle?: string,
+  accountHandle?: string,
+): string {
+  const normalizedHandle = String(handle || '').trim();
+  const normalizedAccountHandle = String(accountHandle || '').trim();
+  if (!normalizedHandle) {
+    return '';
+  }
+  if (kind === 'team') {
+    if (normalizedHandle.includes('/')) {
+      return `@${normalizedHandle}`;
+    }
+    if (normalizedAccountHandle) {
+      return `@${normalizedAccountHandle}/${normalizedHandle}`;
+    }
+    return `@${normalizedHandle}`;
+  }
+  return `@${normalizedHandle}`;
 }
 
 function isSharingAuthorizationMessage(message?: string): boolean {
@@ -328,7 +359,7 @@ function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
       if (typeof entry === 'string') {
         const uid = entry.trim();
         return uid
-          ? { kind: 'user', uid, handle: uid, displayName: uid }
+          ? { kind: 'personal', uid, handle: uid, displayName: uid }
           : null;
       }
       const uid = pickFirstString(entry?.uid, entry?.owner_uid, entry?.id);
@@ -381,7 +412,7 @@ function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
       }
       const normalizedUid = uid.trim();
       return {
-        kind: 'user',
+        kind: 'personal',
         uid: normalizedUid,
         handle: normalizedUid,
         displayName: normalizedUid,
@@ -420,7 +451,7 @@ function emptyAccessByLevel(): AccessByLevel {
 function bucketFor(
   kind: PrincipalKind,
 ): 'userUids' | 'teamUids' | 'organizationUids' {
-  return kind === 'user'
+  return kind === 'personal'
     ? 'userUids'
     : kind === 'team'
       ? 'teamUids'
@@ -499,7 +530,7 @@ function buildAclEntries(
     }
   };
   for (const level of ACCESS_LEVELS) {
-    state[level].userUids.forEach(uid => upsert('user', uid, level));
+    state[level].userUids.forEach(uid => upsert('personal', uid, level));
     state[level].teamUids.forEach(uid => upsert('team', uid, level));
     state[level].organizationUids.forEach(uid =>
       upsert('organization', uid, level),
@@ -595,6 +626,11 @@ function OwnerPrincipalRow({
     ownerPrincipal.kind,
     ownerPrincipal.displayName,
     entry.displayName,
+    formatPrincipalHandle(
+      ownerPrincipal.kind,
+      resolvedHandle,
+      resolvedAccountHandle,
+    ),
     resolvedHandle,
     ownerPrincipal.handle,
     ownerPrincipal.accountHandle,
@@ -604,7 +640,7 @@ function OwnerPrincipalRow({
   const resolvedOrigin =
     ownerPrincipal.origin ||
     entry.origin ||
-    (ownerPrincipal.kind === 'user' ? 'Datalayer' : undefined);
+    (ownerPrincipal.kind === 'personal' ? 'Datalayer' : undefined);
 
   return (
     <Box
@@ -633,7 +669,7 @@ function OwnerPrincipalRow({
           }}
           showPrincipalLabel={false}
           showApplyingToText={false}
-          showOriginLabel={ownerPrincipal.kind === 'user'}
+          showOriginLabel={ownerPrincipal.kind === 'personal'}
           isAdmin={isPlatformAdmin}
           sx={{ px: 0, py: 0, border: 'none', bg: 'transparent' }}
         />
@@ -663,6 +699,7 @@ function AccessPrincipalRow({
   const resolvedDisplayName = ensurePrincipalDisplayName(
     entry.kind,
     cached.displayName,
+    formatPrincipalHandle(entry.kind, resolvedHandle, cached.accountHandle),
     resolvedHandle,
     entry.uid,
   );
@@ -694,7 +731,7 @@ function AccessPrincipalRow({
           }}
           showPrincipalLabel={false}
           showApplyingToText={false}
-          showOriginLabel={entry.kind === 'user'}
+          showOriginLabel={entry.kind === 'personal'}
           isAdmin={isPlatformAdmin}
           sx={{ px: 0, py: 0, border: 'none', bg: 'transparent' }}
         />
@@ -713,6 +750,7 @@ export function ShareAccessComponent({
   resourceLabel,
   resourceName,
   resourceDescription: _resourceDescription,
+  expanded = false,
   onSharingAccessRestrictedChange,
   defaultAccessLevel = 'view',
   principalKinds = DEFAULT_PRINCIPAL_KINDS,
@@ -730,6 +768,7 @@ export function ShareAccessComponent({
   // ----- State -----
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(expanded);
   const [selectedAccessLevel, setSelectedAccessLevel] =
     useState<ItemAccessLevel>(defaultAccessLevel);
 
@@ -791,8 +830,8 @@ export function ShareAccessComponent({
 
   // ----- Derived -----
   const canRequest = Boolean(requestUrl && token);
-  const canSearchPrincipals = Boolean(configuration?.iamRunUrl && token);
-  const iamRunUrl = configuration?.iamRunUrl;
+  const canSearchPrincipals = Boolean(configuration?.iamUrl && token);
+  const iamUrl = configuration?.iamUrl;
 
   const principalKindsSet = useMemo(
     () => new Set(principalKinds),
@@ -942,7 +981,7 @@ export function ShareAccessComponent({
             handle: owner.handle || owner.uid,
             avatarUrl: owner.avatarUrl,
             accountHandle: owner.accountHandle,
-            origin: owner.kind === 'user' ? owner.origin : undefined,
+            origin: owner.kind === 'personal' ? owner.origin : undefined,
           });
         });
         setAccess(hydrated);
@@ -980,7 +1019,7 @@ export function ShareAccessComponent({
 
   // ----- Fetch shareable principals on open -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       return;
     }
     let cancelled = false;
@@ -988,7 +1027,7 @@ export function ShareAccessComponent({
       setIsLoadingShareable(true);
       try {
         const response = await fetch(
-          `${iamRunUrl}/api/iam/v1/principals/shareable`,
+          `${iamUrl}/api/iam/v1/principals/shareable`,
           {
             method: 'GET',
             headers: {
@@ -1043,11 +1082,18 @@ export function ShareAccessComponent({
         setShareablePrincipals(mapped);
         mapped.forEach(principal => {
           mergePrincipalCacheEntry(principal.kind, principal.uid, {
-            displayName: principal.name || principal.handle,
+            displayName:
+              principal.name ||
+              formatPrincipalHandle(
+                principal.kind,
+                principal.handle,
+                principal.organizationHandle || undefined,
+              ) ||
+              principal.handle,
             handle: principal.handle,
             avatarUrl: principal.avatarUrl || undefined,
             accountHandle: principal.organizationHandle || undefined,
-            origin: principal.kind === 'user' ? 'Datalayer' : undefined,
+            origin: principal.kind === 'personal' ? 'Datalayer' : undefined,
           });
         });
       } catch (error) {
@@ -1069,7 +1115,7 @@ export function ShareAccessComponent({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, canSearchPrincipals, iamRunUrl, token, mergePrincipalCacheEntry]);
+  }, [isOpen, canSearchPrincipals, iamUrl, token, mergePrincipalCacheEntry]);
 
   // ----- Debounce search query -----
   useEffect(() => {
@@ -1083,7 +1129,7 @@ export function ShareAccessComponent({
 
   // ----- Run search against /principals/search -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       setSearchResults([]);
       return;
     }
@@ -1104,7 +1150,7 @@ export function ShareAccessComponent({
         let response: Response;
         let payload: any;
         try {
-          response = await fetch(`${iamRunUrl}/api/iam/v1/principals/search`, {
+          response = await fetch(`${iamUrl}/api/iam/v1/principals/search`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1171,7 +1217,7 @@ export function ShareAccessComponent({
               entry?.avatar_url,
             );
             return {
-              kind: 'user',
+              kind: 'personal',
               uid,
               handle: handle || uid,
               displayName: displayName || handle || uid,
@@ -1193,7 +1239,18 @@ export function ShareAccessComponent({
               uid,
               handle: handle || uid,
               displayName:
-                pickFirstString(entry?.name_t, entry?.name) || handle || uid,
+                pickFirstString(entry?.name_t, entry?.name) ||
+                formatPrincipalHandle(
+                  'team',
+                  handle || uid,
+                  pickFirstString(
+                    entry?.organization_handle_s,
+                    entry?.organizationHandle,
+                    entry?.organization_handle,
+                  ) || undefined,
+                ) ||
+                handle ||
+                uid,
               accountHandle:
                 pickFirstString(
                   entry?.organization_handle_s,
@@ -1216,7 +1273,10 @@ export function ShareAccessComponent({
               uid,
               handle: handle || uid,
               displayName:
-                pickFirstString(entry?.name_t, entry?.name) || handle || uid,
+                pickFirstString(entry?.name_t, entry?.name) ||
+                formatPrincipalHandle('organization', handle || uid) ||
+                handle ||
+                uid,
             };
           })
           .filter(Boolean) as PrincipalSearchItem[];
@@ -1233,7 +1293,7 @@ export function ShareAccessComponent({
             handle: result.handle,
             avatarUrl: result.avatarUrl,
             accountHandle: result.accountHandle,
-            origin: result.kind === 'user' ? result.origin : undefined,
+            origin: result.kind === 'personal' ? result.origin : undefined,
           });
         });
 
@@ -1261,7 +1321,7 @@ export function ShareAccessComponent({
   }, [
     isOpen,
     canSearchPrincipals,
-    iamRunUrl,
+    iamUrl,
     token,
     normalizedDebouncedSearch,
     principalKindsKey,
@@ -1272,17 +1332,17 @@ export function ShareAccessComponent({
 
   // ----- Hydrate ACL user uids in bulk -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       return;
     }
     const userUids = Array.from(
       new Set([
         ...aclEntries
-          .filter(e => e.kind === 'user')
+          .filter(e => e.kind === 'personal')
           .map(e => e.uid)
           .filter(Boolean),
         ...ownerPrincipals
-          .filter(o => o.kind === 'user')
+          .filter(o => o.kind === 'personal')
           .map(o => o.uid)
           .filter(Boolean),
       ]),
@@ -1291,7 +1351,7 @@ export function ShareAccessComponent({
       if (!uid || userHydrationMissesRef.current.has(uid)) {
         return false;
       }
-      const cached = principalCache[principalKey('user', uid)] || {};
+      const cached = principalCache[principalKey('personal', uid)] || {};
       return (
         !cached.displayName ||
         !cached.avatarUrl ||
@@ -1315,7 +1375,7 @@ export function ShareAccessComponent({
         ),
       );
       try {
-        const response = await fetch(`${iamRunUrl}/api/iam/v1/users/bulk`, {
+        const response = await fetch(`${iamUrl}/api/iam/v1/users/bulk`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1358,7 +1418,7 @@ export function ShareAccessComponent({
           const origin = normalizeUserOrigin(
             pickFirstString(entry?.origin, entry?.origin_s, entry?.origin_t),
           );
-          mergePrincipalCacheEntry('user', uid, {
+          mergePrincipalCacheEntry('personal', uid, {
             displayName,
             handle,
             avatarUrl: avatarUrl || undefined,
@@ -1385,7 +1445,7 @@ export function ShareAccessComponent({
   }, [
     isOpen,
     canSearchPrincipals,
-    iamRunUrl,
+    iamUrl,
     token,
     aclEntries,
     ownerPrincipals,
@@ -1395,7 +1455,7 @@ export function ShareAccessComponent({
 
   // ----- Hydrate ACL team uids individually -----
   useEffect(() => {
-    if (!isOpen || !canSearchPrincipals || !iamRunUrl || !token) {
+    if (!isOpen || !canSearchPrincipals || !iamUrl || !token) {
       return;
     }
     const unknownTeams = aclEntries.filter(entry => {
@@ -1413,7 +1473,7 @@ export function ShareAccessComponent({
       unknownTeams.map(async entry => {
         try {
           const response = await fetch(
-            `${iamRunUrl}/api/iam/v1/teams/${encodeURIComponent(entry.uid)}`,
+            `${iamUrl}/api/iam/v1/teams/${encodeURIComponent(entry.uid)}`,
             {
               method: 'GET',
               headers: {
@@ -1454,7 +1514,7 @@ export function ShareAccessComponent({
   }, [
     isOpen,
     canSearchPrincipals,
-    iamRunUrl,
+    iamUrl,
     token,
     aclEntries,
     principalCache,
@@ -1632,14 +1692,20 @@ export function ShareAccessComponent({
       principalKindsSet.has(p.kind),
     );
     const selfUid = pickFirstString(user?.uid);
-    const self = filtered.filter(p => p.kind === 'user' && p.uid === selfUid);
+    const self = filtered.filter(p => p.kind === 'personal' && p.uid === selfUid);
     const otherUsers = filtered.filter(
-      p => p.kind === 'user' && p.uid !== selfUid,
+      p => p.kind === 'personal' && p.uid !== selfUid,
     );
     const orgs = filtered.filter(p => p.kind === 'organization');
     const teams = filtered.filter(p => p.kind === 'team');
     return { self, otherUsers, orgs, teams };
   }, [shareablePrincipals, principalKindsSet, user?.uid]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsExpanded(expanded);
+    }
+  }, [isOpen, expanded]);
 
   if (!isOpen) {
     return null;
@@ -1664,7 +1730,7 @@ export function ShareAccessComponent({
     const displayName =
       principal.name || cached.displayName || principal.handle || principal.uid;
     const Icon =
-      principal.kind === 'user'
+      principal.kind === 'personal'
         ? PersonIcon
         : principal.kind === 'organization'
           ? OrganizationIcon
@@ -1728,7 +1794,7 @@ export function ShareAccessComponent({
               }}
             >
               <Text sx={{ fontWeight: 'semibold' }}>{displayName}</Text>
-              {principal.kind === 'user' &&
+              {principal.kind === 'personal' &&
                 user?.uid &&
                 principal.uid === user.uid && (
                   <Label size="small" variant="accent">
@@ -1841,16 +1907,27 @@ export function ShareAccessComponent({
             </Text>
           </Box>
           <ActionMenu>
-            <ActionMenu.Anchor>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+              <ActionMenu.Anchor>
+                <Button
+                  variant="default"
+                  size="small"
+                  leadingVisual={KeyIcon}
+                  disabled={isSaving || isReadOnly}
+                >
+                  Access: {ACCESS_LEVEL_LABELS[selectedAccessLevel]}
+                </Button>
+              </ActionMenu.Anchor>
               <Button
-                variant="default"
+                variant="invisible"
                 size="small"
-                leadingVisual={KeyIcon}
-                disabled={isSaving || isReadOnly}
+                leadingVisual={isExpanded ? ChevronUpIcon : ChevronDownIcon}
+                onClick={() => setIsExpanded(previous => !previous)}
+                aria-label={isExpanded ? 'Shrink sharing details' : 'Expand sharing details'}
               >
-                Access: {ACCESS_LEVEL_LABELS[selectedAccessLevel]}
+                {isExpanded ? 'Shrink details' : 'Expand details'}
               </Button>
-            </ActionMenu.Anchor>
+            </Box>
             <ActionMenu.Overlay width="small">
               <ActionList selectionVariant="single">
                 {ACCESS_LEVELS.map(level => (
@@ -1867,6 +1944,31 @@ export function ShareAccessComponent({
           </ActionMenu>
         </Box>
 
+        {!isExpanded && (
+          <Box
+            sx={{
+              px: 3,
+              py: 2,
+              borderRadius: 2,
+              borderWidth: 1,
+              borderStyle: 'solid',
+              borderColor: 'border.default',
+              bg: 'canvas.default',
+              display: 'grid',
+              gap: 1,
+            }}
+          >
+            <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+              Sharing details are collapsed.
+            </Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              {aclEntries.length} principal{aclEntries.length === 1 ? '' : 's'} currently granted access.
+            </Text>
+          </Box>
+        )}
+
+        {isExpanded && (
+          <>
         {/* Owner */}
         <Box
           sx={{
@@ -1898,7 +2000,7 @@ export function ShareAccessComponent({
                     ownerPrincipal={ownerPrincipal}
                     cache={principalCache}
                     showAvatarSkeleton={
-                      ownerPrincipal.kind === 'user' &&
+                      ownerPrincipal.kind === 'personal' &&
                       Boolean(hydratingUserUids[ownerPrincipal.uid])
                     }
                     isPlatformAdmin={isPlatformAdmin}
@@ -2071,10 +2173,10 @@ export function ShareAccessComponent({
                           }}
                         >
                           <Text>{result.displayName}</Text>
-                          {result.kind === 'user' && (
+                          {result.kind === 'personal' && (
                             <Label size="small" variant="secondary">
                               {result.origin ||
-                                principalCache[principalKey('user', result.uid)]
+                                principalCache[principalKey('personal', result.uid)]
                                   ?.origin ||
                                 'Datalayer'}
                             </Label>
@@ -2148,7 +2250,7 @@ export function ShareAccessComponent({
                       entry={entry}
                       cache={principalCache}
                       showAvatarSkeleton={
-                        entry.kind === 'user' &&
+                        entry.kind === 'personal' &&
                         Boolean(hydratingUserUids[entry.uid])
                       }
                       isPlatformAdmin={isPlatformAdmin}
@@ -2181,6 +2283,9 @@ export function ShareAccessComponent({
             )}
           </Box>
         </Box>
+
+          </>
+        )}
       </Box>
 
       <Box
