@@ -147,7 +147,7 @@
     "date-fns": "^2.29.3",
     "deepmerge": "^4.3.1",
     "diff": "^8.0.2",
-    "echarts": "^5.5.0",
+    "echarts": "^6.1.0",
     "echarts-for-react": "^3.0.2",
     "html2canvas": "^1.4.1",
     "jwt-decode": "^2.2.0",
