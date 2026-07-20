@@ -1,3 +1,4 @@
+---
 title: API Keys
 ---
 
@@ -37,14 +38,18 @@ Create a simple secret API key for API authentication:
 from datalayer_core import DatalayerClient
 
 client = DatalayerClient()
-token_response = client.create_token(
+result = client.create_api_key(
     name="API_ACCESS_TOKEN",
     description="API key for automated API access"
 )
 
-print(f"API key created: {token_response['name']}")
-print(f"API key value: {token_response['token']}")  # Store securely!
-print(f"API key UID: {token_response['uid']}")
+api_key = result.get("api_key", result.get("token", {}))
+access_token = result.get("access_token")
+
+print(f"API key created: {api_key.get('name_s', 'API_ACCESS_TOKEN')}")
+if access_token:
+    print(f"API key value: {access_token}")  # Store securely!
+print(f"API key UID: {api_key.get('uid', 'unknown')}")
 ```
 
 ### API Key with Expiration
@@ -60,13 +65,14 @@ client = DatalayerClient()
 # Create API key that expires in 30 days
 expiration_timestamp = int(time.time()) + (30 * 24 * 60 * 60)  # 30 days from now
 
-token_response = client.create_token(
+result = client.create_api_key(
     name="TEMPORARY_ACCESS_TOKEN",
     description="30-day temporary access API key",
     expiration_date=expiration_timestamp
 )
 
-print(f"API key created with expiration: {token_response['name']}")
+api_key = result.get("api_key", result.get("token", {}))
+print(f"API key created with expiration: {api_key.get('name_s', 'TEMPORARY_ACCESS_TOKEN')}")
 print(f"Expires at: {time.ctime(expiration_timestamp)}")
 ```
 
@@ -81,13 +87,17 @@ from datalayer_core.models import ApiKeyType
 client = DatalayerClient()
 
 # Create secret API key (default type)
-user_token = client.create_token(
+result = client.create_api_key(
     name="USER_API_TOKEN",
     description="User API access key",
-    token_type=ApiKeyType.SECRET
+    api_key_type=ApiKeyType.SECRET
 )
 
-print(f"Created {user_token['type']} API key: {user_token['name']}")
+api_key = result.get("api_key", result.get("token", {}))
+print(
+    f"Created {api_key.get('variant_s', ApiKeyType.SECRET.value)} API key: "
+    f"{api_key.get('name_s', 'USER_API_TOKEN')}"
+)
 ```
 
 ## Listing and Managing API Keys
@@ -101,14 +111,14 @@ from datalayer_core import DatalayerClient
 import time
 
 client = DatalayerClient()
-tokens = client.list_tokens()
+api_keys = client.list_api_keys()
 
-print(f"Found {len(tokens)} API keys:")
-for token in tokens:
-    print(f"  - {token.name}")
-    print(f"    UID: {token.uid}")
-    print(f"    Type: {token.token_type}")
-    print(f"    Description: {token.description}")
+print(f"Found {len(api_keys)} API keys:")
+for api_key in api_keys:
+    print(f"  - {api_key.name}")
+    print(f"    UID: {api_key.uid}")
+    print(f"    Type: {api_key.api_key_type}")
+    print(f"    Description: {api_key.description}")
     print("---")
 ```
 
@@ -119,17 +129,17 @@ Find API keys by name or description:
 ```python
 from datalayer_core import DatalayerClient
 
-def find_tokens(client, search_term):
+def find_api_keys(client, search_term):
     """Find API keys by name or description."""
-    all_tokens = client.list_tokens()
-    matching_tokens = []
+    all_api_keys = client.list_api_keys()
+    matching_api_keys = []
     
-    for token in all_tokens:
-        if (search_term.lower() in token.name.lower() or 
-            search_term.lower() in token.description.lower()):
-            matching_tokens.append(token)
+    for api_key in all_api_keys:
+        if (search_term.lower() in api_key.name.lower() or 
+            search_term.lower() in api_key.description.lower()):
+            matching_api_keys.append(api_key)
     
-    return matching_tokens
+    return matching_api_keys
 ```
 
 ## Deleting API Keys
@@ -144,15 +154,15 @@ from datalayer_core import DatalayerClient
 client = DatalayerClient()
 
 # Delete by UID
-success = client.delete_token("token-uid-12345")
+success = client.delete_api_key("token-uid-12345")
 print(f"API key deletion successful: {success}")
 
-# Delete by Token object
-tokens = client.list_tokens()
-if tokens:
-    old_token = tokens[0]  # Delete the first API key
-    success = client.delete_token(old_token)
-    print(f"Deleted API key '{old_token.name}': {success}")
+# Delete by ApiKeyModel object
+api_keys = client.list_api_keys()
+if api_keys:
+    old_api_key = api_keys[0]  # Delete the first API key
+    success = client.delete_api_key(old_api_key)
+    print(f"Deleted API key '{old_api_key.name}': {success}")
 ```
 
 ## Notes

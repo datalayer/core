@@ -120,7 +120,10 @@ export const formatRelativeTime = (
   if (weeks < 52) return withDirection(weeks, 'w');
 
   const years = Math.floor(days / 365);
-  return withDirection(years, 'y');
+  if (years >= 1) return withDirection(years, 'y');
+
+  // Around the year boundary (e.g. 364 days), prefer weeks over "0y".
+  return withDirection(weeks, 'w');
 };
 
 /**
