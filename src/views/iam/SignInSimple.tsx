@@ -38,6 +38,7 @@ import {
   TelescopeIcon,
 } from '@primer/octicons-react';
 import { GithubMarkIcon, LinkedInGreyIcon } from '@datalayer/icons-react';
+import { useToast } from '../../hooks';
 import { isInsideJupyterLab } from '../../utils/Jupyter';
 
 const GoogleIcon = () => (
@@ -108,6 +109,25 @@ const getIAMUrlFromDocumentConfig = (): string => {
   } catch {
     return '';
   }
+};
+
+const getErrorMessage = (
+  error: unknown,
+  fallback = 'Unable to start social sign-in.',
+): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (typeof error === 'string' && error.trim()) {
+    return error;
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+  }
+  return fallback;
 };
 
 // ── Props ────────────────────────────────────────────────────────────
@@ -212,6 +232,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { enqueueToast } = useToast();
 
   // API Key dialog state
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
@@ -241,6 +262,9 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
   const startOAuthSignIn = useCallback(
     async (providerSpec: OAuthProviderSpec) => {
+      if (socialLoading) {
+        return;
+      }
       setError(null);
       setSocialLoading(true);
       try {
@@ -272,16 +296,25 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         const payload = await response.json();
         const authorizationURL = payload?.autorization_url;
         if (!response.ok || !authorizationURL) {
-          throw new Error(payload?.message || 'Unable to start social sign-in.');
+          throw new Error(
+            payload?.message || 'Unable to start social sign-in.',
+          );
         }
         window.location.assign(authorizationURL);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Unable to start social sign-in.');
-      } finally {
+        const message = getErrorMessage(err);
+        setError(message);
+        enqueueToast(message, { variant: 'error' });
         setSocialLoading(false);
       }
     },
-    [buildCallbackURI, currentRelativeRoute, socialSignInNavigationTarget],
+    [
+      buildCallbackURI,
+      currentRelativeRoute,
+      enqueueToast,
+      socialLoading,
+      socialSignInNavigationTarget,
+    ],
   );
 
   useEffect(() => {
