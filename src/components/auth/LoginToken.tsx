@@ -17,6 +17,10 @@ export interface ILoginTokenProps {
    */
   homeRoute: string;
   /**
+   * Disable token login controls (e.g., while another login flow is submitting)
+   */
+  disabled?: boolean;
+  /**
    * CSS style object
    */
   style?: React.CSSProperties;
@@ -27,7 +31,7 @@ export interface ILoginTokenProps {
  * Provides a simple button that expands to show a token input form
  */
 export const LoginToken = (props: ILoginTokenProps): JSX.Element => {
-  const { homeRoute, style } = props;
+  const { homeRoute, disabled = false, style } = props;
   const [showForm, setShowForm] = useState(false);
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,7 +64,11 @@ export const LoginToken = (props: ILoginTokenProps): JSX.Element => {
 
   if (!showForm) {
     return (
-      <Button onClick={() => setShowForm(true)} style={style}>
+      <Button
+        onClick={() => setShowForm(true)}
+        style={style}
+        disabled={disabled}
+      >
         Login with Token
       </Button>
     );
@@ -74,6 +82,7 @@ export const LoginToken = (props: ILoginTokenProps): JSX.Element => {
           block
           placeholder="Paste your authentication token here"
           value={token}
+          disabled={disabled || loading}
           onChange={e => setToken(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter') {
@@ -93,13 +102,14 @@ export const LoginToken = (props: ILoginTokenProps): JSX.Element => {
         <Button
           variant="primary"
           onClick={handleLogin}
-          disabled={loading || !token.trim()}
+          disabled={disabled || loading || !token.trim()}
           sx={{ mr: 2 }}
         >
           {loading ? 'Authenticating...' : 'Login'}
         </Button>
         <Button
           variant="default"
+          disabled={disabled || loading}
           onClick={() => {
             setShowForm(false);
             setToken('');
