@@ -5,11 +5,32 @@
 
 import React from 'react';
 import { type Id, toast } from 'react-toastify';
-import { Notification } from '@jupyterlab/apputils';
+import type { Notification } from '@jupyterlab/apputils';
 import { Button } from '@primer/react';
-import { JupyterReactTheme } from '@datalayer/jupyter-react';
 import type { VariantType } from './../components/buttons';
 import { isInsideJupyterLab } from '../utils';
+
+// `@datalayer/jupyter-react` and `@jupyterlab/apputils` are heavy (they pull
+// JupyterLab / CodeMirror / lumino) and are only needed when running INSIDE
+// JupyterLab. They are lazily loaded here so the standalone bundle (landing app)
+// never puts JupyterLab on its critical path.
+const JupyterReactTheme = React.lazy(() =>
+  import('@datalayer/jupyter-react').then(m => ({
+    default: m.JupyterReactTheme,
+  })),
+);
+
+// Runtime handle to the JupyterLab Notification API. Populated only when running
+// inside JupyterLab (where @jupyterlab/apputils is already a shared singleton),
+// so standalone builds never eagerly import it. Callers fall back to
+// react-toastify until (and unless) this resolves.
+let NotificationApi:
+  typeof import('@jupyterlab/apputils').Notification | undefined;
+if (isInsideJupyterLab()) {
+  void import('@jupyterlab/apputils').then(m => {
+    NotificationApi = m.Notification;
+  });
+}
 
 const TOAST_POSITION = 'bottom-right' as const;
 
@@ -132,13 +153,11 @@ function createContent(
           <div className="jp-toast-spacer" />
           {actions!.map((action, idx) => {
             return (
-              <JupyterReactTheme>
-                <ToastButton
-                  key={'button-' + idx}
-                  action={action}
-                  closeToast={closeHandler}
-                />
-              </JupyterReactTheme>
+              <React.Suspense key={'button-' + idx} fallback={null}>
+                <JupyterReactTheme>
+                  <ToastButton action={action} closeToast={closeHandler} />
+                </JupyterReactTheme>
+              </React.Suspense>
             );
           })}
         </div>
@@ -158,8 +177,8 @@ export const useToast = () => {
     const theme = resolveToastTheme();
     switch (options.variant) {
       case 'info': {
-        return insideJupyterLab
-          ? Notification.info(message, {
+        return insideJupyterLab && NotificationApi
+          ? NotificationApi.info(message, {
               autoClose: autoClose ?? 5000,
               actions,
             })
@@ -176,8 +195,8 @@ export const useToast = () => {
             );
       }
       case 'success': {
-        return insideJupyterLab
-          ? Notification.success(message, {
+        return insideJupyterLab && NotificationApi
+          ? NotificationApi.success(message, {
               autoClose: autoClose ?? 5000,
               actions,
             })
@@ -194,8 +213,8 @@ export const useToast = () => {
             );
       }
       case 'warning': {
-        return insideJupyterLab
-          ? Notification.warning(message, {
+        return insideJupyterLab && NotificationApi
+          ? NotificationApi.warning(message, {
               autoClose: autoClose ?? false,
               actions,
             })
@@ -216,8 +235,8 @@ export const useToast = () => {
             );
       }
       case 'error': {
-        return insideJupyterLab
-          ? Notification.error(message, {
+        return insideJupyterLab && NotificationApi
+          ? NotificationApi.error(message, {
               autoClose: autoClose ?? false,
               actions,
             })
@@ -245,8 +264,8 @@ export const useToast = () => {
     options: Notification.IPromiseOptions<any>,
   ) => {
     const theme = resolveToastTheme();
-    return insideJupyterLab
-      ? Notification.promise(promise, options)
+    return insideJupyterLab && NotificationApi
+      ? NotificationApi.promise(promise, options)
       : toast.promise(
           promise,
           {
@@ -280,8 +299,8 @@ export const useToast = () => {
      * @param id Toast id
      */
     dismiss: (id?: Id) => {
-      if (insideJupyterLab) {
-        Notification.dismiss(id as string | undefined);
+      if (insideJupyterLab && NotificationApi) {
+        NotificationApi.dismiss(id as string | undefined);
       } else {
         toast.dismiss(id);
       }

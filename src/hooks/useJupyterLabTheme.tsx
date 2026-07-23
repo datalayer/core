@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { IThemeManager } from '@jupyterlab/apputils';
+import type { IThemeManager } from '@jupyterlab/apputils';
 
 export enum JupyterLabTheme {
   LIGHT = 'JupyterLab Light',
