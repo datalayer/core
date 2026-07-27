@@ -4,6 +4,8 @@
 """Command line interface for Datalayer based on Typer."""
 
 import os
+import shutil
+import subprocess
 import sys
 
 import typer
@@ -236,6 +238,31 @@ _GLOBAL_OPTIONS_NO_VALUES = {
     "--version",
 }
 
+_ROOT_COMMANDS = {
+    "about",
+    "auth",
+    "cluster",
+    "config",
+    "memberships",
+    "orgs",
+    "teams",
+    "otel",
+    "secrets",
+    "subscription",
+    "api-keys",
+    "users",
+    "usage",
+    "plans",
+    "web",
+    "login",
+    "logout",
+    "whoami",
+    "secrets-ls",
+    "api-keys-ls",
+    "orgs-ls",
+    "teams-ls",
+}
+
 
 def _normalize_global_options(argv: list[str]) -> list[str]:
     """Hoist supported global options so they work at any argument position."""
@@ -285,9 +312,59 @@ def _normalize_global_options(argv: list[str]) -> list[str]:
     return [argv[0], *extracted, *remaining]
 
 
+def _find_root_command(args: list[str]) -> tuple[str | None, int | None]:
+    """Return the root command token and its index within normalized args."""
+    i = 0
+    while i < len(args):
+        token = args[i]
+        if token == "--":
+            i += 1
+            break
+        if token in _GLOBAL_OPTIONS_NO_VALUES:
+            i += 1
+            continue
+        if token in _GLOBAL_OPTIONS_WITH_VALUES:
+            i += 2
+            continue
+        if any(token.startswith(f"{option}=") for option in _GLOBAL_OPTIONS_WITH_VALUES):
+            i += 1
+            continue
+        if token.startswith("-"):
+            return None, None
+        return token, i
+
+    if i < len(args):
+        token = args[i]
+        if token.startswith("-"):
+            return None, None
+        return token, i
+
+    return None, None
+
+
+def _try_external_command(args: list[str]) -> int | None:
+    """Run datalayer-<command> when an unknown root command is invoked."""
+    command, command_index = _find_root_command(args)
+    if command is None or command_index is None or command in _ROOT_COMMANDS:
+        return None
+
+    executable = shutil.which(f"datalayer-{command}")
+    if executable is None:
+        return None
+
+    forwarded_args = args[command_index + 1 :]
+    completed = subprocess.run([executable, *forwarded_args], check=False)
+    return completed.returncode
+
+
 def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
-    app(args=_normalize_global_options(sys.argv)[1:])
+    normalized_args = _normalize_global_options(sys.argv)[1:]
+    external_exit_code = _try_external_command(normalized_args)
+    if external_exit_code is not None:
+        raise SystemExit(external_exit_code)
+
+    app(args=normalized_args)
 
 
 if __name__ == "__main__":
