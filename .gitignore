@@ -5,6 +5,8 @@ docs/docs/typescript_api
 
 datalayer_core/__version.py
 
+static
+
 #
 yarn.lock
 *.bundle.*

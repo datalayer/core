@@ -26,6 +26,8 @@ import {
   Button,
   FormControl,
   Heading,
+  Link,
+  Spinner,
   Text,
   Textarea,
   TextInput,
@@ -34,40 +36,15 @@ import {
   EyeIcon,
   EyeClosedIcon,
   KeyIcon,
-  LinkExternalIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
-import { GithubMarkIcon, LinkedInGreyIcon } from '@datalayer/icons-react';
+import {
+  GithubMarkIcon,
+  GoogleIcon,
+  LinkedInGreyIcon,
+} from '@datalayer/icons-react';
 import { useToast } from '../../hooks';
 import { isInsideJupyterLab } from '../../utils/Jupyter';
-
-const GoogleIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    preserveAspectRatio="xMidYMid"
-    viewBox="0 0 256 262"
-    height="16px"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <path
-      fill="currentColor"
-      d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"
-    />
-    <path
-      fill="currentColor"
-      d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"
-    />
-    <path
-      fill="currentColor"
-      d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"
-    />
-    <path
-      fill="currentColor"
-      d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
-    />
-  </svg>
-);
 
 type OAuthProviderName = 'github' | 'google' | 'linkedin';
 
@@ -137,7 +114,7 @@ export interface SignInSimpleProps {
    * Called after a successful login with the JWT and the user handle.
    * Typically used to store credentials in a Zustand / context store.
    */
-  onSignIn: (token: string, handle: string) => void;
+  onSignIn?: (token: string, handle: string) => void;
   /**
    * Called when the user authenticates with an API key.
    * If not provided the "Sign In with an API Key" button is hidden.
@@ -198,6 +175,62 @@ export interface SignInSimpleProps {
    * - `null`/empty disables forwarding any callback navigation target.
    */
   socialSignInNavigationTarget?: string | null;
+  /**
+   * Disable all interactive controls (useful when embedded in documentation).
+   */
+  asDoc?: boolean;
+  /**
+   * Hide header title and description area.
+   */
+  hideHero?: boolean;
+  /**
+   * Optional contextual heading shown above auth actions.
+   */
+  calloutTitle?: string;
+  /**
+   * Optional contextual description shown below the callout title.
+   */
+  calloutDescription?: string;
+  /**
+   * Label for password-auth toggle button.
+   */
+  passwordToggleLabel?: string;
+  /**
+   * Sign-up section heading text.
+   */
+  signUpTitle?: string;
+  /**
+   * Sign-up section descriptive text.
+   */
+  signUpDescription?: string;
+  /**
+   * Sign-up button label.
+   */
+  signUpLabel?: string;
+  /**
+   * Sign-up URL opened when clicking the sign-up button.
+   */
+  signUpHref?: string;
+  /**
+   * Forgot-password URL for password form.
+   */
+  forgotPasswordHref?: string;
+  /**
+   * Forgot-password link label.
+   */
+  forgotPasswordLabel?: string;
+  /**
+   * Show forgot-password link in password form.
+   */
+  showForgotPassword?: boolean;
+  /**
+   * Top margin for each social button.
+   */
+  socialButtonMarginTop?: number;
+  /**
+   * Maximum width (px) for primary action buttons.
+   */
+  actionButtonMaxWidth?: number;
 }
 
 // ── Component ────────────────────────────────────────────────────────
@@ -217,6 +250,20 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   apiKey = false,
   signUp = true,
   socialSignInNavigationTarget,
+  asDoc = false,
+  hideHero = false,
+  calloutTitle,
+  calloutDescription,
+  passwordToggleLabel = 'Sign in with a password',
+  signUpTitle = "Don't have an account?",
+  signUpDescription = 'Create a free Datalayer account with your email address.',
+  signUpLabel = 'Sign up with email',
+  signUpHref = 'https://datalayer.ai/signup',
+  forgotPasswordHref = '/password',
+  forgotPasswordLabel = 'Forgot password?',
+  showForgotPassword = true,
+  socialButtonMarginTop = 3,
+  actionButtonMaxWidth = 320,
 }) => {
   const headingText = name ?? title;
   const headingIcon = icon ?? leadingIcon;
@@ -228,9 +275,15 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   }, [loginUrlProp]);
   const [handle, setHandle] = useState('');
   const [password, setPassword] = useState('');
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
+  const [pendingSocialProvider, setPendingSocialProvider] =
+    useState<OAuthProviderName | null>(null);
+  const [mfaUserUid, setMfaUserUid] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { enqueueToast } = useToast();
 
@@ -266,6 +319,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         return;
       }
       setError(null);
+      setPendingSocialProvider(providerSpec.name);
       setSocialLoading(true);
       try {
         const iamUrl = getIAMUrlFromDocumentConfig();
@@ -305,6 +359,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         const message = getErrorMessage(err);
         setError(message);
         enqueueToast(message, { variant: 'error' });
+        setPendingSocialProvider(null);
         setSocialLoading(false);
       }
     },
@@ -335,11 +390,25 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   }, [apiKeyValue, onApiKeySignIn, closeApiKeyDialog]);
 
   const handleSignUp = useCallback(() => {
-    window.open('https://datalayer.ai/signup', '_blank', 'noopener,noreferrer');
-  }, []);
+    window.location.assign(signUpHref);
+  }, [signUpHref]);
+
+  const handleForgotPassword = useCallback(() => {
+    if (!forgotPasswordHref) {
+      return;
+    }
+    if (
+      forgotPasswordHref.startsWith('http://') ||
+      forgotPasswordHref.startsWith('https://')
+    ) {
+      window.open(forgotPasswordHref, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    window.location.assign(forgotPasswordHref);
+  }, [forgotPasswordHref]);
 
   const submit = useCallback(async () => {
-    if (!handle || !password || loading) return;
+    if (asDoc || !handle || !password || loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -353,7 +422,19 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
       }
       const data = await resp.json();
       if (data.success && data.token) {
-        onSignIn(data.token, handle);
+        const maybeUserUid = String(
+          data?.user?.id || data?.user?.uid || '',
+        ).trim();
+        const hasMfa = Boolean(data?.user?.mfaUrl);
+        if (hasMfa && maybeUserUid) {
+          setMfaUserUid(maybeUserUid);
+          setMfaToken(data.token);
+          setError(null);
+          return;
+        }
+        if (onSignIn) {
+          onSignIn(data.token, handle);
+        }
       } else {
         setError(data.message || 'Invalid username or password.');
       }
@@ -362,131 +443,153 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [handle, password, loading, loginUrl, onSignIn]);
+  }, [asDoc, handle, password, loading, loginUrl, onSignIn]);
+
+  const submitMfa = useCallback(async () => {
+    if (asDoc || loading || !mfaUserUid || !mfaCode.trim() || !mfaToken) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const loginUrlObject = new URL(loginUrl, window.location.origin);
+      const iamBaseUrl = loginUrlObject.pathname.endsWith('/api/iam/v1/login')
+        ? loginUrlObject.href.replace(/\/api\/iam\/v1\/login$/, '')
+        : `${loginUrlObject.origin}`;
+      const response = await fetch(
+        `${iamBaseUrl}/api/iam/v1/users/${mfaUserUid}/mfa/validate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userUid: mfaUserUid, code: mfaCode.trim() }),
+        },
+      );
+      const payload = await response.json();
+      if (!response.ok || !payload?.success) {
+        throw new Error(
+          payload?.message || 'Failed to validate your MFA code.',
+        );
+      }
+      if (onSignIn) {
+        onSignIn(mfaToken, handle);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      enqueueToast(message, { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    asDoc,
+    enqueueToast,
+    handle,
+    loading,
+    loginUrl,
+    mfaCode,
+    mfaToken,
+    mfaUserUid,
+    onSignIn,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') submit();
+      if (e.key === 'Enter') {
+        if (mfaUserUid) {
+          submitMfa();
+        } else {
+          submit();
+        }
+      }
     },
-    [submit],
+    [mfaUserUid, submit, submitMfa],
   );
+
+  const socialDisabled = socialLoading || loading || asDoc;
 
   return (
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: hideHero ? 'flex-start' : 'center',
         justifyContent: 'center',
-        height: '100vh',
-        bg: 'canvas.default',
+        minHeight: hideHero ? 'auto' : '100vh',
+        bg: hideHero ? 'transparent' : 'canvas.default',
         color: 'fg.default',
+        py: hideHero ? 0 : 4,
       }}
     >
       <Box
         sx={{
-          width: 360,
-          p: 4,
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'border.default',
-          bg: 'canvas.subtle',
+          width: '100%',
+          maxWidth: 440,
+          p: 0,
         }}
       >
         {/* Header / Branding */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            mb: 4,
-            justifyContent: 'center',
-          }}
-        >
-          {headingIcon}
-          <Heading sx={{ fontSize: 3 }}>{headingText}</Heading>
-        </Box>
-
-        <Text
-          as="p"
-          sx={{ fontSize: 1, color: 'fg.muted', mb: 3, textAlign: 'center' }}
-        >
-          {description}
-        </Text>
-
-        {/* Handle */}
-        <FormControl required sx={{ mb: 3 }}>
-          <FormControl.Label>Username</FormControl.Label>
-          <TextInput
-            autoFocus
-            block
-            placeholder="Your username"
-            value={handle}
-            onChange={e => setHandle(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        </FormControl>
-
-        {/* Password */}
-        <FormControl required sx={{ mb: 3 }}>
-          <FormControl.Label>Password</FormControl.Label>
-          <TextInput
-            block
-            placeholder="Your password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={handleKeyDown}
-            trailingAction={
-              <TextInput.Action
-                onClick={() => setShowPassword(!showPassword)}
-                icon={showPassword ? EyeClosedIcon : EyeIcon}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                sx={{ color: 'var(--fgColor-muted)' }}
-              />
-            }
-          />
-        </FormControl>
-
-        {/* Error */}
-        {error && (
-          <Text
-            sx={{ color: 'danger.fg', fontSize: 1, mb: 3, display: 'block' }}
-          >
-            {error}
-          </Text>
-        )}
-
-        {/* Submit */}
-        <Button
-          variant="primary"
-          block
-          disabled={loading || !handle || !password}
-          onClick={submit}
-        >
-          {loading ? 'Signing in…' : 'Sign in'}
-        </Button>
-
-        {(github || google || linkedin) && (
+        {!hideHero && (
           <>
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
-                my: 3,
+                mb: 3,
+                justifyContent: 'center',
               }}
             >
-              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
-              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>or</Text>
-              <Box sx={{ flex: 1, height: '1px', bg: 'border.default' }} />
+              {headingIcon}
+              <Heading sx={{ fontSize: 3 }}>{headingText}</Heading>
             </Box>
+
+            <Text
+              as="p"
+              sx={{
+                fontSize: 1,
+                color: 'fg.muted',
+                mb: 3,
+                textAlign: 'center',
+              }}
+            >
+              {description}
+            </Text>
+          </>
+        )}
+
+        {(calloutTitle || calloutDescription) && (
+          <Box sx={{ mb: 3, textAlign: 'center' }}>
+            {calloutTitle && (
+              <Heading as="h3" sx={{ fontSize: 2, mb: 1 }}>
+                {calloutTitle}
+              </Heading>
+            )}
+            {calloutDescription && (
+              <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+                {calloutDescription}
+              </Text>
+            )}
+          </Box>
+        )}
+
+        {/* ---- OAuth buttons ---- */}
+        {!mfaUserUid && (github || google || linkedin) && (
+          <>
             {github && (
               <Button
                 block
-                leadingVisual={GithubMarkIcon}
-                disabled={socialLoading}
+                size="large"
+                leadingVisual={
+                  pendingSocialProvider === 'github'
+                    ? () => <Spinner size="small" />
+                    : GithubMarkIcon
+                }
+                disabled={socialDisabled}
                 onClick={() => startOAuthSignIn(OAUTH2_PROVIDERS.github)}
-                sx={{ mb: 2 }}
+                sx={{
+                  mt: socialButtonMarginTop,
+                  maxWidth: actionButtonMaxWidth,
+                  mx: 'auto',
+                }}
               >
                 Sign in with GitHub
               </Button>
@@ -494,10 +597,19 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
             {google && (
               <Button
                 block
-                leadingVisual={GoogleIcon}
-                disabled={socialLoading}
+                size="large"
+                leadingVisual={
+                  pendingSocialProvider === 'google'
+                    ? () => <Spinner size="small" />
+                    : GoogleIcon
+                }
+                disabled={socialDisabled}
                 onClick={() => startOAuthSignIn(OAUTH2_PROVIDERS.google)}
-                sx={{ mb: linkedin ? 2 : 0 }}
+                sx={{
+                  mt: socialButtonMarginTop,
+                  maxWidth: actionButtonMaxWidth,
+                  mx: 'auto',
+                }}
               >
                 Sign in with Google
               </Button>
@@ -505,9 +617,19 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
             {linkedin && (
               <Button
                 block
-                leadingVisual={LinkedInGreyIcon}
-                disabled={socialLoading}
+                size="large"
+                leadingVisual={
+                  pendingSocialProvider === 'linkedin'
+                    ? () => <Spinner size="small" />
+                    : LinkedInGreyIcon
+                }
+                disabled={socialDisabled}
                 onClick={() => startOAuthSignIn(OAUTH2_PROVIDERS.linkedin)}
+                sx={{
+                  mt: socialButtonMarginTop,
+                  maxWidth: actionButtonMaxWidth,
+                  mx: 'auto',
+                }}
               >
                 Sign in with LinkedIn
               </Button>
@@ -515,16 +637,164 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
           </>
         )}
 
-        {signUp && (
-          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+        {/* ---- Password toggle ---- */}
+        {!mfaUserUid && !showPasswordForm && (
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
             <Button
-              size="small"
-              variant="invisible"
-              leadingVisual={LinkExternalIcon}
-              onClick={handleSignUp}
+              leadingVisual={KeyIcon}
+              size="large"
+              block
+              disabled={asDoc || loading || socialLoading}
+              onClick={() => setShowPasswordForm(true)}
+              sx={{ maxWidth: actionButtonMaxWidth, mx: 'auto' }}
             >
-              Sign Up
+              {passwordToggleLabel}
             </Button>
+          </Box>
+        )}
+
+        {/* ---- Password form ---- */}
+        {!mfaUserUid && showPasswordForm && (
+          <Box sx={{ mt: 4 }}>
+            <FormControl required sx={{ mb: 3 }}>
+              <FormControl.Label>Username</FormControl.Label>
+              <TextInput
+                autoFocus
+                block
+                placeholder="Your username"
+                value={handle}
+                disabled={loading || asDoc}
+                onChange={e => setHandle(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </FormControl>
+
+            <FormControl required sx={{ mb: 3 }}>
+              <FormControl.Label>Password</FormControl.Label>
+              <TextInput
+                block
+                placeholder="Your password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                disabled={loading || asDoc}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
+                trailingAction={
+                  <TextInput.Action
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={loading || asDoc}
+                    icon={showPassword ? EyeClosedIcon : EyeIcon}
+                    aria-label={
+                      showPassword ? 'Hide password' : 'Show password'
+                    }
+                    sx={{ color: 'var(--fgColor-muted)' }}
+                  />
+                }
+              />
+            </FormControl>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mt: 3,
+              }}
+            >
+              <Button
+                variant="primary"
+                disabled={loading || asDoc || !handle || !password}
+                onClick={submit}
+              >
+                {loading ? 'Signing in…' : 'Sign in'}
+              </Button>
+              {showForgotPassword && (
+                <Link
+                  as="button"
+                  sx={{
+                    fontSize: 1,
+                    cursor: asDoc ? 'not-allowed' : 'pointer',
+                    background: 'none',
+                    border: 'none',
+                    opacity: asDoc ? 0.6 : 1,
+                  }}
+                  onClick={() => {
+                    if (asDoc || loading) {
+                      return;
+                    }
+                    handleForgotPassword();
+                  }}
+                >
+                  {forgotPasswordLabel}
+                </Link>
+              )}
+            </Box>
+          </Box>
+        )}
+
+        {/* ---- MFA form ---- */}
+        {mfaUserUid && (
+          <>
+            <FormControl required sx={{ mb: 3, mt: 2 }}>
+              <FormControl.Label>MFA Code</FormControl.Label>
+              <TextInput
+                autoFocus
+                block
+                placeholder="Your MFA code"
+                value={mfaCode}
+                disabled={loading || asDoc}
+                onChange={e => setMfaCode(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </FormControl>
+            <Button
+              variant="primary"
+              block
+              disabled={loading || asDoc || !mfaCode.trim()}
+              onClick={submitMfa}
+              sx={{ maxWidth: actionButtonMaxWidth, mx: 'auto' }}
+            >
+              {loading ? 'Validating…' : 'Validate MFA Code'}
+            </Button>
+          </>
+        )}
+
+        {/* Error */}
+        {error && (
+          <Text
+            sx={{ color: 'danger.fg', fontSize: 1, mt: 3, display: 'block' }}
+          >
+            {error}
+          </Text>
+        )}
+
+        {/* ---- Sign up with email ---- */}
+        {signUp && (
+          <Box
+            sx={{
+              mt: 4,
+              pt: 4,
+              textAlign: 'center',
+              borderTop: '1px solid',
+              borderColor: 'border.muted',
+            }}
+          >
+            <Heading as="h3" sx={{ fontSize: 2, mb: 2 }}>
+              {signUpTitle}
+            </Heading>
+            <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, mb: 3 }}>
+              {signUpDescription}
+            </Text>
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Button
+                variant="primary"
+                size="large"
+                disabled={asDoc || loading}
+                onClick={handleSignUp}
+              >
+                {signUpLabel}
+              </Button>
+            </Box>
           </Box>
         )}
 
@@ -546,7 +816,9 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
             <Button
               block
               leadingVisual={KeyIcon}
+              disabled={asDoc || loading || socialLoading}
               onClick={() => setShowApiKeyDialog(true)}
+              sx={{ maxWidth: actionButtonMaxWidth, mx: 'auto' }}
             >
               Sign In with an API Key
             </Button>

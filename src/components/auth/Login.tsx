@@ -6,12 +6,14 @@
 import { useEffect, useState } from 'react';
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
 import { EyeIcon, EyeClosedIcon, MarkGithubIcon } from '@primer/octicons-react';
+import { GoogleIcon } from '@datalayer/icons-react';
 import {
   Button,
   FormControl,
   Heading,
   Link,
   PageLayout,
+  Spinner,
   TextInput,
 } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
@@ -21,28 +23,6 @@ import { CenteredSpinner } from '../display';
 import { isInsideJupyterLab, validateLength } from '../../utils';
 import { useNavigate, useCache, useToast, useIAM } from '../../hooks';
 import { LoginToken } from './LoginToken';
-
-/** Inline Google "G" icon for the login button. */
-const GoogleIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 48 48">
-    <path
-      fill="#EA4335"
-      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-    />
-    <path
-      fill="#4285F4"
-      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.1 24.1 0 0 0 0 21.56l7.98-6.19z"
-    />
-    <path
-      fill="#34A853"
-      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-    />
-  </svg>
-);
 
 interface IFormData {
   handle?: string;
@@ -134,22 +114,28 @@ export const Login = (props: ILoginProps): JSX.Element => {
     password: undefined,
   });
   const [passwordVisibility, setPasswordVisibility] = useState(false);
+  const [pendingOAuthProvider, setPendingOAuthProvider] = useState<
+    string | null
+  >(null);
+
+  const buildCallbackURI = (iamProvider: IIAMProviderSpec) =>
+    isInsideJupyterLab()
+      ? URLExt.join(
+          PageConfig.getBaseUrl(),
+          iamProvider.oauth2CallbackServerRoute,
+        )
+      : location.protocol +
+        '//' +
+        location.hostname +
+        ':' +
+        location.port +
+        iamProvider.oauth2CallbackUIRoute;
+
   useEffect(() => {
     const initIAMProvider = (iamProvider: IIAMProviderSpec) => {
-      const callbackURI = isInsideJupyterLab()
-        ? URLExt.join(
-            PageConfig.getBaseUrl(),
-            iamProvider.oauth2CallbackServerRoute,
-          )
-        : location.protocol +
-          '//' +
-          location.hostname +
-          ':' +
-          location.port +
-          iamProvider.oauth2CallbackUIRoute;
       const queryArgs: Record<string, string> = {
         provider: iamProvider.name,
-        callback_uri: callbackURI,
+        callback_uri: buildCallbackURI(iamProvider),
       };
       /*
       const xsrfTokenMatch = document.cookie.match('\\b_xsrf=([^;]*)\\b');
@@ -257,6 +243,35 @@ export const Login = (props: ILoginProps): JSX.Element => {
       },
     );
   };
+
+  const startOAuthSignIn = (providerSpec: IIAMProviderSpec) => {
+    if (getOAuth2URLMutation.isPending) {
+      return;
+    }
+    setPendingOAuthProvider(providerSpec.name);
+    const queryArgs: Record<string, string> = {
+      provider: providerSpec.name,
+      callback_uri: buildCallbackURI(providerSpec),
+    };
+
+    getOAuth2URLMutation.mutate(queryArgs, {
+      onSuccess: authUrl => {
+        if (authUrl) {
+          window.location.assign(authUrl);
+          return;
+        }
+        setPendingOAuthProvider(null);
+        enqueueToast('Unable to start social sign-in.', { variant: 'warning' });
+      },
+      onError: () => {
+        setPendingOAuthProvider(null);
+        enqueueToast('Unable to start social sign-in.', { variant: 'error' });
+      },
+    });
+  };
+
+  const socialAuthDisabled = getOAuth2URLMutation.isPending;
+  const socialButtonsDisabled = socialAuthDisabled || loading;
   useEffect(() => {
     setValidationResult({
       ...validationResult,
@@ -296,6 +311,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
                         autoFocus
                         placeholder="Your username"
                         value={formValues.handle}
+                        disabled={loading}
                         onChange={handleHandleChange}
                         onKeyDown={handleKeyDown}
                       />
@@ -317,6 +333,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
                         placeholder="Your password"
                         type={passwordVisibility ? 'text' : 'password'}
                         value={formValues.password}
+                        disabled={loading}
                         onChange={handlePasswordChange}
                         onKeyDown={handleKeyDown}
                         trailingAction={
@@ -324,6 +341,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
                             onClick={() => {
                               setPasswordVisibility(!passwordVisibility);
                             }}
+                            disabled={loading}
                             icon={passwordVisibility ? EyeClosedIcon : EyeIcon}
                             aria-label={
                               passwordVisibility
@@ -422,13 +440,15 @@ export const Login = (props: ILoginProps): JSX.Element => {
                       IAMProvidersSpecs.GitHub.name
                     ] && (
                       <Button
-                        leadingVisual={MarkGithubIcon}
-                        href={
-                          iamProvidersAuthorizationURL[
-                            IAMProvidersSpecs.GitHub.name
-                          ]
+                        leadingVisual={
+                          pendingOAuthProvider === IAMProvidersSpecs.GitHub.name
+                            ? () => <Spinner size="small" />
+                            : MarkGithubIcon
                         }
-                        as="a"
+                        onClick={() =>
+                          startOAuthSignIn(IAMProvidersSpecs.GitHub)
+                        }
+                        disabled={socialButtonsDisabled}
                         style={{ margin: '10px 0' }}
                       >
                         Login with GitHub
@@ -439,13 +459,15 @@ export const Login = (props: ILoginProps): JSX.Element => {
                       IAMProvidersSpecs.Google.name
                     ] && (
                       <Button
-                        leadingVisual={GoogleIcon}
-                        href={
-                          iamProvidersAuthorizationURL[
-                            IAMProvidersSpecs.Google.name
-                          ]
+                        leadingVisual={
+                          pendingOAuthProvider === IAMProvidersSpecs.Google.name
+                            ? () => <Spinner size="small" />
+                            : GoogleIcon
                         }
-                        as="a"
+                        onClick={() =>
+                          startOAuthSignIn(IAMProvidersSpecs.Google)
+                        }
+                        disabled={socialButtonsDisabled}
                         style={{ margin: '10px 0' }}
                       >
                         Login with Google
@@ -454,6 +476,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
                   {showTokenLogin && (
                     <LoginToken
                       homeRoute={homeRoute}
+                      disabled={loading}
                       style={{ margin: '10px 0' }}
                     />
                   )}
