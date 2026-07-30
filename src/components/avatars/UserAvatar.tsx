@@ -37,6 +37,10 @@ export type UserAvatarProps = {
   square?: boolean;
   /** Fallback icon size. Defaults to ~48% of `size`. */
   iconSize?: number;
+  /** Optional background color override for the default (non-photo) avatar. */
+  fallbackBackground?: string;
+  /** Optional icon foreground color override for the default avatar. */
+  fallbackForeground?: string;
 };
 
 export const UserAvatar = ({
@@ -44,6 +48,8 @@ export const UserAvatar = ({
   size = 100,
   square = true,
   iconSize,
+  fallbackBackground,
+  fallbackForeground,
 }: UserAvatarProps): JSX.Element => {
   const palette = useColorPalette();
   if (hasRealAvatar(avatarUrl)) {
@@ -56,11 +62,11 @@ export const UserAvatar = ({
         width: size,
         height: size,
         borderRadius: square ? 2 : '50%',
-        bg: 'accent.subtle',
+        bg: fallbackBackground || 'accent.subtle',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        '--datalayer-icon-fg': palette.primary,
+        '--datalayer-icon-fg': fallbackForeground || palette.primary,
       }}
     >
       <AlienIcon size={resolvedIconSize} themed colormoded />
