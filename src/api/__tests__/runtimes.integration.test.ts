@@ -97,7 +97,7 @@ describe.skipIf(skipTests || skipInCi)(
             expect(pythonResponse.success).toBe(true);
             expect(pythonResponse.runtime).toBeDefined();
             expect(pythonResponse.runtime.pod_name).toBeDefined();
-            expect(pythonResponse.runtime.environment_name).toBe(
+            expect(pythonResponse.runtime.environment?.name).toBe(
               environments.python,
             );
             expect(pythonResponse.runtime.given_name).toBe(
@@ -128,7 +128,7 @@ describe.skipIf(skipTests || skipInCi)(
             expect(aiResponse.success).toBe(true);
             expect(aiResponse.runtime).toBeDefined();
             expect(aiResponse.runtime.pod_name).toBeDefined();
-            expect(aiResponse.runtime.environment_name).toBe(environments.ai);
+            expect(aiResponse.runtime.environment?.name).toBe(environments.ai);
             expect(aiResponse.runtime.given_name).toBe('test-ai-runtime');
 
             aiRuntimePodName = aiResponse.runtime.pod_name;
@@ -166,11 +166,11 @@ describe.skipIf(skipTests || skipInCi)(
 
           expect(pythonRuntime).toBeDefined();
           expect(pythonRuntime?.given_name).toBe('test-python-runtime');
-          expect(pythonRuntime?.environment_name).toBe(environments.python);
+          expect(pythonRuntime?.environment?.name).toBe(environments.python);
 
           expect(aiRuntime).toBeDefined();
           expect(aiRuntime?.given_name).toBe('test-ai-runtime');
-          expect(aiRuntime?.environment_name).toBe(environments.ai);
+          expect(aiRuntime?.environment?.name).toBe(environments.ai);
 
           console.log(
             `Found both runtimes in list. Total runtimes: ${response.runtimes.length}`,
@@ -551,7 +551,7 @@ describe.skipIf(skipTests || skipInCi)(
 
           expect(firstRuntime).toHaveProperty('pod_name');
           expect(firstRuntime).toHaveProperty('uid');
-          expect(firstRuntime).toHaveProperty('environment_name');
+          expect(firstRuntime).toHaveProperty('environment');
           expect(firstRuntime).toHaveProperty('burning_rate');
         }
       });
