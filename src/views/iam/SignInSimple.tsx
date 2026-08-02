@@ -36,6 +36,7 @@ import {
   EyeIcon,
   EyeClosedIcon,
   KeyIcon,
+  MailIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
 import {
@@ -789,6 +790,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               <Button
                 variant="primary"
                 size="large"
+                leadingVisual={MailIcon}
                 disabled={asDoc || loading}
                 onClick={handleSignUp}
               >
