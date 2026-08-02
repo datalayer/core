@@ -10,6 +10,8 @@
  * Never use for security-critical checks.
  */
 
+import { asDisplayName } from './Name';
+
 // ── Types ─────────────────────────────────────────────────────────
 
 export interface DatalayerJwtUser {
@@ -81,6 +83,6 @@ export function getDatalayerDisplayName(
   fallback = '',
 ): string {
   if (!user) return fallback;
-  const full = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+  const full = asDisplayName(user.firstName ?? '', user.lastName ?? '').trim();
   return full || user.handle || fallback;
 }
