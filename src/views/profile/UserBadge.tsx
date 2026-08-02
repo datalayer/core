@@ -156,7 +156,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
             sx={{
               px: 3,
               py: 2,
-              bg: 'canvas.subtle',
+              bg: 'canvas.inset',
               borderBottom: '1px solid',
               borderColor: 'border.default',
               display: 'flex',
