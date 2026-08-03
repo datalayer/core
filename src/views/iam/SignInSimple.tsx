@@ -37,6 +37,7 @@ import {
   EyeClosedIcon,
   KeyIcon,
   MailIcon,
+  SignInIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
 import {
@@ -266,8 +267,12 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   socialButtonMarginTop = 3,
   actionButtonMaxWidth = 320,
 }) => {
-  const headingText = name ?? title;
-  const headingIcon = icon ?? leadingIcon;
+  const compactDocMode = asDoc && !hideHero;
+  const headingText =
+    name ??
+    (asDoc && title === 'Datalayer OTEL' ? 'Datalayer Sign In' : title);
+  const headingIcon =
+    icon ?? (asDoc ? <SignInIcon size={24} /> : leadingIcon);
 
   const loginUrl = useMemo(() => {
     if (loginUrlProp) return loginUrlProp;
@@ -512,12 +517,12 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
     <Box
       sx={{
         display: 'flex',
-        alignItems: hideHero ? 'flex-start' : 'center',
+        alignItems: hideHero || compactDocMode ? 'flex-start' : 'center',
         justifyContent: 'center',
-        minHeight: hideHero ? 'auto' : '100vh',
+        minHeight: hideHero || compactDocMode ? 'auto' : '100vh',
         bg: hideHero ? 'transparent' : 'canvas.default',
         color: 'fg.default',
-        py: hideHero ? 0 : 4,
+        py: hideHero ? 0 : compactDocMode ? 2 : 4,
       }}
     >
       <Box
@@ -535,7 +540,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
-                mb: 3,
+                mb: compactDocMode ? 2 : 3,
                 justifyContent: 'center',
               }}
             >
@@ -548,7 +553,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               sx={{
                 fontSize: 1,
                 color: 'fg.muted',
-                mb: 3,
+                mb: compactDocMode ? 2 : 3,
                 textAlign: 'center',
               }}
             >
