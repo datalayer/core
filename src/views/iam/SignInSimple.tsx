@@ -21,6 +21,7 @@ import React, {
   useEffect,
 } from 'react';
 import { PageConfig, URLExt } from '@jupyterlab/coreutils';
+import { createGlobalStyle } from 'styled-components';
 import {
   Box,
   Button,
@@ -234,6 +235,39 @@ export interface SignInSimpleProps {
    */
   actionButtonMaxWidth?: number;
 }
+
+// Repaint the browser autofill highlight (Chrome's blue/yellow) with theme
+// tokens so autofilled/disabled inputs keep the Primer surface colors. A
+// scoped global style is used because Primer's TextInput inner <input> is not
+// reliably reachable via the wrapper `sx` for vendor-prefixed autofill pseudos.
+const SignInInputGlobalStyle = createGlobalStyle`
+  .signin-input-theme-scope input:-webkit-autofill,
+  .signin-input-theme-scope input:-webkit-autofill:hover,
+  .signin-input-theme-scope input:-webkit-autofill:focus,
+  .signin-input-theme-scope input:-webkit-autofill:active,
+  .signin-input-theme-scope input:-webkit-autofill:disabled,
+  .signin-input-theme-scope textarea:-webkit-autofill,
+  .signin-input-theme-scope textarea:-webkit-autofill:hover,
+  .signin-input-theme-scope textarea:-webkit-autofill:focus,
+  .signin-input-theme-scope textarea:-webkit-autofill:active,
+  .signin-input-theme-scope textarea:-webkit-autofill:disabled {
+    -webkit-text-fill-color: var(--fgColor-default) !important;
+    caret-color: var(--fgColor-default) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    background-color: var(--bgColor-default) !important;
+    transition: background-color 9999s ease-in-out 0s !important;
+  }
+
+  .signin-input-theme-scope input:disabled,
+  .signin-input-theme-scope textarea:disabled {
+    -webkit-text-fill-color: var(--fgColor-muted) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    box-shadow: 0 0 0 1000px var(--bgColor-default) inset !important;
+    background-color: var(--bgColor-default) !important;
+    opacity: 1 !important;
+  }
+`;
 
 // ── Component ────────────────────────────────────────────────────────
 
@@ -515,6 +549,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 
   return (
     <Box
+      className="signin-input-theme-scope"
       sx={{
         display: 'flex',
         alignItems: hideHero || compactDocMode ? 'flex-start' : 'center',
@@ -525,6 +560,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         py: hideHero ? 0 : compactDocMode ? 2 : 4,
       }}
     >
+      <SignInInputGlobalStyle />
       <Box
         sx={{
           width: '100%',
