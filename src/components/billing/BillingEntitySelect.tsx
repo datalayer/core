@@ -23,7 +23,6 @@ import {
   ActionList,
   ActionMenu,
   Button,
-  Flash,
   FormControl,
   Label,
   Spinner,
@@ -537,7 +536,19 @@ export function BillingEntitySelect({
           </ActionMenu.Anchor>
           <ActionMenu.Overlay width="large">
             <Box sx={{ p: 2 }}>
-              <Flash variant="default">{flashMessage}</Flash>
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  bg: 'canvas.subtle',
+                  color: 'fg.muted',
+                  px: 3,
+                  py: 2,
+                }}
+              >
+                <Text sx={{ fontSize: 1, lineHeight: 1.5 }}>{flashMessage}</Text>
+              </Box>
             </Box>
             <ActionList selectionVariant="single">
               {isLoading ? (
