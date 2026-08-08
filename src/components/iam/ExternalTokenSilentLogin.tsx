@@ -3,7 +3,12 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
+import {
+  QueryClient,
+  QueryClientContext,
+  QueryClientProvider,
+} from '@tanstack/react-query';
 import { CenteredSpinner } from '../../components/display';
 import { useIAMStore } from '../../state';
 import { useToast, useIAM } from '../../hooks';
@@ -11,6 +16,8 @@ import { useToast, useIAM } from '../../hooks';
 type IExternalTokenSilentLoginProps = {
   message: string;
 };
+
+const externalTokenQueryClient = new QueryClient();
 
 const ExternalTokenSilentLoginRoute = (
   props: IExternalTokenSilentLoginProps,
@@ -39,8 +46,17 @@ const ExternalTokenSilentLoginRoute = (
 export const ExternalTokenSilentLogin = (
   props: IExternalTokenSilentLoginProps,
 ) => {
+  const queryClient = useContext(QueryClientContext);
+
   // No navigation provider needed anymore - auto-detection works without it
-  return <ExternalTokenSilentLoginRoute {...props} />;
+  const content = <ExternalTokenSilentLoginRoute {...props} />;
+  return queryClient ? (
+    content
+  ) : (
+    <QueryClientProvider client={externalTokenQueryClient}>
+      {content}
+    </QueryClientProvider>
+  );
 };
 
 export default ExternalTokenSilentLogin;
