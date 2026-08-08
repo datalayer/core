@@ -38,8 +38,8 @@ let initialConfiguration: IDatalayerCoreConfig = {
   supportUrl: 'https://prod1.datalayer.run',
   launcher: {
     category: 'Datalayer',
-    name: 'Datalayer Runtimes',
-    icon: 'https://raw.githubusercontent.com/datalayer/icons/main/svg/data1/jupyter-base.svg',
+    name: 'Datalayer',
+    icon: null,
     rank: 1,
   },
   brand: {

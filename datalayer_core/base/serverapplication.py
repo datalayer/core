@@ -63,7 +63,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         name = Unicode(
-            "Runtimes",
+            "Datalayer",
             config=True,
             help=("Application launcher card name."),
         )
