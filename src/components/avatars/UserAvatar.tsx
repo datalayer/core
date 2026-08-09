@@ -69,7 +69,7 @@ export const UserAvatar = ({
         '--datalayer-icon-fg': fallbackForeground || palette.primary,
       }}
     >
-      <AlienIcon size={resolvedIconSize} themed colormoded />
+      <AlienIcon size={resolvedIconSize} themed colormode />
     </Box>
   );
 };
