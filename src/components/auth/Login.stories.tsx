@@ -42,7 +42,7 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {
   args: {
-    heading: 'Login to Datalayer',
+    heading: 'Sign in to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: true,
@@ -56,7 +56,7 @@ export const Default: Story = {
  */
 export const EmailOnly: Story = {
   args: {
-    heading: 'Login to Datalayer',
+    heading: 'Sign in to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: true,
@@ -70,7 +70,7 @@ export const EmailOnly: Story = {
  */
 export const OAuthOnly: Story = {
   args: {
-    heading: 'Login to Datalayer',
+    heading: 'Sign in to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: false,
@@ -84,7 +84,7 @@ export const OAuthOnly: Story = {
  */
 export const TokenOnly: Story = {
   args: {
-    heading: 'Login to Datalayer',
+    heading: 'Sign in to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: false,
@@ -112,7 +112,7 @@ export const CustomHeading: Story = {
  */
 export const WithPasswordReset: Story = {
   args: {
-    heading: 'Login to Datalayer',
+    heading: 'Sign in to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     passwordRoute: '/password-reset',

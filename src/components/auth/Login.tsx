@@ -296,7 +296,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
       <PageLayout.Header>
-        <Heading>{heading || 'Login to Datalayer'}</Heading>
+        <Heading>{heading || 'Sign in to Datalayer'}</Heading>
       </PageLayout.Header>
       <PageLayout.Content>
         {loadingWithToken < 0 ? (
