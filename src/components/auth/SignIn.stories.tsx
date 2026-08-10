@@ -6,10 +6,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../../utils/cli/query';
-import { Login } from './Login';
+import { SignIn } from './SignIn';
 
 /**
- * Login component provides a comprehensive authentication interface with multiple methods:
+ * SignIn component provides a comprehensive authentication interface with multiple methods:
  * - Email/password authentication
  * - OAuth (GitHub, LinkedIn)
  * - Direct token input
@@ -17,8 +17,8 @@ import { Login } from './Login';
  * The component includes form validation, loading states, and error handling.
  */
 const meta = {
-  title: 'Components/Auth/Login',
-  component: Login,
+  title: 'Components/Auth/SignIn',
+  component: SignIn,
   parameters: {
     layout: 'fullscreen',
   },
@@ -32,7 +32,7 @@ const meta = {
     ),
   ],
   tags: ['autodocs'],
-} satisfies Meta<typeof Login>;
+} satisfies Meta<typeof SignIn>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -42,7 +42,7 @@ type Story = StoryObj<typeof meta>;
  */
 export const Default: Story = {
   args: {
-    heading: 'Sign in to Datalayer',
+    heading: 'Sign In to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: true,
@@ -56,7 +56,7 @@ export const Default: Story = {
  */
 export const EmailOnly: Story = {
   args: {
-    heading: 'Sign in to Datalayer',
+    heading: 'Sign In to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: true,
@@ -70,7 +70,7 @@ export const EmailOnly: Story = {
  */
 export const OAuthOnly: Story = {
   args: {
-    heading: 'Sign in to Datalayer',
+    heading: 'Sign In to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: false,
@@ -84,7 +84,7 @@ export const OAuthOnly: Story = {
  */
 export const TokenOnly: Story = {
   args: {
-    heading: 'Sign in to Datalayer',
+    heading: 'Sign In to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     showEmailLogin: false,
@@ -112,7 +112,7 @@ export const CustomHeading: Story = {
  */
 export const WithPasswordReset: Story = {
   args: {
-    heading: 'Sign in to Datalayer',
+    heading: 'Sign In to Datalayer',
     homeRoute: '/home',
     loginRoute: '/login',
     passwordRoute: '/password-reset',

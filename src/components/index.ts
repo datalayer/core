@@ -4,6 +4,7 @@
  */
 
 export * from './auth';
+export * from './animation';
 export * from './billing';
 export * from './sharing';
 export * from './sparklines';

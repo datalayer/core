@@ -22,7 +22,7 @@ import { useIAMStore } from '../../state';
 import { CenteredSpinner } from '../display';
 import { isInsideJupyterLab, validateLength } from '../../utils';
 import { useNavigate, useCache, useToast, useIAM } from '../../hooks';
-import { LoginToken } from './LoginToken';
+import { SigInAPIKey } from './SigInAPIKey';
 
 interface IFormData {
   handle?: string;
@@ -34,7 +34,7 @@ interface IFormError {
   password?: string;
 }
 
-export interface ILoginProps {
+export interface ISigninProps {
   /**
    * Page heading
    */
@@ -77,7 +77,7 @@ export interface ILoginProps {
   showTokenLogin?: boolean;
 }
 
-export const Login = (props: ILoginProps): JSX.Element => {
+export const SignIn = (props: ISigninProps): JSX.Element => {
   const {
     heading,
     homeRoute,
@@ -149,7 +149,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
             addIAMProviderAuthorizationURL(iamProvider.name, authUrl);
           } else {
             console.error(
-              `Failed to get the Login URL from Datalayer IAM for provider ${iamProvider.name}.`,
+              `Failed to get the sign-in URL from Datalayer IAM for provider ${iamProvider.name}.`,
             );
           }
         },
@@ -176,7 +176,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
         homeRoute,
       )
         .catch(error => {
-          console.debug('Failed to login with token from cookie..', error);
+          console.debug('Failed to sign in with token from cookie..', error);
           enqueueToast('Failed to check authentication.', { variant: 'error' });
         })
         .finally(() => {
@@ -224,15 +224,18 @@ export const Login = (props: ILoginProps): JSX.Element => {
             setLogin(user, token);
             navigate(homeRoute);
           } else {
-            enqueueToast('Failed to login. Check your username and password.', {
-              variant: 'warning',
-            });
+            enqueueToast(
+              'Failed to sign in. Check your username and password.',
+              {
+                variant: 'warning',
+              },
+            );
             setValidationResult({
               handle: '',
               password: 'Invalid credentials',
             });
             console.debug(
-              `Failed to login: ${resp.message}`,
+              `Failed to sign in: ${resp.message}`,
               resp.errors ?? '',
             );
           }
@@ -296,7 +299,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
       <PageLayout.Header>
-        <Heading>{heading || 'Sign in to Datalayer'}</Heading>
+        <Heading>{heading || 'Sign In to Datalayer'}</Heading>
       </PageLayout.Header>
       <PageLayout.Content>
         {loadingWithToken < 0 ? (
@@ -375,10 +378,10 @@ export const Login = (props: ILoginProps): JSX.Element => {
                       onClick={submit}
                     >
                       {loading
-                        ? 'Login…'
+                        ? 'Sign In…'
                         : heading
-                          ? 'Login with Datalayer'
-                          : 'Login'}
+                          ? 'Sign In with Datalayer'
+                          : 'Sign In'}
                     </Button>
                     <Box pt={6} />
                     {/*
@@ -451,7 +454,7 @@ export const Login = (props: ILoginProps): JSX.Element => {
                         disabled={socialButtonsDisabled}
                         style={{ margin: '10px 0' }}
                       >
-                        Login with GitHub
+                        Sign In with GitHub
                       </Button>
                     )}
                   {showGoogleLogin &&
@@ -470,11 +473,11 @@ export const Login = (props: ILoginProps): JSX.Element => {
                         disabled={socialButtonsDisabled}
                         style={{ margin: '10px 0' }}
                       >
-                        Login with Google
+                        Sign In with Google
                       </Button>
                     )}
                   {showTokenLogin && (
-                    <LoginToken
+                    <SigInAPIKey
                       homeRoute={homeRoute}
                       disabled={loading}
                       style={{ margin: '10px 0' }}
@@ -494,4 +497,4 @@ export const Login = (props: ILoginProps): JSX.Element => {
   );
 };
 
-export default Login;
+export default SignIn;

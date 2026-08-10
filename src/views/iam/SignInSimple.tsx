@@ -277,7 +277,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   loginUrl: loginUrlProp,
   name,
   title = 'Datalayer OTEL',
-  description = 'Sign in to access the observability dashboard.',
+  description = 'Sign In to access the observability dashboard.',
   icon,
   leadingIcon = <TelescopeIcon size={24} />,
   github = false,
@@ -290,7 +290,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   hideHero = false,
   calloutTitle,
   calloutDescription,
-  passwordToggleLabel = 'Sign in with a password',
+  passwordToggleLabel = 'Sign In with a password',
   signUpTitle = "Don't have an account?",
   signUpDescription = 'Create a free Datalayer account with your email address.',
   signUpLabel = 'Sign up with email',
@@ -303,10 +303,8 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
 }) => {
   const compactDocMode = asDoc && !hideHero;
   const headingText =
-    name ??
-    (asDoc && title === 'Datalayer OTEL' ? 'Datalayer Sign In' : title);
-  const headingIcon =
-    icon ?? (asDoc ? <SignInIcon size={24} /> : leadingIcon);
+    name ?? (asDoc && title === 'Datalayer OTEL' ? 'Datalayer Sign In' : title);
+  const headingIcon = icon ?? (asDoc ? <SignInIcon size={24} /> : leadingIcon);
 
   const loginUrl = useMemo(() => {
     if (loginUrlProp) return loginUrlProp;
@@ -633,7 +631,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   mx: 'auto',
                 }}
               >
-                Sign in with GitHub
+                Sign In with GitHub
               </Button>
             )}
             {google && (
@@ -653,7 +651,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   mx: 'auto',
                 }}
               >
-                Sign in with Google
+                Sign In with Google
               </Button>
             )}
             {linkedin && (
@@ -673,7 +671,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   mx: 'auto',
                 }}
               >
-                Sign in with LinkedIn
+                Sign In with LinkedIn
               </Button>
             )}
           </>
@@ -748,7 +746,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                 disabled={loading || asDoc || !handle || !password}
                 onClick={submit}
               >
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? 'Signing in…' : 'Sign In'}
               </Button>
               {showForgotPassword && (
                 <Link

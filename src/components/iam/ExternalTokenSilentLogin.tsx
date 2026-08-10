@@ -30,8 +30,8 @@ const ExternalTokenSilentLoginRoute = (
     if (externalToken) {
       loginAndNavigate(externalToken, logout, checkIAMToken)
         .catch(error => {
-          console.debug('Failed to login with the provided token.', error);
-          enqueueToast('Failed to login with the provided token.', {
+          console.debug('Failed to sign in with the provided token.', error);
+          enqueueToast('Failed to sign in with the provided token.', {
             variant: 'error',
           });
         })
