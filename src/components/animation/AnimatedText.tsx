@@ -56,13 +56,6 @@ export function AnimatedText({
       ? normalizedWords[wordIndex % normalizedWords.length]
       : '';
 
-  const minWidthCh = useMemo(() => {
-    if (normalizedWords.length === 0) {
-      return 0;
-    }
-    return Math.max(...normalizedWords.map(word => word.length));
-  }, [normalizedWords]);
-
   return (
     <span {...rest} style={style}>
       {prefix}
@@ -70,7 +63,6 @@ export function AnimatedText({
         aria-live="polite"
         style={{
           display: 'inline-block',
-          minWidth: `${minWidthCh}ch`,
           transition: `opacity ${transitionMs}ms ease, transform ${transitionMs}ms ease`,
           opacity: visible ? 1 : 0,
           transform: visible ? 'translateY(0)' : 'translateY(0.25em)',
