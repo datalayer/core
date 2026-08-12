@@ -107,7 +107,13 @@ export interface IDialogWrapperOptions<T> {
  */
 export class JupyterDialog<T> extends ReactWidget {
   protected body: JSXElementConstructor<
-    PropsWithChildren<DialogProps & { setValue: (v: T | Error) => void }>
+    PropsWithChildren<
+      DialogProps & {
+        setValue: (v: T | Error) => void;
+        /** Whether an accepted answer is being acted on. */
+        pending?: boolean;
+      }
+    >
   >;
   protected checkbox: Partial<Dialog.ICheckbox> | null;
   protected buttons: Dialog.IButton[];
@@ -140,14 +146,36 @@ export class JupyterDialog<T> extends ReactWidget {
     this.onWillAccept = options.onWillAccept;
   }
 
-  private _renderBody = (props: PropsWithChildren<DialogProps>) => (
-    <PrimerDialog.Body>
-      {createElement(this.body, {
-        ...props,
-        setValue: this.setValue,
-      })}
-    </PrimerDialog.Body>
-  );
+  private _renderBody = (props: PropsWithChildren<DialogProps>) => {
+    const pending = this._pendingButtonIndex !== null;
+    return (
+      <PrimerDialog.Body>
+        {/*
+          While the answer is being acted on — a sandbox reserved, a kernel
+          attached — the body is left visible but out of reach: what is being
+          submitted must not change under the request. The body is told as
+          well, so a form that has something better to show can.
+        */}
+        <div
+          aria-busy={pending}
+          // `inert` is an attribute of the platform that the typings of React
+          // 18 do not carry; it is spread rather than named for that reason.
+          {...(pending ? ({ inert: '' } as any) : {})}
+          style={
+            pending
+              ? { pointerEvents: 'none', opacity: 0.6 }
+              : undefined
+          }
+        >
+          {createElement(this.body, {
+            ...props,
+            setValue: this.setValue,
+            pending,
+          })}
+        </div>
+      </PrimerDialog.Body>
+    );
+  };
 
   private _renderFooter = (props: PropsWithChildren<DialogProps>) => (
     <DialogFooter

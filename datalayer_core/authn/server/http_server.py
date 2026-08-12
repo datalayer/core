@@ -152,7 +152,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
         elif path in {"/", "/datalayer/login/cli"}:
             config_json = json.dumps(
                 {
-                    "datalayerUrl": self.server.datalayer_url,  # type: ignore
+                    "iamUrl": self.server.iam_url,  # type: ignore
                     "iamUrl": self.server.iam_url,  # type: ignore
                     "whiteLabel": False,
                 }
@@ -229,8 +229,8 @@ class AuthHTTPServer(HTTPServer):
         The server address and port.
     RequestHandlerClass : Callable
         The request handler class.
-    datalayer_url : str
-        The runtime URL.
+    iam_url : str
+        The URL of the IAM service, which the login goes through.
     bind_and_activate : bool, default True
         Whether to bind and activate the server.
     """
@@ -239,7 +239,7 @@ class AuthHTTPServer(HTTPServer):
         self,
         server_address: tuple[Union[str, bytes, bytearray], int],
         RequestHandlerClass: t.Callable[[t.Any, t.Any, t.Self], BaseRequestHandler],
-        datalayer_url: str,
+        iam_url: str,
         bind_and_activate: bool = True,
     ) -> None:
         """
@@ -251,14 +251,13 @@ class AuthHTTPServer(HTTPServer):
             The server address and port.
         RequestHandlerClass : Callable
             The request handler class.
-        datalayer_url : str
-            The runtime URL.
+        iam_url : str
+            The URL of the IAM service, which the login goes through.
         bind_and_activate : bool, default True
             Whether to bind and activate the server.
         """
         # Use DatalayerURLs for proper URL configuration
-        self._urls = DatalayerURLs.from_environment(datalayer_url=datalayer_url)
-        self.datalayer_url = self._urls.datalayer_url
+        self._urls = DatalayerURLs.from_environment(iam_url=iam_url)
         self.iam_url = self._urls.iam_url
         self.user_handle = None
         self.token = None
@@ -299,15 +298,15 @@ class AuthHTTPServer(HTTPServer):
 
 
 def get_token(
-    datalayer_url: str, port: Optional[int] = None, logger: logging.Logger = logger
+    iam_url: str, port: Optional[int] = None, logger: logging.Logger = logger
 ) -> Optional[tuple[str, str]]:
     """
     Get the user handle and token.
 
     Parameters
     ----------
-    datalayer_url : str
-        The runtime URL.
+    iam_url : str
+        The URL of the IAM service, which the login goes through.
     port : int or None, default None
         The port to use for the authentication server.
     logger : logging.Logger, default logger
@@ -329,8 +328,8 @@ def get_token(
         )
         sys.argv = [
             "",
-            "--DatalayerExtensionApp.datalayer_url",
-            datalayer_url,
+            "--DatalayerExtensionApp.iam_url",
+            iam_url,
             "--ServerApp.disable_check_xsrf",
             "True",
         ]
@@ -339,7 +338,7 @@ def get_token(
         #        return None if httpd.token is None else (httpd.user_handle, httpd.token)
         return None
     else:
-        httpd = AuthHTTPServer(server_address, LoginRequestHandler, datalayer_url)
+        httpd = AuthHTTPServer(server_address, LoginRequestHandler, iam_url)
         logger.info(
             f"Waiting for user logging, open http://localhost:{port}. Press CTRL+C to abort.\n"
         )

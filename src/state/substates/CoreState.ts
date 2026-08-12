@@ -11,7 +11,6 @@ import { configLogger } from '../../utils/Logger';
 let loadConfigurationFromServer = true;
 
 let initialConfiguration: IDatalayerCoreConfig = {
-  datalayerUrl: 'https://prod1.datalayer.run',
   token: '',
   credits: 0,
   cpuEnvironment: 'ai-agents-env"',

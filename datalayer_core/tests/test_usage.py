@@ -25,7 +25,6 @@ TEST_DATALAYER_API_KEY = os.environ.get("TEST_DATALAYER_API_KEY") or os.environ.
     "DATALAYER_API_KEY"
 )
 
-LOCAL_RUN_URL = os.environ.get("TEST_DATALAYER_URL", "http://localhost:9700")
 LOCAL_IAM_URL = os.environ.get("TEST_DATALAYER_IAM_URL", "http://localhost:9700")
 LOCAL_RUNTIMES_URL = os.environ.get(
     "TEST_DATALAYER_RUNTIMES_URL",
@@ -42,7 +41,6 @@ def _build_test_client() -> DatalayerClient:
     return DatalayerClient(
         api_key=TEST_DATALAYER_API_KEY,
         urls=DatalayerURLs.from_environment(
-            datalayer_url=LOCAL_RUN_URL,
             iam_url=LOCAL_IAM_URL,
             runtimes_url=LOCAL_RUNTIMES_URL,
         ),

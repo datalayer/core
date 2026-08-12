@@ -75,11 +75,6 @@ def main_callback(
             "omitted; otherwise built-in auth resolution is used."
         ),
     ),
-    datalayer_url: str | None = typer.Option(
-        None,
-        "--datalayer-url",
-        help="Override DATALAYER_URL for this CLI invocation.",
-    ),
     iam_url: str | None = typer.Option(
         None,
         "--iam-url",
@@ -154,7 +149,6 @@ def main_callback(
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
-        "DATALAYER_URL": datalayer_url,
         "DATALAYER_IAM_URL": iam_url,
         "DATALAYER_RUNTIMES_URL": runtimes_url,
         "DATALAYER_SPACER_URL": spacer_url,
@@ -216,7 +210,6 @@ app.command(name="teams-ls")(teams_ls)
 
 _GLOBAL_OPTIONS_WITH_VALUES = {
     "--api-key",
-    "--datalayer-url",
     "--iam-url",
     "--runtimes-url",
     "--spacer-url",

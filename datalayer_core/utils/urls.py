@@ -19,35 +19,35 @@ from datalayer_core.base.user_config import (
     get_runtimes_url as _get_config_runtimes_url,
 )
 
-DEFAULT_DATALAYER_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_SERVICE_URL = "https://prod1.datalayer.run"
 
-DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 DEFAULT_DATALAYER_RUNTIMES_URL = "https://r1.datalayer.run"
 
-DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 
 @dataclass
@@ -60,8 +60,6 @@ class DatalayerURLs:
 
     Attributes
     ----------
-    datalayer_url : str
-        The Datalayer runtime/service URL
     iam_url : str
         The Datalayer IAM service URL
     runtimes_url : str
@@ -92,7 +90,6 @@ class DatalayerURLs:
         The Datalayer scheduler service URL
     """
 
-    datalayer_url: str
     iam_url: str
     runtimes_url: str
     spacer_url: str
@@ -111,7 +108,6 @@ class DatalayerURLs:
     @classmethod
     def from_environment(
         cls,
-        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -132,9 +128,6 @@ class DatalayerURLs:
 
         Parameters
         ----------
-        datalayer_url : Optional[str]
-            Override for the run URL. If None, will check DATALAYER_URL env var
-            then fallback to DEFAULT_DATALAYER_URL.
         iam_url : Optional[str]
             Override for the IAM URL. If None, will check DATALAYER_IAM_URL env var
             then fallback to DEFAULT_DATALAYER_IAM_URL.
@@ -189,9 +182,6 @@ class DatalayerURLs:
         unless explicitly overridden. This allows setting a single base URL for all services.
         """
         # Determine base URLs first
-        resolved_datalayer_url = (
-            datalayer_url or os.environ.get("DATALAYER_URL") or DEFAULT_DATALAYER_URL
-        )
         resolved_iam_url = (
             iam_url
             or os.environ.get("DATALAYER_IAM_URL")
@@ -294,7 +284,6 @@ class DatalayerURLs:
         )
 
         # Strip trailing slashes for consistency
-        resolved_datalayer_url = resolved_datalayer_url.rstrip("/")
         resolved_iam_url = resolved_iam_url.rstrip("/")
         resolved_runtimes_url = resolved_runtimes_url.rstrip("/")
         resolved_spacer_url = resolved_spacer_url.rstrip("/")
@@ -311,7 +300,6 @@ class DatalayerURLs:
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
 
         return cls(
-            datalayer_url=resolved_datalayer_url,
             iam_url=resolved_iam_url,
             runtimes_url=resolved_runtimes_url,
             spacer_url=resolved_spacer_url,
@@ -330,7 +318,6 @@ class DatalayerURLs:
 
     def __post_init__(self) -> None:
         """Ensure URLs don't have trailing slashes."""
-        self.datalayer_url = self.datalayer_url.rstrip("/")
         self.iam_url = self.iam_url.rstrip("/")
         self.runtimes_url = self.runtimes_url.rstrip("/")
         self.spacer_url = self.spacer_url.rstrip("/")
@@ -353,7 +340,6 @@ class DatalayerURLs:
     @classmethod
     def get_all_urls(
         cls,
-        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -371,7 +357,6 @@ class DatalayerURLs:
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
         return cls.from_environment(
-            datalayer_url=datalayer_url,
             iam_url=iam_url,
             runtimes_url=runtimes_url,
             spacer_url=spacer_url,

@@ -16,13 +16,6 @@ export const FORCE_ACTIVATE_RUNTIMES_PLUGINS = false;
  */
 export type IDatalayerCoreConfig = {
   /**
-   * Datalayer RUN URL.
-   * The base URL for the Datalayer platform API.
-   * @example "https://prod1.datalayer.run"
-   */
-  datalayerUrl: string;
-
-  /**
    * Datalayer API authentication token.
    * Used for authenticating requests to the Datalayer platform.
    */
@@ -218,8 +211,16 @@ export class DatalayerConfiguration {
 /**
  * Default configuration values for Datalayer
  */
+/**
+ * Where a service lives when nothing says otherwise.
+ *
+ * Each service has a URL of its own — `iamUrl`, `runtimesUrl`, … — and this is
+ * what each of them falls back to.
+ */
+export const DEFAULT_DATALAYER_SERVICE_URL = 'https://prod1.datalayer.run';
+
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  datalayerUrl: 'https://prod1.datalayer.run',
+  iamUrl: DEFAULT_DATALAYER_SERVICE_URL,
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
@@ -232,7 +233,7 @@ export function isDatalayerConfig(config: any): config is IDatalayerCoreConfig {
   return (
     config &&
     typeof config === 'object' &&
-    typeof config.datalayerUrl === 'string' &&
+    typeof config.iamUrl === 'string' &&
     typeof config.token === 'string' &&
     typeof config.credits === 'number' &&
     typeof config.cpuEnvironment === 'string' &&
@@ -250,10 +251,10 @@ export function mergeConfigWithDefaults(
 ): Partial<IDatalayerCoreConfig> | undefined {
   if (!config) return undefined;
 
-  // If we have required fields (token and datalayerUrl), merge with defaults for optional fields
-  if (config.token && config.datalayerUrl) {
+  // If we have required fields (token and iamUrl), merge with defaults for optional fields
+  if (config.token && config.iamUrl) {
     return {
-      datalayerUrl: config.datalayerUrl,
+      iamUrl: config.iamUrl,
       token: config.token,
       credits: config.credits ?? DEFAULT_DATALAYER_CONFIG.credits!,
       cpuEnvironment:

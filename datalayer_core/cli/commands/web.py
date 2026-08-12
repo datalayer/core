@@ -29,10 +29,10 @@ def web_callback(ctx: typer.Context) -> None:
 
 @app.command(name="start")
 def web_start(
-    datalayer_url: Optional[str] = typer.Option(
+    iam_url: Optional[str] = typer.Option(
         None,
-        "--datalayer-url",
-        help="Datalayer URL",
+        "--iam-url",
+        help="Datalayer IAM URL",
     ),
     disable_xsrf: bool = typer.Option(
         True,
@@ -43,18 +43,18 @@ def web_start(
     """Launch the Datalayer web application."""
     try:
         # Get URLs configuration
-        urls = DatalayerURLs.from_environment(datalayer_url=datalayer_url)
+        urls = DatalayerURLs.from_environment(iam_url=iam_url)
 
         # Prepare arguments for Jupyter server
         sys.argv = [
             "",
             f"--ServerApp.disable_check_xsrf={disable_xsrf}",
             "--DatalayerExtensionApp.webapp=True",
-            f"--DatalayerExtensionApp.datalayer_url={urls.datalayer_url}",
+            f"--DatalayerExtensionApp.iam_url={urls.iam_url}",
         ]
 
         console.print("[green]Starting Datalayer web application...[/green]")
-        console.print(f"Datalayer URL: {urls.datalayer_url}")
+        console.print(f"Datalayer IAM URL: {urls.iam_url}")
         console.print("[yellow]Press Ctrl+C to stop the server[/yellow]")
 
         # Launch the Jupyter server
@@ -71,10 +71,10 @@ def web_start(
 @app.callback(invoke_without_command=True)
 def web_callback_default(
     ctx: typer.Context,
-    datalayer_url: Optional[str] = typer.Option(
+    iam_url: Optional[str] = typer.Option(
         None,
-        "--datalayer-url",
-        help="Datalayer Datalayer URL",
+        "--iam-url",
+        help="Datalayer IAM URL",
     ),
     disable_xsrf: bool = typer.Option(
         True,
@@ -85,7 +85,7 @@ def web_callback_default(
     """Launch the Datalayer web application (default behavior)."""
     if ctx.invoked_subcommand is None:
         # Call web_start with the same parameters
-        web_start(datalayer_url=datalayer_url, disable_xsrf=disable_xsrf)
+        web_start(iam_url=iam_url, disable_xsrf=disable_xsrf)
 
 
 if __name__ == "__main__":
