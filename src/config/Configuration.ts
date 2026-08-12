@@ -61,9 +61,17 @@ export type IDatalayerCoreConfig = {
    */
   iamUrl: string;
   /**
+   * Manager API URL.
+   */
+  managerUrl: string;
+  /**
    * Runtimes API URL.
    */
   runtimesUrl: string;
+  /**
+   * Scheduler API URL.
+   */
+  schedulerUrl: string;
   /**
    * Spacer API URL.
    */
