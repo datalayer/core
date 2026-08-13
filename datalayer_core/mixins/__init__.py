@@ -4,10 +4,12 @@ from .authn import AuthnMixin
 from .secrets import SecretsMixin
 from .api_keys import ApiKeysMixin
 from .usage import UsageMixin
+from .spaces import SpacesMixin
 from .whoami import WhoamiAppMixin
 
 __all__ = [
     "AuthnMixin",
+    "SpacesMixin",
     "SecretsMixin",
     "ApiKeysMixin",
     "UsageMixin",

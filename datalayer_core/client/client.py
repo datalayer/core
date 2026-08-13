@@ -15,10 +15,12 @@ from typing import Any, Optional, Union
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.api_keys import ApiKeysMixin
+from datalayer_core.mixins.spaces import SpacesMixin
 from datalayer_core.mixins.usage import UsageMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import UserModel
 from datalayer_core.models.api_key import ApiKeyModel, ApiKeyType
+from datalayer_core.models.space import ItemModel, SpaceModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
 from datalayer_core.utils.urls import DatalayerURLs
 
@@ -29,6 +31,7 @@ class DatalayerClient(
     AuthnMixin,
     SecretsMixin,
     ApiKeysMixin,
+    SpacesMixin,
     UsageMixin,
     WhoamiAppMixin,
 ):
@@ -332,6 +335,40 @@ class DatalayerClient(
                 api_key_objects.append(api_key)
             return api_key_objects
         return []
+
+    def list_spaces(self) -> list[SpaceModel]:
+        """
+        List the spaces of the authenticated user.
+
+        The items of each space are included, so a caller wanting notebooks
+        does not have to ask again per space.
+
+        Returns
+        -------
+        list[SpaceModel]
+            The spaces this user can reach, empty when the call fails.
+        """
+        response = self._list_spaces()
+        if response.get("success"):
+            return [SpaceModel.from_response(s) for s in response.get("spaces", [])]
+        return []
+
+    def list_notebooks(self) -> list[ItemModel]:
+        """
+        List the notebooks of the authenticated user, across their spaces.
+
+        "Which notebooks do I have" is one question, and answering it with
+        "first, which spaces do you have" is a round trip the caller should
+        not have to make. Each notebook carries the space it belongs to.
+
+        Returns
+        -------
+        list[ItemModel]
+            Every notebook this user can reach.
+        """
+        return [
+            notebook for space in self.list_spaces() for notebook in space.notebooks()
+        ]
 
     def delete_api_key(self, api_key: Union[str, ApiKeyModel]) -> bool:
         """

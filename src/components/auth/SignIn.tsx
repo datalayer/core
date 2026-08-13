@@ -299,7 +299,7 @@ export const SignIn = (props: ISigninProps): JSX.Element => {
       style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
     >
       <PageLayout.Header>
-        <Heading>{heading || 'Sign In to Datalayer'}</Heading>
+        <Heading>{heading || 'Sign in to Datalayer'}</Heading>
       </PageLayout.Header>
       <PageLayout.Content>
         {loadingWithToken < 0 ? (
@@ -380,7 +380,7 @@ export const SignIn = (props: ISigninProps): JSX.Element => {
                       {loading
                         ? 'Sign In…'
                         : heading
-                          ? 'Sign In with Datalayer'
+                          ? 'Sign in with Datalayer'
                           : 'Sign In'}
                     </Button>
                     <Box pt={6} />
@@ -454,7 +454,7 @@ export const SignIn = (props: ISigninProps): JSX.Element => {
                         disabled={socialButtonsDisabled}
                         style={{ margin: '10px 0' }}
                       >
-                        Sign In with GitHub
+                        Sign in with GitHub
                       </Button>
                     )}
                   {showGoogleLogin &&
@@ -473,7 +473,7 @@ export const SignIn = (props: ISigninProps): JSX.Element => {
                         disabled={socialButtonsDisabled}
                         style={{ margin: '10px 0' }}
                       >
-                        Sign In with Google
+                        Sign in with Google
                       </Button>
                     )}
                   {showTokenLogin && (

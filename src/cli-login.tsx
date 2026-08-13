@@ -235,7 +235,7 @@ function SignInCLIApp() {
   return renderLayout(
     <SignInSimple
       name="Datalayer CLI"
-      description="Sign In to continue in your CLI session."
+      description="Sign in to continue in your CLI session."
       icon={<ShieldLockIcon size={24} />}
       github
       google

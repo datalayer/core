@@ -120,7 +120,7 @@ export interface SignInSimpleProps {
   onSignIn?: (token: string, handle: string) => void;
   /**
    * Called when the user authenticates with an API key.
-   * If not provided the "Sign In with an API Key" button is hidden.
+   * If not provided the "Sign in with an API Key" button is hidden.
    */
   onApiKeySignIn?: (apiKey: string) => void;
   /**
@@ -277,7 +277,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   loginUrl: loginUrlProp,
   name,
   title = 'Datalayer OTEL',
-  description = 'Sign In to access the observability dashboard.',
+  description = 'Sign in to access the observability dashboard.',
   icon,
   leadingIcon = <TelescopeIcon size={24} />,
   github = false,
@@ -290,7 +290,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   hideHero = false,
   calloutTitle,
   calloutDescription,
-  passwordToggleLabel = 'Sign In with a password',
+  passwordToggleLabel = 'Sign in with a password',
   signUpTitle = "Don't have an account?",
   signUpDescription = 'Create a free Datalayer account with your email address.',
   signUpLabel = 'Sign up with email',
@@ -631,7 +631,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   mx: 'auto',
                 }}
               >
-                Sign In with GitHub
+                Sign in with GitHub
               </Button>
             )}
             {google && (
@@ -651,7 +651,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   mx: 'auto',
                 }}
               >
-                Sign In with Google
+                Sign in with Google
               </Button>
             )}
             {linkedin && (
@@ -671,7 +671,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                   mx: 'auto',
                 }}
               >
-                Sign In with LinkedIn
+                Sign in with LinkedIn
               </Button>
             )}
           </>
@@ -861,7 +861,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
               onClick={() => setShowApiKeyDialog(true)}
               sx={{ maxWidth: actionButtonMaxWidth, mx: 'auto' }}
             >
-              Sign In with an API Key
+              Sign in with an API Key
             </Button>
             {showApiKeyDialog && (
               <Box

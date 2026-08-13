@@ -69,7 +69,7 @@ export const SigInAPIKey = (props: ISigninAPIKeyProps): JSX.Element => {
         style={style}
         disabled={disabled}
       >
-        Sign In with API Key
+        Sign in with API Key
       </Button>
     );
   }
