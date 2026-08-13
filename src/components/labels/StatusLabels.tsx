@@ -1,0 +1,119 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+/**
+ * The small pills that qualify an entry.
+ *
+ * A menu entry, a card, a row of a switcher: what qualifies them is always
+ * the same mark — one lowercase word in a semantic tone — and it was written
+ * out at every place that needed one. These are that mark, named after what
+ * they say, so `alpha` looks the same in the user menu, on an integration and
+ * wherever it is needed next.
+ *
+ * @module components/labels/StatusLabels
+ */
+
+import type { ReactNode } from 'react';
+import { Label } from '@primer/react';
+
+/** The tones a status pill is read in. */
+export type StatusLabelTone = 'accent' | 'attention' | 'success' | 'neutral';
+
+export type StatusLabelProps = {
+  /** Word of the pill; each label has one of its own. */
+  children?: ReactNode;
+  size?: 'small' | 'large';
+  sx?: Record<string, unknown>;
+};
+
+const TONES: Record<
+  StatusLabelTone,
+  { bg: string; color: string; borderColor?: string }
+> = {
+  accent: {
+    bg: 'accent.subtle',
+    color: 'accent.fg',
+    borderColor: 'accent.muted',
+  },
+  attention: {
+    bg: 'attention.subtle',
+    color: 'attention.fg',
+    borderColor: 'attention.muted',
+  },
+  success: {
+    bg: 'success.subtle',
+    color: 'success.fg',
+    borderColor: 'success.muted',
+  },
+  neutral: {
+    bg: 'neutral.subtle',
+    color: 'fg.muted',
+    borderColor: 'border.default',
+  },
+};
+
+/**
+ * The pill the named labels below are made of.
+ *
+ * Exported for a qualification that has no label of its own yet; prefer one of
+ * the named ones, so the same thing is said the same way everywhere.
+ */
+export function StatusLabel(
+  props: StatusLabelProps & { tone: StatusLabelTone },
+): JSX.Element {
+  const { children, size = 'small', sx, tone } = props;
+  return (
+    <Label
+      variant="secondary"
+      size={size}
+      sx={{
+        textTransform: 'lowercase',
+        lineHeight: 1.2,
+        ...TONES[tone],
+        ...sx,
+      }}
+    >
+      {children}
+    </Label>
+  );
+}
+
+/**
+ * A feature that is being tried out.
+ */
+export function AlphaLabel(props: StatusLabelProps = {}): JSX.Element {
+  const { children = 'alpha', ...rest } = props;
+  return (
+    <StatusLabel tone="accent" {...rest}>
+      {children}
+    </StatusLabel>
+  );
+}
+
+/**
+ * Something reserved to the administrators of the platform.
+ */
+export function AdminLabel(props: StatusLabelProps = {}): JSX.Element {
+  const { children = 'admin', ...rest } = props;
+  return (
+    <StatusLabel tone="attention" {...rest}>
+      {children}
+    </StatusLabel>
+  );
+}
+
+/**
+ * The one that is taken when none is chosen — the default space of an account.
+ */
+export function DefaultLabel(props: StatusLabelProps = {}): JSX.Element {
+  const { children = 'default', ...rest } = props;
+  return (
+    <StatusLabel tone="accent" {...rest}>
+      {children}
+    </StatusLabel>
+  );
+}
+
+export default StatusLabel;
