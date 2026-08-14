@@ -90,8 +90,10 @@ function resolveColor(color?: AnimatedTextColor): string | undefined {
   return THEME_COLORS[color] ?? color;
 }
 
-export interface AnimatedTextProps
-  extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'children' | 'color'> {
+export interface AnimatedTextProps extends Omit<
+  React.HTMLAttributes<HTMLSpanElement>,
+  'children' | 'color'
+> {
   /** Text before the cycling words. Ignored when `parts` is given. */
   prefix?: string;
   /** The words to cycle through. Ignored when `parts` is given. */
@@ -117,8 +119,45 @@ export interface AnimatedTextProps
    * where the plate is not wanted.
    */
   background?: string;
+  /**
+   * Hold every cycling piece at the width of the longest word it can show,
+   * instead of letting it size itself to whichever word is currently up.
+   *
+   * Off by default, because it changes the look: a piece is then as wide as
+   * its longest word even when a short one is showing, which is right for a
+   * line that reads as a slot being filled and wrong for one meant to read as
+   * an ordinary sentence.
+   *
+   * Turn it on when the line is set large, or is close to the width it has.
+   * Words of different lengths otherwise shove the rest of the sentence
+   * sideways on every tick, and the longest combination can take a line that
+   * fits on one row and drop it onto two — which, since a theme may set any
+   * typeface, is not something a caller can rule out by measuring.
+   *
+   * The reservation is made by the browser, not by a measurement: all of the
+   * words are laid into one grid cell and the ones not showing are hidden, so
+   * the piece is exactly as wide as the widest of them in the font and size it
+   * actually ends up with.
+   */
+  reserveWidth?: boolean;
   intervalMs?: number;
   transitionMs?: number;
+}
+
+/** Whether this reader has asked for less movement. */
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return reduced;
 }
 
 /**
@@ -135,6 +174,14 @@ export interface AnimatedTextProps
  *   ]}
  * />
  * ```
+ *
+ * Set large, or set close to the width available, pass `reserveWidth` so the
+ * cycling pieces hold the width of their longest word and the line neither
+ * shifts on each tick nor wraps on its longest combination:
+ *
+ * ```tsx
+ * <AnimatedText reserveWidth parts={[...]} background="transparent" />
+ * ```
  */
 export function AnimatedText({
   prefix,
@@ -144,11 +191,16 @@ export function AnimatedText({
   color,
   palette = MEDIUM_PALETTE,
   background = DEFAULT_BACKGROUND,
+  reserveWidth = false,
   intervalMs = 1800,
   transitionMs = 240,
   style,
   ...rest
 }: AnimatedTextProps): JSX.Element {
+  // The words still change for a reader who asked for less movement — that is
+  // what this component is for — but they do it without travelling, and the
+  // fade is dropped rather than merely shortened.
+  const reducedMotion = usePrefersReducedMotion();
   // The older three-prop form is the same thing with one cycling piece.
   const resolvedParts = useMemo<AnimatedTextPart[]>(() => {
     if (parts && parts.length > 0) {
@@ -162,9 +214,9 @@ export function AnimatedText({
       resolvedParts.filter(
         (part): part is AnimatedTextWords =>
           typeof part !== 'string' &&
-          part.words.filter(word => word.trim().length > 0).length > 0
+          part.words.filter(word => word.trim().length > 0).length > 0,
       ),
-    [resolvedParts]
+    [resolvedParts],
   );
 
   // One index for the whole line: what makes several cycling pieces change
@@ -176,11 +228,11 @@ export function AnimatedText({
   // pairing three words with four does not repeat after three.
   const cycleLength = useMemo(() => {
     const lengths = cyclingParts.map(
-      part => part.words.filter(word => word.trim().length > 0).length
+      part => part.words.filter(word => word.trim().length > 0).length,
     );
     return lengths.reduce(
       (total, length) => lowestCommonMultiple(total, length),
-      1
+      1,
     );
   }, [cyclingParts]);
 
@@ -215,14 +267,22 @@ export function AnimatedText({
     return palette[(step * 2 + ordinal * 3) % palette.length];
   };
 
-  const wordStyle = (
+  /** How a word arrives and leaves, and how far it travels doing it. */
+  const motion: React.CSSProperties = reducedMotion
+    ? { transition: undefined }
+    : {
+        transition: `opacity ${transitionMs}ms ease, transform ${transitionMs}ms ease`,
+      };
+  const offset = reducedMotion ? 'translateY(0)' : 'translateY(0.25em)';
+
+  /** The plate the words of a piece are drawn on, and the colour they take. */
+  const pieceStyle = (
     part: AnimatedTextWords,
-    ordinal: number
+    ordinal: number,
   ): React.CSSProperties => {
     const plate = part.background ?? background;
     const hasPlate = plate !== 'transparent' && plate !== 'none';
     return {
-      display: 'inline-block',
       // An explicitly named colour always wins; otherwise the palette.
       color: resolveColor(part.color ?? color) ?? paletteColor(ordinal),
       backgroundColor: hasPlate ? plate : undefined,
@@ -230,11 +290,47 @@ export function AnimatedText({
       // drifting apart from the fixed text around them.
       padding: hasPlate ? '0 0.25em' : undefined,
       borderRadius: hasPlate ? '0.25em' : undefined,
-      transition: `opacity ${transitionMs}ms ease, transform ${transitionMs}ms ease`,
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(0.25em)',
     };
   };
+
+  const wordStyle = (
+    part: AnimatedTextWords,
+    ordinal: number,
+  ): React.CSSProperties => ({
+    ...pieceStyle(part, ordinal),
+    display: 'inline-block',
+    ...motion,
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : offset,
+  });
+
+  /**
+   * The piece as a slot: a grid of one cell, holding every word it can show.
+   *
+   * The cell takes the width of its widest occupant, so the slot is the same
+   * width whichever word is up — which is the whole point of `reserveWidth`,
+   * and why the words have to be in the document rather than measured.
+   */
+  const slotStyle = (
+    part: AnimatedTextWords,
+    ordinal: number,
+  ): React.CSSProperties => ({
+    ...pieceStyle(part, ordinal),
+    display: 'inline-grid',
+    justifyItems: 'center',
+  });
+
+  const wordInSlotStyle = (showing: boolean): React.CSSProperties => ({
+    gridArea: '1 / 1',
+    whiteSpace: 'nowrap',
+    // Hidden rather than merely transparent: the words not showing should be
+    // out of the accessibility tree and out of the way of the pointer, while
+    // still holding the cell open.
+    visibility: showing ? 'visible' : 'hidden',
+    ...motion,
+    opacity: showing && visible ? 1 : 0,
+    transform: showing && visible ? 'translateY(0)' : offset,
+  });
 
   return (
     <span {...rest} style={style}>
@@ -247,6 +343,7 @@ export function AnimatedText({
           return null;
         }
         const ordinal = cyclingParts.indexOf(part);
+        const current = step % available.length;
         return (
           <span
             key={`words-${index}`}
@@ -254,9 +351,21 @@ export function AnimatedText({
             // separate updates, so a screen reader is not read a new word
             // every two seconds.
             aria-live="polite"
-            style={wordStyle(part, ordinal)}
+            style={
+              reserveWidth ? slotStyle(part, ordinal) : wordStyle(part, ordinal)
+            }
           >
-            {available[step % available.length]}
+            {reserveWidth
+              ? available.map((word, wordIndex) => (
+                  <span
+                    key={word}
+                    aria-hidden={wordIndex === current ? undefined : true}
+                    style={wordInSlotStyle(wordIndex === current)}
+                  >
+                    {word}
+                  </span>
+                ))
+              : available[current]}
           </span>
         );
       })}
