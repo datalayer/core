@@ -199,11 +199,12 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 
 ---
 
-<p align="center">
-  <img src="https://assets.datalayer.tech/datalayer-25.svg" alt="Datalayer Logo" width="200"></img>
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>✨ 🤖 Managed Agent Workers</strong><br></br>
-  <a href="https://datalayer.ai">Get started with Datalayer today!</a>
-</p>
+**If this project is helpful to you, please give us a ⭐️**
+
+Made with ❤️ by [Datalayer](https://datalayer.ai)
+
+<img src="https://assets.datalayer.tech/datalayer-25.svg" alt="Datalayer Logo" width="200"></img>
+
+</div>
