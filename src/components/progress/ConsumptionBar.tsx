@@ -65,6 +65,15 @@ export interface IConsumptionBarProps {
    * Duration is the kernel max duration in seconds.
    */
   onUpdate?: (progress: number, duration: number) => void;
+  /**
+   * Paddings of the indicator, each defaulting to what the button wears
+   * today. `0` collapses a side entirely — a host laying the bar out on a
+   * grid of its own passes zeros and spaces it itself.
+   */
+  paddingLeft?: number | string;
+  paddingRight?: number | string;
+  paddingTop?: number | string;
+  paddingBottom?: number | string;
 }
 
 /**
@@ -79,6 +88,10 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
     onUpdate,
     refreshInterval = 2000,
     style,
+    paddingLeft,
+    paddingRight,
+    paddingTop,
+    paddingBottom,
   } = props;
   const duration = useMemo(
     () => getConsumptionDuration(startedAt, expiredAt),
@@ -127,7 +140,15 @@ export function ConsumptionBar(props: IConsumptionBarProps): JSX.Element {
               : undefined
           }
           tabIndex={onClick ? 0 : -1}
-          sx={{ cursor: onClick ? 'pointer' : 'default' }}
+          sx={{
+            cursor: onClick ? 'pointer' : 'default',
+            // Only the sides that were asked for: an absent padding keeps
+            // the button's own.
+            ...(paddingLeft !== undefined ? { paddingLeft } : {}),
+            ...(paddingRight !== undefined ? { paddingRight } : {}),
+            ...(paddingTop !== undefined ? { paddingTop } : {}),
+            ...(paddingBottom !== undefined ? { paddingBottom } : {}),
+          }}
         >
           <Box sx={{ width: '70px' }}>
             <ProgressBar
