@@ -6,19 +6,19 @@
 import { Link, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { ArrowRightIcon } from '@primer/octicons-react';
+import type { PropsWithChildren, ReactNode } from 'react';
 import { useNavigate } from '../../hooks';
 
 type DatalayerBoxProps = {
   id?: string;
   title: string;
+  titleAction?: ReactNode;
   linkLabel?: string;
   linkRoute?: string;
 };
 
-export const DatalayerBox = (
-  props: React.PropsWithChildren<DatalayerBoxProps>,
-) => {
-  const { title, linkLabel, linkRoute, children } = props;
+export const DatalayerBox = (props: PropsWithChildren<DatalayerBoxProps>) => {
+  const { title, titleAction, linkLabel, linkRoute, children } = props;
   const navigate = useNavigate();
   return (
     <>
@@ -33,20 +33,25 @@ export const DatalayerBox = (
         <Text as="h2" sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}>
           {title}
         </Text>
-        {linkRoute && linkLabel && (
-          <Link
-            href="javascript: return false;"
-            onClick={e => navigate(linkRoute)}
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 1,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {linkLabel}
-            <ArrowRightIcon />
-          </Link>
+        {(titleAction || (linkRoute && linkLabel)) && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {titleAction}
+            {linkRoute && linkLabel && (
+              <Link
+                href="javascript: return false;"
+                onClick={e => navigate(linkRoute)}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {linkLabel}
+                <ArrowRightIcon />
+              </Link>
+            )}
+          </Box>
         )}
       </Box>
       <Box
