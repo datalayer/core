@@ -11,19 +11,28 @@ import AstronautIcon from '@datalayer/icons-react/data2/AstronautIcon';
 import ConstructionWorkerIcon from '@datalayer/icons-react/data2/ConstructionWorkerIcon';
 import CowboyHatFaceIcon from '@datalayer/icons-react/data2/CowboyHatFaceIcon';
 import DragonFaceIcon from '@datalayer/icons-react/data2/DragonFaceIcon';
-import JovyanIcon from '@datalayer/icons-react/data2/JovyanIcon';
+import ElfManIcon from '@datalayer/icons-react/data2/ElfManIcon';
+import FlyingSaucerIcon from '@datalayer/icons-react/data2/FlyingSaucerIcon';
+import GremlinIcon from '@datalayer/icons-react/data2/GremlinIcon';
+import GrinningFaceIcon from '@datalayer/icons-react/data2/GrinningFaceIcon';
+import LizardIcon from '@datalayer/icons-react/data2/LizardIcon';
 import MagicWandIcon from '@datalayer/icons-react/data2/MagicWandIcon';
 import ManOfficeWorkerIcon from '@datalayer/icons-react/data2/ManOfficeWorkerIcon';
+import ManTechnologistIcon from '@datalayer/icons-react/data2/ManTechnologistIcon';
 import NinjaIcon from '@datalayer/icons-react/data2/NinjaIcon';
 import PenguinIcon from '@datalayer/icons-react/data2/PenguinIcon';
 import PersonSurfingIcon from '@datalayer/icons-react/data2/PersonSurfingIcon';
 import PersonSwimmingIcon from '@datalayer/icons-react/data2/PersonSwimmingIcon';
+import RingedPlanetIcon from '@datalayer/icons-react/data2/RingedPlanetIcon';
 import RobotIcon from '@datalayer/icons-react/data2/RobotIcon';
 import RocketIcon from '@datalayer/icons-react/data2/RocketIcon';
+import SantaClausIcon from '@datalayer/icons-react/data2/SantaClausIcon';
 import ScientistIcon from '@datalayer/icons-react/data2/ScientistIcon';
+import SharkIcon from '@datalayer/icons-react/data2/SharkIcon';
 import SnowmanIcon from '@datalayer/icons-react/data2/SnowmanIcon';
 import StarIcon from '@datalayer/icons-react/data2/StarIcon';
 import StudentWomanIcon from '@datalayer/icons-react/data2/StudentWomanIcon';
+import SunIcon from '@datalayer/icons-react/data2/SunIcon';
 import WhaleSpoutingIcon from '@datalayer/icons-react/data2/WhaleSpoutingIcon';
 import WomanTechnologistIcon from '@datalayer/icons-react/data2/WomanTechnologistIcon';
 import { SvgAboutHero } from '@datalayer/design/lib/svg/SvgAboutHero';
@@ -64,19 +73,28 @@ export const PRINCIPAL_AVATAR_ICONS: ReadonlyArray<{
   { name: 'ConstructionWorkerIcon', label: 'Construction worker', Icon: ConstructionWorkerIcon },
   { name: 'CowboyHatFaceIcon', label: 'Cowboy', Icon: CowboyHatFaceIcon },
   { name: 'DragonFaceIcon', label: 'Dragon', Icon: DragonFaceIcon },
-  { name: 'JovyanIcon', label: 'Jovyan', Icon: JovyanIcon },
+  { name: 'ElfManIcon', label: 'Elf', Icon: ElfManIcon },
+  { name: 'FlyingSaucerIcon', label: 'Flying saucer', Icon: FlyingSaucerIcon },
+  { name: 'GremlinIcon', label: 'Gremlin', Icon: GremlinIcon },
+  { name: 'GrinningFaceIcon', label: 'Grinning face', Icon: GrinningFaceIcon },
+  { name: 'LizardIcon', label: 'Lizard', Icon: LizardIcon },
   { name: 'MagicWandIcon', label: 'Magic wand', Icon: MagicWandIcon },
   { name: 'ManOfficeWorkerIcon', label: 'Office worker', Icon: ManOfficeWorkerIcon },
+  { name: 'ManTechnologistIcon', label: 'Man technologist', Icon: ManTechnologistIcon },
   { name: 'NinjaIcon', label: 'Ninja', Icon: NinjaIcon },
   { name: 'PenguinIcon', label: 'Penguin', Icon: PenguinIcon },
   { name: 'PersonSurfingIcon', label: 'Surfer', Icon: PersonSurfingIcon },
   { name: 'PersonSwimmingIcon', label: 'Swimmer', Icon: PersonSwimmingIcon },
+  { name: 'RingedPlanetIcon', label: 'Planet', Icon: RingedPlanetIcon },
   { name: 'RobotIcon', label: 'Robot', Icon: RobotIcon },
   { name: 'RocketIcon', label: 'Rocket', Icon: RocketIcon },
+  { name: 'SantaClausIcon', label: 'Santa', Icon: SantaClausIcon },
   { name: 'ScientistIcon', label: 'Scientist', Icon: ScientistIcon },
+  { name: 'SharkIcon', label: 'Shark', Icon: SharkIcon },
   { name: 'SnowmanIcon', label: 'Snowman', Icon: SnowmanIcon },
   { name: 'StarIcon', label: 'Star', Icon: StarIcon },
   { name: 'StudentWomanIcon', label: 'Student', Icon: StudentWomanIcon },
+  { name: 'SunIcon', label: 'Sun', Icon: SunIcon },
   { name: 'WhaleSpoutingIcon', label: 'Whale', Icon: WhaleSpoutingIcon },
   { name: 'WomanTechnologistIcon', label: 'Woman technologist', Icon: WomanTechnologistIcon },
 ] as const;
@@ -213,10 +231,13 @@ export function PrincipalBannerPicker({
   value,
   onChange,
   disabled = false,
+  showPreview = true,
 }: {
   value?: string;
   onChange: (name: string) => void;
   disabled?: boolean;
+  /** Off when the surface already shows the banner the picker changes. */
+  showPreview?: boolean;
 }): JSX.Element {
   const [open, setOpen] = useState(false);
   const [selectedName, setSelectedName] = useState(value);
@@ -227,7 +248,7 @@ export function PrincipalBannerPicker({
       {/* Only a name of the catalogue previews: an unknown one — from an
           older picker, or a value that never persisted — would render as an
           empty box where the banner should be. */}
-      {selected ? (
+      {showPreview && selected ? (
         <Box sx={{ mb: 2 }}>
           <PrincipalBannerImage banner={selected.name} height={120} />
         </Box>

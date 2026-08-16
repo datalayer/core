@@ -1261,6 +1261,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+        // Every cached view of the user — the public profile page, the
+        // admin list and detail, the search seeds — is now out of date.
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       },
     });
   };
@@ -1378,16 +1381,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               first_name_t: profile.first_name,
               last_name_t: profile.last_name,
               avatar_url_s: profile.avatar_url,
+              avatar_icon_s: profile.avatar_icon_s,
+              banner_s: profile.banner_s,
               origin_s: profile.origin,
             });
+            // Stale seeding (updatedAt: 0): the public profile is a partial
+            // shape, and a fresh-marked seed would overwrite a richer detail
+            // entry and be served as the whole truth for the staleTime.
             if (mappedUser) {
               queryClient.setQueryData(
                 queryKeys.users.detail(mappedUser.id),
                 mappedUser,
+                { updatedAt: 0 },
               );
               queryClient.setQueryData(
                 queryKeys.users.byHandle(mappedUser.handle),
                 mappedUser,
+                { updatedAt: 0 },
               );
             }
           }
@@ -1416,12 +1426,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.users) {
           const users = resp.users.map((u: unknown) => {
             const user = toUser(u);
-            // Pre-populate individual caches
+            // Pre-populate individual caches so a detail view renders
+            // instantly — but as STALE data (updatedAt: 0): a search answer
+            // can be a partial shape (a member's search has no email or
+            // settings), and a fresh-marked partial would be served as the
+            // whole truth for the staleTime. Stale renders and revalidates.
             if (user) {
-              queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+              queryClient.setQueryData(queryKeys.users.detail(user.id), user, {
+                updatedAt: 0,
+              });
               queryClient.setQueryData(
                 queryKeys.users.byHandle(user.handle),
                 user,
+                { updatedAt: 0 },
               );
             }
             return user;
@@ -1465,11 +1482,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const users = resp.users
             .map((u: unknown) => {
               const user = toUser(u);
+              // Stale seeding, as in useSearchUsers: the bulk answer may be
+              // a partial shape, so it renders but revalidates.
               if (user) {
-                queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+                queryClient.setQueryData(
+                  queryKeys.users.detail(user.id),
+                  user,
+                  { updatedAt: 0 },
+                );
                 queryClient.setQueryData(
                   queryKeys.users.byHandle(user.handle),
                   user,
+                  { updatedAt: 0 },
                 );
               }
               return user;
