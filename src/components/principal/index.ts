@@ -5,6 +5,7 @@
 
 export * from './Principal';
 export * from './PrincipalAvatar';
+export * from './PrincipalAppearance';
 export * from './PrincipalBadge';
 export * from './PrincipalBanner';
 export {

@@ -7,6 +7,7 @@ export * from './CoreState';
 export * from './DatasourceState';
 export * from './IAMState';
 export * from './LayoutState';
+export * from './ProfileState';
 export * from './OrganizationState';
 export * from './SurveysState';
 export * from './TeamState';

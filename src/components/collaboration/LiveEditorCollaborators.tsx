@@ -22,20 +22,22 @@
  *   of an item. They fill the stack when there is no presence, and complete
  *   it when there is.
  *
- * A face is an avatar when one is known, and initials on a colored disc
- * otherwise — the presence color when the room gave one.
+ * Every face uses the shared principal avatar rules: a selected icon wins,
+ * then a connected-account picture, then the standard personal fallback.
  *
  * @module components/collaboration/LiveEditorCollaborators
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Avatar, AvatarStack } from '@primer/react';
+import { AvatarStack } from '@primer/react';
+import { PrincipalAvatar } from '../principal/PrincipalAvatar';
 
 export type LiveCollaborator = {
   /** Stable identity — a user uid, or the awareness client id. */
   id: string;
   name: string;
   avatarUrl?: string;
+  avatarIcon?: string;
   /** Cursor color of the presence, worn by the initials disc. */
   color?: string;
 };
@@ -50,21 +52,6 @@ export type IAwarenessLike = {
   on(event: 'change', handler: () => void): void;
   off(event: 'change', handler: () => void): void;
 };
-
-const FALLBACK_COLORS = ['#0969da', '#8250df', '#bf3989', '#1a7f37', '#9a6700'];
-
-/** Initials on a disc, for a collaborator without an avatar. */
-function initialsDataUri(name: string, color: string): string {
-  const initials = name
-    .split(' ')
-    .map(part => part[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect width="64" height="64" rx="32" fill="${color}" fill-opacity="0.2"/><text x="32" y="38" text-anchor="middle" fill="${color}" font-family="Arial, sans-serif" font-size="24" font-weight="700">${initials || '?'}</text></svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
 
 /** The `user` field of an awareness state, in its several spellings. */
 function collaboratorOfState(
@@ -84,6 +71,7 @@ function collaboratorOfState(
     id: String(user.uid ?? user.id ?? user.username ?? clientId),
     name,
     avatarUrl: user.avatar_url || user.avatarUrl || undefined,
+    avatarIcon: user.avatar_icon_s || user.avatarIcon || undefined,
     color: user.color || undefined
   };
 }
@@ -143,8 +131,15 @@ export function LiveEditorCollaborators(
       if (!known) {
         merged.set(key, collaborator);
         byName.set(nameKey, key);
-      } else if (!known.avatarUrl && collaborator.avatarUrl) {
-        merged.set(key, { ...known, avatarUrl: collaborator.avatarUrl });
+      } else if (
+        (!known.avatarIcon && collaborator.avatarIcon) ||
+        (!known.avatarUrl && collaborator.avatarUrl)
+      ) {
+        merged.set(key, {
+          ...known,
+          avatarIcon: known.avatarIcon || collaborator.avatarIcon,
+          avatarUrl: known.avatarUrl || collaborator.avatarUrl,
+        });
       }
     }
     return Array.from(merged.values()).slice(0, max);
@@ -155,18 +150,15 @@ export function LiveEditorCollaborators(
   }
   return (
     <AvatarStack size={size}>
-      {faces.map((face, index) => (
-        <Avatar
+      {faces.map(face => (
+        <PrincipalAvatar
           key={face.id}
+          kind="personal"
           size={size}
           alt={face.name}
-          src={
-            face.avatarUrl ||
-            initialsDataUri(
-              face.name,
-              face.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length]
-            )
-          }
+          avatarUrl={face.avatarUrl}
+          avatarIcon={face.avatarIcon}
+          square={false}
         />
       ))}
     </AvatarStack>

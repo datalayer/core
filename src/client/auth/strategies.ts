@@ -56,6 +56,8 @@ abstract class BaseAuthStrategy implements AuthStrategy {
         response.profile.last_name_t || response.profile.last_name || '',
       avatar_url_s:
         response.profile.avatar_url_s || response.profile.avatar_url,
+      avatar_icon_s: response.profile.avatar_icon_s,
+      banner_s: response.profile.banner_s,
     };
 
     return new UserDTO(userData, undefined);

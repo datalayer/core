@@ -31,6 +31,8 @@ export interface UserData {
   last_name_t: string;
   /** Display name shown in the UI */
   avatar_url_s: string;
+  avatar_icon_s?: string;
+  banner_s?: string;
   /** Additional fields that may be present in the response */
   [key: string]: any;
 }
@@ -52,6 +54,8 @@ export interface UserJSON {
   handle: string;
   /** URL to the user's avatar image */
   avatarUrl: string;
+  avatarIcon?: string;
+  banner?: string;
 }
 
 /**
@@ -104,6 +108,14 @@ export class UserDTO {
     return this._data.avatar_url_s;
   }
 
+  get avatarIcon(): string | undefined {
+    return this._data.avatar_icon_s;
+  }
+
+  get banner(): string | undefined {
+    return this._data.banner_s;
+  }
+
   // ========================================================================
   // Utility Methods
   // ========================================================================
@@ -125,6 +137,8 @@ export class UserDTO {
       email: this.email,
       handle: this.handle,
       avatarUrl: this.avatarUrl,
+      avatarIcon: this.avatarIcon,
+      banner: this.banner,
     };
     validateJSON(obj, 'User');
     return obj;

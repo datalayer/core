@@ -14,6 +14,7 @@
 import { AlienIcon } from '@datalayer/icons-react';
 import { Box, useColorPalette } from '@datalayer/primer-addons';
 import { DLAvatar } from './DLAvatar';
+import { getPrincipalAvatarIcon } from '../principal/PrincipalAppearance';
 
 /**
  * Returns `true` when the given URL points to a real user avatar (i.e. not a
@@ -31,6 +32,7 @@ export function hasRealAvatar(url?: string): boolean {
 
 export type UserAvatarProps = {
   avatarUrl?: string;
+  avatarIcon?: string;
   /** Avatar edge length in pixels. Defaults to 100. */
   size?: number;
   /** Render with rounded square corners instead of a circle. Defaults to true. */
@@ -41,23 +43,46 @@ export type UserAvatarProps = {
   fallbackBackground?: string;
   /** Optional icon foreground color override for the default avatar. */
   fallbackForeground?: string;
+  className?: string;
 };
 
 export const UserAvatar = ({
   avatarUrl,
+  avatarIcon,
   size = 100,
   square = true,
   iconSize,
   fallbackBackground,
   fallbackForeground,
+  className,
 }: UserAvatarProps): JSX.Element => {
   const palette = useColorPalette();
+  const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
+  if (SelectedIcon) {
+    return (
+      <Box
+        className={className}
+        sx={{
+          width: size,
+          height: size,
+          borderRadius: square ? 2 : '50%',
+          overflow: 'hidden',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <SelectedIcon size={size} colored />
+      </Box>
+    );
+  }
   if (hasRealAvatar(avatarUrl)) {
-    return <DLAvatar square={square} src={avatarUrl} size={size} />;
+    return <DLAvatar className={className} square={square} src={avatarUrl} size={size} />;
   }
   const resolvedIconSize = iconSize ?? Math.round(size * 0.48);
   return (
     <Box
+      className={className}
       sx={{
         width: size,
         height: size,

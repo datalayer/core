@@ -30,6 +30,8 @@ export function asOrganization(org: any): IOrganization {
     name: org.name_t,
     displayName: org.display_name_t || org.name_t,
     description: org.description_t,
+    avatarIcon: org.avatar_icon_s ?? org.avatarIcon,
+    banner: org.banner_s ?? org.banner,
     public: org.public_b,
     members,
     teams: [],
@@ -50,6 +52,8 @@ export type IBaseOrganization = {
   name: string;
   displayName?: string;
   description: string;
+  avatarIcon?: string;
+  banner?: string;
   public: boolean;
   creationDate: Date;
   members: IOrganizationMember[];

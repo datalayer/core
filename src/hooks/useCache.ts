@@ -87,7 +87,7 @@ type IPage = any;
 type ISpaceItem = any;
 type IStudentItem = any;
 import { asPage, asSpace } from './cacheConverters';
-import { useCoreStore, useIAMStore } from '../state';
+import { useCoreStore, useIAMStore, profileStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
@@ -1223,7 +1223,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           token,
         });
         if (resp.me) {
-          return toUser(resp.me);
+          const me = toUser(resp.me);
+          // The full profile — banner and avatar included — feeds the
+          // profile store every surface reads.
+          profileStore.getState().setProfileFromUser(me);
+          return me;
         }
         return null;
       },
@@ -1240,15 +1244,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         email,
         firstName,
         lastName,
+        avatarIcon,
+        banner,
       }: {
         email: string;
         firstName: string;
         lastName: string;
+        avatarIcon?: string;
+        banner?: string;
       }) => {
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/me`,
           method: 'PUT',
-          body: { email, firstName, lastName },
+          body: { email, firstName, lastName, avatarIcon, banner },
         });
       },
       onSuccess: () => {
@@ -1685,6 +1693,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: {
             name: organization.name,
             description: organization.description,
+            avatarIcon: organization.avatarIcon,
+            banner: organization.banner,
           },
         });
       },
@@ -1809,6 +1819,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: {
             name: team.name,
             description: team.description,
+            avatarIcon: team.avatarIcon,
+            banner: team.banner,
           },
         });
       },

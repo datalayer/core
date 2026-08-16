@@ -30,6 +30,7 @@ export type PrincipalDetailsOverlayProps = {
   email?: string;
   origin?: string;
   avatarUrl?: string;
+  avatarIcon?: string;
   /** Team-specific: parent organization display name. */
   organizationName?: string;
   /** Team-specific: number of members. */
@@ -138,6 +139,7 @@ export function PrincipalDetailsOverlay({
   email,
   origin,
   avatarUrl,
+  avatarIcon,
   organizationName,
   memberCount,
   isPublic,
@@ -215,6 +217,7 @@ export function PrincipalDetailsOverlay({
               <PrincipalAvatar
                 kind={kind}
                 avatarUrl={avatarUrl}
+                avatarIcon={avatarIcon}
                 alt={normalizedDisplayName}
                 size={40}
               />

@@ -24,6 +24,8 @@ export function asTeam(t: any, organizationId: string): ITeam {
     type: 'team',
     name: t.name_t,
     description: t.description_t,
+    avatarIcon: t.avatar_icon_s ?? t.avatarIcon,
+    banner: t.banner_s ?? t.banner,
     public: t.public_b,
     members,
     organization: {
@@ -43,6 +45,8 @@ export type IBaseTeam = {
   handle: string;
   name: string;
   description: string;
+  avatarIcon?: string;
+  banner?: string;
   public: boolean;
   creationDate: Date;
   lastUpdateDate?: Date;

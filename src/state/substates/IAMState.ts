@@ -33,6 +33,7 @@ import {
 } from '../../api/DatalayerApi';
 import { getCookie, setCookie, deleteCookie } from '../../utils';
 import { coreStore } from './CoreState';
+import { profileStore } from './ProfileState';
 
 /**
  * Limit to warn about low credits in milliseconds.
@@ -174,6 +175,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
     logout: () => {
       storeUser();
       storeToken();
+      profileStore.getState().clearProfile();
       set({
         credits: undefined,
         creditsReservations: [],
@@ -219,6 +221,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
             ...(user as IUser),
           },
         };
+        profileStore.getState().setProfileFromUser(updatedState.user as IUser);
         /*
         if (state.user?.email && !updatedState.user.email) {
           updatedState.user.email = state.user.email;
@@ -322,6 +325,9 @@ export const iamStore = createStore<IAMState>((set, get) => {
       set((state: IAMState) => {
         storeUser(user);
         storeToken(token);
+        // The profile store is what the surfaces (user menu, sidebars,
+        // profile views) read: every flow that learns the user feeds it.
+        profileStore.getState().setProfileFromUser(user);
         return {
           user,
           token,

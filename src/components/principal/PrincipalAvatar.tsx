@@ -6,15 +6,18 @@
 import { Box } from '@datalayer/primer-addons';
 import { OrganizationIcon, PeopleIcon } from '@primer/octicons-react';
 import { UserAvatar } from '../avatars';
+import { getPrincipalAvatarIcon, type PrincipalType } from './PrincipalAppearance';
 
-export type PrincipalAvatarKind = 'personal' | 'team' | 'organization';
+export type PrincipalAvatarKind = PrincipalType;
 
 export type PrincipalAvatarProps = {
   kind: PrincipalAvatarKind;
   avatarUrl?: string;
+  avatarIcon?: string;
   alt?: string;
   size?: number;
   square?: boolean;
+  className?: string;
 };
 
 function getFallbackIconSize(size: number): number {
@@ -24,17 +27,42 @@ function getFallbackIconSize(size: number): number {
 export function PrincipalAvatar({
   kind,
   avatarUrl,
+  avatarIcon,
   alt,
   size = 20,
   square = false,
+  className,
 }: PrincipalAvatarProps): JSX.Element {
+  const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
+  if (SelectedIcon) {
+    return (
+      <Box
+        className={className}
+        sx={{
+          width: size,
+          height: size,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          borderRadius: square ? 2 : '50%',
+        }}
+        aria-label={alt || `${kind} avatar`}
+      >
+        <SelectedIcon size={size} colored />
+      </Box>
+    );
+  }
+
   if (kind === 'personal') {
     return (
       <UserAvatar
         avatarUrl={avatarUrl}
+        avatarIcon={avatarIcon}
         size={size}
         square={square}
         iconSize={getFallbackIconSize(size)}
+        className={className}
       />
     );
   }
@@ -46,6 +74,7 @@ export function PrincipalAvatar({
 
   return (
     <Box
+      className={className}
       sx={{
         width: size,
         height: size,
