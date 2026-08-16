@@ -82,9 +82,9 @@ export type IDatalayerCoreConfig = {
    */
   aiInferenceUrl: string;
   /**
-   * MCP Servers API URL.
+   * Jupyter MCP Server URL.
    */
-  mcpServersUrl: string;
+  jupyterMcpServerUrl: string;
   /**
    * OTEL (OpenTelemetry) API URL.
    *

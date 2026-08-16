@@ -452,7 +452,10 @@ def whoami(
                 ("DATALAYER_SUCCESS_URL", urls.success_url),
                 ("DATALAYER_STATUS_URL", urls.status_url),
                 ("DATALAYER_SUPPORT_URL", urls.support_url),
-                ("DATALAYER_MCP_SERVER_URL", urls.mcp_server_url),
+                (
+                    "DATALAYER_JUPYTER_MCP_SERVER_URL",
+                    urls.jupyter_mcp_server_url,
+                ),
                 ("DATALAYER_SCHEDULER_URL", urls.scheduler_url),
             ]
             console.print("[bold]Defined URLs:[/bold]")
@@ -494,7 +497,10 @@ def whoami(
                     ("DATALAYER_SUCCESS_URL", urls.success_url),
                     ("DATALAYER_STATUS_URL", urls.status_url),
                     ("DATALAYER_SUPPORT_URL", urls.support_url),
-                    ("DATALAYER_MCP_SERVER_URL", urls.mcp_server_url),
+                    (
+                        "DATALAYER_JUPYTER_MCP_SERVER_URL",
+                        urls.jupyter_mcp_server_url,
+                    ),
                     ("DATALAYER_SCHEDULER_URL", urls.scheduler_url),
                 ]
 

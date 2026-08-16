@@ -2337,7 +2337,12 @@ export function ShareAccessComponent({
     <Dialog
       title={`Share ${resourceLabel.toLowerCase()}`}
       onClose={onClose}
-      width="large"
+      // Wider than any preset — Primer's `xlarge` stops at 640px, and the
+      // principal picker, the access levels and the ACL list all live in
+      // this one surface. Capped to the viewport so small screens keep a
+      // margin.
+      width="xlarge"
+      sx={{ width: 'min(960px, calc(100vw - 64px))', maxWidth: 'none' }}
     >
       {content}
     </Dialog>

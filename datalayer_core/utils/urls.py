@@ -35,7 +35,7 @@ DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_SERVICE_URL
+DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL = "https://mcp.datalayer.run/mcp"
 
 DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_SERVICE_URL
 
@@ -84,8 +84,8 @@ class DatalayerURLs:
         The Datalayer status service URL
     support_url : str
         The Datalayer support service URL
-    mcp_server_url : str
-        The Datalayer MCP server service URL
+    jupyter_mcp_server_url : str
+        The Datalayer Jupyter MCP Server URL
     scheduler_url : str
         The Datalayer scheduler service URL
     """
@@ -102,7 +102,7 @@ class DatalayerURLs:
     success_url: str
     status_url: str
     support_url: str
-    mcp_server_url: str
+    jupyter_mcp_server_url: str
     scheduler_url: str
 
     @classmethod
@@ -120,7 +120,7 @@ class DatalayerURLs:
         success_url: Optional[str] = None,
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
-        mcp_server_url: Optional[str] = None,
+        jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
@@ -164,9 +164,10 @@ class DatalayerURLs:
         support_url : Optional[str]
             Override for the support URL. If None, will check DATALAYER_SUPPORT_URL env var
             then fallback to DEFAULT_DATALAYER_SUPPORT_URL.
-        mcp_server_url : Optional[str]
-            Override for the MCP server URL. If None, will check DATALAYER_MCP_SERVER_URL env var
-            then fallback to DEFAULT_DATALAYER_MCP_SERVER_URL.
+        jupyter_mcp_server_url : Optional[str]
+            Override for the Jupyter MCP Server URL. If None, will check
+            DATALAYER_JUPYTER_MCP_SERVER_URL, then fallback to
+            DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL.
         scheduler_url : Optional[str]
             Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
             then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
@@ -178,8 +179,9 @@ class DatalayerURLs:
 
         Notes
         -----
-        When iam_url is provided, all other service URLs will be derived from the iam_url
-        unless explicitly overridden. This allows setting a single base URL for all services.
+        When iam_url is provided, other service URLs are derived from it unless explicitly
+        overridden. The Jupyter MCP Server remains independent and uses its dedicated
+        environment variable or hosted default.
         """
         # Determine base URLs first
         resolved_iam_url = (
@@ -270,11 +272,10 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_SUPPORT_URL
         )
-        resolved_mcp_server_url = (
-            mcp_server_url
-            or os.environ.get("DATALAYER_MCP_SERVER_URL")
-            or base_url_for_services
-            or DEFAULT_DATALAYER_MCP_SERVERS_URL
+        resolved_jupyter_mcp_server_url = (
+            jupyter_mcp_server_url
+            or os.environ.get("DATALAYER_JUPYTER_MCP_SERVER_URL")
+            or DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL
         )
         resolved_scheduler_url = (
             scheduler_url
@@ -296,7 +297,9 @@ class DatalayerURLs:
         resolved_success_url = resolved_success_url.rstrip("/")
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
-        resolved_mcp_server_url = resolved_mcp_server_url.rstrip("/")
+        resolved_jupyter_mcp_server_url = resolved_jupyter_mcp_server_url.rstrip(
+            "/"
+        )
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
 
         return cls(
@@ -312,7 +315,7 @@ class DatalayerURLs:
             success_url=resolved_success_url,
             status_url=resolved_status_url,
             support_url=resolved_support_url,
-            mcp_server_url=resolved_mcp_server_url,
+            jupyter_mcp_server_url=resolved_jupyter_mcp_server_url,
             scheduler_url=resolved_scheduler_url,
         )
 
@@ -330,7 +333,7 @@ class DatalayerURLs:
         self.success_url = self.success_url.rstrip("/")
         self.status_url = self.status_url.rstrip("/")
         self.support_url = self.support_url.rstrip("/")
-        self.mcp_server_url = self.mcp_server_url.rstrip("/")
+        self.jupyter_mcp_server_url = self.jupyter_mcp_server_url.rstrip("/")
         self.scheduler_url = self.scheduler_url.rstrip("/")
 
     def as_dict(self) -> dict[str, str]:
@@ -352,7 +355,7 @@ class DatalayerURLs:
         success_url: Optional[str] = None,
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
-        mcp_server_url: Optional[str] = None,
+        jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
@@ -369,6 +372,6 @@ class DatalayerURLs:
             success_url=success_url,
             status_url=status_url,
             support_url=support_url,
-            mcp_server_url=mcp_server_url,
+            jupyter_mcp_server_url=jupyter_mcp_server_url,
             scheduler_url=scheduler_url,
         ).as_dict()
