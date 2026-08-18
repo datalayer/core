@@ -782,7 +782,10 @@ export function PrincipalBannerPicker({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: ['1fr', 'repeat(3, minmax(0, 1fr))'],
+              // Four to a row, so a banner is seen against its neighbours
+              // rather than one at a time; one column on a narrow overlay,
+              // where four would be four slivers.
+              gridTemplateColumns: ['1fr', 'repeat(4, minmax(0, 1fr))'],
               gap: 3,
             }}
           >
