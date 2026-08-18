@@ -149,7 +149,16 @@ export function LiveEditorCollaborators(
     return null;
   }
   return (
-    <AvatarStack size={size}>
+    /*
+     * Expanding to the LEFT.
+     *
+     * A stack of faces spreads out on hover, and it spreads from where it is
+     * anchored: anchored on its left, it grew rightwards over whatever the
+     * toolbar holds next to it. `alignRight` anchors it on its right, so it
+     * opens back over the space it came from — empty by construction, since
+     * the stack was collapsed there a moment before.
+     */
+    <AvatarStack alignRight size={size}>
       {faces.map(face => (
         <PrincipalAvatar
           key={face.id}

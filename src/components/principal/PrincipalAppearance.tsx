@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
-import { Box, Button, Text } from '@primer/react';
+import { Box, Button, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 import AlienMaskIcon from '@datalayer/icons-react/data2/AlienMaskIcon';
 import AlienMonsterIcon from '@datalayer/icons-react/data2/AlienMonsterIcon';
@@ -49,6 +49,8 @@ import NinjaIcon from '@datalayer/icons-react/data2/NinjaIcon';
 import OpenHandsIcon from '@datalayer/icons-react/data2/OpenHandsIcon';
 import PenIcon from '@datalayer/icons-react/data2/PenIcon';
 import PenguinIcon from '@datalayer/icons-react/data2/PenguinIcon';
+import PictureIcon from '@datalayer/icons-react/data2/PictureIcon';
+import PlaneDepartureIcon from '@datalayer/icons-react/data2/PlaneDepartureIcon';
 import PersonSurfingIcon from '@datalayer/icons-react/data2/PersonSurfingIcon';
 import PersonSwimmingIcon from '@datalayer/icons-react/data2/PersonSwimmingIcon';
 import PictureFramedIcon from '@datalayer/icons-react/data2/PictureFramedIcon';
@@ -118,77 +120,410 @@ type AvatarComponent = ComponentType<
 export const PRINCIPAL_AVATAR_ICONS: ReadonlyArray<{
   name: string;
   label: string;
+  /** What the picture is of, as the emoji catalogue describes it. */
+  description?: string;
   Icon: AvatarComponent;
 }> = [
-  { name: 'AlienMaskIcon', label: 'Alien mask', Icon: AlienMaskIcon },
-  { name: 'AlienMonsterIcon', label: 'Alien monster', Icon: AlienMonsterIcon },
-  { name: 'AstronautIcon', label: 'Astronaut', Icon: AstronautIcon },
-  { name: 'AtomSymbolIcon', label: 'Atom', Icon: AtomSymbolIcon },
-  { name: 'BankIcon', label: 'Bank', Icon: BankIcon },
-  { name: 'BlackNibIcon', label: 'Black nib', Icon: BlackNibIcon },
-  { name: 'BriefcaseIcon', label: 'Briefcase', Icon: BriefcaseIcon },
-  { name: 'BuildingClassicIcon', label: 'Classic building', Icon: BuildingClassicIcon },
-  { name: 'BuildingConstructionIcon', label: 'Building construction', Icon: BuildingConstructionIcon },
-  { name: 'BuildingOfficeIcon', label: 'Office building', Icon: BuildingOfficeIcon },
-  { name: 'BullseyeIcon', label: 'Bullseye', Icon: BullseyeIcon },
-  { name: 'CloudGreyIcon', label: 'Cloud', Icon: CloudGreyIcon },
-  { name: 'ConstructionIcon', label: 'Construction', Icon: ConstructionIcon },
-  { name: 'ConstructionWorkerIcon', label: 'Construction worker', Icon: ConstructionWorkerIcon },
-  { name: 'CowboyHatFaceIcon', label: 'Cowboy', Icon: CowboyHatFaceIcon },
-  { name: 'DashboardGreyIcon', label: 'Dashboard', Icon: DashboardGreyIcon },
-  { name: 'DnaIcon', label: 'DNA', Icon: DnaIcon },
-  { name: 'DraftIcon', label: 'Draft', Icon: DraftIcon },
-  { name: 'DragonFaceIcon', label: 'Dragon face', Icon: DragonFaceIcon },
-  { name: 'DragonIcon', label: 'Dragon', Icon: DragonIcon },
-  { name: 'ElfManIcon', label: 'Elf', Icon: ElfManIcon },
-  { name: 'FireIcon', label: 'Fire', Icon: FireIcon },
-  { name: 'FireworksIcon', label: 'Fireworks', Icon: FireworksIcon },
-  { name: 'FlyingSaucerIcon', label: 'Flying saucer', Icon: FlyingSaucerIcon },
-  { name: 'FourLeafCloverIcon', label: 'Four-leaf clover', Icon: FourLeafCloverIcon },
-  { name: 'GraduationCapIcon', label: 'Graduation cap', Icon: GraduationCapIcon },
-  { name: 'GremlinIcon', label: 'Gremlin', Icon: GremlinIcon },
-  { name: 'GrinningFaceIcon', label: 'Grinning face', Icon: GrinningFaceIcon },
-  { name: 'HouseIcon', label: 'House', Icon: HouseIcon },
-  { name: 'LizardIcon', label: 'Lizard', Icon: LizardIcon },
-  { name: 'MagicWandIcon', label: 'Magic wand', Icon: MagicWandIcon },
-  { name: 'ManOfficeWorkerIcon', label: 'Office worker', Icon: ManOfficeWorkerIcon },
-  { name: 'ManTechnologistIcon', label: 'Man technologist', Icon: ManTechnologistIcon },
-  { name: 'MusicalNoteIcon', label: 'Musical note', Icon: MusicalNoteIcon },
-  { name: 'NinjaIcon', label: 'Ninja', Icon: NinjaIcon },
-  { name: 'OpenHandsIcon', label: 'Open hands', Icon: OpenHandsIcon },
-  { name: 'PenIcon', label: 'Pen', Icon: PenIcon },
-  { name: 'PenguinIcon', label: 'Penguin', Icon: PenguinIcon },
-  { name: 'PersonSurfingIcon', label: 'Surfer', Icon: PersonSurfingIcon },
-  { name: 'PersonSwimmingIcon', label: 'Swimmer', Icon: PersonSwimmingIcon },
-  { name: 'PictureFramedIcon', label: 'Framed picture', Icon: PictureFramedIcon },
-  { name: 'RingedPlanetIcon', label: 'Planet', Icon: RingedPlanetIcon },
-  { name: 'RobotIcon', label: 'Robot', Icon: RobotIcon },
-  { name: 'RocketIcon', label: 'Rocket', Icon: RocketIcon },
-  { name: 'SantaClausIcon', label: 'Santa', Icon: SantaClausIcon },
-  { name: 'SatelliteIcon', label: 'Satellite', Icon: SatelliteIcon },
-  { name: 'ScientistIcon', label: 'Scientist', Icon: ScientistIcon },
-  { name: 'SharkIcon', label: 'Shark', Icon: SharkIcon },
-  { name: 'SnowmanIcon', label: 'Snowman', Icon: SnowmanIcon },
-  { name: 'SpaceInvadersAlien1Icon', label: 'Space invader 1', Icon: SpaceInvadersAlien1Icon },
-  { name: 'SpaceInvadersAlien2Icon', label: 'Space invader 2', Icon: SpaceInvadersAlien2Icon },
-  { name: 'SpaceInvadersAlien3Icon', label: 'Space invader 3', Icon: SpaceInvadersAlien3Icon },
-  { name: 'SparklerIcon', label: 'Sparkler', Icon: SparklerIcon },
-  { name: 'StarIcon', label: 'Star', Icon: StarIcon },
-  { name: 'StudentIcon', label: 'Student', Icon: StudentIcon },
-  { name: 'StudioMicrophoneIcon', label: 'Studio microphone', Icon: StudioMicrophoneIcon },
-  { name: 'SunIcon', label: 'Sun', Icon: SunIcon },
-  { name: 'WavingHandIcon', label: 'Waving hand', Icon: WavingHandIcon },
-  { name: 'WhaleSpoutingIcon', label: 'Whale', Icon: WhaleSpoutingIcon },
-  { name: 'WomanTechnologistIcon', label: 'Woman technologist', Icon: WomanTechnologistIcon },
-  { name: 'WrappedGiftIcon', label: 'Wrapped gift', Icon: WrappedGiftIcon },
-  { name: 'WritingHandIcon', label: 'Writing hand', Icon: WritingHandIcon },
-  { name: 'YinYangIcon', label: 'Yin yang', Icon: YinYangIcon },
+  {
+    name: 'AlienMaskIcon',
+    label: 'Alien mask',
+    description: 'A mask of an alien face, worn for disguise.',
+    Icon: AlienMaskIcon,
+  },
+  {
+    name: 'AlienMonsterIcon',
+    label: 'Alien monster',
+    description: 'The pixelated alien of the arcade cabinets.',
+    Icon: AlienMonsterIcon,
+  },
+  {
+    name: 'AstronautIcon',
+    label: 'Astronaut',
+    description: 'A person in a spacesuit, ready for orbit.',
+    Icon: AstronautIcon,
+  },
+  {
+    name: 'AtomSymbolIcon',
+    label: 'Atom',
+    description: 'A nucleus circled by electrons, the mark of physics.',
+    Icon: AtomSymbolIcon,
+  },
+  {
+    name: 'BankIcon',
+    label: 'Bank',
+    description: 'A columned building where money is kept.',
+    Icon: BankIcon,
+  },
+  {
+    name: 'BlackNibIcon',
+    label: 'Black nib',
+    description: 'The nib of a fountain pen, poised to write.',
+    Icon: BlackNibIcon,
+  },
+  {
+    name: 'BriefcaseIcon',
+    label: 'Briefcase',
+    description: 'A case for papers, carried to work.',
+    Icon: BriefcaseIcon,
+  },
+  {
+    name: 'BuildingClassicIcon',
+    label: 'Classic building',
+    description: 'A columned building of the classical order.',
+    Icon: BuildingClassicIcon,
+  },
+  {
+    name: 'BuildingConstructionIcon',
+    label: 'Building construction',
+    description: 'A building going up, crane and all.',
+    Icon: BuildingConstructionIcon,
+  },
+  {
+    name: 'BuildingOfficeIcon',
+    label: 'Office building',
+    description: 'An office block of many identical windows.',
+    Icon: BuildingOfficeIcon,
+  },
+  {
+    name: 'BullseyeIcon',
+    label: 'Bullseye',
+    description: 'A dart in the centre of the target.',
+    Icon: BullseyeIcon,
+  },
+  {
+    name: 'CloudGreyIcon',
+    label: 'Cloud',
+    description: 'A cloud, of the sky or of the servers.',
+    Icon: CloudGreyIcon,
+  },
+  {
+    name: 'ConstructionIcon',
+    label: 'Construction',
+    description: 'A striped barrier: work in progress.',
+    Icon: ConstructionIcon,
+  },
+  {
+    name: 'ConstructionWorkerIcon',
+    label: 'Construction worker',
+    description: 'A worker in a hard hat.',
+    Icon: ConstructionWorkerIcon,
+  },
+  {
+    name: 'CowboyHatFaceIcon',
+    label: 'Cowboy',
+    description: 'A grinning face under a cowboy hat.',
+    Icon: CowboyHatFaceIcon,
+  },
+  {
+    name: 'DashboardGreyIcon',
+    label: 'Dashboard',
+    description: 'A gauge with its needle in the red.',
+    Icon: DashboardGreyIcon,
+  },
+  {
+    name: 'DnaIcon',
+    label: 'DNA',
+    description: 'The double helix that carries the code of life.',
+    Icon: DnaIcon,
+  },
+  {
+    name: 'DraftIcon',
+    label: 'Draft',
+    description: 'A sheet still being drawn up.',
+    Icon: DraftIcon,
+  },
+  {
+    name: 'DragonFaceIcon',
+    label: 'Dragon face',
+    description: 'The face of a dragon, whiskers and horns.',
+    Icon: DragonFaceIcon,
+  },
+  {
+    name: 'DragonIcon',
+    label: 'Dragon',
+    description: 'A dragon in full, coiled and winged.',
+    Icon: DragonIcon,
+  },
+  {
+    name: 'ElfManIcon',
+    label: 'Elf',
+    description: 'A pointy-eared elf of the folk tales.',
+    Icon: ElfManIcon,
+  },
+  {
+    name: 'FireIcon',
+    label: 'Fire',
+    description: 'A flame — hot, fast, or simply on fire.',
+    Icon: FireIcon,
+  },
+  {
+    name: 'FireworksIcon',
+    label: 'Fireworks',
+    description: 'Fireworks bursting over a night sky.',
+    Icon: FireworksIcon,
+  },
+  {
+    name: 'FlyingSaucerIcon',
+    label: 'Flying saucer',
+    description: 'A saucer from elsewhere, beam and all.',
+    Icon: FlyingSaucerIcon,
+  },
+  {
+    name: 'FourLeafCloverIcon',
+    label: 'Four-leaf clover',
+    description: 'The rare fourth leaf, for luck.',
+    Icon: FourLeafCloverIcon,
+  },
+  {
+    name: 'GraduationCapIcon',
+    label: 'Graduation cap',
+    description: 'The square cap thrown on graduation day.',
+    Icon: GraduationCapIcon,
+  },
+  {
+    name: 'GremlinIcon',
+    label: 'Gremlin',
+    description: 'A small mischief-maker, blamed for the bugs.',
+    Icon: GremlinIcon,
+  },
+  {
+    name: 'GrinningFaceIcon',
+    label: 'Grinning face',
+    description: 'A face grinning from ear to ear.',
+    Icon: GrinningFaceIcon,
+  },
+  {
+    name: 'HouseIcon',
+    label: 'House',
+    description: 'A house with its roof and door.',
+    Icon: HouseIcon,
+  },
+  {
+    name: 'LizardIcon',
+    label: 'Lizard',
+    description: 'A lizard, still and watchful.',
+    Icon: LizardIcon,
+  },
+  {
+    name: 'MagicWandIcon',
+    label: 'Magic wand',
+    description: 'A wand trailing sparks.',
+    Icon: MagicWandIcon,
+  },
+  {
+    name: 'ManOfficeWorkerIcon',
+    label: 'Office worker',
+    description: 'A worker at a desk in an office.',
+    Icon: ManOfficeWorkerIcon,
+  },
+  {
+    name: 'ManTechnologistIcon',
+    label: 'Man technologist',
+    description: 'A man at a laptop, writing code.',
+    Icon: ManTechnologistIcon,
+  },
+  {
+    name: 'MusicalNoteIcon',
+    label: 'Musical note',
+    description: 'A single note off a stave.',
+    Icon: MusicalNoteIcon,
+  },
+  {
+    name: 'NinjaIcon',
+    label: 'Ninja',
+    description: 'A masked figure, quick and unseen.',
+    Icon: NinjaIcon,
+  },
+  {
+    name: 'OpenHandsIcon',
+    label: 'Open hands',
+    description: 'Two open hands, offered or welcoming.',
+    Icon: OpenHandsIcon,
+  },
+  {
+    name: 'PenIcon',
+    label: 'Pen',
+    description: 'A ballpoint pen for everyday writing.',
+    Icon: PenIcon,
+  },
+  {
+    name: 'PenguinIcon',
+    label: 'Penguin',
+    description: 'A penguin in its black and white.',
+    Icon: PenguinIcon,
+  },
+  {
+    name: 'PersonSurfingIcon',
+    label: 'Surfer',
+    description: 'A surfer riding the face of a wave.',
+    Icon: PersonSurfingIcon,
+  },
+  {
+    name: 'PersonSwimmingIcon',
+    label: 'Swimmer',
+    description: 'A swimmer mid-stroke.',
+    Icon: PersonSwimmingIcon,
+  },
+  {
+    name: 'PictureFramedIcon',
+    label: 'Framed picture',
+    description: 'A painting hung in its frame.',
+    Icon: PictureFramedIcon,
+  },
+  {
+    name: 'PictureIcon',
+    label: 'Picture',
+    description: 'A photograph of mountains and sun.',
+    Icon: PictureIcon,
+  },
+  {
+    name: 'PlaneDepartureIcon',
+    label: 'Plane',
+    description: 'An aeroplane lifting off the runway.',
+    Icon: PlaneDepartureIcon,
+  },
+  {
+    name: 'RingedPlanetIcon',
+    label: 'Planet',
+    description: 'A planet circled by its rings.',
+    Icon: RingedPlanetIcon,
+  },
+  {
+    name: 'RobotIcon',
+    label: 'Robot',
+    description: 'The square face of a robot.',
+    Icon: RobotIcon,
+  },
+  {
+    name: 'RocketIcon',
+    label: 'Rocket',
+    description: 'A rocket climbing on its exhaust.',
+    Icon: RocketIcon,
+  },
+  {
+    name: 'SantaClausIcon',
+    label: 'Santa',
+    description: 'Santa Claus, red hat and white beard.',
+    Icon: SantaClausIcon,
+  },
+  {
+    name: 'SatelliteIcon',
+    label: 'Satellite',
+    description: 'A satellite with its panels spread.',
+    Icon: SatelliteIcon,
+  },
+  {
+    name: 'ScientistIcon',
+    label: 'Scientist',
+    description: 'A scientist at the microscope.',
+    Icon: ScientistIcon,
+  },
+  {
+    name: 'SharkIcon',
+    label: 'Shark',
+    description: 'A shark, fin first.',
+    Icon: SharkIcon,
+  },
+  {
+    name: 'SnowmanIcon',
+    label: 'Snowman',
+    description: 'A snowman built up in the cold.',
+    Icon: SnowmanIcon,
+  },
+  {
+    name: 'SpaceInvadersAlien1Icon',
+    label: 'Space invader 1',
+    description: 'The first invader of the arcade fleet.',
+    Icon: SpaceInvadersAlien1Icon,
+  },
+  {
+    name: 'SpaceInvadersAlien2Icon',
+    label: 'Space invader 2',
+    description: 'The second invader of the arcade fleet.',
+    Icon: SpaceInvadersAlien2Icon,
+  },
+  {
+    name: 'SpaceInvadersAlien3Icon',
+    label: 'Space invader 3',
+    description: 'The third invader of the arcade fleet.',
+    Icon: SpaceInvadersAlien3Icon,
+  },
+  {
+    name: 'SparklerIcon',
+    label: 'Sparkler',
+    description: 'A hand-held sparkler throwing light.',
+    Icon: SparklerIcon,
+  },
+  {
+    name: 'StarIcon',
+    label: 'Star',
+    description: 'A five-pointed star.',
+    Icon: StarIcon,
+  },
+  {
+    name: 'StudentIcon',
+    label: 'Student',
+    description: 'A student with book and cap.',
+    Icon: StudentIcon,
+  },
+  {
+    name: 'StudioMicrophoneIcon',
+    label: 'Studio microphone',
+    description: 'The microphone of a recording studio.',
+    Icon: StudioMicrophoneIcon,
+  },
+  {
+    name: 'SunIcon',
+    label: 'Sun',
+    description: 'The sun at full strength.',
+    Icon: SunIcon,
+  },
+  {
+    name: 'WavingHandIcon',
+    label: 'Waving hand',
+    description: 'A hand raised in hello.',
+    Icon: WavingHandIcon,
+  },
+  {
+    name: 'WhaleSpoutingIcon',
+    label: 'Whale',
+    description: 'A whale blowing a spout of water.',
+    Icon: WhaleSpoutingIcon,
+  },
+  {
+    name: 'WomanTechnologistIcon',
+    label: 'Woman technologist',
+    description: 'A woman at a laptop, writing code.',
+    Icon: WomanTechnologistIcon,
+  },
+  {
+    name: 'WrappedGiftIcon',
+    label: 'Wrapped gift',
+    description: 'A present tied with a ribbon.',
+    Icon: WrappedGiftIcon,
+  },
+  {
+    name: 'WritingHandIcon',
+    label: 'Writing hand',
+    description: 'A hand writing with a pen.',
+    Icon: WritingHandIcon,
+  },
+  {
+    name: 'YinYangIcon',
+    label: 'Yin yang',
+    description: 'The two halves that make a whole.',
+    Icon: YinYangIcon,
+  },
 ] as const;
 
 export const PRINCIPAL_BANNERS = [
   { name: 'SvgAboutHero', label: 'About', Component: SvgAboutHero },
   { name: 'SvgAgentsHero', label: 'Agents', Component: SvgAgentsHero },
-  { name: 'SvgAgentsHomeHero', label: 'Agents home', Component: SvgAgentsHomeHero },
+  {
+    name: 'SvgAgentsHomeHero',
+    label: 'Agents home',
+    Component: SvgAgentsHomeHero,
+  },
   { name: 'SvgBlogHero', label: 'Blog', Component: SvgBlogHero },
   { name: 'SvgCareersHero', label: 'Careers', Component: SvgCareersHero },
   { name: 'SvgChangelogHero', label: 'Changelog', Component: SvgChangelogHero },
@@ -197,7 +532,11 @@ export const PRINCIPAL_BANNERS = [
   { name: 'SvgEarthHero', label: 'Earth', Component: SvgEarthHero },
   { name: 'SvgEvalsHero', label: 'Evaluations', Component: SvgEvalsHero },
   { name: 'SvgEventsHero', label: 'Events', Component: SvgEventsHero },
-  { name: 'SvgIntegrationsHero', label: 'Integrations', Component: SvgIntegrationsHero },
+  {
+    name: 'SvgIntegrationsHero',
+    label: 'Integrations',
+    Component: SvgIntegrationsHero,
+  },
   { name: 'SvgLoginHero', label: 'Login', Component: SvgLoginHero },
   { name: 'SvgPartnersHero', label: 'Partners', Component: SvgPartnersHero },
   { name: 'SvgPricingHero', label: 'Pricing', Component: SvgPricingHero },
@@ -217,7 +556,9 @@ export function getPrincipalBannerForSeed(seed: string): string {
   return PRINCIPAL_BANNERS[Math.abs(hash) % PRINCIPAL_BANNERS.length].name;
 }
 
-export function getPrincipalAvatarIcon(name?: string): AvatarComponent | undefined {
+export function getPrincipalAvatarIcon(
+  name?: string,
+): AvatarComponent | undefined {
   return PRINCIPAL_AVATAR_ICONS.find(option => option.name === name)?.Icon;
 }
 
@@ -228,7 +569,9 @@ export function PrincipalBannerImage({
   banner?: string;
   height?: number;
 }): JSX.Element | null {
-  const Banner = PRINCIPAL_BANNERS.find(option => option.name === banner)?.Component;
+  const Banner = PRINCIPAL_BANNERS.find(
+    option => option.name === banner,
+  )?.Component;
   if (!Banner) return null;
   return (
     <Box
@@ -310,68 +653,80 @@ export function PrincipalAvatarPicker({
               gap: 2,
             }}
           >
-            {PRINCIPAL_AVATAR_ICONS.map(({ name, label, Icon }) => (
-              // A button drawn as a card rather than a Primer `Button`: the
-              // avatar is named under it, as the banners are under theirs.
-              <Box
-                as="button"
-                key={name}
-                type="button"
-                aria-label={label}
-                aria-pressed={value === name}
-                onClick={() => {
-                  onChange(name);
-                  setOpen(false);
-                }}
-                sx={{
-                  display: 'block',
-                  width: '100%',
-                  p: 0,
-                  overflow: 'hidden',
-                  appearance: 'none',
-                  color: 'fg.default',
-                  cursor: 'pointer',
-                  border: '1px solid',
-                  borderRadius: 2,
-                  borderColor: value === name ? 'accent.emphasis' : 'border.default',
-                  bg: value === name ? 'accent.subtle' : 'canvas.default',
-                  ':hover': { borderColor: 'accent.emphasis' },
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 72,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+            {PRINCIPAL_AVATAR_ICONS.map(
+              ({ name, label, description, Icon }) => (
+                // A button drawn as a card rather than a Primer `Button`: the
+                // avatar is named under it, as the banners are under theirs.
+                // The name under a card is clipped when it is long, and a
+                // picture says only so much: the tooltip gives the whole name
+                // and what the picture is of.
+                <Tooltip
+                  key={name}
+                  text={description ? `${label} — ${description}` : label}
+                  direction="n"
                 >
-                  {/*
+                  <Box
+                    as="button"
+                    type="button"
+                    aria-label={
+                      description ? `${label} — ${description}` : label
+                    }
+                    aria-pressed={value === name}
+                    onClick={() => {
+                      onChange(name);
+                      setOpen(false);
+                    }}
+                    sx={{
+                      display: 'block',
+                      width: '100%',
+                      p: 0,
+                      overflow: 'hidden',
+                      appearance: 'none',
+                      color: 'fg.default',
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderRadius: 2,
+                      borderColor:
+                        value === name ? 'accent.emphasis' : 'border.default',
+                      bg: value === name ? 'accent.subtle' : 'canvas.default',
+                      ':hover': { borderColor: 'accent.emphasis' },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        height: 72,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {/*
                     The plain icon, coloured by the theme — never the `colored`
                     variant, whose fixed palette belongs to the emoji it is
                     drawn from and ignores the colour mode.
                   */}
-                  <Icon size={52} themed colormode />
-                </Box>
-                <Text
-                  sx={{
-                    display: 'block',
-                    px: 2,
-                    py: 1,
-                    fontSize: 0,
-                    textAlign: 'center',
-                    // A name too long for the card is cut rather than
-                    // stretching the grid it sits in.
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                  title={label}
-                >
-                  {label}
-                </Text>
-              </Box>
-            ))}
+                      <Icon size={52} themed colormode />
+                    </Box>
+                    <Text
+                      sx={{
+                        display: 'block',
+                        px: 2,
+                        py: 1,
+                        fontSize: 0,
+                        textAlign: 'center',
+                        // A name too long for the card is cut rather than
+                        // stretching the grid it sits in.
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {label}
+                    </Text>
+                  </Box>
+                </Tooltip>
+              ),
+            )}
           </Box>
         </Dialog>
       ) : null}
@@ -394,7 +749,9 @@ export function PrincipalBannerPicker({
   const [open, setOpen] = useState(false);
   const [selectedName, setSelectedName] = useState(value);
   useEffect(() => setSelectedName(value), [value]);
-  const selected = PRINCIPAL_BANNERS.find(option => option.name === selectedName);
+  const selected = PRINCIPAL_BANNERS.find(
+    option => option.name === selectedName,
+  );
   return (
     <>
       {/* Only a name of the catalogue previews: an unknown one — from an
@@ -451,8 +808,12 @@ export function PrincipalBannerPicker({
                   cursor: 'pointer',
                   border: '1px solid',
                   borderRadius: 2,
-                  borderColor: selectedName === name ? 'accent.emphasis' : 'border.default',
-                  bg: selectedName === name ? 'accent.subtle' : 'canvas.default',
+                  borderColor:
+                    selectedName === name
+                      ? 'accent.emphasis'
+                      : 'border.default',
+                  bg:
+                    selectedName === name ? 'accent.subtle' : 'canvas.default',
                   textAlign: 'left',
                   ':hover': { borderColor: 'accent.emphasis' },
                 }}
@@ -475,7 +836,9 @@ export function PrincipalBannerPicker({
                 >
                   <Component />
                 </Box>
-                <Text sx={{ display: 'block', px: 2, py: 1, fontSize: 0 }}>{label}</Text>
+                <Text sx={{ display: 'block', px: 2, py: 1, fontSize: 0 }}>
+                  {label}
+                </Text>
               </Box>
             ))}
           </Box>
