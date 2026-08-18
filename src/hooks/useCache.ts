@@ -2478,11 +2478,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (resp, _variables) => {
         if (resp.success && resp.document) {
           const document = toDocument(resp.document);
-          // Set detail cache
-          queryClient.setQueryData(
-            queryKeys.documents.detail(document.id),
-            document,
-          );
+          /*
+           * The creation answer carries no model — the spacer keeps the
+           * model with the content, and only the GET of a document answers
+           * with it. Seeding the detail cache here would hand the editor a
+           * document without a model, shown as a blank page: the cache is
+           * invalidated instead, so an editor opening on the creation reads
+           * the document from the server, model included.
+           */
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.documents.detail(document.id),
+          });
           // Refetch all document queries immediately (including bySpace)
           queryClient.refetchQueries({
             queryKey: queryKeys.documents.all(),

@@ -67,12 +67,23 @@ export const UserAvatar = ({
           height: size,
           borderRadius: square ? 2 : '50%',
           overflow: 'hidden',
-          display: 'inline-flex',
+          display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          bg: fallbackBackground || 'accent.subtle',
+          '--datalayer-icon-fg': fallbackForeground || palette.primary,
         }}
       >
-        <SelectedIcon size={size} colored />
+        {/*
+          The plain icon, coloured by the theme — the same treatment as the
+          default avatar below, so a chosen avatar and the default one are
+          the same drawing in two shapes rather than two different looks.
+        */}
+        <SelectedIcon
+          size={iconSize ?? Math.round(size * 0.62)}
+          themed
+          colormode
+        />
       </Box>
     );
   }

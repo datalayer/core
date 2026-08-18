@@ -49,7 +49,8 @@ export function PrincipalAvatar({
         }}
         aria-label={alt || `${kind} avatar`}
       >
-        <SelectedIcon size={size} colored />
+        {/* The plain icon, coloured by the theme — see UserAvatar. */}
+        <SelectedIcon size={size} themed colormode />
       </Box>
     );
   }
