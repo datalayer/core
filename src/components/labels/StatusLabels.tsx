@@ -71,7 +71,24 @@ export function StatusLabel(
       sx={{
         textTransform: 'lowercase',
         lineHeight: 1.2,
-        ...TONES[tone],
+        /*
+         * The tone, under a doubled selector.
+         *
+         * Primer ships `NavList` and `ActionList` as CSS modules, and the
+         * colour they set on the contents of an item ties with the one Emotion
+         * generates for `sx` — so the same label came out in the colour of the
+         * navigation in one place and in its own colour in another, depending
+         * on which stylesheet happened to come last. `&&` raises the
+         * specificity enough that the tone always lands, wherever the label is
+         * put.
+         */
+        '&&': {
+          ...TONES[tone],
+          // The navigation of Primer colours the contents of its items, and
+          // its stylesheet is loaded after ours: a doubled selector was not
+          // enough on its own, so the colour of the tone is stated as final.
+          color: `${TONES[tone].color} !important`,
+        },
         ...sx,
       }}
     >
