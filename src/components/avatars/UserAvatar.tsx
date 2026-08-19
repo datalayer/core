@@ -43,6 +43,14 @@ export type UserAvatarProps = {
   fallbackBackground?: string;
   /** Optional icon foreground color override for the default avatar. */
   fallbackForeground?: string;
+  /**
+   * Whether a ring is drawn around the avatar.
+   *
+   * Off by default: an avatar sits on its own in most places, and a ring
+   * there is one more line for nothing. On, it gives the avatar an edge of
+   * its own against a background of the same colour — a profile page, a card.
+   */
+  ring?: boolean;
   className?: string;
 };
 
@@ -54,9 +62,20 @@ export const UserAvatar = ({
   iconSize,
   fallbackBackground,
   fallbackForeground,
+  ring = false,
   className,
 }: UserAvatarProps): JSX.Element => {
   const palette = useColorPalette();
+  /*
+   * The ring, as a shadow rather than a border.
+   *
+   * A border would take from the size asked for — the avatar is laid out
+   * against others of the same measure — so it is drawn just outside the
+   * edge instead, following whatever shape the avatar has.
+   */
+  const ringSx = ring
+    ? { boxShadow: '0 0 0 1px var(--borderColor-default, currentColor)' }
+    : undefined;
   const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
   if (SelectedIcon) {
     return (
@@ -72,6 +91,7 @@ export const UserAvatar = ({
           justifyContent: 'center',
           bg: fallbackBackground || 'accent.subtle',
           '--datalayer-icon-fg': fallbackForeground || palette.primary,
+          ...ringSx,
         }}
       >
         {/*
@@ -88,7 +108,15 @@ export const UserAvatar = ({
     );
   }
   if (hasRealAvatar(avatarUrl)) {
-    return <DLAvatar className={className} square={square} src={avatarUrl} size={size} />;
+    return (
+      <DLAvatar
+        className={className}
+        square={square}
+        src={avatarUrl}
+        size={size}
+        sx={ringSx}
+      />
+    );
   }
   const resolvedIconSize = iconSize ?? Math.round(size * 0.48);
   return (
@@ -103,6 +131,7 @@ export const UserAvatar = ({
         alignItems: 'center',
         justifyContent: 'center',
         '--datalayer-icon-fg': fallbackForeground || palette.primary,
+        ...ringSx,
       }}
     >
       <AlienIcon size={resolvedIconSize} themed colormode />

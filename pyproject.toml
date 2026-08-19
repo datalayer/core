@@ -30,6 +30,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
+    # The sandbox providers and the environments they ship, shared with every
+    # other surface that offers them — see `datalayer sandboxes`.
+    "code-sandboxes",
     "httpx",
     "jupyter-console",
     "jupyter-nbmodel-client",

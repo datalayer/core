@@ -133,4 +133,21 @@ export function DefaultLabel(props: StatusLabelProps = {}): JSX.Element {
   );
 }
 
+/**
+ * Something announced and not there yet.
+ *
+ * A tone of its own, and deliberately not the accent an alpha wears: one says
+ * "you may try this, it may bite", the other "there is nothing to try". Read
+ * side by side in a navigation, two labels of one colour say the same thing
+ * about two entries that mean different things.
+ */
+export function SoonLabel(props: StatusLabelProps = {}): JSX.Element {
+  const { children = 'soon', ...rest } = props;
+  return (
+    <StatusLabel tone="neutral" {...rest}>
+      {children}
+    </StatusLabel>
+  );
+}
+
 export default StatusLabel;

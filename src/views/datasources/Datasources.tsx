@@ -180,7 +180,7 @@ export const Datasources = ({
               leadingVisual={DatabaseIcon}
               onClick={e => navigate(newDatasourceRoute, e)}
             >
-              New datasource
+              New Datasource
             </Button>
           </Box>
           <DatasourcesTable

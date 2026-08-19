@@ -26,6 +26,7 @@ from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.orgs import app as orgs_app
 from datalayer_core.cli.commands.orgs import orgs_ls
 from datalayer_core.cli.commands.otel import app as otel_app
+from datalayer_core.cli.commands.sandboxes import app as sandboxes_app
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
@@ -185,6 +186,7 @@ app.add_typer(memberships_app)
 app.add_typer(orgs_app)
 app.add_typer(teams_app)
 app.add_typer(otel_app)
+app.add_typer(sandboxes_app)
 app.add_typer(secrets_app)
 app.add_typer(subscription_app)
 app.add_typer(api_keys_app)

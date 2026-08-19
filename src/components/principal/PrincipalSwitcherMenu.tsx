@@ -22,6 +22,7 @@ import {
 import { useCache, useAuthorization } from '../../hooks';
 import { useCoreStore } from '../../state';
 import { useIAMStore } from '../../state/substates';
+import { UserAvatar } from '../avatars';
 import { memberships as fetchMemberships } from '../../api/iam/profile';
 import { usePrincipalStore } from '../../hooks/usePrincipalStore';
 import { useBillingEntityStore } from '../../hooks/useBillingEntityStore';
@@ -469,7 +470,19 @@ export function PrincipalSwitcherMenu({
                 }}
               >
                 <ActionList.LeadingVisual>
-                  <PersonIcon />
+                  {/*
+                    The face of the account rather than a generic person: this
+                    entry IS the user, and the two below it are named by their
+                    own marks. The ring gives it an edge against the row it
+                    sits on, which shares its background when selected.
+                  */}
+                  <UserAvatar
+                    avatarUrl={user?.avatarUrl}
+                    avatarIcon={(user as { avatarIcon?: string })?.avatarIcon}
+                    size={16}
+                    square={false}
+                    ring
+                  />
                 </ActionList.LeadingVisual>
                 <Box
                   as="span"

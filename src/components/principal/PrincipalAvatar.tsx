@@ -17,6 +17,13 @@ export type PrincipalAvatarProps = {
   alt?: string;
   size?: number;
   square?: boolean;
+  /**
+   * Whether a ring is drawn around the avatar.
+   *
+   * Off by default, and the same option `UserAvatar` carries — a public
+   * profile wants the edge, a menu entry does not.
+   */
+  ring?: boolean;
   className?: string;
 };
 
@@ -31,9 +38,15 @@ export function PrincipalAvatar({
   alt,
   size = 20,
   square = false,
+  ring = false,
   className,
 }: PrincipalAvatarProps): JSX.Element {
   const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
+  // Outside the edge rather than a border, so the avatar keeps the size it
+  // was asked for — see `UserAvatar`, which draws its ring the same way.
+  const ringSx = ring
+    ? { boxShadow: '0 0 0 1px var(--borderColor-default, currentColor)' }
+    : undefined;
   if (SelectedIcon) {
     return (
       <Box
@@ -46,6 +59,7 @@ export function PrincipalAvatar({
           justifyContent: 'center',
           overflow: 'hidden',
           borderRadius: square ? 2 : '50%',
+          ...ringSx,
         }}
         aria-label={alt || `${kind} avatar`}
       >
@@ -63,6 +77,7 @@ export function PrincipalAvatar({
         size={size}
         square={square}
         iconSize={getFallbackIconSize(size)}
+        ring={ring}
         className={className}
       />
     );
@@ -86,6 +101,7 @@ export function PrincipalAvatar({
         borderRadius,
         border: '1px solid',
         borderColor: 'border.default',
+        ...ringSx,
       }}
       aria-label={alt || (kind === 'team' ? 'Team' : 'Organization')}
     >
