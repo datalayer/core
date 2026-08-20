@@ -41,49 +41,29 @@ def test_normalize_global_options_preserves_equals_syntax():
     assert normalized == ["d", "--iam-url=https://iam.example", "whoami"]
 
 
-def test_find_root_command_skips_global_options():
-    args = [
-        "--api-key",
-        "token",
-        "--runtimes-url=https://runtimes.example",
-        "growth",
-        "events",
-    ]
+def test_register_extensions_adds_discovered_cli_groups(monkeypatch):
+    """Extensions found through the reactor register into the host app."""
 
-    command, index = cli_main._find_root_command(args)
+    class FakePlatform:
+        def __init__(self):
+            self.discovered: list[str] = []
+            self.cli = None
 
-    assert command == "growth"
-    assert index == 3
+        def discover(self, group: str) -> list[str]:
+            self.discovered.append(group)
+            return ["agent-runtimes"]
 
+        def register_cli(self, cli) -> list[str]:
+            self.cli = cli
+            return ["agent-runtimes"]
 
-def test_try_external_command_runs_datalayer_prefixed_binary(monkeypatch):
-    def fake_which(name: str) -> str | None:
-        assert name == "datalayer-growth"
-        return "/tmp/datalayer-growth"
+    fake = FakePlatform()
+    import reactor
 
-    captured: dict[str, list[str]] = {}
+    monkeypatch.setattr(reactor, "PluginPlatform", lambda: fake)
 
-    class FakeCompleted:
-        returncode = 0
+    sentinel = object()
+    cli_main._register_extensions(sentinel)
 
-    def fake_run(command: list[str], check: bool):
-        captured["command"] = command
-        captured["check"] = [str(check)]
-        return FakeCompleted()
-
-    monkeypatch.setattr(cli_main.shutil, "which", fake_which)
-    monkeypatch.setattr(cli_main.subprocess, "run", fake_run)
-
-    exit_code = cli_main._try_external_command(["growth", "events", "ls"])
-
-    assert exit_code == 0
-    assert captured["command"] == ["/tmp/datalayer-growth", "events", "ls"]
-    assert captured["check"] == ["False"]
-
-
-def test_try_external_command_ignores_known_root_command(monkeypatch):
-    monkeypatch.setattr(cli_main.shutil, "which", lambda _name: "/tmp/not-used")
-
-    exit_code = cli_main._try_external_command(["usage"])
-
-    assert exit_code is None
+    assert fake.discovered == ["datalayer.cli"]
+    assert fake.cli is sentinel

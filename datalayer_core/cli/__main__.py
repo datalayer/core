@@ -4,8 +4,6 @@
 """Command line interface for Datalayer based on Typer."""
 
 import os
-import shutil
-import subprocess
 import sys
 
 import typer
@@ -26,7 +24,6 @@ from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.orgs import app as orgs_app
 from datalayer_core.cli.commands.orgs import orgs_ls
 from datalayer_core.cli.commands.otel import app as otel_app
-from datalayer_core.cli.commands.sandboxes import app as sandboxes_app
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
@@ -186,7 +183,6 @@ app.add_typer(memberships_app)
 app.add_typer(orgs_app)
 app.add_typer(teams_app)
 app.add_typer(otel_app)
-app.add_typer(sandboxes_app)
 app.add_typer(secrets_app)
 app.add_typer(subscription_app)
 app.add_typer(api_keys_app)
@@ -233,30 +229,27 @@ _GLOBAL_OPTIONS_NO_VALUES = {
     "--version",
 }
 
-_ROOT_COMMANDS = {
-    "about",
-    "auth",
-    "cluster",
-    "config",
-    "memberships",
-    "orgs",
-    "teams",
-    "otel",
-    "secrets",
-    "subscription",
-    "api-keys",
-    "users",
-    "usage",
-    "plans",
-    "web",
-    "login",
-    "logout",
-    "whoami",
-    "secrets-ls",
-    "api-keys-ls",
-    "orgs-ls",
-    "teams-ls",
-}
+def _register_extensions(cli) -> None:
+    """Add the commands of every installed Datalayer CLI extension.
+
+    The commands of the platform are not all implemented here — the
+    sandboxes, the agents, the environments live in `agent-runtimes` — and
+    typing that name is asking the user to know which distribution a feature
+    ships in. This CLI used to SPAWN the other one as a fallback; now the
+    extensions register in-process, through the reactor: any distribution
+    advertising a plugin under the ``datalayer.cli`` entry-point group adds
+    its command groups to this application when it starts.
+
+    Without the reactor installed there are simply no extensions — the
+    commands of this package all still work.
+    """
+    try:
+        from reactor import PluginPlatform
+    except ImportError:
+        return
+    platform = PluginPlatform()
+    platform.discover("datalayer.cli")
+    platform.register_cli(cli)
 
 
 def _normalize_global_options(argv: list[str]) -> list[str]:
@@ -307,59 +300,10 @@ def _normalize_global_options(argv: list[str]) -> list[str]:
     return [argv[0], *extracted, *remaining]
 
 
-def _find_root_command(args: list[str]) -> tuple[str | None, int | None]:
-    """Return the root command token and its index within normalized args."""
-    i = 0
-    while i < len(args):
-        token = args[i]
-        if token == "--":
-            i += 1
-            break
-        if token in _GLOBAL_OPTIONS_NO_VALUES:
-            i += 1
-            continue
-        if token in _GLOBAL_OPTIONS_WITH_VALUES:
-            i += 2
-            continue
-        if any(token.startswith(f"{option}=") for option in _GLOBAL_OPTIONS_WITH_VALUES):
-            i += 1
-            continue
-        if token.startswith("-"):
-            return None, None
-        return token, i
-
-    if i < len(args):
-        token = args[i]
-        if token.startswith("-"):
-            return None, None
-        return token, i
-
-    return None, None
-
-
-def _try_external_command(args: list[str]) -> int | None:
-    """Run datalayer-<command> when an unknown root command is invoked."""
-    command, command_index = _find_root_command(args)
-    if command is None or command_index is None or command in _ROOT_COMMANDS:
-        return None
-
-    executable = shutil.which(f"datalayer-{command}")
-    if executable is None:
-        return None
-
-    forwarded_args = args[command_index + 1 :]
-    completed = subprocess.run([executable, *forwarded_args], check=False)
-    return completed.returncode
-
-
 def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
-    normalized_args = _normalize_global_options(sys.argv)[1:]
-    external_exit_code = _try_external_command(normalized_args)
-    if external_exit_code is not None:
-        raise SystemExit(external_exit_code)
-
-    app(args=normalized_args)
+    _register_extensions(app)
+    app(args=_normalize_global_options(sys.argv)[1:])
 
 
 if __name__ == "__main__":
