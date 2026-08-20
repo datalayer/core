@@ -62,9 +62,21 @@ function collaboratorOfState(
   if (!user) {
     return undefined;
   }
+  // Not a person: the presence of the collaboration service itself — the
+  // spacer joins its own rooms, wearing an `agent` field.
+  if (user.agent) {
+    return undefined;
+  }
   const name: string =
     user.display_name || user.displayName || user.name || user.username || '';
   if (!name) {
+    return undefined;
+  }
+  // Nobody either: the seed identity of a Jupyter Server that does not
+  // authenticate its users — "Anonymous Hegemone" and kin. A face for it
+  // would be one avatar too many, wearing the default fallback, next to the
+  // real identity written over it a moment later.
+  if (user.anonymous === true || /^anonymous(\s|$)/i.test(name)) {
     return undefined;
   }
   return {
