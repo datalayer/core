@@ -233,6 +233,11 @@ export function PrincipalDetailsCard({
                 avatarIcon={avatarIcon}
                 alt={normalizedDisplayName}
                 size={40}
+                // The card sets the avatar on its own ground, the same colour
+                // the avatar itself is on: without an edge of its own it has
+                // no visible shape at all. Round, and ringed.
+                square={false}
+                ring
               />
               <Box sx={{ display: 'grid', gap: 0.5 }}>
                 <Text sx={{ fontWeight: 'semibold' }}>

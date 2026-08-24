@@ -47,6 +47,29 @@ export function PrincipalAvatar({
   const ringSx = ring
     ? { boxShadow: '0 0 0 1px var(--borderColor-default, currentColor)' }
     : undefined;
+  /*
+   * A person is drawn by `UserAvatar`, whatever they wear.
+   *
+   * It is the single source of truth for a user's avatar — a photograph, a
+   * chosen icon, or the default one — and it sets a chosen icon on the tinted
+   * disc that makes it read as an avatar rather than as a loose glyph.
+   * Answering the icon here first drew that same icon WITHOUT the disc, so a
+   * person who had chosen one was a bare drawing among circles.
+   */
+  if (kind === 'personal') {
+    return (
+      <UserAvatar
+        avatarUrl={avatarUrl}
+        avatarIcon={avatarIcon}
+        size={size}
+        square={square}
+        iconSize={getFallbackIconSize(size)}
+        ring={ring}
+        className={className}
+      />
+    );
+  }
+
   if (SelectedIcon) {
     return (
       <Box
@@ -59,27 +82,16 @@ export function PrincipalAvatar({
           justifyContent: 'center',
           overflow: 'hidden',
           borderRadius: square ? 2 : '50%',
+          // The disc of `UserAvatar`, for the same reason: the shape is what
+          // says "avatar", and an icon drawn on nothing shows none of it.
+          bg: 'accent.subtle',
           ...ringSx,
         }}
         aria-label={alt || `${kind} avatar`}
       >
         {/* The plain icon, coloured by the theme — see UserAvatar. */}
-        <SelectedIcon size={size} themed colormode />
+        <SelectedIcon size={getFallbackIconSize(size)} themed colormode />
       </Box>
-    );
-  }
-
-  if (kind === 'personal') {
-    return (
-      <UserAvatar
-        avatarUrl={avatarUrl}
-        avatarIcon={avatarIcon}
-        size={size}
-        square={square}
-        iconSize={getFallbackIconSize(size)}
-        ring={ring}
-        className={className}
-      />
     );
   }
 
