@@ -35,6 +35,7 @@ import {
   IContentsView,
   modelToView,
 } from './ContentsItems';
+import { CONTENTS_BROWSER_MOCK_MANAGER } from './ContentsBrowserMock';
 
 /**
  * The maximum upload size (in bytes) for notebook version < 5.1.0
@@ -53,7 +54,11 @@ export interface IContentsBrowserProps {
   /**
    * Contents manager.
    */
-  contents: Contents.IManager;
+  contents?: Contents.IManager;
+  /**
+   * Render an invented Code Sandbox filesystem for documentation and stories.
+   */
+  mock?: boolean;
   /**
    * Contents manager.
    */
@@ -74,7 +79,7 @@ export interface IContentsBrowserProps {
  */
 export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   const {
-    contents,
+    mock = false,
     localContents,
     documentRegistry,
     title = (
@@ -90,6 +95,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
       </Heading>
     ),
   } = props;
+  const contents = props.contents ?? CONTENTS_BROWSER_MOCK_MANAGER;
   const isMounted = useIsMounted();
   const { trackAsyncTask } = useToast();
   const [children, setChildren] = useState<IContentsView[] | null>(null);
@@ -329,8 +335,11 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
             title={'Refresh contents browser.'}
             icon={SyncIcon}
             onClick={refresh}
+            disabled={mock}
           />
-          <UploadIconButton label={'Upload a file'} multiple upload={upload} />
+          {!mock && (
+            <UploadIconButton label={'Upload a file'} multiple upload={upload} />
+          )}
           {/*
             <IconButton
               aria-label={'Refresh'}
@@ -386,7 +395,7 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
                   );
                 })}
               </TreeView>
-              {contextMenuAnchor !== null && (
+              {!mock && contextMenuAnchor !== null && (
                 <ActionMenu
                   anchorRef={contextMenuAnchor ?? undefined}
                   open={contextMenuAnchor?.current !== null}
