@@ -5759,6 +5759,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Launch bulk emails for outbound campaign (production mode)
    */
+  /**
+   * Mark an outbound as launched without sending — for launches that
+   * happened outside the browser (curl, the CLI).
+   */
+  const useMarkOutboundLaunched = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async (outboundId: string) => {
+        return requestDatalayer({
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}/mark-launched`,
+          method: 'POST',
+          body: {},
+        });
+      },
+      onSuccess: (_, outboundId) => {
+        queryClient.removeQueries({
+          queryKey: ['outbounds', outboundId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
+      },
+    });
+  };
+
   const useLaunchBulkEmailsOutbounds = () => {
     const queryClient = useQueryClient();
 
@@ -9509,6 +9536,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useDraftBulkEmailsOutbounds,
     useTryBulkEmailsOutbounds,
     useLaunchBulkEmailsOutbounds,
+    useMarkOutboundLaunched,
     useSendOutboundEmailToUser,
     useDeleteOutbound,
     useSubscribeUserToOutbounds,

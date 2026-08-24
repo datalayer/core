@@ -69,7 +69,7 @@ def main_callback(
         None,
         "--api-key",
         help=(
-            "Auth token for backend calls. Falls back to DATALAYER_API_KEY when "
+            "API key for backend calls. Falls back to DATALAYER_API_KEY when "
             "omitted; otherwise built-in auth resolution is used."
         ),
     ),
@@ -86,7 +86,6 @@ def main_callback(
     spacer_url: str | None = typer.Option(
         None,
         "--spacer-url",
-        "--space-url",
         help="Override DATALAYER_SPACER_URL for this CLI invocation.",
     ),
     library_url: str | None = typer.Option(
@@ -211,7 +210,6 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--iam-url",
     "--runtimes-url",
     "--spacer-url",
-    "--space-url",
     "--library-url",
     "--manager-url",
     "--ai-agents-url",
