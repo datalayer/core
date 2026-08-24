@@ -38,6 +38,20 @@ export type PrincipalDetailsOverlayProps = {
   /** Team/organization visibility. */
   isPublic?: boolean;
   isAdmin?: boolean;
+  /**
+   * Show a route some other way than through the router of this subtree.
+   *
+   * The card is also shown inside the notebook and document editors, which
+   * JupyterLab embeds under a `MemoryRouter` of their own — a router with none
+   * of the application's routes behind it, where a `navigate` reaches nobody.
+   * Those editors hand the route to the view that does have the routes; the
+   * profile then renders there, navigated to rather than loaded, and the page
+   * is never reloaded.
+   *
+   * Left out, the route is followed with `useNavigate`, which is what the web
+   * application and the Datalayer view both want.
+   */
+  onNavigate?: (path: string) => void;
 };
 
 function normalize(value?: string): string {
@@ -126,7 +140,15 @@ export function buildPrincipalProfilePath({
   return null;
 }
 
-export function PrincipalDetailsOverlay({
+/**
+ * The card of a principal, on its own — avatar, identity, and the buttons.
+ *
+ * The body every surface that shows a principal shares: the click overlay
+ * anchored on a name ({@link PrincipalDetailsOverlay}) and the hover card
+ * anchored on an avatar ({@link PrincipalHoverCard}) both render this, so
+ * the two never drift.
+ */
+export function PrincipalDetailsCard({
   kind,
   uid,
   displayName,
@@ -144,8 +166,23 @@ export function PrincipalDetailsOverlay({
   memberCount,
   isPublic,
   isAdmin = false,
+  onNavigate,
 }: PrincipalDetailsOverlayProps): JSX.Element {
   const navigate = useNavigate();
+
+  // Where a profile or organization link goes: the router of this subtree,
+  // unless the caller knows of one that can actually serve it — see
+  // `onNavigate`. Either way it is a navigation, never a page load.
+  const go = (path: string | null): void => {
+    if (!path) {
+      return;
+    }
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      navigate(path);
+    }
+  };
 
   const normalizedDisplayName =
     normalize(displayName) ||
@@ -188,31 +225,7 @@ export function PrincipalDetailsOverlay({
     : '';
 
   return (
-    <ThemeProvider>
-      <ActionMenu>
-        <ActionMenu.Anchor>
-          <Box
-            as="button"
-            type="button"
-            sx={{
-              fontWeight: 'semibold',
-              color: 'accent.fg',
-              textDecoration: 'underline',
-              background: 'transparent',
-              border: 0,
-              padding: 0,
-              margin: 0,
-              cursor: 'pointer',
-              ':hover': {
-                textDecoration: 'underline',
-              },
-            }}
-          >
-            {normalizedDisplayName}
-          </Box>
-        </ActionMenu.Anchor>
-        <ActionMenu.Overlay width="large">
-          <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 420 }}>
+    <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 420 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <PrincipalAvatar
                 kind={kind}
@@ -380,24 +393,63 @@ export function PrincipalDetailsOverlay({
                 <Button
                   size="small"
                   variant="invisible"
-                  onClick={() => navigate(organizationPath)}
+                  onClick={() => go(organizationPath)}
                 >
                   View Organization
                 </Button>
               ) : null}
               <Button
                 size="small"
-                onClick={() => {
-                  if (targetPath) {
-                    navigate(targetPath);
-                  }
-                }}
+                onClick={() => go(targetPath)}
                 disabled={!targetPath}
               >
                 View Profile
               </Button>
             </Box>
+    </Box>
+  );
+}
+
+/**
+ * A principal's details, shown from a click on their name.
+ *
+ * The name is the anchor; clicking it opens the shared
+ * {@link PrincipalDetailsCard}.
+ */
+export function PrincipalDetailsOverlay(
+  props: PrincipalDetailsOverlayProps,
+): JSX.Element {
+  const normalizedDisplayName =
+    normalize(props.displayName) ||
+    normalize(props.handle) ||
+    normalize(props.uid) ||
+    'Principal';
+  return (
+    <ThemeProvider>
+      <ActionMenu>
+        <ActionMenu.Anchor>
+          <Box
+            as="button"
+            type="button"
+            sx={{
+              fontWeight: 'semibold',
+              color: 'accent.fg',
+              textDecoration: 'underline',
+              background: 'transparent',
+              border: 0,
+              padding: 0,
+              margin: 0,
+              cursor: 'pointer',
+              ':hover': {
+                textDecoration: 'underline',
+              },
+            }}
+          >
+            {normalizedDisplayName}
           </Box>
+        </ActionMenu.Anchor>
+        <ActionMenu.Overlay width="large">
+          <PrincipalDetailsCard {...props} />
         </ActionMenu.Overlay>
       </ActionMenu>
     </ThemeProvider>
