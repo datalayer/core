@@ -19,6 +19,7 @@ import { Box } from '@datalayer/primer-addons';
 import { EditIcon } from '@datalayer/icons-react';
 import { IDatasource } from '../../models';
 import { useCache, useNavigate } from '../../hooks';
+import { DATASOURCES_MOCK } from './DatasourcesMock';
 
 export type DatasourcesProps = {
   /** Route to navigate when clicking "New datasource" button. Defaults to '/new/datasource'. */
@@ -31,71 +32,32 @@ export type DatasourcesProps = {
   principalKind?: 'personal' | 'organization' | 'team';
   /** Show local inline spinner in empty state while loading. */
   showInlineLoadingIndicator?: boolean;
+  /** Render the real view with inert, invented data for documentation. */
+  mock?: boolean;
 };
 
 const DatasourcesTable = ({
+  datasources,
   datasourcesListRoute,
-  principalUid,
-  principalKind,
-  showInlineLoadingIndicator = true,
+  mock = false,
 }: {
+  datasources: IDatasource[];
   datasourcesListRoute?: string;
-  principalUid?: string;
-  principalKind?: 'personal' | 'organization' | 'team';
-  showInlineLoadingIndicator?: boolean;
+  mock?: boolean;
 }) => {
-  const { useDatasources } = useCache();
-
-  const datasourcesQuery = useDatasources({ principalUid, principalKind });
-
   const navigate = useNavigate();
-  const [datasources, setDatasources] = useState<IDatasource[]>([]);
-
-  const showInitialSpinner =
-    datasources.length === 0 &&
-    (datasourcesQuery.isLoading ||
-      datasourcesQuery.isFetching ||
-      !Array.isArray(datasourcesQuery.data));
-
-  useEffect(() => {
-    if (datasourcesQuery.data) {
-      setDatasources((datasourcesQuery.data as any) || []);
-    }
-  }, [datasourcesQuery.data]);
   return datasources.length === 0 ? (
     <Blankslate border spacious>
-      {showInitialSpinner && showInlineLoadingIndicator ? (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '40px',
-          }}
-        >
-          <Spinner />
-        </Box>
-      ) : showInitialSpinner ? (
-        <>
-          <Blankslate.Heading>Datasources</Blankslate.Heading>
-          <Blankslate.Description>
-            <Text sx={{ textAlign: 'center' }}>Loading datasources...</Text>
-          </Blankslate.Description>
-        </>
-      ) : (
-        <>
-          <Blankslate.Heading>Datasources</Blankslate.Heading>
-          <Blankslate.Description>
-            <Text sx={{ textAlign: 'center' }}>No Datasources found.</Text>
-          </Blankslate.Description>
-        </>
-      )}
+      <Blankslate.Heading>Datasources</Blankslate.Heading>
+      <Blankslate.Description>
+        <Text sx={{ textAlign: 'center' }}>No Datasources found.</Text>
+      </Blankslate.Description>
     </Blankslate>
   ) : (
     <Table.Container>
       <DataTable
-        aria-labelledby="teams"
-        aria-describedby="teams-subtitle"
+        aria-labelledby="datasources"
+        aria-describedby="datasources-subtitle"
         data={datasources}
         columns={[
           // @ts-ignore
@@ -119,17 +81,20 @@ const DatasourcesTable = ({
             renderCell: datasource => (
               <IconButton
                 icon={EditIcon}
-                aria-label="Edit"
+                aria-label={`Edit ${datasource.name}`}
                 size="small"
                 variant="invisible"
-                onClick={e =>
-                  navigate(
-                    datasourcesListRoute
-                      ? `${datasourcesListRoute}/${datasource.id}`
-                      : `${datasource.id}`,
-                    e,
-                  )
-                }
+                disabled={mock}
+                onClick={e => {
+                  if (!mock) {
+                    navigate(
+                      datasourcesListRoute
+                        ? `${datasourcesListRoute}/${datasource.id}`
+                        : `${datasource.id}`,
+                      e,
+                    );
+                  }
+                }}
               />
             ),
           },
@@ -139,19 +104,81 @@ const DatasourcesTable = ({
   );
 };
 
+const LiveDatasourcesTable = ({
+  datasourcesListRoute,
+  principalUid,
+  principalKind,
+  showInlineLoadingIndicator = true,
+}: {
+  datasourcesListRoute?: string;
+  principalUid?: string;
+  principalKind?: 'personal' | 'organization' | 'team';
+  showInlineLoadingIndicator?: boolean;
+}) => {
+  const { useDatasources } = useCache();
+
+  const datasourcesQuery = useDatasources({ principalUid, principalKind });
+
+  const [datasources, setDatasources] = useState<IDatasource[]>([]);
+
+  const showInitialSpinner =
+    datasources.length === 0 &&
+    (datasourcesQuery.isLoading ||
+      datasourcesQuery.isFetching ||
+      !Array.isArray(datasourcesQuery.data));
+
+  useEffect(() => {
+    if (datasourcesQuery.data) {
+      setDatasources((datasourcesQuery.data as any) || []);
+    }
+  }, [datasourcesQuery.data]);
+  return showInitialSpinner ? (
+    <Blankslate border spacious>
+      {showInitialSpinner && showInlineLoadingIndicator ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '40px',
+          }}
+        >
+          <Spinner />
+        </Box>
+      ) : (
+        <>
+          <Blankslate.Heading>Datasources</Blankslate.Heading>
+          <Blankslate.Description>
+            <Text sx={{ textAlign: 'center' }}>Loading datasources...</Text>
+          </Blankslate.Description>
+        </>
+      )}
+    </Blankslate>
+  ) : (
+    <DatasourcesTable
+      datasources={datasources}
+      datasourcesListRoute={datasourcesListRoute}
+    />
+  );
+};
+
 export const Datasources = ({
   newDatasourceRoute = '/new/datasource',
   datasourcesListRoute,
   principalUid,
   principalKind,
   showInlineLoadingIndicator = true,
+  mock = false,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
   return (
     <PageLayout
       containerWidth="full"
       padding="normal"
-      style={{ overflow: 'visible', minHeight: 'calc(100vh - 45px)' }}
+      style={{
+        overflow: 'visible',
+        minHeight: mock ? undefined : 'calc(100vh - 45px)',
+      }}
     >
       <PageLayout.Content>
         <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
@@ -178,17 +205,22 @@ export const Datasources = ({
               size="small"
               variant="primary"
               leadingVisual={DatabaseIcon}
+              disabled={mock}
               onClick={e => navigate(newDatasourceRoute, e)}
             >
               New Datasource
             </Button>
           </Box>
-          <DatasourcesTable
-            datasourcesListRoute={datasourcesListRoute}
-            principalUid={principalUid}
-            principalKind={principalKind}
-            showInlineLoadingIndicator={showInlineLoadingIndicator}
-          />
+          {mock ? (
+            <DatasourcesTable datasources={DATASOURCES_MOCK} mock />
+          ) : (
+            <LiveDatasourcesTable
+              datasourcesListRoute={datasourcesListRoute}
+              principalUid={principalUid}
+              principalKind={principalKind}
+              showInlineLoadingIndicator={showInlineLoadingIndicator}
+            />
+          )}
         </Box>
       </PageLayout.Content>
     </PageLayout>
