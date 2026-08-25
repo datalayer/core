@@ -9,6 +9,7 @@
 import datalayer_core.cli.__main__ as cli_main
 
 from datalayer_core.cli.__main__ import _normalize_global_options
+from typer.testing import CliRunner
 
 
 def test_normalize_global_options_hoists_runtimes_url_after_subcommands():
@@ -67,3 +68,20 @@ def test_register_extensions_adds_discovered_cli_groups(monkeypatch):
 
     assert fake.discovered == ["datalayer.cli"]
     assert fake.cli is sentinel
+
+
+def test_contents_group_is_registered_with_shared_output_option():
+    result = CliRunner().invoke(cli_main.app, ["contents", "--help"])
+    assert result.exit_code == 0
+    assert "Browse, transfer, attach" in result.stdout
+    assert "--output" in result.stdout
+
+
+def test_contents_url_is_a_normalized_global_option():
+    argv = ["datalayer", "contents", "--contents-url", "http://localhost:9400/"]
+    assert _normalize_global_options(argv) == [
+        "datalayer",
+        "--contents-url",
+        "http://localhost:9400/",
+        "contents",
+    ]

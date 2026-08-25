@@ -1,0 +1,66 @@
+{
+  "sources": [
+    {
+      "contract_version": "v1",
+      "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "kind": "files",
+      "name": "User Folder",
+      "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ",
+      "principal_kind": "user",
+      "configuration": {"kind": "files", "owning_user_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "storage_backend_id": "users", "quota_policy": "standard", "versioning_policy": "retained"},
+      "capabilities": ["browse", "transfer", "mount"],
+      "status": "ready",
+      "created_at": "2026-08-24T12:00:00Z",
+      "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "dataset", "name": "Dataset", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "user",
+      "configuration": {"kind": "dataset", "tags": ["curated"], "publication_eligible": true}, "capabilities": ["browse", "materialize"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "volume", "name": "Volume", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "user",
+      "configuration": {"kind": "volume", "capacity_bytes": 1073741824, "scope": "user", "backing_resource_id": "pvc-1", "default_mount_path": "/home/jovyan/data", "access_modes": ["ro", "rw"], "concurrent_readers": true, "concurrent_writers": false}, "capabilities": ["browse", "mount"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "cloud-storage", "name": "S3", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "user",
+      "configuration": {"kind": "cloud-storage", "provider": "s3", "bucket_or_container": "research", "prefix": "inputs/", "region": "eu-west-1", "access_preference": "automatic"}, "capabilities": ["browse", "transfer"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "datasource", "name": "Warehouse", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "user",
+      "configuration": {"kind": "datasource", "connector_type": "postgresql", "database_or_project": "analytics", "allowed_operations": ["select"], "default_row_limit": 10000}, "capabilities": ["query"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "data-server", "name": "Private gateway", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "organization",
+      "configuration": {"kind": "data-server", "registration_identity": "gateway-1", "mtls_issuer": "datalayer-contents-ca", "connectors": ["adbc"], "policy_version": "v1"}, "capabilities": ["query"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "mcp", "name": "Earthdata", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "team",
+      "configuration": {"kind": "mcp", "transport": "streamable-http", "endpoint": "https://example.test/mcp", "allowed_tools": ["search_earthdata"], "allowed_domains": ["earthdata.nasa.gov"], "approval_policy": "acquisition", "destination_policy": "user-folder"}, "capabilities": ["browse", "transfer"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    },
+    {
+      "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "environment", "name": "Environment content", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "organization",
+      "configuration": {"kind": "environment", "environment_uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "build_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "runtime_content_uids": [], "resolved_provider_paths": {}, "build_entries": []}, "capabilities": ["materialize"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+    }
+  ],
+  "attachment_manifest": {
+    "contract_version": "v1",
+    "sandbox_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ",
+    "sandbox_provider": "daytona",
+    "generated_at": "2026-08-24T12:00:00Z",
+    "attachments": [{
+      "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "source_uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      "sandbox_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ",
+      "sandbox_provider": "daytona",
+      "mode": "ro",
+      "mount_path": "/home/daytona/data",
+      "delivery": "materialize",
+      "required": true,
+      "capabilities": ["browse", "materialize"],
+      "status": "ready",
+      "limits": {"bytes": 1073741824},
+      "created_at": "2026-08-24T12:00:00Z",
+      "cleanup_policy": "remove-materialization"
+    }]
+  }
+}

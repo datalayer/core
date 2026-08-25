@@ -175,6 +175,15 @@ export interface IRequestDatalayerAPIOptions {
   token?: string;
   /** AbortSignal for request cancellation */
   signal?: AbortSignal;
+  /** Axios response representation for binary or streaming transports. */
+  responseType?: AxiosRequestConfig['responseType'];
+}
+
+export interface IDatalayerAPIResponse<T> {
+  data: T;
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
 }
 
 /**
@@ -195,14 +204,15 @@ export interface IRequestDatalayerAPIOptions {
  * });
  * ```
  */
-export async function requestDatalayerAPI<T = any>({
+export async function requestDatalayerAPIWithResponse<T = any>({
   url,
   method,
   body,
   token,
   signal,
+  responseType,
   headers = {},
-}: IRequestDatalayerAPIOptions): Promise<T> {
+}: IRequestDatalayerAPIOptions): Promise<IDatalayerAPIResponse<T>> {
   // Handle FormData differently from JSON
   const isFormData = isFormDataBody(body);
 
@@ -213,6 +223,7 @@ export async function requestDatalayerAPI<T = any>({
     headers: { ...headers },
     withCredentials: true, // equivalent to credentials: 'include'
     signal,
+    responseType,
     // CORS mode is handled automatically by axios
     // Cache control headers
   };
@@ -262,7 +273,13 @@ export async function requestDatalayerAPI<T = any>({
     if (response.status < 300) {
       // Handle redirections if needed.
       if (response.status === 202 && response.headers.location) {
-        return await handleAxiosRedirection(response, axiosConfig);
+        const data = await handleAxiosRedirection(response, axiosConfig);
+        return {
+          data: data as T,
+          status: response.status,
+          statusText: response.statusText,
+          headers: { ...response.headers } as Record<string, string>,
+        };
       }
     } else {
       const adaptedResponse = {
@@ -275,7 +292,12 @@ export async function requestDatalayerAPI<T = any>({
       throw await RunResponseError.create(adaptedResponse);
     }
 
-    return response.data as T;
+    return {
+      data: response.data as T,
+      status: response.status,
+      statusText: response.statusText,
+      headers: { ...response.headers } as Record<string, string>,
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
@@ -293,6 +315,12 @@ export async function requestDatalayerAPI<T = any>({
     }
     throw error;
   }
+}
+
+export async function requestDatalayerAPI<T = any>(
+  options: IRequestDatalayerAPIOptions,
+): Promise<T> {
+  return (await requestDatalayerAPIWithResponse<T>(options)).data;
 }
 
 async function handleAxiosRedirection(

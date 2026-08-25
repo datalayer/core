@@ -20,6 +20,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   loadConfigurationFromServer: true,
   jupyterServerless: false,
   iamUrl: 'https://prod1.datalayer.run',
+  contentsUrl: 'https://r1.datalayer.run',
   managerUrl: 'https://prod1.datalayer.run',
   runtimesUrl: 'https://r1.datalayer.run',
   schedulerUrl: 'https://prod1.datalayer.run',

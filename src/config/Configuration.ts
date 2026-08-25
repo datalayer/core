@@ -54,6 +54,10 @@ export type IDatalayerCoreConfig = {
    */
   iamUrl: string;
   /**
+   * Contents API URL.
+   */
+  contentsUrl: string;
+  /**
    * Manager API URL.
    */
   managerUrl: string;
@@ -219,8 +223,16 @@ export class DatalayerConfiguration {
  */
 export const DEFAULT_DATALAYER_SERVICE_URL = 'https://prod1.datalayer.run';
 
+/**
+ * Where the Contents service lives when nothing says otherwise.
+ *
+ * Not the generic default: Contents runs on the runtimes plane, where the NFS that backs the Home Folder and Volumes lives.
+ */
+export const DEFAULT_DATALAYER_CONTENTS_URL = 'https://r1.datalayer.run';
+
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
   iamUrl: DEFAULT_DATALAYER_SERVICE_URL,
+  contentsUrl: DEFAULT_DATALAYER_CONTENTS_URL,
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',

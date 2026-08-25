@@ -27,6 +27,7 @@ describe('Client IAM Integration Tests', () => {
     client = new DatalayerClient({
       token: testConfig.getToken(),
       iamUrl: DEFAULT_SERVICE_URLS.IAM,
+      contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
       runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
       spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
     });
@@ -100,6 +101,7 @@ describe('Client IAM Integration Tests', () => {
         const loginSdk = new DatalayerClient({
           token: testConfig.getToken(),
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
           runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
           spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
@@ -123,6 +125,7 @@ describe('Client IAM Integration Tests', () => {
         const loginSdk = new DatalayerClient({
           token: testConfig.getToken(),
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
           runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
           spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
@@ -160,6 +163,7 @@ describe('Client IAM Integration Tests', () => {
         const expiredSdk = new DatalayerClient({
           token: 'expired.invalid.token',
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
           runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
           spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
@@ -182,6 +186,7 @@ describe('Client IAM Integration Tests', () => {
         const logoutSdk = new DatalayerClient({
           token: testConfig.getToken(),
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
           runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
           spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });
@@ -207,6 +212,7 @@ describe('Client IAM Integration Tests', () => {
         const invalidSdk = new DatalayerClient({
           token: 'invalid-token',
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
+          contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
           runtimesUrl: DEFAULT_SERVICE_URLS.RUNTIMES,
           spacerUrl: DEFAULT_SERVICE_URLS.SPACER,
         });

@@ -8,6 +8,7 @@
  */
 export const API_BASE_PATHS = {
   AI_AGENTS: '/api/ai-agents/v1',
+  CONTENTS: '/api/contents/v1',
   IAM: '/api/iam/v1',
   OTEL: '/api/otel/v1',
   RUNTIMES: '/api/runtimes/v1',
@@ -21,6 +22,14 @@ export const API_BASE_PATHS = {
 export const DEFAULT_SERVICE_URLS = {
   /** Default URL for AI Agents (durable agent management) service */
   AI_AGENTS: 'https://prod1.datalayer.run',
+  /**
+   * Default URL for the Contents service.
+   *
+   * The same host as RUNTIMES: Contents runs on the runtimes plane, where the NFS that backs the Home Folder and Volumes lives,
+   * so the service sits beside the storage it serves rather than a network
+   * away from it.
+   */
+  CONTENTS: 'https://r1.datalayer.run',
   /** Default URL for IAM (Identity and Access Management) service */
   IAM: 'https://prod1.datalayer.run',
   /** Default URL for OTEL (OpenTelemetry observability) service */

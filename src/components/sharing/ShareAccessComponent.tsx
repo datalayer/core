@@ -45,9 +45,15 @@ type SharingPayload = {
   access?: Partial<Record<ItemAccessLevel, SharingLevelPayload>>;
 };
 
+export type ShareAccessTransport = {
+  load: () => Promise<Record<string, any>>;
+  save: (sharing: SharingPayload) => Promise<void>;
+};
+
 export type ShareAccessComponentProps = {
   isOpen: boolean;
   requestUrl?: string;
+  transport?: ShareAccessTransport;
   resourceLabel: string;
   resourceName?: string;
   resourceDescription?: string;
@@ -747,6 +753,7 @@ function AccessPrincipalRow({
 export function ShareAccessComponent({
   isOpen,
   requestUrl,
+  transport,
   resourceLabel,
   resourceName,
   resourceDescription: _resourceDescription,
@@ -829,7 +836,7 @@ export function ShareAccessComponent({
   ]);
 
   // ----- Derived -----
-  const canRequest = Boolean(requestUrl && token);
+  const canRequest = Boolean(token && (requestUrl || transport));
   const canSearchPrincipals = Boolean(configuration?.iamUrl && token);
   const iamUrl = configuration?.iamUrl;
 
@@ -911,7 +918,7 @@ export function ShareAccessComponent({
       return;
     }
 
-    if (!canRequest || !requestUrl) {
+    if (!canRequest) {
       setIsLoading(false);
       setIsSharingAccessConfirmed(false);
       return;
@@ -928,14 +935,16 @@ export function ShareAccessComponent({
       setIsSharingAccessConfirmed(false);
       setSharingAccessMessage(null);
       try {
-        const response = await fetch(requestUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const payload = await response.json();
+        const response = transport
+          ? null
+          : await fetch(requestUrl!, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+            });
+        const payload = transport ? await transport.load() : await response!.json();
         const message =
           payload?.detail ||
           payload?.message ||
@@ -951,7 +960,7 @@ export function ShareAccessComponent({
           }
           throw new Error(message);
         }
-        if (!response.ok) {
+        if (response && !response.ok) {
           if (
             response.status === 403 ||
             isSharingAuthorizationMessage(message)
@@ -1011,6 +1020,7 @@ export function ShareAccessComponent({
     isOpen,
     canRequest,
     requestUrl,
+    transport,
     token,
     resourceLabel,
     resourceName,
@@ -1524,7 +1534,7 @@ export function ShareAccessComponent({
   // ----- Auto-save on access change after hydration -----
   const saveAccess = useCallback(
     async (snapshot: AccessByLevel) => {
-      if (!canRequest || !requestUrl) {
+      if (!canRequest) {
         return;
       }
       setIsSaving(true);
@@ -1548,7 +1558,14 @@ export function ShareAccessComponent({
             },
           },
         };
-        const response = await fetch(requestUrl, {
+        if (transport) {
+          await transport.save(body);
+          enqueueToastRef.current(`${resourceLabel} sharing updated.`, {
+            variant: 'success',
+          });
+          return;
+        }
+        const response = await fetch(requestUrl!, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1591,7 +1608,7 @@ export function ShareAccessComponent({
         setIsSaving(false);
       }
     },
-    [canRequest, requestUrl, token, resourceLabel],
+    [canRequest, requestUrl, token, resourceLabel, transport],
   );
 
   useEffect(() => {

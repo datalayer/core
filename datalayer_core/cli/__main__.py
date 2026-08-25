@@ -20,6 +20,7 @@ from datalayer_core.cli.commands.authn import (
 )
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
+from datalayer_core.cli.commands.contents import app as contents_app
 from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.orgs import app as orgs_app
 from datalayer_core.cli.commands.orgs import orgs_ls
@@ -143,6 +144,11 @@ def main_callback(
         "--scheduler-url",
         help="Override DATALAYER_SCHEDULER_URL for this CLI invocation.",
     ),
+    contents_url: str | None = typer.Option(
+        None,
+        "--contents-url",
+        help="Override DATALAYER_CONTENTS_URL for this CLI invocation.",
+    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
@@ -160,6 +166,7 @@ def main_callback(
         "DATALAYER_SUPPORT_URL": support_url,
         "DATALAYER_JUPYTER_MCP_SERVER_URL": jupyter_mcp_server_url,
         "DATALAYER_SCHEDULER_URL": scheduler_url,
+        "DATALAYER_CONTENTS_URL": contents_url,
     }
     for env_name, value in overrides.items():
         if value is not None:
@@ -178,6 +185,7 @@ app.add_typer(about_app)
 app.add_typer(auth_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
+app.add_typer(contents_app)
 app.add_typer(memberships_app)
 app.add_typer(orgs_app)
 app.add_typer(teams_app)
@@ -221,6 +229,7 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--support-url",
     "--jupyter-mcp-server-url",
     "--scheduler-url",
+    "--contents-url",
 }
 
 _GLOBAL_OPTIONS_NO_VALUES = {

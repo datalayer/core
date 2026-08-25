@@ -15,12 +15,15 @@
 // Base client exports
 export {
   requestDatalayerAPI,
+  requestDatalayerAPIWithResponse,
   RunResponseError,
   NetworkError,
 } from './DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
+export type { IDatalayerAPIResponse } from './DatalayerApi';
 
 // Domain-organized API exports
 export * as iam from './iam';
+export * as contents from './contents';
 export * as otel from './otel';
 export * from '../api/DatalayerApi';

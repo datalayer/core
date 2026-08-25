@@ -55,6 +55,8 @@
     "build:lib": "npm run clean:lib && gulp resources-to-lib && tsc -b && node scripts/fix-esm-imports.cjs",
     "build:cli-login": "vite build --config vite.cli-login.config.ts",
     "build:types": "npm run clean:lib && tsc -b",
+    "generate:contents": "python scripts/generate-contents-types.py",
+    "check:contents-generated": "python scripts/generate-contents-types.py --check",
     "build:nextjs": "npm run build --workspace=nextjj-example",
     "build:examples": "npm run build:nextjs",
     "build:all": "npm run build && npm run build:examples",

@@ -49,6 +49,10 @@ DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
+# Contents runs on the runtimes plane, where the NFS that backs the Home
+# Folder and Volumes lives, so it shares the runtimes host.
+DEFAULT_DATALAYER_CONTENTS_URL = DEFAULT_DATALAYER_RUNTIMES_URL
+
 
 @dataclass
 class DatalayerURLs:
@@ -104,6 +108,7 @@ class DatalayerURLs:
     support_url: str
     jupyter_mcp_server_url: str
     scheduler_url: str
+    contents_url: str = DEFAULT_DATALAYER_CONTENTS_URL
 
     @classmethod
     def from_environment(
@@ -122,6 +127,7 @@ class DatalayerURLs:
         support_url: Optional[str] = None,
         jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
+        contents_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
         Create DatalayerURLs instance from environment variables and parameters.
@@ -283,6 +289,12 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_SCHEDULER_URL
         )
+        resolved_contents_url = (
+            contents_url
+            or os.environ.get("DATALAYER_CONTENTS_URL")
+            or base_url_for_services
+            or DEFAULT_DATALAYER_CONTENTS_URL
+        )
 
         # Strip trailing slashes for consistency
         resolved_iam_url = resolved_iam_url.rstrip("/")
@@ -301,6 +313,7 @@ class DatalayerURLs:
             "/"
         )
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
+        resolved_contents_url = resolved_contents_url.rstrip("/")
 
         return cls(
             iam_url=resolved_iam_url,
@@ -317,6 +330,7 @@ class DatalayerURLs:
             support_url=resolved_support_url,
             jupyter_mcp_server_url=resolved_jupyter_mcp_server_url,
             scheduler_url=resolved_scheduler_url,
+            contents_url=resolved_contents_url,
         )
 
     def __post_init__(self) -> None:
@@ -335,6 +349,7 @@ class DatalayerURLs:
         self.support_url = self.support_url.rstrip("/")
         self.jupyter_mcp_server_url = self.jupyter_mcp_server_url.rstrip("/")
         self.scheduler_url = self.scheduler_url.rstrip("/")
+        self.contents_url = self.contents_url.rstrip("/")
 
     def as_dict(self) -> dict[str, str]:
         """Return all resolved service URLs as a dictionary."""
@@ -357,6 +372,7 @@ class DatalayerURLs:
         support_url: Optional[str] = None,
         jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
+        contents_url: Optional[str] = None,
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
         return cls.from_environment(
@@ -374,4 +390,5 @@ class DatalayerURLs:
             support_url=support_url,
             jupyter_mcp_server_url=jupyter_mcp_server_url,
             scheduler_url=scheduler_url,
+            contents_url=contents_url,
         ).as_dict()

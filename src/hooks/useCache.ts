@@ -134,6 +134,71 @@ const DEFAULT_QUERY_OPTIONS = {
  * @see https://tanstack.com/query/latest/docs/framework/react/guides/query-keys
  */
 export const queryKeys = {
+  // Contents catalog
+  contents: {
+    all: () => ['contents'] as const,
+    sources: () => [...queryKeys.contents.all(), 'sources'] as const,
+    sourceList: (filters?: {
+      kind?: string;
+      cursor?: string;
+      limit?: number;
+    }) => [...queryKeys.contents.sources(), 'list', filters ?? {}] as const,
+    source: (sourceUid: string) =>
+      [...queryKeys.contents.sources(), 'detail', sourceUid] as const,
+    sourceSharing: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'sharing'] as const,
+    datasetRevisions: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'revisions'] as const,
+    datasetRevision: (sourceUid: string, revisionUid: string) =>
+      [...queryKeys.contents.datasetRevisions(sourceUid), revisionUid] as const,
+    datasetPublications: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'publications'] as const,
+    userFolder: () => [...queryKeys.contents.sources(), 'user-folder'] as const,
+    userFolderQuota: () =>
+      [...queryKeys.contents.userFolder(), 'quota'] as const,
+    userFolderObjects: (filters?: {
+      prefix?: string;
+      cursor?: string;
+      limit?: number;
+      order?: 'path' | 'updated';
+    }) =>
+      [
+        ...queryKeys.contents.userFolder(),
+        'objects',
+        'list',
+        filters ?? {},
+      ] as const,
+    userFolderObject: (path: string) =>
+      [...queryKeys.contents.userFolder(), 'objects', 'stat', path] as const,
+    userFolderObjectVersions: (objectUid: string, cursor?: string) =>
+      [
+        ...queryKeys.contents.userFolder(),
+        'objects',
+        objectUid,
+        'versions',
+        cursor ?? '',
+      ] as const,
+    operations: () => [...queryKeys.contents.all(), 'operations'] as const,
+    operation: (operationUid: string) =>
+      [...queryKeys.contents.operations(), operationUid] as const,
+    transfers: () => [...queryKeys.contents.all(), 'transfers'] as const,
+    transferList: (filters?: {
+      active?: boolean;
+      cursor?: string;
+      limit?: number;
+    }) => [...queryKeys.contents.transfers(), 'list', filters ?? {}] as const,
+    transfer: (transferUid: string) =>
+      [...queryKeys.contents.transfers(), transferUid] as const,
+    attachments: () => [...queryKeys.contents.all(), 'attachments'] as const,
+    attachmentList: (filters?: {
+      sandboxUid?: string;
+      sourceUid?: string;
+      active?: boolean;
+    }) => [...queryKeys.contents.attachments(), 'list', filters ?? {}] as const,
+    attachmentManifest: (sandboxUid: string) =>
+      [...queryKeys.contents.attachments(), 'manifest', sandboxUid] as const,
+  },
+
   // Authentication & Profile
   auth: {
     me: () => ['auth', 'me'] as const,

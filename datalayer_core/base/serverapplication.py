@@ -65,6 +65,12 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         help="""URL to connect to the Datalayer Library API.""",
     )
 
+    contents_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Contents API.""",
+    )
+
     manager_url = Unicode(
         config=True,
         allow_none=True,
@@ -105,6 +111,10 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
     def _default_library_url(self) -> str:
         return self._urls.library_url
 
+    @default("contents_url")
+    def _default_contents_url(self) -> str:
+        return self._urls.contents_url
+
     @default("manager_url")
     def _default_manager_url(self) -> str:
         return self._urls.manager_url
@@ -134,6 +144,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             "runtimes_url": self.runtimes_url,
             "spacer_url": self.spacer_url,
             "library_url": self.library_url,
+            "contents_url": self.contents_url,
             "manager_url": self.manager_url,
             "scheduler_url": self.scheduler_url,
             "ai_agents_url": self.ai_agents_url,

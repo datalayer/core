@@ -26,6 +26,7 @@ import {
   type ClientHandlers,
 } from './base';
 import { IAMMixin } from './mixins/IAMMixin';
+import { ContentsMixin } from './mixins/ContentsMixin';
 
 // Import model types for interface declaration
 import type { UserDTO } from './../models/UserDTO';
@@ -56,7 +57,7 @@ function composeMixins(...mixins: Array<(base: any) => any>) {
 // Apply the IAM mixin to the base class. Runtime and content (Spacer) features
 // live in @datalayer/agent-runtimes, which composes AgentRuntimesClient on top
 // of this core client.
-const DatalayerCoreClientWithMixins = composeMixins(IAMMixin);
+const DatalayerCoreClientWithMixins = composeMixins(IAMMixin, ContentsMixin);
 
 /**
  * Core Datalayer Client providing access to identity, plans and account
