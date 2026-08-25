@@ -1,3 +1,6 @@
+# Copyright (c) 2023-2025 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
 """Generated public Python types for Datalayer Contents."""
 
 from .generated import (
