@@ -13,7 +13,7 @@ import { Box } from '@datalayer/primer-addons';
 import type { CatalogSource } from '../../api/contents';
 import {
   contentSourceEffectiveRole,
-  contentSourceKindLabel,
+  contentSourceLabel,
 } from '../../models/contents';
 
 export type ContentSourceCardProps = {
@@ -39,7 +39,7 @@ export const ContentSourceCard = ({ item, onOpen }: ContentSourceCardProps) => (
       <Box sx={{ minWidth: 0 }}>
         <Text sx={{ fontWeight: 600 }}>{item.source.name}</Text>
         <Text as="p" sx={{ color: 'fg.muted', fontSize: 0, m: 0, mt: 1 }}>
-          {item.source.description || contentSourceKindLabel(item.source.kind)}
+          {item.source.description || contentSourceLabel(item.source.kind)}
         </Text>
         <Text as="p" sx={{ color: 'fg.subtle', fontSize: 0, m: 0, mt: 1 }}>
           {item.source.uid}
@@ -53,7 +53,7 @@ export const ContentSourceCard = ({ item, onOpen }: ContentSourceCardProps) => (
           flexShrink: 0,
         }}
       >
-        <Label>{contentSourceKindLabel(item.source.kind)}</Label>
+        <Label>{contentSourceLabel(item.source.kind)}</Label>
         <Label variant={item.source.status === 'ready' ? 'success' : 'secondary'}>
           {item.source.status}
         </Label>

@@ -32,26 +32,12 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 from uuid import uuid4
 
-# `datalayer_common` is not published, so it is absent wherever this package is
-# installed from an index. The module still has to import there -- the CLI
-# walks it, the docs generator imports every module, and so does the type
-# checker -- so degrade to a synchronizer that refuses to start rather than an
-# import that brings the package down.
-try:
-    from datalayer_common.content_sync import (
-        DEFAULT_BLOCK_SIZE,
-        Exclusions,
-        Manifest,
-        scan_directory,
-    )
-
-    HAS_CONTENT_SYNC = True
-except ImportError:  # pragma: no cover - depends on what is installed
-    DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024
-    # `unused-ignore` too: where `datalayer_common` cannot be resolved the
-    # imported names are untyped and there is nothing left to ignore.
-    Exclusions = Manifest = scan_directory = None  # type: ignore[assignment, misc, unused-ignore]
-    HAS_CONTENT_SYNC = False
+from datalayer_core.contents_sync_engine import (
+    DEFAULT_BLOCK_SIZE,
+    Exclusions,
+    Manifest,
+    scan_directory,
+)
 
 STATE_DIRECTORY = ".datalayer-sync"
 #: Always excluded: the state must never be synchronized as content.
@@ -150,11 +136,6 @@ class Synchronizer:
         block_size: int = DEFAULT_BLOCK_SIZE,
         progress: Progress | None = None,
     ) -> None:
-        if not HAS_CONTENT_SYNC:
-            raise RuntimeError(
-                "Content synchronization needs the `datalayer_common` package, "
-                "which is not installed."
-            )
         self.client = client
         self.root = Path(local_root)
         self.remote_uri = remote_uri

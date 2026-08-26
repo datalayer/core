@@ -15,7 +15,7 @@ import {
   canShareContentSource,
   canUpdateContentSource,
   contentSourceEffectiveRole,
-  contentSourceKindLabel,
+  contentSourceLabel,
 } from '../permissions';
 
 const source = (overrides: Partial<CatalogSource> = {}): CatalogSource => ({
@@ -75,7 +75,7 @@ describe('Contents permission helpers', () => {
   });
 
   it('provides stable user-facing kind labels', () => {
-    expect(contentSourceKindLabel('cloud-storage')).toBe('Cloud Storage');
-    expect(contentSourceKindLabel('data-server')).toBe('Dataserver');
+    expect(contentSourceLabel('cloud-storage')).toBe('Cloud Storage');
+    expect(contentSourceLabel('data-server')).toBe('Dataserver');
   });
 });

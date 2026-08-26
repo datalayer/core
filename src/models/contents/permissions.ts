@@ -10,7 +10,14 @@
 
 import type { CatalogSource, ContentSource } from '../../api/contents';
 
-export const CONTENT_SOURCE_KIND_LABELS: Record<ContentSource['kind'], string> = {
+/**
+ * What each content source is called where a person reads it.
+ *
+ * Keyed by the wire field, which is still `kind`: the contract names it that,
+ * and renaming a stored field is a migration rather than a vocabulary choice.
+ * Everything above the wire says content source.
+ */
+export const CONTENT_SOURCE_LABELS: Record<ContentSource['kind'], string> = {
   files: 'Home Folder',
   dataset: 'Dataset',
   volume: 'Volume',
@@ -21,8 +28,8 @@ export const CONTENT_SOURCE_KIND_LABELS: Record<ContentSource['kind'], string> =
   environment: 'Environment',
 };
 
-export const contentSourceKindLabel = (kind: ContentSource['kind']): string =>
-  CONTENT_SOURCE_KIND_LABELS[kind];
+export const contentSourceLabel = (kind: ContentSource['kind']): string =>
+  CONTENT_SOURCE_LABELS[kind];
 
 export const contentSourceEffectiveRole = (item: CatalogSource): string => {
   if (item.permissions.isOwner) {

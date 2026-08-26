@@ -23,26 +23,17 @@ from types import SimpleNamespace
 from typing import Any, Iterator
 
 import pytest
+from typer.testing import CliRunner
 
-# `datalayer_common` is not published, so it is absent wherever this package is
-# installed from an index -- CI included. The synchronizer itself is imported
-# lazily by the CLI, so only this suite needs it.
-datalayer_common = pytest.importorskip("datalayer_common")
-
-from datalayer_common.content_sync import (  # noqa: E402
+import datalayer_core.cli.commands.contents as contents_commands
+from datalayer_core.cli.__main__ import app
+from datalayer_core.contents_sync import STATE_DIRECTORY, Synchronizer
+from datalayer_core.contents_sync_engine import (
     FileEntry,
     Manifest,
     accepted_after,
     hash_stream,
     reconcile,
-)
-from typer.testing import CliRunner  # noqa: E402
-
-import datalayer_core.cli.commands.contents as contents_commands  # noqa: E402
-from datalayer_core.cli.__main__ import app  # noqa: E402
-from datalayer_core.contents_sync import (  # noqa: E402
-    STATE_DIRECTORY,
-    Synchronizer,
 )
 
 BLOCK = 64 * 1024
