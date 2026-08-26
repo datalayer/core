@@ -3,11 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import { cancelOperation, getOperation } from '../operations';

@@ -3,11 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 import { Contents } from '@jupyterlab/services';
 
 const timestamp = '2026-08-24T08:00:00.000Z';

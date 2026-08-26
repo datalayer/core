@@ -1,9 +1,6 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-# Copyright (c) 2023-2026 Datalayer, Inc.
-# Distributed under the terms of the Modified BSD License.
-
 """The async streaming helpers watch work to its end and stop there."""
 
 from __future__ import annotations

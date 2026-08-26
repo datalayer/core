@@ -3,11 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 import type { IDatasource } from '../../models';
 
 /** Invented records used when the real Datasources view is embedded in docs. */

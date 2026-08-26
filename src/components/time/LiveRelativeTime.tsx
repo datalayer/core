@@ -3,11 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 import { useEffect, useMemo, useState } from 'react';
 import { Tooltip } from '@primer/react';
 import { formatDateTimeDetails, formatRelativeTime } from '../../utils';
