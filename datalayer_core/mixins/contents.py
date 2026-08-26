@@ -383,6 +383,58 @@ class ContentsMixin:
     ) -> TransferView:
         """Create or resume a file upload without buffering the file in memory."""
 
+        return self.upload_file(
+            local_path,
+            f"home-folder:///{destination_path.lstrip('/')}",
+            idempotency_key=idempotency_key,
+            media_type=media_type,
+            overwrite=overwrite,
+            chunk_size=chunk_size,
+            progress=progress,
+        )
+
+    def upload_dataset_file(
+        self,
+        local_path: str | Path,
+        dataset_uid: str,
+        destination_path: str,
+        *,
+        idempotency_key: str,
+        media_type: str = "application/octet-stream",
+        overwrite: str = "reject",
+        chunk_size: int = 8 * 1024 * 1024,
+        progress: Callable[[int, int, str], None] | None = None,
+    ) -> TransferView:
+        """Capture a file into a Dataset: a result, or a file on a mounted Volume.
+
+        Run where the file is — inside the sandbox — the bytes go up through
+        the same verified, resumable transfer as a Home Folder upload and
+        become a version of the Dataset; a revision then pins that version.
+        """
+
+        return self.upload_file(
+            local_path,
+            f"dataset://{dataset_uid}/{destination_path.lstrip('/')}",
+            idempotency_key=idempotency_key,
+            media_type=media_type,
+            overwrite=overwrite,
+            chunk_size=chunk_size,
+            progress=progress,
+        )
+
+    def upload_file(
+        self,
+        local_path: str | Path,
+        destination_uri: str,
+        *,
+        idempotency_key: str,
+        media_type: str = "application/octet-stream",
+        overwrite: str = "reject",
+        chunk_size: int = 8 * 1024 * 1024,
+        progress: Callable[[int, int, str], None] | None = None,
+    ) -> TransferView:
+        """Create or resume a transfer to any destination the service accepts."""
+
         path = Path(local_path)
         size = path.stat().st_size
         digest = hashlib.sha256()
@@ -391,7 +443,7 @@ class ContentsMixin:
                 digest.update(chunk)
         transfer = self.create_content_transfer(
             {
-                "destination_uri": (f"home-folder:///{destination_path.lstrip('/')}"),
+                "destination_uri": destination_uri,
                 "size": size,
                 "checksum": digest.hexdigest(),
                 "media_type": media_type,
@@ -401,6 +453,11 @@ class ContentsMixin:
         )
         verified = {part.number for part in transfer.parts or []}
         uploaded = sum(part.size for part in transfer.parts or [])
+        if transfer.parts:
+            # Resuming: the parts already verified fix the part size. Cutting
+            # the file differently would number the bytes differently, and a
+            # "verified" part would then be the wrong bytes.
+            chunk_size = transfer.parts[0].size
         with path.open("rb") as stream:
             number = 0
             while chunk := stream.read(chunk_size):
@@ -459,6 +516,66 @@ class ContentsMixin:
             stream=True,
         )
         yield from response.iter_content(chunk_size=chunk_size)
+
+    # -- cloud storage ------------------------------------------------------
+    #
+    # A bucket a person connected, read through Contents with a credential
+    # resolved for each request and never returned: the client sees objects
+    # and bytes, not keys.
+
+    def list_cloud_storage_objects(
+        self, source_uid: str, *, prefix: str = "", cursor: str | None = None
+    ) -> dict[str, Any]:
+        parameters: dict[str, str] = {"prefix": prefix}
+        if cursor:
+            parameters["cursor"] = cursor
+        return self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/cloud/objects?{urlencode(parameters)}"),
+            method="GET",
+        ).json()
+
+    def stat_cloud_storage_object(self, source_uid: str, path: str) -> dict[str, Any]:
+        return self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(
+                f"/sources/{source_uid}/cloud/objects/stat?{urlencode({'path': path})}"
+            ),
+            method="GET",
+        ).json()
+
+    def iter_cloud_storage_object(
+        self,
+        source_uid: str,
+        path: str,
+        *,
+        byte_range: str | None = None,
+        chunk_size: int = 1024 * 1024,
+    ) -> Iterator[bytes]:
+        headers = {"Range": byte_range} if byte_range else {}
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(
+                f"/sources/{source_uid}/cloud/objects/content?{urlencode({'path': path})}"
+            ),
+            method="GET",
+            headers=headers,
+            stream=True,
+        )
+        yield from response.iter_content(chunk_size=chunk_size)
+
+    def test_cloud_storage_connection(self, source_uid: str) -> dict[str, Any]:
+        """Does the bucket answer with this credential, right now?"""
+        return self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/cloud/test"), method="POST"
+        ).json()
+
+    def presign_cloud_storage_object(
+        self, source_uid: str, path: str, *, operation: str = "get", expires_in: int = 900
+    ) -> dict[str, Any]:
+        """A URL for one object, one operation, a short while."""
+        query = urlencode({"path": path, "operation": operation, "expires_in": expires_in})
+        return self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/cloud/objects/presign?{query}"),
+            method="POST",
+        ).json()
 
     def update_content_source(
         self,

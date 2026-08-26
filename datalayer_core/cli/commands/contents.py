@@ -832,6 +832,69 @@ def cloud_storage_create(
     _render(created.value.model_dump(mode="json"), _context(ctx))
 
 
+@cloud_storage_app.command(name="objects")
+@contents_command
+def cloud_storage_objects(
+    ctx: typer.Context,
+    source: str = typer.Argument(..., help="Cloud Storage source name or UID"),
+    prefix: str = typer.Option("", "--prefix", help="List under this path"),
+) -> None:
+    """List what a bucket holds, through Contents, without its key."""
+    client = _client()
+    resolved = _resolve_source(client, source)
+    page = client.list_cloud_storage_objects(str(resolved.value.source.uid), prefix=prefix)
+    items = page.get("items", [])
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(items, context)
+        return
+    table = Table("Path", "Type", "Size", "Modified")
+    for item in items:
+        table.add_row(
+            str(item.get("path", "")),
+            "folder" if item.get("is_directory") else "file",
+            "" if item.get("is_directory") else str(item.get("size", "")),
+            str(item.get("modified_at") or ""),
+        )
+    console.print(table)
+    if page.get("next_cursor"):
+        console.print("[dim]more entries follow; narrow the prefix[/dim]")
+
+
+@cloud_storage_app.command(name="test")
+@contents_command
+def cloud_storage_test(
+    ctx: typer.Context,
+    source: str = typer.Argument(..., help="Cloud Storage source name or UID"),
+) -> None:
+    """Check that the bucket answers with the source's credential."""
+    client = _client()
+    resolved = _resolve_source(client, source)
+    answer = client.test_cloud_storage_connection(str(resolved.value.source.uid))
+    _render(answer, _context(ctx))
+    if not answer.get("ok"):
+        raise typer.Exit(1)
+
+
+@cloud_storage_app.command(name="download")
+@contents_command
+def cloud_storage_download(
+    ctx: typer.Context,
+    source: str = typer.Argument(..., help="Cloud Storage source name or UID"),
+    path: str = typer.Argument(..., help="Object path inside the source"),
+    destination: Path = typer.Argument(..., help="Local file to write"),
+) -> None:
+    """Read one object out of the bucket, through Contents."""
+    client = _client()
+    resolved = _resolve_source(client, source)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with contents_progress(f"Downloading {path}"):
+        with destination.open("wb") as output:
+            for chunk in client.iter_cloud_storage_object(str(resolved.value.source.uid), path):
+                output.write(chunk)
+    _render({"path": path, "destination": str(destination)}, _context(ctx))
+
+
 @cloud_storage_app.command(name="attach")
 @contents_command
 def cloud_storage_attach(
@@ -1079,3 +1142,34 @@ def sharing_revoke(
     except Exception as error:
         raise ContentsCommandError(str(error)) from error
     _render(updated.value.model_dump(mode="json"), _context(ctx))
+
+
+@datasets_app.command(name="capture")
+@contents_command
+def capture_dataset_file(
+    ctx: typer.Context,
+    local_path: Path = typer.Argument(..., exists=True, dir_okay=False),
+    dataset: str = typer.Argument(..., help="The Dataset's uid or name"),
+    destination: str = typer.Argument(..., help="The path inside the Dataset"),
+    overwrite: bool = typer.Option(False, "--overwrite"),
+) -> None:
+    """Capture a file into a Dataset — a result, or a file on a mounted Volume.
+
+    Run where the file is, inside the sandbox: the bytes go up through the
+    same verified, resumable transfer as an upload and become a version of
+    the Dataset. `datasets create-revision` then pins that version.
+    """
+    client = _client()
+    dataset_uid = _resolve_source(client, dataset).value.source.uid
+    try:
+        with contents_progress(f"Capturing {local_path.name}"):
+            transfer = client.upload_dataset_file(
+                local_path,
+                str(dataset_uid),
+                destination.lstrip("/"),
+                idempotency_key=f"cli-capture-{uuid4()}",
+                overwrite="replace" if overwrite else "reject",
+            )
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(transfer.model_dump(mode="json"), _context(ctx))

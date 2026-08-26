@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /* This file is generated from Datalayer Contents OpenAPI. Do not edit. */
 
 export interface AttachmentCreate {
@@ -59,6 +54,19 @@ export interface CatalogSource {
   source: ContentSource;
 }
 
+export interface CloudObjectList {
+  items: Array<CloudObjectView>;
+  nextCursor?: string | null;
+}
+
+export interface CloudObjectView {
+  etag?: string | null;
+  isDirectory: boolean;
+  modifiedAt?: string | null;
+  path: string;
+  size: number;
+}
+
 export interface CloudStorageConfiguration {
   accessPreference?: "automatic" | "mount" | "python" | "object-client";
   bucketOrContainer: string;
@@ -79,13 +87,22 @@ export interface ConflictResolution {
   use: "local" | "remote" | "keep-both";
 }
 
+export interface ConnectionTest {
+  detail: string;
+  ok: boolean;
+  provider: string;
+}
+
 export interface ContentAttachment {
+  accessMode?: "mount" | "python" | "object-client" | null;
   capabilities?: Array<Capability>;
   cleanupPolicy?: "revoke" | "remove-materialization" | "retain-source";
   createdAt: string;
   delivery: "mount" | "local-bridge" | "materialize" | "client" | "environment";
   error?: AttachmentError | null;
   expiresAt?: string | null;
+  fallbackReason?: string | null;
+  filesystemPrimitives?: Array<"list" | "stat" | "read" | "write" | "mkdir" | "remove" | "upload" | "download">;
   lastSeenAt?: string | null;
   limits?: AttachmentLimits;
   mode: "ro" | "rw";
@@ -186,6 +203,19 @@ export interface ContentsCapabilities {
   sourceKinds: Array<SourceKindCapability>;
 }
 
+export interface CredentialDiagnostics {
+  credentialName?: string | null;
+  credentialUid: string | null;
+  detail: string;
+  referenced: boolean;
+  resolvable: boolean;
+  sourceUid: string;
+}
+
+export interface CredentialRotation {
+  credentialUid: string;
+}
+
 export interface DataServerConfiguration {
   connectors?: Array<string>;
   kind: "data-server";
@@ -246,7 +276,7 @@ export interface DatasetRevision {
 
 export interface DatasetRevisionCreate {
   files: Array<DatasetRevisionFileCreate>;
-  originKind: "upload" | "home-folder" | "sandbox-result";
+  originKind: "upload" | "home-folder" | "sandbox-result" | "cloud-storage" | "volume";
 }
 
 export interface DatasetRevisionFile {
@@ -260,9 +290,11 @@ export interface DatasetRevisionFile {
 }
 
 export interface DatasetRevisionFileCreate {
-  objectUid: string;
+  objectUid?: string | null;
   path?: string | null;
-  versionUid: string;
+  sourcePath?: string | null;
+  sourceUid?: string | null;
+  versionUid?: string | null;
 }
 
 export interface DatasetRevisionList {
@@ -279,6 +311,10 @@ export interface DatasourceConfiguration {
   endpoint?: string | null;
   kind: "datasource";
   networkRoute?: string | null;
+}
+
+export interface DeadLetterList {
+  items: Array<OperationView>;
 }
 
 export interface DependencyStatusResponse {
@@ -338,8 +374,18 @@ export interface HealthResponse {
   success?: true;
 }
 
+export interface HomeFolderFileEntry {
+  isDirectory: boolean;
+  modifiedAt?: string | null;
+  name: string;
+  path: string;
+  scope?: string | null;
+  size: number;
+  title?: string | null;
+}
+
 export interface HomeFolderFileList {
-  items: Array<Record<string, unknown>>;
+  items: Array<HomeFolderFileEntry>;
   path: string;
 }
 
@@ -425,7 +471,18 @@ export interface PlanAction {
   versionUid?: string | null;
 }
 
+export interface PresignedAccess {
+  expiresIn: number;
+  operation: "get" | "put";
+  path: string;
+  url: string;
+}
+
 export type PrincipalKind = "user" | "team" | "organization";
+
+export interface QuarantineRequest {
+  reason: string;
+}
 
 export interface ReadinessResponse {
   dependencies: Array<DependencyStatusResponse>;

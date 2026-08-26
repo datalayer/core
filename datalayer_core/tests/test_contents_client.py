@@ -247,3 +247,29 @@ def test_contents_client_reads_and_cancels_operations() -> None:
     assert cancelled.cancellation_requested is True
     assert client.calls[1][0].endswith(f"/operations/{UID}/cancel")
     assert client.calls[1][1]["method"] == "POST"
+
+
+def test_contents_client_captures_a_file_into_a_dataset_through_the_same_transfer(tmp_path: Path) -> None:
+    """A Dataset destination is the Home Folder upload with another address."""
+    local = tmp_path / "co2.csv"
+    local.write_bytes(b"year,co2\n2024,422.5\n")
+    transfer = {
+        "uid": "01TRANSFER0000000000000000", "direction": "upload", "source_uid": "01DATASET00000000000000000",
+        "source_uri": None, "destination_uri": "dataset://01DATASET00000000000000000/results/co2.csv",
+        "path": "results/co2.csv", "media_type": "text/csv", "expected_size": 20, "expected_checksum": "a" * 64,
+        "overwrite_policy": "reject", "status": "pending", "received_bytes": 0, "part_count": 0, "parts": [],
+        "object_uid": None, "version_uid": None, "error_code": None, "error_message": None,
+        "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
+    }
+    client = Client()
+    client.responses = [Response(transfer), Response(transfer), Response({**transfer, "status": "succeeded"})]
+
+    result = client.upload_dataset_file(
+        local, "01DATASET00000000000000000", "/results/co2.csv", idempotency_key="capture", media_type="text/csv",
+    )
+
+    assert result.status == "succeeded"
+    created = client.calls[0][1]["json"]
+    assert created["destination_uri"] == "dataset://01DATASET00000000000000000/results/co2.csv"
+    assert created["size"] == 20
+    assert [url.rsplit("/", 1)[1] for url, _ in client.calls if "/parts/" in url] == ["0"]

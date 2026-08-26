@@ -3,17 +3,24 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { requestDatalayerAPI } from '../DatalayerApi';
+import {
+  requestDatalayerAPI,
+  requestDatalayerAPIWithResponse,
+} from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 import { contentsToCamelCase, contentsToSnakeCase } from '../../models/contents';
 import type { JsonValue } from '../../models/contents';
 import type {
+  HomeFolderFileList,
   ContentObject,
   ObjectList,
   RestoreRequest,
   HomeFolderQuota,
   VersionList,
 } from './generated';
+
+const homeFolderUrl = (baseUrl: string, suffix = ''): string =>
+  `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/home-folder${suffix}`;
 
 const convertResponse = <T>(value: unknown): T =>
   contentsToCamelCase(value as JsonValue) as T;
@@ -134,3 +141,39 @@ export const restoreHomeFolderObject = async (
       body: contentsToSnakeCase(request as unknown as JsonValue),
     }),
   );
+
+/**
+ * The files under a path of the caller's Home Folders — what a sandbox
+ * wrote as well as what was uploaded — as the shared filesystem holds them.
+ * The root lists the folders the caller reaches: their own, and one per
+ * organization and team.
+ */
+export const listHomeFolderFiles = async (
+  token: string,
+  path = '',
+  baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
+): Promise<HomeFolderFileList> =>
+  convertResponse<HomeFolderFileList>(
+    await requestDatalayerAPI({
+      url: `${homeFolderUrl(baseUrl, '/files')}?path=${encodeURIComponent(path)}`,
+      method: 'GET',
+      token,
+    }),
+  );
+
+/** The bytes of one Home Folder file, or a range of them, from the shared filesystem. */
+export const readHomeFolderFile = async (
+  token: string,
+  path: string,
+  options: { range?: string } = {},
+  baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
+): Promise<{ body: ArrayBuffer; status: number; headers: Record<string, string> }> => {
+  const response = await requestDatalayerAPIWithResponse({
+    url: `${homeFolderUrl(baseUrl, '/files/content')}?path=${encodeURIComponent(path)}`,
+    method: 'GET',
+    token,
+    headers: options.range ? { Range: options.range } : undefined,
+    responseType: 'arraybuffer',
+  });
+  return { body: response.data as ArrayBuffer, status: response.status, headers: response.headers };
+};

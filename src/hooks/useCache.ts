@@ -77,7 +77,6 @@ type IAnySpace = any;
 type IAssignment = any;
 type ICell = any;
 type ICourse = any;
-type IDataset = any;
 type IDocument = any;
 type IEnvironment = any;
 type IExercise = any;
@@ -155,6 +154,18 @@ export const queryKeys = {
       [...queryKeys.contents.datasetRevisions(sourceUid), revisionUid] as const,
     datasetPublications: (sourceUid: string) =>
       [...queryKeys.contents.source(sourceUid), 'publications'] as const,
+    publishedDatasets: () =>
+      [...queryKeys.contents.all(), 'publications', 'datasets'] as const,
+    cloudObjects: (sourceUid: string, prefix?: string, cursor?: string) =>
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'cloud',
+        'objects',
+        prefix ?? '',
+        cursor ?? '',
+      ] as const,
+    credentialDiagnostics: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'diagnostics'] as const,
     homeFolder: () => [...queryKeys.contents.sources(), 'user-folder'] as const,
     homeFolderQuota: () =>
       [...queryKeys.contents.homeFolder(), 'quota'] as const,
@@ -329,15 +340,6 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.cells.details(), id] as const,
     bySpace: (spaceId: string) =>
       [...queryKeys.cells.all(), 'space', spaceId] as const,
-  },
-
-  // Datasets
-  datasets: {
-    all: () => ['datasets'] as const,
-    details: () => [...queryKeys.datasets.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.datasets.details(), id] as const,
-    bySpace: (spaceId: string) =>
-      [...queryKeys.datasets.all(), 'space', spaceId] as const,
   },
 
   // Lessons
@@ -798,36 +800,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Kept for potential future use
 
-  const toDataset = (raw_dataset: any): IDataset => {
-    const owner = toItemOwner(raw_dataset);
-    return {
-      id: raw_dataset.uid,
-      type: 'dataset',
-      name: raw_dataset.name_t,
-      description: raw_dataset.description_t,
-      fileName: raw_dataset.file_name_s,
-      datasetExtension: raw_dataset.dataset_extension_s,
-      contentLength: raw_dataset.content_length_i,
-      contentType: raw_dataset.content_type_s,
-      mimeType: raw_dataset.mimetype_s,
-      path: raw_dataset.s3_path_s,
-      cdnUrl: raw_dataset.cdn_url_s,
-      creationDate: new Date(raw_dataset.creation_ts_dt),
-      public: raw_dataset.is_public_b ?? false,
-      lastPublicationDate: raw_dataset.creation_ts_dt
-        ? new Date(raw_dataset.creation_ts_dt)
-        : undefined,
-      owner,
-      space: {
-        handle: raw_dataset.handle_s,
-      },
-      organization: {
-        id: raw_dataset.organization_uid_s,
-        handle: raw_dataset.organization_handle_s,
-      },
-    };
-  };
-
   const toCell = (cl: any): ICell => {
     const owner = toItemOwner(cl);
     return {
@@ -1107,8 +1079,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         };
       }
-      case 'dataset':
-        return toDataset(item);
       case 'document':
         return toDocument(item);
       case 'exercise':
@@ -3179,9 +3149,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         queryClient.removeQueries({ queryKey: queryKeys.cells.detail(itemId) });
         queryClient.removeQueries({
-          queryKey: queryKeys.datasets.detail(itemId),
-        });
-        queryClient.removeQueries({
           queryKey: queryKeys.lessons.detail(itemId),
         });
         queryClient.removeQueries({
@@ -3195,7 +3162,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.cells.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.datasets.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.exercises.all() });
         queryClient.invalidateQueries({
@@ -4908,133 +4874,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           });
           // Refetch space items lists immediately
           queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
-        }
-      },
-    });
-  };
-
-  /**
-   * Get dataset by ID
-   */
-  const useDataset = (
-    datasetId: string,
-    scope?: {
-      selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-    },
-  ) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasets.detail(datasetId),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.item) {
-          return toDataset(resp.item);
-        }
-        return undefined;
-      },
-      enabled: !!datasetId,
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Get datasets by space
-   */
-  const useDatasetsBySpace = (
-    spaceId: string,
-    scope?: {
-      selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-    },
-  ) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasets.bySpace(spaceId),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.items) {
-          return resp.items.map((item: unknown) => toDataset(item));
-        }
-        return [];
-      },
-      enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Update dataset
-   */
-  const useUpdateDataset = () => {
-    return useMutation({
-      mutationFn: async ({
-        id,
-        name,
-        description,
-        selectedPrincipalUid,
-        selectedPrincipalKind,
-      }: {
-        id: string;
-        name: string;
-        description: string;
-        spaceId?: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }) => {
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        return requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/datasets/${id}${query ? `?${query}` : ''}`,
-          method: 'PUT',
-          body: { name, description },
-        });
-      },
-      onSuccess: (resp, { id, spaceId }) => {
-        if (resp.success) {
-          // Invalidate detail and list queries
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.datasets.detail(id),
-          });
-          if (spaceId) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.datasets.bySpace(spaceId),
-            });
-          }
         }
       },
     });
@@ -8263,132 +8102,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Refresh a specific dataset
-   * @param options - Mutation options
-   */
-  const useRefreshDataset = (
-    options?: UseMutationOptions<
-      unknown,
-      Error,
-      | string
-      | {
-          datasetId: string;
-          selectedPrincipalUid?: string;
-          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-        }
-    >,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (
-        variables:
-          | string
-          | {
-              datasetId: string;
-              selectedPrincipalUid?: string;
-              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-            },
-      ) => {
-        const datasetId =
-          typeof variables === 'string' ? variables : variables.datasetId;
-        const selectedPrincipalUid =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalUid;
-        const selectedPrincipalKind =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalKind;
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: (data, variables) => {
-        const datasetId =
-          typeof variables === 'string' ? variables : variables.datasetId;
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.detail(datasetId),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
-   * Refresh space datasets
-   * @param options - Mutation options
-   */
-  const useRefreshSpaceDatasets = (
-    options?: UseMutationOptions<
-      unknown,
-      Error,
-      | string
-      | {
-          spaceId: string;
-          selectedPrincipalUid?: string;
-          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-        }
-    >,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (
-        variables:
-          | string
-          | {
-              spaceId: string;
-              selectedPrincipalUid?: string;
-              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-            },
-      ) => {
-        const spaceId =
-          typeof variables === 'string' ? variables : variables.spaceId;
-        const selectedPrincipalUid =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalUid;
-        const selectedPrincipalKind =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalKind;
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: (data, variables) => {
-        const spaceId =
-          typeof variables === 'string' ? variables : variables.spaceId;
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.bySpace(spaceId),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Refresh schools list
    * @param options - Mutation options
    */
@@ -9488,13 +9201,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useCloneCell,
     useRefreshCell,
     useRefreshSpaceCells,
-
-    // Datasets
-    useDataset,
-    useDatasetsBySpace,
-    useUpdateDataset,
-    useRefreshDataset,
-    useRefreshSpaceDatasets,
 
     // Environments
     useEnvironment,

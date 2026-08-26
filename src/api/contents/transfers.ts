@@ -165,18 +165,53 @@ export type UploadProgress = {
   totalBytes: number;
 };
 
-/** Create or resume a checksummed multipart upload and atomically finalize it. */
+export type UploadOptions = {
+  idempotencyKey: string;
+  mediaType?: string;
+  overwrite?: 'reject' | 'replace' | 'new-version';
+  chunkSize?: number;
+  onProgress?: (progress: UploadProgress) => void;
+};
+
+/** Create or resume a checksummed multipart upload into the Home Folder and atomically finalize it. */
 export const uploadHomeFolderFile = async (
   token: string,
   path: string,
   content: Blob | Uint8Array | ArrayBuffer,
-  options: {
-    idempotencyKey: string;
-    mediaType?: string;
-    overwrite?: 'reject' | 'replace' | 'new-version';
-    chunkSize?: number;
-    onProgress?: (progress: UploadProgress) => void;
-  },
+  options: UploadOptions,
+  baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
+): Promise<TransferView> =>
+  uploadFile(
+    token,
+    `home-folder:///${path.replace(/^\/+/, '')}`,
+    content,
+    options,
+    baseUrl,
+  );
+
+/** Capture a file into a Dataset: the same transfer, landing as a version a revision can pin. */
+export const uploadDatasetFile = async (
+  token: string,
+  datasetUid: string,
+  path: string,
+  content: Blob | Uint8Array | ArrayBuffer,
+  options: UploadOptions,
+  baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
+): Promise<TransferView> =>
+  uploadFile(
+    token,
+    `dataset://${datasetUid}/${path.replace(/^\/+/, '')}`,
+    content,
+    options,
+    baseUrl,
+  );
+
+/** Create or resume a checksummed multipart upload to any destination the service accepts. */
+export const uploadFile = async (
+  token: string,
+  destinationUri: string,
+  content: Blob | Uint8Array | ArrayBuffer,
+  options: UploadOptions,
   baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
 ): Promise<TransferView> => {
   const payload = await bytes(content);
@@ -184,7 +219,7 @@ export const uploadHomeFolderFile = async (
   const transfer = await createTransfer(
     token,
     {
-      destinationUri: `home-folder:///${path.replace(/^\/+/, '')}`,
+      destinationUri,
       size: payload.byteLength,
       checksum,
       mediaType: options.mediaType ?? 'application/octet-stream',
@@ -193,7 +228,12 @@ export const uploadHomeFolderFile = async (
     options.idempotencyKey,
     baseUrl,
   );
-  const chunkSize = Math.max(256 * 1024, options.chunkSize ?? 8 * 1024 * 1024);
+  // Resuming: the parts already verified fix the part size. Cutting the file
+  // differently would number the bytes differently, and a "verified" part
+  // would then be the wrong bytes.
+  const chunkSize = transfer.parts?.length
+    ? transfer.parts[0].size
+    : Math.max(256 * 1024, options.chunkSize ?? 8 * 1024 * 1024);
   const verified = new Set((transfer.parts ?? []).map(part => part.number));
   let uploadedBytes = (transfer.parts ?? []).reduce(
     (total, part) => total + part.size,

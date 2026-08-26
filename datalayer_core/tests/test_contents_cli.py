@@ -111,6 +111,12 @@ class Client:
         self.uploaded = (local_path, destination_path, kwargs)
         return transfer_view("succeeded")
 
+    def upload_dataset_file(
+        self, local_path: str | Path, dataset_uid: str, destination_path: str, **kwargs: Any
+    ) -> SimpleNamespace:
+        self.captured = (local_path, dataset_uid, destination_path, kwargs)
+        return transfer_view("succeeded")
+
     def iter_home_folder_object(self, object_uid: str) -> Iterator[bytes]:
         yield b"downloaded"
 
@@ -470,3 +476,28 @@ def test_contents_download_refuses_overwrite_with_nonzero_exit(
 
     assert result.exit_code == 1
     assert destination.read_text() == "keep"
+
+
+def test_contents_datasets_capture_uploads_into_the_dataset(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    captured: dict = {}
+
+    class Recording(Client):
+        def upload_dataset_file(self, local_path, dataset_uid, destination_path, **kwargs):
+            captured.update(local_path=local_path, dataset_uid=dataset_uid, destination_path=destination_path, **kwargs)
+            return transfer_view("succeeded")
+
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
+    local = tmp_path / "co2.csv"
+    local.write_text("year,co2")
+
+    result = CliRunner().invoke(
+        app, ["contents", "--output", "json", "datasets", "capture", str(local), UID, "/results/co2.csv", "--overwrite"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["dataset_uid"] == UID
+    assert captured["destination_path"] == "results/co2.csv"
+    assert captured["overwrite"] == "replace"
+    assert captured["idempotency_key"].startswith("cli-capture-")

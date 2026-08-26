@@ -66,3 +66,22 @@ export const unpublishDataset = async (
   url: resourceUrl(baseUrl, sourceUid, 'publications', `/${encodeURIComponent(publicationUid)}`),
   method: 'DELETE', token,
 }));
+
+/**
+ * Every Dataset currently published, across sources.
+ *
+ * What the Library shows: a publication names one immutable revision of a
+ * Dataset, so this is the list of what has been made public, not of Datasets.
+ * Any signed-in caller may read it — published means public.
+ */
+export const listPublishedDatasets = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
+): Promise<DatasetPublicationList> =>
+  convert<DatasetPublicationList>(
+    await requestDatalayerAPI({
+      url: `${baseUrl}${API_BASE_PATHS.CONTENTS}/publications`,
+      method: 'GET',
+      token,
+    }),
+  );

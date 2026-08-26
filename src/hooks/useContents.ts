@@ -67,8 +67,15 @@ import {
   type HomeFolderQuota,
   type SourceList,
   updateSource,
+  listCloudObjects,
+  getCredentialDiagnostics,
+  testCloudConnection,
+  listPublishedDatasets,
 } from '../api/contents';
 import type {
+  CloudObjectList,
+  ConnectionTest,
+  CredentialDiagnostics,
   ContentsCapabilities,
   SyncConflictList,
   SyncSessionList,
@@ -787,5 +794,69 @@ export const useDownloadHomeFolderObject = () => {
   >({
     mutationFn: ({ objectUid, ...options }) =>
       downloadHomeFolderObject(token ?? '', objectUid, options, contentsUrl),
+  });
+};
+
+/** One page of a Cloud Storage source under a prefix. */
+export const useCloudObjects = (
+  sourceUid?: string,
+  options: { prefix?: string; cursor?: string } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<CloudObjectList>({
+    queryKey: queryKeys.contents.cloudObjects(
+      sourceUid ?? '',
+      options.prefix,
+      options.cursor,
+    ),
+    queryFn: () => listCloudObjects(token ?? '', sourceUid!, options, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid),
+    staleTime: 30_000,
+  });
+};
+
+/** Whether the source's credential is referenced and resolvable — never its value. */
+export const useCredentialDiagnostics = (sourceUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<CredentialDiagnostics>({
+    queryKey: queryKeys.contents.credentialDiagnostics(sourceUid ?? ''),
+    queryFn: () => getCredentialDiagnostics(token ?? '', sourceUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid),
+    staleTime: 60_000,
+  });
+};
+
+/** Try the bucket with the credential attached; the answer is a verdict. */
+export const useTestCloudConnection = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<ConnectionTest, Error, string>({
+    mutationFn: sourceUid => testCloudConnection(token ?? '', sourceUid, contentsUrl),
+  });
+};
+
+/** Every Dataset publication, for the Library. */
+export const usePublishedDatasets = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<DatasetPublicationList>({
+    queryKey: queryKeys.contents.publishedDatasets(),
+    queryFn: () => listPublishedDatasets(token ?? '', contentsUrl),
+    enabled: Boolean(token && contentsUrl),
+    staleTime: 30_000,
   });
 };

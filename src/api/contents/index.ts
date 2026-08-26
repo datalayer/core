@@ -6,6 +6,7 @@
 export * from './generated';
 export * from './attachments';
 export * from './capabilities';
+export * from './cloudStorage';
 export * from './datasets';
 export * from './objects';
 export * from './operations';
