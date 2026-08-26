@@ -6,6 +6,8 @@
 
 """Tests for CLI main argument normalization."""
 
+import re
+
 import pytest
 from typer.testing import CliRunner
 
@@ -73,11 +75,32 @@ def test_register_extensions_adds_discovered_cli_groups(
     assert fake.cli is sentinel
 
 
+def _plain(text: str) -> str:
+    """
+    Return the text without the styling rich puts through it.
+
+    Rich styles the leading dash of an option separately from the rest, so a
+    coloured help page holds no literal ``--output`` to search for.
+
+    Parameters
+    ----------
+    text : str
+        Output captured from a command.
+
+    Returns
+    -------
+    str
+        The same text with every ANSI escape removed.
+    """
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
 def test_contents_group_is_registered_with_shared_output_option() -> None:
     result = CliRunner().invoke(cli_main.app, ["contents", "--help"])
     assert result.exit_code == 0
-    assert "Browse, transfer, attach" in result.stdout
-    assert "--output" in result.stdout
+    help_text = _plain(result.stdout)
+    assert "Browse, transfer, attach" in help_text
+    assert "--output" in help_text
 
 
 def test_contents_url_is_a_normalized_global_option() -> None:

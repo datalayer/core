@@ -217,6 +217,31 @@ def test_contents_list_and_describe_support_machine_output(
     assert "name: Earth data" in described.stdout
 
 
+def test_contents_list_filters_by_content_source_type(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The flag is named after what it filters — a content source — while
+    the API keeps its `kind` query parameter."""
+    seen: dict[str, Any] = {}
+
+    class Recording(Client):
+        def list_content_sources(self, **kwargs: Any) -> SourceList:
+            seen.update(kwargs)
+            return super().list_content_sources(**kwargs)
+
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
+    runner = CliRunner()
+
+    listed = runner.invoke(
+        app, ["contents", "--output", "json", "list", "--source", "dataset"]
+    )
+    rejected = runner.invoke(app, ["contents", "list", "--kind", "dataset"])
+
+    assert listed.exit_code == 0
+    assert seen["kind"] == "dataset"
+    assert rejected.exit_code != 0
+
+
 def test_contents_sharing_grant_uses_uid_and_conditional_write(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

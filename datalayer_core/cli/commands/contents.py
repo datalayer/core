@@ -213,7 +213,11 @@ def _home_folder_path(uri_or_path: str) -> str:
 @contents_command
 def list_contents(
     ctx: typer.Context,
-    kind: str | None = typer.Option(None, "--kind", help="Filter by source kind."),
+    source: str | None = typer.Option(
+        None,
+        "--source",
+        help="Filter by content source type, such as dataset or volume.",
+    ),
     space_uid: str | None = typer.Option(None, "--space", help="Filter by Space UID."),
     cursor: str | None = typer.Option(
         None, "--cursor", help="Continue a catalog page."
@@ -224,7 +228,7 @@ def list_contents(
 
     try:
         page = _client().list_content_sources(
-            kind=kind, space_uid=space_uid, cursor=cursor, limit=limit
+            kind=source, space_uid=space_uid, cursor=cursor, limit=limit
         )
     except Exception as error:
         raise ContentsCommandError(str(error)) from error

@@ -8,6 +8,7 @@
 
 import pytest
 
+import datalayer_core.utils.urls as urls_module
 from datalayer_core.utils.urls import DatalayerURLs
 
 
@@ -22,6 +23,13 @@ def test_contents_follows_runtimes_not_iam(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("DATALAYER_IAM_URL", "https://iam.example")
     monkeypatch.delenv("DATALAYER_CONTENTS_URL", raising=False)
     monkeypatch.delenv("DATALAYER_RUNTIMES_URL", raising=False)
+    # Pin what the user's configuration file would say. Left to read the real
+    # one this passed on a developer's machine and failed anywhere without a
+    # `~/.datalayer` -- CI included -- because with runtimes unresolved
+    # everything, contents included, falls back to the IAM host.
+    monkeypatch.setattr(
+        urls_module, "_get_config_runtimes_url", lambda: "https://runtimes.example"
+    )
 
     urls = DatalayerURLs.from_environment()
 
