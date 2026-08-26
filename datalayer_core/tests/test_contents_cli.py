@@ -141,8 +141,73 @@ class Client:
     def list_content_attachments(self, **kwargs: Any) -> AttachmentList:
         return AttachmentList(items=[attachment_view()])
 
+    def list_environments(self) -> list[dict[str, Any]]:
+        return [environment_view()]
+
+    def get_environment_contents(
+        self, name: str, provider: str = "datalayer"
+    ) -> dict[str, Any]:
+        self.verified = (name, provider)
+        return environment_diagnostics(name, provider)
+
     def revoke_content_attachment(self, attachment_uid: str) -> ContentAttachment:
         return attachment_view(status="revoked")
+
+
+CONTENT_UID = "01J9SKLEARNTUTORIAL000001"
+
+
+def environment_view() -> dict[str, Any]:
+    return {
+        "name": "ai-env",
+        "title": "AI GPU",
+        "description": "PyTorch on a GPU.",
+        "burning_rate": 12,
+        "contents": [
+            {
+                "uid": CONTENT_UID,
+                "name": "sklearn-tutorial-content",
+                "mount": "/home/jovyan/tutorials",
+                "permissions": "ro",
+            }
+        ],
+    }
+
+
+def environment_diagnostics(name: str, provider: str) -> dict[str, Any]:
+    """Resolved on the platform; a shared filesystem nowhere else."""
+    supported = provider == "datalayer"
+    return {
+        "environment": name,
+        "provider": provider,
+        "supported": supported,
+        "contents": [
+            {
+                "uid": CONTENT_UID,
+                "name": "sklearn-tutorial-content",
+                "type": "git",
+                "mount": "/home/jovyan/tutorials",
+                "permissions": "ro",
+                "revision": "4f3c2a1",
+                "sha256": "9b3f" * 16,
+                "status": "resolved",
+                "detail": None,
+            },
+            {
+                "uid": "01J9NFSMODELSOSS000000002",
+                "name": "nfs-models-oss-content",
+                "type": "nfs",
+                "mount": "/home/jovyan/models",
+                "permissions": "ro",
+                "revision": None,
+                "sha256": None,
+                "status": "resolved" if supported else "unsupported",
+                "detail": None
+                if supported
+                else f"{provider} cannot mount the platform filesystem",
+            },
+        ],
+    }
 
 
 def content_object(path: str = "reports/earth.csv") -> ContentObject:
@@ -501,3 +566,69 @@ def test_contents_datasets_capture_uploads_into_the_dataset(
     assert captured["destination_path"] == "results/co2.csv"
     assert captured["overwrite"] == "replace"
     assert captured["idempotency_key"].startswith("cli-capture-")
+
+
+def test_contents_environment_list_names_environments_and_their_contents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The group is `environment`, singular, as the docs say; `list` reads
+    the Runtimes service rather than the catalog, and shows what each
+    Environment selects."""
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
+    runner = CliRunner(env={"COLUMNS": "200"})
+
+    listed = runner.invoke(app, ["contents", "environment", "list"])
+    as_json = runner.invoke(
+        app, ["contents", "--output", "json", "environment", "list"]
+    )
+    plural = runner.invoke(app, ["contents", "environments", "list"])
+
+    assert listed.exit_code == 0, listed.stdout
+    assert "ai-env" in listed.stdout
+    assert "sklearn-tutorial-content" in listed.stdout
+    assert "/home/jovyan/tutorials" in listed.stdout
+    assert as_json.exit_code == 0
+    assert f'"uid": "{CONTENT_UID}"' in as_json.stdout
+    assert plural.exit_code != 0
+
+
+def test_contents_environment_verify_reports_each_content_and_fails_when_unsupported(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
+    # Wide enough that the table does not fold the names it is asked about.
+    runner = CliRunner(env={"COLUMNS": "200"})
+
+    resolved = runner.invoke(
+        app, ["contents", "environment", "verify", "ai-env", "--provider", "datalayer"]
+    )
+    assert resolved.exit_code == 0, resolved.stdout
+    assert Client.last is not None
+    assert Client.last.verified == ("ai-env", "datalayer")
+    assert "sklearn-tutorial-content" in resolved.stdout
+    assert "resolved" in resolved.stdout
+    assert "4f3c2a1" in resolved.stdout
+    assert "supported on datalayer" in resolved.stdout
+
+    unsupported = runner.invoke(
+        app, ["contents", "environment", "verify", "ai-env", "--provider", "e2b"]
+    )
+    assert unsupported.exit_code == 1
+    assert "unsupported" in unsupported.stdout
+    assert "cannot mount the platform filesystem" in unsupported.stdout
+    assert "not supported on e2b" in unsupported.stdout
+
+    # The provider defaults to the platform, and machine output carries the
+    # diagnostics whole while the exit code still says what they mean.
+    as_json = runner.invoke(
+        app, ["contents", "--output", "json", "environment", "verify", "ai-env"]
+    )
+    assert as_json.exit_code == 0, as_json.stdout
+    assert Client.last.verified == ("ai-env", "datalayer")
+    assert '"supported": true' in as_json.stdout
+    failing_json = runner.invoke(
+        app,
+        ["contents", "--output", "json", "environment", "verify", "ai-env", "--provider", "modal"],
+    )
+    assert failing_json.exit_code == 1
+    assert '"status": "unsupported"' in failing_json.stdout

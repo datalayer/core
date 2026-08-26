@@ -68,6 +68,71 @@ class ContentsMixin:
     def _contents_url(self, path: str = "") -> str:
         return f"{self.urls.contents_url}/api/contents/v1{path}"  # type: ignore[attr-defined]
 
+    def _runtimes_url(self, path: str = "") -> str:
+        return f"{self.urls.runtimes_url}/api/runtimes/v1{path}"  # type: ignore[attr-defined]
+
+    # Environments -----------------------------------------------------------
+    #
+    # The content an Environment brings is not a catalog source: it is chosen
+    # by the Environment, which the Runtimes service owns. So these two read
+    # the Runtimes service, through the same authenticated transport.
+
+    def list_environments(self) -> list[dict[str, Any]]:
+        """
+        List the platform Environments, each with the contents it selects.
+
+        Returns
+        -------
+        list[dict[str, Any]]
+            The Environments as the Runtimes service answers them. Each
+            carries ``contents`` as ``[{uid, name, mount, permissions}]``,
+            empty when the Environment selects none.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._runtimes_url("/environments"), method="GET"
+        )
+        payload = response.json()
+        environments = payload.get("environments", []) if isinstance(payload, dict) else []
+        return [
+            {**environment, "contents": environment.get("contents") or []}
+            for environment in environments
+        ]
+
+    def get_environment_contents(
+        self, name: str, provider: str = "datalayer"
+    ) -> dict[str, Any]:
+        """
+        Resolve the contents an Environment selects for one sandbox provider.
+
+        Parameters
+        ----------
+        name : str
+            The Environment name.
+        provider : str
+            The sandbox provider: ``datalayer``, ``daytona``, ``e2b`` or
+            ``modal``.
+
+        Returns
+        -------
+        dict[str, Any]
+            ``{environment, provider, supported, contents}`` where each
+            content carries ``uid``, ``name``, ``type``, ``mount``,
+            ``permissions``, ``revision``, ``sha256``, ``status`` (one of
+            ``resolved``, ``unsupported``, ``unresolved``) and ``detail``.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            f"{self._runtimes_url(f'/environments/{name}/contents')}?"
+            f"{urlencode({'provider': provider})}",
+            method="GET",
+        )
+        payload = response.json()
+        return {
+            "environment": payload.get("environment", name),
+            "provider": payload.get("provider", provider),
+            "supported": bool(payload.get("supported", False)),
+            "contents": payload.get("contents") or [],
+        }
+
     def list_content_sources(
         self,
         *,

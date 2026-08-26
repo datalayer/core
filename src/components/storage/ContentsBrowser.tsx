@@ -16,15 +16,7 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { Contents } from '@jupyterlab/services';
 import { PromiseDelegate } from '@lumino/coreutils';
-import {
-  ActionList,
-  ActionMenu,
-  Heading,
-  IconButton,
-  SegmentedControl,
-  Spinner,
-  TreeView,
-} from '@primer/react';
+import { ActionList, ActionMenu, Heading, IconButton, SegmentedControl, Spinner, TreeView, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { Blankslate, Dialog } from '@primer/react/experimental';
 import { ListUnorderedIcon, SyncIcon, TableIcon } from '@primer/octicons-react';
@@ -115,9 +107,6 @@ export interface IContentsBrowserProps {
 export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   const {
     mock = false,
-    localContents,
-    documentRegistry,
-    onViewChange,
     title = (
       <Heading
         as="h4"
@@ -131,7 +120,27 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
       </Heading>
     ),
   } = props;
-  const contents = props.contents ?? CONTENTS_BROWSER_MOCK_MANAGER;
+  // A browser with nothing behind it shows nothing — never the sample tree.
+  // The sample is for a documentation preview that asks for it by name; a
+  // caller that has not resolved its sandbox yet must not appear to have.
+  const contents = props.contents ?? (mock ? CONTENTS_BROWSER_MOCK_MANAGER : undefined);
+  if (!contents) {
+    return (
+      <Box sx={{ p: 3 }}>
+        {title}
+        <Text sx={{ display: 'block', color: 'fg.muted', fontSize: 1, mt: 2 }}>
+          No filesystem is connected.
+        </Text>
+      </Box>
+    );
+  }
+  return <ConnectedContentsBrowser {...props} contents={contents} mock={mock} title={title} />;
+};
+
+const ConnectedContentsBrowser = (
+  props: IContentsBrowserProps & { contents: Contents.IManager; mock: boolean; title: ReactNode },
+): JSX.Element => {
+  const { contents, mock, title, localContents, documentRegistry, onViewChange } = props;
   const isMounted = useIsMounted();
   const { trackAsyncTask } = useToast();
   const [children, setChildren] = useState<IContentsView[] | null>(null);

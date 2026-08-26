@@ -1042,23 +1042,115 @@ def mcp_connect(
     _render(created.value.model_dump(mode="json"), _context(ctx))
 
 
-environments_app = typer.Typer(
-    name="environments", help="Inspect the content Environments carry."
+environment_app = typer.Typer(
+    name="environment", help="Inspect the content Environments carry."
 )
-app.add_typer(environments_app)
+app.add_typer(environment_app)
 
 
-@environments_app.command(name="list")
+def _selected_contents(environment: dict[str, Any]) -> str:
+    """One line per selected content: name, mount and access."""
+    return "\n".join(
+        f"{content.get('name') or content.get('uid')} {content.get('mount', '')}"
+        f" ({content.get('permissions', 'ro')})"
+        for content in environment.get("contents") or []
+    )
+
+
+@environment_app.command(name="list")
 @contents_command
-def environments_list(ctx: typer.Context) -> None:
+def environment_list(ctx: typer.Context) -> None:
     """
-    List the content the platform's Environments bring with them.
+    List the platform Environments and the contents each selects.
 
     Nobody attaches this: choosing an Environment chooses it, which is why
     there is no `create` beside this command.
     """
-    page = _client().list_content_sources(kind="environment", limit=200)
-    _render(page.model_dump(mode="json"), _context(ctx))
+    try:
+        environments = _client().list_environments()
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(environments, context)
+        return
+    table = Table(title="Environments")
+    table.add_column("Environment", style="bold")
+    table.add_column("Title")
+    table.add_column("Contents")
+    for environment in environments:
+        table.add_row(
+            str(environment.get("name", "")),
+            str(environment.get("title", "")),
+            _selected_contents(environment) or "-",
+        )
+    console.print(table)
+
+
+@environment_app.command(name="verify")
+@contents_command
+def environment_verify(
+    ctx: typer.Context,
+    environment: str = typer.Argument(..., help="The Environment name."),
+    provider: str = typer.Option(
+        "datalayer",
+        "--provider",
+        help="The sandbox provider: datalayer, daytona, e2b or modal.",
+    ),
+) -> None:
+    """
+    Resolve the contents an Environment selects for a provider.
+
+    Every content is printed with its status, and the command exits non-zero
+    when any is `unsupported` or `unresolved`, so a pipeline can refuse an
+    Environment that would not come up whole.
+    """
+    try:
+        diagnostics = _client().get_environment_contents(environment, provider)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    contents = diagnostics.get("contents") or []
+    failing = [
+        content for content in contents if content.get("status") != "resolved"
+    ]
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(diagnostics, context)
+    else:
+        table = Table(
+            title=f"{diagnostics.get('environment', environment)} on "
+            f"{diagnostics.get('provider', provider)}"
+        )
+        table.add_column("Name", style="bold")
+        table.add_column("Type")
+        table.add_column("Mount")
+        table.add_column("Access")
+        table.add_column("Status")
+        table.add_column("Revision")
+        table.add_column("SHA-256")
+        table.add_column("Detail")
+        for content in contents:
+            status = str(content.get("status", "unresolved"))
+            color = {"resolved": "green", "unsupported": "red"}.get(status, "yellow")
+            table.add_row(
+                str(content.get("name") or content.get("uid", "")),
+                str(content.get("type", "")),
+                str(content.get("mount", "")),
+                str(content.get("permissions", "")),
+                f"[{color}]{status}[/{color}]",
+                str(content.get("revision") or "-"),
+                str(content.get("sha256") or "-"),
+                str(content.get("detail") or ""),
+            )
+        console.print(table)
+        verdict = (
+            f"[green]{environment} is supported on {provider}[/green]"
+            if not failing and diagnostics.get("supported", True)
+            else f"[red]{environment} is not supported on {provider}[/red]"
+        )
+        console.print(verdict)
+    if failing or not diagnostics.get("supported", True):
+        raise typer.Exit(1)
 
 
 sharing_app = typer.Typer(name="sharing", help="Inspect and change source sharing.")

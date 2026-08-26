@@ -34,7 +34,12 @@ from datalayer_core.contents import Contents, HomeFolder
 DOCS = (
     Path(__file__).resolve().parents[5] / "landings/datalayer/ui/src/views/docs/pages"
 )
-PAGES = ("ContentsDoc.tsx", "SharingDoc.tsx")
+PAGES = (
+    "ContentsDoc.tsx",
+    "SharingDoc.tsx",
+    "ContentEnvironmentDoc.tsx",
+    "CodeSandboxesDoc.tsx",
+)
 
 _FENCE = re.compile(r"^(```|~~~)(.*)$")
 _CLI = re.compile(r"\bdatalayer contents ([a-z][a-z0-9-]*)(?: ([a-z][a-z0-9-]*))?")

@@ -215,3 +215,12 @@ describe('ContentsBrowser views', () => {
     expect(rowNames()).toEqual(['..', 'earth-observation', 'model-artifacts']);
   });
 });
+
+describe('ContentsBrowser without a manager', () => {
+  it('shows nothing rather than the sample tree', async () => {
+    const { render, screen } = await import('@testing-library/react');
+    render(<ContentsBrowser />);
+    expect(await screen.findByText('No filesystem is connected.')).toBeTruthy();
+    expect(screen.queryByText('workspace')).toBeNull();
+  });
+});

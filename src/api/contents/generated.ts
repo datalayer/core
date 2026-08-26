@@ -525,6 +525,12 @@ export interface SourceList {
 
 export type SourceStatus = "pending" | "ready" | "degraded" | "disabled" | "failed";
 
+export interface SpaceRelease {
+  attachmentsRevoked: number;
+  released: Array<string>;
+  spaceUid: string;
+}
+
 export type StableErrorCode = "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "QUOTA_EXCEEDED" | "CAPABILITY_UNAVAILABLE" | "CHECKSUM_MISMATCH" | "PROVIDER_UNAVAILABLE" | "CAPABILITY_REVOKED" | "OPERATION_CANCELLED" | "INTERNAL_ERROR";
 
 export interface SyncConflictList {

@@ -62,7 +62,10 @@ class Response:
 
 class Client(ContentsMixin):
     def __init__(self) -> None:
-        self.urls = DatalayerURLs.from_environment(contents_url="https://contents.test")
+        self.urls = DatalayerURLs.from_environment(
+            contents_url="https://contents.test",
+            runtimes_url="https://runtimes.test",
+        )
         self.calls: list[tuple[str, dict[str, Any]]] = []
         self.responses: list[Response] = []
 
@@ -273,3 +276,67 @@ def test_contents_client_captures_a_file_into_a_dataset_through_the_same_transfe
     assert created["destination_uri"] == "dataset://01DATASET00000000000000000/results/co2.csv"
     assert created["size"] == 20
     assert [url.rsplit("/", 1)[1] for url, _ in client.calls if "/parts/" in url] == ["0"]
+
+
+def test_contents_client_reads_environments_from_the_runtimes_service() -> None:
+    """The content an Environment brings is the Runtimes service's to say,
+    not the catalog's: both calls go there, and a missing selection reads as
+    none rather than as an error."""
+    client = Client()
+    client.responses = [
+        Response(
+            {
+                "success": True,
+                "environments": [
+                    {"name": "python-cpu-env", "title": "Python CPU"},
+                    {
+                        "name": "ai-env",
+                        "title": "AI GPU",
+                        "contents": [
+                            {
+                                "uid": UID,
+                                "name": "sklearn-tutorial-content",
+                                "mount": "/home/jovyan/tutorials",
+                                "permissions": "ro",
+                            }
+                        ],
+                    },
+                ],
+            }
+        ),
+        Response(
+            {
+                "environment": "ai-env",
+                "provider": "e2b",
+                "supported": False,
+                "contents": [
+                    {
+                        "uid": UID,
+                        "name": "sklearn-tutorial-content",
+                        "type": "git",
+                        "mount": "/home/jovyan/tutorials",
+                        "permissions": "ro",
+                        "revision": "4f3c2a1",
+                        "sha256": "9b3f" * 16,
+                        "status": "unsupported",
+                        "detail": "e2b templates cannot check out a repository",
+                    }
+                ],
+            }
+        ),
+    ]
+
+    environments = client.list_environments()
+    diagnostics = client.get_environment_contents("ai-env", "e2b")
+
+    assert client.calls[0][0] == "https://runtimes.test/api/runtimes/v1/environments"
+    assert client.calls[0][1]["method"] == "GET"
+    assert environments[0]["contents"] == []
+    assert environments[1]["contents"][0]["uid"] == UID
+    assert (
+        client.calls[1][0]
+        == "https://runtimes.test/api/runtimes/v1/environments/ai-env/contents?provider=e2b"
+    )
+    assert diagnostics["supported"] is False
+    assert diagnostics["contents"][0]["status"] == "unsupported"
+    assert diagnostics["contents"][0]["revision"] == "4f3c2a1"

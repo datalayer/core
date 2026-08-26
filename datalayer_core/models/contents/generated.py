@@ -724,6 +724,17 @@ class SourceStatus(Enum):
     failed = 'failed'
 
 
+class SpaceRelease(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    attachments_revoked: int = Field(..., title='Attachments Revoked')
+    released: list[str] = Field(..., title='Released')
+    space_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Space Uid'
+    )
+
+
 class StableErrorCode(Enum):
     UNAUTHENTICATED = 'UNAUTHENTICATED'
     FORBIDDEN = 'FORBIDDEN'
