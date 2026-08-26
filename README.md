@@ -18,7 +18,7 @@
 
 ## Overview
 
-Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.ai). It provides a TypesScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
+Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.ai). It provides TypeScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
 
 This package serves as the base foundation used by many other Datalayer packages, containing core application classes, configuration, and unified APIs for authentication, runtime management, and code execution in cloud-based environments.
 
@@ -99,7 +99,7 @@ Datalayer Core serves as the foundation for the entire Datalayer ecosystem:
 
 ## Examples
 
-- [OTEL example README](./examples/otel/README.md)
+- [OTEL example README](https://github.com/datalayer/core/blob/main/examples/otel/README.md)
 
 ## Documentation
 

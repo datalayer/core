@@ -146,7 +146,6 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
             config_json = json.dumps(
                 {
                     "iamUrl": self.server.iam_url,  # type: ignore
-                    "iamUrl": self.server.iam_url,  # type: ignore
                     "whiteLabel": False,
                 }
             )

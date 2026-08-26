@@ -67,7 +67,6 @@ def _otel_api_url() -> str:
     return (
         os.environ.get("DATALAYER_OTEL_URL")
         or os.environ.get("DATALAYER_OTEL_RUN_URL")
-        or os.environ.get("DATALAYER_OTEL_URL")
         or "https://prod1.datalayer.run"
     ).rstrip("/")
 
