@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping
@@ -16,6 +17,11 @@ from pydantic import BaseModel
 from datalayer_core.models.contents.generated import (
     AttachmentCreate,
     AttachmentList,
+    BridgeCreate,
+    BridgeHeartbeat,
+    BridgeList,
+    BridgeOpened,
+    BridgeSession,
     CatalogSource,
     ContentAttachment,
     ContentAttachmentManifest,
@@ -46,6 +52,47 @@ from datalayer_core.models.contents.generated import (
     TransferView,
     VersionList,
 )
+from datalayer_core.models.contents.datasources import (
+    CapabilityTicket,
+    DataServerConnectivity,
+    DataServerStatus,
+    DatasourceCapabilities,
+    DatasourceQuery,
+    DatasourceQueryList,
+    DatasourceSchema,
+    DatasourceTest,
+    IssuedIdentity,
+)
+from datalayer_core.models.contents.mcp import (
+    McpApproval,
+    McpApprovalList,
+    McpCall,
+    McpCallList,
+    McpHealth,
+    McpSession,
+    McpSessionList,
+    McpToolManifest,
+)
+
+
+_STATUS_IN_MESSAGE = re.compile(r"\bstatus=(\d{3})\b")
+
+
+def http_status_of(error: BaseException) -> int | None:
+    """
+    The HTTP status an error of the transport carries, if it carries one.
+
+    `_fetch` wraps a failed request in a `RuntimeError` whose message names
+    the status and whose cause is the `requests` error with the response; a
+    caller that wants to treat `404` as an answer — nothing there yet — rather
+    than a failure reads it from here, from either place.
+    """
+    cause = error.__cause__
+    response = getattr(cause, "response", None)
+    if response is not None and getattr(response, "status_code", None):
+        return int(response.status_code)
+    match = _STATUS_IN_MESSAGE.search(str(error))
+    return int(match.group(1)) if match else None
 
 
 @dataclass(frozen=True)
@@ -788,6 +835,470 @@ class ContentsMixin:
             json={"use": use},
         )
         return SyncSessionView.model_validate(response.json())
+
+    def upload_content_sync_block(
+        self, session_uid: str, path: str, index: int, content: bytes
+    ) -> dict[str, Any]:
+        """
+        Stage one block of one path of a session, for composition.
+
+        The block-level half of a push: the plan says which blocks the remote
+        version lacks, and each goes up on its own, checksummed. The same
+        block twice is accepted once.
+        """
+        checksum = hashlib.sha256(content).hexdigest()
+        query = urlencode({"path": path, "index": index})
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}/blocks?{query}"),
+            method="POST",
+            headers={
+                "Content-Type": "application/octet-stream",
+                "Content-SHA256": checksum,
+            },
+            data=content,
+        )
+        return response.json()
+
+    def compose_content_sync_version(
+        self, session_uid: str, request: Mapping[str, Any]
+    ) -> ContentObject:
+        """
+        Publish a new version of a path from its staged blocks and the base version.
+
+        `request` is ``{path, base_version_uid, size, checksum, blocks}``, the
+        block hashes being those of the whole file as it now is. The service
+        answers ``SYNC_BASE_STALE`` when the base is no longer current — the
+        session must be reconciled again — and ``SYNC_BLOCK_MISSING`` naming
+        a block that neither the staging area nor the base supplies.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}/compose"),
+            method="POST",
+            json=dict(request),
+        )
+        return ContentObject.model_validate(response.json())
+
+    # -- local bridges -----------------------------------------------------
+    #
+    # A bridge session is what a `local-bridge` attachment holds while the
+    # person's computer serves a folder to the sandbox through the relay.
+    # Opening one answers the client's half — its token, the relay to dial,
+    # the session key the relay never sees — and never learns the folder's
+    # path: what is sent is a fingerprint of it.
+
+    def open_content_bridge(
+        self, attachment_uid: str, request: BridgeCreate | Mapping[str, Any]
+    ) -> BridgeOpened:
+        """
+        Open the session for a `local-bridge` attachment, or find it open.
+
+        Idempotent for the same folder while the session is live; another
+        folder for the same attachment is refused as `BRIDGE_CONFLICT`.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/attachments/{attachment_uid}/bridge"),
+            method="POST",
+            json=_payload(request),
+        )
+        return BridgeOpened.model_validate(response.json())
+
+    def get_attachment_bridge(self, attachment_uid: str) -> BridgeSession | None:
+        """The live session of an attachment; `None` when nothing has dialled yet."""
+        try:
+            response = self._fetch(  # type: ignore[attr-defined]
+                self._contents_url(f"/attachments/{attachment_uid}/bridge"),
+                method="GET",
+            )
+        except RuntimeError as error:
+            if http_status_of(error) == 404:
+                return None
+            raise
+        return BridgeSession.model_validate(response.json())
+
+    def get_content_bridge(self, bridge_uid: str) -> BridgeSession:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/bridges/{bridge_uid}"), method="GET"
+        )
+        return BridgeSession.model_validate(response.json())
+
+    def list_content_bridges(self, *, active: bool = False) -> BridgeList:
+        """The caller's sessions, newest first; `active` leaves out the ended ones."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            f"{self._contents_url('/bridges')}?active={str(active).lower()}",
+            method="GET",
+        )
+        return BridgeList.model_validate(response.json())
+
+    def heartbeat_content_bridge(self, bridge_uid: str) -> BridgeHeartbeat:
+        """Still here: the session stays alive and the answer carries a fresh token."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/bridges/{bridge_uid}/heartbeat"), method="POST"
+        )
+        return BridgeHeartbeat.model_validate(response.json())
+
+    def revoke_content_bridge(self, bridge_uid: str) -> BridgeSession:
+        """End the session; the attachment goes `revoking` with it."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/bridges/{bridge_uid}"), method="DELETE"
+        )
+        return BridgeSession.model_validate(response.json())
+
+    # -- MCP ---------------------------------------------------------------
+    #
+    # An MCP source is a server somebody connected. Nothing here talks to
+    # that server: Contents does, with the credential it holds, through a
+    # session it opens for the caller. What comes back is tool definitions,
+    # call records and approvals — and for a call that moved bytes, the
+    # Transfer or object that holds them rather than the bytes.
+
+    def discover_mcp_tools(self, source_uid: str) -> McpToolManifest:
+        """The tools and resources the server behind a source offers."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/mcp/tools"), method="GET"
+        )
+        return McpToolManifest.model_validate(response.json())
+
+    def test_mcp_source(self, source_uid: str) -> McpHealth:
+        """Does the server answer through this source, right now?"""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/mcp/health"), method="POST"
+        )
+        return McpHealth.model_validate(response.json())
+
+    def create_mcp_session(
+        self,
+        source_uid: str,
+        *,
+        sandbox_uid: str | None = None,
+        tools: list[str] | None = None,
+        expires_in: int | None = None,
+        idempotency_key: str | None = None,
+    ) -> McpSession:
+        """
+        Open a scoped connection to an MCP source on the caller's behalf.
+
+        The session's allowlists are the source's, narrowed by ``tools`` when
+        given; asking for a tool the source does not allow is refused rather
+        than silently dropped.
+        """
+        payload: dict[str, Any] = {"source_uid": source_uid}
+        if sandbox_uid is not None:
+            payload["sandbox_uid"] = sandbox_uid
+        if tools is not None:
+            payload["tools"] = list(tools)
+        if expires_in is not None:
+            payload["expires_in"] = expires_in
+        headers = {"Idempotency-Key": idempotency_key} if idempotency_key else {}
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url("/mcp-sessions"),
+            method="POST",
+            headers=headers,
+            json=payload,
+        )
+        return McpSession.model_validate(response.json())
+
+    def get_mcp_session(self, session_uid: str) -> McpSession:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-sessions/{session_uid}"), method="GET"
+        )
+        return McpSession.model_validate(response.json())
+
+    def list_mcp_sessions(self) -> McpSessionList:
+        """Every session the caller opened; the contract lists them whole."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url("/mcp-sessions"), method="GET"
+        )
+        return McpSessionList.model_validate(response.json())
+
+    def revoke_mcp_session(self, session_uid: str) -> McpSession:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-sessions/{session_uid}"), method="DELETE"
+        )
+        return McpSession.model_validate(response.json())
+
+    def call_mcp_tool(
+        self,
+        session_uid: str,
+        tool: str,
+        arguments: Mapping[str, Any] | None = None,
+        *,
+        destination_uri: str | None = None,
+    ) -> McpCall:
+        """
+        Invoke one tool through a session.
+
+        The answer is the call record, not necessarily the result: under an
+        ``explicit`` approval policy it comes back ``pending-approval`` with
+        the approval to decide, and a bulk acquisition ends in artifacts that
+        name a Transfer rather than carrying bytes.
+        """
+        payload: dict[str, Any] = {"tool": tool, "arguments": dict(arguments or {})}
+        if destination_uri is not None:
+            payload["destination_uri"] = destination_uri
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-sessions/{session_uid}/calls"),
+            method="POST",
+            json=payload,
+        )
+        return McpCall.model_validate(response.json())
+
+    def get_mcp_call(self, session_uid: str, call_uid: str) -> McpCall:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-sessions/{session_uid}/calls/{call_uid}"),
+            method="GET",
+        )
+        return McpCall.model_validate(response.json())
+
+    def list_mcp_calls(self, session_uid: str) -> McpCallList:
+        """
+        The calls made through a session, newest first.
+
+        This is where provenance lives: a call whose result carries artifacts
+        is an acquisition, and the artifact names the Transfer, object and
+        version it became.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-sessions/{session_uid}/calls"), method="GET"
+        )
+        return McpCallList.model_validate(response.json())
+
+    def list_mcp_approvals(self, *, status: str | None = None) -> McpApprovalList:
+        """The caller's approvals, in one status; the contract filters on nothing else."""
+        url = self._contents_url("/mcp-approvals")
+        if status is not None:
+            url = f"{url}?{urlencode({'status': status})}"
+        response = self._fetch(url, method="GET")  # type: ignore[attr-defined]
+        return McpApprovalList.model_validate(response.json())
+
+    def approve_mcp_approval(
+        self, approval_uid: str, *, note: str | None = None
+    ) -> McpApproval:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-approvals/{approval_uid}/approve"),
+            method="POST",
+            json={"note": note} if note else {},
+        )
+        return McpApproval.model_validate(response.json())
+
+    def reject_mcp_approval(
+        self, approval_uid: str, *, note: str | None = None
+    ) -> McpApproval:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/mcp-approvals/{approval_uid}/reject"),
+            method="POST",
+            json={"note": note} if note else {},
+        )
+        return McpApproval.model_validate(response.json())
+
+    # -- datasources -------------------------------------------------------
+    #
+    # A Datasource is a database, warehouse or query service somebody
+    # connected. Nothing here talks to it: Contents does, with the credential
+    # it holds, directly or through a Dataserver in the customer's network.
+    # A query is a job — submitted, polled, cancelled — and its result is a
+    # stream of Arrow IPC bytes, read by range so a result larger than memory
+    # is still readable one batch at a time.
+
+    def test_datasource(self, source_uid: str) -> DatasourceTest:
+        """Does the database answer through this source, right now?"""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/datasource/test"),
+            method="POST",
+        )
+        return DatasourceTest.model_validate(response.json())
+
+    def discover_datasource_schema(self, source_uid: str) -> DatasourceSchema:
+        """The tables and columns the source exposes, as the service saw them."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/datasource/schema"),
+            method="GET",
+        )
+        return DatasourceSchema.model_validate(response.json())
+
+    def get_datasource_capabilities(self, source_uid: str) -> DatasourceCapabilities:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/datasource/capabilities"),
+            method="GET",
+        )
+        return DatasourceCapabilities.model_validate(response.json())
+
+    def create_datasource_query(
+        self,
+        source_uid: str,
+        sql: str,
+        *,
+        row_limit: int | None = None,
+        max_bytes: int | None = None,
+        max_seconds: int | None = None,
+        sandbox_uid: str | None = None,
+        idempotency_key: str | None = None,
+    ) -> DatasourceQuery:
+        """
+        Submit a statement; the answer is the job, not the rows.
+
+        The service checks the statement against the source's operation
+        allowlist and the limits against its policy before the job exists,
+        so a refused query is refused here, with a reason, and not later on
+        the stream.
+        """
+        payload: dict[str, Any] = {"sql": sql}
+        if row_limit is not None:
+            payload["row_limit"] = row_limit
+        if max_bytes is not None:
+            payload["max_bytes"] = max_bytes
+        if max_seconds is not None:
+            payload["max_seconds"] = max_seconds
+        if sandbox_uid is not None:
+            payload["sandbox_uid"] = sandbox_uid
+        headers = {"Idempotency-Key": idempotency_key} if idempotency_key else {}
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/queries"),
+            method="POST",
+            headers=headers,
+            json=payload,
+        )
+        return DatasourceQuery.model_validate(response.json())
+
+    def list_datasource_queries(
+        self, source_uid: str, *, cursor: str | None = None, limit: int = 50
+    ) -> DatasourceQueryList:
+        """The queries run against a source, newest first: its history."""
+        parameters: dict[str, str | int] = {"limit": limit}
+        if cursor is not None:
+            parameters["cursor"] = cursor
+        response = self._fetch(  # type: ignore[attr-defined]
+            f"{self._contents_url(f'/sources/{source_uid}/queries')}?{urlencode(parameters)}",
+            method="GET",
+        )
+        return DatasourceQueryList.model_validate(response.json())
+
+    def get_datasource_query(self, query_uid: str) -> DatasourceQuery:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/queries/{query_uid}"), method="GET"
+        )
+        return DatasourceQuery.model_validate(response.json())
+
+    def cancel_datasource_query(self, query_uid: str) -> DatasourceQuery:
+        """Ask for the query to stop; cancellation reaches the connector."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/queries/{query_uid}/cancel"), method="POST"
+        )
+        return DatasourceQuery.model_validate(response.json())
+
+    def iter_datasource_query_results(
+        self,
+        query_uid: str,
+        *,
+        byte_range: str | None = None,
+        chunk_size: int = 1024 * 1024,
+    ) -> Iterator[bytes]:
+        """
+        The result of a finished query, as Arrow IPC bytes, chunk by chunk.
+
+        A `Range` reads part of it, which is how a stream that broke halfway
+        is resumed rather than restarted.
+        """
+        headers = {"Range": byte_range} if byte_range else {}
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/queries/{query_uid}/results"),
+            method="GET",
+            headers=headers,
+            stream=True,
+        )
+        yield from response.iter_content(chunk_size=chunk_size)
+
+    def save_datasource_query(
+        self, query_uid: str, *, dataset_uid: str, path: str
+    ) -> DatasetRevision:
+        """
+        Keep a result: written into a Dataset as a verified revision.
+
+        The bytes go from the service into the Dataset; nothing is downloaded
+        to be uploaded again, and the answer is the revision that now holds
+        them.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/queries/{query_uid}/save"),
+            method="POST",
+            json={"dataset_uid": dataset_uid, "path": path.lstrip("/")},
+        )
+        return DatasetRevision.model_validate(response.json())
+
+    def create_datasource_query_ticket(
+        self,
+        query_uid: str,
+        *,
+        sandbox_uid: str | None = None,
+        expires_in: int | None = None,
+    ) -> CapabilityTicket:
+        """A Flight ticket for the result, for a client inside a sandbox."""
+        payload: dict[str, Any] = {}
+        if sandbox_uid is not None:
+            payload["sandbox_uid"] = sandbox_uid
+        if expires_in is not None:
+            payload["expires_in"] = expires_in
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/queries/{query_uid}/ticket"),
+            method="POST",
+            json=payload,
+        )
+        return CapabilityTicket.model_validate(response.json())
+
+    # -- dataservers -------------------------------------------------------
+    #
+    # A Dataserver is a gateway in a customer's network, known here by its
+    # registration. Its status is what it last said of itself; drain, resume
+    # and revoke move its state; its identity is a certificate issued from a
+    # CSR, so the private key never travels.
+
+    def get_dataserver_status(self, source_uid: str) -> DataServerStatus:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/dataservers/{source_uid}/status"), method="GET"
+        )
+        return DataServerStatus.model_validate(response.json())
+
+    def test_dataserver(self, source_uid: str) -> DataServerConnectivity:
+        """Try the gateway on Flight and on the HTTPS fallback; a verdict per path."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/dataservers/{source_uid}/test"), method="POST"
+        )
+        return DataServerConnectivity.model_validate(response.json())
+
+    def _dataserver_transition(self, source_uid: str, action: str) -> DataServerStatus:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/dataservers/{source_uid}/{action}"), method="POST"
+        )
+        return DataServerStatus.model_validate(response.json())
+
+    def drain_dataserver(self, source_uid: str) -> DataServerStatus:
+        """Stop routing new queries; the ones running finish."""
+        return self._dataserver_transition(source_uid, "drain")
+
+    def resume_dataserver(self, source_uid: str) -> DataServerStatus:
+        """Route to the gateway again."""
+        return self._dataserver_transition(source_uid, "resume")
+
+    def revoke_dataserver(self, source_uid: str) -> DataServerStatus:
+        """Refuse the gateway's identity from now on. Nothing in its network changes."""
+        return self._dataserver_transition(source_uid, "revoke")
+
+    def issue_dataserver_identity(self, source_uid: str, csr: str) -> IssuedIdentity:
+        """A first certificate for the identity the CSR names."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/dataservers/{source_uid}/identity"),
+            method="POST",
+            json={"csr": csr},
+        )
+        return IssuedIdentity.model_validate(response.json())
+
+    def rotate_dataserver_identity(self, source_uid: str, csr: str) -> IssuedIdentity:
+        """A new certificate that overlaps the current one, so nothing stops."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/dataservers/{source_uid}/identity/rotate"),
+            method="POST",
+            json={"csr": csr},
+        )
+        return IssuedIdentity.model_validate(response.json())
 
     def get_content_operation(self, operation_uid: str) -> OperationView:
         response = self._fetch(  # type: ignore[attr-defined]

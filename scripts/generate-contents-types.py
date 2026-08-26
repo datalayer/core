@@ -152,6 +152,9 @@ def main() -> None:
                 "--use-standard-collections",
                 "--use-union-operator",
                 "--disable-timestamp",
+                "--enum-field-as-literal",
+                "all",
+                "--collapse-root-models",
             ],
             check=True,
         )

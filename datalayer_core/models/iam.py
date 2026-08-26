@@ -634,18 +634,6 @@ class TokenModel(BaseModel):
     )
 
 
-class DatasourceModel(BaseModel):
-    """Datasource data model."""
-
-    id: str = Field(..., description="Datasource ID")
-    uid: str = Field(..., description="Datasource UID")
-    variant_s: str = Field(..., description="Datasource variant")
-    name_s: str = Field(..., description="Datasource name")
-    description_t: Optional[str] = Field(None, description="Datasource description")
-    database_s: str = Field(..., description="Database name")
-    output_bucket_s: str = Field(..., description="Output bucket")
-
-
 # Response data models with structured data
 class LoginResponseData(BaseModel):
     """Login response data model."""

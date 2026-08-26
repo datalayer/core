@@ -7,6 +7,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   cancelSyncSession,
   createAttachment,
+  getBridge,
+  getBridgeSession,
+  isBridgeEnded,
+  listBridges,
+  revokeBridge,
+  type BridgeList,
+  type BridgeSession,
   createSource,
   getCapabilities,
   getSyncSession,
@@ -71,8 +78,60 @@ import {
   getCredentialDiagnostics,
   testCloudConnection,
   listPublishedDatasets,
+  callMcpTool,
+  createMcpSession,
+  decideMcpApproval,
+  discoverMcpTools,
+  getMcpCall,
+  getMcpSession,
+  isMcpCallTerminal,
+  listMcpApprovals,
+  listMcpCalls,
+  listMcpSessions,
+  revokeMcpSession,
+  testMcpSource,
+  type McpApproval,
+  type McpApprovalList,
+  type McpApprovalStatus,
+  type McpCall,
+  type McpCallCreate,
+  type McpCallList,
+  type McpHealth,
+  type McpSession,
+  type McpSessionCreate,
+  type McpSessionList,
+  type McpToolManifest,
+  cancelDatasourceQuery,
+  createDatasourceQuery,
+  createDatasourceQueryTicket,
+  discoverDatasourceSchema,
+  downloadDatasourceQueryResults,
+  drainDataserver,
+  getDatasourceCapabilities,
+  getDatasourceQuery,
+  getDataserverStatus,
+  isDatasourceQueryTerminal,
+  listDatasourceQueries,
+  resumeDataserver,
+  revokeDataserver,
+  rotateDataserverIdentity,
+  saveDatasourceQueryAsDataset,
+  testDatasource,
+  testDataserver,
+  type DatasourceCapabilities,
+  type DatasourceQuery,
+  type DatasourceQueryCreate,
+  type DatasourceQueryList,
+  type DatasourceQueryResultBytes,
+  type DatasourceSchema,
+  type DatasourceTest,
 } from '../api/contents';
 import type {
+  CapabilityTicket,
+  CapabilityTicketRequest,
+  DataServerConnectivity,
+  DataServerStatus,
+  IssuedIdentity,
   CloudObjectList,
   ConnectionTest,
   CredentialDiagnostics,
@@ -748,6 +807,78 @@ export const useCancelSyncSession = () => {
   });
 };
 
+/**
+ * The bridge of one `local-bridge` attachment, polled while it can still
+ * change; `null` when none has been opened for it yet.
+ */
+export const useBridgeSession = (attachmentUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useQuery<BridgeSession | null>({
+    queryKey: queryKeys.contents.bridgeSession(attachmentUid ?? ''),
+    queryFn: () => getBridgeSession(token ?? '', attachmentUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && attachmentUid),
+    // A bridge changes state on its own — a laptop lid closes — so the page
+    // keeps looking until the bridge reaches a state it will not leave.
+    refetchInterval: query =>
+      query.state.data && isBridgeEnded(query.state.data) ? false : 5_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** The caller's bridge sessions; the active ones polled. */
+export const useBridges = (filters: { active?: boolean } = {}) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useQuery<BridgeList>({
+    queryKey: queryKeys.contents.bridgeList(filters),
+    queryFn: () => listBridges(token ?? '', filters, contentsUrl),
+    enabled: Boolean(token && contentsUrl),
+    refetchInterval: filters.active ? 5_000 : false,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** One session by uid, polled until it has ended. */
+export const useBridge = (bridgeUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useQuery<BridgeSession>({
+    queryKey: queryKeys.contents.bridge(bridgeUid ?? ''),
+    queryFn: () => getBridge(token ?? '', bridgeUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && bridgeUid),
+    refetchInterval: query =>
+      query.state.data && isBridgeEnded(query.state.data) ? false : 5_000,
+  });
+};
+
+/**
+ * Revoke a bridge by uid. The attachment goes `revoking` with it on the
+ * service, so every attachment view refreshes as well as the bridge ones.
+ */
+export const useRevokeBridge = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<BridgeSession, Error, string>({
+    mutationFn: bridgeUid => revokeBridge(token ?? '', bridgeUid, contentsUrl),
+    onSuccess: bridge => {
+      queryClient.setQueryData(queryKeys.contents.bridge(bridge.uid), bridge);
+      queryClient.setQueryData(queryKeys.contents.bridgeSession(bridge.attachmentUid), bridge);
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.bridges() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.attachments() });
+    },
+  });
+};
+
 /** Upload a browser file with resumable verified parts and durable progress. */
 export const useUploadHomeFolderFile = () => {
   const queryClient = useQueryClient();
@@ -858,5 +989,514 @@ export const usePublishedDatasets = () => {
     queryFn: () => listPublishedDatasets(token ?? '', contentsUrl),
     enabled: Boolean(token && contentsUrl),
     staleTime: 30_000,
+  });
+};
+
+// -- MCP ----------------------------------------------------------------
+//
+// An MCP source is a server somebody connected. None of these hooks talk to
+// it: Contents does, through a session it opens for the caller. The browser
+// sees tool definitions, call records and approvals.
+
+/** The tools and resources the server behind a source offers. */
+export const useMcpTools = (sourceUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<McpToolManifest>({
+    queryKey: queryKeys.contents.mcpTools(sourceUid ?? ''),
+    queryFn: () => discoverMcpTools(token ?? '', sourceUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid),
+    staleTime: 300_000,
+  });
+};
+
+/** Try the server through the source; the answer is a verdict. */
+export const useMcpHealth = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<McpHealth, Error, string>({
+    mutationFn: sourceUid => testMcpSource(token ?? '', sourceUid, contentsUrl),
+  });
+};
+
+export type McpSessionListFilters = { sourceUid?: string; active?: boolean };
+
+/**
+ * The sessions the caller opened, optionally narrowed to one source or to
+ * the active ones. The contract lists them whole; the narrowing is here.
+ */
+export const useMcpSessions = (
+  filters: McpSessionListFilters = {},
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<McpSessionList>({
+    queryKey: queryKeys.contents.mcpSessionList(filters),
+    queryFn: async () => {
+      const page = await listMcpSessions(token ?? '', contentsUrl);
+      return {
+        items: page.items.filter(
+          session =>
+            (!filters.sourceUid || session.sourceUid === filters.sourceUid) &&
+            (!filters.active || session.status === 'active'),
+        ),
+      };
+    },
+    enabled: Boolean(token && contentsUrl) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+export const useMcpSession = (sessionUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<McpSession>({
+    queryKey: queryKeys.contents.mcpSession(sessionUid ?? ''),
+    queryFn: () => getMcpSession(token ?? '', sessionUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sessionUid),
+    staleTime: 30_000,
+  });
+};
+
+export const useCreateMcpSession = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<
+    McpSession,
+    Error,
+    { request: McpSessionCreate; idempotencyKey: string }
+  >({
+    mutationFn: ({ request, idempotencyKey }) =>
+      createMcpSession(token ?? '', request, idempotencyKey, contentsUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpSessions() });
+    },
+  });
+};
+
+export const useRevokeMcpSession = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<McpSession, Error, string>({
+    mutationFn: sessionUid => revokeMcpSession(token ?? '', sessionUid, contentsUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpSessions() });
+    },
+  });
+};
+
+/**
+ * One call, watched until the service is done with it.
+ *
+ * A call that is pending approval or running is polled; a terminal one is
+ * not, so a page that shows a finished call does not keep asking.
+ */
+export const useMcpCall = (sessionUid?: string, callUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<McpCall>({
+    queryKey: queryKeys.contents.mcpCall(sessionUid ?? '', callUid ?? ''),
+    queryFn: () => getMcpCall(token ?? '', sessionUid!, callUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sessionUid && callUid),
+    refetchInterval: query =>
+      query.state.data && isMcpCallTerminal(query.state.data.status) ? false : 2_000,
+  });
+};
+
+/** The calls made through a session — the provenance of what they acquired. */
+export const useMcpCalls = (sessionUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<McpCallList>({
+    queryKey: queryKeys.contents.mcpCalls(sessionUid ?? ''),
+    queryFn: () => listMcpCalls(token ?? '', sessionUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sessionUid),
+    staleTime: 15_000,
+  });
+};
+
+export const useCallMcpTool = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<McpCall, Error, { sessionUid: string; request: McpCallCreate }>({
+    mutationFn: ({ sessionUid, request }) =>
+      callMcpTool(token ?? '', sessionUid, request, contentsUrl),
+    onSuccess: call => {
+      queryClient.setQueryData(
+        queryKeys.contents.mcpCall(call.sessionUid, call.uid),
+        call,
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.mcpCalls(call.sessionUid),
+      });
+      if (call.status === 'pending-approval') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpApprovals() });
+      }
+    },
+  });
+};
+
+export type McpApprovalListFilters = { status?: McpApprovalStatus; sourceUid?: string };
+
+/**
+ * The approvals waiting on the caller, or those already decided. The
+ * contract filters on the status alone; a source narrows the answer here.
+ */
+export const useMcpApprovals = (
+  status: McpApprovalStatus | undefined = 'pending',
+  filters: Omit<McpApprovalListFilters, 'status'> = {},
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  const listFilters = { status, ...filters };
+
+  return useQuery<McpApprovalList>({
+    queryKey: queryKeys.contents.mcpApprovalList(listFilters),
+    queryFn: async () => {
+      const page = await listMcpApprovals(token ?? '', { status }, contentsUrl);
+      return {
+        items: filters.sourceUid
+          ? page.items.filter(approval => approval.sourceUid === filters.sourceUid)
+          : page.items,
+      };
+    },
+    enabled: Boolean(token && contentsUrl) && (options.enabled ?? true),
+    staleTime: 10_000,
+    refetchInterval: status === 'pending' ? 15_000 : false,
+  });
+};
+
+/** Approve or reject a pending call; the affected call is refreshed. */
+export const useDecideMcpApproval = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<
+    McpApproval,
+    Error,
+    { approvalUid: string; decision: 'approve' | 'reject'; note?: string }
+  >({
+    mutationFn: ({ approvalUid, decision, note }) =>
+      decideMcpApproval(token ?? '', approvalUid, decision, note, contentsUrl),
+    onSuccess: approval => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpApprovals() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.mcpCalls(approval.sessionUid),
+      });
+    },
+  });
+};
+
+// -- Datasources ----------------------------------------------------------
+//
+// A Datasource is a database somebody connected. None of these hooks talk
+// to it: Contents does, with the credential it holds, directly or through a
+// Dataserver. The browser sees verdicts, schemas and query jobs — and reads
+// a finished result as bytes, by range.
+
+/** The tables and columns a source exposes; asked once, then kept. */
+export const useDatasourceSchema = (
+  sourceUid?: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<DatasourceSchema>({
+    queryKey: queryKeys.contents.datasourceSchema(sourceUid ?? ''),
+    queryFn: () => discoverDatasourceSchema(token ?? '', sourceUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
+    staleTime: 300_000,
+  });
+};
+
+/** What the source may be asked, and how the answer can travel. */
+export const useDatasourceCapabilities = (sourceUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<DatasourceCapabilities>({
+    queryKey: queryKeys.contents.datasourceCapabilities(sourceUid ?? ''),
+    queryFn: () => getDatasourceCapabilities(token ?? '', sourceUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid),
+    staleTime: 300_000,
+  });
+};
+
+/** Try the database through the source; the answer is a verdict. */
+export const useTestDatasource = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<DatasourceTest, Error, string>({
+    mutationFn: sourceUid => testDatasource(token ?? '', sourceUid, contentsUrl),
+  });
+};
+
+/** Submit a statement. The answer is the job; `useDatasourceQuery` follows it. */
+export const useCreateDatasourceQuery = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<
+    DatasourceQuery,
+    Error,
+    { sourceUid: string; request: DatasourceQueryCreate; idempotencyKey: string }
+  >({
+    mutationFn: ({ sourceUid, request, idempotencyKey }) =>
+      createDatasourceQuery(token ?? '', sourceUid, request, idempotencyKey, contentsUrl),
+    onSuccess: query => {
+      queryClient.setQueryData(queryKeys.contents.query(query.uid), query);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.datasourceQueries(query.sourceUid),
+      });
+    },
+  });
+};
+
+/**
+ * One query job, polled while it can still change.
+ *
+ * A pending or running query is asked about every second; a finished one is
+ * not, so a page that shows a result does not keep asking.
+ */
+export const useDatasourceQuery = (queryUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<DatasourceQuery>({
+    queryKey: queryKeys.contents.query(queryUid ?? ''),
+    queryFn: () => getDatasourceQuery(token ?? '', queryUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && queryUid),
+    refetchInterval: query =>
+      query.state.data && isDatasourceQueryTerminal(query.state.data.status) ? false : 1_000,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** The queries run against a source, newest first: its history. */
+export const useDatasourceQueries = (
+  sourceUid?: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<DatasourceQueryList>({
+    queryKey: queryKeys.contents.datasourceQueries(sourceUid ?? ''),
+    queryFn: () => listDatasourceQueries(token ?? '', sourceUid!, {}, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
+    staleTime: 15_000,
+  });
+};
+
+/** Ask for a query to stop; the shared job record is refreshed. */
+export const useCancelDatasourceQuery = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<DatasourceQuery, Error, string>({
+    mutationFn: queryUid => cancelDatasourceQuery(token ?? '', queryUid, contentsUrl),
+    onSuccess: query => {
+      queryClient.setQueryData(queryKeys.contents.query(query.uid), query);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.datasourceQueries(query.sourceUid),
+      });
+    },
+  });
+};
+
+/** The bytes of a result, or a range of them — a preview, or a resume. */
+export const useDownloadDatasourceQueryResults = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<DatasourceQueryResultBytes, Error, { queryUid: string; range?: string }>({
+    mutationFn: ({ queryUid, range }) =>
+      downloadDatasourceQueryResults(token ?? '', queryUid, { range }, contentsUrl),
+  });
+};
+
+/** Keep a result as a Dataset revision; the Dataset's revisions refresh. */
+export const useSaveQueryAsDataset = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<
+    DatasetRevision,
+    Error,
+    { queryUid: string; datasetUid: string; path: string }
+  >({
+    mutationFn: ({ queryUid, datasetUid, path }) =>
+      saveDatasourceQueryAsDataset(token ?? '', queryUid, { datasetUid, path }, contentsUrl),
+    onSuccess: revision => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.datasetRevisions(revision.sourceUid),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(revision.sourceUid) });
+    },
+  });
+};
+
+/** A Flight ticket for a result, for a client inside a sandbox. */
+export const useCreateDatasourceQueryTicket = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<
+    CapabilityTicket,
+    Error,
+    { queryUid: string; request?: CapabilityTicketRequest }
+  >({
+    mutationFn: ({ queryUid, request }) =>
+      createDatasourceQueryTicket(token ?? '', queryUid, request ?? {}, contentsUrl),
+  });
+};
+
+// -- Dataservers ----------------------------------------------------------
+
+/**
+ * The gateway as last heard, polled on a bounded interval.
+ *
+ * The previous answer stays on screen while the next is fetched — a status
+ * that blinks to nothing every ten seconds reads as flapping — and a
+ * gateway that is revoked is not polled: nothing will change on its own.
+ */
+export const useDataserverStatus = (
+  sourceUid?: string,
+  options: { enabled?: boolean; intervalMs?: number } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<DataServerStatus>({
+    queryKey: queryKeys.contents.dataserverStatus(sourceUid ?? ''),
+    queryFn: () => getDataserverStatus(token ?? '', sourceUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
+    placeholderData: previous => previous,
+    refetchInterval: query =>
+      query.state.data?.state === 'revoked' ? false : (options.intervalMs ?? 10_000),
+    refetchOnWindowFocus: true,
+  });
+};
+
+export type DataserverTransition = 'drain' | 'resume' | 'revoke';
+
+/** Drain, resume or revoke a gateway; its status and its record refresh. */
+export const useDataserverAction = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<
+    DataServerStatus,
+    Error,
+    { sourceUid: string; action: DataserverTransition }
+  >({
+    mutationFn: ({ sourceUid, action }) =>
+      (action === 'drain'
+        ? drainDataserver
+        : action === 'resume'
+          ? resumeDataserver
+          : revokeDataserver)(token ?? '', sourceUid, contentsUrl),
+    onSuccess: (status, { sourceUid }) => {
+      queryClient.setQueryData(queryKeys.contents.dataserverStatus(sourceUid), status);
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(sourceUid) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.sources() });
+    },
+  });
+};
+
+/** Try the gateway on Flight and on the HTTPS fallback; the answer is a verdict. */
+export const useTestDataserver = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<DataServerConnectivity, Error, string>({
+    mutationFn: sourceUid => testDataserver(token ?? '', sourceUid, contentsUrl),
+  });
+};
+
+/** A new certificate from a CSR; the old one stays valid while it overlaps. */
+export const useRotateDataserverIdentity = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useMutation<IssuedIdentity, Error, { sourceUid: string; csr: string }>({
+    mutationFn: ({ sourceUid, csr }) =>
+      rotateDataserverIdentity(token ?? '', sourceUid, { csr }, contentsUrl),
+    onSuccess: (_identity, { sourceUid }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.dataserverStatus(sourceUid) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(sourceUid) });
+    },
   });
 };

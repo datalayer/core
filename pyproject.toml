@@ -30,6 +30,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
+    # The local bridge: X25519 and ChaCha20-Poly1305 for the channel the
+    # relay cannot read, and the client that dials the relay.
+    "cryptography",
     "datalayer_reactor",
     "httpx",
     "jupyter-console",
@@ -46,6 +49,7 @@ dependencies = [
     "rich",
     "traitlets",
     "typer",
+    "websockets>=13",
 ]
 dynamic = ["version"]
 

@@ -5,9 +5,13 @@
 
 export * from './generated';
 export * from './attachments';
+export * from './bridges';
 export * from './capabilities';
 export * from './cloudStorage';
 export * from './datasets';
+export * from './datasources';
+export * from './dataservers';
+export * from './mcp';
 export * from './objects';
 export * from './operations';
 export * from './sources';

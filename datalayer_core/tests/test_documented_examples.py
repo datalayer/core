@@ -39,6 +39,9 @@ PAGES = (
     "SharingDoc.tsx",
     "ContentEnvironmentDoc.tsx",
     "CodeSandboxesDoc.tsx",
+    "ContentMcpDoc.tsx",
+    "ContentDatasourcesDoc.tsx",
+    "ContentDataserversDoc.tsx",
 )
 
 _FENCE = re.compile(r"^(```|~~~)(.*)$")

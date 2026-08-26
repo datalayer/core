@@ -17,7 +17,6 @@ export * as profile from './profile';
 export * as healthz from './healthz';
 export * as usage from './usage';
 export * as secrets from './secrets';
-export * as datasources from './datasources';
 
 // For backward compatibility, export the old API structure
 export { login, logout, checkAuth } from './authentication';

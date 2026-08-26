@@ -42,7 +42,6 @@ export * from './ContactIAMProvider';
 export * from './ContactTags';
 export * from './Credits';
 export * from './CreditsDTO';
-export * from './Datasource';
 export * from './Dean';
 export * from './Errors';
 export * from './GrowthKPI';

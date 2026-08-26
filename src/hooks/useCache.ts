@@ -50,7 +50,6 @@ import {
   BOOTSTRAP_USER_ONBOARDING,
   IAnyOrganization,
   IContact,
-  IDatasource,
   IIAMToken,
   IOrganization,
   IOrganizationMember,
@@ -62,7 +61,6 @@ import {
   IUserOnboarding,
   IUserSettings,
   asContact,
-  asDatasource,
   asInvite,
   asOrganization,
   asSecret,
@@ -217,6 +215,40 @@ export const queryKeys = {
     }) => [...queryKeys.contents.attachments(), 'list', filters ?? {}] as const,
     attachmentManifest: (sandboxUid: string) =>
       [...queryKeys.contents.attachments(), 'manifest', sandboxUid] as const,
+    // The session of one attachment lives under the attachments key on
+    // purpose: revoking or refreshing an attachment refreshes its bridge.
+    bridgeSession: (attachmentUid: string) =>
+      [...queryKeys.contents.attachments(), 'bridge', attachmentUid] as const,
+    bridges: () => [...queryKeys.contents.all(), 'bridges'] as const,
+    bridgeList: (filters?: { active?: boolean }) =>
+      [...queryKeys.contents.bridges(), 'list', filters ?? {}] as const,
+    bridge: (bridgeUid: string) => [...queryKeys.contents.bridges(), bridgeUid] as const,
+    mcpTools: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'mcp', 'tools'] as const,
+    mcpSessions: () => [...queryKeys.contents.all(), 'mcp-sessions'] as const,
+    mcpSessionList: (filters?: { sourceUid?: string; active?: boolean }) =>
+      [...queryKeys.contents.mcpSessions(), 'list', filters ?? {}] as const,
+    mcpSession: (sessionUid: string) =>
+      [...queryKeys.contents.mcpSessions(), sessionUid] as const,
+    mcpCalls: (sessionUid: string) =>
+      [...queryKeys.contents.mcpSession(sessionUid), 'calls'] as const,
+    mcpCall: (sessionUid: string, callUid: string) =>
+      [...queryKeys.contents.mcpCalls(sessionUid), callUid] as const,
+    mcpApprovals: () => [...queryKeys.contents.all(), 'mcp-approvals'] as const,
+    mcpApprovalList: (filters?: { status?: string; sourceUid?: string }) =>
+      [...queryKeys.contents.mcpApprovals(), 'list', filters ?? {}] as const,
+    datasourceSchema: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'datasource', 'schema'] as const,
+    datasourceCapabilities: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'datasource', 'capabilities'] as const,
+    datasourceQueries: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'queries'] as const,
+    // A query is addressed by its own uid, not under its source: a
+    // notebook reconnects to one by uid alone.
+    queries: () => [...queryKeys.contents.all(), 'queries'] as const,
+    query: (queryUid: string) => [...queryKeys.contents.queries(), queryUid] as const,
+    dataserverStatus: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'dataserver', 'status'] as const,
   },
 
   // Authentication & Profile
@@ -396,13 +428,6 @@ export const queryKeys = {
     all: () => ['pages'] as const,
     details: () => [...queryKeys.pages.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.pages.details(), id] as const,
-  },
-
-  // Datasources
-  datasources: {
-    all: () => ['datasources'] as const,
-    details: () => [...queryKeys.datasources.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.datasources.details(), id] as const,
   },
 
   // Secrets
@@ -720,12 +745,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   const toPage = (s: any): IPage | undefined => {
     if (s) {
       return asPage(s);
-    }
-  };
-
-  const toDatasource = (s: any): IDatasource | undefined => {
-    if (s) {
-      return asDatasource(s);
     }
   };
 
@@ -2723,86 +2742,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // Datasource, Secret, Token Hooks
+  // Secret, Token Hooks
   // ============================================================================
 
   type PrincipalScopeOptions = {
     principalUid?: string;
     principalKind?: 'personal' | 'organization' | 'team';
-  };
-
-  /**
-   * Get all datasources
-   */
-  const useDatasources = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasources.all(),
-        principalUid || 'self',
-        principalKind || '',
-      ],
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'GET',
-        });
-        if (resp.success && resp.datasources) {
-          const datasources = resp.datasources
-            .map((d: unknown) => {
-              const datasource = toDatasource(d);
-              if (datasource) {
-                queryClient.setQueryData(
-                  queryKeys.datasources.detail(datasource.id),
-                  datasource,
-                );
-              }
-              return datasource;
-            })
-            .filter(Boolean);
-          return datasources;
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Create datasource
-   */
-  const useCreateDatasource = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useMutation({
-      mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
-        return requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'POST',
-          body: { ...datasource },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.datasource) {
-          const ds = toDatasource(resp.datasource);
-          if (ds) {
-            queryClient.setQueryData(queryKeys.datasources.detail(ds.id), ds);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasources.all(),
-        });
-      },
-    });
   };
 
   /**
@@ -3176,72 +3121,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
   // Core CRUD Operations - Refresh & Get Methods
   // ============================================================================
-
-  /**
-   * Get single datasource by ID
-   */
-  const useDatasource = (
-    datasourceId: string,
-    options?: PrincipalScopeOptions,
-  ) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasources.detail(datasourceId),
-        principalUid || 'self',
-        principalKind || '',
-      ],
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources/${datasourceId}`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'GET',
-        });
-        if (resp.success && resp.datasource) {
-          return toDatasource(resp.datasource);
-        }
-        return null;
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!datasourceId,
-    });
-  };
-
-  /**
-   * Update datasource
-   */
-  const useUpdateDatasource = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useMutation({
-      mutationFn: async (datasource: IDatasource) => {
-        return requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources/${datasource.id}`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'PUT',
-          body: { ...datasource },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.datasource) {
-          const ds = toDatasource(resp.datasource);
-          if (ds) {
-            queryClient.setQueryData(queryKeys.datasources.detail(ds.id), ds);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasources.all(),
-        });
-      },
-    });
-  };
 
   /**
    * Get single secret by ID
@@ -9257,11 +9136,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUpdatePage,
     useDeletePage,
 
-    // Datasources
-    useDatasource,
-    useDatasources,
-    useCreateDatasource,
-    useUpdateDatasource,
 
     // Secrets
     useSecret,

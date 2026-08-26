@@ -4,7 +4,6 @@
  */
 
 export * from './CoreState';
-export * from './DatasourceState';
 export * from './IAMState';
 export * from './LayoutState';
 export * from './ProfileState';

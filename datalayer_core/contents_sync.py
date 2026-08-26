@@ -5,10 +5,12 @@
 The local side of a synchronization session.
 
 The service decides; this carries the decision out. It hashes the folder,
-opens a session, applies the plan it is given — uploads through the
-resumable transfer API, downloads by fetching only the blocks that differ,
-deletions on either side — and reports back so the service can verify and
-remember. In watch mode it keeps doing that until stopped.
+opens a session, applies the plan it is given — new files through the
+resumable transfer API, changed files by staging only the blocks the remote
+version lacks and asking the service to compose a version from them,
+downloads by fetching only the blocks that differ, deletions on either side —
+and reports back so the service can verify and remember. In watch mode it
+keeps doing that until stopped.
 
 What it remembers between runs lives beside the folder, under
 `.datalayer-sync/`: the session it was in, and the manifest both sides last
@@ -20,7 +22,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import mimetypes
 import os
+import re
 import tempfile
 import time
 from collections.abc import Iterator
@@ -118,6 +122,16 @@ def _now() -> str:
     )
 
 
+def _error_code(error: BaseException) -> str | None:
+    """The service's error code, out of the message the transport wraps it in."""
+    match = re.search(r'"code"\s*:\s*"([A-Z_]+)"', str(error))
+    return match.group(1) if match else None
+
+
+class _BaseStale(Exception):
+    """The version a push was planned against is no longer current."""
+
+
 class Synchronizer:
     """Drive one folder against one remote through the Contents client."""
 
@@ -200,8 +214,31 @@ class Synchronizer:
             )
         return self._apply(session, local)
 
-    def _apply(self, session: Any, local: Manifest) -> SyncOutcome:
+    def _apply(
+        self,
+        session: Any,
+        local: Manifest,
+        *,
+        retry_stale: bool = True,
+        carried: SyncOutcome | None = None,
+    ) -> SyncOutcome:
+        """
+        Carry the plan out and report.
+
+        A push planned against a version that is no longer current is not
+        forced through: the folder is hashed again, the session reconciled
+        again, and the fresh plan applied instead — once. What the first
+        attempt already moved is agreed on by then (the fresh plan does not
+        name it again) and is carried into the outcome so it is not lost
+        from what the command shows.
+        """
         outcome = SyncOutcome(session_uid=session.uid, status=session.status)
+        if carried is not None:
+            outcome.uploaded = list(carried.uploaded)
+            outcome.downloaded = list(carried.downloaded)
+            outcome.deleted_locally = list(carried.deleted_locally)
+            outcome.deleted_remotely = list(carried.deleted_remotely)
+            outcome.transferred_bytes = carried.transferred_bytes
         plan = (session.plan.actions if session.plan else []) or []
         applied: list[str] = []
         for action in plan:
@@ -212,16 +249,41 @@ class Synchronizer:
                     if path.endswith(".local") and not source.exists():
                         # keep-both: the local file goes up under its own name.
                         source = self.root / path[: -len(".local")]
-                    self.progress(f"Uploading {path}")
-                    transfer = self.client.upload_home_folder_file(
-                        source,
-                        _remote_path(self.remote_uri, path),
-                        idempotency_key=f"sync-{session.uid}-{hashlib.sha256(path.encode()).hexdigest()[:16]}",
-                        overwrite="replace",
-                    )
-                    outcome.transferred_bytes += int(
-                        getattr(transfer, "expected_size", 0) or 0
-                    )
+                    entry = local.entries.get(path)
+                    base_version = getattr(action, "version_uid", None)
+                    if base_version and entry is not None and source == self.root / path:
+                        # The remote holds an older version of this very
+                        # file: only the blocks it lacks go up.
+                        self.progress(f"Pushing changed blocks of {path}")
+                        try:
+                            outcome.transferred_bytes += self._push_blocks(
+                                session, action, entry, source
+                            )
+                        except _BaseStale:
+                            if not retry_stale:
+                                outcome.failed[path] = (
+                                    "the remote changed during the push; run again"
+                                )
+                                continue
+                            self.progress("The remote changed; comparing again")
+                            fresh = self.scan()
+                            renewed = self.client.reconcile_content_sync(
+                                session.uid, {"local_manifest": fresh.to_dict()}
+                            )
+                            return self._apply(
+                                renewed, fresh, retry_stale=False, carried=outcome
+                            )
+                    else:
+                        self.progress(f"Uploading {path}")
+                        transfer = self.client.upload_home_folder_file(
+                            source,
+                            _remote_path(self.remote_uri, path),
+                            idempotency_key=f"sync-{session.uid}-{hashlib.sha256(path.encode()).hexdigest()[:16]}",
+                            overwrite="replace",
+                        )
+                        outcome.transferred_bytes += int(
+                            getattr(transfer, "expected_size", 0) or 0
+                        )
                     outcome.uploaded.append(path)
                 elif kind == "download":
                     self.progress(f"Downloading {path}")
@@ -273,6 +335,69 @@ class Synchronizer:
             },
         )
         return outcome
+
+    def _push_blocks(self, session: Any, action: Any, entry: Any, source: Path) -> int:
+        """
+        Send only the blocks the remote version lacks, then have it composed.
+
+        The plan says which blocks those are — the service computed them with
+        the engine's `changed_blocks` against the version it will read — and
+        the manifest entry says what every block of the file hashes to. Each
+        block is checked against the entry before it goes: a file that
+        changed since the scan is not pushed block by block against a
+        manifest that no longer describes it; it goes whole, and the report
+        will say the checksum moved.
+
+        Returns the number of bytes that crossed. Raises `_BaseStale` when
+        the service answers that the base version is no longer current.
+        """
+        path = action.path
+        wanted = [int(index) for index in (getattr(action, "blocks", None) or ())]
+        sent = 0
+        with source.open("rb") as stream:
+            for index in wanted:
+                stream.seek(index * self.block_size)
+                data = stream.read(self.block_size)
+                if (
+                    index >= len(entry.blocks)
+                    or hashlib.sha256(data).hexdigest() != entry.blocks[index]
+                ):
+                    return self._upload_whole(session, path, source)
+                self.client.upload_content_sync_block(session.uid, path, index, data)
+                sent += len(data)
+        try:
+            self.client.compose_content_sync_version(
+                session.uid,
+                {
+                    "path": path,
+                    "base_version_uid": action.version_uid,
+                    "size": entry.size,
+                    "checksum": entry.checksum,
+                    "blocks": list(entry.blocks),
+                    "media_type": mimetypes.guess_type(path)[0]
+                    or "application/octet-stream",
+                },
+            )
+        except Exception as error:  # noqa: BLE001 - the code decides
+            code = _error_code(error)
+            if code == "SYNC_BASE_STALE":
+                raise _BaseStale(path) from error
+            if code == "SYNC_BLOCK_MISSING":
+                # The service and the plan disagree about what the base
+                # holds. The bytes still have to land: send the file whole.
+                self.progress(f"Composition refused; uploading {path} whole")
+                return sent + self._upload_whole(session, path, source)
+            raise
+        return sent
+
+    def _upload_whole(self, session: Any, path: str, source: Path) -> int:
+        transfer = self.client.upload_home_folder_file(
+            source,
+            _remote_path(self.remote_uri, path),
+            idempotency_key=f"sync-{session.uid}-{hashlib.sha256(path.encode()).hexdigest()[:16]}",
+            overwrite="replace",
+        )
+        return int(getattr(transfer, "expected_size", 0) or 0)
 
     def _download(self, action: Any, local: Manifest) -> int:
         """

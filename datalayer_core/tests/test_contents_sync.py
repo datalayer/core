@@ -29,12 +29,23 @@ from datalayer_core.contents_sync_engine import (
     FileEntry,
     Manifest,
     accepted_after,
+    changed_blocks,
     hash_stream,
     reconcile,
 )
 
 BLOCK = 64 * 1024
 REMOTE = "home-folder:///research"
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _refusal(code: str, message: str) -> RuntimeError:
+    """An error the way the transport raises one: the body inside the message."""
+    body = json.dumps({"code": code, "message": message})
+    return RuntimeError(f"Failed to request the URL http://test (status=409, body={body})")
 
 
 class FakeContents:
@@ -50,6 +61,24 @@ class FakeContents:
         self.calls: list[str] = []
         self.ranges: list[str] = []
         self.counter = 0
+        #: How many versions each catalog file has had: its current version
+        #: uid is derived from it, so a publication moves it on.
+        self.revisions: dict[str, int] = {}
+        #: Blocks staged for composition, by session and plan path.
+        self.staged: dict[tuple[str, str], dict[int, bytes]] = {}
+        #: Every block upload as (path, index, size), and every whole-file
+        #: transfer by destination — what a push is judged on.
+        self.block_uploads: list[tuple[str, int, int]] = []
+        self.whole_uploads: list[str] = []
+        #: Runs once, before the next composition: how a test makes the
+        #: remote move on between the plan and the compose.
+        self.before_compose: Any = None
+
+    def version_of(self, path: str) -> str:
+        return f"v-{path}-{self.revisions.get(path, 0)}"
+
+    def bump(self, path: str) -> None:
+        self.revisions[path] = self.revisions.get(path, 0) + 1
 
     # -- the remote side -------------------------------------------------
     def _manifest(self) -> Manifest:
@@ -89,24 +118,35 @@ class FakeContents:
         session["local"], session["remote"] = local_manifest, remote
         session["plan_obj"] = plan
         session["plan"] = [
-            {
-                **a.to_dict(),
-                "blocks": list(a.blocks),
-                # Only what the catalog knows carries an identity; a file
-                # only the folder has is named by its path alone.
-                **(
-                    {"object_uid": f"o-{a.path}", "version_uid": f"v-{a.path}"}
-                    if f"research/{a.path}" in self.files
-                    else {}
-                ),
-            }
-            for a in plan.actions
+            self._action_payload(a, local_manifest, remote) for a in plan.actions
         ]
         session["status"] = (
             "transferring"
             if plan.actions
             else ("watching" if session["watch"] else "transferring")
         )
+
+    def _action_payload(
+        self, action: Any, local: Manifest, remote: Manifest
+    ) -> dict[str, Any]:
+        """One action as the service sends it.
+
+        Only what the catalog knows carries an identity; a file only the
+        folder has is named by its path alone. An upload of a file the
+        catalog holds names the version to compose against and, with the
+        engine's own `changed_blocks`, the blocks that version lacks.
+        """
+        value = {**action.to_dict(), "blocks": list(action.blocks)}
+        remote_path = f"research/{action.path}"
+        if remote_path not in self.files:
+            return value
+        value["object_uid"] = f"o-{action.path}"
+        value["version_uid"] = self.version_of(remote_path)
+        if action.kind == "upload":
+            here, there = local.entries.get(action.path), remote.entries.get(action.path)
+            if here is not None and there is not None:
+                value["blocks"] = list(changed_blocks(there, here))
+        return value
 
     # -- the client surface ---------------------------------------------
     def create_content_sync(
@@ -183,14 +223,65 @@ class FakeContents:
         **kwargs: Any,
     ) -> SimpleNamespace:
         content = Path(local_path).read_bytes()
+        self.calls.append("transfer")
+        self.whole_uploads.append(destination_path)
         self.files[destination_path] = content
+        self.bump(destination_path)
         return SimpleNamespace(uid="T", status="succeeded", expected_size=len(content))
+
+    def upload_content_sync_block(
+        self, session_uid: str, path: str, index: int, content: bytes
+    ) -> dict[str, Any]:
+        self.calls.append("block")
+        self.block_uploads.append((path, index, len(content)))
+        self.staged.setdefault((session_uid, path), {})[index] = content
+        return {
+            "session_uid": session_uid,
+            "path": path,
+            "index": index,
+            "size": len(content),
+            "checksum": _sha(content),
+        }
+
+    def compose_content_sync_version(
+        self, session_uid: str, request: dict[str, Any]
+    ) -> SimpleNamespace:
+        """Assemble as the service does: staged block by hash, else the base's, else refuse."""
+        self.calls.append("compose")
+        if self.before_compose is not None:
+            hook, self.before_compose = self.before_compose, None
+            hook()
+        remote_path = f"research/{request['path']}"
+        if request["base_version_uid"] != self.version_of(remote_path):
+            raise _refusal("SYNC_BASE_STALE", "reconcile again")
+        base = self.files[remote_path]
+        staged = self.staged.pop((session_uid, request["path"]), {})
+        assembled = b""
+        for index, expected in enumerate(request["blocks"]):
+            piece = staged.get(index)
+            if piece is None or _sha(piece) != expected:
+                piece = base[index * BLOCK : (index + 1) * BLOCK]
+            if _sha(piece) != expected:
+                raise _refusal("SYNC_BLOCK_MISSING", f"block {index} is nowhere")
+            assembled += piece
+        assert len(assembled) == request["size"] and _sha(assembled) == request["checksum"]
+        self.files[remote_path] = assembled
+        self.bump(remote_path)
+        return SimpleNamespace(
+            uid=f"o-{request['path']}",
+            path=remote_path,
+            current_version_uid=self.version_of(remote_path),
+            size=len(assembled),
+            checksum=request["checksum"],
+        )
 
     def stat_home_folder_object(self, path: str) -> SimpleNamespace:
         if path not in self.files:
             raise RuntimeError(f"no such object {path}")
         return SimpleNamespace(
-            uid=f"o-{path}", current_version_uid=f"v-{path}", size=len(self.files[path])
+            uid=f"o-{path}",
+            current_version_uid=self.version_of(path),
+            size=len(self.files[path]),
         )
 
     def delete_home_folder_object(
@@ -451,3 +542,119 @@ def test_a_file_only_the_folder_has_is_fetched_by_its_path(tmp_path: Path) -> No
     assert (tmp_path / "from-the-sandbox.md").read_bytes() == payload
     # Asked for by path, not by object: there is no object.
     assert fake.by_path == ["research/from-the-sandbox.md"]
+
+
+# --- a push moves only the blocks that changed ------------------------------
+
+FIVE_BLOCKS = b"a" * BLOCK + b"b" * BLOCK + b"c" * BLOCK + b"d" * BLOCK + b"tail"
+#: The same file with its third block rewritten.
+FIVE_BLOCKS_EDITED = b"a" * BLOCK + b"b" * BLOCK + b"C" * BLOCK + b"d" * BLOCK + b"tail"
+
+
+def agreed_on_five_blocks(fake: FakeContents, root: Path) -> None:
+    """Both sides hold the file, and the session remembers it."""
+    (root / "big.bin").write_bytes(FIVE_BLOCKS)
+    synchronizer(fake, root, direction="push").run_once()
+    assert fake.files["research/big.bin"] == FIVE_BLOCKS
+    fake.calls.clear()
+
+
+def test_a_push_of_a_changed_file_sends_only_the_changed_block(tmp_path: Path) -> None:
+    """The mutation this must catch: a push that re-sends the whole file.
+
+    One block of five changed. Exactly one block upload and one composition
+    cross; the whole-file transfer is not called again.
+    """
+    fake = FakeContents()
+    agreed_on_five_blocks(fake, tmp_path)
+    (tmp_path / "big.bin").write_bytes(FIVE_BLOCKS_EDITED)
+
+    outcome = synchronizer(fake, tmp_path, direction="push").run_once()
+
+    assert outcome.status == "succeeded", outcome.failed
+    assert outcome.uploaded == ["big.bin"]
+    assert fake.files["research/big.bin"] == FIVE_BLOCKS_EDITED
+    assert fake.block_uploads == [("big.bin", 2, BLOCK)]
+    assert fake.calls == ["create", "block", "compose", "report"]
+    # The first push moved the file whole, being new; this one did not.
+    assert fake.whole_uploads == ["research/big.bin"]
+    assert outcome.transferred_bytes == BLOCK
+    # The composition is what the remote now serves, under a new version.
+    assert fake.version_of("research/big.bin") == "v-research/big.bin-2"
+
+
+def test_a_new_file_still_goes_through_the_whole_file_transfer(tmp_path: Path) -> None:
+    fake = FakeContents()
+    (tmp_path / "big.bin").write_bytes(FIVE_BLOCKS)
+
+    outcome = synchronizer(fake, tmp_path, direction="push").run_once()
+
+    assert outcome.status == "succeeded"
+    assert fake.whole_uploads == ["research/big.bin"]
+    assert fake.block_uploads == [] and "compose" not in fake.calls
+    assert outcome.transferred_bytes == len(FIVE_BLOCKS)
+
+
+def test_a_stale_base_is_reconciled_again_once_and_then_pushed(tmp_path: Path) -> None:
+    """Between the plan and the composition, somebody else published.
+
+    The service refuses the base; the client hashes the folder again,
+    reconciles again, and pushes against the version that is current now —
+    still block by block, and only once.
+    """
+    fake = FakeContents()
+    agreed_on_five_blocks(fake, tmp_path)
+    (tmp_path / "big.bin").write_bytes(FIVE_BLOCKS_EDITED)
+    # Same bytes, newer version: the remote moved on under the plan.
+    fake.before_compose = lambda: fake.bump("research/big.bin")
+
+    outcome = synchronizer(fake, tmp_path, direction="push").run_once()
+
+    assert outcome.status == "succeeded", outcome.failed
+    assert outcome.uploaded == ["big.bin"]
+    assert fake.files["research/big.bin"] == FIVE_BLOCKS_EDITED
+    assert fake.calls == ["create", "block", "compose", "reconcile", "block", "compose", "report"]
+    assert fake.block_uploads == [("big.bin", 2, BLOCK), ("big.bin", 2, BLOCK)]
+    assert fake.whole_uploads == ["research/big.bin"]
+
+
+def test_a_base_stale_twice_is_reported_not_forced(tmp_path: Path) -> None:
+    fake = FakeContents()
+    agreed_on_five_blocks(fake, tmp_path)
+    (tmp_path / "big.bin").write_bytes(FIVE_BLOCKS_EDITED)
+    original = fake.compose_content_sync_version
+
+    def always_stale(session_uid: str, request: dict[str, Any]) -> SimpleNamespace:
+        fake.bump("research/big.bin")
+        return original(session_uid, request)
+
+    fake.compose_content_sync_version = always_stale  # type: ignore[method-assign]
+
+    outcome = synchronizer(fake, tmp_path, direction="push").run_once()
+
+    assert outcome.status == "failed"
+    assert "run again" in outcome.failed["big.bin"]
+    assert fake.files["research/big.bin"] == FIVE_BLOCKS
+    assert fake.calls.count("reconcile") == 1
+
+
+def test_a_composition_the_service_cannot_make_falls_back_to_the_whole_file(
+    tmp_path: Path,
+) -> None:
+    """The service says a block is nowhere: the bytes still have to land."""
+    fake = FakeContents()
+    agreed_on_five_blocks(fake, tmp_path)
+    (tmp_path / "big.bin").write_bytes(FIVE_BLOCKS_EDITED)
+
+    def refuse(session_uid: str, request: dict[str, Any]) -> SimpleNamespace:
+        fake.calls.append("compose")
+        raise _refusal("SYNC_BLOCK_MISSING", "block 2 of big.bin is neither staged nor in the base version")
+
+    fake.compose_content_sync_version = refuse  # type: ignore[method-assign]
+
+    outcome = synchronizer(fake, tmp_path, direction="push").run_once()
+
+    assert outcome.status == "succeeded", outcome.failed
+    assert fake.files["research/big.bin"] == FIVE_BLOCKS_EDITED
+    assert fake.calls == ["create", "block", "compose", "transfer", "report"]
+    assert outcome.transferred_bytes == BLOCK + len(FIVE_BLOCKS_EDITED)

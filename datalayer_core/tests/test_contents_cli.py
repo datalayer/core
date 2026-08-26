@@ -632,3 +632,711 @@ def test_contents_environment_verify_reports_each_content_and_fails_when_unsuppo
     )
     assert failing_json.exit_code == 1
     assert '"status": "unsupported"' in failing_json.stdout
+
+
+# -- MCP ---------------------------------------------------------------------
+
+MCP_UID = "01MCPSRC000000000000000000"
+MCP_SESSION_UID = "01MCPSESSION00000000000000"
+MCP_CALL_UID = "01MCPCALL00000000000000000"
+MCP_APPROVAL_UID = "01MCPAPPROVAL0000000000000"
+
+
+def mcp_catalog_source() -> CatalogSource:
+    source = catalog_source().model_dump(mode="json")
+    source["source"].update(
+        {
+            "uid": MCP_UID,
+            "kind": "mcp",
+            "name": "earthdata",
+            "configuration": {
+                "kind": "mcp",
+                "transport": "streamable-http",
+                "endpoint": "https://mcp.example.com/mcp",
+                "approval_policy": "explicit",
+                "destination_policy": "allowlist",
+                "allowed_tools": ["search_earth_datasets", "download_earth_data_granules"],
+                "allowed_domains": ["earthdata.nasa.gov"],
+            },
+        }
+    )
+    return CatalogSource.model_validate(source)
+
+
+def mcp_call_record(status: str, **extra: Any) -> dict[str, Any]:
+    return {
+        "uid": MCP_CALL_UID,
+        "session_uid": MCP_SESSION_UID,
+        "tool": "download_earth_data_granules",
+        "arguments_redacted": {"short_name": "MUR"},
+        "arguments_hash": "sha256:abc",
+        "status": status,
+        "created_at": "2026-08-26T10:00:00Z",
+        "updated_at": "2026-08-26T10:00:00Z",
+        **extra,
+    }
+
+
+def mcp_approval_record(status: str, **extra: Any) -> dict[str, Any]:
+    return {
+        "uid": MCP_APPROVAL_UID,
+        "source_uid": MCP_UID,
+        "session_uid": MCP_SESSION_UID,
+        "call_uid": MCP_CALL_UID,
+        "actor_uid": OWNER_UID,
+        "tool": "download_earth_data_granules",
+        "arguments_hash": "sha256:abc",
+        "arguments_redacted": {"short_name": "MUR"},
+        "destination_uri": "home-folder:///earthdata",
+        "status": status,
+        "created_at": "2026-08-26T10:00:00Z",
+        "expires_at": "2026-08-26T11:00:00Z",
+        **extra,
+    }
+
+
+class McpClient(Client):
+    """The fake, taught the MCP surface: a session, a call, and its approvals."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sessions: list[dict[str, Any]] = []
+        self.calls: list[dict[str, Any]] = []
+        self.decisions: list[tuple[str, str, str | None]] = []
+        self.polls = 0
+        self.call_statuses: list[str] = ["succeeded"]
+
+    def get_content_source(self, reference: str) -> ConditionalCatalogSource:
+        if reference in {MCP_UID, "earthdata"}:
+            return ConditionalCatalogSource(mcp_catalog_source(), '"v1.mcp"')
+        return super().get_content_source(reference)
+
+    def list_content_sources(self, **kwargs: Any) -> SourceList:
+        return SourceList(items=[catalog_source(), mcp_catalog_source()], next_cursor=None)
+
+    def discover_mcp_tools(self, source_uid: str) -> Any:
+        from datalayer_core.models.contents.mcp import McpToolManifest
+
+        assert source_uid == MCP_UID
+        return McpToolManifest.model_validate(
+            {
+                "tools": [
+                    {
+                        "name": "search_earth_datasets",
+                        "description": "Search datasets",
+                        "input_schema": {
+                            "type": "object",
+                            "properties": {
+                                "search_keywords": {"type": "string"},
+                                "count": {"type": "integer"},
+                            },
+                            "required": ["search_keywords"],
+                        },
+                    }
+                ],
+                "resources": [{"uri": "earthdata://catalog", "name": "Catalog"}],
+                "discovered_at": "2026-08-26T10:00:00Z",
+            }
+        )
+
+    def test_mcp_source(self, source_uid: str) -> Any:
+        from datalayer_core.models.contents.mcp import McpHealth
+
+        return McpHealth(ok=True, transport="streamable-http", detail="tools/list answered")
+
+    def create_mcp_session(self, source_uid: str, **kwargs: Any) -> Any:
+        from datalayer_core.models.contents.mcp import McpSession
+
+        self.sessions.append({"source_uid": source_uid, **kwargs})
+        return McpSession.model_validate(
+            {
+                "uid": MCP_SESSION_UID,
+                "source_uid": source_uid,
+                "actor_uid": OWNER_UID,
+                "allowed_tools": ["search_earth_datasets", "download_earth_data_granules"],
+                "allowed_resources": [],
+                "allowed_domains": [],
+                "allowed_destinations": [],
+                "approval_policy": "explicit",
+                "destination_policy": "allowlist",
+                "max_result_bytes": 67108864,
+                "status": "active",
+                "created_at": "2026-08-26T10:00:00Z",
+                "expires_at": "2026-08-26T11:00:00Z",
+            }
+        )
+
+    def call_mcp_tool(
+        self, session_uid: str, tool: str, arguments: Any, *, destination_uri: Any = None
+    ) -> Any:
+        from datalayer_core.models.contents.mcp import McpCall
+
+        self.calls.append(
+            {
+                "session_uid": session_uid,
+                "tool": tool,
+                "arguments": dict(arguments),
+                "destination_uri": destination_uri,
+            }
+        )
+        return McpCall.model_validate(
+            mcp_call_record("pending-approval", tool=tool, approval_uid=MCP_APPROVAL_UID)
+        )
+
+    def get_mcp_call(self, session_uid: str, call_uid: str) -> Any:
+        from datalayer_core.models.contents.mcp import McpCall
+
+        self.polls += 1
+        status = self.call_statuses[min(self.polls, len(self.call_statuses)) - 1]
+        result = None
+        if status == "succeeded":
+            result = {
+                "content": [{"type": "text", "text": "2 granules"}],
+                "artifacts": [
+                    {"name": "a.nc", "size": 10, "transfer_uid": "01TRANSFERA00000000000000"},
+                    {"name": "b.nc", "size": 10, "transfer_uid": "01TRANSFERB00000000000000"},
+                ],
+            }
+        return McpCall.model_validate(mcp_call_record(status, result=result))
+
+    def list_mcp_approvals(self, **kwargs: Any) -> Any:
+        from datalayer_core.models.contents.mcp import McpApprovalList
+
+        self.approval_filters = kwargs
+        return McpApprovalList.model_validate(
+            {"items": [mcp_approval_record(kwargs.get("status") or "pending")]}
+        )
+
+    def approve_mcp_approval(self, approval_uid: str, *, note: str | None = None) -> Any:
+        from datalayer_core.models.contents.mcp import McpApproval
+
+        self.decisions.append(("approve", approval_uid, note))
+        return McpApproval.model_validate(
+            mcp_approval_record("approved", uid=approval_uid, note=note)
+        )
+
+    def reject_mcp_approval(self, approval_uid: str, *, note: str | None = None) -> Any:
+        from datalayer_core.models.contents.mcp import McpApproval
+
+        self.decisions.append(("reject", approval_uid, note))
+        return McpApproval.model_validate(
+            mcp_approval_record("rejected", uid=approval_uid, note=note)
+        )
+
+
+def test_contents_mcp_tools_and_test_answer_for_the_named_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    runner = CliRunner()
+
+    tools = runner.invoke(app, ["contents", "mcp", "tools", "earthdata"])
+    as_json = runner.invoke(app, ["contents", "-o", "json", "mcp", "tools", MCP_UID])
+    health = runner.invoke(app, ["contents", "mcp", "test", "earthdata"])
+    not_mcp = runner.invoke(app, ["contents", "mcp", "tools", "Earth data"])
+
+    assert tools.exit_code == 0, tools.output
+    assert "search_earth_datasets" in tools.output
+    # The required argument is bare, the optional one carries the question mark.
+    assert "search_keywords, count?" in tools.output
+    assert "earthdata://catalog" in tools.output
+    assert as_json.exit_code == 0
+    assert '"discovered_at": "2026-08-26T10:00:00Z"' in as_json.output
+    assert health.exit_code == 0
+    assert "reachable" in health.output and "tools/list answered" in health.output
+    assert not_mcp.exit_code == 1
+    assert "not an MCP server" in not_mcp.output
+
+
+def test_contents_mcp_call_reports_the_pending_approval_and_exits_without_waiting(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    arguments = tmp_path / "search.json"
+    arguments.write_text('{"short_name": "MUR", "count": 10}')
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "contents",
+            "mcp",
+            "call",
+            "earthdata",
+            "download_earth_data_granules",
+            "--arguments-file",
+            str(arguments),
+            "--arg",
+            "mode=manifest",
+            "--arg",
+            "bounding_box=[-4,51,9,61]",
+            "--destination",
+            "home-folder:///earthdata",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    client = McpClient.last
+    assert isinstance(client, McpClient)
+    # One session on the source, one call through it, arguments merged and typed.
+    assert client.sessions[0]["source_uid"] == MCP_UID
+    assert client.calls == [
+        {
+            "session_uid": MCP_SESSION_UID,
+            "tool": "download_earth_data_granules",
+            "arguments": {
+                "short_name": "MUR",
+                "count": 10,
+                "mode": "manifest",
+                "bounding_box": [-4, 51, 9, 61],
+            },
+            "destination_uri": "home-folder:///earthdata",
+        }
+    ]
+    assert "pending-approval" in result.output
+    assert MCP_APPROVAL_UID in result.output
+    assert f"mcp approvals approve {MCP_APPROVAL_UID}" in result.output
+    assert client.polls == 0
+
+
+def test_contents_mcp_call_waits_and_prints_the_transfers_of_a_bulk_acquisition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    monkeypatch.setattr("time.sleep", lambda seconds: None)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "contents",
+            "mcp",
+            "call",
+            "earthdata",
+            "download_earth_data_granules",
+            "--arg",
+            "short_name=MUR",
+            "--wait",
+        ],
+    )
+    as_json = runner.invoke(
+        app,
+        [
+            "contents",
+            "-o",
+            "json",
+            "mcp",
+            "call",
+            "earthdata",
+            "download_earth_data_granules",
+            "--arg",
+            "short_name=MUR",
+            "--wait",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "succeeded" in result.output
+    assert "01TRANSFERA00000000000000" in result.output
+    assert "01TRANSFERB00000000000000" in result.output
+    assert "transfer status" in result.output
+    assert as_json.exit_code == 0
+    assert '"transfer_uid": "01TRANSFERA00000000000000"' in as_json.output
+
+
+def test_contents_mcp_call_fails_when_the_call_is_denied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class Denying(McpClient):
+        def __init__(self) -> None:
+            super().__init__()
+            self.call_statuses = ["denied"]
+
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Denying)
+    monkeypatch.setattr("time.sleep", lambda seconds: None)
+    bad_pair = CliRunner().invoke(
+        app, ["contents", "mcp", "call", "earthdata", "tool", "--arg", "novalue"]
+    )
+    denied = CliRunner().invoke(
+        app,
+        ["contents", "mcp", "call", "earthdata", "download_earth_data_granules", "--wait"],
+    )
+
+    assert bad_pair.exit_code == 1
+    assert "key=value" in bad_pair.output
+    assert denied.exit_code == 1
+    assert "denied" in denied.output
+
+
+def test_contents_mcp_approvals_list_approve_and_reject(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    runner = CliRunner()
+
+    listed = runner.invoke(app, ["contents", "mcp", "approvals", "list", "--source", "earthdata"])
+    # Each command builds its own client; read the one that listed before
+    # the next command replaces it.
+    lister = McpClient.last
+    approved = runner.invoke(
+        app, ["contents", "-o", "json", "mcp", "approvals", "approve", MCP_APPROVAL_UID]
+    )
+    rejected = runner.invoke(
+        app,
+        ["contents", "mcp", "approvals", "reject", MCP_APPROVAL_UID, "--note", "too large"],
+    )
+
+    assert listed.exit_code == 0, listed.output
+    assert MCP_APPROVAL_UID in listed.output
+    assert "home-folder:///earthdata" in listed.output
+    assert f"approve|reject {MCP_APPROVAL_UID}" in listed.output
+    assert isinstance(lister, McpClient)
+    # The service filters on status alone; the source narrows the answer client-side.
+    assert lister.approval_filters == {"status": "pending"}
+    assert approved.exit_code == 0
+    assert '"status": "approved"' in approved.output
+    assert rejected.exit_code == 0
+    rejecter = McpClient.last
+    assert isinstance(rejecter, McpClient)
+    assert rejecter.decisions[-1] == ("reject", MCP_APPROVAL_UID, "too large")
+
+
+# -- Datasources and Dataservers ----------------------------------------------
+
+DATASOURCE_UID = "01DATASRC00000000000000000"
+DATASERVER_UID = "01DATASRV00000000000000000"
+DATASET_UID = UID
+QUERY_UID = "01QUERY000000000000000000Q"
+
+
+def kind_source(kind: str, uid: str, name: str) -> CatalogSource:
+    configuration = {
+        "datasource": {"kind": "datasource", "connector_type": "bigquery"},
+        "data-server": {
+            "kind": "data-server",
+            "registration_identity": "edge-1",
+            "mtls_issuer": "datalayer-internal",
+            "policy_version": "3",
+        },
+    }[kind]
+    return CatalogSource.model_validate(
+        {
+            "source": {
+                "contract_version": "v1",
+                "uid": uid,
+                "kind": kind,
+                "name": name,
+                "principal_uid": OWNER_UID,
+                "principal_kind": "user",
+                "configuration": configuration,
+                "status": "ready",
+                "created_at": "2026-08-24T12:00:00Z",
+                "updated_at": "2026-08-24T12:00:00Z",
+            },
+            "permissions": {
+                "view": True, "update": True, "execute": True,
+                "effective_access_level": "execute", "is_owner": True,
+            },
+        }
+    )
+
+
+def arrow_stream_bytes() -> bytes:
+    import pyarrow
+
+    batch = pyarrow.record_batch({"id": [1, 2, 3], "city": ["Paris", "Oslo", "Lima"]})
+    sink = pyarrow.BufferOutputStream()
+    with pyarrow.ipc.new_stream(sink, batch.schema) as writer:
+        writer.write(batch)
+    return sink.getvalue().to_pybytes()
+
+
+def query_record(**overrides: Any) -> Any:
+    """A query as the contract shapes it, with the fields a test cares about on top."""
+    from datalayer_core.models.contents.datasources import DatasourceQuery
+
+    record: dict[str, Any] = {
+        "uid": QUERY_UID,
+        "source_uid": DATASOURCE_UID,
+        "actor_uid": OWNER_UID,
+        "sql_hash": "h",
+        "status": "pending",
+        "row_limit": 1000,
+        "max_bytes": 268435456,
+        "max_seconds": 300,
+        "policy_version": "3",
+        "created_at": "2026-08-26T12:00:00Z",
+    }
+    record.update(overrides)
+    return DatasourceQuery.model_validate(record)
+
+
+def dataserver_status(state: str) -> Any:
+    from datalayer_core.models.contents.datasources import DataServerStatus
+
+    return DataServerStatus(state=state, connectors=[], lease_seconds=90, queue_depth=0)
+
+
+class DataClient(Client):
+    """The catalog with a Datasource, a Dataserver and a Dataset in it."""
+
+    # Every command makes a client of its own, so what several commands did
+    # is remembered on the class.
+    transitions: list[str] = []
+    requests: list[dict[str, Any]] = []
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.polls = 0
+
+    def create_content_source(
+        self, request: dict[str, Any], *, idempotency_key: str
+    ) -> ConditionalCatalogSource:
+        DataClient.requests.append(request)
+        return super().create_content_source(request, idempotency_key=idempotency_key)
+
+    def get_content_source(self, reference: str) -> ConditionalCatalogSource:
+        if reference in {DATASOURCE_UID, "earth-observation"}:
+            return ConditionalCatalogSource(
+                kind_source("datasource", DATASOURCE_UID, "earth-observation"), '"v1"'
+            )
+        if reference in {DATASERVER_UID, "private-data"}:
+            return ConditionalCatalogSource(
+                kind_source("data-server", DATASERVER_UID, "private-data"), '"v1"'
+            )
+        return super().get_content_source(reference)
+
+    def test_datasource(self, source_uid: str) -> Any:
+        from datalayer_core.models.contents.datasources import DatasourceTest
+
+        return DatasourceTest(ok=True, connector_type="bigquery", detail="answered")
+
+    def discover_datasource_schema(self, source_uid: str) -> Any:
+        from datalayer_core.models.contents.datasources import DatasourceSchema
+
+        return DatasourceSchema.model_validate(
+            {
+                "tables": [{"name": "observations", "columns": [{"name": "id", "type": "int64"}]}],
+                "discovered_at": "2026-08-26T12:00:00Z",
+            }
+        )
+
+    def create_datasource_query(self, source_uid: str, sql: str, **kwargs: Any) -> Any:
+        self.query_request = (source_uid, sql, kwargs)
+        return query_record(uid=QUERY_UID, source_uid=source_uid, status="pending")
+
+    def get_datasource_query(self, query_uid: str) -> Any:
+        self.polls += 1
+        return query_record(uid=query_uid, status="succeeded", rows=3)
+
+    def cancel_datasource_query(self, query_uid: str) -> Any:
+        return query_record(uid=query_uid, status="cancelled")
+
+    def iter_datasource_query_results(self, query_uid: str, **kwargs: Any) -> Iterator[bytes]:
+        payload = arrow_stream_bytes()
+        for start in range(0, len(payload), 11):
+            yield payload[start : start + 11]
+
+    def save_datasource_query(self, query_uid: str, *, dataset_uid: str, path: str) -> Any:
+        self.saved = (query_uid, dataset_uid, path)
+        return SimpleNamespace(model_dump=lambda mode="json": {"uid": "01REV", "source_uid": dataset_uid, "path": path})
+
+    def get_dataserver_status(self, source_uid: str) -> Any:
+        from datalayer_core.models.contents.datasources import DataServerStatus
+
+        return DataServerStatus.model_validate(
+            {
+                "state": "ready",
+                "last_heartbeat_at": "2026-08-26T12:00:00Z",
+                "lease_seconds": 90,
+                "connectors": [
+                    {"connector_type": "sql", "operations": ["select", "describe"], "policy_version": "3"}
+                ],
+                "queue_depth": 0,
+                "identity_serial": "1a2b",
+            }
+        )
+
+    def _move(self, action: str, state: str) -> Any:
+        DataClient.transitions.append(action)
+        return dataserver_status(state)
+
+    def drain_dataserver(self, source_uid: str) -> Any:
+        return self._move("drain", "draining")
+
+    def resume_dataserver(self, source_uid: str) -> Any:
+        return self._move("resume", "ready")
+
+    def revoke_dataserver(self, source_uid: str) -> Any:
+        return self._move("revoke", "revoked")
+
+
+def test_datasources_create_needs_a_credential_or_a_dataserver(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", DataClient)
+    runner = CliRunner()
+
+    refused = runner.invoke(
+        app, ["contents", "datasources", "create", "eo", "--connector-type", "sql"]
+    )
+    routed = runner.invoke(
+        app,
+        [
+            "contents", "--output", "json", "datasources", "create", "eo",
+            "--connector-type", "sql", "--endpoint", "db.internal:5432",
+            "--database", "research", "--dataserver", "private-data",
+            "--allow", "select,describe", "--row-limit", "500",
+        ],
+    )
+    direct = runner.invoke(
+        app,
+        [
+            "contents", "datasources", "create", "eo", "--connector-type", "bigquery",
+            "--project", "eo-prod", "--credential", "01CREDENTIAL0000000000000A",
+        ],
+    )
+    unknown = runner.invoke(
+        app,
+        ["contents", "datasources", "create", "eo", "--connector-type", "sql",
+         "--credential", "c", "--allow", "select,drop"],
+    )
+
+    assert refused.exit_code == 1
+    assert "needs --credential" in refused.output
+    assert routed.exit_code == 0, routed.output
+    assert direct.exit_code == 0, direct.output
+    assert unknown.exit_code == 1
+    assert "not drop" in unknown.output
+    routed_request, direct_request = DataClient.requests[-2:]
+    assert routed_request["kind"] == "datasource"
+    assert routed_request["credential_uid"] is None
+    assert routed_request["configuration"]["network_route"] == "dataserver"
+    assert routed_request["configuration"]["data_server_uid"] == DATASERVER_UID
+    assert routed_request["configuration"]["allowed_operations"] == ["select", "describe"]
+    assert routed_request["configuration"]["default_row_limit"] == 500
+    assert direct_request["configuration"]["network_route"] == "direct"
+    assert direct_request["configuration"]["database_or_project"] == "eo-prod"
+    assert direct_request["credential_uid"] == "01CREDENTIAL0000000000000A"
+
+
+def test_datasources_test_and_schema(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", DataClient)
+    runner = CliRunner()
+
+    tested = runner.invoke(app, ["contents", "datasources", "test", "earth-observation"])
+    schema = runner.invoke(app, ["contents", "datasources", "schema", "earth-observation"])
+    wrong_kind = runner.invoke(app, ["contents", "datasources", "test", "private-data"])
+
+    assert tested.exit_code == 0, tested.output
+    assert "reachable" in tested.output and "bigquery" in tested.output
+    assert schema.exit_code == 0, schema.output
+    assert "observations" in schema.output and "int64" in schema.output
+    assert wrong_kind.exit_code == 1
+    assert "not a Datasource" in wrong_kind.output
+
+
+def test_datasources_query_submits_waits_prints_writes_and_cancels(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    pyarrow = pytest.importorskip("pyarrow")
+    monkeypatch.setattr(contents_commands, "DatalayerClient", DataClient)
+    monkeypatch.setattr("time.sleep", lambda seconds: None)
+    runner = CliRunner()
+
+    submitted = runner.invoke(
+        app,
+        ["contents", "--output", "json", "datasources", "query", "earth-observation",
+         "SELECT * FROM observations", "--row-limit", "10"],
+    )
+    assert submitted.exit_code == 0, submitted.output
+    assert f'"uid": "{QUERY_UID}"' in submitted.output
+    assert DataClient.last.query_request[1] == "SELECT * FROM observations"  # type: ignore[union-attr]
+    assert DataClient.last.query_request[2]["row_limit"] == 10  # type: ignore[union-attr]
+    # Submitted, not waited for: nothing was polled.
+    assert DataClient.last.polls == 0  # type: ignore[union-attr]
+
+    statement = tmp_path / "query.sql"
+    statement.write_text("SELECT id, city FROM observations")
+    shown = runner.invoke(
+        app,
+        ["contents", "datasources", "query", "earth-observation",
+         "--sql-file", str(statement), "--wait", "--rows", "2"],
+    )
+    assert shown.exit_code == 0, shown.output
+    assert "Paris" in shown.output and "Oslo" in shown.output
+    assert "Lima" not in shown.output
+
+    arrow_file = tmp_path / "out" / "observations.arrow"
+    written = runner.invoke(
+        app,
+        ["contents", "--output", "json", "datasources", "query", "earth-observation",
+         "SELECT 1", "--format", "arrow", "--output", str(arrow_file)],
+    )
+    assert written.exit_code == 0, written.output
+    with pyarrow.ipc.open_stream(str(arrow_file)) as reader:
+        table = reader.read_all()
+    assert table.num_rows == 3 and table.column_names == ["id", "city"]
+    assert '"written_rows": 3' in written.output
+
+    parquet_file = tmp_path / "observations.parquet"
+    written = runner.invoke(
+        app,
+        ["contents", "datasources", "query", "earth-observation", "SELECT 1",
+         "--format", "parquet", "--output", str(parquet_file)],
+    )
+    assert written.exit_code == 0, written.output
+    assert pyarrow.parquet.read_table(str(parquet_file)).num_rows == 3
+
+    missing = runner.invoke(
+        app, ["contents", "datasources", "query", "earth-observation", "SELECT 1", "--format", "arrow"]
+    )
+    assert missing.exit_code == 1 and "--output" in missing.output
+
+    cancelled = runner.invoke(app, ["contents", "--output", "json", "datasources", "cancel", QUERY_UID])
+    assert cancelled.exit_code == 0, cancelled.output
+    assert '"status": "cancelled"' in cancelled.output
+
+
+def test_datasources_save_resolves_the_dataset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", DataClient)
+    runner = CliRunner()
+
+    saved = runner.invoke(
+        app,
+        ["contents", "--output", "json", "datasources", "save", QUERY_UID, "Earth data",
+         "/results/observations.arrow"],
+    )
+
+    assert saved.exit_code == 0, saved.output
+    assert DataClient.last.saved == (QUERY_UID, DATASET_UID, "/results/observations.arrow")  # type: ignore[union-attr]
+    assert '"uid": "01REV"' in saved.output
+
+
+def test_dataservers_status_connectors_and_transitions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", DataClient)
+    DataClient.transitions.clear()
+    runner = CliRunner()
+
+    status = runner.invoke(app, ["contents", "dataservers", "status", "private-data"])
+    connectors = runner.invoke(app, ["contents", "dataservers", "connectors", "private-data"])
+    as_json = runner.invoke(app, ["contents", "--output", "json", "dataservers", "status", "private-data"])
+    drained = runner.invoke(app, ["contents", "dataservers", "drain", "private-data"])
+    resumed = runner.invoke(app, ["contents", "dataservers", "resume", "private-data"])
+    declined = runner.invoke(app, ["contents", "dataservers", "revoke", "private-data"], input="n\n")
+    revoked = runner.invoke(app, ["contents", "dataservers", "revoke", "private-data", "--yes"])
+    wrong_kind = runner.invoke(app, ["contents", "dataservers", "status", "earth-observation"])
+
+    assert status.exit_code == 0, status.output
+    assert "ready" in status.output and "1a2b" in status.output
+    assert connectors.exit_code == 0, connectors.output
+    assert "sql" in connectors.output and "select, describe" in connectors.output
+    assert as_json.exit_code == 0 and '"lease_seconds": 90' in as_json.output
+    assert drained.exit_code == 0 and "draining" in drained.output
+    assert resumed.exit_code == 0 and "ready" in resumed.output
+    assert declined.exit_code == 1
+    assert revoked.exit_code == 0 and "revoked" in revoked.output
+    assert DataClient.transitions == ["drain", "resume", "revoke"]
+    assert wrong_kind.exit_code == 1 and "not a Dataserver" in wrong_kind.output

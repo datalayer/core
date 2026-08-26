@@ -36,6 +36,7 @@ class FakeClient:
     get_content_operation = lambda self, uid: self._next()  # noqa: E731
     get_content_transfer = lambda self, uid: self._next()  # noqa: E731
     get_content_sync = lambda self, uid: self._next()  # noqa: E731
+    get_datasource_query = lambda self, uid: self._next()  # noqa: E731
 
 
 async def collect(iterator: AsyncIterator[Any]) -> list[Any]:
@@ -211,3 +212,103 @@ def test_a_broken_arrow_stream_raises_rather_than_ending_quietly() -> None:
 
     with pytest.raises(Exception):
         asyncio.run(run())
+
+
+# -- Datasource queries and synchronous Arrow ---------------------------------
+
+
+def test_a_query_is_watched_until_it_succeeds() -> None:
+    from datalayer_core.contents_streaming import stream_query
+
+    client = FakeClient(
+        [
+            {"status": "pending", "rows": None},
+            {"status": "running", "rows": None},
+            {"status": "running", "rows": 100},
+            {"status": "succeeded", "rows": 250},
+        ]
+    )
+    states = asyncio.run(collect(stream_query(client, "01QUERY", poll_seconds=0)))
+    assert [state["status"] for state in states] == ["pending", "running", "running", "succeeded"]
+    assert client.calls == 4
+
+
+def arrow_stream(rows: int, batch_rows: int) -> bytes:
+    import pyarrow
+
+    sink = pyarrow.BufferOutputStream()
+    schema = pyarrow.schema([("id", pyarrow.int64()), ("value", pyarrow.float64())])
+    with pyarrow.ipc.new_stream(sink, schema) as writer:
+        for start in range(0, rows, batch_rows):
+            end = min(start + batch_rows, rows)
+            writer.write(
+                pyarrow.record_batch(
+                    {"id": list(range(start, end)), "value": [float(i) for i in range(start, end)]},
+                    schema=schema,
+                )
+            )
+    return sink.getvalue().to_pybytes()
+
+
+def test_a_real_arrow_ipc_stream_is_decoded_batch_by_batch_from_chunks() -> None:
+    """The bytes of a query result arrive cut anywhere; batches come out whole."""
+    pytest.importorskip("pyarrow")
+    from datalayer_core.contents_streaming import iter_arrow_batches
+
+    payload = arrow_stream(rows=1000, batch_rows=128)
+    seen: list[int] = []
+
+    def chunks() -> Any:
+        # 13-byte chunks: never on a frame boundary, which is the point.
+        for start in range(0, len(payload), 13):
+            seen.append(start)
+            yield payload[start : start + 13]
+
+    batches = list(iter_arrow_batches(chunks()))
+
+    assert [batch.num_rows for batch in batches] == [128] * 7 + [104]
+    assert sum(batch.num_rows for batch in batches) == 1000
+    assert batches[3].column("id")[0].as_py() == 384
+    assert seen[-1] + 13 >= len(payload)
+
+
+def test_a_reader_that_stops_early_stops_the_reads() -> None:
+    pytest.importorskip("pyarrow")
+    from datalayer_core.contents_streaming import iter_arrow_batches
+
+    payload = arrow_stream(rows=10_000, batch_rows=100)
+    pulled = 0
+
+    def chunks() -> Any:
+        nonlocal pulled
+        for start in range(0, len(payload), 4096):
+            pulled += 1
+            yield payload[start : start + 4096]
+
+    for index, batch in enumerate(iter_arrow_batches(chunks())):
+        assert batch.num_rows == 100
+        if index == 2:
+            break
+
+    # Three batches needed a few chunks, not the whole stream.
+    assert pulled < len(payload) // 4096
+
+
+def test_the_async_and_sync_decoders_agree_on_a_real_stream() -> None:
+    pytest.importorskip("pyarrow")
+    from datalayer_core.contents_streaming import iter_arrow_batches
+
+    payload = arrow_stream(rows=300, batch_rows=100)
+
+    async def chunks() -> AsyncIterator[bytes]:
+        for start in range(0, len(payload), 17):
+            yield payload[start : start + 17]
+
+    async def via_async() -> list[int]:
+        return [batch.num_rows async for batch in stream_arrow_batches(chunks())]
+
+    sync_rows = [
+        batch.num_rows
+        for batch in iter_arrow_batches(payload[i : i + 17] for i in range(0, len(payload), 17))
+    ]
+    assert asyncio.run(via_async()) == sync_rows == [100, 100, 100]

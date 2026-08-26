@@ -27,15 +27,15 @@
     },
     {
       "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "datasource", "name": "Warehouse", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "user",
-      "configuration": {"kind": "datasource", "connector_type": "postgresql", "database_or_project": "analytics", "allowed_operations": ["select"], "default_row_limit": 10000}, "capabilities": ["query"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+      "configuration": {"kind": "datasource", "connector_type": "sql", "endpoint": "duckdb://", "credential_uid": "01HZY7WQ8XKJ4M2N5P6R7S8T9V", "database_or_project": "analytics", "allowed_operations": ["select"], "default_row_limit": 10000}, "capabilities": ["query"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
     },
     {
       "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "data-server", "name": "Private gateway", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "organization",
-      "configuration": {"kind": "data-server", "registration_identity": "gateway-1", "mtls_issuer": "datalayer-contents-ca", "connectors": ["adbc"], "policy_version": "v1"}, "capabilities": ["query"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+      "configuration": {"kind": "data-server", "registration_identity": "gateway-1", "mtls_issuer": "datalayer-contents-ca", "connectors": [{"connector_type": "sql", "operations": ["select"], "policy_version": "v1"}], "policy_version": "v1"}, "capabilities": ["query"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
     },
     {
       "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "mcp", "name": "Earthdata", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "team",
-      "configuration": {"kind": "mcp", "transport": "streamable-http", "endpoint": "https://example.test/mcp", "allowed_tools": ["search_earthdata"], "allowed_domains": ["earthdata.nasa.gov"], "approval_policy": "acquisition", "destination_policy": "user-folder"}, "capabilities": ["browse", "transfer"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
+      "configuration": {"kind": "mcp", "transport": "streamable-http", "endpoint": "https://example.test/mcp", "allowed_tools": ["search_earthdata"], "allowed_domains": ["earthdata.nasa.gov"], "allowed_destinations": ["home-folder:///acquisitions/"], "approval_policy": "explicit", "destination_policy": "home-folder-only", "max_result_bytes": 67108864}, "capabilities": ["browse", "transfer"], "status": "ready", "created_at": "2026-08-24T12:00:00Z", "updated_at": "2026-08-24T12:00:00Z"
     },
     {
       "contract_version": "v1", "uid": "01ARZ3NDEKTSV4RRFFQ69G5FAV", "kind": "environment", "name": "Environment content", "principal_uid": "01BX5ZZKBKACTAV9WEVGEMMVRZ", "principal_kind": "organization",

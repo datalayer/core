@@ -15,8 +15,9 @@ caller keeps its event loop; a synchronous caller keeps its client.
 
 `stream_arrow_batches` is the other direction: bytes arriving as an Arrow IPC
 stream, decoded into record batches as they land, without holding the whole
-result in memory. It imports `pyarrow` only when called, so the package does
-not depend on it.
+result in memory. `iter_arrow_batches` is the same for a synchronous caller —
+a notebook cell, a script — whose bytes come from a plain iterator. Both
+import `pyarrow` only when called, so the package does not depend on it.
 """
 
 from __future__ import annotations
@@ -25,16 +26,19 @@ import asyncio
 import io
 import queue
 import threading
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterable, Iterator
 from typing import Any, Protocol
 
 __all__ = [
     "OPERATION_TERMINAL_STATUSES",
+    "QUERY_TERMINAL_STATUSES",
     "SYNC_TERMINAL_STATUSES",
     "TRANSFER_TERMINAL_STATUSES",
     "follow_transfer",
+    "iter_arrow_batches",
     "stream_arrow_batches",
     "stream_operation",
+    "stream_query",
     "stream_sync_session",
     "stream_transfer",
 ]
@@ -48,6 +52,7 @@ TRANSFER_TERMINAL_STATUSES = frozenset(
 SYNC_TERMINAL_STATUSES = frozenset(
     {"succeeded", "completed", "partial", "failed", "cancelled", "client-lost"}
 )
+QUERY_TERMINAL_STATUSES = frozenset({"succeeded", "failed", "cancelled"})
 
 _DEFAULT_POLL_SECONDS = 1.0
 
@@ -58,6 +63,7 @@ class _ContentsClient(Protocol):
     def get_content_operation(self, operation_uid: str) -> Any: ...
     def get_content_transfer(self, transfer_uid: str) -> Any: ...
     def get_content_sync(self, session_uid: str) -> Any: ...
+    def get_datasource_query(self, query_uid: str) -> Any: ...
 
 
 def _status(state: Any) -> str:
@@ -171,6 +177,24 @@ async def stream_sync_session(
         yield state
 
 
+async def stream_query(
+    client: _ContentsClient,
+    query_uid: str,
+    *,
+    poll_seconds: float = _DEFAULT_POLL_SECONDS,
+    timeout: float | None = None,
+) -> AsyncIterator[Any]:
+    """Yield a Datasource query every time it advances, until it is over."""
+    async for state in _stream(
+        lambda: client.get_datasource_query(query_uid),
+        terminal=QUERY_TERMINAL_STATUSES,
+        fields=("status", "rows", "bytes", "error"),
+        poll_seconds=poll_seconds,
+        timeout=timeout,
+    ):
+        yield state
+
+
 async def follow_transfer(
     client: _ContentsClient,
     transfer_uid: str,
@@ -213,6 +237,55 @@ async def follow_transfer(
             task_id = progress.add_task(description or str(path), total=total)
         progress.update(task_id, completed=received or 0, total=total)
     return final
+
+
+class _IteratorReader(io.RawIOBase):
+    """A file over an iterator of chunks, for a decoder that wants `read`."""
+
+    def __init__(self, chunks: Iterable[bytes]) -> None:
+        self._chunks = iter(chunks)
+        self._buffer = b""
+        self._done = False
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, target: Any) -> int:
+        while not self._buffer and not self._done:
+            try:
+                self._buffer = next(self._chunks)
+            except StopIteration:
+                self._done = True
+        if not self._buffer:
+            return 0
+        size = min(len(target), len(self._buffer))
+        target[:size] = self._buffer[:size]
+        self._buffer = self._buffer[size:]
+        return size
+
+
+def iter_arrow_batches(chunks: Iterable[bytes]) -> Iterator[Any]:
+    """
+    Decode an Arrow IPC byte stream into record batches, synchronously.
+
+    `chunks` is what a streaming HTTP response gives — `iter_content`, say.
+    Batches are yielded as the decoder finishes them and the bytes behind
+    them are dropped, so a result larger than memory is still readable one
+    batch at a time. A caller who stops early stops the reads with it.
+    """
+    try:
+        import pyarrow.ipc as arrow_ipc
+    except ImportError as error:  # pragma: no cover - depends on the caller's env
+        raise RuntimeError(
+            "Reading Arrow batches needs pyarrow: pip install pyarrow."
+        ) from error
+
+    # Buffered, because the reader asks for a whole frame at a time and the
+    # iterator hands over whatever chunk arrived.
+    source = io.BufferedReader(_IteratorReader(chunks))
+    with arrow_ipc.open_stream(source) as reader:
+        for batch in reader:
+            yield batch
 
 
 class _QueueReader(io.RawIOBase):

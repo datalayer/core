@@ -34,9 +34,19 @@ from rich.table import Table
 
 __all__ = [
     "arrow_batches_table",
+    "bridge_sessions_table",
     "content_sources_table",
+    "dataserver_connectors_table",
+    "dataserver_status_table",
+    "datasource_queries_table",
+    "datasource_schema_table",
     "display_arrow_batches",
+    "display_bridge_sessions",
     "display_content_sources",
+    "display_dataserver_connectors",
+    "display_dataserver_status",
+    "display_datasource_queries",
+    "display_datasource_schema",
     "display_operations",
     "display_sync_conflicts",
     "display_sync_sessions",
@@ -194,6 +204,31 @@ def sync_sessions_table(items: Iterable[Any], *, title: str | None = None) -> Ta
     return table
 
 
+def bridge_sessions_table(items: Iterable[Any], *, title: str | None = None) -> Table:
+    """Local bridge sessions: what is served where, and whether both ends are up."""
+    table = Table(title=title)
+    table.add_column("UID", style="cyan", no_wrap=True)
+    table.add_column("Sandbox", style="cyan", no_wrap=True)
+    table.add_column("Path", style="cyan")
+    table.add_column("Mode", style="cyan")
+    table.add_column("State", style="cyan")
+    table.add_column("Client seen", style="cyan")
+    table.add_column("Mount seen", style="cyan")
+    table.add_column("Expires", style="cyan")
+    for item in items:
+        table.add_row(
+            _text(item, "uid"),
+            _text(item, "sandbox_uid"),
+            _text(item, "mount_path"),
+            _text(item, "mode"),
+            _text(item, "state"),
+            _text(item, "client_seen_at", "never"),
+            _text(item, "mount_seen_at", "never"),
+            _text(item, "expires_at"),
+        )
+    return table
+
+
 def sync_conflicts_table(items: Iterable[Any], *, title: str | None = None) -> Table:
     """The paths a synchronization cannot decide on its own."""
     table = Table(title=title)
@@ -210,6 +245,93 @@ def sync_conflicts_table(items: Iterable[Any], *, title: str | None = None) -> T
             _text(item, "status"),
             _text(item, "resolution", "-"),
         )
+    return table
+
+
+def datasource_queries_table(items: Iterable[Any], *, title: str | None = None) -> Table:
+    """Datasource queries: what ran, what it cost, how it ended."""
+    table = Table(title=title)
+    table.add_column("UID", style="cyan", no_wrap=True)
+    table.add_column("Status", style="cyan")
+    table.add_column("Rows", style="cyan", justify="right")
+    table.add_column("Bytes", style="cyan", justify="right")
+    table.add_column("Row limit", style="cyan", justify="right")
+    table.add_column("Route", style="cyan")
+    table.add_column("Detail", style="cyan")
+    for item in items:
+        # A query that failed says why; a saved result says where it is.
+        result = _field(item, "result") or {}
+        detail = _text(item, "error") or (
+            f"object {_text(result, 'object_uid')}" if _field(result, "object_uid") else ""
+        )
+        table.add_row(
+            _text(item, "uid"),
+            _text(item, "status"),
+            _text(item, "rows", "-"),
+            format_bytes(_field(item, "bytes")),
+            _text(item, "row_limit", "-"),
+            "dataserver" if _field(item, "data_server_uid") else "direct",
+            detail,
+        )
+    return table
+
+
+def datasource_schema_table(schema: Any, *, title: str | None = None) -> Table:
+    """The tables of a source, one row per column."""
+    table = Table(title=title)
+    table.add_column("Table", style="cyan", no_wrap=True)
+    table.add_column("Column", style="cyan")
+    table.add_column("Type", style="cyan")
+    tables = _field(schema, "tables") or []
+    for entry in tables:
+        columns = _field(entry, "columns") or []
+        if not columns:
+            table.add_row(_text(entry, "name"), "-", "-")
+        for column in columns:
+            table.add_row(_text(entry, "name"), _text(column, "name"), _text(column, "type", "-"))
+    if not tables:
+        table.add_row("No table was discovered.", "", "")
+    return table
+
+
+def dataserver_connectors_table(items: Iterable[Any], *, title: str | None = None) -> Table:
+    """The connectors a gateway advertises, with what each may be asked."""
+    table = Table(title=title)
+    table.add_column("Connector", style="cyan", no_wrap=True)
+    table.add_column("Operations", style="cyan")
+    table.add_column("Policy", style="cyan")
+    for item in items:
+        if isinstance(item, str):
+            table.add_row(item, "-", "-")
+            continue
+        operations = _field(item, "operations") or []
+        table.add_row(
+            _text(item, "connector_type"),
+            ", ".join(str(operation) for operation in operations) or "-",
+            _text(item, "policy_version", "-"),
+        )
+    return table
+
+
+def dataserver_status_table(status: Any, *, title: str | None = None) -> Table:
+    """A gateway as last heard: one row, the facts that decide if it is used."""
+    table = Table(title=title)
+    table.add_column("State", style="cyan")
+    table.add_column("Last heartbeat", style="cyan")
+    table.add_column("Lease (s)", style="cyan", justify="right")
+    table.add_column("Queue", style="cyan", justify="right")
+    table.add_column("Connectors", style="cyan", justify="right")
+    table.add_column("Identity", style="cyan")
+    table.add_column("Identity expires", style="cyan")
+    table.add_row(
+        _text(status, "state"),
+        _text(status, "last_heartbeat_at", "never"),
+        _text(status, "lease_seconds", "-"),
+        _text(status, "queue_depth", "-"),
+        str(len(_field(status, "connectors") or [])),
+        _text(status, "identity_serial", "-"),
+        _text(status, "identity_expires_at", "-"),
+    )
     return table
 
 
@@ -299,11 +421,45 @@ def display_sync_sessions(
     _print(sync_sessions_table(items, title=title), console)
 
 
+def display_bridge_sessions(
+    items: Iterable[Any], *, title: str | None = None, console: Console | None = None
+) -> None:
+    _print(bridge_sessions_table(items, title=title), console)
+
+
 def display_sync_conflicts(
     items: Iterable[Any], *, console: Console | None = None, title: str | None = None
 ) -> None:
     """Print the conflicts of a synchronization session."""
     _print(sync_conflicts_table(items, title=title), console)
+
+
+def display_datasource_queries(
+    items: Iterable[Any], *, console: Console | None = None, title: str | None = None
+) -> None:
+    """Print Datasource queries."""
+    _print(datasource_queries_table(items, title=title), console)
+
+
+def display_datasource_schema(
+    schema: Any, *, console: Console | None = None, title: str | None = None
+) -> None:
+    """Print the schema of a Datasource."""
+    _print(datasource_schema_table(schema, title=title), console)
+
+
+def display_dataserver_connectors(
+    items: Iterable[Any], *, console: Console | None = None, title: str | None = None
+) -> None:
+    """Print the connectors of a Dataserver."""
+    _print(dataserver_connectors_table(items, title=title), console)
+
+
+def display_dataserver_status(
+    status: Any, *, console: Console | None = None, title: str | None = None
+) -> None:
+    """Print the status of a Dataserver."""
+    _print(dataserver_status_table(status, title=title), console)
 
 
 def display_arrow_batches(

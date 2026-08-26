@@ -6,38 +6,22 @@
 
 from __future__ import annotations
 
-from enum import Enum
 from typing import Any, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, conint, constr
-
-
-class CleanupPolicy(Enum):
-    revoke = 'revoke'
-    remove_materialization = 'remove-materialization'
-    retain_source = 'retain-source'
-
-
-class Delivery(Enum):
-    mount = 'mount'
-    local_bridge = 'local-bridge'
-    materialize = 'materialize'
-    client = 'client'
-    environment = 'environment'
-
-
-class Mode(Enum):
-    ro = 'ro'
-    rw = 'rw'
 
 
 class AttachmentCreate(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    cleanup_policy: CleanupPolicy | None = Field('revoke', title='Cleanup Policy')
-    delivery: Delivery | None = Field('mount', title='Delivery')
-    mode: Mode | None = Field('ro', title='Mode')
+    cleanup_policy: (
+        Literal['revoke', 'remove-materialization', 'retain-source'] | None
+    ) = Field('revoke', title='Cleanup Policy')
+    delivery: (
+        Literal['mount', 'local-bridge', 'materialize', 'client', 'environment'] | None
+    ) = Field('mount', title='Delivery')
+    mode: Literal['ro', 'rw'] | None = Field('ro', title='Mode')
     mount_path: str | None = Field(None, title='Mount Path')
     required: bool | None = Field(True, title='Required')
     revision_uid: str | None = Field(None, title='Revision Uid')
@@ -63,21 +47,60 @@ class AttachmentPrepare(BaseModel):
     token_audience: str | None = Field(None, title='Token Audience')
 
 
-class AttachmentStatus(Enum):
-    requested = 'requested'
-    preparing = 'preparing'
-    ready = 'ready'
-    degraded = 'degraded'
-    revoking = 'revoking'
-    revoked = 'revoked'
-    failed = 'failed'
+class BridgeCreate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    exclusions: list[str] | None = Field(None, title='Exclusions')
+    local_root_fingerprint: constr(pattern=r'^[0-9a-f]{64}$') = Field(
+        ..., title='Local Root Fingerprint'
+    )
 
 
-class Status(Enum):
-    ready = 'ready'
-    degraded = 'degraded'
-    failed = 'failed'
-    revoked = 'revoked'
+class BridgeMountGrant(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    bridge_uid: str = Field(..., title='Bridge Uid')
+    expires_at: str = Field(..., title='Expires At')
+    mode: Literal['ro', 'rw'] = Field(..., title='Mode')
+    mount_path: str = Field(..., title='Mount Path')
+    mount_token: str = Field(..., title='Mount Token')
+    relay_url: str = Field(..., title='Relay Url')
+    session_key: str = Field(..., title='Session Key')
+
+
+class BridgeSession(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    attachment_uid: str = Field(..., title='Attachment Uid')
+    client_seen_at: str | None = Field(None, title='Client Seen At')
+    created_at: str = Field(..., title='Created At')
+    exclusions: list[str] | None = Field(None, title='Exclusions')
+    expires_at: str = Field(..., title='Expires At')
+    local_root_fingerprint: str = Field(..., title='Local Root Fingerprint')
+    mode: Literal['ro', 'rw'] = Field(..., title='Mode')
+    mount_path: str = Field(..., title='Mount Path')
+    mount_seen_at: str | None = Field(None, title='Mount Seen At')
+    owner_uid: str = Field(..., title='Owner Uid')
+    revoked_at: str | None = Field(None, title='Revoked At')
+    sandbox_uid: str = Field(..., title='Sandbox Uid')
+    state: Literal[
+        'pending', 'connected', 'reconnecting', 'disconnected', 'revoked', 'expired'
+    ] = Field(..., title='State')
+    uid: str = Field(..., title='Uid')
+    updated_at: str = Field(..., title='Updated At')
+
+
+class BridgeStateReport(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    role: Literal['client', 'mount'] = Field(..., title='Role')
+    state: Literal['connected', 'reconnecting', 'disconnected'] = Field(
+        ..., title='State'
+    )
 
 
 class CallerResponse(BaseModel):
@@ -88,14 +111,50 @@ class CallerResponse(BaseModel):
     uid: str | int | None = Field(None, title='Uid')
 
 
-class Capability(Enum):
-    browse = 'browse'
-    transfer = 'transfer'
-    mount = 'mount'
-    query = 'query'
-    materialize = 'materialize'
-    sync = 'sync'
-    local_bridge_mount = 'local-bridge-mount'
+class CapabilityTicket(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    expires_at: str = Field(..., title='Expires At')
+    flight_endpoint: str | None = Field(None, title='Flight Endpoint')
+    https_fallback_url: str = Field(..., title='Https Fallback Url')
+    ticket: str = Field(..., title='Ticket')
+
+
+class CapabilityTicketMint(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    expires_in: conint(ge=1) | None = Field(None, title='Expires In')
+    query_uid: str = Field(..., title='Query Uid')
+    sandbox_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Sandbox Uid'
+    )
+
+
+class CapabilityTicketRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    expires_in: conint(ge=1) | None = Field(None, title='Expires In')
+    sandbox_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Sandbox Uid')
+    )
+
+
+class CertificateAuthorityView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    ca_certificate: str = Field(..., title='Ca Certificate')
+    ephemeral: bool = Field(..., title='Ephemeral')
+
+
+class CertificateSigningRequest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    csr: constr(min_length=1) = Field(..., title='Csr')
 
 
 class CloudObjectView(BaseModel):
@@ -109,35 +168,13 @@ class CloudObjectView(BaseModel):
     size: int = Field(..., title='Size')
 
 
-class AccessPreference(Enum):
-    automatic = 'automatic'
-    mount = 'mount'
-    python = 'python'
-    object_client = 'object-client'
-
-
-class Origin(Enum):
-    datalayer_shared = 'datalayer-shared'
-    environment = 'environment'
-    user = 'user'
-
-
-class Provider(Enum):
-    s3 = 's3'
-    gcs = 'gcs'
-    r2 = 'r2'
-    azure_blob = 'azure-blob'
-    s3_compatible = 's3-compatible'
-    datalayer_shared_fs = 'datalayer-shared-fs'
-
-
 class CloudStorageConfiguration(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    access_preference: AccessPreference | None = Field(
-        'automatic', title='Access Preference'
-    )
+    access_preference: (
+        Literal['automatic', 'mount', 'python', 'object-client'] | None
+    ) = Field('automatic', title='Access Preference')
     bucket_or_container: str = Field(..., title='Bucket Or Container')
     cache_policy: str | None = Field(None, title='Cache Policy')
     credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
@@ -147,24 +184,22 @@ class CloudStorageConfiguration(BaseModel):
     expected_consistency: str | None = Field(None, title='Expected Consistency')
     kind: Literal['cloud-storage'] = Field(..., title='Kind')
     mount_implementation: str | None = Field(None, title='Mount Implementation')
-    origin: Origin | None = Field('user', title='Origin')
+    origin: Literal['datalayer-shared', 'environment', 'user'] | None = Field(
+        'user', title='Origin'
+    )
     prefix: str | None = Field('', title='Prefix')
-    provider: Provider = Field(..., title='Provider')
+    provider: Literal[
+        's3', 'gcs', 'r2', 'azure-blob', 's3-compatible', 'datalayer-shared-fs'
+    ] = Field(..., title='Provider')
     python_implementation: str | None = Field(None, title='Python Implementation')
     region: str | None = Field(None, title='Region')
-
-
-class Use(Enum):
-    local = 'local'
-    remote = 'remote'
-    keep_both = 'keep-both'
 
 
 class ConflictResolution(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    use: Use = Field(..., title='Use')
+    use: Literal['local', 'remote', 'keep-both'] = Field(..., title='Use')
 
 
 class ConnectionTest(BaseModel):
@@ -174,28 +209,6 @@ class ConnectionTest(BaseModel):
     detail: str = Field(..., title='Detail')
     ok: bool = Field(..., title='Ok')
     provider: str = Field(..., title='Provider')
-
-
-class AccessMode(Enum):
-    mount = 'mount'
-    python = 'python'
-    object_client = 'object-client'
-
-
-class FilesystemPrimitive(Enum):
-    list = 'list'
-    stat = 'stat'
-    read = 'read'
-    write = 'write'
-    mkdir = 'mkdir'
-    remove = 'remove'
-    upload = 'upload'
-    download = 'download'
-
-
-class Kind(Enum):
-    file = 'file'
-    folder = 'folder'
 
 
 class ContentObject(BaseModel):
@@ -208,7 +221,7 @@ class ContentObject(BaseModel):
     created_by_uid: str = Field(..., title='Created By Uid')
     current_version_uid: str | None = Field(None, title='Current Version Uid')
     deleted: bool = Field(..., title='Deleted')
-    kind: Kind = Field(..., title='Kind')
+    kind: Literal['file', 'folder'] = Field(..., title='Kind')
     media_type: str = Field(..., title='Media Type')
     path: str = Field(..., title='Path')
     size: int = Field(..., title='Size')
@@ -235,17 +248,6 @@ class ContentObjectVersion(BaseModel):
     uid: str = Field(..., title='Uid')
 
 
-class Kind1(Enum):
-    files = 'files'
-    dataset = 'dataset'
-    volume = 'volume'
-    cloud_storage = 'cloud-storage'
-    datasource = 'datasource'
-    data_server = 'data-server'
-    mcp = 'mcp'
-    environment = 'environment'
-
-
 class CredentialDiagnostics(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -267,16 +269,84 @@ class CredentialRotation(BaseModel):
     )
 
 
-class DataServerConfiguration(BaseModel):
+class DataServerConnector(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    connectors: list[str] | None = Field(None, title='Connectors')
-    kind: Literal['data-server'] = Field(..., title='Kind')
-    last_heartbeat_at: AwareDatetime | None = Field(None, title='Last Heartbeat At')
-    mtls_issuer: str = Field(..., title='Mtls Issuer')
+    connector_type: Literal['athena', 'bigquery', 'sql'] = Field(
+        ..., title='Connector Type'
+    )
+    operations: list[Literal['select', 'describe', 'list']] | None = Field(
+        None, title='Operations'
+    )
     policy_version: str = Field(..., title='Policy Version')
+
+
+class DataServerHeartbeat(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    last_heartbeat_at: str = Field(..., title='Last Heartbeat At')
+    lease_seconds: int = Field(..., title='Lease Seconds')
+    state: Literal[
+        'registering', 'ready', 'degraded', 'unavailable', 'draining', 'revoked'
+    ] = Field(..., title='State')
+
+
+class DataServerJobFailure(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    code: constr(min_length=1) = Field(..., title='Code')
+    message: constr(min_length=1) = Field(..., title='Message')
+
+
+class DataServerRegister(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    connectors: list[DataServerConnector] | None = Field(None, title='Connectors')
+    registration_identity: constr(min_length=1) = Field(
+        ..., title='Registration Identity'
+    )
+    version: constr(min_length=1) = Field(..., title='Version')
+
+
+class DataServerRegistration(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    connectors: list[DataServerConnector] = Field(..., title='Connectors')
+    identity_serial: str | None = Field(None, title='Identity Serial')
+    identity_source: Literal['certificate', 'body'] = Field(
+        ..., title='Identity Source'
+    )
+    last_heartbeat_at: str | None = Field(None, title='Last Heartbeat At')
+    lease_seconds: int = Field(..., title='Lease Seconds')
+    policy_version: str = Field(..., title='Policy Version')
+    registered_at: str = Field(..., title='Registered At')
     registration_identity: str = Field(..., title='Registration Identity')
+    source_uid: str = Field(..., title='Source Uid')
+    state: Literal[
+        'registering', 'ready', 'degraded', 'unavailable', 'draining', 'revoked'
+    ] = Field(..., title='State')
+    uid: str = Field(..., title='Uid')
+    version: str | None = Field(None, title='Version')
+
+
+class DataServerStatus(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    connectors: list[DataServerConnector] = Field(..., title='Connectors')
+    identity_expires_at: str | None = Field(None, title='Identity Expires At')
+    identity_serial: str | None = Field(None, title='Identity Serial')
+    last_heartbeat_at: str | None = Field(None, title='Last Heartbeat At')
+    lease_seconds: int = Field(..., title='Lease Seconds')
+    queue_depth: int = Field(..., title='Queue Depth')
+    state: Literal[
+        'registering', 'ready', 'degraded', 'unavailable', 'draining', 'revoked'
+    ] = Field(..., title='State')
 
 
 class DatasetConfiguration(BaseModel):
@@ -329,14 +399,6 @@ class DatasetPublicationList(BaseModel):
     items: list[DatasetPublication] = Field(..., title='Items')
 
 
-class OriginKind(Enum):
-    upload = 'upload'
-    home_folder = 'home-folder'
-    sandbox_result = 'sandbox-result'
-    cloud_storage = 'cloud-storage'
-    volume = 'volume'
-
-
 class DatasetRevisionFile(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -361,12 +423,39 @@ class DatasetRevisionFileCreate(BaseModel):
     version_uid: str | None = Field(None, title='Version Uid')
 
 
+class DatasourceCapabilities(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    flight: bool = Field(..., title='Flight')
+    https_fallback: Literal[True] = Field(True, title='Https Fallback')
+    max_bytes: int = Field(..., title='Max Bytes')
+    max_seconds: int = Field(..., title='Max Seconds')
+    operations: list[Literal['select', 'describe', 'list']] = Field(
+        ..., title='Operations'
+    )
+    row_limit: int = Field(..., title='Row Limit')
+    streaming: Literal[True] = Field(True, title='Streaming')
+
+
+class DatasourceColumn(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    name: str = Field(..., title='Name')
+    type: str = Field(..., title='Type')
+
+
 class DatasourceConfiguration(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    allowed_operations: list[str] | None = Field(None, title='Allowed Operations')
-    connector_type: str = Field(..., title='Connector Type')
+    allowed_operations: list[Literal['select', 'describe', 'list']] | None = Field(
+        None, title='Allowed Operations'
+    )
+    connector_type: Literal['athena', 'bigquery', 'sql'] = Field(
+        ..., title='Connector Type'
+    )
     credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
         Field(None, title='Credential Uid')
     )
@@ -374,10 +463,44 @@ class DatasourceConfiguration(BaseModel):
         Field(None, title='Data Server Uid')
     )
     database_or_project: str | None = Field(None, title='Database Or Project')
-    default_row_limit: conint(ge=1) | None = Field(None, title='Default Row Limit')
+    default_row_limit: conint(ge=1) | None = Field(10000, title='Default Row Limit')
     endpoint: str | None = Field(None, title='Endpoint')
     kind: Literal['datasource'] = Field(..., title='Kind')
-    network_route: str | None = Field(None, title='Network Route')
+    max_bytes: conint(ge=1) | None = Field(268435456, title='Max Bytes')
+    max_seconds: conint(ge=1) | None = Field(300, title='Max Seconds')
+    network_route: Literal['direct', 'dataserver'] | None = Field(
+        'direct', title='Network Route'
+    )
+
+
+class DatasourceQueryCreate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    max_bytes: conint(ge=1) | None = Field(None, title='Max Bytes')
+    max_seconds: conint(ge=1) | None = Field(None, title='Max Seconds')
+    row_limit: conint(ge=1) | None = Field(None, title='Row Limit')
+    sandbox_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Sandbox Uid')
+    )
+    sql: constr(min_length=1) = Field(..., title='Sql')
+
+
+class DatasourceTable(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    columns: list[DatasourceColumn] | None = Field(None, title='Columns')
+    name: str = Field(..., title='Name')
+
+
+class DatasourceTest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    connector_type: str = Field(..., title='Connector Type')
+    detail: str = Field(..., title='Detail')
+    ok: bool = Field(..., title='Ok')
 
 
 class DependencyStatusResponse(BaseModel):
@@ -391,17 +514,11 @@ class DependencyStatusResponse(BaseModel):
     required: bool = Field(..., title='Required')
 
 
-class EffectiveAccessLevel(Enum):
-    view = 'view'
-    update = 'update'
-    execute = 'execute'
-
-
 class EffectivePermissions(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    effective_access_level: EffectiveAccessLevel | None = Field(
+    effective_access_level: Literal['view', 'update', 'execute'] | None = Field(
         ..., title='Effective Access Level'
     )
     execute: bool = Field(..., title='Execute')
@@ -455,24 +572,25 @@ class FilesConfiguration(BaseModel):
     versioning_policy: str = Field(..., title='Versioning Policy')
 
 
-class AccessLevel(Enum):
-    view = 'view'
-    update = 'update'
-    execute = 'execute'
-
-
-class PrincipalKind(Enum):
-    user = 'user'
-    team = 'team'
-    organization = 'organization'
+class FlightConnectivity(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    detail: str = Field(..., title='Detail')
+    endpoint: str | None = Field(None, title='Endpoint')
+    reachable: bool = Field(..., title='Reachable')
 
 
 class Grant(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    access_level: AccessLevel = Field(..., title='Access Level')
-    principal_kind: PrincipalKind = Field(..., title='Principal Kind')
+    access_level: Literal['view', 'update', 'execute'] = Field(
+        ..., title='Access Level'
+    )
+    principal_kind: Literal['user', 'team', 'organization'] = Field(
+        ..., title='Principal Kind'
+    )
     principal_uid: str = Field(..., title='Principal Uid')
     uid: str | None = Field(None, title='Uid')
 
@@ -519,6 +637,25 @@ class HomeFolderQuota(BaseModel):
     used_objects: int = Field(..., title='Used Objects')
 
 
+class HttpsConnectivity(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    detail: str = Field(..., title='Detail')
+    reachable: bool = Field(..., title='Reachable')
+    url: str | None = Field(None, title='Url')
+
+
+class IssuedIdentity(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    ca_certificate: str = Field(..., title='Ca Certificate')
+    certificate: str = Field(..., title='Certificate')
+    expires_at: str = Field(..., title='Expires At')
+    serial: str = Field(..., title='Serial')
+
+
 class ManifestEntry(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -539,30 +676,179 @@ class ManifestPayload(BaseModel):
     tombstones: dict[str, str] | None = Field(None, title='Tombstones')
 
 
-class Transport(Enum):
-    stdio = 'stdio'
-    streamable_http = 'streamable-http'
-    sse = 'sse'
+class McpApproval(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    actor_uid: str = Field(..., title='Actor Uid')
+    arguments_hash: str = Field(..., title='Arguments Hash')
+    arguments_redacted: dict[str, Any] = Field(..., title='Arguments Redacted')
+    call_uid: str = Field(..., title='Call Uid')
+    created_at: str = Field(..., title='Created At')
+    decided_at: str | None = Field(None, title='Decided At')
+    decided_by: str | None = Field(None, title='Decided By')
+    destination_uri: str | None = Field(None, title='Destination Uri')
+    expires_at: str = Field(..., title='Expires At')
+    note: str | None = Field(None, title='Note')
+    session_uid: str = Field(..., title='Session Uid')
+    source_uid: str = Field(..., title='Source Uid')
+    status: Literal['pending', 'approved', 'rejected', 'expired', 'consumed'] = Field(
+        ..., title='Status'
+    )
+    tool: str = Field(..., title='Tool')
+    uid: str = Field(..., title='Uid')
+
+
+class McpApprovalDecision(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    note: constr(max_length=2000) | None = Field(None, title='Note')
+
+
+class McpApprovalList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[McpApproval] = Field(..., title='Items')
+
+
+class McpArtifactView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    destination_uri: str | None = Field(None, title='Destination Uri')
+    media_type: str | None = Field(None, title='Media Type')
+    name: str = Field(..., title='Name')
+    object_uid: str | None = Field(None, title='Object Uid')
+    operation_uid: str | None = Field(None, title='Operation Uid')
+    size: int | None = Field(None, title='Size')
+    source_uri: str | None = Field(None, title='Source Uri')
+    transfer_uid: str | None = Field(None, title='Transfer Uid')
+    url: str | None = Field(None, title='Url')
+    version_uid: str | None = Field(None, title='Version Uid')
+
+
+class McpCallCreate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    arguments: dict[str, Any] | None = Field(None, title='Arguments')
+    destination_uri: str | None = Field(None, title='Destination Uri')
+    tool: constr(min_length=1) = Field(..., title='Tool')
+
+
+class McpCallError(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    code: str = Field(..., title='Code')
+    message: str = Field(..., title='Message')
+
+
+class McpCallResult(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    artifacts: list[McpArtifactView] | None = Field(None, title='Artifacts')
+    content: list[dict[str, Any]] | None = Field(None, title='Content')
 
 
 class McpConfiguration(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
+    allowed_destinations: list[str] | None = Field(None, title='Allowed Destinations')
     allowed_domains: list[str] | None = Field(None, title='Allowed Domains')
+    allowed_media_types: list[str] | None = Field(None, title='Allowed Media Types')
     allowed_resources: list[str] | None = Field(None, title='Allowed Resources')
     allowed_tools: list[str] | None = Field(None, title='Allowed Tools')
-    approval_policy: str = Field(..., title='Approval Policy')
+    approval_policy: Literal['explicit', 'auto-allowlisted', 'never'] = Field(
+        ..., title='Approval Policy'
+    )
     credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
         Field(None, title='Credential Uid')
     )
-    destination_policy: str = Field(..., title='Destination Policy')
+    destination_policy: Literal['allowlist', 'home-folder-only', 'dataset-only'] = (
+        Field(..., title='Destination Policy')
+    )
     endpoint: str | None = Field(None, title='Endpoint')
     kind: Literal['mcp'] = Field(..., title='Kind')
     managed_server_uid: (
         constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None
     ) = Field(None, title='Managed Server Uid')
-    transport: Transport = Field(..., title='Transport')
+    max_result_bytes: conint(ge=1) | None = Field(67108864, title='Max Result Bytes')
+    transport: Literal['stdio', 'streamable-http', 'sse'] = Field(
+        ..., title='Transport'
+    )
+
+
+class McpHealth(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    detail: str = Field(..., title='Detail')
+    ok: bool = Field(..., title='Ok')
+    transport: str = Field(..., title='Transport')
+
+
+class McpResourceView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    media_type: str | None = Field(None, title='Media Type')
+    name: str | None = Field(None, title='Name')
+    uri: str = Field(..., title='Uri')
+
+
+class McpSession(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    actor_uid: str = Field(..., title='Actor Uid')
+    allowed_destinations: list[str] = Field(..., title='Allowed Destinations')
+    allowed_domains: list[str] = Field(..., title='Allowed Domains')
+    allowed_resources: list[str] = Field(..., title='Allowed Resources')
+    allowed_tools: list[str] = Field(..., title='Allowed Tools')
+    approval_policy: Literal['explicit', 'auto-allowlisted', 'never'] = Field(
+        ..., title='Approval Policy'
+    )
+    created_at: str = Field(..., title='Created At')
+    destination_policy: Literal['allowlist', 'home-folder-only', 'dataset-only'] = (
+        Field(..., title='Destination Policy')
+    )
+    expires_at: str = Field(..., title='Expires At')
+    max_result_bytes: int = Field(..., title='Max Result Bytes')
+    sandbox_uid: str | None = Field(None, title='Sandbox Uid')
+    source_uid: str = Field(..., title='Source Uid')
+    status: Literal['active', 'revoked', 'expired'] = Field(..., title='Status')
+    uid: str = Field(..., title='Uid')
+
+
+class McpSessionCreate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    expires_in: conint(ge=1) | None = Field(None, title='Expires In')
+    sandbox_uid: str | None = Field(None, title='Sandbox Uid')
+    source_uid: constr(min_length=1) = Field(..., title='Source Uid')
+    tools: list[str] | None = Field(None, title='Tools')
+
+
+class McpSessionList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[McpSession] = Field(..., title='Items')
+
+
+class McpToolView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    description: str | None = Field(None, title='Description')
+    input_schema: dict[str, Any] | None = Field(None, title='Input Schema')
+    name: str = Field(..., title='Name')
 
 
 class ObjectList(BaseModel):
@@ -586,15 +872,6 @@ class OperationCapability(BaseModel):
     reason: str | None = Field(None, title='Reason')
 
 
-class Status1(Enum):
-    pending = 'pending'
-    running = 'running'
-    succeeded = 'succeeded'
-    failed = 'failed'
-    cancelling = 'cancelling'
-    cancelled = 'cancelled'
-
-
 class OperationView(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -609,7 +886,9 @@ class OperationView(BaseModel):
     operation_kind: str = Field(..., title='Operation Kind')
     result: dict[str, Any] | None = Field(None, title='Result')
     source_uid: str | None = Field(None, title='Source Uid')
-    status: Status1 = Field(..., title='Status')
+    status: Literal[
+        'pending', 'running', 'succeeded', 'failed', 'cancelling', 'cancelled'
+    ] = Field(..., title='Status')
     uid: str = Field(..., title='Uid')
     updated_at: str = Field(..., title='Updated At')
 
@@ -623,29 +902,18 @@ class PingResponse(BaseModel):
     version: str = Field(..., title='Version')
 
 
-class Kind3(Enum):
-    upload = 'upload'
-    download = 'download'
-    delete_remote = 'delete_remote'
-    delete_local = 'delete_local'
-    conflict = 'conflict'
-
-
 class PlanAction(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
     blocks: list[int] | None = Field(None, title='Blocks')
-    kind: Kind3 = Field(..., title='Kind')
+    kind: Literal['upload', 'download', 'delete_remote', 'delete_local', 'conflict'] = (
+        Field(..., title='Kind')
+    )
     object_uid: str | None = Field(None, title='Object Uid')
     path: str = Field(..., title='Path')
     reason: str = Field(..., title='Reason')
     version_uid: str | None = Field(None, title='Version Uid')
-
-
-class Operation(Enum):
-    get = 'get'
-    put = 'put'
 
 
 class PresignedAccess(BaseModel):
@@ -653,7 +921,7 @@ class PresignedAccess(BaseModel):
         extra='forbid',
     )
     expires_in: int = Field(..., title='Expires In')
-    operation: Operation = Field(..., title='Operation')
+    operation: Literal['get', 'put'] = Field(..., title='Operation')
     path: str = Field(..., title='Path')
     url: str = Field(..., title='Url')
 
@@ -665,9 +933,43 @@ class QuarantineRequest(BaseModel):
     reason: str = Field(..., title='Reason')
 
 
-class Status2(Enum):
-    ready = 'ready'
-    not_ready = 'not-ready'
+class QueryError(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    code: str = Field(..., title='Code')
+    message: str = Field(..., title='Message')
+
+
+class QueryLimits(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    bytes: conint(ge=1) = Field(..., title='Bytes')
+    rows: conint(ge=1) = Field(..., title='Rows')
+    seconds: conint(ge=1) = Field(..., title='Seconds')
+
+
+class QueryResultReference(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    checksum: str = Field(..., title='Checksum')
+    media_type: str | None = Field(
+        'application/vnd.apache.arrow.stream', title='Media Type'
+    )
+    object_uid: str = Field(..., title='Object Uid')
+    version_uid: str = Field(..., title='Version Uid')
+
+
+class QuerySave(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    dataset_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Dataset Uid'
+    )
+    path: constr(min_length=1) = Field(..., title='Path')
 
 
 class ReadinessResponse(BaseModel):
@@ -676,7 +978,7 @@ class ReadinessResponse(BaseModel):
     )
     dependencies: list[DependencyStatusResponse] = Field(..., title='Dependencies')
     service: Literal['contents'] = Field('contents', title='Service')
-    status: Status2 = Field(..., title='Status')
+    status: Literal['ready', 'not-ready'] = Field(..., title='Status')
     success: bool = Field(..., title='Success')
 
 
@@ -719,14 +1021,6 @@ class SourceKindCapability(BaseModel):
     reason: str | None = Field(None, title='Reason')
 
 
-class SourceStatus(Enum):
-    pending = 'pending'
-    ready = 'ready'
-    degraded = 'degraded'
-    disabled = 'disabled'
-    failed = 'failed'
-
-
 class SpaceRelease(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -738,29 +1032,27 @@ class SpaceRelease(BaseModel):
     )
 
 
-class StableErrorCode(Enum):
-    UNAUTHENTICATED = 'UNAUTHENTICATED'
-    FORBIDDEN = 'FORBIDDEN'
-    NOT_FOUND = 'NOT_FOUND'
-    CONFLICT = 'CONFLICT'
-    QUOTA_EXCEEDED = 'QUOTA_EXCEEDED'
-    CAPABILITY_UNAVAILABLE = 'CAPABILITY_UNAVAILABLE'
-    CHECKSUM_MISMATCH = 'CHECKSUM_MISMATCH'
-    PROVIDER_UNAVAILABLE = 'PROVIDER_UNAVAILABLE'
-    CAPABILITY_REVOKED = 'CAPABILITY_REVOKED'
-    OPERATION_CANCELLED = 'OPERATION_CANCELLED'
-    INTERNAL_ERROR = 'INTERNAL_ERROR'
+class SyncBlockView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    checksum: str = Field(..., title='Checksum')
+    index: int = Field(..., title='Index')
+    path: str = Field(..., title='Path')
+    session_uid: str = Field(..., title='Session Uid')
+    size: int = Field(..., title='Size')
 
 
-class Resolution(Enum):
-    local = 'local'
-    remote = 'remote'
-    keep_both = 'keep-both'
-
-
-class Status3(Enum):
-    open = 'open'
-    resolved = 'resolved'
+class SyncCompose(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    base_version_uid: str = Field(..., title='Base Version Uid')
+    blocks: list[str] | None = Field(None, title='Blocks')
+    checksum: constr(pattern=r'^[0-9a-f]{64}$') = Field(..., title='Checksum')
+    media_type: str | None = Field('application/octet-stream', title='Media Type')
+    path: str = Field(..., title='Path')
+    size: conint(ge=0) = Field(..., title='Size')
 
 
 class SyncConflictView(BaseModel):
@@ -772,24 +1064,13 @@ class SyncConflictView(BaseModel):
     path: str = Field(..., title='Path')
     reason: str = Field(..., title='Reason')
     remote_entry: ManifestEntry | None = None
-    resolution: Resolution | None = Field(None, title='Resolution')
+    resolution: Literal['local', 'remote', 'keep-both'] | None = Field(
+        None, title='Resolution'
+    )
     resolved_at: str | None = Field(None, title='Resolved At')
     session_uid: str = Field(..., title='Session Uid')
-    status: Status3 = Field(..., title='Status')
+    status: Literal['open', 'resolved'] = Field(..., title='Status')
     uid: str = Field(..., title='Uid')
-
-
-class ConflictPolicy(Enum):
-    manual = 'manual'
-    newest = 'newest'
-    local = 'local'
-    remote = 'remote'
-
-
-class Direction(Enum):
-    push = 'push'
-    pull = 'pull'
-    bidirectional = 'bidirectional'
 
 
 class SyncCreate(BaseModel):
@@ -797,9 +1078,13 @@ class SyncCreate(BaseModel):
         extra='forbid',
     )
     block_size: int | None = Field(4194304, title='Block Size')
-    conflict_policy: ConflictPolicy | None = Field('manual', title='Conflict Policy')
+    conflict_policy: Literal['manual', 'newest', 'local', 'remote'] | None = Field(
+        'manual', title='Conflict Policy'
+    )
     delete: bool | None = Field(False, title='Delete')
-    direction: Direction | None = Field('bidirectional', title='Direction')
+    direction: Literal['push', 'pull', 'bidirectional'] | None = Field(
+        'bidirectional', title='Direction'
+    )
     exclusions: list[str] | None = Field(None, title='Exclusions')
     local_manifest: ManifestPayload
     remote_uri: str = Field(..., title='Remote Uri')
@@ -858,10 +1143,20 @@ class SyncSessionView(BaseModel):
     watch: bool = Field(..., title='Watch')
 
 
-class Overwrite(Enum):
-    reject = 'reject'
-    replace_ = 'replace'
-    new_version = 'new-version'
+class TicketResult(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    checksum: str = Field(..., title='Checksum')
+    size: int = Field(..., title='Size')
+    storage_key: str = Field(..., title='Storage Key')
+
+
+class TicketValidation(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    ticket: constr(min_length=1) = Field(..., title='Ticket')
 
 
 class TransferCreate(BaseModel):
@@ -872,7 +1167,9 @@ class TransferCreate(BaseModel):
     destination_uri: str = Field(..., title='Destination Uri')
     direction: Literal['upload'] = Field('upload', title='Direction')
     media_type: str | None = Field('application/octet-stream', title='Media Type')
-    overwrite: Overwrite | None = Field('reject', title='Overwrite')
+    overwrite: Literal['reject', 'replace', 'new-version'] | None = Field(
+        'reject', title='Overwrite'
+    )
     size: conint(ge=0) = Field(..., title='Size')
 
 
@@ -928,28 +1225,18 @@ class VersionList(BaseModel):
     next_cursor: str | None = Field(None, title='Next Cursor')
 
 
-class AccessMode1(Enum):
-    ro = 'ro'
-    rw = 'rw'
-
-
-class Scope(Enum):
-    user = 'user'
-    space = 'space'
-
-
 class VolumeConfiguration(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    access_modes: list[AccessMode1] = Field(..., title='Access Modes')
+    access_modes: list[Literal['ro', 'rw']] = Field(..., title='Access Modes')
     backing_resource_id: str | None = Field(None, title='Backing Resource Id')
     capacity_bytes: conint(ge=1) = Field(..., title='Capacity Bytes')
     concurrent_readers: bool = Field(..., title='Concurrent Readers')
     concurrent_writers: bool = Field(..., title='Concurrent Writers')
     default_mount_path: str = Field(..., title='Default Mount Path')
     kind: Literal['volume'] = Field(..., title='Kind')
-    scope: Scope = Field(..., title='Scope')
+    scope: Literal['user', 'space'] = Field(..., title='Scope')
     storage_class: str | None = Field(None, title='Storage Class')
 
 
@@ -957,7 +1244,19 @@ class AttachmentError(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    code: StableErrorCode
+    code: Literal[
+        'UNAUTHENTICATED',
+        'FORBIDDEN',
+        'NOT_FOUND',
+        'CONFLICT',
+        'QUOTA_EXCEEDED',
+        'CAPABILITY_UNAVAILABLE',
+        'CHECKSUM_MISMATCH',
+        'PROVIDER_UNAVAILABLE',
+        'CAPABILITY_REVOKED',
+        'OPERATION_CANCELLED',
+        'INTERNAL_ERROR',
+    ] = Field(..., title='StableErrorCode')
     message: str = Field(..., title='Message')
     retryable: bool = Field(..., title='Retryable')
 
@@ -966,10 +1265,65 @@ class AttachmentStatusUpdate(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    capabilities: list[Capability] | None = Field(None, title='Capabilities')
+    capabilities: (
+        list[
+            Literal[
+                'browse',
+                'transfer',
+                'mount',
+                'query',
+                'materialize',
+                'sync',
+                'local-bridge-mount',
+            ]
+        ]
+        | None
+    ) = Field(None, title='Capabilities')
     error: AttachmentError | None = None
     provider_resource_id: str | None = Field(None, title='Provider Resource Id')
-    status: Status = Field(..., title='Status')
+    status: Literal['ready', 'degraded', 'failed', 'revoked'] = Field(
+        ..., title='Status'
+    )
+
+
+class BridgeHeartbeat(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    bridge: BridgeSession
+    client_token: str = Field(..., title='Client Token')
+
+
+class BridgeList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[BridgeSession] = Field(..., title='Items')
+
+
+class BridgeOpened(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    bridge: BridgeSession
+    client_token: str = Field(..., title='Client Token')
+    relay_url: str = Field(..., title='Relay Url')
+    session_key: str = Field(..., title='Session Key')
+
+
+class CapabilityTicketClaims(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    actor_uid: str = Field(..., title='Actor Uid')
+    exp: int = Field(..., title='Exp')
+    jti: str = Field(..., title='Jti')
+    limits: QueryLimits
+    operation: Literal['get'] = Field(..., title='Operation')
+    policy_version: str = Field(..., title='Policy Version')
+    query_uid: str = Field(..., title='Query Uid')
+    sandbox_uid: str | None = Field(None, title='Sandbox Uid')
+    source_uid: str = Field(..., title='Source Uid')
 
 
 class CloudObjectList(BaseModel):
@@ -984,20 +1338,44 @@ class ContentAttachment(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    access_mode: AccessMode | None = Field(None, title='Access Mode')
-    capabilities: list[Capability] | None = Field(None, title='Capabilities')
-    cleanup_policy: CleanupPolicy | None = Field('revoke', title='Cleanup Policy')
+    access_mode: Literal['mount', 'python', 'object-client'] | None = Field(
+        None, title='Access Mode'
+    )
+    capabilities: (
+        list[
+            Literal[
+                'browse',
+                'transfer',
+                'mount',
+                'query',
+                'materialize',
+                'sync',
+                'local-bridge-mount',
+            ]
+        ]
+        | None
+    ) = Field(None, title='Capabilities')
+    cleanup_policy: (
+        Literal['revoke', 'remove-materialization', 'retain-source'] | None
+    ) = Field('revoke', title='Cleanup Policy')
     created_at: AwareDatetime = Field(..., title='Created At')
-    delivery: Delivery = Field(..., title='Delivery')
+    delivery: Literal[
+        'mount', 'local-bridge', 'materialize', 'client', 'environment'
+    ] = Field(..., title='Delivery')
     error: AttachmentError | None = None
     expires_at: AwareDatetime | None = Field(None, title='Expires At')
     fallback_reason: str | None = Field(None, title='Fallback Reason')
-    filesystem_primitives: list[FilesystemPrimitive] | None = Field(
-        None, title='Filesystem Primitives'
-    )
+    filesystem_primitives: (
+        list[
+            Literal[
+                'list', 'stat', 'read', 'write', 'mkdir', 'remove', 'upload', 'download'
+            ]
+        ]
+        | None
+    ) = Field(None, title='Filesystem Primitives')
     last_seen_at: AwareDatetime | None = Field(None, title='Last Seen At')
     limits: AttachmentLimits | None = None
-    mode: Mode = Field(..., title='Mode')
+    mode: Literal['ro', 'rw'] = Field(..., title='Mode')
     mount_path: str | None = Field(None, title='Mount Path')
     provider_resource_id: str | None = Field(None, title='Provider Resource Id')
     ready_at: AwareDatetime | None = Field(None, title='Ready At')
@@ -1013,7 +1391,9 @@ class ContentAttachment(BaseModel):
     source_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
         ..., title='Source Uid'
     )
-    status: AttachmentStatus
+    status: Literal[
+        'requested', 'preparing', 'ready', 'degraded', 'revoking', 'revoked', 'failed'
+    ] = Field(..., title='AttachmentStatus')
     token_audience: str | None = Field(None, title='Token Audience')
     uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
         ..., title='Uid'
@@ -1033,97 +1413,6 @@ class ContentAttachmentManifest(BaseModel):
     )
 
 
-class ContentSource(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-    )
-    capabilities: list[Capability] | None = Field(None, title='Capabilities')
-    configuration: (
-        FilesConfiguration
-        | DatasetConfiguration
-        | VolumeConfiguration
-        | CloudStorageConfiguration
-        | DatasourceConfiguration
-        | DataServerConfiguration
-        | McpConfiguration
-        | EnvironmentConfiguration
-    ) = Field(..., discriminator='kind', title='Configuration')
-    contract_version: Literal['v1'] = Field(..., title='Contract Version')
-    created_at: AwareDatetime = Field(..., title='Created At')
-    credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
-        Field(None, title='Credential Uid')
-    )
-    description: str | None = Field(None, title='Description')
-    kind: Kind1 = Field(..., title='Kind')
-    name: constr(min_length=1) = Field(..., title='Name')
-    principal_kind: PrincipalKind
-    principal_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
-        ..., title='Principal Uid'
-    )
-    space_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = Field(
-        None, title='Space Uid'
-    )
-    status: SourceStatus
-    uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
-        ..., title='Uid'
-    )
-    updated_at: AwareDatetime = Field(..., title='Updated At')
-
-
-class ContentSourceCreate(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-    )
-    capabilities: list[Capability] | None = Field(None, title='Capabilities')
-    configuration: (
-        FilesConfiguration
-        | DatasetConfiguration
-        | VolumeConfiguration
-        | CloudStorageConfiguration
-        | DatasourceConfiguration
-        | DataServerConfiguration
-        | McpConfiguration
-        | EnvironmentConfiguration
-    ) = Field(..., discriminator='kind', title='Configuration')
-    credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
-        Field(None, title='Credential Uid')
-    )
-    description: str | None = Field(None, title='Description')
-    kind: Kind1 = Field(..., title='Kind')
-    name: constr(min_length=1) = Field(..., title='Name')
-    principal_kind: PrincipalKind | None = None
-    principal_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
-        Field(None, title='Principal Uid')
-    )
-    space_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = Field(
-        None, title='Space Uid'
-    )
-
-
-class ContentSourceUpdate(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-    )
-    capabilities: list[Capability] | None = Field(None, title='Capabilities')
-    configuration: (
-        FilesConfiguration
-        | DatasetConfiguration
-        | VolumeConfiguration
-        | CloudStorageConfiguration
-        | DatasourceConfiguration
-        | DataServerConfiguration
-        | McpConfiguration
-        | EnvironmentConfiguration
-        | None
-    ) = Field(None, title='Configuration')
-    credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
-        Field(None, title='Credential Uid')
-    )
-    description: str | None = Field(None, title='Description')
-    name: constr(min_length=1) | None = Field(None, title='Name')
-    status: SourceStatus | None = None
-
-
 class ContentsCapabilities(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -1131,6 +1420,69 @@ class ContentsCapabilities(BaseModel):
     counts_truncated: bool = Field(..., title='Counts Truncated')
     operations: list[OperationCapability] = Field(..., title='Operations')
     source_kinds: list[SourceKindCapability] = Field(..., title='Source Kinds')
+
+
+class DataServerConfiguration(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    connectors: list[DataServerConnector] | None = Field(None, title='Connectors')
+    identity_expires_at: AwareDatetime | None = Field(None, title='Identity Expires At')
+    identity_serial: str | None = Field(None, title='Identity Serial')
+    kind: Literal['data-server'] = Field(..., title='Kind')
+    last_heartbeat_at: AwareDatetime | None = Field(None, title='Last Heartbeat At')
+    lease_seconds: conint(ge=5) | None = Field(None, title='Lease Seconds')
+    mtls_issuer: str = Field(..., title='Mtls Issuer')
+    policy_version: str = Field(..., title='Policy Version')
+    previous_identity_serial: str | None = Field(None, title='Previous Identity Serial')
+    registration_identity: str = Field(..., title='Registration Identity')
+    state: (
+        Literal[
+            'registering', 'ready', 'degraded', 'unavailable', 'draining', 'revoked'
+        ]
+        | None
+    ) = Field('registering', title='State')
+    version: str | None = Field(None, title='Version')
+
+
+class DataServerConnectivity(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    detail: str = Field(..., title='Detail')
+    flight: FlightConnectivity
+    https_fallback: HttpsConnectivity
+    ok: bool = Field(..., title='Ok')
+
+
+class DataServerJob(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    connector_type: Literal['athena', 'bigquery', 'sql'] = Field(
+        ..., title='Connector Type'
+    )
+    credential_ref: str | None = Field(None, title='Credential Ref')
+    limits: QueryLimits
+    policy_version: str = Field(..., title='Policy Version')
+    query_uid: str = Field(..., title='Query Uid')
+    sql: str = Field(..., title='Sql')
+
+
+class DataServerJobs(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    cancel: list[str] = Field(..., title='Cancel')
+    jobs: list[DataServerJob] = Field(..., title='Jobs')
+
+
+class DataServerRegistered(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    jobs_url: str = Field(..., title='Jobs Url')
+    registration: DataServerRegistration
 
 
 class DatasetRevision(BaseModel):
@@ -1154,7 +1506,14 @@ class DatasetRevisionCreate(BaseModel):
         extra='forbid',
     )
     files: list[DatasetRevisionFileCreate] = Field(..., min_length=1, title='Files')
-    origin_kind: OriginKind = Field(..., title='Origin Kind')
+    origin_kind: Literal[
+        'upload',
+        'home-folder',
+        'sandbox-result',
+        'cloud-storage',
+        'volume',
+        'acquisition',
+    ] = Field(..., title='Origin Kind')
 
 
 class DatasetRevisionList(BaseModel):
@@ -1162,6 +1521,49 @@ class DatasetRevisionList(BaseModel):
         extra='forbid',
     )
     items: list[DatasetRevision] = Field(..., title='Items')
+
+
+class DatasourceQuery(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    actor_uid: str = Field(..., title='Actor Uid')
+    bytes: int | None = Field(None, title='Bytes')
+    created_at: str = Field(..., title='Created At')
+    data_server_uid: str | None = Field(None, title='Data Server Uid')
+    error: QueryError | None = None
+    finished_at: str | None = Field(None, title='Finished At')
+    max_bytes: int = Field(..., title='Max Bytes')
+    max_seconds: int = Field(..., title='Max Seconds')
+    operation_uid: str | None = Field(None, title='Operation Uid')
+    policy_version: str = Field(..., title='Policy Version')
+    result: QueryResultReference | None = None
+    row_limit: int = Field(..., title='Row Limit')
+    rows: int | None = Field(None, title='Rows')
+    sandbox_uid: str | None = Field(None, title='Sandbox Uid')
+    source_uid: str = Field(..., title='Source Uid')
+    sql_hash: str = Field(..., title='Sql Hash')
+    started_at: str | None = Field(None, title='Started At')
+    status: Literal['pending', 'running', 'succeeded', 'failed', 'cancelled'] = Field(
+        ..., title='Status'
+    )
+    uid: str = Field(..., title='Uid')
+
+
+class DatasourceQueryList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[DatasourceQuery] = Field(..., title='Items')
+    next_cursor: str | None = Field(None, title='Next Cursor')
+
+
+class DatasourceSchema(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    discovered_at: str = Field(..., title='Discovered At')
+    tables: list[DatasourceTable] = Field(..., title='Tables')
 
 
 class DeadLetterList(BaseModel):
@@ -1173,6 +1575,117 @@ class DeadLetterList(BaseModel):
 
 class HTTPValidationError(BaseModel):
     detail: list[ValidationError] | None = Field(None, title='Detail')
+
+
+class McpCall(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    approval_uid: str | None = Field(None, title='Approval Uid')
+    arguments_hash: str = Field(..., title='Arguments Hash')
+    arguments_redacted: dict[str, Any] = Field(..., title='Arguments Redacted')
+    completed_at: str | None = Field(None, title='Completed At')
+    created_at: str = Field(..., title='Created At')
+    destination_uri: str | None = Field(None, title='Destination Uri')
+    error: McpCallError | None = None
+    operation_uid: str | None = Field(None, title='Operation Uid')
+    result: McpCallResult | None = None
+    session_uid: str = Field(..., title='Session Uid')
+    status: Literal[
+        'pending-approval',
+        'approved',
+        'denied',
+        'running',
+        'succeeded',
+        'failed',
+        'refused',
+    ] = Field(..., title='Status')
+    tool: str = Field(..., title='Tool')
+    uid: str = Field(..., title='Uid')
+    updated_at: str = Field(..., title='Updated At')
+
+
+class McpCallList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[McpCall] = Field(..., title='Items')
+
+
+class McpToolManifest(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    discovered_at: str = Field(..., title='Discovered At')
+    resources: list[McpResourceView] = Field(..., title='Resources')
+    tools: list[McpToolView] = Field(..., title='Tools')
+
+
+class PreparedAttachment(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    access_mode: Literal['mount', 'python', 'object-client'] | None = Field(
+        None, title='Access Mode'
+    )
+    bridge: BridgeMountGrant | None = None
+    capabilities: (
+        list[
+            Literal[
+                'browse',
+                'transfer',
+                'mount',
+                'query',
+                'materialize',
+                'sync',
+                'local-bridge-mount',
+            ]
+        ]
+        | None
+    ) = Field(None, title='Capabilities')
+    cleanup_policy: (
+        Literal['revoke', 'remove-materialization', 'retain-source'] | None
+    ) = Field('revoke', title='Cleanup Policy')
+    created_at: AwareDatetime = Field(..., title='Created At')
+    delivery: Literal[
+        'mount', 'local-bridge', 'materialize', 'client', 'environment'
+    ] = Field(..., title='Delivery')
+    error: AttachmentError | None = None
+    expires_at: AwareDatetime | None = Field(None, title='Expires At')
+    fallback_reason: str | None = Field(None, title='Fallback Reason')
+    filesystem_primitives: (
+        list[
+            Literal[
+                'list', 'stat', 'read', 'write', 'mkdir', 'remove', 'upload', 'download'
+            ]
+        ]
+        | None
+    ) = Field(None, title='Filesystem Primitives')
+    last_seen_at: AwareDatetime | None = Field(None, title='Last Seen At')
+    limits: AttachmentLimits | None = None
+    mode: Literal['ro', 'rw'] = Field(..., title='Mode')
+    mount_path: str | None = Field(None, title='Mount Path')
+    provider_resource_id: str | None = Field(None, title='Provider Resource Id')
+    ready_at: AwareDatetime | None = Field(None, title='Ready At')
+    required: bool | None = Field(True, title='Required')
+    revision_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Revision Uid')
+    )
+    revoked_at: AwareDatetime | None = Field(None, title='Revoked At')
+    sandbox_provider: str = Field(..., title='Sandbox Provider')
+    sandbox_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Sandbox Uid'
+    )
+    source_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Source Uid'
+    )
+    status: Literal[
+        'requested', 'preparing', 'ready', 'degraded', 'revoking', 'revoked', 'failed'
+    ] = Field(..., title='AttachmentStatus')
+    token_audience: str | None = Field(None, title='Token Audience')
+    uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Uid'
+    )
 
 
 class SyncConflictList(BaseModel):
@@ -1190,6 +1703,16 @@ class SyncSessionList(BaseModel):
     next_cursor: str | None = Field(None, title='Next Cursor')
 
 
+class TicketValidationResult(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    claims: CapabilityTicketClaims | None = None
+    reason: str | None = Field(None, title='Reason')
+    result: TicketResult | None = None
+    valid: bool = Field(..., title='Valid')
+
+
 class TransferList(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -1203,6 +1726,158 @@ class AttachmentList(BaseModel):
         extra='forbid',
     )
     items: list[ContentAttachment] = Field(..., title='Items')
+
+
+class ContentSource(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    capabilities: (
+        list[
+            Literal[
+                'browse',
+                'transfer',
+                'mount',
+                'query',
+                'materialize',
+                'sync',
+                'local-bridge-mount',
+            ]
+        ]
+        | None
+    ) = Field(None, title='Capabilities')
+    configuration: (
+        FilesConfiguration
+        | DatasetConfiguration
+        | VolumeConfiguration
+        | CloudStorageConfiguration
+        | DatasourceConfiguration
+        | DataServerConfiguration
+        | McpConfiguration
+        | EnvironmentConfiguration
+    ) = Field(..., discriminator='kind', title='Configuration')
+    contract_version: Literal['v1'] = Field(..., title='Contract Version')
+    created_at: AwareDatetime = Field(..., title='Created At')
+    credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Credential Uid')
+    )
+    description: str | None = Field(None, title='Description')
+    kind: Literal[
+        'files',
+        'dataset',
+        'volume',
+        'cloud-storage',
+        'datasource',
+        'data-server',
+        'mcp',
+        'environment',
+    ] = Field(..., title='Kind')
+    name: constr(min_length=1) = Field(..., title='Name')
+    principal_kind: Literal['user', 'team', 'organization'] = Field(
+        ..., title='PrincipalKind'
+    )
+    principal_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Principal Uid'
+    )
+    space_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = Field(
+        None, title='Space Uid'
+    )
+    status: Literal['pending', 'ready', 'degraded', 'disabled', 'failed'] = Field(
+        ..., title='SourceStatus'
+    )
+    uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
+        ..., title='Uid'
+    )
+    updated_at: AwareDatetime = Field(..., title='Updated At')
+
+
+class ContentSourceCreate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    capabilities: (
+        list[
+            Literal[
+                'browse',
+                'transfer',
+                'mount',
+                'query',
+                'materialize',
+                'sync',
+                'local-bridge-mount',
+            ]
+        ]
+        | None
+    ) = Field(None, title='Capabilities')
+    configuration: (
+        FilesConfiguration
+        | DatasetConfiguration
+        | VolumeConfiguration
+        | CloudStorageConfiguration
+        | DatasourceConfiguration
+        | DataServerConfiguration
+        | McpConfiguration
+        | EnvironmentConfiguration
+    ) = Field(..., discriminator='kind', title='Configuration')
+    credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Credential Uid')
+    )
+    description: str | None = Field(None, title='Description')
+    kind: Literal[
+        'files',
+        'dataset',
+        'volume',
+        'cloud-storage',
+        'datasource',
+        'data-server',
+        'mcp',
+        'environment',
+    ] = Field(..., title='Kind')
+    name: constr(min_length=1) = Field(..., title='Name')
+    principal_kind: Literal['user', 'team', 'organization'] | None = None
+    principal_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Principal Uid')
+    )
+    space_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = Field(
+        None, title='Space Uid'
+    )
+
+
+class ContentSourceUpdate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    capabilities: (
+        list[
+            Literal[
+                'browse',
+                'transfer',
+                'mount',
+                'query',
+                'materialize',
+                'sync',
+                'local-bridge-mount',
+            ]
+        ]
+        | None
+    ) = Field(None, title='Capabilities')
+    configuration: (
+        FilesConfiguration
+        | DatasetConfiguration
+        | VolumeConfiguration
+        | CloudStorageConfiguration
+        | DatasourceConfiguration
+        | DataServerConfiguration
+        | McpConfiguration
+        | EnvironmentConfiguration
+        | None
+    ) = Field(None, title='Configuration')
+    credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Credential Uid')
+    )
+    description: str | None = Field(None, title='Description')
+    name: constr(min_length=1) | None = Field(None, title='Name')
+    status: Literal['pending', 'ready', 'degraded', 'disabled', 'failed'] | None = None
 
 
 class CatalogSource(BaseModel):

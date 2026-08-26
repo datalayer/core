@@ -23,14 +23,25 @@ from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.contents import (
+    bridge_sessions_table,
     content_sources_table,
+    dataserver_connectors_table,
+    dataserver_status_table,
+    datasource_queries_table,
+    datasource_schema_table,
+    display_arrow_batches,
     operations_table,
     sync_conflicts_table,
     sync_sessions_table,
     transfers_table,
 )
 from datalayer_core.mixins.contents import ConditionalCatalogSource
-from datalayer_core.models.contents import ContentAttachment
+from datalayer_core.models.contents import (
+    ContentAttachment,
+    McpApprovalList,
+    call_artifacts,
+    call_transfer_uids,
+)
 
 # `enum.StrEnum` is 3.11+, and this package still supports 3.10.
 if sys.version_info >= (3, 11):
@@ -149,6 +160,10 @@ def _table_for(rows: list[dict[str, Any]]) -> Table:
         return sync_conflicts_table(rows)
     if "received_bytes" in first:
         return transfers_table(rows)
+    if "local_root_fingerprint" in first:
+        return bridge_sessions_table(rows)
+    if "sql_hash" in first:
+        return datasource_queries_table(rows)
     return content_sources_table(rows)
 
 
@@ -475,6 +490,94 @@ def sync_resolve(
         session_uid, conflict_uid, use=use
     )
     _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
+
+
+@app.command(name="mount")
+@contents_command
+def mount_folder(
+    ctx: typer.Context,
+    local_root: Path = typer.Argument(
+        ..., exists=True, file_okay=False, resolve_path=True, help="The folder to serve"
+    ),
+    sandbox: str = typer.Option(..., "--sandbox", help="The Code Sandbox the folder is served to"),
+    path: str = typer.Option(
+        ..., "--path", help="Where the folder appears in the sandbox, such as /home/jovyan/local"
+    ),
+    read_only: bool = typer.Option(False, "--ro", help="Serve the folder read-only"),
+    exclude: list[str] = typer.Option(
+        [], "--exclude", help="gitignore-style pattern the sandbox never sees; repeatable"
+    ),
+    provider: str = typer.Option("datalayer", "--provider", help="The sandbox provider"),
+    heartbeat_seconds: float = typer.Option(30.0, "--heartbeat-seconds", hidden=True),
+) -> None:
+    """
+    Serve a folder of this computer inside a Code Sandbox, until unmounted.
+
+    The folder is attached as a local bridge and served through the relay for
+    as long as this command runs: Ctrl-C, `datalayer contents unmount`, the
+    Unmount button or the session's expiry end it. The folder's path never
+    leaves this machine; the service is told a fingerprint of it.
+    """
+    from datalayer_core.contents_bridge import LocalBridge
+
+    context = _context(ctx)
+    quiet = context.output is not OutputFormat.TABLE
+
+    def say(message: str) -> None:
+        if not quiet:
+            console.print(f"[dim]{message}[/dim]")
+
+    bridge = LocalBridge(
+        _client(),
+        local_root=local_root,
+        sandbox_uid=sandbox,
+        mount_path=path,
+        mode="ro" if read_only else "rw",
+        exclusions=exclude,
+        sandbox_provider=provider,
+        progress=say,
+        heartbeat_seconds=heartbeat_seconds,
+    )
+    try:
+        opened = bridge.open()
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    if not quiet:
+        console.print(
+            f"Bridge [cyan]{opened.bridge.uid}[/cyan] serves {local_root} at "
+            f"{path} ({bridge.mode}) in sandbox {sandbox}; Ctrl-C to unmount."
+        )
+    try:
+        outcome = bridge.run_forever()
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(outcome.to_dict(), context)
+    if outcome.state in {"refused", "ended"}:
+        raise typer.Exit(1)
+
+
+@app.command(name="mounts")
+@contents_command
+def list_mounts(
+    ctx: typer.Context,
+    active: bool = typer.Option(
+        True, "--active/--all", help="Only sessions that are not revoked or expired"
+    ),
+) -> None:
+    """The caller's local bridge sessions and the state of their two ends."""
+    sessions = _client().list_content_bridges(active=active)
+    _render([item.model_dump(mode="json") for item in sessions.items], _context(ctx))
+
+
+@app.command(name="unmount")
+@contents_command
+def unmount_folder(ctx: typer.Context, bridge_uid: str = typer.Argument(...)) -> None:
+    """End a bridge session; the attachment is revoked with it and the mount goes away."""
+    try:
+        session = _client().revoke_content_bridge(bridge_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(session.model_dump(mode="json"), _context(ctx))
 
 
 transfer_app = typer.Typer(name="transfer", help="Inspect or cancel transfers.")
@@ -982,6 +1085,415 @@ def dataservers_register(
     _render(created.value.model_dump(mode="json"), _context(ctx))
 
 
+def _resolve_kind(client: DatalayerClient, reference: str, kind: str, label: str) -> str:
+    """The uid of a source of one kind, named or identified by ``reference``."""
+    resolved = _resolve_source(client, reference)
+    found = getattr(resolved.value.source.kind, "value", resolved.value.source.kind)
+    if found != kind:
+        raise ContentsCommandError(f"'{reference}' is a {found} source, not a {label}")
+    return str(resolved.value.source.uid)
+
+
+@dataservers_app.command(name="status")
+@contents_command
+def dataservers_status(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """The gateway as last heard: state, heartbeat lease, queue and identity."""
+    client = _client()
+    source_uid = _resolve_kind(client, source, "data-server", "Dataserver")
+    try:
+        status = client.get_dataserver_status(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(status.model_dump(mode="json"), context)
+        return
+    console.print(dataserver_status_table(status.model_dump(mode="json")))
+
+
+@dataservers_app.command(name="connectors")
+@contents_command
+def dataservers_connectors(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """The connectors the gateway advertises, with the operations each allows."""
+    client = _client()
+    source_uid = _resolve_kind(client, source, "data-server", "Dataserver")
+    try:
+        status = client.get_dataserver_status(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    connectors = [item.model_dump(mode="json") for item in status.connectors]
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(connectors, context)
+        return
+    console.print(dataserver_connectors_table(connectors))
+
+
+def _dataserver_transition(ctx: typer.Context, source: str, action: str) -> None:
+    client = _client()
+    source_uid = _resolve_kind(client, source, "data-server", "Dataserver")
+    try:
+        status = getattr(client, f"{action}_dataserver")(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(status.model_dump(mode="json"), context)
+        return
+    console.print(dataserver_status_table(status.model_dump(mode="json")))
+
+
+@dataservers_app.command(name="drain")
+@contents_command
+def dataservers_drain(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """Stop routing new queries to the gateway; the ones running finish."""
+    _dataserver_transition(ctx, source, "drain")
+
+
+@dataservers_app.command(name="resume")
+@contents_command
+def dataservers_resume(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """Route to the gateway again after a drain."""
+    _dataserver_transition(ctx, source, "resume")
+
+
+@dataservers_app.command(name="revoke")
+@contents_command
+def dataservers_revoke(
+    ctx: typer.Context,
+    source: str = typer.Argument(...),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """
+    Refuse the gateway's identity from now on.
+
+    The registration stays, revoked, so what routed through it can still be
+    read; nothing inside the customer's network is touched. A revoked gateway
+    is re-admitted only with a new identity.
+    """
+    if not yes and not typer.confirm(f"Revoke the identity of Dataserver '{source}'?"):
+        raise typer.Exit(1)
+    _dataserver_transition(ctx, source, "revoke")
+
+
+datasources_app = typer.Typer(
+    name="datasources", help="Connect, test and query Datasources."
+)
+app.add_typer(datasources_app)
+
+
+def _resolve_datasource(client: DatalayerClient, reference: str) -> str:
+    return _resolve_kind(client, reference, "datasource", "Datasource")
+
+
+@datasources_app.command(name="list")
+@contents_command
+def datasources_list(ctx: typer.Context) -> None:
+    page = _client().list_content_sources(kind="datasource", limit=200)
+    _render(page.model_dump(mode="json"), _context(ctx))
+
+
+@datasources_app.command(name="create")
+@contents_command
+def datasources_create(
+    ctx: typer.Context,
+    name: str = typer.Argument(...),
+    connector_type: str = typer.Option(
+        ..., "--connector-type", "--connector", help="athena, bigquery or sql."
+    ),
+    endpoint: str | None = typer.Option(None, "--endpoint"),
+    database: str | None = typer.Option(
+        None, "--database", "--project", help="The database, or the project for BigQuery."
+    ),
+    credential_uid: str | None = typer.Option(
+        None, "--credential", help="The Secret holding the connection credential."
+    ),
+    dataserver: str | None = typer.Option(
+        None, "--dataserver", help="Route through this Dataserver, by uid or name."
+    ),
+    allow: str = typer.Option(
+        "select,describe,list", "--allow", help="Allowed operations, comma separated."
+    ),
+    row_limit: int | None = typer.Option(None, "--row-limit", min=1),
+    max_bytes: int | None = typer.Option(None, "--max-bytes", min=1),
+    max_seconds: int | None = typer.Option(None, "--max-seconds", min=1),
+    description: str = typer.Option("", "--description"),
+    space_uid: str | None = typer.Option(None, "--space"),
+) -> None:
+    """
+    Connect a database, warehouse or query service.
+
+    The credential is a Secret reference; its value stays in Vault and is
+    resolved by Contents for each query. A source routed through a
+    Dataserver needs none here, because the gateway holds the credential in
+    the network the database lives in.
+    """
+    from datalayer_core.models.contents.datasources import DATASOURCE_OPERATIONS
+
+    if connector_type not in {"athena", "bigquery", "sql"}:
+        raise ContentsCommandError("--connector-type must be athena, bigquery or sql")
+    operations = [value.strip() for value in allow.split(",") if value.strip()]
+    unknown = sorted(set(operations) - set(DATASOURCE_OPERATIONS))
+    if unknown:
+        raise ContentsCommandError(
+            f"--allow accepts {', '.join(DATASOURCE_OPERATIONS)}; not {', '.join(unknown)}"
+        )
+    if not credential_uid and not dataserver:
+        raise ContentsCommandError(
+            "a Datasource needs --credential, unless --dataserver routes it "
+            "through a gateway that holds the credential"
+        )
+    client = _client()
+    data_server_uid = (
+        _resolve_kind(client, dataserver, "data-server", "Dataserver") if dataserver else None
+    )
+    try:
+        created = client.create_content_source(
+            {
+                "name": name,
+                "description": description or None,
+                "kind": "datasource",
+                "capabilities": ["query"],
+                "credential_uid": credential_uid,
+                "space_uid": space_uid,
+                "configuration": {
+                    "kind": "datasource",
+                    "connector_type": connector_type,
+                    "endpoint": endpoint,
+                    "database_or_project": database,
+                    "credential_uid": credential_uid,
+                    "network_route": "dataserver" if data_server_uid else "direct",
+                    "data_server_uid": data_server_uid,
+                    "allowed_operations": operations,
+                    "default_row_limit": row_limit,
+                    "max_bytes": max_bytes,
+                    "max_seconds": max_seconds,
+                },
+            },
+            idempotency_key=f"cli-datasource-{uuid4()}",
+        )
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(created.value.model_dump(mode="json"), _context(ctx))
+
+
+@datasources_app.command(name="test")
+@contents_command
+def datasources_test(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """Does the database answer through this source, right now?"""
+    client = _client()
+    source_uid = _resolve_datasource(client, source)
+    try:
+        verdict = client.test_datasource(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(verdict.model_dump(mode="json"), context)
+    else:
+        answer = "[green]reachable[/green]" if verdict.ok else "[red]not reachable[/red]"
+        console.print(
+            f"{answer} through {verdict.connector_type or 'the connector'}"
+            + (f": {verdict.detail}" if verdict.detail else "")
+        )
+    if not verdict.ok:
+        raise typer.Exit(1)
+
+
+@datasources_app.command(name="schema")
+@contents_command
+def datasources_schema(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """The tables and columns the source exposes."""
+    client = _client()
+    source_uid = _resolve_datasource(client, source)
+    try:
+        schema = client.discover_datasource_schema(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(schema.model_dump(mode="json"), context)
+        return
+    console.print(datasource_schema_table(schema.model_dump(mode="json")))
+
+
+class QueryFormat(StrEnum):
+    TABLE = "table"
+    ARROW = "arrow"
+    PARQUET = "parquet"
+
+
+def _write_batches(batches: Iterator[Any], destination: Path, format_: QueryFormat) -> int:
+    """Write a stream of record batches to a file, batch by batch. Returns the rows."""
+    import pyarrow.ipc
+    import pyarrow.parquet
+
+    rows = 0
+    writer: Any = None
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        for batch in batches:
+            if writer is None:
+                writer = (
+                    pyarrow.parquet.ParquetWriter(str(destination), batch.schema)
+                    if format_ is QueryFormat.PARQUET
+                    else pyarrow.ipc.new_stream(str(destination), batch.schema)
+                )
+            writer.write_batch(batch) if format_ is QueryFormat.PARQUET else writer.write(batch)
+            rows += batch.num_rows
+    finally:
+        if writer is not None:
+            writer.close()
+    if writer is None:
+        # An empty result is still a result: a file with no rows, not no file.
+        destination.write_bytes(b"")
+    return rows
+
+
+@datasources_app.command(name="query")
+@contents_command
+def datasources_query(
+    ctx: typer.Context,
+    source: str = typer.Argument(..., help="The Datasource, by uid or name."),
+    sql: str | None = typer.Argument(None, help="The statement; or use --sql-file."),
+    sql_file: Path | None = typer.Option(
+        None, "--sql-file", exists=True, dir_okay=False, help="A file holding the statement."
+    ),
+    row_limit: int | None = typer.Option(None, "--row-limit", min=1),
+    max_bytes: int | None = typer.Option(None, "--max-bytes", min=1),
+    max_seconds: int | None = typer.Option(None, "--max-seconds", min=1),
+    format_: QueryFormat = typer.Option(
+        QueryFormat.TABLE, "--format", case_sensitive=False,
+        help="table prints the first rows; arrow and parquet write --output.",
+    ),
+    output: Path | None = typer.Option(
+        None, "--output", help="The file an arrow or parquet result is written to."
+    ),
+    wait: bool = typer.Option(
+        False, "--wait", help="Poll until the query finishes and read its result."
+    ),
+    timeout: float = typer.Option(600.0, "--timeout", help="Seconds to wait."),
+    rows: int = typer.Option(10, "--rows", min=1, help="Rows a table shows."),
+) -> None:
+    """
+    Run a statement against a Datasource.
+
+    Without --wait the command prints the query job — its uid is what to
+    poll, cancel or save with. With --wait, or when a file format is asked
+    for, it waits and reads the result batch by batch: a table of the first
+    rows, or an Arrow IPC or Parquet file written as the batches arrive.
+    """
+    from datalayer_core.contents import Datasource, QueryFailed
+
+    if (sql is None) == (sql_file is None):
+        raise ContentsCommandError("Give the statement as an argument or with --sql-file, not both")
+    statement = sql_file.read_text() if sql_file is not None else str(sql)
+    if format_ is not QueryFormat.TABLE and output is None:
+        raise ContentsCommandError(f"--format {format_} needs --output FILE")
+    if output is not None and format_ is QueryFormat.TABLE:
+        raise ContentsCommandError("--output goes with --format arrow or --format parquet")
+    client = _client()
+    source_uid = _resolve_datasource(client, source)
+    datasource = Datasource(client, source_uid)
+    context = _context(ctx)
+    try:
+        query = datasource.query(
+            statement, row_limit=row_limit, max_bytes=max_bytes, max_seconds=max_seconds
+        )
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    if not wait and format_ is QueryFormat.TABLE:
+        _render(query.record.model_dump(mode="json"), context)
+        if context.output is OutputFormat.TABLE:
+            console.print(
+                f"[dim]Follow it: datalayer contents datasources query-status {query.uid}; "
+                f"stop it: datalayer contents datasources cancel {query.uid}[/dim]"
+            )
+        return
+    try:
+        with contents_progress(f"Running query {query.uid}"):
+            query.wait(timeout=timeout)
+        if format_ is QueryFormat.TABLE:
+            if context.output is not OutputFormat.TABLE:
+                _render(query.record.model_dump(mode="json"), context)
+                return
+            display_arrow_batches(query.to_arrow(), limit=rows, console=console)
+            _render(query.record.model_dump(mode="json"), context)
+            return
+        assert output is not None
+        with contents_progress(f"Writing {output}"):
+            written = _write_batches(query.to_arrow(), output, format_)
+    except QueryFailed as error:
+        _render(error.query.model_dump(mode="json"), context)
+        raise typer.Exit(1)
+    except TimeoutError as error:
+        raise ContentsCommandError(str(error)) from error
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(
+        {**query.record.model_dump(mode="json"), "output": str(output), "written_rows": written},
+        context,
+    )
+
+
+@datasources_app.command(name="query-status")
+@contents_command
+def datasources_query_status(ctx: typer.Context, query_uid: str = typer.Argument(...)) -> None:
+    """One query job, as the service last saw it."""
+    try:
+        query = _client().get_datasource_query(query_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(query.model_dump(mode="json"), _context(ctx))
+
+
+@datasources_app.command(name="queries")
+@contents_command
+def datasources_queries(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """The queries run against a source, newest first."""
+    client = _client()
+    source_uid = _resolve_datasource(client, source)
+    try:
+        page = client.list_datasource_queries(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render([item.model_dump(mode="json") for item in page.items], _context(ctx))
+
+
+@datasources_app.command(name="cancel")
+@contents_command
+def datasources_cancel(ctx: typer.Context, query_uid: str = typer.Argument(...)) -> None:
+    """Stop a running query; the cancellation reaches the connector."""
+    try:
+        query = _client().cancel_datasource_query(query_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(query.model_dump(mode="json"), _context(ctx))
+
+
+@datasources_app.command(name="save")
+@contents_command
+def datasources_save(
+    ctx: typer.Context,
+    query_uid: str = typer.Argument(..., help="A finished query."),
+    dataset: str = typer.Argument(..., help="The Dataset, by uid or name."),
+    path: str = typer.Argument(..., help="The path inside the Dataset, such as results/2026-08.arrow"),
+) -> None:
+    """
+    Keep a query result as a verified revision of a Dataset.
+
+    The service writes the bytes into the Dataset; nothing is downloaded to
+    be uploaded again.
+    """
+    client = _client()
+    dataset_uid = _resolve_kind(client, dataset, "dataset", "Dataset")
+    try:
+        revision = client.save_datasource_query(query_uid, dataset_uid=dataset_uid, path=path)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(revision.model_dump(mode="json"), _context(ctx))
+
+
 mcp_app = typer.Typer(name="mcp", help="Connect and inspect MCP servers.")
 app.add_typer(mcp_app)
 
@@ -1040,6 +1552,292 @@ def mcp_connect(
     except Exception as error:
         raise ContentsCommandError(str(error)) from error
     _render(created.value.model_dump(mode="json"), _context(ctx))
+
+
+@mcp_app.command(name="test")
+@contents_command
+def mcp_test(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """Does the server answer through this source, right now?"""
+    client = _client()
+    source_uid = _resolve_mcp_source(client, source)
+    try:
+        health = client.test_mcp_source(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(health.model_dump(mode="json"), context)
+    else:
+        verdict = "[green]reachable[/green]" if health.ok else "[red]not reachable[/red]"
+        console.print(
+            f"{verdict} over {health.transport or 'the configured transport'}"
+            + (f": {health.detail}" if health.detail else "")
+        )
+    if not health.ok:
+        raise typer.Exit(1)
+
+
+@mcp_app.command(name="tools")
+@contents_command
+def mcp_tools(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
+    """List the tools and resources the server behind a source offers."""
+    client = _client()
+    source_uid = _resolve_mcp_source(client, source)
+    try:
+        discovered = client.discover_mcp_tools(source_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(discovered.model_dump(mode="json"), context)
+        return
+    table = Table(title="Tools")
+    table.add_column("Tool", style="bold")
+    table.add_column("Description")
+    table.add_column("Arguments")
+    for tool in discovered.tools:
+        properties = tool.input_schema.get("properties") or {}
+        required = set(tool.input_schema.get("required") or [])
+        arguments = ", ".join(
+            f"{name}{'' if name in required else '?'}" for name in properties
+        )
+        table.add_row(tool.name, tool.description or "", arguments or "-")
+    console.print(table)
+    if discovered.resources:
+        resources = Table(title="Resources")
+        resources.add_column("URI", style="bold")
+        resources.add_column("Name")
+        resources.add_column("Media type")
+        for resource in discovered.resources:
+            resources.add_row(
+                resource.uri, resource.name or "", resource.media_type or ""
+            )
+        console.print(resources)
+
+
+def _parse_arguments(
+    arguments_file: Path | None, pairs: list[str]
+) -> dict[str, Any]:
+    """
+    The tool's arguments, from a JSON file and/or ``key=value`` flags.
+
+    A flag's value is read as JSON when it parses as such — ``count=5`` is a
+    number, ``bbox=[1,2,3,4]`` a list — and as a string otherwise, so a
+    keyword needs no quoting and a structure needs no file.
+    """
+    arguments: dict[str, Any] = {}
+    if arguments_file is not None:
+        try:
+            loaded = json.loads(arguments_file.read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            raise ContentsCommandError(
+                f"Could not read arguments from {arguments_file}: {error}"
+            ) from error
+        if not isinstance(loaded, dict):
+            raise ContentsCommandError(
+                f"{arguments_file} must hold a JSON object of arguments"
+            )
+        arguments.update(loaded)
+    for pair in pairs:
+        key, separator, raw = pair.partition("=")
+        if not separator or not key.strip():
+            raise ContentsCommandError(f"--arg expects key=value, got '{pair}'")
+        try:
+            value: Any = json.loads(raw)
+        except json.JSONDecodeError:
+            value = raw
+        arguments[key.strip()] = value
+    return arguments
+
+
+def _report_call(call: Any, context: ContentsCLIContext) -> None:
+    """One call, as the terminal should see it: status, then what to do."""
+    if context.output is not OutputFormat.TABLE:
+        _render(call.model_dump(mode="json"), context)
+        return
+    colors = {
+        "succeeded": "green",
+        "failed": "red",
+        "denied": "red",
+        "refused": "red",
+        "pending-approval": "yellow",
+    }
+    color = colors.get(call.status, "cyan")
+    console.print(
+        f"Call [bold]{call.uid}[/bold] of {call.tool}: [{color}]{call.status}[/{color}]"
+    )
+    if call.status == "pending-approval" and call.approval_uid:
+        console.print(
+            f"[yellow]Approval {call.approval_uid} is pending:[/yellow] "
+            f"datalayer contents mcp approvals approve {call.approval_uid}"
+        )
+    if call.error:
+        console.print(f"[red]{call.error.code}: {call.error.message}[/red]")
+    artifacts = call_artifacts(call)
+    if call.result is not None:
+        for artifact in artifacts:
+            handle = (
+                f"Transfer {artifact.transfer_uid}"
+                if artifact.transfer_uid
+                else f"object {artifact.object_uid}"
+                if artifact.object_uid
+                else artifact.url or "inline"
+            )
+            console.print(f"  {artifact.name}: {handle}")
+        if call.result.content is not None and not artifacts:
+            console.print(json.dumps(call.result.content, indent=2))
+    transfer_uids = call_transfer_uids(call)
+    if transfer_uids:
+        console.print(
+            "Transfers: " + ", ".join(transfer_uids)
+            + "  (datalayer contents transfer status <uid>)"
+        )
+
+
+@mcp_app.command(name="call")
+@contents_command
+def mcp_call(
+    ctx: typer.Context,
+    source: str = typer.Argument(...),
+    tool: str = typer.Argument(...),
+    arguments_file: Path | None = typer.Option(
+        None,
+        "--arguments-file",
+        exists=True,
+        dir_okay=False,
+        help="A JSON object of arguments.",
+    ),
+    arg: list[str] = typer.Option(
+        [], "--arg", help="One argument as key=value; repeatable."
+    ),
+    destination: str | None = typer.Option(
+        None,
+        "--destination",
+        help="Where an acquisition lands, as a Contents URI (home-folder:///path, dataset://uid/path).",
+    ),
+    wait: bool = typer.Option(
+        False, "--wait", help="Poll until the call finishes, approval included."
+    ),
+    timeout: float = typer.Option(600.0, "--timeout", help="Seconds to wait."),
+) -> None:
+    """
+    Call one tool through a session on the source.
+
+    The command prints the call's status. Under an explicit approval policy
+    that is `pending-approval` with the approval uid to decide; with `--wait`
+    it keeps polling until the decision lands and the call finishes. A bulk
+    acquisition never comes back as bytes: the command prints the Transfer
+    uid(s) behind the artifacts.
+    """
+    from datalayer_core.contents import McpSource
+
+    client = _client()
+    source_uid = _resolve_mcp_source(client, source)
+    arguments = _parse_arguments(arguments_file, arg)
+    mcp_source = McpSource(client, source_uid, output=error_console.file)
+    try:
+        call = mcp_source.call(
+            tool, destination=destination, wait=wait, timeout=timeout, **arguments
+        )
+    except TimeoutError as error:
+        raise ContentsCommandError(str(error)) from error
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _report_call(call, _context(ctx))
+    if call.status in {"failed", "denied", "refused"}:
+        raise typer.Exit(1)
+
+
+mcp_approvals_app = typer.Typer(
+    name="approvals", help="Decide the tool calls that wait on you."
+)
+mcp_app.add_typer(mcp_approvals_app)
+
+
+@mcp_approvals_app.command(name="list")
+@contents_command
+def mcp_approvals_list(
+    ctx: typer.Context,
+    status: str = typer.Option("pending", "--status", help="pending, approved, rejected, expired or consumed."),
+    source: str | None = typer.Option(None, "--source", help="Only one MCP source."),
+) -> None:
+    client = _client()
+    source_uid = _resolve_mcp_source(client, source) if source else None
+    try:
+        page = client.list_mcp_approvals(status=status)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    if source_uid is not None:
+        # The service filters on status alone; the source is narrowed here.
+        page = McpApprovalList(
+            items=[item for item in page.items if item.source_uid == source_uid]
+        )
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(page.model_dump(mode="json"), context)
+        return
+    if not page.items:
+        console.print(f"No {status} approval.")
+        return
+    # One block per approval rather than a table: a uid, a tool name and a
+    # destination URI do not survive being wrapped at 80 columns, and the
+    # reader needs each of them whole to type it back.
+    console.print(f"[bold]{status.capitalize()} approvals[/bold] ({len(page.items)})")
+    for approval in page.items:
+        lines = [
+            f"[bold]{approval.uid}[/bold]  {approval.tool}",
+            f"  arguments:   {json.dumps(approval.arguments_redacted, sort_keys=True)}",
+        ]
+        if approval.destination_uri:
+            lines.append(f"  destination: {approval.destination_uri}")
+        lines.append(f"  source:      {approval.source_uid}")
+        if approval.expires_at:
+            lines.append(f"  expires:     {approval.expires_at}")
+        if approval.status == "pending":
+            lines.append(
+                f"  decide:      datalayer contents mcp approvals approve|reject {approval.uid}"
+            )
+        for line in lines:
+            console.print(line, soft_wrap=True)
+
+
+@mcp_approvals_app.command(name="approve")
+@contents_command
+def mcp_approvals_approve(
+    ctx: typer.Context,
+    approval_uid: str = typer.Argument(...),
+    note: str | None = typer.Option(None, "--note"),
+) -> None:
+    try:
+        decided = _client().approve_mcp_approval(approval_uid, note=note)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(decided.model_dump(mode="json"), _context(ctx))
+
+
+@mcp_approvals_app.command(name="reject")
+@contents_command
+def mcp_approvals_reject(
+    ctx: typer.Context,
+    approval_uid: str = typer.Argument(...),
+    note: str | None = typer.Option(None, "--note"),
+) -> None:
+    try:
+        decided = _client().reject_mcp_approval(approval_uid, note=note)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(decided.model_dump(mode="json"), _context(ctx))
+
+
+def _resolve_mcp_source(client: DatalayerClient, reference: str) -> str:
+    """The uid of an MCP source named or identified by ``reference``."""
+    resolved = _resolve_source(client, reference)
+    kind = getattr(resolved.value.source.kind, "value", resolved.value.source.kind)
+    if kind != "mcp":
+        raise ContentsCommandError(
+            f"'{reference}' is a {kind} source, not an MCP server"
+        )
+    return str(resolved.value.source.uid)
 
 
 environment_app = typer.Typer(
@@ -1183,7 +1981,7 @@ def sharing_grant(
         for grant in (sharing.grants or [])
         if not (
             grant.principal_uid == principal_uid
-            and grant.principal_kind.value == principal_kind
+            and grant.principal_kind == principal_kind
         )
     ]
     grants.append(
@@ -1220,7 +2018,7 @@ def sharing_revoke(
         for grant in (sharing.grants or [])
         if not (
             grant.principal_uid == principal_uid
-            and grant.principal_kind.value == principal_kind
+            and grant.principal_kind == principal_kind
         )
     ]
     if len(grants) == len(sharing.grants or []):

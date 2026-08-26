@@ -47,6 +47,60 @@ export interface AttachmentStatusUpdate {
   status: "ready" | "degraded" | "failed" | "revoked";
 }
 
+export interface BridgeCreate {
+  exclusions?: Array<string>;
+  localRootFingerprint: string;
+}
+
+export interface BridgeHeartbeat {
+  bridge: BridgeSession;
+  clientToken: string;
+}
+
+export interface BridgeList {
+  items: Array<BridgeSession>;
+}
+
+export interface BridgeMountGrant {
+  bridgeUid: string;
+  expiresAt: string;
+  mode: "ro" | "rw";
+  mountPath: string;
+  mountToken: string;
+  relayUrl: string;
+  sessionKey: string;
+}
+
+export interface BridgeOpened {
+  bridge: BridgeSession;
+  clientToken: string;
+  relayUrl: string;
+  sessionKey: string;
+}
+
+export interface BridgeSession {
+  attachmentUid: string;
+  clientSeenAt?: string | null;
+  createdAt: string;
+  exclusions?: Array<string>;
+  expiresAt: string;
+  localRootFingerprint: string;
+  mode: "ro" | "rw";
+  mountPath: string;
+  mountSeenAt?: string | null;
+  ownerUid: string;
+  revokedAt?: string | null;
+  sandboxUid: string;
+  state: "pending" | "connected" | "reconnecting" | "disconnected" | "revoked" | "expired";
+  uid: string;
+  updatedAt: string;
+}
+
+export interface BridgeStateReport {
+  role: "client" | "mount";
+  state: "connected" | "reconnecting" | "disconnected";
+}
+
 export interface CallerResponse {
   roles?: Array<string>;
   uid?: string | number | null;
@@ -54,9 +108,48 @@ export interface CallerResponse {
 
 export type Capability = "browse" | "transfer" | "mount" | "query" | "materialize" | "sync" | "local-bridge-mount";
 
+export interface CapabilityTicket {
+  expiresAt: string;
+  flightEndpoint?: string | null;
+  httpsFallbackUrl: string;
+  ticket: string;
+}
+
+export interface CapabilityTicketClaims {
+  actorUid: string;
+  exp: number;
+  jti: string;
+  limits: QueryLimits;
+  operation: "get";
+  policyVersion: string;
+  queryUid: string;
+  sandboxUid?: string | null;
+  sourceUid: string;
+}
+
+export interface CapabilityTicketMint {
+  expiresIn?: number | null;
+  queryUid: string;
+  sandboxUid: string;
+}
+
+export interface CapabilityTicketRequest {
+  expiresIn?: number | null;
+  sandboxUid?: string | null;
+}
+
 export interface CatalogSource {
   permissions: EffectivePermissions;
   source: ContentSource;
+}
+
+export interface CertificateAuthorityView {
+  caCertificate: string;
+  ephemeral: boolean;
+}
+
+export interface CertificateSigningRequest {
+  csr: string;
 }
 
 export interface CloudObjectList {
@@ -222,12 +315,92 @@ export interface CredentialRotation {
 }
 
 export interface DataServerConfiguration {
-  connectors?: Array<string>;
+  connectors?: Array<DataServerConnector>;
+  identityExpiresAt?: string | null;
+  identitySerial?: string | null;
   kind: "data-server";
   lastHeartbeatAt?: string | null;
+  leaseSeconds?: number | null;
   mtlsIssuer: string;
   policyVersion: string;
+  previousIdentitySerial?: string | null;
   registrationIdentity: string;
+  state?: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+  version?: string | null;
+}
+
+export interface DataServerConnectivity {
+  detail: string;
+  flight: FlightConnectivity;
+  httpsFallback: HttpsConnectivity;
+  ok: boolean;
+}
+
+export interface DataServerConnector {
+  connectorType: "athena" | "bigquery" | "sql";
+  operations?: Array<"select" | "describe" | "list">;
+  policyVersion: string;
+}
+
+export interface DataServerHeartbeat {
+  lastHeartbeatAt: string;
+  leaseSeconds: number;
+  state: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+}
+
+export interface DataServerJob {
+  connectorType: "athena" | "bigquery" | "sql";
+  credentialRef?: string | null;
+  limits: QueryLimits;
+  policyVersion: string;
+  queryUid: string;
+  sql: string;
+}
+
+export interface DataServerJobFailure {
+  code: string;
+  message: string;
+}
+
+export interface DataServerJobs {
+  cancel: Array<string>;
+  jobs: Array<DataServerJob>;
+}
+
+export interface DataServerRegister {
+  connectors?: Array<DataServerConnector>;
+  registrationIdentity: string;
+  version: string;
+}
+
+export interface DataServerRegistered {
+  jobsUrl: string;
+  registration: DataServerRegistration;
+}
+
+export interface DataServerRegistration {
+  connectors: Array<DataServerConnector>;
+  identitySerial?: string | null;
+  identitySource: "certificate" | "body";
+  lastHeartbeatAt?: string | null;
+  leaseSeconds: number;
+  policyVersion: string;
+  registeredAt: string;
+  registrationIdentity: string;
+  sourceUid: string;
+  state: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+  uid: string;
+  version?: string | null;
+}
+
+export interface DataServerStatus {
+  connectors: Array<DataServerConnector>;
+  identityExpiresAt?: string | null;
+  identitySerial?: string | null;
+  lastHeartbeatAt?: string | null;
+  leaseSeconds: number;
+  queueDepth: number;
+  state: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
 }
 
 export interface DatasetConfiguration {
@@ -281,7 +454,7 @@ export interface DatasetRevision {
 
 export interface DatasetRevisionCreate {
   files: Array<DatasetRevisionFileCreate>;
-  originKind: "upload" | "home-folder" | "sandbox-result" | "cloud-storage" | "volume";
+  originKind: "upload" | "home-folder" | "sandbox-result" | "cloud-storage" | "volume" | "acquisition";
 }
 
 export interface DatasetRevisionFile {
@@ -306,16 +479,84 @@ export interface DatasetRevisionList {
   items: Array<DatasetRevision>;
 }
 
+export interface DatasourceCapabilities {
+  flight: boolean;
+  httpsFallback?: true;
+  maxBytes: number;
+  maxSeconds: number;
+  operations: Array<"select" | "describe" | "list">;
+  rowLimit: number;
+  streaming?: true;
+}
+
+export interface DatasourceColumn {
+  name: string;
+  type: string;
+}
+
 export interface DatasourceConfiguration {
-  allowedOperations?: Array<string>;
-  connectorType: string;
+  allowedOperations?: Array<"select" | "describe" | "list">;
+  connectorType: "athena" | "bigquery" | "sql";
   credentialUid?: string | null;
   dataServerUid?: string | null;
   databaseOrProject?: string | null;
-  defaultRowLimit?: number | null;
+  defaultRowLimit?: number;
   endpoint?: string | null;
   kind: "datasource";
-  networkRoute?: string | null;
+  maxBytes?: number;
+  maxSeconds?: number;
+  networkRoute?: "direct" | "dataserver";
+}
+
+export interface DatasourceQuery {
+  actorUid: string;
+  bytes?: number | null;
+  createdAt: string;
+  dataServerUid?: string | null;
+  error?: QueryError | null;
+  finishedAt?: string | null;
+  maxBytes: number;
+  maxSeconds: number;
+  operationUid?: string | null;
+  policyVersion: string;
+  result?: QueryResultReference | null;
+  rowLimit: number;
+  rows?: number | null;
+  sandboxUid?: string | null;
+  sourceUid: string;
+  sqlHash: string;
+  startedAt?: string | null;
+  status: "pending" | "running" | "succeeded" | "failed" | "cancelled";
+  uid: string;
+}
+
+export interface DatasourceQueryCreate {
+  maxBytes?: number | null;
+  maxSeconds?: number | null;
+  rowLimit?: number | null;
+  sandboxUid?: string | null;
+  sql: string;
+}
+
+export interface DatasourceQueryList {
+  items: Array<DatasourceQuery>;
+  nextCursor?: string | null;
+}
+
+export interface DatasourceSchema {
+  discoveredAt: string;
+  tables: Array<DatasourceTable>;
+}
+
+export interface DatasourceTable {
+  columns?: Array<DatasourceColumn>;
+  name: string;
+}
+
+export interface DatasourceTest {
+  connectorType: string;
+  detail: string;
+  ok: boolean;
 }
 
 export interface DeadLetterList {
@@ -362,6 +603,12 @@ export interface FilesConfiguration {
   versioningPolicy: string;
 }
 
+export interface FlightConnectivity {
+  detail: string;
+  endpoint?: string | null;
+  reachable: boolean;
+}
+
 export interface Grant {
   accessLevel: "view" | "update" | "execute";
   principalKind: "user" | "team" | "organization";
@@ -403,6 +650,19 @@ export interface HomeFolderQuota {
   usedObjects: number;
 }
 
+export interface HttpsConnectivity {
+  detail: string;
+  reachable: boolean;
+  url?: string | null;
+}
+
+export interface IssuedIdentity {
+  caCertificate: string;
+  certificate: string;
+  expiresAt: string;
+  serial: string;
+}
+
 export interface ManifestEntry {
   blocks?: Array<string>;
   checksum: string;
@@ -417,17 +677,148 @@ export interface ManifestPayload {
   tombstones?: Record<string, string>;
 }
 
+export interface McpApproval {
+  actorUid: string;
+  argumentsHash: string;
+  argumentsRedacted: Record<string, unknown>;
+  callUid: string;
+  createdAt: string;
+  decidedAt?: string | null;
+  decidedBy?: string | null;
+  destinationUri?: string | null;
+  expiresAt: string;
+  note?: string | null;
+  sessionUid: string;
+  sourceUid: string;
+  status: "pending" | "approved" | "rejected" | "expired" | "consumed";
+  tool: string;
+  uid: string;
+}
+
+export interface McpApprovalDecision {
+  note?: string | null;
+}
+
+export interface McpApprovalList {
+  items: Array<McpApproval>;
+}
+
+export interface McpArtifactView {
+  destinationUri?: string | null;
+  mediaType?: string | null;
+  name: string;
+  objectUid?: string | null;
+  operationUid?: string | null;
+  size?: number | null;
+  sourceUri?: string | null;
+  transferUid?: string | null;
+  url?: string | null;
+  versionUid?: string | null;
+}
+
+export interface McpCall {
+  approvalUid?: string | null;
+  argumentsHash: string;
+  argumentsRedacted: Record<string, unknown>;
+  completedAt?: string | null;
+  createdAt: string;
+  destinationUri?: string | null;
+  error?: McpCallError | null;
+  operationUid?: string | null;
+  result?: McpCallResult | null;
+  sessionUid: string;
+  status: "pending-approval" | "approved" | "denied" | "running" | "succeeded" | "failed" | "refused";
+  tool: string;
+  uid: string;
+  updatedAt: string;
+}
+
+export interface McpCallCreate {
+  arguments?: Record<string, unknown>;
+  destinationUri?: string | null;
+  tool: string;
+}
+
+export interface McpCallError {
+  code: string;
+  message: string;
+}
+
+export interface McpCallList {
+  items: Array<McpCall>;
+}
+
+export interface McpCallResult {
+  artifacts?: Array<McpArtifactView>;
+  content?: Array<Record<string, unknown>>;
+}
+
 export interface McpConfiguration {
+  allowedDestinations?: Array<string>;
   allowedDomains?: Array<string>;
+  allowedMediaTypes?: Array<string>;
   allowedResources?: Array<string>;
   allowedTools?: Array<string>;
-  approvalPolicy: string;
+  approvalPolicy: "explicit" | "auto-allowlisted" | "never";
   credentialUid?: string | null;
-  destinationPolicy: string;
+  destinationPolicy: "allowlist" | "home-folder-only" | "dataset-only";
   endpoint?: string | null;
   kind: "mcp";
   managedServerUid?: string | null;
+  maxResultBytes?: number;
   transport: "stdio" | "streamable-http" | "sse";
+}
+
+export interface McpHealth {
+  detail: string;
+  ok: boolean;
+  transport: string;
+}
+
+export interface McpResourceView {
+  mediaType?: string | null;
+  name?: string | null;
+  uri: string;
+}
+
+export interface McpSession {
+  actorUid: string;
+  allowedDestinations: Array<string>;
+  allowedDomains: Array<string>;
+  allowedResources: Array<string>;
+  allowedTools: Array<string>;
+  approvalPolicy: "explicit" | "auto-allowlisted" | "never";
+  createdAt: string;
+  destinationPolicy: "allowlist" | "home-folder-only" | "dataset-only";
+  expiresAt: string;
+  maxResultBytes: number;
+  sandboxUid?: string | null;
+  sourceUid: string;
+  status: "active" | "revoked" | "expired";
+  uid: string;
+}
+
+export interface McpSessionCreate {
+  expiresIn?: number | null;
+  sandboxUid?: string | null;
+  sourceUid: string;
+  tools?: Array<string> | null;
+}
+
+export interface McpSessionList {
+  items: Array<McpSession>;
+}
+
+export interface McpToolManifest {
+  discoveredAt: string;
+  resources: Array<McpResourceView>;
+  tools: Array<McpToolView>;
+}
+
+export interface McpToolView {
+  description?: string | null;
+  inputSchema?: Record<string, unknown>;
+  name: string;
 }
 
 export interface ObjectList {
@@ -476,6 +867,34 @@ export interface PlanAction {
   versionUid?: string | null;
 }
 
+export interface PreparedAttachment {
+  accessMode?: "mount" | "python" | "object-client" | null;
+  bridge?: BridgeMountGrant | null;
+  capabilities?: Array<Capability>;
+  cleanupPolicy?: "revoke" | "remove-materialization" | "retain-source";
+  createdAt: string;
+  delivery: "mount" | "local-bridge" | "materialize" | "client" | "environment";
+  error?: AttachmentError | null;
+  expiresAt?: string | null;
+  fallbackReason?: string | null;
+  filesystemPrimitives?: Array<"list" | "stat" | "read" | "write" | "mkdir" | "remove" | "upload" | "download">;
+  lastSeenAt?: string | null;
+  limits?: AttachmentLimits;
+  mode: "ro" | "rw";
+  mountPath?: string | null;
+  providerResourceId?: string | null;
+  readyAt?: string | null;
+  required?: boolean;
+  revisionUid?: string | null;
+  revokedAt?: string | null;
+  sandboxProvider: string;
+  sandboxUid: string;
+  sourceUid: string;
+  status: AttachmentStatus;
+  tokenAudience?: string | null;
+  uid: string;
+}
+
 export interface PresignedAccess {
   expiresIn: number;
   operation: "get" | "put";
@@ -487,6 +906,29 @@ export type PrincipalKind = "user" | "team" | "organization";
 
 export interface QuarantineRequest {
   reason: string;
+}
+
+export interface QueryError {
+  code: string;
+  message: string;
+}
+
+export interface QueryLimits {
+  bytes: number;
+  rows: number;
+  seconds: number;
+}
+
+export interface QueryResultReference {
+  checksum: string;
+  mediaType?: string;
+  objectUid: string;
+  versionUid: string;
+}
+
+export interface QuerySave {
+  datasetUid: string;
+  path: string;
 }
 
 export interface ReadinessResponse {
@@ -537,6 +979,23 @@ export interface SpaceRelease {
 }
 
 export type StableErrorCode = "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "QUOTA_EXCEEDED" | "CAPABILITY_UNAVAILABLE" | "CHECKSUM_MISMATCH" | "PROVIDER_UNAVAILABLE" | "CAPABILITY_REVOKED" | "OPERATION_CANCELLED" | "INTERNAL_ERROR";
+
+export interface SyncBlockView {
+  checksum: string;
+  index: number;
+  path: string;
+  sessionUid: string;
+  size: number;
+}
+
+export interface SyncCompose {
+  baseVersionUid: string;
+  blocks?: Array<string>;
+  checksum: string;
+  mediaType?: string;
+  path: string;
+  size: number;
+}
 
 export interface SyncConflictList {
   items: Array<SyncConflictView>;
@@ -609,6 +1068,23 @@ export interface SyncSessionView {
   updatedAt: string;
   uploadedFiles: number;
   watch: boolean;
+}
+
+export interface TicketResult {
+  checksum: string;
+  size: number;
+  storageKey: string;
+}
+
+export interface TicketValidation {
+  ticket: string;
+}
+
+export interface TicketValidationResult {
+  claims?: CapabilityTicketClaims | null;
+  reason?: string | null;
+  result?: TicketResult | null;
+  valid: boolean;
 }
 
 export interface TransferCreate {
