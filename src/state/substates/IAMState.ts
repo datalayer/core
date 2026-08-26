@@ -111,7 +111,7 @@ export type IAMState = IIAMState & {
   setExternalToken: (externalToken: string) => void;
   setVersion: (version: string) => void;
   /**
-   * Set the {@link token} and the {@link user}.
+   * Set the `token` and the `user`.
    *
    * The user detail will be automatically retrieve
    * to avoid inconsistency.
