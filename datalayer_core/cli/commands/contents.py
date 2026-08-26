@@ -150,7 +150,7 @@ def _resolve_source(client: DatalayerClient, reference: str):
         return client.get_content_source(matches[0].source.uid)
 
 
-def _user_folder_path(uri_or_path: str) -> str:
+def _home_folder_path(uri_or_path: str) -> str:
     prefix = "home-folder:///"
     value = uri_or_path[len(prefix) :] if uri_or_path.startswith(prefix) else uri_or_path
     value = value.lstrip("/")
@@ -208,7 +208,7 @@ def home_folder_list(
     cursor: str | None = typer.Option(None, "--cursor"),
     limit: int = typer.Option(100, "--limit", min=1, max=200),
 ) -> None:
-    page = _client().list_user_folder_objects(
+    page = _client().list_home_folder_objects(
         prefix=prefix, cursor=cursor, limit=limit
     )
     _render(page.model_dump(mode="json"), _context(ctx))
@@ -220,8 +220,8 @@ def home_folder_versions(
     ctx: typer.Context, path: str = typer.Argument(...)
 ) -> None:
     client = _client()
-    object_ = client.stat_user_folder_object(_user_folder_path(path))
-    versions = client.list_user_folder_object_versions(object_.uid)
+    object_ = client.stat_home_folder_object(_home_folder_path(path))
+    versions = client.list_home_folder_object_versions(object_.uid)
     _render(versions.model_dump(mode="json"), _context(ctx))
 
 
@@ -233,8 +233,8 @@ def home_folder_restore(
     version: str = typer.Option(..., "--version"),
 ) -> None:
     client = _client()
-    object_ = client.stat_user_folder_object(_user_folder_path(path))
-    restored = client.restore_user_folder_object(
+    object_ = client.stat_home_folder_object(_home_folder_path(path))
+    restored = client.restore_home_folder_object(
         object_.uid,
         version,
         idempotency_key=f"cli-restore-{uuid4()}",
@@ -250,10 +250,10 @@ def upload_content(
     destination: str = typer.Argument(...),
     overwrite: bool = typer.Option(False, "--overwrite"),
 ) -> None:
-    destination_path = _user_folder_path(destination)
+    destination_path = _home_folder_path(destination)
     try:
         with contents_progress(f"Uploading {local_path.name}"):
-            transfer = _client().upload_user_folder_file(
+            transfer = _client().upload_home_folder_file(
                 local_path,
                 destination_path,
                 idempotency_key=f"cli-upload-{uuid4()}",
@@ -276,7 +276,7 @@ def download_content(
             f"Destination '{local_path}' exists; pass --overwrite to replace it"
         )
     client = _client()
-    object_ = client.stat_user_folder_object(_user_folder_path(source))
+    object_ = client.stat_home_folder_object(_home_folder_path(source))
     local_path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(
         prefix=f".{local_path.name}.", suffix=".part", dir=local_path.parent
@@ -285,7 +285,7 @@ def download_content(
         with os.fdopen(descriptor, "wb") as output, contents_progress(
             f"Downloading {object_.path}"
         ):
-            for chunk in client.iter_user_folder_object(object_.uid):
+            for chunk in client.iter_home_folder_object(object_.uid):
                 output.write(chunk)
         os.replace(temporary_name, local_path)
     except Exception as error:

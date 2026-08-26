@@ -87,7 +87,7 @@ def test_contents_client_preserves_etag_for_conditional_mutation() -> None:
     assert client.calls[1][1]["json"] == {"name": "Changed"}
 
 
-def test_contents_client_resolves_the_server_managed_user_folder() -> None:
+def test_contents_client_resolves_the_server_managed_home_folder() -> None:
     client = Client()
     client.responses = [Response(source_response("User Folder"), '"folder.hash"')]
 
@@ -154,7 +154,7 @@ def test_contents_client_creates_and_reads_attachment_manifest() -> None:
     }
 
 
-def test_contents_client_browses_deletes_and_restores_user_folder_objects() -> None:
+def test_contents_client_browses_deletes_and_restores_home_folder_objects() -> None:
     object_value = {
         "uid": "01OBJECT000000000000000000",
         "source_uid": UID,
@@ -177,11 +177,11 @@ def test_contents_client_browses_deletes_and_restores_user_folder_objects() -> N
         Response(object_value),
     ]
 
-    page = client.list_user_folder_objects(prefix="reports", limit=25)
-    deleted = client.delete_user_folder_object(
+    page = client.list_home_folder_objects(prefix="reports", limit=25)
+    deleted = client.delete_home_folder_object(
         object_value["uid"], idempotency_key="delete-earth"
     )
-    restored = client.restore_user_folder_object(
+    restored = client.restore_home_folder_object(
         object_value["uid"],
         object_value["current_version_uid"],
         idempotency_key="restore-earth",

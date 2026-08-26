@@ -130,21 +130,21 @@ class FakeContents:
         self.sessions[uid]["status"] = "cancelled"
         return self._view(uid)
 
-    def upload_user_folder_file(self, local_path, destination_path, *, idempotency_key, overwrite="reject", **kwargs):
+    def upload_home_folder_file(self, local_path, destination_path, *, idempotency_key, overwrite="reject", **kwargs):
         content = Path(local_path).read_bytes()
         self.files[destination_path] = content
         return SimpleNamespace(uid="T", status="succeeded", expected_size=len(content))
 
-    def stat_user_folder_object(self, path):
+    def stat_home_folder_object(self, path):
         if path not in self.files:
             raise RuntimeError(f"no such object {path}")
         return SimpleNamespace(uid=f"o-{path}", current_version_uid=f"v-{path}", size=len(self.files[path]))
 
-    def delete_user_folder_object(self, object_uid, *, idempotency_key):
+    def delete_home_folder_object(self, object_uid, *, idempotency_key):
         path = object_uid[len("o-"):]
         self.files.pop(path, None)
 
-    def iter_user_folder_object(self, object_uid, *, version_uid=None, byte_range=None, chunk_size=1 << 20):
+    def iter_home_folder_object(self, object_uid, *, version_uid=None, byte_range=None, chunk_size=1 << 20):
         path = object_uid[len("o-"):]
         if not path.startswith("research/"):
             path = f"research/{path}"
@@ -253,7 +253,7 @@ def test_a_failed_action_is_reported_not_hidden(tmp_path: Path) -> None:
     def refuse(*args, **kwargs):
         raise RuntimeError("quota exceeded")
 
-    fake.upload_user_folder_file = refuse  # type: ignore[assignment]
+    fake.upload_home_folder_file = refuse  # type: ignore[assignment]
 
     outcome = synchronizer(fake, tmp_path, direction="push").run_once()
 

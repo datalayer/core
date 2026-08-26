@@ -84,23 +84,23 @@ class Client:
         self.replaced = SimpleNamespace(source_uid=source_uid, sharing=sharing, etag=etag)
         return ConditionalCatalogSource(catalog_source(), '"v1.next"')
 
-    def list_user_folder_objects(self, **kwargs):
+    def list_home_folder_objects(self, **kwargs):
         return ObjectList(items=[content_object()], next_cursor=None)
 
-    def stat_user_folder_object(self, path):
+    def stat_home_folder_object(self, path):
         return content_object(path)
 
-    def list_user_folder_object_versions(self, object_uid):
+    def list_home_folder_object_versions(self, object_uid):
         return VersionList(items=[], next_cursor=None)
 
-    def restore_user_folder_object(self, object_uid, version, **kwargs):
+    def restore_home_folder_object(self, object_uid, version, **kwargs):
         return content_object()
 
-    def upload_user_folder_file(self, local_path, destination_path, **kwargs):
+    def upload_home_folder_file(self, local_path, destination_path, **kwargs):
         self.uploaded = (local_path, destination_path, kwargs)
         return transfer_view("succeeded")
 
-    def iter_user_folder_object(self, object_uid):
+    def iter_home_folder_object(self, object_uid):
         yield b"downloaded"
 
     def get_content_transfer(self, transfer_uid):

@@ -31,21 +31,21 @@ class Client:
     def get_home_folder(self):
         return object()
 
-    def list_user_folder_objects(self, **kwargs):
+    def list_home_folder_objects(self, **kwargs):
         return ObjectList(items=[object_()], next_cursor=None)
 
-    def stat_user_folder_object(self, path):
+    def stat_home_folder_object(self, path):
         return object_()
 
-    def iter_user_folder_object(self, object_uid, **kwargs):
+    def iter_home_folder_object(self, object_uid, **kwargs):
         yield b"earth"
 
-    def upload_user_folder_file(self, local_path, destination_path, **kwargs):
+    def upload_home_folder_file(self, local_path, destination_path, **kwargs):
         self.upload = (local_path, destination_path, kwargs)
         return object()
 
 
-def test_high_level_user_folder_browses_uploads_and_streams_downloads(tmp_path) -> None:
+def test_high_level_home_folder_browses_uploads_and_streams_downloads(tmp_path) -> None:
     client = Client()
     folder = Contents(client).home_folder()
     local = tmp_path / "earth.csv"

@@ -30,20 +30,20 @@ class HomeFolder:
     def list(
         self, prefix: str | None = None, *, cursor: str | None = None, limit: int = 100
     ) -> ObjectList:
-        return self.client.list_user_folder_objects(
+        return self.client.list_home_folder_objects(
             prefix=prefix, cursor=cursor, limit=limit
         )
 
     def stat(self, path: str) -> ContentObject:
-        return self.client.stat_user_folder_object(path.lstrip("/"))
+        return self.client.stat_home_folder_object(path.lstrip("/"))
 
     def versions(self, path: str) -> VersionList:
         object_ = self.stat(path)
-        return self.client.list_user_folder_object_versions(object_.uid)
+        return self.client.list_home_folder_object_versions(object_.uid)
 
     def restore(self, path: str, version_uid: str) -> ContentObject:
         object_ = self.stat(path)
-        return self.client.restore_user_folder_object(
+        return self.client.restore_home_folder_object(
             object_.uid,
             version_uid,
             idempotency_key=f"python-restore-{uuid4()}",
@@ -57,7 +57,7 @@ class HomeFolder:
         overwrite: bool = False,
         progress: Callable[[int, int, str], None] | None = None,
     ) -> TransferView:
-        return self.client.upload_user_folder_file(
+        return self.client.upload_home_folder_file(
             local_path,
             destination_path.lstrip("/"),
             idempotency_key=f"python-upload-{uuid4()}",
@@ -73,7 +73,7 @@ class HomeFolder:
         byte_range: str | None = None,
     ) -> Iterator[bytes]:
         object_ = self.stat(path)
-        return self.client.iter_user_folder_object(
+        return self.client.iter_home_folder_object(
             object_.uid,
             version_uid=version_uid,
             byte_range=byte_range,

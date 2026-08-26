@@ -191,7 +191,7 @@ class Synchronizer:
                         # keep-both: the local file goes up under its own name.
                         source = self.root / path[: -len(".local")]
                     self.progress(f"Uploading {path}")
-                    transfer = self.client.upload_user_folder_file(
+                    transfer = self.client.upload_home_folder_file(
                         source,
                         _remote_path(self.remote_uri, path),
                         idempotency_key=f"sync-{session.uid}-{hashlib.sha256(path.encode()).hexdigest()[:16]}",
@@ -210,8 +210,8 @@ class Synchronizer:
                     outcome.deleted_locally.append(path)
                 elif kind == "delete_remote":
                     self.progress(f"Deleting {path} remotely")
-                    stat = self.client.stat_user_folder_object(_remote_path(self.remote_uri, path))
-                    self.client.delete_user_folder_object(
+                    stat = self.client.stat_home_folder_object(_remote_path(self.remote_uri, path))
+                    self.client.delete_home_folder_object(
                         stat.uid, idempotency_key=f"sync-{session.uid}-delete-{hashlib.sha256(path.encode()).hexdigest()[:16]}"
                     )
                     outcome.deleted_remotely.append(path)
@@ -251,12 +251,12 @@ class Synchronizer:
         """Fetch only the blocks that differ, writing the result atomically."""
         object_uid = getattr(action, "object_uid", None)
         if not object_uid:
-            stat = self.client.stat_user_folder_object(_remote_path(self.remote_uri, action.path))
+            stat = self.client.stat_home_folder_object(_remote_path(self.remote_uri, action.path))
             object_uid = stat.uid
             version_uid = stat.current_version_uid
         else:
             version_uid = getattr(action, "version_uid", None)
-        remote_size = int(self.client.stat_user_folder_object(_remote_path(self.remote_uri, action.path)).size)
+        remote_size = int(self.client.stat_home_folder_object(_remote_path(self.remote_uri, action.path)).size)
         target = self.root / action.path
         target.parent.mkdir(parents=True, exist_ok=True)
         existing = local.entries.get(action.path)
@@ -275,7 +275,7 @@ class Synchronizer:
                                 break
                             end = min(start + self.block_size, remote_size) - 1
                             if index in wanted or index >= len(existing.blocks):
-                                for chunk in self.client.iter_user_folder_object(
+                                for chunk in self.client.iter_home_folder_object(
                                     object_uid, version_uid=version_uid, byte_range=f"bytes={start}-{end}"
                                 ):
                                     output.write(chunk)
@@ -284,7 +284,7 @@ class Synchronizer:
                                 current.seek(start)
                                 output.write(current.read(end - start + 1))
                 else:
-                    for chunk in self.client.iter_user_folder_object(object_uid, version_uid=version_uid):
+                    for chunk in self.client.iter_home_folder_object(object_uid, version_uid=version_uid):
                         output.write(chunk)
                         fetched += len(chunk)
             os.replace(temporary, target)

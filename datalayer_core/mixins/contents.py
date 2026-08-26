@@ -207,7 +207,7 @@ class ContentsMixin:
             CatalogSource.model_validate(response.json()), response.headers["ETag"]
         )
 
-    def list_user_folder_objects(
+    def list_home_folder_objects(
         self,
         *,
         prefix: str | None = None,
@@ -232,14 +232,14 @@ class ContentsMixin:
         )
         return HomeFolderQuota.model_validate(response.json())
 
-    def stat_user_folder_object(self, path: str) -> ContentObject:
+    def stat_home_folder_object(self, path: str) -> ContentObject:
         response = self._fetch(  # type: ignore[attr-defined]
             f"{self._contents_url('/sources/home-folder/objects/stat')}?{urlencode({'path': path})}",
             method="GET",
         )
         return ContentObject.model_validate(response.json())
 
-    def list_user_folder_object_versions(
+    def list_home_folder_object_versions(
         self,
         object_uid: str,
         *,
@@ -255,7 +255,7 @@ class ContentsMixin:
         )
         return VersionList.model_validate(response.json())
 
-    def delete_user_folder_object(
+    def delete_home_folder_object(
         self, object_uid: str, *, idempotency_key: str
     ) -> ContentObject:
         response = self._fetch(  # type: ignore[attr-defined]
@@ -265,7 +265,7 @@ class ContentsMixin:
         )
         return ContentObject.model_validate(response.json())
 
-    def restore_user_folder_object(
+    def restore_home_folder_object(
         self,
         object_uid: str,
         version_uid: str,
@@ -351,7 +351,7 @@ class ContentsMixin:
         )
         return TransferView.model_validate(response.json())
 
-    def upload_user_folder_file(
+    def upload_home_folder_file(
         self,
         local_path: str | Path,
         destination_path: str,
@@ -397,7 +397,7 @@ class ContentsMixin:
                 number += 1
         return self.complete_content_transfer(transfer.uid)
 
-    def iter_user_folder_object(
+    def iter_home_folder_object(
         self,
         object_uid: str,
         *,
