@@ -10,6 +10,8 @@ import typer
 
 from datalayer_core.__version import __version__
 from datalayer_core.cli.commands.about import app as about_app
+from datalayer_core.cli.commands.api_keys import api_keys_ls
+from datalayer_core.cli.commands.api_keys import app as api_keys_app
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
@@ -25,18 +27,16 @@ from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.orgs import app as orgs_app
 from datalayer_core.cli.commands.orgs import orgs_ls
 from datalayer_core.cli.commands.otel import app as otel_app
+from datalayer_core.cli.commands.plans import app as plans_app
+from datalayer_core.cli.commands.plans import plans_root
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
 from datalayer_core.cli.commands.teams import app as teams_app
 from datalayer_core.cli.commands.teams import teams_ls
-from datalayer_core.cli.commands.api_keys import app as api_keys_app
-from datalayer_core.cli.commands.api_keys import api_keys_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
-from datalayer_core.cli.commands.plans import app as plans_app
-from datalayer_core.cli.commands.plans import plans_root
 from datalayer_core.cli.commands.users import app as users_app
 from datalayer_core.cli.commands.web import app as web_app
 
@@ -236,8 +236,10 @@ _GLOBAL_OPTIONS_NO_VALUES = {
     "--version",
 }
 
-def _register_extensions(cli) -> None:
-    """Add the commands of every installed Datalayer CLI extension.
+
+def _register_extensions(cli: typer.Typer) -> None:
+    """
+    Add the commands of every installed Datalayer CLI extension.
 
     The commands of the platform are not all implemented here — the
     sandboxes, the agents, the environments live in `agent-runtimes` — and

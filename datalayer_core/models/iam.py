@@ -451,13 +451,16 @@ class MembershipsModel(BaseModel):
 
 # Shareable Principals Models
 class ShareablePrincipalModel(BaseModel):
-    """Principal a user can share artifacts with.
+    """
+    Principal a user can share artifacts with.
 
     Always one of: self (user), an organization the user is a member of,
     or a team the user is a member of (with its parent organization info).
     """
 
-    kind: str = Field(..., description="Principal kind: 'user' | 'organization' | 'team'")
+    kind: str = Field(
+        ..., description="Principal kind: 'user' | 'organization' | 'team'"
+    )
     uid: str = Field(..., description="Principal UID")
     handle: str = Field(..., description="Principal handle")
     name: Optional[str] = Field(None, description="Display name")

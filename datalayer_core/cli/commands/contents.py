@@ -6,15 +6,15 @@
 
 """Contents command group; feature commands are added by delivery milestones."""
 
+import json
+import os
+import sys
+import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import StrEnum
 from functools import wraps
-import json
-import os
 from pathlib import Path
-import tempfile
 from typing import Any, Callable, TypeVar
 from uuid import uuid4
 
@@ -25,6 +25,36 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from datalayer_core.client.client import DatalayerClient
+from datalayer_core.displays.contents import (
+    content_sources_table,
+    operations_table,
+    sync_conflicts_table,
+    sync_sessions_table,
+    transfers_table,
+)
+from datalayer_core.mixins.contents import ConditionalCatalogSource
+from datalayer_core.models.contents import ContentAttachment
+
+# `enum.StrEnum` is 3.11+, and this package still supports 3.10.
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:
+    from enum import Enum
+
+    class StrEnum(str, Enum):  # type: ignore[no-redef]
+        """Values that are their own string, as :class:`enum.StrEnum` gives."""
+
+        def __str__(self) -> str:
+            """
+            Return the member value.
+
+            Returns
+            -------
+            str
+                The member's value, not its qualified name.
+            """
+            return str(self.value)
+
 
 _Command = TypeVar("_Command", bound=Callable[..., Any])
 console = Console()
@@ -103,6 +133,28 @@ def _context(ctx: typer.Context) -> ContentsCLIContext:
     return value or ContentsCLIContext(output=OutputFormat.TABLE)
 
 
+def _table_for(rows: list[dict[str, Any]]) -> Table:
+    """
+    The display that fits what came back.
+
+    The commands answer catalog rows, transfers, operations, synchronization
+    sessions and conflicts, and each of those has a table of its own in
+    `datalayer_core.displays.contents` — the same one a notebook or a script
+    would reach for. What the rows carry says which it is; a shape nothing
+    recognises is still a catalog row, which is what most of them are.
+    """
+    first = rows[0] if rows else {}
+    if "operation_kind" in first:
+        return operations_table(rows)
+    if "remote_uri" in first:
+        return sync_sessions_table(rows)
+    if "session_uid" in first and "reason" in first:
+        return sync_conflicts_table(rows)
+    if "received_bytes" in first:
+        return transfers_table(rows)
+    return content_sources_table(rows)
+
+
 def _render(value: Any, context: ContentsCLIContext) -> None:
     if hasattr(value, "model_dump"):
         value = value.model_dump(mode="json")
@@ -113,18 +165,12 @@ def _render(value: Any, context: ContentsCLIContext) -> None:
         console.print(yaml.safe_dump(value, sort_keys=False).rstrip())
         return
     if isinstance(value, list):
-        table = Table("UID", "Kind", "Name", "Access", "Status")
-        for item in value:
-            source = item.get("source", item)
-            permissions = item.get("permissions", {})
-            table.add_row(
-                str(source.get("uid", "")),
-                str(source.get("kind", "")),
-                str(source.get("name", "")),
-                str(permissions.get("effective_access_level") or ""),
-                str(source.get("status", "")),
-            )
-        console.print(table)
+        console.print(_table_for(value))
+        return
+    # One of the same things, on its own: a table of one row reads better than
+    # a dictionary, and reads the same as the list it came from.
+    if isinstance(value, dict) and "uid" in value:
+        console.print(_table_for([value]))
         return
     console.print(value)
 
@@ -136,7 +182,9 @@ def _client() -> DatalayerClient:
         raise ContentsCommandError(str(error)) from error
 
 
-def _resolve_source(client: DatalayerClient, reference: str):
+def _resolve_source(
+    client: DatalayerClient, reference: str
+) -> ConditionalCatalogSource:
     try:
         return client.get_content_source(reference)
     except Exception:
@@ -152,10 +200,12 @@ def _resolve_source(client: DatalayerClient, reference: str):
 
 def _home_folder_path(uri_or_path: str) -> str:
     prefix = "home-folder:///"
-    value = uri_or_path[len(prefix) :] if uri_or_path.startswith(prefix) else uri_or_path
+    value = (
+        uri_or_path[len(prefix) :] if uri_or_path.startswith(prefix) else uri_or_path
+    )
     value = value.lstrip("/")
     if not value:
-        raise ContentsCommandError("A User Folder file path is required")
+        raise ContentsCommandError("A Home Folder file path is required")
     return value
 
 
@@ -165,7 +215,9 @@ def list_contents(
     ctx: typer.Context,
     kind: str | None = typer.Option(None, "--kind", help="Filter by source kind."),
     space_uid: str | None = typer.Option(None, "--space", help="Filter by Space UID."),
-    cursor: str | None = typer.Option(None, "--cursor", help="Continue a catalog page."),
+    cursor: str | None = typer.Option(
+        None, "--cursor", help="Continue a catalog page."
+    ),
     limit: int = typer.Option(50, "--limit", min=1, max=200),
 ) -> None:
     """List content sources available to the authenticated user."""
@@ -208,17 +260,13 @@ def home_folder_list(
     cursor: str | None = typer.Option(None, "--cursor"),
     limit: int = typer.Option(100, "--limit", min=1, max=200),
 ) -> None:
-    page = _client().list_home_folder_objects(
-        prefix=prefix, cursor=cursor, limit=limit
-    )
+    page = _client().list_home_folder_objects(prefix=prefix, cursor=cursor, limit=limit)
     _render(page.model_dump(mode="json"), _context(ctx))
 
 
 @home_folder_app.command(name="versions")
 @contents_command
-def home_folder_versions(
-    ctx: typer.Context, path: str = typer.Argument(...)
-) -> None:
+def home_folder_versions(ctx: typer.Context, path: str = typer.Argument(...)) -> None:
     client = _client()
     object_ = client.stat_home_folder_object(_home_folder_path(path))
     versions = client.list_home_folder_object_versions(object_.uid)
@@ -282,8 +330,9 @@ def download_content(
         prefix=f".{local_path.name}.", suffix=".part", dir=local_path.parent
     )
     try:
-        with os.fdopen(descriptor, "wb") as output, contents_progress(
-            f"Downloading {object_.path}"
+        with (
+            os.fdopen(descriptor, "wb") as output,
+            contents_progress(f"Downloading {object_.path}"),
         ):
             for chunk in client.iter_home_folder_object(object_.uid):
                 output.write(chunk)
@@ -297,18 +346,36 @@ def download_content(
 @contents_command
 def sync_folder(
     ctx: typer.Context,
-    local_path: Path = typer.Argument(..., exists=True, file_okay=False, resolve_path=True),
-    remote: str = typer.Argument(..., help="A folder of the Home Folder, as home-folder:///path"),
-    direction: str = typer.Option("bidirectional", "--direction", help="push, pull or bidirectional"),
-    watch: bool = typer.Option(False, "--watch", help="Keep the session open and reconcile as files change"),
-    exclude: list[str] = typer.Option([], "--exclude", help="gitignore-style pattern; repeatable"),
-    conflict: str = typer.Option("manual", "--conflict", help="manual, newest, local or remote"),
-    delete: bool = typer.Option(False, "--delete", help="Propagate deletions in the selected direction"),
-    block_size: int = typer.Option(4 * 1024 * 1024, "--block-size", help="Bytes per hashed block"),
-    interval: float = typer.Option(5.0, "--interval", help="Seconds between scans while watching"),
+    local_path: Path = typer.Argument(
+        ..., exists=True, file_okay=False, resolve_path=True
+    ),
+    remote: str = typer.Argument(
+        ..., help="A folder of the Home Folder, as home-folder:///path"
+    ),
+    direction: str = typer.Option(
+        "bidirectional", "--direction", help="push, pull or bidirectional"
+    ),
+    watch: bool = typer.Option(
+        False, "--watch", help="Keep the session open and reconcile as files change"
+    ),
+    exclude: list[str] = typer.Option(
+        [], "--exclude", help="gitignore-style pattern; repeatable"
+    ),
+    conflict: str = typer.Option(
+        "manual", "--conflict", help="manual, newest, local or remote"
+    ),
+    delete: bool = typer.Option(
+        False, "--delete", help="Propagate deletions in the selected direction"
+    ),
+    block_size: int = typer.Option(
+        4 * 1024 * 1024, "--block-size", help="Bytes per hashed block"
+    ),
+    interval: float = typer.Option(
+        5.0, "--interval", help="Seconds between scans while watching"
+    ),
 ) -> None:
     """Synchronize a local folder with a folder of the Home Folder."""
-    from datalayer_core.contents_sync import Synchronizer
+    from datalayer_core.contents_sync import Synchronizer, SyncOutcome
 
     if not remote.startswith("home-folder:///"):
         raise ContentsCommandError(
@@ -335,7 +402,8 @@ def sync_folder(
     )
     try:
         if watch:
-            def report(outcome) -> None:
+
+            def report(outcome: SyncOutcome) -> None:
                 _render(outcome.to_dict(), context)
 
             outcome = synchronizer.watch(interval_seconds=interval, on_pass=report)
@@ -363,7 +431,9 @@ def sync_status(ctx: typer.Context, session_uid: str) -> None:
 
 @app.command(name="sync-list")
 @contents_command
-def sync_list(ctx: typer.Context, active: bool = typer.Option(False, "--active")) -> None:
+def sync_list(
+    ctx: typer.Context, active: bool = typer.Option(False, "--active")
+) -> None:
     sessions = _client().list_content_syncs(active=active)
     _render(
         [item.model_dump(mode="json", exclude={"plan"}) for item in sessions.items],
@@ -400,7 +470,9 @@ def sync_resolve(
     """Decide a conflict; the decision is applied on the next `sync` of the folder."""
     if use not in {"local", "remote", "keep-both"}:
         raise ContentsCommandError("--use must be local, remote or keep-both")
-    session = _client().resolve_content_sync_conflict(session_uid, conflict_uid, use=use)
+    session = _client().resolve_content_sync_conflict(
+        session_uid, conflict_uid, use=use
+    )
     _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
 
 
@@ -439,7 +511,7 @@ def _attach_source(
     delivery: str,
     required: bool = True,
     revision_uid: str | None = None,
-):
+) -> ContentAttachment:
     resolved = _resolve_source(client, source)
     return client.create_content_attachment(
         {
@@ -525,28 +597,48 @@ app.add_typer(volumes_app)
 @volumes_app.command(name="list")
 @contents_command
 def volumes_list(ctx: typer.Context) -> None:
-    _render(_client().list_content_sources(kind="volume", limit=200).model_dump(mode="json"), _context(ctx))
+    _render(
+        _client()
+        .list_content_sources(kind="volume", limit=200)
+        .model_dump(mode="json"),
+        _context(ctx),
+    )
 
 
 @volumes_app.command(name="create")
 @contents_command
-def volume_create(ctx: typer.Context, name: str, backing_resource_id: str | None = typer.Option(None, "--backing-resource"),
-                  capacity_bytes: int = typer.Option(..., "--capacity-bytes", min=1),
-                  mount_path: str = typer.Option(..., "--path", "--mount-path"),
-                  scope: str = typer.Option("user", "--scope"),
-                  space_uid: str | None = typer.Option(None, "--space")) -> None:
+def volume_create(
+    ctx: typer.Context,
+    name: str,
+    backing_resource_id: str | None = typer.Option(None, "--backing-resource"),
+    capacity_bytes: int = typer.Option(..., "--capacity-bytes", min=1),
+    mount_path: str = typer.Option(..., "--path", "--mount-path"),
+    scope: str = typer.Option("user", "--scope"),
+    space_uid: str | None = typer.Option(None, "--space"),
+) -> None:
     if scope not in {"user", "space"}:
         raise ContentsCommandError("--scope must be user or space")
     if scope == "space" and not space_uid:
         raise ContentsCommandError("--space is required when --scope is space")
-    created = _client().create_content_source({
-        "name": name, "kind": "volume", "capabilities": ["browse", "transfer", "mount"],
-        "space_uid": space_uid,
-        "configuration": {"kind": "volume", "scope": scope,
-            "capacity_bytes": capacity_bytes, "access_modes": ["ro", "rw"],
-            "default_mount_path": mount_path, "backing_resource_id": backing_resource_id,
-            "concurrent_readers": True, "concurrent_writers": True}},
-        idempotency_key=f"cli-volume-{uuid4()}")
+    created = _client().create_content_source(
+        {
+            "name": name,
+            "kind": "volume",
+            "capabilities": ["browse", "transfer", "mount"],
+            "space_uid": space_uid,
+            "configuration": {
+                "kind": "volume",
+                "scope": scope,
+                "capacity_bytes": capacity_bytes,
+                "access_modes": ["ro", "rw"],
+                "default_mount_path": mount_path,
+                "backing_resource_id": backing_resource_id,
+                "concurrent_readers": True,
+                "concurrent_writers": True,
+            },
+        },
+        idempotency_key=f"cli-volume-{uuid4()}",
+    )
     _render(created.value.model_dump(mode="json"), _context(ctx))
 
 
@@ -581,18 +673,37 @@ app.add_typer(datasets_app)
 @datasets_app.command(name="list")
 @contents_command
 def datasets_list(ctx: typer.Context) -> None:
-    _render(_client().list_content_sources(kind="dataset", limit=200).model_dump(mode="json"), _context(ctx))
+    _render(
+        _client()
+        .list_content_sources(kind="dataset", limit=200)
+        .model_dump(mode="json"),
+        _context(ctx),
+    )
 
 
 @datasets_app.command(name="create")
 @contents_command
-def dataset_create(ctx: typer.Context, name: str, description: str | None = typer.Option(None, "--description"),
-                   tag: list[str] | None = typer.Option(None, "--tag")) -> None:
-    created = _client().create_content_source({"name": name, "description": description,
-        "kind": "dataset", "capabilities": ["browse", "transfer", "materialize"],
-        "configuration": {"kind": "dataset", "current_revision_uid": None,
-            "publication_eligible": False, "tags": tag or []}},
-        idempotency_key=f"cli-dataset-{uuid4()}")
+def dataset_create(
+    ctx: typer.Context,
+    name: str,
+    description: str | None = typer.Option(None, "--description"),
+    tag: list[str] | None = typer.Option(None, "--tag"),
+) -> None:
+    created = _client().create_content_source(
+        {
+            "name": name,
+            "description": description,
+            "kind": "dataset",
+            "capabilities": ["browse", "transfer", "materialize"],
+            "configuration": {
+                "kind": "dataset",
+                "current_revision_uid": None,
+                "publication_eligible": False,
+                "tags": tag or [],
+            },
+        },
+        idempotency_key=f"cli-dataset-{uuid4()}",
+    )
     _render(created.value.model_dump(mode="json"), _context(ctx))
 
 
@@ -606,20 +717,33 @@ def dataset_revisions(ctx: typer.Context, source: str) -> None:
 
 @datasets_app.command(name="create-revision")
 @contents_command
-def dataset_create_revision(ctx: typer.Context, source: str,
+def dataset_create_revision(
+    ctx: typer.Context,
+    source: str,
     files: list[str] = typer.Option(..., "--file"),
-    origin: str = typer.Option("home-folder", "--origin")) -> None:
+    origin: str = typer.Option("home-folder", "--origin"),
+) -> None:
     selected = []
     for value in files:
         parts = value.split(":", 2)
         if len(parts) < 2 or not all(parts[:2]):
-            raise ContentsCommandError("--file must be OBJECT_UID:VERSION_UID[:DESTINATION_PATH]")
-        selected.append({"object_uid": parts[0], "version_uid": parts[1],
-                         "path": parts[2] if len(parts) == 3 else None})
+            raise ContentsCommandError(
+                "--file must be OBJECT_UID:VERSION_UID[:DESTINATION_PATH]"
+            )
+        selected.append(
+            {
+                "object_uid": parts[0],
+                "version_uid": parts[1],
+                "path": parts[2] if len(parts) == 3 else None,
+            }
+        )
     client = _client()
     uid = _resolve_source(client, source).value.source.uid
-    revision = client.create_dataset_revision(uid, {"origin_kind": origin, "files": selected},
-        idempotency_key=f"cli-dataset-revision-{uuid4()}")
+    revision = client.create_dataset_revision(
+        uid,
+        {"origin_kind": origin, "files": selected},
+        idempotency_key=f"cli-dataset-revision-{uuid4()}",
+    )
     _render(revision.model_dump(mode="json"), _context(ctx))
 
 
@@ -674,12 +798,8 @@ def cloud_storage_create(
     endpoint: str | None = typer.Option(None, "--endpoint"),
     read_only: bool = typer.Option(False, "--read-only"),
     access: str = typer.Option("automatic", "--access"),
-    mount_implementation: str | None = typer.Option(
-        None, "--mount-implementation"
-    ),
-    python_implementation: str | None = typer.Option(
-        None, "--python-implementation"
-    ),
+    mount_implementation: str | None = typer.Option(None, "--mount-implementation"),
+    python_implementation: str | None = typer.Option(None, "--python-implementation"),
 ) -> None:
     capabilities = ["browse", "transfer", "mount"]
     if not read_only:
@@ -765,7 +885,8 @@ def dataservers_register(
     connectors: str = typer.Option("", "--connectors"),
     description: str = typer.Option("", "--description"),
 ) -> None:
-    """Register a gateway deployed in your own network.
+    """
+    Register a gateway deployed in your own network.
 
     The identity is what the gateway presents when it calls home: rotating its
     certificate under the same identity resumes this registration rather than
@@ -819,7 +940,8 @@ def mcp_connect(
     allowed_domains: str = typer.Option("", "--domains"),
     description: str = typer.Option("", "--description"),
 ) -> None:
-    """Connect an MCP server so agents can use its tools.
+    """
+    Connect an MCP server so agents can use its tools.
 
     Every tool call is approved explicitly and destinations are an allowlist:
     a server reached this way runs code on somebody's behalf, so the safe
@@ -865,7 +987,8 @@ app.add_typer(environments_app)
 @environments_app.command(name="list")
 @contents_command
 def environments_list(ctx: typer.Context) -> None:
-    """List the content the platform's Environments bring with them.
+    """
+    List the content the platform's Environments bring with them.
 
     Nobody attaches this: choosing an Environment chooses it, which is why
     there is no `create` beside this command.

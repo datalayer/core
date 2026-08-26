@@ -5,3 +5,4 @@
 
 export * from './ContentsBrowser';
 export * from './ContentsItems';
+export * from './ContentsTable';

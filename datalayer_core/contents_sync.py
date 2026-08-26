@@ -4,7 +4,8 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""The local side of a synchronization session.
+"""
+The local side of a synchronization session.
 
 The service decides; this carries the decision out. It hashes the folder,
 opens a session, applies the plan it is given — uploads through the
@@ -96,12 +97,18 @@ class LocalSyncState:
         self.directory.mkdir(parents=True, exist_ok=True)
         path = self._path(remote_uri)
         temporary = path.with_suffix(".tmp")
-        temporary.write_text(json.dumps({**value, "remote_uri": remote_uri}, indent=2, sort_keys=True))
+        temporary.write_text(
+            json.dumps({**value, "remote_uri": remote_uri}, indent=2, sort_keys=True)
+        )
         os.replace(temporary, path)
 
 
 def _remote_path(remote_uri: str, relative: str) -> str:
-    prefix = remote_uri[len("home-folder:///"):].strip("/") if remote_uri.startswith("home-folder:///") else ""
+    prefix = (
+        remote_uri[len("home-folder:///") :].strip("/")
+        if remote_uri.startswith("home-folder:///")
+        else ""
+    )
     return f"{prefix}/{relative}" if prefix else relative
 
 
@@ -157,7 +164,13 @@ class Synchronizer:
         if session_uid:
             try:
                 current = self.client.get_content_sync(session_uid)
-                if current.status in {"watching", "conflicted", "transferring", "pending", "scanning"}:
+                if current.status in {
+                    "watching",
+                    "conflicted",
+                    "transferring",
+                    "pending",
+                    "scanning",
+                }:
                     self.progress("Resuming the session")
                     session = self.client.reconcile_content_sync(
                         session_uid, {"local_manifest": local.to_dict()}
@@ -174,7 +187,11 @@ class Synchronizer:
                     "delete": self.delete,
                     "watch": watch,
                     "block_size": self.block_size,
-                    "exclusions": [p for p in self.exclusions.patterns if p not in BUILT_IN_EXCLUSIONS],
+                    "exclusions": [
+                        p
+                        for p in self.exclusions.patterns
+                        if p not in BUILT_IN_EXCLUSIONS
+                    ],
                     "local_manifest": local.to_dict(),
                 },
                 idempotency_key=f"cli-sync-{uuid4()}",
@@ -200,7 +217,9 @@ class Synchronizer:
                         idempotency_key=f"sync-{session.uid}-{hashlib.sha256(path.encode()).hexdigest()[:16]}",
                         overwrite="replace",
                     )
-                    outcome.transferred_bytes += int(getattr(transfer, "expected_size", 0) or 0)
+                    outcome.transferred_bytes += int(
+                        getattr(transfer, "expected_size", 0) or 0
+                    )
                     outcome.uploaded.append(path)
                 elif kind == "download":
                     self.progress(f"Downloading {path}")
@@ -213,9 +232,12 @@ class Synchronizer:
                     outcome.deleted_locally.append(path)
                 elif kind == "delete_remote":
                     self.progress(f"Deleting {path} remotely")
-                    stat = self.client.stat_home_folder_object(_remote_path(self.remote_uri, path))
+                    stat = self.client.stat_home_folder_object(
+                        _remote_path(self.remote_uri, path)
+                    )
                     self.client.delete_home_folder_object(
-                        stat.uid, idempotency_key=f"sync-{session.uid}-delete-{hashlib.sha256(path.encode()).hexdigest()[:16]}"
+                        stat.uid,
+                        idempotency_key=f"sync-{session.uid}-delete-{hashlib.sha256(path.encode()).hexdigest()[:16]}",
                     )
                     outcome.deleted_remotely.append(path)
                 elif kind == "conflict":
@@ -254,24 +276,35 @@ class Synchronizer:
         """Fetch only the blocks that differ, writing the result atomically."""
         object_uid = getattr(action, "object_uid", None)
         if not object_uid:
-            stat = self.client.stat_home_folder_object(_remote_path(self.remote_uri, action.path))
+            stat = self.client.stat_home_folder_object(
+                _remote_path(self.remote_uri, action.path)
+            )
             object_uid = stat.uid
             version_uid = stat.current_version_uid
         else:
             version_uid = getattr(action, "version_uid", None)
-        remote_size = int(self.client.stat_home_folder_object(_remote_path(self.remote_uri, action.path)).size)
+        remote_size = int(
+            self.client.stat_home_folder_object(
+                _remote_path(self.remote_uri, action.path)
+            ).size
+        )
         target = self.root / action.path
         target.parent.mkdir(parents=True, exist_ok=True)
         existing = local.entries.get(action.path)
         wanted = list(action.blocks or [])
         fetched = 0
-        descriptor, temporary = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".sync", dir=target.parent)
+        descriptor, temporary = tempfile.mkstemp(
+            prefix=f".{target.name}.", suffix=".sync", dir=target.parent
+        )
         try:
             with os.fdopen(descriptor, "wb") as output:
                 if existing is not None and target.is_file() and wanted:
                     # Keep the blocks we already hold; fetch the rest by range.
                     with target.open("rb") as current:
-                        total_blocks = max(len(existing.blocks), (remote_size + self.block_size - 1) // self.block_size)
+                        total_blocks = max(
+                            len(existing.blocks),
+                            (remote_size + self.block_size - 1) // self.block_size,
+                        )
                         for index in range(total_blocks):
                             start = index * self.block_size
                             if start >= remote_size:
@@ -279,7 +312,9 @@ class Synchronizer:
                             end = min(start + self.block_size, remote_size) - 1
                             if index in wanted or index >= len(existing.blocks):
                                 for chunk in self.client.iter_home_folder_object(
-                                    object_uid, version_uid=version_uid, byte_range=f"bytes={start}-{end}"
+                                    object_uid,
+                                    version_uid=version_uid,
+                                    byte_range=f"bytes={start}-{end}",
                                 ):
                                     output.write(chunk)
                                     fetched += len(chunk)
@@ -287,7 +322,9 @@ class Synchronizer:
                                 current.seek(start)
                                 output.write(current.read(end - start + 1))
                 else:
-                    for chunk in self.client.iter_home_folder_object(object_uid, version_uid=version_uid):
+                    for chunk in self.client.iter_home_folder_object(
+                        object_uid, version_uid=version_uid
+                    ):
                         output.write(chunk)
                         fetched += len(chunk)
             os.replace(temporary, target)
@@ -306,7 +343,8 @@ class Synchronizer:
         stop: Callable[[], bool] | None = None,
         on_pass: Callable[[SyncOutcome], None] | None = None,
     ) -> SyncOutcome:
-        """Reconcile until told to stop, or until the session ends.
+        """
+        Reconcile until told to stop, or until the session ends.
 
         Local changes are found by rescanning: a folder is hashed again each
         interval and compared. No filesystem watcher is required, which is
@@ -317,7 +355,11 @@ class Synchronizer:
             on_pass(outcome)
         last_beat = time.monotonic()
         last_seen = self.scan()
-        while not (stop and stop()) and outcome.status in {"watching", "conflicted", "transferring"}:
+        while not (stop and stop()) and outcome.status in {
+            "watching",
+            "conflicted",
+            "transferring",
+        }:
             time.sleep(interval_seconds)
             if time.monotonic() - last_beat >= heartbeat_seconds:
                 try:

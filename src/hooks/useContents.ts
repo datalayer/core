@@ -417,7 +417,7 @@ export const useHomeFolder = () => {
   });
 };
 
-/** Query durable used, reserved and configured User Folder capacity. */
+/** Query durable used, reserved and configured Home Folder capacity. */
 export const useHomeFolderQuota = () => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
@@ -456,7 +456,7 @@ export const useHomeFolderObjects = (
   });
 };
 
-/** Resolve one User Folder path to its current object metadata. */
+/** Resolve one Home Folder path to its current object metadata. */
 export const useHomeFolderObject = (path?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
@@ -469,7 +469,7 @@ export const useHomeFolderObject = (path?: string) => {
   });
 };
 
-/** List immutable versions for a User Folder object. */
+/** List immutable versions for a Home Folder object. */
 export const useHomeFolderObjectVersions = (
   objectUid?: string,
   options: { cursor?: string; limit?: number } = {},
@@ -496,7 +496,7 @@ export const useHomeFolderObjectVersions = (
 
 type ObjectMutation = { objectUid: string; idempotencyKey: string };
 
-/** Soft-delete a User Folder object and invalidate its browse metadata. */
+/** Soft-delete a Home Folder object and invalidate its browse metadata. */
 export const useDeleteHomeFolderObject = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);

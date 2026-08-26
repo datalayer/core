@@ -12,17 +12,17 @@ import logging
 import os
 from typing import Any, Optional, Union
 
+from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.contents import ContentsMixin
 from datalayer_core.mixins.secrets import SecretsMixin
-from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.spaces import SpacesMixin
 from datalayer_core.mixins.usage import UsageMixin
 from datalayer_core.mixins.whoami import WhoamiAppMixin
 from datalayer_core.models import UserModel
 from datalayer_core.models.api_key import ApiKeyModel, ApiKeyType
-from datalayer_core.models.space import ItemModel, SpaceModel
 from datalayer_core.models.secret import SecretModel, SecretVariant
+from datalayer_core.models.space import ItemModel, SpaceModel
 from datalayer_core.utils.urls import DatalayerURLs
 
 logger = logging.getLogger(__name__)
@@ -186,13 +186,6 @@ class DatalayerClient(
         """
         return self._create_checkout_portal(return_url)
 
-
-
-
-
-
-
-
     def list_secrets(self) -> list[SecretModel]:
         """
         List all secrets available in the Datalayer environment.
@@ -274,9 +267,6 @@ class DatalayerClient(
         """
         uid = secret.uid if isinstance(secret, SecretModel) else secret
         return self._delete_secret(uid)
-
-
-
 
     def create_api_key(
         self,

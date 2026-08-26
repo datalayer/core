@@ -5,7 +5,7 @@
 
 import json as _json
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -32,11 +32,9 @@ def _is_owner(roles: list[str]) -> bool:
     )
 
 
-def _print_organizations(memberships: list[dict]) -> None:
+def _print_organizations(memberships: list[dict[str, Any]]) -> None:
     """Render a table of the user's organizations with roles and ownership."""
-    orgs = [
-        m for m in memberships if (m.get("type") or "").lower() == "organization"
-    ]
+    orgs = [m for m in memberships if (m.get("type") or "").lower() == "organization"]
     if not orgs:
         console.print("[dim]No organization memberships.[/dim]")
         return
@@ -79,9 +77,7 @@ def _run_orgs_ls(
         console.print("[red]Failed to fetch organizations from IAM service.[/red]")
         raise typer.Exit(1)
 
-    orgs = [
-        m for m in memberships if (m.get("type") or "").lower() == "organization"
-    ]
+    orgs = [m for m in memberships if (m.get("type") or "").lower() == "organization"]
     if as_json:
         typer.echo(_json.dumps(orgs, indent=2, sort_keys=True))
         return

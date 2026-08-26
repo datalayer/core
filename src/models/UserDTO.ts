@@ -128,7 +128,9 @@ export class UserDTO {
    * @returns Core user data with camelCase properties
    */
   toJSON(): UserJSON {
-    const obj = {
+    // avatarIcon and banner are optional: omit them when the API did not
+    // return them, as validateJSON rejects undefined property values.
+    const obj: UserJSON = {
       id: this.id,
       uid: this.uid,
       firstName: this.firstName,
@@ -137,8 +139,8 @@ export class UserDTO {
       email: this.email,
       handle: this.handle,
       avatarUrl: this.avatarUrl,
-      avatarIcon: this.avatarIcon,
-      banner: this.banner,
+      ...(this.avatarIcon !== undefined ? { avatarIcon: this.avatarIcon } : {}),
+      ...(this.banner !== undefined ? { banner: this.banner } : {}),
     };
     validateJSON(obj, 'User');
     return obj;

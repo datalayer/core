@@ -8,8 +8,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping
 from urllib.parse import urlencode
@@ -22,31 +22,31 @@ from datalayer_core.models.contents.generated import (
     CatalogSource,
     ContentAttachment,
     ContentAttachmentManifest,
+    ContentObject,
+    ContentSourceCreate,
+    ContentSourceUpdate,
     DatasetPublication,
     DatasetPublicationCreate,
     DatasetPublicationList,
     DatasetRevision,
     DatasetRevisionCreate,
     DatasetRevisionList,
-    ContentObject,
-    ContentSourceCreate,
-    ContentSourceUpdate,
     EffectivePermissions,
-    OperationView,
+    HomeFolderQuota,
     ObjectList,
+    OperationView,
     RestoreRequest,
     Sharing,
     SourceList,
-    TransferCreate,
-    TransferList,
-    TransferView,
     SyncConflictList,
     SyncCreate,
     SyncReconcile,
     SyncReport,
     SyncSessionList,
     SyncSessionView,
-    HomeFolderQuota,
+    TransferCreate,
+    TransferList,
+    TransferView,
     VersionList,
 )
 
@@ -79,7 +79,7 @@ class ContentsMixin:
         cursor: str | None = None,
         limit: int = 50,
     ) -> SourceList:
-        parameters = {"limit": limit}
+        parameters: dict[str, Any] = {"limit": limit}
         if kind is not None:
             parameters["kind"] = kind
         if space_uid is not None:
@@ -106,40 +106,64 @@ class ContentsMixin:
         )
         return ContentAttachment.model_validate(response.json())
 
-    def create_dataset_revision(self, source_uid: str,
-        request: DatasetRevisionCreate | Mapping[str, Any], *,
-        idempotency_key: str) -> DatasetRevision:
-        response = self._fetch(self._contents_url(f"/sources/{source_uid}/revisions"),
-            method="POST", headers={"Idempotency-Key": idempotency_key},
-            json=_payload(request))  # type: ignore[attr-defined]
+    def create_dataset_revision(
+        self,
+        source_uid: str,
+        request: DatasetRevisionCreate | Mapping[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> DatasetRevision:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/revisions"),
+            method="POST",
+            headers={"Idempotency-Key": idempotency_key},
+            json=_payload(request),
+        )
         return DatasetRevision.model_validate(response.json())
 
     def list_dataset_revisions(self, source_uid: str) -> DatasetRevisionList:
-        response = self._fetch(self._contents_url(f"/sources/{source_uid}/revisions"),
-            method="GET")  # type: ignore[attr-defined]
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/revisions"), method="GET"
+        )
         return DatasetRevisionList.model_validate(response.json())
 
-    def get_dataset_revision(self, source_uid: str, revision_uid: str) -> DatasetRevision:
-        response = self._fetch(self._contents_url(
-            f"/sources/{source_uid}/revisions/{revision_uid}"), method="GET")  # type: ignore[attr-defined]
+    def get_dataset_revision(
+        self, source_uid: str, revision_uid: str
+    ) -> DatasetRevision:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/revisions/{revision_uid}"),
+            method="GET",
+        )
         return DatasetRevision.model_validate(response.json())
 
-    def create_dataset_publication(self, source_uid: str,
-        request: DatasetPublicationCreate | Mapping[str, Any], *,
-        idempotency_key: str) -> DatasetPublication:
-        response = self._fetch(self._contents_url(f"/sources/{source_uid}/publications"),
-            method="POST", headers={"Idempotency-Key": idempotency_key},
-            json=_payload(request))  # type: ignore[attr-defined]
+    def create_dataset_publication(
+        self,
+        source_uid: str,
+        request: DatasetPublicationCreate | Mapping[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> DatasetPublication:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/publications"),
+            method="POST",
+            headers={"Idempotency-Key": idempotency_key},
+            json=_payload(request),
+        )
         return DatasetPublication.model_validate(response.json())
 
     def list_dataset_publications(self, source_uid: str) -> DatasetPublicationList:
-        response = self._fetch(self._contents_url(f"/sources/{source_uid}/publications"),
-            method="GET")  # type: ignore[attr-defined]
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/publications"), method="GET"
+        )
         return DatasetPublicationList.model_validate(response.json())
 
-    def unpublish_dataset(self, source_uid: str, publication_uid: str) -> DatasetPublication:
-        response = self._fetch(self._contents_url(
-            f"/sources/{source_uid}/publications/{publication_uid}"), method="DELETE")  # type: ignore[attr-defined]
+    def unpublish_dataset(
+        self, source_uid: str, publication_uid: str
+    ) -> DatasetPublication:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/{source_uid}/publications/{publication_uid}"),
+            method="DELETE",
+        )
         return DatasetPublication.model_validate(response.json())
 
     def list_content_attachments(
@@ -273,9 +297,7 @@ class ContentsMixin:
         idempotency_key: str,
     ) -> ContentObject:
         response = self._fetch(  # type: ignore[attr-defined]
-            self._contents_url(
-                f"/sources/home-folder/objects/{object_uid}/restore"
-            ),
+            self._contents_url(f"/sources/home-folder/objects/{object_uid}/restore"),
             method="POST",
             headers={"Idempotency-Key": idempotency_key},
             json=RestoreRequest(version_uid=version_uid).model_dump(mode="json"),
@@ -372,9 +394,7 @@ class ContentsMixin:
                 digest.update(chunk)
         transfer = self.create_content_transfer(
             {
-                "destination_uri": (
-                    f"home-folder:///{destination_path.lstrip('/')}"
-                ),
+                "destination_uri": (f"home-folder:///{destination_path.lstrip('/')}"),
                 "size": size,
                 "checksum": digest.hexdigest(),
                 "media_type": media_type,
@@ -388,9 +408,7 @@ class ContentsMixin:
             number = 0
             while chunk := stream.read(chunk_size):
                 if number not in verified:
-                    self.upload_content_transfer_part(
-                        transfer.uid, number, chunk
-                    )
+                    self.upload_content_transfer_part(transfer.uid, number, chunk)
                     uploaded += len(chunk)
                     if progress is not None:
                         progress(uploaded, size, transfer.uid)
@@ -504,7 +522,10 @@ class ContentsMixin:
     def list_content_syncs(
         self, *, active: bool = False, cursor: str | None = None, limit: int = 50
     ) -> SyncSessionList:
-        parameters: dict[str, str | int] = {"active": str(active).lower(), "limit": limit}
+        parameters: dict[str, str | int] = {
+            "active": str(active).lower(),
+            "limit": limit,
+        }
         if cursor is not None:
             parameters["cursor"] = cursor
         response = self._fetch(  # type: ignore[attr-defined]

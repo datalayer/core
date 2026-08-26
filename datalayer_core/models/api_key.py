@@ -32,7 +32,7 @@ class ApiKeyModel(BaseModel):
     description: str = Field(..., description="Description of the API key")
     api_key_type: Union[str, ApiKeyType] = Field(
         default=ApiKeyType.SECRET,
-        description='Type of the API key (secret, publishable, restricted, temporary)',
+        description="Type of the API key (secret, publishable, restricted, temporary)",
     )
     kwargs: Dict[str, Any] = Field(
         default_factory=dict, description="Additional keyword arguments"

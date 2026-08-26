@@ -32,7 +32,7 @@ const object = {
   updated_at: '2026-08-24T12:00:01Z',
 };
 
-describe('Contents User Folder object API', () => {
+describe('Contents Home Folder object API', () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it('converts browse metadata and preserves opaque cursors', async () => {

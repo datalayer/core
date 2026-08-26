@@ -6,7 +6,7 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { DatalayerClient } from '..';
+import { DatalayerCoreClient } from '..';
 import { testConfig } from '../../__tests__/shared/test-config';
 import { DEFAULT_SERVICE_URLS } from '../../api/constants';
 
@@ -17,14 +17,14 @@ import { DEFAULT_SERVICE_URLS } from '../../api/constants';
  * using the Client client.
  */
 describe('Client IAM Integration Tests', () => {
-  let client: DatalayerClient;
+  let client: DatalayerCoreClient;
 
   beforeAll(() => {
     if (!testConfig.hasToken()) {
       return;
     }
 
-    client = new DatalayerClient({
+    client = new DatalayerCoreClient({
       token: testConfig.getToken(),
       iamUrl: DEFAULT_SERVICE_URLS.IAM,
       contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
@@ -98,7 +98,7 @@ describe('Client IAM Integration Tests', () => {
       it('should handle invalid credentials properly', async () => {
         console.log('Testing login with invalid credentials...');
 
-        const loginSdk = new DatalayerClient({
+        const loginSdk = new DatalayerCoreClient({
           token: testConfig.getToken(),
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
           contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
@@ -122,7 +122,7 @@ describe('Client IAM Integration Tests', () => {
       it('should validate login request structure', async () => {
         console.log('Testing login validation...');
 
-        const loginSdk = new DatalayerClient({
+        const loginSdk = new DatalayerCoreClient({
           token: testConfig.getToken(),
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
           contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
@@ -160,7 +160,7 @@ describe('Client IAM Integration Tests', () => {
       it('should handle expired tokens gracefully', async () => {
         console.log('Testing expired token handling...');
 
-        const expiredSdk = new DatalayerClient({
+        const expiredSdk = new DatalayerCoreClient({
           token: 'expired.invalid.token',
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
           contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
@@ -183,7 +183,7 @@ describe('Client IAM Integration Tests', () => {
         console.log('Testing logout...');
 
         // Create a separate Client instance for logout test
-        const logoutSdk = new DatalayerClient({
+        const logoutSdk = new DatalayerCoreClient({
           token: testConfig.getToken(),
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
           contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,
@@ -209,7 +209,7 @@ describe('Client IAM Integration Tests', () => {
       it('should provide clear error messages for auth failures', async () => {
         console.log('Testing auth error messages...');
 
-        const invalidSdk = new DatalayerClient({
+        const invalidSdk = new DatalayerCoreClient({
           token: 'invalid-token',
           iamUrl: DEFAULT_SERVICE_URLS.IAM,
           contentsUrl: DEFAULT_SERVICE_URLS.CONTENTS,

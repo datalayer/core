@@ -8,8 +8,7 @@ Provides environment variable support with fallback to defaults.
 """
 
 import os
-from dataclasses import asdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Optional
 
 from datalayer_core.base.user_config import (
@@ -315,9 +314,7 @@ class DatalayerURLs:
         resolved_success_url = resolved_success_url.rstrip("/")
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
-        resolved_jupyter_mcp_server_url = resolved_jupyter_mcp_server_url.rstrip(
-            "/"
-        )
+        resolved_jupyter_mcp_server_url = resolved_jupyter_mcp_server_url.rstrip("/")
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
         resolved_contents_url = resolved_contents_url.rstrip("/")
 

@@ -9,8 +9,8 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import Callable, Iterator
 from uuid import uuid4
 
@@ -96,9 +96,7 @@ class HomeFolder:
         )
         try:
             with os.fdopen(descriptor, "wb") as output:
-                for chunk in self.iter_download(
-                    source_path, version_uid=version_uid
-                ):
+                for chunk in self.iter_download(source_path, version_uid=version_uid):
                     output.write(chunk)
             os.replace(temporary_name, destination)
         except Exception:

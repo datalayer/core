@@ -149,13 +149,13 @@ describe('Contents source API', () => {
     );
   });
 
-  it('resolves the server-managed User Folder and retains its ETag', async () => {
+  it('resolves the server-managed Home Folder and retains its ETag', async () => {
     const request = vi
       .spyOn(DatalayerApi, 'requestDatalayerAPIWithResponse')
       .mockResolvedValue({
         data: {
           ...response,
-          source: { ...response.source, kind: 'files', name: 'User Folder' },
+          source: { ...response.source, kind: 'files', name: 'Home Folder' },
         },
         status: 200,
         statusText: 'OK',
@@ -164,7 +164,7 @@ describe('Contents source API', () => {
 
     const folder = await getHomeFolder('token');
 
-    expect(folder.value.source.name).toBe('User Folder');
+    expect(folder.value.source.name).toBe('Home Folder');
     expect(folder.etag).toBe('"folder.hash"');
     expect(request).toHaveBeenCalledWith(
       expect.objectContaining({ url: expect.stringMatching(/\/sources\/home-folder$/) }),

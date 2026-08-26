@@ -281,7 +281,9 @@ def tokens(
         f"SUM(CASE WHEN metric_name = '{_COMPLETION_TOKENS_METRIC}' "
         "THEN COALESCE(value_int, value_double, 0) ELSE 0 END) AS completion_tokens, "
         "COUNT(*) AS sample_count "
-        f"FROM metrics WHERE {where_clause}"
+        # The metric names are module constants, the service name is escaped
+        # above, and this endpoint takes SQL as its payload by design.
+        f"FROM metrics WHERE {where_clause}"  # nosec B608
     )
 
     endpoint = "/api/otel/v1/query/" if scoped else "/api/otel/v1/system/sql"

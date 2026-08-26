@@ -137,7 +137,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         return DatalayerURLs.from_environment()
 
     @property
-    def service_urls(self) -> dict:
+    def service_urls(self) -> dict[str, str]:
         """The URL of every service, as the browser and the templates read them."""
         return {
             "iam_url": self.iam_url,

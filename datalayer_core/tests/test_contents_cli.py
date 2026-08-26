@@ -3,16 +3,19 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, Iterator
 
+import pytest
 from typer.testing import CliRunner
 
 import datalayer_core.cli.commands.contents as contents_commands
 from datalayer_core.cli.__main__ import app
 from datalayer_core.mixins.contents import ConditionalCatalogSource
 from datalayer_core.models.contents.generated import (
-    CatalogSource,
     AttachmentList,
+    CatalogSource,
     ContentAttachment,
     ContentObject,
     ObjectList,
@@ -57,17 +60,17 @@ class Client:
 
     def __init__(self) -> None:
         Client.last = self
-        self.replaced = None
+        self.replaced: SimpleNamespace | None = None
 
-    def list_content_sources(self, **kwargs):
+    def list_content_sources(self, **kwargs: Any) -> SourceList:
         return SourceList(items=[catalog_source()], next_cursor="next")
 
-    def get_content_source(self, reference):
+    def get_content_source(self, reference: str) -> ConditionalCatalogSource:
         if reference not in {UID, "Earth data"}:
             raise RuntimeError("not found")
         return ConditionalCatalogSource(catalog_source(), '"v1.hash"')
 
-    def get_content_source_sharing(self, source_uid):
+    def get_content_source_sharing(self, source_uid: str) -> Sharing:
         return Sharing.model_validate(
             {
                 "grants": [
@@ -80,47 +83,59 @@ class Client:
             }
         )
 
-    def replace_content_source_sharing(self, source_uid, sharing, *, etag):
-        self.replaced = SimpleNamespace(source_uid=source_uid, sharing=sharing, etag=etag)
+    def replace_content_source_sharing(
+        self, source_uid: str, sharing: dict[str, Any], *, etag: str
+    ) -> ConditionalCatalogSource:
+        self.replaced = SimpleNamespace(
+            source_uid=source_uid, sharing=sharing, etag=etag
+        )
         return ConditionalCatalogSource(catalog_source(), '"v1.next"')
 
-    def list_home_folder_objects(self, **kwargs):
+    def list_home_folder_objects(self, **kwargs: Any) -> ObjectList:
         return ObjectList(items=[content_object()], next_cursor=None)
 
-    def stat_home_folder_object(self, path):
+    def stat_home_folder_object(self, path: str) -> ContentObject:
         return content_object(path)
 
-    def list_home_folder_object_versions(self, object_uid):
+    def list_home_folder_object_versions(self, object_uid: str) -> VersionList:
         return VersionList(items=[], next_cursor=None)
 
-    def restore_home_folder_object(self, object_uid, version, **kwargs):
+    def restore_home_folder_object(
+        self, object_uid: str, version: str, **kwargs: Any
+    ) -> ContentObject:
         return content_object()
 
-    def upload_home_folder_file(self, local_path, destination_path, **kwargs):
+    def upload_home_folder_file(
+        self, local_path: str | Path, destination_path: str, **kwargs: Any
+    ) -> SimpleNamespace:
         self.uploaded = (local_path, destination_path, kwargs)
         return transfer_view("succeeded")
 
-    def iter_home_folder_object(self, object_uid):
+    def iter_home_folder_object(self, object_uid: str) -> Iterator[bytes]:
         yield b"downloaded"
 
-    def get_content_transfer(self, transfer_uid):
+    def get_content_transfer(self, transfer_uid: str) -> SimpleNamespace:
         return transfer_view("running")
 
-    def cancel_content_transfer(self, transfer_uid):
+    def cancel_content_transfer(self, transfer_uid: str) -> SimpleNamespace:
         return transfer_view("cancelled")
 
-    def create_content_attachment(self, request, *, idempotency_key):
+    def create_content_attachment(
+        self, request: dict[str, Any], *, idempotency_key: str
+    ) -> ContentAttachment:
         self.attachment_request = (request, idempotency_key)
         return attachment_view()
 
-    def create_content_source(self, request, *, idempotency_key):
+    def create_content_source(
+        self, request: dict[str, Any], *, idempotency_key: str
+    ) -> ConditionalCatalogSource:
         self.source_request = (request, idempotency_key)
         return ConditionalCatalogSource(catalog_source(), '"v1.created"')
 
-    def list_content_attachments(self, **kwargs):
+    def list_content_attachments(self, **kwargs: Any) -> AttachmentList:
         return AttachmentList(items=[attachment_view()])
 
-    def revoke_content_attachment(self, attachment_uid):
+    def revoke_content_attachment(self, attachment_uid: str) -> ContentAttachment:
         return attachment_view(status="revoked")
 
 
@@ -185,7 +200,9 @@ def attachment_view(status: str = "requested") -> ContentAttachment:
     )
 
 
-def test_contents_list_and_describe_support_machine_output(monkeypatch) -> None:
+def test_contents_list_and_describe_support_machine_output(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     runner = CliRunner()
 
@@ -200,7 +217,9 @@ def test_contents_list_and_describe_support_machine_output(monkeypatch) -> None:
     assert "name: Earth data" in described.stdout
 
 
-def test_contents_sharing_grant_uses_uid_and_conditional_write(monkeypatch) -> None:
+def test_contents_sharing_grant_uses_uid_and_conditional_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     result = CliRunner().invoke(
         app,
@@ -221,11 +240,15 @@ def test_contents_sharing_grant_uses_uid_and_conditional_write(monkeypatch) -> N
 
     assert result.exit_code == 0, result.stdout
     assert Client.last is not None
-    assert Client.last.replaced.etag == '"v1.hash"'
-    assert Client.last.replaced.sharing["grants"][-1]["access_level"] == "execute"
+    replaced = Client.last.replaced
+    assert replaced is not None
+    assert replaced.etag == '"v1.hash"'
+    assert replaced.sharing["grants"][-1]["access_level"] == "execute"
 
 
-def test_contents_upload_download_and_transfer_commands(monkeypatch, tmp_path) -> None:
+def test_contents_upload_download_and_transfer_commands(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     source = tmp_path / "earth.csv"
     destination = tmp_path / "downloaded.csv"
@@ -285,7 +308,7 @@ def test_contents_upload_download_and_transfer_commands(monkeypatch, tmp_path) -
     assert '"status": "cancelled"' in cancelled.stdout
 
 
-def test_contents_sandbox_attachment_commands(monkeypatch) -> None:
+def test_contents_sandbox_attachment_commands(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     runner = CliRunner()
 
@@ -325,16 +348,22 @@ def test_contents_sandbox_attachment_commands(monkeypatch) -> None:
     assert '"status": "revoked"' in detached.stdout
 
 
-def test_contents_volume_attach_and_dataset_materialize(monkeypatch) -> None:
+def test_contents_volume_attach_and_dataset_materialize(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     runner = CliRunner()
 
     volume = runner.invoke(
         app,
         [
-            "contents", "volumes", "attach", UID,
+            "contents",
+            "volumes",
+            "attach",
+            UID,
             "01B3TA5NDEKTSV4RRFFQ69G5FA",
-            "--path", "/home/jovyan/volumes/work",
+            "--path",
+            "/home/jovyan/volumes/work",
         ],
     )
     assert volume.exit_code == 0, volume.stdout
@@ -346,10 +375,16 @@ def test_contents_volume_attach_and_dataset_materialize(monkeypatch) -> None:
     dataset = runner.invoke(
         app,
         [
-            "contents", "datasets", "materialize", UID,
-            "--revision", "01REVISION00000000000000000",
-            "--sandbox", "01B3TA5NDEKTSV4RRFFQ69G5FA",
-            "--path", "/home/jovyan/datasets/earth",
+            "contents",
+            "datasets",
+            "materialize",
+            UID,
+            "--revision",
+            "01REVISION00000000000000000",
+            "--sandbox",
+            "01B3TA5NDEKTSV4RRFFQ69G5FA",
+            "--path",
+            "/home/jovyan/datasets/earth",
         ],
     )
     assert dataset.exit_code == 0, dataset.stdout
@@ -360,7 +395,9 @@ def test_contents_volume_attach_and_dataset_materialize(monkeypatch) -> None:
     assert dataset_request["revision_uid"] == "01REVISION00000000000000000"
 
 
-def test_contents_cloud_storage_create_keeps_only_credential_reference(monkeypatch) -> None:
+def test_contents_cloud_storage_create_keeps_only_credential_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     result = CliRunner().invoke(
         app,
@@ -389,7 +426,9 @@ def test_contents_cloud_storage_create_keeps_only_credential_reference(monkeypat
     assert "secret" not in request["configuration"]
 
 
-def test_contents_download_refuses_overwrite_with_nonzero_exit(monkeypatch, tmp_path) -> None:
+def test_contents_download_refuses_overwrite_with_nonzero_exit(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     destination = tmp_path / "earth.csv"
     destination.write_text("keep")

@@ -35,9 +35,7 @@ SOLR_CODEC_FIXTURE = Path(
 )
 OUTPUT = ROOT / "src/api/contents/generated.ts"
 PYTHON_OUTPUT = ROOT / "datalayer_core/models/contents/generated.py"
-CLIENT_CONTRACT_FIXTURES = (
-    ROOT / "src/models/contents/__fixtures__/v1-contracts.json"
-)
+CLIENT_CONTRACT_FIXTURES = ROOT / "src/models/contents/__fixtures__/v1-contracts.json"
 CLIENT_SOLR_CODEC_FIXTURE = ROOT / "src/models/contents/__fixtures__/solr-codec.json"
 
 
@@ -58,12 +56,18 @@ def ts_type(schema: dict[str, Any]) -> str:
         return " | ".join(ts_type(item) for item in schema["anyOf"])
     kind = schema.get("type")
     if isinstance(kind, list):
-        return " | ".join("null" if item == "null" else ts_type({"type": item}) for item in kind)
+        return " | ".join(
+            "null" if item == "null" else ts_type({"type": item}) for item in kind
+        )
     if kind == "array":
         return f"Array<{ts_type(schema.get('items', {}))}>"
     if kind == "object":
         additional = schema.get("additionalProperties")
-        return f"Record<string, {ts_type(additional)}>" if isinstance(additional, dict) else "Record<string, unknown>"
+        return (
+            f"Record<string, {ts_type(additional)}>"
+            if isinstance(additional, dict)
+            else "Record<string, unknown>"
+        )
     if kind in {"integer", "number"}:
         return "number"
     if kind == "boolean":
@@ -128,7 +132,9 @@ def main() -> None:
         CLIENT_SOLR_CODEC_FIXTURE.write_text(expected_solr_fixture)
 
     with tempfile.TemporaryDirectory() as temporary_directory:
-        generated_python = Path(temporary_directory) / "generated.py" if check else PYTHON_OUTPUT
+        generated_python = (
+            Path(temporary_directory) / "generated.py" if check else PYTHON_OUTPUT
+        )
         generated_python.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [

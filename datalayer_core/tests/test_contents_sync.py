@@ -4,7 +4,8 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""The local side of synchronization, driven against a fake service.
+"""
+The local side of synchronization, driven against a fake service.
 
 The fake answers the way the service does — it hashes its own folder with the
 shared engine and reconciles — so what these exercise is the client's part:
@@ -19,13 +20,9 @@ import io
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, Callable, Iterator
 
 import pytest
-from typer.testing import CliRunner
-
-import datalayer_core.cli.commands.contents as contents_commands
-from datalayer_core.cli.__main__ import app
-from datalayer_core.contents_sync import STATE_DIRECTORY, Synchronizer
 from datalayer_common.content_sync import (
     FileEntry,
     Manifest,
@@ -33,6 +30,11 @@ from datalayer_common.content_sync import (
     hash_stream,
     reconcile,
 )
+from typer.testing import CliRunner
+
+import datalayer_core.cli.commands.contents as contents_commands
+from datalayer_core.cli.__main__ import app
+from datalayer_core.contents_sync import STATE_DIRECTORY, Synchronizer
 
 BLOCK = 64 * 1024
 REMOTE = "home-folder:///research"
@@ -43,7 +45,7 @@ class FakeContents:
 
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
-        self.sessions: dict[str, dict] = {}
+        self.sessions: dict[str, dict[str, Any]] = {}
         self.calls: list[str] = []
         self.ranges: list[str] = []
         self.counter = 0
@@ -54,40 +56,62 @@ class FakeContents:
         for path, content in self.files.items():
             if not path.startswith("research/"):
                 continue
-            relative = path[len("research/"):]
+            relative = path[len("research/") :]
             checksum, blocks, size = hash_stream(io.BytesIO(content), BLOCK)
-            manifest.entries[relative] = FileEntry(relative, size, "2026-08-25T09:00:00.000Z", checksum, blocks)
+            manifest.entries[relative] = FileEntry(
+                relative, size, "2026-08-25T09:00:00.000Z", checksum, blocks
+            )
         return manifest
 
-    def _view(self, uid: str):
+    def _view(self, uid: str) -> SimpleNamespace:
         session = self.sessions[uid]
         actions = [SimpleNamespace(**a) for a in session["plan"]]
-        return SimpleNamespace(uid=uid, status=session["status"], plan=SimpleNamespace(actions=actions))
+        return SimpleNamespace(
+            uid=uid, status=session["status"], plan=SimpleNamespace(actions=actions)
+        )
 
-    def _plan(self, uid: str, local: dict) -> None:
+    def _plan(self, uid: str, local: dict[str, Any]) -> None:
         session = self.sessions[uid]
         local_manifest = Manifest.from_dict(local)
         remote = self._manifest()
         base = Manifest.from_dict(session["accepted"]) if session["accepted"] else None
-        plan = reconcile(local_manifest, remote, base, direction=session["direction"],
-                         conflict_policy=session["conflict_policy"], delete=session["delete"])
+        plan = reconcile(
+            local_manifest,
+            remote,
+            base,
+            direction=session["direction"],
+            conflict_policy=session["conflict_policy"],
+            delete=session["delete"],
+        )
         session["local"], session["remote"] = local_manifest, remote
         session["plan_obj"] = plan
         session["plan"] = [
-            {**a.to_dict(), "blocks": list(a.blocks), "object_uid": f"o-{a.path}", "version_uid": f"v-{a.path}"}
+            {
+                **a.to_dict(),
+                "blocks": list(a.blocks),
+                "object_uid": f"o-{a.path}",
+                "version_uid": f"v-{a.path}",
+            }
             for a in plan.actions
         ]
-        session["status"] = "transferring" if plan.actions else ("watching" if session["watch"] else "transferring")
+        session["status"] = (
+            "transferring"
+            if plan.actions
+            else ("watching" if session["watch"] else "transferring")
+        )
 
     # -- the client surface ---------------------------------------------
-    def create_content_sync(self, request, *, idempotency_key):
+    def create_content_sync(
+        self, request: dict[str, Any], *, idempotency_key: str
+    ) -> SimpleNamespace:
         self.calls.append("create")
         self.counter += 1
         uid = f"S{self.counter}"
         # As the service does: a new session starts from what the last one
         # on this remote agreed, so a deletion is not mistaken for a new file.
         previous = [
-            item for item in self.sessions.values()
+            item
+            for item in self.sessions.values()
             if item["remote_uri"] == request["remote_uri"] and item.get("accepted")
         ]
         inherited = previous[-1]["accepted"] if previous else None
@@ -95,19 +119,21 @@ class FakeContents:
         self._plan(uid, request["local_manifest"])
         return self._view(uid)
 
-    def get_content_sync(self, uid):
+    def get_content_sync(self, uid: str) -> SimpleNamespace:
         return self._view(uid)
 
-    def reconcile_content_sync(self, uid, request):
+    def reconcile_content_sync(
+        self, uid: str, request: dict[str, Any]
+    ) -> SimpleNamespace:
         self.calls.append("reconcile")
         self._plan(uid, request["local_manifest"])
         return self._view(uid)
 
-    def heartbeat_content_sync(self, uid):
+    def heartbeat_content_sync(self, uid: str) -> SimpleNamespace:
         self.calls.append("heartbeat")
         return self._view(uid)
 
-    def report_content_sync(self, uid, request):
+    def report_content_sync(self, uid: str, request: dict[str, Any]) -> SimpleNamespace:
         self.calls.append("report")
         session = self.sessions[uid]
         verified = []
@@ -118,10 +144,16 @@ class FakeContents:
             if action["kind"] == "upload":
                 stored = self.files.get(f"research/{path}")
                 expected = session["local"].entries.get(path)
-                if stored is None or expected is None or hashlib.sha256(stored).hexdigest() != expected.checksum:
+                if (
+                    stored is None
+                    or expected is None
+                    or hashlib.sha256(stored).hexdigest() != expected.checksum
+                ):
                     continue
             verified.append(path)
-        session["accepted"] = accepted_after(session["local"], self._manifest(), session["plan_obj"], applied=verified).to_dict()
+        session["accepted"] = accepted_after(
+            session["local"], self._manifest(), session["plan_obj"], applied=verified
+        ).to_dict()
         session["plan"] = [a for a in session["plan"] if a["path"] not in verified]
         if session["watch"]:
             session["status"] = "watching"
@@ -129,44 +161,67 @@ class FakeContents:
             session["status"] = "failed" if request.get("failed") else "succeeded"
         return self._view(uid)
 
-    def cancel_content_sync(self, uid):
+    def cancel_content_sync(self, uid: str) -> SimpleNamespace:
         self.sessions[uid]["status"] = "cancelled"
         return self._view(uid)
 
-    def upload_home_folder_file(self, local_path, destination_path, *, idempotency_key, overwrite="reject", **kwargs):
+    def upload_home_folder_file(
+        self,
+        local_path: str | Path,
+        destination_path: str,
+        *,
+        idempotency_key: str,
+        overwrite: str = "reject",
+        **kwargs: Any,
+    ) -> SimpleNamespace:
         content = Path(local_path).read_bytes()
         self.files[destination_path] = content
         return SimpleNamespace(uid="T", status="succeeded", expected_size=len(content))
 
-    def stat_home_folder_object(self, path):
+    def stat_home_folder_object(self, path: str) -> SimpleNamespace:
         if path not in self.files:
             raise RuntimeError(f"no such object {path}")
-        return SimpleNamespace(uid=f"o-{path}", current_version_uid=f"v-{path}", size=len(self.files[path]))
+        return SimpleNamespace(
+            uid=f"o-{path}", current_version_uid=f"v-{path}", size=len(self.files[path])
+        )
 
-    def delete_home_folder_object(self, object_uid, *, idempotency_key):
-        path = object_uid[len("o-"):]
+    def delete_home_folder_object(
+        self, object_uid: str, *, idempotency_key: str
+    ) -> None:
+        path = object_uid[len("o-") :]
         self.files.pop(path, None)
 
-    def iter_home_folder_object(self, object_uid, *, version_uid=None, byte_range=None, chunk_size=1 << 20):
-        path = object_uid[len("o-"):]
+    def iter_home_folder_object(
+        self,
+        object_uid: str,
+        *,
+        version_uid: str | None = None,
+        byte_range: str | None = None,
+        chunk_size: int = 1 << 20,
+    ) -> Iterator[bytes]:
+        path = object_uid[len("o-") :]
         if not path.startswith("research/"):
             path = f"research/{path}"
         content = self.files[path]
         if byte_range:
             self.ranges.append(byte_range)
-            start, end = byte_range[len("bytes="):].split("-")
-            content = content[int(start): int(end) + 1]
+            start, end = byte_range[len("bytes=") :].split("-")
+            content = content[int(start) : int(end) + 1]
         for index in range(0, len(content), chunk_size):
-            yield content[index: index + chunk_size]
+            yield content[index : index + chunk_size]
 
 
-def synchronizer(fake: FakeContents, root: Path, **overrides) -> Synchronizer:
-    settings = dict(local_root=root, remote_uri=REMOTE, block_size=BLOCK)
+def synchronizer(fake: FakeContents, root: Path, **overrides: Any) -> Synchronizer:
+    settings: dict[str, Any] = dict(
+        local_root=root, remote_uri=REMOTE, block_size=BLOCK
+    )
     settings.update(overrides)
     return Synchronizer(fake, **settings)
 
 
-def test_a_push_uploads_what_is_missing_and_remembers_the_session(tmp_path: Path) -> None:
+def test_a_push_uploads_what_is_missing_and_remembers_the_session(
+    tmp_path: Path,
+) -> None:
     fake = FakeContents()
     (tmp_path / "a.csv").write_text("alpha")
     (tmp_path / "sub").mkdir()
@@ -209,7 +264,9 @@ def test_a_pull_fetches_only_the_blocks_that_changed(tmp_path: Path) -> None:
     assert fake.ranges == [f"bytes={BLOCK}-{2 * BLOCK - 1}"]
 
 
-def test_a_new_remote_file_is_fetched_whole_and_written_atomically(tmp_path: Path) -> None:
+def test_a_new_remote_file_is_fetched_whole_and_written_atomically(
+    tmp_path: Path,
+) -> None:
     fake = FakeContents()
     fake.files["research/new.txt"] = b"fresh"
 
@@ -232,7 +289,9 @@ def test_a_manual_conflict_is_left_for_a_person(tmp_path: Path) -> None:
     assert fake.files["research/c.txt"] == b"theirs"
 
 
-def test_a_local_deletion_propagates_only_with_delete_and_leaves_a_tombstone(tmp_path: Path) -> None:
+def test_a_local_deletion_propagates_only_with_delete_and_leaves_a_tombstone(
+    tmp_path: Path,
+) -> None:
     fake = FakeContents()
     (tmp_path / "gone.txt").write_text("v1")
     synchronizer(fake, tmp_path, direction="push").run_once()
@@ -253,10 +312,10 @@ def test_a_failed_action_is_reported_not_hidden(tmp_path: Path) -> None:
     fake = FakeContents()
     (tmp_path / "a.csv").write_text("alpha")
 
-    def refuse(*args, **kwargs):
+    def refuse(*args: Any, **kwargs: Any) -> SimpleNamespace:
         raise RuntimeError("quota exceeded")
 
-    fake.upload_home_folder_file = refuse  # type: ignore[assignment]
+    fake.upload_home_folder_file = refuse  # type: ignore[method-assign]
 
     outcome = synchronizer(fake, tmp_path, direction="push").run_once()
 
@@ -264,10 +323,12 @@ def test_a_failed_action_is_reported_not_hidden(tmp_path: Path) -> None:
     assert outcome.failed == {"a.csv": "quota exceeded"}
 
 
-def test_watch_reconciles_when_the_folder_changes_and_stops_when_told(tmp_path: Path) -> None:
+def test_watch_reconciles_when_the_folder_changes_and_stops_when_told(
+    tmp_path: Path,
+) -> None:
     fake = FakeContents()
     (tmp_path / "a.csv").write_text("v1")
-    passes: list = []
+    passes: list[Any] = []
     ticks = {"n": 0}
 
     def stop() -> bool:
@@ -297,12 +358,24 @@ class Client(FakeContents):
         Client.last = self
 
 
-def test_sync_command_reports_the_outcome_as_json(monkeypatch, tmp_path: Path) -> None:
+def test_sync_command_reports_the_outcome_as_json(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     (tmp_path / "a.csv").write_text("alpha")
 
     result = CliRunner().invoke(
-        app, ["contents", "--output", "json", "sync", str(tmp_path), REMOTE, "--direction", "push"]
+        app,
+        [
+            "contents",
+            "--output",
+            "json",
+            "sync",
+            str(tmp_path),
+            REMOTE,
+            "--direction",
+            "push",
+        ],
     )
 
     assert result.exit_code == 0, result.stdout
@@ -310,19 +383,27 @@ def test_sync_command_reports_the_outcome_as_json(monkeypatch, tmp_path: Path) -
     assert Client.last is not None and Client.last.files["research/a.csv"] == b"alpha"
 
 
-def test_sync_command_refuses_a_remote_it_cannot_serve(monkeypatch, tmp_path: Path) -> None:
+def test_sync_command_refuses_a_remote_it_cannot_serve(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
 
-    result = CliRunner().invoke(app, ["contents", "sync", str(tmp_path), "sandbox://box/work"])
+    result = CliRunner().invoke(
+        app, ["contents", "sync", str(tmp_path), "sandbox://box/work"]
+    )
 
     assert result.exit_code == 1
     assert "home-folder:///" in result.output
 
 
-def test_sync_resolve_validates_the_choice(monkeypatch, tmp_path: Path) -> None:
+def test_sync_resolve_validates_the_choice(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
 
-    result = CliRunner().invoke(app, ["contents", "sync-resolve", "S1", "C1", "--use", "coin"])
+    result = CliRunner().invoke(
+        app, ["contents", "sync-resolve", "S1", "C1", "--use", "coin"]
+    )
 
     assert result.exit_code == 1
     assert "local, remote or keep-both" in result.output

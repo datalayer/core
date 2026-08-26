@@ -10,7 +10,7 @@ import os
 import threading
 import time
 from datetime import datetime, timezone
-from typing import Optional, Any
+from typing import Any, Optional
 
 import questionary
 import requests
@@ -37,7 +37,9 @@ def auth_callback(ctx: typer.Context) -> None:
         typer.echo(ctx.get_help())
 
 
-def _fetch_memberships(iam_url: str, token: Optional[str]) -> Optional[list[dict]]:
+def _fetch_memberships(
+    iam_url: str, token: Optional[str]
+) -> Optional[list[dict[str, Any]]]:
     """Fetch the authenticated user's organization/team memberships."""
     if not token:
         return None
@@ -57,7 +59,7 @@ def _fetch_memberships(iam_url: str, token: Optional[str]) -> Optional[list[dict
         return None
 
 
-def _decode_jwt_claims(token: str) -> Optional[dict]:
+def _decode_jwt_claims(token: str) -> Optional[dict[str, Any]]:
     """Decode JWT claims without verifying signature (display purpose only)."""
     try:
         parts = token.split(".")
@@ -91,7 +93,9 @@ def _format_unix_timestamp(ts: Optional[int]) -> str:
     if ts is None:
         return "unknown"
     try:
-        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
     except Exception:
         return "unknown"
 
@@ -118,7 +122,7 @@ def _expiration_status(exp_ts: Optional[int]) -> str:
     now = int(time.time())
     remaining = exp_ts - now
     if remaining <= 0:
-        return f"[red]expired { _format_duration(abs(remaining)) } ago[/red]"
+        return f"[red]expired {_format_duration(abs(remaining))} ago[/red]"
     if remaining <= 900:
         return f"[red]{_format_duration(remaining)} remaining[/red]"
     if remaining <= 86400:
@@ -212,9 +216,7 @@ def login(
 
                 if credentials.get("credentials_type") == "api_key":
                     asyncio.run(
-                        _login_with_api_key(
-                            auth, credentials["api_key"], urls.iam_url
-                        )
+                        _login_with_api_key(auth, credentials["api_key"], urls.iam_url)
                     )
                 else:
                     asyncio.run(
@@ -399,8 +401,7 @@ def _authenticate_with_browser(auth: AuthenticationManager, server_url: str) -> 
 
 
 @app.command()
-def logout(
-) -> None:
+def logout() -> None:
     """Log out from Datalayer server."""
     try:
         urls = DatalayerURLs.from_environment()
@@ -440,7 +441,7 @@ def whoami(
 
         if urls_only:
             url_items = [
-                                ("DATALAYER_IAM_URL", urls.iam_url),
+                ("DATALAYER_IAM_URL", urls.iam_url),
                 ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
                 ("DATALAYER_SPACER_URL", urls.spacer_url),
                 ("DATALAYER_LIBRARY_URL", urls.library_url),
@@ -486,7 +487,7 @@ def whoami(
                 console.print("\n[bold]Detailed Information:[/bold]")
 
                 url_items = [
-                                        ("DATALAYER_IAM_URL", urls.iam_url),
+                    ("DATALAYER_IAM_URL", urls.iam_url),
                     ("DATALAYER_RUNTIMES_URL", urls.runtimes_url),
                     ("DATALAYER_SPACER_URL", urls.spacer_url),
                     ("DATALAYER_LIBRARY_URL", urls.library_url),
@@ -534,7 +535,9 @@ def whoami(
                     console.print(f"🔄 Last Updated: {user.get('last_update_ts_dt')}")
 
                 # JWT token details
-                token_for_details = access_token or auth.current_token or auth.get_stored_token()
+                token_for_details = (
+                    access_token or auth.current_token or auth.get_stored_token()
+                )
                 if token_for_details:
                     claims = _decode_jwt_claims(token_for_details)
                     if claims:
@@ -552,10 +555,16 @@ def whoami(
                         if claims.get("iss"):
                             console.print(f"  🏷️  Issuer: {claims.get('iss')}")
                         if iat_ts is not None:
-                            console.print(f"  🕒 Issued At: {_format_unix_timestamp(iat_ts)}")
+                            console.print(
+                                f"  🕒 Issued At: {_format_unix_timestamp(iat_ts)}"
+                            )
                         if exp_ts is not None:
-                            console.print(f"  ⏰ Expires At: {_format_unix_timestamp(exp_ts)}")
-                        console.print(f"  ⌛ Time to Expiration: {_expiration_status(exp_ts)}")
+                            console.print(
+                                f"  ⏰ Expires At: {_format_unix_timestamp(exp_ts)}"
+                            )
+                        console.print(
+                            f"  ⌛ Time to Expiration: {_expiration_status(exp_ts)}"
+                        )
 
                 # IAM Providers
                 iam_providers = user.get("iam_providers", [])
@@ -586,8 +595,16 @@ def whoami(
                 # Memberships (organizations + teams)
                 memberships = _fetch_memberships(urls.iam_url, access_token)
                 if memberships is not None:
-                    orgs = [m for m in memberships if (m.get("type") or "").lower() == "organization"]
-                    teams = [m for m in memberships if (m.get("type") or "").lower() == "team"]
+                    orgs = [
+                        m
+                        for m in memberships
+                        if (m.get("type") or "").lower() == "organization"
+                    ]
+                    teams = [
+                        m
+                        for m in memberships
+                        if (m.get("type") or "").lower() == "team"
+                    ]
                     org_by_uid = {m.get("uid"): m for m in orgs}
 
                     console.print("\n[bold]👥 Memberships:[/bold]")
@@ -613,7 +630,9 @@ def whoami(
                             org_uid = team.get("organization_uid")
                             parent = org_by_uid.get(org_uid) if org_uid else None
                             parent_label = (
-                                parent.get("handle") if parent else (org_uid or "unknown")
+                                parent.get("handle")
+                                if parent
+                                else (org_uid or "unknown")
                             )
                             label = f"    • [cyan]{handle}[/cyan]"
                             if name and name != handle:
@@ -623,7 +642,9 @@ def whoami(
                             console.print(label)
 
                     if not orgs and not teams:
-                        console.print("  [dim]No organization or team memberships.[/dim]")
+                        console.print(
+                            "  [dim]No organization or team memberships.[/dim]"
+                        )
 
                 console.print("\n[bold]Defined URLs:[/bold]")
                 for env_name, value in url_items:
@@ -671,8 +692,7 @@ def login_root(
     )
 
 
-def logout_root(
-) -> None:
+def logout_root() -> None:
     """
     Log out of Datalayer server.
     """

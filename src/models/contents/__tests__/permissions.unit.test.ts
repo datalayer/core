@@ -50,7 +50,7 @@ describe('Contents permission helpers', () => {
     expect(canShareContentSource(shared)).toBe(false);
   });
 
-  it('permits owners to share normal sources but never the User Folder', () => {
+  it('permits owners to share normal sources but never the Home Folder', () => {
     const owned = source({
       permissions: {
         view: true,

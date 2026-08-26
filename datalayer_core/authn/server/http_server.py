@@ -110,17 +110,12 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
 
         user = json.loads(urllib.parse.unquote(user_raw))
         content = (
-            AUTH_SUCCESS_PAGE
-            .replace("__USER_KEY__", DATALAYER_IAM_USER_KEY)
+            AUTH_SUCCESS_PAGE.replace("__USER_KEY__", DATALAYER_IAM_USER_KEY)
             .replace("__TOKEN_KEY__", DATALAYER_IAM_TOKEN_KEY)
             .replace("__UID_JSON__", json.dumps(user.get("uid", "")))
             .replace("__HANDLE_JSON__", json.dumps(user.get("handle_s", "")))
-            .replace(
-                "__FIRST_NAME_JSON__", json.dumps(user.get("first_name_t", ""))
-            )
-            .replace(
-                "__LAST_NAME_JSON__", json.dumps(user.get("last_name_t", ""))
-            )
+            .replace("__FIRST_NAME_JSON__", json.dumps(user.get("first_name_t", "")))
+            .replace("__LAST_NAME_JSON__", json.dumps(user.get("last_name_t", "")))
             .replace("__EMAIL_JSON__", json.dumps(user.get("email_s", "")))
             .replace(
                 "__DISPLAY_NAME_JSON__",
@@ -134,9 +129,7 @@ class LoginRequestHandler(SimpleHTTPRequestHandler):
                 ),
             )
             .replace("__TOKEN_JSON__", json.dumps(token))
-            .replace(
-                "__NAVIGATION_TARGET_JSON__", json.dumps(navigation_target or "")
-            )
+            .replace("__NAVIGATION_TARGET_JSON__", json.dumps(navigation_target or ""))
         ).encode("UTF-8", "replace")
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-type", "text/html")

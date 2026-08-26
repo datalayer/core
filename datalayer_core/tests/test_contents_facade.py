@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any, Iterator, cast
+
+from datalayer_core.client import DatalayerClient
 from datalayer_core.contents import Contents
 from datalayer_core.models.contents.generated import ContentObject, ObjectList
 
@@ -25,29 +29,37 @@ def object_() -> ContentObject:
 
 
 class Client:
-    def __init__(self) -> None:
-        self.upload = None
+    """A stand-in for the parts of `DatalayerClient` the facade actually calls."""
 
-    def get_home_folder(self):
+    def __init__(self) -> None:
+        self.upload: tuple[str | Path, str, dict[str, Any]] | None = None
+
+    def get_home_folder(self) -> object:
         return object()
 
-    def list_home_folder_objects(self, **kwargs):
+    def list_home_folder_objects(self, **kwargs: Any) -> ObjectList:
         return ObjectList(items=[object_()], next_cursor=None)
 
-    def stat_home_folder_object(self, path):
+    def stat_home_folder_object(self, path: str) -> ContentObject:
         return object_()
 
-    def iter_home_folder_object(self, object_uid, **kwargs):
+    def iter_home_folder_object(
+        self, object_uid: str, **kwargs: Any
+    ) -> Iterator[bytes]:
         yield b"earth"
 
-    def upload_home_folder_file(self, local_path, destination_path, **kwargs):
+    def upload_home_folder_file(
+        self, local_path: str | Path, destination_path: str, **kwargs: Any
+    ) -> object:
         self.upload = (local_path, destination_path, kwargs)
         return object()
 
 
-def test_high_level_home_folder_browses_uploads_and_streams_downloads(tmp_path) -> None:
+def test_high_level_home_folder_browses_uploads_and_streams_downloads(
+    tmp_path: Path,
+) -> None:
     client = Client()
-    folder = Contents(client).home_folder()
+    folder = Contents(cast(DatalayerClient, client)).home_folder()
     local = tmp_path / "earth.csv"
     local.write_text("earth")
 
@@ -56,5 +68,6 @@ def test_high_level_home_folder_browses_uploads_and_streams_downloads(tmp_path) 
     chunks = list(folder.iter_download("/reports/earth.csv"))
 
     assert listed.items[0].path == "reports/earth.csv"
+    assert client.upload is not None
     assert client.upload[1] == "reports/earth.csv"
     assert chunks == [b"earth"]

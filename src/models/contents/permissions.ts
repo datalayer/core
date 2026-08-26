@@ -11,7 +11,7 @@
 import type { CatalogSource, ContentSource } from '../../api/contents';
 
 export const CONTENT_SOURCE_KIND_LABELS: Record<ContentSource['kind'], string> = {
-  files: 'User Folder',
+  files: 'Home Folder',
   dataset: 'Dataset',
   volume: 'Volume',
   'cloud-storage': 'Cloud Storage',

@@ -5,7 +5,7 @@
 
 import json as _json
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -32,11 +32,9 @@ def _is_owner(roles: list[str]) -> bool:
     )
 
 
-def _print_teams(memberships: list[dict]) -> None:
+def _print_teams(memberships: list[dict[str, Any]]) -> None:
     """Render a table of the user's teams with roles and ownership."""
-    orgs = [
-        m for m in memberships if (m.get("type") or "").lower() == "organization"
-    ]
+    orgs = [m for m in memberships if (m.get("type") or "").lower() == "organization"]
     teams = [m for m in memberships if (m.get("type") or "").lower() == "team"]
     org_by_uid = {m.get("uid"): m for m in orgs}
 

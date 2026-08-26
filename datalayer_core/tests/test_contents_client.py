@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from datalayer_core.mixins.contents import ContentsMixin
 from datalayer_core.models.contents.generated import (
@@ -17,12 +18,11 @@ from datalayer_core.utils.urls import DatalayerURLs
 UID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 OWNER_UID = "01BX5ZZKBKACTAV9WEVGEMMVRZ"
 CONTRACT_FIXTURES = (
-    Path(__file__).parents[2]
-    / "src/models/contents/__fixtures__/v1-contracts.json"
+    Path(__file__).parents[2] / "src/models/contents/__fixtures__/v1-contracts.json"
 )
 
 
-def source_response(name: str = "Dataset") -> dict:
+def source_response(name: str = "Dataset") -> dict[str, Any]:
     return {
         "source": {
             "contract_version": "v1",
@@ -52,33 +52,34 @@ def source_response(name: str = "Dataset") -> dict:
 
 
 class Response:
-    def __init__(self, value: dict, etag: str = '"v1.hash"') -> None:
+    def __init__(self, value: dict[str, Any], etag: str = '"v1.hash"') -> None:
         self._value = value
         self.headers = {"ETag": etag}
 
-    def json(self) -> dict:
+    def json(self) -> dict[str, Any]:
         return self._value
 
 
 class Client(ContentsMixin):
     def __init__(self) -> None:
         self.urls = DatalayerURLs.from_environment(contents_url="https://contents.test")
-        self.calls: list[tuple[str, dict]] = []
+        self.calls: list[tuple[str, dict[str, Any]]] = []
         self.responses: list[Response] = []
 
-    def _fetch(self, url: str, **kwargs):
+    def _fetch(self, url: str, **kwargs: Any) -> Response:
         self.calls.append((url, kwargs))
         return self.responses.pop(0)
 
 
 def test_contents_client_preserves_etag_for_conditional_mutation() -> None:
     client = Client()
-    client.responses = [Response(source_response()), Response(source_response("Changed"), '"v1.next"')]
+    client.responses = [
+        Response(source_response()),
+        Response(source_response("Changed"), '"v1.next"'),
+    ]
 
     fetched = client.get_content_source(UID)
-    changed = client.update_content_source(
-        UID, {"name": "Changed"}, etag=fetched.etag
-    )
+    changed = client.update_content_source(UID, {"name": "Changed"}, etag=fetched.etag)
 
     assert fetched.value.source.status is SourceStatus.ready
     assert changed.value.source.name == "Changed"
@@ -89,17 +90,17 @@ def test_contents_client_preserves_etag_for_conditional_mutation() -> None:
 
 def test_contents_client_resolves_the_server_managed_home_folder() -> None:
     client = Client()
-    client.responses = [Response(source_response("User Folder"), '"folder.hash"')]
+    client.responses = [Response(source_response("Home Folder"), '"folder.hash"')]
 
     folder = client.get_home_folder()
 
-    assert folder.value.source.name == "User Folder"
+    assert folder.value.source.name == "Home Folder"
     assert folder.etag == '"folder.hash"'
     assert client.calls[0][0].endswith("/sources/home-folder")
 
 
 def test_contents_client_creates_and_reads_attachment_manifest() -> None:
-    attachment = {
+    attachment: dict[str, Any] = {
         "uid": "01C3TA5NDEKTSV4RRFFQ69G5FA",
         "source_uid": UID,
         "sandbox_uid": "01B3TA5NDEKTSV4RRFFQ69G5FA",
@@ -149,13 +150,11 @@ def test_contents_client_creates_and_reads_attachment_manifest() -> None:
 
     assert created.mount_path == "/home/jovyan/volumes/work"
     assert manifest.attachments[0].uid == created.uid
-    assert client.calls[0][1]["headers"] == {
-        "Idempotency-Key": "attach-volume"
-    }
+    assert client.calls[0][1]["headers"] == {"Idempotency-Key": "attach-volume"}
 
 
 def test_contents_client_browses_deletes_and_restores_home_folder_objects() -> None:
-    object_value = {
+    object_value: dict[str, Any] = {
         "uid": "01OBJECT000000000000000000",
         "source_uid": UID,
         "path": "reports/earth.csv",
@@ -191,12 +190,8 @@ def test_contents_client_browses_deletes_and_restores_home_folder_objects() -> N
     assert page.next_cursor == "signed.cursor"
     assert deleted.deleted is True
     assert restored.deleted is False
-    assert client.calls[1][1]["headers"] == {
-        "Idempotency-Key": "delete-earth"
-    }
-    assert client.calls[2][1]["json"] == {
-        "version_uid": "01VERSION00000000000000000"
-    }
+    assert client.calls[1][1]["headers"] == {"Idempotency-Key": "delete-earth"}
+    assert client.calls[2][1]["json"] == {"version_uid": "01VERSION00000000000000000"}
 
 
 def test_contents_client_list_uses_signed_cursor_without_interpreting_it() -> None:
@@ -224,7 +219,7 @@ def test_generated_models_validate_every_shared_v1_contract_fixture() -> None:
 
 
 def test_contents_client_reads_and_cancels_operations() -> None:
-    operation = {
+    operation: dict[str, Any] = {
         "uid": UID,
         "operation_kind": "transfer",
         "source_uid": None,

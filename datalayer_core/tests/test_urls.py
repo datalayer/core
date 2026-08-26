@@ -6,9 +6,12 @@
 
 """Where each service is, when the environment only says where some of them are."""
 
+import pytest
+
 from datalayer_core.utils.urls import DatalayerURLs
 
-def test_contents_follows_runtimes_not_iam(monkeypatch) -> None:
+
+def test_contents_follows_runtimes_not_iam(monkeypatch: pytest.MonkeyPatch) -> None:
     """Contents lives on the runtimes plane, beside the NFS it serves.
 
     Setting `DATALAYER_IAM_URL` makes every other service inherit that host.
@@ -27,7 +30,9 @@ def test_contents_follows_runtimes_not_iam(monkeypatch) -> None:
     assert urls.contents_url != urls.iam_url
 
 
-def test_contents_follows_runtimes_wherever_runtimes_is_put(monkeypatch) -> None:
+def test_contents_follows_runtimes_wherever_runtimes_is_put(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Including a plane that puts every service on one host."""
     monkeypatch.setenv("DATALAYER_IAM_URL", "https://one-host.example")
     monkeypatch.setenv("DATALAYER_RUNTIMES_URL", "https://one-host.example")
@@ -38,7 +43,7 @@ def test_contents_follows_runtimes_wherever_runtimes_is_put(monkeypatch) -> None
     assert urls.contents_url == "https://one-host.example"
 
 
-def test_an_explicit_contents_url_still_wins(monkeypatch) -> None:
+def test_an_explicit_contents_url_still_wins(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DATALAYER_IAM_URL", "https://iam.example")
     monkeypatch.setenv("DATALAYER_RUNTIMES_URL", "https://runtimes.example")
     monkeypatch.setenv("DATALAYER_CONTENTS_URL", "https://contents.example")
