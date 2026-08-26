@@ -45,6 +45,10 @@ class FakeContents:
 
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
+        #: Files the folder has and the catalog does not — what a notebook
+        #: wrote inside a sandbox.
+        self.folder_only: dict[str, bytes] = {}
+        self.by_path: list[str] = []
         self.sessions: dict[str, dict[str, Any]] = {}
         self.calls: list[str] = []
         self.ranges: list[str] = []
@@ -53,7 +57,9 @@ class FakeContents:
     # -- the remote side -------------------------------------------------
     def _manifest(self) -> Manifest:
         manifest = Manifest(block_size=BLOCK)
-        for path, content in self.files.items():
+        # The remote side is the folder: what Contents wrote and what a
+        # notebook wrote, exactly as the service reports it.
+        for path, content in {**self.files, **self.folder_only}.items():
             if not path.startswith("research/"):
                 continue
             relative = path[len("research/") :]
@@ -89,8 +95,13 @@ class FakeContents:
             {
                 **a.to_dict(),
                 "blocks": list(a.blocks),
-                "object_uid": f"o-{a.path}",
-                "version_uid": f"v-{a.path}",
+                # Only what the catalog knows carries an identity; a file
+                # only the folder has is named by its path alone.
+                **(
+                    {"object_uid": f"o-{a.path}", "version_uid": f"v-{a.path}"}
+                    if f"research/{a.path}" in self.files
+                    else {}
+                ),
             }
             for a in plan.actions
         ]
@@ -190,6 +201,23 @@ class FakeContents:
     ) -> None:
         path = object_uid[len("o-") :]
         self.files.pop(path, None)
+
+    def iter_home_folder_file(
+        self,
+        path: str,
+        *,
+        byte_range: str | None = None,
+        chunk_size: int = 1 << 20,
+    ) -> Iterator[bytes]:
+        """Read by path: what a file only the folder has is fetched with."""
+        self.by_path.append(path)
+        content = self.folder_only[path]
+        if byte_range:
+            self.ranges.append(byte_range)
+            start, end = byte_range[len("bytes=") :].split("-")
+            content = content[int(start) : int(end) + 1]
+        for index in range(0, len(content), chunk_size):
+            yield content[index : index + chunk_size]
 
     def iter_home_folder_object(
         self,
@@ -407,3 +435,22 @@ def test_sync_resolve_validates_the_choice(
 
     assert result.exit_code == 1
     assert "local, remote or keep-both" in result.output
+
+
+def test_a_file_only_the_folder_has_is_fetched_by_its_path(tmp_path: Path) -> None:
+    """The download the catalog cannot serve.
+
+    A notebook wrote the file straight into the mounted folder, so there is
+    no object and no version to ask for — the plan names the path, and the
+    client reads it from the folder through the service.
+    """
+    fake = FakeContents()
+    payload = b"written inside the sandbox\n"
+    fake.folder_only["research/from-the-sandbox.md"] = payload
+
+    outcome = synchronizer(fake, tmp_path, direction="pull").run_once()
+
+    assert outcome.downloaded == ["from-the-sandbox.md"]
+    assert (tmp_path / "from-the-sandbox.md").read_bytes() == payload
+    # Asked for by path, not by object: there is no object.
+    assert fake.by_path == ["research/from-the-sandbox.md"]

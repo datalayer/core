@@ -26,6 +26,7 @@ import json
 import os
 import tempfile
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -277,21 +278,40 @@ class Synchronizer:
         return outcome
 
     def _download(self, action: Any, local: Manifest) -> int:
-        """Fetch only the blocks that differ, writing the result atomically."""
+        """
+        Fetch only the blocks that differ, writing the result atomically.
+
+        A file the catalog knows is fetched by object and version, which is
+        what makes an immutable version downloadable long after it stopped
+        being current. A file only the folder has — written inside a sandbox,
+        never through Contents — is fetched by its path: the service reads the
+        same shared filesystem the sandbox wrote to.
+        """
+        remote_path = _remote_path(self.remote_uri, action.path)
         object_uid = getattr(action, "object_uid", None)
+        version_uid = getattr(action, "version_uid", None)
+        stat = None
         if not object_uid:
-            stat = self.client.stat_home_folder_object(
-                _remote_path(self.remote_uri, action.path)
-            )
-            object_uid = stat.uid
-            version_uid = stat.current_version_uid
-        else:
-            version_uid = getattr(action, "version_uid", None)
-        remote_size = int(
-            self.client.stat_home_folder_object(
-                _remote_path(self.remote_uri, action.path)
-            ).size
+            try:
+                stat = self.client.stat_home_folder_object(remote_path)
+                object_uid = stat.uid
+                version_uid = stat.current_version_uid
+            except Exception:
+                # Not in the catalog: the folder is the only place it exists.
+                object_uid = None
+        remote_size = (
+            int((stat or self.client.stat_home_folder_object(remote_path)).size)
+            if object_uid
+            else 0
         )
+
+        def fetch(byte_range: str | None = None) -> Iterator[bytes]:
+            if object_uid:
+                return self.client.iter_home_folder_object(
+                    object_uid, version_uid=version_uid, byte_range=byte_range
+                )
+            return self.client.iter_home_folder_file(remote_path, byte_range=byte_range)
+
         target = self.root / action.path
         target.parent.mkdir(parents=True, exist_ok=True)
         existing = local.entries.get(action.path)
@@ -302,7 +322,11 @@ class Synchronizer:
         )
         try:
             with os.fdopen(descriptor, "wb") as output:
-                if existing is not None and target.is_file() and wanted:
+                # Only a catalog entry carries the size the block boundaries
+                # are computed from; a file only the folder has is fetched
+                # whole, which is what the first download of it would be
+                # anyway.
+                if object_uid and existing is not None and target.is_file() and wanted:
                     # Keep the blocks we already hold; fetch the rest by range.
                     with target.open("rb") as current:
                         total_blocks = max(
@@ -315,20 +339,14 @@ class Synchronizer:
                                 break
                             end = min(start + self.block_size, remote_size) - 1
                             if index in wanted or index >= len(existing.blocks):
-                                for chunk in self.client.iter_home_folder_object(
-                                    object_uid,
-                                    version_uid=version_uid,
-                                    byte_range=f"bytes={start}-{end}",
-                                ):
+                                for chunk in fetch(f"bytes={start}-{end}"):
                                     output.write(chunk)
                                     fetched += len(chunk)
                             else:
                                 current.seek(start)
                                 output.write(current.read(end - start + 1))
                 else:
-                    for chunk in self.client.iter_home_folder_object(
-                        object_uid, version_uid=version_uid
-                    ):
+                    for chunk in fetch():
                         output.write(chunk)
                         fetched += len(chunk)
             os.replace(temporary, target)

@@ -438,6 +438,31 @@ class ContentsMixin:
         )
         yield from response.iter_content(chunk_size=chunk_size)
 
+    def iter_home_folder_file(
+        self,
+        path: str,
+        *,
+        byte_range: str | None = None,
+        chunk_size: int = 1024 * 1024,
+    ) -> Iterator[bytes]:
+        """
+        Read one file of a Home Folder by its path, ranges included.
+
+        The object download beside this one is keyed by what Contents wrote.
+        A folder on the shared filesystem also holds what a notebook wrote,
+        and synchronization has to be able to fetch those: a file the catalog
+        never heard of is no less a file in the folder.
+        """
+        query = urlencode({"path": path})
+        headers = {"Range": byte_range} if byte_range else {}
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sources/home-folder/files/content?{query}"),
+            method="GET",
+            headers=headers,
+            stream=True,
+        )
+        yield from response.iter_content(chunk_size=chunk_size)
+
     def update_content_source(
         self,
         source_uid: str,
