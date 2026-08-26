@@ -91,11 +91,11 @@ def test_contents_client_resolves_the_server_managed_user_folder() -> None:
     client = Client()
     client.responses = [Response(source_response("User Folder"), '"folder.hash"')]
 
-    folder = client.get_user_folder()
+    folder = client.get_home_folder()
 
     assert folder.value.source.name == "User Folder"
     assert folder.etag == '"folder.hash"'
-    assert client.calls[0][0].endswith("/sources/user-folder")
+    assert client.calls[0][0].endswith("/sources/home-folder")
 
 
 def test_contents_client_creates_and_reads_attachment_manifest() -> None:

@@ -126,7 +126,7 @@ export type DownloadedObject = {
   headers: Record<string, string>;
 };
 
-export const downloadUserFolderObject = async (
+export const downloadHomeFolderObject = async (
   token: string,
   objectUid: string,
   options: { versionUid?: string; range?: string } = {},
@@ -136,7 +136,7 @@ export const downloadUserFolderObject = async (
   if (options.versionUid) parameters.set('version_uid', options.versionUid);
   const query = parameters.size ? `?${parameters.toString()}` : '';
   const response = await requestDatalayerAPIWithResponse<ArrayBuffer>({
-    url: `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/user-folder/objects/${encodeURIComponent(objectUid)}/download${query}`,
+    url: `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/home-folder/objects/${encodeURIComponent(objectUid)}/download${query}`,
     method: 'GET',
     token,
     headers: options.range ? { Range: options.range } : {},
@@ -171,7 +171,7 @@ export type UploadProgress = {
 };
 
 /** Create or resume a checksummed multipart upload and atomically finalize it. */
-export const uploadUserFolderFile = async (
+export const uploadHomeFolderFile = async (
   token: string,
   path: string,
   content: Blob | Uint8Array | ArrayBuffer,
@@ -189,7 +189,7 @@ export const uploadUserFolderFile = async (
   const transfer = await createTransfer(
     token,
     {
-      destinationUri: `user-folder:///${path.replace(/^\/+/, '')}`,
+      destinationUri: `home-folder:///${path.replace(/^\/+/, '')}`,
       size: payload.byteLength,
       checksum,
       mediaType: options.mediaType ?? 'application/octet-stream',

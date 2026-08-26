@@ -10,8 +10,10 @@
 
 export * from './generated';
 export * from './attachments';
+export * from './capabilities';
 export * from './datasets';
 export * from './objects';
 export * from './operations';
 export * from './sources';
+export * from './sync';
 export * from './transfers';

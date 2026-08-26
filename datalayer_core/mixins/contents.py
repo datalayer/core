@@ -40,7 +40,13 @@ from datalayer_core.models.contents.generated import (
     TransferCreate,
     TransferList,
     TransferView,
-    UserFolderQuota,
+    SyncConflictList,
+    SyncCreate,
+    SyncReconcile,
+    SyncReport,
+    SyncSessionList,
+    SyncSessionView,
+    HomeFolderQuota,
     VersionList,
 )
 
@@ -193,9 +199,9 @@ class ContentsMixin:
             CatalogSource.model_validate(response.json()), response.headers["ETag"]
         )
 
-    def get_user_folder(self) -> ConditionalCatalogSource:
+    def get_home_folder(self) -> ConditionalCatalogSource:
         response = self._fetch(  # type: ignore[attr-defined]
-            self._contents_url("/sources/user-folder"), method="GET"
+            self._contents_url("/sources/home-folder"), method="GET"
         )
         return ConditionalCatalogSource(
             CatalogSource.model_validate(response.json()), response.headers["ETag"]
@@ -215,20 +221,20 @@ class ContentsMixin:
         if cursor is not None:
             parameters["cursor"] = cursor
         response = self._fetch(  # type: ignore[attr-defined]
-            f"{self._contents_url('/sources/user-folder/objects')}?{urlencode(parameters)}",
+            f"{self._contents_url('/sources/home-folder/objects')}?{urlencode(parameters)}",
             method="GET",
         )
         return ObjectList.model_validate(response.json())
 
-    def get_user_folder_quota(self) -> UserFolderQuota:
+    def get_home_folder_quota(self) -> HomeFolderQuota:
         response = self._fetch(  # type: ignore[attr-defined]
-            self._contents_url("/sources/user-folder/quota"), method="GET"
+            self._contents_url("/sources/home-folder/quota"), method="GET"
         )
-        return UserFolderQuota.model_validate(response.json())
+        return HomeFolderQuota.model_validate(response.json())
 
     def stat_user_folder_object(self, path: str) -> ContentObject:
         response = self._fetch(  # type: ignore[attr-defined]
-            f"{self._contents_url('/sources/user-folder/objects/stat')}?{urlencode({'path': path})}",
+            f"{self._contents_url('/sources/home-folder/objects/stat')}?{urlencode({'path': path})}",
             method="GET",
         )
         return ContentObject.model_validate(response.json())
@@ -244,7 +250,7 @@ class ContentsMixin:
         if cursor is not None:
             parameters["cursor"] = cursor
         response = self._fetch(  # type: ignore[attr-defined]
-            f"{self._contents_url(f'/sources/user-folder/objects/{object_uid}/versions')}?{urlencode(parameters)}",
+            f"{self._contents_url(f'/sources/home-folder/objects/{object_uid}/versions')}?{urlencode(parameters)}",
             method="GET",
         )
         return VersionList.model_validate(response.json())
@@ -253,7 +259,7 @@ class ContentsMixin:
         self, object_uid: str, *, idempotency_key: str
     ) -> ContentObject:
         response = self._fetch(  # type: ignore[attr-defined]
-            self._contents_url(f"/sources/user-folder/objects/{object_uid}"),
+            self._contents_url(f"/sources/home-folder/objects/{object_uid}"),
             method="DELETE",
             headers={"Idempotency-Key": idempotency_key},
         )
@@ -268,7 +274,7 @@ class ContentsMixin:
     ) -> ContentObject:
         response = self._fetch(  # type: ignore[attr-defined]
             self._contents_url(
-                f"/sources/user-folder/objects/{object_uid}/restore"
+                f"/sources/home-folder/objects/{object_uid}/restore"
             ),
             method="POST",
             headers={"Idempotency-Key": idempotency_key},
@@ -367,7 +373,7 @@ class ContentsMixin:
         transfer = self.create_content_transfer(
             {
                 "destination_uri": (
-                    f"user-folder:///{destination_path.lstrip('/')}"
+                    f"home-folder:///{destination_path.lstrip('/')}"
                 ),
                 "size": size,
                 "checksum": digest.hexdigest(),
@@ -406,7 +412,7 @@ class ContentsMixin:
         headers = {"Range": byte_range} if byte_range else {}
         response = self._fetch(  # type: ignore[attr-defined]
             self._contents_url(
-                f"/sources/user-folder/objects/{object_uid}/download{query}"
+                f"/sources/home-folder/objects/{object_uid}/download{query}"
             ),
             method="GET",
             headers=headers,
@@ -471,6 +477,92 @@ class ContentsMixin:
         return ConditionalCatalogSource(
             CatalogSource.model_validate(response.json()), response.headers["ETag"]
         )
+
+    # -- synchronization -------------------------------------------------
+
+    def create_content_sync(
+        self,
+        request: SyncCreate | Mapping[str, Any],
+        *,
+        idempotency_key: str,
+    ) -> SyncSessionView:
+        """Open a session; the answer carries the first plan."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url("/sync"),
+            method="POST",
+            headers={"Idempotency-Key": idempotency_key},
+            json=_payload(request),
+        )
+        return SyncSessionView.model_validate(response.json())
+
+    def get_content_sync(self, session_uid: str) -> SyncSessionView:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}"), method="GET"
+        )
+        return SyncSessionView.model_validate(response.json())
+
+    def list_content_syncs(
+        self, *, active: bool = False, cursor: str | None = None, limit: int = 50
+    ) -> SyncSessionList:
+        parameters: dict[str, str | int] = {"active": str(active).lower(), "limit": limit}
+        if cursor is not None:
+            parameters["cursor"] = cursor
+        response = self._fetch(  # type: ignore[attr-defined]
+            f"{self._contents_url('/sync')}?{urlencode(parameters)}", method="GET"
+        )
+        return SyncSessionList.model_validate(response.json())
+
+    def reconcile_content_sync(
+        self, session_uid: str, request: SyncReconcile | Mapping[str, Any]
+    ) -> SyncSessionView:
+        """A fresh local manifest; a fresh plan. How a watch pass and a reconnect both work."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}/reconcile"),
+            method="POST",
+            json=_payload(request),
+        )
+        return SyncSessionView.model_validate(response.json())
+
+    def heartbeat_content_sync(self, session_uid: str) -> SyncSessionView:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}/heartbeat"), method="POST"
+        )
+        return SyncSessionView.model_validate(response.json())
+
+    def report_content_sync(
+        self, session_uid: str, request: SyncReport | Mapping[str, Any]
+    ) -> SyncSessionView:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}/report"),
+            method="POST",
+            json=_payload(request),
+        )
+        return SyncSessionView.model_validate(response.json())
+
+    def cancel_content_sync(self, session_uid: str) -> SyncSessionView:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}"), method="DELETE"
+        )
+        return SyncSessionView.model_validate(response.json())
+
+    def list_content_sync_conflicts(
+        self, session_uid: str, *, open_only: bool = False
+    ) -> SyncConflictList:
+        response = self._fetch(  # type: ignore[attr-defined]
+            f"{self._contents_url(f'/sync/{session_uid}/conflicts')}?open_only={str(open_only).lower()}",
+            method="GET",
+        )
+        return SyncConflictList.model_validate(response.json())
+
+    def resolve_content_sync_conflict(
+        self, session_uid: str, conflict_uid: str, *, use: str
+    ) -> SyncSessionView:
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/sync/{session_uid}/conflicts/{conflict_uid}/resolve"),
+            method="POST",
+            json={"use": use},
+        )
+        return SyncSessionView.model_validate(response.json())
 
     def get_content_operation(self, operation_uid: str) -> OperationView:
         response = self._fetch(  # type: ignore[attr-defined]

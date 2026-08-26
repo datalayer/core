@@ -150,7 +150,7 @@ def transfer_view(status: str) -> TransferView:
             "uid": "01TRANSFER0000000000000000",
             "direction": "upload",
             "source_uid": UID,
-            "destination_uri": "user-folder:///reports/earth.csv",
+            "destination_uri": "home-folder:///reports/earth.csv",
             "path": "reports/earth.csv",
             "media_type": "text/csv",
             "expected_size": 10,
@@ -240,7 +240,7 @@ def test_contents_upload_download_and_transfer_commands(monkeypatch, tmp_path) -
             "json",
             "upload",
             str(source),
-            "user-folder:///reports/earth.csv",
+            "home-folder:///reports/earth.csv",
         ],
     )
     downloaded = runner.invoke(
@@ -248,7 +248,7 @@ def test_contents_upload_download_and_transfer_commands(monkeypatch, tmp_path) -
         [
             "contents",
             "download",
-            "user-folder:///reports/earth.csv",
+            "home-folder:///reports/earth.csv",
             str(destination),
         ],
     )
@@ -399,7 +399,7 @@ def test_contents_download_refuses_overwrite_with_nonzero_exit(monkeypatch, tmp_
         [
             "contents",
             "download",
-            "user-folder:///reports/earth.csv",
+            "home-folder:///reports/earth.csv",
             str(destination),
         ],
     )

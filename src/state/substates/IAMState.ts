@@ -15,6 +15,7 @@ import {
   IAMProvidersSpecs,
   IIAMResponseType,
 } from '../../models';
+import { availableCredits } from '../../models/Credits';
 import type {
   ICredits,
   ICreditsReservation,
@@ -248,16 +249,11 @@ export const iamStore = createStore<IAMState>((set, get) => {
           });
           const { credits, reservations: creditsReservations = [] } =
             creditsRaw;
-          let available =
-            credits.quota !== null
-              ? credits.quota - credits.credits
-              : credits.credits;
-          available -= creditsReservations.reduce(
-            (consumed, reservation) => consumed + reservation.credits,
-            0,
-          );
           set({
-            credits: { ...credits, available: Math.max(0, available) },
+            credits: {
+              ...credits,
+              available: availableCredits(credits, creditsReservations),
+            },
             creditsReservations: creditsReservations,
           });
         } catch (error) {

@@ -143,6 +143,19 @@ class CloudStorageConfiguration(BaseModel):
     region: str | None = Field(None, title='Region')
 
 
+class Use(Enum):
+    local = 'local'
+    remote = 'remote'
+    keep_both = 'keep-both'
+
+
+class ConflictResolution(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    use: Use = Field(..., title='Use')
+
+
 class Kind(Enum):
     file = 'file'
     folder = 'folder'
@@ -260,7 +273,7 @@ class DatasetPublicationList(BaseModel):
 
 class OriginKind(Enum):
     upload = 'upload'
-    user_folder = 'user-folder'
+    home_folder = 'home-folder'
     sandbox_result = 'sandbox-result'
 
 
@@ -411,6 +424,46 @@ class HealthResponse(BaseModel):
     success: Literal[True] = Field(True, title='Success')
 
 
+class HomeFolderFileList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[dict[str, Any]] = Field(..., title='Items')
+    path: str = Field(..., title='Path')
+
+
+class HomeFolderQuota(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    limit_bytes: int = Field(..., title='Limit Bytes')
+    limit_objects: int = Field(..., title='Limit Objects')
+    reserved_bytes: int = Field(..., title='Reserved Bytes')
+    reserved_objects: int = Field(..., title='Reserved Objects')
+    used_bytes: int = Field(..., title='Used Bytes')
+    used_objects: int = Field(..., title='Used Objects')
+
+
+class ManifestEntry(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    blocks: list[str] | None = Field(None, title='Blocks')
+    checksum: constr(pattern=r'^[0-9a-f]{64}$') = Field(..., title='Checksum')
+    modified_at: str = Field(..., title='Modified At')
+    path: str = Field(..., title='Path')
+    size: conint(ge=0) = Field(..., title='Size')
+
+
+class ManifestPayload(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    block_size: int | None = Field(4194304, title='Block Size')
+    entries: list[ManifestEntry] | None = Field(None, title='Entries')
+    tombstones: dict[str, str] | None = Field(None, title='Tombstones')
+
+
 class Transport(Enum):
     stdio = 'stdio'
     streamable_http = 'streamable-http'
@@ -443,6 +496,19 @@ class ObjectList(BaseModel):
     )
     items: list[ContentObject] = Field(..., title='Items')
     next_cursor: str | None = Field(None, title='Next Cursor')
+
+
+class OperationCapability(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    available: bool = Field(..., title='Available')
+    deployed: bool = Field(..., title='Deployed')
+    documentation: str | None = Field(None, title='Documentation')
+    kind: Literal['operation'] = Field('operation', title='Kind')
+    label: str = Field(..., title='Label')
+    name: str = Field(..., title='Name')
+    reason: str | None = Field(None, title='Reason')
 
 
 class Status1(Enum):
@@ -480,6 +546,26 @@ class PingResponse(BaseModel):
     message: Literal['Pong.'] = Field('Pong.', title='Message')
     success: Literal[True] = Field(True, title='Success')
     version: str = Field(..., title='Version')
+
+
+class Kind3(Enum):
+    upload = 'upload'
+    download = 'download'
+    delete_remote = 'delete_remote'
+    delete_local = 'delete_local'
+    conflict = 'conflict'
+
+
+class PlanAction(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    blocks: list[int] | None = Field(None, title='Blocks')
+    kind: Kind3 = Field(..., title='Kind')
+    object_uid: str | None = Field(None, title='Object Uid')
+    path: str = Field(..., title='Path')
+    reason: str = Field(..., title='Reason')
+    version_uid: str | None = Field(None, title='Version Uid')
 
 
 class Status2(Enum):
@@ -521,6 +607,21 @@ class Sharing(BaseModel):
     grants: list[Grant] | None = Field(None, title='Grants')
 
 
+class SourceKindCapability(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    available: bool = Field(..., title='Available')
+    count: int = Field(..., title='Count')
+    creatable: bool = Field(..., title='Creatable')
+    deployed: bool = Field(..., title='Deployed')
+    documentation: str | None = Field(None, title='Documentation')
+    kind: str = Field(..., title='Kind')
+    label: str = Field(..., title='Label')
+    name: str = Field(..., title='Name')
+    reason: str | None = Field(None, title='Reason')
+
+
 class SourceStatus(Enum):
     pending = 'pending'
     ready = 'ready'
@@ -541,6 +642,112 @@ class StableErrorCode(Enum):
     CAPABILITY_REVOKED = 'CAPABILITY_REVOKED'
     OPERATION_CANCELLED = 'OPERATION_CANCELLED'
     INTERNAL_ERROR = 'INTERNAL_ERROR'
+
+
+class Resolution(Enum):
+    local = 'local'
+    remote = 'remote'
+    keep_both = 'keep-both'
+
+
+class Status3(Enum):
+    open = 'open'
+    resolved = 'resolved'
+
+
+class SyncConflictView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    created_at: str = Field(..., title='Created At')
+    local_entry: ManifestEntry | None = None
+    path: str = Field(..., title='Path')
+    reason: str = Field(..., title='Reason')
+    remote_entry: ManifestEntry | None = None
+    resolution: Resolution | None = Field(None, title='Resolution')
+    resolved_at: str | None = Field(None, title='Resolved At')
+    session_uid: str = Field(..., title='Session Uid')
+    status: Status3 = Field(..., title='Status')
+    uid: str = Field(..., title='Uid')
+
+
+class ConflictPolicy(Enum):
+    manual = 'manual'
+    newest = 'newest'
+    local = 'local'
+    remote = 'remote'
+
+
+class Direction(Enum):
+    push = 'push'
+    pull = 'pull'
+    bidirectional = 'bidirectional'
+
+
+class SyncCreate(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    block_size: int | None = Field(4194304, title='Block Size')
+    conflict_policy: ConflictPolicy | None = Field('manual', title='Conflict Policy')
+    delete: bool | None = Field(False, title='Delete')
+    direction: Direction | None = Field('bidirectional', title='Direction')
+    exclusions: list[str] | None = Field(None, title='Exclusions')
+    local_manifest: ManifestPayload
+    remote_uri: str = Field(..., title='Remote Uri')
+    watch: bool | None = Field(False, title='Watch')
+
+
+class SyncPlan(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    actions: list[PlanAction] | None = Field(None, title='Actions')
+
+
+class SyncReconcile(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    local_manifest: ManifestPayload
+
+
+class SyncReport(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    applied: list[str] | None = Field(None, title='Applied')
+    failed: dict[str, str] | None = Field(None, title='Failed')
+    transferred_bytes: conint(ge=0) | None = Field(0, title='Transferred Bytes')
+
+
+class SyncSessionView(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    block_size: int = Field(..., title='Block Size')
+    completed_at: str | None = Field(None, title='Completed At')
+    conflict_count: int = Field(..., title='Conflict Count')
+    conflict_policy: str = Field(..., title='Conflict Policy')
+    created_at: str = Field(..., title='Created At')
+    delete: bool = Field(..., title='Delete')
+    deleted_files: int = Field(..., title='Deleted Files')
+    direction: str = Field(..., title='Direction')
+    downloaded_files: int = Field(..., title='Downloaded Files')
+    error_code: str | None = Field(None, title='Error Code')
+    error_message: str | None = Field(None, title='Error Message')
+    exclusions: list[str] = Field(..., title='Exclusions')
+    last_heartbeat_at: str | None = Field(None, title='Last Heartbeat At')
+    plan: SyncPlan | None = None
+    reconciliations: int = Field(..., title='Reconciliations')
+    remote_uri: str = Field(..., title='Remote Uri')
+    source_uid: str = Field(..., title='Source Uid')
+    status: str = Field(..., title='Status')
+    transferred_bytes: int = Field(..., title='Transferred Bytes')
+    uid: str = Field(..., title='Uid')
+    updated_at: str = Field(..., title='Updated At')
+    uploaded_files: int = Field(..., title='Uploaded Files')
+    watch: bool = Field(..., title='Watch')
 
 
 class Overwrite(Enum):
@@ -595,18 +802,6 @@ class TransferView(BaseModel):
     uid: str = Field(..., title='Uid')
     updated_at: str = Field(..., title='Updated At')
     version_uid: str | None = Field(None, title='Version Uid')
-
-
-class UserFolderQuota(BaseModel):
-    model_config = ConfigDict(
-        extra='forbid',
-    )
-    limit_bytes: int = Field(..., title='Limit Bytes')
-    limit_objects: int = Field(..., title='Limit Objects')
-    reserved_bytes: int = Field(..., title='Reserved Bytes')
-    reserved_objects: int = Field(..., title='Reserved Objects')
-    used_bytes: int = Field(..., title='Used Bytes')
-    used_objects: int = Field(..., title='Used Objects')
 
 
 class ValidationError(BaseModel):
@@ -808,6 +1003,15 @@ class ContentSourceUpdate(BaseModel):
     status: SourceStatus | None = None
 
 
+class ContentsCapabilities(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    counts_truncated: bool = Field(..., title='Counts Truncated')
+    operations: list[OperationCapability] = Field(..., title='Operations')
+    source_kinds: list[SourceKindCapability] = Field(..., title='Source Kinds')
+
+
 class DatasetRevision(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -841,6 +1045,21 @@ class DatasetRevisionList(BaseModel):
 
 class HTTPValidationError(BaseModel):
     detail: list[ValidationError] | None = Field(None, title='Detail')
+
+
+class SyncConflictList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[SyncConflictView] = Field(..., title='Items')
+
+
+class SyncSessionList(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    items: list[SyncSessionView] = Field(..., title='Items')
+    next_cursor: str | None = Field(None, title='Next Cursor')
 
 
 class TransferList(BaseModel):

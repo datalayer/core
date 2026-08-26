@@ -29,12 +29,12 @@ import {
 import { Box } from '@datalayer/primer-addons';
 import type { ContentObject } from '../../api/contents';
 import {
-  useDeleteUserFolderObject,
-  useDownloadUserFolderObject,
-  useRestoreUserFolderObject,
-  useUploadUserFolderFile,
-  useUserFolderObjects,
-  useUserFolderObjectVersions,
+  useDeleteHomeFolderObject,
+  useDownloadHomeFolderObject,
+  useRestoreHomeFolderObject,
+  useUploadHomeFolderFile,
+  useHomeFolderObjects,
+  useHomeFolderObjectVersions,
 } from '../../hooks/useContents';
 
 const formatBytes = (bytes: number): string => {
@@ -52,7 +52,7 @@ const mutationKey = (action: string, uid: string): string => {
   return `${action}:${uid}:${random}`;
 };
 
-export type UserFolderBrowserProps = {
+export type HomeFolderObjectsBrowserProps = {
   prefix?: string;
   selectedObjectUids?: readonly string[];
   onSelectedObjectsChange?: (objects: ContentObject[]) => void;
@@ -60,9 +60,9 @@ export type UserFolderBrowserProps = {
 };
 
 /** Browser for the server-managed Home Folder metadata and version history. */
-export const UserFolderBrowser = ({ prefix, selectedObjectUids = [],
-  onSelectedObjectsChange, selectionDisabled = false }: UserFolderBrowserProps) => {
-  const objects = useUserFolderObjects({ prefix, limit: 100 });
+export const HomeFolderObjectsBrowser = ({ prefix, selectedObjectUids = [],
+  onSelectedObjectsChange, selectionDisabled = false }: HomeFolderObjectsBrowserProps) => {
+  const objects = useHomeFolderObjects({ prefix, limit: 100 });
   const [selected, setSelected] = useState<ContentObject>();
   const [uploadProgress, setUploadProgress] = useState<{
     uploaded: number;
@@ -70,11 +70,11 @@ export const UserFolderBrowser = ({ prefix, selectedObjectUids = [],
   }>();
   const [failedUpload, setFailedUpload] = useState<File>();
   const fileInput = useRef<HTMLInputElement>(null);
-  const versions = useUserFolderObjectVersions(selected?.uid);
-  const deleteObject = useDeleteUserFolderObject();
-  const restoreObject = useRestoreUserFolderObject();
-  const uploadObject = useUploadUserFolderFile();
-  const downloadObject = useDownloadUserFolderObject();
+  const versions = useHomeFolderObjectVersions(selected?.uid);
+  const deleteObject = useDeleteHomeFolderObject();
+  const restoreObject = useRestoreHomeFolderObject();
+  const uploadObject = useUploadHomeFolderFile();
+  const downloadObject = useDownloadHomeFolderObject();
   const selectable = Boolean(onSelectedObjectsChange);
   const toggleSelection = (object: ContentObject) => {
     if (!onSelectedObjectsChange) return;
@@ -176,7 +176,7 @@ export const UserFolderBrowser = ({ prefix, selectedObjectUids = [],
         }}
       >
         <Text sx={{ color: 'fg.muted' }}>
-          {prefix ? `user-folder:///${prefix}` : 'user-folder:///'}
+          {prefix ? `home-folder:///${prefix}` : 'home-folder:///'}
         </Text>
         <>
           <input
@@ -411,4 +411,4 @@ export const UserFolderBrowser = ({ prefix, selectedObjectUids = [],
   );
 };
 
-export default UserFolderBrowser;
+export default HomeFolderObjectsBrowser;

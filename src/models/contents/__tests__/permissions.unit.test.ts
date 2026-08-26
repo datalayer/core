@@ -68,7 +68,7 @@ describe('Contents permission helpers', () => {
         source: {
           ...owned.source,
           kind: 'files',
-          configuration: { kind: 'files', rootUri: 'user-folder:///' },
+          configuration: { kind: 'files', rootUri: 'home-folder:///' },
         },
       }),
     ).toBe(false);

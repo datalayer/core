@@ -20,31 +20,31 @@ import {
   completeTransfer,
   createSource,
   createTransfer,
-  downloadUserFolderObject,
+  downloadHomeFolderObject,
   getSource,
-  getUserFolderQuota,
-  getUserFolder,
+  getHomeFolderQuota,
+  getHomeFolder,
   getAttachmentManifest,
   getDatasetRevision,
   getOperation,
   getTransfer,
   getSourcePermissions,
   getSourceSharing,
-  listUserFolderObjects,
-  listUserFolderObjectVersions,
+  listHomeFolderObjects,
+  listHomeFolderObjectVersions,
   listSources,
   listTransfers,
   listAttachments,
   listDatasetRevisions,
   listDatasetPublications,
-  deleteUserFolderObject,
+  deleteHomeFolderObject,
   replaceSourceSharing,
-  restoreUserFolderObject,
+  restoreHomeFolderObject,
   revokeAttachment,
   unpublishDataset,
-  statUserFolderObject,
+  statHomeFolderObject,
   uploadTransferPart,
-  uploadUserFolderFile,
+  uploadHomeFolderFile,
   updateSource,
   type ConditionalCatalogSource,
   type AttachmentCreate,
@@ -71,8 +71,8 @@ import {
   type TransferList,
   type TransferView,
   type UploadProgress,
-  type UserFolderObjectListOptions,
-  type UserFolderQuota,
+  type HomeFolderObjectListOptions,
+  type HomeFolderQuota,
   type VersionList,
 } from '../../api/contents';
 import type { Constructor } from '../utils/mixins';
@@ -168,51 +168,51 @@ export function ContentsMixin<TBase extends Constructor>(Base: TBase) {
       return getSource(token, sourceUid, baseUrl);
     }
 
-    async getUserFolder(): Promise<ConditionalCatalogSource> {
+    async getHomeFolder(): Promise<ConditionalCatalogSource> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return getUserFolder(token, baseUrl);
+      return getHomeFolder(token, baseUrl);
     }
 
-    async listUserFolderObjects(
-      options: UserFolderObjectListOptions = {},
+    async listHomeFolderObjects(
+      options: HomeFolderObjectListOptions = {},
     ): Promise<ObjectList> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return listUserFolderObjects(token, options, baseUrl);
+      return listHomeFolderObjects(token, options, baseUrl);
     }
 
-    async getUserFolderQuota(): Promise<UserFolderQuota> {
+    async getHomeFolderQuota(): Promise<HomeFolderQuota> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return getUserFolderQuota(token, baseUrl);
+      return getHomeFolderQuota(token, baseUrl);
     }
 
-    async statUserFolderObject(path: string): Promise<ContentObject> {
+    async statHomeFolderObject(path: string): Promise<ContentObject> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return statUserFolderObject(token, path, baseUrl);
+      return statHomeFolderObject(token, path, baseUrl);
     }
 
-    async listUserFolderObjectVersions(
+    async listHomeFolderObjectVersions(
       objectUid: string,
       options: { cursor?: string; limit?: number } = {},
     ): Promise<VersionList> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return listUserFolderObjectVersions(token, objectUid, options, baseUrl);
+      return listHomeFolderObjectVersions(token, objectUid, options, baseUrl);
     }
 
-    async deleteUserFolderObject(
+    async deleteHomeFolderObject(
       objectUid: string,
       idempotencyKey: string,
     ): Promise<ContentObject> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return deleteUserFolderObject(token, objectUid, idempotencyKey, baseUrl);
+      return deleteHomeFolderObject(token, objectUid, idempotencyKey, baseUrl);
     }
 
-    async restoreUserFolderObject(
+    async restoreHomeFolderObject(
       objectUid: string,
       request: RestoreRequest,
       idempotencyKey: string,
     ): Promise<ContentObject> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return restoreUserFolderObject(
+      return restoreHomeFolderObject(
         token,
         objectUid,
         request,
@@ -268,7 +268,7 @@ export function ContentsMixin<TBase extends Constructor>(Base: TBase) {
       return cancelTransfer(token, transferUid, baseUrl);
     }
 
-    async uploadUserFolderFile(
+    async uploadHomeFolderFile(
       path: string,
       content: Blob | Uint8Array | ArrayBuffer,
       options: {
@@ -280,15 +280,15 @@ export function ContentsMixin<TBase extends Constructor>(Base: TBase) {
       },
     ): Promise<TransferView> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return uploadUserFolderFile(token, path, content, options, baseUrl);
+      return uploadHomeFolderFile(token, path, content, options, baseUrl);
     }
 
-    async downloadUserFolderObject(
+    async downloadHomeFolderObject(
       objectUid: string,
       options: { versionUid?: string; range?: string } = {},
     ): Promise<DownloadedObject> {
       const { token, baseUrl } = this.contentsRequestContext();
-      return downloadUserFolderObject(token, objectUid, options, baseUrl);
+      return downloadHomeFolderObject(token, objectUid, options, baseUrl);
     }
 
     async updateContentSource(

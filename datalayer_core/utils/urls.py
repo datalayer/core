@@ -289,11 +289,17 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_SCHEDULER_URL
         )
+        # Contents follows **runtimes**, not IAM. It is deployed on the
+        # runtimes plane, beside the NFS that backs the Home Folder and the
+        # Volumes, so inheriting `base_url_for_services` — the IAM host —
+        # pointed every client at a host with no Contents service. Runtimes
+        # already sidesteps that inheritance for the same reason; contents now
+        # simply goes wherever runtimes goes, which keeps a single-host plane
+        # working too because there runtimes *is* that host.
         resolved_contents_url = (
             contents_url
             or os.environ.get("DATALAYER_CONTENTS_URL")
-            or base_url_for_services
-            or DEFAULT_DATALAYER_CONTENTS_URL
+            or resolved_runtimes_url
         )
 
         # Strip trailing slashes for consistency

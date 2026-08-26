@@ -92,25 +92,13 @@ export type IDatalayerCoreConfig = {
   /**
    * OTEL (OpenTelemetry) API URL.
    *
-   * This is the endpoint runtimes/agents export telemetry to. In the browser
-   * it is also the default endpoint used to *consume* (query) telemetry, unless
-   * {@link otelInUrl} is provided.
+   * Both directions: the endpoint runtimes and agents export telemetry to, and
+   * the endpoint the browser reads it back from. A separate consume URL existed
+   * so a local UI could read from a remote service while exporting elsewhere;
+   * pointing this at that service does the same thing without two fields that
+   * can disagree.
    */
   otelUrl: string;
-  /**
-   * OTEL (OpenTelemetry) *consume* (read/query) API URL override.
-   *
-   * When set, the UI reads telemetry (metrics, traces, logs) from this URL
-   * instead of {@link otelUrl}. When empty/undefined, {@link otelUrl} is used.
-   *
-   * Primary use case: local development. When runtimes run in the cloud and
-   * export their telemetry to the production OTEL service, a local UI must fetch
-   * telemetry from production rather than from the local OTEL endpoint. Set this
-   * to e.g. `https://prod1.datalayer.run` while `otelUrl` stays local.
-   *
-   * Fed by the `DATALAYER_OTEL_IN_URL` environment variable at build/deploy time.
-   */
-  otelInUrl?: string;
   /**
    * Growth API URL.
    */

@@ -138,6 +138,8 @@ export const queryKeys = {
   contents: {
     all: () => ['contents'] as const,
     sources: () => [...queryKeys.contents.all(), 'sources'] as const,
+    capabilities: () =>
+      [...queryKeys.contents.all(), 'capabilities'] as const,
     sourceList: (filters?: {
       kind?: string;
       cursor?: string;
@@ -153,26 +155,26 @@ export const queryKeys = {
       [...queryKeys.contents.datasetRevisions(sourceUid), revisionUid] as const,
     datasetPublications: (sourceUid: string) =>
       [...queryKeys.contents.source(sourceUid), 'publications'] as const,
-    userFolder: () => [...queryKeys.contents.sources(), 'user-folder'] as const,
-    userFolderQuota: () =>
-      [...queryKeys.contents.userFolder(), 'quota'] as const,
-    userFolderObjects: (filters?: {
+    homeFolder: () => [...queryKeys.contents.sources(), 'user-folder'] as const,
+    homeFolderQuota: () =>
+      [...queryKeys.contents.homeFolder(), 'quota'] as const,
+    homeFolderObjects: (filters?: {
       prefix?: string;
       cursor?: string;
       limit?: number;
       order?: 'path' | 'updated';
     }) =>
       [
-        ...queryKeys.contents.userFolder(),
+        ...queryKeys.contents.homeFolder(),
         'objects',
         'list',
         filters ?? {},
       ] as const,
-    userFolderObject: (path: string) =>
-      [...queryKeys.contents.userFolder(), 'objects', 'stat', path] as const,
-    userFolderObjectVersions: (objectUid: string, cursor?: string) =>
+    homeFolderObject: (path: string) =>
+      [...queryKeys.contents.homeFolder(), 'objects', 'stat', path] as const,
+    homeFolderObjectVersions: (objectUid: string, cursor?: string) =>
       [
-        ...queryKeys.contents.userFolder(),
+        ...queryKeys.contents.homeFolder(),
         'objects',
         objectUid,
         'versions',
@@ -189,6 +191,13 @@ export const queryKeys = {
     }) => [...queryKeys.contents.transfers(), 'list', filters ?? {}] as const,
     transfer: (transferUid: string) =>
       [...queryKeys.contents.transfers(), transferUid] as const,
+    syncSessions: () => [...queryKeys.contents.all(), 'sync'] as const,
+    syncSessionList: (filters?: { active?: boolean; cursor?: string; limit?: number }) =>
+      [...queryKeys.contents.syncSessions(), 'list', filters ?? {}] as const,
+    syncSession: (sessionUid: string) =>
+      [...queryKeys.contents.syncSessions(), sessionUid] as const,
+    syncConflicts: (sessionUid: string) =>
+      [...queryKeys.contents.syncSession(sessionUid), 'conflicts'] as const,
     attachments: () => [...queryKeys.contents.all(), 'attachments'] as const,
     attachmentList: (filters?: {
       sandboxUid?: string;

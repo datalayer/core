@@ -209,7 +209,7 @@ def generate_pydantic_ai_traces(count: int = 3, token: str | None = None) -> Non
         provider = TracerProvider(resource=_resource("unknown_service", token=token))
         exporter = OTLPSpanExporter(endpoint=f"{endpoint}/v1/traces")
         provider.add_span_processor(BatchSpanProcessor(exporter))
-        tracer = provider.get_tracer("pydantic-ai", "1.42.0")
+        tracer = provider.get_tracer("pydantic-ai", "2.35.0")
 
         with tracer.start_as_current_span("agent run") as root:
             # Core agent attributes

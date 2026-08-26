@@ -11,9 +11,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
-  deleteUserFolderObject,
-  listUserFolderObjects,
-  restoreUserFolderObject,
+  deleteHomeFolderObject,
+  listHomeFolderObjects,
+  restoreHomeFolderObject,
 } from '../objects';
 
 const object = {
@@ -40,7 +40,7 @@ describe('Contents User Folder object API', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValue({ items: [object], next_cursor: 'signed.cursor' });
 
-    const page = await listUserFolderObjects('token', {
+    const page = await listHomeFolderObjects('token', {
       prefix: 'reports',
       cursor: 'previous.cursor',
       limit: 25,
@@ -62,8 +62,8 @@ describe('Contents User Folder object API', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValue(object);
 
-    await deleteUserFolderObject('token', 'object uid', 'delete-object');
-    await restoreUserFolderObject(
+    await deleteHomeFolderObject('token', 'object uid', 'delete-object');
+    await restoreHomeFolderObject(
       'token',
       'object uid',
       { versionUid: '01VERSION' },

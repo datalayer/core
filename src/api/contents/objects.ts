@@ -16,38 +16,38 @@ import type {
   ContentObject,
   ObjectList,
   RestoreRequest,
-  UserFolderQuota,
+  HomeFolderQuota,
   VersionList,
 } from './generated';
 
 const convertResponse = <T>(value: unknown): T =>
   contentsToCamelCase(value as JsonValue) as T;
 
-const userFolderObjectsUrl = (baseUrl: string, suffix = ''): string =>
-  `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/user-folder/objects${suffix}`;
+const homeFolderObjectsUrl = (baseUrl: string, suffix = ''): string =>
+  `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/home-folder/objects${suffix}`;
 
-export type UserFolderObjectListOptions = {
+export type HomeFolderObjectListOptions = {
   prefix?: string;
   cursor?: string;
   limit?: number;
   order?: 'path' | 'updated';
 };
 
-export const getUserFolderQuota = async (
+export const getHomeFolderQuota = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
-): Promise<UserFolderQuota> =>
-  convertResponse<UserFolderQuota>(
+): Promise<HomeFolderQuota> =>
+  convertResponse<HomeFolderQuota>(
     await requestDatalayerAPI({
-      url: `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/user-folder/quota`,
+      url: `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/home-folder/quota`,
       method: 'GET',
       token,
     }),
   );
 
-export const listUserFolderObjects = async (
+export const listHomeFolderObjects = async (
   token: string,
-  options: UserFolderObjectListOptions = {},
+  options: HomeFolderObjectListOptions = {},
   baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
 ): Promise<ObjectList> => {
   const parameters = new URLSearchParams();
@@ -63,14 +63,14 @@ export const listUserFolderObjects = async (
   }
   return convertResponse<ObjectList>(
     await requestDatalayerAPI({
-      url: `${userFolderObjectsUrl(baseUrl)}?${parameters.toString()}`,
+      url: `${homeFolderObjectsUrl(baseUrl)}?${parameters.toString()}`,
       method: 'GET',
       token,
     }),
   );
 };
 
-export const statUserFolderObject = async (
+export const statHomeFolderObject = async (
   token: string,
   path: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
@@ -78,14 +78,14 @@ export const statUserFolderObject = async (
   const parameters = new URLSearchParams({ path });
   return convertResponse<ContentObject>(
     await requestDatalayerAPI({
-      url: `${userFolderObjectsUrl(baseUrl, '/stat')}?${parameters.toString()}`,
+      url: `${homeFolderObjectsUrl(baseUrl, '/stat')}?${parameters.toString()}`,
       method: 'GET',
       token,
     }),
   );
 };
 
-export const listUserFolderObjectVersions = async (
+export const listHomeFolderObjectVersions = async (
   token: string,
   objectUid: string,
   options: { cursor?: string; limit?: number } = {},
@@ -98,14 +98,14 @@ export const listUserFolderObjectVersions = async (
   }
   return convertResponse<VersionList>(
     await requestDatalayerAPI({
-      url: `${userFolderObjectsUrl(baseUrl, `/${encodeURIComponent(objectUid)}/versions`)}?${parameters.toString()}`,
+      url: `${homeFolderObjectsUrl(baseUrl, `/${encodeURIComponent(objectUid)}/versions`)}?${parameters.toString()}`,
       method: 'GET',
       token,
     }),
   );
 };
 
-export const deleteUserFolderObject = async (
+export const deleteHomeFolderObject = async (
   token: string,
   objectUid: string,
   idempotencyKey: string,
@@ -113,14 +113,14 @@ export const deleteUserFolderObject = async (
 ): Promise<ContentObject> =>
   convertResponse<ContentObject>(
     await requestDatalayerAPI({
-      url: userFolderObjectsUrl(baseUrl, `/${encodeURIComponent(objectUid)}`),
+      url: homeFolderObjectsUrl(baseUrl, `/${encodeURIComponent(objectUid)}`),
       method: 'DELETE',
       token,
       headers: { 'Idempotency-Key': idempotencyKey },
     }),
   );
 
-export const restoreUserFolderObject = async (
+export const restoreHomeFolderObject = async (
   token: string,
   objectUid: string,
   request: RestoreRequest,
@@ -129,7 +129,7 @@ export const restoreUserFolderObject = async (
 ): Promise<ContentObject> =>
   convertResponse<ContentObject>(
     await requestDatalayerAPI({
-      url: userFolderObjectsUrl(
+      url: homeFolderObjectsUrl(
         baseUrl,
         `/${encodeURIComponent(objectUid)}/restore`,
       ),

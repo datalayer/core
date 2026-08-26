@@ -9,4 +9,4 @@
  */
 
 export * from './ContentSourceCard';
-export * from './UserFolderBrowser';
+export * from './HomeFolderObjectsBrowser';

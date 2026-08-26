@@ -10,36 +10,42 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  cancelSyncSession,
   createAttachment,
   createSource,
+  getCapabilities,
+  getSyncSession,
+  listSyncConflicts,
+  listSyncSessions,
+  resolveSyncConflict,
   createDatasetRevision,
   createDatasetPublication,
   cancelOperation,
   cancelTransfer,
-  deleteUserFolderObject,
-  downloadUserFolderObject,
+  deleteHomeFolderObject,
+  downloadHomeFolderObject,
   getOperation,
   getAttachmentManifest,
   getDatasetRevision,
   getTransfer,
   getSource,
   getSourceSharing,
-  getUserFolderQuota,
-  getUserFolder,
-  listUserFolderObjects,
-  listUserFolderObjectVersions,
+  getHomeFolderQuota,
+  getHomeFolder,
+  listHomeFolderObjects,
+  listHomeFolderObjectVersions,
   listSources,
   listAttachments,
   listDatasetRevisions,
   listDatasetPublications,
   listTransfers,
-  restoreUserFolderObject,
+  restoreHomeFolderObject,
   revokeAttachment,
   unpublishDataset,
   archiveSource,
   replaceSourceSharing,
-  statUserFolderObject,
-  uploadUserFolderFile,
+  statHomeFolderObject,
+  uploadHomeFolderFile,
   type DownloadedObject,
   type AttachmentCreate,
   type AttachmentList,
@@ -63,9 +69,15 @@ import {
   type TransferList,
   type UploadProgress,
   type VersionList,
-  type UserFolderQuota,
+  type HomeFolderQuota,
   type SourceList,
   updateSource,
+} from '../api/contents';
+import type {
+  ContentsCapabilities,
+  SyncConflictList,
+  SyncSessionList,
+  SyncSessionView,
 } from '../api/contents';
 import { useCoreStore, useIAMStore } from '../state';
 import { queryKeys } from './useCache';
@@ -74,7 +86,7 @@ export type ContentSourceKind = ContentSource['kind'];
 
 export const useDatasetRevisions = (sourceUid?: string) => {
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.iamUrl);
+  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
   return useQuery<DatasetRevisionList>({
     queryKey: queryKeys.contents.datasetRevisions(sourceUid ?? ''),
     queryFn: () => listDatasetRevisions(token ?? '', sourceUid!, contentsUrl),
@@ -84,7 +96,7 @@ export const useDatasetRevisions = (sourceUid?: string) => {
 
 export const useDatasetRevision = (sourceUid?: string, revisionUid?: string) => {
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.iamUrl);
+  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
   return useQuery<DatasetRevision>({
     queryKey: queryKeys.contents.datasetRevision(sourceUid ?? '', revisionUid ?? ''),
     queryFn: () => getDatasetRevision(token ?? '', sourceUid!, revisionUid!, contentsUrl),
@@ -95,7 +107,7 @@ export const useDatasetRevision = (sourceUid?: string, revisionUid?: string) => 
 export const useCreateDatasetRevision = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.iamUrl);
+  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
   return useMutation<DatasetRevision, Error,
     { sourceUid: string; request: DatasetRevisionCreate; idempotencyKey: string }>({
     mutationFn: ({ sourceUid, request, idempotencyKey }) =>
@@ -109,7 +121,7 @@ export const useCreateDatasetRevision = () => {
 
 export const useDatasetPublications = (sourceUid?: string) => {
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.iamUrl);
+  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
   return useQuery<DatasetPublicationList>({
     queryKey: queryKeys.contents.datasetPublications(sourceUid ?? ''),
     queryFn: () => listDatasetPublications(token ?? '', sourceUid!, contentsUrl),
@@ -120,7 +132,7 @@ export const useDatasetPublications = (sourceUid?: string) => {
 export const useCreateDatasetPublication = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.iamUrl);
+  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
   return useMutation<DatasetPublication, Error,
     { sourceUid: string; request: DatasetPublicationCreate; idempotencyKey: string }>({
     mutationFn: ({ sourceUid, request, idempotencyKey }) =>
@@ -134,7 +146,7 @@ export const useCreateDatasetPublication = () => {
 export const useUnpublishDataset = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.iamUrl);
+  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
   return useMutation<DatasetPublication, Error,
     { sourceUid: string; publicationUid: string }>({
     mutationFn: ({ sourceUid, publicationUid }) =>
@@ -156,7 +168,7 @@ export const useContentAttachments = (
 ) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<AttachmentList>({
     queryKey: queryKeys.contents.attachmentList(filters),
@@ -169,7 +181,7 @@ export const useContentAttachments = (
 export const useContentAttachmentManifest = (sandboxUid?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<ContentAttachmentManifest>({
     queryKey: queryKeys.contents.attachmentManifest(sandboxUid ?? ''),
@@ -183,7 +195,7 @@ export const useCreateContentAttachment = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     ContentAttachment,
@@ -208,7 +220,7 @@ export const useRevokeContentAttachment = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<ContentAttachment, Error, string>({
     mutationFn: attachmentUid =>
@@ -233,7 +245,7 @@ export const useContentSources = (
 ) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
   return useQuery<SourceList>({
@@ -245,11 +257,33 @@ export const useContentSources = (
   });
 };
 
+/**
+ * What this deployment offers and what this caller may do with it.
+ *
+ * The Contents page shows entry points and a create menu; neither can be
+ * decided in the client, which knows neither what is running here nor what
+ * this principal is entitled to. Cached longer than a listing because it
+ * changes when the deployment does, not when a source does.
+ */
+export const useContentsCapabilities = () => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+
+  return useQuery<ContentsCapabilities>({
+    queryKey: queryKeys.contents.capabilities(),
+    queryFn: () => getCapabilities(token ?? '', contentsUrl),
+    enabled: Boolean(token && contentsUrl),
+    staleTime: 300_000,
+  });
+};
+
 /** Query one catalog source, including its ETag and effective permissions. */
 export const useContentSource = (sourceUid?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
   return useQuery<ConditionalCatalogSource>({
@@ -265,7 +299,7 @@ export const useCreateContentSource = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     ConditionalCatalogSource,
@@ -288,7 +322,7 @@ export const useUpdateContentSource = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     ConditionalCatalogSource,
@@ -311,7 +345,7 @@ export const useArchiveContentSource = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     ConditionalCatalogSource,
@@ -333,7 +367,7 @@ export const useArchiveContentSource = () => {
 export const useContentSourceSharing = (sourceUid?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<Sharing>({
     queryKey: queryKeys.contents.sourceSharing(sourceUid ?? ''),
@@ -346,7 +380,7 @@ export const useReplaceContentSourceSharing = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     ConditionalCatalogSource,
@@ -368,15 +402,15 @@ export const useReplaceContentSourceSharing = () => {
 };
 
 /** Resolve and, on first access, provision the authenticated user's folder. */
-export const useUserFolder = () => {
+export const useHomeFolder = () => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
   return useQuery<ConditionalCatalogSource>({
-    queryKey: queryKeys.contents.userFolder(),
-    queryFn: () => getUserFolder(token ?? '', contentsUrl),
+    queryKey: queryKeys.contents.homeFolder(),
+    queryFn: () => getHomeFolder(token ?? '', contentsUrl),
     enabled: Boolean(token && contentsUrl),
     staleTime: 5 * 60_000,
     refetchOnWindowFocus: true,
@@ -384,21 +418,21 @@ export const useUserFolder = () => {
 };
 
 /** Query durable used, reserved and configured User Folder capacity. */
-export const useUserFolderQuota = () => {
+export const useHomeFolderQuota = () => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
-  return useQuery<UserFolderQuota>({
-    queryKey: queryKeys.contents.userFolderQuota(),
-    queryFn: () => getUserFolderQuota(token ?? '', contentsUrl),
+  return useQuery<HomeFolderQuota>({
+    queryKey: queryKeys.contents.homeFolderQuota(),
+    queryFn: () => getHomeFolderQuota(token ?? '', contentsUrl),
     enabled: Boolean(token && contentsUrl),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
   });
 };
 
-export type UserFolderObjectListFilters = {
+export type HomeFolderObjectListFilters = {
   prefix?: string;
   cursor?: string;
   limit?: number;
@@ -406,16 +440,16 @@ export type UserFolderObjectListFilters = {
 };
 
 /** Browse the authenticated user's persistent folder. */
-export const useUserFolderObjects = (
-  filters: UserFolderObjectListFilters = {},
+export const useHomeFolderObjects = (
+  filters: HomeFolderObjectListFilters = {},
 ) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<ObjectList>({
-    queryKey: queryKeys.contents.userFolderObjects(filters),
-    queryFn: () => listUserFolderObjects(token ?? '', filters, contentsUrl),
+    queryKey: queryKeys.contents.homeFolderObjects(filters),
+    queryFn: () => listHomeFolderObjects(token ?? '', filters, contentsUrl),
     enabled: Boolean(token && contentsUrl),
     staleTime: 30_000,
     refetchOnWindowFocus: true,
@@ -423,34 +457,34 @@ export const useUserFolderObjects = (
 };
 
 /** Resolve one User Folder path to its current object metadata. */
-export const useUserFolderObject = (path?: string) => {
+export const useHomeFolderObject = (path?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<ContentObject>({
-    queryKey: queryKeys.contents.userFolderObject(path ?? ''),
-    queryFn: () => statUserFolderObject(token ?? '', path!, contentsUrl),
+    queryKey: queryKeys.contents.homeFolderObject(path ?? ''),
+    queryFn: () => statHomeFolderObject(token ?? '', path!, contentsUrl),
     enabled: Boolean(token && contentsUrl && path),
   });
 };
 
 /** List immutable versions for a User Folder object. */
-export const useUserFolderObjectVersions = (
+export const useHomeFolderObjectVersions = (
   objectUid?: string,
   options: { cursor?: string; limit?: number } = {},
 ) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<VersionList>({
-    queryKey: queryKeys.contents.userFolderObjectVersions(
+    queryKey: queryKeys.contents.homeFolderObjectVersions(
       objectUid ?? '',
       options.cursor,
     ),
     queryFn: () =>
-      listUserFolderObjectVersions(
+      listHomeFolderObjectVersions(
         token ?? '',
         objectUid!,
         options,
@@ -463,15 +497,15 @@ export const useUserFolderObjectVersions = (
 type ObjectMutation = { objectUid: string; idempotencyKey: string };
 
 /** Soft-delete a User Folder object and invalidate its browse metadata. */
-export const useDeleteUserFolderObject = () => {
+export const useDeleteHomeFolderObject = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<ContentObject, Error, ObjectMutation>({
     mutationFn: ({ objectUid, idempotencyKey }) =>
-      deleteUserFolderObject(
+      deleteHomeFolderObject(
         token ?? '',
         objectUid,
         idempotencyKey,
@@ -479,10 +513,10 @@ export const useDeleteUserFolderObject = () => {
       ),
     onSuccess: object => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.contents.userFolder(),
+        queryKey: queryKeys.contents.homeFolder(),
       });
       queryClient.setQueryData(
-        queryKeys.contents.userFolderObject(object.path),
+        queryKeys.contents.homeFolderObject(object.path),
         object,
       );
     },
@@ -490,11 +524,11 @@ export const useDeleteUserFolderObject = () => {
 };
 
 /** Restore an immutable version as the object's new current version. */
-export const useRestoreUserFolderObject = () => {
+export const useRestoreHomeFolderObject = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     ContentObject,
@@ -502,7 +536,7 @@ export const useRestoreUserFolderObject = () => {
     ObjectMutation & { versionUid: string }
   >({
     mutationFn: ({ objectUid, versionUid, idempotencyKey }) =>
-      restoreUserFolderObject(
+      restoreHomeFolderObject(
         token ?? '',
         objectUid,
         { versionUid },
@@ -511,15 +545,15 @@ export const useRestoreUserFolderObject = () => {
       ),
     onSuccess: object => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.contents.userFolder(),
+        queryKey: queryKeys.contents.homeFolder(),
       });
       queryClient.setQueryData(
-        queryKeys.contents.userFolderObject(object.path),
+        queryKeys.contents.homeFolderObject(object.path),
         object,
       );
       queryClient.invalidateQueries({
         queryKey: [
-          ...queryKeys.contents.userFolder(),
+          ...queryKeys.contents.homeFolder(),
           'objects',
           object.uid,
           'versions',
@@ -535,7 +569,7 @@ const terminalOperationStatuses = new Set(['succeeded', 'failed', 'cancelled']);
 export const useContentOperation = (operationUid?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
   return useQuery<OperationView>({
@@ -555,7 +589,7 @@ export const useCancelContentOperation = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
   return useMutation<OperationView, Error, string>({
@@ -574,7 +608,7 @@ export const useCancelContentOperation = () => {
 export const useContentTransfer = (transferUid?: string) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<TransferView>({
     queryKey: queryKeys.contents.transfer(transferUid ?? ''),
@@ -594,7 +628,7 @@ export const useContentTransfers = (
 ) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useQuery<TransferList>({
     queryKey: queryKeys.contents.transferList(filters),
@@ -610,7 +644,7 @@ export const useCancelContentTransfer = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<TransferView, Error, string>({
     mutationFn: transferUid =>
@@ -621,18 +655,103 @@ export const useCancelContentTransfer = () => {
         transfer,
       );
       queryClient.invalidateQueries({
-        queryKey: queryKeys.contents.userFolder(),
+        queryKey: queryKeys.contents.homeFolder(),
       });
     },
   });
 };
 
-/** Upload a browser file with resumable verified parts and durable progress. */
-export const useUploadUserFolderFile = () => {
+/** The authenticated user's synchronization sessions, active ones polled. */
+export const useSyncSessions = (
+  filters: { active?: boolean; cursor?: string; limit?: number } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useQuery<SyncSessionList>({
+    queryKey: queryKeys.contents.syncSessionList(filters),
+    queryFn: () => listSyncSessions(token ?? '', filters, contentsUrl),
+    enabled: Boolean(token && contentsUrl),
+    refetchInterval: filters.active ? 5_000 : false,
+    refetchOnWindowFocus: true,
+  });
+};
+
+/** One session, polled while it is still doing something. */
+export const useSyncSession = (sessionUid?: string) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useQuery<SyncSessionView>({
+    queryKey: queryKeys.contents.syncSession(sessionUid ?? ''),
+    queryFn: () => getSyncSession(token ?? '', sessionUid!, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sessionUid),
+    refetchInterval: query =>
+      query.state.data && terminalOperationStatuses.has(query.state.data.status)
+        ? false
+        : 5_000,
+  });
+};
+
+/** The paths a session left for a person to decide. */
+export const useSyncConflicts = (sessionUid?: string, openOnly = true) => {
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useQuery<SyncConflictList>({
+    queryKey: [...queryKeys.contents.syncConflicts(sessionUid ?? ''), openOnly],
+    queryFn: () => listSyncConflicts(token ?? '', sessionUid!, { openOnly }, contentsUrl),
+    enabled: Boolean(token && contentsUrl && sessionUid),
+  });
+};
+
+/** Decide a conflict; the client applies the decision on its next pass. */
+export const useResolveSyncConflict = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<
+    SyncSessionView,
+    Error,
+    { sessionUid: string; conflictUid: string; use: 'local' | 'remote' | 'keep-both' }
+  >({
+    mutationFn: ({ sessionUid, conflictUid, use }) =>
+      resolveSyncConflict(token ?? '', sessionUid, conflictUid, { use }, contentsUrl),
+    onSuccess: session => {
+      queryClient.setQueryData(queryKeys.contents.syncSession(session.uid), session);
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.syncConflicts(session.uid) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.syncSessions() });
+    },
+  });
+};
+
+/** End a session from the page; the client finds out on its next call. */
+export const useCancelSyncSession = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<SyncSessionView, Error, string>({
+    mutationFn: sessionUid => cancelSyncSession(token ?? '', sessionUid, contentsUrl),
+    onSuccess: session => {
+      queryClient.setQueryData(queryKeys.contents.syncSession(session.uid), session);
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.syncSessions() });
+    },
+  });
+};
+
+/** Upload a browser file with resumable verified parts and durable progress. */
+export const useUploadHomeFolderFile = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     TransferView,
@@ -647,24 +766,24 @@ export const useUploadUserFolderFile = () => {
     }
   >({
     mutationFn: ({ path, content, ...options }) =>
-      uploadUserFolderFile(token ?? '', path, content, options, contentsUrl),
+      uploadHomeFolderFile(token ?? '', path, content, options, contentsUrl),
     onSuccess: transfer => {
       queryClient.setQueryData(
         queryKeys.contents.transfer(transfer.uid),
         transfer,
       );
       queryClient.invalidateQueries({
-        queryKey: queryKeys.contents.userFolder(),
+        queryKey: queryKeys.contents.homeFolder(),
       });
     },
   });
 };
 
 /** Fetch a complete object version or a resumable HTTP byte range. */
-export const useDownloadUserFolderObject = () => {
+export const useDownloadHomeFolderObject = () => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
-    state => state.configuration.contentsUrl || state.configuration.iamUrl,
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<
     DownloadedObject,
@@ -672,6 +791,6 @@ export const useDownloadUserFolderObject = () => {
     { objectUid: string; versionUid?: string; range?: string }
   >({
     mutationFn: ({ objectUid, ...options }) =>
-      downloadUserFolderObject(token ?? '', objectUid, options, contentsUrl),
+      downloadHomeFolderObject(token ?? '', objectUid, options, contentsUrl),
   });
 };

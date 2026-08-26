@@ -75,6 +75,10 @@ export interface CloudStorageConfiguration {
   region?: string | null;
 }
 
+export interface ConflictResolution {
+  use: "local" | "remote" | "keep-both";
+}
+
 export interface ContentAttachment {
   capabilities?: Array<Capability>;
   cleanupPolicy?: "revoke" | "remove-materialization" | "retain-source";
@@ -176,6 +180,12 @@ export interface ContentSourceUpdate {
   status?: SourceStatus | null;
 }
 
+export interface ContentsCapabilities {
+  countsTruncated: boolean;
+  operations: Array<OperationCapability>;
+  sourceKinds: Array<SourceKindCapability>;
+}
+
 export interface DataServerConfiguration {
   connectors?: Array<string>;
   kind: "data-server";
@@ -236,7 +246,7 @@ export interface DatasetRevision {
 
 export interface DatasetRevisionCreate {
   files: Array<DatasetRevisionFileCreate>;
-  originKind: "upload" | "user-folder" | "sandbox-result";
+  originKind: "upload" | "home-folder" | "sandbox-result";
 }
 
 export interface DatasetRevisionFile {
@@ -328,6 +338,34 @@ export interface HealthResponse {
   success?: true;
 }
 
+export interface HomeFolderFileList {
+  items: Array<Record<string, unknown>>;
+  path: string;
+}
+
+export interface HomeFolderQuota {
+  limitBytes: number;
+  limitObjects: number;
+  reservedBytes: number;
+  reservedObjects: number;
+  usedBytes: number;
+  usedObjects: number;
+}
+
+export interface ManifestEntry {
+  blocks?: Array<string>;
+  checksum: string;
+  modifiedAt: string;
+  path: string;
+  size: number;
+}
+
+export interface ManifestPayload {
+  blockSize?: number;
+  entries?: Array<ManifestEntry>;
+  tombstones?: Record<string, string>;
+}
+
 export interface McpConfiguration {
   allowedDomains?: Array<string>;
   allowedResources?: Array<string>;
@@ -344,6 +382,16 @@ export interface McpConfiguration {
 export interface ObjectList {
   items: Array<ContentObject>;
   nextCursor?: string | null;
+}
+
+export interface OperationCapability {
+  available: boolean;
+  deployed: boolean;
+  documentation?: string | null;
+  kind?: "operation";
+  label: string;
+  name: string;
+  reason?: string | null;
 }
 
 export interface OperationView {
@@ -366,6 +414,15 @@ export interface PingResponse {
   message?: "Pong.";
   success?: true;
   version: string;
+}
+
+export interface PlanAction {
+  blocks?: Array<number>;
+  kind: "upload" | "download" | "delete_remote" | "delete_local" | "conflict";
+  objectUid?: string | null;
+  path: string;
+  reason: string;
+  versionUid?: string | null;
 }
 
 export type PrincipalKind = "user" | "team" | "organization";
@@ -392,6 +449,18 @@ export interface Sharing {
   grants?: Array<Grant>;
 }
 
+export interface SourceKindCapability {
+  available: boolean;
+  count: number;
+  creatable: boolean;
+  deployed: boolean;
+  documentation?: string | null;
+  kind: string;
+  label: string;
+  name: string;
+  reason?: string | null;
+}
+
 export interface SourceList {
   items: Array<CatalogSource>;
   nextCursor?: string | null;
@@ -400,6 +469,79 @@ export interface SourceList {
 export type SourceStatus = "pending" | "ready" | "degraded" | "disabled" | "failed";
 
 export type StableErrorCode = "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "QUOTA_EXCEEDED" | "CAPABILITY_UNAVAILABLE" | "CHECKSUM_MISMATCH" | "PROVIDER_UNAVAILABLE" | "CAPABILITY_REVOKED" | "OPERATION_CANCELLED" | "INTERNAL_ERROR";
+
+export interface SyncConflictList {
+  items: Array<SyncConflictView>;
+}
+
+export interface SyncConflictView {
+  createdAt: string;
+  localEntry?: ManifestEntry | null;
+  path: string;
+  reason: string;
+  remoteEntry?: ManifestEntry | null;
+  resolution?: "local" | "remote" | "keep-both" | null;
+  resolvedAt?: string | null;
+  sessionUid: string;
+  status: "open" | "resolved";
+  uid: string;
+}
+
+export interface SyncCreate {
+  blockSize?: number;
+  conflictPolicy?: "manual" | "newest" | "local" | "remote";
+  delete?: boolean;
+  direction?: "push" | "pull" | "bidirectional";
+  exclusions?: Array<string>;
+  localManifest: ManifestPayload;
+  remoteUri: string;
+  watch?: boolean;
+}
+
+export interface SyncPlan {
+  actions?: Array<PlanAction>;
+}
+
+export interface SyncReconcile {
+  localManifest: ManifestPayload;
+}
+
+export interface SyncReport {
+  applied?: Array<string>;
+  failed?: Record<string, string>;
+  transferredBytes?: number;
+}
+
+export interface SyncSessionList {
+  items: Array<SyncSessionView>;
+  nextCursor?: string | null;
+}
+
+export interface SyncSessionView {
+  blockSize: number;
+  completedAt?: string | null;
+  conflictCount: number;
+  conflictPolicy: string;
+  createdAt: string;
+  delete: boolean;
+  deletedFiles: number;
+  direction: string;
+  downloadedFiles: number;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  exclusions: Array<string>;
+  lastHeartbeatAt?: string | null;
+  plan?: SyncPlan | null;
+  reconciliations: number;
+  remoteUri: string;
+  sourceUid: string;
+  status: string;
+  transferredBytes: number;
+  uid: string;
+  updatedAt: string;
+  uploadedFiles: number;
+  watch: boolean;
+}
 
 export interface TransferCreate {
   checksum: string;
@@ -443,15 +585,6 @@ export interface TransferView {
   uid: string;
   updatedAt: string;
   versionUid?: string | null;
-}
-
-export interface UserFolderQuota {
-  limitBytes: number;
-  limitObjects: number;
-  reservedBytes: number;
-  reservedObjects: number;
-  usedBytes: number;
-  usedObjects: number;
 }
 
 export interface ValidationError {

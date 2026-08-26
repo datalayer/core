@@ -28,7 +28,7 @@ class Client:
     def __init__(self) -> None:
         self.upload = None
 
-    def get_user_folder(self):
+    def get_home_folder(self):
         return object()
 
     def list_user_folder_objects(self, **kwargs):
@@ -47,7 +47,7 @@ class Client:
 
 def test_high_level_user_folder_browses_uploads_and_streams_downloads(tmp_path) -> None:
     client = Client()
-    folder = Contents(client).user_folder()
+    folder = Contents(client).home_folder()
     local = tmp_path / "earth.csv"
     local.write_text("earth")
 

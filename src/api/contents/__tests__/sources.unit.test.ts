@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
   createSource,
-  getUserFolder,
+  getHomeFolder,
   listSources,
   updateSource,
 } from '../sources';
@@ -162,12 +162,12 @@ describe('Contents source API', () => {
         headers: { etag: '"folder.hash"' },
       });
 
-    const folder = await getUserFolder('token');
+    const folder = await getHomeFolder('token');
 
     expect(folder.value.source.name).toBe('User Folder');
     expect(folder.etag).toBe('"folder.hash"');
     expect(request).toHaveBeenCalledWith(
-      expect.objectContaining({ url: expect.stringMatching(/\/sources\/user-folder$/) }),
+      expect.objectContaining({ url: expect.stringMatching(/\/sources\/home-folder$/) }),
     );
   });
 });

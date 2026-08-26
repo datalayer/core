@@ -105,12 +105,12 @@ export const getSource = async (
   };
 };
 
-export const getUserFolder = async (
+export const getHomeFolder = async (
   token: string,
   baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
 ): Promise<ConditionalCatalogSource> => {
   const response = await requestDatalayerAPIWithResponse({
-    url: sourceUrl(baseUrl, '/user-folder'),
+    url: sourceUrl(baseUrl, '/home-folder'),
     method: 'GET',
     token,
   });

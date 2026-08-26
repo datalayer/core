@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
   createTransfer,
-  downloadUserFolderObject,
+  downloadHomeFolderObject,
   listTransfers,
   uploadTransferPart,
 } from '../transfers';
@@ -21,7 +21,7 @@ const transfer = {
   uid: '01TRANSFER',
   direction: 'upload',
   source_uid: '01SOURCE',
-  destination_uri: 'user-folder:///earth.csv',
+  destination_uri: 'home-folder:///earth.csv',
   path: 'earth.csv',
   media_type: 'text/csv',
   expected_size: 5,
@@ -47,7 +47,7 @@ describe('Contents transfer API', () => {
     const created = await createTransfer(
       'token',
       {
-        destinationUri: 'user-folder:///earth.csv',
+        destinationUri: 'home-folder:///earth.csv',
         size: 5,
         checksum: 'a'.repeat(64),
       },
@@ -62,7 +62,7 @@ describe('Contents transfer API', () => {
       expect.objectContaining({
         headers: { 'Idempotency-Key': 'upload-earth' },
         body: expect.objectContaining({
-          destination_uri: 'user-folder:///earth.csv',
+          destination_uri: 'home-folder:///earth.csv',
         }),
       }),
     );
@@ -88,7 +88,7 @@ describe('Contents transfer API', () => {
       new Uint8Array([1, 2, 3]),
       'b'.repeat(64),
     );
-    const downloaded = await downloadUserFolderObject(
+    const downloaded = await downloadHomeFolderObject(
       'token',
       'object uid',
       { range: 'bytes=0-4' },

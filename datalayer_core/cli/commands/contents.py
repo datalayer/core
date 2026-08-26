@@ -151,7 +151,7 @@ def _resolve_source(client: DatalayerClient, reference: str):
 
 
 def _user_folder_path(uri_or_path: str) -> str:
-    prefix = "user-folder:///"
+    prefix = "home-folder:///"
     value = uri_or_path[len(prefix) :] if uri_or_path.startswith(prefix) else uri_or_path
     value = value.lstrip("/")
     if not value:
@@ -194,15 +194,15 @@ def describe_content(ctx: typer.Context, source: str = typer.Argument(...)) -> N
     _render(resolved.value.model_dump(mode="json"), _context(ctx))
 
 
-user_folder_app = typer.Typer(
-    name="user-folder", help="Browse and recover private User Folder files."
+home_folder_app = typer.Typer(
+    name="home-folder", help="Browse and recover private Home Folder files."
 )
-app.add_typer(user_folder_app)
+app.add_typer(home_folder_app)
 
 
-@user_folder_app.command(name="list")
+@home_folder_app.command(name="list")
 @contents_command
-def user_folder_list(
+def home_folder_list(
     ctx: typer.Context,
     prefix: str | None = typer.Option(None, "--prefix"),
     cursor: str | None = typer.Option(None, "--cursor"),
@@ -214,9 +214,9 @@ def user_folder_list(
     _render(page.model_dump(mode="json"), _context(ctx))
 
 
-@user_folder_app.command(name="versions")
+@home_folder_app.command(name="versions")
 @contents_command
-def user_folder_versions(
+def home_folder_versions(
     ctx: typer.Context, path: str = typer.Argument(...)
 ) -> None:
     client = _client()
@@ -225,9 +225,9 @@ def user_folder_versions(
     _render(versions.model_dump(mode="json"), _context(ctx))
 
 
-@user_folder_app.command(name="restore")
+@home_folder_app.command(name="restore")
 @contents_command
-def user_folder_restore(
+def home_folder_restore(
     ctx: typer.Context,
     path: str = typer.Argument(...),
     version: str = typer.Option(..., "--version"),
@@ -291,6 +291,117 @@ def download_content(
     except Exception as error:
         Path(temporary_name).unlink(missing_ok=True)
         raise ContentsCommandError(str(error)) from error
+
+
+@app.command(name="sync")
+@contents_command
+def sync_folder(
+    ctx: typer.Context,
+    local_path: Path = typer.Argument(..., exists=True, file_okay=False, resolve_path=True),
+    remote: str = typer.Argument(..., help="A folder of the Home Folder, as home-folder:///path"),
+    direction: str = typer.Option("bidirectional", "--direction", help="push, pull or bidirectional"),
+    watch: bool = typer.Option(False, "--watch", help="Keep the session open and reconcile as files change"),
+    exclude: list[str] = typer.Option([], "--exclude", help="gitignore-style pattern; repeatable"),
+    conflict: str = typer.Option("manual", "--conflict", help="manual, newest, local or remote"),
+    delete: bool = typer.Option(False, "--delete", help="Propagate deletions in the selected direction"),
+    block_size: int = typer.Option(4 * 1024 * 1024, "--block-size", help="Bytes per hashed block"),
+    interval: float = typer.Option(5.0, "--interval", help="Seconds between scans while watching"),
+) -> None:
+    """Synchronize a local folder with a folder of the Home Folder."""
+    from datalayer_core.contents_sync import Synchronizer
+
+    if not remote.startswith("home-folder:///"):
+        raise ContentsCommandError(
+            "This release synchronizes with a folder of the Home Folder: "
+            "address it as home-folder:///path"
+        )
+    context = _context(ctx)
+    quiet = context.output is not OutputFormat.TABLE
+
+    def say(message: str) -> None:
+        if not quiet:
+            console.print(f"[dim]{message}[/dim]")
+
+    synchronizer = Synchronizer(
+        _client(),
+        local_root=local_path,
+        remote_uri=remote,
+        direction=direction,
+        conflict_policy=conflict,
+        delete=delete,
+        exclusions=exclude,
+        block_size=block_size,
+        progress=say,
+    )
+    try:
+        if watch:
+            def report(outcome) -> None:
+                _render(outcome.to_dict(), context)
+
+            outcome = synchronizer.watch(interval_seconds=interval, on_pass=report)
+        else:
+            outcome = synchronizer.run_once()
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    if not watch:
+        _render(outcome.to_dict(), context)
+    if outcome.conflicts and not quiet:
+        console.print(
+            f"[yellow]{len(outcome.conflicts)} path(s) need a decision: "
+            f"datalayer contents sync-conflicts {outcome.session_uid}[/yellow]"
+        )
+    if outcome.status == "failed":
+        raise typer.Exit(1)
+
+
+@app.command(name="sync-status")
+@contents_command
+def sync_status(ctx: typer.Context, session_uid: str) -> None:
+    session = _client().get_content_sync(session_uid)
+    _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
+
+
+@app.command(name="sync-list")
+@contents_command
+def sync_list(ctx: typer.Context, active: bool = typer.Option(False, "--active")) -> None:
+    sessions = _client().list_content_syncs(active=active)
+    _render(
+        [item.model_dump(mode="json", exclude={"plan"}) for item in sessions.items],
+        _context(ctx),
+    )
+
+
+@app.command(name="sync-cancel")
+@contents_command
+def sync_cancel(ctx: typer.Context, session_uid: str) -> None:
+    session = _client().cancel_content_sync(session_uid)
+    _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
+
+
+@app.command(name="sync-conflicts")
+@contents_command
+def sync_conflicts(
+    ctx: typer.Context,
+    session_uid: str,
+    open_only: bool = typer.Option(True, "--open/--all"),
+) -> None:
+    conflicts = _client().list_content_sync_conflicts(session_uid, open_only=open_only)
+    _render([item.model_dump(mode="json") for item in conflicts.items], _context(ctx))
+
+
+@app.command(name="sync-resolve")
+@contents_command
+def sync_resolve(
+    ctx: typer.Context,
+    session_uid: str,
+    conflict_uid: str,
+    use: str = typer.Option(..., "--use", help="local, remote or keep-both"),
+) -> None:
+    """Decide a conflict; the decision is applied on the next `sync` of the folder."""
+    if use not in {"local", "remote", "keep-both"}:
+        raise ContentsCommandError("--use must be local, remote or keep-both")
+    session = _client().resolve_content_sync_conflict(session_uid, conflict_uid, use=use)
+    _render(session.model_dump(mode="json", exclude={"plan"}), _context(ctx))
 
 
 transfer_app = typer.Typer(name="transfer", help="Inspect or cancel transfers.")
@@ -497,7 +608,7 @@ def dataset_revisions(ctx: typer.Context, source: str) -> None:
 @contents_command
 def dataset_create_revision(ctx: typer.Context, source: str,
     files: list[str] = typer.Option(..., "--file"),
-    origin: str = typer.Option("user-folder", "--origin")) -> None:
+    origin: str = typer.Option("home-folder", "--origin")) -> None:
     selected = []
     for value in files:
         parts = value.split(":", 2)
@@ -628,6 +739,139 @@ def cloud_storage_attach(
     except Exception as error:
         raise ContentsCommandError(str(error)) from error
     _render(attachment.model_dump(mode="json"), _context(ctx))
+
+
+dataservers_app = typer.Typer(
+    name="dataservers", help="Register and inspect Dataserver gateways."
+)
+app.add_typer(dataservers_app)
+
+
+@dataservers_app.command(name="list")
+@contents_command
+def dataservers_list(ctx: typer.Context) -> None:
+    page = _client().list_content_sources(kind="data-server", limit=200)
+    _render(page.model_dump(mode="json"), _context(ctx))
+
+
+@dataservers_app.command(name="register")
+@contents_command
+def dataservers_register(
+    ctx: typer.Context,
+    name: str = typer.Argument(...),
+    registration_identity: str = typer.Option(..., "--identity"),
+    mtls_issuer: str = typer.Option(..., "--mtls-issuer"),
+    policy_version: str = typer.Option("1", "--policy-version"),
+    connectors: str = typer.Option("", "--connectors"),
+    description: str = typer.Option("", "--description"),
+) -> None:
+    """Register a gateway deployed in your own network.
+
+    The identity is what the gateway presents when it calls home: rotating its
+    certificate under the same identity resumes this registration rather than
+    making a second one.
+    """
+    try:
+        created = _client().create_content_source(
+            {
+                "name": name,
+                "description": description or None,
+                "kind": "data-server",
+                "capabilities": ["query", "browse"],
+                "configuration": {
+                    "kind": "data-server",
+                    "registration_identity": registration_identity,
+                    "mtls_issuer": mtls_issuer,
+                    "policy_version": policy_version,
+                    "connectors": [
+                        value.strip()
+                        for value in connectors.split(",")
+                        if value.strip()
+                    ],
+                },
+            },
+            idempotency_key=f"cli-data-server-{uuid4()}",
+        )
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(created.value.model_dump(mode="json"), _context(ctx))
+
+
+mcp_app = typer.Typer(name="mcp", help="Connect and inspect MCP servers.")
+app.add_typer(mcp_app)
+
+
+@mcp_app.command(name="list")
+@contents_command
+def mcp_list(ctx: typer.Context) -> None:
+    page = _client().list_content_sources(kind="mcp", limit=200)
+    _render(page.model_dump(mode="json"), _context(ctx))
+
+
+@mcp_app.command(name="connect")
+@contents_command
+def mcp_connect(
+    ctx: typer.Context,
+    name: str = typer.Argument(...),
+    transport: str = typer.Option("streamable-http", "--transport"),
+    endpoint: str | None = typer.Option(None, "--endpoint"),
+    allowed_tools: str = typer.Option("", "--tools"),
+    allowed_domains: str = typer.Option("", "--domains"),
+    description: str = typer.Option("", "--description"),
+) -> None:
+    """Connect an MCP server so agents can use its tools.
+
+    Every tool call is approved explicitly and destinations are an allowlist:
+    a server reached this way runs code on somebody's behalf, so the safe
+    policy is the default rather than the opt-in.
+    """
+    if transport != "stdio" and not (endpoint or "").strip():
+        raise ContentsCommandError(
+            "an MCP server reached over http or sse needs --endpoint"
+        )
+    listed = lambda value: [
+        entry.strip() for entry in value.split(",") if entry.strip()
+    ]
+    try:
+        created = _client().create_content_source(
+            {
+                "name": name,
+                "description": description or None,
+                "kind": "mcp",
+                "capabilities": ["query", "browse"],
+                "configuration": {
+                    "kind": "mcp",
+                    "transport": transport,
+                    "endpoint": endpoint,
+                    "approval_policy": "explicit",
+                    "destination_policy": "allowlist",
+                    "allowed_tools": listed(allowed_tools),
+                    "allowed_domains": listed(allowed_domains),
+                },
+            },
+            idempotency_key=f"cli-mcp-{uuid4()}",
+        )
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(created.value.model_dump(mode="json"), _context(ctx))
+
+
+environments_app = typer.Typer(
+    name="environments", help="Inspect the content Environments carry."
+)
+app.add_typer(environments_app)
+
+
+@environments_app.command(name="list")
+@contents_command
+def environments_list(ctx: typer.Context) -> None:
+    """List the content the platform's Environments bring with them.
+
+    Nobody attaches this: choosing an Environment chooses it, which is why
+    there is no `create` beside this command.
+    """
+    page = _client().list_content_sources(kind="environment", limit=200)
+    _render(page.model_dump(mode="json"), _context(ctx))
 
 
 sharing_app = typer.Typer(name="sharing", help="Inspect and change source sharing.")

@@ -34,6 +34,16 @@ export type DatasourcesProps = {
   showInlineLoadingIndicator?: boolean;
   /** Render the real view with inert, invented data for documentation. */
   mock?: boolean;
+  /**
+   * Drawn inside a page that already has a heading and an inset of its own.
+   *
+   * On its own route this is a page: a frame, a centred column, a full-height
+   * minimum and a title. Inside the Contents catalog all four fight the page
+   * around it — the inset doubles, the column narrows past its neighbours, the
+   * min-height leaves a gap under a short list, and the title names the
+   * section twice.
+   */
+  embedded?: boolean;
 };
 
 const DatasourcesTable = ({
@@ -169,19 +179,11 @@ export const Datasources = ({
   principalKind,
   showInlineLoadingIndicator = true,
   mock = false,
+  embedded = false,
 }: DatasourcesProps = {}) => {
   const navigate = useNavigate();
-  return (
-    <PageLayout
-      containerWidth="full"
-      padding="normal"
-      style={{
-        overflow: 'visible',
-        minHeight: mock ? undefined : 'calc(100vh - 45px)',
-      }}
-    >
-      <PageLayout.Content>
-        <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
+  const body = (
+        <Box sx={{ maxWidth: embedded ? undefined : 960, mx: 'auto', width: '100%' }}>
           <Box
             sx={{
               display: 'flex',
@@ -189,17 +191,21 @@ export const Datasources = ({
               justifyContent: 'space-between',
               gap: 3,
               flexWrap: 'wrap',
-              mb: 4,
+              mb: embedded ? 2 : 4,
             }}
           >
             <Box>
-              <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
-                Datasources
-              </Heading>
-              <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-                Configure external data providers available to your workspaces
-                and agents.
-              </Text>
+              {!embedded && (
+                <>
+                  <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
+                    Datasources
+                  </Heading>
+                  <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
+                    Configure external data providers available to your workspaces
+                    and agents.
+                  </Text>
+                </>
+              )}
             </Box>
             <Button
               size="small"
@@ -222,7 +228,20 @@ export const Datasources = ({
             />
           )}
         </Box>
-      </PageLayout.Content>
+  );
+  if (embedded) {
+    return body;
+  }
+  return (
+    <PageLayout
+      containerWidth="full"
+      padding="normal"
+      style={{
+        overflow: 'visible',
+        minHeight: mock ? undefined : 'calc(100vh - 45px)',
+      }}
+    >
+      <PageLayout.Content>{body}</PageLayout.Content>
     </PageLayout>
   );
 };

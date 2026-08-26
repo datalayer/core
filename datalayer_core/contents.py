@@ -23,7 +23,7 @@ from datalayer_core.models.contents.generated import (
 )
 
 
-class UserFolder:
+class HomeFolder:
     def __init__(self, client: DatalayerClient) -> None:
         self.client = client
 
@@ -117,11 +117,11 @@ class Contents:
             self._client = DatalayerClient()
         return self._client
 
-    def user_folder(self) -> UserFolder:
-        self.client.get_user_folder()
-        return UserFolder(self.client)
+    def home_folder(self) -> HomeFolder:
+        self.client.get_home_folder()
+        return HomeFolder(self.client)
 
 
 contents = Contents()
 
-__all__ = ["Contents", "UserFolder", "contents"]
+__all__ = ["Contents", "HomeFolder", "contents"]

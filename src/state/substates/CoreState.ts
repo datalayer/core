@@ -31,9 +31,6 @@ let initialConfiguration: IDatalayerCoreConfig = {
   jupyterMcpServerUrl: 'https://mcp.datalayer.run/mcp',
   otelUrl: 'https://prod1.datalayer.run',
   // Defaults to prod so telemetry is consumed from the production OTEL service
-  // even when runtimes export elsewhere (see `getOtelConsumeUrl` and the
-  // `DATALAYER_OTEL_IN_URL` env var). Override to '' to consume from `otelUrl`.
-  otelInUrl: 'https://prod1.datalayer.run',
   growthUrl: 'https://prod1.datalayer.run',
   inboundsUrl: 'https://prod1.datalayer.run',
   successUrl: 'https://prod1.datalayer.run',
@@ -58,6 +55,18 @@ let initialConfiguration: IDatalayerCoreConfig = {
   },
 };
 
+/**
+ * What the page itself stated, as opposed to what this module defaults to.
+ *
+ * The two cannot be told apart once merged, and they do not carry the same
+ * weight: a value written into the page describes the deployment that served
+ * it, while a default is only a guess. A consumer that reconciles this
+ * configuration with another source — the Jupyter server extension, say —
+ * needs to know which keys were actually stated, or it will let a stale
+ * answer from elsewhere override a deliberate one from here.
+ */
+export const pageConfiguration: Partial<IDatalayerCoreConfig> = {};
+
 // Try loading initial state from datalayer-config-data element
 try {
   if (typeof document !== 'undefined') {
@@ -66,6 +75,7 @@ try {
       const htmlOverridingConfiguration = JSON.parse(
         rawConfig?.innerText || '{}',
       ) as IDatalayerCoreConfig;
+      Object.assign(pageConfiguration, htmlOverridingConfiguration);
       if (
         htmlOverridingConfiguration.loadConfigurationFromServer != undefined
       ) {
@@ -143,18 +153,13 @@ export function useCoreStore<T>(selector?: (state: DatalayerCoreState) => T) {
 }
 
 /**
- * Resolve the OTEL base URL used to *consume* (read/query) telemetry.
+ * The OTEL base URL used to *consume* (read/query) telemetry.
  *
- * Prefers `otelInUrl` when set, otherwise falls back to `otelUrl`. This allows
- * local development to fetch telemetry from a remote (e.g. production) OTEL
- * service even when the local runtime exports telemetry to a different endpoint.
- *
- * Mirrors the `DATALAYER_OTEL_IN_URL` (consume) / `DATALAYER_OTEL_URL` (export)
- * split on the backend/build side.
+ * One address, `otelUrl`. A second one existed so local development could read
+ * from a remote service while exporting elsewhere; pointing `otelUrl` at that
+ * remote does the same thing without two fields that disagree.
  */
-export const getOtelConsumeUrl = (): string => {
-  const cfg = coreStore.getState().configuration;
-  return cfg.otelInUrl || cfg.otelUrl;
-};
+export const getOtelConsumeUrl = (): string =>
+  coreStore.getState().configuration.otelUrl;
 
 export default useCoreStore;
