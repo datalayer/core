@@ -1028,6 +1028,76 @@ def cloud_storage_attach(
     _render(attachment.model_dump(mode="json"), _context(ctx))
 
 
+operations_app = typer.Typer(
+    name="operations", help="Durable operations: what runs, what gave up, what to try again."
+)
+app.add_typer(operations_app)
+
+
+@operations_app.command(name="get")
+@contents_command
+def operations_get(ctx: typer.Context, operation_uid: str = typer.Argument(...)) -> None:
+    """One operation: kind, status, attempts, error."""
+    try:
+        operation = _client().get_content_operation(operation_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(operation.model_dump(mode="json"), _context(ctx))
+
+
+@operations_app.command(name="cancel")
+@contents_command
+def operations_cancel(ctx: typer.Context, operation_uid: str = typer.Argument(...)) -> None:
+    try:
+        operation = _client().cancel_content_operation(operation_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(operation.model_dump(mode="json"), _context(ctx))
+
+
+@operations_app.command(name="dead-letter")
+@contents_command
+def operations_dead_letter(
+    ctx: typer.Context, rows: int = typer.Option(100, "--rows", min=1, max=1000)
+) -> None:
+    """What gave up, and why: retries exhausted or quarantined. Platform administrators only."""
+    try:
+        listed = _client().list_dead_letter_operations(rows=rows)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(listed.model_dump(mode="json"), context)
+        return
+    _render([item.model_dump(mode="json") for item in listed.items], context)
+
+
+@operations_app.command(name="quarantine")
+@contents_command
+def operations_quarantine(
+    ctx: typer.Context,
+    operation_uid: str = typer.Argument(...),
+    reason: str = typer.Option(..., "--reason", help="Why it is kept out of the queue"),
+) -> None:
+    """Keep a failed operation out of the queue while it is looked at."""
+    try:
+        operation = _client().quarantine_content_operation(operation_uid, reason=reason)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(operation.model_dump(mode="json"), _context(ctx))
+
+
+@operations_app.command(name="requeue")
+@contents_command
+def operations_requeue(ctx: typer.Context, operation_uid: str = typer.Argument(...)) -> None:
+    """Try a failed operation again from its first attempt, once the cause is fixed."""
+    try:
+        operation = _client().requeue_content_operation(operation_uid)
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _render(operation.model_dump(mode="json"), _context(ctx))
+
+
 dataservers_app = typer.Typer(
     name="dataservers", help="Register and inspect Dataserver gateways."
 )

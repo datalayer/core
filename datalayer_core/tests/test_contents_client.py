@@ -711,3 +711,34 @@ def test_contents_client_reads_and_moves_a_dataserver() -> None:
     assert urls[5].endswith(f"/dataservers/{UID}/identity/rotate")
     assert client.calls[4][1]["json"] == {"csr": "CSR-PEM"}
     assert all(client.calls[index][1]["method"] == "POST" for index in range(1, 6))
+
+
+def _operation(status: str = "failed", error_code: str | None = "RETRY_EXHAUSTED") -> dict[str, Any]:
+    return {
+        "uid": "01OPERATION00000000000000", "operation_kind": "volume-provision", "status": status,
+        "attempt": 5, "max_attempts": 5, "cancellation_requested": False, "source_uid": UID,
+        "error_code": error_code, "error_message": "operator away", "result": None,
+        "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
+    }
+
+
+def test_contents_client_reads_the_dead_letter_and_quarantines_and_requeues() -> None:
+    client = Client()
+    client.responses = [
+        Response({"items": [_operation()]}),
+        Response(_operation(error_code="QUARANTINED")),
+        Response(_operation(status="pending", error_code=None)),
+    ]
+
+    dead = client.list_dead_letter_operations(rows=50)
+    quarantined = client.quarantine_content_operation("01OPERATION00000000000000", reason="looking")
+    requeued = client.requeue_content_operation("01OPERATION00000000000000")
+
+    assert dead.items[0].error_code == "RETRY_EXHAUSTED"
+    assert quarantined.error_code == "QUARANTINED"
+    assert requeued.status == "pending"
+    urls = [url for url, _ in client.calls]
+    assert urls[0].endswith("/operations/dead-letter?rows=50")
+    assert urls[1].endswith("/operations/01OPERATION00000000000000/quarantine")
+    assert client.calls[1][1]["json"] == {"reason": "looking"}
+    assert urls[2].endswith("/operations/01OPERATION00000000000000/requeue")

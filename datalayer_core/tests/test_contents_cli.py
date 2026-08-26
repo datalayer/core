@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Iterator
 
+import json
 import pytest
 from typer.testing import CliRunner
 
@@ -23,6 +24,8 @@ from datalayer_core.models.contents.generated import (
     SourceList,
     TransferView,
     VersionList,
+    DeadLetterList,
+    OperationView,
 )
 
 UID = "01ARZ3NDEKTSV4RRFFQ69G5FAV"
@@ -1340,3 +1343,41 @@ def test_dataservers_status_connectors_and_transitions(
     assert revoked.exit_code == 0 and "revoked" in revoked.output
     assert DataClient.transitions == ["drain", "resume", "revoke"]
     assert wrong_kind.exit_code == 1 and "not a Dataserver" in wrong_kind.output
+
+
+def test_contents_operations_commands_reach_the_dead_letter(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple] = []
+
+    class Operations(Client):
+        def list_dead_letter_operations(self, *, rows=100):
+            calls.append(("dead-letter", rows))
+            return DeadLetterList(items=[])
+
+        def quarantine_content_operation(self, uid, *, reason):
+            calls.append(("quarantine", uid, reason))
+            return OperationView.model_validate(_operation_view())
+
+        def requeue_content_operation(self, uid):
+            calls.append(("requeue", uid))
+            return OperationView.model_validate(_operation_view(status="pending", error_code=None))
+
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Operations)
+    runner = CliRunner()
+    listed = runner.invoke(app, ["contents", "--output", "json", "operations", "dead-letter", "--rows", "20"])
+    held = runner.invoke(app, ["contents", "--output", "json", "operations", "quarantine", "01OPERATION00000000000000", "--reason", "looking"])
+    again = runner.invoke(app, ["contents", "--output", "json", "operations", "requeue", "01OPERATION00000000000000"])
+
+    assert listed.exit_code == 0, listed.output
+    assert held.exit_code == 0, held.output
+    assert again.exit_code == 0, again.output
+    assert calls == [("dead-letter", 20), ("quarantine", "01OPERATION00000000000000", "looking"), ("requeue", "01OPERATION00000000000000")]
+    assert json.loads(again.output)["status"] == "pending"
+
+
+def _operation_view(status: str = "failed", error_code: str | None = "RETRY_EXHAUSTED") -> dict:
+    return {
+        "uid": "01OPERATION00000000000000", "operation_kind": "volume-provision", "status": status,
+        "attempt": 5, "max_attempts": 5, "cancellation_requested": False, "source_uid": UID,
+        "error_code": error_code, "error_message": "operator away", "result": None,
+        "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
+    }

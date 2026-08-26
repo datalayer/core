@@ -37,6 +37,7 @@ from datalayer_core.models.contents.generated import (
     EffectivePermissions,
     HomeFolderQuota,
     ObjectList,
+    DeadLetterList,
     OperationView,
     RestoreRequest,
     Sharing,
@@ -1303,6 +1304,32 @@ class ContentsMixin:
     def get_content_operation(self, operation_uid: str) -> OperationView:
         response = self._fetch(  # type: ignore[attr-defined]
             self._contents_url(f"/operations/{operation_uid}"), method="GET"
+        )
+        return OperationView.model_validate(response.json())
+
+    def list_dead_letter_operations(self, *, rows: int = 100) -> DeadLetterList:
+        """The operations that gave up: retries exhausted, or quarantined."""
+
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/operations/dead-letter?rows={int(rows)}"), method="GET"
+        )
+        return DeadLetterList.model_validate(response.json())
+
+    def quarantine_content_operation(self, operation_uid: str, *, reason: str) -> OperationView:
+        """Keep a failed operation out of the queue while it is looked at."""
+
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/operations/{operation_uid}/quarantine"),
+            method="POST",
+            json={"reason": reason},
+        )
+        return OperationView.model_validate(response.json())
+
+    def requeue_content_operation(self, operation_uid: str) -> OperationView:
+        """Try a failed operation again from its first attempt."""
+
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/operations/{operation_uid}/requeue"), method="POST"
         )
         return OperationView.model_validate(response.json())
 
