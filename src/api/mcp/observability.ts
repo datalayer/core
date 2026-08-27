@@ -25,27 +25,41 @@ import { queryLogs } from '../otel/logs';
 import type { OtelLog, OtelMetric, OtelSpan } from '../otel/types';
 import type { McpTask } from '../../models/McpTask';
 
-/** The `service.name` the gateway exports under; the worker uses its own. */
-export const MCP_GATEWAY_SERVICE_NAME = 'datalayer-jupyter-mcp-server';
+/**
+ * The `service.name` the gateway exports under, and the one its workers use.
+ *
+ * The bare service name, like every other Datalayer service (`contents`,
+ * `iam`, `runtimes`): `instrument(app, name)` is what sets it. A worker is a
+ * process of its own and is filed separately, so a worker's last lines stay
+ * queryable after the process is gone.
+ */
+export const MCP_GATEWAY_SERVICE_NAME = 'jupyter-mcp-server';
+
+/** The `service.name` a worker's relayed output is filed under. */
+export const MCP_WORKER_SERVICE_NAME = 'jupyter-mcp-worker';
 
 /** The metric catalog `telemetry.py` owns; no ad-hoc counters. */
 export const MCP_METRIC_CATALOG = [
   'mcp.calls',
   'mcp.call.duration',
   'mcp.refusals',
-  'mcp.forwarded',
+  'mcp.forwards',
   'mcp.workers',
   'mcp.worker_start_seconds',
   'mcp.bindings',
-  'mcp.sandbox_lost',
+  'mcp.sandbox.lost',
   'mcp.tasks',
   'mcp.task.duration',
   'durable.step.duration',
   'durable.queue.wait',
   'durable.recoveries',
   'sandbox.launch_seconds',
+  'mcp.audit.writes',
   'mcp.audit.write_failures',
+  'mcp.dependency.duration',
+  'mcp.dependency.timeouts',
   'mcp.dependency.ready',
+  'mcp.readiness.failures',
 ] as const;
 
 export type McpMetricName = (typeof MCP_METRIC_CATALOG)[number];

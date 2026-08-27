@@ -6,6 +6,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
+  MCP_GATEWAY_SERVICE_NAME,
   fetchMcpLogs,
   fetchRunTrace,
   percentile,
@@ -22,7 +23,7 @@ const span = (overrides: Partial<OtelSpan>): OtelSpan => ({
   trace_id: 'abc',
   span_id: 's',
   span_name: 'mcp.request',
-  service_name: 'datalayer-jupyter-mcp-server',
+  service_name: MCP_GATEWAY_SERVICE_NAME,
   kind: 'SERVER',
   start_time: '2026-08-27T10:00:00Z',
   end_time: '2026-08-27T10:00:01Z',
