@@ -18,6 +18,8 @@ describe('IAM connected agents API', () => {
           uid: '01GRANT',
           client_id: 'https://claude.ai/.well-known/mcp-client.json',
           client_name: 'Claude Code',
+          client_hostname: 'claude.ai',
+          registration: 'cimd',
           scopes: ['notebooks:read'],
           scope_details: [{ name: 'notebooks:read', title: 'Read notebooks', description: 'Read cells.' }],
           resource: 'https://mcp.datalayer.run/mcp',
@@ -37,6 +39,8 @@ describe('IAM connected agents API', () => {
         uid: '01GRANT',
         clientId: 'https://claude.ai/.well-known/mcp-client.json',
         clientName: 'Claude Code',
+        clientHostname: 'claude.ai',
+        registration: 'cimd',
         scopes: ['notebooks:read'],
         scopeDetails: [{ name: 'notebooks:read', title: 'Read notebooks', description: 'Read cells.' }],
         resource: 'https://mcp.datalayer.run/mcp',
@@ -44,6 +48,29 @@ describe('IAM connected agents API', () => {
         lastUsedAt: null,
       },
     ]);
+  });
+
+  it('reads the registration IAM answers, without inferring it from the client id', async () => {
+    vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockResolvedValue({
+      success: true,
+      agents: [
+        {
+          uid: '01GRANT',
+          client_id: '01HZX7Q2M3N4P5R6S7T8U9V0W1',
+          client_name: 'A dynamically registered client',
+          client_hostname: '',
+          registration: 'dcr',
+          scopes: [],
+          scope_details: [],
+          resource: 'https://mcp.datalayer.run/mcp',
+        },
+      ],
+    });
+
+    const [agent] = await listConnectedAgents('token', 'https://iam.test');
+
+    expect(agent.registration).toBe('dcr');
+    expect(agent.clientHostname).toBe('');
   });
 
   it('disconnects one grant with a DELETE', async () => {

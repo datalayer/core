@@ -86,6 +86,9 @@ def _client_registration_notes() -> str:
         )
         lines.append(f"  {setup.id:<15} {how}")
     lines.append(
+        f"  {'any other':<15} whatever its vendor does; this command writes no file for it"
+    )
+    lines.append(
         "\nNone of the seven takes a client_metadata_url in its configuration file: "
         "a client's id is its vendor's own document. Datalayer's own clients pass "
         f"theirs in code — this CLI and agent-runtimes use {CLI_CLIENT_METADATA_URL} "

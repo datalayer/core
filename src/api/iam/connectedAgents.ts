@@ -24,11 +24,21 @@ export interface ConnectedAgentScope {
   description: string;
 }
 
+/** How the client registered: by document URL, or the deprecated fallback. */
+export type ConnectedAgentRegistration = 'cimd' | 'dcr';
+
 export interface ConnectedAgent {
   /** The grant's uid: what **Disconnect** names. */
   uid: string;
   clientId: string;
   clientName: string;
+  /**
+   * The hostname of the client's document when it registered by URL — the
+   * part of a client's identity that cannot be invented, and what the
+   * consent screen showed. Empty for a DCR client.
+   */
+  clientHostname: string;
+  registration: ConnectedAgentRegistration;
   scopes: string[];
   scopeDetails: ConnectedAgentScope[];
   /** The MCP resource the grant is for. */
@@ -43,6 +53,8 @@ interface ConnectedAgentsResponse {
     uid: string;
     client_id?: string | null;
     client_name?: string | null;
+    client_hostname?: string | null;
+    registration?: ConnectedAgentRegistration;
     scopes?: string[];
     scope_details?: ConnectedAgentScope[];
     resource?: string;
@@ -56,7 +68,8 @@ const connectedAgentsUrl = (baseUrl: string, suffix = ''): string =>
 
 /**
  * Whether a client id is a Client ID Metadata Document URL: `https`, a host
- * and a path, no fragment. Such a client registered by URL rather than DCR.
+ * and a path, no fragment. IAM answers `registration` itself; this is for a
+ * client id read from somewhere else, such as an audit row or a task.
  */
 export const isCimdClientId = (clientId: string): boolean =>
   /^https:\/\/[^/?#]+\/[^#]*$/.test(clientId);
@@ -74,6 +87,8 @@ export const listConnectedAgents = async (
     uid: agent.uid,
     clientId: agent.client_id ?? '',
     clientName: agent.client_name ?? agent.client_id ?? '',
+    clientHostname: agent.client_hostname ?? '',
+    registration: agent.registration ?? 'dcr',
     scopes: agent.scopes ?? [],
     scopeDetails: agent.scope_details ?? [],
     resource: agent.resource ?? '',

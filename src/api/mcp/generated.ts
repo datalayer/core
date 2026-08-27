@@ -25,8 +25,13 @@ export const MCP_GATEWAY_ROUTES: ReadonlyArray<McpGatewayRoute> = [
   { method: 'GET', path: "/.well-known/oauth-protected-resource", operationId: "protected_resource_metadata_endpoint__well_known_oauth_protected_resource_get", parameters: [] },
   { method: 'GET', path: "/.well-known/oauth-protected-resource/mcp", operationId: "protected_resource_metadata_endpoint__well_known_oauth_protected_resource_mcp_get", parameters: [] },
   { method: 'GET', path: "/api/mcp/healthz", operationId: "healthz_endpoint_api_mcp_healthz_get", parameters: [] },
+  { method: 'GET', path: "/api/mcp/readyz", operationId: "readyz_endpoint_api_mcp_readyz_get", parameters: [] },
+  { method: 'GET', path: "/api/mcp/v1/bindings", operationId: "list_bindings_endpoint_api_mcp_v1_bindings_get", parameters: [{ name: "kind", in: "query" }] },
+  { method: 'DELETE', path: "/api/mcp/v1/bindings/{binding_uid}", operationId: "delete_binding_endpoint_api_mcp_v1_bindings__binding_uid__delete", parameters: [{ name: "binding_uid", in: "path" }] },
   { method: 'GET', path: "/api/mcp/v1/executions/{execution_id}", operationId: "get_execution_endpoint_api_mcp_v1_executions__execution_id__get", parameters: [{ name: "execution_id", in: "path" }] },
   { method: 'POST', path: "/api/mcp/v1/executions/{execution_id}/cancel", operationId: "cancel_execution_endpoint_api_mcp_v1_executions__execution_id__cancel_post", parameters: [{ name: "execution_id", in: "path" }] },
   { method: 'GET', path: "/api/mcp/v1/notebooks/{notebook_id}/executions", operationId: "list_executions_endpoint_api_mcp_v1_notebooks__notebook_id__executions_get", parameters: [{ name: "notebook_id", in: "path" }] },
+  { method: 'GET', path: "/api/mcp/v1/notebooks/{notebook_uid}/tasks", operationId: "list_notebook_tasks_endpoint_api_mcp_v1_notebooks__notebook_uid__tasks_get", parameters: [{ name: "notebook_uid", in: "path" }, { name: "cursor", in: "query" }, { name: "limit", in: "query" }] },
+  { method: 'GET', path: "/api/mcp/v1/operations/workers", operationId: "operations_workers_endpoint_api_mcp_v1_operations_workers_get", parameters: [] },
   { method: 'GET', path: "/api/mcp/version", operationId: "version_endpoint_api_mcp_version_get", parameters: [] },
 ];

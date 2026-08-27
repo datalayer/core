@@ -40,5 +40,6 @@ export {
   disconnectAgent,
   isCimdClientId,
   type ConnectedAgent,
+  type ConnectedAgentRegistration,
   type ConnectedAgentScope,
 } from './connectedAgents';
