@@ -23,6 +23,7 @@ from datalayer_core.cli.commands.authn import (
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.contents import app as contents_app
+from datalayer_core.cli.commands.mcp import app as mcp_app
 from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.orgs import app as orgs_app
 from datalayer_core.cli.commands.orgs import orgs_ls
@@ -186,6 +187,7 @@ app.add_typer(auth_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
 app.add_typer(contents_app)
+app.add_typer(mcp_app)
 app.add_typer(memberships_app)
 app.add_typer(orgs_app)
 app.add_typer(teams_app)

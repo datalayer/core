@@ -25,5 +25,6 @@ export type { IDatalayerAPIResponse } from './DatalayerApi';
 // Domain-organized API exports
 export * as iam from './iam';
 export * as contents from './contents';
+export * as mcp from './mcp';
 export * as otel from './otel';
 export * from '../api/DatalayerApi';

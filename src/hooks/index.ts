@@ -23,6 +23,7 @@ export * from './useKeyboardShortcuts';
 export * from './useKeyboardEscape';
 export * from './useLocation';
 export * from './useLocationHandles';
+export * from './useMcp';
 export * from './useNavigate';
 export * from './useParams';
 export * from './useOnClickOutside';

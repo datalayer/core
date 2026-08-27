@@ -251,6 +251,37 @@ export const queryKeys = {
       [...queryKeys.contents.source(sourceUid), 'dataserver', 'status'] as const,
   },
 
+  // The Jupyter MCP Server: what the agents did, and what they may do
+  mcp: {
+    all: () => ['mcp'] as const,
+    tasks: () => [...queryKeys.mcp.all(), 'tasks'] as const,
+    taskList: (filters?: object) =>
+      [...queryKeys.mcp.tasks(), 'list', filters ?? {}] as const,
+    task: (taskUid: string) => [...queryKeys.mcp.tasks(), taskUid] as const,
+    notebookTasks: (notebookUid: string, filters?: object) =>
+      [...queryKeys.mcp.tasks(), 'notebook', notebookUid, filters ?? {}] as const,
+    bindings: () => [...queryKeys.mcp.all(), 'bindings'] as const,
+    bindingList: (filters?: object) =>
+      [...queryKeys.mcp.bindings(), 'list', filters ?? {}] as const,
+    activity: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'activity', filters ?? {}] as const,
+    audit: () => [...queryKeys.mcp.all(), 'audit'] as const,
+    auditList: (filters?: object) =>
+      [...queryKeys.mcp.audit(), 'list', filters ?? {}] as const,
+    policy: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'policy', filters ?? {}] as const,
+    connectedAgents: () => [...queryKeys.mcp.all(), 'connected-agents'] as const,
+    // Observability, over the OTEL service, keyed by the task it describes.
+    trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
+    logs: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'logs'] as const,
+    metrics: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'metrics', filters ?? {}] as const,
+    operations: () => [...queryKeys.mcp.all(), 'operations'] as const,
+    workers: () => [...queryKeys.mcp.operations(), 'workers'] as const,
+    workflows: () => [...queryKeys.mcp.operations(), 'workflows'] as const,
+    gatewayVersion: () => [...queryKeys.mcp.all(), 'version'] as const,
+  },
+
   // Authentication & Profile
   auth: {
     me: () => ['auth', 'me'] as const,

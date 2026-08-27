@@ -1,0 +1,36 @@
+name: MCP Generated Types
+
+# The checked-in `src/api/mcp/generated.ts` must be what the Jupyter MCP
+# Server's OpenAPI document gives. The gateway publishes its document without
+# authentication, so the check reads the deployed one: a route the gateway
+# added or dropped fails here until `npm run generate:mcp` is committed.
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/api/mcp/**'
+      - 'scripts/generate-mcp-types.py'
+      - '.github/workflows/mcp-generated-types.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/api/mcp/**'
+      - 'scripts/generate-mcp-types.py'
+      - '.github/workflows/mcp-generated-types.yml'
+  workflow_dispatch:
+
+jobs:
+  check-generated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check src/api/mcp/generated.ts is current
+        env:
+          DATALAYER_JUPYTER_MCP_OPENAPI: ${{ vars.DATALAYER_JUPYTER_MCP_OPENAPI || 'https://mcp.datalayer.run/api/mcp/v1/openapi.json' }}
+        run: python scripts/generate-mcp-types.py --check

@@ -1,0 +1,504 @@
+# Copyright (c) 2023-2026 Datalayer, Inc.
+# Distributed under the terms of the Modified BSD License.
+
+"""
+The ``datalayer mcp`` command group: the agents connected to the account,
+the audit log, the observability of a run, and the configuration of the MCP
+clients.
+
+Every operation here is one the web application has too, over the same
+routes — the gateway's ``/api/mcp/v1``, IAM's connected agents and the
+``datalayer-otel`` query API, all with the caller's own token.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+from dataclasses import dataclass
+from functools import wraps
+from pathlib import Path
+from typing import Any, Callable, TypeVar
+
+import typer
+import yaml
+from rich.console import Console
+
+from datalayer_core.cli.commands.contents import OutputFormat
+from datalayer_core.client.client import DatalayerClient
+from datalayer_core.displays.mcp import (
+    activity_summary_table,
+    audit_events_table,
+    bindings_table,
+    connected_agents_table,
+    logs_table,
+    policy_table,
+    slis_table,
+    spans_table,
+    tasks_table,
+)
+from datalayer_core.mcp import (
+    CLI_CLIENT_METADATA_URL,
+    MCP_CLIENT_IDS,
+    MCP_CLIENTS,
+    default_config_path,
+    mcp_endpoint_url,
+    render_client_configuration,
+    span_tree,
+    write_client_configuration,
+)
+
+_Command = TypeVar("_Command", bound=Callable[..., Any])
+console = Console()
+error_console = Console(stderr=True)
+
+
+@dataclass(frozen=True)
+class McpCLIContext:
+    output: OutputFormat
+
+
+class McpCommandError(RuntimeError):
+    """A safe, user-facing error of an MCP command."""
+
+
+def mcp_command(function: _Command) -> _Command:
+    """The error boundary every MCP command shares."""
+
+    @wraps(function)
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return function(*args, **kwargs)
+        except McpCommandError as error:
+            error_console.print(f"[red]{error}[/red]")
+            raise typer.Exit(1) from None
+
+    return wrapped  # type: ignore[return-value]
+
+
+def _client_registration_notes() -> str:
+    lines = ["How each client registers with Datalayer's authorization server:"]
+    for setup in MCP_CLIENTS.values():
+        how = (
+            "by URL (Client ID Metadata Document)"
+            if setup.registration == "cimd"
+            else "dynamic client registration (the deprecated fallback)"
+        )
+        lines.append(f"  {setup.id:<15} {how}")
+    lines.append(
+        "\nNone of the seven takes a client_metadata_url in its configuration file: "
+        "a client's id is its vendor's own document. Datalayer's own clients pass "
+        f"theirs in code — this CLI and agent-runtimes use {CLI_CLIENT_METADATA_URL} "
+        "and its sibling under https://datalayer.ai/.well-known/mcp-clients/."
+    )
+    return "\n".join(lines)
+
+
+app = typer.Typer(
+    name="mcp",
+    help="The agents connected to your account, their audit log and runs, and the MCP clients' configuration.",
+    invoke_without_command=True,
+    no_args_is_help=True,
+)
+
+
+@app.callback()
+def mcp_callback(
+    ctx: typer.Context,
+    output: OutputFormat = typer.Option(
+        OutputFormat.TABLE,
+        "--output",
+        "-o",
+        case_sensitive=False,
+        help="Output format used by MCP commands.",
+    ),
+) -> None:
+    """Use the shared CLI authentication and the selected output format."""
+    ctx.obj = McpCLIContext(output=output)
+
+
+def _context(ctx: typer.Context) -> McpCLIContext:
+    value = ctx.find_object(McpCLIContext)
+    return value or McpCLIContext(output=OutputFormat.TABLE)
+
+
+def _client() -> DatalayerClient:
+    try:
+        return DatalayerClient()
+    except Exception as error:
+        raise McpCommandError(str(error)) from error
+
+
+def _dump(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    if isinstance(value, list):
+        return [_dump(item) for item in value]
+    return value
+
+
+def _emit_machine(value: Any, context: McpCLIContext) -> bool:
+    """Print JSON or YAML when asked; answer whether that was done."""
+    if context.output is OutputFormat.JSON:
+        console.print_json(json.dumps(_dump(value)))
+        return True
+    if context.output is OutputFormat.YAML:
+        console.print(yaml.safe_dump(_dump(value), sort_keys=False).rstrip())
+        return True
+    return False
+
+
+def _call(function: Callable[[], Any]) -> Any:
+    try:
+        return function()
+    except McpCommandError:
+        raise
+    except Exception as error:
+        raise McpCommandError(str(error)) from error
+
+
+# ---------------------------------------------------------------------------
+# agents
+# ---------------------------------------------------------------------------
+
+agents_app = typer.Typer(name="agents", help="The agents connected to your account.")
+app.add_typer(agents_app)
+
+
+@agents_app.command(name="list")
+@mcp_command
+def agents_list(ctx: typer.Context) -> None:
+    """List the agents connected to your account, with their scopes and last use."""
+    agents = _call(lambda: _client().list_connected_agents())
+    if _emit_machine(agents, _context(ctx)):
+        return
+    if not agents:
+        console.print("No agent is connected. Connect one from an MCP client: `datalayer mcp setup --help`.")
+        return
+    console.print(connected_agents_table(agents))
+
+
+@agents_app.command(name="revoke")
+@mcp_command
+def agents_revoke(
+    ctx: typer.Context,
+    grant_uid: str = typer.Argument(..., help="The grant, from `datalayer mcp agents list`."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Disconnect an agent: its refresh token stops working at once."""
+    if not yes and not typer.confirm(f"Disconnect the agent behind grant {grant_uid}?"):
+        raise typer.Exit(0)
+    answer = _call(lambda: _client().disconnect_agent(grant_uid))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(answer.get("message") or f"Disconnected {grant_uid}.")
+
+
+# ---------------------------------------------------------------------------
+# activity, tasks, bindings, policy
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="activity")
+@mcp_command
+def activity(
+    ctx: typer.Context,
+    org: str | None = typer.Option(None, "--org", help="An organization you own."),
+) -> None:
+    """What is going on: connected clients, bound sandboxes, running tasks, today's counts."""
+    answer = _call(lambda: _client().get_mcp_activity(org=org))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(activity_summary_table(answer))
+    if answer.clients:
+        console.print(connected_agents_table(
+            [
+                {
+                    "uid": client.grant_uid,
+                    "client_name": client.client_name,
+                    "client_id": client.client_id,
+                    "scopes": client.scopes,
+                    "created_at": client.connected_at,
+                    "last_used_at": client.last_call.at if client.last_call else None,
+                }
+                for client in answer.clients
+            ],
+            title="Connected clients",
+        ))
+    if answer.sandboxes:
+        console.print(bindings_table(answer.sandboxes, title="Bound sandboxes"))
+    if answer.tasks:
+        console.print(tasks_table(answer.tasks, title="Running tasks"))
+    if answer.calls:
+        console.print(audit_events_table(answer.calls, title="Last calls"))
+
+
+tasks_app = typer.Typer(name="tasks", help="The runs the agents started.")
+app.add_typer(tasks_app)
+
+
+@tasks_app.command(name="list")
+@mcp_command
+def tasks_list(
+    ctx: typer.Context,
+    notebook: str | None = typer.Option(None, "--notebook", help="Filter by notebook uid."),
+    sandbox: str | None = typer.Option(None, "--sandbox", help="Filter by sandbox uid."),
+    agent: str | None = typer.Option(None, "--agent", help="Filter by the agent's client id."),
+    status: str | None = typer.Option(None, "--status", help="working, input_required, completed, failed, cancelled."),
+    org: str | None = typer.Option(None, "--org", help="An organization you own."),
+    cursor: str | None = typer.Option(None, "--cursor", help="Continue a page."),
+    limit: int = typer.Option(50, "--limit", min=1, max=200),
+) -> None:
+    """List the tasks, newest first."""
+    page = _call(
+        lambda: _client().list_mcp_tasks(
+            notebook=notebook, sandbox=sandbox, agent=agent, status=status, org=org, cursor=cursor, limit=limit
+        )
+    )
+    if _emit_machine(page, _context(ctx)):
+        return
+    console.print(tasks_table(page.items))
+    if page.next_cursor:
+        console.print(f"Next cursor: {page.next_cursor}")
+
+
+@tasks_app.command(name="describe")
+@mcp_command
+def tasks_describe(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> None:
+    """One task, with its outputs."""
+    task = _call(lambda: _client().get_mcp_task(task_uid))
+    if _emit_machine(task, _context(ctx)):
+        return
+    console.print(tasks_table([task]))
+    for output in task.outputs:
+        console.print(f"[{output.index}] {output.output_type}: {output.text or output.reference or ''}")
+    if task.error:
+        console.print(f"[red]{task.error}[/red]")
+
+
+@tasks_app.command(name="cancel")
+@mcp_command
+def tasks_cancel(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> None:
+    """Stop a task that is still going; a finished one is answered as it is."""
+    task = _call(lambda: _client().cancel_mcp_task(task_uid))
+    if _emit_machine(task, _context(ctx)):
+        return
+    console.print(f"{task.uid}: {task.status}")
+
+
+bindings_app = typer.Typer(name="bindings", help="The handles the agents hold: notebooks, toolsets, sandboxes.")
+app.add_typer(bindings_app)
+
+
+@bindings_app.command(name="list")
+@mcp_command
+def bindings_list(
+    ctx: typer.Context,
+    kind: str | None = typer.Option(None, "--kind", help="notebook, toolset or sandbox."),
+    state: str | None = typer.Option(None, "--state", help="active, lost, closed, expired."),
+    agent: str | None = typer.Option(None, "--agent", help="Filter by the agent's client id."),
+    limit: int = typer.Option(50, "--limit", min=1, max=200),
+) -> None:
+    """List your handles."""
+    page = _call(lambda: _client().list_mcp_bindings(kind=kind, state=state, agent=agent, limit=limit))
+    if _emit_machine(page, _context(ctx)):
+        return
+    console.print(bindings_table(page.items))
+
+
+@bindings_app.command(name="terminate")
+@mcp_command
+def bindings_terminate(
+    ctx: typer.Context,
+    binding_uid: str = typer.Argument(..., help="The handle, e.g. sb_…"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Release a handle; a sandbox binding's runtime is terminated with it."""
+    if not yes and not typer.confirm(f"Terminate {binding_uid}?"):
+        raise typer.Exit(0)
+    binding = _call(lambda: _client().terminate_mcp_binding(binding_uid))
+    if _emit_machine(binding, _context(ctx)):
+        return
+    console.print(f"{binding.uid}: {binding.state or 'closed'}")
+
+
+@app.command(name="policy")
+@mcp_command
+def policy(
+    ctx: typer.Context,
+    agent: str | None = typer.Option(None, "--agent", help="Preview the policy as this agent (client id)."),
+) -> None:
+    """The effective policy for your token, each rule naming the layer that decided it."""
+    answer = _call(lambda: _client().get_mcp_effective_policy(agent=agent))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(policy_table(answer))
+
+
+# ---------------------------------------------------------------------------
+# audit
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="audit")
+@mcp_command
+def audit(
+    ctx: typer.Context,
+    org: str | None = typer.Option(None, "--org", help="An organization you own or audit."),
+    team: str | None = typer.Option(None, "--team", help="A team of that organization."),
+    agent: str | None = typer.Option(None, "--agent", help="The agent's client id."),
+    user: str | None = typer.Option(None, "--user", help="A member's uid."),
+    tool: str | None = typer.Option(None, "--tool", help="A tool name."),
+    decision: str | None = typer.Option(None, "--decision", help="allowed or refused."),
+    outcome: str | None = typer.Option(None, "--outcome", help="ok, error or is_error."),
+    since: str | None = typer.Option(None, "--since", help="ISO 8601, UTC."),
+    until: str | None = typer.Option(None, "--until", help="ISO 8601, UTC."),
+    task_id: str | None = typer.Option(None, "--task", help="The rows of one task."),
+    cursor: str | None = typer.Option(None, "--cursor", help="Continue a page."),
+    limit: int = typer.Option(50, "--limit", min=1, max=500),
+    export: str | None = typer.Option(None, "--export", help="Export everything the filters select: jsonl or csv."),
+    file: Path | None = typer.Option(None, "--file", help="Write the export here instead of stdout."),
+) -> None:
+    """The audit log: every call and decision, for security auditors and owners."""
+    if export is not None:
+        if export not in ("jsonl", "csv"):
+            raise McpCommandError("--export takes jsonl or csv")
+        document = _call(
+            lambda: _client().export_mcp_audit_events(
+                format=export, org=org, team=team, agent=agent, user=user, tool=tool,
+                decision=decision, outcome=outcome, since=since, until=until,
+            )
+        )
+        if file is not None:
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text(document)
+            console.print(f"Wrote {file}")
+        else:
+            sys.stdout.write(document)
+        return
+    page = _call(
+        lambda: _client().list_mcp_audit_events(
+            org=org, team=team, agent=agent, user=user, tool=tool, decision=decision,
+            outcome=outcome, since=since, until=until, task_id=task_id, cursor=cursor, limit=limit,
+        )
+    )
+    if _emit_machine(page, _context(ctx)):
+        return
+    console.print(audit_events_table(page.items))
+    if page.next_cursor:
+        console.print(f"Next cursor: {page.next_cursor}")
+
+
+# ---------------------------------------------------------------------------
+# trace, metrics, logs
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="trace")
+@mcp_command
+def trace(ctx: typer.Context, task_uid: str = typer.Argument(..., help="The task (run) uid.")) -> None:
+    """The spans of a run — gateway, policy, worker and what they called — as a tree."""
+    answer = _call(lambda: _client().get_mcp_run_trace(task_uid))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    if not answer.get("trace_id"):
+        console.print(f"Task {task_uid} has no trace yet.")
+        return
+    console.print(spans_table(span_tree(answer.get("spans", [])), title=f"Trace {answer['trace_id']}"))
+
+
+@app.command(name="metrics")
+@mcp_command
+def metrics(
+    ctx: typer.Context,
+    agent: str | None = typer.Option(None, "--agent", help="The SLIs of one agent (client id), read from its spans."),
+    org: str | None = typer.Option(None, "--org", help="The SLIs of one organization, read from its spans."),
+    since: str | None = typer.Option(None, "--since", help="ISO 8601, UTC; earlier points are left out."),
+) -> None:
+    """The four service level indicators and the catalog they are read from."""
+    answer = _call(lambda: _client().get_mcp_metrics(agent=agent, org=org, since=since))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    scope = f" for agent {agent}" if agent else f" for organization {org}" if org else ""
+    console.print(slis_table(answer.get("slis", {}), title=f"MCP service level indicators{scope}"))
+    counts = {name: len(points) for name, points in (answer.get("metrics") or {}).items()}
+    console.print("Catalog points read: " + ", ".join(f"{name}={count}" for name, count in counts.items()))
+
+
+@app.command(name="logs")
+@mcp_command
+def logs(
+    ctx: typer.Context,
+    task_uid: str = typer.Argument(..., help="The task (run) uid."),
+    limit: int = typer.Option(200, "--limit", min=1, max=2000),
+    severity: str | None = typer.Option(None, "--severity", help="INFO, WARN, ERROR…"),
+) -> None:
+    """The log lines of a run, gateway and worker alike, by the trace they carry."""
+    answer = _call(lambda: _client().get_mcp_run_logs(task_uid, limit=limit, severity=severity))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    if not answer.get("trace_id"):
+        console.print(f"Task {task_uid} has no trace yet.")
+        return
+    console.print(logs_table(answer.get("records", []), title=f"Logs of trace {answer['trace_id']}"))
+
+
+# ---------------------------------------------------------------------------
+# setup
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="setup", help=f"Write an MCP client's configuration for the Datalayer endpoint.\n\n{_client_registration_notes()}")
+@mcp_command
+def setup(
+    ctx: typer.Context,
+    client: str = typer.Argument(..., help="One of: " + ", ".join(MCP_CLIENT_IDS)),
+    url: str | None = typer.Option(None, "--url", help="The MCP endpoint; defaults to the configured Jupyter MCP Server URL."),
+    scopes: str | None = typer.Option(None, "--scopes", help="Comma-separated scopes to name in the URL, e.g. notebooks:read."),
+    name: str = typer.Option("datalayer", "--name", help="The server entry's name in the client's file."),
+    path: Path | None = typer.Option(None, "--path", help="Write here instead of the client's default location."),
+    print_only: bool = typer.Option(False, "--print", help="Print the resulting file; write nothing."),
+) -> None:
+    if client not in MCP_CLIENTS:
+        raise McpCommandError(f"Unknown client '{client}'. Choose one of: {', '.join(MCP_CLIENT_IDS)}")
+    setup_of = MCP_CLIENTS[client]
+    endpoint_base = url or _urls().jupyter_mcp_server_url
+    endpoint = mcp_endpoint_url(endpoint_base, scopes.split(",") if scopes else None)
+    target = path or default_config_path(client)
+    if print_only:
+        existing = target.read_text() if target.exists() else ""
+        try:
+            rendered = render_client_configuration(client, endpoint, existing=existing, server_name=name)
+        except ValueError as error:
+            raise McpCommandError(f"{target}: {error}") from error
+        if _emit_machine({"client": client, "path": str(target), "endpoint": endpoint, "content": rendered}, _context(ctx)):
+            return
+        console.print(f"[dim]# {target}[/dim]")
+        sys.stdout.write(rendered)
+        return
+    try:
+        written = write_client_configuration(client, endpoint, path=target, server_name=name)
+    except (ValueError, OSError) as error:
+        raise McpCommandError(f"{target}: {error}") from error
+    answer = {
+        "client": client,
+        "path": str(written),
+        "endpoint": endpoint,
+        "registration": setup_of.registration,
+        "note": setup_of.note,
+    }
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(f"Wrote {written} for {setup_of.name}: {endpoint}")
+    console.print(setup_of.note)
+    console.print(
+        "Registers by URL (Client ID Metadata Document)."
+        if setup_of.registration == "cimd"
+        else "Registers with dynamic client registration, the deprecated fallback."
+    )
+
+
+def _urls() -> Any:
+    from datalayer_core.utils.urls import DatalayerURLs
+
+    return DatalayerURLs.from_environment()

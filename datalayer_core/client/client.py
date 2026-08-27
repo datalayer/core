@@ -15,6 +15,7 @@ from typing import Any, Optional, Union
 from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.contents import ContentsMixin
+from datalayer_core.mixins.mcp import McpMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.spaces import SpacesMixin
 from datalayer_core.mixins.usage import UsageMixin
@@ -36,6 +37,7 @@ class DatalayerClient(
     UsageMixin,
     WhoamiAppMixin,
     ContentsMixin,
+    McpMixin,
 ):
     """
     Client for Datalayer AI platform.

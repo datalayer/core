@@ -10,6 +10,7 @@ from datalayer_core.base import paths
 from datalayer_core.base.serverapplication import DatalayerExtensionApp
 from datalayer_core.client import DatalayerClient
 from datalayer_core.contents import Contents, HomeFolder, contents
+from datalayer_core.mcp import Mcp, mcp
 
 
 def _jupyter_server_extension_points() -> List[Dict[str, Any]]:
@@ -36,4 +37,6 @@ __all__ = [
     "Contents",
     "HomeFolder",
     "contents",
+    "Mcp",
+    "mcp",
 ]

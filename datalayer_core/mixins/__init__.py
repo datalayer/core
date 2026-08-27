@@ -2,6 +2,7 @@
 # Distributed under the terms of the Modified BSD License.
 from .api_keys import ApiKeysMixin
 from .authn import AuthnMixin
+from .mcp import McpMixin
 from .secrets import SecretsMixin
 from .spaces import SpacesMixin
 from .usage import UsageMixin
@@ -12,6 +13,7 @@ __all__ = [
     "SpacesMixin",
     "SecretsMixin",
     "ApiKeysMixin",
+    "McpMixin",
     "UsageMixin",
     "WhoamiAppMixin",
 ]
