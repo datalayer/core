@@ -8,6 +8,7 @@ export * from './animation';
 export * from './billing';
 export * from './collaboration';
 export * from './contents';
+export * from './mcp';
 export * from './sharing';
 export * from './sparklines';
 export * from './time';

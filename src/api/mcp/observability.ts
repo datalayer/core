@@ -277,6 +277,26 @@ export const fetchRunTrace = async (
   return { taskUid: task.uid, traceId: task.traceId, spans, tree: spanTree(spans) };
 };
 
+/**
+ * The spans of one trace, named directly.
+ *
+ * A synchronous call has no task — it finished inside its own request — but
+ * it does carry a trace, which is what the audit row records and what
+ * "show me this call" means before durable execution exists.
+ */
+export const fetchTraceSpans = async (
+  token: string,
+  traceId: string,
+  otelUrl: string = DEFAULT_SERVICE_URLS.OTEL,
+): Promise<McpRunTrace> => {
+  if (!traceId) {
+    return { taskUid: '', traceId: '', spans: [], tree: [] };
+  }
+  const trace = await getTrace(token, traceId, otelUrl);
+  const spans = trace.data ?? [];
+  return { taskUid: '', traceId, spans, tree: spanTree(spans) };
+};
+
 export interface McpRunLogs {
   taskUid: string;
   traceId: string;

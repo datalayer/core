@@ -273,6 +273,8 @@ export const queryKeys = {
     connectedAgents: () => [...queryKeys.mcp.all(), 'connected-agents'] as const,
     // Observability, over the OTEL service, keyed by the task it describes.
     trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
+    // A trace named directly: a synchronous call has one and no task.
+    traceById: (traceId: string) => [...queryKeys.mcp.all(), 'traces', traceId] as const,
     logs: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'logs'] as const,
     metrics: (filters?: object) =>
       [...queryKeys.mcp.all(), 'metrics', filters ?? {}] as const,
@@ -280,6 +282,9 @@ export const queryKeys = {
     workers: () => [...queryKeys.mcp.operations(), 'workers'] as const,
     workflows: () => [...queryKeys.mcp.operations(), 'workflows'] as const,
     gatewayVersion: () => [...queryKeys.mcp.all(), 'version'] as const,
+    // The Enterprise console: one answer per organization, narrowed by team.
+    orgOverview: (orgUid: string, filters?: object) =>
+      [...queryKeys.mcp.all(), 'organizations', orgUid, 'overview', filters ?? {}] as const,
   },
 
   // Authentication & Profile

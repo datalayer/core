@@ -17,6 +17,7 @@ export * from './tasks';
 export * from './bindings';
 export * from './audit';
 export * from './activity';
+export * from './organizations';
 export * from './policy';
 export * from './operations';
 export * from './observability';

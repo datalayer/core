@@ -26,9 +26,11 @@ import {
   fetchMcpLogs,
   fetchMcpMetrics,
   fetchRunTrace,
+  fetchTraceSpans,
   getEffectivePolicy,
   getGatewayVersion,
   getMcpActivity,
+  getOrganizationMcpOverview,
   getTask,
   getWorkflowsHealth,
   isMcpTaskTerminal,
@@ -46,6 +48,8 @@ import {
   type McpGatewayVersion,
   type McpMetricsFilters,
   type McpMetricsSnapshot,
+  type McpOrganizationOverview,
+  type McpOrganizationOverviewFilters,
   type McpPolicyFilters,
   type McpRunLogs,
   type McpRunTrace,
@@ -294,6 +298,30 @@ export const useEffectivePolicy = (
   });
 };
 
+// -- Organizations (the Enterprise console) --------------------------------
+
+/**
+ * The organization's MCP overview, for the console's first page.
+ *
+ * Read on demand and kept for a minute: an administrator reads it, acts, and
+ * comes back — it is not a live pane, and a page that re-asked every ten
+ * seconds would cost the gateway three bounded queries for nothing.
+ */
+export const useOrgMcpOverview = (
+  orgUid?: string,
+  filters: McpOrganizationOverviewFilters = {},
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const mcpUrl = useMcpServerUrl();
+  return useQuery<McpOrganizationOverview>({
+    queryKey: queryKeys.mcp.orgOverview(orgUid ?? '', filters),
+    queryFn: () => getOrganizationMcpOverview(token ?? '', orgUid!, filters, mcpUrl),
+    enabled: Boolean(token && mcpUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 60_000,
+  });
+};
+
 // -- Connected agents (IAM) ------------------------------------------------
 
 export const useConnectedAgents = (options: { enabled?: boolean } = {}) => {
@@ -334,6 +362,23 @@ export const useRunTrace = (taskUid?: string, options: { enabled?: boolean } = {
     enabled: Boolean(token && otelUrl && task.data) && (options.enabled ?? true),
     staleTime: 15_000,
     refetchInterval: task.data && !isMcpTaskTerminal(task.data.status) ? 5_000 : false,
+  });
+};
+
+/**
+ * The spans of one trace, for a call that finished inside its own request.
+ *
+ * Read once and kept: a finished trace does not change, and the pane that
+ * shows it is opened from an audit row rather than watched.
+ */
+export const useMcpTrace = (traceId?: string, options: { enabled?: boolean } = {}) => {
+  const token = useIAMStore(state => state.token);
+  const otelUrl = useOtelUrl();
+  return useQuery<McpRunTrace>({
+    queryKey: queryKeys.mcp.traceById(traceId ?? ''),
+    queryFn: () => fetchTraceSpans(token ?? '', traceId!, otelUrl),
+    enabled: Boolean(token && otelUrl && traceId) && (options.enabled ?? true),
+    staleTime: 60_000,
   });
 };
 
