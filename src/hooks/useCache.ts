@@ -2160,7 +2160,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   /**
    * Update space with optimistic update.
-   * Any extra fields (e.g. attached_agent_pod_name_s) are forwarded to the backend.
+   * Any extra fields (e.g. attached_agent_runtime_name_s) are forwarded to the backend.
    */
   const useUpdateSpace = () => {
     return useMutation({

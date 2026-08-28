@@ -190,7 +190,7 @@ export const validateRequiredString = (
  * ```typescript
  * const runtimeData = {
  *   uid: 'abc123',
- *   podName: 'my-pod',
+ *   runtimeName: 'runtime-abc123',
  *   environmentName: undefined  // This will throw
  * };
  * validateJSON(runtimeData, 'Runtime');

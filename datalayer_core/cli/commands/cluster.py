@@ -232,14 +232,14 @@ def show_cluster(
                         continue
 
                     for pod in node_pods:
-                        pod_name = str(pod.get("name") or "")
+                        runtime_name = str(pod.get("name") or "")
                         namespace = str(pod.get("namespace") or "")
                         pod_phase = str(pod.get("phase") or "Unknown")
                         unsched = bool(pod.get("unschedulable"))
 
                         pod_line = Text()
                         pod_line.append(
-                            f"{namespace}/{pod_name}" if namespace else pod_name
+                            f"{namespace}/{runtime_name}" if namespace else runtime_name
                         )
                         pod_line.append(" ")
                         pod_line.append(
@@ -254,11 +254,11 @@ def show_cluster(
                     f"[bold yellow]unassigned[/bold yellow] pods={len(unassigned)}"
                 )
                 for pod in unassigned:
-                    pod_name = str(pod.get("name") or "")
+                    runtime_name = str(pod.get("name") or "")
                     namespace = str(pod.get("namespace") or "")
                     pod_phase = str(pod.get("phase") or "Unknown")
                     line = Text()
-                    line.append(f"{namespace}/{pod_name}" if namespace else pod_name)
+                    line.append(f"{namespace}/{runtime_name}" if namespace else runtime_name)
                     line.append(" ")
                     line.append(f"[{pod_phase}]", style=_status_style(pod_phase))
                     if bool(pod.get("unschedulable")):

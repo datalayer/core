@@ -231,7 +231,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             raise
 
         # Creation coverage.
-        assert runtime.pod_name, "Runtime pod_name should be set after creation"
+        assert runtime.runtime_name, "Runtime runtime_name should be set after creation"
         assert runtime.reservation_id, "Runtime reservation_id should be present"
 
         # Reservation coverage: usage row should be open while runtime is running.
@@ -239,7 +239,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             client=client,
             account_uid=account["uid"],
             account_kind=account["kind"],
-            runtime_uid=runtime.pod_name,
+            runtime_uid=runtime.runtime_name,
             expect_closed=False,
             timeout_seconds=180,
         )
@@ -261,7 +261,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             client=client,
             account_uid=account["uid"],
             account_kind=account["kind"],
-            runtime_uid=runtime.pod_name,
+            runtime_uid=runtime.runtime_name,
             expect_closed=True,
             timeout_seconds=240,
         )
@@ -285,7 +285,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
         )
 
     finally:
-        if runtime is not None and runtime.pod_name:
+        if runtime is not None and runtime.runtime_name:
             # Best-effort cleanup for flaky failures.
             try:
                 client.terminate_runtime(runtime)
