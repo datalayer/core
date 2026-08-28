@@ -11,7 +11,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
+  MCP_DURABLE_SERVICE_NAME,
   MCP_GATEWAY_SERVICE_NAME,
+  MCP_METRIC_CATALOG,
+  serviceNameFor,
   fetchMcpLogs,
   fetchRunTrace,
   percentile,
@@ -131,5 +134,34 @@ describe('MCP observability', () => {
       2,
       expect.objectContaining({ url: 'https://otel.test/api/otel/v1/logs?trace_id=abc&limit=10' }),
     );
+  });
+});
+
+describe('which service a metric is queried against', () => {
+  /**
+   * A metric's service is a property of the metric, not of the caller. The
+   * `durable.*` metrics come from `datalayer-durable`; asking the gateway for
+   * them is a well-formed query, truthfully answered with nothing, rendering
+   * a legitimate-looking zero. That is the failure that had three panels
+   * querying `mcp.forwarded` and `mcp.sandbox_lost`.
+   */
+  it('sends durable metrics to the durable service', () => {
+    expect(serviceNameFor('durable.step.duration')).toBe(MCP_DURABLE_SERVICE_NAME);
+    expect(serviceNameFor('durable.queue.wait')).toBe(MCP_DURABLE_SERVICE_NAME);
+    expect(serviceNameFor('durable.recoveries')).toBe(MCP_DURABLE_SERVICE_NAME);
+  });
+
+  it('sends gateway metrics to the gateway', () => {
+    expect(serviceNameFor('mcp.calls')).toBe(MCP_GATEWAY_SERVICE_NAME);
+    expect(serviceNameFor('sandbox.launch_seconds')).toBe(MCP_GATEWAY_SERVICE_NAME);
+  });
+
+  it('covers every metric in the catalog', () => {
+    // A metric added without a service is one that silently inherits the
+    // gateway's, which is right for most and wrong for exactly the ones
+    // that matter.
+    for (const metric of MCP_METRIC_CATALOG) {
+      expect(serviceNameFor(metric)).toBeTruthy();
+    }
   });
 });

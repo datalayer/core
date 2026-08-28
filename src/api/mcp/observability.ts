@@ -43,6 +43,30 @@ export const MCP_GATEWAY_SERVICE_NAME = 'jupyter-mcp-server';
 /** The `service.name` a worker's relayed output is filed under. */
 export const MCP_WORKER_SERVICE_NAME = 'jupyter-mcp-worker';
 
+/**
+ * The `service.name` the durable execution service exports under.
+ *
+ * The `durable.*` metrics come from there, not from the gateway. Querying
+ * them against the gateway would be well formed, would be answered
+ * truthfully with nothing, and would render a legitimate-looking zero — the
+ * same failure that had three panels querying `mcp.forwarded` and
+ * `mcp.sandbox_lost`. `serviceNameFor` exists so the question is answered
+ * once rather than at each call site.
+ */
+export const MCP_DURABLE_SERVICE_NAME = 'datalayer-durable';
+
+/**
+ * Which service emits a metric.
+ *
+ * A metric's service is a property of the metric, not of the caller. Reading
+ * it from here is what keeps a new panel from inheriting whichever constant
+ * happened to be in scope where it was written.
+ */
+export const serviceNameFor = (metric: McpMetricName): string =>
+  metric.startsWith('durable.')
+    ? MCP_DURABLE_SERVICE_NAME
+    : MCP_GATEWAY_SERVICE_NAME;
+
 /** The metric catalog `telemetry.py` owns; no ad-hoc counters. */
 export const MCP_METRIC_CATALOG = [
   'mcp.calls',
@@ -229,7 +253,7 @@ export const fetchMcpMetrics = async (
   const names = Object.values(MCP_SLI_METRICS);
   const pages = await Promise.all(
     names.map(name =>
-      queryMetrics(token, { metricName: name, serviceName: MCP_GATEWAY_SERVICE_NAME, limit }, otelUrl),
+      queryMetrics(token, { metricName: name, serviceName: serviceNameFor(name), limit }, otelUrl),
     ),
   );
   const metrics: Partial<Record<McpMetricName, OtelMetric[]>> = {};
