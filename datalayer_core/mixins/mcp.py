@@ -26,6 +26,7 @@ from datalayer_core.models.mcp import (
     McpBinding,
     McpBindingList,
     McpEffectivePolicy,
+    McpJobSchedule,
     McpTask,
     McpTaskList,
 )
@@ -247,6 +248,19 @@ class McpMixin:
             self._mcp_url("/policy", agent=agent, org=org, team=team), method="GET"
         )
         return McpEffectivePolicy.model_validate(response.json())
+
+    def get_mcp_job_schedule(self) -> McpJobSchedule:
+        """The periodic work of the replica that answers, and what it has done.
+
+        Platform administrators only. Whichever replica the load balancer
+        picks is the one that reports — the counts are that replica's, and
+        `skipped` being high on it is the scheduler working rather than a
+        problem.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._mcp_url("/operations/jobs"), method="GET"
+        )
+        return McpJobSchedule.model_validate(response.json())
 
     # Connected agents (IAM) -------------------------------------------------
 

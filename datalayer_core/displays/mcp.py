@@ -177,6 +177,55 @@ def policy_table(policy: Any, *, title: str | None = None) -> Table:
     return table
 
 
+def jobs_table(schedule: Any, *, title: str | None = None) -> Table:
+    """The periodic work of one replica, and what it has done.
+
+    The replica is in the title rather than a column, because every row is
+    that replica's: only one replica holds a job's lease at a time, so a
+    reader who takes these counts for the platform's will read a healthy
+    scheduler as a broken one.
+    """
+    holder = _text(schedule, "holder", "?")
+    running = _field(schedule, "running", False)
+    table = Table(
+        title=title or f"Periodic jobs on {holder}" + ("" if running else " (not running)")
+    )
+    table.add_column("Job", style="cyan")
+    table.add_column("Ran", style="cyan", justify="right")
+    table.add_column("Skipped", style="cyan", justify="right")
+    table.add_column("Failed", style="cyan", justify="right")
+    table.add_column("Last run", style="cyan")
+    table.add_column("Last error", style="cyan")
+    for job in _field(schedule, "jobs", []) or []:
+        last = _field(job, "last_ran_at")
+        table.add_row(
+            _text(job, "job"),
+            _text(job, "ran", "0"),
+            _text(job, "skipped", "0"),
+            _text(job, "failed", "0"),
+            "never" if not last else _iso(last),
+            _text(job, "last_error") or "-",
+        )
+    if not (_field(schedule, "jobs", []) or []):
+        # An empty table and "this replica schedules nothing" look the same
+        # otherwise, and the second is a real state: a deployment with no
+        # Solr registers no retention job.
+        table.add_row("(none scheduled)", "-", "-", "-", "-", "-")
+    return table
+
+
+def _iso(moment: Any) -> str:
+    """A unix moment as UTC, or whatever it already was."""
+    from datetime import datetime, timezone
+
+    try:
+        return datetime.fromtimestamp(float(moment), tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+    except (TypeError, ValueError, OSError):
+        return str(moment)
+
+
 def activity_summary_table(activity: Any, *, title: str | None = None) -> Table:
     """Today's counts, and how much is going on right now."""
     today = _field(activity, "today", {}) or {}

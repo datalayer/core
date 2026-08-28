@@ -34,6 +34,7 @@ from datalayer_core.displays.mcp import (
     audit_events_table,
     bindings_table,
     connected_agents_table,
+    jobs_table,
     logs_table,
     policy_table,
     slis_table,
@@ -339,6 +340,22 @@ def policy(
     if _emit_machine(answer, _context(ctx)):
         return
     console.print(policy_table(answer))
+
+
+@app.command(name="jobs")
+@mcp_command
+def jobs(ctx: typer.Context) -> None:
+    """The gateway's periodic work — retention, alerts — on the replica that answers.
+
+    Platform administrators only. The counts belong to whichever replica the
+    load balancer picked: only one holds each job's lease at a time, so a high
+    `skipped` here is the scheduler working. Ask again to reach another
+    replica; every replica skipping is the lease store refusing everybody.
+    """
+    answer = _call(lambda: _client().get_mcp_job_schedule())
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(jobs_table(answer))
 
 
 # ---------------------------------------------------------------------------

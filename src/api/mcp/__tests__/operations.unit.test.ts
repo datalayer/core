@@ -10,7 +10,13 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
-import { getGatewayHealth, getGatewayVersion, getWorkflowsHealth, listWorkers } from '../operations';
+import {
+  getGatewayHealth,
+  getGatewayVersion,
+  getJobSchedule,
+  getWorkflowsHealth,
+  listWorkers,
+} from '../operations';
 import { MCP_GATEWAY_ROUTES } from '../generated';
 
 const BASE = 'https://mcp.test/mcp';
@@ -60,6 +66,38 @@ describe('MCP operations API', () => {
     expect(request).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({ url: 'https://mcp.test/api/mcp/v1/operations/workflows' }),
+    );
+  });
+
+  it('reads the periodic work of the replica that answers', async () => {
+    const request = vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockResolvedValueOnce({
+      running: true,
+      holder: 'gateway-1',
+      jobs: [
+        {
+          job: 'audit-retention',
+          ran: 4,
+          skipped: 19,
+          failed: 0,
+          last_ran_at: 1800000000,
+          last_error: '',
+          last_duration_seconds: 2.4,
+          healthy: true,
+        },
+      ],
+    });
+
+    const schedule = await getJobSchedule('token', BASE);
+
+    expect(schedule.holder).toBe('gateway-1');
+    expect(schedule.jobs[0].lastDurationSeconds).toBe(2.4);
+    // Skipped is the ordinary outcome on every replica that does not hold
+    // the lease, so it must survive the wire unchanged rather than being
+    // folded into a failure count somewhere.
+    expect(schedule.jobs[0].skipped).toBe(19);
+    expect(schedule.jobs[0].healthy).toBe(true);
+    expect(request).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://mcp.test/api/mcp/v1/operations/jobs' }),
     );
   });
 

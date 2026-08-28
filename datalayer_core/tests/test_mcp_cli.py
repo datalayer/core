@@ -24,6 +24,7 @@ from datalayer_core.models.mcp import (
     McpBinding,
     McpBindingList,
     McpEffectivePolicy,
+    McpJobSchedule,
     McpTask,
     McpTaskList,
 )
@@ -73,6 +74,19 @@ class Client:
 
     def get_mcp_effective_policy(self, **kwargs: Any) -> McpEffectivePolicy:
         return McpEffectivePolicy.model_validate({"scope": "organization", "scopes": ["notebooks:read"], "rules": [{"name": "tool_denylist", "value": ["delete_cell"], "decided_by": "organization"}], "tools": [{"tool": "delete_cell", "scope": "notebooks:write", "allowed": False, "decided_by": "organization"}]})
+
+    def get_mcp_job_schedule(self) -> McpJobSchedule:
+        return McpJobSchedule.model_validate({
+            "running": True,
+            "holder": "gateway-1",
+            "jobs": [
+                {"job": "audit-retention", "ran": 4, "skipped": 19, "failed": 7,
+                 "last_ran_at": 1800000000, "last_error": "", "last_duration_seconds": 2.4,
+                 "healthy": True},
+                {"job": "alerts", "ran": 0, "skipped": 0, "failed": 2,
+                 "last_error": "RuntimeError: solr is down", "healthy": False},
+            ],
+        })
 
     def list_mcp_audit_events(self, **kwargs: Any) -> McpAuditEventList:
         RECORDED["audit_filters"] = kwargs
@@ -171,6 +185,34 @@ def test_activity_tasks_bindings_and_policy() -> None:
     assert bindings.exit_code == 0 and "sb_1" in bindings.output and "datalayer" in bindings.output
     policy = runner.invoke(app, ["mcp", "policy"])
     assert policy.exit_code == 0 and "tool_denylist" in policy.output and "organization" in policy.output
+
+
+def test_jobs_names_the_replica_and_keeps_skipped_separate_from_failed() -> None:
+    """`skipped` is the ordinary outcome on every replica but one.
+
+    Rendering it as a problem, or folding it into failures, turns a working
+    scheduler into a page somebody investigates.
+    """
+    runner = CliRunner()
+    listed = runner.invoke(app, ["mcp", "jobs"])
+
+    assert listed.exit_code == 0, listed.output
+    # The replica is named, because every count below belongs to it alone.
+    assert "gateway-1" in listed.output
+    assert "audit-retention" in listed.output and "19" in listed.output
+    # Skipped and failed are separate columns. Summed they would read 26, and
+    # a scheduler doing its job would look like one failing seven times.
+    assert "26" not in listed.output
+    # A failing job shows why rather than only that.
+    assert "solr is down" in listed.output
+    # A job that has never run says so rather than showing an empty cell.
+    assert "never" in listed.output
+
+    as_json = runner.invoke(app, ["mcp", "-o", "json", "jobs"])
+    payload = json.loads(as_json.output)
+    assert payload["holder"] == "gateway-1"
+    assert payload["jobs"][0]["skipped"] == 19 and payload["jobs"][0]["failed"] == 7
+    assert payload["jobs"][1]["healthy"] is False
 
 
 def test_setup_writes_each_client_s_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

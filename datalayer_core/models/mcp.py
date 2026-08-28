@@ -168,6 +168,34 @@ class McpEffectivePolicy(_Wire):
     evaluated_at: str | None = None
 
 
+class McpJob(_Wire):
+    """One periodic job on the replica that answered."""
+
+    job: str
+    ran: int = 0
+    #: Ticks this replica skipped because another held the lease. The ordinary
+    #: outcome on every replica but one — read it per replica, never summed.
+    skipped: int = 0
+    failed: int = 0
+    last_ran_at: float | None = None
+    last_error: str = ""
+    last_duration_seconds: float = 0
+    healthy: bool = True
+
+
+class McpJobSchedule(_Wire):
+    """The periodic work of one replica.
+
+    There is no platform-wide view here on purpose: only one replica holds a
+    job's lease at a time, so an aggregate would hide the case worth seeing,
+    which is every replica skipping at once.
+    """
+
+    running: bool = False
+    holder: str = ""
+    jobs: list[McpJob] = Field(default_factory=list)
+
+
 class McpActiveClient(_Wire):
     client_id: str
     client_name: str | None = None

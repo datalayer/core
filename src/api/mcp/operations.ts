@@ -60,6 +60,32 @@ export interface McpWorkflowQueue {
   oldestWaitSeconds?: number | null;
 }
 
+/** One periodic job on the replica that answered. */
+export interface McpJob {
+  job: string;
+  /** Ticks this replica actually ran. */
+  ran: number;
+  /**
+   * Ticks this replica skipped because another held the lease. The ordinary
+   * outcome on every replica but one — read it per replica, never summed.
+   * Rising on *all* of them at once is the lease store refusing everybody.
+   */
+  skipped: number;
+  failed: number;
+  lastRanAt?: number | null;
+  lastError?: string;
+  lastDurationSeconds?: number;
+  healthy: boolean;
+}
+
+export interface McpJobSchedule {
+  /** Whether this replica's scheduler loops are running. */
+  running: boolean;
+  /** The replica that answered; the counts below are only about it. */
+  holder: string;
+  jobs: McpJob[];
+}
+
 /** Engine health, queue backlog and worker versions. */
 export interface McpWorkflowsHealth {
   engine: 'temporal' | 'dbos' | string;
@@ -106,6 +132,27 @@ export const getWorkflowsHealth = async (
   fromWire<McpWorkflowsHealth>(
     await requestDatalayerAPI({
       url: mcpUrl(baseUrl, '/operations/workflows'),
+      method: 'GET',
+      token,
+    }),
+  );
+
+/**
+ * The periodic work on the replica that answers, and what it has done.
+ *
+ * Per replica by construction: only one replica holds each job's lease at a
+ * time, so `ran` on one and `skipped` on the others is the scheduler working.
+ * A caller that wants the platform's view has to ask every replica — there is
+ * no aggregate here, because an aggregate would hide the case worth seeing,
+ * which is every replica skipping at once.
+ */
+export const getJobSchedule = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.JUPYTER_MCP_SERVER,
+): Promise<McpJobSchedule> =>
+  fromWire<McpJobSchedule>(
+    await requestDatalayerAPI({
+      url: mcpUrl(baseUrl, '/operations/jobs'),
       method: 'GET',
       token,
     }),
