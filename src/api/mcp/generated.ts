@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
 /* This file is generated from the Datalayer Jupyter MCP Server OpenAPI. Do not edit. */
 
 export interface HTTPValidationError {
