@@ -23,6 +23,7 @@ Three things live here beside the facade:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -39,6 +40,7 @@ from datalayer_core.models.mcp import (
     McpAuditEventList,
     McpBindingList,
     McpEffectivePolicy,
+    McpJobSchedule,
     McpTask,
     McpTaskList,
 )
@@ -465,6 +467,23 @@ def write_client_configuration(
 # ---------------------------------------------------------------------------
 
 
+def derived_idempotency_key(task_uid: str, answer: Mapping[str, Any]) -> str:
+    """One key per (task, answer), so a retry is the same answer.
+
+    Shared by the CLI and the facade rather than written twice: two
+    derivations that drift would make `datalayer mcp tasks input` and
+    `mcp.answer()` disagree about whether a retry is a repeat, and the
+    disagreement would only show up as a task answered twice.
+
+    Canonical JSON, so the same answer serialised with its keys in another
+    order is still recognised as the same answer. The task is in the digest
+    too — without it, one task's approval would satisfy another's.
+    """
+    canonical = json.dumps(dict(answer), sort_keys=True, separators=(",", ":"), default=str)
+    digest = hashlib.sha256(f"{task_uid}\x00{canonical}".encode()).hexdigest()
+    return f"cli-{digest[:32]}"
+
+
 class Mcp:
     """
     The Jupyter MCP Server, used from Python.
@@ -503,6 +522,22 @@ class Mcp:
     def cancel(self, task_uid: str) -> McpTask:
         return self.client.cancel_mcp_task(task_uid)
 
+    def answer(
+        self, task_uid: str, input: Mapping[str, Any], *, idempotency_key: str | None = None
+    ) -> McpTask:
+        """Answer a task waiting on a person; the input is the tool's own.
+
+        The key is derived from the task and the input when none is given, so
+        a retry after a timeout is the same answer rather than a second one —
+        a `POST` that timed out may well have arrived. Pass one explicitly
+        only when you mean to answer again.
+        """
+        return self.client.answer_mcp_task(
+            task_uid,
+            input,
+            idempotency_key=idempotency_key or derived_idempotency_key(task_uid, input),
+        )
+
     def bindings(self, **filters: Any) -> McpBindingList:
         return self.client.list_mcp_bindings(**filters)
 
@@ -515,6 +550,15 @@ class Mcp:
 
     def export_audit(self, format: str = "jsonl", **filters: Any) -> str:
         return self.client.export_mcp_audit_events(format=format, **filters)
+
+    # Operations
+    def jobs(self) -> McpJobSchedule:
+        """The periodic work of whichever gateway replica answers.
+
+        Platform administrators only, and the counts are one replica's — see
+        `McpJobSchedule`.
+        """
+        return self.client.get_mcp_job_schedule()
 
     # Observability
     def trace(self, task_uid: str) -> dict[str, Any]:

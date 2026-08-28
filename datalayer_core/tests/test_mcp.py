@@ -14,6 +14,8 @@ from pathlib import Path
 import pytest
 
 from datalayer_core.mcp import (
+    Mcp,
+    derived_idempotency_key,
     CLIENT_METADATA_URLS,
     CLI_CLIENT_METADATA_URL,
     MCP_CLIENT_IDS,
@@ -29,6 +31,40 @@ from datalayer_core.mcp import (
 )
 from datalayer_core.mixins.mcp import mcp_gateway_origin
 from datalayer_core.models.mcp import McpTask, is_cimd_client_id, is_task_terminal
+
+
+def test_the_answer_key_is_the_same_for_a_retry_and_different_for_a_change() -> None:
+    """A POST that timed out may well have arrived.
+
+    Deriving the key from the task and the input is what makes re-running the
+    command safe. Canonical JSON, so the same answer written with its keys in
+    another order is still the same answer.
+    """
+    same = derived_idempotency_key("01T", {"approve": True, "note": "ok"})
+    reordered = derived_idempotency_key("01T", {"note": "ok", "approve": True})
+    assert same == reordered
+
+    assert derived_idempotency_key("01T", {"approve": False}) != same
+    # The task is in the digest: without it, one task's approval would
+    # satisfy another's.
+    assert derived_idempotency_key("01U", {"approve": True, "note": "ok"}) != same
+
+
+def test_the_cli_and_the_facade_derive_the_same_key() -> None:
+    """Two derivations that drifted would make `datalayer mcp tasks input`
+    and `mcp.answer()` disagree about whether a retry is a repeat — and the
+    disagreement would only show up as a task answered twice."""
+    import datalayer_core.cli.commands.mcp as cli
+
+    assert cli.derived_idempotency_key is derived_idempotency_key
+
+
+def test_the_facade_offers_every_operation_the_cli_has() -> None:
+    """The facade's own docstring promises this: "every operation the CLI has,
+    and no more". A method that exists in one and not the other is a scripted
+    workflow that cannot be written."""
+    for name in ("tasks", "task", "cancel", "answer", "bindings", "policy", "jobs", "audit"):
+        assert callable(getattr(Mcp, name)), name
 
 
 def test_the_gateway_origin_is_the_resource_without_its_path() -> None:

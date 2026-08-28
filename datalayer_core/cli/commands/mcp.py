@@ -43,6 +43,7 @@ from datalayer_core.displays.mcp import (
 )
 from datalayer_core.mcp import (
     CLI_CLIENT_METADATA_URL,
+    derived_idempotency_key,
     MCP_CLIENT_IDS,
     MCP_CLIENTS,
     default_config_path,
@@ -288,6 +289,56 @@ def tasks_describe(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> N
 def tasks_cancel(ctx: typer.Context, task_uid: str = typer.Argument(...)) -> None:
     """Stop a task that is still going; a finished one is answered as it is."""
     task = _call(lambda: _client().cancel_mcp_task(task_uid))
+    if _emit_machine(task, _context(ctx)):
+        return
+    console.print(f"{task.uid}: {task.status}")
+
+
+@tasks_app.command(name="input")
+@mcp_command
+def tasks_input(
+    ctx: typer.Context,
+    task_uid: str = typer.Argument(..., help="The task waiting on you."),
+    payload: str | None = typer.Option(
+        None, "--input", help="The tool's own input, as JSON. `-` reads stdin."
+    ),
+    file: Path | None = typer.Option(None, "--file", help="Read the JSON from this file."),
+    key: str | None = typer.Option(
+        None,
+        "--key",
+        help="Idempotency key. Derived from the task and the input when omitted, "
+        "so re-running the same command after a timeout answers once.",
+    ),
+) -> None:
+    """Answer a task that is waiting on a person.
+
+    The input is whatever the tool asked for, so it is JSON rather than
+    flags: this command cannot know the shape, and inventing one would make
+    it wrong for every tool but the one it was written against.
+
+    The idempotency key is derived from the task and the input unless you
+    give one. That matters more than it looks: a `POST` that timed out may
+    well have arrived, and a freshly generated key on the retry would be a
+    *second* answer to a question that was already answered.
+    """
+    if (payload is None) == (file is None):
+        raise McpCommandError("give the input with --input or --file, not both and not neither")
+    raw = file.read_text() if file is not None else (sys.stdin.read() if payload == "-" else payload)
+    try:
+        answer = json.loads(raw or "")
+    except json.JSONDecodeError as error:
+        raise McpCommandError(f"the input is not valid JSON: {error}") from error
+    if not isinstance(answer, dict):
+        # The gateway sends this on as the tool's arguments, and a tool's
+        # arguments are an object. A bare list or string would be refused
+        # there, one network round trip later and with a worse message.
+        raise McpCommandError("the input must be a JSON object, as the tool's arguments are")
+
+    task = _call(
+        lambda: _client().answer_mcp_task(
+            task_uid, answer, idempotency_key=key or derived_idempotency_key(task_uid, answer)
+        )
+    )
     if _emit_machine(task, _context(ctx)):
         return
     console.print(f"{task.uid}: {task.status}")

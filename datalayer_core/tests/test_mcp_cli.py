@@ -66,6 +66,12 @@ class Client:
         RECORDED["cancelled"] = task_uid
         return task("cancelled")
 
+    def answer_mcp_task(self, task_uid: str, input: Any, *, idempotency_key: str) -> McpTask:
+        RECORDED.setdefault("answers", []).append(
+            {"task": task_uid, "input": dict(input), "key": idempotency_key}
+        )
+        return task("working")
+
     def list_mcp_bindings(self, **kwargs: Any) -> McpBindingList:
         return McpBindingList(items=[McpBinding(uid="sb_1", kind="sandbox", sandbox_uid="01R", sandbox_provider="datalayer", state="active", client_id=AGENT)])
 
@@ -185,6 +191,71 @@ def test_activity_tasks_bindings_and_policy() -> None:
     assert bindings.exit_code == 0 and "sb_1" in bindings.output and "datalayer" in bindings.output
     policy = runner.invoke(app, ["mcp", "policy"])
     assert policy.exit_code == 0 and "tool_denylist" in policy.output and "organization" in policy.output
+
+
+def _answer(runner: CliRunner, *arguments: str) -> dict:
+    """Run one `tasks input` and return what the client was asked to send.
+
+    Read per invocation: every command builds a client of its own and each one
+    clears `RECORDED`, so keys cannot be accumulated across runs.
+    """
+    result = runner.invoke(app, ["mcp", "tasks", "input", *arguments])
+    assert result.exit_code == 0, result.output
+    return RECORDED["answers"][-1]
+
+
+def test_answering_a_task_twice_with_the_same_input_is_one_answer() -> None:
+    """A POST that timed out may well have arrived.
+
+    Deriving the key from the task and the input is what makes the obvious
+    reaction — run it again — safe. A freshly generated key on the retry
+    would be a second answer to a question already answered.
+    """
+    runner = CliRunner()
+    first = _answer(runner, "01T", "--input", '{"approve": true}')
+    # The same answer written differently is the same answer: the key comes
+    # from canonical JSON rather than from the bytes the user typed.
+    retried = _answer(runner, "01T", "--input", '{"approve":  true }')
+    assert first["key"] == retried["key"], "the retry asked to be a different answer"
+
+    # A different answer to the same task is a different key.
+    changed = _answer(runner, "01T", "--input", '{"approve": false}')
+    assert changed["key"] != first["key"]
+
+    # And the same answer to a different task is a different key too, or one
+    # task's approval would silently satisfy another's.
+    elsewhere = _answer(runner, "01U", "--input", '{"approve": true}')
+    assert elsewhere["key"] != first["key"]
+
+
+def test_answering_a_task_reads_the_input_from_a_file_or_a_flag(tmp_path: Path) -> None:
+    runner = CliRunner()
+    document = tmp_path / "answer.json"
+    document.write_text('{"choice": "rerun"}')
+    assert _answer(runner, "01T", "--file", str(document))["input"] == {"choice": "rerun"}
+    assert _answer(runner, "01T", "--key", "mine", "--input", "{}")["key"] == "mine"
+
+
+def test_an_answer_that_is_not_a_json_object_is_refused_before_the_call() -> None:
+    """The gateway sends this on as the tool's arguments, and arguments are an
+    object. Refusing here saves a round trip and gives a better message."""
+    runner = CliRunner()
+    for bad in ("[1, 2]", '"yes"', "not json at all"):
+        RECORDED.pop("answers", None)
+        refused = runner.invoke(app, ["mcp", "tasks", "input", "01T", "--input", bad])
+        assert refused.exit_code == 1, bad
+        assert "answers" not in RECORDED, f"{bad} reached the gateway"
+
+
+def test_answering_needs_exactly_one_source_of_input(tmp_path: Path) -> None:
+    runner = CliRunner()
+    document = tmp_path / "a.json"
+    document.write_text("{}")
+    for arguments in ([], ["--input", "{}", "--file", str(document)]):
+        RECORDED.pop("answers", None)
+        refused = runner.invoke(app, ["mcp", "tasks", "input", "01T", *arguments])
+        assert refused.exit_code == 1, arguments
+        assert "answers" not in RECORDED
 
 
 def test_jobs_names_the_replica_and_keeps_skipped_separate_from_failed() -> None:
