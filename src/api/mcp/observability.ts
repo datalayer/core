@@ -89,6 +89,9 @@ export const MCP_METRIC_CATALOG = [
   'mcp.dependency.timeouts',
   'mcp.dependency.ready',
   'mcp.readiness.failures',
+  'mcp.audit.deleted',
+  'mcp.jobs',
+  'mcp.job.duration',
 ] as const;
 
 export type McpMetricName = (typeof MCP_METRIC_CATALOG)[number];
