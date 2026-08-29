@@ -31,9 +31,11 @@ from datalayer_core.cli.commands.contents import OutputFormat
 from datalayer_core.client.client import DatalayerClient
 from datalayer_core.displays.mcp import (
     activity_summary_table,
+    alerts_table,
     audit_events_table,
     bindings_table,
     connected_agents_table,
+    forwarding_table,
     jobs_table,
     logs_table,
     policy_table,
@@ -391,6 +393,54 @@ def policy(
     if _emit_machine(answer, _context(ctx)):
         return
     console.print(policy_table(answer))
+
+
+alerts_app = typer.Typer(name="alerts", help="The alert rules that fired.")
+app.add_typer(alerts_app)
+
+
+@alerts_app.command(name="list")
+@mcp_command
+def alerts_list(
+    ctx: typer.Context,
+    org: str | None = typer.Option(None, "--org", help="An organization you own or audit."),
+    team: str | None = typer.Option(None, "--team", help="A team of that organization."),
+    unacknowledged: bool = typer.Option(False, "--unacknowledged", help="Only what nobody has seen."),
+) -> None:
+    """What fired, newest first, for an organization's owners and auditors."""
+    page = _call(
+        lambda: _client().list_mcp_alerts(org=org, team=team, unacknowledged=unacknowledged)
+    )
+    if _emit_machine(page, _context(ctx)):
+        return
+    console.print(alerts_table(page.items))
+
+
+@alerts_app.command(name="ack")
+@mcp_command
+def alerts_ack(ctx: typer.Context, alert_uid: str = typer.Argument(...)) -> None:
+    """Say you have seen one. Idempotent; the first acknowledgement stands."""
+    alert = _call(lambda: _client().acknowledge_mcp_alert(alert_uid))
+    if _emit_machine(alert, _context(ctx)):
+        return
+    console.print(f"{alert.uid}: acknowledged by {alert.acknowledged_by or 'you'}")
+
+
+@app.command(name="forwarding")
+@mcp_command
+def forwarding(
+    ctx: typer.Context,
+    org: str | None = typer.Option(None, "--org", help="An organization you own or audit."),
+) -> None:
+    """Whether the audit is reaching your own system of record.
+
+    Forwarding never fails the call it describes, so a failure is invisible
+    unless something reports it. This is that something.
+    """
+    answer = _call(lambda: _client().get_mcp_audit_forwarding(org=org))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(forwarding_table(answer))
 
 
 @app.command(name="jobs")

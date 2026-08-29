@@ -39,7 +39,10 @@ from datalayer_core.models.mcp import (
     McpActivity,
     McpAuditEventList,
     McpBindingList,
+    McpAlert,
+    McpAlertList,
     McpEffectivePolicy,
+    McpForwarding,
     McpJobSchedule,
     McpTask,
     McpTaskList,
@@ -550,6 +553,16 @@ class Mcp:
 
     def export_audit(self, format: str = "jsonl", **filters: Any) -> str:
         return self.client.export_mcp_audit_events(format=format, **filters)
+
+    # Alerts
+    def alerts(self, **filters: Any) -> McpAlertList:
+        return self.client.list_mcp_alerts(**filters)
+
+    def acknowledge(self, alert_uid: str) -> McpAlert:
+        return self.client.acknowledge_mcp_alert(alert_uid)
+
+    def forwarding(self, *, org: str | None = None) -> McpForwarding:
+        return self.client.get_mcp_audit_forwarding(org=org)
 
     # Operations
     def jobs(self) -> McpJobSchedule:

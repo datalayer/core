@@ -177,6 +177,57 @@ def policy_table(policy: Any, *, title: str | None = None) -> Table:
     return table
 
 
+def alerts_table(alerts: Any, *, title: str | None = None) -> Table:
+    """What fired, and whether anybody has said they saw it."""
+    table = Table(title=title or "MCP alerts")
+    table.add_column("At", style="cyan")
+    table.add_column("Severity", style="cyan")
+    table.add_column("Rule", style="cyan")
+    table.add_column("Scope", style="cyan")
+    table.add_column("Value", style="cyan", justify="right")
+    table.add_column("Acknowledged", style="cyan")
+    for alert in alerts or []:
+        # `_text` substitutes "-" for an absent value, which is truthy — so
+        # `_text(...) or fallback` never reaches its fallback. Both cells
+        # below wanted one, and both were silently dead until a rendering
+        # test looked at the row instead of the whole table.
+        by = _text(alert, "acknowledged_by", default="")
+        table.add_row(
+            _text(alert, "at"),
+            _text(alert, "severity"),
+            _text(alert, "rule_uid"),
+            _text(alert, "scope_uid", default="") or _text(alert, "org_uid"),
+            _text(alert, "value"),
+            # Named rather than a tick: "who saw this" is the question, and a
+            # tick answers a different one.
+            by if by else "no",
+        )
+    if not (alerts or []):
+        table.add_row("(none)", "-", "-", "-", "-", "-")
+    return table
+
+
+def forwarding_table(answer: Any, *, title: str | None = None) -> Table:
+    """Whether the audit is reaching the organization's own system of record."""
+    table = Table(title=title or "Audit forwarding")
+    table.add_column("Measure", style="cyan")
+    table.add_column("Value", style="cyan")
+    if not _field(answer, "configured", False):
+        # Not the same as healthy. Nothing has ever been sent, which for an
+        # organization that configured a destination is the worst state and
+        # the one that reads most like fine.
+        table.add_row("Forwarding", "never attempted")
+        return table
+    state = _field(answer, "state", {}) or {}
+    table.add_row("Healthy", "yes" if _field(state, "healthy", True) else "no")
+    table.add_row("Delivered", _text(state, "delivered", "0"))
+    table.add_row("Failed", _text(state, "failed", "0"))
+    table.add_row("Last delivered", _text(state, "last_delivered_at") or "never")
+    if _text(state, "last_error"):
+        table.add_row("Last error", _text(state, "last_error"))
+    return table
+
+
 def jobs_table(schedule: Any, *, title: str | None = None) -> Table:
     """The periodic work of one replica, and what it has done.
 

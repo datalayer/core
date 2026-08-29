@@ -63,7 +63,10 @@ def test_the_facade_offers_every_operation_the_cli_has() -> None:
     """The facade's own docstring promises this: "every operation the CLI has,
     and no more". A method that exists in one and not the other is a scripted
     workflow that cannot be written."""
-    for name in ("tasks", "task", "cancel", "answer", "bindings", "policy", "jobs", "audit"):
+    for name in (
+        "tasks", "task", "cancel", "answer", "bindings", "policy", "jobs",
+        "audit", "alerts", "acknowledge", "forwarding",
+    ):
         assert callable(getattr(Mcp, name)), name
 
 

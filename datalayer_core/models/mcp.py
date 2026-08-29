@@ -168,6 +168,50 @@ class McpEffectivePolicy(_Wire):
     evaluated_at: str | None = None
 
 
+class McpAlert(_Wire):
+    """One alert rule that fired."""
+
+    uid: str
+    rule_uid: str = ""
+    org_uid: str = ""
+    scope_kind: str = "organization"
+    scope_uid: str = ""
+    severity: str = "warning"
+    value: float = 0
+    at: str = ""
+    acknowledged: bool = False
+    acknowledged_by: str | None = None
+    acknowledged_at: str | None = None
+
+
+class McpAlertList(_Wire):
+    items: list[McpAlert] = Field(default_factory=list)
+
+
+class McpForwardingState(_Wire):
+    """Whether an organization's audit is reaching its own system of record.
+
+    No destination and no secret: a URL is not a credential, but it is where
+    somebody's audit goes.
+    """
+
+    org_uid: str = ""
+    delivered: int = 0
+    failed: int = 0
+    last_delivered_at: float | None = None
+    last_error: str = ""
+    last_error_at: float | None = None
+    healthy: bool = True
+
+
+class McpForwarding(_Wire):
+    #: Whether anything has ever been delivered or attempted. A brand-new
+    #: organization and one whose endpoint has never answered look the same
+    #: in the counters, and they are not the same thing.
+    configured: bool = False
+    state: McpForwardingState | None = None
+
+
 class McpJob(_Wire):
     """One periodic job on the replica that answered."""
 

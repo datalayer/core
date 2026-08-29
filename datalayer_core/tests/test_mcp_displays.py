@@ -11,9 +11,11 @@ from __future__ import annotations
 from rich.console import Console, RenderableType
 
 from datalayer_core.displays.mcp import (
+    alerts_table,
     audit_events_table,
     bindings_table,
     connected_agents_table,
+    forwarding_table,
     policy_table,
     slis_table,
     spans_table,
@@ -62,3 +64,72 @@ def test_spans_are_drawn_as_a_tree() -> None:
     tree = span_tree([{"span_id": "r", "span_name": "mcp.request", "duration_ms": 10, "start_time": "1"}, {"span_id": "c", "parent_span_id": "r", "span_name": "mcp.worker", "duration_ms": 5, "start_time": "2"}])
     output = render(spans_table(tree))
     assert "mcp.request" in output and "└ mcp.worker" in output and "5.0 ms" in output
+
+
+# ---------------------------------------------------------------------------
+# Alerts and forwarding
+# ---------------------------------------------------------------------------
+
+
+def _rendered_rows(table) -> list[str]:
+    """The table's body lines, so a cell can be asserted rather than a
+    substring of the whole render."""
+    return [
+        line
+        for line in render(table).splitlines()
+        if line.strip().startswith("│") and "─" not in line
+    ]
+
+
+def test_an_alert_says_who_acknowledged_it_and_an_unacknowledged_one_says_no():
+    """"Who saw this" is the question, and a tick answers a different one.
+
+    Asserted per row rather than against the whole render: "no" appears in
+    plenty of English, and a check that passes on the word somewhere in the
+    output is a check that passes on nothing.
+    """
+    rows = _rendered_rows(
+        alerts_table(
+            [
+                {"uid": "a1", "rule_uid": "spend-cap", "severity": "critical",
+                 "org_uid": "01ORG", "value": 120, "at": "t1"},
+                {"uid": "a2", "rule_uid": "task-failures", "severity": "warning",
+                 "org_uid": "01ORG", "value": 9, "at": "t2",
+                 "acknowledged_by": "01USER"},
+            ]
+        )
+    )
+    unacknowledged = next(row for row in rows if "spend-cap" in row)
+    acknowledged = next(row for row in rows if "task-failures" in row)
+    assert unacknowledged.rstrip().rstrip("│").rstrip().endswith("no")
+    assert "01USER" in acknowledged
+
+
+def test_an_alert_with_no_team_shows_the_organization_it_fired_for():
+    """An organization-scope alert has no team uid, and a blank scope column
+    leaves the reader with nothing to act on."""
+    rows = _rendered_rows(
+        alerts_table([{"uid": "a1", "rule_uid": "r", "org_uid": "01ORG", "at": "t"}])
+    )
+    assert any("01ORG" in row for row in rows)
+
+
+def test_no_alerts_says_so_rather_than_drawing_an_empty_table():
+    assert "(none)" in render(alerts_table([]))
+
+
+def test_forwarding_that_has_never_been_attempted_does_not_read_as_healthy():
+    """The worst state for an organization that configured a destination,
+    and the one that reads most like fine."""
+    drawn = render(forwarding_table({"configured": False, "state": None}))
+    assert "never attempted" in drawn
+    assert "Healthy" not in drawn
+
+
+def test_forwarding_that_is_working_says_healthy_yes():
+    drawn = render(
+        forwarding_table(
+            {"configured": True, "state": {"healthy": True, "delivered": 3, "failed": 0}}
+        )
+    )
+    assert "Healthy" in drawn and "yes" in drawn

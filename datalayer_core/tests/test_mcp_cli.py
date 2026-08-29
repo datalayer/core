@@ -19,6 +19,9 @@ import datalayer_core.cli.commands.mcp as mcp_commands
 from datalayer_core.cli.__main__ import app
 from datalayer_core.models.mcp import (
     ConnectedAgent,
+    McpAlert,
+    McpAlertList,
+    McpForwarding,
     McpActivity,
     McpAuditEventList,
     McpBinding,
@@ -80,6 +83,34 @@ class Client:
 
     def get_mcp_effective_policy(self, **kwargs: Any) -> McpEffectivePolicy:
         return McpEffectivePolicy.model_validate({"scope": "organization", "scopes": ["notebooks:read"], "rules": [{"name": "tool_denylist", "value": ["delete_cell"], "decided_by": "organization"}], "tools": [{"tool": "delete_cell", "scope": "notebooks:write", "allowed": False, "decided_by": "organization"}]})
+
+    def list_mcp_alerts(self, **kwargs: Any) -> McpAlertList:
+        RECORDED["alert_filters"] = kwargs
+        return McpAlertList.model_validate({
+            "items": [
+                {"uid": "alr_1", "rule_uid": "spend-cap", "org_uid": "01ORG",
+                 "scope_uid": "01TEAM", "severity": "critical", "value": 120.0,
+                 "at": "2026-08-29T10:00:00Z", "acknowledged": False},
+                {"uid": "alr_2", "rule_uid": "task-failures", "org_uid": "01ORG",
+                 "severity": "warning", "value": 9.0, "at": "2026-08-29T09:00:00Z",
+                 "acknowledged": True, "acknowledged_by": "01USER",
+                 "acknowledged_at": "2026-08-29T09:05:00Z"},
+            ]
+        })
+
+    def acknowledge_mcp_alert(self, alert_uid: str) -> McpAlert:
+        RECORDED["acknowledged"] = alert_uid
+        return McpAlert.model_validate(
+            {"uid": alert_uid, "acknowledged": True, "acknowledged_by": "01USER"}
+        )
+
+    def get_mcp_audit_forwarding(self, **kwargs: Any) -> McpForwarding:
+        RECORDED["forwarding_filters"] = kwargs
+        return McpForwarding.model_validate({
+            "configured": True,
+            "state": {"org_uid": "01ORG", "delivered": 42, "failed": 7,
+                      "last_error": "refused with 401", "healthy": False},
+        })
 
     def get_mcp_job_schedule(self) -> McpJobSchedule:
         return McpJobSchedule.model_validate({
@@ -256,6 +287,53 @@ def test_answering_needs_exactly_one_source_of_input(tmp_path: Path) -> None:
         refused = runner.invoke(app, ["mcp", "tasks", "input", "01T", *arguments])
         assert refused.exit_code == 1, arguments
         assert "answers" not in RECORDED
+
+
+def test_alerts_name_who_acknowledged_rather_than_showing_a_tick() -> None:
+    """"Who saw this" is the question. A tick answers a different one."""
+    runner = CliRunner()
+    listed = runner.invoke(app, ["mcp", "alerts", "list", "--org", "01ORG"])
+
+    assert listed.exit_code == 0, listed.output
+    assert "spend-cap" in listed.output and "critical" in listed.output
+    assert "01USER" in listed.output, "an acknowledged alert does not say by whom"
+    assert "no" in listed.output, "an unacknowledged alert does not say so"
+    assert RECORDED["alert_filters"]["org"] == "01ORG"
+
+
+def test_alerts_can_be_narrowed_to_a_team_and_to_what_nobody_has_seen() -> None:
+    runner = CliRunner()
+    runner.invoke(
+        app, ["mcp", "alerts", "list", "--org", "01ORG", "--team", "01TEAM", "--unacknowledged"]
+    )
+    assert RECORDED["alert_filters"]["team"] == "01TEAM"
+    assert RECORDED["alert_filters"]["unacknowledged"] is True
+
+
+def test_acknowledging_an_alert_names_it() -> None:
+    runner = CliRunner()
+    acked = runner.invoke(app, ["mcp", "alerts", "ack", "alr_1"])
+    assert acked.exit_code == 0 and "acknowledged" in acked.output
+    assert RECORDED["acknowledged"] == "alr_1"
+
+
+def test_forwarding_says_it_is_unhealthy_and_why() -> None:
+    """Forwarding never fails the call it describes, so a failure is
+    invisible unless something reports it."""
+    runner = CliRunner()
+    shown = runner.invoke(app, ["mcp", "forwarding", "--org", "01ORG"])
+
+    assert shown.exit_code == 0, shown.output
+    assert "no" in shown.output and "401" in shown.output
+    assert "42" in shown.output and "7" in shown.output
+    assert RECORDED["forwarding_filters"]["org"] == "01ORG"
+
+
+def test_forwarding_never_shows_the_destination() -> None:
+    """A URL is not a credential, but it is where somebody's audit goes."""
+    runner = CliRunner()
+    body = json.loads(runner.invoke(app, ["mcp", "-o", "json", "forwarding"]).output)
+    assert "url" not in json.dumps(body) and "secret" not in json.dumps(body)
 
 
 def test_jobs_names_the_replica_and_keeps_skipped_separate_from_failed() -> None:

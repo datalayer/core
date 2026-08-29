@@ -25,7 +25,10 @@ from datalayer_core.models.mcp import (
     McpAuditEventList,
     McpBinding,
     McpBindingList,
+    McpAlert,
+    McpAlertList,
     McpEffectivePolicy,
+    McpForwarding,
     McpJobSchedule,
     McpTask,
     McpTaskList,
@@ -248,6 +251,35 @@ class McpMixin:
             self._mcp_url("/policy", agent=agent, org=org, team=team), method="GET"
         )
         return McpEffectivePolicy.model_validate(response.json())
+
+    def list_mcp_alerts(
+        self, *, org: str | None = None, team: str | None = None, unacknowledged: bool = False
+    ) -> McpAlertList:
+        """The alert rules that fired, for an organization's owners and auditors."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._mcp_url(
+                "/alerts",
+                org=org,
+                scope=team,
+                unacknowledged="true" if unacknowledged else None,
+            ),
+            method="GET",
+        )
+        return McpAlertList.model_validate(response.json())
+
+    def acknowledge_mcp_alert(self, alert_uid: str) -> McpAlert:
+        """Mark one alert as seen. Idempotent; the first acknowledgement stands."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._mcp_url(f"/alerts/{alert_uid}/acknowledge"), method="POST"
+        )
+        return McpAlert.model_validate(response.json())
+
+    def get_mcp_audit_forwarding(self, *, org: str | None = None) -> McpForwarding:
+        """Whether the audit is reaching the organization's own system of record."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._mcp_url("/audit/forwarding", org=org), method="GET"
+        )
+        return McpForwarding.model_validate(response.json())
 
     def get_mcp_job_schedule(self) -> McpJobSchedule:
         """The periodic work of the replica that answers, and what it has done.
