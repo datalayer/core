@@ -247,8 +247,50 @@ export const useMcpActivity = (
     queryFn: () => getMcpActivity(token ?? '', filters, mcpUrl),
     enabled: Boolean(token && mcpUrl) && (options.enabled ?? true),
     staleTime: 5_000,
-    refetchInterval: options.pollIntervalMs ?? 10_000,
+    /*
+     * A poll that cannot succeed stops polling.
+     *
+     * `refetchInterval` as a plain number re-arms after *every* settle,
+     * failures included — so an endpoint the browser refuses outright (no
+     * CORS header, a dead host, a revoked token) turned this into a tight
+     * loop: fetch, fail, re-arm, fetch. Each failure is a query state change,
+     * and every observer re-rendered on each one, which read as a page
+     * repainting on a timer with nothing behind it.
+     *
+     * As a function it can decline. One error is enough to stand down; a
+     * remount, a refocus or a token change starts it again, which is when
+     * the answer could genuinely have changed.
+     */
+    refetchInterval: query =>
+      query.state.status === 'error'
+        ? false
+        : (options.pollIntervalMs ?? 10_000),
     refetchIntervalInBackground: false,
+    // One retry, not the default three. The failures worth retrying here are
+    // transient; a refused origin is not, and three attempts only make the
+    // loop above three times as loud.
+    retry: 1,
+    /*
+     * Re-render for the answer, not for the asking.
+     *
+     * This polls for as long as the page is open, and by default a query
+     * notifies on every observed field — so `isFetching` going true and back
+     * again re-rendered every consumer twice a poll, whether or not a single
+     * byte had changed. On a dashboard that reads only the data, that is a
+     * repaint on a timer with nothing behind it.
+     *
+     * Structural sharing already keeps `data` referentially stable when the
+     * payload is unchanged, so with this the quiet polls cost nothing.
+     */
+    /*
+     * Re-render for the answer, not for the asking.
+     *
+     * `error` is deliberately absent: this is a background poll, and a
+     * consumer that redraws every time it fails is redrawing for something it
+     * does not show. `isPending` covers the one transition that matters —
+     * nothing yet, then something.
+     */
+    notifyOnChangeProps: ['data', 'isPending'],
   });
 };
 

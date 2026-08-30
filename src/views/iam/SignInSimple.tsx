@@ -183,6 +183,18 @@ export interface SignInSimpleProps {
    */
   asDoc?: boolean;
   /**
+   * Whether the form centres itself in the viewport.
+   *
+   * True by default, which is right for a page that is nothing but this form.
+   * False for a host that has placed it — a column beside something else —
+   * where `min-height: 100vh` pushes it half a screen down from whatever it
+   * was meant to sit level with.
+   *
+   * Distinct from `hideHero`, which also top-aligns but takes the title, icon
+   * and description with it, and from `asDoc`, which disables the form.
+   */
+  fillHeight?: boolean;
+  /**
    * Hide header title and description area.
    */
   hideHero?: boolean;
@@ -287,6 +299,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
   signUp = true,
   socialSignInNavigationTarget,
   asDoc = false,
+  fillHeight = true,
   hideHero = false,
   calloutTitle,
   calloutDescription,
@@ -550,9 +563,11 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
       className="signin-input-theme-scope"
       sx={{
         display: 'flex',
-        alignItems: hideHero || compactDocMode ? 'flex-start' : 'center',
+        alignItems:
+          hideHero || compactDocMode || !fillHeight ? 'flex-start' : 'center',
         justifyContent: 'center',
-        minHeight: hideHero || compactDocMode ? 'auto' : '100vh',
+        minHeight:
+          hideHero || compactDocMode || !fillHeight ? 'auto' : '100vh',
         bg: hideHero ? 'transparent' : 'canvas.default',
         color: 'fg.default',
         py: hideHero ? 0 : compactDocMode ? 2 : 4,
