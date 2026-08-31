@@ -312,6 +312,97 @@ class McpMixin:
         )
         return dict(response.json())
 
+    # Policy layers (IAM) ----------------------------------------------------
+
+    def get_mcp_policy_layer(self, scope: str, subject_uid: str) -> dict[str, Any] | None:
+        """One layer's rules, or ``None`` where nobody has written it.
+
+        Distinct from :meth:`get_mcp_effective_policy`, which is every layer
+        intersected with the layer that decided each rule. That one answers
+        "what may my agent do"; this one answers "what does *this* layer
+        narrow", which is the only thing that can be written back.
+
+        ``None`` rather than an empty answer: "narrows nothing" and "does not
+        exist" are the same in effect and different to edit.
+        """
+        try:
+            response = self._fetch(  # type: ignore[attr-defined]
+                self._iam_url(f"/mcp-policies/{scope}/{subject_uid}"), method="GET"
+            )
+        except Exception as error:  # noqa: BLE001 - a missing layer is an answer
+            if "404" in str(error) or "not found" in str(error).lower():
+                return None
+            raise
+        return dict(response.json())
+
+    def set_mcp_policy_layer(
+        self,
+        scope: str,
+        subject_uid: str,
+        rules: dict[str, Any],
+        *,
+        expected_version: int | None = None,
+    ) -> dict[str, Any]:
+        """Replace one layer's rules.
+
+        Replace, not merge: a policy is read whole and small, and merging
+        would leave no way to express *removing* a rule — clearing a denylist
+        would find it still there.
+
+        ``expected_version`` is the version that was read. Passing it makes a
+        write that would overwrite somebody else's fail instead of winning
+        silently.
+        """
+        suffix = f"/mcp-policies/{scope}/{subject_uid}"
+        if expected_version is not None:
+            suffix = f"{suffix}?expected_version={expected_version}"
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(suffix), method="PUT", json=rules
+        )
+        return dict(response.json())
+
+    def delete_mcp_policy_layer(self, scope: str, subject_uid: str) -> dict[str, Any]:
+        """Remove one layer, so it narrows nothing again."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/mcp-policies/{scope}/{subject_uid}"), method="DELETE"
+        )
+        return dict(response.json()) if response.content else {}
+
+    # Alert rules (IAM) and trying one (gateway) -----------------------------
+
+    def list_mcp_alert_rules(self, org_uid: str) -> list[dict[str, Any]]:
+        """One organization's rules, disabled ones included."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/mcp-alert-rules/{org_uid}"), method="GET"
+        )
+        payload = response.json()
+        return [dict(rule) for rule in (payload.get("rules") or [])]
+
+    def create_mcp_alert_rule(self, org_uid: str, rule: dict[str, Any]) -> dict[str, Any]:
+        """Write a rule. Refused when the evaluator could not evaluate it."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/mcp-alert-rules/{org_uid}"), method="POST", json=rule
+        )
+        return dict((response.json() or {}).get("rule") or {})
+
+    def delete_mcp_alert_rule(self, org_uid: str, uid: str) -> dict[str, Any]:
+        """Remove one rule. What it watched is unwatched from the next tick."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/mcp-alert-rules/{org_uid}/{uid}"), method="DELETE"
+        )
+        return dict(response.json()) if response.content else {}
+
+    def test_mcp_alert_rule(self, rule: dict[str, Any]) -> dict[str, Any]:
+        """What a rule would see now. Records nothing, tells nobody.
+
+        Asked of the **gateway** rather than IAM: IAM holds the rule and has
+        nothing to read it with.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._mcp_url("/alerts/test"), method="POST", json=rule
+        )
+        return dict(response.json())
+
     # Service agents (IAM) ---------------------------------------------------
 
     def list_service_agents(self, org_uid: str) -> list[dict[str, Any]]:

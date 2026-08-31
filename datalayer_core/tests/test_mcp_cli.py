@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from types import SimpleNamespace
+
 import pytest
 from typer.testing import CliRunner
 
@@ -42,6 +44,13 @@ def task(status: str = "working") -> McpTask:
 #: What the commands asked of the client. Every command builds a client of
 #: its own, so what one invocation recorded is read here, not on an instance.
 RECORDED: dict[str, Any] = {}
+
+#: What the fake should *answer*, as opposed to what it recorded.
+#:
+#: Separate because every command builds its own client and `RECORDED` is
+#: cleared in the constructor — an answer staged there is wiped before the
+#: command can read it.
+ANSWERS: dict[str, Any] = {}
 
 
 class Client:
@@ -163,6 +172,48 @@ class Client:
     def revoke_service_agent(self, org_uid: str, agent_uid: str) -> dict[str, Any]:
         RECORDED["revoked"] = agent_uid
         return {"uid": agent_uid, "revoked": True}
+
+    def get_profile(self):
+        return SimpleNamespace(uid="01USER")
+
+    def get_mcp_policy_layer(self, scope: str, subject_uid: str):
+        RECORDED["read_layer"] = (scope, subject_uid)
+        return ANSWERS.get("layer", {"toolDenylist": ["execute_cell"], "version": 3})
+
+    def set_mcp_policy_layer(self, scope, subject_uid, rules, *, expected_version=None):
+        RECORDED["wrote_layer"] = {
+            "scope": scope,
+            "subject": subject_uid,
+            "rules": rules,
+            "version": expected_version,
+        }
+        return {"success": True}
+
+    def list_mcp_alert_rules(self, org_uid: str):
+        RECORDED["rules_for"] = org_uid
+        return [
+            {
+                "uid": "01R",
+                "condition": "tasks.open",
+                "operator": "gt",
+                "threshold": 20,
+                "window_seconds": 3600,
+                "severity": "warning",
+                "enabled": False,
+            }
+        ]
+
+    def create_mcp_alert_rule(self, org_uid: str, rule: dict):
+        RECORDED["watched"] = {"org": org_uid, **rule}
+        return {"uid": "01R", **rule}
+
+    def delete_mcp_alert_rule(self, org_uid: str, uid: str):
+        RECORDED["unwatched"] = uid
+        return {"success": True}
+
+    def test_mcp_alert_rule(self, rule: dict):
+        RECORDED["tested"] = rule
+        return ANSWERS.get("trial", {"readable": True, "value": 42, "would_fire": True})
 
     def get_mcp_metrics(self, **kwargs: Any) -> dict[str, Any]:
         RECORDED["metrics_filters"] = kwargs
@@ -492,3 +543,137 @@ def test_service_agents_revoke_asks_first_and_says_it_stays_listed() -> None:
     assert revoked.exit_code == 0, revoked.output
     assert "audit" in revoked.output
     assert RECORDED["revoked"] == "01SA"
+
+
+def test_policy_get_reads_the_layer_not_the_effective_policy() -> None:
+    """Two different questions. `policy` is what applies to you, with the
+    layer that decided each rule; `policy-get` is what one layer narrows,
+    which is the only thing that can be written back."""
+    runner = CliRunner()
+    read = runner.invoke(app, ["mcp", "policy-get", "--org", "01ORG"])
+
+    assert read.exit_code == 0, read.output
+    assert RECORDED["read_layer"] == ("organization", "01ORG")
+    assert "toolDenylist" in read.output
+
+
+def test_policy_get_defaults_to_your_own_layer() -> None:
+    runner = CliRunner()
+    read = runner.invoke(app, ["mcp", "policy-get"])
+
+    assert read.exit_code == 0, read.output
+    assert RECORDED["read_layer"] == ("personal", "01USER")
+
+
+def test_policy_get_says_no_layer_is_not_a_layer_that_narrows_nothing() -> None:
+    ANSWERS["layer"] = None
+    runner = CliRunner()
+    read = runner.invoke(app, ["mcp", "policy-get", "--org", "01ORG"])
+    ANSWERS.pop("layer", None)
+
+    assert "narrows nothing" in read.output
+
+
+def test_policy_set_carries_the_version_it_read() -> None:
+    """Two owners editing at once would otherwise each overwrite the other,
+    and the loser would not know."""
+    runner = CliRunner()
+    written = runner.invoke(
+        app, ["mcp", "policy-set", "--org", "01ORG", "--deny", "execute_cell", "--yes"]
+    )
+
+    assert written.exit_code == 0, written.output
+    assert RECORDED["wrote_layer"]["version"] == 3
+    assert RECORDED["wrote_layer"]["rules"]["toolDenylist"] == ["execute_cell"]
+
+
+def test_policy_set_refuses_a_limit_of_zero_and_says_what_to_do() -> None:
+    """A non-positive limit reads as *no limit*, so a zero written to stop
+    an organization's agents would lift its limit instead."""
+    runner = CliRunner()
+    refused = runner.invoke(
+        app, ["mcp", "policy-set", "--org", "01ORG", "--calls-per-minute", "0", "--yes"]
+    )
+
+    assert refused.exit_code != 0
+    assert "revoke" in refused.output
+
+
+def test_policy_set_refuses_two_scopes_at_once() -> None:
+    runner = CliRunner()
+    refused = runner.invoke(
+        app, ["mcp", "policy-set", "--org", "01ORG", "--team", "01TEAM", "--yes"]
+    )
+    assert refused.exit_code != 0
+
+
+def test_policy_set_says_which_rules_it_would_clear() -> None:
+    """Replace, not merge: a flag left out is a rule being cleared, and
+    somebody should be told before it happens rather than after."""
+    runner = CliRunner()
+    declined = runner.invoke(
+        app,
+        ["mcp", "policy-set", "--org", "01ORG", "--calls-per-minute", "30"],
+        input="n\n",
+    )
+    assert "toolDenylist" in declined.output
+
+
+def test_alerts_rules_shows_a_switched_off_rule_as_off() -> None:
+    runner = CliRunner()
+    listed = runner.invoke(app, ["mcp", "alerts", "rules", "01ORG"])
+
+    assert listed.exit_code == 0, listed.output
+    assert "tasks.open" in listed.output
+    assert "off" in listed.output
+    assert RECORDED["rules_for"] == "01ORG"
+
+
+def test_alerts_watch_writes_a_rule() -> None:
+    runner = CliRunner()
+    written = runner.invoke(
+        app,
+        ["mcp", "alerts", "watch", "01ORG", "--condition", "tasks.open", "--threshold", "20"],
+    )
+
+    assert written.exit_code == 0, written.output
+    assert RECORDED["watched"]["condition"] == "tasks.open"
+    assert RECORDED["watched"]["threshold"] == 20.0
+
+
+def test_alerts_unwatch_asks_first() -> None:
+    RECORDED.pop("unwatched", None)
+    runner = CliRunner()
+    declined = runner.invoke(app, ["mcp", "alerts", "unwatch", "01ORG", "01R"], input="n\n")
+    assert "unwatched" not in RECORDED
+
+    removed = runner.invoke(app, ["mcp", "alerts", "unwatch", "01ORG", "01R", "--yes"])
+    assert declined.exit_code == 0
+    assert removed.exit_code == 0
+    assert RECORDED["unwatched"] == "01R"
+
+
+def test_alerts_test_says_whether_it_would_fire() -> None:
+    runner = CliRunner()
+    tried = runner.invoke(
+        app, ["mcp", "alerts", "test", "--condition", "tasks.open", "--threshold", "20"]
+    )
+
+    assert tried.exit_code == 0, tried.output
+    assert "would fire" in tried.output
+    assert RECORDED["tested"]["window_seconds"] == 3600
+
+
+def test_alerts_test_keeps_unreadable_apart_from_would_not_fire() -> None:
+    """The one answer worth having. Folded into 'would not fire' it
+    disappears, and a rule that never fires is exactly what a
+    correctly-quiet rule looks like."""
+    ANSWERS["trial"] = {"readable": False, "would_fire": False, "detail": "nothing reads it"}
+    runner = CliRunner()
+    tried = runner.invoke(
+        app, ["mcp", "alerts", "test", "--condition", "sli.latency", "--threshold", "1"]
+    )
+    ANSWERS.pop("trial", None)
+
+    assert "Cannot be read" in tried.output
+    assert "never happens" in tried.output

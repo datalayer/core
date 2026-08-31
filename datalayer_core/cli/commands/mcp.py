@@ -514,6 +514,136 @@ def policy(
     console.print(policy_table(answer))
 
 
+def _scope_of(org: str | None, team: str | None) -> tuple[str, str]:
+    """Which layer a command means, from the flags it was given.
+
+    One command with a scope flag rather than three commands for one
+    document. The plan named `datalayer mcp policy`, `datalayer orgs
+    mcp-policy` and `datalayer mcp quotas` separately; three entry points
+    onto one policy document is three places for the rules, the refusals and
+    the version handling to drift, and quotas *are* three of those rules —
+    a `quotas set` would be a second way to write what `policy set` writes.
+    """
+    if org and team:
+        raise McpCommandError(
+            "A policy layer is one of an organization, a team or you. Name "
+            "--org or --team, not both."
+        )
+    if team:
+        return "team", team
+    if org:
+        return "organization", org
+    return "personal", ""
+
+
+@app.command(name="policy-get")
+@mcp_command
+def policy_get(
+    ctx: typer.Context,
+    org: str | None = typer.Option(None, "--org", help="An organization you own."),
+    team: str | None = typer.Option(None, "--team", help="A team you own."),
+) -> None:
+    """One layer's own rules — what it narrows, not what applies to you.
+
+    `datalayer mcp policy` is the other question: every layer intersected,
+    with the layer that decided each rule. This is the one that can be
+    written back.
+    """
+    scope, subject = _scope_of(org, team)
+    if scope == "personal":
+        subject = _call(lambda: _client().get_profile()).uid
+    layer = _call(lambda: _client().get_mcp_policy_layer(scope, subject))
+    if _emit_machine(layer, _context(ctx)):
+        return
+    if layer is None:
+        console.print(
+            f"No {scope} policy. This layer narrows nothing — which is not the "
+            "same as having written one that narrows nothing."
+        )
+        return
+    for name, value in sorted(layer.items()):
+        if name != "version":
+            console.print(f"{name}: {value}")
+    console.print(f"[dim]version {layer.get('version')}[/dim]")
+
+
+@app.command(name="policy-set")
+@mcp_command
+def policy_set(
+    ctx: typer.Context,
+    org: str | None = typer.Option(None, "--org", help="An organization you own."),
+    team: str | None = typer.Option(None, "--team", help="A team you own."),
+    deny: str = typer.Option("", "--deny", help="Comma-separated tools to deny."),
+    allow: str = typer.Option("", "--allow", help="Comma-separated tools to permit, to the exclusion of the rest."),
+    clients: str = typer.Option("", "--clients", help="Comma-separated CIMD URLs or hostnames to admit."),
+    calls_per_minute: int | None = typer.Option(None, "--calls-per-minute"),
+    credits_per_day: float | None = typer.Option(None, "--credits-per-day"),
+    sandboxes: int | None = typer.Option(None, "--sandboxes", help="Sandboxes at once."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Replace one layer's rules.
+
+    **Replace, not merge.** A policy is small and read whole, and merging
+    would leave no way to express removing a rule — so a flag you leave out
+    is a rule you are clearing, and the confirmation says so.
+
+    The quota rules live here too: they *are* policy rules, and a separate
+    `quotas set` would be a second way to write the same document.
+    """
+    scope, subject = _scope_of(org, team)
+    if scope == "personal":
+        subject = _call(lambda: _client().get_profile()).uid
+
+    rules: dict[str, Any] = {}
+    for flag, name in ((deny, "toolDenylist"), (allow, "toolAllowlist"), (clients, "allowedClients")):
+        entries = [entry.strip() for entry in flag.split(",") if entry.strip()]
+        if entries:
+            rules[name] = entries
+    for value, name, label in (
+        (calls_per_minute, "maxCallsPerMinute", "Calls per minute"),
+        (credits_per_day, "maxCreditsPerDay", "Credits per day"),
+        (sandboxes, "maxConcurrentSandboxes", "Sandboxes at once"),
+    ):
+        if value is None:
+            continue
+        if value <= 0:
+            # Refused here rather than at the write. IAM's refusal is correct
+            # and unhelpful: somebody who passed 0 meant "stop my agents",
+            # and a non-positive limit reads as *no limit*.
+            raise McpCommandError(
+                f"{label} cannot be {value}. A non-positive limit reads as no "
+                "limit, so it would lift the limit rather than set it. To stop "
+                "an agent, revoke its grant or deny the tools it uses."
+            )
+        rules[name] = value
+
+    current = _call(lambda: _client().get_mcp_policy_layer(scope, subject))
+    cleared = sorted(
+        name
+        for name in (current or {})
+        if name != "version" and name not in rules
+    )
+    if cleared and not yes:
+        console.print(
+            f"This replaces the {scope} layer. Not passing a flag clears it: "
+            f"{', '.join(cleared)} would be removed."
+        )
+        if not typer.confirm("Go ahead?"):
+            raise typer.Exit(0)
+
+    answer = _call(
+        lambda: _client().set_mcp_policy_layer(
+            scope,
+            subject,
+            rules,
+            expected_version=(current or {}).get("version"),
+        )
+    )
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(f"The {scope} policy is set. It applies to the next call.")
+
+
 alerts_app = typer.Typer(name="alerts", help="The alert rules that fired.")
 app.add_typer(alerts_app)
 
@@ -543,6 +673,129 @@ def alerts_ack(ctx: typer.Context, alert_uid: str = typer.Argument(...)) -> None
     if _emit_machine(alert, _context(ctx)):
         return
     console.print(f"{alert.uid}: acknowledged by {alert.acknowledged_by or 'you'}")
+
+
+@alerts_app.command(name="rules")
+@mcp_command
+def alerts_rules(
+    ctx: typer.Context,
+    org: str = typer.Argument(..., help="The organization."),
+) -> None:
+    """The rules an organization asked to be told about, disabled included.
+
+    Switched off is a state, not a reason to hide a row: a rule somebody
+    silenced for a migration is one they may want back.
+    """
+    rules = _call(lambda: _client().list_mcp_alert_rules(org))
+    if _emit_machine(rules, _context(ctx)):
+        return
+    if not rules:
+        console.print(
+            "Nothing is watched. Runs are recorded either way; a rule is what "
+            "turns a number somebody would have to look at into something that "
+            "reaches them."
+        )
+        return
+    for rule in rules:
+        state = "" if rule.get("enabled", True) else " [red](off)[/red]"
+        console.print(
+            f"{rule.get('uid')}  {rule.get('condition')} {rule.get('operator')} "
+            f"{rule.get('threshold')} over {rule.get('window_seconds')}s "
+            f"[{rule.get('severity')}]{state}"
+        )
+
+
+@alerts_app.command(name="watch")
+@mcp_command
+def alerts_watch(
+    ctx: typer.Context,
+    org: str = typer.Argument(..., help="The organization."),
+    condition: str = typer.Option(..., "--condition", help="e.g. tasks.open"),
+    threshold: float = typer.Option(..., "--threshold"),
+    operator: str = typer.Option("gt", "--operator", help="gt, gte, lt, lte or eq."),
+    window: int = typer.Option(3600, "--window", help="Seconds the reading looks back over."),
+    severity: str = typer.Option("warning", "--severity"),
+) -> None:
+    """Write a rule.
+
+    Refused by name when the evaluator could not evaluate it. That refusal is
+    the point: a rule that never fires because of a typo is
+    indistinguishable from a condition that never happened, and the second is
+    what somebody would believe.
+    """
+    rule = {
+        "condition": condition,
+        "threshold": threshold,
+        "operator": operator,
+        "window_seconds": window,
+        "severity": severity,
+        "scope_kind": "organization",
+        "enabled": True,
+    }
+    written = _call(lambda: _client().create_mcp_alert_rule(org, rule))
+    if _emit_machine(written, _context(ctx)):
+        return
+    console.print(f"Watching {condition}. Evaluated on the next tick.")
+
+
+@alerts_app.command(name="unwatch")
+@mcp_command
+def alerts_unwatch(
+    ctx: typer.Context,
+    org: str = typer.Argument(..., help="The organization."),
+    uid: str = typer.Argument(..., help="From `alerts rules`."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Remove a rule. What it watched is unwatched from the next check."""
+    if not yes and not typer.confirm(
+        f"Remove {uid}? What it watched becomes unwatched, and nothing will "
+        "say so again."
+    ):
+        raise typer.Exit(0)
+    answer = _call(lambda: _client().delete_mcp_alert_rule(org, uid))
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print(f"{uid} removed.")
+
+
+@alerts_app.command(name="test")
+@mcp_command
+def alerts_test(
+    ctx: typer.Context,
+    condition: str = typer.Option(..., "--condition"),
+    threshold: float = typer.Option(..., "--threshold"),
+    operator: str = typer.Option("gt", "--operator"),
+    window: int = typer.Option(3600, "--window"),
+) -> None:
+    """What a rule would see right now. Records nothing, tells nobody.
+
+    The answer worth having is not the number but whether the condition can
+    be **read at all**: a rule on something nothing reads never fires, and
+    never firing is exactly what a correctly-quiet rule looks like.
+    """
+    trial = _call(
+        lambda: _client().test_mcp_alert_rule(
+            {
+                "condition": condition,
+                "threshold": threshold,
+                "operator": operator,
+                "window_seconds": window,
+            }
+        )
+    )
+    if _emit_machine(trial, _context(ctx)):
+        return
+    if not trial.get("readable"):
+        console.print(
+            "[yellow]Cannot be read at the moment[/yellow], so this rule would "
+            "not fire — and a rule that never fires looks exactly like a "
+            "condition that never happens."
+        )
+        if trial.get("detail"):
+            console.print(f"[dim]{trial['detail']}[/dim]")
+        return
+    verdict = "would fire" if trial.get("would_fire") else "would not fire"
+    console.print(f"Reads {trial.get('value')} now, so this rule {verdict}.")
 
 
 @app.command(name="forwarding")
