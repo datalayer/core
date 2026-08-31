@@ -65,6 +65,14 @@ import {
 } from '../api/mcp';
 import { disconnectAgent, listConnectedAgents, type ConnectedAgent } from '../api/iam/connectedAgents';
 import {
+  deleteMcpPolicy,
+  getMcpPolicy,
+  setMcpPolicy,
+  type McpPolicy,
+  type McpPolicyRules,
+  type McpPolicyScope,
+} from '../api/iam/mcpPolicy';
+import {
   createServiceAgent,
   listServiceAgents,
   revokeServiceAgent,
@@ -400,6 +408,76 @@ export const useDisconnectAgent = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.connectedAgents() });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
+    },
+  });
+};
+
+// -- The policy layer IAM stores (IAM) -------------------------------------
+
+/**
+ * One layer's rules, or `null` where nobody has written one.
+ *
+ * `null` is a real answer and not an error: most organizations have never
+ * written a policy, and a form needs to tell "narrows nothing" from "does
+ * not exist" — only the second has nothing to remove.
+ */
+export const useMcpPolicyLayer = (
+  scope: McpPolicyScope,
+  subjectUid: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<McpPolicy | null>({
+    queryKey: queryKeys.mcp.policyLayer(scope, subjectUid),
+    queryFn: () => getMcpPolicy(token ?? '', scope, subjectUid, iamUrl),
+    enabled: Boolean(token && iamUrl && subjectUid) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Replace one layer's rules.
+ *
+ * The **effective** policy is invalidated alongside the layer: the two are
+ * the same fact read two ways, and a page still showing the old effective
+ * policy after a write is a page saying the change did not take.
+ */
+export const useSetMcpPolicyLayer = (scope: McpPolicyScope, subjectUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    McpPolicy,
+    Error,
+    { rules: McpPolicyRules; expectedVersion?: number }
+  >({
+    mutationFn: ({ rules, expectedVersion }) =>
+      setMcpPolicy(token ?? '', scope, subjectUid, rules, { expectedVersion }, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.policyLayer(scope, subjectUid),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.policy() });
+    },
+  });
+};
+
+/** Remove one layer, so it narrows nothing again. */
+export const useDeleteMcpPolicyLayer = (
+  scope: McpPolicyScope,
+  subjectUid: string,
+) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<void, Error, void>({
+    mutationFn: () => deleteMcpPolicy(token ?? '', scope, subjectUid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.policyLayer(scope, subjectUid),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.policy() });
     },
   });
 };

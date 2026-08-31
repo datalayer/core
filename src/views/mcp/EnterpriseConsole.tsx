@@ -61,6 +61,7 @@ import type { McpActiveClient } from '../../api/mcp';
 import type { McpAuditFilters } from '../../api/mcp';
 import { AuditLog } from './AuditLog';
 import { McpObservability, type McpObservabilityPane } from './McpObservability';
+import { OrganizationPolicy } from './OrganizationPolicy';
 import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
 import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
@@ -70,6 +71,7 @@ export type EnterpriseConsolePage =
   | 'overview'
   | 'agents'
   | 'service-agents'
+  | 'policy'
   | 'audit'
   | 'observability';
 
@@ -80,6 +82,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
   { id: 'overview', label: 'Overview' },
   { id: 'agents', label: 'Agents' },
   { id: 'service-agents', label: 'Service Agents' },
+  { id: 'policy', label: 'Policy' },
   { id: 'audit', label: 'Audit' },
   { id: 'observability', label: 'Observability' },
 ];
@@ -87,13 +90,22 @@ export const ENTERPRISE_CONSOLE_PAGES: {
 /** Which pages each organization role may read. */
 export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
   if (roles.includes('organization_owner')) {
-    return ['overview', 'agents', 'service-agents', 'audit', 'observability'];
+    return [
+      'overview',
+      'agents',
+      'service-agents',
+      'policy',
+      'audit',
+      'observability',
+    ];
   }
   if (roles.includes('organization_security_auditor')) {
     // The service agents too, read-only: an auditor reading a row that names
     // `agent_uid` needs somewhere to find out what that agent is, and the
     // list carries no key.
-    return ['overview', 'service-agents', 'audit', 'observability'];
+    // The policy too, read-only: an auditor asked why a call was refused
+    // needs to see the rule that refused it, and the page carries no secret.
+    return ['overview', 'service-agents', 'policy', 'audit', 'observability'];
   }
   if (roles.includes('organization_usage_reviewer')) {
     return ['overview'];
@@ -442,6 +454,14 @@ export const EnterpriseConsole = ({
             </Box>
           </Box>
         ))}
+
+      {current === 'policy' && (
+        <OrganizationPolicy
+          errorState={errorState}
+          orgUid={organization.uid}
+          readOnly={!roles.includes('organization_owner')}
+        />
+      )}
 
       {current === 'service-agents' && (
         <ServiceAgents

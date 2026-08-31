@@ -64,8 +64,19 @@ describe('the console’s pages', () => {
     expect(pagesForRoles([])).toEqual([]);
   });
 
+  it('lets an auditor read the policy', () => {
+    // Asked why a call was refused, an auditor needs to see the rule that
+    // refused it. The page carries no secret.
+    expect(pagesForRoles(AUDITOR)).toContain('policy');
+  });
+
   it('has Service Agents as a page of its own', () => {
     const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
     expect(ids).toContain('service-agents');
+  });
+
+  it('has Policy as a page of its own', () => {
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    expect(ids).toContain('policy');
   });
 });

@@ -280,6 +280,11 @@ export const queryKeys = {
     // organizations' lists must not share a cache entry.
     serviceAgents: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'service-agents', orgUid] as const,
+    // The layer IAM stores, keyed by the scope *and* the subject: an
+    // organization's policy and a team's are different documents, and a
+    // shared entry would show one under the other's name.
+    policyLayer: (scope: string, subjectUid: string) =>
+      [...queryKeys.mcp.all(), 'policy-layer', scope, subjectUid] as const,
     // Observability, over the OTEL service, keyed by the task it describes.
     trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
     // A trace named directly: a synchronous call has one and no task.

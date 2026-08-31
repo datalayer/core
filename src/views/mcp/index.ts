@@ -25,6 +25,7 @@ export * from './format';
 export * from './McpDashboard';
 export * from './McpHome';
 export * from './ConnectedAgents';
+export * from './OrganizationPolicy';
 export * from './ServiceAgents';
 export * from './AuditLog';
 export * from './McpObservability';
