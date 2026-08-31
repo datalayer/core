@@ -41,6 +41,7 @@ import {
 } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
 import { McpPolicyConflict } from '../../api/iam/mcpPolicy';
+import { PolicyHistory } from './PolicyHistory';
 import {
   EMPTY_POLICY_DRAFT,
   PolicyForm,
@@ -67,10 +68,12 @@ export interface TeamPoliciesProps {
  * would notice until it had happened.
  */
 const TeamPolicyForm = ({
+  orgUid,
   teamUid,
   teamName,
   readOnly,
 }: {
+  orgUid: string;
   teamUid: string;
   teamName: string;
   readOnly: boolean;
@@ -199,6 +202,21 @@ const TeamPolicyForm = ({
         </Box>
       )}
 
+      <Box
+        sx={{
+          borderTop: '1px solid',
+          borderColor: 'border.muted',
+          pt: 3,
+          display: 'grid',
+          gap: 2,
+        }}
+      >
+        <Text as="h3" sx={{ fontSize: 1, fontWeight: 'semibold', m: 0 }}>
+          History
+        </Text>
+        <PolicyHistory orgUid={orgUid} subjectUid={teamUid} />
+      </Box>
+
       <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
         A team can be stricter than its organization and never looser.
         Permitting a tool the organization denies does nothing, and a cap above
@@ -290,6 +308,7 @@ export const TeamPolicies = ({
         // than carrying one team's unsaved draft onto the next.
         <TeamPolicyForm
           key={current.uid}
+          orgUid={orgUid}
           teamUid={current.uid}
           teamName={current.name}
           readOnly={readOnly}

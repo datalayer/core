@@ -44,6 +44,7 @@ import {
 } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
 import { McpPolicyConflict } from '../../api/iam/mcpPolicy';
+import { PolicyHistory } from './PolicyHistory';
 import {
   EMPTY_POLICY_DRAFT,
   PolicyForm,
@@ -225,6 +226,24 @@ export const OrganizationPolicy = ({
           )}
         </Box>
       )}
+
+      <Box
+        sx={{
+          borderTop: '1px solid',
+          borderColor: 'border.muted',
+          pt: 3,
+          display: 'grid',
+          gap: 2,
+        }}
+      >
+        <Text as="h3" sx={{ fontSize: 1, fontWeight: 'semibold', m: 0 }}>
+          History
+        </Text>
+        {/* The one question the policy above cannot answer about itself: an
+            administrator who finds a denylist they did not write has
+            nowhere else to ask. */}
+        <PolicyHistory orgUid={orgUid} subjectUid={orgUid} />
+      </Box>
 
       <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
         Only these rules can be stored. A rule the gateway does not enforce is
