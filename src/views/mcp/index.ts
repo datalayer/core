@@ -30,6 +30,7 @@ export * from './AlertRules';
 export * from './OrganizationPolicy';
 export * from './PersonalPolicy';
 export * from './PolicyForm';
+export * from './TeamPolicies';
 export * from './ServiceAgents';
 export * from './AuditLog';
 export * from './McpObservability';

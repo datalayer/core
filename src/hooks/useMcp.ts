@@ -70,6 +70,10 @@ import {
 } from '../api/mcp';
 import { disconnectAgent, listConnectedAgents, type ConnectedAgent } from '../api/iam/connectedAgents';
 import {
+  listOrganizationTeams,
+  type OrganizationTeam,
+} from '../api/iam/organizationTeams';
+import {
   getAuditSettings,
   setAuditSettings,
   type McpAuditSettings,
@@ -427,6 +431,23 @@ export const useDisconnectAgent = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.connectedAgents() });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
     },
+  });
+};
+
+// -- Teams (IAM) ------------------------------------------------------------
+
+/** One organization's teams, for the console's team policy page. */
+export const useOrganizationTeams = (
+  orgUid: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<OrganizationTeam[]>({
+    queryKey: queryKeys.mcp.organizationTeams(orgUid),
+    queryFn: () => listOrganizationTeams(token ?? '', orgUid, iamUrl),
+    enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 60_000,
   });
 };
 

@@ -81,6 +81,17 @@ describe('the console’s pages', () => {
     expect(pagesForRoles(AUDITOR)).toContain('alerts');
   });
 
+  it('lets an auditor read the team layers', () => {
+    // Asked why one team's agents are treated differently, an auditor needs
+    // the layer that treats them so.
+    expect(pagesForRoles(AUDITOR)).toContain('teams');
+  });
+
+  it('has Teams as a page of its own', () => {
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    expect(ids).toContain('teams');
+  });
+
   it('has Alerts as a page of its own', () => {
     const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
     expect(ids).toContain('alerts');

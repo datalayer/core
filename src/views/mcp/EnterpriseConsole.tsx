@@ -62,6 +62,7 @@ import type { McpAuditFilters } from '../../api/mcp';
 import { AuditLog } from './AuditLog';
 import { McpObservability, type McpObservabilityPane } from './McpObservability';
 import { AlertRules } from './AlertRules';
+import { TeamPolicies } from './TeamPolicies';
 import { OrganizationPolicy } from './OrganizationPolicy';
 import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
@@ -73,6 +74,7 @@ export type EnterpriseConsolePage =
   | 'agents'
   | 'service-agents'
   | 'policy'
+  | 'teams'
   | 'alerts'
   | 'audit'
   | 'observability';
@@ -85,6 +87,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
   { id: 'agents', label: 'Agents' },
   { id: 'service-agents', label: 'Service Agents' },
   { id: 'policy', label: 'Policy' },
+  { id: 'teams', label: 'Teams' },
   { id: 'alerts', label: 'Alerts' },
   { id: 'audit', label: 'Audit' },
   { id: 'observability', label: 'Observability' },
@@ -98,6 +101,7 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       'agents',
       'service-agents',
       'policy',
+      'teams',
       'alerts',
       'audit',
       'observability',
@@ -113,6 +117,9 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       'overview',
       'service-agents',
       'policy',
+      // The team layers too: an auditor asked why one team's agents are
+      // treated differently needs the layer that treats them so.
+      'teams',
       // The alerts too: what an organization watches for is part of the
       // security posture an auditor is there to read.
       'alerts',
@@ -467,6 +474,14 @@ export const EnterpriseConsole = ({
             </Box>
           </Box>
         ))}
+
+      {current === 'teams' && (
+        <TeamPolicies
+          errorState={errorState}
+          orgUid={organization.uid}
+          readOnly={!roles.includes('organization_owner')}
+        />
+      )}
 
       {current === 'alerts' && (
         <AlertRules
