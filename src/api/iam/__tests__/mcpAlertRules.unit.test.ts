@@ -158,12 +158,16 @@ describe('alert rules', () => {
     expect(request.mock.calls[0][0].method).toBe('DELETE');
   });
 
-  it('marks a condition nothing measures as not measurable', () => {
-    // Offered as though it worked, a rule on it would be stored, never fire,
-    // and look exactly like a condition that never happens — the silence
-    // rules exist to break.
-    const latency = ALERT_CONDITIONS.find(c => c.name === 'sli.latency');
-    expect(latency?.measurable).toBe(false);
+  it('offers only conditions something actually reads', () => {
+    // A condition offered as though it worked, that nothing reads, is stored
+    // and never fires and looks exactly like a condition that never happens
+    // — the silence rules exist to break. A test in the gateway's suite
+    // holds this list against its readers in both directions; this one holds
+    // the shape.
+    for (const condition of ALERT_CONDITIONS) {
+      expect(typeof condition.measurable).toBe('boolean');
+    }
+    expect(ALERT_CONDITIONS.some(c => c.measurable)).toBe(true);
   });
 
   it('offers every operator the evaluator implements', () => {

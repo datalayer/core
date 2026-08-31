@@ -83,10 +83,12 @@ export const ALERT_CONDITIONS: {
     name: 'sli.latency',
     label: 'Latency (p95)',
     help:
-      'Not measurable yet: a percentile needs the observability service, ' +
-      'and the gateway counts rather than times. A rule on it would never ' +
-      'fire.',
-    measurable: false,
+      'The 95th percentile call duration, in milliseconds, read from the ' +
+      'audit — which is never sampled, so it is the more complete source. ' +
+      'A very busy window holds more rows than one reading takes, and is ' +
+      'reported as unreadable rather than as a percentile of the newest ' +
+      'slice; Test says so straight away.',
+    measurable: true,
   },
 ];
 

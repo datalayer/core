@@ -48,6 +48,7 @@ import { McpErrorBlankslate } from '../../components/mcp';
 import { AlertDestinations } from './AlertDestinations';
 import {
   useAlertRules,
+  useTestAlertRule,
   useCreateAlertRule,
   useDeleteAlertRule,
   useUpdateAlertRule,
@@ -61,6 +62,7 @@ import {
   type McpAlertRule,
   type McpAlertRuleDraft,
 } from '../../api/iam/mcpAlertRules';
+import type { McpAlertRuleTrial } from '../../api/mcp/alerts';
 import type { McpErrorStateFn } from './types';
 
 export interface AlertRulesProps {
@@ -115,11 +117,13 @@ export const AlertRules = ({
   const create = useCreateAlertRule(orgUid);
   const update = useUpdateAlertRule(orgUid);
   const remove = useDeleteAlertRule(orgUid);
+  const test = useTestAlertRule();
 
   const [editing, setEditing] = useState<McpAlertRule | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState<McpAlertRuleDraft>(BLANK);
   const [refusal, setRefusal] = useState('');
+  const [trial, setTrial] = useState<McpAlertRuleTrial | null>(null);
   const [removing, setRemoving] = useState<RuleRow | null>(null);
   const returnFocusRef = useRef<HTMLElement>(null);
 
@@ -131,6 +135,7 @@ export const AlertRules = ({
   const openCreate = () => {
     setDraft(BLANK);
     setRefusal('');
+    setTrial(null);
     setCreating(true);
   };
 
@@ -138,6 +143,7 @@ export const AlertRules = ({
     const { uid, orgUid: _org, version: _version, ...rest } = rule;
     setDraft(rest);
     setRefusal('');
+    setTrial(null);
     setEditing(rule);
   };
 
@@ -231,7 +237,31 @@ export const AlertRules = ({
   const set = <K extends keyof McpAlertRuleDraft>(
     key: K,
     value: McpAlertRuleDraft[K],
-  ) => setDraft(current => ({ ...current, [key]: value }));
+  ) => {
+    // A reading belongs to the rule that produced it. Left on screen after
+    // the condition changes, it would be somebody reading last question's
+    // answer as this question's.
+    setTrial(null);
+    setDraft(current => ({ ...current, [key]: value }));
+  };
+
+  const tryIt = () => {
+    setRefusal('');
+    test.mutate(
+      {
+        condition: draft.condition,
+        operator: draft.operator,
+        threshold: draft.threshold,
+        windowSeconds: draft.windowSeconds,
+        scopeKind: draft.scopeKind,
+        scopeUid: draft.scopeUid,
+      },
+      {
+        onSuccess: setTrial,
+        onError: error => setRefusal(error.message),
+      },
+    );
+  };
 
   const columns: DataTableProps<RuleRow>['columns'] = [
     {
@@ -417,6 +447,12 @@ export const AlertRules = ({
           footerButtons={[
             { buttonType: 'default', content: 'Cancel', onClick: close },
             {
+              buttonType: 'default',
+              content: test.isPending ? 'Testing…' : 'Test',
+              onClick: tryIt,
+              disabled: test.isPending || !draft.condition,
+            },
+            {
               buttonType: 'primary',
               content: editing ? 'Save' : 'Create',
               onClick: apply,
@@ -428,6 +464,25 @@ export const AlertRules = ({
             {refusal && (
               <Flash variant="danger">
                 <Text sx={{ fontSize: 1 }}>{refusal}</Text>
+              </Flash>
+            )}
+
+            {trial && (
+              <Flash variant={trial.readable ? 'default' : 'warning'}>
+                <Text sx={{ fontSize: 1 }}>
+                  {trial.readable
+                    ? `Right now it reads ${trial.value}, so this rule ${
+                        trial.wouldFire ? 'would fire' : 'would not fire'
+                      }.`
+                    : 'This cannot be read at the moment, so the rule would ' +
+                      'not fire — and a rule that never fires looks exactly ' +
+                      'like a condition that never happens.'}
+                </Text>
+                {trial.detail && (
+                  <Text as="p" sx={{ fontSize: 0, color: 'fg.muted', mt: 1, mb: 0 }}>
+                    {trial.detail}
+                  </Text>
+                )}
               </Flash>
             )}
 

@@ -79,6 +79,10 @@ import {
   type McpAuditSettings,
 } from '../api/iam/mcpAuditSettings';
 import {
+  testAlertRule,
+  type McpAlertRuleTrial,
+} from '../api/mcp/alerts';
+import {
   createAlertRule,
   deleteAlertRule,
   listAlertRules,
@@ -484,6 +488,25 @@ export const useSetAuditSettings = (orgUid: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.auditSettings(orgUid) });
     },
+  });
+};
+
+/**
+ * Try a rule against current values.
+ *
+ * A mutation rather than a query: it is something somebody asks for, once,
+ * by pressing a button — and caching "what does this see now" would answer
+ * the second press with the first press's numbers.
+ */
+export const useTestAlertRule = () => {
+  const token = useIAMStore(state => state.token);
+  const mcpUrl = useMcpServerUrl();
+  return useMutation<
+    McpAlertRuleTrial,
+    Error,
+    Parameters<typeof testAlertRule>[1]
+  >({
+    mutationFn: rule => testAlertRule(token ?? '', rule, mcpUrl),
   });
 };
 
