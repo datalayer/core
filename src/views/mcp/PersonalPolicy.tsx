@@ -125,9 +125,9 @@ export const PersonalPolicy = ({
   showTitle = true,
 }: PersonalPolicyProps): JSX.Element => {
   const { enqueueToast } = useToast();
-  const layer = useMcpPolicyLayer('user', userUid);
-  const save = useSetMcpPolicyLayer('user', userUid);
-  const remove = useDeleteMcpPolicyLayer('user', userUid);
+  const layer = useMcpPolicyLayer('personal', userUid);
+  const save = useSetMcpPolicyLayer('personal', userUid);
+  const remove = useDeleteMcpPolicyLayer('personal', userUid);
 
   const [draft, setDraft] = useState<PolicyDraft>(EMPTY_POLICY_DRAFT);
   const [conflict, setConflict] = useState('');

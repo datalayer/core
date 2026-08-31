@@ -28,8 +28,17 @@
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
 
-/** Which layer a policy belongs to. */
-export type McpPolicyScope = 'organization' | 'team' | 'user';
+/**
+ * Which layer a policy belongs to.
+ *
+ * The names IAM stores, exactly: `personal`, not `user`. It refuses an
+ * unknown scope with a `422`, so getting this wrong is not a subtle
+ * mis-scoping — it is every read and every write of that layer failing.
+ * Held against IAM's own `POLICY_SCOPES` by a test in the gateway's suite.
+ */
+export const MCP_POLICY_SCOPES = ['organization', 'team', 'personal'] as const;
+
+export type McpPolicyScope = (typeof MCP_POLICY_SCOPES)[number];
 
 /**
  * The rules a layer may set. Every one is optional: a layer that sets

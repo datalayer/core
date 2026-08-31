@@ -17,6 +17,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as DatalayerApi from '../../DatalayerApi';
 import {
   MCP_POLICY_RULES,
+  MCP_POLICY_SCOPES,
   McpPolicyConflict,
   deleteMcpPolicy,
   getMcpPolicy,
@@ -168,6 +169,13 @@ describe('the MCP policy layer', () => {
     await deleteMcpPolicy('token', 'organization', ORG, IAM);
 
     expect(request.mock.calls[0][0].method).toBe('DELETE');
+  });
+
+  it('spells the layers the way IAM stores them', () => {
+    // `personal`, not `user`. IAM refuses an unknown scope with a 422, so
+    // this is not a subtle mis-scoping: it is every read and every write of
+    // that layer failing. It shipped wrong once.
+    expect([...MCP_POLICY_SCOPES]).toEqual(['organization', 'team', 'personal']);
   });
 
   it('names only the rules the gateway enforces', () => {
