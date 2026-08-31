@@ -75,6 +75,17 @@ describe('the console’s pages', () => {
     expect(ids).toContain('service-agents');
   });
 
+  it('lets an auditor read the alert rules', () => {
+    // What an organization watches for is part of the posture an auditor is
+    // there to read.
+    expect(pagesForRoles(AUDITOR)).toContain('alerts');
+  });
+
+  it('has Alerts as a page of its own', () => {
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    expect(ids).toContain('alerts');
+  });
+
   it('has Policy as a page of its own', () => {
     const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
     expect(ids).toContain('policy');

@@ -61,6 +61,7 @@ import type { McpActiveClient } from '../../api/mcp';
 import type { McpAuditFilters } from '../../api/mcp';
 import { AuditLog } from './AuditLog';
 import { McpObservability, type McpObservabilityPane } from './McpObservability';
+import { AlertRules } from './AlertRules';
 import { OrganizationPolicy } from './OrganizationPolicy';
 import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
@@ -72,6 +73,7 @@ export type EnterpriseConsolePage =
   | 'agents'
   | 'service-agents'
   | 'policy'
+  | 'alerts'
   | 'audit'
   | 'observability';
 
@@ -83,6 +85,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
   { id: 'agents', label: 'Agents' },
   { id: 'service-agents', label: 'Service Agents' },
   { id: 'policy', label: 'Policy' },
+  { id: 'alerts', label: 'Alerts' },
   { id: 'audit', label: 'Audit' },
   { id: 'observability', label: 'Observability' },
 ];
@@ -95,6 +98,7 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       'agents',
       'service-agents',
       'policy',
+      'alerts',
       'audit',
       'observability',
     ];
@@ -105,7 +109,16 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
     // list carries no key.
     // The policy too, read-only: an auditor asked why a call was refused
     // needs to see the rule that refused it, and the page carries no secret.
-    return ['overview', 'service-agents', 'policy', 'audit', 'observability'];
+    return [
+      'overview',
+      'service-agents',
+      'policy',
+      // The alerts too: what an organization watches for is part of the
+      // security posture an auditor is there to read.
+      'alerts',
+      'audit',
+      'observability',
+    ];
   }
   if (roles.includes('organization_usage_reviewer')) {
     return ['overview'];
@@ -454,6 +467,14 @@ export const EnterpriseConsole = ({
             </Box>
           </Box>
         ))}
+
+      {current === 'alerts' && (
+        <AlertRules
+          errorState={errorState}
+          orgUid={organization.uid}
+          readOnly={!roles.includes('organization_owner')}
+        />
+      )}
 
       {current === 'policy' && (
         <OrganizationPolicy

@@ -65,6 +65,14 @@ import {
 } from '../api/mcp';
 import { disconnectAgent, listConnectedAgents, type ConnectedAgent } from '../api/iam/connectedAgents';
 import {
+  createAlertRule,
+  deleteAlertRule,
+  listAlertRules,
+  updateAlertRule,
+  type McpAlertRule,
+  type McpAlertRuleDraft,
+} from '../api/iam/mcpAlertRules';
+import {
   deleteMcpPolicy,
   getMcpPolicy,
   setMcpPolicy,
@@ -408,6 +416,56 @@ export const useDisconnectAgent = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.connectedAgents() });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
+    },
+  });
+};
+
+// -- Alert rules (IAM) ------------------------------------------------------
+
+/** One organization's alert rules, disabled ones included. */
+export const useAlertRules = (orgUid: string, options: { enabled?: boolean } = {}) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<McpAlertRule[]>({
+    queryKey: queryKeys.mcp.alertRules(orgUid),
+    queryFn: () => listAlertRules(token ?? '', orgUid, iamUrl),
+    enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+export const useCreateAlertRule = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<McpAlertRule, Error, McpAlertRuleDraft>({
+    mutationFn: rule => createAlertRule(token ?? '', orgUid, rule, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.alertRules(orgUid) });
+    },
+  });
+};
+
+export const useUpdateAlertRule = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<McpAlertRule, Error, { uid: string; rule: McpAlertRuleDraft }>({
+    mutationFn: ({ uid, rule }) => updateAlertRule(token ?? '', orgUid, uid, rule, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.alertRules(orgUid) });
+    },
+  });
+};
+
+export const useDeleteAlertRule = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<void, Error, string>({
+    mutationFn: uid => deleteAlertRule(token ?? '', orgUid, uid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.alertRules(orgUid) });
     },
   });
 };
