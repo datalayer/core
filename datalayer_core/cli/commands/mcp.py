@@ -798,6 +798,51 @@ def alerts_test(
     console.print(f"Reads {trial.get('value')} now, so this rule {verdict}.")
 
 
+@alerts_app.command(name="destinations")
+@mcp_command
+def alerts_destinations(
+    ctx: typer.Context,
+    org: str = typer.Argument(..., help="The organization."),
+    webhook: str | None = typer.Option(None, "--webhook", help="An https endpoint that takes a JSON POST."),
+    slack: str | None = typer.Option(None, "--slack", help="A hooks.slack.com incoming webhook."),
+    emails: str | None = typer.Option(None, "--emails", help="Comma-separated, up to twenty."),
+) -> None:
+    """Where fired alerts go, besides the notice in the app.
+
+    With no flags it shows them. With flags it changes **only what you
+    pass** — IAM merges this document, and audit retention and SIEM
+    forwarding live on it too, set by other people; sending the whole shape
+    would clear them. Passing an empty string clears one, which is a
+    decision rather than an omission.
+
+    Set once for the organization rather than per rule: a URL repeated on
+    twenty rules is nineteen places to forget when it rotates.
+    """
+    if webhook is None and slack is None and emails is None:
+        settings = _call(lambda: _client().get_mcp_alert_destinations(org))
+        if _emit_machine(settings, _context(ctx)):
+            return
+        if not settings:
+            console.print("Nothing is set. Fired alerts appear in the app only.")
+            return
+        for label, key in (
+            ("email", "alert_emails"),
+            ("slack", "alert_slack_webhook_url"),
+            ("webhook", "alert_webhook_url"),
+        ):
+            console.print(f"{label}: {settings.get(key) or '(none)'}")
+        return
+
+    answer = _call(
+        lambda: _client().set_mcp_alert_destinations(
+            org, webhook=webhook, slack=slack, emails=emails
+        )
+    )
+    if _emit_machine(answer, _context(ctx)):
+        return
+    console.print("Saved. The next firing goes there.")
+
+
 @app.command(name="forwarding")
 @mcp_command
 def forwarding(

@@ -215,6 +215,21 @@ class Client:
         RECORDED["tested"] = rule
         return ANSWERS.get("trial", {"readable": True, "value": 42, "would_fire": True})
 
+    def get_mcp_alert_destinations(self, org_uid: str):
+        RECORDED["read_destinations"] = org_uid
+        return ANSWERS.get(
+            "destinations", {"alert_emails": "ops@example.co", "alert_webhook_url": ""}
+        )
+
+    def set_mcp_alert_destinations(self, org_uid, *, webhook=None, slack=None, emails=None):
+        RECORDED["wrote_destinations"] = {
+            "org": org_uid,
+            "webhook": webhook,
+            "slack": slack,
+            "emails": emails,
+        }
+        return {"alert_emails": emails or ""}
+
     def get_mcp_metrics(self, **kwargs: Any) -> dict[str, Any]:
         RECORDED["metrics_filters"] = kwargs
         return {"filters": kwargs, "metrics": {"mcp.calls": [{}]}, "spans": [], "slis": {"availability": 0.99, "p95_call_duration_ms": 120, "task_success_rate": None, "p95_sandbox_launch_seconds": {"datalayer": 4.2}, "samples": {"calls": 100, "tasks": 0, "launches": 3}}}
@@ -677,3 +692,44 @@ def test_alerts_test_keeps_unreadable_apart_from_would_not_fire() -> None:
 
     assert "Cannot be read" in tried.output
     assert "never happens" in tried.output
+
+
+def test_alerts_destinations_shows_them_when_given_no_flags() -> None:
+    runner = CliRunner()
+    shown = runner.invoke(app, ["mcp", "alerts", "destinations", "01ORG"])
+
+    assert shown.exit_code == 0, shown.output
+    assert "ops@example.co" in shown.output
+    assert RECORDED["read_destinations"] == "01ORG"
+
+
+def test_alerts_destinations_says_when_nothing_is_set() -> None:
+    ANSWERS["destinations"] = {}
+    runner = CliRunner()
+    shown = runner.invoke(app, ["mcp", "alerts", "destinations", "01ORG"])
+    ANSWERS.pop("destinations", None)
+
+    assert "app only" in shown.output
+
+
+def test_alerts_destinations_sends_only_what_was_passed() -> None:
+    """IAM merges this document, and retention and SIEM forwarding live on it
+    too — set by other people. Sending the whole shape would clear them."""
+    runner = CliRunner()
+    written = runner.invoke(
+        app, ["mcp", "alerts", "destinations", "01ORG", "--emails", "ops@example.co"]
+    )
+
+    assert written.exit_code == 0, written.output
+    assert RECORDED["wrote_destinations"]["emails"] == "ops@example.co"
+    assert RECORDED["wrote_destinations"]["webhook"] is None
+    assert RECORDED["wrote_destinations"]["slack"] is None
+
+
+def test_alerts_destinations_can_clear_one() -> None:
+    """An empty string is a decision. Dropped, it would be a destination
+    somebody removed that keeps receiving."""
+    runner = CliRunner()
+    runner.invoke(app, ["mcp", "alerts", "destinations", "01ORG", "--webhook", ""])
+
+    assert RECORDED["wrote_destinations"]["webhook"] == ""

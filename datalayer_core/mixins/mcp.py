@@ -403,6 +403,46 @@ class McpMixin:
         )
         return dict(response.json())
 
+    # Where alerts go (IAM) --------------------------------------------------
+
+    def get_mcp_alert_destinations(self, org_uid: str) -> dict[str, Any]:
+        """Where an organization's fired alerts go, besides the app."""
+        try:
+            response = self._fetch(  # type: ignore[attr-defined]
+                self._iam_url(f"/mcp-audit-settings/{org_uid}"), method="GET"
+            )
+        except Exception as error:  # noqa: BLE001 - having decided nothing is an answer
+            if "404" in str(error) or "not found" in str(error).lower():
+                return {}
+            raise
+        return dict((response.json() or {}).get("settings") or {})
+
+    def set_mcp_alert_destinations(
+        self,
+        org_uid: str,
+        *,
+        webhook: str | None = None,
+        slack: str | None = None,
+        emails: str | None = None,
+    ) -> dict[str, Any]:
+        """Change some of them. Only what is passed is sent.
+
+        IAM merges this document, and retention and SIEM forwarding live on
+        it too — set by other people, on another surface. Sending the whole
+        shape would clear them.
+        """
+        body: dict[str, Any] = {}
+        if webhook is not None:
+            body["alert_webhook_url"] = webhook
+        if slack is not None:
+            body["alert_slack_webhook_url"] = slack
+        if emails is not None:
+            body["alert_emails"] = emails
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/mcp-audit-settings/{org_uid}"), method="PUT", json=body
+        )
+        return dict((response.json() or {}).get("settings") or {})
+
     # Service agents (IAM) ---------------------------------------------------
 
     def list_service_agents(self, org_uid: str) -> list[dict[str, Any]]:
