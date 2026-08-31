@@ -64,6 +64,14 @@ import {
   type McpWorkflowsHealth,
 } from '../api/mcp';
 import { disconnectAgent, listConnectedAgents, type ConnectedAgent } from '../api/iam/connectedAgents';
+import {
+  createServiceAgent,
+  listServiceAgents,
+  revokeServiceAgent,
+  rotateServiceAgentKey,
+  type ServiceAgent,
+  type ServiceAgentWithKey,
+} from '../api/iam/serviceAgents';
 import type { McpAuditEventList, McpAuditExportFormat } from '../models/McpAuditEvent';
 import type { McpBinding, McpBindingList } from '../models/McpBinding';
 import type { McpEffectivePolicy } from '../models/McpPolicy';
@@ -392,6 +400,81 @@ export const useDisconnectAgent = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.connectedAgents() });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
+    },
+  });
+};
+
+// -- Service agents (IAM) --------------------------------------------------
+
+/**
+ * One organization's service agents, revoked ones included.
+ *
+ * Keyed by the organization: two organizations' lists must never share a
+ * cache entry, or an owner of both would see one under the other's name.
+ */
+export const useServiceAgents = (
+  orgUid: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<ServiceAgent[]>({
+    queryKey: queryKeys.mcp.serviceAgents(orgUid),
+    queryFn: () => listServiceAgents(token ?? '', orgUid, iamUrl),
+    enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Create one. The answer carries the key, and it is the only place it
+ * exists — so the caller must render it before doing anything else with it.
+ */
+export const useCreateServiceAgent = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    ServiceAgentWithKey,
+    Error,
+    { name: string; scopes: string[]; description?: string; teamUid?: string }
+  >({
+    mutationFn: agent => createServiceAgent(token ?? '', orgUid, agent, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.serviceAgents(orgUid),
+      });
+    },
+  });
+};
+
+/** Replace an agent's key; the old one stops working with the call. */
+export const useRotateServiceAgentKey = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<ServiceAgentWithKey, Error, string>({
+    mutationFn: agentUid =>
+      rotateServiceAgentKey(token ?? '', orgUid, agentUid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.serviceAgents(orgUid),
+      });
+    },
+  });
+};
+
+/** Stop an agent. The list is refetched rather than edited in place. */
+export const useRevokeServiceAgent = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<ServiceAgent, Error, string>({
+    mutationFn: agentUid => revokeServiceAgent(token ?? '', orgUid, agentUid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.serviceAgents(orgUid),
+      });
     },
   });
 };

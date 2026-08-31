@@ -13,6 +13,7 @@
 import { URLExt } from '@jupyterlab/coreutils';
 import axios, { AxiosRequestConfig } from 'axios';
 import { sleep } from '../utils/Sleep';
+import { getJwtExpiryMs, isJwtExpired } from '../utils/Jwt';
 
 function isFormDataBody(body: unknown): body is FormData {
   if (!body || typeof body !== 'object') {
@@ -160,6 +161,85 @@ export class NetworkError extends TypeError {
 }
 
 /**
+ * Thrown when a request is made with a JWT that has already expired.
+ *
+ * Raised in place of the `RunResponseError` a 401 would otherwise produce,
+ * and only when the token we sent says it has expired. That distinction is
+ * the point of the class: a 401 can mean a dozen things — a revoked token, a
+ * wrong audience, a permission the account never had — and none of them are
+ * fixed by the same action. An expired token has exactly one remedy, and a
+ * caller that can recognise it can offer that remedy instead of an error.
+ *
+ * Callers are expected to catch this by name:
+ *
+ * ```typescript
+ * try {
+ *   await requestDatalayerAPI({ url, token });
+ * } catch (error) {
+ *   if (error instanceof TokenExpiredError) {
+ *     showSignIn();
+ *     return;
+ *   }
+ *   throw error;
+ * }
+ * ```
+ */
+export class TokenExpiredError extends Error {
+  /** When the token expired, in milliseconds since the epoch. */
+  readonly expiredAt: number;
+
+  /** The URL the request was going to, for context in logs. */
+  readonly url: string;
+
+  constructor(url: string, expiredAt: number) {
+    super(
+      `The Datalayer token expired at ${new Date(expiredAt).toISOString()}; ` +
+        `not sending the request to ${url}.`,
+    );
+    // `name` rather than only the prototype, because a bundler that downlevels
+    // this class can break `instanceof` across package boundaries and a name
+    // check is the fallback every caller can still make.
+    this.name = 'TokenExpiredError';
+    this.expiredAt = expiredAt;
+    this.url = url;
+    // Restores the prototype chain when compiled down to ES5, without which
+    // `instanceof TokenExpiredError` is false — see TypeScript #13965.
+    Object.setPrototypeOf(this, TokenExpiredError.prototype);
+  }
+}
+
+/**
+ * Turn a 401 into a `TokenExpiredError` when the token is the reason for it.
+ *
+ * After the fact rather than before it. Checking the token up front would
+ * have meant deciding, at the door, which endpoints require one — and plenty
+ * here accept anonymous callers, so a pre-flight refusal would reject
+ * requests that were going to succeed. The server is the only thing that
+ * knows whether a given endpoint wanted credentials, and a 401 is it saying
+ * so.
+ *
+ * Asked only on a 401, and only when we actually hold a token that says it
+ * has expired. Every other 401 — a revoked token, a wrong audience, a
+ * permission the account never had, an anonymous call to a protected route —
+ * stays a `RunResponseError`, because those are not fixed by signing in
+ * again and should not be dressed up as though they were.
+ *
+ * Reading `exp` after the response has come back is also the more reliable
+ * moment: time has only moved forward, so a token the server judged expired
+ * reads as expired here too, with no clock-skew allowance to tune.
+ */
+function throwIfTokenExpired(
+  status: number,
+  token: string | undefined,
+  url: string,
+): void {
+  if (status !== 401 || !token || !isJwtExpired(token)) {
+    return;
+  }
+  throw new TokenExpiredError(url, getJwtExpiryMs(token) ?? Date.now());
+}
+
+/**
  * Options for Datalayer API requests.
  */
 export interface IRequestDatalayerAPIOptions {
@@ -282,6 +362,7 @@ export async function requestDatalayerAPIWithResponse<T = any>({
         };
       }
     } else {
+      throwIfTokenExpired(response.status, token, url);
       const adaptedResponse = {
         ok: false,
         status: response.status,
@@ -301,6 +382,7 @@ export async function requestDatalayerAPIWithResponse<T = any>({
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response) {
+        throwIfTokenExpired(error.response.status, token, url);
         // Convert axios error to our RunResponseError format
         const adaptedResponse = {
           ok: false,

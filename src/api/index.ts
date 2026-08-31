@@ -18,6 +18,7 @@ export {
   requestDatalayerAPIWithResponse,
   RunResponseError,
   NetworkError,
+  TokenExpiredError,
 } from './DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
 export type { IDatalayerAPIResponse } from './DatalayerApi';

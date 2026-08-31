@@ -223,6 +223,11 @@ export const queryKeys = {
     bridgeList: (filters?: { active?: boolean }) =>
       [...queryKeys.contents.bridges(), 'list', filters ?? {}] as const,
     bridge: (bridgeUid: string) => [...queryKeys.contents.bridges(), bridgeUid] as const,
+    // What a running Runtime has mounted. Under the Contents key rather than
+    // a Runtimes one because attaching and detaching a source is what changes
+    // it, and those invalidate from here.
+    runtimeMounts: (runtimeName: string) =>
+      [...queryKeys.contents.all(), 'runtime-mounts', runtimeName] as const,
     mcpTools: (sourceUid: string) =>
       [...queryKeys.contents.source(sourceUid), 'mcp', 'tools'] as const,
     mcpSessions: () => [...queryKeys.contents.all(), 'mcp-sessions'] as const,
@@ -271,6 +276,10 @@ export const queryKeys = {
     policy: (filters?: object) =>
       [...queryKeys.mcp.all(), 'policy', filters ?? {}] as const,
     connectedAgents: () => [...queryKeys.mcp.all(), 'connected-agents'] as const,
+    // Service agents are an organization's, never an account's: two
+    // organizations' lists must not share a cache entry.
+    serviceAgents: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'service-agents', orgUid] as const,
     // Observability, over the OTEL service, keyed by the task it describes.
     trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
     // A trace named directly: a synchronous call has one and no task.

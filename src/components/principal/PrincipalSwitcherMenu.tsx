@@ -9,7 +9,6 @@ import {
   ActionMenu,
   Box,
   Button,
-  Label,
   Text,
   ThemeProvider,
 } from '@primer/react';
@@ -28,6 +27,7 @@ import { usePrincipalStore } from '../../hooks/usePrincipalStore';
 import { useBillingEntityStore } from '../../hooks/useBillingEntityStore';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
 import { DisplayHandle, displayHandleText } from '../display/DisplayHandle';
+import { AdminLabel } from '../labels/StatusLabels';
 
 type TeamMembership = {
   uid: string;
@@ -290,12 +290,6 @@ export function PrincipalSwitcherMenu({
     color: 'accent.fg',
     fontWeight: 'semibold',
   } as const;
-  const adminBadgeSx = {
-    bg: 'attention.subtle',
-    color: 'attention.fg',
-    textTransform: 'lowercase',
-    lineHeight: 1.2,
-  } as const;
 
   return (
     <ThemeProvider>
@@ -374,9 +368,7 @@ export function PrincipalSwitcherMenu({
                     alignItems: 'center',
                   }}
                 >
-                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                    admin
-                  </Label>
+                  <AdminLabel />
                 </Box>
               ) : null}
               <Box
@@ -444,9 +436,7 @@ export function PrincipalSwitcherMenu({
                   </Text>
                 </Box>
                 {isPlatformAdmin && isCurrentUserPrincipal ? (
-                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                    admin
-                  </Label>
+                  <AdminLabel />
                 ) : null}
               </Box>
             </Button>
@@ -507,9 +497,7 @@ export function PrincipalSwitcherMenu({
                 </Box>
                 {isPlatformAdmin ? (
                   <ActionList.TrailingVisual>
-                    <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                      admin
-                    </Label>
+                    <AdminLabel />
                   </ActionList.TrailingVisual>
                 ) : null}
               </ActionList.Item>

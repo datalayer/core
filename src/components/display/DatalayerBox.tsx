@@ -12,9 +12,14 @@ import { useNavigate } from '../../hooks';
 type DatalayerBoxProps = {
   id?: string;
   title: string;
-  titleAction?: ReactNode;
   linkLabel?: string;
   linkRoute?: string;
+  /**
+   * What sits next to the title, e.g. the mark that explains the box.
+   *
+   * The link on the trailing edge leads somewhere; this stays here.
+   */
+  titleAction?: ReactNode;
 };
 
 export const DatalayerBox = (props: PropsWithChildren<DatalayerBoxProps>) => {
@@ -30,28 +35,26 @@ export const DatalayerBox = (props: PropsWithChildren<DatalayerBoxProps>) => {
           paddingRight: 4,
         }}
       >
-        <Text as="h2" sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}>
-          {title}
-        </Text>
-        {(titleAction || (linkRoute && linkLabel)) && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {titleAction}
-            {linkRoute && linkLabel && (
-              <Link
-                href="javascript: return false;"
-                onClick={e => navigate(linkRoute)}
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {linkLabel}
-                <ArrowRightIcon />
-              </Link>
-            )}
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Text as="h2" sx={{ borderLeft: '6px solid #28b899', paddingLeft: 2 }}>
+            {title}
+          </Text>
+          {titleAction}
+        </Box>
+        {linkRoute && linkLabel && (
+          <Link
+            href="javascript: return false;"
+            onClick={e => navigate(linkRoute)}
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {linkLabel}
+            <ArrowRightIcon />
+          </Link>
         )}
       </Box>
       <Box

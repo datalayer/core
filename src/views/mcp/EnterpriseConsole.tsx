@@ -18,16 +18,24 @@
  * test per surface, and an administrator who has learned the personal page
  * has learned this one.
  *
- * Milestone 1 carries Overview, Agents, Audit and Observability, read-only
- * over what exists. Teams, Policies, Quotas, Alerts, Approvals and Runs
- * join as the layers behind them ship; the sub-navigation says so rather
- * than hiding what is coming.
+ * Milestone 1 carried Overview, Agents, Audit and Observability, read-only
+ * over what exists. **Service Agents** joins them in milestone 3, and is the
+ * one page here that *writes*: an organization's own principals, created,
+ * rotated and revoked from it. Teams, Policies, Quotas, Alerts, Approvals
+ * and Runs join as the layers behind them ship; the sub-navigation says so
+ * rather than hiding what is coming.
  *
  * Roles: an `organization_owner` sees everything; an
- * `organization_security_auditor` sees the Overview, the Audit and the
- * Observability, which is the directory an auditor asks for; an
+ * `organization_security_auditor` sees the Overview, the Service Agents,
+ * the Audit and the Observability, which is the directory an auditor asks
+ * for — the service agents because an audit row naming `agent_uid` needs
+ * somewhere to say what that agent is, and the list carries no key; an
  * `organization_usage_reviewer` sees the Overview. Anyone else is told
  * plainly that this is not theirs to read.
+ *
+ * The auditor's view of Service Agents is read-only, and the page is told
+ * so rather than working it out: IAM refuses their writes either way, and a
+ * button that exists to be refused is worse than no button.
  *
  * @module views/mcp/EnterpriseConsole
  */
@@ -53,11 +61,17 @@ import type { McpActiveClient } from '../../api/mcp';
 import type { McpAuditFilters } from '../../api/mcp';
 import { AuditLog } from './AuditLog';
 import { McpObservability, type McpObservabilityPane } from './McpObservability';
+import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
 import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
 
 /** The pages milestone 1 carries. */
-export type EnterpriseConsolePage = 'overview' | 'agents' | 'audit' | 'observability';
+export type EnterpriseConsolePage =
+  | 'overview'
+  | 'agents'
+  | 'service-agents'
+  | 'audit'
+  | 'observability';
 
 export const ENTERPRISE_CONSOLE_PAGES: {
   id: EnterpriseConsolePage;
@@ -65,6 +79,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
 }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'agents', label: 'Agents' },
+  { id: 'service-agents', label: 'Service Agents' },
   { id: 'audit', label: 'Audit' },
   { id: 'observability', label: 'Observability' },
 ];
@@ -72,10 +87,13 @@ export const ENTERPRISE_CONSOLE_PAGES: {
 /** Which pages each organization role may read. */
 export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
   if (roles.includes('organization_owner')) {
-    return ['overview', 'agents', 'audit', 'observability'];
+    return ['overview', 'agents', 'service-agents', 'audit', 'observability'];
   }
   if (roles.includes('organization_security_auditor')) {
-    return ['overview', 'audit', 'observability'];
+    // The service agents too, read-only: an auditor reading a row that names
+    // `agent_uid` needs somewhere to find out what that agent is, and the
+    // list carries no key.
+    return ['overview', 'service-agents', 'audit', 'observability'];
   }
   if (roles.includes('organization_usage_reviewer')) {
     return ['overview'];
@@ -424,6 +442,14 @@ export const EnterpriseConsole = ({
             </Box>
           </Box>
         ))}
+
+      {current === 'service-agents' && (
+        <ServiceAgents
+          errorState={errorState}
+          orgUid={organization.uid}
+          readOnly={!roles.includes('organization_owner')}
+        />
+      )}
 
       {current === 'agents' &&
         (activity.isError ? (

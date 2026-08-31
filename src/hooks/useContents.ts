@@ -125,6 +125,10 @@ import {
   type DatasourceQueryResultBytes,
   type DatasourceSchema,
   type DatasourceTest,
+  attachRuntimeMounts,
+  detachRuntimeMount,
+  getRuntimeMounts,
+  isRuntimeMountsSettled,
 } from '../api/contents';
 import type {
   CapabilityTicket,
@@ -139,6 +143,7 @@ import type {
   SyncConflictList,
   SyncSessionList,
   SyncSessionView,
+  RuntimeMounts,
 } from '../api/contents';
 import { useCoreStore, useIAMStore } from '../state';
 import { queryKeys } from './useCache';
@@ -1497,6 +1502,73 @@ export const useRotateDataserverIdentity = () => {
     onSuccess: (_identity, { sourceUid }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contents.dataserverStatus(sourceUid) });
       queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(sourceUid) });
+    },
+  });
+};
+
+
+// --- The folders mounted into a Runtime that is already running -------------
+//
+// A Pod's volumes are fixed when it is created; the mount gateway is what
+// lets the Home Folder arrive afterwards. `mountGateway` on the Runtime says
+// whether this one can take it, so a view can offer the action instead of
+// finding out by failing.
+
+/**
+ * What a running Runtime is granted, and what has arrived.
+ *
+ * Polled while the platform is still applying a change and left alone once it
+ * has settled: a mount takes a second or two, and a runtime lives for hours.
+ */
+export const useRuntimeMounts = (runtimeName?: string, enabled = true) => {
+  const token = useIAMStore(state => state.token);
+  const runtimesUrl = useCoreStore(state => state.configuration.runtimesUrl);
+  return useQuery<RuntimeMounts>({
+    queryKey: queryKeys.contents.runtimeMounts(runtimeName ?? ''),
+    queryFn: () => getRuntimeMounts(token ?? '', runtimeName!, runtimesUrl),
+    enabled: Boolean(token && runtimesUrl && runtimeName && enabled),
+    refetchInterval: query => (isRuntimeMountsSettled(query.state.data) ? false : 2_000),
+  });
+};
+
+/**
+ * Mount the caller's home folders into a Runtime that is already running.
+ *
+ * Which folders is not a parameter: the platform resolves the caller's own
+ * memberships. A Runtime that cannot take a mount answers with the reason —
+ * 409 for a sandbox created without the gateway, 504 when the platform could
+ * not confirm it — and the caller shows that rather than a generic failure.
+ */
+export const useAttachRuntimeMounts = () => {
+  const token = useIAMStore(state => state.token);
+  const runtimesUrl = useCoreStore(state => state.configuration.runtimesUrl);
+  const queryClient = useQueryClient();
+  return useMutation<RuntimeMounts, Error, string>({
+    mutationFn: runtimeName => attachRuntimeMounts(token ?? '', runtimeName, runtimesUrl),
+    onSuccess: (_data, runtimeName) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.runtimeMounts(runtimeName),
+      });
+      // The Home Folder browser shows the same folders; a mount that appeared
+      // in a sandbox and not on the page is the disagreement to avoid.
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.attachments() });
+    },
+  });
+};
+
+/** Take one folder out of a running Runtime, by the name it appears under. */
+export const useDetachRuntimeMount = () => {
+  const token = useIAMStore(state => state.token);
+  const runtimesUrl = useCoreStore(state => state.configuration.runtimesUrl);
+  const queryClient = useQueryClient();
+  return useMutation<RuntimeMounts, Error, { runtimeName: string; target: string }>({
+    mutationFn: ({ runtimeName, target }) =>
+      detachRuntimeMount(token ?? '', runtimeName, target, runtimesUrl),
+    onSuccess: (_data, { runtimeName }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.runtimeMounts(runtimeName),
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.attachments() });
     },
   });
 };

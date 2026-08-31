@@ -13,6 +13,7 @@ export * from './datasources';
 export * from './dataservers';
 export * from './mcp';
 export * from './objects';
+export * from './runtimeMounts';
 export * from './operations';
 export * from './sources';
 export * from './sync';
