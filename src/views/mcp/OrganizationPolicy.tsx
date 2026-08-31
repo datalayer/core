@@ -33,16 +33,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  Flash,
-  FormControl,
-  Heading,
-  Spinner,
-  Text,
-  TextInput,
-  Textarea,
-} from '@primer/react';
+import { Button, Flash, Heading, Spinner, Text } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
@@ -52,10 +43,15 @@ import {
   useSetMcpPolicyLayer,
 } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
+import { McpPolicyConflict } from '../../api/iam/mcpPolicy';
 import {
-  McpPolicyConflict,
-  type McpPolicyRules,
-} from '../../api/iam/mcpPolicy';
+  EMPTY_POLICY_DRAFT,
+  PolicyForm,
+  draftOf,
+  policyChanged,
+  rulesFrom,
+  type PolicyDraft,
+} from './PolicyForm';
 import type { McpErrorStateFn } from './types';
 
 export interface OrganizationPolicyProps {
@@ -72,57 +68,6 @@ export interface OrganizationPolicyProps {
   showTitle?: boolean;
 }
 
-/** The form's own shape: every field a string, as a text input holds it. */
-type Draft = {
-  toolDenylist: string;
-  toolAllowlist: string;
-  allowedClients: string;
-  maxCallsPerMinute: string;
-  maxCreditsPerDay: string;
-  maxConcurrentSandboxes: string;
-};
-
-const EMPTY: Draft = {
-  toolDenylist: '',
-  toolAllowlist: '',
-  allowedClients: '',
-  maxCallsPerMinute: '',
-  maxCreditsPerDay: '',
-  maxConcurrentSandboxes: '',
-};
-
-/** A stored list as the textarea shows it: one entry a line. */
-const linesOf = (value: string[] | undefined): string =>
-  (value ?? []).join('\n');
-
-/**
- * A textarea back to a list, or `undefined` where nothing was typed.
- *
- * `undefined`, never `[]`. An empty array is a rule *set* to nothing, and
- * for an allowlist that is the difference between "I have not set one" and
- * a setting that refuses everything.
- */
-const listFrom = (value: string): string[] | undefined => {
-  const entries = value
-    .split('\n')
-    .map(entry => entry.trim())
-    .filter(Boolean);
-  return entries.length > 0 ? entries : undefined;
-};
-
-/** A number field back to a number, or `undefined` where it was left blank. */
-const numberFrom = (value: string): number | undefined => {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : undefined;
-};
-
-const textOf = (value: number | undefined): string =>
-  value === undefined || value === null ? '' : String(value);
-
 export const OrganizationPolicy = ({
   errorState,
   orgUid,
@@ -134,7 +79,7 @@ export const OrganizationPolicy = ({
   const save = useSetMcpPolicyLayer('organization', orgUid);
   const remove = useDeleteMcpPolicyLayer('organization', orgUid);
 
-  const [draft, setDraft] = useState<Draft>(EMPTY);
+  const [draft, setDraft] = useState<PolicyDraft>(EMPTY_POLICY_DRAFT);
   const [removing, setRemoving] = useState(false);
   const [conflict, setConflict] = useState('');
   const [refusal, setRefusal] = useState('');
@@ -147,17 +92,7 @@ export const OrganizationPolicy = ({
    */
   const version = layer.data?.version;
 
-  const stored = useMemo<Draft>(
-    () => ({
-      toolDenylist: linesOf(layer.data?.toolDenylist),
-      toolAllowlist: linesOf(layer.data?.toolAllowlist),
-      allowedClients: linesOf(layer.data?.allowedClients),
-      maxCallsPerMinute: textOf(layer.data?.maxCallsPerMinute),
-      maxCreditsPerDay: textOf(layer.data?.maxCreditsPerDay),
-      maxConcurrentSandboxes: textOf(layer.data?.maxConcurrentSandboxes),
-    }),
-    [layer.data],
-  );
+  const stored = useMemo(() => draftOf(layer.data), [layer.data]);
 
   // The form follows what was read, including after a conflict has been
   // resolved by re-reading: an editor still showing the losing draft is how
@@ -165,56 +100,15 @@ export const OrganizationPolicy = ({
   useEffect(() => setDraft(stored), [stored]);
 
   const changed = useMemo(
-    () => (Object.keys(EMPTY) as (keyof Draft)[]).some(key => draft[key] !== stored[key]),
+    () => policyChanged(draft, stored),
     [draft, stored],
   );
 
-  const set = (key: keyof Draft, value: string) =>
+  const set = (key: keyof PolicyDraft, value: string) =>
     setDraft(current => ({ ...current, [key]: value }));
 
-  /**
-   * The rules as they will be stored, or the reason they will not be.
-   *
-   * A cap of zero is caught *here* rather than at the write, because IAM's
-   * refusal is correct and unhelpful: somebody who typed 0 meant "stop my
-   * agents", and the answer they need is what to do instead.
-   */
-  const rulesOrRefusal = (): McpPolicyRules | string => {
-    const numbers: [keyof Draft, string][] = [
-      ['maxCallsPerMinute', 'Calls per minute'],
-      ['maxCreditsPerDay', 'Credits per day'],
-      ['maxConcurrentSandboxes', 'Sandboxes at once'],
-    ];
-    for (const [key, label] of numbers) {
-      const typed = draft[key].trim();
-      if (!typed) {
-        continue;
-      }
-      const parsed = Number(typed);
-      if (!Number.isFinite(parsed)) {
-        return `${label} must be a number, or empty for no limit.`;
-      }
-      if (parsed <= 0) {
-        return (
-          `${label} cannot be 0. A non-positive limit reads as *no limit*, ` +
-          'so a zero written to stop your agents would lift the limit ' +
-          'instead. To stop an agent, revoke its grant or deny the tools it ' +
-          'uses.'
-        );
-      }
-    }
-    return {
-      toolDenylist: listFrom(draft.toolDenylist),
-      toolAllowlist: listFrom(draft.toolAllowlist),
-      allowedClients: listFrom(draft.allowedClients),
-      maxCallsPerMinute: numberFrom(draft.maxCallsPerMinute),
-      maxCreditsPerDay: numberFrom(draft.maxCreditsPerDay),
-      maxConcurrentSandboxes: numberFrom(draft.maxConcurrentSandboxes),
-    };
-  };
-
   const apply = () => {
-    const rules = rulesOrRefusal();
+    const rules = rulesFrom(draft);
     if (typeof rules === 'string') {
       setRefusal(rules);
       return;
@@ -306,101 +200,7 @@ export const OrganizationPolicy = ({
         </Flash>
       )}
 
-      <FormControl>
-        <FormControl.Label>Denied tools</FormControl.Label>
-        <Textarea
-          block
-          rows={3}
-          disabled={readOnly}
-          value={draft.toolDenylist}
-          onChange={event => set('toolDenylist', event.target.value)}
-          placeholder={'execute_cell\ndelete_file'}
-        />
-        <FormControl.Caption>
-          One a line. A denial is added to every other layer&rsquo;s and can
-          never be lifted by one — a team cannot re-permit what you deny here.
-        </FormControl.Caption>
-      </FormControl>
-
-      <FormControl>
-        <FormControl.Label>Permitted tools</FormControl.Label>
-        <Textarea
-          block
-          rows={3}
-          disabled={readOnly}
-          value={draft.toolAllowlist}
-          onChange={event => set('toolAllowlist', event.target.value)}
-          placeholder={'read_cell\nlist_notebooks'}
-        />
-        <FormControl.Caption>
-          One a line, and everything else is refused. <strong>Leave it empty
-          to set no allowlist</strong> — empty means &ldquo;I have not set
-          one&rdquo;, not &ldquo;nothing is permitted&rdquo;, because the
-          second would stop every agent in the organization at once.
-        </FormControl.Caption>
-      </FormControl>
-
-      <FormControl>
-        <FormControl.Label>Admitted clients</FormControl.Label>
-        <Textarea
-          block
-          rows={3}
-          disabled={readOnly}
-          value={draft.allowedClients}
-          onChange={event => set('allowedClients', event.target.value)}
-          placeholder={'https://claude.ai/.well-known/mcp-client.json\ncursor.com'}
-        />
-        <FormControl.Caption>
-          A client&rsquo;s document URL, or just its hostname. Empty is not an
-          allowlist, for the same reason as above.
-        </FormControl.Caption>
-      </FormControl>
-
-      <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: ['1fr', '1fr 1fr 1fr'] }}>
-        <FormControl>
-          <FormControl.Label>Calls per minute</FormControl.Label>
-          <TextInput
-            block
-            type="number"
-            min={1}
-            disabled={readOnly}
-            value={draft.maxCallsPerMinute}
-            onChange={event => set('maxCallsPerMinute', event.target.value)}
-          />
-          <FormControl.Caption>Empty for no limit.</FormControl.Caption>
-        </FormControl>
-
-        <FormControl>
-          <FormControl.Label>Credits per day</FormControl.Label>
-          <TextInput
-            block
-            type="number"
-            min={1}
-            disabled={readOnly}
-            value={draft.maxCreditsPerDay}
-            onChange={event => set('maxCreditsPerDay', event.target.value)}
-          />
-          <FormControl.Caption>
-            Checked before a launch, never mid-session.
-          </FormControl.Caption>
-        </FormControl>
-
-        <FormControl>
-          <FormControl.Label>Sandboxes at once</FormControl.Label>
-          <TextInput
-            block
-            type="number"
-            min={1}
-            disabled={readOnly}
-            value={draft.maxConcurrentSandboxes}
-            onChange={event => set('maxConcurrentSandboxes', event.target.value)}
-          />
-          <FormControl.Caption>
-            Counted across the organization. A team&rsquo;s own limit counts
-            only that team&rsquo;s.
-          </FormControl.Caption>
-        </FormControl>
-      </Box>
+      <PolicyForm draft={draft} onChange={set} disabled={readOnly} />
 
       {!readOnly && (
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>

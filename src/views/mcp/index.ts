@@ -28,6 +28,8 @@ export * from './ConnectedAgents';
 export * from './AlertDestinations';
 export * from './AlertRules';
 export * from './OrganizationPolicy';
+export * from './PersonalPolicy';
+export * from './PolicyForm';
 export * from './ServiceAgents';
 export * from './AuditLog';
 export * from './McpObservability';
