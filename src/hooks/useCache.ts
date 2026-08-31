@@ -287,6 +287,8 @@ export const queryKeys = {
       [...queryKeys.mcp.all(), 'policy-layer', scope, subjectUid] as const,
     alertRules: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'alert-rules', orgUid] as const,
+    auditSettings: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'audit-settings', orgUid] as const,
     // Observability, over the OTEL service, keyed by the task it describes.
     trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
     // A trace named directly: a synchronous call has one and no task.

@@ -65,6 +65,11 @@ import {
 } from '../api/mcp';
 import { disconnectAgent, listConnectedAgents, type ConnectedAgent } from '../api/iam/connectedAgents';
 import {
+  getAuditSettings,
+  setAuditSettings,
+  type McpAuditSettings,
+} from '../api/iam/mcpAuditSettings';
+import {
   createAlertRule,
   deleteAlertRule,
   listAlertRules,
@@ -416,6 +421,42 @@ export const useDisconnectAgent = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.connectedAgents() });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
+    },
+  });
+};
+
+// -- Audit settings: retention, forwarding, alert destinations (IAM) --------
+
+/** One organization's settings, or `null` where it has decided nothing. */
+export const useAuditSettings = (orgUid: string, options: { enabled?: boolean } = {}) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<McpAuditSettings | null>({
+    queryKey: queryKeys.mcp.auditSettings(orgUid),
+    queryFn: () => getAuditSettings(token ?? '', orgUid, iamUrl),
+    enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+/**
+ * Change some of them. Only what is passed is sent, because IAM merges: a
+ * page editing the alert destinations must not clear a retention it never
+ * showed.
+ */
+export const useSetAuditSettings = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    McpAuditSettings,
+    Error,
+    { settings: Parameters<typeof setAuditSettings>[2]; expectedVersion?: number }
+  >({
+    mutationFn: ({ settings, expectedVersion }) =>
+      setAuditSettings(token ?? '', orgUid, settings, { expectedVersion }, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.auditSettings(orgUid) });
     },
   });
 };

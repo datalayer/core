@@ -45,6 +45,7 @@ import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { BellIcon, KebabHorizontalIcon } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
+import { AlertDestinations } from './AlertDestinations';
 import {
   useAlertRules,
   useCreateAlertRule,
@@ -401,6 +402,12 @@ export const AlertRules = ({
           )}
         </Blankslate>
       )}
+
+      <AlertDestinations
+        errorState={errorState}
+        orgUid={orgUid}
+        readOnly={readOnly}
+      />
 
       {(creating || editing) && (
         <Dialog
