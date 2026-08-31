@@ -23,7 +23,12 @@
  */
 
 import { useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   answerTask,
   cancelTask,
@@ -532,6 +537,34 @@ export const useMcpPolicyLayer = (
     queryFn: () => getMcpPolicy(token ?? '', scope, subjectUid, iamUrl),
     enabled: Boolean(token && iamUrl && subjectUid) && (options.enabled ?? true),
     staleTime: 30_000,
+  });
+};
+
+/**
+ * Several layers at once, for a page that has to compare against them all.
+ *
+ * The personal policy page needs every organization a person belongs to in
+ * order to say which of their values will have no effect. One hook per
+ * organization is not something a component can do — the count changes — so
+ * they are fetched together and answered in the order asked.
+ *
+ * A layer that could not be read comes back `null`, the same as one nobody
+ * has written. That is the safe direction here: the page would rather say
+ * nothing about narrowing than invent a cap somebody does not have.
+ */
+export const useMcpPolicyLayers = (
+  scope: McpPolicyScope,
+  subjectUids: string[],
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQueries({
+    queries: subjectUids.map(subjectUid => ({
+      queryKey: queryKeys.mcp.policyLayer(scope, subjectUid),
+      queryFn: () => getMcpPolicy(token ?? '', scope, subjectUid, iamUrl),
+      enabled: Boolean(token && iamUrl && subjectUid),
+      staleTime: 30_000,
+    })),
   });
 };
 
