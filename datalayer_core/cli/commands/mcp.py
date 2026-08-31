@@ -35,6 +35,7 @@ from datalayer_core.displays.mcp import (
     audit_events_table,
     bindings_table,
     connected_agents_table,
+    service_agents_table,
     forwarding_table,
     jobs_table,
     logs_table,
@@ -202,6 +203,124 @@ def agents_revoke(
     if _emit_machine(answer, _context(ctx)):
         return
     console.print(answer.get("message") or f"Disconnected {grant_uid}.")
+
+
+# ---------------------------------------------------------------------------
+# service agents
+# ---------------------------------------------------------------------------
+
+service_agents_app = typer.Typer(
+    name="service-agents",
+    help="Agents that belong to an organization rather than to a person.",
+)
+app.add_typer(service_agents_app)
+
+
+@service_agents_app.command(name="list")
+@mcp_command
+def service_agents_list(
+    ctx: typer.Context,
+    org_uid: str = typer.Argument(..., help="The organization."),
+) -> None:
+    """List an organization's service agents, revoked ones included."""
+    agents = _call(lambda: _client().list_service_agents(org_uid))
+    if _emit_machine(agents, _context(ctx)):
+        return
+    if not agents:
+        console.print(
+            "This organization has no service agents. "
+            "Create one with `datalayer mcp service-agents create`."
+        )
+        return
+    console.print(service_agents_table(agents))
+
+
+@service_agents_app.command(name="create")
+@mcp_command
+def service_agents_create(
+    ctx: typer.Context,
+    org_uid: str = typer.Argument(..., help="The organization it belongs to."),
+    name: str = typer.Option(..., "--name", help="What it is, for the audit."),
+    scopes: str = typer.Option(
+        ...,
+        "--scopes",
+        help=(
+            "Space-separated, from: runtimes:read runtimes:write data:read "
+            "sandboxes:manage."
+        ),
+    ),
+    description: str = typer.Option("", "--description", help="Optional."),
+    team_uid: str = typer.Option("", "--team", help="A team's rather than the organization's."),
+) -> None:
+    """Create a service agent and print its key — once.
+
+    IAM stores a hash of the key and has no way back, so this is the only
+    place it exists. Pipe it somewhere or copy it now; losing it means
+    rotating, not recovering.
+    """
+    agent = _call(
+        lambda: _client().create_service_agent(
+            org_uid,
+            name=name,
+            scopes=scopes,
+            description=description,
+            team_uid=team_uid,
+        )
+    )
+    if _emit_machine(agent, _context(ctx)):
+        return
+    console.print(f"Created service agent {agent.get('uid', '')}.")
+    console.print("")
+    console.print(agent.get("key", ""))
+    console.print("")
+    console.print(
+        "[bold]That key is shown once and cannot be shown again.[/bold] "
+        "Store it now; if you lose it, rotate."
+    )
+
+
+@service_agents_app.command(name="rotate")
+@mcp_command
+def service_agents_rotate(
+    ctx: typer.Context,
+    org_uid: str = typer.Argument(..., help="The organization."),
+    agent_uid: str = typer.Argument(..., help="From `service-agents list`."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Give the agent a new key. The old one stops working at once."""
+    if not yes and not typer.confirm(
+        f"Rotate the key of {agent_uid}? Anything still using the old key "
+        "stops working immediately."
+    ):
+        raise typer.Exit(0)
+    agent = _call(lambda: _client().rotate_service_agent_key(org_uid, agent_uid))
+    if _emit_machine(agent, _context(ctx)):
+        return
+    console.print(f"Rotated the key of {agent_uid}. The previous key no longer works.")
+    console.print("")
+    console.print(agent.get("key", ""))
+    console.print("")
+    console.print("[bold]Shown once.[/bold]")
+
+
+@service_agents_app.command(name="revoke")
+@mcp_command
+def service_agents_revoke(
+    ctx: typer.Context,
+    org_uid: str = typer.Argument(..., help="The organization."),
+    agent_uid: str = typer.Argument(..., help="From `service-agents list`."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Stop the agent. It stays listed, because its audit rows name it."""
+    if not yes and not typer.confirm(f"Revoke {agent_uid}? Its key stops working."):
+        raise typer.Exit(0)
+    agent = _call(lambda: _client().revoke_service_agent(org_uid, agent_uid))
+    if _emit_machine(agent, _context(ctx)):
+        return
+    console.print(
+        f"Revoked {agent_uid}. Its key no longer authenticates; it stays in the "
+        "list so its audit rows still resolve."
+    )
 
 
 # ---------------------------------------------------------------------------

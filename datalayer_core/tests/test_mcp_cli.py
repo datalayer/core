@@ -139,6 +139,31 @@ class Client:
     def get_mcp_run_logs(self, task_uid: str, **kwargs: Any) -> dict[str, Any]:
         return {"task_uid": task_uid, "trace_id": "abc", "records": [{"timestamp": "t", "severity_text": "INFO", "service_name": "worker", "body": "ran cell c1"}]}
 
+    def list_service_agents(self, org_uid: str) -> list[dict[str, Any]]:
+        RECORDED["listed_for"] = org_uid
+        return [
+            {
+                "uid": "01SA",
+                "name": "nightly ingest",
+                "scopes": "runtimes:read data:read",
+                "revoked": False,
+                "key_rotated_at": "2026-08-27T09:00:00Z",
+            },
+            {"uid": "01SB", "name": "retired bot", "scopes": "data:read", "revoked": True},
+        ]
+
+    def create_service_agent(self, org_uid: str, **kwargs: Any) -> dict[str, Any]:
+        RECORDED["created"] = {"org": org_uid, **kwargs}
+        return {"uid": "01SA", "key": "dla_sa_the-only-time-this-exists", **kwargs}
+
+    def rotate_service_agent_key(self, org_uid: str, agent_uid: str) -> dict[str, Any]:
+        RECORDED["rotated"] = agent_uid
+        return {"uid": agent_uid, "key": "dla_sa_a-new-one"}
+
+    def revoke_service_agent(self, org_uid: str, agent_uid: str) -> dict[str, Any]:
+        RECORDED["revoked"] = agent_uid
+        return {"uid": agent_uid, "revoked": True}
+
     def get_mcp_metrics(self, **kwargs: Any) -> dict[str, Any]:
         RECORDED["metrics_filters"] = kwargs
         return {"filters": kwargs, "metrics": {"mcp.calls": [{}]}, "spans": [], "slis": {"availability": 0.99, "p95_call_duration_ms": 120, "task_success_rate": None, "p95_sandbox_launch_seconds": {"datalayer": 4.2}, "samples": {"calls": 100, "tasks": 0, "launches": 3}}}
@@ -394,3 +419,76 @@ def test_setup_help_says_which_clients_register_by_url() -> None:
     assert "Client ID Metadata Document" in result.output
     assert "dynamic client registration" in result.output
     assert "mcp-clients/cli.json" in result.output
+
+
+def test_service_agents_list_shows_revoked_ones_marked() -> None:
+    """Revoked agents are a state, not a filter: hiding one makes it
+    invisible to whoever is deciding whether it is still needed, while its
+    audit rows still name it.
+    """
+    runner = CliRunner()
+    listed = runner.invoke(app, ["mcp", "service-agents", "list", "01ORG"])
+
+    assert listed.exit_code == 0, listed.output
+    assert "nightly ingest" in listed.output
+    assert "retired bot" in listed.output and "revoked" in listed.output
+    assert RECORDED["listed_for"] == "01ORG"
+
+
+def test_service_agents_create_prints_the_key_and_says_it_is_once() -> None:
+    """The key is in this output and in no other — IAM stores a hash. Saying
+    so is the difference between somebody storing it and somebody rotating
+    an hour later.
+    """
+    runner = CliRunner()
+    created = runner.invoke(
+        app,
+        [
+            "mcp", "service-agents", "create", "01ORG",
+            "--name", "nightly ingest",
+            "--scopes", "runtimes:read data:read",
+        ],
+    )
+
+    assert created.exit_code == 0, created.output
+    assert "dla_sa_the-only-time-this-exists" in created.output
+    assert "once" in created.output
+    assert RECORDED["created"]["name"] == "nightly ingest"
+    assert RECORDED["created"]["scopes"] == "runtimes:read data:read"
+
+
+def test_service_agents_create_emits_the_key_in_json_too() -> None:
+    """So a pipeline can capture it without scraping a sentence."""
+    runner = CliRunner()
+    created = runner.invoke(
+        app,
+        [
+            "mcp", "--output", "json", "service-agents", "create", "01ORG",
+            "--name", "bot", "--scopes", "data:read",
+        ],
+    )
+    assert json.loads(created.output)["key"] == "dla_sa_the-only-time-this-exists"
+
+
+def test_service_agents_rotate_asks_before_breaking_the_old_key() -> None:
+    runner = CliRunner()
+    declined = runner.invoke(app, ["mcp", "service-agents", "rotate", "01ORG", "01SA"], input="n\n")
+    assert "rotated" not in RECORDED
+
+    rotated = runner.invoke(app, ["mcp", "service-agents", "rotate", "01ORG", "01SA", "--yes"])
+    assert declined.exit_code == 0
+    assert rotated.exit_code == 0, rotated.output
+    assert "dla_sa_a-new-one" in rotated.output
+    assert RECORDED["rotated"] == "01SA"
+
+
+def test_service_agents_revoke_asks_first_and_says_it_stays_listed() -> None:
+    runner = CliRunner()
+    declined = runner.invoke(app, ["mcp", "service-agents", "revoke", "01ORG", "01SA"], input="n\n")
+    assert "revoked" not in RECORDED
+
+    revoked = runner.invoke(app, ["mcp", "service-agents", "revoke", "01ORG", "01SA", "--yes"])
+    assert declined.exit_code == 0
+    assert revoked.exit_code == 0, revoked.output
+    assert "audit" in revoked.output
+    assert RECORDED["revoked"] == "01SA"

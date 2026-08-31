@@ -78,6 +78,31 @@ def connected_agents_table(items: Iterable[Any], *, title: str | None = None) ->
     return table
 
 
+def service_agents_table(items: Iterable[Any], *, title: str | None = None) -> Table:
+    """One row per service agent an organization holds.
+
+    Revoked agents are shown, and marked. Hiding them would make one
+    invisible to whoever is deciding whether it is still needed, while its
+    audit rows still name it — so the state is a column rather than a filter.
+    """
+    table = Table(title=title)
+    table.add_column("Agent", style="cyan", no_wrap=True)
+    table.add_column("Name", style="cyan")
+    table.add_column("Scopes", style="cyan")
+    table.add_column("State", style="cyan")
+    table.add_column("Key rotated", style="cyan")
+    for item in items:
+        revoked = bool(_field(item, "revoked", False))
+        table.add_row(
+            _text(item, "uid"),
+            _short(_text(item, "name"), 30),
+            _short(_text(item, "scopes"), 44),
+            "[red]revoked[/red]" if revoked else "active",
+            _text(item, "key_rotated_at", "never"),
+        )
+    return table
+
+
 def tasks_table(items: Iterable[Any], *, title: str | None = None) -> Table:
     table = Table(title=title)
     table.add_column("Task", style="cyan", no_wrap=True)

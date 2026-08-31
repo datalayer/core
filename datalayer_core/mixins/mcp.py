@@ -312,6 +312,71 @@ class McpMixin:
         )
         return dict(response.json())
 
+    # Service agents (IAM) ---------------------------------------------------
+
+    def list_service_agents(self, org_uid: str) -> list[dict[str, Any]]:
+        """One organization's service agents, revoked ones included.
+
+        Revoked ones included because hiding them makes a revoked agent
+        invisible to whoever is deciding whether it is still needed, while
+        its audit rows still name it.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/organizations/{org_uid}/mcp-service-agents"), method="GET"
+        )
+        payload = response.json()
+        agents = payload.get("agents", []) if isinstance(payload, dict) else []
+        return [dict(agent) for agent in agents]
+
+    def create_service_agent(
+        self,
+        org_uid: str,
+        *,
+        name: str,
+        scopes: str | list[str],
+        description: str = "",
+        team_uid: str = "",
+    ) -> dict[str, Any]:
+        """Create a service agent. **The key is in this answer and no other.**
+
+        IAM stores a hash of it, so nothing can return it later: a caller
+        that drops it rotates rather than recovers.
+        """
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(f"/organizations/{org_uid}/mcp-service-agents"),
+            method="POST",
+            json={
+                "name": name,
+                "scopes": scopes,
+                "description": description,
+                "team_uid": team_uid,
+            },
+        )
+        payload = response.json()
+        return dict(payload.get("agent") or {})
+
+    def rotate_service_agent_key(self, org_uid: str, agent_uid: str) -> dict[str, Any]:
+        """Give the agent a new key. The old one stops working at once."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(
+                f"/organizations/{org_uid}/mcp-service-agents/{agent_uid}/rotate"
+            ),
+            method="POST",
+        )
+        payload = response.json()
+        return dict(payload.get("agent") or {})
+
+    def revoke_service_agent(self, org_uid: str, agent_uid: str) -> dict[str, Any]:
+        """Stop the agent, keeping it readable for its audit."""
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._iam_url(
+                f"/organizations/{org_uid}/mcp-service-agents/{agent_uid}/revoke"
+            ),
+            method="POST",
+        )
+        payload = response.json()
+        return dict(payload.get("agent") or {})
+
     # Observability (OTEL) ---------------------------------------------------
 
     def _otel_client(self) -> Any:
