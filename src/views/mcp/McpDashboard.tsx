@@ -75,7 +75,29 @@ export interface McpDashboardProps {
   org?: string;
   /** Drawn without its heading, when the page around it carries one. */
   showTitle?: boolean;
+  /**
+   * Which part of the page to draw, when it is drawn as tabs.
+   *
+   * The whole thing on one page is a column of tables and blankslates that
+   * a reader has to scroll past to find the one they came for; asked a
+   * section, it draws only that. `'all'` keeps the single-page reading for
+   * anywhere that still wants it.
+   *
+   * The counts stay with `'overview'` rather than repeating on each tab:
+   * they are the answer to "is anything happening", which is the question
+   * somebody has *before* choosing where to look.
+   */
+  section?: McpDashboardSection;
 }
+
+/** The parts of the dashboard, each its own tab. */
+export type McpDashboardSection =
+  | 'all'
+  | 'overview'
+  | 'agents'
+  | 'runs'
+  | 'sandboxes'
+  | 'calls';
 
 /** How a client's status is drawn. */
 const STATUS_LOOK: Record<McpClientStatus, { label: string; variant: 'success' | 'attention' | 'secondary' }> = {
@@ -175,8 +197,11 @@ export const McpDashboard = ({
   routes,
   org,
   showTitle = true,
+  section = 'all',
 }: McpDashboardProps): JSX.Element => {
   const where = { ...DEFAULT_MCP_ROUTES, ...routes };
+  /** Whether this section is being drawn — `'all'` draws every one. */
+  const draws = (name: McpDashboardSection) => section === 'all' || section === name;
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
   const activity = useMcpActivity(org ? { org } : {});
@@ -368,13 +393,6 @@ export const McpDashboard = ({
           </ActionMenu.Anchor>
           <ActionMenu.Overlay align="end">
             <ActionList>
-              <ActionList.Item
-                onSelect={() =>
-                  navigate(`${where.runs}?agent=${encodeURIComponent(row.clientId)}`)
-                }
-              >
-                Runs
-              </ActionList.Item>
               <ActionList.Item
                 onSelect={() =>
                   navigate(`${where.audit}?agent=${encodeURIComponent(row.clientId)}`)
@@ -593,7 +611,7 @@ export const McpDashboard = ({
       )}
 
       {/* Is anything happening: the counts, before the detail of it. */}
-      {loading ? (
+      {draws('overview') && (loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
           <Spinner />
         </Box>
@@ -619,10 +637,10 @@ export const McpDashboard = ({
           />
           <Count label="Credits by agents" value={data?.today.credits ?? 0} note="today" />
         </Box>
-      )}
+      ))}
 
       {/* Connected clients */}
-      {!loading &&
+      {draws('agents') && !loading &&
         (clients.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-clients">
@@ -648,7 +666,7 @@ export const McpDashboard = ({
         ))}
 
       {/* Running now — the durable tasks of milestone 2. */}
-      {!loading && (
+      {draws('runs') && !loading && (
         <Box>
           <Heading as="h3" sx={{ fontSize: 1, mb: 2 }}>
             Running now
@@ -666,7 +684,7 @@ export const McpDashboard = ({
       )}
 
       {/* Sandboxes bound */}
-      {!loading &&
+      {draws('sandboxes') && !loading &&
         (sandboxes.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-sandboxes">
@@ -691,7 +709,7 @@ export const McpDashboard = ({
         ))}
 
       {/* Recent calls */}
-      {!loading &&
+      {draws('calls') && !loading &&
         (calls.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-calls">

@@ -51,6 +51,25 @@ export interface McpHomeProps {
   /** Where the per-client manuals live; each client appends its own name. */
   clientDocsBase?: string;
   showTitle?: boolean;
+  /**
+   * Whether to draw the summary cards beneath the setup.
+   *
+   * Off where they have a page of their own. This page answers "how do I
+   * connect one", and six cards about what connected agents are *doing* sat
+   * under that question answering a different one — a reader looking for a
+   * command scrolled past them, and a reader looking for the numbers had to
+   * know they were filed under Access.
+   */
+  showSummaries?: boolean;
+  /**
+   * Whether to draw the setup half — the endpoint and the per-client cards.
+   *
+   * Off where only the summaries are wanted, which is how the MCP overview
+   * mounts this: the two halves answer different questions and now live on
+   * different tabs, and one component drawing either keeps the wording and
+   * the data of each in one place rather than two that drift.
+   */
+  showSetup?: boolean;
 }
 
 /**
@@ -152,6 +171,8 @@ export const McpHome = ({
   routes,
   clientDocsBase = '/docs/mcp-clients',
   showTitle = true,
+  showSummaries = true,
+  showSetup = true,
 }: McpHomeProps): JSX.Element => {
   const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
@@ -183,87 +204,91 @@ export const McpHome = ({
         </Box>
       )}
 
-      {/* What is going on now is one line and one link; the dashboard answers it. */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3,
-          flexWrap: 'wrap',
-          p: 3,
-          borderRadius: 2,
-          bg: 'canvas.subtle',
-          border: '1px solid',
-          borderColor: 'border.default',
-        }}
-      >
-        <Text sx={{ fontSize: 1 }}>
-          {live > 0
-            ? `${plural(live, 'client')} connected right now.`
-            : 'No client is connected right now.'}
-        </Text>
-        <Button size="small" leadingVisual={PulseIcon} onClick={() => navigate(where.dashboard)}>
-          What is going on
-        </Button>
-      </Box>
-
-      {/* The endpoint, and whether this browser is signed in to it. */}
-      <Box sx={{ display: 'grid', gap: 2 }}>
-        <Heading as="h3" sx={{ fontSize: 2 }}>
-          The endpoint
-        </Heading>
-        <Copyable text={endpoint || 'https://mcp.datalayer.run/mcp'} />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <KeyIcon size={14} />
-          <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-            {signedIn
-              ? 'You are signed in, so a client you set up from here authorizes through OAuth without a shared token.'
-              : 'Sign in to authorize a client through OAuth; without it a client can only use a personal access token.'}
-          </Text>
-        </Box>
-      </Box>
-
-      {/* One card per client: the command that writes its configuration, and
-          its manual for the format and the file it writes. */}
-      <Box sx={{ display: 'grid', gap: 2 }}>
-        <Heading as="h3" sx={{ fontSize: 2 }}>
-          Set up a client
-        </Heading>
+      {showSetup && (
+        <>
+        {/* What is going on now is one line and one link; the dashboard answers it. */}
         <Box
           sx={{
-            display: 'grid',
+            display: 'flex',
+            alignItems: 'center',
             gap: 3,
-            gridTemplateColumns: ['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)'],
+            flexWrap: 'wrap',
+            p: 3,
+            borderRadius: 2,
+            bg: 'canvas.subtle',
+            border: '1px solid',
+            borderColor: 'border.default',
           }}
         >
-          {MCP_CLIENTS.map(client => (
-            <Box
-              key={client.setup}
-              sx={{
-                p: 3,
-                border: '1px solid',
-                borderColor: 'border.default',
-                borderRadius: 2,
-                display: 'grid',
-                gap: 2,
-                minWidth: 0,
-              }}
-            >
-              <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{client.name}</Text>
-              <Copyable text={`datalayer mcp setup ${client.setup}`} />
-              <Link
-                as="button"
-                sx={{ fontSize: 0, cursor: 'pointer', textAlign: 'left' }}
-                onClick={() => navigate(`${clientDocsBase}/${client.setup}`)}
-              >
-                Configuration and authorization
-              </Link>
-            </Box>
-          ))}
+          <Text sx={{ fontSize: 1 }}>
+            {live > 0
+              ? `${plural(live, 'client')} connected right now.`
+              : 'No client is connected right now.'}
+          </Text>
+          <Button size="small" leadingVisual={PulseIcon} onClick={() => navigate(where.dashboard)}>
+            What is going on
+          </Button>
         </Box>
-      </Box>
 
-      {/* The five summaries. */}
+        {/* The endpoint, and whether this browser is signed in to it. */}
+        <Box sx={{ display: 'grid', gap: 2 }}>
+          <Heading as="h3" sx={{ fontSize: 2 }}>
+            The endpoint
+          </Heading>
+          <Copyable text={endpoint || 'https://mcp.datalayer.run/mcp'} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <KeyIcon size={14} />
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              {signedIn
+                ? 'You are signed in, so a client you set up from here authorizes through OAuth without a shared token.'
+                : 'Sign in to authorize a client through OAuth; without it a client can only use a personal access token.'}
+            </Text>
+          </Box>
+        </Box>
+
+        {/* One card per client: the command that writes its configuration, and
+            its manual for the format and the file it writes. */}
+        <Box sx={{ display: 'grid', gap: 2 }}>
+          <Heading as="h3" sx={{ fontSize: 2 }}>
+            Set up a client
+          </Heading>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 3,
+              gridTemplateColumns: ['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)'],
+            }}
+          >
+            {MCP_CLIENTS.map(client => (
+              <Box
+                key={client.setup}
+                sx={{
+                  p: 3,
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  borderRadius: 2,
+                  display: 'grid',
+                  gap: 2,
+                  minWidth: 0,
+                }}
+              >
+                <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{client.name}</Text>
+                <Copyable text={`datalayer mcp setup ${client.setup}`} />
+                <Link
+                  as="button"
+                  sx={{ fontSize: 0, cursor: 'pointer', textAlign: 'left' }}
+                  onClick={() => navigate(`${clientDocsBase}/${client.setup}`)}
+                >
+                  Configuration and authorization
+                </Link>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+        </>
+      )}
+
+      {showSummaries && (
       <Box
         sx={{
           display: 'grid',
@@ -361,6 +386,7 @@ export const McpHome = ({
           </Text>
         </Summary>
       </Box>
+      )}
     </Box>
   );
 };
