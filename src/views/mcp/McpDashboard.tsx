@@ -47,8 +47,8 @@ import { Box } from '@datalayer/primer-addons';
 import {
   ChecklistIcon,
   KebabHorizontalIcon,
+  PlayIcon,
   PlugIcon,
-  PulseIcon,
   StackIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
@@ -151,7 +151,12 @@ const PanelEmpty = ({
     </Blankslate.Visual>
     <Blankslate.Heading>{heading}</Blankslate.Heading>
     <Blankslate.Description>
-      <Text sx={{ textAlign: 'center' }}>{description}</Text>
+      {/* `as="p"`: `Text` renders a span by default, and `text-align` does
+          not apply to an inline element — the rule was here and doing
+          nothing. */}
+      <Text as="p" sx={{ textAlign: 'center', m: 0 }}>
+        {description}
+      </Text>
     </Blankslate.Description>
     {action && (
       <Button size="small" onClick={action.onClick}>
@@ -649,7 +654,7 @@ export const McpDashboard = ({
             Running now
           </Heading>
           <PanelEmpty
-            icon={PulseIcon}
+            icon={PlayIcon}
             heading="Nothing is running"
             description={
               (data?.tasks.length ?? 0) > 0
