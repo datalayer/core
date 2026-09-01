@@ -64,13 +64,14 @@ import type { McpAuditEvent } from '../../models/McpAuditEvent';
 import type { McpBinding } from '../../models/McpBinding';
 import { clientStatusOf, durationLabel, plural, timeAgo } from './format';
 import type { McpClientStatus } from './format';
-import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
+import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export interface McpDashboardProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
   /** Where the surfaces this page links to live. */
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** An owner's view of one organization, rather than the caller's own. */
   org?: string;
   /** Drawn without its heading, when the page around it carries one. */
@@ -198,7 +199,6 @@ export const McpDashboard = ({
   showTitle = true,
   section,
 }: McpDashboardProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   /** Whether this section is the one being drawn. */
   const draws = (name: McpDashboardSection) => section === name;
   const navigate = useNavigate();
@@ -274,15 +274,15 @@ export const McpDashboard = ({
       }
     }
     const search = parameters.toString();
-    return search ? `${where.audit}?${search}` : where.audit;
+    return search ? `${routes.audit}?${search}` : routes.audit;
   };
 
   const traceFor = (call: McpAuditEvent): string | null => {
     if (call.taskId) {
-      return `${where.observability}?task=${encodeURIComponent(call.taskId)}`;
+      return `${routes.observability}?task=${encodeURIComponent(call.taskId)}`;
     }
     if (call.traceId) {
-      return `${where.observability}?trace=${encodeURIComponent(call.traceId)}`;
+      return `${routes.observability}?trace=${encodeURIComponent(call.traceId)}`;
     }
     return null;
   };
@@ -394,7 +394,7 @@ export const McpDashboard = ({
             <ActionList>
               <ActionList.Item
                 onSelect={() =>
-                  navigate(`${where.audit}?agent=${encodeURIComponent(row.clientId)}`)
+                  navigate(`${routes.audit}?agent=${encodeURIComponent(row.clientId)}`)
                 }
               >
                 Audit
@@ -660,7 +660,7 @@ export const McpDashboard = ({
             icon={PlugIcon}
             heading="No client connected"
             description="Connect Claude Code, Codex, Cursor, VS Code or any MCP client to your workspace, and it appears here on its first call."
-            action={{ label: 'Set up a client', onClick: () => navigate(where.access) }}
+            action={{ label: 'Set up a client', onClick: () => navigate(routes.access) }}
           />
         ))}
 
@@ -777,7 +777,7 @@ export const McpDashboard = ({
             icon={ChecklistIcon}
             heading="No call yet"
             description="Ask your agent to list your notebooks. The call, its decision and its outcome land here and in the audit log."
-            action={{ label: 'Open the audit log', onClick: () => navigate(where.audit) }}
+            action={{ label: 'Open the audit log', onClick: () => navigate(routes.audit) }}
           />
         ))}
 
@@ -786,7 +786,7 @@ export const McpDashboard = ({
           <Button
             size="small"
             leadingVisual={TelescopeIcon}
-            onClick={() => navigate(where.observability)}
+            onClick={() => navigate(routes.observability)}
           >
             Observability
           </Button>

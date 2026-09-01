@@ -61,12 +61,13 @@ import { useNavigate, useToast } from '../../hooks';
 import type { McpAuditFilters } from '../../api/mcp';
 import type { McpAuditEvent, McpAuditExportFormat } from '../../models/McpAuditEvent';
 import { durationLabel } from './format';
-import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
+import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export interface AuditLogProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** The filters, exactly as the address holds them. */
   filters: McpAuditFilters;
   /** Asked to write a new set of filters into the address. */
@@ -111,7 +112,6 @@ export const AuditLog = ({
   showTitle = true,
   subject = 'your agents',
 }: AuditLogProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
   const page = useAuditEvents({ limit: PAGE_SIZE, ...filters });
@@ -292,7 +292,7 @@ export const AuditLog = ({
               outcome. Connect a client and ask it to list your notebooks.
             </Text>
           </Blankslate.Description>
-          <Button size="small" onClick={() => navigate(where.access)}>
+          <Button size="small" onClick={() => navigate(routes.access)}>
             Connect an agent
           </Button>
         </Blankslate>
@@ -452,7 +452,7 @@ export const AuditLog = ({
               {open.taskId && (
                 <Button
                   size="small"
-                  onClick={() => navigate(`${where.runs}/${encodeURIComponent(open.taskId!)}`)}
+                  onClick={() => navigate(`${routes.runs}/${encodeURIComponent(open.taskId!)}`)}
                 >
                   The run
                 </Button>
@@ -462,7 +462,7 @@ export const AuditLog = ({
                   size="small"
                   onClick={() =>
                     navigate(
-                      `${where.observability}?trace=${encodeURIComponent(open.traceId!)}`,
+                      `${routes.observability}?trace=${encodeURIComponent(open.traceId!)}`,
                     )
                   }
                 >

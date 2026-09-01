@@ -52,6 +52,21 @@ export type McpErrorStateFn = (error: unknown, subject: string) => McpErrorState
  * A view links onward — a call to its audit row, an agent to its runs — and
  * must not invent the addresses; the application owns its routing.
  */
+/**
+ * Where an application puts the surfaces these views link to.
+ *
+ * Required at every mount, with no defaults. There were defaults, naming the
+ * layout the web application had when these views were written — the audit at
+ * `/audit`, the runs at `/runs`. The application moved them under `/mcp`, and
+ * every view mounted without `routes` went on linking to the old addresses:
+ * the page rendered, the links looked right, and clicking one left the tabs
+ * or landed on a route that had stopped existing.
+ *
+ * That was found four separate times by clicking, and fixed four times by
+ * eye. A default here is a wrong answer that looks like a right one, so
+ * there is none: an application that mounts these says where its own pages
+ * are, or it does not compile.
+ */
 export interface McpRoutes {
   /** The dashboard: what the connected clients are doing right now. */
   dashboard: string;
@@ -69,13 +84,3 @@ export interface McpRoutes {
   policies: string;
 }
 
-/** The application's routes, as the web application places them today. */
-export const DEFAULT_MCP_ROUTES: McpRoutes = {
-  dashboard: '/mcp',
-  access: '/access/mcp',
-  audit: '/audit',
-  runs: '/runs',
-  observability: '/access/mcp/observability',
-  agents: '/settings/agents',
-  policies: '/settings/policies',
-};

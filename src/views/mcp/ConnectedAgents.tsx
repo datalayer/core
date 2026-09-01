@@ -36,12 +36,13 @@ import { ClientBadge, McpErrorBlankslate, ScopeList } from '../../components/mcp
 import { useConnectedAgents, useDisconnectAgent } from '../../hooks/useMcp';
 import { useNavigate, useToast } from '../../hooks';
 import type { ConnectedAgent } from '../../api/iam/connectedAgents';
-import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
+import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export interface ConnectedAgentsProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** Drawn without its heading, when the page around it carries one. */
   showTitle?: boolean;
   /**
@@ -59,7 +60,6 @@ export const ConnectedAgents = ({
   showTitle = true,
   readOnly = false,
 }: ConnectedAgentsProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
   const agents = useConnectedAgents();
@@ -169,14 +169,14 @@ export const ConnectedAgents = ({
             <ActionList>
               <ActionList.Item
                 onSelect={() =>
-                  navigate(`${where.runs}?agent=${encodeURIComponent(row.clientId)}`)
+                  navigate(`${routes.runs}?agent=${encodeURIComponent(row.clientId)}`)
                 }
               >
                 Runs
               </ActionList.Item>
               <ActionList.Item
                 onSelect={() =>
-                  navigate(`${where.audit}?agent=${encodeURIComponent(row.clientId)}`)
+                  navigate(`${routes.audit}?agent=${encodeURIComponent(row.clientId)}`)
                 }
               >
                 Audit
@@ -250,7 +250,7 @@ export const ConnectedAgents = ({
               appears here and can be revoked from here.
             </Text>
           </Blankslate.Description>
-          <Button size="small" onClick={() => navigate(where.access)}>
+          <Button size="small" onClick={() => navigate(routes.access)}>
             Connect an agent
           </Button>
         </Blankslate>

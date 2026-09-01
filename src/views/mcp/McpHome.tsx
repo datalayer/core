@@ -44,10 +44,11 @@ import { useConnectedAgents, useMcpActivity, useMcpMetrics, useTasks } from '../
 import { useNavigate } from '../../hooks';
 import { useCoreStore, useIAMStore } from '../../state';
 import { plural, timeAgo } from './format';
-import { DEFAULT_MCP_ROUTES, type McpRoutes } from './types';
+import { type McpRoutes } from './types';
 
 export interface McpHomeProps {
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** Where the per-client manuals live; each client appends its own name. */
   clientDocsBase?: string;
   showTitle?: boolean;
@@ -210,7 +211,6 @@ export const McpHome = ({
   showSetup = true,
   onOpenDocs,
 }: McpHomeProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
   const endpoint = useCoreStore(state => state.configuration.jupyterMcpServerUrl);
   // Whether there is a token, never what it is: this page shows an address
@@ -261,7 +261,7 @@ export const McpHome = ({
               ? `${plural(live, 'client')} connected right now.`
               : 'No client is connected right now.'}
           </Text>
-          <Button size="small" leadingVisual={PulseIcon} onClick={() => navigate(where.dashboard)}>
+          <Button size="small" leadingVisual={PulseIcon} onClick={() => navigate(routes.dashboard)}>
             What is going on
           </Button>
         </Box>
@@ -345,7 +345,7 @@ export const McpHome = ({
         <Summary
           icon={PlugIcon}
           title="Agents"
-          action={{ label: 'Connected agents', onClick: () => navigate(where.agents) }}
+          action={{ label: 'Connected agents', onClick: () => navigate(routes.agents) }}
         >
           {connected.length === 0 ? (
             <Text>
@@ -368,7 +368,7 @@ export const McpHome = ({
         <Summary
           icon={PulseIcon}
           title="Runs"
-          action={{ label: 'All runs', onClick: () => navigate(where.runs) }}
+          action={{ label: 'All runs', onClick: () => navigate(routes.runs) }}
         >
           {runs.length === 0 ? (
             <Text>
@@ -387,7 +387,7 @@ export const McpHome = ({
         <Summary
           icon={TelescopeIcon}
           title="Observability"
-          action={{ label: 'Runs and metrics', onClick: () => navigate(where.observability) }}
+          action={{ label: 'Runs and metrics', onClick: () => navigate(routes.observability) }}
         >
           <Text>
             {metrics.data?.slis.samples.calls
@@ -425,7 +425,7 @@ export const McpHome = ({
         <Summary
           icon={KeyIcon}
           title="Policies"
-          action={{ label: 'What applies', onClick: () => navigate(where.policies) }}
+          action={{ label: 'What applies', onClick: () => navigate(routes.policies) }}
         >
           <Text>
             What your agents are allowed to do, and which layer decided each rule.

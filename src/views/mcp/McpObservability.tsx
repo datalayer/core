@@ -50,14 +50,15 @@ import { useNavigate } from '../../hooks';
 import { MCP_METRIC_CATALOG } from '../../api/mcp';
 import type { McpSpanNode } from '../../api/mcp';
 import { durationLabel } from './format';
-import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
+import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export type McpObservabilityPane = 'runs' | 'metrics';
 
 export interface McpObservabilityProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** Which pane is open; the address owns it. */
   pane: McpObservabilityPane;
   onPaneChange: (pane: McpObservabilityPane) => void;
@@ -179,7 +180,6 @@ export const McpObservability = ({
   org,
   showTitle = true,
 }: McpObservabilityProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
   const [find, setFind] = useState(taskUid ?? traceId ?? '');
 
@@ -198,7 +198,7 @@ export const McpObservability = ({
       <Text
         as="span"
         sx={{ color: 'accent.fg', cursor: 'pointer' }}
-        onClick={() => navigate(where.audit)}
+        onClick={() => navigate(routes.audit)}
       >
         the audit log
       </Text>{' '}
@@ -281,7 +281,7 @@ export const McpObservability = ({
                   and the worker appear with the time each took.
                 </Text>
               </Blankslate.Description>
-              <Button size="small" onClick={() => navigate(where.audit)}>
+              <Button size="small" onClick={() => navigate(routes.audit)}>
                 Open the audit log
               </Button>
             </Blankslate>
@@ -321,7 +321,7 @@ export const McpObservability = ({
                   size="small"
                   onClick={() =>
                     navigate(
-                      `${where.audit}?trace=${encodeURIComponent(run.data?.traceId ?? '')}`,
+                      `${routes.audit}?trace=${encodeURIComponent(run.data?.traceId ?? '')}`,
                     )
                   }
                 >

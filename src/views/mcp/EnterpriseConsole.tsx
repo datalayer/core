@@ -66,7 +66,7 @@ import { TeamPolicies } from './TeamPolicies';
 import { OrganizationPolicy } from './OrganizationPolicy';
 import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
-import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
+import { type McpErrorStateFn, type McpRoutes } from './types';
 
 /** The pages milestone 1 carries. */
 export type EnterpriseConsolePage =
@@ -136,7 +136,8 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
 export interface EnterpriseConsoleProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** The organization this console is of. */
   organization: { uid: string; handle: string; name?: string };
   /** The roles the signed-in person holds in this organization. */
@@ -207,7 +208,6 @@ export const EnterpriseConsole = ({
   observabilityTrace,
   onObservabilitySelect,
 }: EnterpriseConsoleProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
   const allowed = pagesForRoles(roles);
@@ -304,7 +304,7 @@ export const EnterpriseConsole = ({
             size="small"
             onClick={() =>
               navigate(
-                `${where.audit}?org=${encodeURIComponent(organization.uid)}&agent=${encodeURIComponent(row.clientId)}`,
+                `${routes.audit}?org=${encodeURIComponent(organization.uid)}&agent=${encodeURIComponent(row.clientId)}`,
               )
             }
           >

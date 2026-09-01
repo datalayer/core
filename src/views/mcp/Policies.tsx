@@ -35,12 +35,13 @@ import { McpErrorBlankslate } from '../../components/mcp';
 import { useEffectivePolicy } from '../../hooks/useMcp';
 import { useNavigate } from '../../hooks';
 import type { McpEffectivePolicy, McpPolicyLayer, McpPolicyRule, McpToolRule } from '../../models/McpPolicy';
-import { DEFAULT_MCP_ROUTES, type McpErrorStateFn, type McpRoutes } from './types';
+import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export interface PoliciesProps {
   /** The application's words for a failed request. */
   errorState: McpErrorStateFn;
-  routes?: Partial<McpRoutes>;
+  /** Where this application puts the surfaces this view links to. */
+  routes: McpRoutes;
   /** The organization whose name a row can carry, when the token has one. */
   organizationName?: string;
   showTitle?: boolean;
@@ -184,7 +185,6 @@ export const Policies = ({
   organizationName,
   showTitle = true,
 }: PoliciesProps): JSX.Element => {
-  const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
   const policy = useEffectivePolicy();
 
@@ -253,7 +253,7 @@ export const Policies = ({
           <Link
             as="button"
             sx={{ cursor: 'pointer' }}
-            onClick={() => navigate(where.access)}
+            onClick={() => navigate(routes.access)}
           >
             Set up a client
           </Link>
