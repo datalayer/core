@@ -26,13 +26,13 @@
  * @module views/mcp/Policies
  */
 
-import { useMemo } from 'react';
-import { Heading, Label, Link, Spinner, Text } from '@primer/react';
+import { useMemo, useState } from 'react';
+import { Heading, Label, Link, Select, Spinner, Text } from '@primer/react';
 import { Blankslate, Table } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { ShieldCheckIcon } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
-import { useEffectivePolicy } from '../../hooks/useMcp';
+import { useConnectedAgents, useEffectivePolicy } from '../../hooks/useMcp';
 import { useNavigate } from '../../hooks';
 import type { McpEffectivePolicy, McpPolicyLayer, McpPolicyRule, McpToolRule } from '../../models/McpPolicy';
 import { type McpErrorStateFn, type McpRoutes } from './types';
@@ -46,6 +46,26 @@ export interface PoliciesProps {
   organizationName?: string;
   showTitle?: boolean;
 }
+
+/**
+ * The agent a preview is taken as, or nothing for the reader's own token.
+ *
+ * Empty is the reader's own, which is the default and the honest one: the
+ * table answers "what applies to me" until somebody asks otherwise.
+ */
+export type PolicyPreviewAgent = string;
+
+/**
+ * The filter for a preview choice.
+ *
+ * A blank choice is *nobody*, not an agent whose client id is the empty
+ * string: sent as a filter that matches nothing, and a table that renders
+ * empty looks like a policy that grants nothing rather than a query that
+ * asked for no one.
+ */
+export const policyFiltersOf = (previewAs: PolicyPreviewAgent) => ({
+  agent: previewAs.trim() || undefined,
+});
 
 /** How each layer is named on a row, in the reader's terms. */
 export const layerLabel = (layer: McpPolicyLayer, organizationName?: string): string => {
@@ -186,7 +206,17 @@ export const Policies = ({
   showTitle = true,
 }: PoliciesProps): JSX.Element => {
   const navigate = useNavigate();
-  const policy = useEffectivePolicy();
+  // Whose policy is being read. Empty is the reader's own.
+  //
+  // The layers differ per agent — a client admitted by one organization and
+  // not another, a scope one grant carries and the next does not — so "what
+  // applies" has no single answer once somebody has connected more than one
+  // agent. Without this the page answered for the reader's own token and
+  // said nothing about which, which is the answer to a question nobody
+  // asked.
+  const [previewAs, setPreviewAs] = useState<PolicyPreviewAgent>('');
+  const agents = useConnectedAgents();
+  const policy = useEffectivePolicy(policyFiltersOf(previewAs).agent);
 
   const rows = useMemo(() => {
     const effective: McpEffectivePolicy | undefined = policy.data;
@@ -228,8 +258,42 @@ export const Policies = ({
             Policies
           </Heading>
           <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-            What applies to your agents, and which layer decided it.
+            {previewAs
+              ? 'What applies to this agent, and which layer decided it.'
+              : 'What applies to your agents, and which layer decided it.'}
           </Text>
+        </Box>
+      )}
+
+      {/* Whose policy this is.
+ 
+          Shown only when there is more than one answer: with a single
+          connected agent the reader's own token and that agent see the same
+          layers, and a picker offering one option is a control that asks a
+          question it already knows the answer to. */}
+      {(agents.data?.length ?? 0) > 1 && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Preview as</Text>
+          <Box sx={{ minWidth: '18rem' }}>
+            <Select
+              value={previewAs}
+              onChange={event => setPreviewAs(event.target.value)}
+              aria-label="Preview the policy as"
+            >
+              <Select.Option value="">You — your own token</Select.Option>
+              {(agents.data ?? []).map(agent => (
+                <Select.Option key={agent.uid} value={agent.clientId}>
+                  {agent.clientName || agent.clientId}
+                </Select.Option>
+              ))}
+            </Select>
+          </Box>
+          {previewAs && (
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              A grant carries its own scopes and its own admitted clients, so
+              this can differ from what applies to you.
+            </Text>
+          )}
         </Box>
       )}
 
