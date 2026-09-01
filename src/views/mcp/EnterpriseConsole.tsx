@@ -63,6 +63,7 @@ import { AuditLog } from './AuditLog';
 import { McpObservability, type McpObservabilityPane } from './McpObservability';
 import { AlertRules } from './AlertRules';
 import { TeamPolicies } from './TeamPolicies';
+import { OrganizationUsage } from './OrganizationUsage';
 import { OrganizationPolicy } from './OrganizationPolicy';
 import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
@@ -71,6 +72,7 @@ import { type McpErrorStateFn, type McpRoutes } from './types';
 /** The pages milestone 1 carries. */
 export type EnterpriseConsolePage =
   | 'overview'
+  | 'usage'
   | 'agents'
   | 'service-agents'
   | 'policy'
@@ -84,6 +86,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
   label: string;
 }[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'usage', label: 'Usage' },
   { id: 'agents', label: 'Agents' },
   { id: 'service-agents', label: 'Service Agents' },
   { id: 'policy', label: 'Policy' },
@@ -98,6 +101,7 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
   if (roles.includes('organization_owner')) {
     return [
       'overview',
+      'usage',
       'agents',
       'service-agents',
       'policy',
@@ -128,7 +132,10 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
     ];
   }
   if (roles.includes('organization_usage_reviewer')) {
-    return ['overview'];
+    // The page the role is named for. It saw only the Overview, which counts
+    // runs and refusals and says nothing about a limit — a usage reviewer
+    // with no usage page had nothing to review.
+    return ['overview', 'usage'];
   }
   return [];
 };
@@ -474,6 +481,14 @@ export const EnterpriseConsole = ({
             </Box>
           </Box>
         ))}
+
+      {current === 'usage' && (
+        <OrganizationUsage
+          errorState={errorState}
+          orgUid={organization.uid}
+          showTitle={false}
+        />
+      )}
 
       {current === 'teams' && (
         <TeamPolicies

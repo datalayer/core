@@ -41,6 +41,7 @@ import {
   getGatewayVersion,
   getMcpActivity,
   getOrganizationMcpOverview,
+  getOrganizationMcpUsage,
   getTask,
   getWorkflowsHealth,
   isMcpTaskTerminal,
@@ -59,6 +60,7 @@ import {
   type McpMetricsFilters,
   type McpMetricsSnapshot,
   type McpOrganizationOverview,
+  type McpOrganizationUsage,
   type McpOrganizationOverviewFilters,
   type McpPolicyFilters,
   type McpRunLogs,
@@ -410,6 +412,29 @@ export const useOrgMcpOverview = (
   return useQuery<McpOrganizationOverview>({
     queryKey: queryKeys.mcp.orgOverview(orgUid ?? '', filters),
     queryFn: () => getOrganizationMcpOverview(token ?? '', orgUid!, filters, mcpUrl),
+    enabled: Boolean(token && mcpUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 60_000,
+  });
+};
+
+/**
+ * The organization's use against its quotas, and which agents spent it.
+ *
+ * Kept for a minute like the overview, and for the same reason: an
+ * administrator reads it, acts, and comes back. A budget that re-asked every
+ * ten seconds would cost IAM a ledger query for a number that moves in
+ * credits, not in milliseconds.
+ */
+export const useOrgMcpUsage = (
+  orgUid?: string,
+  filters: McpOrganizationOverviewFilters = {},
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const mcpUrl = useMcpServerUrl();
+  return useQuery<McpOrganizationUsage>({
+    queryKey: queryKeys.mcp.orgUsage(orgUid ?? '', filters),
+    queryFn: () => getOrganizationMcpUsage(token ?? '', orgUid!, filters, mcpUrl),
     enabled: Boolean(token && mcpUrl && orgUid) && (options.enabled ?? true),
     staleTime: 60_000,
   });

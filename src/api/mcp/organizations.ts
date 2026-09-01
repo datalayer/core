@@ -97,3 +97,72 @@ export const getOrganizationMcpOverview = async (
       token,
     }),
   );
+
+/** One quota: what may be used, what is, and the share of the two.
+ *
+ * `used` is `null` where the figure could not be read, with `unknown` saying
+ * why. Absent and unreadable look identical in a dashboard — no number
+ * beside a heading — and mean opposite things: one is "no limit set", the
+ * other is "we cannot tell you what your limit is".
+ */
+export interface McpQuota {
+  limit?: number | null;
+  used?: number | null;
+  /** `used / limit`, computed by the gateway so a page and an alert cannot
+   * divide differently. */
+  fraction?: number | null;
+  /** Why the figure could not be read. Present only when it could not. */
+  unknown?: string;
+}
+
+/** What one agent spent of the day's credits. */
+export interface McpAgentSpend {
+  /** The MCP client it connected as, e.g. `claude`. Empty for a service
+   * agent reaching Runtimes through the gateway. */
+  clientId: string;
+  /** The service agent's uid, where it is one. */
+  agentUid: string;
+  credits: number;
+  /** Usage records behind the figure. */
+  records: number;
+}
+
+export interface McpOrganizationUsage {
+  orgUid: string;
+  teamUid?: string | null;
+  window: { seconds: number };
+  quotas: {
+    creditsPerDay?: McpQuota;
+    concurrentSandboxes?: McpQuota;
+    callsPerMinute?: McpQuota;
+  };
+  /** Which agents the day's credits went to, biggest spender first. Empty
+   * where the total could not be read — the parts under an unreadable whole
+   * make every agent look cheap. */
+  byAgent: McpAgentSpend[];
+  /** Where a limit is changed, which is not here. */
+  setAt: string;
+}
+
+/**
+ * One organization's use against its quotas, and who spent it.
+ *
+ * Never throws for a figure it could not read: this is a page somebody opens
+ * when something is wrong, and the half of it that works is worth more than
+ * an error saying one number was unavailable.
+ */
+export const getOrganizationMcpUsage = async (
+  token: string,
+  orgUid: string,
+  filters: McpOrganizationOverviewFilters = {},
+  baseUrl: string = DEFAULT_SERVICE_URLS.JUPYTER_MCP_SERVER,
+): Promise<McpOrganizationUsage> =>
+  fromWire<McpOrganizationUsage>(
+    await requestDatalayerAPI({
+      url: mcpUrl(baseUrl, `/organizations/${encodeURIComponent(orgUid)}/usage`, {
+        team: filters.team,
+      }),
+      method: 'GET',
+      token,
+    }),
+  );

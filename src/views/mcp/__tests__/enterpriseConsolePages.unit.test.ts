@@ -56,8 +56,26 @@ describe('the console’s pages', () => {
     expect(pagesForRoles(AUDITOR)).not.toContain('agents');
   });
 
-  it('gives a usage reviewer the overview and nothing else', () => {
-    expect(pagesForRoles(REVIEWER)).toEqual(['overview']);
+  it('gives a usage reviewer the page their role is named for', () => {
+    // The role existed with no usage page behind it: a reviewer was sent to
+    // the Overview, which counts runs and refusals and says nothing about a
+    // limit.
+    expect(pagesForRoles(REVIEWER)).toContain('usage');
+  });
+
+  it('gives a usage reviewer nothing beyond the two', () => {
+    expect(pagesForRoles(REVIEWER).slice().sort()).toEqual(['overview', 'usage']);
+  });
+
+  it('does not let a usage reviewer read the audit', () => {
+    // Who spent what is not who did what. A spend reviewer has no business
+    // in the record of every call.
+    expect(pagesForRoles(REVIEWER)).not.toContain('audit');
+  });
+
+  it('has Usage as a page of its own', () => {
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    expect(ids).toContain('usage');
   });
 
   it('gives somebody with no role in the organization nothing', () => {

@@ -36,4 +36,5 @@ export * from './ServiceAgents';
 export * from './AuditLog';
 export * from './McpObservability';
 export * from './Policies';
+export * from './OrganizationUsage';
 export * from './EnterpriseConsole';

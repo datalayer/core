@@ -307,6 +307,8 @@ export const queryKeys = {
     // The Enterprise console: one answer per organization, narrowed by team.
     orgOverview: (orgUid: string, filters?: object) =>
       [...queryKeys.mcp.all(), 'organizations', orgUid, 'overview', filters ?? {}] as const,
+    orgUsage: (orgUid: string, filters?: object) =>
+      [...queryKeys.mcp.all(), 'organizations', orgUid, 'usage', filters ?? {}] as const,
   },
 
   // Authentication & Profile
