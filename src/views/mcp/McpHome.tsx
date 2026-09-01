@@ -70,6 +70,19 @@ export interface McpHomeProps {
    * the data of each in one place rather than two that drift.
    */
   showSetup?: boolean;
+  /**
+   * Open a documentation page beside this view rather than navigating to it.
+   *
+   * Given, a client's "Configuration and authorization" opens the panel the
+   * application already has; not given, it navigates as before. Reading how
+   * to configure Cursor should not mean losing the endpoint, the other
+   * clients and the command that were on screen — the page you are reading
+   * about is the page you just left.
+   *
+   * A callback rather than the store itself: this view knows a documentation
+   * *path* and nothing about how the application shows one.
+   */
+  onOpenDocs?: (path: string) => void;
 }
 
 /**
@@ -173,6 +186,7 @@ export const McpHome = ({
   showTitle = true,
   showSummaries = true,
   showSetup = true,
+  onOpenDocs,
 }: McpHomeProps): JSX.Element => {
   const where = { ...DEFAULT_MCP_ROUTES, ...routes };
   const navigate = useNavigate();
@@ -275,9 +289,24 @@ export const McpHome = ({
                 <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{client.name}</Text>
                 <Copyable text={`datalayer mcp setup ${client.setup}`} />
                 <Link
-                  as="button"
+                  href={`${clientDocsBase}/${client.setup}`}
                   sx={{ fontSize: 0, cursor: 'pointer', textAlign: 'left' }}
-                  onClick={() => navigate(`${clientDocsBase}/${client.setup}`)}
+                  onClick={event => {
+                    // A modified click is the reader asking for a new tab or
+                    // window, and `href` is real so it still leads to the
+                    // full page — for that, for the status bar and for the
+                    // context menu.
+                    if (event.metaKey || event.ctrlKey || event.shiftKey) {
+                      return;
+                    }
+                    event.preventDefault();
+                    const path = `${clientDocsBase}/${client.setup}`;
+                    if (onOpenDocs) {
+                      onOpenDocs(path);
+                      return;
+                    }
+                    navigate(path);
+                  }}
                 >
                   Configuration and authorization
                 </Link>
