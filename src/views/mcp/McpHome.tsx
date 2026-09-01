@@ -73,22 +73,37 @@ export interface McpHomeProps {
   /**
    * Open a documentation page beside this view rather than navigating to it.
    *
-   * Given, a client's "Configuration and authorization" opens the panel the
-   * application already has; not given, it navigates as before. Reading how
-   * to configure Cursor should not mean losing the endpoint, the other
-   * clients and the command that were on screen — the page you are reading
-   * about is the page you just left.
+   * A client's "Configuration and authorization" opens the panel the
+   * application has rather than navigating: reading how to configure Cursor
+   * should not mean losing the endpoint, the other clients and the command
+   * that were on screen — the page you are reading about is the page you
+   * just left.
    *
-   * A callback rather than the store itself: this view knows a documentation
-   * *path* and nothing about how the application shows one.
+   * Required, and a callback rather than the store itself: this view knows a
+   * documentation *path* and nothing about how an application shows one. An
+   * optional one would mean a second behaviour nobody chose, kept alive by
+   * whichever caller forgot to pass it.
    */
-  onOpenDocs?: (path: string) => void;
+  onOpenDocs: (path: string) => void;
 }
 
 /**
  * The clients the documentation carries a page for, in the order it lists
  * them, with the name `datalayer mcp setup` takes.
  */
+/**
+ * The command that writes a client's configuration.
+ *
+ * One function rather than the string written wherever it is shown. It is
+ * shown in two places that must not disagree — the Access view and the
+ * documentation page for each client — and a command a reader copies from
+ * the documentation that differs by a word from the one the interface shows
+ * is worse than either alone: it is two answers to "what do I run", and no
+ * way to tell which is current.
+ */
+export const mcpSetupCommand = (client: string): string =>
+  `datalayer mcp setup ${client}`;
+
 export const MCP_CLIENTS: { name: string; setup: string }[] = [
   { name: 'Claude Code', setup: 'claude-code' },
   { name: 'Claude Desktop', setup: 'claude-desktop' },
@@ -99,7 +114,14 @@ export const MCP_CLIENTS: { name: string; setup: string }[] = [
   { name: 'Cline', setup: 'cline' },
 ];
 
-const Copyable = ({ text }: { text: string }): JSX.Element => {
+/**
+ * A line of text with the button that copies it.
+ *
+ * Exported so the documentation shows a command the same way this view
+ * does: a reader who has seen one and then the other should not have to
+ * work out whether they are the same affordance.
+ */
+export const Copyable = ({ text }: { text: string }): JSX.Element => {
   const [copied, setCopied] = useState(false);
   return (
     <Box
@@ -287,7 +309,7 @@ export const McpHome = ({
                 }}
               >
                 <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{client.name}</Text>
-                <Copyable text={`datalayer mcp setup ${client.setup}`} />
+                <Copyable text={mcpSetupCommand(client.setup)} />
                 <Link
                   href={`${clientDocsBase}/${client.setup}`}
                   sx={{ fontSize: 0, cursor: 'pointer', textAlign: 'left' }}
@@ -300,12 +322,7 @@ export const McpHome = ({
                       return;
                     }
                     event.preventDefault();
-                    const path = `${clientDocsBase}/${client.setup}`;
-                    if (onOpenDocs) {
-                      onOpenDocs(path);
-                      return;
-                    }
-                    navigate(path);
+                    onOpenDocs(`${clientDocsBase}/${client.setup}`);
                   }}
                 >
                   Configuration and authorization

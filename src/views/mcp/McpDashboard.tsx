@@ -76,23 +76,22 @@ export interface McpDashboardProps {
   /** Drawn without its heading, when the page around it carries one. */
   showTitle?: boolean;
   /**
-   * Which part of the page to draw, when it is drawn as tabs.
+   * Which part of the page to draw.
    *
-   * The whole thing on one page is a column of tables and blankslates that
-   * a reader has to scroll past to find the one they came for; asked a
-   * section, it draws only that. `'all'` keeps the single-page reading for
-   * anywhere that still wants it.
+   * Required, and there is no "draw everything": the whole thing on one page
+   * was a column of tables and blankslates a reader scrolled past to find
+   * the one they came for. Each part is a tab now, and a caller that has not
+   * decided which one it wants has not decided what it is showing.
    *
-   * The counts stay with `'overview'` rather than repeating on each tab:
-   * they are the answer to "is anything happening", which is the question
-   * somebody has *before* choosing where to look.
+   * The counts belong to `'overview'` rather than repeating on each tab:
+   * they answer "is anything happening", which is the question somebody has
+   * *before* choosing where to look.
    */
-  section?: McpDashboardSection;
+  section: McpDashboardSection;
 }
 
 /** The parts of the dashboard, each its own tab. */
 export type McpDashboardSection =
-  | 'all'
   | 'overview'
   | 'agents'
   | 'runs'
@@ -197,11 +196,11 @@ export const McpDashboard = ({
   routes,
   org,
   showTitle = true,
-  section = 'all',
+  section,
 }: McpDashboardProps): JSX.Element => {
   const where = { ...DEFAULT_MCP_ROUTES, ...routes };
-  /** Whether this section is being drawn — `'all'` draws every one. */
-  const draws = (name: McpDashboardSection) => section === 'all' || section === name;
+  /** Whether this section is the one being drawn. */
+  const draws = (name: McpDashboardSection) => section === name;
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
   const activity = useMcpActivity(org ? { org } : {});
