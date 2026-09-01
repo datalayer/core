@@ -95,6 +95,24 @@ export const ALERT_CONDITIONS: {
       'slice; Test says so straight away.',
     measurable: true,
   },
+  {
+    name: 'sandbox.lost',
+    label: 'Sandboxes lost',
+    help:
+      'Sessions whose sandbox was found gone. Relaunched ones count: a ' +
+      'provider losing sandboxes steadily and quietly relaunching them is ' +
+      'invisible from the outside precisely because it recovers.',
+    measurable: true,
+  },
+  {
+    name: 'dependency.down',
+    label: 'Dependencies down',
+    help:
+      'How many of the services the gateway needs are not answering. A ' +
+      'service nobody configured is not counted. This is about the ' +
+      'platform rather than your organization, and is your outage anyway.',
+    measurable: true,
+  },
 ];
 
 /** How a reading is compared with the threshold. */
