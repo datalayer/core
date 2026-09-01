@@ -6,6 +6,7 @@
 export * from './generated';
 export * from './attachments';
 export * from './bridges';
+export * from './sandboxUid';
 export * from './capabilities';
 export * from './cloudStorage';
 export * from './datasets';
