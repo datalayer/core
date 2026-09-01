@@ -15,10 +15,21 @@
  * the list shows the first few and says how many more there are; the whole
  * list is in the title, which is where a reader who needs it looks.
  *
+ * The `+N` is **not** a Primer `Tooltip`. That component requires an
+ * interactive child and warns otherwise, for a good reason: a tooltip on a
+ * span appears on hover and nowhere else, so it does not exist for anybody
+ * using a keyboard or a screen reader. Wrapping the count in a `<button>`
+ * would silence the warning by trading one problem for another — a tab stop
+ * that announces itself as a button and does nothing when pressed.
+ *
+ * So the scopes go where they are actually readable: `title` for the mouse,
+ * and the accessible name for everything else. Which is what the sentence
+ * above always said.
+ *
  * @module components/mcp/ScopeList
  */
 
-import { Label, Text, Tooltip } from '@primer/react';
+import { Label, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 
 export interface ScopeListProps {
@@ -43,9 +54,17 @@ export const ScopeList = ({ scopes, max = 3 }: ScopeListProps): JSX.Element => {
         </Label>
       ))}
       {rest > 0 && (
-        <Tooltip text={scopes.join('\n')} direction="n">
-          <Text sx={{ fontSize: 0, color: 'fg.muted' }}>+{rest}</Text>
-        </Tooltip>
+        <Text
+          as="span"
+          title={scopes.join('\n')}
+          // The hidden ones by name, not "3 more scopes". A count is what is
+          // already on the screen; the names are the part that is missing,
+          // and scopes are the ceiling on what this agent may do.
+          aria-label={`and ${rest} more: ${scopes.slice(max).join(', ')}`}
+          sx={{ fontSize: 0, color: 'fg.muted' }}
+        >
+          +{rest}
+        </Text>
       )}
     </Box>
   );

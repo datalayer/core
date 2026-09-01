@@ -18,10 +18,20 @@
  * deprecated dynamic path has an opaque id and gets it plainly, marked as
  * such, because the two are not the same kind of fact.
  *
+ * The badge explains itself through `title` and its accessible name rather
+ * than a Primer `Tooltip`. That component requires an interactive child and
+ * warns otherwise, because a tooltip on a label appears on hover and nowhere
+ * else — it does not exist for a keyboard or a screen reader. A `<button>`
+ * around the word would silence the warning by trading one problem for
+ * another: a tab stop that announces itself as a button and does nothing.
+ *
+ * The word alone is the part that needs explaining. "Document" read out on
+ * its own says nothing, so the accessible name is the whole sentence.
+ *
  * @module components/mcp/ClientBadge
  */
 
-import { Label, Text, Tooltip } from '@primer/react';
+import { Label, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { isCimdClientId } from '../../api/iam/connectedAgents';
 import type { ConnectedAgentRegistration } from '../../api/iam/connectedAgents';
@@ -74,17 +84,23 @@ export const ClientBadge = ({
           {name}
         </Text>
         {byDocument ? (
-          <Tooltip text="Registered by Client ID Metadata Document" direction="n">
-            <Label size="small" variant="accent">
-              Document
-            </Label>
-          </Tooltip>
+          <Label
+            size="small"
+            variant="accent"
+            title="Registered by Client ID Metadata Document"
+            aria-label="Registered by Client ID Metadata Document"
+          >
+            Document
+          </Label>
         ) : (
-          <Tooltip text="Registered dynamically; its id is opaque" direction="n">
-            <Label size="small" variant="secondary">
-              Dynamic
-            </Label>
-          </Tooltip>
+          <Label
+            size="small"
+            variant="secondary"
+            title="Registered dynamically; its id is opaque"
+            aria-label="Registered dynamically; its id is opaque"
+          >
+            Dynamic
+          </Label>
         )}
       </Box>
       {!compact && clientId && (
