@@ -77,6 +77,7 @@ export * from './TeamMember';
 export * from './URN';
 export * from './Usage';
 export * from './User';
+export * from './StartedBy';
 export * from './UserDTO';
 export * from './UserEvent';
 export * from './UserOnboarding';

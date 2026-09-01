@@ -483,6 +483,57 @@ class ContentsMixin:
         )
         return TransferView.model_validate(response.json())
 
+    def publish_table(
+        self,
+        table: Any,
+        *,
+        relation: str,
+        row_group_rows: int = 1_000_000,
+    ) -> dict[str, Any]:
+        """Publish a table so other people can query it.
+
+        Three calls, made as one: reserve a publication, write its parts, and
+        complete it. The caller never names a path — the directory is derived
+        from their own uid — and the record is created only once the bytes
+        have landed, so a publication either exists or it does not.
+
+        `table` is anything Arrow can take: a pyarrow Table, a pandas or
+        polars DataFrame, or anything with `to_arrow()` or `__arrow_c_stream__`.
+        It is written as Parquet in parts, because a frame worth publishing is
+        one worth streaming.
+        """
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        arrow = _as_arrow_table(table)
+        self._fetch(  # type: ignore[attr-defined]
+            self._contents_url("/published-tables"),
+            method="POST",
+            json={"relation": relation},
+        )
+        # One part per row-group slice. A single part would put the whole
+        # frame in one request, which is the thing the two-step shape exists
+        # to avoid.
+        written = 0
+        for index in range(0, max(arrow.num_rows, 1), row_group_rows):
+            chunk = arrow.slice(index, row_group_rows)
+            if chunk.num_rows == 0 and arrow.num_rows:
+                continue
+            buffer = pa.BufferOutputStream()
+            pq.write_table(chunk, buffer)
+            part = f"part-{written:05d}.parquet"
+            self._fetch(  # type: ignore[attr-defined]
+                self._contents_url(f"/published-tables/{relation}/parts/{part}"),
+                method="PUT",
+                files={"file": (part, buffer.getvalue().to_pybytes())},
+            )
+            written += 1
+        response = self._fetch(  # type: ignore[attr-defined]
+            self._contents_url(f"/published-tables/{relation}/complete"),
+            method="POST",
+        )
+        return dict(response.json())
+
     def upload_home_folder_file(
         self,
         local_path: str | Path,
@@ -1338,3 +1389,28 @@ class ContentsMixin:
             self._contents_url(f"/operations/{operation_uid}/cancel"), method="POST"
         )
         return OperationView.model_validate(response.json())
+
+def _as_arrow_table(table: Any) -> Any:
+    """Whatever the caller has, as an Arrow table.
+
+    Accepting one type would mean a user converting first, and the conversion
+    they would write is this one — done less carefully, because it is in their
+    way rather than the point of their work.
+    """
+    import pyarrow as pa
+
+    if isinstance(table, pa.Table):
+        return table
+    for attribute in ("to_arrow", "to_arrow_table"):
+        converter = getattr(table, attribute, None)
+        if callable(converter):
+            return pa.table(converter())
+    if hasattr(table, "__arrow_c_stream__") or hasattr(table, "to_pandas"):
+        return pa.table(table)
+    try:
+        return pa.table(table)
+    except Exception as refused:  # noqa: BLE001 - the caller needs the name
+        raise TypeError(
+            f"cannot publish a {type(table).__name__}: give a pyarrow Table, a "
+            "pandas or polars DataFrame, or anything Arrow can take"
+        ) from refused

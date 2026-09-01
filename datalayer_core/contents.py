@@ -533,6 +533,58 @@ class Contents:
         self.client.get_home_folder()
         return HomeFolder(self.client)
 
+    def publish(
+        self,
+        table: Any,
+        *,
+        name: str,
+        live: bool = False,
+        **options: Any,
+    ) -> dict[str, Any]:
+        """Publish a table so other people can query it.
+
+        ``contents.publish(frame, name="sales")`` writes the frame out and
+        registers it. What comes back is a **Datasource** — nothing new to
+        learn: it is queried the way every other Datasource is, with the same
+        limits and the same result streaming.
+
+        By default the table is a **snapshot** taken now: publishing the same
+        name again replaces it, and nothing the kernel does in between changes
+        what a query sees.
+
+        With ``live=True`` this sandbox also answers queries against the
+        object itself, so every query sees its current value. The snapshot is
+        still written, and it is what queries fall back to once this sandbox
+        stops — a live table does not vanish from under the people using it,
+        it becomes explicitly the last known value.
+
+        `table` may be a value or a callable. With ``live=True`` a **callable**
+        is what makes it live: `publish(lambda: frame, name="sales", live=True)`
+        follows the name, while passing the frame itself serves the object it
+        was bound to at this moment.
+        """
+        subject = table() if (live and callable(table)) else table
+        published = self.client.publish_table(subject, relation=name, **options)
+        if live:
+            published["live"] = self._serve_live(name, table)
+        return published
+
+    def _serve_live(self, name: str, table: Any) -> bool:
+        """Serve `table` from this sandbox, if this process can.
+
+        Answers whether it is being served. A sandbox without the Data Server
+        package installed publishes the snapshot and says the live half did
+        not happen — rather than raising, which would lose a publication that
+        did succeed.
+        """
+        try:
+            from datalayer_dataservers.live_server import live_server
+        except ImportError:
+            return False
+        getter = table if callable(table) else (lambda: table)
+        live_server.serve(name, getter)
+        return True
+
     def _resolve(self, source: str, kind: str, label: str) -> str:
         """
         The uid of a source of one kind, given its uid or unambiguous name.
