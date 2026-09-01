@@ -38,6 +38,7 @@ import {
   Heading,
   Label,
   Link,
+  Flash,
   RelativeTime,
   Select,
   Spinner,
@@ -56,7 +57,7 @@ import {
   XCircleIcon,
 } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
-import { useAuditEvents, useAuditExport } from '../../hooks/useMcp';
+import { useAuditEvents, useAuditExport, useMcpForwarding } from '../../hooks/useMcp';
 import { useNavigate, useToast } from '../../hooks';
 import type { McpAuditFilters } from '../../api/mcp';
 import type { McpAuditEvent, McpAuditExportFormat } from '../../models/McpAuditEvent';
@@ -116,6 +117,10 @@ export const AuditLog = ({
   const { enqueueToast } = useToast();
   const page = useAuditEvents({ limit: PAGE_SIZE, ...filters });
   const exporting = useAuditExport();
+  // Only an organization forwards; a personal audit has nowhere to go.
+  const forwarding = useMcpForwarding(filters.org ?? '', {
+    enabled: Boolean(filters.org),
+  });
   const [open, setOpen] = useState<McpAuditEvent | null>(null);
   const returnFocusRef = useRef<HTMLElement>(null);
   /** The cursors already walked, so "Newer" is a step back rather than a guess. */
@@ -191,6 +196,44 @@ export const AuditLog = ({
             Every call {subject} made through MCP, what was decided, and why.
           </Text>
         </Box>
+      )}
+
+      {/* Whether these rows are also reaching the organization's own system
+          of record.
+ 
+          Forwarding never fails the call it describes, so a failure is
+          invisible unless something says so — and a silently dropped audit
+          record looks exactly like nothing having happened. This is the
+          only place it is said. */}
+      {forwarding.data?.configured && forwarding.data.state && (
+        <Flash variant={forwarding.data.state.healthy ? 'default' : 'danger'}>
+          <Text sx={{ fontSize: 1 }}>
+            {forwarding.data.state.healthy ? (
+              <>
+                Forwarded to your own system of record —{' '}
+                {forwarding.data.state.delivered} batches
+                {forwarding.data.state.lastDeliveredAt && (
+                  <>
+                    , last <RelativeTime datetime={forwarding.data.state.lastDeliveredAt} />
+                  </>
+                )}
+                .
+              </>
+            ) : (
+              <>
+                <strong>Forwarding is failing.</strong> These rows are kept
+                here and are not reaching your own system of record:{' '}
+                {forwarding.data.state.lastError}
+                {forwarding.data.state.lastErrorAt && (
+                  <>
+                    {' '}(<RelativeTime datetime={forwarding.data.state.lastErrorAt} />)
+                  </>
+                )}
+                . {forwarding.data.state.failed} batches have failed.
+              </>
+            )}
+          </Text>
+        </Flash>
       )}
 
       {/* What is being looked at. Every one of these is in the address, so a

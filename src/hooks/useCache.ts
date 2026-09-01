@@ -287,6 +287,8 @@ export const queryKeys = {
       [...queryKeys.mcp.all(), 'policy-layer', scope, subjectUid] as const,
     alertRules: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'alert-rules', orgUid] as const,
+    forwarding: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'audit-forwarding', orgUid] as const,
     auditSettings: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'audit-settings', orgUid] as const,
     organizationTeams: (orgUid: string) =>

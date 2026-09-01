@@ -79,6 +79,10 @@ import {
   type McpAuditSettings,
 } from '../api/iam/mcpAuditSettings';
 import {
+  getMcpForwarding,
+  type McpForwarding,
+} from '../api/mcp/forwarding';
+import {
   testAlertRule,
   type McpAlertRuleTrial,
 } from '../api/mcp/alerts';
@@ -452,6 +456,25 @@ export const useOrganizationTeams = (
     queryFn: () => listOrganizationTeams(token ?? '', orgUid, iamUrl),
     enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
     staleTime: 60_000,
+  });
+};
+
+/**
+ * Whether the audit is reaching the organization's own system of record.
+ *
+ * Polled rather than read once: a destination that stops answering does so
+ * while somebody is looking at the page, and the point of the panel is to
+ * say when that happens.
+ */
+export const useMcpForwarding = (org = '', options: { enabled?: boolean } = {}) => {
+  const token = useIAMStore(state => state.token);
+  const mcpUrl = useMcpServerUrl();
+  return useQuery<McpForwarding>({
+    queryKey: queryKeys.mcp.forwarding(org),
+    queryFn: () => getMcpForwarding(token ?? '', org, mcpUrl),
+    enabled: Boolean(token && mcpUrl) && (options.enabled ?? true),
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 };
 
