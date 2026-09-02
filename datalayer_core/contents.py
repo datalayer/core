@@ -1016,7 +1016,13 @@ class Contents:
                 live_server.runner_factory = runner_factory_for(
                     self.client,
                     contents_url=self.client.urls.contents_url,
-                    api_key=self.client.token,
+                    # `_get_api_key()`, which is what the client itself calls
+                    # to authenticate — not a `token` attribute, which it does
+                    # not have. The first version read one, the test's fake
+                    # had one, and the `except` below turned the resulting
+                    # `AttributeError` into a silent `live: False` on every
+                    # real publication.
+                    api_key=self.client._get_api_key(),  # noqa: SLF001
                 )
             except Exception:  # noqa: BLE001 - publishing must survive this
                 logger.debug("This sandbox cannot serve live tables", exc_info=True)

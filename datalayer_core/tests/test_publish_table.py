@@ -40,7 +40,18 @@ class FakeClient:
     def __init__(self) -> None:
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
         self.urls = SimpleNamespace(contents_url="https://contents.example")
-        self.token = "the-owner-token"
+
+    def _get_api_key(self) -> str:
+        """What the real client calls to authenticate.
+
+        Named exactly as the real one names it. The fake used to carry a
+        `token` attribute instead — which the real `DatalayerClient` does not
+        have — so the code under test read something that existed only here,
+        and every real publication silently reported `live: False` while this
+        file stayed green. A fake with an attribute the real object lacks
+        cannot fail, and cannot be trusted.
+        """
+        return "the-owner-token"
 
     def _contents_url(self, path: str) -> str:
         return f"https://contents.example/api/contents/v1{path}"
@@ -339,3 +350,29 @@ def test_a_factory_that_cannot_be_built_does_not_lose_the_publication(
 
     assert result["live"] is False
     assert any(m == "POST" and p.endswith("/complete") for m, p, _ in client.calls)
+
+
+def test_the_fake_client_only_offers_what_the_real_one_offers() -> None:
+    """The fake must not carry names the real client lacks.
+
+    This is the failure that reached a cluster: the fake had a `token`
+    attribute, `DatalayerClient` has `_get_api_key()`, and the code under test
+    read `token`. Here it worked. There it raised `AttributeError`, was
+    swallowed by the guard that keeps a publication alive, and reported
+    `live: False` for every live publication anybody made — a silent, total
+    failure of the feature, behind a green test file.
+
+    So: every name the live-publishing path reads off the client must exist on
+    the real class too. Checked against the class rather than an instance, so
+    it needs no credentials and no network.
+    """
+    from datalayer_core.client import DatalayerClient
+
+    for name in ("urls", "_get_api_key"):
+        assert hasattr(FakeClient, name) or hasattr(FakeClient(), name), (
+            f"the fake does not offer {name!r}"
+        )
+        assert hasattr(DatalayerClient, name), (
+            f"the fake offers {name!r} and the real client does not — which is "
+            "how a passing test hid a feature that never worked"
+        )
