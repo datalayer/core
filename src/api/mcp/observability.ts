@@ -72,6 +72,11 @@ export const MCP_METRIC_CATALOG = [
   'mcp.calls',
   'mcp.call.duration',
   'mcp.refusals',
+  // A limit *not* applied because the figure it compares against could not
+  // be read. Distinct from a refusal, which is the limit working: an
+  // organization whose budget stopped being enforced otherwise looks exactly
+  // like one that never set a budget.
+  'mcp.limit.unenforced',
   'mcp.forwards',
   'mcp.workers',
   'mcp.worker_start_seconds',
