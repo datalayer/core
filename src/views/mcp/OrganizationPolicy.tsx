@@ -37,6 +37,7 @@
  * @module views/mcp/OrganizationPolicy
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Flash, Heading, Spinner, Text } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
@@ -105,10 +106,7 @@ export const OrganizationPolicy = ({
   // somebody reapplies the change that was already refused.
   useEffect(() => setDraft(stored), [stored]);
 
-  const changed = useMemo(
-    () => policyChanged(draft, stored),
-    [draft, stored],
-  );
+  const changed = useMemo(() => policyChanged(draft, stored), [draft, stored]);
 
   const set = (key: keyof PolicyDraft, value: string) =>
     setDraft(current => ({ ...current, [key]: value }));
@@ -136,7 +134,9 @@ export const OrganizationPolicy = ({
             setConflict(error.message);
             return;
           }
-          enqueueToast(`Could not save: ${error.message}`, { variant: 'error' });
+          enqueueToast(`Could not save: ${error.message}`, {
+            variant: 'error',
+          });
         },
       },
     );
@@ -152,7 +152,9 @@ export const OrganizationPolicy = ({
       },
       onError: error => {
         setRemoving(false);
-        enqueueToast(`Could not remove: ${error.message}`, { variant: 'error' });
+        enqueueToast(`Could not remove: ${error.message}`, {
+          variant: 'error',
+        });
       },
     });
   };
@@ -183,8 +185,8 @@ export const OrganizationPolicy = ({
           </Heading>
           <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
             What this organization narrows for every agent acting in it. Each
-            layer only narrows — a team, or a person, can be stricter than
-            this and never looser.
+            layer only narrows — a team, or a person, can be stricter than this
+            and never looser.
           </Text>
         </Box>
       )}
@@ -193,7 +195,13 @@ export const OrganizationPolicy = ({
         <Flash variant="warning">
           <Text sx={{ fontSize: 1 }}>{conflict}</Text>
           <Box sx={{ mt: 2 }}>
-            <Button size="small" onClick={() => { setConflict(''); layer.refetch(); }}>
+            <Button
+              size="small"
+              onClick={() => {
+                setConflict('');
+                layer.refetch();
+              }}
+            >
               Read it again
             </Button>
           </Box>
@@ -261,7 +269,11 @@ export const OrganizationPolicy = ({
           title="Remove this policy?"
           onClose={() => setRemoving(false)}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setRemoving(false) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setRemoving(false),
+            },
             {
               buttonType: 'danger',
               content: 'Remove',
@@ -272,9 +284,9 @@ export const OrganizationPolicy = ({
         >
           <Text sx={{ fontSize: 1 }}>
             This organization stops narrowing anything. Its agents fall back to
-            the platform defaults and to whatever each team and person has set
-            — which may be <strong>wider</strong> than what you have now.
-            Nothing already done is undone.
+            the platform defaults and to whatever each team and person has set —
+            which may be <strong>wider</strong> than what you have now. Nothing
+            already done is undone.
           </Text>
         </Dialog>
       )}

@@ -11,6 +11,7 @@
  * {@link AlienIcon} placeholder so every consumer (profile, sidebar,
  * principal overlay, …) shares the same default look.
  */
+import type { JSX } from 'react';
 import { AlienIcon } from '@datalayer/icons-react';
 import { Box, useColorPalette } from '@datalayer/primer-addons';
 import { DLAvatar } from './DLAvatar';

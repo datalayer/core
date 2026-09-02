@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useInterval } from 'usehooks-ts';
 import { ProgressBar, Tooltip, Button } from '@primer/react';

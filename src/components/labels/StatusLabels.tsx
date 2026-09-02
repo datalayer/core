@@ -15,6 +15,7 @@
  * @module components/labels/StatusLabels
  */
 
+import type { JSX } from 'react';
 import type { ReactNode } from 'react';
 import { Label } from '@primer/react';
 

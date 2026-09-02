@@ -26,6 +26,7 @@
  * @module views/mcp/Policies
  */
 
+import type { JSX } from 'react';
 import { useMemo, useState } from 'react';
 import { Heading, Label, Link, Select, Spinner, Text } from '@primer/react';
 import { Blankslate, Table } from '@primer/react/experimental';
@@ -34,7 +35,12 @@ import { ShieldCheckIcon } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
 import { useConnectedAgents, useEffectivePolicy } from '../../hooks/useMcp';
 import { useNavigate } from '../../hooks';
-import type { McpEffectivePolicy, McpPolicyLayer, McpPolicyRule, McpToolRule } from '../../models/McpPolicy';
+import type {
+  McpEffectivePolicy,
+  McpPolicyLayer,
+  McpPolicyRule,
+  McpToolRule,
+} from '../../models/McpPolicy';
 import { type McpErrorStateFn, type McpRoutes } from './types';
 
 export interface PoliciesProps {
@@ -68,7 +74,10 @@ export const policyFiltersOf = (previewAs: PolicyPreviewAgent) => ({
 });
 
 /** How each layer is named on a row, in the reader's terms. */
-export const layerLabel = (layer: McpPolicyLayer, organizationName?: string): string => {
+export const layerLabel = (
+  layer: McpPolicyLayer,
+  organizationName?: string,
+): string => {
   switch (layer) {
     case 'platform':
       return 'Datalayer default';
@@ -83,7 +92,10 @@ export const layerLabel = (layer: McpPolicyLayer, organizationName?: string): st
   }
 };
 
-const LAYER_VARIANT: Record<McpPolicyLayer, 'secondary' | 'accent' | 'attention'> = {
+const LAYER_VARIANT: Record<
+  McpPolicyLayer,
+  'secondary' | 'accent' | 'attention'
+> = {
   platform: 'secondary',
   organization: 'accent',
   team: 'accent',
@@ -108,12 +120,14 @@ const ROW_ORDER: { name: string; label: string; description: string }[] = [
   {
     name: 'require_org_sso',
     label: 'Sign-in required',
-    description: 'Whether an agent must be authorized through your organization.',
+    description:
+      'Whether an agent must be authorized through your organization.',
   },
   {
     name: 'require_dpop',
     label: 'Token binding',
-    description: 'Whether a token must be bound to the key of the client holding it.',
+    description:
+      'Whether a token must be bound to the key of the client holding it.',
   },
   {
     name: 'max_scopes',
@@ -131,7 +145,11 @@ const ROW_ORDER: { name: string; label: string; description: string }[] = [
     description: 'Where those sandboxes may run.',
   },
   { name: 'max_gpu', label: 'Compute: GPU at most', description: '' },
-  { name: 'max_reservation_minutes', label: 'Compute: reservation at most', description: '' },
+  {
+    name: 'max_reservation_minutes',
+    label: 'Compute: reservation at most',
+    description: '',
+  },
   { name: 'credits_per_day', label: 'Spend: credits a day', description: '' },
   { name: 'calls_per_minute', label: 'Rate: calls a minute', description: '' },
   { name: 'session_max_hours', label: 'Session at most', description: '' },
@@ -170,7 +188,9 @@ const ToolGroup = ({
 }): JSX.Element => (
   <Box sx={{ display: 'grid', gap: 2 }}>
     <Box>
-      <Text sx={{ fontSize: 1, fontWeight: 'semibold', display: 'block' }}>{title}</Text>
+      <Text sx={{ fontSize: 1, fontWeight: 'semibold', display: 'block' }}>
+        {title}
+      </Text>
       <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{description}</Text>
     </Box>
     {tools.length === 0 ? (
@@ -184,7 +204,11 @@ const ToolGroup = ({
             key={tool.tool}
             size="small"
             variant={
-              !tool.allowed ? 'danger' : tool.approval === 'explicit' ? 'attention' : 'secondary'
+              !tool.allowed
+                ? 'danger'
+                : tool.approval === 'explicit'
+                  ? 'attention'
+                  : 'secondary'
             }
             title={`${tool.scope} · ${tool.approval ?? 'no approval rule'} · ${layerLabel(
               tool.decidedBy,
@@ -232,14 +256,21 @@ export const Policies = ({
     // shown: hiding it would make the page a partial answer to "what applies".
     const rest = effective.rules
       .filter(rule => !ROW_ORDER.some(row => row.name === rule.name))
-      .map(rule => ({ name: rule.name, label: rule.name, description: '', rule }));
+      .map(rule => ({
+        name: rule.name,
+        label: rule.name,
+        description: '',
+        rule,
+      }));
     return [...known, ...rest];
   }, [policy.data]);
 
   const tools = policy.data?.tools ?? [];
   const readOnlyTools = tools.filter(tool => tool.access === 'read');
   const writeTools = tools.filter(tool => tool.access === 'write');
-  const executeTools = tools.filter(tool => tool.access === 'execute' || !tool.access);
+  const executeTools = tools.filter(
+    tool => tool.access === 'execute' || !tool.access,
+  );
 
   if (policy.isError) {
     return (
@@ -272,7 +303,14 @@ export const Policies = ({
           layers, and a picker offering one option is a control that asks a
           question it already knows the answer to. */}
       {(agents.data?.length ?? 0) > 1 && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
           <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Preview as</Text>
           <Box sx={{ minWidth: '18rem' }}>
             <Select
@@ -309,9 +347,9 @@ export const Policies = ({
           <Blankslate.Heading>The defaults apply</Blankslate.Heading>
           <Blankslate.Description>
             <Text sx={{ textAlign: 'center' }}>
-              No agent is connected yet, so nothing narrows the Datalayer defaults.
-              Connect a client and this page fills with what its calls are allowed
-              to do.
+              No agent is connected yet, so nothing narrows the Datalayer
+              defaults. Connect a client and this page fills with what its calls
+              are allowed to do.
             </Text>
           </Blankslate.Description>
           <Link
@@ -330,7 +368,9 @@ export const Policies = ({
             </Heading>
             <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
               Scope of this reading: {policy.data?.scope ?? 'personal'}
-              {policy.data?.evaluatedAt ? ` · evaluated ${policy.data.evaluatedAt}` : ''}
+              {policy.data?.evaluatedAt
+                ? ` · evaluated ${policy.data.evaluatedAt}`
+                : ''}
             </Text>
           </Box>
 
@@ -339,8 +379,8 @@ export const Policies = ({
               Effective policy
             </Table.Title>
             <Table.Subtitle as="p" id="effective-policy-subtitle">
-              Each layer only narrows the one above it, so the strictest rule is what
-              applies.
+              Each layer only narrows the one above it, so the strictest rule is
+              what applies.
             </Table.Subtitle>
             <Box
               as="table"
@@ -383,9 +423,13 @@ export const Policies = ({
                         verticalAlign: 'top',
                       }}
                     >
-                      <Text sx={{ fontSize: 1, display: 'block' }}>{row.label}</Text>
+                      <Text sx={{ fontSize: 1, display: 'block' }}>
+                        {row.label}
+                      </Text>
                       {row.description && (
-                        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{row.description}</Text>
+                        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                          {row.description}
+                        </Text>
                       )}
                     </Box>
                     <Box
@@ -398,7 +442,9 @@ export const Policies = ({
                         verticalAlign: 'top',
                       }}
                     >
-                      <Text sx={{ fontSize: 1 }}>{ruleValueLabel(row.rule.value)}</Text>
+                      <Text sx={{ fontSize: 1 }}>
+                        {ruleValueLabel(row.rule.value)}
+                      </Text>
                     </Box>
                     <Box
                       as="td"
@@ -411,11 +457,21 @@ export const Policies = ({
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      <Label size="small" variant={LAYER_VARIANT[row.rule.decidedBy]}>
+                      <Label
+                        size="small"
+                        variant={LAYER_VARIANT[row.rule.decidedBy]}
+                      >
                         {layerLabel(row.rule.decidedBy, organizationName)}
                       </Label>
                       {row.rule.reason && (
-                        <Text sx={{ fontSize: 0, color: 'fg.muted', display: 'block', mt: 1 }}>
+                        <Text
+                          sx={{
+                            fontSize: 0,
+                            color: 'fg.muted',
+                            display: 'block',
+                            mt: 1,
+                          }}
+                        >
                           {row.rule.reason}
                         </Text>
                       )}
@@ -448,8 +504,8 @@ export const Policies = ({
           </Box>
 
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-            Your token carries {policy.data?.scopes.length ?? 0} scopes, which is the
-            ceiling over every rule above:{' '}
+            Your token carries {policy.data?.scopes.length ?? 0} scopes, which
+            is the ceiling over every rule above:{' '}
             {(policy.data?.scopes ?? []).join(', ') || 'none'}.
           </Text>
         </>
@@ -470,17 +526,17 @@ export const Policies = ({
         <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>Your own rules</Text>
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
           Narrowing the defaults for your own agents — approval by tool, a daily
-          credits cap, a denylist, the environments they may use — is edited here once
-          the policy layers ship. When your agents act inside an organization, that
-          organization's policy applies instead of yours.
+          credits cap, a denylist, the environments they may use — is edited
+          here once the policy layers ship. When your agents act inside an
+          organization, that organization's policy applies instead of yours.
         </Text>
         <Text sx={{ fontSize: 1, fontWeight: 'semibold', mt: 2 }}>
           Organizations you own
         </Text>
         <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-          The policy form for each organization you own, with its history and a preview
-          of what one agent would get, is the same form the organization's MCP tab
-          carries. It joins this page with the layers.
+          The policy form for each organization you own, with its history and a
+          preview of what one agent would get, is the same form the
+          organization's MCP tab carries. It joins this page with the layers.
         </Text>
       </Box>
     </Box>

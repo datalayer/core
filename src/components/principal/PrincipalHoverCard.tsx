@@ -21,6 +21,7 @@
  * @module components/principal/PrincipalHoverCard
  */
 
+import type { JSX } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AnchoredOverlay, Box, ThemeProvider } from '@primer/react';

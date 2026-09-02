@@ -30,6 +30,7 @@
  * @module views/mcp/AlertRules
  */
 
+import type { JSX } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import {
   ActionList,

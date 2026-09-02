@@ -36,6 +36,7 @@
  * @module views/mcp/ServiceAgents
  */
 
+import type { JSX } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import {
   ActionList,

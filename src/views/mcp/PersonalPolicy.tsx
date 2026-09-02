@@ -35,6 +35,7 @@
  * @module views/mcp/PersonalPolicy
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Flash, Heading, Spinner, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
@@ -45,7 +46,10 @@ import {
   useSetMcpPolicyLayer,
 } from '../../hooks/useMcp';
 import { useToast } from '../../hooks';
-import { McpPolicyConflict, type McpPolicyRules } from '../../api/iam/mcpPolicy';
+import {
+  McpPolicyConflict,
+  type McpPolicyRules,
+} from '../../api/iam/mcpPolicy';
 import {
   EMPTY_POLICY_DRAFT,
   PolicyForm,
@@ -169,7 +173,8 @@ export const PersonalPolicy = ({
     ] as const) {
       const lower = cappedLower(draft[key], organizations, key);
       if (lower.length > 0) {
-        built[key] = `Wider than an organization you belong to allows — ${lower.join('; ')}. When you act for them, theirs applies; this still governs your own work.`;
+        built[key] =
+          `Wider than an organization you belong to allows — ${lower.join('; ')}. When you act for them, theirs applies; this still governs your own work.`;
       }
     }
     return built;
@@ -187,13 +192,17 @@ export const PersonalPolicy = ({
       { rules, expectedVersion: layer.data?.version },
       {
         onSuccess: () =>
-          enqueueToast('Saved. It applies to your next call.', { variant: 'success' }),
+          enqueueToast('Saved. It applies to your next call.', {
+            variant: 'success',
+          }),
         onError: error => {
           if (error instanceof McpPolicyConflict) {
             setConflict(error.message);
             return;
           }
-          enqueueToast(`Could not save: ${error.message}`, { variant: 'error' });
+          enqueueToast(`Could not save: ${error.message}`, {
+            variant: 'error',
+          });
         },
       },
     );
@@ -225,8 +234,8 @@ export const PersonalPolicy = ({
           </Heading>
           <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
             Rules for your own agents. These can only make things{' '}
-            <strong>stricter</strong> — where you belong to an organization,
-            its rules apply underneath and nothing here can loosen them.
+            <strong>stricter</strong> — where you belong to an organization, its
+            rules apply underneath and nothing here can loosen them.
           </Text>
         </Box>
       )}
@@ -257,7 +266,11 @@ export const PersonalPolicy = ({
       <PolicyForm draft={draft} onChange={set} notes={notes} />
 
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-        <Button variant="primary" onClick={apply} disabled={!changed || save.isPending}>
+        <Button
+          variant="primary"
+          onClick={apply}
+          disabled={!changed || save.isPending}
+        >
           Save
         </Button>
         {changed && (

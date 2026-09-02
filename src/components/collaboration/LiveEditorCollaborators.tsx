@@ -23,6 +23,7 @@
  * @module components/collaboration/LiveEditorCollaborators
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { AvatarStack } from '@primer/react';
 import { PrincipalAvatar } from '../principal/PrincipalAvatar';
@@ -56,7 +57,7 @@ export type IAwarenessLike = {
 /** The `user` field of an awareness state, in its several spellings. */
 function collaboratorOfState(
   clientId: number,
-  state: Record<string, any>
+  state: Record<string, any>,
 ): LiveCollaborator | undefined {
   const user = state?.user;
   if (!user) {
@@ -94,7 +95,7 @@ function collaboratorOfState(
     avatarIcon: user.avatar_icon_s || user.avatarIcon || undefined,
     color: user.color || undefined,
     uid: uid ? String(uid) : undefined,
-    handle: user.handle || username || undefined
+    handle: user.handle || username || undefined,
   };
 }
 
@@ -107,7 +108,7 @@ function collaboratorOfState(
  */
 function mergeCollaborators(
   known: LiveCollaborator,
-  incoming: LiveCollaborator
+  incoming: LiveCollaborator,
 ): LiveCollaborator {
   const incomingNameWins =
     !!incoming.uid && !known.uid && incoming.name.trim().length > 0;
@@ -141,7 +142,7 @@ export type LiveEditorCollaboratorsProps = {
 };
 
 export function LiveEditorCollaborators(
-  props: LiveEditorCollaboratorsProps
+  props: LiveEditorCollaboratorsProps,
 ): JSX.Element | null {
   const {
     awareness,

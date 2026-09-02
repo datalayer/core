@@ -34,8 +34,17 @@
  * @module views/mcp/AlertDestinations
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Flash, FormControl, Heading, Spinner, Text, TextInput } from '@primer/react';
+import {
+  Button,
+  Flash,
+  FormControl,
+  Heading,
+  Spinner,
+  Text,
+  TextInput,
+} from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { McpErrorBlankslate } from '../../components/mcp';
 import { useAuditSettings, useSetAuditSettings } from '../../hooks/useMcp';
@@ -85,7 +94,10 @@ export const AlertDestinations = ({
   useEffect(() => setDraft(stored), [stored]);
 
   const changed = useMemo(
-    () => (Object.keys(EMPTY) as (keyof Draft)[]).some(key => draft[key] !== stored[key]),
+    () =>
+      (Object.keys(EMPTY) as (keyof Draft)[]).some(
+        key => draft[key] !== stored[key],
+      ),
     [draft, stored],
   );
 
@@ -107,7 +119,9 @@ export const AlertDestinations = ({
       { settings: changes, expectedVersion: settings.data?.version },
       {
         onSuccess: () => {
-          enqueueToast('Saved. The next firing goes there.', { variant: 'success' });
+          enqueueToast('Saved. The next firing goes there.', {
+            variant: 'success',
+          });
         },
         onError: error => {
           if (error instanceof AuditSettingInvalid) {
@@ -117,7 +131,9 @@ export const AlertDestinations = ({
             setRefusal(error.message);
             return;
           }
-          enqueueToast(`Could not save: ${error.message}`, { variant: 'error' });
+          enqueueToast(`Could not save: ${error.message}`, {
+            variant: 'error',
+          });
         },
       },
     );
@@ -157,10 +173,10 @@ export const AlertDestinations = ({
           Where alerts go
         </Heading>
         <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-          Set once for the organization, not per rule — a URL repeated on
-          twenty rules is nineteen places to forget when it rotates. Every
-          firing also appears in the app, and that copy is sent first so it is
-          not lost when one of these is down.
+          Set once for the organization, not per rule — a URL repeated on twenty
+          rules is nineteen places to forget when it rotates. Every firing also
+          appears in the app, and that copy is sent first so it is not lost when
+          one of these is down.
         </Text>
       </Box>
 
@@ -180,9 +196,9 @@ export const AlertDestinations = ({
           placeholder="ops@example.co, oncall@example.co"
         />
         <FormControl.Caption>
-          Comma-separated, up to twenty. An alert list is the people who want
-          to know, not a mailing list — a firing that emails two hundred
-          people is a firing that gets the rule switched off.
+          Comma-separated, up to twenty. An alert list is the people who want to
+          know, not a mailing list — a firing that emails two hundred people is
+          a firing that gets the rule switched off.
         </FormControl.Caption>
       </FormControl>
 
@@ -221,7 +237,11 @@ export const AlertDestinations = ({
 
       {!readOnly && (
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="primary" onClick={apply} disabled={!changed || save.isPending}>
+          <Button
+            variant="primary"
+            onClick={apply}
+            disabled={!changed || save.isPending}
+          >
             Save destinations
           </Button>
           {changed && (
@@ -233,11 +253,11 @@ export const AlertDestinations = ({
       )}
 
       <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
-        Each copy is attempted on its own: if the webhook is down you still
-        get the email. A copy that fails is recorded and <strong>not
-        retried</strong> — retrying a notice against an endpoint that is down
-        turns its outage into a loop against it, and the alert is already in
-        the app.
+        Each copy is attempted on its own: if the webhook is down you still get
+        the email. A copy that fails is recorded and{' '}
+        <strong>not retried</strong> — retrying a notice against an endpoint
+        that is down turns its outage into a loop against it, and the alert is
+        already in the app.
       </Text>
     </Box>
   );

@@ -20,6 +20,7 @@
  * `ShareAccessComponent`.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { FormControl, Text, Textarea } from '@primer/react';

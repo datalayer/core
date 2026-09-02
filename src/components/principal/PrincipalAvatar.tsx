@@ -3,10 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { OrganizationIcon, PeopleIcon } from '@primer/octicons-react';
 import { UserAvatar } from '../avatars';
-import { getPrincipalAvatarIcon, type PrincipalType } from './PrincipalAppearance';
+import {
+  getPrincipalAvatarIcon,
+  type PrincipalType,
+} from './PrincipalAppearance';
 
 export type PrincipalAvatarKind = PrincipalType;
 

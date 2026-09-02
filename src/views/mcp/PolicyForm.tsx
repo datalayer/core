@@ -25,6 +25,7 @@
  * @module views/mcp/PolicyForm
  */
 
+import type { JSX } from 'react';
 import { FormControl, TextInput, Textarea, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import type { McpPolicyRules } from '../../api/iam/mcpPolicy';
@@ -81,7 +82,9 @@ export const textOf = (value: number | undefined): string =>
   value === undefined || value === null ? '' : String(value);
 
 /** A stored layer as the form holds it. */
-export const draftOf = (rules: McpPolicyRules | null | undefined): PolicyDraft => ({
+export const draftOf = (
+  rules: McpPolicyRules | null | undefined,
+): PolicyDraft => ({
   toolDenylist: linesOf(rules?.toolDenylist),
   toolAllowlist: linesOf(rules?.toolAllowlist),
   allowedClients: linesOf(rules?.allowedClients),
@@ -149,7 +152,11 @@ export interface PolicyFormProps {
   notes?: Partial<Record<keyof PolicyDraft, React.ReactNode>>;
 }
 
-const Note = ({ children }: { children?: React.ReactNode }): JSX.Element | null =>
+const Note = ({
+  children,
+}: {
+  children?: React.ReactNode;
+}): JSX.Element | null =>
   children ? (
     <Text as="p" sx={{ fontSize: 0, color: 'attention.fg', mt: 1, mb: 0 }}>
       {children}
@@ -174,8 +181,8 @@ export const PolicyForm = ({
         placeholder={'execute_cell\ndelete_file'}
       />
       <FormControl.Caption>
-        One a line. A denial is added to every other layer&rsquo;s and can
-        never be lifted by one.
+        One a line. A denial is added to every other layer&rsquo;s and can never
+        be lifted by one.
       </FormControl.Caption>
       <Note>{notes.toolDenylist}</Note>
     </FormControl>
@@ -191,10 +198,10 @@ export const PolicyForm = ({
         placeholder={'read_cell\nlist_notebooks'}
       />
       <FormControl.Caption>
-        One a line, and everything else is refused. <strong>Leave it empty to
-        set no allowlist</strong> — empty means &ldquo;I have not set
-        one&rdquo;, not &ldquo;nothing is permitted&rdquo;, because the second
-        would stop every agent at once.
+        One a line, and everything else is refused.{' '}
+        <strong>Leave it empty to set no allowlist</strong> — empty means
+        &ldquo;I have not set one&rdquo;, not &ldquo;nothing is
+        permitted&rdquo;, because the second would stop every agent at once.
       </FormControl.Caption>
       <Note>{notes.toolAllowlist}</Note>
     </FormControl>
@@ -207,7 +214,9 @@ export const PolicyForm = ({
         disabled={disabled}
         value={draft.allowedClients}
         onChange={event => onChange('allowedClients', event.target.value)}
-        placeholder={'https://claude.ai/.well-known/mcp-client.json\ncursor.com'}
+        placeholder={
+          'https://claude.ai/.well-known/mcp-client.json\ncursor.com'
+        }
       />
       <FormControl.Caption>
         A client&rsquo;s document URL, or just its hostname. Empty is not an
@@ -216,7 +225,13 @@ export const PolicyForm = ({
       <Note>{notes.allowedClients}</Note>
     </FormControl>
 
-    <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: ['1fr', '1fr 1fr 1fr'] }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 3,
+        gridTemplateColumns: ['1fr', '1fr 1fr 1fr'],
+      }}
+    >
       <FormControl>
         <FormControl.Label>Calls per minute</FormControl.Label>
         <TextInput
@@ -255,7 +270,9 @@ export const PolicyForm = ({
           min={1}
           disabled={disabled}
           value={draft.maxConcurrentSandboxes}
-          onChange={event => onChange('maxConcurrentSandboxes', event.target.value)}
+          onChange={event =>
+            onChange('maxConcurrentSandboxes', event.target.value)
+          }
         />
         <FormControl.Caption>
           Counted across the layer that set it.

@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import {
   JSXElementConstructor,
   PropsWithChildren,
@@ -161,11 +162,7 @@ export class JupyterDialog<T> extends ReactWidget {
           // `inert` is an attribute of the platform that the typings of React
           // 18 do not carry; it is spread rather than named for that reason.
           {...(pending ? ({ inert: '' } as any) : {})}
-          style={
-            pending
-              ? { pointerEvents: 'none', opacity: 0.6 }
-              : undefined
-          }
+          style={pending ? { pointerEvents: 'none', opacity: 0.6 } : undefined}
         >
           {createElement(this.body, {
             ...props,

@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { AvatarStack } from '@primer/react';
 import type { Awareness } from 'y-protocols/awareness';

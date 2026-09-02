@@ -5,6 +5,7 @@
  * Datalayer License
  */
 
+import type { JSX } from 'react';
 import { useState } from 'react';
 import { Button, FormControl, TextInput } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';

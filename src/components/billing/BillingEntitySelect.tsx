@@ -13,6 +13,7 @@
  * resolved account via `onSelectedAccountChange`.
  */
 
+import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, Fragment } from 'react';
 import {
   ActionList,
@@ -542,7 +543,9 @@ export function BillingEntitySelect({
                   py: 2,
                 }}
               >
-                <Text sx={{ fontSize: 1, lineHeight: 1.5 }}>{flashMessage}</Text>
+                <Text sx={{ fontSize: 1, lineHeight: 1.5 }}>
+                  {flashMessage}
+                </Text>
               </Box>
             </Box>
             <ActionList selectionVariant="single">

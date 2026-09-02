@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
 import { Box, Button, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';

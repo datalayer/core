@@ -31,6 +31,7 @@
  * @module components/mcp/ClientBadge
  */
 
+import type { JSX } from 'react';
 import { Label, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { isCimdClientId } from '../../api/iam/connectedAgents';
@@ -66,9 +67,12 @@ export const ClientBadge = ({
   clientHostname,
   compact = false,
 }: ClientBadgeProps): JSX.Element => {
-  const byDocument = (registration ?? (isCimdClientId(clientId) ? 'cimd' : 'dcr')) === 'cimd';
-  const hostname = clientHostname || (byDocument ? clientHostnameOf(clientId) : '');
-  const name = clientName || (byDocument ? hostname : '') || clientId || 'Unknown client';
+  const byDocument =
+    (registration ?? (isCimdClientId(clientId) ? 'cimd' : 'dcr')) === 'cimd';
+  const hostname =
+    clientHostname || (byDocument ? clientHostnameOf(clientId) : '');
+  const name =
+    clientName || (byDocument ? hostname : '') || clientId || 'Unknown client';
   return (
     <Box sx={{ display: 'grid', gap: '2px', minWidth: 0 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>

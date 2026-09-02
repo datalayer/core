@@ -26,6 +26,7 @@
  * @module views/mcp/ConnectedAgents
  */
 
+import type { JSX } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import {
   ActionList,

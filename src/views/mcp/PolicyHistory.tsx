@@ -32,6 +32,7 @@
  * @module views/mcp/PolicyHistory
  */
 
+import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { Label, RelativeTime, Spinner, Text } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
@@ -92,12 +93,16 @@ export const PolicyHistory = ({
   );
 
   const rows = useMemo(() => {
-    const all = [...(events.data?.items ?? []), ...(removals.data?.items ?? [])];
+    const all = [
+      ...(events.data?.items ?? []),
+      ...(removals.data?.items ?? []),
+    ];
     const mine = subjectUid
       ? all.filter(
           event =>
-            String((event.clientInfo as Record<string, unknown>)?.subject_uid ?? '') ===
-            subjectUid,
+            String(
+              (event.clientInfo as Record<string, unknown>)?.subject_uid ?? '',
+            ) === subjectUid,
         )
       : all;
     // Newest first, merged across the two reads.
@@ -127,8 +132,8 @@ export const PolicyHistory = ({
     return (
       <Text as="p" sx={{ fontSize: 0, color: 'fg.muted', m: 0 }}>
         No recorded change. Either this layer has not been edited, or this
-        deployment routes identity records to a log pipeline rather than to
-        the audit — an administrator can tell you which.
+        deployment routes identity records to a log pipeline rather than to the
+        audit — an administrator can tell you which.
       </Text>
     );
   }
@@ -149,14 +154,18 @@ export const PolicyHistory = ({
           <Text sx={{ color: 'fg.muted', whiteSpace: 'nowrap' }}>
             <RelativeTime datetime={event.at} />
           </Text>
-          <Text sx={{ fontWeight: 'semibold' }}>{event.userUid || 'unknown'}</Text>
+          <Text sx={{ fontWeight: 'semibold' }}>
+            {event.userUid || 'unknown'}
+          </Text>
           <Text>{describeChange(event)}</Text>
           {String(
             (event.clientInfo as Record<string, unknown>)?.version ?? '',
           ) && (
             <Label size="small" variant="secondary">
               v
-              {String((event.clientInfo as Record<string, unknown>)?.version ?? '')}
+              {String(
+                (event.clientInfo as Record<string, unknown>)?.version ?? '',
+              )}
             </Label>
           )}
         </Box>

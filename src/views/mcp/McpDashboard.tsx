@@ -29,6 +29,7 @@
  * @module views/mcp/McpDashboard
  */
 
+import type { JSX } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import {
   ActionList,

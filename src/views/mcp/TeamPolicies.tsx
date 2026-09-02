@@ -32,6 +32,7 @@
  * @module views/mcp/TeamPolicies
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Flash, Heading, Select, Spinner, Text } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
@@ -117,7 +118,9 @@ const TeamPolicyForm = ({
             setConflict(error.message);
             return;
           }
-          enqueueToast(`Could not save: ${error.message}`, { variant: 'error' });
+          enqueueToast(`Could not save: ${error.message}`, {
+            variant: 'error',
+          });
         },
       },
     );
@@ -241,7 +244,9 @@ export const TeamPolicies = ({
   const [chosen, setChosen] = useState('');
 
   const current = useMemo(
-    () => (teams.data ?? []).find(team => team.uid === chosen) ?? (teams.data ?? [])[0],
+    () =>
+      (teams.data ?? []).find(team => team.uid === chosen) ??
+      (teams.data ?? [])[0],
     [teams.data, chosen],
   );
 

@@ -31,6 +31,7 @@
  * @module views/mcp/McpObservability
  */
 
+import type { JSX } from 'react';
 import { useState } from 'react';
 import {
   Button,
@@ -92,7 +93,13 @@ const STAGE = (name: string): string => {
   return '';
 };
 
-const SpanRow = ({ node, depth }: { node: McpSpanNode; depth: number }): JSX.Element => {
+const SpanRow = ({
+  node,
+  depth,
+}: {
+  node: McpSpanNode;
+  depth: number;
+}): JSX.Element => {
   const stage = STAGE(node.span.span_name);
   const failed = (node.span.status_code ?? '').toUpperCase() === 'ERROR';
   return (
@@ -128,8 +135,17 @@ const SpanRow = ({ node, depth }: { node: McpSpanNode; depth: number }): JSX.Ele
             {stage}
           </Label>
         )}
-        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{node.span.service_name}</Text>
-        <Text sx={{ fontSize: 0, fontWeight: 'semibold', minWidth: 60, textAlign: 'right' }}>
+        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+          {node.span.service_name}
+        </Text>
+        <Text
+          sx={{
+            fontSize: 0,
+            fontWeight: 'semibold',
+            minWidth: 60,
+            textAlign: 'right',
+          }}
+        >
           {durationLabel(node.span.duration_ms)}
         </Text>
       </Box>
@@ -159,14 +175,24 @@ const Sli = ({
       minWidth: 0,
     }}
   >
-    <Text sx={{ display: 'block', fontSize: 3, fontWeight: 'bold' }}>{value}</Text>
-    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>{label}</Text>
-    {note && <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle' }}>{note}</Text>}
+    <Text sx={{ display: 'block', fontSize: 3, fontWeight: 'bold' }}>
+      {value}
+    </Text>
+    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>
+      {label}
+    </Text>
+    {note && (
+      <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle' }}>
+        {note}
+      </Text>
+    )}
   </Box>
 );
 
 const percentLabel = (value: number | null | undefined): string =>
-  value === null || value === undefined ? 'Not measured' : `${(value * 100).toFixed(1)}%`;
+  value === null || value === undefined
+    ? 'Not measured'
+    : `${(value * 100).toFixed(1)}%`;
 
 export const McpObservability = ({
   errorState,
@@ -186,15 +212,17 @@ export const McpObservability = ({
   // One of the two, never both: a task names its own trace, and a trace
   // names itself.
   const byTask = useRunTrace(taskUid, { enabled: Boolean(taskUid) });
-  const byTrace = useMcpTrace(traceId, { enabled: Boolean(traceId) && !taskUid });
+  const byTrace = useMcpTrace(traceId, {
+    enabled: Boolean(traceId) && !taskUid,
+  });
   const run = taskUid ? byTask : byTrace;
   const metrics = useMcpMetrics({ agent, org });
 
   const telemetryNotice = (
     <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
-      This is telemetry: spans and metrics are sampled, kept for a short time and
-      meant for understanding how a call ran. It is not the record of what was
-      allowed —{' '}
+      This is telemetry: spans and metrics are sampled, kept for a short time
+      and meant for understanding how a call ran. It is not the record of what
+      was allowed —{' '}
       <Text
         as="span"
         sx={{ color: 'accent.fg', cursor: 'pointer' }}
@@ -214,8 +242,8 @@ export const McpObservability = ({
             Observability
           </Heading>
           <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-            How the calls of your agents ran: where the time went, and how the service
-            is behaving.
+            How the calls of your agents ran: where the time went, and how the
+            service is behaving.
           </Text>
         </Box>
       )}
@@ -239,7 +267,14 @@ export const McpObservability = ({
 
       {pane === 'runs' && (
         <Box sx={{ display: 'grid', gap: 3 }}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
             <TextInput
               size="small"
               leadingVisual={SearchIcon}
@@ -260,7 +295,9 @@ export const McpObservability = ({
                 // A trace id is 32 hexadecimal characters; anything else is a
                 // task uid, and the gateway tells us which by answering.
                 onSelect(
-                  /^[0-9a-f]{32}$/i.test(value) ? { trace: value } : { task: value },
+                  /^[0-9a-f]{32}$/i.test(value)
+                    ? { trace: value }
+                    : { task: value },
                 );
               }}
             >
@@ -276,9 +313,10 @@ export const McpObservability = ({
               <Blankslate.Heading>Pick a run</Blankslate.Heading>
               <Blankslate.Description>
                 <Text sx={{ textAlign: 'center' }}>
-                  Open a call from the audit log or the dashboard, or paste its task uid
-                  or trace id here, and its spans across the gateway, the policy check
-                  and the worker appear with the time each took.
+                  Open a call from the audit log or the dashboard, or paste its
+                  task uid or trace id here, and its spans across the gateway,
+                  the policy check and the worker appear with the time each
+                  took.
                 </Text>
               </Blankslate.Description>
               <Button size="small" onClick={() => navigate(routes.audit)}>
@@ -302,16 +340,25 @@ export const McpObservability = ({
               <Blankslate.Heading>No span for this call</Blankslate.Heading>
               <Blankslate.Description>
                 <Text sx={{ textAlign: 'center' }}>
-                  Spans reach the collector a few seconds after the call and are kept
-                  for a short time. A call older than the retention window has an audit
-                  row but no trace.
+                  Spans reach the collector a few seconds after the call and are
+                  kept for a short time. A call older than the retention window
+                  has an audit row but no trace.
                 </Text>
               </Blankslate.Description>
             </Blankslate>
           ) : (
             <Box sx={{ display: 'grid', gap: 2 }}>
-              <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Text sx={{ fontSize: 0, color: 'fg.muted', fontFamily: 'mono' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 3,
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Text
+                  sx={{ fontSize: 0, color: 'fg.muted', fontFamily: 'mono' }}
+                >
                   {run.data?.traceId}
                 </Text>
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
@@ -341,9 +388,9 @@ export const McpObservability = ({
                 ))}
               </Box>
               <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
-                The workflow steps and the sandbox launch of a durable task join this
-                tree with milestone 2, and so does the live stream of calls as they
-                land.
+                The workflow steps and the sandbox launch of a durable task join
+                this tree with milestone 2, and so does the live stream of calls
+                as they land.
               </Text>
             </Box>
           )}
@@ -367,7 +414,11 @@ export const McpObservability = ({
                 sx={{
                   display: 'grid',
                   gap: 3,
-                  gridTemplateColumns: ['1fr', 'repeat(2, 1fr)', 'repeat(4, 1fr)'],
+                  gridTemplateColumns: [
+                    '1fr',
+                    'repeat(2, 1fr)',
+                    'repeat(4, 1fr)',
+                  ],
                 }}
               >
                 <Sli
@@ -392,10 +443,17 @@ export const McpObservability = ({
                 <Sli
                   label="Sandbox launch, p95"
                   value={
-                    Object.keys(metrics.data?.slis.p95SandboxLaunchSeconds ?? {}).length === 0
+                    Object.keys(
+                      metrics.data?.slis.p95SandboxLaunchSeconds ?? {},
+                    ).length === 0
                       ? 'Not measured'
-                      : Object.entries(metrics.data?.slis.p95SandboxLaunchSeconds ?? {})
-                          .map(([provider, seconds]) => `${provider} ${seconds.toFixed(1)}s`)
+                      : Object.entries(
+                          metrics.data?.slis.p95SandboxLaunchSeconds ?? {},
+                        )
+                          .map(
+                            ([provider, seconds]) =>
+                              `${provider} ${seconds.toFixed(1)}s`,
+                          )
                           .join(' · ')
                   }
                   note={`${metrics.data?.slis.samples.launches ?? 0} launches`}
@@ -426,12 +484,25 @@ export const McpObservability = ({
                         borderColor: 'border.muted',
                       }}
                     >
-                      <Text sx={{ fontSize: 0, fontFamily: 'mono', flex: 1 }}>{name}</Text>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        {points.length === 0 ? 'no point' : `${points.length} points`}
+                      <Text sx={{ fontSize: 0, fontFamily: 'mono', flex: 1 }}>
+                        {name}
                       </Text>
-                      <Text sx={{ fontSize: 0, fontWeight: 'semibold', minWidth: 80, textAlign: 'right' }}>
-                        {last ? `${last.value}${last.unit ? ` ${last.unit}` : ''}` : '—'}
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        {points.length === 0
+                          ? 'no point'
+                          : `${points.length} points`}
+                      </Text>
+                      <Text
+                        sx={{
+                          fontSize: 0,
+                          fontWeight: 'semibold',
+                          minWidth: 80,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {last
+                          ? `${last.value}${last.unit ? ` ${last.unit}` : ''}`
+                          : '—'}
                       </Text>
                     </Box>
                   );
@@ -439,8 +510,9 @@ export const McpObservability = ({
               </Box>
 
               <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
-                Metrics carry no user, agent or organization label by design, so a
-                per-agent reading is computed from the request spans, which do.
+                Metrics carry no user, agent or organization label by design, so
+                a per-agent reading is computed from the request spans, which
+                do.
                 {metrics.data?.spans.length
                   ? ` ${metrics.data.spans.length} spans read.`
                   : ''}

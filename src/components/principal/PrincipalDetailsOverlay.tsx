@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import {
   ActionMenu,
   Box,
@@ -226,191 +227,177 @@ export function PrincipalDetailsCard({
 
   return (
     <Box sx={{ display: 'grid', gap: 3, p: 4, minWidth: 420 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <PrincipalAvatar
-                kind={kind}
-                avatarUrl={avatarUrl}
-                avatarIcon={avatarIcon}
-                alt={normalizedDisplayName}
-                size={40}
-                // The card sets the avatar on its own ground, the same colour
-                // the avatar itself is on: without an edge of its own it has
-                // no visible shape at all. Round, and ringed.
-                square={false}
-                ring
-              />
-              <Box sx={{ display: 'grid', gap: 0.5 }}>
-                <Text sx={{ fontWeight: 'semibold' }}>
-                  {normalizedDisplayName}
-                </Text>
-                {kind === 'team' ? (
-                  teamHandleOnly ? (
-                    <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                      {displayHandleText(teamHandleOnly)}
-                      {teamOrganizationHandle
-                        ? ` · @${teamOrganizationHandle.replace(/^@+/, '')}`
-                        : ''}
-                    </Text>
-                  ) : null
-                ) : resolvedHandle ? (
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    {displayHandleText(resolvedHandle)}
-                  </Text>
-                ) : null}
-              </Box>
-            </Box>
-            <Box
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <PrincipalAvatar
+          kind={kind}
+          avatarUrl={avatarUrl}
+          avatarIcon={avatarIcon}
+          alt={normalizedDisplayName}
+          size={40}
+          // The card sets the avatar on its own ground, the same colour
+          // the avatar itself is on: without an edge of its own it has
+          // no visible shape at all. Round, and ringed.
+          square={false}
+          ring
+        />
+        <Box sx={{ display: 'grid', gap: 0.5 }}>
+          <Text sx={{ fontWeight: 'semibold' }}>{normalizedDisplayName}</Text>
+          {kind === 'team' ? (
+            teamHandleOnly ? (
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                {displayHandleText(teamHandleOnly)}
+                {teamOrganizationHandle
+                  ? ` · @${teamOrganizationHandle.replace(/^@+/, '')}`
+                  : ''}
+              </Text>
+            ) : null
+          ) : resolvedHandle ? (
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              {displayHandleText(resolvedHandle)}
+            </Text>
+          ) : null}
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: '110px 1fr',
+          gap: 1,
+          alignItems: 'baseline',
+        }}
+      >
+        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
+        <Text sx={{ fontSize: 1 }}>{kind}</Text>
+        {resolvedHandle && kind !== 'team' ? (
+          <>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
+            <Text sx={{ fontSize: 1 }}>
+              {displayHandleText(resolvedHandle)}
+            </Text>
+          </>
+        ) : null}
+        {normalizedUid ? (
+          <>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>UID</Text>
+            <Text sx={{ fontSize: 1 }}>{normalizedUid}</Text>
+          </>
+        ) : null}
+        {kind === 'personal' ? (
+          <>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>First name</Text>
+            <Text sx={{ fontSize: 1 }}>{firstName || 'N/A'}</Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Last name</Text>
+            <Text sx={{ fontSize: 1 }}>{lastName || 'N/A'}</Text>
+            {email ? (
+              <>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Email</Text>
+                <Text sx={{ fontSize: 1 }}>{email}</Text>
+              </>
+            ) : null}
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
+            <Label
+              size="small"
+              variant="secondary"
+              title={normalizedOrigin}
               sx={{
-                display: 'grid',
-                gridTemplateColumns: '110px 1fr',
-                gap: 1,
-                alignItems: 'baseline',
+                justifySelf: 'start',
+                width: 'fit-content',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
-              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Kind</Text>
-              <Text sx={{ fontSize: 1 }}>{kind}</Text>
-              {resolvedHandle && kind !== 'team' ? (
-                <>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
-                  <Text sx={{ fontSize: 1 }}>
-                    {displayHandleText(resolvedHandle)}
-                  </Text>
-                </>
-              ) : null}
-              {normalizedUid ? (
-                <>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>UID</Text>
-                  <Text sx={{ fontSize: 1 }}>{normalizedUid}</Text>
-                </>
-              ) : null}
-              {kind === 'personal' ? (
-                <>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    First name
-                  </Text>
-                  <Text sx={{ fontSize: 1 }}>{firstName || 'N/A'}</Text>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Last name</Text>
-                  <Text sx={{ fontSize: 1 }}>{lastName || 'N/A'}</Text>
-                  {email ? (
-                    <>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Email</Text>
-                      <Text sx={{ fontSize: 1 }}>{email}</Text>
-                    </>
-                  ) : null}
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
-                  <Label
-                    size="small"
-                    variant="secondary"
-                    title={normalizedOrigin}
-                    sx={{
-                      justifySelf: 'start',
-                      width: 'fit-content',
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {normalizedOrigin}
-                  </Label>
-                </>
-              ) : (
-                <>
-                  {kind === 'team' && teamHandleOnly ? (
-                    <>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        Handle
-                      </Text>
-                      <Text sx={{ fontSize: 1 }}>
-                        {displayHandleText(teamHandleOnly)}
-                      </Text>
-                    </>
-                  ) : null}
-                  {kind === 'team' && teamOrganizationHandle ? (
-                    <>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        Organization
-                      </Text>
-                      <Text sx={{ fontSize: 1 }}>
-                        {normalizedOrganizationName
-                          ? `${normalizedOrganizationName} (${displayHandleText(
-                              teamOrganizationHandle,
-                            )})`
-                          : displayHandleText(teamOrganizationHandle)}
-                      </Text>
-                    </>
-                  ) : null}
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Name</Text>
-                  <Text sx={{ fontSize: 1 }}>
-                    {normalizedName || normalizedDisplayName}
-                  </Text>
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                    Description
-                  </Text>
-                  <Text sx={{ fontSize: 1 }}>
-                    {normalizedDescription || 'N/A'}
-                  </Text>
-                  {kind === 'team' && typeof memberCount === 'number' ? (
-                    <>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        Members
-                      </Text>
-                      <Text sx={{ fontSize: 1 }}>
-                        {memberCount} {memberCount === 1 ? 'member' : 'members'}
-                      </Text>
-                    </>
-                  ) : null}
-                  {typeof isPublic === 'boolean' ? (
-                    <>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        Visibility
-                      </Text>
-                      <Label
-                        size="small"
-                        variant={isPublic ? 'success' : 'secondary'}
-                        sx={{ justifySelf: 'start', width: 'fit-content' }}
-                      >
-                        {isPublic ? 'Public' : 'Private'}
-                      </Label>
-                    </>
-                  ) : null}
-                  <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
-                  <Label
-                    size="small"
-                    variant="secondary"
-                    title={normalizedOrigin}
-                    sx={{
-                      justifySelf: 'start',
-                      width: 'fit-content',
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {normalizedOrigin}
-                  </Label>
-                </>
-              )}
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-              {kind === 'team' && organizationPath ? (
-                <Button
+              {normalizedOrigin}
+            </Label>
+          </>
+        ) : (
+          <>
+            {kind === 'team' && teamHandleOnly ? (
+              <>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Handle</Text>
+                <Text sx={{ fontSize: 1 }}>
+                  {displayHandleText(teamHandleOnly)}
+                </Text>
+              </>
+            ) : null}
+            {kind === 'team' && teamOrganizationHandle ? (
+              <>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                  Organization
+                </Text>
+                <Text sx={{ fontSize: 1 }}>
+                  {normalizedOrganizationName
+                    ? `${normalizedOrganizationName} (${displayHandleText(
+                        teamOrganizationHandle,
+                      )})`
+                    : displayHandleText(teamOrganizationHandle)}
+                </Text>
+              </>
+            ) : null}
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Name</Text>
+            <Text sx={{ fontSize: 1 }}>
+              {normalizedName || normalizedDisplayName}
+            </Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Description</Text>
+            <Text sx={{ fontSize: 1 }}>{normalizedDescription || 'N/A'}</Text>
+            {kind === 'team' && typeof memberCount === 'number' ? (
+              <>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Members</Text>
+                <Text sx={{ fontSize: 1 }}>
+                  {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                </Text>
+              </>
+            ) : null}
+            {typeof isPublic === 'boolean' ? (
+              <>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Visibility</Text>
+                <Label
                   size="small"
-                  variant="invisible"
-                  onClick={() => go(organizationPath)}
+                  variant={isPublic ? 'success' : 'secondary'}
+                  sx={{ justifySelf: 'start', width: 'fit-content' }}
                 >
-                  View Organization
-                </Button>
-              ) : null}
-              <Button
-                size="small"
-                onClick={() => go(targetPath)}
-                disabled={!targetPath}
-              >
-                View Profile
-              </Button>
-            </Box>
+                  {isPublic ? 'Public' : 'Private'}
+                </Label>
+              </>
+            ) : null}
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Origin</Text>
+            <Label
+              size="small"
+              variant="secondary"
+              title={normalizedOrigin}
+              sx={{
+                justifySelf: 'start',
+                width: 'fit-content',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {normalizedOrigin}
+            </Label>
+          </>
+        )}
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        {kind === 'team' && organizationPath ? (
+          <Button
+            size="small"
+            variant="invisible"
+            onClick={() => go(organizationPath)}
+          >
+            View Organization
+          </Button>
+        ) : null}
+        <Button
+          size="small"
+          onClick={() => go(targetPath)}
+          disabled={!targetPath}
+        >
+          View Profile
+        </Button>
+      </Box>
     </Box>
   );
 }

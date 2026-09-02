@@ -19,9 +19,16 @@
  * @module components/mcp/McpErrorBlankslate
  */
 
+import type { JSX } from 'react';
 import { Button, Text } from '@primer/react';
 import { Blankslate } from '@primer/react/experimental';
-import { AlertIcon, LockIcon, SearchIcon, ShieldLockIcon, StopIcon } from '@primer/octicons-react';
+import {
+  AlertIcon,
+  LockIcon,
+  SearchIcon,
+  ShieldLockIcon,
+  StopIcon,
+} from '@primer/octicons-react';
 import { Box } from '@datalayer/primer-addons';
 import type { McpErrorState } from '../../views/mcp/types';
 

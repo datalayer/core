@@ -40,7 +40,15 @@
  * @module views/mcp/EnterpriseConsole
  */
 
-import { Button, Heading, Label, SegmentedControl, Spinner, Text } from '@primer/react';
+import type { JSX } from 'react';
+import {
+  Button,
+  Heading,
+  Label,
+  SegmentedControl,
+  Spinner,
+  Text,
+} from '@primer/react';
 import { Blankslate, DataTable, Table } from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
@@ -50,7 +58,11 @@ import {
   LockIcon,
   PlugIcon,
 } from '@primer/octicons-react';
-import { ClientBadge, McpErrorBlankslate, ScopeList } from '../../components/mcp';
+import {
+  ClientBadge,
+  McpErrorBlankslate,
+  ScopeList,
+} from '../../components/mcp';
 import {
   useDisconnectAgent,
   useMcpActivity,
@@ -60,7 +72,10 @@ import { useNavigate, useToast } from '../../hooks';
 import type { McpActiveClient } from '../../api/mcp';
 import type { McpAuditFilters } from '../../api/mcp';
 import { AuditLog } from './AuditLog';
-import { McpObservability, type McpObservabilityPane } from './McpObservability';
+import {
+  McpObservability,
+  type McpObservabilityPane,
+} from './McpObservability';
 import { AlertRules } from './AlertRules';
 import { TeamPolicies } from './TeamPolicies';
 import { OrganizationUsage } from './OrganizationUsage';
@@ -193,8 +208,14 @@ const Metric = ({
     >
       {value}
     </Text>
-    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>{label}</Text>
-    {note && <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle' }}>{note}</Text>}
+    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>
+      {label}
+    </Text>
+    {note && (
+      <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle' }}>
+        {note}
+      </Text>
+    )}
   </Box>
 );
 
@@ -220,9 +241,14 @@ export const EnterpriseConsole = ({
   const allowed = pagesForRoles(roles);
   const current = allowed.includes(page) ? page : allowed[0];
 
-  const overview = useOrgMcpOverview(organization.uid, {}, {
-    enabled: Boolean(current) && (current === 'overview' || current === 'agents'),
-  });
+  const overview = useOrgMcpOverview(
+    organization.uid,
+    {},
+    {
+      enabled:
+        Boolean(current) && (current === 'overview' || current === 'agents'),
+    },
+  );
   const activity = useMcpActivity(
     { org: organization.uid },
     { enabled: current === 'agents' },
@@ -238,8 +264,8 @@ export const EnterpriseConsole = ({
         <Blankslate.Heading>Unauthorized</Blankslate.Heading>
         <Blankslate.Description>
           <Text sx={{ textAlign: 'center' }}>
-            The MCP console of an organization is read by its owners, its security
-            auditors and its usage reviewers. Ask an owner of{' '}
+            The MCP console of an organization is read by its owners, its
+            security auditors and its usage reviewers. Ask an owner of{' '}
             {organization.name || organization.handle} for the role you need.
           </Text>
         </Blankslate.Description>
@@ -247,17 +273,21 @@ export const EnterpriseConsole = ({
     );
   }
 
-  const agentRows: OrgAgentRow[] = (activity.data?.clients ?? []).map(client => ({
-    ...client,
-    id: client.clientId,
-  }));
+  const agentRows: OrgAgentRow[] = (activity.data?.clients ?? []).map(
+    client => ({
+      ...client,
+      id: client.clientId,
+    }),
+  );
 
   const agentColumns: DataTableProps<OrgAgentRow>['columns'] = [
     {
       header: 'Client',
       field: 'clientId',
       rowHeader: true,
-      renderCell: row => <ClientBadge clientId={row.clientId} clientName={row.clientName} />,
+      renderCell: row => (
+        <ClientBadge clientId={row.clientId} clientName={row.clientName} />
+      ),
     },
     {
       header: 'Member',
@@ -293,7 +323,13 @@ export const EnterpriseConsole = ({
         return (
           <Label
             size="small"
-            variant={status === 'active' ? 'success' : status === 'idle' ? 'attention' : 'secondary'}
+            variant={
+              status === 'active'
+                ? 'success'
+                : status === 'idle'
+                  ? 'attention'
+                  : 'secondary'
+            }
           >
             {status}
           </Label>
@@ -325,9 +361,12 @@ export const EnterpriseConsole = ({
               row.grantUid &&
               disconnect.mutate(row.grantUid, {
                 onSuccess: () =>
-                  enqueueToast(`${row.clientName || row.clientId} is disconnected.`, {
-                    variant: 'success',
-                  }),
+                  enqueueToast(
+                    `${row.clientName || row.clientId} is disconnected.`,
+                    {
+                      variant: 'success',
+                    },
+                  ),
                 onError: () =>
                   enqueueToast(
                     'That grant belongs to another member and is revoked by them today. Revoking on their behalf arrives with the organization agent directory.',
@@ -350,13 +389,15 @@ export const EnterpriseConsole = ({
           MCP — {organization.name || organization.handle}
         </Heading>
         <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-          What the agents of this organization are doing, what they were allowed to do,
-          and how it ran.
+          What the agents of this organization are doing, what they were allowed
+          to do, and how it ran.
         </Text>
       </Box>
 
       <SegmentedControl aria-label="MCP console pages" size="small">
-        {ENTERPRISE_CONSOLE_PAGES.filter(entry => allowed.includes(entry.id)).map(entry => (
+        {ENTERPRISE_CONSOLE_PAGES.filter(entry =>
+          allowed.includes(entry.id),
+        ).map(entry => (
           <SegmentedControl.Button
             key={entry.id}
             selected={current === entry.id}
@@ -383,7 +424,11 @@ export const EnterpriseConsole = ({
               sx={{
                 display: 'grid',
                 gap: 3,
-                gridTemplateColumns: ['repeat(2, 1fr)', 'repeat(3, 1fr)', 'repeat(5, 1fr)'],
+                gridTemplateColumns: [
+                  'repeat(2, 1fr)',
+                  'repeat(3, 1fr)',
+                  'repeat(5, 1fr)',
+                ],
               }}
             >
               <Metric
@@ -393,7 +438,10 @@ export const EnterpriseConsole = ({
                   overview.data?.agents.service ?? 0
                 } service`}
               />
-              <Metric label="Runs today" value={overview.data?.runs.today ?? 0} />
+              <Metric
+                label="Runs today"
+                value={overview.data?.runs.today ?? 0}
+              />
               <Metric
                 label="Success rate"
                 value={
@@ -415,9 +463,14 @@ export const EnterpriseConsole = ({
               />
               <Metric
                 label="Refusals today"
-                value={(overview.data?.refusals ?? []).reduce((sum, row) => sum + row.count, 0)}
+                value={(overview.data?.refusals ?? []).reduce(
+                  (sum, row) => sum + row.count,
+                  0,
+                )}
                 tone={
-                  (overview.data?.refusals ?? []).length > 0 ? 'danger' : 'neutral'
+                  (overview.data?.refusals ?? []).length > 0
+                    ? 'danger'
+                    : 'neutral'
                 }
               />
             </Box>
@@ -444,8 +497,8 @@ export const EnterpriseConsole = ({
               </Heading>
               {(overview.data?.compliance ?? []).length === 0 ? (
                 <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                  Nothing to check yet: the strip fills as the organization's sign-in,
-                  admitted clients and audit export are configured.
+                  Nothing to check yet: the strip fills as the organization's
+                  sign-in, admitted clients and audit export are configured.
                 </Text>
               ) : (
                 <Box sx={{ display: 'grid', gap: 1 }}>
@@ -454,12 +507,23 @@ export const EnterpriseConsole = ({
                       key={check.name}
                       sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
                     >
-                      <Box sx={{ color: check.ok ? 'success.fg' : 'attention.fg', display: 'flex' }}>
-                        {check.ok ? <CheckCircleIcon size={14} /> : <AlertIcon size={14} />}
+                      <Box
+                        sx={{
+                          color: check.ok ? 'success.fg' : 'attention.fg',
+                          display: 'flex',
+                        }}
+                      >
+                        {check.ok ? (
+                          <CheckCircleIcon size={14} />
+                        ) : (
+                          <AlertIcon size={14} />
+                        )}
                       </Box>
                       <Text sx={{ fontSize: 1 }}>{check.name}</Text>
                       {!check.ok && check.detail && (
-                        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{check.detail}</Text>
+                        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                          {check.detail}
+                        </Text>
                       )}
                     </Box>
                   ))}
@@ -537,12 +601,14 @@ export const EnterpriseConsole = ({
             <Blankslate.Visual>
               <PlugIcon size="medium" />
             </Blankslate.Visual>
-            <Blankslate.Heading>No agent acts for this organization</Blankslate.Heading>
+            <Blankslate.Heading>
+              No agent acts for this organization
+            </Blankslate.Heading>
             <Blankslate.Description>
               <Text sx={{ textAlign: 'center' }}>
                 A member who authorizes a client while acting for{' '}
-                {organization.name || organization.handle} appears here with the scopes
-                the grant carries and what it last did.
+                {organization.name || organization.handle} appears here with the
+                scopes the grant carries and what it last did.
               </Text>
             </Blankslate.Description>
           </Blankslate>
@@ -552,9 +618,10 @@ export const EnterpriseConsole = ({
               Agents
             </Table.Title>
             <Table.Subtitle as="p" id="org-agents-subtitle">
-              {plural(agentRows.length, 'principal')} acting through MCP for this
-              organization. A member's own grant is revoked by that member; revoking on
-              their behalf arrives with the organization's agent directory.
+              {plural(agentRows.length, 'principal')} acting through MCP for
+              this organization. A member's own grant is revoked by that member;
+              revoking on their behalf arrives with the organization's agent
+              directory.
             </Table.Subtitle>
             <DataTable
               aria-labelledby="org-agents"
@@ -572,7 +639,9 @@ export const EnterpriseConsole = ({
           showTitle={false}
           subject={organization.name || organization.handle}
           filters={{ ...auditFilters, org: organization.uid }}
-          onFiltersChange={filters => onAuditFiltersChange({ ...filters, org: undefined })}
+          onFiltersChange={filters =>
+            onAuditFiltersChange({ ...filters, org: undefined })
+          }
         />
       )}
 
@@ -591,9 +660,9 @@ export const EnterpriseConsole = ({
       )}
 
       <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
-        Teams, Policies, Quotas, Alerts, Approvals and Runs join this console as the
-        layers behind them ship. Identity — providers, group mapping, SCIM and session
-        controls — comes last, with enterprise sign-in.
+        Teams, Policies, Quotas, Alerts, Approvals and Runs join this console as
+        the layers behind them ship. Identity — providers, group mapping, SCIM
+        and session controls — comes last, with enterprise sign-in.
       </Text>
     </Box>
   );

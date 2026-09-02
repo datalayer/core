@@ -33,6 +33,7 @@
  * @module views/mcp/OrganizationUsage
  */
 
+import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { Heading, Label, ProgressBar, Spinner, Text } from '@primer/react';
 import { Blankslate, DataTable, Table } from '@primer/react/experimental';
@@ -96,7 +97,9 @@ export const amount = (value: number): string =>
  * not at eighty-one percent, and a bar that reddens smoothly gives them no
  * moment to act on.
  */
-export const quotaTone = (fraction: number): 'success' | 'attention' | 'danger' =>
+export const quotaTone = (
+  fraction: number,
+): 'success' | 'attention' | 'danger' =>
   fraction >= 0.9 ? 'danger' : fraction >= 0.75 ? 'attention' : 'success';
 
 /**
@@ -162,7 +165,9 @@ const QuotaCard = ({
               {typeof used === 'number' ? amount(used) : '—'}
             </Text>
             <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-              {typeof limit === 'number' ? `of ${amount(limit)}` : 'no limit set'}
+              {typeof limit === 'number'
+                ? `of ${amount(limit)}`
+                : 'no limit set'}
             </Text>
           </>
         )}
@@ -192,7 +197,10 @@ export const OrganizationUsage = ({
 }: OrganizationUsageProps): JSX.Element => {
   const usage = useOrgMcpUsage(orgUid, teamUid ? { team: teamUid } : {});
 
-  const rows = useMemo(() => spendRowsOf(usage.data?.byAgent ?? []), [usage.data]);
+  const rows = useMemo(
+    () => spendRowsOf(usage.data?.byAgent ?? []),
+    [usage.data],
+  );
 
   if (usage.isLoading) {
     return (
@@ -222,8 +230,8 @@ export const OrganizationUsage = ({
       )}
       <Text as="p" sx={{ color: 'fg.muted', mt: 0, mb: 3 }}>
         What this organization&apos;s agents used over the last day, against
-        what they may use. Limits are set in the organization&apos;s MCP
-        policy, not here.
+        what they may use. Limits are set in the organization&apos;s MCP policy,
+        not here.
       </Text>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -245,7 +253,9 @@ export const OrganizationUsage = ({
           <Blankslate.Visual>
             <GraphIcon size="medium" />
           </Blankslate.Visual>
-          <Blankslate.Heading>The day&apos;s spend could not be read</Blankslate.Heading>
+          <Blankslate.Heading>
+            The day&apos;s spend could not be read
+          </Blankslate.Heading>
           <Blankslate.Description>
             <Text as="p" sx={{ textAlign: 'center' }}>
               A breakdown of a total nobody could read would make every agent
