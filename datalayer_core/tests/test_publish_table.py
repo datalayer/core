@@ -185,3 +185,43 @@ def test_a_snapshot_publication_serves_nothing_live(client: FakeClient, monkeypa
 
     assert called == []
     assert "live" not in result
+
+
+def test_a_part_upload_is_not_labelled_json() -> None:
+    """The header that made publishing fail on its first part.
+
+    `fetch` defaulted every request to `Content-Type: application/json`. A
+    multipart upload has to be described by `requests`, which writes
+    `multipart/form-data` *with the boundary it generated*; overriding that
+    hands the server a multipart body under a JSON content type, and FastAPI
+    reports the form field as missing — true, and silent about why.
+
+    Asserted on the headers rather than through a round trip, because the
+    round trip is what took a live deployment to notice.
+    """
+    from datalayer_core.utils import network
+
+    sent: dict = {}
+
+    def record(url, **kwargs):
+        sent.update(kwargs)
+
+        class _Answer:
+            status_code = 200
+
+            def raise_for_status(self) -> None: ...
+
+            def json(self) -> dict:
+                return {}
+
+        return _Answer()
+
+    original = network.requests.put
+    network.requests.put = record
+    try:
+        network.fetch("https://example.invalid/x", method="PUT", files={"file": ("p", b"x")})
+        assert "Content-Type" not in sent["headers"], sent["headers"]
+        network.fetch("https://example.invalid/x", method="PUT", json={"a": 1})
+        assert sent["headers"]["Content-Type"] == "application/json"
+    finally:
+        network.requests.put = original

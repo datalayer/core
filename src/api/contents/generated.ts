@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /* This file is generated from Datalayer Contents OpenAPI. Do not edit. */
 
 export interface AttachmentCreate {
@@ -428,6 +423,7 @@ export interface DataServerConnectivity {
 
 export interface DataServerConnector {
   connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
+  name?: string | null;
   operations?: Array<'select' | 'describe' | 'list'>;
   policyVersion: string;
 }
@@ -443,6 +439,11 @@ export interface DataServerHeartbeat {
     | 'unavailable'
     | 'draining'
     | 'revoked';
+}
+
+export interface DataServerHeartbeatRequest {
+  connectors?: Array<DataServerConnector>;
+  load?: Record<string, unknown>;
 }
 
 export interface DataServerJob {
@@ -1070,6 +1071,7 @@ export interface PublishTableReservation {
 
 export interface PublishedTableView {
   datasource: Record<string, unknown>;
+  datasourceUid: string;
   ownerUid: string;
   parts: number;
   relation: string;

@@ -1121,13 +1121,26 @@ def dataservers_register(
     policy_version: str = typer.Option("1", "--policy-version"),
     connectors: str = typer.Option("", "--connectors"),
     description: str = typer.Option("", "--description"),
+    managed: bool = typer.Option(
+        False,
+        "--managed",
+        help="Datalayer runs this one: it may obtain its own identity at start.",
+    ),
 ) -> None:
     """
-    Register a gateway deployed in your own network.
+    Register a gateway deployed in your own network, or a managed one.
 
     The identity is what the gateway presents when it calls home: rotating its
     certificate under the same identity resumes this registration rather than
     making a second one.
+
+    `--managed` says Datalayer runs the host. It is the difference between a
+    Dataserver that must be handed a certificate somebody generated with
+    `bootstrap` and one that obtains its own at start — Contents issues an
+    identity to a pod with none only for a registration marked this way. The
+    flag was missing until 2026-09-02, which left the documented self-bootstrap
+    path with no way to create its own precondition: the field existed in the
+    contract, the service checked it, and nothing a person could run set it.
     """
     try:
         created = _client().create_content_source(
@@ -1141,6 +1154,7 @@ def dataservers_register(
                     "registration_identity": registration_identity,
                     "mtls_issuer": mtls_issuer,
                     "policy_version": policy_version,
+                    "managed": managed,
                     "connectors": [
                         value.strip()
                         for value in connectors.split(",")
