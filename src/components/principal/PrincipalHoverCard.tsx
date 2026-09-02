@@ -48,7 +48,7 @@ export function PrincipalHoverCard({
   ...principal
 }: PrincipalHoverCardProps): JSX.Element {
   const [open, setOpen] = useState(false);
-  const hideTimeout = useRef<number | undefined>();
+  const hideTimeout = useRef<number | undefined>(undefined);
 
   const cancelHide = useCallback(() => {
     if (hideTimeout.current !== undefined) {

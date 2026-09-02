@@ -50,7 +50,12 @@ import {
   Text,
   TextInput,
 } from '@primer/react';
-import { Blankslate, DataTable, Dialog, Table } from '@primer/react/experimental';
+import {
+  Blankslate,
+  DataTable,
+  Dialog,
+  Table,
+} from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { KebabHorizontalIcon, KeyIcon } from '@primer/octicons-react';
@@ -107,7 +112,12 @@ export const ServiceAgents = ({
   const [rotating, setRotating] = useState<AgentRow | null>(null);
   const [revoking, setRevoking] = useState<AgentRow | null>(null);
   const [keyShown, setKeyShown] = useState<KeyShown | null>(null);
-  const returnFocusRef = useRef<HTMLElement>(null);
+  // Primer 37 types Dialog's focus refs with React 18's non-nullable
+  // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
+  // ref is only handed to Dialog, so narrow it once here.
+  const returnFocusRef = useRef<HTMLElement>(
+    null,
+  ) as React.RefObject<HTMLElement>;
 
   const rows = useMemo<AgentRow[]>(
     () => (agents.data ?? []).map(agent => ({ ...agent, id: agent.uid })),
@@ -126,7 +136,11 @@ export const ServiceAgents = ({
       {
         onSuccess: agent => {
           closeCreate();
-          setKeyShown({ agent: agent.name || agent.uid, key: agent.key, rotated: false });
+          setKeyShown({
+            agent: agent.name || agent.uid,
+            key: agent.key,
+            rotated: false,
+          });
         },
         onError: reason => {
           enqueueToast(`Could not create the agent: ${reason.message}`, {
@@ -145,10 +159,16 @@ export const ServiceAgents = ({
     rotate.mutate(agent.uid, {
       onSuccess: rotated => {
         setRotating(null);
-        setKeyShown({ agent: agent.name || agent.uid, key: rotated.key, rotated: true });
+        setKeyShown({
+          agent: agent.name || agent.uid,
+          key: rotated.key,
+          rotated: true,
+        });
       },
       onError: reason => {
-        enqueueToast(`Could not rotate the key: ${reason.message}`, { variant: 'error' });
+        enqueueToast(`Could not rotate the key: ${reason.message}`, {
+          variant: 'error',
+        });
         setRotating(null);
       },
     });
@@ -161,11 +181,15 @@ export const ServiceAgents = ({
     }
     revoke.mutate(agent.uid, {
       onSuccess: () => {
-        enqueueToast(`${agent.name || agent.uid} is revoked.`, { variant: 'success' });
+        enqueueToast(`${agent.name || agent.uid} is revoked.`, {
+          variant: 'success',
+        });
         setRevoking(null);
       },
       onError: reason => {
-        enqueueToast(`Could not revoke: ${reason.message}`, { variant: 'error' });
+        enqueueToast(`Could not revoke: ${reason.message}`, {
+          variant: 'error',
+        });
         setRevoking(null);
       },
     });
@@ -173,7 +197,9 @@ export const ServiceAgents = ({
 
   const toggleScope = (scope: string, on: boolean) =>
     setScopes(current =>
-      on ? [...current, scope] : current.filter(candidate => candidate !== scope),
+      on
+        ? [...current, scope]
+        : current.filter(candidate => candidate !== scope),
     );
 
   const columns: DataTableProps<AgentRow>['columns'] = [
@@ -183,9 +209,13 @@ export const ServiceAgents = ({
       rowHeader: true,
       renderCell: row => (
         <Box sx={{ display: 'grid' }}>
-          <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>{row.name || row.uid}</Text>
+          <Text sx={{ fontSize: 1, fontWeight: 'semibold' }}>
+            {row.name || row.uid}
+          </Text>
           {row.description && (
-            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{row.description}</Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              {row.description}
+            </Text>
           )}
         </Box>
       ),
@@ -204,7 +234,9 @@ export const ServiceAgents = ({
       header: 'Allowed to',
       id: 'scopes',
       width: 'growCollapse',
-      renderCell: row => <ScopeList scopes={row.scopes.split(' ').filter(Boolean)} />,
+      renderCell: row => (
+        <ScopeList scopes={row.scopes.split(' ').filter(Boolean)} />
+      ),
     },
     {
       header: 'State',
@@ -257,7 +289,10 @@ export const ServiceAgents = ({
                 <ActionList.Item onSelect={() => setRotating(row)}>
                   Rotate key
                 </ActionList.Item>
-                <ActionList.Item variant="danger" onSelect={() => setRevoking(row)}>
+                <ActionList.Item
+                  variant="danger"
+                  onSelect={() => setRevoking(row)}
+                >
                   Revoke
                 </ActionList.Item>
               </ActionList>
@@ -293,8 +328,8 @@ export const ServiceAgents = ({
             </Heading>
             <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
               Agents that belong to this organization rather than to a person: a
-              pipeline, a CI job, a bot. Each holds its own key and spends under its
-              own name.
+              pipeline, a CI job, a bot. Each holds its own key and spends under
+              its own name.
             </Text>
           </Box>
           {!readOnly && (
@@ -333,9 +368,9 @@ export const ServiceAgents = ({
           <Blankslate.Heading>No service agent</Blankslate.Heading>
           <Blankslate.Description>
             <Text sx={{ textAlign: 'center' }}>
-              An agent that runs on somebody&rsquo;s grant stops when that person
-              leaves, and its spend shows against them. A service agent is the
-              organization&rsquo;s own.
+              An agent that runs on somebody&rsquo;s grant stops when that
+              person leaves, and its spend shows against them. A service agent
+              is the organization&rsquo;s own.
             </Text>
           </Blankslate.Description>
           {!readOnly && (
@@ -375,8 +410,8 @@ export const ServiceAgents = ({
                 placeholder="nightly ingest"
               />
               <FormControl.Caption>
-                What somebody reading an audit row or a spend line a year from now
-                has to go on.
+                What somebody reading an audit row or a spend line a year from
+                now has to go on.
               </FormControl.Caption>
             </FormControl>
 
@@ -389,16 +424,18 @@ export const ServiceAgents = ({
                   <FormControl key={scope}>
                     <Checkbox
                       checked={scopes.includes(scope)}
-                      onChange={event => toggleScope(scope, event.target.checked)}
+                      onChange={event =>
+                        toggleScope(scope, event.target.checked)
+                      }
                     />
                     <FormControl.Label>{scope}</FormControl.Label>
                   </FormControl>
                 ))}
               </Box>
               <Text as="p" sx={{ fontSize: 0, color: 'fg.muted', mt: 1 }}>
-                The scopes about a person — their profile, acting as them — are not
-                here: a pipeline is not a person, and granting one to it would do
-                nothing while looking like it did something.
+                The scopes about a person — their profile, acting as them — are
+                not here: a pipeline is not a person, and granting one to it
+                would do nothing while looking like it did something.
               </Text>
             </Box>
           </Box>
@@ -425,9 +462,9 @@ export const ServiceAgents = ({
               This is shown once and cannot be shown again.
             </Text>
             <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-              We store a hash of it, so there is no page and no support request that
-              can show it to you a second time. If you lose it, rotate — that issues
-              a new key and stops this one.
+              We store a hash of it, so there is no page and no support request
+              that can show it to you a second time. If you lose it, rotate —
+              that issues a new key and stops this one.
             </Text>
             <Box
               as="pre"
@@ -445,8 +482,8 @@ export const ServiceAgents = ({
             </Box>
             {keyShown.rotated && (
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                {keyShown.agent}&rsquo;s previous key stopped working when this one
-                was issued.
+                {keyShown.agent}&rsquo;s previous key stopped working when this
+                one was issued.
               </Text>
             )}
           </Box>
@@ -459,7 +496,11 @@ export const ServiceAgents = ({
           onClose={() => setRotating(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setRotating(null) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setRotating(null),
+            },
             {
               buttonType: 'danger',
               content: 'Rotate',
@@ -469,10 +510,10 @@ export const ServiceAgents = ({
           ]}
         >
           <Text sx={{ fontSize: 1 }}>
-            {rotating.name || rotating.uid} gets a new key and the current one stops
-            working immediately — there is no grace period, which is the point of
-            rotating. Anything still using the old key fails until you give it the
-            new one. The new key is shown once.
+            {rotating.name || rotating.uid} gets a new key and the current one
+            stops working immediately — there is no grace period, which is the
+            point of rotating. Anything still using the old key fails until you
+            give it the new one. The new key is shown once.
           </Text>
         </Dialog>
       )}
@@ -483,7 +524,11 @@ export const ServiceAgents = ({
           onClose={() => setRevoking(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setRevoking(null) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setRevoking(null),
+            },
             {
               buttonType: 'danger',
               content: 'Revoke',
@@ -493,9 +538,10 @@ export const ServiceAgents = ({
           ]}
         >
           <Text sx={{ fontSize: 1 }}>
-            {revoking.name || revoking.uid} stops authenticating within a minute and
-            anything running on its key fails. It stays in this list, marked revoked,
-            because its audit rows name it — and nothing it already did is undone.
+            {revoking.name || revoking.uid} stops authenticating within a minute
+            and anything running on its key fails. It stays in this list, marked
+            revoked, because its audit rows name it — and nothing it already did
+            is undone.
           </Text>
         </Dialog>
       )}

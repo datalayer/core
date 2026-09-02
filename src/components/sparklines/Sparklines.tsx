@@ -73,7 +73,10 @@ export const Sparklines: React.FC<SparklinesProps> = ({
   return (
     <svg {...svgProps}>
       {React.Children.map(children, child => {
-        if (React.isValidElement(child)) {
+        // React 19 types element props as `unknown` rather than `any`. Each
+        // child is a series component that takes the shared scale below and may
+        // override any of it with props of its own, so keep the shape open.
+        if (React.isValidElement<Record<string, unknown>>(child)) {
           return React.cloneElement(child, {
             data,
             points,

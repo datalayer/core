@@ -359,6 +359,39 @@ class DatalayerURLs:
         return asdict(self)
 
     @classmethod
+    def from_single_origin(cls, origin: str) -> "DatalayerURLs":
+        """Every service under one host, each on its own path prefix.
+
+        A run — a sandbox, an agent, anything served from one deployment —
+        addresses all of Datalayer through a single origin, so one URL is
+        enough to reach every service. `from_environment` takes them one by
+        one, which is the right shape for a workstation and the wrong one
+        here.
+
+        The services are read off `from_environment`'s own signature rather
+        than listed. A list copied from it goes stale the moment a URL is
+        renamed, and it did: `mcp_server_url` became `jupyter_mcp_server_url`
+        and every execution died on an unexpected keyword, a long way from the
+        rename that caused it. Asking the signature means a new service is
+        picked up for free and a renamed one cannot break this.
+
+        It lived in `code_sandboxes.datalayer_sandbox` as `_urls_for_run`,
+        where two services outside that package had come to import it — one of
+        them by its private name — because there was nowhere else to get it.
+        Nothing about it is provider-specific, so it belongs with the type it
+        builds.
+        """
+        import inspect
+
+        base = (origin or "").rstrip("/")
+        services = [
+            name
+            for name in inspect.signature(cls.from_environment).parameters
+            if name.endswith("_url")
+        ]
+        return cls.from_environment(**dict.fromkeys(services, base))
+
+    @classmethod
     def get_all_urls(
         cls,
         iam_url: Optional[str] = None,

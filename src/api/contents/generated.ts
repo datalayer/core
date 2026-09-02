@@ -1,14 +1,10 @@
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /* This file is generated from Datalayer Contents OpenAPI. Do not edit. */
 
 export interface AttachmentCreate {
-  cleanupPolicy?: "revoke" | "remove-materialization" | "retain-source";
-  delivery?: "mount" | "local-bridge" | "materialize" | "client" | "environment";
-  mode?: "ro" | "rw";
+  cleanupPolicy?: 'revoke' | 'remove-materialization' | 'retain-source';
+  delivery?:
+    'mount' | 'local-bridge' | 'materialize' | 'client' | 'environment';
+  mode?: 'ro' | 'rw';
   mountPath?: string | null;
   required?: boolean;
   revisionUid?: string | null;
@@ -38,13 +34,24 @@ export interface AttachmentPrepare {
   tokenAudience?: string | null;
 }
 
-export type AttachmentStatus = "requested" | "preparing" | "ready" | "degraded" | "revoking" | "revoked" | "failed";
+export type AttachmentStatus =
+  | 'requested'
+  | 'preparing'
+  | 'ready'
+  | 'degraded'
+  | 'revoking'
+  | 'revoked'
+  | 'failed';
 
 export interface AttachmentStatusUpdate {
   capabilities?: Array<Capability>;
   error?: AttachmentError | null;
   providerResourceId?: string | null;
-  status: "ready" | "degraded" | "failed" | "revoked";
+  status: 'ready' | 'degraded' | 'failed' | 'revoked';
+}
+
+export interface Body_write_part_api_contents_v1_published_tables__relation__parts__part__put {
+  file: string;
 }
 
 export interface BridgeCreate {
@@ -64,7 +71,7 @@ export interface BridgeList {
 export interface BridgeMountGrant {
   bridgeUid: string;
   expiresAt: string;
-  mode: "ro" | "rw";
+  mode: 'ro' | 'rw';
   mountPath: string;
   mountToken: string;
   relayUrl: string;
@@ -85,20 +92,26 @@ export interface BridgeSession {
   exclusions?: Array<string>;
   expiresAt: string;
   localRootFingerprint: string;
-  mode: "ro" | "rw";
+  mode: 'ro' | 'rw';
   mountPath: string;
   mountSeenAt?: string | null;
   ownerUid: string;
   revokedAt?: string | null;
   sandboxUid: string;
-  state: "pending" | "connected" | "reconnecting" | "disconnected" | "revoked" | "expired";
+  state:
+    | 'pending'
+    | 'connected'
+    | 'reconnecting'
+    | 'disconnected'
+    | 'revoked'
+    | 'expired';
   uid: string;
   updatedAt: string;
 }
 
 export interface BridgeStateReport {
-  role: "client" | "mount";
-  state: "connected" | "reconnecting" | "disconnected";
+  role: 'client' | 'mount';
+  state: 'connected' | 'reconnecting' | 'disconnected';
 }
 
 export interface CallerResponse {
@@ -106,7 +119,14 @@ export interface CallerResponse {
   uid?: string | number | null;
 }
 
-export type Capability = "browse" | "transfer" | "mount" | "query" | "materialize" | "sync" | "local-bridge-mount";
+export type Capability =
+  | 'browse'
+  | 'transfer'
+  | 'mount'
+  | 'query'
+  | 'materialize'
+  | 'sync'
+  | 'local-bridge-mount';
 
 export interface CapabilityTicket {
   expiresAt: string;
@@ -120,7 +140,7 @@ export interface CapabilityTicketClaims {
   exp: number;
   jti: string;
   limits: QueryLimits;
-  operation: "get";
+  operation: 'get';
   policyVersion: string;
   queryUid: string;
   sandboxUid?: string | null;
@@ -166,23 +186,31 @@ export interface CloudObjectView {
 }
 
 export interface CloudStorageConfiguration {
-  accessPreference?: "automatic" | "mount" | "python" | "object-client";
+  accessPreference?: 'automatic' | 'mount' | 'python' | 'object-client';
   bucketOrContainer: string;
   cachePolicy?: string | null;
   credentialUid?: string | null;
   endpoint?: string | null;
   expectedConsistency?: string | null;
-  kind: "cloud-storage";
+  kind: 'cloud-storage';
   mountImplementation?: string | null;
-  origin?: "datalayer-shared" | "environment" | "user";
+  mountRoleArn?: string | null;
+  mountSessionSeconds?: number;
+  origin?: 'datalayer-shared' | 'environment' | 'user';
   prefix?: string;
-  provider: "s3" | "gcs" | "r2" | "azure-blob" | "s3-compatible" | "datalayer-shared-fs";
+  provider:
+    | 's3'
+    | 'gcs'
+    | 'r2'
+    | 'azure-blob'
+    | 's3-compatible'
+    | 'datalayer-shared-fs';
   pythonImplementation?: string | null;
   region?: string | null;
 }
 
 export interface ConflictResolution {
-  use: "local" | "remote" | "keep-both";
+  use: 'local' | 'remote' | 'keep-both';
 }
 
 export interface ConnectionTest {
@@ -192,18 +220,27 @@ export interface ConnectionTest {
 }
 
 export interface ContentAttachment {
-  accessMode?: "mount" | "python" | "object-client" | null;
+  accessMode?: 'mount' | 'python' | 'object-client' | null;
   capabilities?: Array<Capability>;
-  cleanupPolicy?: "revoke" | "remove-materialization" | "retain-source";
+  cleanupPolicy?: 'revoke' | 'remove-materialization' | 'retain-source';
   createdAt: string;
-  delivery: "mount" | "local-bridge" | "materialize" | "client" | "environment";
+  delivery: 'mount' | 'local-bridge' | 'materialize' | 'client' | 'environment';
   error?: AttachmentError | null;
   expiresAt?: string | null;
   fallbackReason?: string | null;
-  filesystemPrimitives?: Array<"list" | "stat" | "read" | "write" | "mkdir" | "remove" | "upload" | "download">;
+  filesystemPrimitives?: Array<
+    | 'list'
+    | 'stat'
+    | 'read'
+    | 'write'
+    | 'mkdir'
+    | 'remove'
+    | 'upload'
+    | 'download'
+  >;
   lastSeenAt?: string | null;
   limits?: AttachmentLimits;
-  mode: "ro" | "rw";
+  mode: 'ro' | 'rw';
   mountPath?: string | null;
   providerResourceId?: string | null;
   readyAt?: string | null;
@@ -220,7 +257,7 @@ export interface ContentAttachment {
 
 export interface ContentAttachmentManifest {
   attachments: Array<ContentAttachment>;
-  contractVersion: "v1";
+  contractVersion: 'v1';
   generatedAt: string;
   sandboxProvider: string;
   sandboxUid: string;
@@ -233,7 +270,7 @@ export interface ContentObject {
   createdByUid: string;
   currentVersionUid?: string | null;
   deleted: boolean;
-  kind: "file" | "folder";
+  kind: 'file' | 'folder';
   mediaType: string;
   path: string;
   size: number;
@@ -259,12 +296,28 @@ export interface ContentObjectVersion {
 
 export interface ContentSource {
   capabilities?: Array<Capability>;
-  configuration: FilesConfiguration | DatasetConfiguration | VolumeConfiguration | CloudStorageConfiguration | DatasourceConfiguration | DataServerConfiguration | McpConfiguration | EnvironmentConfiguration;
-  contractVersion: "v1";
+  configuration:
+    | FilesConfiguration
+    | DatasetConfiguration
+    | VolumeConfiguration
+    | CloudStorageConfiguration
+    | DatasourceConfiguration
+    | DataServerConfiguration
+    | McpConfiguration
+    | EnvironmentConfiguration;
+  contractVersion: 'v1';
   createdAt: string;
   credentialUid?: string | null;
   description?: string | null;
-  kind: "files" | "dataset" | "volume" | "cloud-storage" | "datasource" | "data-server" | "mcp" | "environment";
+  kind:
+    | 'files'
+    | 'dataset'
+    | 'volume'
+    | 'cloud-storage'
+    | 'datasource'
+    | 'data-server'
+    | 'mcp'
+    | 'environment';
   name: string;
   principalKind: PrincipalKind;
   principalUid: string;
@@ -276,10 +329,26 @@ export interface ContentSource {
 
 export interface ContentSourceCreate {
   capabilities?: Array<Capability>;
-  configuration: FilesConfiguration | DatasetConfiguration | VolumeConfiguration | CloudStorageConfiguration | DatasourceConfiguration | DataServerConfiguration | McpConfiguration | EnvironmentConfiguration;
+  configuration:
+    | FilesConfiguration
+    | DatasetConfiguration
+    | VolumeConfiguration
+    | CloudStorageConfiguration
+    | DatasourceConfiguration
+    | DataServerConfiguration
+    | McpConfiguration
+    | EnvironmentConfiguration;
   credentialUid?: string | null;
   description?: string | null;
-  kind: "files" | "dataset" | "volume" | "cloud-storage" | "datasource" | "data-server" | "mcp" | "environment";
+  kind:
+    | 'files'
+    | 'dataset'
+    | 'volume'
+    | 'cloud-storage'
+    | 'datasource'
+    | 'data-server'
+    | 'mcp'
+    | 'environment';
   name: string;
   principalKind?: PrincipalKind | null;
   principalUid?: string | null;
@@ -288,7 +357,16 @@ export interface ContentSourceCreate {
 
 export interface ContentSourceUpdate {
   capabilities?: Array<Capability> | null;
-  configuration?: FilesConfiguration | DatasetConfiguration | VolumeConfiguration | CloudStorageConfiguration | DatasourceConfiguration | DataServerConfiguration | McpConfiguration | EnvironmentConfiguration | null;
+  configuration?:
+    | FilesConfiguration
+    | DatasetConfiguration
+    | VolumeConfiguration
+    | CloudStorageConfiguration
+    | DatasourceConfiguration
+    | DataServerConfiguration
+    | McpConfiguration
+    | EnvironmentConfiguration
+    | null;
   credentialUid?: string | null;
   description?: string | null;
   name?: string | null;
@@ -318,14 +396,21 @@ export interface DataServerConfiguration {
   connectors?: Array<DataServerConnector>;
   identityExpiresAt?: string | null;
   identitySerial?: string | null;
-  kind: "data-server";
+  kind: 'data-server';
   lastHeartbeatAt?: string | null;
   leaseSeconds?: number | null;
+  managed?: boolean;
   mtlsIssuer: string;
   policyVersion: string;
   previousIdentitySerial?: string | null;
   registrationIdentity: string;
-  state?: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+  state?:
+    | 'registering'
+    | 'ready'
+    | 'degraded'
+    | 'unavailable'
+    | 'draining'
+    | 'revoked';
   version?: string | null;
 }
 
@@ -337,19 +422,27 @@ export interface DataServerConnectivity {
 }
 
 export interface DataServerConnector {
-  connectorType: "athena" | "bigquery" | "sql";
-  operations?: Array<"select" | "describe" | "list">;
+  connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
+  operations?: Array<'select' | 'describe' | 'list'>;
   policyVersion: string;
 }
 
 export interface DataServerHeartbeat {
   lastHeartbeatAt: string;
   leaseSeconds: number;
-  state: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+  publishedConnectors?: Array<Record<string, unknown>>;
+  state:
+    | 'registering'
+    | 'ready'
+    | 'degraded'
+    | 'unavailable'
+    | 'draining'
+    | 'revoked';
 }
 
 export interface DataServerJob {
-  connectorType: "athena" | "bigquery" | "sql";
+  connector?: string | null;
+  connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
   credentialRef?: string | null;
   limits: QueryLimits;
   policyVersion: string;
@@ -381,14 +474,20 @@ export interface DataServerRegistered {
 export interface DataServerRegistration {
   connectors: Array<DataServerConnector>;
   identitySerial?: string | null;
-  identitySource: "certificate" | "body";
+  identitySource: 'certificate' | 'body';
   lastHeartbeatAt?: string | null;
   leaseSeconds: number;
   policyVersion: string;
   registeredAt: string;
   registrationIdentity: string;
   sourceUid: string;
-  state: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+  state:
+    | 'registering'
+    | 'ready'
+    | 'degraded'
+    | 'unavailable'
+    | 'draining'
+    | 'revoked';
   uid: string;
   version?: string | null;
 }
@@ -400,12 +499,18 @@ export interface DataServerStatus {
   lastHeartbeatAt?: string | null;
   leaseSeconds: number;
   queueDepth: number;
-  state: "registering" | "ready" | "degraded" | "unavailable" | "draining" | "revoked";
+  state:
+    | 'registering'
+    | 'ready'
+    | 'degraded'
+    | 'unavailable'
+    | 'draining'
+    | 'revoked';
 }
 
 export interface DatasetConfiguration {
   currentRevisionUid?: string | null;
-  kind: "dataset";
+  kind: 'dataset';
   license?: string | null;
   publicationEligible?: boolean;
   schemaNotes?: string | null;
@@ -454,7 +559,13 @@ export interface DatasetRevision {
 
 export interface DatasetRevisionCreate {
   files: Array<DatasetRevisionFileCreate>;
-  originKind: "upload" | "home-folder" | "sandbox-result" | "cloud-storage" | "volume" | "acquisition";
+  originKind:
+    | 'upload'
+    | 'home-folder'
+    | 'sandbox-result'
+    | 'cloud-storage'
+    | 'volume'
+    | 'acquisition';
 }
 
 export interface DatasetRevisionFile {
@@ -484,7 +595,7 @@ export interface DatasourceCapabilities {
   httpsFallback?: true;
   maxBytes: number;
   maxSeconds: number;
-  operations: Array<"select" | "describe" | "list">;
+  operations: Array<'select' | 'describe' | 'list'>;
   rowLimit: number;
   streaming?: true;
 }
@@ -495,17 +606,17 @@ export interface DatasourceColumn {
 }
 
 export interface DatasourceConfiguration {
-  allowedOperations?: Array<"select" | "describe" | "list">;
-  connectorType: "athena" | "bigquery" | "sql";
+  allowedOperations?: Array<'select' | 'describe' | 'list'>;
+  connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
   credentialUid?: string | null;
   dataServerUid?: string | null;
   databaseOrProject?: string | null;
   defaultRowLimit?: number;
   endpoint?: string | null;
-  kind: "datasource";
+  kind: 'datasource';
   maxBytes?: number;
   maxSeconds?: number;
-  networkRoute?: "direct" | "dataserver";
+  networkRoute?: 'direct' | 'dataserver';
 }
 
 export interface DatasourceQuery {
@@ -526,7 +637,8 @@ export interface DatasourceQuery {
   sourceUid: string;
   sqlHash: string;
   startedAt?: string | null;
-  status: "pending" | "running" | "succeeded" | "failed" | "cancelled";
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+  truncated?: string | null;
   uid: string;
 }
 
@@ -572,7 +684,7 @@ export interface DependencyStatusResponse {
 }
 
 export interface EffectivePermissions {
-  effectiveAccessLevel: "view" | "update" | "execute" | null;
+  effectiveAccessLevel: 'view' | 'update' | 'execute' | null;
   execute: boolean;
   isOwner: boolean;
   update: boolean;
@@ -590,13 +702,13 @@ export interface EnvironmentConfiguration {
   buildEntries?: Array<EnvironmentBuildEntry>;
   buildUid: string;
   environmentUid: string;
-  kind: "environment";
+  kind: 'environment';
   resolvedProviderPaths?: Record<string, string>;
   runtimeContentUids?: Array<string>;
 }
 
 export interface FilesConfiguration {
-  kind: "files";
+  kind: 'files';
   owningUserUid: string;
   quotaPolicy: string;
   storageBackendId: string;
@@ -610,8 +722,8 @@ export interface FlightConnectivity {
 }
 
 export interface Grant {
-  accessLevel: "view" | "update" | "execute";
-  principalKind: "user" | "team" | "organization";
+  accessLevel: 'view' | 'update' | 'execute';
+  principalKind: 'user' | 'team' | 'organization';
   principalUid: string;
   uid?: string | null;
 }
@@ -621,8 +733,8 @@ export interface HTTPValidationError {
 }
 
 export interface HealthResponse {
-  service?: "contents";
-  status?: "healthy";
+  service?: 'contents';
+  status?: 'healthy';
   success?: true;
 }
 
@@ -690,7 +802,7 @@ export interface McpApproval {
   note?: string | null;
   sessionUid: string;
   sourceUid: string;
-  status: "pending" | "approved" | "rejected" | "expired" | "consumed";
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'consumed';
   tool: string;
   uid: string;
 }
@@ -727,7 +839,14 @@ export interface McpCall {
   operationUid?: string | null;
   result?: McpCallResult | null;
   sessionUid: string;
-  status: "pending-approval" | "approved" | "denied" | "running" | "succeeded" | "failed" | "refused";
+  status:
+    | 'pending-approval'
+    | 'approved'
+    | 'denied'
+    | 'running'
+    | 'succeeded'
+    | 'failed'
+    | 'refused';
   tool: string;
   uid: string;
   updatedAt: string;
@@ -759,14 +878,14 @@ export interface McpConfiguration {
   allowedMediaTypes?: Array<string>;
   allowedResources?: Array<string>;
   allowedTools?: Array<string>;
-  approvalPolicy: "explicit" | "auto-allowlisted" | "never";
+  approvalPolicy: 'explicit' | 'auto-allowlisted' | 'never';
   credentialUid?: string | null;
-  destinationPolicy: "allowlist" | "home-folder-only" | "dataset-only";
+  destinationPolicy: 'allowlist' | 'home-folder-only' | 'dataset-only';
   endpoint?: string | null;
-  kind: "mcp";
+  kind: 'mcp';
   managedServerUid?: string | null;
   maxResultBytes?: number;
-  transport: "stdio" | "streamable-http" | "sse";
+  transport: 'stdio' | 'streamable-http' | 'sse';
 }
 
 export interface McpHealth {
@@ -787,14 +906,14 @@ export interface McpSession {
   allowedDomains: Array<string>;
   allowedResources: Array<string>;
   allowedTools: Array<string>;
-  approvalPolicy: "explicit" | "auto-allowlisted" | "never";
+  approvalPolicy: 'explicit' | 'auto-allowlisted' | 'never';
   createdAt: string;
-  destinationPolicy: "allowlist" | "home-folder-only" | "dataset-only";
+  destinationPolicy: 'allowlist' | 'home-folder-only' | 'dataset-only';
   expiresAt: string;
   maxResultBytes: number;
   sandboxUid?: string | null;
   sourceUid: string;
-  status: "active" | "revoked" | "expired";
+  status: 'active' | 'revoked' | 'expired';
   uid: string;
 }
 
@@ -821,6 +940,19 @@ export interface McpToolView {
   name: string;
 }
 
+export interface MountSession {
+  accessKeyId: string;
+  endpointUrl?: string;
+  expiration: string;
+  region?: string;
+  secretAccessKey: string;
+  sessionToken: string;
+}
+
+export interface MountSessionAnswer {
+  mountSession?: MountSession | null;
+}
+
 export interface ObjectList {
   items: Array<ContentObject>;
   nextCursor?: string | null;
@@ -830,7 +962,7 @@ export interface OperationCapability {
   available: boolean;
   deployed: boolean;
   documentation?: string | null;
-  kind?: "operation";
+  kind?: 'operation';
   label: string;
   name: string;
   reason?: string | null;
@@ -847,20 +979,26 @@ export interface OperationView {
   operationKind: string;
   result?: Record<string, unknown> | null;
   sourceUid?: string | null;
-  status: "pending" | "running" | "succeeded" | "failed" | "cancelling" | "cancelled";
+  status:
+    'pending' | 'running' | 'succeeded' | 'failed' | 'cancelling' | 'cancelled';
   uid: string;
   updatedAt: string;
 }
 
+export interface PartWritten {
+  bytesWritten: number;
+  part: string;
+}
+
 export interface PingResponse {
-  message?: "Pong.";
+  message?: 'Pong.';
   success?: true;
   version: string;
 }
 
 export interface PlanAction {
   blocks?: Array<number>;
-  kind: "upload" | "download" | "delete_remote" | "delete_local" | "conflict";
+  kind: 'upload' | 'download' | 'delete_remote' | 'delete_local' | 'conflict';
   objectUid?: string | null;
   path: string;
   reason: string;
@@ -868,20 +1006,30 @@ export interface PlanAction {
 }
 
 export interface PreparedAttachment {
-  accessMode?: "mount" | "python" | "object-client" | null;
+  accessMode?: 'mount' | 'python' | 'object-client' | null;
   bridge?: BridgeMountGrant | null;
   capabilities?: Array<Capability>;
-  cleanupPolicy?: "revoke" | "remove-materialization" | "retain-source";
+  cleanupPolicy?: 'revoke' | 'remove-materialization' | 'retain-source';
   createdAt: string;
-  delivery: "mount" | "local-bridge" | "materialize" | "client" | "environment";
+  delivery: 'mount' | 'local-bridge' | 'materialize' | 'client' | 'environment';
   error?: AttachmentError | null;
   expiresAt?: string | null;
   fallbackReason?: string | null;
-  filesystemPrimitives?: Array<"list" | "stat" | "read" | "write" | "mkdir" | "remove" | "upload" | "download">;
+  filesystemPrimitives?: Array<
+    | 'list'
+    | 'stat'
+    | 'read'
+    | 'write'
+    | 'mkdir'
+    | 'remove'
+    | 'upload'
+    | 'download'
+  >;
   lastSeenAt?: string | null;
   limits?: AttachmentLimits;
-  mode: "ro" | "rw";
+  mode: 'ro' | 'rw';
   mountPath?: string | null;
+  mountSession?: MountSession | null;
   providerResourceId?: string | null;
   readyAt?: string | null;
   required?: boolean;
@@ -897,12 +1045,30 @@ export interface PreparedAttachment {
 
 export interface PresignedAccess {
   expiresIn: number;
-  operation: "get" | "put";
+  operation: 'get' | 'put';
   path: string;
   url: string;
 }
 
-export type PrincipalKind = "user" | "team" | "organization";
+export type PrincipalKind = 'user' | 'team' | 'organization';
+
+export interface PublishTableRequest {
+  relation: string;
+}
+
+export interface PublishTableReservation {
+  directory: string;
+  firstPart: string;
+  ownerUid: string;
+  relation: string;
+}
+
+export interface PublishedTableView {
+  datasource: Record<string, unknown>;
+  ownerUid: string;
+  parts: number;
+  relation: string;
+}
 
 export interface QuarantineRequest {
   reason: string;
@@ -933,9 +1099,18 @@ export interface QuerySave {
 
 export interface ReadinessResponse {
   dependencies: Array<DependencyStatusResponse>;
-  service?: "contents";
-  status: "ready" | "not-ready";
+  service?: 'contents';
+  status: 'ready' | 'not-ready';
   success: boolean;
+}
+
+export interface ReconcileReportView {
+  durationSeconds: number;
+  error?: string | null;
+  ranAt: string;
+  report?: Record<string, unknown> | null;
+  sample: number;
+  verify: boolean;
 }
 
 export interface RestoreRequest {
@@ -944,7 +1119,7 @@ export interface RestoreRequest {
 
 export interface ServiceStatusResponse {
   caller: CallerResponse;
-  service?: "contents";
+  service?: 'contents';
   success?: true;
   version: string;
 }
@@ -970,7 +1145,8 @@ export interface SourceList {
   nextCursor?: string | null;
 }
 
-export type SourceStatus = "pending" | "ready" | "degraded" | "disabled" | "failed";
+export type SourceStatus =
+  'pending' | 'ready' | 'degraded' | 'disabled' | 'failed';
 
 export interface SpaceRelease {
   attachmentsRevoked: number;
@@ -978,7 +1154,18 @@ export interface SpaceRelease {
   spaceUid: string;
 }
 
-export type StableErrorCode = "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "QUOTA_EXCEEDED" | "CAPABILITY_UNAVAILABLE" | "CHECKSUM_MISMATCH" | "PROVIDER_UNAVAILABLE" | "CAPABILITY_REVOKED" | "OPERATION_CANCELLED" | "INTERNAL_ERROR";
+export type StableErrorCode =
+  | 'UNAUTHENTICATED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'CONFLICT'
+  | 'QUOTA_EXCEEDED'
+  | 'CAPABILITY_UNAVAILABLE'
+  | 'CHECKSUM_MISMATCH'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'CAPABILITY_REVOKED'
+  | 'OPERATION_CANCELLED'
+  | 'INTERNAL_ERROR';
 
 export interface SyncBlockView {
   checksum: string;
@@ -1007,18 +1194,18 @@ export interface SyncConflictView {
   path: string;
   reason: string;
   remoteEntry?: ManifestEntry | null;
-  resolution?: "local" | "remote" | "keep-both" | null;
+  resolution?: 'local' | 'remote' | 'keep-both' | null;
   resolvedAt?: string | null;
   sessionUid: string;
-  status: "open" | "resolved";
+  status: 'open' | 'resolved';
   uid: string;
 }
 
 export interface SyncCreate {
   blockSize?: number;
-  conflictPolicy?: "manual" | "newest" | "local" | "remote";
+  conflictPolicy?: 'manual' | 'newest' | 'local' | 'remote';
   delete?: boolean;
-  direction?: "push" | "pull" | "bidirectional";
+  direction?: 'push' | 'pull' | 'bidirectional';
   exclusions?: Array<string>;
   localManifest: ManifestPayload;
   remoteUri: string;
@@ -1090,9 +1277,9 @@ export interface TicketValidationResult {
 export interface TransferCreate {
   checksum: string;
   destinationUri: string;
-  direction?: "upload";
+  direction?: 'upload';
   mediaType?: string;
-  overwrite?: "reject" | "replace" | "new-version";
+  overwrite?: 'reject' | 'replace' | 'new-version';
   size: number;
 }
 
@@ -1145,13 +1332,13 @@ export interface VersionList {
 }
 
 export interface VolumeConfiguration {
-  accessModes: Array<"ro" | "rw">;
+  accessModes: Array<'ro' | 'rw'>;
   backingResourceId?: string | null;
   capacityBytes: number;
   concurrentReaders: boolean;
   concurrentWriters: boolean;
   defaultMountPath: string;
-  kind: "volume";
-  scope: "user" | "space";
+  kind: 'volume';
+  scope: 'user' | 'space';
   storageClass?: string | null;
 }

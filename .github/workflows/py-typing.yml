@@ -51,6 +51,10 @@ jobs:
         run: |
           uv pip install mypy
           uv pip install types-requests
+          # The CLI reads YAML, so mypy needs its stubs; without them this
+          # job fails on an import it can do nothing about, which is a job
+          # that reports nothing about the code.
+          uv pip install types-PyYAML
       - name: Run mypy
         run: |
           mypy datalayer_core

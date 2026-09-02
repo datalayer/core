@@ -16,7 +16,16 @@ import { PathExt } from '@jupyterlab/coreutils';
 import { DocumentRegistry } from '@jupyterlab/docregistry';
 import { Contents } from '@jupyterlab/services';
 import { PromiseDelegate } from '@lumino/coreutils';
-import { ActionList, ActionMenu, Heading, IconButton, SegmentedControl, Spinner, TreeView, Text } from '@primer/react';
+import {
+  ActionList,
+  ActionMenu,
+  Heading,
+  IconButton,
+  SegmentedControl,
+  Spinner,
+  TreeView,
+  Text,
+} from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { Blankslate, Dialog } from '@primer/react/experimental';
 import { ListUnorderedIcon, SyncIcon, TableIcon } from '@primer/octicons-react';
@@ -123,7 +132,8 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
   // A browser with nothing behind it shows nothing — never the sample tree.
   // The sample is for a documentation preview that asks for it by name; a
   // caller that has not resolved its sandbox yet must not appear to have.
-  const contents = props.contents ?? (mock ? CONTENTS_BROWSER_MOCK_MANAGER : undefined);
+  const contents =
+    props.contents ?? (mock ? CONTENTS_BROWSER_MOCK_MANAGER : undefined);
   if (!contents) {
     return (
       <Box sx={{ p: 3 }}>
@@ -134,13 +144,31 @@ export function ContentsBrowser(props: IContentsBrowserProps): JSX.Element {
       </Box>
     );
   }
-  return <ConnectedContentsBrowser {...props} contents={contents} mock={mock} title={title} />;
-};
+  return (
+    <ConnectedContentsBrowser
+      {...props}
+      contents={contents}
+      mock={mock}
+      title={title}
+    />
+  );
+}
 
 const ConnectedContentsBrowser = (
-  props: IContentsBrowserProps & { contents: Contents.IManager; mock: boolean; title: ReactNode },
+  props: IContentsBrowserProps & {
+    contents: Contents.IManager;
+    mock: boolean;
+    title: ReactNode;
+  },
 ): JSX.Element => {
-  const { contents, mock, title, localContents, documentRegistry, onViewChange } = props;
+  const {
+    contents,
+    mock,
+    title,
+    localContents,
+    documentRegistry,
+    onViewChange,
+  } = props;
   const isMounted = useIsMounted();
   const { trackAsyncTask } = useToast();
   const [children, setChildren] = useState<IContentsView[] | null>(null);
@@ -559,7 +587,12 @@ const ConnectedContentsBrowser = (
           )}
           {!mock && contextMenuAnchor !== null && (
             <ActionMenu
-              anchorRef={contextMenuAnchor ?? undefined}
+              // Primer 37 types `anchorRef` with React 18's non-nullable
+              // `RefObject<HTMLElement>`; the anchor this menu tracks is nullable.
+              anchorRef={
+                (contextMenuAnchor ?? undefined) as
+                  React.RefObject<HTMLElement> | undefined
+              }
               open={contextMenuAnchor?.current !== null}
               onOpenChange={() => {
                 setContextMenuAnchor(null);
@@ -647,6 +680,6 @@ const ConnectedContentsBrowser = (
       )}
     </Box>
   );
-}
+};
 
 export default ContentsBrowser;

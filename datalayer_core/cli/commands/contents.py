@@ -1666,8 +1666,14 @@ def mcp_tools(ctx: typer.Context, source: str = typer.Argument(...)) -> None:
     table.add_column("Description")
     table.add_column("Arguments")
     for tool in discovered.tools:
-        properties = tool.input_schema.get("properties") or {}
-        required = set(tool.input_schema.get("required") or [])
+        # `input_schema` is optional on the wire, and a tool that takes no
+        # arguments is entitled to omit it. Reaching through it directly
+        # turned that into an `AttributeError` in the middle of rendering the
+        # table — `datalayer contents mcp tools` crashing on a server whose
+        # tools are all zero-argument.
+        schema = tool.input_schema or {}
+        properties = schema.get("properties") or {}
+        required = set(schema.get("required") or [])
         arguments = ", ".join(
             f"{name}{'' if name in required else '?'}" for name in properties
         )

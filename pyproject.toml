@@ -73,6 +73,8 @@ test = [
     "types-requests",
     "typing-extensions",
     "datamodel-code-generator",
+    # So the fsspec filesystem is exercised rather than skipped in CI.
+    "fsspec>=2024.6.0",
 ]
 docs = [
     "click>=8.3.1",  # Use latest version, 8.2.2 issue has been fixed
@@ -86,6 +88,12 @@ examples = [
     "streamlit",
     "torch",
     "uvicorn",
+]
+# `CloudStorage.filesystem()` only. Reading one object needs nothing extra —
+# `storage.open(path)` is a plain stream — so a notebook that never asks for
+# an fsspec filesystem should not carry fsspec.
+fsspec = [
+    "fsspec>=2024.6.0",
 ]
 otel = [
     "logfire>=3.0.0",

@@ -566,8 +566,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
         alignItems:
           hideHero || compactDocMode || !fillHeight ? 'flex-start' : 'center',
         justifyContent: 'center',
-        minHeight:
-          hideHero || compactDocMode || !fillHeight ? 'auto' : '100vh',
+        minHeight: hideHero || compactDocMode || !fillHeight ? 'auto' : '100vh',
         bg: hideHero ? 'transparent' : 'canvas.default',
         color: 'fg.default',
         py: hideHero ? 0 : compactDocMode ? 2 : 4,
@@ -932,9 +931,7 @@ export const SignInSimple: React.FC<SignInSimpleProps> = ({
                       autoFocus
                       placeholder="Paste your API key here"
                       value={apiKeyValue}
-                      onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setApiKeyValue(e.target.value)
-                      }
+                      onInput={e => setApiKeyValue(e.currentTarget.value)}
                       ref={apiKeyRef}
                     />
                   </FormControl>

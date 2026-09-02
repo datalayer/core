@@ -9,7 +9,7 @@ import os
 import sys
 import tempfile
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from pathlib import Path
 from typing import Any, Callable, Iterator, TextIO
 from uuid import uuid4
@@ -28,8 +28,13 @@ from datalayer_core.models.contents.datasources import (
     is_query_terminal,
 )
 from datalayer_core.models.contents.generated import (
+    AttachmentList,
+    ContentAttachment,
     ContentObject,
+    DatasetPublication,
+    DatasetPublicationList,
     DatasetRevision,
+    DatasetRevisionList,
     ObjectList,
     TransferView,
     VersionList,
@@ -519,6 +524,381 @@ class Dataserver:
         return self.client.rotate_dataserver_identity(self.source_uid, csr)
 
 
+class _Attached:
+    """
+    What every attachable source shares: being put into a sandbox.
+
+    Cloud Storage, a Dataset and a Volume are three different things to hold
+    and one thing to attach — the service takes the same attachment either
+    way, and the kind decides what the sandbox ends up seeing. Writing it
+    once means `--path` and `--ro` cannot come to mean different things in
+    three places.
+    """
+
+    client: DatalayerClient
+    source_uid: str
+
+    def source(self) -> Any:
+        """The catalog record, fetched now.
+
+        Not cached: a source can be renamed, re-scoped or revoked between two
+        calls, and a stale copy of that is worse than a second request.
+        """
+        return self.client.get_content_source(self.source_uid).value
+
+    def attach(
+        self,
+        sandbox_uid: str,
+        *,
+        path: str | None = None,
+        read_only: bool = False,
+        delivery: str = "mount",
+        required: bool = True,
+        provider: str = "datalayer",
+        revision_uid: str | None = None,
+    ) -> ContentAttachment:
+        """Put this source into a sandbox.
+
+        `path` is where it appears. A sandbox that is **already running**
+        receives it under the home directory instead, so an absolute path
+        asked for after launch is answered with the reason rather than
+        silently moved — see the Cloud Storage page.
+        """
+        return self.client.create_content_attachment(
+            {
+                "source_uid": self.source_uid,
+                "revision_uid": revision_uid,
+                "sandbox_uid": sandbox_uid,
+                "sandbox_provider": provider,
+                "mode": "ro" if read_only else "rw",
+                "mount_path": path,
+                "delivery": delivery,
+                "required": required,
+            },
+            idempotency_key=f"contents-attachment-{uuid4()}",
+        )
+
+    def attachments(self, *, active: bool = False) -> AttachmentList:
+        """Where this source is attached."""
+        return self.client.list_content_attachments(
+            source_uid=self.source_uid, active=active
+        )
+
+    def detach(self, attachment_uid: str) -> ContentAttachment:
+        """Revoke one attachment of this source."""
+        return self.client.revoke_content_attachment(attachment_uid)
+
+
+class CloudStorageObject:
+    """One object, opened for reading.
+
+    A file-like the standard readers accept — `pandas.read_parquet`,
+    `pyarrow`, `json.load` — that pulls through Contents rather than from the
+    bucket, so the process never holds a bucket key. It is sequential and
+    read-only: no `seek`, because there is one range request behind it and
+    pretending otherwise would quietly re-read the object from the start.
+    """
+
+    def __init__(self, chunks: Iterator[bytes]) -> None:
+        self._chunks = chunks
+        self._buffer = b""
+        self._done = False
+
+    def readable(self) -> bool:
+        return True
+
+    def seekable(self) -> bool:
+        return False
+
+    def writable(self) -> bool:
+        return False
+
+    def read(self, size: int = -1) -> bytes:
+        while (size < 0 or len(self._buffer) < size) and not self._done:
+            try:
+                self._buffer += next(self._chunks)
+            except StopIteration:
+                self._done = True
+        if size < 0:
+            taken, self._buffer = self._buffer, b""
+            return taken
+        taken, self._buffer = self._buffer[:size], self._buffer[size:]
+        return taken
+
+    def close(self) -> None:
+        self._done = True
+        self._buffer = b""
+        closer = getattr(self._chunks, "close", None)
+        if closer is not None:
+            closer()
+
+    def __enter__(self) -> "CloudStorageObject":
+        return self
+
+    def __exit__(self, *exception: Any) -> None:
+        self.close()
+
+    def __iter__(self) -> Iterator[bytes]:
+        while True:
+            chunk = self.read(1024 * 1024)
+            if not chunk:
+                return
+            yield chunk
+
+
+class CloudStorage(_Attached):
+    """
+    A bucket, container or shared filesystem, read through Contents.
+
+    The point of reaching it from here rather than with `boto3` is what is
+    *not* in the notebook: no key, no endpoint, no region. Contents holds the
+    credential, applies the source's prefix and read/write mode, and answers
+    with bytes. What you can see is what the source was configured to expose.
+
+    Listing, stat and reads go through the service. `presign` is the one
+    exception and it is deliberate: one object, one operation, minutes — for
+    handing to something that cannot call Datalayer.
+    """
+
+    def __init__(self, client: DatalayerClient, source_uid: str) -> None:
+        self.client = client
+        self.source_uid = source_uid
+
+    def test(self) -> dict[str, Any]:
+        """Does the bucket answer with this credential, right now?"""
+        return self.client.test_cloud_storage_connection(self.source_uid)
+
+    def ls(self, prefix: str = "", *, recursive: bool = False) -> list[dict[str, Any]]:
+        """The objects under `prefix`, following pagination to the end.
+
+        Paths are relative to the source's own prefix; the source's prefix is
+        never a thing the caller has to know or repeat.
+        """
+        found: list[dict[str, Any]] = []
+        cursor: str | None = None
+        while True:
+            page = self.client.list_cloud_storage_objects(
+                self.source_uid, prefix=prefix, cursor=cursor
+            )
+            found.extend(page.get("items", []))
+            cursor = page.get("next_cursor")
+            if not cursor:
+                break
+        if recursive:
+            for entry in list(found):
+                if entry.get("is_directory"):
+                    found.extend(self.ls(entry["path"], recursive=True))
+        return found
+
+    def stat(self, path: str) -> dict[str, Any]:
+        """Size, modification time and etag for one object."""
+        return self.client.stat_cloud_storage_object(self.source_uid, path)
+
+    def open(self, path: str, mode: str = "rb") -> CloudStorageObject:
+        """One object as a file-like, streamed.
+
+        Binary and read-only. A text mode or a write mode is refused here
+        rather than at the first `read` — there is no write route on a Cloud
+        Storage source, and failing at `open` says so while the caller can
+        still see which line asked.
+        """
+        if mode not in {"rb", "r"}:
+            raise ValueError(
+                f"Cloud Storage objects open read-only and binary, not '{mode}'. "
+                "Write to a Dataset or a Volume instead."
+            )
+        return CloudStorageObject(self.iter_bytes(path))
+
+    def iter_bytes(
+        self,
+        path: str,
+        *,
+        byte_range: str | None = None,
+        chunk_size: int = 1024 * 1024,
+    ) -> Iterator[bytes]:
+        """The object's bytes, a chunk at a time, optionally one HTTP range."""
+        return self.client.iter_cloud_storage_object(
+            self.source_uid, path, byte_range=byte_range, chunk_size=chunk_size
+        )
+
+    def presign(
+        self, path: str, *, operation: str = "get", expires_in: int = 900
+    ) -> dict[str, Any]:
+        """A URL for one object, one operation, a short while."""
+        return self.client.presign_cloud_storage_object(
+            self.source_uid, path, operation=operation, expires_in=expires_in
+        )
+
+    def filesystem(self, implementation: str = "auto") -> Any:
+        """An `fsspec` filesystem over this source, for libraries that want one.
+
+        `implementation` exists because the answer is not always the same
+        thing, and today there is one: `"auto"`, which reads through Contents.
+        A provider-native `s3fs` needs bucket-scoped credentials handed to
+        this process, and no route issues them — so asking for `"s3fs"` is
+        refused with that reason rather than answered with something that
+        merely looks like it.
+        """
+        if implementation not in {"auto", "datalayer"}:
+            raise ValueError(
+                f"'{implementation}' is not available from the client: Contents "
+                "does not issue bucket credentials to a caller. Use "
+                "filesystem() to read through the service, or attach the "
+                "source to a sandbox for a provider-native mount."
+            )
+        from datalayer_core.contents_fsspec import ContentsFileSystem
+
+        return ContentsFileSystem(storage=self)
+
+
+class Dataset(_Attached):
+    """
+    A Dataset: its revisions, its publications, and files going into it.
+
+    A revision is what makes a Dataset citable — it pins the versions that
+    were there when somebody ran something, so re-running it a year later
+    reads the same bytes. Uploading a file does not create one; pinning does.
+    """
+
+    def __init__(self, client: DatalayerClient, source_uid: str) -> None:
+        self.client = client
+        self.source_uid = source_uid
+
+    def revisions(self) -> DatasetRevisionList:
+        return self.client.list_dataset_revisions(self.source_uid)
+
+    def revision(self, revision_uid: str) -> DatasetRevision:
+        return self.client.get_dataset_revision(self.source_uid, revision_uid)
+
+    def create_revision(
+        self, request: Mapping[str, Any] | None = None, **fields: Any
+    ) -> DatasetRevision:
+        """Pin the current contents as a revision.
+
+        The idempotency key is generated here. That is safe because a retry
+        of *this* call is a retry of one intent; a second deliberate revision
+        is a second call, with a key of its own.
+        """
+        payload: dict[str, Any] = dict(request or {})
+        payload.update(fields)
+        return self.client.create_dataset_revision(
+            self.source_uid, payload, idempotency_key=f"contents-revision-{uuid4()}"
+        )
+
+    def publications(self) -> DatasetPublicationList:
+        return self.client.list_dataset_publications(self.source_uid)
+
+    def publish(
+        self, request: Mapping[str, Any] | None = None, **fields: Any
+    ) -> DatasetPublication:
+        """Publish a revision of this Dataset.
+
+        Not to be confused with `contents.publish(frame, name=...)`, which
+        publishes a table for querying. This one makes a Dataset visible
+        beyond the people it is shared with.
+        """
+        payload: dict[str, Any] = dict(request or {})
+        payload.update(fields)
+        return self.client.create_dataset_publication(
+            self.source_uid, payload, idempotency_key=f"contents-publication-{uuid4()}"
+        )
+
+    def unpublish(self, publication_uid: str) -> DatasetPublication:
+        return self.client.unpublish_dataset(self.source_uid, publication_uid)
+
+    def upload(
+        self,
+        local_path: str | Path,
+        destination_path: str,
+        *,
+        media_type: str = "application/octet-stream",
+        overwrite: str = "reject",
+        progress: Callable[[int, int, str], None] | None = None,
+    ) -> TransferView:
+        """Capture a local file into this Dataset.
+
+        Run it where the file is — usually inside the sandbox — and the bytes
+        go up through the same verified, resumable transfer the Home Folder
+        uses.
+        """
+        return self.client.upload_dataset_file(
+            local_path,
+            self.source_uid,
+            destination_path,
+            idempotency_key=f"contents-dataset-upload-{uuid4()}",
+            media_type=media_type,
+            overwrite=overwrite,
+            progress=progress,
+        )
+
+
+class Volume(_Attached):
+    """
+    A Volume: read-write storage that outlives the sandbox using it.
+
+    There is little to *call* on a Volume, and that is the point — it is a
+    filesystem. What is here is what a notebook needs before writing to one:
+    where it lands, how big it is, and whether this attachment may write.
+    Everything after that is `open()`.
+    """
+
+    def __init__(self, client: DatalayerClient, source_uid: str) -> None:
+        self.client = client
+        self.source_uid = source_uid
+
+    def configuration(self) -> dict[str, Any]:
+        """The Volume's own settings: capacity, scope, mount path, modes."""
+        configuration = self.source().source.configuration
+        if hasattr(configuration, "model_dump"):
+            return dict(configuration.model_dump(mode="json"))
+        return dict(configuration or {})
+
+    def default_mount_path(self) -> str | None:
+        """Where it appears when attached without a path."""
+        return self.configuration().get("default_mount_path")
+
+    def capacity_bytes(self) -> int | None:
+        return self.configuration().get("capacity_bytes")
+
+    def writable(self) -> bool:
+        """Whether this Volume permits read-write attachments at all."""
+        return "rw" in (self.configuration().get("access_modes") or [])
+
+    def attach(
+        self,
+        sandbox_uid: str,
+        *,
+        path: str | None = None,
+        read_only: bool = False,
+        delivery: str = "mount",
+        required: bool = True,
+        provider: str = "datalayer",
+        revision_uid: str | None = None,
+    ) -> ContentAttachment:
+        """Mount this Volume in a sandbox.
+
+        A read-write attachment of a Volume configured read-only is refused
+        here, with the configuration as the reason. The service refuses it
+        too; doing it first turns a rejected request into a sentence naming
+        the setting to change.
+        """
+        if not read_only and not self.writable():
+            raise ValueError(
+                f"Volume '{self.source_uid}' allows "
+                f"{self.configuration().get('access_modes')} attachments only; "
+                "pass read_only=True."
+            )
+        return super().attach(
+            sandbox_uid,
+            path=path,
+            read_only=read_only,
+            delivery=delivery,
+            required=required,
+            provider=provider,
+            revision_uid=revision_uid,
+        )
+
+
 class Contents:
     def __init__(self, client: DatalayerClient | None = None) -> None:
         self._client = client
@@ -621,16 +1001,34 @@ class Contents:
         """A Dataserver registration by uid or unambiguous name."""
         return Dataserver(self.client, self._resolve(source, "data-server", "Dataserver"))
 
+    def cloud_storage(self, source: str) -> CloudStorage:
+        """A Cloud Storage source by uid or unambiguous name."""
+        return CloudStorage(
+            self.client, self._resolve(source, "cloud-storage", "Cloud Storage")
+        )
+
+    def dataset(self, source: str) -> Dataset:
+        """A Dataset by uid or unambiguous name."""
+        return Dataset(self.client, self._resolve(source, "dataset", "Dataset"))
+
+    def volume(self, source: str) -> Volume:
+        """A Volume by uid or unambiguous name."""
+        return Volume(self.client, self._resolve(source, "volume", "Volume"))
+
 
 contents = Contents()
 
 __all__ = [
+    "CloudStorage",
+    "CloudStorageObject",
     "Contents",
     "Dataserver",
+    "Dataset",
     "Datasource",
     "HomeFolder",
     "McpSource",
     "Query",
     "QueryFailed",
+    "Volume",
     "contents",
 ]

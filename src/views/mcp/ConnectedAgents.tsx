@@ -27,12 +27,30 @@
  */
 
 import { useMemo, useRef, useState } from 'react';
-import { ActionList, ActionMenu, Button, Heading, Label, RelativeTime, Spinner, Text } from '@primer/react';
-import { Blankslate, DataTable, Dialog, Table } from '@primer/react/experimental';
+import {
+  ActionList,
+  ActionMenu,
+  Button,
+  Heading,
+  Label,
+  RelativeTime,
+  Spinner,
+  Text,
+} from '@primer/react';
+import {
+  Blankslate,
+  DataTable,
+  Dialog,
+  Table,
+} from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { KebabHorizontalIcon, PlugIcon } from '@primer/octicons-react';
-import { ClientBadge, McpErrorBlankslate, ScopeList } from '../../components/mcp';
+import {
+  ClientBadge,
+  McpErrorBlankslate,
+  ScopeList,
+} from '../../components/mcp';
 import { useConnectedAgents, useDisconnectAgent } from '../../hooks/useMcp';
 import { useNavigate, useToast } from '../../hooks';
 import type { ConnectedAgent } from '../../api/iam/connectedAgents';
@@ -65,7 +83,12 @@ export const ConnectedAgents = ({
   const agents = useConnectedAgents();
   const disconnect = useDisconnectAgent();
   const [disconnecting, setDisconnecting] = useState<AgentRow | null>(null);
-  const returnFocusRef = useRef<HTMLElement>(null);
+  // Primer 37 types Dialog's focus refs with React 18's non-nullable
+  // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
+  // ref is only handed to Dialog, so narrow it once here.
+  const returnFocusRef = useRef<HTMLElement>(
+    null,
+  ) as React.RefObject<HTMLElement>;
 
   const rows = useMemo<AgentRow[]>(
     () => (agents.data ?? []).map(agent => ({ ...agent, id: agent.uid })),
@@ -85,7 +108,9 @@ export const ConnectedAgents = ({
         setDisconnecting(null);
       },
       onError: reason => {
-        enqueueToast(`Could not disconnect: ${reason.message}`, { variant: 'error' });
+        enqueueToast(`Could not disconnect: ${reason.message}`, {
+          variant: 'error',
+        });
         setDisconnecting(null);
       },
     });
@@ -169,14 +194,18 @@ export const ConnectedAgents = ({
             <ActionList>
               <ActionList.Item
                 onSelect={() =>
-                  navigate(`${routes.runs}?agent=${encodeURIComponent(row.clientId)}`)
+                  navigate(
+                    `${routes.runs}?agent=${encodeURIComponent(row.clientId)}`,
+                  )
                 }
               >
                 Runs
               </ActionList.Item>
               <ActionList.Item
                 onSelect={() =>
-                  navigate(`${routes.audit}?agent=${encodeURIComponent(row.clientId)}`)
+                  navigate(
+                    `${routes.audit}?agent=${encodeURIComponent(row.clientId)}`,
+                  )
                 }
               >
                 Audit
@@ -184,7 +213,10 @@ export const ConnectedAgents = ({
               {!readOnly && (
                 <>
                   <ActionList.Divider />
-                  <ActionList.Item variant="danger" onSelect={() => setDisconnecting(row)}>
+                  <ActionList.Item
+                    variant="danger"
+                    onSelect={() => setDisconnecting(row)}
+                  >
                     Disconnect
                   </ActionList.Item>
                 </>
@@ -213,7 +245,8 @@ export const ConnectedAgents = ({
             Connected Agents
           </Heading>
           <Text as="p" sx={{ color: 'fg.muted', fontSize: 1, m: 0 }}>
-            Every agent you have authorized, what it may do, and when it last did it.
+            Every agent you have authorized, what it may do, and when it last
+            did it.
           </Text>
         </Box>
       )}
@@ -228,8 +261,8 @@ export const ConnectedAgents = ({
             Agents
           </Table.Title>
           <Table.Subtitle as="p" id="connected-agents-subtitle">
-            An agent acts with exactly the access of the person who authorized it, and
-            no more.
+            An agent acts with exactly the access of the person who authorized
+            it, and no more.
           </Table.Subtitle>
           <DataTable
             aria-labelledby="connected-agents"
@@ -246,8 +279,8 @@ export const ConnectedAgents = ({
           <Blankslate.Heading>No agent connected</Blankslate.Heading>
           <Blankslate.Description>
             <Text sx={{ textAlign: 'center' }}>
-              Connect an MCP client and approve the scopes it asks for; the grant
-              appears here and can be revoked from here.
+              Connect an MCP client and approve the scopes it asks for; the
+              grant appears here and can be revoked from here.
             </Text>
           </Blankslate.Description>
           <Button size="small" onClick={() => navigate(routes.access)}>
@@ -269,7 +302,11 @@ export const ConnectedAgents = ({
           onClose={() => setDisconnecting(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setDisconnecting(null) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setDisconnecting(null),
+            },
             {
               buttonType: 'danger',
               content: 'Disconnect',
@@ -279,10 +316,10 @@ export const ConnectedAgents = ({
           ]}
         >
           <Text sx={{ fontSize: 1 }}>
-            {disconnecting.clientName || disconnecting.clientId} loses its grant at once
-            and its next call is refused. An access token it still holds dies with its
-            own short expiry. The other agents are untouched, and nothing this one
-            already did is undone.
+            {disconnecting.clientName || disconnecting.clientId} loses its grant
+            at once and its next call is refused. An access token it still holds
+            dies with its own short expiry. The other agents are untouched, and
+            nothing this one already did is undone.
           </Text>
         </Dialog>
       )}

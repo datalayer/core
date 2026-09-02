@@ -44,6 +44,19 @@ DEFAULT_GATEWAY_CHECKOUT = ROOT.parents[2] / "k8s/services/jupyter-mcp-server"
 DEFAULT_GATEWAY_OPENAPI_URL = "https://mcp.datalayer.run/api/mcp/v1/openapi.json"
 GATEWAY_APP = "datalayer_jupyter_mcp_server.main:app"
 OUTPUT = ROOT / "src/api/mcp/generated.ts"
+#: The licence header every source file in this repository carries. It is
+#: emitted here because `fix-license-header` adds it to whatever this writes,
+#: and then `--check` compares that against output that never had one — so the
+#: two CI jobs each broke the other, permanently, and the check was red for
+#: reasons that had nothing to do with the types. It stayed red long enough
+#: for a dozen MCP routes to drift without anybody being able to see it.
+LICENCE = (
+    "/*\n"
+    " * Copyright (c) 2023-2025 Datalayer, Inc.\n"
+    " * Distributed under the terms of the Modified BSD License.\n"
+    " */"
+)
+
 HEADER = "/* This file is generated from the Datalayer Jupyter MCP Server OpenAPI. Do not edit. */"
 
 
@@ -163,7 +176,7 @@ def _routes(document: dict[str, Any]) -> list[dict[str, Any]]:
 
 def generate(document: dict[str, Any]) -> str:
     schemas = (document.get("components") or {}).get("schemas") or {}
-    lines = [HEADER, ""]
+    lines = [LICENCE, "", HEADER, ""]
     for name, schema in sorted(schemas.items()):
         if schema.get("type") == "object" and "properties" in schema:
             lines.append(f"export interface {name} {{")

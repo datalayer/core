@@ -10,7 +10,7 @@ export type VisibilityMap = {
 };
 
 export function useVisibilityObserver(
-  navigationRef: RefObject<HTMLUListElement>,
+  navigationRef: RefObject<HTMLUListElement | null>,
   children,
 ) {
   const [visibilityMap, setVisibilityMap] = useState<VisibilityMap>({});

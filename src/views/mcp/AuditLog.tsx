@@ -57,10 +57,17 @@ import {
   XCircleIcon,
 } from '@primer/octicons-react';
 import { McpErrorBlankslate } from '../../components/mcp';
-import { useAuditEvents, useAuditExport, useMcpForwarding } from '../../hooks/useMcp';
+import {
+  useAuditEvents,
+  useAuditExport,
+  useMcpForwarding,
+} from '../../hooks/useMcp';
 import { useNavigate, useToast } from '../../hooks';
 import type { McpAuditFilters } from '../../api/mcp';
-import type { McpAuditEvent, McpAuditExportFormat } from '../../models/McpAuditEvent';
+import type {
+  McpAuditEvent,
+  McpAuditExportFormat,
+} from '../../models/McpAuditEvent';
 import { durationLabel } from './format';
 import { type McpErrorStateFn, type McpRoutes } from './types';
 
@@ -122,7 +129,12 @@ export const AuditLog = ({
     enabled: Boolean(filters.org),
   });
   const [open, setOpen] = useState<McpAuditEvent | null>(null);
-  const returnFocusRef = useRef<HTMLElement>(null);
+  // Primer 37 types Dialog's focus refs with React 18's non-nullable
+  // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
+  // ref is only handed to Dialog, so narrow it once here.
+  const returnFocusRef = useRef<HTMLElement>(
+    null,
+  ) as React.RefObject<HTMLElement>;
   /** The cursors already walked, so "Newer" is a step back rather than a guess. */
   const [walked, setWalked] = useState<string[]>([]);
 
@@ -163,7 +175,9 @@ export const AuditLog = ({
           );
         },
         onError: reason =>
-          enqueueToast(`Could not export: ${reason.message}`, { variant: 'error' }),
+          enqueueToast(`Could not export: ${reason.message}`, {
+            variant: 'error',
+          }),
       },
     );
   };
@@ -214,19 +228,27 @@ export const AuditLog = ({
                 {forwarding.data.state.delivered} batches
                 {forwarding.data.state.lastDeliveredAt && (
                   <>
-                    , last <RelativeTime datetime={forwarding.data.state.lastDeliveredAt} />
+                    , last{' '}
+                    <RelativeTime
+                      datetime={forwarding.data.state.lastDeliveredAt}
+                    />
                   </>
                 )}
                 .
               </>
             ) : (
               <>
-                <strong>Forwarding is failing.</strong> These rows are kept
-                here and are not reaching your own system of record:{' '}
+                <strong>Forwarding is failing.</strong> These rows are kept here
+                and are not reaching your own system of record:{' '}
                 {forwarding.data.state.lastError}
                 {forwarding.data.state.lastErrorAt && (
                   <>
-                    {' '}(<RelativeTime datetime={forwarding.data.state.lastErrorAt} />)
+                    {' '}
+                    (
+                    <RelativeTime
+                      datetime={forwarding.data.state.lastErrorAt}
+                    />
+                    )
                   </>
                 )}
                 . {forwarding.data.state.failed} batches have failed.
@@ -251,14 +273,18 @@ export const AuditLog = ({
           aria-label="Agent"
           placeholder="Agent"
           value={filters.agent ?? ''}
-          onChange={event => set({ agent: event.currentTarget.value || undefined })}
+          onChange={event =>
+            set({ agent: event.currentTarget.value || undefined })
+          }
         />
         <TextInput
           size="small"
           aria-label="Tool"
           placeholder="Tool"
           value={filters.tool ?? ''}
-          onChange={event => set({ tool: event.currentTarget.value || undefined })}
+          onChange={event =>
+            set({ tool: event.currentTarget.value || undefined })
+          }
         />
         <Select
           size="small"
@@ -266,7 +292,8 @@ export const AuditLog = ({
           value={filters.decision ?? ''}
           onChange={event =>
             set({
-              decision: (event.currentTarget.value || undefined) as McpAuditFilters['decision'],
+              decision: (event.currentTarget.value ||
+                undefined) as McpAuditFilters['decision'],
             })
           }
         >
@@ -280,7 +307,8 @@ export const AuditLog = ({
           value={filters.outcome ?? ''}
           onChange={event =>
             set({
-              outcome: (event.currentTarget.value || undefined) as McpAuditFilters['outcome'],
+              outcome: (event.currentTarget.value ||
+                undefined) as McpAuditFilters['outcome'],
             })
           }
         >
@@ -291,7 +319,11 @@ export const AuditLog = ({
         </Select>
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
           <ActionMenu>
-            <ActionMenu.Button size="small" leadingVisual={DownloadIcon} disabled={exporting.isPending}>
+            <ActionMenu.Button
+              size="small"
+              leadingVisual={DownloadIcon}
+              disabled={exporting.isPending}
+            >
               Export
             </ActionMenu.Button>
             <ActionMenu.Overlay align="end">
@@ -315,8 +347,9 @@ export const AuditLog = ({
       </Box>
 
       <Text sx={{ fontSize: 0, color: 'fg.subtle' }}>
-        Audit rows are written once and never changed or deleted by anyone, here or
-        elsewhere. Arguments are redacted before they are written. {retention}
+        Audit rows are written once and never changed or deleted by anyone, here
+        or elsewhere. Arguments are redacted before they are written.{' '}
+        {retention}
       </Text>
 
       {page.isPending && !page.data ? (
@@ -331,8 +364,9 @@ export const AuditLog = ({
           <Blankslate.Heading>Nothing to audit yet</Blankslate.Heading>
           <Blankslate.Description>
             <Text sx={{ textAlign: 'center' }}>
-              Every call an agent makes is written down here with its decision and its
-              outcome. Connect a client and ask it to list your notebooks.
+              Every call an agent makes is written down here with its decision
+              and its outcome. Connect a client and ask it to list your
+              notebooks.
             </Text>
           </Blankslate.Description>
           <Button size="small" onClick={() => navigate(routes.access)}>
@@ -348,7 +382,13 @@ export const AuditLog = ({
             const isLast = index === rows.length - 1;
             return (
               <Box key={event.uid} sx={{ display: 'flex', gap: 3 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
                   <Box
                     sx={{
                       width: 26,
@@ -365,13 +405,27 @@ export const AuditLog = ({
                     <look.Icon size={13} />
                   </Box>
                   {!isLast && (
-                    <Box sx={{ width: '2px', flex: 1, bg: 'border.muted', my: 1 }} />
+                    <Box
+                      sx={{ width: '2px', flex: 1, bg: 'border.muted', my: 1 }}
+                    />
                   )}
                 </Box>
-                <Box sx={{ flexGrow: 1, minWidth: 0, pb: isLast ? 0 : 3, pt: '3px' }}>
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    minWidth: 0,
+                    pb: isLast ? 0 : 3,
+                    pt: '3px',
+                  }}
+                >
                   <Link
                     as="button"
-                    sx={{ fontSize: 1, display: 'block', textAlign: 'left', cursor: 'pointer' }}
+                    sx={{
+                      fontSize: 1,
+                      display: 'block',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                    }}
                     onClick={() => setOpen(event)}
                   >
                     {event.tool || event.method}
@@ -387,21 +441,28 @@ export const AuditLog = ({
                   >
                     <Label
                       size="small"
-                      variant={event.decision === 'refused' ? 'danger' : 'success'}
+                      variant={
+                        event.decision === 'refused' ? 'danger' : 'success'
+                      }
                     >
                       {event.decision}
                     </Label>
                     {event.clientId && (
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{event.clientId}</Text>
-                    )}
-                    {event.itemUid && (
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>on {event.itemUid}</Text>
-                    )}
-                    {event.durationMs !== null && event.durationMs !== undefined && (
                       <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        {durationLabel(event.durationMs)}
+                        {event.clientId}
                       </Text>
                     )}
+                    {event.itemUid && (
+                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                        on {event.itemUid}
+                      </Text>
+                    )}
+                    {event.durationMs !== null &&
+                      event.durationMs !== undefined && (
+                        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                          {durationLabel(event.durationMs)}
+                        </Text>
+                      )}
                     {event.refusalReason && (
                       <Text sx={{ fontSize: 0, color: 'danger.fg' }}>
                         {event.refusalReason}
@@ -459,13 +520,19 @@ export const AuditLog = ({
               <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Who</Text>
               <Text sx={{ fontSize: 1 }}>
                 {open.clientId || 'unknown client'}
-                {open.act && open.act.length > 0 && ` acting for ${open.act.join(' → ')}`}
+                {open.act &&
+                  open.act.length > 0 &&
+                  ` acting for ${open.act.join(' → ')}`}
               </Text>
             </Box>
             {open.refusalReason && (
               <Box sx={{ display: 'grid', gap: 1 }}>
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Why it was refused</Text>
-                <Text sx={{ fontSize: 1, color: 'danger.fg' }}>{open.refusalReason}</Text>
+                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                  Why it was refused
+                </Text>
+                <Text sx={{ fontSize: 1, color: 'danger.fg' }}>
+                  {open.refusalReason}
+                </Text>
               </Box>
             )}
             <Box sx={{ display: 'grid', gap: 1 }}>
@@ -486,7 +553,9 @@ export const AuditLog = ({
                 {JSON.stringify(open.redactedArguments ?? {}, null, 2)}
               </Box>
               {open.argumentsHash && (
-                <Text sx={{ fontSize: 0, color: 'fg.subtle', fontFamily: 'mono' }}>
+                <Text
+                  sx={{ fontSize: 0, color: 'fg.subtle', fontFamily: 'mono' }}
+                >
                   {open.argumentsHash}
                 </Text>
               )}
@@ -495,7 +564,11 @@ export const AuditLog = ({
               {open.taskId && (
                 <Button
                   size="small"
-                  onClick={() => navigate(`${routes.runs}/${encodeURIComponent(open.taskId!)}`)}
+                  onClick={() =>
+                    navigate(
+                      `${routes.runs}/${encodeURIComponent(open.taskId!)}`,
+                    )
+                  }
                 >
                   The run
                 </Button>

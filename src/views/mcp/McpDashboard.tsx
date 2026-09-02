@@ -41,7 +41,12 @@ import {
   Spinner,
   Text,
 } from '@primer/react';
-import { Blankslate, DataTable, Dialog, Table } from '@primer/react/experimental';
+import {
+  Blankslate,
+  DataTable,
+  Dialog,
+  Table,
+} from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import {
@@ -93,14 +98,13 @@ export interface McpDashboardProps {
 
 /** The parts of the dashboard, each its own tab. */
 export type McpDashboardSection =
-  | 'overview'
-  | 'agents'
-  | 'runs'
-  | 'sandboxes'
-  | 'calls';
+  'overview' | 'agents' | 'runs' | 'sandboxes' | 'calls';
 
 /** How a client's status is drawn. */
-const STATUS_LOOK: Record<McpClientStatus, { label: string; variant: 'success' | 'attention' | 'secondary' }> = {
+const STATUS_LOOK: Record<
+  McpClientStatus,
+  { label: string; variant: 'success' | 'attention' | 'secondary' }
+> = {
   active: { label: 'Active', variant: 'success' },
   idle: { label: 'Idle', variant: 'attention' },
   disconnected: { label: 'Disconnected', variant: 'secondary' },
@@ -145,12 +149,23 @@ const Count = ({
       minWidth: 0,
     }}
   >
-    <Text sx={{ display: 'block', fontSize: 4, fontWeight: 'bold', color: countLook(tone) }}>
+    <Text
+      sx={{
+        display: 'block',
+        fontSize: 4,
+        fontWeight: 'bold',
+        color: countLook(tone),
+      }}
+    >
       {value}
     </Text>
-    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>{label}</Text>
+    <Text sx={{ display: 'block', fontSize: 0, color: 'fg.muted' }}>
+      {label}
+    </Text>
     {note && (
-      <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle', mt: 1 }}>{note}</Text>
+      <Text sx={{ display: 'block', fontSize: 0, color: 'fg.subtle', mt: 1 }}>
+        {note}
+      </Text>
     )}
   </Box>
 );
@@ -209,7 +224,12 @@ export const McpDashboard = ({
 
   const [disconnecting, setDisconnecting] = useState<ClientRow | null>(null);
   const [terminating, setTerminating] = useState<SandboxRow | null>(null);
-  const returnFocusRef = useRef<HTMLElement>(null);
+  // Primer 37 types Dialog's focus refs with React 18's non-nullable
+  // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
+  // ref is only handed to Dialog, so narrow it once here.
+  const returnFocusRef = useRef<HTMLElement>(
+    null,
+  ) as React.RefObject<HTMLElement>;
 
   // The calls panel filters what is already in hand: the answer carries the
   // last fifty calls, so narrowing them is a matter of the browser, not of
@@ -231,7 +251,8 @@ export const McpDashboard = ({
   );
 
   const sandboxes = useMemo<SandboxRow[]>(
-    () => (data?.sandboxes ?? []).map(binding => ({ ...binding, id: binding.uid })),
+    () =>
+      (data?.sandboxes ?? []).map(binding => ({ ...binding, id: binding.uid })),
     [data?.sandboxes],
   );
 
@@ -255,7 +276,10 @@ export const McpDashboard = ({
   );
 
   const callTools = useMemo(
-    () => [...new Set(calls.map(call => call.tool).filter(Boolean))].sort() as string[],
+    () =>
+      [
+        ...new Set(calls.map(call => call.tool).filter(Boolean)),
+      ].sort() as string[],
     [calls],
   );
 
@@ -294,13 +318,18 @@ export const McpDashboard = ({
     }
     disconnect.mutate(client.grantUid, {
       onSuccess: () => {
-        enqueueToast(`${client.clientName || client.clientId} is disconnected.`, {
-          variant: 'success',
-        });
+        enqueueToast(
+          `${client.clientName || client.clientId} is disconnected.`,
+          {
+            variant: 'success',
+          },
+        );
         setDisconnecting(null);
       },
       onError: reason => {
-        enqueueToast(`Could not disconnect: ${reason.message}`, { variant: 'error' });
+        enqueueToast(`Could not disconnect: ${reason.message}`, {
+          variant: 'error',
+        });
         setDisconnecting(null);
       },
     });
@@ -313,11 +342,15 @@ export const McpDashboard = ({
     }
     terminate.mutate(binding.uid, {
       onSuccess: () => {
-        enqueueToast(`Sandbox ${binding.uid} is terminated.`, { variant: 'success' });
+        enqueueToast(`Sandbox ${binding.uid} is terminated.`, {
+          variant: 'success',
+        });
         setTerminating(null);
       },
       onError: reason => {
-        enqueueToast(`Could not terminate: ${reason.message}`, { variant: 'error' });
+        enqueueToast(`Could not terminate: ${reason.message}`, {
+          variant: 'error',
+        });
         setTerminating(null);
       },
     });
@@ -349,7 +382,9 @@ export const McpDashboard = ({
       id: 'bound',
       width: 'growCollapse',
       renderCell: row => (
-        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{boundTo(row) || '—'}</Text>
+        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+          {boundTo(row) || '—'}
+        </Text>
       ),
     },
     {
@@ -358,8 +393,12 @@ export const McpDashboard = ({
       renderCell: row =>
         row.lastCall ? (
           <Box sx={{ display: 'grid', gap: '2px', minWidth: 0 }}>
-            <Text sx={{ fontSize: 0 }}>{row.lastCall.tool || row.lastCall.method}</Text>
-            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{timeAgo(row.lastCall.at)}</Text>
+            <Text sx={{ fontSize: 0 }}>
+              {row.lastCall.tool || row.lastCall.method}
+            </Text>
+            <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+              {timeAgo(row.lastCall.at)}
+            </Text>
           </Box>
         ) : (
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Nothing yet</Text>
@@ -394,7 +433,9 @@ export const McpDashboard = ({
             <ActionList>
               <ActionList.Item
                 onSelect={() =>
-                  navigate(`${routes.audit}?agent=${encodeURIComponent(row.clientId)}`)
+                  navigate(
+                    `${routes.audit}?agent=${encodeURIComponent(row.clientId)}`,
+                  )
                 }
               >
                 Audit
@@ -470,7 +511,10 @@ export const McpDashboard = ({
             SANDBOX_LOST
           </Label>
         ) : (
-          <Label size="small" variant={row.state === 'active' ? 'success' : 'secondary'}>
+          <Label
+            size="small"
+            variant={row.state === 'active' ? 'success' : 'secondary'}
+          >
             {row.state ?? 'active'}
           </Label>
         ),
@@ -509,7 +553,9 @@ export const McpDashboard = ({
       header: 'Client',
       id: 'client',
       renderCell: row => (
-        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>{row.clientId || '—'}</Text>
+        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+          {row.clientId || '—'}
+        </Text>
       ),
     },
     {
@@ -527,7 +573,10 @@ export const McpDashboard = ({
       id: 'decision',
       width: '110px',
       renderCell: row => (
-        <Label size="small" variant={row.decision === 'refused' ? 'danger' : 'success'}>
+        <Label
+          size="small"
+          variant={row.decision === 'refused' ? 'danger' : 'success'}
+        >
           {row.decision}
         </Label>
       ),
@@ -537,7 +586,12 @@ export const McpDashboard = ({
       id: 'outcome',
       width: '110px',
       renderCell: row => (
-        <Text sx={{ fontSize: 0, color: row.outcome === 'ok' ? 'fg.muted' : 'danger.fg' }}>
+        <Text
+          sx={{
+            fontSize: 0,
+            color: row.outcome === 'ok' ? 'fg.muted' : 'danger.fg',
+          }}
+        >
           {row.outcome ?? '—'}
         </Text>
       ),
@@ -610,43 +664,58 @@ export const McpDashboard = ({
       )}
 
       {/* Is anything happening: the counts, before the detail of it. */}
-      {draws('overview') && (loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
-          <Spinner />
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            display: 'grid',
-            gap: 3,
-            gridTemplateColumns: ['repeat(2, 1fr)', 'repeat(3, 1fr)', 'repeat(6, 1fr)'],
-          }}
-        >
-          <Count label="Clients connected" value={clients.length} />
-          <Count
-            label="Sandboxes bound"
-            value={sandboxes.filter(binding => (binding.state ?? 'active') === 'active').length}
-          />
-          <Count label="Tasks running" value={data?.tasks.length ?? 0} />
-          <Count label="Calls today" value={data?.today.calls ?? 0} />
-          <Count
-            label="Refusals today"
-            value={data?.today.refusals ?? 0}
-            tone={(data?.today.refusals ?? 0) > 0 ? 'danger' : 'neutral'}
-          />
-          <Count label="Credits by agents" value={data?.today.credits ?? 0} note="today" />
-        </Box>
-      ))}
+      {draws('overview') &&
+        (loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+            <Spinner />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 3,
+              gridTemplateColumns: [
+                'repeat(2, 1fr)',
+                'repeat(3, 1fr)',
+                'repeat(6, 1fr)',
+              ],
+            }}
+          >
+            <Count label="Clients connected" value={clients.length} />
+            <Count
+              label="Sandboxes bound"
+              value={
+                sandboxes.filter(
+                  binding => (binding.state ?? 'active') === 'active',
+                ).length
+              }
+            />
+            <Count label="Tasks running" value={data?.tasks.length ?? 0} />
+            <Count label="Calls today" value={data?.today.calls ?? 0} />
+            <Count
+              label="Refusals today"
+              value={data?.today.refusals ?? 0}
+              tone={(data?.today.refusals ?? 0) > 0 ? 'danger' : 'neutral'}
+            />
+            <Count
+              label="Credits by agents"
+              value={data?.today.credits ?? 0}
+              note="today"
+            />
+          </Box>
+        ))}
 
       {/* Connected clients */}
-      {draws('agents') && !loading &&
+      {draws('agents') &&
+        !loading &&
         (clients.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-clients">
               Connected clients
             </Table.Title>
             <Table.Subtitle as="p" id="mcp-clients-subtitle">
-              {plural(clients.length, 'client')} with a live grant on your workspace.
+              {plural(clients.length, 'client')} with a live grant on your
+              workspace.
             </Table.Subtitle>
             <DataTable
               aria-labelledby="mcp-clients"
@@ -660,7 +729,10 @@ export const McpDashboard = ({
             icon={PlugIcon}
             heading="No client connected"
             description="Connect Claude Code, Codex, Cursor, VS Code or any MCP client to your workspace, and it appears here on its first call."
-            action={{ label: 'Set up a client', onClick: () => navigate(routes.access) }}
+            action={{
+              label: 'Set up a client',
+              onClick: () => navigate(routes.access),
+            }}
           />
         ))}
 
@@ -683,14 +755,16 @@ export const McpDashboard = ({
       )}
 
       {/* Sandboxes bound */}
-      {draws('sandboxes') && !loading &&
+      {draws('sandboxes') &&
+        !loading &&
         (sandboxes.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-sandboxes">
               Sandboxes bound
             </Table.Title>
             <Table.Subtitle as="p" id="mcp-sandboxes-subtitle">
-              The sessions your agents execute in. Terminating one ends its open work.
+              The sessions your agents execute in. Terminating one ends its open
+              work.
             </Table.Subtitle>
             <DataTable
               aria-labelledby="mcp-sandboxes"
@@ -708,15 +782,16 @@ export const McpDashboard = ({
         ))}
 
       {/* Recent calls */}
-      {draws('calls') && !loading &&
+      {draws('calls') &&
+        !loading &&
         (calls.length > 0 ? (
           <Table.Container>
             <Table.Title as="h3" id="mcp-calls">
               Recent calls
             </Table.Title>
             <Table.Subtitle as="p" id="mcp-calls-subtitle">
-              The last calls as they landed. Every one of them has an audit row that
-              outlives this page.
+              The last calls as they landed. Every one of them has an audit row
+              that outlives this page.
             </Table.Subtitle>
             <Table.Actions>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -728,7 +803,10 @@ export const McpDashboard = ({
                 >
                   <Select.Option value="">Every client</Select.Option>
                   {clients.map(client => (
-                    <Select.Option key={client.clientId} value={client.clientId}>
+                    <Select.Option
+                      key={client.clientId}
+                      value={client.clientId}
+                    >
                       {client.clientName || client.clientId}
                     </Select.Option>
                   ))}
@@ -767,7 +845,14 @@ export const McpDashboard = ({
                 columns={callColumns}
               />
             ) : (
-              <Box sx={{ p: 4, textAlign: 'center', color: 'fg.muted', fontSize: 1 }}>
+              <Box
+                sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  color: 'fg.muted',
+                  fontSize: 1,
+                }}
+              >
                 No call matches these filters.
               </Box>
             )}
@@ -777,12 +862,22 @@ export const McpDashboard = ({
             icon={ChecklistIcon}
             heading="No call yet"
             description="Ask your agent to list your notebooks. The call, its decision and its outcome land here and in the audit log."
-            action={{ label: 'Open the audit log', onClick: () => navigate(routes.audit) }}
+            action={{
+              label: 'Open the audit log',
+              onClick: () => navigate(routes.audit),
+            }}
           />
         ))}
 
       {!loading && (
-        <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 3,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <Button
             size="small"
             leadingVisual={TelescopeIcon}
@@ -791,7 +886,8 @@ export const McpDashboard = ({
             Observability
           </Button>
           <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-            Refreshed {timeAgo(data?.at) || 'just now'}, and again every ten seconds.
+            Refreshed {timeAgo(data?.at) || 'just now'}, and again every ten
+            seconds.
           </Text>
         </Box>
       )}
@@ -804,7 +900,11 @@ export const McpDashboard = ({
           onClose={() => setDisconnecting(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setDisconnecting(null) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setDisconnecting(null),
+            },
             {
               buttonType: 'danger',
               content: 'Disconnect',
@@ -814,9 +914,9 @@ export const McpDashboard = ({
           ]}
         >
           <Text sx={{ fontSize: 1 }}>
-            {disconnecting.clientName || disconnecting.clientId} loses its grant at once.
-            Its next call is refused; an access token it still holds dies with its own
-            short expiry. Nothing it already did is undone.
+            {disconnecting.clientName || disconnecting.clientId} loses its grant
+            at once. Its next call is refused; an access token it still holds
+            dies with its own short expiry. Nothing it already did is undone.
           </Text>
         </Dialog>
       )}
@@ -827,7 +927,11 @@ export const McpDashboard = ({
           onClose={() => setTerminating(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setTerminating(null) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setTerminating(null),
+            },
             {
               buttonType: 'danger',
               content: 'Terminate',
@@ -837,9 +941,10 @@ export const McpDashboard = ({
           ]}
         >
           <Text sx={{ fontSize: 1 }}>
-            The runtime behind {terminating.uid} is stopped and its session closed. Work
-            the agent has open there ends as <code>SANDBOX_LOST</code>; anything already
-            written to a notebook stays.
+            The runtime behind {terminating.uid} is stopped and its session
+            closed. Work the agent has open there ends as{' '}
+            <code>SANDBOX_LOST</code>; anything already written to a notebook
+            stays.
           </Text>
         </Dialog>
       )}

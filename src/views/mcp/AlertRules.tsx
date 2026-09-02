@@ -45,7 +45,12 @@ import {
   TextInput,
   ToggleSwitch,
 } from '@primer/react';
-import { Blankslate, DataTable, Dialog, Table } from '@primer/react/experimental';
+import {
+  Blankslate,
+  DataTable,
+  Dialog,
+  Table,
+} from '@primer/react/experimental';
 import type { DataTableProps } from '@primer/react/experimental';
 import { Box } from '@datalayer/primer-addons';
 import { BellIcon, KebabHorizontalIcon } from '@primer/octicons-react';
@@ -130,7 +135,12 @@ export const AlertRules = ({
   const [refusal, setRefusal] = useState('');
   const [trial, setTrial] = useState<McpAlertRuleTrial | null>(null);
   const [removing, setRemoving] = useState<RuleRow | null>(null);
-  const returnFocusRef = useRef<HTMLElement>(null);
+  // Primer 37 types Dialog's focus refs with React 18's non-nullable
+  // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
+  // ref is only handed to Dialog, so narrow it once here.
+  const returnFocusRef = useRef<HTMLElement>(
+    null,
+  ) as React.RefObject<HTMLElement>;
 
   const rows = useMemo<RuleRow[]>(
     () => (rules.data ?? []).map(rule => ({ ...rule, id: rule.uid })),
@@ -165,7 +175,9 @@ export const AlertRules = ({
       setRefusal(error.message);
       return;
     }
-    enqueueToast(`Could not save the rule: ${error.message}`, { variant: 'error' });
+    enqueueToast(`Could not save the rule: ${error.message}`, {
+      variant: 'error',
+    });
   };
 
   const apply = () => {
@@ -234,7 +246,9 @@ export const AlertRules = ({
       },
       onError: error => {
         setRemoving(null);
-        enqueueToast(`Could not remove: ${error.message}`, { variant: 'error' });
+        enqueueToast(`Could not remove: ${error.message}`, {
+          variant: 'error',
+        });
       },
     });
   };
@@ -348,8 +362,13 @@ export const AlertRules = ({
             </ActionMenu.Anchor>
             <ActionMenu.Overlay align="end">
               <ActionList>
-                <ActionList.Item onSelect={() => openEdit(row)}>Edit</ActionList.Item>
-                <ActionList.Item variant="danger" onSelect={() => setRemoving(row)}>
+                <ActionList.Item onSelect={() => openEdit(row)}>
+                  Edit
+                </ActionList.Item>
+                <ActionList.Item
+                  variant="danger"
+                  onSelect={() => setRemoving(row)}
+                >
                   Remove
                 </ActionList.Item>
               </ActionList>
@@ -426,8 +445,8 @@ export const AlertRules = ({
           <Blankslate.Description>
             <Text sx={{ textAlign: 'center' }}>
               Runs are recorded either way. A rule is what turns a number
-              somebody would have to go and look at into something that
-              reaches you.
+              somebody would have to go and look at into something that reaches
+              you.
             </Text>
           </Blankslate.Description>
           {!readOnly && (
@@ -484,7 +503,10 @@ export const AlertRules = ({
                       'like a condition that never happens.'}
                 </Text>
                 {trial.detail && (
-                  <Text as="p" sx={{ fontSize: 0, color: 'fg.muted', mt: 1, mb: 0 }}>
+                  <Text
+                    as="p"
+                    sx={{ fontSize: 0, color: 'fg.muted', mt: 1, mb: 0 }}
+                  >
                     {trial.detail}
                   </Text>
                 )}
@@ -516,7 +538,9 @@ export const AlertRules = ({
               )}
             </FormControl>
 
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}>
+            <Box
+              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
+            >
               <FormControl>
                 <FormControl.Label>Comparison</FormControl.Label>
                 <Select
@@ -537,20 +561,29 @@ export const AlertRules = ({
                   block
                   type="number"
                   value={String(draft.threshold)}
-                  onChange={event => set('threshold', Number(event.target.value))}
+                  onChange={event =>
+                    set('threshold', Number(event.target.value))
+                  }
                 />
               </FormControl>
             </Box>
 
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}>
+            <Box
+              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
+            >
               <FormControl>
                 <FormControl.Label>Over</FormControl.Label>
                 <Select
                   value={String(draft.windowSeconds)}
-                  onChange={event => set('windowSeconds', Number(event.target.value))}
+                  onChange={event =>
+                    set('windowSeconds', Number(event.target.value))
+                  }
                 >
                   {WINDOWS.map(window => (
-                    <Select.Option key={window.seconds} value={String(window.seconds)}>
+                    <Select.Option
+                      key={window.seconds}
+                      value={String(window.seconds)}
+                    >
                       {window.label}
                     </Select.Option>
                   ))}
@@ -580,13 +613,18 @@ export const AlertRules = ({
               </FormControl>
             </Box>
 
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}>
+            <Box
+              sx={{ display: 'grid', gap: 2, gridTemplateColumns: '1fr 1fr' }}
+            >
               <FormControl>
                 <FormControl.Label>Measured over</FormControl.Label>
                 <Select
                   value={draft.scopeKind}
                   onChange={event =>
-                    set('scopeKind', event.target.value as typeof draft.scopeKind)
+                    set(
+                      'scopeKind',
+                      event.target.value as typeof draft.scopeKind,
+                    )
                   }
                 >
                   <Select.Option value="organization">
@@ -624,7 +662,11 @@ export const AlertRules = ({
           onClose={() => setRemoving(null)}
           returnFocusRef={returnFocusRef}
           footerButtons={[
-            { buttonType: 'default', content: 'Keep it', onClick: () => setRemoving(null) },
+            {
+              buttonType: 'default',
+              content: 'Keep it',
+              onClick: () => setRemoving(null),
+            },
             {
               buttonType: 'danger',
               content: 'Remove',

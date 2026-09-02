@@ -27,7 +27,10 @@ import {
   requestDatalayerAPIWithResponse,
 } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { contentsToCamelCase, contentsToSnakeCase } from '../../models/contents';
+import {
+  contentsToCamelCase,
+  contentsToSnakeCase,
+} from '../../models/contents';
 import type { JsonValue } from '../../models/contents';
 import type {
   CapabilityTicket,
@@ -44,7 +47,9 @@ import type {
 } from './generated';
 
 export type DatasourceConnectorType = DatasourceConfiguration['connectorType'];
-export type DatasourceNetworkRoute = NonNullable<DatasourceConfiguration['networkRoute']>;
+export type DatasourceNetworkRoute = NonNullable<
+  DatasourceConfiguration['networkRoute']
+>;
 export type DatasourceOperation = DatasourceCapabilities['operations'][number];
 export type DatasourceQueryStatus = DatasourceQuery['status'];
 
@@ -55,18 +60,39 @@ export const DATASOURCE_OPERATIONS: ReadonlyArray<DatasourceOperation> = [
   'list',
 ];
 
-export const DATASOURCE_CONNECTOR_LABELS: Record<DatasourceConnectorType, string> = {
+/**
+ * The connectors a person can pick in a form.
+ *
+ * `table` is not one of them: a published table is created by publishing it
+ * from a sandbox, and `POST /sources` refuses one made by hand
+ * (`PUBLISHED_TABLE_MANAGED`) because the record and its files have to come
+ * into being together. Saying that in the type keeps a creation form from
+ * having to invent labels and hints for something it cannot create.
+ */
+export type CreatableDatasourceConnectorType = Exclude<
+  DatasourceConnectorType,
+  'table'
+>;
+
+export const DATASOURCE_CONNECTOR_LABELS: Record<
+  DatasourceConnectorType,
+  string
+> = {
   athena: 'Amazon Athena',
   bigquery: 'Google BigQuery',
   sql: 'SQL database',
+  // Listed, unlike above: a published table is a Datasource people see in
+  // the catalog and query like any other, even though no form makes one.
+  table: 'Published table',
 };
 
 /** A query the service has finished with, one way or another. */
 export const DATASOURCE_QUERY_TERMINAL_STATUSES: ReadonlySet<DatasourceQueryStatus> =
   new Set<DatasourceQueryStatus>(['succeeded', 'failed', 'cancelled']);
 
-export const isDatasourceQueryTerminal = (status: DatasourceQueryStatus): boolean =>
-  DATASOURCE_QUERY_TERMINAL_STATUSES.has(status);
+export const isDatasourceQueryTerminal = (
+  status: DatasourceQueryStatus,
+): boolean => DATASOURCE_QUERY_TERMINAL_STATUSES.has(status);
 
 /** The bytes of a result, or a range of them, with what the headers said. */
 export interface DatasourceQueryResultBytes {
@@ -81,7 +107,11 @@ const convertResponse = <T>(value: unknown): T =>
 const convertRequest = (value: unknown): unknown =>
   contentsToSnakeCase(value as JsonValue);
 
-const datasourceUrl = (baseUrl: string, sourceUid: string, suffix = ''): string =>
+const datasourceUrl = (
+  baseUrl: string,
+  sourceUid: string,
+  suffix = '',
+): string =>
   `${baseUrl}${API_BASE_PATHS.CONTENTS}/sources/${encodeURIComponent(sourceUid)}/datasource${suffix}`;
 
 const queryUrl = (baseUrl: string, queryUid: string, suffix = ''): string =>
@@ -251,7 +281,10 @@ export const saveDatasourceQueryAsDataset = async (
       url: queryUrl(baseUrl, queryUid, '/save'),
       method: 'POST',
       token,
-      body: convertRequest({ ...request, path: request.path.replace(/^\/+/, '') }),
+      body: convertRequest({
+        ...request,
+        path: request.path.replace(/^\/+/, ''),
+      }),
     }),
   );
 

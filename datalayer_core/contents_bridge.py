@@ -24,7 +24,7 @@ import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable, Iterable
+from typing import Any, AsyncIterator, Callable, Iterable, Literal
 from uuid import uuid4
 
 from datalayer_core.contents_bridge_protocol import (
@@ -88,7 +88,7 @@ class BridgeStopped(Exception):
         self.reason = reason
 
 
-async def _default_connect(url: str):
+async def _default_connect(url: str) -> Any:
     from websockets.asyncio.client import connect
 
     return connect(url, max_size=MAX_FRAME_BYTES, compression=None)
@@ -125,7 +125,11 @@ class LocalBridge:
         self.root = Path(local_root)
         self.sandbox_uid = sandbox_uid
         self.mount_path = mount_path
-        self.mode = mode
+        # Narrowed explicitly. The parameter stays `str` so a CLI can hand
+        # over a raw flag value and get the `ValueError` above rather than a
+        # type error; what is *stored* is one of two strings, and saying so
+        # is what lets `LocalRootServer` be given it without a cast.
+        self.mode: Literal["ro", "rw"] = "rw" if mode == "rw" else "ro"
         self.exclusions = Exclusions(exclusions)
         self.sandbox_provider = sandbox_provider
         self.progress = progress or (lambda message: None)
@@ -288,7 +292,7 @@ class LocalBridge:
                 await websocket.send(channel.seal(response))
 
     @staticmethod
-    async def _messages(websocket) -> AsyncIterator[Any]:
+    async def _messages(websocket: Any) -> AsyncIterator[Any]:
         async for message in websocket:
             yield message
 

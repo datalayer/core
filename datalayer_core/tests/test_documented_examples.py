@@ -4,10 +4,18 @@
 # Copyright (c) 2023-2026 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-"""What the Contents documentation shows must be what the client offers.
+"""What the documentation shows must be what the client offers.
 
-The catalog and Sharing pages are the first thing anybody reads, and every
-command and call in them is a promise. A promise that stopped being true — a
+Every page of the manual, not a list of them. The checks are about
+`datalayer contents ...` and `datalayer.contents....`, and a page mentioning
+either has to be honest about it wherever it sits — so the pages are found by
+reading the directory rather than named here. Until 2026-09-02 they were
+named, seven of them, and the six Contents pages nobody had thought to add —
+Cloud Storage, Home Folder, Local Mount, Synchronize, Transfer, Volume — had
+never had a command or a call in them read by anything. A page that mentions
+neither contributes nothing and costs one read.
+
+Every command and call in a page is a promise. A promise that stopped being true — a
 renamed command, a method that never landed — is worse than no example: it is
 read as fact and typed into a terminal.
 
@@ -34,6 +42,11 @@ from datalayer_core.contents import Contents, HomeFolder
 DOCS = (
     Path(__file__).resolve().parents[5] / "landings/datalayer/ui/src/views/docs/pages"
 )
+#: Pages that must be there. Not the list that gets read — that is derived
+#: below — but a tripwire: a rename or a deletion of one of these is a page
+#: dropping out of the checked set, which is exactly how a hardcoded list
+#: comes to cover a third of the manual without anybody noticing. This one
+#: covered seven of thirteen.
 PAGES = (
     "ContentsDoc.tsx",
     "SharingDoc.tsx",
@@ -104,13 +117,40 @@ def cli_names() -> set[str]:
     return names
 
 
+#: What makes a file one of these pages: it carries the manual in a template
+#: literal. `ContentsCards.tsx` and friends are components, not prose.
+MARKER = "const markdown = `"
+
+
 def pages() -> list[Path]:
-    return [DOCS / name for name in PAGES if (DOCS / name).exists()]
+    """Every documentation page, found rather than listed.
+
+    Derived so that a page added to the manual is checked the day it is
+    added. A list written by hand is a list that stops being the manual: the
+    six pages this one did not name — Cloud Storage, Home Folder, Local
+    Mount, Synchronize, Transfer, Volume — had never had a single command or
+    client call in them read by anything.
+    """
+    if not DOCS.exists():
+        return []
+    return sorted(
+        path
+        for path in DOCS.glob("*Doc.tsx")
+        if MARKER in path.read_text(errors="ignore")
+    )
 
 
 @pytest.mark.skipif(not DOCS.exists(), reason="the web repository is not checked out")
 def test_the_pages_are_where_they_are_expected() -> None:
-    assert pages(), f"no Contents documentation page found under {DOCS}"
+    found = {path.name for path in pages()}
+    assert found, f"no Contents documentation page found under {DOCS}"
+    # A named page that is gone is a page that stopped being checked. Being
+    # non-empty is not enough: one page out of thirteen would pass that.
+    missing = sorted(name for name in PAGES if name not in found)
+    assert not missing, (
+        f"pages named here are not in the manual: {missing}. If one was "
+        "renamed, rename it here; if it was removed, remove it here."
+    )
 
 
 @pytest.mark.skipif(not DOCS.exists(), reason="the web repository is not checked out")

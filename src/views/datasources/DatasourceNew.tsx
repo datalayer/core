@@ -8,7 +8,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import {
   PageLayout,
   FormControl,
@@ -28,7 +34,7 @@ import {
   DATASOURCE_CONNECTOR_LABELS,
   DATASOURCE_OPERATIONS,
   type DataServerConfiguration,
-  type DatasourceConnectorType,
+  type CreatableDatasourceConnectorType,
   type DatasourceOperation,
 } from '../../api/contents';
 import {
@@ -50,10 +56,17 @@ export type DatasourceNewProps = {
   accountPrincipal?: ReactNode;
 };
 
-const CONNECTORS: ReadonlyArray<DatasourceConnectorType> = ['athena', 'bigquery', 'sql'];
+const CONNECTORS: ReadonlyArray<CreatableDatasourceConnectorType> = [
+  'athena',
+  'bigquery',
+  'sql',
+];
 
 /** What the connector needs to be told, and what the field is called. */
-const TARGET_LABELS: Record<DatasourceConnectorType, { endpoint: string; target: string; hint: string }> = {
+const TARGET_LABELS: Record<
+  CreatableDatasourceConnectorType,
+  { endpoint: string; target: string; hint: string }
+> = {
   athena: {
     endpoint: 'Region or workgroup endpoint',
     target: 'Database',
@@ -95,13 +108,18 @@ export const DatasourceNew = ({
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [connectorType, setConnectorType] = useState<DatasourceConnectorType>('bigquery');
+  const [connectorType, setConnectorType] =
+    useState<CreatableDatasourceConnectorType>('bigquery');
   const [endpoint, setEndpoint] = useState('');
   const [target, setTarget] = useState('');
   const [route, setRoute] = useState<'direct' | 'dataserver'>('direct');
   const [credentialUid, setCredentialUid] = useState('');
   const [dataServerUid, setDataServerUid] = useState('');
-  const [operations, setOperations] = useState<DatasourceOperation[]>(['select', 'describe', 'list']);
+  const [operations, setOperations] = useState<DatasourceOperation[]>([
+    'select',
+    'describe',
+    'list',
+  ]);
   const [rowLimit, setRowLimit] = useState('10000');
   const [maxBytes, setMaxBytes] = useState('');
   const [maxSeconds, setMaxSeconds] = useState('60');
@@ -110,11 +128,14 @@ export const DatasourceNew = ({
   const dataserverOptions = useMemo(
     () =>
       (dataservers.data?.items ?? []).map(item => {
-        const configuration = item.source.configuration as DataServerConfiguration;
+        const configuration = item.source
+          .configuration as DataServerConfiguration;
         return {
           uid: item.source.uid,
           name: item.source.name,
-          state: configuration.state ?? (configuration.lastHeartbeatAt ? 'ready' : 'registering'),
+          state:
+            configuration.state ??
+            (configuration.lastHeartbeatAt ? 'ready' : 'registering'),
         };
       }),
     [dataservers.data],
@@ -124,14 +145,20 @@ export const DatasourceNew = ({
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
   };
   const nameValid = name.trim().length > 2;
-  const credentialValid = route === 'dataserver' ? Boolean(dataServerUid) : Boolean(credentialUid);
+  const credentialValid =
+    route === 'dataserver' ? Boolean(dataServerUid) : Boolean(credentialUid);
   const canSubmit =
-    nameValid && credentialValid && operations.length > 0 && !createSource.isPending;
+    nameValid &&
+    credentialValid &&
+    operations.length > 0 &&
+    !createSource.isPending;
 
   const toggleOperation = (operation: DatasourceOperation, checked: boolean) =>
     setOperations(current =>
       checked
-        ? DATASOURCE_OPERATIONS.filter(item => item === operation || current.includes(item))
+        ? DATASOURCE_OPERATIONS.filter(
+            item => item === operation || current.includes(item),
+          )
         : current.filter(item => item !== operation),
     );
 
@@ -196,7 +223,11 @@ export const DatasourceNew = ({
               <FormControl.Label>Connector</FormControl.Label>
               <Select
                 value={connectorType}
-                onChange={event => setConnectorType(event.target.value as DatasourceConnectorType)}
+                onChange={event =>
+                  setConnectorType(
+                    event.target.value as CreatableDatasourceConnectorType,
+                  )
+                }
               >
                 {CONNECTORS.map(connector => (
                   <Select.Option key={connector} value={connector}>
@@ -208,7 +239,12 @@ export const DatasourceNew = ({
             </FormControl>
             <FormControl required>
               <FormControl.Label>Name</FormControl.Label>
-              <TextInput block value={name} onChange={event => setName(event.target.value)} autoFocus />
+              <TextInput
+                block
+                value={name}
+                onChange={event => setName(event.target.value)}
+                autoFocus
+              />
               {name.length > 0 && !nameValid && (
                 <FormControl.Validation variant="error">
                   Name must have more than 2 characters.
@@ -217,7 +253,11 @@ export const DatasourceNew = ({
             </FormControl>
             <FormControl>
               <FormControl.Label>Description</FormControl.Label>
-              <Textarea block value={description} onChange={event => setDescription(event.target.value)} />
+              <Textarea
+                block
+                value={description}
+                onChange={event => setDescription(event.target.value)}
+              />
             </FormControl>
             <FormControl>
               <FormControl.Label>{labels.endpoint}</FormControl.Label>
@@ -225,19 +265,35 @@ export const DatasourceNew = ({
                 block
                 monospace
                 value={endpoint}
-                placeholder={connectorType === 'sql' ? 'warehouse.internal:5432' : ''}
+                placeholder={
+                  connectorType === 'sql' ? 'warehouse.internal:5432' : ''
+                }
                 onChange={event => setEndpoint(event.target.value)}
               />
             </FormControl>
             <FormControl>
               <FormControl.Label>{labels.target}</FormControl.Label>
-              <TextInput block monospace value={target} onChange={event => setTarget(event.target.value)} />
+              <TextInput
+                block
+                monospace
+                value={target}
+                onChange={event => setTarget(event.target.value)}
+              />
             </FormControl>
             <FormControl required>
               <FormControl.Label>Network route</FormControl.Label>
-              <Select value={route} onChange={event => setRoute(event.target.value as 'direct' | 'dataserver')}>
-                <Select.Option value="direct">Direct — Datalayer reaches the endpoint</Select.Option>
-                <Select.Option value="dataserver">Through a Dataserver in your network</Select.Option>
+              <Select
+                value={route}
+                onChange={event =>
+                  setRoute(event.target.value as 'direct' | 'dataserver')
+                }
+              >
+                <Select.Option value="direct">
+                  Direct — Datalayer reaches the endpoint
+                </Select.Option>
+                <Select.Option value="dataserver">
+                  Through a Dataserver in your network
+                </Select.Option>
               </Select>
               <FormControl.Caption>
                 A private endpoint is reached through a Dataserver, which holds
@@ -247,9 +303,15 @@ export const DatasourceNew = ({
             {route === 'direct' ? (
               <FormControl required>
                 <FormControl.Label>Credential</FormControl.Label>
-                <Select value={credentialUid} onChange={event => setCredentialUid(event.target.value)}>
+                <Select
+                  value={credentialUid}
+                  onChange={event => setCredentialUid(event.target.value)}
+                >
                   <Select.Option value="">Choose a Secret…</Select.Option>
-                  {((secrets.data as Array<{ id: string; name: string }> | undefined) ?? []).map(secret => (
+                  {(
+                    (secrets.data as
+                      Array<{ id: string; name: string }> | undefined) ?? []
+                  ).map(secret => (
                     <Select.Option key={secret.id} value={secret.id}>
                       {secret.name}
                     </Select.Option>
@@ -273,7 +335,10 @@ export const DatasourceNew = ({
             ) : (
               <FormControl required>
                 <FormControl.Label>Dataserver</FormControl.Label>
-                <Select value={dataServerUid} onChange={event => setDataServerUid(event.target.value)}>
+                <Select
+                  value={dataServerUid}
+                  onChange={event => setDataServerUid(event.target.value)}
+                >
                   <Select.Option value="">Choose a Dataserver…</Select.Option>
                   {dataserverOptions.map(option => (
                     <Select.Option key={option.uid} value={option.uid}>
@@ -295,9 +360,13 @@ export const DatasourceNew = ({
                   <Checkbox
                     value={operation}
                     checked={operations.includes(operation)}
-                    onChange={event => toggleOperation(operation, event.target.checked)}
+                    onChange={event =>
+                      toggleOperation(operation, event.target.checked)
+                    }
                   />
-                  <FormControl.Label sx={{ textTransform: 'capitalize' }}>{operation}</FormControl.Label>
+                  <FormControl.Label sx={{ textTransform: 'capitalize' }}>
+                    {operation}
+                  </FormControl.Label>
                 </FormControl>
               ))}
               <CheckboxGroup.Caption>
@@ -305,25 +374,53 @@ export const DatasourceNew = ({
                 query exists. Writes are never allowed through a Datasource.
               </CheckboxGroup.Caption>
             </CheckboxGroup>
-            <Box sx={{ display: 'grid', gridTemplateColumns: ['1fr', 'repeat(3, minmax(0, 1fr))'], gap: 3 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: ['1fr', 'repeat(3, minmax(0, 1fr))'],
+                gap: 3,
+              }}
+            >
               <FormControl>
                 <FormControl.Label>Default row limit</FormControl.Label>
-                <TextInput block type="number" min={1} value={rowLimit} onChange={event => setRowLimit(event.target.value)} />
+                <TextInput
+                  block
+                  type="number"
+                  min={1}
+                  value={rowLimit}
+                  onChange={event => setRowLimit(event.target.value)}
+                />
               </FormControl>
               <FormControl>
                 <FormControl.Label>Max bytes</FormControl.Label>
-                <TextInput block type="number" min={1} value={maxBytes} placeholder="Unlimited" onChange={event => setMaxBytes(event.target.value)} />
+                <TextInput
+                  block
+                  type="number"
+                  min={1}
+                  value={maxBytes}
+                  placeholder="Unlimited"
+                  onChange={event => setMaxBytes(event.target.value)}
+                />
               </FormControl>
               <FormControl>
                 <FormControl.Label>Max seconds</FormControl.Label>
-                <TextInput block type="number" min={1} value={maxSeconds} onChange={event => setMaxSeconds(event.target.value)} />
+                <TextInput
+                  block
+                  type="number"
+                  min={1}
+                  value={maxSeconds}
+                  onChange={event => setMaxSeconds(event.target.value)}
+                />
               </FormControl>
             </Box>
             {createSource.isError && (
               <Flash variant="danger">{createSource.error.message}</Flash>
             )}
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button type="button" onClick={event => navigate(datasourcesListRoute, event)}>
+              <Button
+                type="button"
+                onClick={event => navigate(datasourcesListRoute, event)}
+              >
                 Cancel
               </Button>
               <Button type="submit" variant="primary" disabled={!canSubmit}>

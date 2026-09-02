@@ -139,7 +139,7 @@ def decode_frame(frame: bytes) -> tuple[dict[str, Any], bytes]:
 # -- the encrypted channel -----------------------------------------------------
 
 
-def _cryptography():
+def _cryptography() -> Any:
     try:
         from cryptography.hazmat.primitives import hashes
         from cryptography.hazmat.primitives.asymmetric.x25519 import (
@@ -223,7 +223,7 @@ class SecureChannel:
             self._send_key, self._receive_key = mount_to_client, client_to_mount
         self._sent = self._received = 0
 
-    def _aead(self, key: bytes):
+    def _aead(self, key: bytes) -> Any:
         _, _, _, ChaCha20Poly1305, _ = _cryptography()
         return ChaCha20Poly1305(key)
 

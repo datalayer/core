@@ -368,8 +368,13 @@ def normalize_grants(grants: Iterable[Any] | None) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             continue
         entry = grant(
-            source=item.get("source"),
-            target=item.get("target"),
+            # Coerced here rather than loosening `grant`'s signature: it
+            # declares `str` because that is what a grant names, and the
+            # cleaners refuse an empty one with the error a caller can act
+            # on. `str(None or "")` is exactly what they would compute, so
+            # the refusal is unchanged and the types now say what is true.
+            source=str(item.get("source") or ""),
+            target=str(item.get("target") or ""),
             mode=item.get("mode", "rw"),
             uid=item.get("uid", ""),
             kind=item.get("kind", ""),
