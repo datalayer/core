@@ -952,10 +952,20 @@ class Contents:
     def _serve_live(self, name: str, table: Any) -> bool:
         """Serve `table` from this sandbox, if this process can.
 
-        Answers whether it is being served. A sandbox without the Data Server
-        package installed publishes the snapshot and says the live half did
-        not happen — rather than raising, which would lose a publication that
-        did succeed.
+        Answers whether it is **actually being served**, which is not the same
+        question as whether the package imported. This used to return `True`
+        as soon as the import succeeded, and the import is the easy half: the
+        table is then registered in a process-local registry, and the server
+        that would let anything reach it starts only where a runner has been
+        configured. Where none has, the table sits in that registry unreachable
+        and `publish(live=True)` said `live: True` — reporting success for a
+        thing that had not happened, which is the one answer worse than
+        reporting the failure.
+
+        A sandbox that cannot serve live still publishes the snapshot and says
+        the live half did not happen, rather than raising: the publication
+        succeeded, and losing it to make a point about a missing package would
+        be the wrong trade.
         """
         try:
             from datalayer_dataservers.live_server import live_server
@@ -963,7 +973,7 @@ class Contents:
             return False
         getter = table if callable(table) else (lambda: table)
         live_server.serve(name, getter)
-        return True
+        return live_server.running
 
     def _resolve(self, source: str, kind: str, label: str) -> str:
         """

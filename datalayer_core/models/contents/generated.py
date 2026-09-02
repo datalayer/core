@@ -198,6 +198,13 @@ class CloudStorageConfiguration(BaseModel):
     region: str | None = Field(None, title='Region')
 
 
+class CompletePublication(BaseModel):
+    model_config = ConfigDict(
+        extra='forbid',
+    )
+    live_server_uid: str | None = Field(None, title='Live Server Uid')
+
+
 class ConflictResolution(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
@@ -481,6 +488,9 @@ class DatasourceConfiguration(BaseModel):
     default_row_limit: conint(ge=1) | None = Field(10000, title='Default Row Limit')
     endpoint: str | None = Field(None, title='Endpoint')
     kind: Literal['datasource'] = Field(..., title='Kind')
+    live_server_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
+        Field(None, title='Live Server Uid')
+    )
     max_bytes: conint(ge=1) | None = Field(268435456, title='Max Bytes')
     max_seconds: conint(ge=1) | None = Field(300, title='Max Seconds')
     network_route: Literal['direct', 'dataserver'] | None = Field(
@@ -1618,6 +1628,8 @@ class DatasourceQuery(BaseModel):
         extra='forbid',
     )
     actor_uid: str = Field(..., title='Actor Uid')
+    answered: Literal['live', 'snapshot'] | None = Field(None, title='Answered')
+    answered_reason: str | None = Field(None, title='Answered Reason')
     bytes: int | None = Field(None, title='Bytes')
     created_at: str = Field(..., title='Created At')
     data_server_uid: str | None = Field(None, title='Data Server Uid')

@@ -166,12 +166,26 @@ def test_a_callable_follows_the_name(client: FakeClient, monkeypatch) -> None:
     assert pq.read_table(pa.BufferReader(payload)).num_rows == 3
 
 
-def test_a_sandbox_without_the_dataserver_still_publishes(client: FakeClient) -> None:
-    # No `datalayer_dataservers` installed here. The snapshot succeeded, and
-    # raising would lose a publication that worked.
+def test_a_sandbox_that_cannot_serve_live_publishes_and_says_so(client: FakeClient) -> None:
+    """The snapshot succeeds; `live` reports what actually happened.
+
+    This is the only test that runs the real `_serve_live` — the others
+    monkeypatch it — and it used to assert `result["live"] in (True, False)`,
+    which every possible answer satisfies. Behind that assertion,
+    `_serve_live` returned `True` as soon as the package *imported*, while the
+    server that would make the table reachable starts only where a runner has
+    been configured, and nothing configures one. So `publish(live=True)`
+    reported `live: True` for a table nothing was serving and nothing could
+    route to.
+
+    Whichever half is true of the process running this test — the package
+    missing, or present with no runner — the answer is the same and it is
+    `False`. There is no arrangement in which an unserved table may report
+    itself served.
+    """
     result = Contents(client).publish(frame(), name="sales", live=True)
 
-    assert result["live"] in (True, False)
+    assert result["live"] is False
     assert any(m == "POST" and p.endswith("/complete") for m, p, _ in client.calls)
 
 

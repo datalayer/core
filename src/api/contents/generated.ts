@@ -209,6 +209,10 @@ export interface CloudStorageConfiguration {
   region?: string | null;
 }
 
+export interface CompletePublication {
+  liveServerUid?: string | null;
+}
+
 export interface ConflictResolution {
   use: 'local' | 'remote' | 'keep-both';
 }
@@ -620,6 +624,7 @@ export interface DatasourceConfiguration {
   defaultRowLimit?: number;
   endpoint?: string | null;
   kind: 'datasource';
+  liveServerUid?: string | null;
   maxBytes?: number;
   maxSeconds?: number;
   networkRoute?: 'direct' | 'dataserver';
@@ -627,6 +632,8 @@ export interface DatasourceConfiguration {
 
 export interface DatasourceQuery {
   actorUid: string;
+  answered?: 'live' | 'snapshot' | null;
+  answeredReason?: string | null;
   bytes?: number | null;
   createdAt: string;
   dataServerUid?: string | null;

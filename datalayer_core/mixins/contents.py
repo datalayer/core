@@ -489,6 +489,7 @@ class ContentsMixin:
         *,
         relation: str,
         row_group_rows: int = 1_000_000,
+        live_server_uid: str | None = None,
     ) -> dict[str, Any]:
         """Publish a table so other people can query it.
 
@@ -528,9 +529,14 @@ class ContentsMixin:
                 files={"file": (part, buffer.getvalue().to_pybytes())},
             )
             written += 1
+        # The sandbox naming itself as this table's live answerer, when it is
+        # serving one. Contents cannot work this out: it sees a user's Data
+        # Servers and cannot tell which of them is the thread in the kernel
+        # that just published this table, so the publisher says.
         response = self._fetch(  # type: ignore[attr-defined]
             self._contents_url(f"/published-tables/{relation}/complete"),
             method="POST",
+            json={"live_server_uid": live_server_uid} if live_server_uid else {},
         )
         return dict(response.json())
 
