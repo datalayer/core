@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
 import pyarrow as pa
@@ -28,16 +29,40 @@ class FakeResponse:
 
 
 class FakeClient:
-    """Records the calls, so the test can assert their order."""
+    """Records the calls, so the test can assert their order.
+
+    It also carries `urls` and `token`, which the real client has and the
+    live-publishing path reads: without them the code under test raised an
+    `AttributeError` that its own `except` swallowed, and the test watched a
+    feature fail for a reason that exists nowhere but in this fake.
+    """
 
     def __init__(self) -> None:
         self.calls: list[tuple[str, str, dict[str, Any]]] = []
+        self.urls = SimpleNamespace(contents_url="https://contents.example")
+        self.token = "the-owner-token"
 
     def _contents_url(self, path: str) -> str:
         return f"https://contents.example/api/contents/v1{path}"
 
     def _fetch(self, url: str, *, method: str, **options: Any) -> FakeResponse:
-        self.calls.append((method, url.split("/v1", 1)[1], options))
+        path = url.split("/v1", 1)[1]
+        self.calls.append((method, path, options))
+        if path.endswith("/complete"):
+            # Echo the live answerer back inside the Datasource, the way the
+            # service does. `publish()` reports `live` from what Contents
+            # *recorded*, not from what the sandbox attempted, so a double
+            # that answered a fixed empty configuration would report every
+            # live publication as a snapshot — and did.
+            named = (options.get("json") or {}).get("live_server_uid")
+            datasource = {"live_server_uid": named} if named else {}
+            return FakeResponse({"relation": "sales", "parts": 1, "datasource": datasource})
+        if path == "/published-tables":
+            # The reservation, which is the only thing that knows the owner
+            # uid — and the live connector's name has to be owner-scoped.
+            return FakeResponse(
+                {"relation": "sales", "owner_uid": "01OWNER", "directory": "/d", "first_part": "part-00000.parquet"}
+            )
         return FakeResponse({"relation": "sales", "parts": 1, "datasource": {}})
 
 
@@ -139,7 +164,9 @@ def test_something_that_is_not_a_table_says_what_it_was() -> None:
 def test_live_still_writes_the_snapshot(client: FakeClient, monkeypatch) -> None:
     served: list[tuple[str, Any]] = []
     monkeypatch.setattr(
-        Contents, "_serve_live", lambda self, name, table: served.append((name, table)) or True
+        Contents,
+        "_serve_live",
+        lambda self, name, table: served.append((name, table)) or "01LIVESERVER",
     )
 
     result = Contents(client).publish(frame(), name="sales", live=True)
@@ -150,12 +177,15 @@ def test_live_still_writes_the_snapshot(client: FakeClient, monkeypatch) -> None
     assert [(m, p) for m, p, _ in client.calls][0] == ("POST", "/published-tables")
     assert any(m == "PUT" for m, _p, _o in client.calls)
     assert result["live"] is True
-    assert served[0][0] == "sales"
+    # Owner-scoped, because that is the name Contents routes to. Registering
+    # the bare relation would put a connector in the sandbox under a name no
+    # job ever asks for — live, correct, and never reached.
+    assert served[0][0] == "01OWNER.sales"
 
 
 def test_a_callable_follows_the_name(client: FakeClient, monkeypatch) -> None:
     current = frame()
-    monkeypatch.setattr(Contents, "_serve_live", lambda self, name, table: True)
+    monkeypatch.setattr(Contents, "_serve_live", lambda self, name, table: "01LIVESERVER")
 
     Contents(client).publish(lambda: current, name="sales", live=True)
 
@@ -239,3 +269,73 @@ def test_a_part_upload_is_not_labelled_json() -> None:
         assert sent["headers"]["Content-Type"] == "application/json"
     finally:
         network.requests.put = original
+
+
+def test_a_query_says_which_answerer_served_it() -> None:
+    """A published live table has two answerers, and the result says which.
+
+    Read through the `Query` rather than off the record, because that is what
+    the manual tells people to read — and the manual said so before this
+    existed, which would have been a documented attribute that raises.
+    """
+    from types import SimpleNamespace
+
+    from datalayer_core.contents import Query
+
+    live = Query(None, SimpleNamespace(answered="live", answered_reason="the sandbox holding this table was up"))
+    assert live.answered == "live"
+    assert "up" in live.answered_reason
+
+    # A snapshot-only table was never a choice, and says nothing rather than
+    # reporting a decision nobody made.
+    plain = Query(None, SimpleNamespace())
+    assert plain.answered is None
+    assert plain.answered_reason is None
+
+
+def test_publishing_live_installs_the_runner_factory(monkeypatch, client: FakeClient) -> None:
+    """The seam that was missing, checked from the side that fills it.
+
+    `live_server` starts its Data Server through a `runner_factory`, and
+    nothing constructed one — so a live table was filed in a process-local
+    registry that nothing could reach, and `publish(live=True)` said `True`.
+    Every test of `live_server` supplies its own factory, so its absence was
+    invisible from that side too: a collaborator always injected in tests and
+    never provided in production.
+    """
+    from datalayer_dataservers.live_server import LiveTableServer
+
+    server = LiveTableServer()
+    monkeypatch.setattr("datalayer_dataservers.live_server.live_server", server)
+
+    assert server.runner_factory is None
+    Contents(client).publish(frame(), name="sales", live=True)
+
+    assert server.runner_factory is not None, (
+        "publishing live left the server with no way to start, which is the "
+        "state every live table was published into"
+    )
+
+
+def test_a_factory_that_cannot_be_built_does_not_lose_the_publication(
+    monkeypatch, client: FakeClient
+) -> None:
+    """The snapshot is the thing that must survive.
+
+    A sandbox that cannot reach Contents to register, or has no credentials to
+    do it with, still published a table — and raising here would throw that
+    away to make a point about the half that did not work.
+    """
+    from datalayer_dataservers.live_server import LiveTableServer
+
+    server = LiveTableServer()
+    monkeypatch.setattr("datalayer_dataservers.live_server.live_server", server)
+    monkeypatch.setattr(
+        "datalayer_dataservers.sandbox.runner_factory_for",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("no credentials here")),
+    )
+
+    result = Contents(client).publish(frame(), name="sales", live=True)
+
+    assert result["live"] is False
+    assert any(m == "POST" and p.endswith("/complete") for m, p, _ in client.calls)

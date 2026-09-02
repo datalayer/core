@@ -490,6 +490,7 @@ class ContentsMixin:
         relation: str,
         row_group_rows: int = 1_000_000,
         live_server_uid: str | None = None,
+        live_setup: Callable[[str], str | None] | None = None,
     ) -> dict[str, Any]:
         """Publish a table so other people can query it.
 
@@ -507,11 +508,11 @@ class ContentsMixin:
         import pyarrow.parquet as pq
 
         arrow = _as_arrow_table(table)
-        self._fetch(  # type: ignore[attr-defined]
+        reserved = self._fetch(  # type: ignore[attr-defined]
             self._contents_url("/published-tables"),
             method="POST",
             json={"relation": relation},
-        )
+        ).json()
         # One part per row-group slice. A single part would put the whole
         # frame in one request, which is the thing the two-step shape exists
         # to avoid.
@@ -529,6 +530,18 @@ class ContentsMixin:
                 files={"file": (part, buffer.getvalue().to_pybytes())},
             )
             written += 1
+        # Start serving *before* completing, and not by preference: the
+        # completion is what records the live answerer, so a sandbox that
+        # published first would have no way left to say it was serving one.
+        #
+        # `live_setup` is given the **owner uid**, which only the reservation
+        # knows, because the live connector's name has to be the one Contents
+        # routes to — owner-scoped, `<owner uid>.<relation>`. Registering the
+        # bare relation would put a connector in the sandbox under a name no
+        # job ever asks for: a live table that is up, correct, and never
+        # reached.
+        if live_setup is not None and live_server_uid is None:
+            live_server_uid = live_setup(str(reserved.get("owner_uid") or ""))
         # The sandbox naming itself as this table's live answerer, when it is
         # serving one. Contents cannot work this out: it sees a user's Data
         # Servers and cannot tell which of them is the thread in the kernel

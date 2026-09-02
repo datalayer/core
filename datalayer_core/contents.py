@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import tempfile
@@ -49,6 +50,8 @@ from datalayer_core.models.contents.mcp import (
     is_call_terminal,
 )
 
+
+logger = logging.getLogger(__name__)
 
 class HomeFolder:
     def __init__(self, client: DatalayerClient) -> None:
@@ -262,6 +265,26 @@ class Query:
     @property
     def is_terminal(self) -> bool:
         return is_query_terminal(self.record)
+
+    @property
+    def answered(self) -> str | None:
+        """`live` or `snapshot` for a published table with two answerers.
+
+        `None` for every other query, where there was only ever one answerer
+        and reporting a choice would invite the reader to wonder which they
+        got.
+
+        Worth checking on a live table rather than assuming: a number read
+        from an object in a running kernel and a number read from the last
+        published snapshot are not the same claim, and a result that cannot be
+        told apart is how somebody quotes a stale figure in a meeting.
+        """
+        return getattr(self.record, "answered", None)
+
+    @property
+    def answered_reason(self) -> str | None:
+        """Why that one answered, in words rather than a status to look up."""
+        return getattr(self.record, "answered_reason", None)
 
     def refresh(self) -> "Query":
         self.record = self.client.get_datasource_query(self.record.uid)
@@ -944,12 +967,22 @@ class Contents:
         was bound to at this moment.
         """
         subject = table() if (live and callable(table)) else table
-        published = self.client.publish_table(subject, relation=name, **options)
+        published = self.client.publish_table(
+            subject,
+            relation=name,
+            # Given the owner uid, once the reservation knows it: the live
+            # connector must carry the name Contents routes to, and that name
+            # is owner-scoped.
+            live_setup=(lambda owner: self._serve_live(f"{owner}.{name}", table))
+            if live
+            else None,
+            **options,
+        )
         if live:
-            published["live"] = self._serve_live(name, table)
+            published["live"] = bool(published.get("datasource", {}).get("live_server_uid"))
         return published
 
-    def _serve_live(self, name: str, table: Any) -> bool:
+    def _serve_live(self, name: str, table: Any) -> str | None:
         """Serve `table` from this sandbox, if this process can.
 
         Answers whether it is **actually being served**, which is not the same
@@ -969,11 +1002,27 @@ class Contents:
         """
         try:
             from datalayer_dataservers.live_server import live_server
+            from datalayer_dataservers.sandbox import runner_factory_for
         except ImportError:
-            return False
+            return None
+        # `live_server` knows how to *serve* an object and when to start; it
+        # does not know how to register with Contents, and had no way to be
+        # told — its `runner_factory` was never constructed by anything, so
+        # every live table sat in a process-local registry that nothing could
+        # reach. This is the seam that was missing, and it is filled here
+        # because this is the side holding the client and the token.
+        if live_server.runner_factory is None:
+            try:
+                live_server.runner_factory = runner_factory_for(
+                    self.client,
+                    contents_url=self.client.urls.contents_url,
+                    api_key=self.client.token,
+                )
+            except Exception:  # noqa: BLE001 - publishing must survive this
+                logger.debug("This sandbox cannot serve live tables", exc_info=True)
         getter = table if callable(table) else (lambda: table)
         live_server.serve(name, getter)
-        return live_server.running
+        return live_server.registration_uid
 
     def _resolve(self, source: str, kind: str, label: str) -> str:
         """
