@@ -258,6 +258,7 @@ export interface ContentAttachment {
   revokedAt?: string | null;
   sandboxProvider: string;
   sandboxUid: string;
+  sourcePath?: string | null;
   sourceUid: string;
   status: AttachmentStatus;
   tokenAudience?: string | null;
@@ -431,7 +432,7 @@ export interface DataServerConnectivity {
 }
 
 export interface DataServerConnector {
-  connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
+  connectorType: 'athena' | 'bigquery' | 'sql' | 'table' | 'live';
   name?: string | null;
   operations?: Array<'select' | 'describe' | 'list'>;
   policyVersion: string;
@@ -457,7 +458,7 @@ export interface DataServerHeartbeatRequest {
 
 export interface DataServerJob {
   connector?: string | null;
-  connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
+  connectorType: 'athena' | 'bigquery' | 'sql' | 'table' | 'live';
   credentialRef?: string | null;
   limits: QueryLimits;
   policyVersion: string;
@@ -622,7 +623,7 @@ export interface DatasourceColumn {
 
 export interface DatasourceConfiguration {
   allowedOperations?: Array<'select' | 'describe' | 'list'>;
-  connectorType: 'athena' | 'bigquery' | 'sql' | 'table';
+  connectorType: 'athena' | 'bigquery' | 'sql' | 'table' | 'live';
   credentialUid?: string | null;
   dataServerUid?: string | null;
   databaseOrProject?: string | null;
@@ -1055,6 +1056,7 @@ export interface PreparedAttachment {
   revokedAt?: string | null;
   sandboxProvider: string;
   sandboxUid: string;
+  sourcePath?: string | null;
   sourceUid: string;
   status: AttachmentStatus;
   tokenAudience?: string | null;

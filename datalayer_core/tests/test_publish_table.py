@@ -318,6 +318,10 @@ def test_publishing_live_installs_the_runner_factory(monkeypatch, client: FakeCl
 
     server = LiveTableServer()
     monkeypatch.setattr("datalayer_dataservers.live_server.live_server", server)
+    # The Data Server's own credential, which Datalayer gives a sandbox. A
+    # sandbox without it cannot register and cannot serve live — checked by
+    # the test below rather than treated as the normal case here.
+    monkeypatch.setenv("DATALAYER_CONTENTS_DATASERVER_API_KEY", "the-service-key")
 
     assert server.runner_factory is None
     Contents(client).publish(frame(), name="sales", live=True)
@@ -376,3 +380,26 @@ def test_the_fake_client_only_offers_what_the_real_one_offers() -> None:
             f"the fake offers {name!r} and the real client does not — which is "
             "how a passing test hid a feature that never worked"
         )
+
+
+def test_a_sandbox_without_the_service_credential_publishes_a_snapshot(
+    monkeypatch, client: FakeClient
+) -> None:
+    """`register` speaks for the platform about which Data Servers exist.
+
+    A person's token does not carry that scope, so a sandbox Datalayer did not
+    provision cannot serve live. It publishes the snapshot and says `live:
+    False` — the truthful answer — rather than registering something that would
+    answer `401` on every heartbeat for as long as it ran.
+    """
+    from datalayer_dataservers.live_server import LiveTableServer
+
+    server = LiveTableServer()
+    monkeypatch.setattr("datalayer_dataservers.live_server.live_server", server)
+    monkeypatch.delenv("DATALAYER_CONTENTS_DATASERVER_API_KEY", raising=False)
+
+    result = Contents(client).publish(frame(), name="sales", live=True)
+
+    assert result["live"] is False
+    assert server.runner_factory is None
+    assert any(m == "POST" and p.endswith("/complete") for m, p, _ in client.calls)

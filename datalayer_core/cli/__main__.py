@@ -256,11 +256,14 @@ def _register_extensions(cli: typer.Typer) -> None:
     """
     try:
         from reactor import PluginPlatform
+        from reactor.cli import extend
     except ImportError:
         return
     platform = PluginPlatform()
     platform.discover("datalayer.cli")
-    platform.register_cli(cli)
+    # The reactor CLI's own registration path — skip-on-failure included —
+    # rather than a local copy of it.
+    extend(cli, platform)
 
 
 def _normalize_global_options(argv: list[str]) -> list[str]:

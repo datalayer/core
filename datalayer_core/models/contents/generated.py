@@ -286,7 +286,7 @@ class DataServerConnector(BaseModel):
     model_config = ConfigDict(
         extra='forbid',
     )
-    connector_type: Literal['athena', 'bigquery', 'sql', 'table'] = Field(
+    connector_type: Literal['athena', 'bigquery', 'sql', 'table', 'live'] = Field(
         ..., title='Connector Type'
     )
     name: str | None = Field(None, title='Name')
@@ -478,7 +478,7 @@ class DatasourceConfiguration(BaseModel):
     allowed_operations: list[Literal['select', 'describe', 'list']] | None = Field(
         None, title='Allowed Operations'
     )
-    connector_type: Literal['athena', 'bigquery', 'sql', 'table'] = Field(
+    connector_type: Literal['athena', 'bigquery', 'sql', 'table', 'live'] = Field(
         ..., title='Connector Type'
     )
     credential_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') | None = (
@@ -1489,6 +1489,7 @@ class ContentAttachment(BaseModel):
     sandbox_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
         ..., title='Sandbox Uid'
     )
+    source_path: str | None = Field(None, title='Source Path')
     source_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
         ..., title='Source Uid'
     )
@@ -1562,7 +1563,7 @@ class DataServerJob(BaseModel):
         extra='forbid',
     )
     connector: str | None = Field(None, title='Connector')
-    connector_type: Literal['athena', 'bigquery', 'sql', 'table'] = Field(
+    connector_type: Literal['athena', 'bigquery', 'sql', 'table', 'live'] = Field(
         ..., title='Connector Type'
     )
     credential_ref: str | None = Field(None, title='Credential Ref')
@@ -1785,6 +1786,7 @@ class PreparedAttachment(BaseModel):
     sandbox_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
         ..., title='Sandbox Uid'
     )
+    source_path: str | None = Field(None, title='Source Path')
     source_uid: constr(pattern=r'^[0-9A-HJKMNP-TV-Za-hjkmnp-tv-z]{26}$') = Field(
         ..., title='Source Uid'
     )

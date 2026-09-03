@@ -1016,13 +1016,18 @@ class Contents:
                 live_server.runner_factory = runner_factory_for(
                     self.client,
                     contents_url=self.client.urls.contents_url,
-                    # `_get_api_key()`, which is what the client itself calls
-                    # to authenticate — not a `token` attribute, which it does
-                    # not have. The first version read one, the test's fake
-                    # had one, and the `except` below turned the resulting
-                    # `AttributeError` into a silent `live: False` on every
-                    # real publication.
-                    api_key=self.client._get_api_key(),  # noqa: SLF001
+                    # The **Data Server's** credential, not the person's.
+                    # `register` and `heartbeat` are gated on a service scope
+                    # that a user's token does not carry, so a sandbox that
+                    # presented the owner's token registered nothing and
+                    # answered `401 Service authentication required` on every
+                    # beat. Datalayer gives a sandbox this; a laptop does not
+                    # have it, and cannot serve live tables — which is the
+                    # right shape, since `register` speaks for the platform
+                    # about which Data Servers exist.
+                    api_key=os.environ.get(
+                        "DATALAYER_CONTENTS_DATASERVER_API_KEY", ""
+                    ),
                 )
             except Exception:  # noqa: BLE001 - publishing must survive this
                 logger.debug("This sandbox cannot serve live tables", exc_info=True)

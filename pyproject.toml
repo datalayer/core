@@ -102,6 +102,13 @@ otel = [
     "opentelemetry-exporter-otlp-proto-http>=1.20.0",
 ]
 
+# The core's command groups, as a reactor CLI extension: any reactor CLI
+# host — the `reactor` command itself — picks them up from here. Not under
+# `datalayer.cli`: the `datalayer` command hosts that group and adds these
+# statically; discovering itself would register everything twice.
+[project.entry-points."datalayer.reactor.cli"]
+datalayer-core = "datalayer_core.reactor_extension:plugin"
+
 [project.scripts]
 d = "datalayer_core.cli.__main__:main"
 dla = "datalayer_core.cli.__main__:main"
