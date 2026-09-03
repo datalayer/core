@@ -364,6 +364,87 @@ class DatalayerClient(
             notebook for space in self.list_spaces() for notebook in space.notebooks()
         ]
 
+    def list_notebook_versions(self, notebook: Union[str, ItemModel]) -> list[dict[str, Any]]:
+        """
+        List a notebook's kept versions, newest first.
+
+        Each carries ``uid``, ``created_at``, ``message``, ``reason`` and an
+        ``actor`` naming the person and, when one acted, the agent.
+
+        Parameters
+        ----------
+        notebook : Union[str, ItemModel]
+            The notebook, or its uid.
+
+        Returns
+        -------
+        list[dict]
+            The versions, empty when the call fails.
+        """
+        uid = notebook.uid if isinstance(notebook, ItemModel) else notebook
+        response = self._list_notebook_versions(uid)
+        if response.get("success"):
+            return list(response.get("versions") or [])
+        return []
+
+    def snapshot_notebook(self, notebook: Union[str, ItemModel], message: str = "") -> dict[str, Any]:
+        """
+        Keep a notebook as it is now, as a version to restore later.
+
+        Parameters
+        ----------
+        notebook : Union[str, ItemModel]
+            The notebook, or its uid.
+        message : str
+            Why this moment is worth keeping.
+
+        Returns
+        -------
+        dict
+            The version kept, or ``{"success": False, "message": ...}``.
+
+        Raises
+        ------
+        RuntimeError
+            When the spacer refused: no ``update`` access, or no such notebook.
+        """
+        uid = notebook.uid if isinstance(notebook, ItemModel) else notebook
+        response = self._snapshot_notebook(uid, message)
+        if not response.get("success"):
+            raise RuntimeError(str(response.get("message") or response.get("detail") or "the version was not kept"))
+        return dict(response.get("version") or {})
+
+    def restore_notebook_version(self, notebook: Union[str, ItemModel], version_uid: str) -> dict[str, Any]:
+        """
+        Make a kept version the notebook's current content.
+
+        The spacer keeps the content it replaces first, as a ``restore``
+        version, so this can itself be undone.
+
+        Parameters
+        ----------
+        notebook : Union[str, ItemModel]
+            The notebook, or its uid.
+        version_uid : str
+            A version uid from :meth:`list_notebook_versions`.
+
+        Returns
+        -------
+        dict
+            ``restored`` (the version made current) and ``kept`` (the one
+            made of what it replaced).
+
+        Raises
+        ------
+        RuntimeError
+            When the spacer refused or knows no such version.
+        """
+        uid = notebook.uid if isinstance(notebook, ItemModel) else notebook
+        response = self._restore_notebook_version(uid, version_uid)
+        if not response.get("success"):
+            raise RuntimeError(str(response.get("message") or response.get("detail") or "the version was not restored"))
+        return {"restored": response.get("restored") or {}, "kept": response.get("kept") or {}}
+
     def delete_api_key(self, api_key: Union[str, ApiKeyModel]) -> bool:
         """
         Delete a specific API key.
