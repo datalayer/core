@@ -271,12 +271,38 @@ def _clean_relative(value: Any) -> str:
     return "/".join(parts)
 
 
+#: How deep a target may go. One segment is the common case — a Home
+#: Folder's handle, a share's name; two is an Environment's contents at
+#: `datasets/<name>` and `models/<name>`; more has no use yet, and a bound
+#: keeps a target from becoming a path the agent has to think about.
+TARGET_MAX_SEGMENTS = 3
+
+
 def clean_target(value: Any) -> str:
-    """The single path segment a grant appears under in the gateway."""
+    """The relative path a grant appears under in the gateway.
+
+    One segment for most grants, and a path of clean segments for an
+    Environment's contents, which the manual promises at `datasets/<name>`
+    and `models/<name>` beneath the home — the one-segment rule made those
+    unservable from the pool, and every launch that mounted anything got a
+    cold pod for it. Each segment is held to the one-segment rule; the path
+    may not start at the root, walk, or carry an empty segment, so `/a`,
+    `a/../b` and `a//b` are refused where they are written, not on a node.
+    """
     raw = str(value or "").strip()
-    if not _TARGET_RE.match(raw):
-        raise NodeMountGatewayError(ERROR_INVALID_TARGET, f"target '{raw}' is not one path segment")
-    return raw
+    if not raw or raw.startswith("/") or "\\" in raw:
+        raise NodeMountGatewayError(ERROR_INVALID_TARGET, f"target '{raw}' is not a relative path")
+    parts = raw.split("/")
+    if len(parts) > TARGET_MAX_SEGMENTS:
+        raise NodeMountGatewayError(
+            ERROR_INVALID_TARGET, f"target '{raw}' is deeper than {TARGET_MAX_SEGMENTS} segments"
+        )
+    for part in parts:
+        if not _TARGET_RE.match(part):
+            raise NodeMountGatewayError(
+                ERROR_INVALID_TARGET, f"target '{raw}' is not a path of clean segments"
+            )
+    return "/".join(parts)
 
 
 #: A Kubernetes object name: the agent looks one up, so a value that is not a

@@ -51,11 +51,19 @@ class TestWhatMayBeGranted:
             clean_source("home/../../etc")
         assert raised.value.code == ERROR_INVALID_SOURCE
 
-    def test_a_target_is_one_path_segment(self):
-        for bad in ("a/b", "..", ".", "", "-flag", "/abs"):
+    def test_a_target_is_a_relative_path_of_clean_segments(self):
+        for bad in ("..", ".", "", "-flag", "/abs", "a//b", "a/../b", "a/.", "a/", "a\\b", "a/b/c/d"):
             with pytest.raises(NodeMountGatewayError) as raised:
                 clean_target(bad)
-            assert raised.value.code == ERROR_INVALID_TARGET
+            assert raised.value.code == ERROR_INVALID_TARGET, bad
+
+    def test_an_environments_content_keeps_its_promised_depth(self):
+        # `datasets/<name>` and `models/<name>` are where the manual says an
+        # Environment's contents are; one segment made them unservable from
+        # the pool, and every launch that mounted anything got a cold pod.
+        assert clean_target("datasets/aws-opendata-genome-browser") == "datasets/aws-opendata-genome-browser"
+        assert clean_target("models/datalayer-oss") == "models/datalayer-oss"
+        assert clean_target("a/b/c") == "a/b/c"
 
     def test_a_handle_the_home_folder_module_produces_is_a_valid_target(self):
         # `sanitize_mount_handle` makes names like `datalayer__research`; a
