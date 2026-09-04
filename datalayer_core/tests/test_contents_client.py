@@ -786,3 +786,29 @@ def test_two_of_the_callers_own_sources_with_one_name_stay_ambiguous() -> None:
 
     with pytest.raises(LookupError, match="Several"):
         Contents(client)._resolve("sales", "datasource", "Datasource")
+
+
+def test_calling_a_tool_carries_an_idempotency_key() -> None:
+    """Audit 63: a tool call runs code on somebody's behalf.
+
+    The route requires a key so a retry never calls twice, and nothing sent
+    one: every `datalayer contents mcp call` was answered `422
+    Idempotency-Key: Field required`. The whole command, unusable, behind a
+    header.
+    """
+    client = Client()
+    client.responses = [Response(mcp_call("succeeded"))]
+
+    client.call_mcp_tool(SESSION_UID, "list_spaces", {})
+
+    headers = client.calls[0][1]["headers"]
+    assert headers["Idempotency-Key"].startswith("sdk-mcp-call-")
+
+
+def test_a_caller_may_choose_the_key_it_retries_under() -> None:
+    client = Client()
+    client.responses = [Response(mcp_call("succeeded"))]
+
+    client.call_mcp_tool(SESSION_UID, "list_spaces", {}, idempotency_key="mine")
+
+    assert client.calls[0][1]["headers"]["Idempotency-Key"] == "mine"

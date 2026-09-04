@@ -10,6 +10,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Iterator, Mapping
+from uuid import uuid4
 from urllib.parse import urlencode
 
 from pydantic import BaseModel
@@ -1186,6 +1187,7 @@ class ContentsMixin:
         arguments: Mapping[str, Any] | None = None,
         *,
         destination_uri: str | None = None,
+        idempotency_key: str | None = None,
     ) -> McpCall:
         """
         Invoke one tool through a session.
@@ -1198,10 +1200,15 @@ class ContentsMixin:
         payload: dict[str, Any] = {"tool": tool, "arguments": dict(arguments or {})}
         if destination_uri is not None:
             payload["destination_uri"] = destination_uri
+        # A tool call runs code on somebody's behalf, so the route requires a
+        # key and retries never call twice. Nothing sent one, and every call
+        # was answered `422 Idempotency-Key: Field required` — the whole
+        # command, unusable, behind a header.
         response = self._fetch(  # type: ignore[attr-defined]
             self._contents_url(f"/mcp-sessions/{session_uid}/calls"),
             method="POST",
             json=payload,
+            headers={"Idempotency-Key": idempotency_key or f"sdk-mcp-call-{uuid4()}"},
         )
         return McpCall.model_validate(response.json())
 
