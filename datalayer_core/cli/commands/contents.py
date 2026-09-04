@@ -1593,6 +1593,21 @@ def mcp_list(ctx: typer.Context) -> None:
     _render(page.model_dump(mode="json"), _context(ctx))
 
 
+def _secret_uid(reference: str) -> str:
+    """A secret's uid, given its uid or its unambiguous name."""
+    wanted = reference.strip()
+    if not wanted:
+        raise ContentsCommandError("--credential needs a secret name or uid")
+    secrets = _client().list_secrets() or []
+    if any(str(getattr(secret, "uid", "")) == wanted for secret in secrets):
+        return wanted
+    matches = [secret for secret in secrets if str(getattr(secret, "name", "")) == wanted]
+    if len(matches) != 1:
+        qualifier = "Several secrets are" if matches else "No secret is"
+        raise ContentsCommandError(f"{qualifier} named or identified by '{wanted}'")
+    return str(getattr(matches[0], "uid", ""))
+
+
 @mcp_app.command(name="connect")
 @contents_command
 def mcp_connect(
@@ -1603,6 +1618,11 @@ def mcp_connect(
     allowed_tools: str = typer.Option("", "--tools"),
     allowed_domains: str = typer.Option("", "--domains"),
     description: str = typer.Option("", "--description"),
+    credential: str | None = typer.Option(
+        None,
+        "--credential",
+        help="Secret holding the server's bearer token, by name or UID.",
+    ),
 ) -> None:
     """
     Connect an MCP server so agents can use its tools.
@@ -1633,6 +1653,12 @@ def mcp_connect(
                     "destination_policy": "allowlist",
                     "allowed_tools": listed(allowed_tools),
                     "allowed_domains": listed(allowed_domains),
+                    # Every MCP server worth reaching wants a token, and
+                    # this was the only way to give one: create the source,
+                    # then `PATCH` a `credential_uid` with an `If-Match`
+                    # nobody hands you. The secret stays in IAM; the source
+                    # carries its uid and never its value.
+                    **({"credential_uid": _secret_uid(credential)} if credential else {}),
                 },
             },
             idempotency_key=f"cli-mcp-{uuid4()}",

@@ -1390,3 +1390,56 @@ def _operation_view(status: str = "failed", error_code: str | None = "RETRY_EXHA
         "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
     }
 
+
+
+def test_connecting_an_mcp_server_can_name_its_credential(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Audit 63: every MCP server worth reaching wants a token.
+
+    `connect` had no way to give one, so a credential meant creating the
+    source and then `PATCH`ing a `credential_uid` with an `If-Match` header
+    nobody hands you. The secret stays in IAM; the source carries its uid.
+    """
+    sent: dict[str, Any] = {}
+
+    class Recording(Client):
+        def list_secrets(self) -> Any:
+            from datalayer_core.models.secret import SecretModel
+
+            return [
+                SecretModel(
+                    uid="01SECRET0000000000000000AB",
+                    name="mcp-token",
+                    description="",
+                    secret_type="api_key",
+                )
+            ]
+
+        def create_content_source(self, body: dict, **kwargs: Any) -> Any:
+            sent.update(body)
+            return super().create_content_source(body, **kwargs)
+
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
+    result = CliRunner().invoke(
+        app,
+        ["contents", "mcp", "connect", "earthdata", "--endpoint", "https://s/mcp", "--credential", "mcp-token"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert sent["configuration"]["credential_uid"] == "01SECRET0000000000000000AB"
+
+
+def test_a_credential_that_names_nothing_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Recording(Client):
+        def list_secrets(self) -> Any:
+            return []
+
+    monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
+    result = CliRunner().invoke(
+        app,
+        ["contents", "mcp", "connect", "earthdata", "--endpoint", "https://s/mcp", "--credential", "nope"],
+    )
+
+    assert result.exit_code != 0
+    assert "No secret is named" in result.output
