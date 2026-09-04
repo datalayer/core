@@ -169,6 +169,94 @@ def _call(function: Callable[[], Any]) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# sandboxes
+# ---------------------------------------------------------------------------
+
+sandboxes_app = typer.Typer(name="sandboxes", help="Sharing the sandboxes you launched.")
+app.add_typer(sandboxes_app)
+
+
+def _principals(users: list[str] | None, teams: list[str] | None, organizations: list[str] | None, agents: list[str] | None) -> dict[str, list[str]]:
+    return {"users": users or [], "teams": teams or [], "organizations": organizations or [], "agents": agents or []}
+
+
+def _sharing_lines(sharing: dict[str, Any]) -> str:
+    lines = [f"{sharing.get('runtime_name', '')}: {'shared' if sharing.get('shared') else 'not shared'} (owner {sharing.get('owner_uid', '')})"]
+    for level, grants in (sharing.get("access") or {}).items():
+        named = [f"{kind.removesuffix('Uids')} {', '.join(values)}" for kind, values in grants.items() if values]
+        lines.append(f"  {level:8} {'; '.join(named) if named else '-'}")
+    return "\n".join(lines)
+
+
+@sandboxes_app.command(name="share")
+@mcp_command
+def sandboxes_share(
+    ctx: typer.Context,
+    runtime_name: str = typer.Argument(..., help="The sandbox, by the name it was launched under."),
+    level: str = typer.Option("view", "--level", help="view reads outputs, update may change files, execute may run code."),
+    user: list[str] = typer.Option([], "--user", help="A user uid to grant; repeatable."),
+    team: list[str] = typer.Option([], "--team", help="A team uid to grant; repeatable."),
+    organization: list[str] = typer.Option([], "--organization", help="An organization uid to grant; repeatable."),
+    agent: list[str] = typer.Option([], "--agent", help="A service-agent uid to grant — the agent alone, not its owner; repeatable."),
+    replace: bool = typer.Option(False, "--replace", help="Make these the whole grant at that level rather than adding to it."),
+) -> None:
+    """Share a sandbox. They use it with `use_sandbox` and its name."""
+    who = _principals(user, team, organization, agent)
+    if not any(who.values()):
+        raise McpCommandError("Name somebody to share with: --user, --team, --organization or --agent.")
+    sharing = _call(lambda: _client().share_runtime(runtime_name, level=level, replace=replace, **who))
+    if _emit_machine(sharing, _context(ctx)):
+        return
+    console.print(_sharing_lines(sharing))
+
+
+@sandboxes_app.command(name="unshare")
+@mcp_command
+def sandboxes_unshare(
+    ctx: typer.Context,
+    runtime_name: str = typer.Argument(..., help="The sandbox, by the name it was launched under."),
+    level: str = typer.Option("all", "--level", help="The level to revoke at; 'all' revokes every level."),
+    user: list[str] = typer.Option([], "--user", help="A user uid to revoke; repeatable."),
+    team: list[str] = typer.Option([], "--team", help="A team uid to revoke; repeatable."),
+    organization: list[str] = typer.Option([], "--organization", help="An organization uid to revoke; repeatable."),
+    agent: list[str] = typer.Option([], "--agent", help="A service-agent uid to revoke; repeatable."),
+) -> None:
+    """Take a share back. Name nobody to revoke everybody at the level."""
+    sharing = _call(lambda: _client().unshare_runtime(runtime_name, level=level, **_principals(user, team, organization, agent)))
+    if _emit_machine(sharing, _context(ctx)):
+        return
+    console.print(_sharing_lines(sharing))
+
+
+@sandboxes_app.command(name="sharing")
+@mcp_command
+def sandboxes_sharing(
+    ctx: typer.Context,
+    runtime_name: str = typer.Argument(..., help="The sandbox, by the name it was launched under."),
+) -> None:
+    """Who a sandbox of yours is shared with."""
+    sharing = _call(lambda: _client().runtime_sharing(runtime_name))
+    if _emit_machine(sharing, _context(ctx)):
+        return
+    console.print(_sharing_lines(sharing))
+
+
+@sandboxes_app.command(name="permissions")
+@mcp_command
+def sandboxes_permissions(
+    ctx: typer.Context,
+    runtime_name: str = typer.Argument(..., help="A sandbox, yours or somebody else's."),
+) -> None:
+    """What you may do with a sandbox: view, update, execute."""
+    permissions = _call(lambda: _client().runtime_permissions(runtime_name))
+    if _emit_machine(permissions, _context(ctx)):
+        return
+    held = [level for level in ("view", "update", "execute") if permissions.get(level)]
+    owner = " (yours)" if permissions.get("owner") else (f" (shared by {permissions['owner_uid']})" if permissions.get("owner_uid") else "")
+    console.print(f"{runtime_name}: {', '.join(held) if held else 'nothing'}{owner}")
+
+
+# ---------------------------------------------------------------------------
 # agents
 # ---------------------------------------------------------------------------
 

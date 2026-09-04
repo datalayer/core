@@ -16,6 +16,7 @@ from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.contents import ContentsMixin
 from datalayer_core.mixins.mcp import McpMixin
+from datalayer_core.mixins.runtime_sharing import RuntimeSharingMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.spaces import SpacesMixin
 from datalayer_core.mixins.usage import UsageMixin
@@ -38,6 +39,7 @@ class DatalayerClient(
     WhoamiAppMixin,
     ContentsMixin,
     McpMixin,
+    RuntimeSharingMixin,
 ):
     """
     Client for Datalayer AI platform.
@@ -444,6 +446,118 @@ class DatalayerClient(
         if not response.get("success"):
             raise RuntimeError(str(response.get("message") or response.get("detail") or "the version was not restored"))
         return {"restored": response.get("restored") or {}, "kept": response.get("kept") or {}}
+
+    #: The three sharing levels, nested: each includes the ones before it.
+    SHARING_LEVELS = ("view", "update", "execute")
+
+    def runtime_sharing(self, runtime_name: str) -> dict[str, Any]:
+        """
+        Who a runtime is shared with, per level and kind of principal.
+
+        The owner's to see: Runtimes answers `403` to anybody else.
+
+        Parameters
+        ----------
+        runtime_name : str
+            The runtime, by the name it was launched under.
+
+        Returns
+        -------
+        dict
+            ``access`` (levels → ``userUids``, ``teamUids``, ``organizationUids``,
+            ``agentUids``), ``owner_uid`` and ``shared``.
+
+        Raises
+        ------
+        RuntimeError
+            When Runtimes refused.
+        """
+        response = self._runtime_sharing(runtime_name)
+        if not response.get("success"):
+            raise RuntimeError(str(response.get("message") or response.get("detail") or "the sharing could not be read"))
+        return dict(response.get("sharing") or {})
+
+    def share_runtime(
+        self,
+        runtime_name: str,
+        *,
+        level: str = "view",
+        users: list[str] | None = None,
+        teams: list[str] | None = None,
+        organizations: list[str] | None = None,
+        agents: list[str] | None = None,
+        replace: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Share a runtime at one level with users, teams, organizations or agents.
+
+        Grants add to what is already shared at that level unless ``replace``
+        is set, which makes the lists given the whole grant at that level.
+        Levels not named are kept. An agent grant is matched on the agent
+        alone, never on its owner.
+
+        Returns
+        -------
+        dict
+            The sharing as Runtimes holds it afterwards.
+        """
+        if level not in self.SHARING_LEVELS:
+            raise ValueError(f"'{level}' is not a level; the levels are {', '.join(self.SHARING_LEVELS)}")
+        wanted = {"userUids": users or [], "teamUids": teams or [], "organizationUids": organizations or [], "agentUids": agents or []}
+        if not replace:
+            held = (self.runtime_sharing(runtime_name).get("access") or {}).get(level) or {}
+            wanted = {kind: list(held.get(kind) or []) + [v for v in values if v not in (held.get(kind) or [])] for kind, values in wanted.items()}
+        response = self._share_runtime(runtime_name, {level: wanted})
+        if not response.get("success"):
+            raise RuntimeError(str(response.get("message") or response.get("detail") or "the runtime was not shared"))
+        return dict(response.get("sharing") or {})
+
+    def unshare_runtime(
+        self,
+        runtime_name: str,
+        *,
+        level: str = "all",
+        users: list[str] | None = None,
+        teams: list[str] | None = None,
+        organizations: list[str] | None = None,
+        agents: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Take a share back, at one level or at every level.
+
+        Naming nobody revokes everybody at the level; ``level="all"`` walks
+        every level. The grantee's next call on the runtime is refused.
+        """
+        levels = self.SHARING_LEVELS if level == "all" else (level,)
+        for one in levels:
+            if one not in self.SHARING_LEVELS:
+                raise ValueError(f"'{level}' is not a level; the levels are {', '.join(self.SHARING_LEVELS)}")
+        asked = {"userUids": users or [], "teamUids": teams or [], "organizationUids": organizations or [], "agentUids": agents or []}
+        nobody_named = not any(asked.values())
+        held = self.runtime_sharing(runtime_name).get("access") or {}
+        access: dict[str, Any] = {}
+        for one in levels:
+            at_level = dict(held.get(one) or {})
+            access[one] = {
+                kind: ([] if nobody_named else [v for v in (at_level.get(kind) or []) if v not in asked[kind]])
+                for kind in asked
+            }
+        response = self._share_runtime(runtime_name, access)
+        if not response.get("success"):
+            raise RuntimeError(str(response.get("message") or response.get("detail") or "the runtime was not unshared"))
+        return dict(response.get("sharing") or {})
+
+    def runtime_permissions(self, runtime_name: str) -> dict[str, Any]:
+        """
+        What you may do with a runtime: ``view``, ``update``, ``execute``.
+
+        Anybody may ask about any runtime; one not shared with you and one
+        that does not exist answer alike, three ``False``.
+        """
+        response = self._runtime_permissions(runtime_name)
+        if not response.get("success"):
+            raise RuntimeError(str(response.get("message") or response.get("detail") or "the permissions could not be read"))
+        return dict(response.get("permissions") or {})
 
     def delete_api_key(self, api_key: Union[str, ApiKeyModel]) -> bool:
         """
