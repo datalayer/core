@@ -169,6 +169,69 @@ def _call(function: Callable[[], Any]) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# toolsets
+# ---------------------------------------------------------------------------
+
+toolsets_app = typer.Typer(name="toolsets", help="The tools your Content sources lend to agents.")
+app.add_typer(toolsets_app)
+
+
+@toolsets_app.command(name="list")
+@mcp_command
+def toolsets_list(ctx: typer.Context) -> None:
+    """The sources that lend tools, and which of them are enabled."""
+    client = _client()
+    catalogue = _call(client.list_toolsets)
+    open_sessions = _call(client.list_toolset_sessions)
+    by_source: dict[str, list[str]] = {}
+    for session in open_sessions:
+        if str(session.get("status") or "") == "active":
+            by_source.setdefault(str(session.get("source_uid") or ""), []).append(str(session.get("uid") or ""))
+    listed = [{**entry, "sessions": by_source.get(entry["uid"], [])} for entry in catalogue]
+    if _emit_machine(listed, _context(ctx)):
+        return
+    if not listed:
+        console.print("No source of yours lends tools.")
+        return
+    for entry in listed:
+        state = f"enabled ({', '.join(entry['sessions'])})" if entry["sessions"] else "not enabled"
+        console.print(f"{entry['name']} [{entry['uid']}] {entry['kind']}: {state}")
+        console.print(f"  tools: {', '.join(entry['tools'])}")
+
+
+@toolsets_app.command(name="enable")
+@mcp_command
+def toolsets_enable(
+    ctx: typer.Context,
+    source_uid: str = typer.Argument(..., help="The source, from `toolsets list`."),
+    tool: list[str] = typer.Option([], "--tool", help="Only this tool; repeatable. All the source allows when omitted."),
+) -> None:
+    """Open a session on a source so an agent can call its tools."""
+    session = _call(lambda: _client().enable_toolset(source_uid, tools=list(tool) or None))
+    if _emit_machine(session, _context(ctx)):
+        return
+    allowed = ", ".join(session.get("allowed_tools") or []) or "none"
+    console.print(f"{session.get('uid', '')}: {allowed}")
+    console.print(f"  expires {session.get('expires_at', 'unknown')}; approvals: {session.get('approval_policy', 'unknown')}")
+
+
+@toolsets_app.command(name="disable")
+@mcp_command
+def toolsets_disable(
+    ctx: typer.Context,
+    session_uid: str = typer.Argument(..., help="The session, from `toolsets list`."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask for confirmation."),
+) -> None:
+    """Revoke a session. Its tools stop working on the next call."""
+    if not yes and not typer.confirm(f"Revoke {session_uid}?"):
+        raise typer.Exit(0)
+    session = _call(lambda: _client().disable_toolset(session_uid))
+    if _emit_machine(session, _context(ctx)):
+        return
+    console.print(f"{session.get('uid', session_uid)}: {session.get('status', 'revoked')}")
+
+
+# ---------------------------------------------------------------------------
 # sandboxes
 # ---------------------------------------------------------------------------
 

@@ -202,6 +202,98 @@ class ContentsMixin:
         )
         return SourceList.model_validate(response.json())
 
+    # Toolsets ---------------------------------------------------------------
+    #
+    # A source can lend its tools to an agent. Contents owns which tools a
+    # source allows, who may call them and whether a call needs approving;
+    # these four are the catalogue and the session, which is all a person
+    # needs to see and manage what their agents borrowed.
+
+    def list_toolsets(self) -> list[dict[str, Any]]:
+        """
+        The sources that lend tools, each with the tools it offers.
+
+        A source with no MCP tools is left out: a listing of everything with
+        an empty column beside most rows is a listing nobody reads.
+
+        Returns
+        -------
+        list[dict]
+            One entry per source: ``uid``, ``name``, ``kind`` and ``tools``.
+        """
+        found = []
+        for item in self.list_content_sources().items:  # type: ignore[attr-defined]
+            source = getattr(item, "source", item)
+            uid = str(getattr(source, "uid", "") or "")
+            if not uid:
+                continue
+            try:
+                manifest = self._fetch(  # type: ignore[attr-defined]
+                    self._contents_url(f"/sources/{uid}/mcp/tools"), method="GET"
+                ).json()
+            except Exception:  # noqa: BLE001 - a source that serves no manifest lends nothing
+                continue
+            tools = [str(tool.get("name") or "") for tool in (manifest.get("tools") or [])]
+            if tools:
+                found.append({
+                    "uid": uid,
+                    "name": str(getattr(source, "name", "") or uid),
+                    "kind": str(getattr(source, "kind", "") or ""),
+                    "tools": sorted(name for name in tools if name),
+                })
+        return found
+
+    def list_toolset_sessions(self) -> list[dict[str, Any]]:
+        """The MCP sessions open on your sources: what your agents borrowed."""
+        try:
+            answer = self._fetch(  # type: ignore[attr-defined]
+                self._contents_url("/mcp-sessions"), method="GET"
+            ).json()
+        except RuntimeError as error:
+            raise RuntimeError(f"the toolset sessions could not be read: {error}") from error
+        return list(answer.get("items") or [])
+
+    def enable_toolset(self, source_uid: str, *, tools: list[str] | None = None) -> dict[str, Any]:
+        """
+        Open a session on a source, so its tools can be called.
+
+        Parameters
+        ----------
+        source_uid : str
+            The source, from :meth:`list_toolsets`.
+        tools : list[str] | None
+            Only these tools; everything the source allows when omitted.
+
+        Raises
+        ------
+        RuntimeError
+            When Contents refused — no ``execute`` on the source, or a tool
+            the source does not allow.
+        """
+        body: dict[str, Any] = {"source_uid": source_uid}
+        if tools:
+            body["tools"] = tools
+        try:
+            response = self._fetch(  # type: ignore[attr-defined]
+                self._contents_url("/mcp-sessions"),
+                method="POST",
+                json=body,
+                headers={"Idempotency-Key": f"cli-enable-{source_uid}"},
+            )
+        except RuntimeError as error:
+            raise RuntimeError(f"the toolset could not be enabled: {error}") from error
+        return dict(response.json())
+
+    def disable_toolset(self, session_uid: str) -> dict[str, Any]:
+        """Revoke a session. The tools it lent stop working on the next call."""
+        try:
+            response = self._fetch(  # type: ignore[attr-defined]
+                self._contents_url(f"/mcp-sessions/{session_uid}"), method="DELETE"
+            )
+        except RuntimeError as error:
+            raise RuntimeError(f"the toolset could not be disabled: {error}") from error
+        return dict(response.json())
+
     def create_content_attachment(
         self,
         request: AttachmentCreate | Mapping[str, Any],
