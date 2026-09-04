@@ -71,7 +71,9 @@ export const DATASOURCE_OPERATIONS: ReadonlyArray<DatasourceOperation> = [
  */
 export type CreatableDatasourceConnectorType = Exclude<
   DatasourceConnectorType,
-  'table'
+  // Neither is made by a form: a published table is written by `publish`,
+  // and a live table is served by the sandbox kernel that holds the frame.
+  'table' | 'live'
 >;
 
 export const DATASOURCE_CONNECTOR_LABELS: Record<
@@ -84,6 +86,9 @@ export const DATASOURCE_CONNECTOR_LABELS: Record<
   // Listed, unlike above: a published table is a Datasource people see in
   // the catalog and query like any other, even though no form makes one.
   table: 'Published table',
+  // The same table while its kernel is up: answered from the live frame,
+  // and from the published snapshot once the kernel is gone.
+  live: 'Live table',
 };
 
 /** A query the service has finished with, one way or another. */

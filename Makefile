@@ -38,7 +38,12 @@ publish-npm: clean build-lib ## publish-npm
 	echo open https://www.npmjs.com/package/@datalayer/core
 
 publish-pypi: # publish the pypi package
-	git clean -fdx && \
+	# The sdist hook needs the vite-built CLI login asset and skips npm when
+	# it is there; `git clean -fdx` used to delete it (and node_modules) and
+	# hand the hook a cold workspace install inside the isolated build.
+	rm -rf dist build && \
+		([ -x node_modules/.bin/vite ] || npm install) && \
+		npm run build:cli-login && \
 		python -m build
 	@exec echo
 	@exec echo twine upload ./dist/*-py3-none-any.whl

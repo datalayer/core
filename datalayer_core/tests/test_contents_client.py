@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import json
+
+import pytest
 from pathlib import Path
 from typing import Any
 
@@ -742,3 +744,45 @@ def test_contents_client_reads_the_dead_letter_and_quarantines_and_requeues() ->
     assert urls[1].endswith("/operations/01OPERATION00000000000000/quarantine")
     assert client.calls[1][1]["json"] == {"reason": "looking"}
     assert urls[2].endswith("/operations/01OPERATION00000000000000/requeue")
+
+
+def test_a_name_shared_with_someone_elses_source_resolves_to_the_callers_own() -> None:
+    """Two people, one relation: both published `sales`, and an account that
+    can see the other's — an administrator, a share — listed both. A name
+    means *mine* before it means *theirs*."""
+    from datalayer_core.contents import Contents
+
+    mine = source_response("sales")
+    mine["source"]["uid"] = "01M1NF00000000000000000001"
+    mine["source"]["kind"] = "datasource"
+    mine["permissions"]["is_owner"] = True
+    theirs = source_response("sales")
+    theirs["source"]["uid"] = "01M1NF00000000000000000002"
+    theirs["source"]["kind"] = "datasource"
+    theirs["source"]["principal_uid"] = "01KH11CH29BEAQAVFM932ERTF7"
+    theirs["permissions"]["is_owner"] = False
+
+    client = Client()
+    client.responses = [
+        Response({}),  # not a uid: the record does not parse, and the name is looked up
+        Response({"items": [theirs, mine], "next_cursor": None}),
+    ]
+    contents = Contents(client)
+
+    assert contents._resolve("sales", "datasource", "Datasource") == "01M1NF00000000000000000001"
+
+
+def test_two_of_the_callers_own_sources_with_one_name_stay_ambiguous() -> None:
+    from datalayer_core.contents import Contents
+
+    one, two = source_response("sales"), source_response("sales")
+    one["source"]["kind"] = two["source"]["kind"] = "datasource"
+    one["permissions"]["is_owner"] = two["permissions"]["is_owner"] = True
+    client = Client()
+    client.responses = [
+        Response({}),
+        Response({"items": [one, two], "next_cursor": None}),
+    ]
+
+    with pytest.raises(LookupError, match="Several"):
+        Contents(client)._resolve("sales", "datasource", "Datasource")

@@ -1048,6 +1048,19 @@ class Contents:
         except Exception:
             page = self.client.list_content_sources(kind=kind, limit=200)
             matches = [item for item in page.items if item.source.name == source]
+            if len(matches) > 1:
+                # Two people, one relation: both published `sales`, and an
+                # account that can see the other's — an administrator, a
+                # share — listed both. A name means *mine* before it means
+                # *theirs*, so when exactly one match is owned, that is it;
+                # two owned, or none, is the ambiguity the error names.
+                owned = [
+                    item
+                    for item in matches
+                    if getattr(getattr(item, "permissions", None), "is_owner", False)
+                ]
+                if len(owned) == 1:
+                    matches = owned
             if len(matches) != 1:
                 qualifier = f"Several {label} sources are" if matches else f"No {label} source is"
                 raise LookupError(

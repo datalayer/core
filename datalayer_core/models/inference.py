@@ -45,6 +45,13 @@ class ChatRequest(BaseModel):
     parallel_tool_calls: Optional[bool] = Field(
         None, description="Whether model can invoke tools in parallel"
     )
+    stream_options: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "OpenAI stream options, e.g. {'include_usage': true} to receive "
+            "a final usage chunk on streaming responses"
+        ),
+    )
 
 
 class CompletionRequest(BaseModel):
