@@ -291,11 +291,16 @@ def test_contents_list_and_describe_support_machine_output(
     assert "name: Earth data" in described.stdout
 
 
-def test_contents_list_filters_by_content_source_type(
+def test_contents_list_filters_by_kind_under_either_flag(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The flag is named after what it filters — a content source — while
-    the API keeps its `kind` query parameter."""
+    """The flag filters by **kind**, and says so.
+
+    It was `--source` and it took a kind — the one place the product itself
+    said one word and meant the other, and the one people read as evidence
+    that a source and a kind were the same thing. `--kind` is the name now;
+    `--source` still works, so nothing anybody typed before stops working.
+    """
     seen: dict[str, Any] = {}
 
     class Recording(Client):
@@ -306,13 +311,16 @@ def test_contents_list_filters_by_content_source_type(
     monkeypatch.setattr(contents_commands, "DatalayerClient", Recording)
     runner = CliRunner()
 
-    listed = runner.invoke(
-        app, ["contents", "--output", "json", "list", "--source", "dataset"]
-    )
-    rejected = runner.invoke(app, ["contents", "list", "--kind", "dataset"])
+    for flag, expected in (("--kind", "dataset"), ("--source", "volume")):
+        seen.clear()
+        listed = runner.invoke(
+            app, ["contents", "--output", "json", "list", flag, expected]
+        )
+        assert listed.exit_code == 0, (flag, listed.output)
+        assert seen["kind"] == expected, flag
 
-    assert listed.exit_code == 0
-    assert seen["kind"] == "dataset"
+    # Two names by design, not any name: the alias set stays deliberate.
+    rejected = runner.invoke(app, ["contents", "list", "--type", "dataset"])
     assert rejected.exit_code != 0
 
 
@@ -1381,3 +1389,4 @@ def _operation_view(status: str = "failed", error_code: str | None = "RETRY_EXHA
         "error_code": error_code, "error_message": "operator away", "result": None,
         "created_at": "2026-08-26T00:00:00Z", "updated_at": "2026-08-26T00:00:00Z", "completed_at": None,
     }
+

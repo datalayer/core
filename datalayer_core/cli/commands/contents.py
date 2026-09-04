@@ -225,10 +225,14 @@ def _home_folder_path(uri_or_path: str) -> str:
 @contents_command
 def list_contents(
     ctx: typer.Context,
-    source: str | None = typer.Option(
+    kind: str | None = typer.Option(
         None,
+        "--kind",
+        # The flag was `--source`, and it takes a *kind*: the one place the
+        # product itself said one word and meant the other. The old name
+        # still works, so nothing anybody typed before stops working.
         "--source",
-        help="Filter by content source type, such as dataset or volume.",
+        help="Filter by kind, such as dataset or volume.",
     ),
     space_uid: str | None = typer.Option(None, "--space", help="Filter by Space UID."),
     cursor: str | None = typer.Option(
@@ -240,7 +244,7 @@ def list_contents(
 
     try:
         page = _client().list_content_sources(
-            kind=source, space_uid=space_uid, cursor=cursor, limit=limit
+            kind=kind, space_uid=space_uid, cursor=cursor, limit=limit
         )
     except Exception as error:
         raise ContentsCommandError(str(error)) from error
