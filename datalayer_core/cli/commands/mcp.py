@@ -396,8 +396,8 @@ def service_agents_create(
         ...,
         "--scopes",
         help=(
-            "Space-separated, from: runtimes:read runtimes:write data:read "
-            "sandboxes:manage."
+            "Space-separated, from: code:execute notebooks:read notebooks:write "
+            "runtimes:read runtimes:write data:read sandboxes:manage."
         ),
     ),
     description: str = typer.Option("", "--description", help="Optional."),
