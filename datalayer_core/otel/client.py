@@ -181,13 +181,17 @@ class OtelClient:
         trace_id : str
             The trace ID.
         """
-        return self._get(f"/api/otel/v1/traces/{trace_id}/")
+        # No trailing slash. The service declares the route without one and
+        # does not redirect, so `/traces/{id}/` answered 404 for a trace the
+        # listing route had just returned — and `datalayer mcp trace` found
+        # nothing for every run.
+        return self._get(f"/api/otel/v1/traces/{trace_id}")
 
     def list_services(self) -> list[str]:
         """
         List all observed service names.
         """
-        data = self._get("/api/otel/v1/traces/services/list/")
+        data = self._get("/api/otel/v1/traces/services/list")
         return data.get("services", data)
 
     # ── metrics ──────────────────────────────────────────────────────

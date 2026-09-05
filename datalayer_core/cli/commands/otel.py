@@ -560,7 +560,7 @@ def list_services(
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
     resp = httpx.get(
-        f"{url}/api/otel/v1/traces/services/list/",
+        f"{url}/api/otel/v1/traces/services/list",
         headers=headers,
         timeout=15,
         follow_redirects=True,
