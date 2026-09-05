@@ -44,6 +44,12 @@ export interface McpBinding {
   sessionUid?: string | null;
   /** The runtime, for a `sandbox` binding. */
   sandboxUid?: string | null;
+  /**
+   * What Runtimes and the Operator know the sandbox by, which is **not** the
+   * handle. Sharing is addressed by this name; sending the handle instead is
+   * a `403` that reads as "you are not the owner".
+   */
+  runtimeName?: string | null;
   sandboxProvider?: string | null;
   /** What the runtime reported it can do. */
   capabilities?: string[];

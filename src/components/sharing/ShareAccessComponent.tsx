@@ -251,7 +251,7 @@ function principalKey(kind: PrincipalKind, uid: string): string {
 // Owner extraction (preserves all current fallbacks).
 // ---------------------------------------------------------------------------
 
-function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
+export function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
   const ownersFromSharing = Array.isArray(payload?.sharing?.owners)
     ? payload.sharing.owners
     : [];
@@ -284,6 +284,11 @@ function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
     ownerPayload?.id,
     payload?.owner_uid,
     payload?.ownerUid,
+    // Runtimes names a sandbox's owner inside its `sharing` document rather
+    // than beside it. Without this the dialog draws no owner at all, which
+    // reads as a resource nobody owns.
+    payload?.sharing?.owner_uid,
+    payload?.sharing?.ownerUid,
   );
   const ownerHandle = pickFirstString(
     ownerPayload?.handle_s,

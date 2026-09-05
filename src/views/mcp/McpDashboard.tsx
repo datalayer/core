@@ -58,6 +58,7 @@ import {
   StackIcon,
   TelescopeIcon,
 } from '@primer/octicons-react';
+import { ShareAccessDialog, sandboxSharingUrl } from '../../components/sharing';
 import { ClientBadge, McpErrorBlankslate } from '../../components/mcp';
 import {
   useDisconnectAgent,
@@ -65,6 +66,7 @@ import {
   useTerminateBinding,
 } from '../../hooks/useMcp';
 import { useNavigate, useToast } from '../../hooks';
+import { useCoreStore } from '../../state';
 import type { McpActiveClient } from '../../api/mcp';
 import type { McpAuditEvent } from '../../models/McpAuditEvent';
 import type { McpBinding } from '../../models/McpBinding';
@@ -225,6 +227,13 @@ export const McpDashboard = ({
 
   const [disconnecting, setDisconnecting] = useState<ClientRow | null>(null);
   const [terminating, setTerminating] = useState<SandboxRow | null>(null);
+  const [sharing, setSharing] = useState<SandboxRow | null>(null);
+  // Runtimes owns a sandbox's sharing, and addresses it by the *runtime's*
+  // name rather than by the handle the session holds.
+  const runtimesUrl = useCoreStore(
+    state =>
+      state.configuration.runtimesUrl || state.configuration.managerUrl || '',
+  );
   // Primer 37 types Dialog's focus refs with React 18's non-nullable
   // `RefObject<HTMLElement>`. React 19's `useRef(null)` is nullable, and this
   // ref is only handed to Dialog, so narrow it once here.
@@ -523,17 +532,30 @@ export const McpDashboard = ({
     {
       header: '',
       id: 'actions',
-      width: '110px',
+      width: '190px',
       align: 'end',
       renderCell: row => (
-        <Button
-          size="small"
-          variant="danger"
-          disabled={row.state === 'closed'}
-          onClick={() => setTerminating(row)}
-        >
-          Terminate
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          {/* Only what Runtimes can be asked about: a sandbox is shared by
+              its runtime's name, and a binding still reserving has none. */}
+          {sandboxSharingUrl(runtimesUrl, row.runtimeName) && (
+            <Button
+              size="small"
+              disabled={row.state === 'closed'}
+              onClick={() => setSharing(row)}
+            >
+              Share
+            </Button>
+          )}
+          <Button
+            size="small"
+            variant="danger"
+            disabled={row.state === 'closed'}
+            onClick={() => setTerminating(row)}
+          >
+            Terminate
+          </Button>
+        </Box>
       ),
     },
   ];
@@ -948,6 +970,17 @@ export const McpDashboard = ({
             stays.
           </Text>
         </Dialog>
+      )}
+
+      {sandboxSharingUrl(runtimesUrl, sharing?.runtimeName) && (
+        <ShareAccessDialog
+          isOpen
+          requestUrl={sandboxSharingUrl(runtimesUrl, sharing?.runtimeName)}
+          resourceLabel="Sandbox"
+          resourceName={sharing?.alias || sharing?.uid}
+          resourceDescription="Who else may look at this sandbox, change it, or run code on it. Sharing ends when the sandbox does."
+          onClose={() => setSharing(null)}
+        />
       )}
     </Box>
   );
