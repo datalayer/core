@@ -281,7 +281,17 @@ class LocalBridge:
                 if channel is None:
                     continue  # bytes before a pairing are nobody's
                 if not channel.established:
-                    channel.establish(bytes(message))
+                    try:
+                        channel.establish(bytes(message))
+                    except BridgeProtocolError as error:
+                        # A frame from the pairing before this one, still on
+                        # the wire when the peer came back. A sealed frame
+                        # that cannot be opened is dropped two lines below;
+                        # this one used to end the whole relay connection,
+                        # which reconnected straight back into the same
+                        # state. The channel is not established either way —
+                        # keep waiting for a hello that is one.
+                        self.progress(f"Ignored a frame that is not the peer's hello: {error}")
                     continue
                 try:
                     response = server.handle(channel.open(bytes(message)))
