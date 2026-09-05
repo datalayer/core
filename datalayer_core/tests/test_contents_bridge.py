@@ -249,6 +249,27 @@ async def sandbox_asks(connection: FakeConnection) -> AsyncIterator[Any]:
         yield json.dumps({"event": "keepalive"})
 
 
+
+async def a_stale_frame_then_the_hello(connection: FakeConnection) -> AsyncIterator[Any]:
+    """The peer comes back, but a frame from before it left is still on the wire.
+
+    The relay forwards whatever the previous pairing had in flight, and it
+    arrives where this pairing's hello belongs. It is not a hello and cannot
+    be made into one; what matters is that the *next* frame, which is one,
+    still gets through.
+    """
+    yield json.dumps({"event": "paired", "bridge_uid": BRIDGE})
+    yield b"a sealed frame from the pairing that just ended"
+    client_hello = connection.sent[-1]
+    mount = SecureChannel(role="mount", bridge_uid=BRIDGE, session_key=KEY)
+    mount.establish(client_hello)
+    yield mount.hello()
+    yield mount.seal(encode_frame({"id": 1, "op": "stat", "args": {"path": "docs/notes.txt"}}, b""))
+    connection.answers.append(decode_frame(mount.open(connection.sent[-1])))
+    while True:
+        await asyncio.sleep(0.01)
+        yield json.dumps({"event": "keepalive"})
+
 async def relay_drops(connection: FakeConnection) -> AsyncIterator[Any]:
     yield json.dumps({"event": "paired", "bridge_uid": BRIDGE})
     raise ConnectionError("the relay went away")
@@ -350,6 +371,38 @@ def test_the_folder_answers_the_sandbox_through_the_channel_until_revoked(tmp_pa
         if isinstance(frame, bytes):
             assert b"hello" not in frame and b"notes.txt" not in frame
 
+
+
+def test_a_frame_that_is_not_a_hello_is_dropped_not_the_whole_session(tmp_path: Path) -> None:
+    """Found on r1 (audit 70). Anything that is not 32 bytes raises
+    `BridgeProtocolError` out of `establish`, and that used to escape the
+    receive loop and end the relay connection — which reconnected into the
+    same state, over and over, so a Local Mount never became readable.
+
+    A sealed frame that cannot be opened is already dropped and the session
+    kept. A hello that is not a hello is less serious, not more: the channel
+    is not established either way, so the only thing to do is keep waiting for
+    one that is. Here the peer's real hello arrives right behind the stale
+    frame, and the folder answers.
+    """
+    root = folder(tmp_path)
+    client = BridgeClient(revoke_after=2)
+    relay = FakeRelay(a_stale_frame_then_the_hello)
+    bridge = bridge_for(client, root, relay)
+    progress: list[str] = []
+    bridge.progress = progress.append
+
+    outcome = asyncio.run(bridge.run())
+
+    assert outcome.state == "revoked"
+    # One dial, not a reconnect loop: the bad frame cost a frame, not the
+    # connection.
+    assert outcome.connections == 1
+    assert outcome.requests == 1
+    assert any("not the peer's hello" in line for line in progress)
+    [connection] = relay.connections
+    [(answer, _payload)] = connection.answers
+    assert answer["result"]["size"] == len("hello, bridge")
 
 def test_a_dropped_relay_is_dialled_again_with_the_renewed_token(tmp_path: Path) -> None:
     root = folder(tmp_path)

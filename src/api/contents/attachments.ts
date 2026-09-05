@@ -5,9 +5,11 @@
 
 import { requestDatalayerAPI } from '../DatalayerApi';
 import { API_BASE_PATHS, DEFAULT_SERVICE_URLS } from '../constants';
-import { contentsToCamelCase, contentsToSnakeCase } from '../../models/contents';
+import {
+  contentsToCamelCase,
+  contentsToSnakeCase,
+} from '../../models/contents';
 import type { JsonValue } from '../../models/contents';
-import { assertSandboxUid } from './sandboxUid';
 import type {
   AttachmentCreate,
   AttachmentList,
@@ -43,8 +45,7 @@ export const listAttachments = async (
   baseUrl: string = DEFAULT_SERVICE_URLS.CONTENTS,
 ): Promise<AttachmentList> => {
   const parameters = new URLSearchParams();
-  if (options.sandboxUid)
-    parameters.set('sandbox_uid', assertSandboxUid(options.sandboxUid));
+  if (options.sandboxUid) parameters.set('sandbox_uid', options.sandboxUid);
   if (options.sourceUid) parameters.set('source_uid', options.sourceUid);
   parameters.set('active', String(options.active ?? false));
   return convert<AttachmentList>(
@@ -63,13 +64,7 @@ export const getAttachmentManifest = async (
 ): Promise<ContentAttachmentManifest> =>
   convert<ContentAttachmentManifest>(
     await requestDatalayerAPI({
-      // Throws on a Pod name. Contents validates this while building its
-      // reply, so sending the wrong spelling produced a 500 the caller could
-      // not read; this fails where the caller can be seen.
-      url: url(
-        baseUrl,
-        `/manifest/${encodeURIComponent(assertSandboxUid(sandboxUid))}`,
-      ),
+      url: url(baseUrl, `/manifest/${encodeURIComponent(sandboxUid)}`),
       method: 'GET',
       token,
     }),
