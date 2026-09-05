@@ -16,13 +16,6 @@ export const FORCE_ACTIVATE_RUNTIMES_PLUGINS = false;
  */
 export type IDatalayerCoreConfig = {
   /**
-   * Datalayer RUN URL.
-   * The base URL for the Datalayer platform API.
-   * @example "https://prod1.datalayer.run"
-   */
-  datalayerUrl: string;
-
-  /**
    * Datalayer API authentication token.
    * Used for authenticating requests to the Datalayer platform.
    */
@@ -61,9 +54,21 @@ export type IDatalayerCoreConfig = {
    */
   iamUrl: string;
   /**
+   * Contents API URL.
+   */
+  contentsUrl: string;
+  /**
+   * Manager API URL.
+   */
+  managerUrl: string;
+  /**
    * Runtimes API URL.
    */
   runtimesUrl: string;
+  /**
+   * Scheduler API URL.
+   */
+  schedulerUrl: string;
   /**
    * Spacer API URL.
    */
@@ -81,31 +86,19 @@ export type IDatalayerCoreConfig = {
    */
   aiInferenceUrl: string;
   /**
-   * MCP Servers API URL.
+   * Jupyter MCP Server URL.
    */
-  mcpServersUrl: string;
+  jupyterMcpServerUrl: string;
   /**
    * OTEL (OpenTelemetry) API URL.
    *
-   * This is the endpoint runtimes/agents export telemetry to. In the browser
-   * it is also the default endpoint used to *consume* (query) telemetry, unless
-   * {@link otelInUrl} is provided.
+   * Both directions: the endpoint runtimes and agents export telemetry to, and
+   * the endpoint the browser reads it back from. A separate consume URL existed
+   * so a local UI could read from a remote service while exporting elsewhere;
+   * pointing this at that service does the same thing without two fields that
+   * can disagree.
    */
   otelUrl: string;
-  /**
-   * OTEL (OpenTelemetry) *consume* (read/query) API URL override.
-   *
-   * When set, the UI reads telemetry (metrics, traces, logs) from this URL
-   * instead of {@link otelUrl}. When empty/undefined, {@link otelUrl} is used.
-   *
-   * Primary use case: local development. When runtimes run in the cloud and
-   * export their telemetry to the production OTEL service, a local UI must fetch
-   * telemetry from production rather than from the local OTEL endpoint. Set this
-   * to e.g. `https://prod1.datalayer.run` while `otelUrl` stays local.
-   *
-   * Fed by the `DATALAYER_OTEL_IN_URL` environment variable at build/deploy time.
-   */
-  otelInUrl?: string;
   /**
    * Growth API URL.
    */
@@ -210,8 +203,24 @@ export class DatalayerConfiguration {
 /**
  * Default configuration values for Datalayer
  */
+/**
+ * Where a service lives when nothing says otherwise.
+ *
+ * Each service has a URL of its own — `iamUrl`, `runtimesUrl`, … — and this is
+ * what each of them falls back to.
+ */
+export const DEFAULT_DATALAYER_SERVICE_URL = 'https://prod1.datalayer.run';
+
+/**
+ * Where the Contents service lives when nothing says otherwise.
+ *
+ * Not the generic default: Contents runs on the runtimes plane, where the NFS that backs the Home Folder and Volumes lives.
+ */
+export const DEFAULT_DATALAYER_CONTENTS_URL = 'https://r1.datalayer.run';
+
 export const DEFAULT_DATALAYER_CONFIG: Partial<IDatalayerCoreConfig> = {
-  datalayerUrl: 'https://prod1.datalayer.run',
+  iamUrl: DEFAULT_DATALAYER_SERVICE_URL,
+  contentsUrl: DEFAULT_DATALAYER_CONTENTS_URL,
   credits: 100,
   cpuEnvironment: 'ai-agents-env',
   gpuEnvironment: 'ai-env',
@@ -224,7 +233,7 @@ export function isDatalayerConfig(config: any): config is IDatalayerCoreConfig {
   return (
     config &&
     typeof config === 'object' &&
-    typeof config.datalayerUrl === 'string' &&
+    typeof config.iamUrl === 'string' &&
     typeof config.token === 'string' &&
     typeof config.credits === 'number' &&
     typeof config.cpuEnvironment === 'string' &&
@@ -242,10 +251,10 @@ export function mergeConfigWithDefaults(
 ): Partial<IDatalayerCoreConfig> | undefined {
   if (!config) return undefined;
 
-  // If we have required fields (token and datalayerUrl), merge with defaults for optional fields
-  if (config.token && config.datalayerUrl) {
+  // If we have required fields (token and iamUrl), merge with defaults for optional fields
+  if (config.token && config.iamUrl) {
     return {
-      datalayerUrl: config.datalayerUrl,
+      iamUrl: config.iamUrl,
       token: config.token,
       credits: config.credits ?? DEFAULT_DATALAYER_CONFIG.credits!,
       cpuEnvironment:

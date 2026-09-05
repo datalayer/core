@@ -150,6 +150,7 @@ export const PrincipalBadge = ({
       lastName: user?.lastName,
       email: user?.email,
       avatarUrl: user?.avatarUrl,
+      avatarIcon: user?.avatarIcon,
       origin: normalizeUserOrigin(user?.origin),
     };
   }, [
@@ -165,6 +166,7 @@ export const PrincipalBadge = ({
     user?.lastName,
     user?.email,
     user?.avatarUrl,
+    user?.avatarIcon,
   ]);
 
   const userLookupUid =
@@ -195,6 +197,8 @@ export const PrincipalBadge = ({
           `@${normalizedHandle}`,
         handle: resolvedHandle,
         accountHandle: resolvedHandle,
+        avatarIcon:
+          resolvedOrganization?.avatarIcon || basePrincipal.avatarIcon,
         origin: basePrincipal.origin || 'Datalayer',
       };
     }
@@ -211,6 +215,7 @@ export const PrincipalBadge = ({
         handle: basePrincipal.handle,
         accountHandle: basePrincipal.accountHandle,
         avatarUrl: basePrincipal.avatarUrl,
+        avatarIcon: basePrincipal.avatarIcon,
         origin: basePrincipal.origin,
       };
     }
@@ -248,6 +253,7 @@ export const PrincipalBadge = ({
       lastName: resolvedUser?.lastName || basePrincipal.lastName,
       email: resolvedUser?.email || basePrincipal.email,
       avatarUrl: resolvedUser?.avatarUrl || basePrincipal.avatarUrl,
+      avatarIcon: resolvedUser?.avatarIcon || basePrincipal.avatarIcon,
       origin,
     };
   }, [
@@ -261,6 +267,8 @@ export const PrincipalBadge = ({
     resolvedUser?.lastName,
     resolvedUser?.email,
     resolvedUser?.avatarUrl,
+    resolvedUser?.avatarIcon,
+    resolvedOrganization?.avatarIcon,
     resolvedUser?.origin,
   ]);
 

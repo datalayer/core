@@ -50,7 +50,7 @@ def _make_client(
 
 @app.callback()
 def plans_callback(ctx: typer.Context) -> None:
-    """Plans and subscription commands."""
+    """Manage plans and subscriptions."""
     if ctx.invoked_subcommand is None:
         plans_show(api_key=None, iam_url=None, raw=False)
 
@@ -97,9 +97,7 @@ def _format_wallet(
     wallet_balance: Any = None,
 ) -> str:
     balance = (
-        wallet_balance
-        if wallet_balance is not None
-        else plan.get("wallet_balance")
+        wallet_balance if wallet_balance is not None else plan.get("wallet_balance")
     )
     quota = plan.get("wallet_quota")
     is_quota = bool(plan.get("wallet_is_quota"))
@@ -122,9 +120,7 @@ def _render_plan_row(
 ) -> None:
     plan_name = plan.get("plan_name") or plan.get("plan_code") or "Free"
     status = plan.get("status") or "unknown"
-    eligible = (
-        "yes" if is_eligible is True else ("no" if is_eligible is False else "-")
-    )
+    eligible = "yes" if is_eligible is True else ("no" if is_eligible is False else "-")
     handle_text = _normalize_value(handle, fallback="-")
     if name and name != handle:
         handle_text = f"{handle_text} ({name})"
@@ -154,16 +150,13 @@ def _add_plan_columns(table: Table) -> None:
     table.add_column(
         "Wallet (balance/quota)", style="yellow", justify="right", no_wrap=True
     )
-    table.add_column(
-        "Current Credits", style="white", justify="right", no_wrap=True
-    )
+    table.add_column("Current Credits", style="white", justify="right", no_wrap=True)
     table.add_column(
         "Runs (used/included)", style="white", justify="right", no_wrap=True
     )
     table.add_column("Period", style="white", no_wrap=True)
     table.add_column("Eligible", style="white", no_wrap=True)
     table.add_column("Account UID", style="dim", no_wrap=True)
-
 
 
 @app.command(name="show")
@@ -205,9 +198,7 @@ def plans_show(
         )
 
         # 3. Resolve plans for all org/team memberships in one batch.
-        membership_uids = [
-            m.get("uid") for m in memberships if m.get("uid")
-        ]
+        membership_uids = [m.get("uid") for m in memberships if m.get("uid")]
         accounts_details: list[dict[str, Any]] = []
         if membership_uids:
             details_response = _iam_post(
@@ -233,9 +224,9 @@ def plans_show(
 
         # Self row.
         self_plan = self_plan_response.get("plan") or {}
-        self_account_uid = self_plan_response.get("account_uid") or self_plan.get(
-            "account_uid"
-        ) or ""
+        self_account_uid = (
+            self_plan_response.get("account_uid") or self_plan.get("account_uid") or ""
+        )
         self_handle = self_plan.get("account_handle") or "-"
         _render_plan_row(
             table,
@@ -251,7 +242,7 @@ def plans_show(
 
         # Memberships rows.
         details_by_uid: dict[str, dict[str, Any]] = {
-            entry.get("account_uid"): entry for entry in accounts_details
+            str(entry.get("account_uid") or ""): entry for entry in accounts_details
         }
         orgs_by_uid = {
             m.get("uid"): m
@@ -335,9 +326,7 @@ def plans_catalog(
     try:
         client = _make_client(api_key=api_key, iam_url=iam_url)
         suffix = (
-            f"?billing_entity_uid={billing_entity_uid}"
-            if billing_entity_uid
-            else ""
+            f"?billing_entity_uid={billing_entity_uid}" if billing_entity_uid else ""
         )
         response = _iam_get(client, f"/api/iam/v1/plans/catalog{suffix}")
         if not response.get("success", True):

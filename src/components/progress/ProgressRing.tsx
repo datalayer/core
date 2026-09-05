@@ -6,6 +6,7 @@
 /**
  * Progress ring segment properties
  */
+import type { JSX } from 'react';
 export interface IProgressRingItemProps {
   /**
    * Progress

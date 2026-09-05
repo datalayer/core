@@ -9,6 +9,7 @@
  * @module models/CreditsDTO
  */
 
+import { isSandboxUid } from '../api/contents/sandboxUid';
 import { validateJSON } from '../api/utils/validation';
 
 /**
@@ -121,10 +122,13 @@ export class CreditsDTO {
   }
 
   /**
-   * Get runtime reservations (reservations that start with 'runtime-').
+   * Get runtime reservations: the ones held for a runtime, which a
+   * reservation names by the runtime's uid.
    */
   get runtimeReservations(): CreditReservation[] {
-    return this._reservations.filter(r => r.id.startsWith('runtime-'));
+    return this._reservations.filter(
+      r => isSandboxUid(r.resource) || isSandboxUid(r.id),
+    );
   }
 
   /**

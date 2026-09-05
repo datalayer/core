@@ -451,13 +451,16 @@ class MembershipsModel(BaseModel):
 
 # Shareable Principals Models
 class ShareablePrincipalModel(BaseModel):
-    """Principal a user can share artifacts with.
+    """
+    Principal a user can share artifacts with.
 
     Always one of: self (user), an organization the user is a member of,
     or a team the user is a member of (with its parent organization info).
     """
 
-    kind: str = Field(..., description="Principal kind: 'user' | 'organization' | 'team'")
+    kind: str = Field(
+        ..., description="Principal kind: 'user' | 'organization' | 'team'"
+    )
     uid: str = Field(..., description="Principal UID")
     handle: str = Field(..., description="Principal handle")
     name: Optional[str] = Field(None, description="Display name")
@@ -629,18 +632,6 @@ class TokenModel(BaseModel):
     expiration_ts_dt: Optional[datetime] = Field(
         None, description="Token expiration timestamp"
     )
-
-
-class DatasourceModel(BaseModel):
-    """Datasource data model."""
-
-    id: str = Field(..., description="Datasource ID")
-    uid: str = Field(..., description="Datasource UID")
-    variant_s: str = Field(..., description="Datasource variant")
-    name_s: str = Field(..., description="Datasource name")
-    description_t: Optional[str] = Field(None, description="Datasource description")
-    database_s: str = Field(..., description="Database name")
-    output_bucket_s: str = Field(..., description="Output bucket")
 
 
 # Response data models with structured data

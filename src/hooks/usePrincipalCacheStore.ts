@@ -27,6 +27,8 @@ export type CachedPrincipal = {
   email?: string;
   origin?: string;
   avatarUrl?: string;
+  avatarIcon?: string;
+  banner?: string;
   /** Team-specific: parent organization handle. */
   organizationHandle?: string;
   /** Team-specific: parent organization display name. */
@@ -58,6 +60,8 @@ const MERGEABLE_KEYS: Array<keyof CachedPrincipal> = [
   'email',
   'origin',
   'avatarUrl',
+  'avatarIcon',
+  'banner',
   'organizationHandle',
   'organizationName',
   'memberCount',

@@ -16,7 +16,7 @@ from datalayer_core.handlers.config.handler import ConfigHandler
 from datalayer_core.handlers.index.handler import IndexHandler
 from datalayer_core.handlers.login.handler import LoginHandler
 from datalayer_core.handlers.service_worker.handler import ServiceWorkerHandler
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_IAM_URL
+from datalayer_core.utils.urls import DatalayerURLs
 
 _PACKAGE_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_STATIC_FILES_PATH = str(_PACKAGE_ROOT / "static")
@@ -36,14 +36,120 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
 
     template_paths = [DEFAULT_TEMPLATE_FILES_PATH]
 
-    # datalayer_url can be set set and None or ' ' (empty string).
-    # In that case, the consumer of those settings are free to consider datalayer_url as null.
-    datalayer_url = Unicode(
-        DEFAULT_DATALAYER_IAM_URL,
+    # One URL per service: there is no single base any more. Each of them can
+    # be set and None or ' ' (empty string); the consumer of those settings is
+    # then free to consider it as null. What is not configured is resolved from
+    # the environment — `DATALAYER_IAM_URL` and friends — and falls back to the
+    # default of the service, see `DatalayerURLs`.
+    iam_url = Unicode(
         config=True,
         allow_none=True,
-        help="""URL to connect to the Datalayer RUN APIs.""",
+        help="""URL to connect to the Datalayer IAM API.""",
     )
+
+    runtimes_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Runtimes API.""",
+    )
+
+    spacer_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Spacer API.""",
+    )
+
+    library_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Library API.""",
+    )
+
+    contents_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Contents API.""",
+    )
+
+    manager_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Manager API.""",
+    )
+
+    scheduler_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer Scheduler API.""",
+    )
+
+    ai_agents_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer AI Agents API.""",
+    )
+
+    ai_inference_url = Unicode(
+        config=True,
+        allow_none=True,
+        help="""URL to connect to the Datalayer AI Inference API.""",
+    )
+
+    @default("iam_url")
+    def _default_iam_url(self) -> str:
+        return self._urls.iam_url
+
+    @default("runtimes_url")
+    def _default_runtimes_url(self) -> str:
+        return self._urls.runtimes_url
+
+    @default("spacer_url")
+    def _default_spacer_url(self) -> str:
+        return self._urls.spacer_url
+
+    @default("library_url")
+    def _default_library_url(self) -> str:
+        return self._urls.library_url
+
+    @default("contents_url")
+    def _default_contents_url(self) -> str:
+        return self._urls.contents_url
+
+    @default("manager_url")
+    def _default_manager_url(self) -> str:
+        return self._urls.manager_url
+
+    @default("scheduler_url")
+    def _default_scheduler_url(self) -> str:
+        return self._urls.scheduler_url
+
+    @default("ai_agents_url")
+    def _default_ai_agents_url(self) -> str:
+        return self._urls.ai_agents_url
+
+    @default("ai_inference_url")
+    def _default_ai_inference_url(self) -> str:
+        return self._urls.ai_inference_url
+
+    @property
+    def _urls(self) -> DatalayerURLs:
+        """The URLs of the services, as the environment resolves them."""
+        return DatalayerURLs.from_environment()
+
+    @property
+    def service_urls(self) -> dict[str, str]:
+        """The URL of every service, as the browser and the templates read them."""
+        return {
+            "iam_url": self.iam_url,
+            "runtimes_url": self.runtimes_url,
+            "spacer_url": self.spacer_url,
+            "library_url": self.library_url,
+            "contents_url": self.contents_url,
+            "manager_url": self.manager_url,
+            "scheduler_url": self.scheduler_url,
+            "ai_agents_url": self.ai_agents_url,
+            "ai_inference_url": self.ai_inference_url,
+        }
 
     white_label = Bool(False, config=True, help="""Display white label content.""")
 
@@ -63,7 +169,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         )
 
         name = Unicode(
-            "Runtimes",
+            "Datalayer",
             config=True,
             help=("Application launcher card name."),
         )
@@ -189,7 +295,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
             self.serverapp.port = port
 
         settings = dict(
-            datalayer_url=self.datalayer_url,
+            **self.service_urls,
             launcher={
                 "category": self.launcher.category,
                 "name": self.launcher.name,
@@ -215,7 +321,7 @@ class DatalayerExtensionApp(ExtensionAppJinjaMixin, ExtensionApp):
         self.serverapp.jinja_template_vars.update(
             {
                 "datalayer_version": __version__,
-                "datalayer_url": self.datalayer_url,
+                **self.service_urls,
             }
         )
 

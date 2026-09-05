@@ -2,7 +2,7 @@
 
 [![Become a Sponsor](https://img.shields.io/static/v1?label=Become%20a%20Sponsor&message=%E2%9D%A4&logo=GitHub&style=flat&color=1ABC9C)](https://github.com/sponsors/datalayer)
 
-# ☰ 〇 Datalayer Core
+# ☰ ⭕ Datalayer Core
 
 <p align="center">
   <strong>Python and Typescript libraries for Datalayer</strong>
@@ -18,7 +18,7 @@
 
 ## Overview
 
-Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.app/). It provides a TypesScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
+Datalayer Core is the foundational package that powers the [Datalayer AI Platform](https://datalayer.ai). It provides TypeScript and Python packages as a Command Line Interface (CLI) for AI engineers, data scientists, and researchers to seamlessly integrate scalable compute runtimes into their workflows.
 
 This package serves as the base foundation used by many other Datalayer packages, containing core application classes, configuration, and unified APIs for authentication, runtime management, and code execution in cloud-based environments.
 
@@ -66,8 +66,6 @@ npm install
 
 ## Quick Start with Python
 
-### 1. Authentication
-
 Set your Datalayer token as an environment variable:
 
 ```bash
@@ -89,31 +87,19 @@ if client.authenticate():
     print("Successfully authenticated!")
 ```
 
-### 2. Runtime, Snapshots, and Evals
+## Architecture
 
-Runtime execution, snapshot workflows, and evals CLI are now documented and maintained in:
+Datalayer Core serves as the foundation for the entire Datalayer ecosystem:
 
-- [agent-runtimes README](https://github.com/datalayer/agent-runtimes/blob/main/README.md)
-- [agent-runtimes CLI docs](https://agent-runtimes.datalayer.tech/cli)
-
-Use `agent-runtimes` for runtime workloads (`RuntimeClient`, `@datalayer`, snapshots, and evals), and use `datalayer-core` for account/platform operations (authentication, secrets, API keys, usage, profile).
+- **Base Classes**: Core application classes inherited by other Datalayer packages
+- **Configuration Management**: Centralized configuration system for all Datalayer components
+- **Authentication Layer**: Unified authentication across all Datalayer services
+- **Runtime Abstraction**: Common interface for different types of compute runtimes
+- **Resource Management**: Automatic cleanup and lifecycle management
 
 ## Examples
 
-Examples have moved to Agent Runtimes:
-
-- [Agent Runtimes examples README](https://github.com/datalayer/agent-runtimes/blob/main/examples/README.md)
-- [Agent Runtimes examples directory](https://github.com/datalayer/agent-runtimes/tree/main/examples)
-
-## Platform Integration
-
-Datalayer adds AI capabilities and scalable compute runtimes to your development workflows. The platform is designed to seamlessly integrate into your existing processes and supercharge your computations with the processing power you need.
-
-Key platform features accessible through this Client and CLI:
-
-- **Remote Runtimes**: Execute code on powerful remote machines with CPU, RAM, and GPU resources
-- **Multiple Interfaces**: Access and consume runtimes through Python Client, CLI, or other integrated tools
-- **Scalable Compute**: Dynamically scale your computational resources based on workload requirements
+- [OTEL example README](https://github.com/datalayer/core/blob/main/examples/otel/README.md)
 
 ## Documentation
 
@@ -193,16 +179,6 @@ This Client is designed to be simple and extensible. We welcome contributions! P
 
 For issues and enhancement requests, please use the [GitHub issue tracker](https://github.com/datalayer/core/issues).
 
-## Architecture
-
-Datalayer Core serves as the foundation for the entire Datalayer ecosystem:
-
-- **Base Classes**: Core application classes inherited by other Datalayer packages
-- **Configuration Management**: Centralized configuration system for all Datalayer components
-- **Authentication Layer**: Unified authentication across all Datalayer services
-- **Runtime Abstraction**: Common interface for different types of compute runtimes
-- **Resource Management**: Automatic cleanup and lifecycle management
-
 ## Use Cases
 
 - **AI/ML Development**: Scale your machine learning workflows with cloud compute using Client or CLI
@@ -219,15 +195,16 @@ This project is licensed under the [BSD 3-Clause License](https://github.com/dat
 
 - **Documentation**: [Datalayer Platform Documentation](https://datalayer.ai/docs/)
 - **Issues**: [GitHub Issues](https://github.com/datalayer/core/issues)
-- **Community**: [Datalayer Platform](https://datalayer.app/)
+- **Community**: [Datalayer Platform](https://datalayer.ai)
 
 ---
 
-<p align="center">
-  <img src="https://assets.datalayer.tech/datalayer-25.svg" alt="Datalayer Logo" width="200"></img>
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>🚀 AI Agents for Data Analysis</strong><br></br>
-  <a href="https://datalayer.app/">Get started with Datalayer today!</a>
-</p>
+**If this project is helpful to you, please give us a ⭐️**
+
+Made with ❤️ by [Datalayer](https://datalayer.ai)
+
+<img src="https://assets.datalayer.tech/datalayer-25.svg" alt="Datalayer Logo" width="200"></img>
+
+</div>

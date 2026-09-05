@@ -50,7 +50,6 @@ import {
   BOOTSTRAP_USER_ONBOARDING,
   IAnyOrganization,
   IContact,
-  IDatasource,
   IIAMToken,
   IOrganization,
   IOrganizationMember,
@@ -62,7 +61,6 @@ import {
   IUserOnboarding,
   IUserSettings,
   asContact,
-  asDatasource,
   asInvite,
   asOrganization,
   asSecret,
@@ -77,7 +75,6 @@ type IAnySpace = any;
 type IAssignment = any;
 type ICell = any;
 type ICourse = any;
-type IDataset = any;
 type IDocument = any;
 type IEnvironment = any;
 type IExercise = any;
@@ -87,7 +84,7 @@ type IPage = any;
 type ISpaceItem = any;
 type IStudentItem = any;
 import { asPage, asSpace } from './cacheConverters';
-import { useCoreStore, useIAMStore } from '../state';
+import { useCoreStore, useIAMStore, profileStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
@@ -134,6 +131,186 @@ const DEFAULT_QUERY_OPTIONS = {
  * @see https://tanstack.com/query/latest/docs/framework/react/guides/query-keys
  */
 export const queryKeys = {
+  // Contents catalog
+  contents: {
+    all: () => ['contents'] as const,
+    sources: () => [...queryKeys.contents.all(), 'sources'] as const,
+    capabilities: () =>
+      [...queryKeys.contents.all(), 'capabilities'] as const,
+    sourceList: (filters?: {
+      kind?: string;
+      cursor?: string;
+      limit?: number;
+    }) => [...queryKeys.contents.sources(), 'list', filters ?? {}] as const,
+    source: (sourceUid: string) =>
+      [...queryKeys.contents.sources(), 'detail', sourceUid] as const,
+    sourceSharing: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'sharing'] as const,
+    datasetRevisions: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'revisions'] as const,
+    datasetRevision: (sourceUid: string, revisionUid: string) =>
+      [...queryKeys.contents.datasetRevisions(sourceUid), revisionUid] as const,
+    datasetPublications: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'publications'] as const,
+    publishedDatasets: () =>
+      [...queryKeys.contents.all(), 'publications', 'datasets'] as const,
+    cloudObjects: (sourceUid: string, prefix?: string, cursor?: string) =>
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'cloud',
+        'objects',
+        prefix ?? '',
+        cursor ?? '',
+      ] as const,
+    credentialDiagnostics: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'diagnostics'] as const,
+    homeFolder: () => [...queryKeys.contents.sources(), 'user-folder'] as const,
+    homeFolderQuota: () =>
+      [...queryKeys.contents.homeFolder(), 'quota'] as const,
+    homeFolderObjects: (filters?: {
+      prefix?: string;
+      cursor?: string;
+      limit?: number;
+      order?: 'path' | 'updated';
+    }) =>
+      [
+        ...queryKeys.contents.homeFolder(),
+        'objects',
+        'list',
+        filters ?? {},
+      ] as const,
+    homeFolderObject: (path: string) =>
+      [...queryKeys.contents.homeFolder(), 'objects', 'stat', path] as const,
+    homeFolderObjectVersions: (objectUid: string, cursor?: string) =>
+      [
+        ...queryKeys.contents.homeFolder(),
+        'objects',
+        objectUid,
+        'versions',
+        cursor ?? '',
+      ] as const,
+    operations: () => [...queryKeys.contents.all(), 'operations'] as const,
+    operation: (operationUid: string) =>
+      [...queryKeys.contents.operations(), operationUid] as const,
+    transfers: () => [...queryKeys.contents.all(), 'transfers'] as const,
+    transferList: (filters?: {
+      active?: boolean;
+      cursor?: string;
+      limit?: number;
+    }) => [...queryKeys.contents.transfers(), 'list', filters ?? {}] as const,
+    transfer: (transferUid: string) =>
+      [...queryKeys.contents.transfers(), transferUid] as const,
+    syncSessions: () => [...queryKeys.contents.all(), 'sync'] as const,
+    syncSessionList: (filters?: { active?: boolean; cursor?: string; limit?: number }) =>
+      [...queryKeys.contents.syncSessions(), 'list', filters ?? {}] as const,
+    syncSession: (sessionUid: string) =>
+      [...queryKeys.contents.syncSessions(), sessionUid] as const,
+    syncConflicts: (sessionUid: string) =>
+      [...queryKeys.contents.syncSession(sessionUid), 'conflicts'] as const,
+    attachments: () => [...queryKeys.contents.all(), 'attachments'] as const,
+    attachmentList: (filters?: {
+      sandboxUid?: string;
+      sourceUid?: string;
+      active?: boolean;
+    }) => [...queryKeys.contents.attachments(), 'list', filters ?? {}] as const,
+    attachmentManifest: (sandboxUid: string) =>
+      [...queryKeys.contents.attachments(), 'manifest', sandboxUid] as const,
+    // The session of one attachment lives under the attachments key on
+    // purpose: revoking or refreshing an attachment refreshes its bridge.
+    bridgeSession: (attachmentUid: string) =>
+      [...queryKeys.contents.attachments(), 'bridge', attachmentUid] as const,
+    bridges: () => [...queryKeys.contents.all(), 'bridges'] as const,
+    bridgeList: (filters?: { active?: boolean }) =>
+      [...queryKeys.contents.bridges(), 'list', filters ?? {}] as const,
+    bridge: (bridgeUid: string) => [...queryKeys.contents.bridges(), bridgeUid] as const,
+    // What a running Runtime has mounted. Under the Contents key rather than
+    // a Runtimes one because attaching and detaching a source is what changes
+    // it, and those invalidate from here.
+    runtimeMounts: (runtimeName: string) =>
+      [...queryKeys.contents.all(), 'runtime-mounts', runtimeName] as const,
+    mcpTools: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'mcp', 'tools'] as const,
+    mcpSessions: () => [...queryKeys.contents.all(), 'mcp-sessions'] as const,
+    mcpSessionList: (filters?: { sourceUid?: string; active?: boolean }) =>
+      [...queryKeys.contents.mcpSessions(), 'list', filters ?? {}] as const,
+    mcpSession: (sessionUid: string) =>
+      [...queryKeys.contents.mcpSessions(), sessionUid] as const,
+    mcpCalls: (sessionUid: string) =>
+      [...queryKeys.contents.mcpSession(sessionUid), 'calls'] as const,
+    mcpCall: (sessionUid: string, callUid: string) =>
+      [...queryKeys.contents.mcpCalls(sessionUid), callUid] as const,
+    mcpApprovals: () => [...queryKeys.contents.all(), 'mcp-approvals'] as const,
+    mcpApprovalList: (filters?: { status?: string; sourceUid?: string }) =>
+      [...queryKeys.contents.mcpApprovals(), 'list', filters ?? {}] as const,
+    datasourceSchema: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'datasource', 'schema'] as const,
+    datasourceCapabilities: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'datasource', 'capabilities'] as const,
+    datasourceQueries: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'queries'] as const,
+    // A query is addressed by its own uid, not under its source: a
+    // notebook reconnects to one by uid alone.
+    queries: () => [...queryKeys.contents.all(), 'queries'] as const,
+    query: (queryUid: string) => [...queryKeys.contents.queries(), queryUid] as const,
+    dataserverStatus: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'dataserver', 'status'] as const,
+  },
+
+  // The Jupyter MCP Server: what the agents did, and what they may do
+  mcp: {
+    all: () => ['mcp'] as const,
+    tasks: () => [...queryKeys.mcp.all(), 'tasks'] as const,
+    taskList: (filters?: object) =>
+      [...queryKeys.mcp.tasks(), 'list', filters ?? {}] as const,
+    task: (taskUid: string) => [...queryKeys.mcp.tasks(), taskUid] as const,
+    notebookTasks: (notebookUid: string, filters?: object) =>
+      [...queryKeys.mcp.tasks(), 'notebook', notebookUid, filters ?? {}] as const,
+    bindings: () => [...queryKeys.mcp.all(), 'bindings'] as const,
+    bindingList: (filters?: object) =>
+      [...queryKeys.mcp.bindings(), 'list', filters ?? {}] as const,
+    activity: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'activity', filters ?? {}] as const,
+    audit: () => [...queryKeys.mcp.all(), 'audit'] as const,
+    auditList: (filters?: object) =>
+      [...queryKeys.mcp.audit(), 'list', filters ?? {}] as const,
+    policy: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'policy', filters ?? {}] as const,
+    connectedAgents: () => [...queryKeys.mcp.all(), 'connected-agents'] as const,
+    // Service agents are an organization's, never an account's: two
+    // organizations' lists must not share a cache entry.
+    serviceAgents: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'service-agents', orgUid] as const,
+    // The layer IAM stores, keyed by the scope *and* the subject: an
+    // organization's policy and a team's are different documents, and a
+    // shared entry would show one under the other's name.
+    policyLayer: (scope: string, subjectUid: string) =>
+      [...queryKeys.mcp.all(), 'policy-layer', scope, subjectUid] as const,
+    alertRules: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'alert-rules', orgUid] as const,
+    forwarding: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'audit-forwarding', orgUid] as const,
+    auditSettings: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'audit-settings', orgUid] as const,
+    organizationTeams: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'organization-teams', orgUid] as const,
+    // Observability, over the OTEL service, keyed by the task it describes.
+    trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
+    // A trace named directly: a synchronous call has one and no task.
+    traceById: (traceId: string) => [...queryKeys.mcp.all(), 'traces', traceId] as const,
+    logs: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'logs'] as const,
+    metrics: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'metrics', filters ?? {}] as const,
+    operations: () => [...queryKeys.mcp.all(), 'operations'] as const,
+    workers: () => [...queryKeys.mcp.operations(), 'workers'] as const,
+    workflows: () => [...queryKeys.mcp.operations(), 'workflows'] as const,
+    gatewayVersion: () => [...queryKeys.mcp.all(), 'version'] as const,
+    // The Enterprise console: one answer per organization, narrowed by team.
+    orgOverview: (orgUid: string, filters?: object) =>
+      [...queryKeys.mcp.all(), 'organizations', orgUid, 'overview', filters ?? {}] as const,
+    orgUsage: (orgUid: string, filters?: object) =>
+      [...queryKeys.mcp.all(), 'organizations', orgUid, 'usage', filters ?? {}] as const,
+  },
+
   // Authentication & Profile
   auth: {
     me: () => ['auth', 'me'] as const,
@@ -257,15 +434,6 @@ export const queryKeys = {
       [...queryKeys.cells.all(), 'space', spaceId] as const,
   },
 
-  // Datasets
-  datasets: {
-    all: () => ['datasets'] as const,
-    details: () => [...queryKeys.datasets.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.datasets.details(), id] as const,
-    bySpace: (spaceId: string) =>
-      [...queryKeys.datasets.all(), 'space', spaceId] as const,
-  },
-
   // Lessons
   lessons: {
     all: () => ['lessons'] as const,
@@ -320,13 +488,6 @@ export const queryKeys = {
     all: () => ['pages'] as const,
     details: () => [...queryKeys.pages.all(), 'detail'] as const,
     detail: (id: string) => [...queryKeys.pages.details(), id] as const,
-  },
-
-  // Datasources
-  datasources: {
-    all: () => ['datasources'] as const,
-    details: () => [...queryKeys.datasources.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.datasources.details(), id] as const,
   },
 
   // Secrets
@@ -647,12 +808,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     }
   };
 
-  const toDatasource = (s: any): IDatasource | undefined => {
-    if (s) {
-      return asDatasource(s);
-    }
-  };
-
   const toSecret = (s: any): ISecret | undefined => {
     if (s) {
       return asSecret(s);
@@ -723,36 +878,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // Kept for potential future use
 
   // Kept for potential future use
-
-  const toDataset = (raw_dataset: any): IDataset => {
-    const owner = toItemOwner(raw_dataset);
-    return {
-      id: raw_dataset.uid,
-      type: 'dataset',
-      name: raw_dataset.name_t,
-      description: raw_dataset.description_t,
-      fileName: raw_dataset.file_name_s,
-      datasetExtension: raw_dataset.dataset_extension_s,
-      contentLength: raw_dataset.content_length_i,
-      contentType: raw_dataset.content_type_s,
-      mimeType: raw_dataset.mimetype_s,
-      path: raw_dataset.s3_path_s,
-      cdnUrl: raw_dataset.cdn_url_s,
-      creationDate: new Date(raw_dataset.creation_ts_dt),
-      public: raw_dataset.is_public_b ?? false,
-      lastPublicationDate: raw_dataset.creation_ts_dt
-        ? new Date(raw_dataset.creation_ts_dt)
-        : undefined,
-      owner,
-      space: {
-        handle: raw_dataset.handle_s,
-      },
-      organization: {
-        id: raw_dataset.organization_uid_s,
-        handle: raw_dataset.organization_handle_s,
-      },
-    };
-  };
 
   const toCell = (cl: any): ICell => {
     const owner = toItemOwner(cl);
@@ -1033,8 +1158,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         };
       }
-      case 'dataset':
-        return toDataset(item);
       case 'document':
         return toDocument(item);
       case 'exercise':
@@ -1223,7 +1346,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           token,
         });
         if (resp.me) {
-          return toUser(resp.me);
+          const me = toUser(resp.me);
+          // The full profile — banner and avatar included — feeds the
+          // profile store every surface reads.
+          profileStore.getState().setProfileFromUser(me);
+          return me;
         }
         return null;
       },
@@ -1240,19 +1367,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         email,
         firstName,
         lastName,
+        avatarIcon,
+        banner,
       }: {
         email: string;
         firstName: string;
         lastName: string;
+        avatarIcon?: string;
+        banner?: string;
       }) => {
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/me`,
           method: 'PUT',
-          body: { email, firstName, lastName },
+          body: { email, firstName, lastName, avatarIcon, banner },
         });
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+        // Every cached view of the user — the public profile page, the
+        // admin list and detail, the search seeds — is now out of date.
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       },
     });
   };
@@ -1370,16 +1504,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               first_name_t: profile.first_name,
               last_name_t: profile.last_name,
               avatar_url_s: profile.avatar_url,
+              avatar_icon_s: profile.avatar_icon_s,
+              banner_s: profile.banner_s,
               origin_s: profile.origin,
             });
+            // Stale seeding (updatedAt: 0): the public profile is a partial
+            // shape, and a fresh-marked seed would overwrite a richer detail
+            // entry and be served as the whole truth for the staleTime.
             if (mappedUser) {
               queryClient.setQueryData(
                 queryKeys.users.detail(mappedUser.id),
                 mappedUser,
+                { updatedAt: 0 },
               );
               queryClient.setQueryData(
                 queryKeys.users.byHandle(mappedUser.handle),
                 mappedUser,
+                { updatedAt: 0 },
               );
             }
           }
@@ -1408,12 +1549,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.users) {
           const users = resp.users.map((u: unknown) => {
             const user = toUser(u);
-            // Pre-populate individual caches
+            // Pre-populate individual caches so a detail view renders
+            // instantly — but as STALE data (updatedAt: 0): a search answer
+            // can be a partial shape (a member's search has no email or
+            // settings), and a fresh-marked partial would be served as the
+            // whole truth for the staleTime. Stale renders and revalidates.
             if (user) {
-              queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+              queryClient.setQueryData(queryKeys.users.detail(user.id), user, {
+                updatedAt: 0,
+              });
               queryClient.setQueryData(
                 queryKeys.users.byHandle(user.handle),
                 user,
+                { updatedAt: 0 },
               );
             }
             return user;
@@ -1457,11 +1605,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const users = resp.users
             .map((u: unknown) => {
               const user = toUser(u);
+              // Stale seeding, as in useSearchUsers: the bulk answer may be
+              // a partial shape, so it renders but revalidates.
               if (user) {
-                queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+                queryClient.setQueryData(
+                  queryKeys.users.detail(user.id),
+                  user,
+                  { updatedAt: 0 },
+                );
                 queryClient.setQueryData(
                   queryKeys.users.byHandle(user.handle),
                   user,
+                  { updatedAt: 0 },
                 );
               }
               return user;
@@ -1685,6 +1840,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: {
             name: organization.name,
             description: organization.description,
+            avatarIcon: organization.avatarIcon,
+            banner: organization.banner,
           },
         });
       },
@@ -1809,6 +1966,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: {
             name: team.name,
             description: team.description,
+            avatarIcon: team.avatarIcon,
+            banner: team.banner,
           },
         });
       },
@@ -2025,7 +2184,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   /**
    * Update space with optimistic update.
-   * Any extra fields (e.g. attached_agent_pod_name_s) are forwarded to the backend.
+   * Any extra fields (e.g. attached_agent_runtime_name_s) are forwarded to the backend.
    */
   const useUpdateSpace = () => {
     return useMutation({
@@ -2442,11 +2601,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (resp, _variables) => {
         if (resp.success && resp.document) {
           const document = toDocument(resp.document);
-          // Set detail cache
-          queryClient.setQueryData(
-            queryKeys.documents.detail(document.id),
-            document,
-          );
+          /*
+           * The creation answer carries no model — the spacer keeps the
+           * model with the content, and only the GET of a document answers
+           * with it. Seeding the detail cache here would hand the editor a
+           * document without a model, shown as a blank page: the cache is
+           * invalidated instead, so an editor opening on the creation reads
+           * the document from the server, model included.
+           */
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.documents.detail(document.id),
+          });
           // Refetch all document queries immediately (including bySpace)
           queryClient.refetchQueries({
             queryKey: queryKeys.documents.all(),
@@ -2637,86 +2802,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   // ============================================================================
-  // Datasource, Secret, Token Hooks
+  // Secret, Token Hooks
   // ============================================================================
 
   type PrincipalScopeOptions = {
     principalUid?: string;
     principalKind?: 'personal' | 'organization' | 'team';
-  };
-
-  /**
-   * Get all datasources
-   */
-  const useDatasources = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasources.all(),
-        principalUid || 'self',
-        principalKind || '',
-      ],
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'GET',
-        });
-        if (resp.success && resp.datasources) {
-          const datasources = resp.datasources
-            .map((d: unknown) => {
-              const datasource = toDatasource(d);
-              if (datasource) {
-                queryClient.setQueryData(
-                  queryKeys.datasources.detail(datasource.id),
-                  datasource,
-                );
-              }
-              return datasource;
-            })
-            .filter(Boolean);
-          return datasources;
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Create datasource
-   */
-  const useCreateDatasource = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useMutation({
-      mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
-        return requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'POST',
-          body: { ...datasource },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.datasource) {
-          const ds = toDatasource(resp.datasource);
-          if (ds) {
-            queryClient.setQueryData(queryKeys.datasources.detail(ds.id), ds);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasources.all(),
-        });
-      },
-    });
   };
 
   /**
@@ -3063,9 +3154,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         queryClient.removeQueries({ queryKey: queryKeys.cells.detail(itemId) });
         queryClient.removeQueries({
-          queryKey: queryKeys.datasets.detail(itemId),
-        });
-        queryClient.removeQueries({
           queryKey: queryKeys.lessons.detail(itemId),
         });
         queryClient.removeQueries({
@@ -3079,7 +3167,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.cells.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.datasets.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.exercises.all() });
         queryClient.invalidateQueries({
@@ -3094,72 +3181,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
   // Core CRUD Operations - Refresh & Get Methods
   // ============================================================================
-
-  /**
-   * Get single datasource by ID
-   */
-  const useDatasource = (
-    datasourceId: string,
-    options?: PrincipalScopeOptions,
-  ) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasources.detail(datasourceId),
-        principalUid || 'self',
-        principalKind || '',
-      ],
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources/${datasourceId}`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'GET',
-        });
-        if (resp.success && resp.datasource) {
-          return toDatasource(resp.datasource);
-        }
-        return null;
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!datasourceId,
-    });
-  };
-
-  /**
-   * Update datasource
-   */
-  const useUpdateDatasource = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useMutation({
-      mutationFn: async (datasource: IDatasource) => {
-        return requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources/${datasource.id}`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'PUT',
-          body: { ...datasource },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.datasource) {
-          const ds = toDatasource(resp.datasource);
-          if (ds) {
-            queryClient.setQueryData(queryKeys.datasources.detail(ds.id), ds);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasources.all(),
-        });
-      },
-    });
-  };
 
   /**
    * Get single secret by ID
@@ -4798,133 +4819,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Get dataset by ID
-   */
-  const useDataset = (
-    datasetId: string,
-    scope?: {
-      selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-    },
-  ) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasets.detail(datasetId),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.item) {
-          return toDataset(resp.item);
-        }
-        return undefined;
-      },
-      enabled: !!datasetId,
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Get datasets by space
-   */
-  const useDatasetsBySpace = (
-    spaceId: string,
-    scope?: {
-      selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-    },
-  ) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasets.bySpace(spaceId),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.items) {
-          return resp.items.map((item: unknown) => toDataset(item));
-        }
-        return [];
-      },
-      enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Update dataset
-   */
-  const useUpdateDataset = () => {
-    return useMutation({
-      mutationFn: async ({
-        id,
-        name,
-        description,
-        selectedPrincipalUid,
-        selectedPrincipalKind,
-      }: {
-        id: string;
-        name: string;
-        description: string;
-        spaceId?: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }) => {
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        return requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/datasets/${id}${query ? `?${query}` : ''}`,
-          method: 'PUT',
-          body: { name, description },
-        });
-      },
-      onSuccess: (resp, { id, spaceId }) => {
-        if (resp.success) {
-          // Invalidate detail and list queries
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.datasets.detail(id),
-          });
-          if (spaceId) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.datasets.bySpace(spaceId),
-            });
-          }
-        }
-      },
-    });
-  };
-
-  /**
    * Get environment by ID
    */
   const useEnvironment = (environmentId: string) => {
@@ -5717,6 +5611,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Launch bulk emails for outbound campaign (production mode)
    */
+  /**
+   * Mark an outbound as launched without sending — for launches that
+   * happened outside the browser (curl, the CLI).
+   */
+  const useMarkOutboundLaunched = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async (outboundId: string) => {
+        return requestDatalayer({
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}/mark-launched`,
+          method: 'POST',
+          body: {},
+        });
+      },
+      onSuccess: (_, outboundId) => {
+        queryClient.removeQueries({
+          queryKey: ['outbounds', outboundId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
+      },
+    });
+  };
+
   const useLaunchBulkEmailsOutbounds = () => {
     const queryClient = useQueryClient();
 
@@ -8120,132 +8041,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Refresh a specific dataset
-   * @param options - Mutation options
-   */
-  const useRefreshDataset = (
-    options?: UseMutationOptions<
-      unknown,
-      Error,
-      | string
-      | {
-          datasetId: string;
-          selectedPrincipalUid?: string;
-          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-        }
-    >,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (
-        variables:
-          | string
-          | {
-              datasetId: string;
-              selectedPrincipalUid?: string;
-              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-            },
-      ) => {
-        const datasetId =
-          typeof variables === 'string' ? variables : variables.datasetId;
-        const selectedPrincipalUid =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalUid;
-        const selectedPrincipalKind =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalKind;
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: (data, variables) => {
-        const datasetId =
-          typeof variables === 'string' ? variables : variables.datasetId;
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.detail(datasetId),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
-   * Refresh space datasets
-   * @param options - Mutation options
-   */
-  const useRefreshSpaceDatasets = (
-    options?: UseMutationOptions<
-      unknown,
-      Error,
-      | string
-      | {
-          spaceId: string;
-          selectedPrincipalUid?: string;
-          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-        }
-    >,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (
-        variables:
-          | string
-          | {
-              spaceId: string;
-              selectedPrincipalUid?: string;
-              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-            },
-      ) => {
-        const spaceId =
-          typeof variables === 'string' ? variables : variables.spaceId;
-        const selectedPrincipalUid =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalUid;
-        const selectedPrincipalKind =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalKind;
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: (data, variables) => {
-        const spaceId =
-          typeof variables === 'string' ? variables : variables.spaceId;
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.bySpace(spaceId),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Refresh schools list
    * @param options - Mutation options
    */
@@ -9346,13 +9141,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useRefreshCell,
     useRefreshSpaceCells,
 
-    // Datasets
-    useDataset,
-    useDatasetsBySpace,
-    useUpdateDataset,
-    useRefreshDataset,
-    useRefreshSpaceDatasets,
-
     // Environments
     useEnvironment,
     useEnvironmentsBySpace,
@@ -9408,11 +9196,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useUpdatePage,
     useDeletePage,
 
-    // Datasources
-    useDatasource,
-    useDatasources,
-    useCreateDatasource,
-    useUpdateDatasource,
 
     // Secrets
     useSecret,
@@ -9467,6 +9250,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useDraftBulkEmailsOutbounds,
     useTryBulkEmailsOutbounds,
     useLaunchBulkEmailsOutbounds,
+    useMarkOutboundLaunched,
     useSendOutboundEmailToUser,
     useDeleteOutbound,
     useSubscribeUserToOutbounds,

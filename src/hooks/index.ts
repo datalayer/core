@@ -8,6 +8,7 @@ export * from './useBackdrop';
 export * from './useBackdropJupyterLab';
 export * from './useCache';
 export * from './useContainsFocus';
+export * from './useContents';
 export * from './useDatalayer';
 // export * from "./useCellOutputshot"; // Do not export html2canvas
 export * from './useError';
@@ -22,6 +23,7 @@ export * from './useKeyboardShortcuts';
 export * from './useKeyboardEscape';
 export * from './useLocation';
 export * from './useLocationHandles';
+export * from './useMcp';
 export * from './useNavigate';
 export * from './useParams';
 export * from './useOnClickOutside';

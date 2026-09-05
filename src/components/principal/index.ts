@@ -5,11 +5,17 @@
 
 export * from './Principal';
 export * from './PrincipalAvatar';
+export * from './PrincipalAppearance';
 export * from './PrincipalBadge';
 export * from './PrincipalBanner';
 export {
   buildPrincipalProfilePath,
+  PrincipalDetailsCard,
   PrincipalDetailsOverlay,
 } from './PrincipalDetailsOverlay';
 export type { PrincipalDetailsOverlayProps } from './PrincipalDetailsOverlay';
+export {
+  PrincipalHoverCard,
+  type PrincipalHoverCardProps,
+} from './PrincipalHoverCard';
 export * from './PrincipalSwitcherMenu';

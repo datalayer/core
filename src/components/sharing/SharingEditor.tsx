@@ -3,11 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /**
  * SharingEditor — inline editor for the sharing payload shape used by
  * `ShareAccessComponent` ACL endpoints.
@@ -25,6 +20,7 @@
  * `ShareAccessComponent`.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { FormControl, Text, Textarea } from '@primer/react';

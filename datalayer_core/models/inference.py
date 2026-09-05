@@ -45,6 +45,13 @@ class ChatRequest(BaseModel):
     parallel_tool_calls: Optional[bool] = Field(
         None, description="Whether model can invoke tools in parallel"
     )
+    stream_options: Optional[Dict[str, Any]] = Field(
+        None,
+        description=(
+            "OpenAI stream options, e.g. {'include_usage': true} to receive "
+            "a final usage chunk on streaming responses"
+        ),
+    )
 
 
 class CompletionRequest(BaseModel):
@@ -54,9 +61,7 @@ class CompletionRequest(BaseModel):
     prompt: str = Field(..., description="Prompt text")
     temperature: Optional[float] = Field(1.0, description="Sampling temperature")
     max_tokens: Optional[int] = Field(None, description="Maximum output tokens")
-    stop: Optional[Union[str, List[str]]] = Field(
-        None, description="Stop sequence(s)"
-    )
+    stop: Optional[Union[str, List[str]]] = Field(None, description="Stop sequence(s)")
     stream: bool = Field(False, description="Enable SSE streaming response")
 
 

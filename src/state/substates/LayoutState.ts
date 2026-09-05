@@ -99,6 +99,76 @@ export type LayoutState = ILayoutState & {
   updateLayoutTeam: (team?: Partial<IAnyTeam>) => void;
 };
 
+
+/**
+ * Name of the cookie holding the space last selected by the user.
+ *
+ * The selection has to survive a reload, as the whole user interface is scoped
+ * by it; it lives in a cookie next to the principal context written by
+ * `usePrincipalStore`.
+ */
+const SPACE_CONTEXT_COOKIE = 'datalayer-space-context';
+const SPACE_CONTEXT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/** The identity of a space, all a reload needs to restore the selection. */
+type SpaceContextCookie = {
+  id?: string;
+  handle?: string;
+  name?: string;
+};
+
+const readSpaceContextCookie = (): SpaceContextCookie | undefined => {
+  if (typeof document === 'undefined') {
+    return undefined;
+  }
+  const escaped = SPACE_CONTEXT_COOKIE.replace(
+    /[-[\]{}()*+?.,\\^$|#\s]/g,
+    '\\$&',
+  );
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${escaped}=([^;]*)`),
+  );
+  if (!match?.[1]) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(decodeURIComponent(match[1]));
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.id !== 'string') {
+      return undefined;
+    }
+    return {
+      id: parsed.id,
+      handle: typeof parsed.handle === 'string' ? parsed.handle : undefined,
+      name: typeof parsed.name === 'string' ? parsed.name : undefined,
+    };
+  } catch {
+    return undefined;
+  }
+};
+
+const writeSpaceContextCookie = (space?: Partial<IAnySpace>): void => {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  if (!space?.id) {
+    document.cookie =
+      `${SPACE_CONTEXT_COOKIE}=;` + ' path=/; max-age=0; SameSite=Lax';
+    return;
+  }
+  const value = encodeURIComponent(
+    JSON.stringify({
+      id: space.id,
+      handle: space.handle,
+      name: space.name,
+    }),
+  );
+  document.cookie =
+    `${SPACE_CONTEXT_COOKIE}=${value};` +
+    ` path=/; max-age=${SPACE_CONTEXT_COOKIE_MAX_AGE}; SameSite=Lax`;
+};
+
+const initialSpaceContext = readSpaceContextCookie();
+
 export const layoutStore = createStore<LayoutState>((set, get) => ({
   backdrop: undefined,
   banner: undefined,
@@ -110,7 +180,8 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
   organization: undefined,
   rightPortal: undefined,
   screenCapture: undefined,
-  space: undefined,
+  // Restored from the cookie; the full space is hydrated once loaded.
+  space: initialSpaceContext,
   team: undefined,
   hideBackdrop: () =>
     set((state: LayoutState) => ({
@@ -176,13 +247,15 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     }),
   updateLayoutSpace: (space?: Partial<IAnySpace>) =>
     set((state: LayoutState) => {
+      const next = space
+        ? {
+            ...state.space,
+            ...(space as IAnySpace),
+          }
+        : undefined;
+      writeSpaceContextCookie(next);
       return {
-        space: space
-          ? {
-              ...state.space,
-              ...(space as IAnySpace),
-            }
-          : undefined,
+        space: next,
       };
     }),
   setItem: (item?: ISpaceItem) => set((state: LayoutState) => ({ item })),

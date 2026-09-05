@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronDownIcon,
@@ -45,9 +46,15 @@ type SharingPayload = {
   access?: Partial<Record<ItemAccessLevel, SharingLevelPayload>>;
 };
 
+export type ShareAccessTransport = {
+  load: () => Promise<Record<string, any>>;
+  save: (sharing: SharingPayload) => Promise<void>;
+};
+
 export type ShareAccessComponentProps = {
   isOpen: boolean;
   requestUrl?: string;
+  transport?: ShareAccessTransport;
   resourceLabel: string;
   resourceName?: string;
   resourceDescription?: string;
@@ -747,6 +754,7 @@ function AccessPrincipalRow({
 export function ShareAccessComponent({
   isOpen,
   requestUrl,
+  transport,
   resourceLabel,
   resourceName,
   resourceDescription: _resourceDescription,
@@ -829,7 +837,7 @@ export function ShareAccessComponent({
   ]);
 
   // ----- Derived -----
-  const canRequest = Boolean(requestUrl && token);
+  const canRequest = Boolean(token && (requestUrl || transport));
   const canSearchPrincipals = Boolean(configuration?.iamUrl && token);
   const iamUrl = configuration?.iamUrl;
 
@@ -911,7 +919,7 @@ export function ShareAccessComponent({
       return;
     }
 
-    if (!canRequest || !requestUrl) {
+    if (!canRequest) {
       setIsLoading(false);
       setIsSharingAccessConfirmed(false);
       return;
@@ -928,14 +936,18 @@ export function ShareAccessComponent({
       setIsSharingAccessConfirmed(false);
       setSharingAccessMessage(null);
       try {
-        const response = await fetch(requestUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const payload = await response.json();
+        const response = transport
+          ? null
+          : await fetch(requestUrl!, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+            });
+        const payload = transport
+          ? await transport.load()
+          : await response!.json();
         const message =
           payload?.detail ||
           payload?.message ||
@@ -951,7 +963,7 @@ export function ShareAccessComponent({
           }
           throw new Error(message);
         }
-        if (!response.ok) {
+        if (response && !response.ok) {
           if (
             response.status === 403 ||
             isSharingAuthorizationMessage(message)
@@ -1011,6 +1023,7 @@ export function ShareAccessComponent({
     isOpen,
     canRequest,
     requestUrl,
+    transport,
     token,
     resourceLabel,
     resourceName,
@@ -1524,7 +1537,7 @@ export function ShareAccessComponent({
   // ----- Auto-save on access change after hydration -----
   const saveAccess = useCallback(
     async (snapshot: AccessByLevel) => {
-      if (!canRequest || !requestUrl) {
+      if (!canRequest) {
         return;
       }
       setIsSaving(true);
@@ -1548,7 +1561,14 @@ export function ShareAccessComponent({
             },
           },
         };
-        const response = await fetch(requestUrl, {
+        if (transport) {
+          await transport.save(body);
+          enqueueToastRef.current(`${resourceLabel} sharing updated.`, {
+            variant: 'success',
+          });
+          return;
+        }
+        const response = await fetch(requestUrl!, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1591,7 +1611,7 @@ export function ShareAccessComponent({
         setIsSaving(false);
       }
     },
-    [canRequest, requestUrl, token, resourceLabel],
+    [canRequest, requestUrl, token, resourceLabel, transport],
   );
 
   useEffect(() => {
@@ -1692,7 +1712,9 @@ export function ShareAccessComponent({
       principalKindsSet.has(p.kind),
     );
     const selfUid = pickFirstString(user?.uid);
-    const self = filtered.filter(p => p.kind === 'personal' && p.uid === selfUid);
+    const self = filtered.filter(
+      p => p.kind === 'personal' && p.uid === selfUid,
+    );
     const otherUsers = filtered.filter(
       p => p.kind === 'personal' && p.uid !== selfUid,
     );
@@ -1923,7 +1945,11 @@ export function ShareAccessComponent({
                 size="small"
                 leadingVisual={isExpanded ? ChevronUpIcon : ChevronDownIcon}
                 onClick={() => setIsExpanded(previous => !previous)}
-                aria-label={isExpanded ? 'Shrink sharing details' : 'Expand sharing details'}
+                aria-label={
+                  isExpanded
+                    ? 'Shrink sharing details'
+                    : 'Expand sharing details'
+                }
               >
                 {isExpanded ? 'Shrink details' : 'Expand details'}
               </Button>
@@ -1962,328 +1988,341 @@ export function ShareAccessComponent({
               Sharing details are collapsed.
             </Text>
             <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-              {aclEntries.length} principal{aclEntries.length === 1 ? '' : 's'} currently granted access.
+              {aclEntries.length} principal{aclEntries.length === 1 ? '' : 's'}{' '}
+              currently granted access.
             </Text>
           </Box>
         )}
 
         {isExpanded && (
           <>
-        {/* Owner */}
-        <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'border.default',
-            bg: 'canvas.default',
-            display: 'grid',
-            gap: 1,
-          }}
-        >
-          <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Owner</Text>
-          {ownerPrincipals.length > 0 ? (
-            <Box sx={{ display: 'grid' }}>
-              {ownerPrincipals.map((ownerPrincipal, index) => (
-                <Box
-                  key={principalKey(ownerPrincipal.kind, ownerPrincipal.uid)}
-                  sx={{
-                    py: 1,
-                    borderTopWidth: index === 0 ? 0 : 1,
-                    borderTopStyle: 'solid',
-                    borderColor: 'border.subtle',
-                  }}
-                >
-                  <OwnerPrincipalRow
-                    ownerPrincipal={ownerPrincipal}
-                    cache={principalCache}
-                    showAvatarSkeleton={
-                      ownerPrincipal.kind === 'personal' &&
-                      Boolean(hydratingUserUids[ownerPrincipal.uid])
-                    }
-                    isPlatformAdmin={isPlatformAdmin}
-                  />
+            {/* Owner */}
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'border.default',
+                bg: 'canvas.default',
+                display: 'grid',
+                gap: 1,
+              }}
+            >
+              <Text sx={{ fontSize: 1, color: 'fg.muted' }}>Owner</Text>
+              {ownerPrincipals.length > 0 ? (
+                <Box sx={{ display: 'grid' }}>
+                  {ownerPrincipals.map((ownerPrincipal, index) => (
+                    <Box
+                      key={principalKey(
+                        ownerPrincipal.kind,
+                        ownerPrincipal.uid,
+                      )}
+                      sx={{
+                        py: 1,
+                        borderTopWidth: index === 0 ? 0 : 1,
+                        borderTopStyle: 'solid',
+                        borderColor: 'border.subtle',
+                      }}
+                    >
+                      <OwnerPrincipalRow
+                        ownerPrincipal={ownerPrincipal}
+                        cache={principalCache}
+                        showAvatarSkeleton={
+                          ownerPrincipal.kind === 'personal' &&
+                          Boolean(hydratingUserUids[ownerPrincipal.uid])
+                        }
+                        isPlatformAdmin={isPlatformAdmin}
+                      />
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Box>
-          ) : (
-            <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-              Owner information is not available.
-            </Text>
-          )}
-        </Box>
-
-        {/* Share with… (shareable principals picker — PROMINENT) */}
-        <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'border.default',
-            bg: 'canvas.default',
-            display: 'grid',
-            gap: 2,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-            }}
-          >
-            <Text sx={{ fontSize: 1, fontWeight: 600 }}>Share with…</Text>
-            {isLoadingShareable && (
-              <Box
-                sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}
-              >
-                <Spinner size="small" />
-                <Text sx={{ fontSize: 0, color: 'fg.muted' }}>Loading…</Text>
-              </Box>
-            )}
-          </Box>
-          {!isLoadingShareable &&
-          groupedShareable.self.length === 0 &&
-          groupedShareable.otherUsers.length === 0 &&
-          groupedShareable.orgs.length === 0 &&
-          groupedShareable.teams.length === 0 ? (
-            <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-              No principals available to share with.
-            </Text>
-          ) : (
-            <Box sx={{ display: 'grid', gap: 2 }}>
-              {renderShareableGroup('You', groupedShareable.self)}
-              {renderShareableGroup('Other users', groupedShareable.otherUsers)}
-              {renderShareableGroup(
-                'Your organizations',
-                groupedShareable.orgs,
+              ) : (
+                <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+                  Owner information is not available.
+                </Text>
               )}
-              {renderShareableGroup('Your teams', groupedShareable.teams)}
             </Box>
-          )}
-        </Box>
 
-        {/* Secondary advanced search */}
-        <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'border.subtle',
-            bg: 'canvas.subtle',
-            display: 'grid',
-            gap: 1,
-          }}
-        >
-          <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-            Or search for any user, team, or organization
-          </Text>
-          <Box sx={{ position: 'relative' }} ref={searchContainerRef}>
-            <TextInput
-              ref={searchInputRef}
-              block
-              value={searchQuery}
-              onChange={e => {
-                const next = e.target.value;
-                setSearchQuery(next);
-                setIsSearchOverlayOpen(next.trim().length > 0);
+            {/* Share with… (shareable principals picker — PROMINENT) */}
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'border.default',
+                bg: 'canvas.default',
+                display: 'grid',
+                gap: 2,
               }}
-              onFocus={() => {
-                if (searchQuery.trim().length > 0) {
-                  setIsSearchOverlayOpen(true);
-                }
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Escape') {
-                  e.preventDefault();
-                  setIsSearchOverlayOpen(false);
-                }
-              }}
-              placeholder="Search by handle, name, or email"
-              aria-label="Search principals"
-              disabled={isSaving}
-            />
-            {canShowSearchResults && (
+            >
               <Box
                 sx={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  left: 0,
-                  right: 0,
-                  zIndex: 100,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2,
+                }}
+              >
+                <Text sx={{ fontSize: 1, fontWeight: 600 }}>Share with…</Text>
+                {isLoadingShareable && (
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <Spinner size="small" />
+                    <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                      Loading…
+                    </Text>
+                  </Box>
+                )}
+              </Box>
+              {!isLoadingShareable &&
+              groupedShareable.self.length === 0 &&
+              groupedShareable.otherUsers.length === 0 &&
+              groupedShareable.orgs.length === 0 &&
+              groupedShareable.teams.length === 0 ? (
+                <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+                  No principals available to share with.
+                </Text>
+              ) : (
+                <Box sx={{ display: 'grid', gap: 2 }}>
+                  {renderShareableGroup('You', groupedShareable.self)}
+                  {renderShareableGroup(
+                    'Other users',
+                    groupedShareable.otherUsers,
+                  )}
+                  {renderShareableGroup(
+                    'Your organizations',
+                    groupedShareable.orgs,
+                  )}
+                  {renderShareableGroup('Your teams', groupedShareable.teams)}
+                </Box>
+              )}
+            </Box>
+
+            {/* Secondary advanced search */}
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'border.subtle',
+                bg: 'canvas.subtle',
+                display: 'grid',
+                gap: 1,
+              }}
+            >
+              <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+                Or search for any user, team, or organization
+              </Text>
+              <Box sx={{ position: 'relative' }} ref={searchContainerRef}>
+                <TextInput
+                  ref={searchInputRef}
+                  block
+                  value={searchQuery}
+                  onChange={e => {
+                    const next = e.target.value;
+                    setSearchQuery(next);
+                    setIsSearchOverlayOpen(next.trim().length > 0);
+                  }}
+                  onFocus={() => {
+                    if (searchQuery.trim().length > 0) {
+                      setIsSearchOverlayOpen(true);
+                    }
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setIsSearchOverlayOpen(false);
+                    }
+                  }}
+                  placeholder="Search by handle, name, or email"
+                  aria-label="Search principals"
+                  disabled={isSaving}
+                />
+                {canShowSearchResults && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      left: 0,
+                      right: 0,
+                      zIndex: 100,
+                      borderWidth: 1,
+                      borderStyle: 'solid',
+                      borderColor: 'border.default',
+                      borderRadius: 2,
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      bg: 'canvas.overlay',
+                      boxShadow: 'shadow.medium',
+                    }}
+                  >
+                    {isSearching ? (
+                      <Box
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 2,
+                        }}
+                      >
+                        <Spinner size="small" />
+                        <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+                          Searching…
+                        </Text>
+                      </Box>
+                    ) : searchResults.length === 0 ? (
+                      <Box sx={{ px: 3, py: 2 }}>
+                        <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+                          No principals found.
+                        </Text>
+                      </Box>
+                    ) : (
+                      <ActionList>
+                        {searchResults.map(result => (
+                          <ActionList.Item
+                            key={principalKey(result.kind, result.uid)}
+                            onSelect={() => handleSearchResultSelect(result)}
+                          >
+                            <ActionList.LeadingVisual>
+                              <PrincipalAvatar
+                                kind={result.kind}
+                                avatarUrl={result.avatarUrl}
+                                alt={result.displayName}
+                                size={18}
+                              />
+                            </ActionList.LeadingVisual>
+                            <Box
+                              sx={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <Text>{result.displayName}</Text>
+                              {result.kind === 'personal' && (
+                                <Label size="small" variant="secondary">
+                                  {result.origin ||
+                                    principalCache[
+                                      principalKey('personal', result.uid)
+                                    ]?.origin ||
+                                    'Datalayer'}
+                                </Label>
+                              )}
+                            </Box>
+                            <ActionList.Description variant="block">
+                              @{result.handle}
+                            </ActionList.Description>
+                          </ActionList.Item>
+                        ))}
+                      </ActionList>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            {/* ACL list */}
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                borderRadius: 2,
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'border.default',
+                bg: 'canvas.default',
+                display: 'grid',
+                gap: 1,
+              }}
+            >
+              <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
+                Access Control List (ACL)
+              </Text>
+              <Box
+                sx={{
                   borderWidth: 1,
                   borderStyle: 'solid',
                   borderColor: 'border.default',
                   borderRadius: 2,
                   maxHeight: '220px',
                   overflowY: 'auto',
-                  bg: 'canvas.overlay',
-                  boxShadow: 'shadow.medium',
+                  bg: 'canvas.subtle',
                 }}
               >
-                {isSearching ? (
-                  <Box
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 2,
-                    }}
-                  >
-                    <Spinner size="small" />
-                    <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-                      Searching…
-                    </Text>
-                  </Box>
-                ) : searchResults.length === 0 ? (
+                {aclEntries.length === 0 ? (
                   <Box sx={{ px: 3, py: 2 }}>
                     <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-                      No principals found.
+                      No principals shared yet.
                     </Text>
                   </Box>
                 ) : (
-                  <ActionList>
-                    {searchResults.map(result => (
-                      <ActionList.Item
-                        key={principalKey(result.kind, result.uid)}
-                        onSelect={() => handleSearchResultSelect(result)}
+                  <Box sx={{ display: 'grid' }}>
+                    {aclEntries.map(entry => (
+                      <Box
+                        key={principalKey(entry.kind, entry.uid)}
+                        sx={{
+                          px: 3,
+                          py: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 2,
+                          borderTopWidth: 1,
+                          borderTopStyle: 'solid',
+                          borderColor: 'border.subtle',
+                          '&:first-of-type': { borderTop: 'none' },
+                        }}
                       >
-                        <ActionList.LeadingVisual>
-                          <PrincipalAvatar
-                            kind={result.kind}
-                            avatarUrl={result.avatarUrl}
-                            alt={result.displayName}
-                            size={18}
-                          />
-                        </ActionList.LeadingVisual>
+                        <AccessPrincipalRow
+                          entry={entry}
+                          cache={principalCache}
+                          showAvatarSkeleton={
+                            entry.kind === 'personal' &&
+                            Boolean(hydratingUserUids[entry.uid])
+                          }
+                          isPlatformAdmin={isPlatformAdmin}
+                        />
                         <Box
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 1,
+                            display: 'flex',
                             flexWrap: 'wrap',
+                            gap: 1,
+                            justifyContent: 'flex-end',
                           }}
                         >
-                          <Text>{result.displayName}</Text>
-                          {result.kind === 'personal' && (
-                            <Label size="small" variant="secondary">
-                              {result.origin ||
-                                principalCache[principalKey('personal', result.uid)]
-                                  ?.origin ||
-                                'Datalayer'}
+                          {entry.levels.map(level => (
+                            <Label key={level} size="small" variant="secondary">
+                              {ACCESS_LEVEL_LABELS[level]}
                             </Label>
-                          )}
+                          ))}
                         </Box>
-                        <ActionList.Description variant="block">
-                          @{result.handle}
-                        </ActionList.Description>
-                      </ActionList.Item>
+                        <Button
+                          size="small"
+                          variant="invisible"
+                          onClick={() => removePrincipal(entry.kind, entry.uid)}
+                          disabled={isSaving}
+                        >
+                          Remove
+                        </Button>
+                      </Box>
                     ))}
-                  </ActionList>
+                  </Box>
                 )}
               </Box>
-            )}
-          </Box>
-        </Box>
-
-        {/* ACL list */}
-        <Box
-          sx={{
-            px: 3,
-            py: 2,
-            borderRadius: 2,
-            borderWidth: 1,
-            borderStyle: 'solid',
-            borderColor: 'border.default',
-            bg: 'canvas.default',
-            display: 'grid',
-            gap: 1,
-          }}
-        >
-          <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-            Access Control List (ACL)
-          </Text>
-          <Box
-            sx={{
-              borderWidth: 1,
-              borderStyle: 'solid',
-              borderColor: 'border.default',
-              borderRadius: 2,
-              maxHeight: '220px',
-              overflowY: 'auto',
-              bg: 'canvas.subtle',
-            }}
-          >
-            {aclEntries.length === 0 ? (
-              <Box sx={{ px: 3, py: 2 }}>
-                <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
-                  No principals shared yet.
-                </Text>
-              </Box>
-            ) : (
-              <Box sx={{ display: 'grid' }}>
-                {aclEntries.map(entry => (
-                  <Box
-                    key={principalKey(entry.kind, entry.uid)}
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 2,
-                      borderTopWidth: 1,
-                      borderTopStyle: 'solid',
-                      borderColor: 'border.subtle',
-                      '&:first-of-type': { borderTop: 'none' },
-                    }}
-                  >
-                    <AccessPrincipalRow
-                      entry={entry}
-                      cache={principalCache}
-                      showAvatarSkeleton={
-                        entry.kind === 'personal' &&
-                        Boolean(hydratingUserUids[entry.uid])
-                      }
-                      isPlatformAdmin={isPlatformAdmin}
-                    />
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 1,
-                        justifyContent: 'flex-end',
-                      }}
-                    >
-                      {entry.levels.map(level => (
-                        <Label key={level} size="small" variant="secondary">
-                          {ACCESS_LEVEL_LABELS[level]}
-                        </Label>
-                      ))}
-                    </Box>
-                    <Button
-                      size="small"
-                      variant="invisible"
-                      onClick={() => removePrincipal(entry.kind, entry.uid)}
-                      disabled={isSaving}
-                    >
-                      Remove
-                    </Button>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
-        </Box>
-
+            </Box>
           </>
         )}
       </Box>
@@ -2337,7 +2376,12 @@ export function ShareAccessComponent({
     <Dialog
       title={`Share ${resourceLabel.toLowerCase()}`}
       onClose={onClose}
-      width="large"
+      // Wider than any preset — Primer's `xlarge` stops at 640px, and the
+      // principal picker, the access levels and the ACL list all live in
+      // this one surface. Capped to the viewport so small screens keep a
+      // margin.
+      width="xlarge"
+      sx={{ width: 'min(960px, calc(100vw - 64px))', maxWidth: 'none' }}
     >
       {content}
     </Dialog>

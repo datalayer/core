@@ -3,8 +3,8 @@
 
 """Utilities for formatting and normalizing user handles."""
 
-import unicodedata
 import re
+import unicodedata
 
 EXT_URN_PREFIX = "urn:dla:iam:ext::"
 
@@ -66,9 +66,7 @@ def format_friendly_handle(handle: str | None = None) -> str:
     if not identifier:
         return provider_label
 
-    short_identifier = (
-        f"{identifier[:15]}..." if len(identifier) > 18 else identifier
-    )
+    short_identifier = f"{identifier[:15]}..." if len(identifier) > 18 else identifier
 
     return f"{provider_label} {short_identifier}"
 
@@ -104,7 +102,6 @@ def format_display_name(
     if full_name:
         return full_name
     return format_friendly_handle(handle)
-
 
 
 def normalize_handle_from_name(value: str | None = None) -> str:

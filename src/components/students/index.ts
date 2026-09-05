@@ -3,4 +3,5 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+export * from './StudentItemStatus';
 export * from './StudentResultCircle';

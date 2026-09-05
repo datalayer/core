@@ -10,6 +10,8 @@ import typer
 
 from datalayer_core.__version import __version__
 from datalayer_core.cli.commands.about import app as about_app
+from datalayer_core.cli.commands.api_keys import api_keys_ls
+from datalayer_core.cli.commands.api_keys import app as api_keys_app
 from datalayer_core.cli.commands.authn import (
     app as auth_app,
 )
@@ -20,22 +22,22 @@ from datalayer_core.cli.commands.authn import (
 )
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
+from datalayer_core.cli.commands.contents import app as contents_app
+from datalayer_core.cli.commands.mcp import app as mcp_app
 from datalayer_core.cli.commands.memberships import app as memberships_app
 from datalayer_core.cli.commands.orgs import app as orgs_app
 from datalayer_core.cli.commands.orgs import orgs_ls
 from datalayer_core.cli.commands.otel import app as otel_app
+from datalayer_core.cli.commands.plans import app as plans_app
+from datalayer_core.cli.commands.plans import plans_root
 from datalayer_core.cli.commands.secrets import app as secrets_app
 from datalayer_core.cli.commands.secrets import secrets_ls
 from datalayer_core.cli.commands.subscription import app as subscription_app
 from datalayer_core.cli.commands.subscription import subscription_root
 from datalayer_core.cli.commands.teams import app as teams_app
 from datalayer_core.cli.commands.teams import teams_ls
-from datalayer_core.cli.commands.api_keys import app as api_keys_app
-from datalayer_core.cli.commands.api_keys import api_keys_ls
 from datalayer_core.cli.commands.usage import app as usage_app
 from datalayer_core.cli.commands.usage import usage_root
-from datalayer_core.cli.commands.plans import app as plans_app
-from datalayer_core.cli.commands.plans import plans_root
 from datalayer_core.cli.commands.users import app as users_app
 from datalayer_core.cli.commands.web import app as web_app
 
@@ -69,14 +71,9 @@ def main_callback(
         None,
         "--api-key",
         help=(
-            "Auth token for backend calls. Falls back to DATALAYER_API_KEY when "
+            "API key for backend calls. Falls back to DATALAYER_API_KEY when "
             "omitted; otherwise built-in auth resolution is used."
         ),
-    ),
-    datalayer_url: str | None = typer.Option(
-        None,
-        "--datalayer-url",
-        help="Override DATALAYER_URL for this CLI invocation.",
     ),
     iam_url: str | None = typer.Option(
         None,
@@ -91,7 +88,6 @@ def main_callback(
     spacer_url: str | None = typer.Option(
         None,
         "--spacer-url",
-        "--space-url",
         help="Override DATALAYER_SPACER_URL for this CLI invocation.",
     ),
     library_url: str | None = typer.Option(
@@ -139,20 +135,24 @@ def main_callback(
         "--support-url",
         help="Override DATALAYER_SUPPORT_URL for this CLI invocation.",
     ),
-    mcp_server_url: str | None = typer.Option(
+    jupyter_mcp_server_url: str | None = typer.Option(
         None,
-        "--mcp-server-url",
-        help="Override DATALAYER_MCP_SERVER_URL for this CLI invocation.",
+        "--jupyter-mcp-server-url",
+        help="Override DATALAYER_JUPYTER_MCP_SERVER_URL for this CLI invocation.",
     ),
     scheduler_url: str | None = typer.Option(
         None,
         "--scheduler-url",
         help="Override DATALAYER_SCHEDULER_URL for this CLI invocation.",
     ),
+    contents_url: str | None = typer.Option(
+        None,
+        "--contents-url",
+        help="Override DATALAYER_CONTENTS_URL for this CLI invocation.",
+    ),
 ) -> None:
     """Main callback to handle global options."""
     overrides = {
-        "DATALAYER_URL": datalayer_url,
         "DATALAYER_IAM_URL": iam_url,
         "DATALAYER_RUNTIMES_URL": runtimes_url,
         "DATALAYER_SPACER_URL": spacer_url,
@@ -165,8 +165,9 @@ def main_callback(
         "DATALAYER_SUCCESS_URL": success_url,
         "DATALAYER_STATUS_URL": status_url,
         "DATALAYER_SUPPORT_URL": support_url,
-        "DATALAYER_MCP_SERVER_URL": mcp_server_url,
+        "DATALAYER_JUPYTER_MCP_SERVER_URL": jupyter_mcp_server_url,
         "DATALAYER_SCHEDULER_URL": scheduler_url,
+        "DATALAYER_CONTENTS_URL": contents_url,
     }
     for env_name, value in overrides.items():
         if value is not None:
@@ -185,6 +186,8 @@ app.add_typer(about_app)
 app.add_typer(auth_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
+app.add_typer(contents_app)
+app.add_typer(mcp_app)
 app.add_typer(memberships_app)
 app.add_typer(orgs_app)
 app.add_typer(teams_app)
@@ -214,11 +217,9 @@ app.command(name="teams-ls")(teams_ls)
 
 _GLOBAL_OPTIONS_WITH_VALUES = {
     "--api-key",
-    "--datalayer-url",
     "--iam-url",
     "--runtimes-url",
     "--spacer-url",
-    "--space-url",
     "--library-url",
     "--manager-url",
     "--ai-agents-url",
@@ -228,13 +229,41 @@ _GLOBAL_OPTIONS_WITH_VALUES = {
     "--success-url",
     "--status-url",
     "--support-url",
-    "--mcp-server-url",
+    "--jupyter-mcp-server-url",
     "--scheduler-url",
+    "--contents-url",
 }
 
 _GLOBAL_OPTIONS_NO_VALUES = {
     "--version",
 }
+
+
+def _register_extensions(cli: typer.Typer) -> None:
+    """
+    Add the commands of every installed Datalayer CLI extension.
+
+    The commands of the platform are not all implemented here — the
+    sandboxes, the agents, the environments live in `agent-runtimes` — and
+    typing that name is asking the user to know which distribution a feature
+    ships in. This CLI used to SPAWN the other one as a fallback; now the
+    extensions register in-process, through the reactor: any distribution
+    advertising a plugin under the ``datalayer.cli`` entry-point group adds
+    its command groups to this application when it starts.
+
+    Without the reactor installed there are simply no extensions — the
+    commands of this package all still work.
+    """
+    try:
+        from reactor import PluginPlatform
+        from reactor.cli import extend
+    except ImportError:
+        return
+    platform = PluginPlatform()
+    platform.discover("datalayer.cli")
+    # The reactor CLI's own registration path — skip-on-failure included —
+    # rather than a local copy of it.
+    extend(cli, platform)
 
 
 def _normalize_global_options(argv: list[str]) -> list[str]:
@@ -287,6 +316,7 @@ def _normalize_global_options(argv: list[str]) -> list[str]:
 
 def main() -> None:
     """Main entry point for the Datalayer Typer CLI."""
+    _register_extensions(app)
     app(args=_normalize_global_options(sys.argv)[1:])
 
 

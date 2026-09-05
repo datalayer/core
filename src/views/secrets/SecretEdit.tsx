@@ -36,7 +36,14 @@ interface FormData {
   value: string;
 }
 
-export const SecretEdit = () => {
+export type SecretEditProps = {
+  /** The list to return to once the secret is deleted. */
+  secretsListRoute?: string;
+};
+
+export const SecretEdit = ({
+  secretsListRoute = '/settings/secrets',
+}: SecretEditProps = {}) => {
   const { secretId } = useParams();
   const runStore = useRunStore();
   const navigate = useNavigate();
@@ -154,7 +161,7 @@ export const SecretEdit = () => {
           enqueueToast('The secret is successfully deleted.', {
             variant: 'success',
           });
-          navigate(`/settings/iam/secrets`);
+          navigate(secretsListRoute);
         }
       },
       onSettled: () => {

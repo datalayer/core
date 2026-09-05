@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 /**
  * Authentication module for Datalayer Client
  * Provides unified authentication interface with multiple strategies
