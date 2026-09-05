@@ -106,6 +106,7 @@ class Client:
     def restore_home_folder_object(
         self, object_uid: str, version: str, **kwargs: Any
     ) -> ContentObject:
+        self.restored = (object_uid, version)
         return content_object()
 
     def upload_home_folder_file(
@@ -415,6 +416,45 @@ def test_contents_upload_download_and_transfer_commands(
     assert '"status": "cancelled"' in cancelled.stdout
 
 
+def test_contents_home_folder_restore_passes_the_version(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Found on r1 (audit 81). The command's option was `--version`, which the
+    CLI reserves globally: an eager `--version` callback prints the core
+    version and exits before any subcommand runs. `home-folder restore PATH
+    --version <uid>` therefore printed `datalayer_core: x.y.z` and never
+    restored. The option a command owns cannot be one the app reserves; it is
+    `--version-uid` now."""
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        ["contents", "home-folder", "restore", "reports/earth.csv", "--version-uid", "01VERSIONUID0000000000000V"],
+    )
+    assert result.exit_code == 0, result.output
+    # The version reached the client — the command ran, not the global banner.
+    assert "datalayer_core:" not in result.output
+    assert McpClient.last.restored[1] == "01VERSIONUID0000000000000V"
+
+
+def test_contents_home_folder_restore_rejects_the_reserved_version_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`--version` must NOT reach this command: it is the global one, and it
+    would exit with the banner instead of restoring. Passed here, it prints
+    the banner and the client's restore is never called."""
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        ["contents", "home-folder", "restore", "reports/earth.csv", "--version", "01X"],
+    )
+    # `--version` is not this command's to own: it does not perform a restore.
+    # In the packaged binary the global eager callback prints the core version
+    # and exits; in the test harness the parser rejects the unknown option.
+    # Either way the command fails rather than restoring.
+    assert result.exit_code != 0
+    assert "restored" not in result.output.lower()
+
+
 def test_contents_sandbox_attachment_commands(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(contents_commands, "DatalayerClient", Client)
     runner = CliRunner()
@@ -715,7 +755,12 @@ class McpClient(Client):
         self.calls: list[dict[str, Any]] = []
         self.decisions: list[tuple[str, str, str | None]] = []
         self.polls = 0
-        self.call_statuses: list[str] = ["succeeded"]
+        # A test that wants the call to take a few polls sets the class-level
+        # default before invoking; each command builds its own client.
+        self.call_statuses: list[str] = list(type(self).call_statuses_default)
+        self.polled: list[tuple[str, str]] = []
+
+    call_statuses_default: list[str] = ["succeeded"]
 
     def get_content_source(self, reference: str) -> ConditionalCatalogSource:
         if reference in {MCP_UID, "earthdata"}:
@@ -798,6 +843,7 @@ class McpClient(Client):
         from datalayer_core.models.contents.mcp import McpCall
 
         self.polls += 1
+        self.polled.append((session_uid, call_uid))
         status = self.call_statuses[min(self.polls, len(self.call_statuses)) - 1]
         result = None
         if status == "succeeded":
@@ -908,6 +954,10 @@ def test_contents_mcp_call_reports_the_pending_approval_and_exits_without_waitin
     assert MCP_APPROVAL_UID in result.output
     assert f"mcp approvals approve {MCP_APPROVAL_UID}" in result.output
     assert client.polls == 0
+    # Both uids, so the call can be read back once the approval has landed.
+    # Rich wraps the line; compare with the whitespace collapsed.
+    assert f"mcp call-status {MCP_SESSION_UID} {MCP_CALL_UID}" in " ".join(result.output.split())
+
 
 
 def test_contents_mcp_call_waits_and_prints_the_transfers_of_a_bulk_acquisition(
@@ -1011,6 +1061,45 @@ def test_contents_mcp_approvals_list_approve_and_reject(
     assert isinstance(rejecter, McpClient)
     assert rejecter.decisions[-1] == ("reject", MCP_APPROVAL_UID, "too large")
 
+
+
+def test_approving_shows_the_call_it_releases_and_can_follow_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Found on r1 (audit 76). `approvals approve` printed the approval —
+    `consumed` — and stopped. The thing the person wants is the *call*, and
+    reading it needs a session uid and a call uid the CLI never showed, with
+    no command to read a call back by. On the cluster the result was reachable
+    only through the raw API."""
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    runner = CliRunner()
+
+    shown = runner.invoke(app, ["contents", "mcp", "approvals", "approve", MCP_APPROVAL_UID])
+    assert shown.exit_code == 0, shown.output
+    assert f"Approval {MCP_APPROVAL_UID}" in shown.output
+    assert f"Call {MCP_CALL_UID}" in shown.output  # the call, after the approval
+
+    McpClient.call_statuses_default = ["running", "succeeded"]
+    followed = runner.invoke(
+        app, ["contents", "mcp", "approvals", "approve", MCP_APPROVAL_UID, "--wait"]
+    )
+    McpClient.call_statuses_default = ["succeeded"]
+    assert followed.exit_code == 0, followed.output
+    assert "succeeded" in followed.output
+    assert McpClient.last.polls >= 2
+
+
+def test_a_call_can_be_read_back_by_its_session_and_uid(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(contents_commands, "DatalayerClient", McpClient)
+    runner = CliRunner()
+    read = runner.invoke(
+        app, ["contents", "mcp", "call-status", MCP_SESSION_UID, MCP_CALL_UID]
+    )
+    assert read.exit_code == 0, read.output
+    assert f"Call {MCP_CALL_UID}" in read.output and "succeeded" in read.output
+    assert McpClient.last.polled == [(MCP_SESSION_UID, MCP_CALL_UID)]
 
 # -- Datasources and Dataservers ----------------------------------------------
 

@@ -37,6 +37,7 @@ from datalayer_core.displays.contents import (
 )
 from datalayer_core.mixins.contents import ConditionalCatalogSource
 from datalayer_core.models.contents import (
+    is_call_terminal,
     ContentAttachment,
     McpApprovalList,
     call_artifacts,
@@ -298,13 +299,17 @@ def home_folder_versions(ctx: typer.Context, path: str = typer.Argument(...)) ->
 def home_folder_restore(
     ctx: typer.Context,
     path: str = typer.Argument(...),
-    version: str = typer.Option(..., "--version"),
+    # Not `--version`: the CLI has a global eager `--version` that prints the
+    # core version and exits before a subcommand runs, so `home-folder restore
+    # PATH --version <uid>` never restored — it printed `datalayer_core: x.y.z`
+    # (audit 81). The option a command owns cannot be one the app reserves.
+    version_uid: str = typer.Option(..., "--version-uid", "--to-version"),
 ) -> None:
     client = _client()
     object_ = client.stat_home_folder_object(_home_folder_path(path))
     restored = client.restore_home_folder_object(
         object_.uid,
-        version,
+        version_uid,
         idempotency_key=f"cli-restore-{uuid4()}",
     )
     _render(restored.model_dump(mode="json"), _context(ctx))
@@ -1791,6 +1796,13 @@ def _report_call(call: Any, context: ContentsCLIContext) -> None:
             f"[yellow]Approval {call.approval_uid} is pending:[/yellow] "
             f"datalayer contents mcp approvals approve {call.approval_uid}"
         )
+    if not is_call_terminal(call):
+        # Reading the call back later takes both uids, and the session's is
+        # on no other line of this output: without it the call could be
+        # followed only through the JSON output or the raw API (audit 76).
+        console.print(
+            f"Read it back: datalayer contents mcp call-status {call.session_uid} {call.uid}"
+        )
     if call.error:
         console.print(f"[red]{call.error.code}: {call.error.message}[/red]")
     artifacts = call_artifacts(call)
@@ -1927,12 +1939,74 @@ def mcp_approvals_approve(
     ctx: typer.Context,
     approval_uid: str = typer.Argument(...),
     note: str | None = typer.Option(None, "--note"),
+    wait: bool = typer.Option(
+        False, "--wait", help="Follow the approved call until it finishes."
+    ),
+    timeout: float = typer.Option(600.0, "--timeout", help="Seconds to wait."),
 ) -> None:
+    """
+    Approve a waiting call, and show the call it releases.
+
+    The approval is consumed the moment the call runs, so the thing to look
+    at afterwards is the call, not the approval — printed here, and followed
+    to its end with `--wait`. It can be read again later with
+    `datalayer contents mcp call-status SESSION CALL`.
+    """
+    from datalayer_core.contents import wait_for_mcp_call
+
+    client = _client()
     try:
-        decided = _client().approve_mcp_approval(approval_uid, note=note)
+        decided = client.approve_mcp_approval(approval_uid, note=note)
     except Exception as error:
         raise ContentsCommandError(str(error)) from error
-    _render(decided.model_dump(mode="json"), _context(ctx))
+    context = _context(ctx)
+    if context.output is not OutputFormat.TABLE:
+        _render(decided.model_dump(mode="json"), context)
+    else:
+        console.print(f"Approval [bold]{decided.uid}[/bold] for {decided.tool}: {decided.status}")
+    try:
+        call = client.get_mcp_call(decided.session_uid, decided.call_uid)
+        if wait:
+            call = wait_for_mcp_call(client, call, timeout=timeout)
+    except TimeoutError as error:
+        raise ContentsCommandError(str(error)) from error
+    except Exception as error:
+        raise ContentsCommandError(f"approved, but the call could not be read: {error}") from error
+    _report_call(call, context)
+    if call.status in {"failed", "denied", "refused"}:
+        raise typer.Exit(1)
+
+
+@mcp_app.command(name="call-status")
+@contents_command
+def mcp_call_status(
+    ctx: typer.Context,
+    session_uid: str = typer.Argument(..., help="The session the call was made on."),
+    call_uid: str = typer.Argument(...),
+    wait: bool = typer.Option(False, "--wait", help="Poll until the call finishes."),
+    timeout: float = typer.Option(600.0, "--timeout", help="Seconds to wait."),
+) -> None:
+    """
+    Read one call back: its status, result or error, and its artifacts.
+
+    A call that waited on an approval finishes after the person who approved
+    it has moved on; `mcp call --wait` may have given up by then. Both uids
+    are on the call as `mcp call` printed it, and on the approval.
+    """
+    from datalayer_core.contents import wait_for_mcp_call
+
+    client = _client()
+    try:
+        call = client.get_mcp_call(session_uid, call_uid)
+        if wait:
+            call = wait_for_mcp_call(client, call, timeout=timeout)
+    except TimeoutError as error:
+        raise ContentsCommandError(str(error)) from error
+    except Exception as error:
+        raise ContentsCommandError(str(error)) from error
+    _report_call(call, _context(ctx))
+    if call.status in {"failed", "denied", "refused"}:
+        raise typer.Exit(1)
 
 
 @mcp_approvals_app.command(name="reject")

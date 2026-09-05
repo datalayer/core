@@ -135,6 +135,25 @@ class HomeFolder:
         return destination
 
 
+def wait_for_mcp_call(
+    client: Any, call: McpCall, *, timeout: float = 600.0, interval: float = 2.0
+) -> McpCall:
+    """Poll a call until the service is done with it, or time runs out.
+
+    A call is found by its session and its own uid — nothing about the source
+    is needed to follow it, which is why this is not a method of `McpSource`:
+    the person who approved a call, or comes back to one later, holds those
+    two uids and nothing else.
+    """
+    deadline = time.monotonic() + timeout
+    while not is_call_terminal(call):
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f"call {call.uid} is still {call.status} after {timeout:.0f}s")
+        time.sleep(interval)
+        call = client.get_mcp_call(call.session_uid, call.uid)
+    return call
+
+
 class McpSource:
     """
     An MCP source, used: its tools, and calls through a session of it.
@@ -204,15 +223,7 @@ class McpSource:
         self, call: McpCall, *, timeout: float = 600.0, interval: float = 2.0
     ) -> McpCall:
         """Poll a call until the service is done with it, or time runs out."""
-        deadline = time.monotonic() + timeout
-        while not is_call_terminal(call):
-            if time.monotonic() >= deadline:
-                raise TimeoutError(
-                    f"call {call.uid} is still {call.status} after {timeout:.0f}s"
-                )
-            time.sleep(interval)
-            call = self.client.get_mcp_call(call.session_uid, call.uid)
-        return call
+        return wait_for_mcp_call(self.client, call, timeout=timeout, interval=interval)
 
     def approvals(self, status: str | None = "pending") -> McpApprovalList:
         """The approvals on this source; the service filters on status alone."""
