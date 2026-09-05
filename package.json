@@ -247,6 +247,9 @@
     "@microsoft/load-themed-styles": "1.10.295",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    },
     "pyodide": "0.29.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
