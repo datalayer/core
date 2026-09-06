@@ -424,6 +424,59 @@ def test_a_local_deletion_propagates_only_with_delete_and_leaves_a_tombstone(
     assert "gone.txt" in state["tombstones"]
 
 
+def _entry(path: str, checksum: str, size: int = 3) -> FileEntry:
+    return FileEntry(
+        path=path, size=size, modified_at="2026-09-06T10:00:00Z",
+        checksum=checksum, blocks=(checksum,),
+    )
+
+
+def test_a_file_recreated_after_an_agreed_deletion_is_not_deleted_again() -> None:
+    """The data-loss case: X was deleted and both sides agreed (the base holds a
+    tombstone, and a side still carries it). A copy present now was re-created
+    after the agreement — propagate it, never re-delete it out from under whoever
+    made it. Only a genuinely fresh deletion (the base still held the file) is
+    propagated with --delete."""
+    buried = {"x": "2026-09-01T00:00:00Z"}
+
+    # Remote re-created X; the local side still carries the agreed tombstone.
+    plan = reconcile(
+        Manifest(entries={}, tombstones=dict(buried)),
+        Manifest(entries={"x": _entry("x", "new")}),
+        Manifest(entries={}, tombstones=dict(buried)),
+        direction="bidirectional", delete=True,
+    )
+    assert [(a.kind, a.path) for a in plan.actions] == [("download", "x")]
+
+    # Symmetric: the local side re-created X.
+    plan = reconcile(
+        Manifest(entries={"x": _entry("x", "new")}),
+        Manifest(entries={}, tombstones=dict(buried)),
+        Manifest(entries={}, tombstones=dict(buried)),
+        direction="bidirectional", delete=True,
+    )
+    assert [(a.kind, a.path) for a in plan.actions] == [("upload", "x")]
+
+    # Both re-created, differently: a conflict, not a silent loss.
+    plan = reconcile(
+        Manifest(entries={"x": _entry("x", "mine")}),
+        Manifest(entries={"x": _entry("x", "theirs")}),
+        Manifest(entries={}, tombstones=dict(buried)),
+        direction="bidirectional", conflict_policy="manual", delete=True,
+    )
+    assert [(a.kind, a.path) for a in plan.actions] == [("conflict", "x")]
+
+    # A genuinely fresh deletion (the base still held X as a file) still
+    # propagates — the fix must not weaken --delete.
+    plan = reconcile(
+        Manifest(entries={}, tombstones={"x": "2026-09-05T00:00:00Z"}),
+        Manifest(entries={"x": _entry("x", "v1")}),
+        Manifest(entries={"x": _entry("x", "v1")}),
+        direction="bidirectional", delete=True,
+    )
+    assert [(a.kind, a.path) for a in plan.actions] == [("delete_remote", "x")]
+
+
 def test_a_failed_action_is_reported_not_hidden(tmp_path: Path) -> None:
     fake = FakeContents()
     (tmp_path / "a.csv").write_text("alpha")

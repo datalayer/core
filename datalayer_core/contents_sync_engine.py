@@ -417,7 +417,14 @@ def reconcile(
 
         if here is not None and there is None:
             # Present locally, absent remotely: created here, or deleted there.
-            deleted_remotely = before is not None or path in remote.tombstones
+            # A deletion already agreed on both sides (`buried`) is not a fresh
+            # remote deletion to propagate: the file is gone from the base, so a
+            # copy present now was re-created after the agreement, and re-deleting
+            # it would destroy the re-creation. Left to the re-created branch
+            # below, which uploads it.
+            deleted_remotely = (
+                before is not None or path in remote.tombstones
+            ) and not buried
             if deleted_remotely and delete and direction in ("pull", "bidirectional"):
                 recreated = before is not None and not before.same_content(here)
                 if recreated and direction == "bidirectional":
@@ -448,7 +455,13 @@ def reconcile(
             continue
 
         if here is None and there is not None:
-            deleted_locally = before is not None or path in local.tombstones
+            # Symmetric to the branch above: a deletion already agreed on both
+            # sides (`buried`) is not a fresh local deletion to propagate. A copy
+            # present remotely now was re-created after the agreement, so it is
+            # downloaded (below), never deleted out from under whoever made it.
+            deleted_locally = (
+                before is not None or path in local.tombstones
+            ) and not buried
             if deleted_locally and delete and direction in ("push", "bidirectional"):
                 recreated = before is not None and not before.same_content(there)
                 if recreated and direction == "bidirectional":
