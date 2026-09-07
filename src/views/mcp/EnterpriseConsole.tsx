@@ -82,6 +82,7 @@ import { OrganizationUsage } from './OrganizationUsage';
 import { OrganizationPolicy } from './OrganizationPolicy';
 import { ServiceAgents } from './ServiceAgents';
 import { clientStatusOf, plural, timeAgo } from './format';
+import { ApprovalQueue } from './ApprovalQueue';
 import { type McpErrorStateFn, type McpRoutes } from './types';
 
 /** The pages milestone 1 carries. */
@@ -93,6 +94,7 @@ export type EnterpriseConsolePage =
   | 'policy'
   | 'teams'
   | 'alerts'
+  | 'approvals'
   | 'audit'
   | 'observability';
 
@@ -107,6 +109,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
   { id: 'policy', label: 'Policy' },
   { id: 'teams', label: 'Teams' },
   { id: 'alerts', label: 'Alerts' },
+  { id: 'approvals', label: 'Approvals' },
   { id: 'audit', label: 'Audit' },
   { id: 'observability', label: 'Observability' },
 ];
@@ -122,6 +125,7 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       'policy',
       'teams',
       'alerts',
+      'approvals',
       'audit',
       'observability',
     ];
@@ -142,6 +146,13 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       // The alerts too: what an organization watches for is part of the
       // security posture an auditor is there to read.
       'alerts',
+      // The approvals are deliberately NOT here. Contents scopes
+      // `/mcp-approvals` to the caller — the actor, or the person who owns
+      // the source and must decide — so an auditor would open a queue of
+      // their own approvals under an organization's console and read it as
+      // that organization having none. An empty table that looks like an
+      // answer is worse than no tab. What an auditor needs is the decision
+      // *after* it was taken, and that is an audit row.
       'audit',
       'observability',
     ];
@@ -569,6 +580,13 @@ export const EnterpriseConsole = ({
           readOnly={!roles.includes('organization_owner')}
         />
       )}
+
+      {/* The calls waiting on this owner. Contents scopes the queue to the
+          caller rather than to an organization, so this is the owner's own
+          list rather than the organization's — there is no route for the
+          second, and drawing one from the first would be a claim the data
+          does not support. */}
+      {current === 'approvals' && <ApprovalQueue errorState={errorState} />}
 
       {current === 'policy' && (
         <OrganizationPolicy

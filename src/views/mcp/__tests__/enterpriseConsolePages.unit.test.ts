@@ -119,4 +119,30 @@ describe('the console’s pages', () => {
     const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
     expect(ids).toContain('policy');
   });
+
+  it('has Approvals as a page of its own', () => {
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    expect(ids).toContain('approvals');
+  });
+
+  it('lets an owner decide the calls waiting on them', () => {
+    expect(pagesForRoles(['organization_owner'])).toContain('approvals');
+  });
+
+  it('does not give an auditor an approvals queue that would read as empty', () => {
+    // Contents scopes `/mcp-approvals` to the caller, so an auditor opening
+    // it under an organization's console would see their own approvals and
+    // read the absence as the organization having none. The decision they
+    // are entitled to is in the audit, after it was taken.
+    expect(pagesForRoles(['organization_security_auditor'])).not.toContain(
+      'approvals',
+    );
+    expect(pagesForRoles(['organization_security_auditor'])).toContain('audit');
+  });
+
+  it('does not give a usage reviewer the approvals', () => {
+    expect(pagesForRoles(['organization_usage_reviewer'])).not.toContain(
+      'approvals',
+    );
+  });
 });

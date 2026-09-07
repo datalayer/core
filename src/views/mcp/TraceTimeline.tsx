@@ -59,14 +59,23 @@ export interface TimelineRow {
   width: number;
 }
 
-/** The instants a span covers, as epoch milliseconds; `end` is never before `start`. */
+/**
+ * The instants a span covers, as epoch milliseconds.
+ *
+ * `end` is never before `start`, and one comparison is enough for both ways
+ * that happens: an end that will not parse is `NaN`, and every comparison
+ * with `NaN` is false, so it falls to `start` along with an end that is
+ * merely backwards. A `Number.isFinite` check beside it reads as belt and
+ * braces but is dead code — which is what the mutation run showed.
+ *
+ * The `NaN` case is the one that matters. A single unparseable timestamp
+ * left in would poison the window every other bar is measured against, and
+ * the timeline would go on drawing — as a column of identical marks.
+ */
 const extentOf = (span: OtelSpan): { start: number; end: number } => {
   const start = Date.parse(span.start_time);
   const end = Date.parse(span.end_time);
-  return {
-    start,
-    end: Number.isFinite(end) ? end : start,
-  };
+  return { start, end: end > start ? end : start };
 };
 
 /**
@@ -116,10 +125,7 @@ export const timelineRows = (tree: McpSpanNode[]): TimelineRow[] => {
     // hold it: a zero-length span at the very end of a run is a mark that
     // has to fit inside the track, not one hanging off its right edge.
     const width = Math.max(MIN_BAR_PERCENT, ((end - start) / total) * 100);
-    const left = Math.min(
-      100 - width,
-      Math.max(0, ((start - first) / total) * 100),
-    );
+    const left = Math.min(100 - width, Math.max(0, ((start - first) / total) * 100));
     return { span, depth, left, width };
   });
 };
@@ -140,10 +146,7 @@ export const SERVICE_TONE: Record<string, string> = {
 
 /** The bar colour of a span, by the service that emitted it and how it ended. */
 export const toneOf = (span: OtelSpan): string => {
-  if (
-    span.status_code === 'STATUS_CODE_ERROR' ||
-    span.status_code === 'ERROR'
-  ) {
+  if (span.status_code === 'STATUS_CODE_ERROR' || span.status_code === 'ERROR') {
     return 'danger.emphasis';
   }
   return SERVICE_TONE[span.service_name] ?? 'neutral.emphasis';
@@ -223,13 +226,7 @@ export const TraceTimeline = ({
               title={`${row.span.service_name} · ${durationLabel(row.span.duration_ms)}`}
             />
           </Box>
-          <Text
-            sx={{
-              fontSize: 0,
-              color: 'fg.muted',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
+          <Text sx={{ fontSize: 0, color: 'fg.muted', fontVariantNumeric: 'tabular-nums' }}>
             {durationLabel(row.span.duration_ms)}
           </Text>
         </Box>
@@ -239,9 +236,7 @@ export const TraceTimeline = ({
 };
 
 /** The timeline under its own heading, as the Runs detail draws it. */
-export const TraceTimelineSection = (
-  props: TraceTimelineProps,
-): JSX.Element => (
+export const TraceTimelineSection = (props: TraceTimelineProps): JSX.Element => (
   <Box>
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
       <Heading as="h3" sx={{ fontSize: 1 }}>

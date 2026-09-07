@@ -41,3 +41,4 @@ export * from './Policies';
 export * from './OrganizationUsage';
 export * from './EnterpriseConsole';
 export * from './TraceTimeline';
+export * from './ApprovalQueue';

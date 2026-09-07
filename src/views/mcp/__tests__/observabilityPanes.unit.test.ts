@@ -103,6 +103,18 @@ describe('engineLook', () => {
     expect(many.note).toContain('5');
   });
 
+  it('does not invent a waiting run out of a queue that reported no number', () => {
+    // `backlog` is required by the contract, so a missing one is a malformed
+    // answer — and the reading to avoid is the one that puts a number on an
+    // operator's screen that nothing measured.
+    const malformed = engineLook(
+      health({ queues: [{ name: 'q' } as unknown as McpWorkflowsHealth['queues'][number]] }),
+      false,
+    );
+    expect(malformed.note).toMatch(/Nothing/);
+    expect(malformed.variant).toBe('success');
+  });
+
   it('reads one waiting run as singular', () => {
     const one = engineLook(
       health({ queues: [{ name: 'q', backlog: 1 }] }),
