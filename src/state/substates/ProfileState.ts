@@ -38,6 +38,7 @@ export type IProfile = {
   avatarUrl?: string;
   avatarIcon?: string;
   banner?: string;
+  showOrbits?: boolean;
   origin?: string;
   roles?: string[];
 };
@@ -68,6 +69,7 @@ const userToProfile = (user?: IUser): IProfile | undefined =>
         avatarUrl: user.avatarUrl,
         avatarIcon: (user as any).avatarIcon,
         banner: (user as any).banner,
+        showOrbits: (user as any).showOrbits,
         origin: user.origin,
         roles: user.roles,
       }

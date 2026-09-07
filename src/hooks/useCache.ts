@@ -80,10 +80,9 @@ type IEnvironment = any;
 type IExercise = any;
 type ILesson = any;
 type INotebook = any;
-type IPage = any;
 type ISpaceItem = any;
 type IStudentItem = any;
-import { asPage, asSpace } from './cacheConverters';
+import { asSpace } from './cacheConverters';
 import { useCoreStore, useIAMStore, profileStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
@@ -135,8 +134,7 @@ export const queryKeys = {
   contents: {
     all: () => ['contents'] as const,
     sources: () => [...queryKeys.contents.all(), 'sources'] as const,
-    capabilities: () =>
-      [...queryKeys.contents.all(), 'capabilities'] as const,
+    capabilities: () => [...queryKeys.contents.all(), 'capabilities'] as const,
     sourceList: (filters?: {
       kind?: string;
       cursor?: string;
@@ -201,7 +199,11 @@ export const queryKeys = {
     transfer: (transferUid: string) =>
       [...queryKeys.contents.transfers(), transferUid] as const,
     syncSessions: () => [...queryKeys.contents.all(), 'sync'] as const,
-    syncSessionList: (filters?: { active?: boolean; cursor?: string; limit?: number }) =>
+    syncSessionList: (filters?: {
+      active?: boolean;
+      cursor?: string;
+      limit?: number;
+    }) =>
       [...queryKeys.contents.syncSessions(), 'list', filters ?? {}] as const,
     syncSession: (sessionUid: string) =>
       [...queryKeys.contents.syncSessions(), sessionUid] as const,
@@ -222,7 +224,8 @@ export const queryKeys = {
     bridges: () => [...queryKeys.contents.all(), 'bridges'] as const,
     bridgeList: (filters?: { active?: boolean }) =>
       [...queryKeys.contents.bridges(), 'list', filters ?? {}] as const,
-    bridge: (bridgeUid: string) => [...queryKeys.contents.bridges(), bridgeUid] as const,
+    bridge: (bridgeUid: string) =>
+      [...queryKeys.contents.bridges(), bridgeUid] as const,
     // What a running Runtime has mounted. Under the Contents key rather than
     // a Runtimes one because attaching and detaching a source is what changes
     // it, and those invalidate from here.
@@ -243,17 +246,30 @@ export const queryKeys = {
     mcpApprovalList: (filters?: { status?: string; sourceUid?: string }) =>
       [...queryKeys.contents.mcpApprovals(), 'list', filters ?? {}] as const,
     datasourceSchema: (sourceUid: string) =>
-      [...queryKeys.contents.source(sourceUid), 'datasource', 'schema'] as const,
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'datasource',
+        'schema',
+      ] as const,
     datasourceCapabilities: (sourceUid: string) =>
-      [...queryKeys.contents.source(sourceUid), 'datasource', 'capabilities'] as const,
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'datasource',
+        'capabilities',
+      ] as const,
     datasourceQueries: (sourceUid: string) =>
       [...queryKeys.contents.source(sourceUid), 'queries'] as const,
     // A query is addressed by its own uid, not under its source: a
     // notebook reconnects to one by uid alone.
     queries: () => [...queryKeys.contents.all(), 'queries'] as const,
-    query: (queryUid: string) => [...queryKeys.contents.queries(), queryUid] as const,
+    query: (queryUid: string) =>
+      [...queryKeys.contents.queries(), queryUid] as const,
     dataserverStatus: (sourceUid: string) =>
-      [...queryKeys.contents.source(sourceUid), 'dataserver', 'status'] as const,
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'dataserver',
+        'status',
+      ] as const,
   },
 
   // The Jupyter MCP Server: what the agents did, and what they may do
@@ -264,7 +280,12 @@ export const queryKeys = {
       [...queryKeys.mcp.tasks(), 'list', filters ?? {}] as const,
     task: (taskUid: string) => [...queryKeys.mcp.tasks(), taskUid] as const,
     notebookTasks: (notebookUid: string, filters?: object) =>
-      [...queryKeys.mcp.tasks(), 'notebook', notebookUid, filters ?? {}] as const,
+      [
+        ...queryKeys.mcp.tasks(),
+        'notebook',
+        notebookUid,
+        filters ?? {},
+      ] as const,
     bindings: () => [...queryKeys.mcp.all(), 'bindings'] as const,
     bindingList: (filters?: object) =>
       [...queryKeys.mcp.bindings(), 'list', filters ?? {}] as const,
@@ -275,7 +296,8 @@ export const queryKeys = {
       [...queryKeys.mcp.audit(), 'list', filters ?? {}] as const,
     policy: (filters?: object) =>
       [...queryKeys.mcp.all(), 'policy', filters ?? {}] as const,
-    connectedAgents: () => [...queryKeys.mcp.all(), 'connected-agents'] as const,
+    connectedAgents: () =>
+      [...queryKeys.mcp.all(), 'connected-agents'] as const,
     // Service agents are an organization's, never an account's: two
     // organizations' lists must not share a cache entry.
     serviceAgents: (orgUid: string) =>
@@ -294,10 +316,13 @@ export const queryKeys = {
     organizationTeams: (orgUid: string) =>
       [...queryKeys.mcp.all(), 'organization-teams', orgUid] as const,
     // Observability, over the OTEL service, keyed by the task it describes.
-    trace: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'trace'] as const,
+    trace: (taskUid: string) =>
+      [...queryKeys.mcp.task(taskUid), 'trace'] as const,
     // A trace named directly: a synchronous call has one and no task.
-    traceById: (traceId: string) => [...queryKeys.mcp.all(), 'traces', traceId] as const,
-    logs: (taskUid: string) => [...queryKeys.mcp.task(taskUid), 'logs'] as const,
+    traceById: (traceId: string) =>
+      [...queryKeys.mcp.all(), 'traces', traceId] as const,
+    logs: (taskUid: string) =>
+      [...queryKeys.mcp.task(taskUid), 'logs'] as const,
     metrics: (filters?: object) =>
       [...queryKeys.mcp.all(), 'metrics', filters ?? {}] as const,
     operations: () => [...queryKeys.mcp.all(), 'operations'] as const,
@@ -306,9 +331,21 @@ export const queryKeys = {
     gatewayVersion: () => [...queryKeys.mcp.all(), 'version'] as const,
     // The Enterprise console: one answer per organization, narrowed by team.
     orgOverview: (orgUid: string, filters?: object) =>
-      [...queryKeys.mcp.all(), 'organizations', orgUid, 'overview', filters ?? {}] as const,
+      [
+        ...queryKeys.mcp.all(),
+        'organizations',
+        orgUid,
+        'overview',
+        filters ?? {},
+      ] as const,
     orgUsage: (orgUid: string, filters?: object) =>
-      [...queryKeys.mcp.all(), 'organizations', orgUid, 'usage', filters ?? {}] as const,
+      [
+        ...queryKeys.mcp.all(),
+        'organizations',
+        orgUid,
+        'usage',
+        filters ?? {},
+      ] as const,
   },
 
   // Authentication & Profile
@@ -483,13 +520,6 @@ export const queryKeys = {
       [...queryKeys.environments.all(), 'space', spaceId] as const,
   },
 
-  // Pages
-  pages: {
-    all: () => ['pages'] as const,
-    details: () => [...queryKeys.pages.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.pages.details(), id] as const,
-  },
-
   // Secrets
   secrets: {
     all: () => ['secrets'] as const,
@@ -564,10 +594,20 @@ export const queryKeys = {
   items: {
     all: () => ['items'] as const,
     public: () => [...queryKeys.items.all(), 'public'] as const,
+    publicItem: (uid: string) =>
+      [...queryKeys.items.all(), 'public', uid] as const,
     bySpace: (spaceId: string) =>
       [...queryKeys.items.all(), 'space', spaceId] as const,
     search: (opts: ISearchOpts) =>
       [...queryKeys.items.all(), 'search', opts] as const,
+    // The library: what the home page, the profile pages and "my orbits"
+    // read, each invalidated by the mutation that changes it.
+    featured: () => [...queryKeys.items.all(), 'featured'] as const,
+    orbits: () => [...queryKeys.items.all(), 'orbits'] as const,
+    orbiters: (uid: string) =>
+      [...queryKeys.items.all(), 'orbiters', uid] as const,
+    byOwner: (handle: string) =>
+      [...queryKeys.items.all(), 'owner', handle] as const,
   },
 
   // Layout
@@ -802,12 +842,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return asSpace(spc);
   };
 
-  const toPage = (s: any): IPage | undefined => {
-    if (s) {
-      return asPage(s);
-    }
-  };
-
   const toSecret = (s: any): ISecret | undefined => {
     if (s) {
       return asSecret(s);
@@ -837,6 +871,114 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * is available so the UI hydration hooks (e.g. `useUsersByUids`) can
    * still fill in display data downstream.
    */
+  /**
+   * What the library knows about an artifact, on top of what its own service
+   * stores: how many people orbit it, whether this visitor does, how often it
+   * has been reused, whether it is featured, and what it looks like.
+   *
+   * Applied in one place — `toItem`, the library and search path — rather than
+   * in each mapper: a notebook read from its space has none of this, and
+   * inventing zeros there would say "nobody orbits it" where the truth is
+   * "this was not the library answering".
+   */
+  const withLibraryMeta = (raw: any): Record<string, any> => {
+    if (!raw || typeof raw !== 'object') {
+      return {};
+    }
+    const meta: Record<string, any> = {};
+    if (raw.orbits !== undefined) meta.orbits = Number(raw.orbits) || 0;
+    if (raw.orbited !== undefined) meta.orbited = Boolean(raw.orbited);
+    if (raw.clones !== undefined) meta.clones = Number(raw.clones) || 0;
+    if (raw.instantiations !== undefined)
+      meta.instantiations = Number(raw.instantiations) || 0;
+    if (raw.featured !== undefined) meta.featured = Boolean(raw.featured);
+    if (raw.featuredRank !== undefined)
+      meta.featuredRank = Number(raw.featuredRank);
+    if (raw.reuse !== undefined) meta.reuse = raw.reuse;
+    if (raw.publisher !== undefined) meta.publisher = raw.publisher;
+    if (raw.image !== undefined) meta.image = raw.image;
+    return meta;
+  };
+
+  /**
+   * A published dataset. Keyed on the dataset it is a publication of, not on
+   * the publication: republishing mints a new immutable revision, and the
+   * library entry — with the orbits it has collected — is the dataset's.
+   */
+  const toDataset = (raw: any): any => {
+    const owner = toItemOwner(raw);
+    return {
+      id: raw.uid,
+      type: 'dataset',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      license: raw.license_s,
+      fileCount: raw.file_count_i,
+      totalSize: raw.total_size_l,
+      publicationId: raw.latest_publication_uid_s,
+      revisionId: raw.revision_uid_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      owner,
+    };
+  };
+
+  /**
+   * An agent as a library artifact: published by Datalayer rather than by a
+   * user, and reused by instantiating a runtime from its specification rather
+   * than by cloning a document. The specification itself lives in the
+   * application's own build; this is only what the library shows of it.
+   */
+  /**
+   * A published Data Server: its catalog, never its address.
+   *
+   * What the library holds is what it answers for — the connector kinds and
+   * the relations they name. Reusing one attaches it as a Datasource; there
+   * is nothing to copy, because a Data Server is a process somebody runs.
+   */
+  const toDataserver = (raw: any): any => {
+    const owner = toItemOwner(raw);
+    return {
+      id: raw.uid,
+      type: 'dataserver',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      connectors: Array.isArray(raw.connectors_ss) ? raw.connectors_ss : [],
+      relations: Array.isArray(raw.relations_ss) ? raw.relations_ss : [],
+      publicationId: raw.latest_publication_uid_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      owner,
+    };
+  };
+
+  const toAgent = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'agent',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      domain: raw.domain_s,
+      icon: raw.icon_s,
+      emoji: raw.emoji_s,
+      model: raw.model_s,
+      specId: String(raw.uid || '').replace(/^agent:/, ''),
+      specVersion: raw.spec_version_s,
+      publisher: raw.publisher_s || 'datalayer',
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+    };
+  };
+
   const toItemOwner = (raw: any): IUser => {
     const uid = String(
       raw?.creator_uid_s ??
@@ -1114,6 +1256,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       console.error('No type_s found on item', item);
       return {};
     }
+    // The library answers with the same field names a space item has, plus
+    // what only it knows; the type mapper reads the former and
+    // `withLibraryMeta` adds the latter, so one artifact has one shape
+    // wherever it was searched.
+    return { ...toTypedItem(item), ...withLibraryMeta(item) };
+  };
+
+  const toTypedItem = (item: any): any => {
     switch (item.type_s) {
       case 'assignment':
         return toAssignment(item);
@@ -1166,10 +1316,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toLesson(item);
       case 'notebook':
         return toNotebook(item);
-      case 'page':
-        return toPage(item);
       case 'evalset':
         return toEvalset(item);
+      case 'dataset':
+        return toDataset(item);
+      case 'agent':
+        return toAgent(item);
+      case 'dataserver':
+        return toDataserver(item);
       default:
         return {};
     }
@@ -1369,17 +1523,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         lastName,
         avatarIcon,
         banner,
+        showOrbits,
       }: {
         email: string;
         firstName: string;
         lastName: string;
         avatarIcon?: string;
         banner?: string;
+        showOrbits?: boolean;
       }) => {
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/me`,
           method: 'PUT',
-          body: { email, firstName, lastName, avatarIcon, banner },
+          body: { email, firstName, lastName, avatarIcon, banner, showOrbits },
         });
       },
       onSuccess: () => {
@@ -2653,153 +2809,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
   // Page Hooks
   // ============================================================================
-
-  /**
-   * Get page by ID
-   */
-  const usePage = (pageId: string) => {
-    return useQuery({
-      queryKey: queryKeys.pages.detail(pageId),
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages/${pageId}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.page) {
-          return toPage(resp.page);
-        }
-        throw new Error(resp.message || 'Failed to fetch page');
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!pageId,
-    });
-  };
-
-  /**
-   * Get all pages
-   */
-  const usePages = (scope?: {
-    selectedPrincipalUid?: string;
-    selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-  }) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.pages.all(),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.pages) {
-          const pages = resp.pages
-            .map((p: unknown) => {
-              const page = toPage(p);
-              if (page) {
-                queryClient.setQueryData(queryKeys.pages.detail(page.id), page);
-              }
-              return page;
-            })
-            .filter(Boolean);
-          return pages;
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Create page
-   */
-  const useCreatePage = () => {
-    return useMutation({
-      mutationFn: async (page: Omit<IPage, 'id'>) => {
-        return requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages`,
-          method: 'POST',
-          body: { ...page },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.page) {
-          const page = toPage(resp.page);
-          if (page) {
-            // Set detail cache
-            queryClient.setQueryData(queryKeys.pages.detail(page.id), page);
-            // Invalidate list to refetch
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.pages.all(),
-            });
-          }
-        }
-      },
-    });
-  };
-
-  /**
-   * Update page
-   */
-  const useUpdatePage = () => {
-    return useMutation({
-      mutationFn: async (
-        page: Pick<IPage, 'id' | 'name' | 'description' | 'tags'>,
-      ) => {
-        return requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages/${page.id}`,
-          method: 'PUT',
-          body: {
-            name: page.name,
-            description: page.description,
-            tags: page.tags,
-          },
-        });
-      },
-      onSuccess: (resp, page) => {
-        if (resp.success) {
-          // Invalidate detail and list queries
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.pages.detail(page.id),
-          });
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.pages.all(),
-          });
-        }
-      },
-    });
-  };
-
-  /**
-   * Delete page
-   */
-  const useDeletePage = () => {
-    return useMutation({
-      mutationFn: async (pageId: string) => {
-        return requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages/${pageId}`,
-          method: 'DELETE',
-        });
-      },
-      onSuccess: (_, pageId) => {
-        // Remove from detail cache
-        queryClient.removeQueries({ queryKey: queryKeys.pages.detail(pageId) });
-        // Invalidate list to refetch
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.pages.all(),
-        });
-      },
-    });
-  };
 
   // ============================================================================
   // Secret, Token Hooks
@@ -4350,26 +4359,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           queryKey: ['courses'],
         });
       },
-    });
-  };
-
-  /**
-   * Get public courses
-   */
-  const usePublicCourses = () => {
-    return useQuery({
-      queryKey: ['courses', 'public'] as const,
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/courses/public`,
-          method: 'GET',
-        });
-        if (resp.success && resp.courses) {
-          return resp.courses.map((course: unknown) => toCourse(course));
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
     });
   };
 
@@ -7254,51 +7243,632 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Search public items (notebooks, documents, etc.)
    */
+  /**
+   * Every artifact type the library holds. One list, so a caller that wants
+   * "everything" cannot accidentally ask for the six types someone wrote out
+   * by hand two releases ago.
+   */
+  const LIBRARY_ARTIFACT_TYPES = [
+    'notebook',
+    'document',
+    'cell',
+    'lesson',
+    'exercise',
+    'assignment',
+    'course',
+    'evalset',
+    'dataset',
+    'agent',
+  ];
+
+  type LibrarySearchArgs = {
+    q?: string;
+    types?: string[];
+    max?: number;
+    offset?: number;
+    /** `relevance`, `recent` or `orbits`. */
+    sort?: string;
+    featured?: boolean;
+    /** Only this account's artifacts: what a public profile page lists. */
+    owner?: string;
+  };
+
+  const librarySearchQueryString = ({
+    q,
+    types,
+    max = 20,
+    offset = 0,
+    sort = 'relevance',
+    featured = false,
+    owner,
+  }: LibrarySearchArgs): string => {
+    const normalizedTypes = Array.from(
+      new Set(
+        (types || [])
+          .map(type =>
+            String(type || '')
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean)
+          .map(type => (type === 'eval' ? 'evalset' : type)),
+      ),
+    );
+    const params: Record<string, string> = {
+      q: q || '*',
+      types: (normalizedTypes.length > 0
+        ? normalizedTypes
+        : LIBRARY_ARTIFACT_TYPES
+      ).join(' '),
+      max: String(max),
+      offset: String(offset),
+      sort,
+    };
+    if (featured) {
+      params.featured = 'true';
+    }
+    if (owner) {
+      params.owner = owner;
+    }
+    return Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&');
+  };
+
+  const searchLibrary = async (args: LibrarySearchArgs) => {
+    const resp = await requestDatalayer({
+      url: `${configuration.libraryUrl}/api/library/v1/search?${librarySearchQueryString(args)}`,
+      method: 'GET',
+    });
+    if (!resp.success) {
+      throw new Error(resp.message || 'Failed to search the library');
+    }
+    return {
+      items: (resp.items || [])
+        .map((item: any) => toItem(item))
+        .filter(Boolean),
+      total: Number(resp.total ?? 0),
+      offset: Number(resp.offset ?? args.offset ?? 0),
+    };
+  };
+
+  /**
+   * Search the library: one request, whatever mix of artifact types is asked
+   * for, with the total so a caller can page without asking twice.
+   *
+   * Answers `{ items, total, offset }` rather than a bare array — a result
+   * page without its total cannot be paged, and every caller was inventing
+   * "there is probably more" from the length it got.
+   */
   const useSearchPublicItems = () => {
     return useMutation({
-      mutationFn: async ({
-        q,
-        types = ['notebook', 'document', 'cell', 'lesson', 'evalset', 'course'],
-        max = 100,
-      }: {
-        q?: string;
-        types?: string[];
-        max?: number;
-      }) => {
-        const normalizedTypes = Array.from(
-          new Set(
-            (types || [])
-              .map(type =>
-                String(type || '')
-                  .trim()
-                  .toLowerCase(),
-              )
-              .filter(Boolean)
-              .map(type => (type === 'eval' ? 'evalset' : type)),
-          ),
-        );
-        const queryString = Object.entries({
-          q: q || '*',
-          types: (normalizedTypes.length > 0
-            ? normalizedTypes
-            : ['notebook', 'document', 'cell', 'lesson', 'evalset', 'course']
-          ).join(' '),
-          max: max.toString(),
-        })
-          .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-          .join('&');
+      mutationFn: async (args: LibrarySearchArgs) => searchLibrary(args),
+    });
+  };
 
+  /**
+   * The featured artifacts, for the home page's ribbon.
+   *
+   * Anonymous-safe: the library answers this one without a token, and the
+   * service holds it for a minute, so a visit costs the platform nothing.
+   */
+  const useFeaturedItems = (
+    max: number = 12,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.featured(), max] as const,
+      queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/search?${queryString}`,
+          url: `${configuration.libraryUrl}/api/library/v1/featured?max=${max}`,
           method: 'GET',
         });
-
         if (!resp.success) {
-          throw new Error(resp.message || 'Failed to search public items');
+          throw new Error(
+            resp.message || 'Failed to get the featured artifacts',
+          );
         }
         return (resp.items || [])
           .map((item: any) => toItem(item))
           .filter(Boolean);
+      },
+      staleTime: 60_000,
+      ...options,
+    } as any);
+  };
+
+  /**
+   * One public artifact by uid, with its content and its library metadata.
+   *
+   * The public pages used to `fetch` this endpoint themselves, which meant no
+   * token was ever sent and the page could not know whether the visitor
+   * orbits what they are reading.
+   */
+  const usePublicItem = (
+    itemId?: string,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: queryKeys.items.publicItem(itemId || ''),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/public/items/${encodeURIComponent(itemId!)}`,
+          method: 'GET',
+        });
+        if (!resp.success || !resp.item) {
+          throw new Error(resp.message || 'Failed to get the public artifact');
+        }
+        return toItem(resp.item);
+      },
+      enabled: Boolean(itemId),
+      ...options,
+    } as any);
+  };
+
+  /** The artifacts this account has published: a public profile page. */
+  const useAccountPublications = (
+    handle?: string,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: queryKeys.items.byOwner(handle || ''),
+      queryFn: async () =>
+        searchLibrary({ owner: handle, max: 100, sort: 'recent' }),
+      enabled: Boolean(handle),
+      ...options,
+    } as any);
+  };
+
+  /** The artifacts the signed-in visitor orbits. */
+  const useMyOrbits = (
+    offset: number = 0,
+    max: number = 20,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.orbits(), offset, max] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/orbits?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the orbits');
+        }
+        return {
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+          total: Number(resp.total ?? 0),
+        };
+      },
+      ...options,
+    } as any);
+  };
+
+  /**
+   * What one account orbits, on its public profile.
+   *
+   * Whether it publishes them at all is the service's answer, not this
+   * caller's: `shown` says so, and an account that has not opted in reads the
+   * same as one that orbits nothing.
+   */
+  const useAccountOrbits = (
+    handle?: string,
+    offset: number = 0,
+    max: number = 12,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [
+        ...queryKeys.items.orbits(),
+        'account',
+        handle || '',
+        offset,
+        max,
+      ] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/accounts/${encodeURIComponent(handle!)}/orbits?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the orbits');
+        }
+        return {
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+          total: Number(resp.total ?? 0),
+          shown: Boolean(resp.shown),
+        };
+      },
+      enabled: Boolean(handle),
+      ...options,
+    } as any);
+  };
+
+  /** Who orbits an artifact. */
+  const useItemOrbiters = (
+    itemId?: string,
+    offset: number = 0,
+    max: number = 20,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [
+        ...queryKeys.items.orbiters(itemId || ''),
+        offset,
+        max,
+      ] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId!)}/orbiters?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the orbiters');
+        }
+        return {
+          orbiters: resp.orbiters || [],
+          total: Number(resp.total ?? 0),
+        };
+      },
+      enabled: Boolean(itemId),
+      ...options,
+    } as any);
+  };
+
+  /**
+   * Show an artifact as orbited before the server has said so, and put it
+   * back if the server disagrees.
+   *
+   * A star that waits for a round trip feels broken, and the count is on the
+   * button the visitor just pressed. The server answers with a recount, which
+   * is what finally lands in the cache.
+   */
+  const applyOrbitToCaches = (
+    itemId: string,
+    orbited: boolean,
+    orbits?: number,
+  ) => {
+    const patch = (item: any) => {
+      if (!item || String(item.id ?? item.uid) !== String(itemId)) {
+        return item;
+      }
+      const nextOrbits =
+        orbits !== undefined
+          ? orbits
+          : Math.max(0, Number(item.orbits || 0) + (orbited ? 1 : -1));
+      return { ...item, orbited, orbits: nextOrbits };
+    };
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.items.all() },
+      (data: any) => {
+        if (!data) {
+          return data;
+        }
+        if (Array.isArray(data)) {
+          return data.map(patch);
+        }
+        if (Array.isArray(data.items)) {
+          return { ...data, items: data.items.map(patch) };
+        }
+        if (data.id || data.uid) {
+          return patch(data);
+        }
+        return data;
+      },
+    );
+  };
+
+  const useOrbitItem = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/orbit`,
+          method: 'PUT',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to orbit the artifact');
+        }
+        return { itemId, orbits: Number(resp.orbits ?? 0), orbited: true };
+      },
+      onMutate: async (itemId: string) => {
+        applyOrbitToCaches(itemId, true);
+        return { itemId };
+      },
+      onError: (_error, itemId) => {
+        applyOrbitToCaches(itemId, false);
+      },
+      onSuccess: result => {
+        applyOrbitToCaches(result.itemId, true, result.orbits);
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.orbits() });
+      },
+    });
+  };
+
+  const useUnorbitItem = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/orbit`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to leave the orbit');
+        }
+        return { itemId, orbits: Number(resp.orbits ?? 0), orbited: false };
+      },
+      onMutate: async (itemId: string) => {
+        applyOrbitToCaches(itemId, false);
+        return { itemId };
+      },
+      onError: (_error, itemId) => {
+        applyOrbitToCaches(itemId, true);
+      },
+      onSuccess: result => {
+        applyOrbitToCaches(result.itemId, false, result.orbits);
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.orbits() });
+      },
+    });
+  };
+
+  /** Feature an artifact on the home page. `platform_admin` only. */
+  const useFeatureItem = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        rank,
+      }: {
+        itemId: string;
+        rank?: number;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
+          method: 'PUT',
+          body: { rank: rank ?? null },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to feature the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+      },
+    });
+  };
+
+  const useUnfeatureItem = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to unfeature the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+      },
+    });
+  };
+
+  const useSetFeaturedRank = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        rank,
+      }: {
+        itemId: string;
+        rank: number;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
+          method: 'PATCH',
+          body: { rank },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to move the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.featured() });
+      },
+    });
+  };
+
+  /**
+   * What an artifact looks like in the library: a capture the publisher took,
+   * the box drawn for its kind, or an icon from the Datalayer set.
+   */
+  const useSetItemImage = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        kind,
+        ref,
+        data,
+      }: {
+        itemId: string;
+        kind: 'capture' | 'box' | 'icon';
+        ref?: string;
+        data?: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/image`,
+          method: 'PUT',
+          body: { kind, ref, data },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to set the image');
+        }
+        return resp.image;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+      },
+    });
+  };
+
+  const useResetItemImage = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/image`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to reset the image');
+        }
+        return resp.image;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+      },
+    });
+  };
+
+  /**
+   * Tell the library that an artifact was reused: cloned into a space, or
+   * instantiated as a runtime. The reuse itself belongs to the service that
+   * performed it, so this is a count, not the act.
+   */
+  const useCountItemReuse = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        kind,
+      }: {
+        itemId: string;
+        kind: 'clone' | 'instantiate';
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/reused`,
+          method: 'POST',
+          body: { kind },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to count the reuse');
+        }
+        return resp;
+      },
+    });
+  };
+
+  /**
+   * Publish the platform's own catalogue — the agents — into the library.
+   * `platform_admin` only; the catalogue lives in this application's build.
+   */
+  const useSyncArtifactCatalogue = () => {
+    return useMutation({
+      mutationFn: async ({
+        artifacts,
+        artifactType = 'agent',
+      }: {
+        artifacts: Array<Record<string, any>>;
+        artifactType?: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/artifacts/sync`,
+          method: 'PUT',
+          body: { artifact_type: artifactType, artifacts },
+        });
+        if (!resp.success) {
+          throw new Error(
+            resp.message || 'Failed to synchronize the catalogue',
+          );
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+      },
+    });
+  };
+
+  /**
+   * Publish an artifact in the library: choose its image, then make it
+   * public.
+   *
+   * The one place that publishes. It used to be a `ToggleSwitch` in each of
+   * seven tables and three editors, each with its own copy of the mutation
+   * and its own idea of what to roll back; publishing is an act with
+   * consequences a switch cannot express — a picture to choose, a public page
+   * that appears, a search it enters.
+   *
+   * The image is set first: a failure there leaves the artifact private, which
+   * is recoverable by trying again, where the reverse would publish something
+   * showing the wrong picture.
+   */
+  const usePublishArtifact = () => {
+    const setImage = useSetItemImage();
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        image,
+      }: {
+        itemId: string;
+        image?: {
+          kind: 'capture' | 'box' | 'icon';
+          ref?: string;
+          data?: string;
+        };
+      }) => {
+        if (image) {
+          try {
+            await setImage.mutateAsync({ itemId, ...image });
+          } catch (error) {
+            throw new Error(
+              `The image could not be set, so the artifact stays private: ${
+                (error as Error)?.message || 'unknown error'
+              }`,
+              { cause: error },
+            );
+          }
+        }
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
+          method: 'PATCH',
+          body: { is_public: true },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to publish the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+        queryClient.invalidateQueries({ queryKey: ['spaces'] });
+      },
+    });
+  };
+
+  /**
+   * Withdraw an artifact from the library. Its orbits are kept: publishing it
+   * again brings them back.
+   */
+  const useUnpublishArtifact = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
+          method: 'PATCH',
+          body: { is_public: false },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to withdraw the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+        queryClient.invalidateQueries({ queryKey: ['spaces'] });
       },
     });
   };
@@ -7752,32 +8322,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Refresh public courses list
-   * @param options - Mutation options
-   */
-  const useRefreshPublicCourses = (
-    options?: UseMutationOptions<unknown, Error, void>,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/courses/public`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.courses.public(),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Refresh instructor courses list
    * @param options - Mutation options
    */
@@ -8065,29 +8609,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Get public items (query hook)
-   * @param options - Query options
-   */
-  const usePublicItems = (options?: UseQueryOptions<unknown, Error>) => {
-    return useQuery({
-      queryKey: queryKeys.items.public(),
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/search?q=*&max=-1`,
-          method: 'GET',
-        });
-        return {
-          ...resp,
-          items: (resp.items || [])
-            .map((item: any) => toItem(item))
-            .filter(Boolean),
-        };
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Get the current user's own public items (publications).
    * @param options - Query options
    */
@@ -8105,35 +8626,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             .map((item: any) => toItem(item))
             .filter(Boolean),
         };
-      },
-      ...options,
-    });
-  };
-
-  /**
-   * Refresh public items
-   * @param options - Mutation options
-   */
-  const useRefreshPublicItems = (
-    options?: UseMutationOptions<unknown, Error, void>,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/search?q=*&max=-1`,
-          method: 'GET',
-        });
-        return {
-          ...resp,
-          items: (resp.items || [])
-            .map((item: any) => toItem(item))
-            .filter(Boolean),
-        };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.public() });
       },
       ...options,
     });
@@ -9098,7 +9590,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Courses
     useCourse,
     useUpdateCourse,
-    usePublicCourses,
     useInstructorCourses,
     useCourseEnrollments,
     useEnrollStudentToCourse,
@@ -9108,7 +9599,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useConfirmCourseItemCompletion,
     useSetCourseItems,
     useRefreshCourse,
-    useRefreshPublicCourses,
     useRefreshInstructorCourses,
     useRefreshCoursesEnrollments,
     useRefreshStudent,
@@ -9182,20 +9672,31 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useMakeItemPublic,
     useMakeItemPrivate,
     useSearchPublicItems,
-    usePublicItems,
     usePublications,
-    useRefreshPublicItems,
+
+    // Library (search, orbits, featuring, images, reuse)
+    useFeaturedItems,
+    usePublicItem,
+    useAccountPublications,
+    useMyOrbits,
+    useAccountOrbits,
+    useItemOrbiters,
+    useOrbitItem,
+    useUnorbitItem,
+    useFeatureItem,
+    useUnfeatureItem,
+    useSetFeaturedRank,
+    useSetItemImage,
+    useResetItemImage,
+    useCountItemReuse,
+    useSyncArtifactCatalogue,
+    usePublishArtifact,
+    useUnpublishArtifact,
     useRefreshSpaceItems,
     useClearCachedPublicItems,
     useClearCachedItems,
 
     // Pages
-    usePage,
-    usePages,
-    useCreatePage,
-    useUpdatePage,
-    useDeletePage,
-
 
     // Secrets
     useSecret,

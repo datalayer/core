@@ -21,6 +21,8 @@ import {
   listSyncSessions,
   resolveSyncConflict,
   createDatasetRevision,
+  attachDataServerPublication,
+  cloneDatasetPublication,
   createDatasetPublication,
   cancelOperation,
   cancelTransfer,
@@ -56,6 +58,8 @@ import {
   type DatasetRevision,
   type DatasetRevisionCreate,
   type DatasetRevisionList,
+  type DataServerAttachment,
+  type DatasetClone,
   type DatasetPublication,
   type DatasetPublicationCreate,
   type DatasetPublicationList,
@@ -152,7 +156,9 @@ export type ContentSourceKind = ContentSource['kind'];
 
 export const useDatasetRevisions = (sourceUid?: string) => {
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
   return useQuery<DatasetRevisionList>({
     queryKey: queryKeys.contents.datasetRevisions(sourceUid ?? ''),
     queryFn: () => listDatasetRevisions(token ?? '', sourceUid!, contentsUrl),
@@ -160,12 +166,21 @@ export const useDatasetRevisions = (sourceUid?: string) => {
   });
 };
 
-export const useDatasetRevision = (sourceUid?: string, revisionUid?: string) => {
+export const useDatasetRevision = (
+  sourceUid?: string,
+  revisionUid?: string,
+) => {
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
   return useQuery<DatasetRevision>({
-    queryKey: queryKeys.contents.datasetRevision(sourceUid ?? '', revisionUid ?? ''),
-    queryFn: () => getDatasetRevision(token ?? '', sourceUid!, revisionUid!, contentsUrl),
+    queryKey: queryKeys.contents.datasetRevision(
+      sourceUid ?? '',
+      revisionUid ?? '',
+    ),
+    queryFn: () =>
+      getDatasetRevision(token ?? '', sourceUid!, revisionUid!, contentsUrl),
     enabled: Boolean(token && contentsUrl && sourceUid && revisionUid),
   });
 };
@@ -173,24 +188,46 @@ export const useDatasetRevision = (sourceUid?: string, revisionUid?: string) => 
 export const useCreateDatasetRevision = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
-  return useMutation<DatasetRevision, Error,
-    { sourceUid: string; request: DatasetRevisionCreate; idempotencyKey: string }>({
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<
+    DatasetRevision,
+    Error,
+    {
+      sourceUid: string;
+      request: DatasetRevisionCreate;
+      idempotencyKey: string;
+    }
+  >({
     mutationFn: ({ sourceUid, request, idempotencyKey }) =>
-      createDatasetRevision(token ?? '', sourceUid, request, idempotencyKey, contentsUrl),
+      createDatasetRevision(
+        token ?? '',
+        sourceUid,
+        request,
+        idempotencyKey,
+        contentsUrl,
+      ),
     onSuccess: revision => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.datasetRevisions(revision.sourceUid) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(revision.sourceUid) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.datasetRevisions(revision.sourceUid),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.source(revision.sourceUid),
+      });
     },
   });
 };
 
 export const useDatasetPublications = (sourceUid?: string) => {
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
   return useQuery<DatasetPublicationList>({
     queryKey: queryKeys.contents.datasetPublications(sourceUid ?? ''),
-    queryFn: () => listDatasetPublications(token ?? '', sourceUid!, contentsUrl),
+    queryFn: () =>
+      listDatasetPublications(token ?? '', sourceUid!, contentsUrl),
     enabled: Boolean(token && contentsUrl && sourceUid),
   });
 };
@@ -198,28 +235,111 @@ export const useDatasetPublications = (sourceUid?: string) => {
 export const useCreateDatasetPublication = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
-  return useMutation<DatasetPublication, Error,
-    { sourceUid: string; request: DatasetPublicationCreate; idempotencyKey: string }>({
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<
+    DatasetPublication,
+    Error,
+    {
+      sourceUid: string;
+      request: DatasetPublicationCreate;
+      idempotencyKey: string;
+    }
+  >({
     mutationFn: ({ sourceUid, request, idempotencyKey }) =>
-      createDatasetPublication(token ?? '', sourceUid, request, idempotencyKey, contentsUrl),
-    onSuccess: publication => queryClient.invalidateQueries({
-      queryKey: queryKeys.contents.datasetPublications(publication.sourceUid),
-    }),
+      createDatasetPublication(
+        token ?? '',
+        sourceUid,
+        request,
+        idempotencyKey,
+        contentsUrl,
+      ),
+    onSuccess: publication =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.datasetPublications(publication.sourceUid),
+      }),
+  });
+};
+
+/**
+ * Clone a published Dataset into the caller's own catalog.
+ *
+ * The idempotency key is derived from the publication rather than random: a
+ * retried click finds the clone it already made instead of making a second
+ * one.
+ */
+export const useCloneDatasetPublication = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<
+    DatasetClone,
+    Error,
+    { sourceUid: string; publicationUid: string }
+  >({
+    mutationFn: ({ sourceUid, publicationUid }) =>
+      cloneDatasetPublication(
+        token ?? '',
+        sourceUid,
+        publicationUid,
+        `dataset-clone:${publicationUid}`,
+        contentsUrl,
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.all() }),
+  });
+};
+
+/**
+ * Attach a published Data Server as a Datasource of the caller's own.
+ *
+ * The idempotency key is derived from the publication: a retried click finds
+ * the Datasource it already made rather than making a second one.
+ */
+export const useAttachDataServerPublication = () => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<
+    DataServerAttachment,
+    Error,
+    { sourceUid: string; publicationUid: string }
+  >({
+    mutationFn: ({ sourceUid, publicationUid }) =>
+      attachDataServerPublication(
+        token ?? '',
+        sourceUid,
+        publicationUid,
+        `dataserver-attach:${publicationUid}`,
+        contentsUrl,
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.contents.all() }),
   });
 };
 
 export const useUnpublishDataset = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
-  const contentsUrl = useCoreStore(state => state.configuration.contentsUrl || state.configuration.runtimesUrl);
-  return useMutation<DatasetPublication, Error,
-    { sourceUid: string; publicationUid: string }>({
+  const contentsUrl = useCoreStore(
+    state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
+  );
+  return useMutation<
+    DatasetPublication,
+    Error,
+    { sourceUid: string; publicationUid: string }
+  >({
     mutationFn: ({ sourceUid, publicationUid }) =>
       unpublishDataset(token ?? '', sourceUid, publicationUid, contentsUrl),
-    onSuccess: publication => queryClient.invalidateQueries({
-      queryKey: queryKeys.contents.datasetPublications(publication.sourceUid),
-    }),
+    onSuccess: publication =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.datasetPublications(publication.sourceUid),
+      }),
   });
 };
 
@@ -306,9 +426,7 @@ export type ContentSourceListFilters = {
 };
 
 /** Query the contents visible to the current user. */
-export const useContentSources = (
-  filters: ContentSourceListFilters = {},
-) => {
+export const useContentSources = (filters: ContentSourceListFilters = {}) => {
   const token = useIAMStore(state => state.token);
   const contentsUrl = useCoreStore(
     state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
@@ -769,7 +887,8 @@ export const useSyncConflicts = (sessionUid?: string, openOnly = true) => {
   );
   return useQuery<SyncConflictList>({
     queryKey: [...queryKeys.contents.syncConflicts(sessionUid ?? ''), openOnly],
-    queryFn: () => listSyncConflicts(token ?? '', sessionUid!, { openOnly }, contentsUrl),
+    queryFn: () =>
+      listSyncConflicts(token ?? '', sessionUid!, { openOnly }, contentsUrl),
     enabled: Boolean(token && contentsUrl && sessionUid),
   });
 };
@@ -784,14 +903,31 @@ export const useResolveSyncConflict = () => {
   return useMutation<
     SyncSessionView,
     Error,
-    { sessionUid: string; conflictUid: string; use: 'local' | 'remote' | 'keep-both' }
+    {
+      sessionUid: string;
+      conflictUid: string;
+      use: 'local' | 'remote' | 'keep-both';
+    }
   >({
     mutationFn: ({ sessionUid, conflictUid, use }) =>
-      resolveSyncConflict(token ?? '', sessionUid, conflictUid, { use }, contentsUrl),
+      resolveSyncConflict(
+        token ?? '',
+        sessionUid,
+        conflictUid,
+        { use },
+        contentsUrl,
+      ),
     onSuccess: session => {
-      queryClient.setQueryData(queryKeys.contents.syncSession(session.uid), session);
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.syncConflicts(session.uid) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.syncSessions() });
+      queryClient.setQueryData(
+        queryKeys.contents.syncSession(session.uid),
+        session,
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.syncConflicts(session.uid),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.syncSessions(),
+      });
     },
   });
 };
@@ -804,10 +940,16 @@ export const useCancelSyncSession = () => {
     state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
   return useMutation<SyncSessionView, Error, string>({
-    mutationFn: sessionUid => cancelSyncSession(token ?? '', sessionUid, contentsUrl),
+    mutationFn: sessionUid =>
+      cancelSyncSession(token ?? '', sessionUid, contentsUrl),
     onSuccess: session => {
-      queryClient.setQueryData(queryKeys.contents.syncSession(session.uid), session);
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.syncSessions() });
+      queryClient.setQueryData(
+        queryKeys.contents.syncSession(session.uid),
+        session,
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.syncSessions(),
+      });
     },
   });
 };
@@ -877,9 +1019,14 @@ export const useRevokeBridge = () => {
     mutationFn: bridgeUid => revokeBridge(token ?? '', bridgeUid, contentsUrl),
     onSuccess: bridge => {
       queryClient.setQueryData(queryKeys.contents.bridge(bridge.uid), bridge);
-      queryClient.setQueryData(queryKeys.contents.bridgeSession(bridge.attachmentUid), bridge);
+      queryClient.setQueryData(
+        queryKeys.contents.bridgeSession(bridge.attachmentUid),
+        bridge,
+      );
       queryClient.invalidateQueries({ queryKey: queryKeys.contents.bridges() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.attachments() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.attachments(),
+      });
     },
   });
 };
@@ -949,7 +1096,8 @@ export const useCloudObjects = (
       options.prefix,
       options.cursor,
     ),
-    queryFn: () => listCloudObjects(token ?? '', sourceUid!, options, contentsUrl),
+    queryFn: () =>
+      listCloudObjects(token ?? '', sourceUid!, options, contentsUrl),
     enabled: Boolean(token && contentsUrl && sourceUid),
     staleTime: 30_000,
   });
@@ -964,7 +1112,8 @@ export const useCredentialDiagnostics = (sourceUid?: string) => {
 
   return useQuery<CredentialDiagnostics>({
     queryKey: queryKeys.contents.credentialDiagnostics(sourceUid ?? ''),
-    queryFn: () => getCredentialDiagnostics(token ?? '', sourceUid!, contentsUrl),
+    queryFn: () =>
+      getCredentialDiagnostics(token ?? '', sourceUid!, contentsUrl),
     enabled: Boolean(token && contentsUrl && sourceUid),
     staleTime: 60_000,
   });
@@ -978,7 +1127,8 @@ export const useTestCloudConnection = () => {
   );
 
   return useMutation<ConnectionTest, Error, string>({
-    mutationFn: sourceUid => testCloudConnection(token ?? '', sourceUid, contentsUrl),
+    mutationFn: sourceUid =>
+      testCloudConnection(token ?? '', sourceUid, contentsUrl),
   });
 };
 
@@ -1091,7 +1241,9 @@ export const useCreateMcpSession = () => {
     mutationFn: ({ request, idempotencyKey }) =>
       createMcpSession(token ?? '', request, idempotencyKey, contentsUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpSessions() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.mcpSessions(),
+      });
     },
   });
 };
@@ -1104,9 +1256,12 @@ export const useRevokeMcpSession = () => {
   );
 
   return useMutation<McpSession, Error, string>({
-    mutationFn: sessionUid => revokeMcpSession(token ?? '', sessionUid, contentsUrl),
+    mutationFn: sessionUid =>
+      revokeMcpSession(token ?? '', sessionUid, contentsUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpSessions() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.mcpSessions(),
+      });
     },
   });
 };
@@ -1128,7 +1283,9 @@ export const useMcpCall = (sessionUid?: string, callUid?: string) => {
     queryFn: () => getMcpCall(token ?? '', sessionUid!, callUid!, contentsUrl),
     enabled: Boolean(token && contentsUrl && sessionUid && callUid),
     refetchInterval: query =>
-      query.state.data && isMcpCallTerminal(query.state.data.status) ? false : 2_000,
+      query.state.data && isMcpCallTerminal(query.state.data.status)
+        ? false
+        : 2_000,
   });
 };
 
@@ -1154,7 +1311,11 @@ export const useCallMcpTool = () => {
     state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
-  return useMutation<McpCall, Error, { sessionUid: string; request: McpCallCreate }>({
+  return useMutation<
+    McpCall,
+    Error,
+    { sessionUid: string; request: McpCallCreate }
+  >({
     mutationFn: ({ sessionUid, request }) =>
       callMcpTool(token ?? '', sessionUid, request, contentsUrl),
     onSuccess: call => {
@@ -1166,13 +1327,18 @@ export const useCallMcpTool = () => {
         queryKey: queryKeys.contents.mcpCalls(call.sessionUid),
       });
       if (call.status === 'pending-approval') {
-        queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpApprovals() });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contents.mcpApprovals(),
+        });
       }
     },
   });
 };
 
-export type McpApprovalListFilters = { status?: McpApprovalStatus; sourceUid?: string };
+export type McpApprovalListFilters = {
+  status?: McpApprovalStatus;
+  sourceUid?: string;
+};
 
 /**
  * The approvals waiting on the caller, or those already decided. The
@@ -1195,7 +1361,9 @@ export const useMcpApprovals = (
       const page = await listMcpApprovals(token ?? '', { status }, contentsUrl);
       return {
         items: filters.sourceUid
-          ? page.items.filter(approval => approval.sourceUid === filters.sourceUid)
+          ? page.items.filter(
+              approval => approval.sourceUid === filters.sourceUid,
+            )
           : page.items,
       };
     },
@@ -1221,7 +1389,9 @@ export const useDecideMcpApproval = () => {
     mutationFn: ({ approvalUid, decision, note }) =>
       decideMcpApproval(token ?? '', approvalUid, decision, note, contentsUrl),
     onSuccess: approval => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.mcpApprovals() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.mcpApprovals(),
+      });
       queryClient.invalidateQueries({
         queryKey: queryKeys.contents.mcpCalls(approval.sessionUid),
       });
@@ -1248,8 +1418,10 @@ export const useDatasourceSchema = (
 
   return useQuery<DatasourceSchema>({
     queryKey: queryKeys.contents.datasourceSchema(sourceUid ?? ''),
-    queryFn: () => discoverDatasourceSchema(token ?? '', sourceUid!, contentsUrl),
-    enabled: Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
+    queryFn: () =>
+      discoverDatasourceSchema(token ?? '', sourceUid!, contentsUrl),
+    enabled:
+      Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
     staleTime: 300_000,
   });
 };
@@ -1263,7 +1435,8 @@ export const useDatasourceCapabilities = (sourceUid?: string) => {
 
   return useQuery<DatasourceCapabilities>({
     queryKey: queryKeys.contents.datasourceCapabilities(sourceUid ?? ''),
-    queryFn: () => getDatasourceCapabilities(token ?? '', sourceUid!, contentsUrl),
+    queryFn: () =>
+      getDatasourceCapabilities(token ?? '', sourceUid!, contentsUrl),
     enabled: Boolean(token && contentsUrl && sourceUid),
     staleTime: 300_000,
   });
@@ -1277,7 +1450,8 @@ export const useTestDatasource = () => {
   );
 
   return useMutation<DatasourceTest, Error, string>({
-    mutationFn: sourceUid => testDatasource(token ?? '', sourceUid, contentsUrl),
+    mutationFn: sourceUid =>
+      testDatasource(token ?? '', sourceUid, contentsUrl),
   });
 };
 
@@ -1292,10 +1466,20 @@ export const useCreateDatasourceQuery = () => {
   return useMutation<
     DatasourceQuery,
     Error,
-    { sourceUid: string; request: DatasourceQueryCreate; idempotencyKey: string }
+    {
+      sourceUid: string;
+      request: DatasourceQueryCreate;
+      idempotencyKey: string;
+    }
   >({
     mutationFn: ({ sourceUid, request, idempotencyKey }) =>
-      createDatasourceQuery(token ?? '', sourceUid, request, idempotencyKey, contentsUrl),
+      createDatasourceQuery(
+        token ?? '',
+        sourceUid,
+        request,
+        idempotencyKey,
+        contentsUrl,
+      ),
     onSuccess: query => {
       queryClient.setQueryData(queryKeys.contents.query(query.uid), query);
       queryClient.invalidateQueries({
@@ -1322,7 +1506,9 @@ export const useDatasourceQuery = (queryUid?: string) => {
     queryFn: () => getDatasourceQuery(token ?? '', queryUid!, contentsUrl),
     enabled: Boolean(token && contentsUrl && queryUid),
     refetchInterval: query =>
-      query.state.data && isDatasourceQueryTerminal(query.state.data.status) ? false : 1_000,
+      query.state.data && isDatasourceQueryTerminal(query.state.data.status)
+        ? false
+        : 1_000,
     refetchOnWindowFocus: true,
   });
 };
@@ -1339,8 +1525,10 @@ export const useDatasourceQueries = (
 
   return useQuery<DatasourceQueryList>({
     queryKey: queryKeys.contents.datasourceQueries(sourceUid ?? ''),
-    queryFn: () => listDatasourceQueries(token ?? '', sourceUid!, {}, contentsUrl),
-    enabled: Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
+    queryFn: () =>
+      listDatasourceQueries(token ?? '', sourceUid!, {}, contentsUrl),
+    enabled:
+      Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
     staleTime: 15_000,
   });
 };
@@ -1354,7 +1542,8 @@ export const useCancelDatasourceQuery = () => {
   );
 
   return useMutation<DatasourceQuery, Error, string>({
-    mutationFn: queryUid => cancelDatasourceQuery(token ?? '', queryUid, contentsUrl),
+    mutationFn: queryUid =>
+      cancelDatasourceQuery(token ?? '', queryUid, contentsUrl),
     onSuccess: query => {
       queryClient.setQueryData(queryKeys.contents.query(query.uid), query);
       queryClient.invalidateQueries({
@@ -1371,9 +1560,18 @@ export const useDownloadDatasourceQueryResults = () => {
     state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
-  return useMutation<DatasourceQueryResultBytes, Error, { queryUid: string; range?: string }>({
+  return useMutation<
+    DatasourceQueryResultBytes,
+    Error,
+    { queryUid: string; range?: string }
+  >({
     mutationFn: ({ queryUid, range }) =>
-      downloadDatasourceQueryResults(token ?? '', queryUid, { range }, contentsUrl),
+      downloadDatasourceQueryResults(
+        token ?? '',
+        queryUid,
+        { range },
+        contentsUrl,
+      ),
   });
 };
 
@@ -1391,12 +1589,19 @@ export const useSaveQueryAsDataset = () => {
     { queryUid: string; datasetUid: string; path: string }
   >({
     mutationFn: ({ queryUid, datasetUid, path }) =>
-      saveDatasourceQueryAsDataset(token ?? '', queryUid, { datasetUid, path }, contentsUrl),
+      saveDatasourceQueryAsDataset(
+        token ?? '',
+        queryUid,
+        { datasetUid, path },
+        contentsUrl,
+      ),
     onSuccess: revision => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.contents.datasetRevisions(revision.sourceUid),
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(revision.sourceUid) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.source(revision.sourceUid),
+      });
     },
   });
 };
@@ -1414,7 +1619,12 @@ export const useCreateDatasourceQueryTicket = () => {
     { queryUid: string; request?: CapabilityTicketRequest }
   >({
     mutationFn: ({ queryUid, request }) =>
-      createDatasourceQueryTicket(token ?? '', queryUid, request ?? {}, contentsUrl),
+      createDatasourceQueryTicket(
+        token ?? '',
+        queryUid,
+        request ?? {},
+        contentsUrl,
+      ),
   });
 };
 
@@ -1439,10 +1649,13 @@ export const useDataserverStatus = (
   return useQuery<DataServerStatus>({
     queryKey: queryKeys.contents.dataserverStatus(sourceUid ?? ''),
     queryFn: () => getDataserverStatus(token ?? '', sourceUid!, contentsUrl),
-    enabled: Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
+    enabled:
+      Boolean(token && contentsUrl && sourceUid) && (options.enabled ?? true),
     placeholderData: previous => previous,
     refetchInterval: query =>
-      query.state.data?.state === 'revoked' ? false : (options.intervalMs ?? 10_000),
+      query.state.data?.state === 'revoked'
+        ? false
+        : (options.intervalMs ?? 10_000),
     refetchOnWindowFocus: true,
   });
 };
@@ -1469,8 +1682,13 @@ export const useDataserverAction = () => {
           ? resumeDataserver
           : revokeDataserver)(token ?? '', sourceUid, contentsUrl),
     onSuccess: (status, { sourceUid }) => {
-      queryClient.setQueryData(queryKeys.contents.dataserverStatus(sourceUid), status);
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(sourceUid) });
+      queryClient.setQueryData(
+        queryKeys.contents.dataserverStatus(sourceUid),
+        status,
+      );
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.source(sourceUid),
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.contents.sources() });
     },
   });
@@ -1484,7 +1702,8 @@ export const useTestDataserver = () => {
   );
 
   return useMutation<DataServerConnectivity, Error, string>({
-    mutationFn: sourceUid => testDataserver(token ?? '', sourceUid, contentsUrl),
+    mutationFn: sourceUid =>
+      testDataserver(token ?? '', sourceUid, contentsUrl),
   });
 };
 
@@ -1496,16 +1715,21 @@ export const useRotateDataserverIdentity = () => {
     state => state.configuration.contentsUrl || state.configuration.runtimesUrl,
   );
 
-  return useMutation<IssuedIdentity, Error, { sourceUid: string; csr: string }>({
-    mutationFn: ({ sourceUid, csr }) =>
-      rotateDataserverIdentity(token ?? '', sourceUid, { csr }, contentsUrl),
-    onSuccess: (_identity, { sourceUid }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.dataserverStatus(sourceUid) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.source(sourceUid) });
+  return useMutation<IssuedIdentity, Error, { sourceUid: string; csr: string }>(
+    {
+      mutationFn: ({ sourceUid, csr }) =>
+        rotateDataserverIdentity(token ?? '', sourceUid, { csr }, contentsUrl),
+      onSuccess: (_identity, { sourceUid }) => {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contents.dataserverStatus(sourceUid),
+        });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.contents.source(sourceUid),
+        });
+      },
     },
-  });
+  );
 };
-
 
 // --- The folders mounted into a Runtime that is already running -------------
 //
@@ -1527,7 +1751,8 @@ export const useRuntimeMounts = (runtimeName?: string, enabled = true) => {
     queryKey: queryKeys.contents.runtimeMounts(runtimeName ?? ''),
     queryFn: () => getRuntimeMounts(token ?? '', runtimeName!, runtimesUrl),
     enabled: Boolean(token && runtimesUrl && runtimeName && enabled),
-    refetchInterval: query => (isRuntimeMountsSettled(query.state.data) ? false : 2_000),
+    refetchInterval: query =>
+      isRuntimeMountsSettled(query.state.data) ? false : 2_000,
   });
 };
 
@@ -1544,14 +1769,17 @@ export const useAttachRuntimeMounts = () => {
   const runtimesUrl = useCoreStore(state => state.configuration.runtimesUrl);
   const queryClient = useQueryClient();
   return useMutation<RuntimeMounts, Error, string>({
-    mutationFn: runtimeName => attachRuntimeMounts(token ?? '', runtimeName, runtimesUrl),
+    mutationFn: runtimeName =>
+      attachRuntimeMounts(token ?? '', runtimeName, runtimesUrl),
     onSuccess: (_data, runtimeName) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.contents.runtimeMounts(runtimeName),
       });
       // The Home Folder browser shows the same folders; a mount that appeared
       // in a sandbox and not on the page is the disagreement to avoid.
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.attachments() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.attachments(),
+      });
     },
   });
 };
@@ -1561,14 +1789,20 @@ export const useDetachRuntimeMount = () => {
   const token = useIAMStore(state => state.token);
   const runtimesUrl = useCoreStore(state => state.configuration.runtimesUrl);
   const queryClient = useQueryClient();
-  return useMutation<RuntimeMounts, Error, { runtimeName: string; target: string }>({
+  return useMutation<
+    RuntimeMounts,
+    Error,
+    { runtimeName: string; target: string }
+  >({
     mutationFn: ({ runtimeName, target }) =>
       detachRuntimeMount(token ?? '', runtimeName, target, runtimesUrl),
     onSuccess: (_data, { runtimeName }) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.contents.runtimeMounts(runtimeName),
       });
-      queryClient.invalidateQueries({ queryKey: queryKeys.contents.attachments() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.contents.attachments(),
+      });
     },
   });
 };
