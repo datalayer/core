@@ -25,6 +25,7 @@ export * from './format';
 export * from './McpDashboard';
 export * from './McpHome';
 export * from './ConnectedAgents';
+export * from './RunDetail';
 export * from './AlertDestinations';
 export * from './AlertRules';
 export * from './OrganizationPolicy';

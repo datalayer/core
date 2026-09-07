@@ -38,6 +38,7 @@ import {
   Heading,
   Label,
   Link,
+  RelativeTime,
   Select,
   Spinner,
   Text,
@@ -70,6 +71,7 @@ import { useCoreStore } from '../../state';
 import type { McpActiveClient } from '../../api/mcp';
 import type { McpAuditEvent } from '../../models/McpAuditEvent';
 import type { McpBinding } from '../../models/McpBinding';
+import type { McpTask, McpTaskStatus } from '../../models/McpTask';
 import { clientStatusOf, durationLabel, plural, timeAgo } from './format';
 import type { McpClientStatus } from './format';
 import { type McpErrorStateFn, type McpRoutes } from './types';
@@ -111,6 +113,34 @@ const STATUS_LOOK: Record<
   active: { label: 'Active', variant: 'success' },
   idle: { label: 'Idle', variant: 'attention' },
   disconnected: { label: 'Disconnected', variant: 'secondary' },
+};
+
+/**
+ * How a task's status is drawn.
+ *
+ * `input_required` is `attention` rather than `secondary` because it is the
+ * one status that is waiting on a person: a run stopped for an approval is
+ * not idling, it is asking, and it stays asking until somebody answers.
+ */
+const TASK_LOOK: Record<
+  McpTaskStatus,
+  { label: string; variant: 'success' | 'attention' | 'secondary' | 'danger' }
+> = {
+  working: { label: 'Working', variant: 'success' },
+  input_required: { label: 'Waiting on you', variant: 'attention' },
+  completed: { label: 'Completed', variant: 'secondary' },
+  failed: { label: 'Failed', variant: 'danger' },
+  cancelled: { label: 'Cancelled', variant: 'secondary' },
+};
+
+/** What a task is running, in one phrase. */
+const taskContext = (task: McpTask): string => {
+  if (task.notebookUid) {
+    return task.cellId
+      ? `Notebook ${task.notebookUid} · cell ${task.cellId}`
+      : `Notebook ${task.notebookUid}`;
+  }
+  return task.sandboxUid ? `Sandbox ${task.sandboxUid}` : '';
 };
 
 /** What a client is working on, in one phrase. */
@@ -208,6 +238,7 @@ const PanelEmpty = ({
 
 type ClientRow = McpActiveClient & { id: string; status: McpClientStatus };
 type SandboxRow = McpBinding & { id: string };
+type TaskRow = McpTask & { id: string };
 type CallRow = McpAuditEvent & { id: string };
 
 export const McpDashboard = ({
@@ -265,6 +296,31 @@ export const McpDashboard = ({
       (data?.sandboxes ?? []).map(binding => ({ ...binding, id: binding.uid })),
     [data?.sandboxes],
   );
+
+  /**
+   * The runs, the ones asking for a person first.
+   *
+   * `input_required` is a run that has stopped and will not move until
+   * somebody answers it, so it goes to the top however long it has been
+   * there; `working` next; then whatever has just finished, newest first. A
+   * list ordered only by time buries the one row that needs a hand.
+   */
+  const tasks = useMemo<TaskRow[]>(() => {
+    const rank: Record<McpTaskStatus, number> = {
+      input_required: 0,
+      working: 1,
+      failed: 2,
+      completed: 3,
+      cancelled: 3,
+    };
+    return [...(data?.tasks ?? [])]
+      .map(task => ({ ...task, id: task.uid }))
+      .sort(
+        (left, right) =>
+          rank[left.status] - rank[right.status] ||
+          right.lastUpdatedAt.localeCompare(left.lastUpdatedAt),
+      );
+  }, [data?.tasks]);
 
   const calls = useMemo<CallRow[]>(
     () => (data?.calls ?? []).map(call => ({ ...call, id: call.uid })),
@@ -461,6 +517,62 @@ export const McpDashboard = ({
             </ActionList>
           </ActionMenu.Overlay>
         </ActionMenu>
+      ),
+    },
+  ];
+
+  const taskColumns: DataTableProps<TaskRow>['columns'] = [
+    {
+      header: 'Run',
+      field: 'uid',
+      rowHeader: true,
+      renderCell: row => (
+        <Link
+          href={`${routes.runs}/${encodeURIComponent(row.uid)}`}
+          onClick={event => {
+            event.preventDefault();
+            navigate(`${routes.runs}/${encodeURIComponent(row.uid)}`);
+          }}
+          sx={{ fontFamily: 'mono', fontSize: 0 }}
+        >
+          {row.uid}
+        </Link>
+      ),
+    },
+    {
+      header: 'Status',
+      id: 'status',
+      width: '150px',
+      renderCell: row => (
+        <Label size="small" variant={TASK_LOOK[row.status].variant}>
+          {TASK_LOOK[row.status].label}
+        </Label>
+      ),
+    },
+    {
+      header: 'Tool',
+      id: 'tool',
+      width: '160px',
+      renderCell: row => <Text sx={{ fontSize: 0 }}>{row.tool || '—'}</Text>,
+    },
+    {
+      header: 'Running',
+      id: 'context',
+      width: 'growCollapse',
+      renderCell: row => (
+        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+          {taskContext(row) || '—'}
+        </Text>
+      ),
+    },
+    {
+      header: 'Updated',
+      id: 'updated',
+      width: '140px',
+      renderCell: row => (
+        <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
+          <RelativeTime datetime={row.lastUpdatedAt} />
+        </Text>
       ),
     },
   ];
@@ -759,21 +871,38 @@ export const McpDashboard = ({
           />
         ))}
 
-      {/* Running now — the durable tasks of milestone 2. */}
+      {/* Running now.
+          This drew `PanelEmpty` unconditionally, including the branch whose
+          own text read "Tasks are running, and the live pane ... arrives
+          with durable execution in milestone 2" — under a heading that said
+          "Nothing is running", with the tasks in `data.tasks` the whole
+          time. Tasks have run since `tasks/*` began answering, so the panel
+          was telling a person nothing was happening while their cell ran. */}
       {draws('runs') && !loading && (
         <Box>
-          <Heading as="h3" sx={{ fontSize: 1, mb: 2 }}>
-            Running now
-          </Heading>
-          <PanelEmpty
-            icon={PlayIcon}
-            heading="Nothing is running"
-            description={
-              (data?.tasks.length ?? 0) > 0
-                ? 'Tasks are running, and the live pane that shows their progress, their cell and their approvals arrives with durable execution in milestone 2.'
-                : 'A tool call that outlives its request becomes a task you can watch, cancel and answer. Durable execution arrives in milestone 2; until then every call finishes inside its own request and is listed under Recent calls.'
-            }
-          />
+          {tasks.length > 0 ? (
+            <Table.Container>
+              <Table.Title as="h3" id="mcp-runs">
+                Running now
+              </Table.Title>
+              <Table.Subtitle as="p" id="mcp-runs-subtitle">
+                A tool call that outlives its request. Open one to watch its
+                output, cancel it, or answer it when it is waiting on you.
+              </Table.Subtitle>
+              <DataTable
+                aria-labelledby="mcp-runs"
+                aria-describedby="mcp-runs-subtitle"
+                data={tasks}
+                columns={taskColumns}
+              />
+            </Table.Container>
+          ) : (
+            <PanelEmpty
+              icon={PlayIcon}
+              heading="Nothing is running"
+              description="A tool call that outlives its request becomes a task you can watch, cancel and answer. Ask a client for one — an agent that runs a long cell — and it appears here while it runs."
+            />
+          )}
         </Box>
       )}
 
