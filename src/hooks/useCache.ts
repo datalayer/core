@@ -7358,6 +7358,26 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Everything the library holds, as a query rather than a mutation.
+   *
+   * For the administration page, which has to show what *could* be featured
+   * as well as what is. Publishing the agent catalogue puts artifacts in the
+   * library; without this the page reported "6 agents published" and then
+   * listed none of them, because the only list it had was the featured one.
+   */
+  const useLibraryArtifacts = (
+    max: number = 100,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.all(), 'library-artifacts', max] as const,
+      queryFn: async () =>
+        searchLibrary({ max, sort: 'recent' } as LibrarySearchArgs),
+      ...options,
+    } as any);
+  };
+
+  /**
    * The featured artifacts, for the home page's ribbon.
    *
    * Anonymous-safe: the library answers this one without a token, and the
@@ -7727,6 +7747,36 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Refresh everything that carries an artifact's public flag or its image.
+   *
+   * `items` and `spaces` cover the library listings, but an artifact opened in
+   * an editor is read through its own per-type detail query
+   * (`notebooks.detail(id)`, `documents.detail(id)`, …), which shares no
+   * prefix with either. Leaving those alone is what made the Publish button
+   * keep saying "Publish" after publishing, and "Published" after withdrawing:
+   * the mutation succeeded, the editor's cached copy still held the old
+   * `is_public_b`, and nothing asked for it again for five minutes.
+   *
+   * Only the `details()` sub-namespace is invalidated, never `all()`, so a
+   * notebook's `model` query — its actual content — is not dragged into a
+   * refetch by a visibility change.
+   */
+  const invalidateArtifactVisibility = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+    queryClient.invalidateQueries({ queryKey: ['spaces'] });
+    for (const details of [
+      queryKeys.notebooks.details(),
+      queryKeys.documents.details(),
+      queryKeys.cells.details(),
+      queryKeys.lessons.details(),
+      queryKeys.exercises.details(),
+      queryKeys.assignments.details(),
+    ]) {
+      queryClient.invalidateQueries({ queryKey: details });
+    }
+  };
+
+  /**
    * What an artifact looks like in the library: a capture the publisher took,
    * the box drawn for its kind, or an icon from the Datalayer set.
    */
@@ -7753,9 +7803,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return resp.image;
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
-      },
+      onSuccess: invalidateArtifactVisibility,
     });
   };
 
@@ -7771,9 +7819,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return resp.image;
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
-      },
+      onSuccess: invalidateArtifactVisibility,
     });
   };
 
@@ -7911,10 +7957,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return resp;
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
-        queryClient.invalidateQueries({ queryKey: ['spaces'] });
-      },
+      onSuccess: invalidateArtifactVisibility,
     });
   };
 
@@ -7935,10 +7978,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         }
         return resp;
       },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
-        queryClient.invalidateQueries({ queryKey: ['spaces'] });
-      },
+      onSuccess: invalidateArtifactVisibility,
     });
   };
 
@@ -9741,6 +9781,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useMakeItemPublic,
     useMakeItemPrivate,
     useSearchPublicItems,
+    useLibraryArtifacts,
     usePublications,
 
     // Library (search, orbits, featuring, images, reuse)

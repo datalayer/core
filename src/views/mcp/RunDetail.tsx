@@ -54,10 +54,14 @@ import { McpErrorBlankslate } from '../../components/mcp';
 import {
   useAnswerTask,
   useCancelTask,
+  useRunTrace,
   useTask,
   useTaskEvents,
 } from '../../hooks/useMcp';
+import { TraceTimelineSection } from './TraceTimeline';
 import type { McpTask, McpTaskStatus } from '../../models/McpTask';
+import type { McpSpanNode } from '../../api/mcp/observability';
+import type { OtelSpan } from '../../api/otel/types';
 import { type McpErrorStateFn, type McpRoutes } from './types';
 
 /** How a run's status is drawn. Shared with the runs list. */
@@ -145,6 +149,90 @@ export const SAMPLE_RUN: McpTask = {
   },
 };
 
+/**
+ * The spans that run left behind, for the documentation to draw.
+ *
+ * The shape is the one a reader needs to recognise: the gateway's twenty-two
+ * seconds are almost entirely the sandbox's, and the durable step between
+ * them explains the gap. A timeline drawn from an empty trace would teach
+ * nobody what the timeline is for.
+ */
+export const SAMPLE_TRACE: McpSpanNode[] = (() => {
+  const at = (second: number, millisecond = 0): string =>
+    new Date(Date.UTC(2026, 8, 7, 12, 0, second, millisecond)).toISOString();
+  const span = (
+    id: string,
+    name: string,
+    service: string,
+    from: string,
+    to: string,
+  ): OtelSpan => ({
+    trace_id: '4f7a1c9d2b8e40a5b6c3d1e0f9a8b7c6',
+    span_id: id,
+    span_name: name,
+    service_name: service,
+    kind: 'SPAN_KIND_INTERNAL',
+    start_time: from,
+    end_time: to,
+    duration_ms: Date.parse(to) - Date.parse(from),
+  });
+  return [
+    {
+      span: span(
+        '01',
+        'mcp.tools/call execute_cell',
+        'jupyter-mcp-server',
+        at(0),
+        at(22),
+      ),
+      children: [
+        {
+          span: span(
+            '02',
+            'mcp.authorize',
+            'jupyter-mcp-server',
+            at(0),
+            at(0, 4),
+          ),
+          children: [],
+        },
+        {
+          span: span(
+            '03',
+            'durable.workflow.start',
+            'datalayer-durable',
+            at(0, 120),
+            at(0, 480),
+          ),
+          children: [
+            {
+              span: span(
+                '04',
+                'durable.step.execute',
+                'datalayer-durable',
+                at(0, 500),
+                at(22),
+              ),
+              children: [
+                {
+                  span: span(
+                    '05',
+                    'runtimes.kernel.execute',
+                    'datalayer-runtimes',
+                    at(1, 200),
+                    at(21, 900),
+                  ),
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+})();
+
 export interface RunDetailProps {
   /** The run to draw. */
   taskUid: string;
@@ -173,6 +261,10 @@ export const RunDetail = ({
   const run = useTask(mock ? undefined : taskUid);
   const cancel = useCancelTask();
   const answer = useAnswerTask();
+  // Asked for whatever the run's own trace holds; the hook itself stops
+  // polling when the run reaches a terminal state, and asks for nothing at
+  // all in `mock`.
+  const trace = useRunTrace(mock ? undefined : taskUid, { enabled: !mock });
   const [reply, setReply] = useState('');
 
   // Live while it runs, and it ends itself when the run is over. Never for
@@ -219,7 +311,14 @@ export const RunDetail = ({
         <Heading as="h2" sx={{ fontSize: 3, mt: 1, mb: 1 }}>
           {task.tool || 'Run'}
         </Heading>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <Label size="small" variant={look.variant}>
             {look.label}
           </Label>
@@ -317,6 +416,15 @@ export const RunDetail = ({
           </Text>
         </Box>
       )}
+
+      {/* What the run spent its time on, across every service that touched
+          it. After the output, because the output is what somebody came for
+          and this is why it took as long as it did. */}
+      <TraceTimelineSection
+        tree={mock ? SAMPLE_TRACE : (trace.data?.tree ?? [])}
+        traceId={mock ? SAMPLE_TRACE[0].span.trace_id : trace.data?.traceId}
+        live={!over}
+      />
 
       {/* Only while there is something to stop. Cancelling a run that has
           already finished is not an error, but offering it invites a person
