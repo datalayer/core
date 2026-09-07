@@ -109,6 +109,37 @@ export const outputTextOf = (task: McpTask): string => {
     .join('');
 };
 
+/**
+ * A run for the documentation to draw: cancelled mid-flight, holding the
+ * lines it printed before it stopped.
+ *
+ * Cancelled rather than completed on purpose. It is the state that shows
+ * both halves of what this view is for — the output a run keeps when it is
+ * stopped, and the reason it stopped — and it is the one a reader is most
+ * likely to be looking at when they open the documentation.
+ */
+export const SAMPLE_RUN: McpTask = {
+  uid: 'tsk_0980147b852244d098b04efd',
+  status: 'cancelled',
+  statusMessage: 'cancelled by the client',
+  tool: 'execute_cell',
+  notebookUid: '01KW96PZYRVKZXT8FS644GFD0D',
+  cellId: 'fdcac494',
+  initiatingUser: '01JV1VE1T5VG22Z05F6EFBMW8E',
+  createdAt: '2026-09-07T12:00:00Z',
+  lastUpdatedAt: '2026-09-07T12:00:22Z',
+  outputs: [
+    {
+      index: 0,
+      outputType: 'stream',
+      text: 'tick 0\ntick 1\ntick 2\ntick 3\ntick 4\ntick 5\n',
+    },
+  ],
+  result: {
+    content: [{ type: 'text', text: 'tick 6\ntick 7\nKeyboardInterrupt\n' }],
+  },
+};
+
 export interface RunDetailProps {
   /** The run to draw. */
   taskUid: string;
@@ -116,23 +147,36 @@ export interface RunDetailProps {
   errorState: McpErrorStateFn;
   /** Where this application puts the surfaces this view links to. */
   routes: McpRoutes;
+  /**
+   * Draw `SAMPLE_RUN` instead of asking the server, for documentation.
+   *
+   * The real component with fixed data, rather than a screenshot or a copy:
+   * a change to how a run is drawn reaches the documentation by itself, and
+   * a change that breaks it breaks the build rather than going unnoticed
+   * until somebody compares a picture.
+   */
+  mock?: boolean;
 }
 
 export const RunDetail = ({
   taskUid,
   errorState,
   routes,
+  mock = false,
 }: RunDetailProps): JSX.Element => {
   const navigate = useNavigate();
-  const run = useTask(taskUid);
+  const run = useTask(mock ? undefined : taskUid);
   const cancel = useCancelTask();
   const answer = useAnswerTask();
   const [reply, setReply] = useState('');
 
-  // Live while it runs, and it ends itself when the run is over.
-  useTaskEvents(taskUid, { enabled: Boolean(run.data) && !isRunOver(run.data!.status) });
+  // Live while it runs, and it ends itself when the run is over. Never for
+  // the documentation's copy: it names a run that does not exist.
+  useTaskEvents(taskUid, {
+    enabled: !mock && Boolean(run.data) && !isRunOver(run.data!.status),
+  });
 
-  if (run.isError) {
+  if (!mock && run.isError) {
     return (
       <McpErrorBlankslate
         state={errorState(run.error, 'Run')}
@@ -141,7 +185,7 @@ export const RunDetail = ({
     );
   }
 
-  if (run.isLoading || !run.data) {
+  if (!mock && (run.isLoading || !run.data)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
         <Spinner />
@@ -149,7 +193,7 @@ export const RunDetail = ({
     );
   }
 
-  const task = run.data;
+  const task = mock ? SAMPLE_RUN : run.data!;
   const look = RUN_STATUS_LOOK[task.status];
   const over = isRunOver(task.status);
   const output = outputTextOf(task);
