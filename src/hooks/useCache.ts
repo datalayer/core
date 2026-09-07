@@ -897,6 +897,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     if (raw.reuse !== undefined) meta.reuse = raw.reuse;
     if (raw.publisher !== undefined) meta.publisher = raw.publisher;
     if (raw.image !== undefined) meta.image = raw.image;
+    /*
+     * Where the artifact can be opened for editing.
+     *
+     * An item is a nested child of its space and carries no handle of its
+     * own, so the library resolves the space when it projects one. Without
+     * these two a page can link to the public reading of an artifact and has
+     * no way to offer the editable one.
+     */
+    if (raw.space_handle_s) meta.spaceHandle = raw.space_handle_s;
+    if (raw.space_owner_handle_s)
+      meta.spaceOwnerHandle = raw.space_owner_handle_s;
     return meta;
   };
 
@@ -7378,6 +7389,38 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * Everything an administrator has actually featured, and nothing else.
+   *
+   * Not `useFeaturedItems`. That one answers for the home page's ribbon, and
+   * a ribbon must never be an empty rail on a young deployment — so when
+   * nothing is featured it stands the most orbited artifacts in instead. Read
+   * from the administration page, that fallback is a lie: it lists artifacts
+   * nobody featured, numbers them by their position in the list, and offers
+   * to re-order them, which the service then refuses because they are not
+   * featured at all. `platform_admin` only.
+   */
+  const useAllFeaturedItems = (options?: UseQueryOptions<any, Error>) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.featured(), 'all'] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/featured/all`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(
+            resp.message || 'Failed to get the featured artifacts',
+          );
+        }
+        return (resp.items || [])
+          .map((item: any) => toItem(item))
+          .filter(Boolean);
+      },
+      ...options,
+    } as any);
+  };
+
+  /**
    * One public artifact by uid, with its content and its library metadata.
    *
    * The public pages used to `fetch` this endpoint themselves, which meant no
@@ -7820,18 +7863,20 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           data?: string;
         };
       }) => {
-        if (image) {
-          try {
-            await setImage.mutateAsync({ itemId, ...image });
-          } catch (error) {
-            throw new Error(
-              `The image could not be set, so the artifact stays private: ${
-                (error as Error)?.message || 'unknown error'
-              }`,
-              { cause: error },
-            );
-          }
-        }
+        /*
+         * Publish first, then dress it.
+         *
+         * The image used to be set before the artifact was made public, so
+         * that a picture that would not take left it private rather than
+         * published with the wrong one. That order could never work: the
+         * library indexes public artifacts, so a private one has no
+         * projection, and setting an image on it answered "The artifact is
+         * not found" — every first publish with a picture failed.
+         *
+         * The intent survives the reordering. The artifact goes public, which
+         * is what creates the projection; if the picture then will not take,
+         * it is withdrawn again and the message still tells the truth.
+         */
         const resp = await requestDatalayer({
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
           method: 'PATCH',
@@ -7839,6 +7884,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to publish the artifact');
+        }
+        if (image) {
+          try {
+            await setImage.mutateAsync({ itemId, ...image });
+          } catch (error) {
+            // Back to private, so the artifact is never left public wearing
+            // the drawing the publisher did not choose.
+            try {
+              await requestDatalayer({
+                url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
+                method: 'PATCH',
+                body: { is_public: false },
+              });
+            } catch {
+              // The withdrawal failed too; the error below is still the one
+              // worth showing, and it is the more actionable of the two.
+            }
+            throw new Error(
+              `The image could not be set, so the artifact stays private: ${
+                (error as Error)?.message || 'unknown error'
+              }`,
+              { cause: error },
+            );
+          }
         }
         return resp;
       },
@@ -9676,6 +9745,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
     // Library (search, orbits, featuring, images, reuse)
     useFeaturedItems,
+    useAllFeaturedItems,
     usePublicItem,
     useAccountPublications,
     useMyOrbits,
