@@ -961,6 +961,15 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     if (raw.space_handle_s) meta.spaceHandle = raw.space_handle_s;
     if (raw.space_owner_handle_s)
       meta.spaceOwnerHandle = raw.space_owner_handle_s;
+    /*
+     * The absolute address anyone can read it at.
+     *
+     * Built by the library, not here, because it needs the host the site is
+     * served from and the browser only knows the host it happens to be on —
+     * which on a development server is `localhost:3063`, the one address that
+     * is no use to whoever the link is being copied for.
+     */
+    if (raw.publicUrl) meta.publicUrl = raw.publicUrl;
     return meta;
   };
 
