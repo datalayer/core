@@ -7825,35 +7825,70 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Refresh everything that carries an artifact's public flag or its image.
    *
    * `items` and `spaces` cover the library listings, but an artifact opened in
-   * an editor is read through its own per-type detail query
-   * (`notebooks.detail(id)`, `documents.detail(id)`, …), which shares no
-   * prefix with either. Leaving those alone is what made the Publish button
-   * keep saying "Publish" after publishing, and "Published" after withdrawing:
-   * the mutation succeeded, the editor's cached copy still held the old
-   * `is_public_b`, and nothing asked for it again for five minutes.
-   *
-   * Only the `details()` sub-namespace is invalidated, never `all()`, so a
-   * notebook's `model` query — its actual content — is not dragged into a
-   * refetch by a visibility change.
+   * an editor is read through its own per-type query — `notebooks.detail(id)`
+   * for the editor, `notebooks.bySpace(id)` for the table — and neither
+   * shares a prefix with either of those. Leaving them alone is what made the
+   * Publish button keep saying "Publish" after publishing, and "Published"
+   * after withdrawing: the mutation succeeded, the cached copy still held the
+   * old `is_public_b`, and nothing asked for it again for five minutes.
    *
    * A course is a space, but it is not read through the `spaces` queries: it
    * has a namespace of its own, so publishing one from its header left the
    * course page holding the `public` flag it loaded with and the button
    * saying the opposite of what had just happened.
+   *
+   * **`refetchType: 'all'`, which is what makes any of the above work.**
+   *
+   * Naming a query is not the same as making it ask again. The default,
+   * `'active'`, refetches the queries something is currently watching and
+   * leaves the rest marked stale — right nearly everywhere, and wrong here,
+   * because this application sets `refetchOnMount: false` (see
+   * `DEFAULT_QUERY_OPTIONS`, and the client the web application builds). A
+   * query that mounts holding stale data renders it and asks for nothing.
+   *
+   * So publishing worked exactly once. The editor it was published from was
+   * mounted and flipped its button; the notebooks table, the library, the
+   * search page and the artifact's own public page were not, and kept the
+   * answer they already had. Come back to the editor after that and *it* is
+   * now the page that was not mounted for the next withdrawal, so its button
+   * is wrong too — which is what "it works the first time" means.
+   *
+   * The whole of each type's namespace, not only its `details()`. A table
+   * lists its artifacts under `bySpace(spaceId)`, which shares no prefix with
+   * `detail(id)` — so publishing from an editor and walking back to the table
+   * showed the row exactly as it was, switch and all.
+   *
+   * The `model` queries are the one thing held out. A notebook's model is its
+   * content, megabytes of it, and it lives *under* `detail(id)` — so
+   * refetching a namespace would pull every open notebook's content over the
+   * wire each time somebody pressed Publish. Whether an artifact is public
+   * says nothing about what is in it.
    */
   const invalidateArtifactVisibility = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
-    queryClient.invalidateQueries({ queryKey: ['spaces'] });
-    for (const details of [
-      queryKeys.notebooks.details(),
-      queryKeys.documents.details(),
-      queryKeys.cells.details(),
-      queryKeys.lessons.details(),
-      queryKeys.exercises.details(),
-      queryKeys.assignments.details(),
-      queryKeys.courses.details(),
+    const refetchType = 'all' as const;
+    /** Everything about an artifact except what is written in it. */
+    const notItsContent = (query: { queryKey: readonly unknown[] }) =>
+      query.queryKey[query.queryKey.length - 1] !== 'model';
+
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.items.all(),
+      refetchType,
+    });
+    queryClient.invalidateQueries({ queryKey: ['spaces'], refetchType });
+    for (const namespace of [
+      queryKeys.notebooks.all(),
+      queryKeys.documents.all(),
+      queryKeys.cells.all(),
+      queryKeys.lessons.all(),
+      queryKeys.exercises.all(),
+      queryKeys.assignments.all(),
+      queryKeys.courses.all(),
     ]) {
-      queryClient.invalidateQueries({ queryKey: details });
+      queryClient.invalidateQueries({
+        queryKey: namespace,
+        refetchType,
+        predicate: notItsContent,
+      });
     }
   };
 
@@ -7985,6 +8020,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       mutationFn: async ({
         itemId,
         image,
+        tags,
       }: {
         itemId: string;
         image?: {
@@ -7992,6 +8028,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           ref?: string;
           data?: string;
         };
+        /**
+         * The publisher's own words for their work, which is what somebody
+         * else will search for.
+         *
+         * Sent with the visibility rather than in a write of their own: the
+         * service writes them onto the artifact in the same operation that
+         * makes it public, so publishing still costs what it cost. Omitted
+         * entirely, they are left as they were — which is what withdrawing
+         * wants, and what an older caller gets.
+         */
+        tags?: string[];
       }) => {
         /*
          * Publish first, then dress it.
@@ -8010,7 +8057,10 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await requestDatalayer({
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
           method: 'PATCH',
-          body: { is_public: true },
+          body:
+            tags === undefined
+              ? { is_public: true }
+              : { is_public: true, tags },
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to publish the artifact');
