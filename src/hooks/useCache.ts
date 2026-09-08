@@ -1116,6 +1116,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'cell',
       name: cl.name_t,
       description: cl.description_t,
+      /*
+       * The words its owner filed it under.
+       *
+       * Every artifact type the library holds carries `tags_ss`, and the six
+       * space items — notebook, document, cell, lesson, exercise, assignment
+       * — were the six that never read it. So a notebook could be published
+       * under tags, be found by them in a search, and arrive at the card that
+       * shows them with none: the field was dropped here, one layer below
+       * anything that could notice.
+       */
+      tags: Array.isArray(cl.tags_ss) ? cl.tags_ss : [],
       source: cl.source_t,
       creationDate: new Date(cl.creation_ts_dt),
       public: cl.is_public_b ?? false,
@@ -1142,6 +1153,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'notebook',
       name: raw_notebook.name_t,
       description: raw_notebook.description_t,
+      tags: Array.isArray(raw_notebook.tags_ss) ? raw_notebook.tags_ss : [],
       nbformat: raw_notebook.model_s
         ? JSON.parse(raw_notebook.model_s)
         : undefined,
@@ -1172,6 +1184,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'document',
       name: doc.name_t,
       description: doc.description_t,
+      tags: Array.isArray(doc.tags_ss) ? doc.tags_ss : [],
       model: doc.model_s ? JSON.parse(doc.model_s) : undefined,
       public: doc.is_public_b ?? false,
       creationDate: new Date(doc.creation_ts_dt),
@@ -1199,6 +1212,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'lesson',
       name: raw_lesson.name_t,
       description: raw_lesson.description_t,
+      tags: Array.isArray(raw_lesson.tags_ss) ? raw_lesson.tags_ss : [],
       nbformat: raw_lesson.model_s ? JSON.parse(raw_lesson.model_s) : undefined,
       public: raw_lesson.is_public_b ?? false,
       creationDate: new Date(raw_lesson.creation_ts_dt),
@@ -1227,6 +1241,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'exercise',
       name: ex.name_t,
       description: ex.description_t,
+      tags: Array.isArray(ex.tags_ss) ? ex.tags_ss : [],
       help: ex.help_t,
       codePre: ex.code_pre_t,
       codeQuestion: ex.code_question_t,
@@ -1273,6 +1288,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'assignment',
       name: raw_assignment.name_t,
       description: raw_assignment.description_t,
+      tags: Array.isArray(raw_assignment.tags_ss) ? raw_assignment.tags_ss : [],
       nbformat: raw_assignment.model_s
         ? JSON.parse(raw_assignment.model_s)
         : undefined,
@@ -8030,6 +8046,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         itemId,
         image,
         tags,
+        description,
       }: {
         itemId: string;
         image?: {
@@ -8048,6 +8065,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
          * wants, and what an older caller gets.
          */
         tags?: string[];
+        /**
+         * What the artifact says about itself, in the publisher's words.
+         *
+         * Sent with the visibility for the same reason the tags are: the
+         * service writes it onto the artifact in the operation that makes it
+         * public. Omitted entirely, it is left as it was.
+         */
+        description?: string;
       }) => {
         /*
          * Publish first, then dress it.
@@ -8066,10 +8091,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await requestDatalayer({
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
           method: 'PATCH',
-          body:
-            tags === undefined
-              ? { is_public: true }
-              : { is_public: true, tags },
+          body: {
+            is_public: true,
+            // Absent, not null: the service reads "leave it alone" from a
+            // missing key, and a caller that does not know an artifact's
+            // words must not be able to clear them by omission.
+            ...(tags === undefined ? {} : { tags }),
+            ...(description === undefined ? {} : { description }),
+          },
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to publish the artifact');
