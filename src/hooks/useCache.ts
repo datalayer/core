@@ -8137,6 +8137,50 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Withdraw an artifact from the library. Its orbits are kept: publishing it
    * again brings them back.
    */
+  /**
+   * Rename a published artifact, or change what it says about itself.
+   *
+   * The words belong to the artifact rather than to the library — the
+   * library holds a projection of them — so the library service writes the
+   * artifact's own source and that write carries the change into the index.
+   * Which is why this is one request and not two.
+   *
+   * Every field is optional and every one means "leave it alone" when
+   * omitted, so a caller may change one without knowing the others.
+   */
+  const useUpdateArtifactDetails = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        name,
+        description,
+        tags,
+      }: {
+        itemId: string;
+        name?: string;
+        description?: string;
+        tags?: string[];
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}`,
+          method: 'PATCH',
+          body: {
+            ...(name === undefined ? {} : { name }),
+            ...(description === undefined ? {} : { description }),
+            ...(tags === undefined ? {} : { tags }),
+          },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to update the artifact');
+        }
+        return resp;
+      },
+      // The same fan-out publishing uses: a rename changes the card in every
+      // listing, the editor's own copy, and the artifact's public page.
+      onSuccess: invalidateArtifactVisibility,
+    });
+  };
+
   const useUnpublishArtifact = () => {
     return useMutation({
       mutationFn: async (itemId: string) => {
@@ -9975,6 +10019,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useSyncArtifactCatalogue,
     usePublishArtifact,
     useUnpublishArtifact,
+    useUpdateArtifactDetails,
     useRefreshSpaceItems,
     useClearCachedPublicItems,
     useClearCachedItems,
