@@ -21,7 +21,10 @@ import { describe, expect, it } from 'vitest';
 import {
   AGENT_UID_KEY,
   CLIENT_ID_KEY,
+  matchesStarter,
+  STARTER_FILTERS,
   startedBy,
+  startedByResource,
   startedBySearchTerms,
 } from '../StartedBy';
 
@@ -99,5 +102,82 @@ describe('what the search box matches', () => {
     const terms = startedBySearchTerms(map({ [AGENT_UID_KEY]: '01HOURLY' }));
     expect(terms).toContain('01HOURLY');
     expect(terms).toContain('service-agent');
+  });
+});
+
+describe('startedByResource', () => {
+  const usages = [
+    { id: 'rt-mine', metadata: map({}) },
+    { id: 'rt-agent', metadata: map({ [CLIENT_ID_KEY]: 'cursor' }) },
+    { id: 'rt-service', metadata: map({ [AGENT_UID_KEY]: '01NIGHTLY' }) },
+  ];
+
+  it('reads each starter off the reservation of that runtime', () => {
+    expect(startedByResource('rt-mine', usages)?.kind).toBe('person');
+    expect(startedByResource('rt-agent', usages)?.kind).toBe('agent');
+    expect(startedByResource('rt-service', usages)?.kind).toBe('service-agent');
+  });
+
+  it('answers nothing at all for a runtime it has no reservation for', () => {
+    // Not "a person did". The dimensions are written when the reservation is
+    // made, so their absence from a record means something; their absence
+    // from a record that has not been read means nothing, and calling it
+    // "You" would put the reader's name on an agent's runtime in the very
+    // view built to tell those apart.
+    expect(startedByResource('rt-unknown', usages)).toBeUndefined();
+  });
+
+  it('answers nothing before any reservation has been read', () => {
+    expect(startedByResource('rt-mine', undefined)).toBeUndefined();
+    expect(startedByResource('rt-mine', [])).toBeUndefined();
+  });
+
+  it('matches the reservation by the resource it is for, not by position', () => {
+    expect(startedByResource('rt-service', usages)?.agentUid).toBe('01NIGHTLY');
+  });
+});
+
+describe('matchesStarter', () => {
+  const person = startedBy(map({}));
+  const agent = startedBy(map({ [CLIENT_ID_KEY]: 'cursor' }));
+  const service = startedBy(map({ [AGENT_UID_KEY]: '01NIGHTLY' }));
+
+  it('keeps everything under "Anyone", including what it could not classify', () => {
+    for (const who of [person, agent, service, undefined]) {
+      expect(matchesStarter(who, 'all')).toBe(true);
+    }
+  });
+
+  it('narrows to exactly one kind', () => {
+    expect(matchesStarter(agent, 'agent')).toBe(true);
+    expect(matchesStarter(service, 'agent')).toBe(false);
+    expect(matchesStarter(person, 'agent')).toBe(false);
+  });
+
+  it('keeps a service agent out of "Your agents"', () => {
+    // The distinction the whole column exists for: one is yours and stops
+    // with you, the other is the organization's and does not.
+    expect(matchesStarter(service, 'agent')).toBe(false);
+    expect(matchesStarter(service, 'service-agent')).toBe(true);
+  });
+
+  it('drops a row it could not classify from every narrowed filter', () => {
+    expect(matchesStarter(undefined, 'person')).toBe(false);
+    expect(matchesStarter(undefined, 'agent')).toBe(false);
+    expect(matchesStarter(undefined, 'service-agent')).toBe(false);
+  });
+
+  it('offers a filter for every kind there is, and one for all of them', () => {
+    const ids = STARTER_FILTERS.map(entry => entry.id);
+    expect(ids).toContain('all');
+    for (const kind of ['person', 'agent', 'service-agent'] as const) {
+      expect(ids).toContain(kind);
+    }
+  });
+
+  it('gives every filter words to draw', () => {
+    for (const entry of STARTER_FILTERS) {
+      expect(entry.label.trim()).toBeTruthy();
+    }
   });
 });

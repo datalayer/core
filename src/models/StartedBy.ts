@@ -105,4 +105,59 @@ export const startedBySearchTerms = (metadata: UsageMetadata): string => {
   return `agent ${who.clientId}`;
 };
 
+/** The choices a "started by" filter offers, `all` included. */
+export type StarterFilter = 'all' | StartedByKind;
+
+/** Those choices in the order they are drawn, with the words for each. */
+export const STARTER_FILTERS: { id: StarterFilter; label: string }[] = [
+  { id: 'all', label: 'Anyone' },
+  { id: 'person', label: 'You' },
+  { id: 'agent', label: 'Your agents' },
+  { id: 'service-agent', label: 'Service agents' },
+];
+
+/** Enough of a usage record to say who started the resource it is for. */
+export interface StarterUsage {
+  /** The resource this reservation is for — a runtime's uid. */
+  id: string;
+  metadata: UsageMetadata;
+}
+
+/**
+ * Who started the resource a uid names, from the reservations in hand.
+ *
+ * `undefined` when no reservation for it has been read — which is a
+ * different answer from "a person did". `startedBy` reads a record with
+ * neither dimension as the reader's own work, and that is right *for a
+ * record*: the dimensions are written when the reservation is made, so their
+ * absence is meaningful. Their absence from a row that does not exist is
+ * not. Saying "You" while the reservations are still loading would put the
+ * reader's name on a runtime one of their agents started, in the one view
+ * built to tell those apart.
+ */
+export const startedByResource = (
+  resourceUid: string,
+  usages: readonly StarterUsage[] | null | undefined,
+): StartedBy | undefined => {
+  const usage = (usages ?? []).find(entry => entry.id === resourceUid);
+  return usage ? startedBy(usage.metadata) : undefined;
+};
+
+/**
+ * Whether a row survives the filter.
+ *
+ * A row nobody could classify passes only `all`. Narrowing to "Your agents"
+ * and being shown rows that might be anything is not a narrower answer —
+ * it is the same answer with a claim attached.
+ */
+export const matchesStarter = (
+  who: StartedBy | undefined,
+  filter: StarterFilter,
+): boolean => {
+  if (filter === 'all') {
+    return true;
+  }
+  return who?.kind === filter;
+};
+
 export default startedBy;
