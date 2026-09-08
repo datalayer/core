@@ -43,6 +43,7 @@ import {
   useQueries,
   useMutation,
   useQueryClient,
+  QueryClient,
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
@@ -118,6 +119,58 @@ const DEFAULT_QUERY_OPTIONS = {
   refetchOnReconnect: true,
   // Ensure queries prioritize cache over network when data is fresh
   networkMode: 'online' as const,
+};
+
+/**
+ * Refresh what a visitor sees, not just what the editor is looking at.
+ *
+ * `invalidateQueries` marks queries stale and refetches the **active** ones —
+ * the ones some mounted component is watching. Everything else is left to
+ * refetch when it is next mounted, which is the usual and correct behaviour
+ * and does not work here.
+ *
+ * It does not work because the app's `QueryClient` is built with
+ * `refetchOnMount: false`. A query that mounts holding stale data renders it
+ * and asks for nothing. So an administrator on `/admin/library/featured`
+ * would reorder the ribbon, watch the admin list reorder itself correctly —
+ * that query is active — and then find the home page still showing the old
+ * order, because the ribbon was not mounted when the invalidation happened
+ * and would not ask again when it was. Only a full page reload, which throws
+ * the whole cache away, put it right.
+ *
+ * `refetchType: 'all'` fetches the inactive ones too, there and then. It
+ * belongs on the handful of mutations that change what somebody *else's*
+ * screen shows, and nowhere else: for an ordinary edit, refetching every
+ * dormant query in the cache is a burst of requests for pages nobody is on.
+ */
+const invalidateEverywhere = (
+  client: QueryClient,
+  queryKey: readonly unknown[],
+): void => {
+  void client.invalidateQueries({ queryKey, refetchType: 'all' });
+};
+
+/**
+ * Forget everything a session was told, without orphaning what is on screen.
+ *
+ * `queryClient.clear()` is the obvious way to end a session and the wrong
+ * one. It destroys the query objects themselves, and an observer whose query
+ * is destroyed while its fetch is in flight is never answered and never asks
+ * again: it sits at `isLoading` for as long as the page stays open.
+ *
+ * Signing out is exactly that race. Ending the session swaps the whole tree
+ * for the anonymous one, which mounts the home page and starts fetching the
+ * featured ribbon; the logout response then lands on top of that fetch. The
+ * ribbon stayed a row of empty placeholders until the reader reloaded.
+ *
+ * So: drop what nobody is looking at, and reset what is on screen. A reset
+ * forgets the answer the person who has left was given and asks the question
+ * again as whoever is here now, which is what signing out means for a page
+ * that is still open.
+ */
+export const forgetSession = (client: QueryClient): void => {
+  client.removeQueries({ type: 'inactive' });
+  client.resetQueries({ type: 'active' });
 };
 
 // ============================================================================
@@ -1010,6 +1063,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const email = String(raw?.creator_email_s ?? raw?.email_s ?? '').trim();
     const displayName =
       firstName || lastName ? asDisplayName(firstName, lastName) : handle;
+    /*
+     * The face, which the library has been projecting all along and nothing
+     * was reading. Without it every published artifact was attributed to a
+     * pair of initials, on its own public page as much as anywhere else —
+     * the owner is right there in the projection, and this is the one place
+     * it was being dropped.
+     */
+    const avatarUrl = String(
+      raw?.creator_avatar_url_s ?? raw?.avatar_url_s ?? '',
+    ).trim();
+    const avatarIcon = String(
+      raw?.creator_avatar_icon_s ?? raw?.avatar_icon_s ?? '',
+    ).trim();
     return {
       id: uid,
       handle,
@@ -1018,6 +1084,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       lastName,
       initials: namesAsInitials(firstName, lastName),
       displayName,
+      avatarUrl: avatarUrl || undefined,
+      avatarIcon: avatarIcon || undefined,
       roles: [],
       iamProviders: [],
       setRoles: () => {},
@@ -1488,8 +1556,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: () => {
-        // Clear all queries on logout
-        queryClient.clear();
+        forgetSession(queryClient);
       },
     });
   };
@@ -7411,13 +7478,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Everything an administrator has actually featured, and nothing else.
    *
-   * Not `useFeaturedItems`. That one answers for the home page's ribbon, and
-   * a ribbon must never be an empty rail on a young deployment — so when
-   * nothing is featured it stands the most orbited artifacts in instead. Read
-   * from the administration page, that fallback is a lie: it lists artifacts
-   * nobody featured, numbers them by their position in the list, and offers
-   * to re-order them, which the service then refuses because they are not
-   * featured at all. `platform_admin` only.
+   * Not `useFeaturedItems`. That one answers for the home page's ribbon: a
+   * public request, capped at what a row can show, ordered for reading. This
+   * one is what the administration page edits — everything featured, in rank
+   * order, however long the list is and whoever it belongs to — so that the
+   * page showing the ribbon's contents is showing the ribbon's contents and
+   * not a page of it. `platform_admin` only.
    */
   const useAllFeaturedItems = (options?: UseQueryOptions<any, Error>) => {
     return useQuery({
@@ -7691,6 +7757,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
           method: 'PUT',
           body: { rank: rank ?? null },
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to feature the artifact');
@@ -7698,7 +7767,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+        invalidateEverywhere(queryClient, queryKeys.items.all());
       },
     });
   };
@@ -7709,6 +7778,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         const resp = await requestDatalayer({
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
           method: 'DELETE',
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to unfeature the artifact');
@@ -7716,7 +7788,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+        invalidateEverywhere(queryClient, queryKeys.items.all());
       },
     });
   };
@@ -7734,6 +7806,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
           method: 'PATCH',
           body: { rank },
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
         });
         if (!resp.success) {
           throw new Error(resp.message || 'Failed to move the artifact');
@@ -7741,7 +7816,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.featured() });
+        invalidateEverywhere(queryClient, queryKeys.items.featured());
       },
     });
   };
@@ -7760,6 +7835,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * Only the `details()` sub-namespace is invalidated, never `all()`, so a
    * notebook's `model` query — its actual content — is not dragged into a
    * refetch by a visibility change.
+   *
+   * A course is a space, but it is not read through the `spaces` queries: it
+   * has a namespace of its own, so publishing one from its header left the
+   * course page holding the `public` flag it loaded with and the button
+   * saying the opposite of what had just happened.
    */
   const invalidateArtifactVisibility = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
@@ -7771,6 +7851,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       queryKeys.lessons.details(),
       queryKeys.exercises.details(),
       queryKeys.assignments.details(),
+      queryKeys.courses.details(),
     ]) {
       queryClient.invalidateQueries({ queryKey: details });
     }
@@ -7867,6 +7948,9 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           url: `${configuration.libraryUrl}/api/library/v1/artifacts/sync`,
           method: 'PUT',
           body: { artifact_type: artifactType, artifacts },
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
         });
         if (!resp.success) {
           throw new Error(
@@ -7876,7 +7960,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return resp;
       },
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.all() });
+        invalidateEverywhere(queryClient, queryKeys.items.all());
       },
     });
   };
