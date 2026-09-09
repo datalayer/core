@@ -254,6 +254,84 @@ describe('the evals client', () => {
       'DELETE',
       '/api/ai-agents/v1/evals/live/targets',
     ],
+    [
+      'listRunsAcross',
+      () => client.listRunsAcross(options, { launch_id: 'l1' }),
+      'GET',
+      '/api/ai-agents/v1/evals/runs',
+    ],
+    [
+      'cancelRun',
+      () => client.cancelRun(options, 'r1'),
+      'POST',
+      '/api/ai-agents/v1/evals/runs/r1/cancel',
+    ],
+    [
+      'listCaseResults',
+      () => client.listCaseResults(options, 'r1', { status: 'failed' }),
+      'GET',
+      '/api/ai-agents/v1/evals/runs/r1/cases',
+    ],
+    [
+      'getCaseResult',
+      () => client.getCaseResult(options, 'r1', 'c1'),
+      'GET',
+      '/api/ai-agents/v1/evals/runs/r1/cases/c1',
+    ],
+    [
+      'reviewCaseResult',
+      () => client.reviewCaseResult(options, 'r1', 'c1', { status: 'passed' }),
+      'PATCH',
+      '/api/ai-agents/v1/evals/runs/r1/cases/c1/review',
+    ],
+    [
+      'createLaunch',
+      () => client.createLaunch(options, 'e1', { experiment_ids: ['x1'] }),
+      'POST',
+      '/api/ai-agents/v1/evals/evalsets/e1/launches',
+    ],
+    [
+      'listLaunches',
+      () => client.listLaunches(options, { evalset_id: 'e1' }),
+      'GET',
+      '/api/ai-agents/v1/evals/launches',
+    ],
+    [
+      'getLaunch',
+      () => client.getLaunch(options, 'l1'),
+      'GET',
+      '/api/ai-agents/v1/evals/launches/l1',
+    ],
+    [
+      'cancelLaunch',
+      () => client.cancelLaunch(options, 'l1'),
+      'POST',
+      '/api/ai-agents/v1/evals/launches/l1/cancel',
+    ],
+    [
+      'importEvalset',
+      () => client.importEvalset(options, { spec: { name: 'x' } }),
+      'POST',
+      '/api/ai-agents/v1/evals/evalsets/import',
+    ],
+    [
+      'listEvalsetVersions',
+      () => client.listEvalsetVersions(options, 'e1'),
+      'GET',
+      '/api/ai-agents/v1/evals/evalsets/e1/versions',
+    ],
+    [
+      'getEvalsetVersion',
+      () => client.getEvalsetVersion(options, 'e1', 2),
+      'GET',
+      '/api/ai-agents/v1/evals/evalsets/e1/versions/2',
+    ],
+    [
+      'archiveLaunch',
+      () => client.archiveLaunch(options, 'l1'),
+      'POST',
+      '/api/ai-agents/v1/evals/launches/l1/archive',
+    ],
   ];
 
   for (const [name, call, method, expected] of cases) {

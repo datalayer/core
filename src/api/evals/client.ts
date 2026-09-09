@@ -27,6 +27,29 @@ import {
 } from './request';
 import type {
   CaseListResponse,
+  EvalsetVersionListResponse,
+  EvalsetVersionResponse,
+  InvestigationListResponse,
+  InvestigationResponse,
+  InvestigationScope,
+  InvestigationStatus,
+  LexicalReportResponse,
+  ReportDocumentResponse,
+  ResumeSandboxRequest,
+  ResumeSandboxResponse,
+  TaskInvestigationResponse,
+  UpdateInvestigationRequest,
+  EvalsetCategory,
+  ImportEvalsetRequest,
+  ImportEvalsetResponse,
+  CaseResultListResponse,
+  CaseResultResponse,
+  CreateLaunchRequest,
+  LaunchCancelResponse,
+  LaunchListResponse,
+  LaunchResponse,
+  ReviewCaseRequest,
+  RunCancelResponse,
   CaseRequest,
   CaseResponse,
   CreateEvalsetRequest,
@@ -58,6 +81,7 @@ import type {
 export type ListEvalsetsQuery = {
   kind?: EvalKind;
   run_environment?: EvalRunEnvironment;
+  category?: EvalsetCategory;
   q?: string;
   limit?: number;
   offset?: number;
@@ -368,3 +392,289 @@ export const deleteLiveTarget = (
     method: 'DELETE',
     query: { target_id: targetId, target_type: targetType },
   });
+
+// --- Runs across experiments, task results, launches (B2-01 to B2-03) -------
+
+export type ListRunsQuery = {
+  evalset_id?: string;
+  launch_id?: string;
+  experiment_id?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export const listRunsAcross = (
+  options: EvalsClientOptions,
+  query: ListRunsQuery = {},
+) => evalsRequest<RunListResponse>(options, '/runs', { query });
+
+export const cancelRun = (options: EvalsClientOptions, runId: string) =>
+  evalsRequest<RunCancelResponse>(options, `/runs/${segment(runId)}/cancel`, {
+    method: 'POST',
+  });
+
+export type ListCaseResultsQuery = {
+  status?: string;
+  category?: string;
+  difficulty?: string;
+  failure_mode?: string;
+  min_score?: number;
+  max_score?: number;
+  q?: string;
+  sort?: string;
+  limit?: number;
+  offset?: number;
+};
+
+/** The task grid of a run, filtered and paged by the service. */
+export const listCaseResults = (
+  options: EvalsClientOptions,
+  runId: string,
+  query: ListCaseResultsQuery = {},
+) =>
+  evalsRequest<CaseResultListResponse>(
+    options,
+    `/runs/${segment(runId)}/cases`,
+    { query },
+  );
+
+export const getCaseResult = (
+  options: EvalsClientOptions,
+  runId: string,
+  caseId: string,
+) =>
+  evalsRequest<CaseResultResponse>(
+    options,
+    `/runs/${segment(runId)}/cases/${segment(caseId)}`,
+  );
+
+export const reviewCaseResult = (
+  options: EvalsClientOptions,
+  runId: string,
+  caseId: string,
+  body: ReviewCaseRequest,
+) =>
+  evalsRequest<CaseResultResponse>(
+    options,
+    `/runs/${segment(runId)}/cases/${segment(caseId)}/review`,
+    {
+      method: 'PATCH',
+      body,
+    },
+  );
+
+/** One submission of a benchmark across its experiments. */
+export const createLaunch = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  body: CreateLaunchRequest,
+) =>
+  evalsRequest<LaunchResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/launches`,
+    {
+      method: 'POST',
+      body,
+    },
+  );
+
+export type ListLaunchesQuery = {
+  evalset_id?: string;
+  status?: string;
+  include_archived?: boolean;
+  limit?: number;
+  offset?: number;
+};
+
+export const listLaunches = (
+  options: EvalsClientOptions,
+  query: ListLaunchesQuery = {},
+) => evalsRequest<LaunchListResponse>(options, '/launches', { query });
+
+export const getLaunch = (options: EvalsClientOptions, launchId: string) =>
+  evalsRequest<LaunchResponse>(options, `/launches/${segment(launchId)}`);
+
+export const cancelLaunch = (options: EvalsClientOptions, launchId: string) =>
+  evalsRequest<LaunchCancelResponse>(
+    options,
+    `/launches/${segment(launchId)}/cancel`,
+    { method: 'POST' },
+  );
+
+export const archiveLaunch = (options: EvalsClientOptions, launchId: string) =>
+  evalsRequest<SuccessResponse>(
+    options,
+    `/launches/${segment(launchId)}/archive`,
+    { method: 'POST' },
+  );
+
+// --- Spec import and definition versions (B2-08, B2-09) --------------------
+
+/** An evalset from a spec file, the same body the CLI and the action send. */
+export const importEvalset = (
+  options: EvalsClientOptions,
+  body: ImportEvalsetRequest,
+) =>
+  evalsRequest<ImportEvalsetResponse>(options, '/evalsets/import', {
+    method: 'POST',
+    body,
+  });
+
+export const listEvalsetVersions = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  query: { limit?: number; offset?: number } = {},
+) =>
+  evalsRequest<EvalsetVersionListResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/versions`,
+    { query },
+  );
+
+export const getEvalsetVersion = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  version: number,
+) =>
+  evalsRequest<EvalsetVersionResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/versions/${segment(String(version))}`,
+  );
+
+// --- Reports of a launch and a run, and the report document (B3-03) --------
+
+/** The benchmark's whole report (every launch) as a serialized Lexical editor state. */
+export const getEvalsetReportDocument = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  query: { run_limit?: number } = {},
+) =>
+  evalsRequest<LexicalReportResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/report`,
+    { query: { ...query, format: 'lexical' } },
+  );
+
+/** The launch's report as a serialized Lexical editor state. */
+export const getLaunchReportDocument = (
+  options: EvalsClientOptions,
+  launchId: string,
+  query: { run_limit?: number } = {},
+) =>
+  evalsRequest<LexicalReportResponse>(
+    options,
+    `/launches/${segment(launchId)}/report`,
+    { query: { ...query, format: 'lexical' } },
+  );
+
+/** Where a launch's Markdown or CSV report is downloaded from. */
+export const launchReportUrl = (
+  options: EvalsClientOptions,
+  launchId: string,
+  format: 'markdown' | 'csv',
+) => evalsUrl(options, `/launches/${segment(launchId)}/report`, { format });
+
+/** One run's report as a serialized Lexical editor state, with its task documents. */
+export const getRunReportDocument = (
+  options: EvalsClientOptions,
+  runId: string,
+) =>
+  evalsRequest<LexicalReportResponse>(
+    options,
+    `/runs/${segment(runId)}/report`,
+    { query: { format: 'lexical' } },
+  );
+
+export const runReportUrl = (
+  options: EvalsClientOptions,
+  runId: string,
+  format: 'markdown' | 'csv',
+) => evalsUrl(options, `/runs/${segment(runId)}/report`, { format });
+
+/** Write the launch's report into the account's benchmarks space. */
+export const writeLaunchReportDocument = (
+  options: EvalsClientOptions,
+  launchId: string,
+  body: { name?: string } = {},
+) =>
+  evalsRequest<ReportDocumentResponse>(
+    options,
+    `/launches/${segment(launchId)}/report-document`,
+    { method: 'POST', body },
+  );
+
+// --- Investigations and the task sandbox (B3-02, B3-05) --------------------
+
+/** Open the investigation of one task, or get the one already open. */
+export const openTaskInvestigation = (
+  options: EvalsClientOptions,
+  runId: string,
+  caseId: string,
+) =>
+  evalsRequest<TaskInvestigationResponse>(
+    options,
+    `/runs/${segment(runId)}/tasks/${segment(caseId)}/investigation`,
+    { method: 'POST' },
+  );
+
+export const openLaunchInvestigation = (
+  options: EvalsClientOptions,
+  launchId: string,
+) =>
+  evalsRequest<InvestigationResponse>(
+    options,
+    `/launches/${segment(launchId)}/investigation`,
+    { method: 'POST' },
+  );
+
+export type InvestigationsQuery = {
+  evalset_id?: string;
+  launch_id?: string;
+  run_id?: string;
+  scope?: InvestigationScope;
+  status?: InvestigationStatus;
+  limit?: number;
+  offset?: number;
+};
+
+export const listInvestigations = (
+  options: EvalsClientOptions,
+  query: InvestigationsQuery = {},
+) =>
+  evalsRequest<InvestigationListResponse>(options, '/investigations', {
+    query,
+  });
+
+export const getInvestigation = (
+  options: EvalsClientOptions,
+  investigationId: string,
+) =>
+  evalsRequest<InvestigationResponse>(
+    options,
+    `/investigations/${segment(investigationId)}`,
+  );
+
+export const updateInvestigation = (
+  options: EvalsClientOptions,
+  investigationId: string,
+  body: UpdateInvestigationRequest,
+) =>
+  evalsRequest<InvestigationResponse>(
+    options,
+    `/investigations/${segment(investigationId)}`,
+    { method: 'PATCH', body },
+  );
+
+/** Bring the task's sandbox back from its snapshot, bound to its investigation. */
+export const resumeTaskSandbox = (
+  options: EvalsClientOptions,
+  runId: string,
+  caseId: string,
+  body: ResumeSandboxRequest = {},
+) =>
+  evalsRequest<ResumeSandboxResponse>(
+    options,
+    `/runs/${segment(runId)}/tasks/${segment(caseId)}/sandbox/resume`,
+    { method: 'POST', body },
+  );
