@@ -8,11 +8,18 @@ Generate deterministic TypeScript types from the canonical orchestration models.
 The pydantic models in ``datalayer_core/orchestration`` are the source of
 truth (PLAN_ORCHESTRATOR.md, 19.8) and ``src/api/orchestration/generated.ts``
 is what they say, in TypeScript, for the browser and the app. This is the
-``generate-contents-types.py`` and ``generate-mcp-types.py`` pattern with the
-document coming from the models themselves rather than from a service's
-OpenAPI: in Phase 0 there is no control plane to read one from, and once
-O1-01 exists this generator reads its document instead. The ``--check`` gate
-is what keeps the two languages agreeing in the meantime.
+``generate-contents-types.py`` and ``generate-mcp-types.py`` pattern with two
+documents rather than one:
+
+- the models themselves, walked, for every canonical record and vocabulary
+  — including those no route carries, such as a descriptor mapping;
+- the control plane's OpenAPI document (O1-01), checked in by the agents
+  service, for the answers that wrap those records and for the operations
+  the app may call. Every canonical schema the control plane serves must be
+  the one the models give, or this refuses to write anything: a service
+  answering a different shape than ``core`` declares is exactly the drift the
+  generated file exists to catch. ``DATALAYER_ORCHESTRATION_OPENAPI`` names
+  another copy of that document.
 
 What is written:
 
@@ -34,7 +41,10 @@ What is written:
   each nested one holds. TypeScript
   types vanish at runtime and ``src/**/__tests__`` is outside the tsconfig,
   so this is what lets the vitest suite hold the shared fixture to the same
-  contract the pytest suite holds it to.
+  contract the pytest suite holds it to;
+- ``ORCHESTRATION_API``: every operation of the control plane — its command
+  name, method and path — so a client builds no orchestration URL of its
+  own and a spec can hold the app's calls to the service's routes.
 
 ``--check`` exits non-zero when the checked-in file is not what the models
 give — the CI check that the file is current.
@@ -44,6 +54,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import pkgutil
 import sys
 from enum import Enum
@@ -52,6 +63,17 @@ from typing import Any
 
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT))
+DEFAULT_CONTROL_PLANE = (
+    ROOT.parents[2]
+    / "k8s/services/ai-agents/datalayer_ai_agents/contracts/v1/orchestration-openapi.json"
+)
+CONTROL_PLANE = Path(
+    os.environ.get("DATALAYER_ORCHESTRATION_OPENAPI", DEFAULT_CONTROL_PLANE)
+)
+#: What FastAPI adds to every document for its own request validation. Not
+#: the control plane's vocabulary, and a `ValidationError` exported from
+#: `core` would shadow every other one a consumer imports.
+FRAMEWORK_SCHEMAS = frozenset({"HTTPValidationError", "ValidationError"})
 
 from datalayer_core.orchestration.base import CanonicalModel  # noqa: E402
 from datalayer_core.orchestration.commands import (  # noqa: E402
@@ -85,7 +107,7 @@ LICENCE = (
 )
 HEADER = (
     "/* This file is generated from the datalayer_core.orchestration "
-    "pydantic models. Do not edit. */"
+    "pydantic models and the control plane's OpenAPI document. Do not edit. */"
 )
 #: Everything under `src` is prettier-checked, and prettier rewrites double
 #: quotes to single ones and reflows anything that does not fit. Emitting
@@ -428,6 +450,79 @@ def read_models() -> dict[str, Any]:
     return {"components": {"schemas": schemas}}
 
 
+def _without_null_defaults(schema: Any) -> Any:
+    """
+    Return a schema without its `default: null` entries.
+
+    FastAPI leaves those out of an OpenAPI document and pydantic keeps them
+    in a model's schema; they say the same thing, and no TypeScript written
+    here reads them.
+
+    Parameters
+    ----------
+    schema : Any
+        The schema node.
+
+    Returns
+    -------
+    Any
+        The node, with every null default removed at every depth.
+    """
+    if isinstance(schema, dict):
+        return {
+            key: _without_null_defaults(value)
+            for key, value in schema.items()
+            if not (key == "default" and value is None)
+        }
+    if isinstance(schema, list):
+        return [_without_null_defaults(item) for item in schema]
+    return schema
+
+
+def read_control_plane(models: dict[str, Any]) -> dict[str, Any]:
+    """
+    Return the models' document with the control plane's answers and operations.
+
+    Parameters
+    ----------
+    models : dict[str, Any]
+        The document `read_models` produced.
+
+    Returns
+    -------
+    dict[str, Any]
+        The canonical schemas, the control plane's own schemas beside them,
+        and the control plane's paths.
+
+    Raises
+    ------
+    SystemExit
+        When the document is missing, or serves a canonical record in a shape
+        the models do not give.
+    """
+    if not CONTROL_PLANE.exists():
+        raise SystemExit(
+            f"No orchestration OpenAPI document at {CONTROL_PLANE}: run "
+            "`make openapi-orchestration` in services/ai-agents, or name a copy "
+            "with DATALAYER_ORCHESTRATION_OPENAPI."
+        )
+    document = json.loads(CONTROL_PLANE.read_text())
+    schemas = dict(models["components"]["schemas"])
+    for name, schema in sorted(document["components"]["schemas"].items()):
+        if name in FRAMEWORK_SCHEMAS:
+            continue
+        if name in schemas:
+            if _without_null_defaults(schema) != _without_null_defaults(schemas[name]):
+                raise SystemExit(
+                    f"The control plane serves '{name}' in a shape the "
+                    f"{PACKAGE} models do not give; regenerate its document "
+                    "from the models it imports."
+                )
+            continue
+        schemas[name] = schema
+    return {"components": {"schemas": schemas}, "paths": document["paths"]}
+
+
 def _enum_schema(enum: type[Enum]) -> dict[str, Any]:
     """
     Return the schema pydantic gives an enum, for one no model references.
@@ -493,7 +588,44 @@ def generate(document: dict[str, Any]) -> str:
     lines.extend(_commands())
     lines.extend(_limits())
     lines.extend(_fields(schemas))
+    lines.extend(_api(document.get("paths", {})))
     return "\n".join(lines)
+
+
+def _api(paths: dict[str, Any]) -> list[str]:
+    """
+    Render every operation of the control plane (O1-01).
+
+    Parameters
+    ----------
+    paths : dict[str, Any]
+        The `paths` of the control plane's OpenAPI document.
+
+    Returns
+    -------
+    list[str]
+        The lines of the type and the constant.
+    """
+    value = [
+        {
+            "operation": operation["operationId"],
+            "method": method.upper(),
+            "path": path,
+        }
+        for path, operations in sorted(paths.items())
+        for method, operation in sorted(operations.items())
+    ]
+    return [
+        "/** One operation of the control plane: its name, method and path. */",
+        "export interface OrchestrationOperation {",
+        f"{INDENT}readonly operation: string;",
+        f"{INDENT}readonly method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';",
+        f"{INDENT}readonly path: string;",
+        "}",
+        "",
+        *_declare("ORCHESTRATION_API", "readonly OrchestrationOperation[]", value),
+        "",
+    ]
 
 
 def _lifecycle() -> list[str]:
@@ -703,7 +835,7 @@ def main() -> None:
     SystemExit
         When `--check` is given and the file is stale.
     """
-    expected = generate(read_models())
+    expected = generate(read_control_plane(read_models()))
     if "--check" in sys.argv[1:]:
         if not OUTPUT.exists() or OUTPUT.read_text() != expected:
             raise SystemExit(

@@ -742,3 +742,45 @@ export interface ReportDocumentResponse extends SuccessResponse {
   document_uid: string;
   launch: EvalLaunch;
 }
+
+// --- Sharing and permissions (B4-05) ----------------------------------------
+
+/** The records that carry grants, as their routes name them. */
+export type SharedEvalsRecord = 'evalsets' | 'launches' | 'investigations';
+
+/**
+ * The levels a grant gives, lowest first, each allowing what the ones before
+ * it allow: Viewer, Reviewer, Runner, Editor.
+ */
+export type EvalsAccessLevel = 'view' | 'review' | 'execute' | 'update';
+
+/** A level, or the owner — which is never granted: only an owner shares or publishes. */
+export type EvalsRole = EvalsAccessLevel | 'owner';
+
+export interface EvalsPrincipals {
+  userUids: string[];
+  teamUids: string[];
+  organizationUids: string[];
+}
+
+export type EvalsSharingUpdate = Partial<
+  Record<EvalsAccessLevel, Partial<EvalsPrincipals>>
+>;
+
+export interface EvalsSharingResponse extends SuccessResponse {
+  sharing: {
+    kind: 'evalset' | 'launch' | 'investigation';
+    uid: string;
+    /** The account the record belongs to. */
+    owner_uid: string;
+    access: Record<EvalsAccessLevel, EvalsPrincipals>;
+    shared: boolean;
+  };
+}
+
+export interface EvalsPermissionsResponse extends SuccessResponse {
+  kind: string;
+  uid: string;
+  role: EvalsRole;
+  permissions: Record<EvalsRole, boolean>;
+}

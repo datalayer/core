@@ -3,7 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/* This file is generated from the datalayer_core.orchestration pydantic models. Do not edit. */
+/* This file is generated from the datalayer_core.orchestration pydantic models and the control plane's OpenAPI document. Do not edit. */
 
 /** One milestone reached, reported by the endpoint or by the worker. */
 export interface Acknowledgement {
@@ -219,6 +219,25 @@ export interface Budget {
   executions?: number | null;
 }
 
+/** The executions `executions.cancel` stopped. */
+export interface CancelAnswer {
+  acknowledgement: Acknowledgement;
+  cancelledExecutionIds?: Array<string>;
+  /** Whether the execution's workflow was told. Told is not accepted. */
+  delivered: boolean;
+  detail?: string | null;
+  execution: Execution;
+  success?: boolean;
+}
+
+/** The artifacts registered against an execution, and its children's. */
+export interface CollectAnswer {
+  artifacts: Array<Artifact>;
+  children?: Array<Execution>;
+  execution: Execution;
+  success?: boolean;
+}
+
 /** What every command carries, whatever it asks for. */
 export interface Command {
   command: CommandName;
@@ -226,6 +245,16 @@ export interface Command {
   issuedAt?: string | null;
   /** The W3C context of the caller, so the tree is one trace. */
   traceparent?: string | null;
+}
+
+/** A request to a worker, received: steer, pause, resume, checkpoint, terminate. */
+export interface CommandAnswer {
+  acknowledgement: Acknowledgement;
+  /** Whether the execution's workflow was told. Told is not accepted. */
+  delivered: boolean;
+  detail?: string | null;
+  execution: Execution;
+  success?: boolean;
 }
 
 /** The twelve commands of section 6.2. */
@@ -295,6 +324,16 @@ export interface CostHint {
 export type DataClassification =
   'public' | 'internal' | 'confidential' | 'restricted';
 
+/** The execution `executions.delegate` created, or found under its key. */
+export interface DelegateAnswer {
+  acknowledgement: Acknowledgement;
+  detail?: string | null;
+  /** Whether the durable service took the execution. False leaves it created, and detail says why. */
+  dispatched: boolean;
+  execution: Execution;
+  success?: boolean;
+}
+
 /** The bounds a tree is created under, defaulted to 19.8's decision. */
 export interface DelegationLimits {
   maxDepth?: number;
@@ -312,6 +351,12 @@ export interface DescriptorMapping {
 /** Which document a descriptor was read from. */
 export type DescriptorSource =
   'a2a-agent-card' | 'acp-agent-entry' | 'datalayer-agentspec';
+
+/** The workers `agents.discover` found. */
+export interface DiscoverAnswer {
+  agents: Array<AgentDescriptor>;
+  success?: boolean;
+}
 
 /** Why an execution, an attempt or a command did not do what was asked. */
 export type ErrorCode =
@@ -354,6 +399,14 @@ export interface Execution {
   createdAt: string;
   updatedAt: string;
   error?: OrchestrationError | null;
+}
+
+/** One execution, its attempts, and the milestones it reached. */
+export interface ExecutionAnswer {
+  acknowledgements: Array<Acknowledgement>;
+  attempts: Array<Attempt>;
+  execution: Execution;
+  success?: boolean;
 }
 
 /** One thing that happened to one execution. */
@@ -407,6 +460,24 @@ export type ExecutionState =
   | 'failed'
   | 'cancelled'
   | 'terminated';
+
+/** One node of a tree: enough to draw it and to know where it stands. */
+export interface ExecutionSummary {
+  agentId: string;
+  depth: number;
+  executionId: string;
+  goal: string;
+  parentExecutionId?: string | null;
+  protocol: AgentProtocol;
+  status: ExecutionState;
+  updatedAt: string;
+}
+
+/** Executions of the caller's account, oldest first. */
+export interface ExecutionsAnswer {
+  executions: Array<Execution>;
+  success?: boolean;
+}
 
 /** Stop the work without deleting its history. */
 export interface ExecutionsCancel {
@@ -676,8 +747,43 @@ export interface Trace {
   tracestate?: string | null;
 }
 
+/** The tree an execution is in, as it was announced. */
+export interface TreeAnswer {
+  success?: boolean;
+  tree: TreeSummary;
+}
+
+/** A tree of executions at a glance, as the user channel carries it (O1-09). */
+export interface TreeSummary {
+  /** Executions by status. */
+  counts: Record<string, number>;
+  executions: Array<ExecutionSummary>;
+  rootExecutionId: string;
+  /** Whether every execution of the tree has ended. */
+  terminal: boolean;
+}
+
 /** How much of what a worker says may be believed. */
 export type TrustLevel = 'untrusted' | 'verified' | 'internal';
+
+/** A worker an execution can be bound to, created or attached. */
+export interface Worker {
+  agentId: string;
+  endpoint?: string | null;
+  protocol: AgentProtocol;
+  sessionId?: string | null;
+  /** What the adapter of this protocol can ask the worker for. */
+  supportedOperations?: Array<WorkerOperation>;
+  /** The durable run bringing a created worker's compute up. */
+  workflowUid?: string | null;
+}
+
+/** The worker `agents.create` or `agents.attach` produced. */
+export interface WorkerAnswer {
+  detail?: string | null;
+  success?: boolean;
+  worker: Worker;
+}
 
 /** A lifecycle operation a worker supports, named as section 6.2 names it. */
 export type WorkerOperation =
@@ -975,10 +1081,29 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     ],
     refs: {},
   },
+  CancelAnswer: {
+    required: ['acknowledgement', 'delivered', 'execution'],
+    optional: ['cancelledExecutionIds', 'detail', 'success'],
+    refs: { acknowledgement: 'Acknowledgement', execution: 'Execution' },
+  },
+  CollectAnswer: {
+    required: ['artifacts', 'execution'],
+    optional: ['children', 'success'],
+    refs: {
+      artifacts: 'Artifact',
+      children: 'Execution',
+      execution: 'Execution',
+    },
+  },
   Command: {
     required: ['command'],
     optional: ['issuedAt', 'traceparent'],
     refs: {},
+  },
+  CommandAnswer: {
+    required: ['acknowledgement', 'delivered', 'execution'],
+    optional: ['detail', 'success'],
+    refs: { acknowledgement: 'Acknowledgement', execution: 'Execution' },
   },
   ContextManifest: {
     required: [],
@@ -1001,6 +1126,11 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     optional: ['currency', 'perExecution', 'perInputToken', 'perOutputToken'],
     refs: {},
   },
+  DelegateAnswer: {
+    required: ['acknowledgement', 'dispatched', 'execution'],
+    optional: ['detail', 'success'],
+    refs: { acknowledgement: 'Acknowledgement', execution: 'Execution' },
+  },
   DelegationLimits: {
     required: [],
     optional: ['maxChildrenPerParent', 'maxDepth', 'maxExecutionsPerTree'],
@@ -1010,6 +1140,11 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     required: ['descriptor', 'source'],
     optional: ['gaps'],
     refs: { descriptor: 'AgentDescriptor', gaps: 'MappingGap' },
+  },
+  DiscoverAnswer: {
+    required: ['agents'],
+    optional: ['success'],
+    refs: { agents: 'AgentDescriptor' },
   },
   Execution: {
     required: [
@@ -1043,6 +1178,15 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
       trace: 'Trace',
     },
   },
+  ExecutionAnswer: {
+    required: ['acknowledgements', 'attempts', 'execution'],
+    optional: ['success'],
+    refs: {
+      acknowledgements: 'Acknowledgement',
+      attempts: 'Attempt',
+      execution: 'Execution',
+    },
+  },
   ExecutionEvent: {
     required: [
       'emittedAt',
@@ -1074,6 +1218,24 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
       artifact: 'Artifact',
       error: 'OrchestrationError',
     },
+  },
+  ExecutionSummary: {
+    required: [
+      'agentId',
+      'depth',
+      'executionId',
+      'goal',
+      'protocol',
+      'status',
+      'updatedAt',
+    ],
+    optional: ['parentExecutionId'],
+    refs: {},
+  },
+  ExecutionsAnswer: {
+    required: ['executions'],
+    optional: ['success'],
+    refs: { executions: 'Execution' },
   },
   ExecutionsCancel: {
     required: ['executionId', 'idempotencyKey'],
@@ -1239,4 +1401,109 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     refs: {},
   },
   Trace: { required: [], optional: ['traceparent', 'tracestate'], refs: {} },
+  TreeAnswer: {
+    required: ['tree'],
+    optional: ['success'],
+    refs: { tree: 'TreeSummary' },
+  },
+  TreeSummary: {
+    required: ['counts', 'executions', 'rootExecutionId', 'terminal'],
+    optional: [],
+    refs: { executions: 'ExecutionSummary' },
+  },
+  Worker: {
+    required: ['agentId', 'protocol'],
+    optional: ['endpoint', 'sessionId', 'supportedOperations', 'workflowUid'],
+    refs: {},
+  },
+  WorkerAnswer: {
+    required: ['worker'],
+    optional: ['detail', 'success'],
+    refs: { worker: 'Worker' },
+  },
 };
+
+/** One operation of the control plane: its name, method and path. */
+export interface OrchestrationOperation {
+  readonly operation: string;
+  readonly method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  readonly path: string;
+}
+
+export const ORCHESTRATION_API: readonly OrchestrationOperation[] = [
+  {
+    operation: 'agents.attach',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/agents/attach',
+  },
+  {
+    operation: 'agents.create',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/agents/create',
+  },
+  {
+    operation: 'agents.discover',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/agents/discover',
+  },
+  {
+    operation: 'executions.list',
+    method: 'GET',
+    path: '/api/ai-agents/v1/orchestration/executions',
+  },
+  {
+    operation: 'executions.cancel',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/cancel',
+  },
+  {
+    operation: 'executions.checkpoint',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/checkpoint',
+  },
+  {
+    operation: 'executions.collect',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/collect',
+  },
+  {
+    operation: 'executions.delegate',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/delegate',
+  },
+  {
+    operation: 'executions.pause',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/pause',
+  },
+  {
+    operation: 'executions.resume',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/resume',
+  },
+  {
+    operation: 'executions.steer',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/steer',
+  },
+  {
+    operation: 'executions.terminate',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/terminate',
+  },
+  {
+    operation: 'executions.get',
+    method: 'GET',
+    path: '/api/ai-agents/v1/orchestration/executions/{execution_id}',
+  },
+  {
+    operation: 'executions.announce',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/{execution_id}/announce',
+  },
+  {
+    operation: 'executions.subscribe',
+    method: 'GET',
+    path: '/api/ai-agents/v1/orchestration/executions/{execution_id}/events',
+  },
+];

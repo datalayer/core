@@ -36,6 +36,16 @@ import { PrincipalBadge } from '../principal/PrincipalBadge';
 export type ItemAccessLevel = 'view' | 'update' | 'execute';
 type PrincipalKind = 'personal' | 'team' | 'organization';
 
+/**
+ * One level the dialog offers, and what it is called. A resource whose
+ * service grants other levels than view, update and execute names its own —
+ * a benchmark's Reviewer and Runner, for one.
+ */
+export type AccessLevelOption = {
+  level: string;
+  label: string;
+};
+
 type SharingLevelPayload = {
   userUids?: string[];
   teamUids?: string[];
@@ -43,7 +53,7 @@ type SharingLevelPayload = {
 };
 
 type SharingPayload = {
-  access?: Partial<Record<ItemAccessLevel, SharingLevelPayload>>;
+  access?: Partial<Record<string, SharingLevelPayload>>;
 };
 
 export type ShareAccessTransport = {
@@ -63,7 +73,9 @@ export type ShareAccessComponentProps = {
     restricted: boolean,
     message?: string,
   ) => void;
-  defaultAccessLevel?: ItemAccessLevel;
+  defaultAccessLevel?: string;
+  /** The levels offered, lowest first; view, update and execute when not named. */
+  levels?: readonly AccessLevelOption[];
   principalKinds?: readonly PrincipalKind[];
   displayMode?: 'dialog' | 'inline';
   onClose: () => void;
@@ -74,7 +86,7 @@ export type ShareAccessComponentProps = {
 // ---------------------------------------------------------------------------
 
 type AccessByLevel = Record<
-  ItemAccessLevel,
+  string,
   {
     userUids: string[];
     teamUids: string[];
@@ -85,7 +97,7 @@ type AccessByLevel = Record<
 type ACLPrincipalEntry = {
   kind: PrincipalKind;
   uid: string;
-  levels: ItemAccessLevel[];
+  levels: string[];
 };
 
 type OwnerPrincipal = {
@@ -133,18 +145,16 @@ type PrincipalCache = Record<string, PrincipalCacheEntry>;
 // Constants.
 // ---------------------------------------------------------------------------
 
-const ACCESS_LEVELS: ItemAccessLevel[] = ['view', 'update', 'execute'];
+const DEFAULT_ACCESS_LEVELS: readonly AccessLevelOption[] = [
+  { level: 'view', label: 'Viewer' },
+  { level: 'update', label: 'Editor' },
+  { level: 'execute', label: 'Executor' },
+];
 const DEFAULT_PRINCIPAL_KINDS: readonly PrincipalKind[] = [
   'personal',
   'team',
   'organization',
 ];
-
-const ACCESS_LEVEL_LABELS: Record<ItemAccessLevel, string> = {
-  view: 'Viewer',
-  update: 'Editor',
-  execute: 'Executor',
-};
 
 // ---------------------------------------------------------------------------
 // String / payload helpers.
@@ -452,12 +462,15 @@ export function extractOwnerPrincipals(payload: any): OwnerPrincipal[] {
 // AccessByLevel helpers.
 // ---------------------------------------------------------------------------
 
-function emptyAccessByLevel(): AccessByLevel {
-  return {
-    view: { userUids: [], teamUids: [], organizationUids: [] },
-    update: { userUids: [], teamUids: [], organizationUids: [] },
-    execute: { userUids: [], teamUids: [], organizationUids: [] },
-  };
+function emptyAccessByLevel(
+  levels: readonly AccessLevelOption[],
+): AccessByLevel {
+  return Object.fromEntries(
+    levels.map(({ level }) => [
+      level,
+      { userUids: [], teamUids: [], organizationUids: [] },
+    ]),
+  );
 }
 
 function bucketFor(
@@ -472,7 +485,7 @@ function bucketFor(
 
 function hasPrincipal(
   state: AccessByLevel,
-  level: ItemAccessLevel,
+  level: string,
   kind: PrincipalKind,
   uid: string,
 ): boolean {
@@ -484,7 +497,7 @@ function hasPrincipal(
 
 function withPrincipalAdded(
   state: AccessByLevel,
-  level: ItemAccessLevel,
+  level: string,
   kind: PrincipalKind,
   uid: string,
 ): AccessByLevel {
@@ -508,17 +521,17 @@ function withPrincipalRemoved(
 ): AccessByLevel {
   const lower = uid.toLowerCase();
   const bucket = bucketFor(kind);
-  const next: AccessByLevel = {
-    view: { ...state.view },
-    update: { ...state.update },
-    execute: { ...state.execute },
-  };
-  for (const level of ACCESS_LEVELS) {
-    next[level][bucket] = next[level][bucket].filter(
-      value => value.toLowerCase() !== lower,
-    );
-  }
-  return next;
+  return Object.fromEntries(
+    Object.entries(state).map(([level, principals]) => [
+      level,
+      {
+        ...principals,
+        [bucket]: principals[bucket].filter(
+          value => value.toLowerCase() !== lower,
+        ),
+      },
+    ]),
+  );
 }
 
 function buildAclEntries(
@@ -527,7 +540,7 @@ function buildAclEntries(
 ): ACLPrincipalEntry[] {
   const allowed = new Set(principalKinds);
   const byPrincipal = new Map<string, ACLPrincipalEntry>();
-  const upsert = (kind: PrincipalKind, uid: string, level: ItemAccessLevel) => {
+  const upsert = (kind: PrincipalKind, uid: string, level: string) => {
     if (!allowed.has(kind)) {
       return;
     }
@@ -541,7 +554,7 @@ function buildAclEntries(
       existing.levels.push(level);
     }
   };
-  for (const level of ACCESS_LEVELS) {
+  for (const level of Object.keys(state)) {
     state[level].userUids.forEach(uid => upsert('personal', uid, level));
     state[level].teamUids.forEach(uid => upsert('team', uid, level));
     state[level].organizationUids.forEach(uid =>
@@ -556,28 +569,24 @@ function buildAclEntries(
   });
 }
 
-function hydrateAccessFromSharing(sharing: SharingPayload): AccessByLevel {
+function hydrateAccessFromSharing(
+  sharing: SharingPayload,
+  levels: readonly AccessLevelOption[],
+): AccessByLevel {
   const access = sharing.access || {};
-  const view = access.view || {};
-  const update = access.update || {};
-  const execute = access.execute || {};
-  return {
-    view: {
-      userUids: [...(view.userUids || [])],
-      teamUids: [...(view.teamUids || [])],
-      organizationUids: [...(view.organizationUids || [])],
-    },
-    update: {
-      userUids: [...(update.userUids || [])],
-      teamUids: [...(update.teamUids || [])],
-      organizationUids: [...(update.organizationUids || [])],
-    },
-    execute: {
-      userUids: [...(execute.userUids || [])],
-      teamUids: [...(execute.teamUids || [])],
-      organizationUids: [...(execute.organizationUids || [])],
-    },
-  };
+  return Object.fromEntries(
+    levels.map(({ level }) => {
+      const given = access[level] || {};
+      return [
+        level,
+        {
+          userUids: [...(given.userUids || [])],
+          teamUids: [...(given.teamUids || [])],
+          organizationUids: [...(given.organizationUids || [])],
+        },
+      ];
+    }),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -766,6 +775,7 @@ export function ShareAccessComponent({
   expanded = false,
   onSharingAccessRestrictedChange,
   defaultAccessLevel = 'view',
+  levels = DEFAULT_ACCESS_LEVELS,
   principalKinds = DEFAULT_PRINCIPAL_KINDS,
   displayMode = 'dialog',
   onClose,
@@ -783,9 +793,15 @@ export function ShareAccessComponent({
   const [isSaving, setIsSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(expanded);
   const [selectedAccessLevel, setSelectedAccessLevel] =
-    useState<ItemAccessLevel>(defaultAccessLevel);
+    useState<string>(defaultAccessLevel);
+  const levelLabels = useMemo<Record<string, string>>(
+    () => Object.fromEntries(levels.map(({ level, label }) => [level, label])),
+    [levels],
+  );
 
-  const [access, setAccess] = useState<AccessByLevel>(emptyAccessByLevel());
+  const [access, setAccess] = useState<AccessByLevel>(() =>
+    emptyAccessByLevel(levels),
+  );
   const [ownerPrincipals, setOwnerPrincipals] = useState<OwnerPrincipal[]>([]);
   const [shareablePrincipals, setShareablePrincipals] = useState<
     ShareablePrincipal[]
@@ -962,7 +978,7 @@ export function ShareAccessComponent({
           if (!cancelled && isSharingAuthorizationMessage(message)) {
             setSharingAccessMessage(message);
             setIsSharingAccessConfirmed(true);
-            setAccess(emptyAccessByLevel());
+            setAccess(emptyAccessByLevel(levels));
             setOwnerPrincipals([]);
             return;
           }
@@ -976,7 +992,7 @@ export function ShareAccessComponent({
             if (!cancelled) {
               setSharingAccessMessage(message);
               setIsSharingAccessConfirmed(true);
-              setAccess(emptyAccessByLevel());
+              setAccess(emptyAccessByLevel(levels));
               setOwnerPrincipals([]);
             }
             return;
@@ -989,7 +1005,7 @@ export function ShareAccessComponent({
 
         const sharing = (payload?.sharing || {}) as SharingPayload;
         const owners = extractOwnerPrincipals(payload);
-        const hydrated = hydrateAccessFromSharing(sharing);
+        const hydrated = hydrateAccessFromSharing(sharing, levels);
 
         setOwnerPrincipals(owners);
         owners.forEach(owner => {
@@ -1032,6 +1048,7 @@ export function ShareAccessComponent({
     token,
     resourceLabel,
     resourceName,
+    levels,
     mergePrincipalCacheEntry,
   ]);
 
@@ -1548,23 +1565,16 @@ export function ShareAccessComponent({
       setIsSaving(true);
       try {
         const body: SharingPayload = {
-          access: {
-            view: {
-              userUids: snapshot.view.userUids,
-              teamUids: snapshot.view.teamUids,
-              organizationUids: snapshot.view.organizationUids,
-            },
-            update: {
-              userUids: snapshot.update.userUids,
-              teamUids: snapshot.update.teamUids,
-              organizationUids: snapshot.update.organizationUids,
-            },
-            execute: {
-              userUids: snapshot.execute.userUids,
-              teamUids: snapshot.execute.teamUids,
-              organizationUids: snapshot.execute.organizationUids,
-            },
-          },
+          access: Object.fromEntries(
+            Object.entries(snapshot).map(([level, principals]) => [
+              level,
+              {
+                userUids: principals.userUids,
+                teamUids: principals.teamUids,
+                organizationUids: principals.organizationUids,
+              },
+            ]),
+          ),
         };
         if (transport) {
           await transport.save(body);
@@ -1942,7 +1952,8 @@ export function ShareAccessComponent({
                   leadingVisual={KeyIcon}
                   disabled={isSaving || isReadOnly}
                 >
-                  Access: {ACCESS_LEVEL_LABELS[selectedAccessLevel]}
+                  Access:{' '}
+                  {levelLabels[selectedAccessLevel] || selectedAccessLevel}
                 </Button>
               </ActionMenu.Anchor>
               <Button
@@ -1961,13 +1972,13 @@ export function ShareAccessComponent({
             </Box>
             <ActionMenu.Overlay width="small">
               <ActionList selectionVariant="single">
-                {ACCESS_LEVELS.map(level => (
+                {levels.map(({ level, label }) => (
                   <ActionList.Item
                     key={level}
                     selected={selectedAccessLevel === level}
                     onSelect={() => setSelectedAccessLevel(level)}
                   >
-                    {ACCESS_LEVEL_LABELS[level]}
+                    {label}
                   </ActionList.Item>
                 ))}
               </ActionList>
@@ -2310,7 +2321,7 @@ export function ShareAccessComponent({
                         >
                           {entry.levels.map(level => (
                             <Label key={level} size="small" variant="secondary">
-                              {ACCESS_LEVEL_LABELS[level]}
+                              {levelLabels[level] || level}
                             </Label>
                           ))}
                         </Box>

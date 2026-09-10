@@ -27,6 +27,10 @@ import {
 } from './request';
 import type {
   CaseListResponse,
+  EvalsPermissionsResponse,
+  EvalsSharingResponse,
+  EvalsSharingUpdate,
+  SharedEvalsRecord,
   EvalsetVersionListResponse,
   EvalsetVersionResponse,
   InvestigationListResponse,
@@ -771,4 +775,41 @@ export const resumeTaskSandbox = (
     options,
     `/runs/${segment(runId)}/tasks/${segment(caseId)}/sandbox/resume`,
     { method: 'POST', body },
+  );
+
+// --- Sharing and permissions (B4-05) ----------------------------------------
+
+/** Who a benchmark, one of its runs or an investigation is shared with; its owner's to read. */
+export const getEvalsSharing = (
+  options: EvalsClientOptions,
+  record: SharedEvalsRecord,
+  uid: string,
+) =>
+  evalsRequest<EvalsSharingResponse>(
+    options,
+    `/${record}/${segment(uid)}/sharing`,
+  );
+
+/** Replace the grants at the levels named; the others are kept. Its owner's to do. */
+export const updateEvalsSharing = (
+  options: EvalsClientOptions,
+  record: SharedEvalsRecord,
+  uid: string,
+  access: EvalsSharingUpdate,
+) =>
+  evalsRequest<EvalsSharingResponse>(
+    options,
+    `/${record}/${segment(uid)}/sharing`,
+    { method: 'PUT', body: { access } },
+  );
+
+/** The caller's role on the record, and what it allows. */
+export const getEvalsPermissions = (
+  options: EvalsClientOptions,
+  record: SharedEvalsRecord,
+  uid: string,
+) =>
+  evalsRequest<EvalsPermissionsResponse>(
+    options,
+    `/${record}/${segment(uid)}/permissions`,
   );

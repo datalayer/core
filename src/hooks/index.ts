@@ -37,6 +37,7 @@ export * from './useMobile';
 export * from './useUsageRefreshStore';
 export * from './usePrincipalStore';
 export * from './usePrincipalCacheStore';
+export * from './useSpaceCacheStore';
 export * from './useBillingEntityStore';
 export * from './useSelectedPrincipal';
 export * from './useSelectedBillingEntity';
