@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+import { registerSessionState } from '../state/sessionEnd';
 
 /**
  * A resolved space, kept in memory.
@@ -138,3 +139,6 @@ export const useSpaceCacheStore = create<SpaceCacheState>((set, get) => ({
 }));
 
 export default useSpaceCacheStore;
+
+// What one session resolved is not the next one's to paint.
+registerSessionState({ forget: () => useSpaceCacheStore.getState().reset() });

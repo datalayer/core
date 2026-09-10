@@ -16,6 +16,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { registerSessionState } from '../../state/sessionEnd';
 
 export interface SimpleAuthState {
   /** JWT bearer token (from IAM login). */
@@ -39,3 +40,6 @@ export const useSimpleAuthStore = create<SimpleAuthState>()(
     { name: 'datalayer-simple-auth' },
   ),
 );
+
+// A token is the session's: forgotten when it ends.
+registerSessionState({ forget: () => useSimpleAuthStore.getState().clearAuth() });

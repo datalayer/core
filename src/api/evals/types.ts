@@ -718,6 +718,23 @@ export interface UpdateInvestigationRequest {
   assignees?: string[];
 }
 
+/**
+ * A view of an investigation's page kept under a name for everybody on it
+ * (B4-11), in the investigation's `metadata.views`.
+ */
+export interface SavedInvestigationView {
+  name: string;
+  /** What the page shows: `surface`, and `block`, `case` or `cell`. */
+  query: string;
+  saved_by_uid?: string;
+  saved_at?: string;
+}
+
+export interface SaveInvestigationViewRequest {
+  name: string;
+  query: string;
+}
+
 export interface ResumeSandboxRequest {
   /** Minutes the restored sandbox is reserved for. */
   time_reservation?: number;
@@ -746,7 +763,8 @@ export interface ReportDocumentResponse extends SuccessResponse {
 // --- Sharing and permissions (B4-05) ----------------------------------------
 
 /** The records that carry grants, as their routes name them. */
-export type SharedEvalsRecord = 'evalsets' | 'launches' | 'investigations';
+export type SharedEvalsRecord =
+  'evalsets' | 'launches' | 'investigations' | 'reports';
 
 /**
  * The levels a grant gives, lowest first, each allowing what the ones before
@@ -783,4 +801,202 @@ export interface EvalsPermissionsResponse extends SuccessResponse {
   uid: string;
   role: EvalsRole;
   permissions: Record<EvalsRole, boolean>;
+}
+
+// --- Reports (B4-04) --------------------------------------------------------
+
+/** The states of a report (section 13.3), in the order a report goes through them. */
+export type ReportState =
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'published_private'
+  | 'published_public'
+  | 'superseded';
+
+/** A report over runs of one benchmark: its document and its state. */
+export interface EvalReport {
+  id: string;
+  owner_uid: string;
+  account_uid: string;
+  evalset_id: string;
+  evalset_version: number | null;
+  launch_ids: string[];
+  run_ids: string[];
+  /** The Lexical document in the benchmarks space people read and edit. */
+  document_uid: string;
+  title: string;
+  state: ReportState;
+  version: number;
+  /** Who was asked to approve it. */
+  reviewer_uids: string[];
+  approved_by_uid: string;
+  approved_at: string | null;
+  /** The version of the document kept when it was approved. */
+  approved_version_uid: string;
+  published_at: string | null;
+  supersedes_uid: string;
+  superseded_by_uid: string;
+  created_by_uid: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface ReportResponse extends SuccessResponse {
+  report: EvalReport;
+}
+
+export interface ReportListResponse extends SuccessResponse {
+  total: number;
+  reports: EvalReport[];
+}
+
+export interface CreateReportRequest {
+  evalset_id: string;
+  launch_ids: string[];
+  title?: string;
+}
+
+/** A move of a report; `superseded` is not one, a regeneration is. */
+export interface MoveReportRequest {
+  state: Exclude<ReportState, 'superseded'>;
+  /** Who is asked to approve it, when it is sent for review. */
+  reviewer_uids?: string[];
+  /** What the approval says. */
+  message?: string;
+}
+
+export interface RegenerateReportResponse extends ReportResponse {
+  superseded: EvalReport;
+}
+
+export type ReportsQuery = {
+  evalset_id?: string;
+  launch_id?: string;
+  state?: ReportState;
+  limit?: number;
+  offset?: number;
+};
+
+// --- Review decisions (B4-03) -------------------------------------------------
+
+export type DecisionKind =
+  | 'accepted_regression'
+  | 'expected_change'
+  | 'evaluator_issue'
+  | 'data_issue'
+  | 'action_required';
+
+export type DecisionOutcome =
+  'approved' | 'blocked' | 'accepted_with_limitations';
+
+/** What a decision is about: a block of a report, a task, a run, a launch. */
+export type DecisionScope = 'block' | 'case' | 'run' | 'launch';
+
+/** The records a decision is made on, as their routes name them. */
+export type DecisionSubject = 'reports' | 'investigations';
+
+/** A decision as it was made; decisions are appended, never edited. */
+export interface EvalDecision {
+  id: string;
+  owner_uid: string;
+  account_uid: string;
+  subject: 'report' | 'investigation';
+  subject_uid: string;
+  kind: DecisionKind;
+  outcome: DecisionOutcome;
+  scope: DecisionScope;
+  /** What in the scope: the block, the task, the run or the launch. */
+  scope_ref: string;
+  note: string;
+  decided_by_uid: string;
+  decided_at: string | null;
+  /** The comment thread the decision resolves. */
+  thread_uid: string;
+  evalset_id: string;
+  launch_ids: string[];
+}
+
+export interface DecisionRequest {
+  kind: DecisionKind;
+  outcome: DecisionOutcome;
+  scope: DecisionScope;
+  scope_ref?: string;
+  note?: string;
+  thread_uid?: string;
+}
+
+export interface DecisionResponse extends SuccessResponse {
+  decision: EvalDecision;
+}
+
+export interface DecisionListResponse extends SuccessResponse {
+  total: number;
+  decisions: EvalDecision[];
+}
+
+// --- Shared with the caller (B4-07) -------------------------------------------
+
+/** A report or an investigation somebody shared with the caller. */
+export interface SharedEvalsItem {
+  kind: 'report' | 'investigation';
+  uid: string;
+  title: string;
+  owner_uid: string;
+  /** The level the grants give the caller. */
+  role: EvalsAccessLevel;
+  /** The report's state or the investigation's status. */
+  state: string;
+  /** The page of the app it opens. */
+  link: string;
+  updated_at: string | null;
+}
+
+export interface SharedWithMeResponse extends SuccessResponse {
+  total: number;
+  shared: SharedEvalsItem[];
+}
+
+// --- CI reports imported as snapshots (B4-09) ---------------------------------
+
+/** A report file CI produced, kept on its benchmark as it was. */
+export interface EvalReportImport {
+  id: string;
+  owner_uid: string;
+  account_uid: string;
+  evalset_id: string;
+  format: 'csv' | 'markdown';
+  name: string;
+  run_ids: string[];
+  launch_ids: string[];
+  /** Run ids the file names that are no run of this benchmark here. */
+  unmatched_run_ids: string[];
+  imported_by_uid: string;
+  /** The live report continued from it, once one is. */
+  live_report_uid: string;
+  investigation_uid: string;
+  /** The file's text; left out of a listing. */
+  content: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface ReportImportRequest {
+  format: 'csv' | 'markdown';
+  content: string;
+  name?: string;
+}
+
+export interface ReportImportResponse extends SuccessResponse {
+  import: EvalReportImport;
+}
+
+export interface ReportImportListResponse extends SuccessResponse {
+  total: number;
+  imports: EvalReportImport[];
+}
+
+export interface ContinueReportImportResponse extends ReportImportResponse {
+  report_link: string;
+  investigation_link: string;
 }

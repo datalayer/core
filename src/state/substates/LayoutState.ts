@@ -7,6 +7,7 @@ import { ReactPortal } from 'react';
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import { IAnyOrganization, IAnyTeam } from '../../models';
+import { registerSessionState } from '../sessionEnd';
 
 /**
  * Structural placeholder for a space in the layout state. The concrete space
@@ -267,6 +268,18 @@ export const layoutStore = createStore<LayoutState>((set, get) => ({
     set((state: LayoutState) => ({ screenCapture })),
   reset: () => set((state: LayoutState) => ({ bootstrapped: false })),
 }));
+
+// The current space, organization, team and item are the session's own:
+// forgotten when it ends, cookie included.
+registerSessionState({
+  forget: () => {
+    const state = layoutStore.getState();
+    state.updateLayoutSpace(undefined);
+    state.updateLayoutOrganization(undefined);
+    state.updateLayoutTeam(undefined);
+    state.setItem(undefined);
+  },
+});
 
 export function useLayoutStore(): LayoutState;
 export function useLayoutStore<T>(selector: (state: LayoutState) => T): T;

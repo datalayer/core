@@ -35,6 +35,7 @@ import {
 import { getCookie, setCookie, deleteCookie } from '../../utils';
 import { coreStore } from './CoreState';
 import { profileStore } from './ProfileState';
+import { claimSessionState, forgetSessionState } from '../sessionEnd';
 
 /**
  * Limit to warn about low credits in milliseconds.
@@ -177,6 +178,9 @@ export const iamStore = createStore<IAMState>((set, get) => {
       storeUser();
       storeToken();
       profileStore.getState().clearProfile();
+      // Everything else the session left in the browser goes with it: the
+      // current space, the principal, the billing entity, what apps registered.
+      forgetSessionState();
       set({
         credits: undefined,
         creditsReservations: [],
@@ -295,6 +299,8 @@ export const iamStore = createStore<IAMState>((set, get) => {
           token,
         });
         const user = asUser(data.profile);
+        // State another person left in this browser is not this person's.
+        claimSessionState((user as any)?.id ?? (user as any)?.uid);
         storeUser(user);
         storeToken(token);
         set(() => ({ user, token }));
@@ -319,6 +325,7 @@ export const iamStore = createStore<IAMState>((set, get) => {
       }),
     setLogin: (user: IUser, token: string) =>
       set((state: IAMState) => {
+        claimSessionState((user as any)?.id ?? (user as any)?.uid);
         storeUser(user);
         storeToken(token);
         // The profile store is what the surfaces (user menu, sidebars,

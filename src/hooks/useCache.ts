@@ -91,6 +91,7 @@ import { useAuthorization } from './useAuthorization';
 import { useUploadForm } from './useUpload';
 
 import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
+import { forgetSessionState } from '../state/sessionEnd';
 
 // ============================================================================
 // Types
@@ -1613,6 +1614,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       },
       onSuccess: () => {
         forgetSession(queryClient);
+        forgetSessionState();
       },
     });
   };

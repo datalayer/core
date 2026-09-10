@@ -27,6 +27,21 @@ import {
 } from './request';
 import type {
   CaseListResponse,
+  CreateReportRequest,
+  MoveReportRequest,
+  RegenerateReportResponse,
+  ReportListResponse,
+  ReportResponse,
+  ReportsQuery,
+  DecisionListResponse,
+  DecisionRequest,
+  DecisionResponse,
+  DecisionSubject,
+  SharedWithMeResponse,
+  ContinueReportImportResponse,
+  ReportImportListResponse,
+  ReportImportRequest,
+  ReportImportResponse,
   EvalsPermissionsResponse,
   EvalsSharingResponse,
   EvalsSharingUpdate,
@@ -764,6 +779,33 @@ export const updateInvestigation = (
     { method: 'PATCH', body },
   );
 
+/**
+ * Keep the investigation's page as it is shown, under a name everybody on
+ * the investigation sees; a view of that name is replaced (B4-11).
+ */
+export const saveInvestigationView = (
+  options: EvalsClientOptions,
+  investigationId: string,
+  body: { name: string; query: string },
+) =>
+  evalsRequest<InvestigationResponse>(
+    options,
+    `/investigations/${segment(investigationId)}/views`,
+    { method: 'POST', body },
+  );
+
+/** Forget a saved view of the investigation's page. */
+export const forgetInvestigationView = (
+  options: EvalsClientOptions,
+  investigationId: string,
+  name: string,
+) =>
+  evalsRequest<InvestigationResponse>(
+    options,
+    `/investigations/${segment(investigationId)}/views`,
+    { method: 'DELETE', query: { name } },
+  );
+
 /** Bring the task's sandbox back from its snapshot, bound to its investigation. */
 export const resumeTaskSandbox = (
   options: EvalsClientOptions,
@@ -812,4 +854,133 @@ export const getEvalsPermissions = (
   evalsRequest<EvalsPermissionsResponse>(
     options,
     `/${record}/${segment(uid)}/permissions`,
+  );
+
+// --- Reports (B4-04) ----------------------------------------------------------
+
+/** A report over runs of a benchmark, written as a draft. */
+export const createReport = (
+  options: EvalsClientOptions,
+  body: CreateReportRequest,
+) =>
+  evalsRequest<ReportResponse>(options, '/reports', { method: 'POST', body });
+
+export const listReports = (
+  options: EvalsClientOptions,
+  query: ReportsQuery = {},
+) => evalsRequest<ReportListResponse>(options, '/reports', { query });
+
+export const getReport = (options: EvalsClientOptions, reportId: string) =>
+  evalsRequest<ReportResponse>(options, `/reports/${segment(reportId)}`);
+
+/** Send a report for review, send it back, approve it or publish it. */
+export const moveReport = (
+  options: EvalsClientOptions,
+  reportId: string,
+  body: MoveReportRequest,
+) =>
+  evalsRequest<ReportResponse>(options, `/reports/${segment(reportId)}/state`, {
+    method: 'POST',
+    body,
+  });
+
+/** A new version over newer runs, or the same ones; the old report is superseded by it. */
+export const regenerateReport = (
+  options: EvalsClientOptions,
+  reportId: string,
+  launchIds?: string[],
+) =>
+  evalsRequest<RegenerateReportResponse>(
+    options,
+    `/reports/${segment(reportId)}/regenerate`,
+    {
+      method: 'POST',
+      body: launchIds?.length ? { launch_ids: launchIds } : {},
+    },
+  );
+
+// --- Review decisions (B4-03) -------------------------------------------------
+
+/** What a reviewer decided about part of a result, recorded on a report or in an investigation. */
+export const recordDecision = (
+  options: EvalsClientOptions,
+  subject: DecisionSubject,
+  uid: string,
+  body: DecisionRequest,
+) =>
+  evalsRequest<DecisionResponse>(
+    options,
+    `/${subject}/${segment(uid)}/decisions`,
+    { method: 'POST', body },
+  );
+
+/** The decisions made on a report or in an investigation, in the order they were made. */
+export const listDecisions = (
+  options: EvalsClientOptions,
+  subject: DecisionSubject,
+  uid: string,
+) =>
+  evalsRequest<DecisionListResponse>(
+    options,
+    `/${subject}/${segment(uid)}/decisions`,
+  );
+
+export type ReportExportFormat = 'markdown' | 'csv';
+
+/** Where a report is downloaded as it was written, with its decisions (B4-08). */
+export const reportExportUrl = (
+  options: EvalsClientOptions,
+  reportId: string,
+  format: ReportExportFormat = 'markdown',
+) => evalsUrl(options, `/reports/${segment(reportId)}/export`, { format });
+
+// --- Shared with the caller (B4-07) -------------------------------------------
+
+/** The reports and investigations other people shared with the caller. */
+export const listSharedWithMe = (options: EvalsClientOptions) =>
+  evalsRequest<SharedWithMeResponse>(options, '/shared');
+
+// --- CI reports imported as snapshots (B4-09) ---------------------------------
+
+/** Keep a report file CI produced on its benchmark, as its text. */
+export const importReport = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  body: ReportImportRequest,
+) =>
+  evalsRequest<ReportImportResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/reports/import`,
+    { method: 'POST', body },
+  );
+
+/** The reports imported on a benchmark, newest first, without their text. */
+export const listReportImports = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+) =>
+  evalsRequest<ReportImportListResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/reports/imports`,
+  );
+
+/** One imported report, with its text as it was. */
+export const getReportImport = (
+  options: EvalsClientOptions,
+  importId: string,
+) =>
+  evalsRequest<ReportImportResponse>(
+    options,
+    `/report-imports/${segment(importId)}`,
+  );
+
+/** Continue investigation: a live report and an investigation over its runs. */
+export const continueReportImport = (
+  options: EvalsClientOptions,
+  importId: string,
+) =>
+  evalsRequest<ContinueReportImportResponse>(
+    options,
+    `/report-imports/${segment(importId)}/continue`,
+    { method: 'POST' },
   );
