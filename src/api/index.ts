@@ -28,5 +28,6 @@ export * as iam from './iam';
 export * as contents from './contents';
 export * as evals from './evals';
 export * as mcp from './mcp';
+export * as orchestration from './orchestration';
 export * as otel from './otel';
 export * from '../api/DatalayerApi';

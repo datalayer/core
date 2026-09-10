@@ -86,6 +86,11 @@ export interface AiAgentsRequestInit {
   body?: unknown;
   query?: EvalsQuery;
   signal?: AbortSignal;
+  /**
+   * Headers beyond the caller's own credential. One call needs this: a
+   * trial's claim carries the trial's key beside the person's (B2-14).
+   */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -106,6 +111,7 @@ export const aiAgentsRequest = <T>(
     body: init.body,
     token: options.token,
     signal: init.signal,
+    ...(init.headers ? { headers: init.headers } : {}),
   });
 
 /** One request under `/evals`. */

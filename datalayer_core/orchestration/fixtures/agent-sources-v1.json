@@ -1,0 +1,152 @@
+{
+  "a2aAgentCards": {
+    "served": {
+      "name": "Example A2A Researcher",
+      "description": "A research specialist served over the A2A protocol.",
+      "version": "1.0.0",
+      "supportedInterfaces": [
+        {
+          "protocolBinding": "JSONRPC",
+          "url": "https://oss.datalayer.run/api/agent-runtimes/v1/a2a/agents/example-a2a-researcher",
+          "protocolVersion": "1.0"
+        }
+      ],
+      "skills": [],
+      "defaultInputModes": [
+        "application/json"
+      ],
+      "defaultOutputModes": [
+        "application/json"
+      ],
+      "capabilities": {
+        "streaming": true,
+        "pushNotifications": false
+      }
+    },
+    "conformant": {
+      "name": "Notebook Validator",
+      "description": "Runs a notebook from a clean sandbox and reports what broke.",
+      "version": "1.4.0",
+      "provider": {
+        "organization": "Datalayer",
+        "url": "https://datalayer.io"
+      },
+      "documentationUrl": "https://docs.datalayer.io/agents/notebook-validator",
+      "iconUrl": "https://assets.datalayer.tech/datalayer-25.svg",
+      "supportedInterfaces": [
+        {
+          "protocolBinding": "JSONRPC",
+          "url": "https://agents.datalayer.run/api/v1/a2a/agents/notebook-validator",
+          "protocolVersion": "1.0",
+          "tenant": "datalayer"
+        }
+      ],
+      "capabilities": {
+        "streaming": true,
+        "pushNotifications": true,
+        "extendedAgentCard": true,
+        "extensions": [
+          {
+            "uri": "https://datalayer.ai/specs/a2a/context-orchestration/v1",
+            "description": "Datalayer orchestration semantics.",
+            "required": false
+          }
+        ]
+      },
+      "securitySchemes": {
+        "bearer": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      },
+      "securityRequirements": [
+        {
+          "bearer": [
+            "executions:run",
+            "notebooks:read"
+          ]
+        }
+      ],
+      "defaultInputModes": [
+        "application/json",
+        "text/plain"
+      ],
+      "defaultOutputModes": [
+        "application/json",
+        "application/x-ipynb+json"
+      ],
+      "skills": [
+        {
+          "id": "notebook-validate",
+          "name": "Validate a notebook",
+          "description": "Execute every cell in order and compare the outputs.",
+          "tags": [
+            "notebook",
+            "jupyter",
+            "validation"
+          ],
+          "examples": [
+            "Validate the benchmark notebook from a clean sandbox"
+          ],
+          "inputModes": [
+            "application/x-ipynb+json"
+          ],
+          "outputModes": [
+            "application/json"
+          ],
+          "securityRequirements": [
+            {
+              "bearer": [
+                "notebooks:execute"
+              ]
+            }
+          ]
+        }
+      ],
+      "signatures": [
+        {
+          "protected": "eyJhbGciOiJFUzI1NiJ9",
+          "signature": "c2lnbmF0dXJlLXBsYWNlaG9sZGVy"
+        }
+      ]
+    },
+    "singleUrl": {
+      "name": "Third Party Researcher",
+      "description": "An A2A worker published by somebody else.",
+      "version": "2.1.0",
+      "url": "https://agents.example.com/a2a/researcher",
+      "preferredTransport": "JSONRPC",
+      "protocolVersion": "0.3.0",
+      "skills": [],
+      "defaultInputModes": [
+        "text/plain"
+      ],
+      "defaultOutputModes": [
+        "text/plain"
+      ],
+      "capabilities": {
+        "streaming": false
+      }
+    }
+  },
+  "acpAgentEntries": {
+    "registered": {
+      "id": "example-agentic-chat",
+      "name": "Example Agentic Chat",
+      "description": "A chat agent registered on the ACP route.",
+      "capabilities": {
+        "streaming": true,
+        "tool_calling": true,
+        "code_execution": true,
+        "file_access": false,
+        "permissions": [
+          "notebook.read"
+        ]
+      },
+      "version": "1.0.0",
+      "protocol_version": 1,
+      "protocol": "ag-ui"
+    }
+  }
+}

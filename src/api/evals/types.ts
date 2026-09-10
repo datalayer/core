@@ -71,6 +71,16 @@ export interface Evalset {
   version: number;
   /** How many launches this benchmark has had; the next is number + 1. */
   launch_count: number;
+  /** What the runs say, kept by the launch refresh (B2-10). */
+  run_count?: number;
+  latest_launch_id?: string;
+  latest_pass_rate?: number | null;
+  best_pass_rate?: number | null;
+  last_run_status?: string;
+  last_run_at?: string | null;
+  estimated_cost?: number | null;
+  environment?: string;
+  subject_refs?: string[];
   schema: Record<string, unknown>;
   evalset_evaluators: EvalEvaluatorRef[];
   report_evaluators: EvalEvaluatorRef[];
@@ -97,6 +107,17 @@ export interface EvalsetVersion {
 }
 
 /** One experiment: an agentspec, model, prompt or configuration under test. */
+/** What an experiment runs (B2-11): `{kind, ref, model?, ...}`. */
+export interface EvalSubject {
+  kind: string;
+  ref: string;
+  model?: string;
+  endpoint?: string;
+  image?: string;
+  command?: string;
+  provider?: string;
+}
+
 export interface EvalExperiment {
   id: string;
   owner_uid: string;
@@ -104,6 +125,8 @@ export interface EvalExperiment {
   name: string;
   description: string;
   status: string;
+  /** What the experiment runs (B2-11); empty on an experiment without one. */
+  subject?: EvalSubject | Record<string, never>;
   config: Record<string, unknown>;
   summary: Record<string, unknown>;
   tags: string[];
@@ -159,6 +182,15 @@ export interface EvalRun {
   evalset_id: string;
   /** The launch this run is part of; every run has one once backfilled. */
   launch_id: string;
+  /** Credits consumed so far (B2-06). */
+  cost_credits?: number | null;
+  /** The credits this run may spend; null is no cap (B2-06). */
+  budget_limit?: number | null;
+  /** The compute asked for: environment, slots, concurrency, time_reservation (B2-06). */
+  compute?: Record<string, unknown>;
+  elapsed_ms?: number | null;
+  /** Why the run is `blocked`, when it is (B2-06). */
+  blocked_reason?: string;
   /** The durable workflow executing it, once one does. */
   workflow_uid: string;
   /** The evalset version the run was started against; null on rows not yet backfilled. */
@@ -229,11 +261,94 @@ export interface EvalLaunch {
   created_by_uid: string;
   /** The report document written for this launch, once one is (B3-03). */
   report_document_uid?: string;
+  /** The credits the launch may spend; null is no cap (B2-06). */
+  budget_limit?: number | null;
+  /** The compute asked for: environment, slots, concurrency, time_reservation (B2-06). */
+  compute?: Record<string, unknown>;
+  /** Why the launch is `blocked`, when it is (B2-06). */
+  blocked_reason?: string;
+  /**
+   * The window of live traffic an interactive launch is (B2-13):
+   * `{size, starts_at, ends_at}`. Empty on a batch launch.
+   */
+  window?: { size?: string; starts_at?: string; ends_at?: string };
   archived: boolean;
   started_at: string | null;
   ended_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+}
+
+/** One problem the pre-launch validation found (B2-07). */
+export interface LaunchPlanProblem {
+  code: string;
+  severity: 'error' | 'warning';
+  message: string;
+  experiment_id?: string;
+}
+
+/** The plan of a launch before it is made (B2-07). */
+export interface LaunchPlanResponse {
+  success: boolean;
+  /** No error-level problem: the launch would run. */
+  ok: boolean;
+  /** The mode the plan was made for (B2-13). */
+  run_mode: EvalKind;
+  /**
+   * How run mode, run environment and execution target relate, stated by
+   * the service so the wizard explains it inline rather than failing after
+   * submission (BENCHMARK.md section 9).
+   */
+  run_mode_constraint: string;
+  problems: LaunchPlanProblem[];
+  estimate: {
+    cases: number;
+    experiments: number;
+    slots: number;
+    duration_seconds: number;
+    duration_basis: 'history' | 'assumed' | 'mixed';
+    /** Credits the launch would reserve; null when the burning rate is unknown. */
+    credits_reserved: number | null;
+    credits_available: number | null;
+    budget_limit: number | null;
+  };
+  compute: {
+    environment: string;
+    slots: number;
+    concurrency: number;
+    time_reservation: number;
+    burning_rate: number | null;
+  };
+  experiments: Array<{
+    id: string;
+    name: string;
+    subject: EvalSubject | Record<string, never>;
+    execution_target: string;
+    seconds_per_case: number;
+    duration_basis: 'history' | 'assumed';
+    duration_seconds: number;
+    credits_reserved: number | null;
+  }>;
+  approvals: { pending_tool_approvals: number; budget_limit: number | null };
+  unsupported_evaluators: string[];
+}
+
+/** What a claim moved, by document type; empty when it was a repeat (B2-14). */
+export interface ClaimTrialResponse {
+  success: boolean;
+  trial: Record<string, unknown> | null;
+  moved: Record<string, number>;
+}
+
+/** The subjects an experiment can have and the models offered (B2-11). */
+export interface SubjectsResponse {
+  success: boolean;
+  kinds: Array<{ kind: string; executable: boolean; label: string }>;
+  models: string[];
+  default_model: string;
+  default_provider: string;
+  /** False when AI Inference could not be asked. */
+  models_available: boolean;
 }
 
 /** One evaluated event of a live target. */
@@ -248,7 +363,36 @@ export interface LiveEvalEvent {
   label: string;
   passed: boolean | null;
   attributes: Record<string, unknown>;
+  /** The experiment the event was produced for, graded with its evaluators (B2-13). */
+  experiment_id?: string;
+  evalset_id?: string;
+  /** The interactive launch whose window the event fell into, if one was open. */
+  launch_id?: string;
+  /** The case it answered, when it answered one. */
+  case_id?: string;
+  /** What the experiment's evaluators said of it, server-side. */
+  results?: Array<Record<string, unknown>>;
   created_at: string;
+}
+
+/** What the rolling windows raised on a live target (B2-13). */
+export interface LiveEvalAlert {
+  id: string;
+  owner_uid: string;
+  target_id: string;
+  target_type: string;
+  experiment_id: string;
+  launch_id: string;
+  /** `failure_spike` or `drift`. */
+  kind: string;
+  message: string;
+  /** The failed share, or the pass rate that drifted. */
+  value: number | null;
+  /** The pass rate before the drift. */
+  baseline: number | null;
+  threshold: number | null;
+  window_events: number;
+  created_at: string | null;
 }
 
 /** A live target's rolling-window summary. */
@@ -257,9 +401,14 @@ export interface LiveEvalTarget {
   target_type: string;
   event_count: number;
   passed_count: number;
+  failed_count?: number;
   pass_rate: number | null;
   avg_value: number | null;
   last_event_at: string | null;
+  /** What the target's newest event is bound to (B2-13). */
+  experiment_id?: string;
+  evalset_id?: string;
+  launch_id?: string;
   [key: string]: unknown;
 }
 
@@ -412,6 +561,19 @@ export interface LiveEventListResponse {
   window: string;
   total: number;
   events: LiveEvalEvent[];
+}
+
+export interface LiveEventCreateResponse {
+  success: boolean;
+  event: LiveEvalEvent;
+  /** The alerts this event's arrival raised, if any (B2-13). */
+  alerts: LiveEvalAlert[];
+}
+
+export interface LiveAlertListResponse {
+  success: boolean;
+  window: string;
+  alerts: LiveEvalAlert[];
 }
 
 export interface LiveTargetDeleteResponse {

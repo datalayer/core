@@ -59,6 +59,8 @@
     "check:contents-generated": "python scripts/generate-contents-types.py --check",
     "generate:mcp": "python scripts/generate-mcp-types.py",
     "check:mcp-generated": "python scripts/generate-mcp-types.py --check",
+    "generate:orchestration": "python scripts/generate-orchestration-types.py",
+    "check:orchestration-generated": "python scripts/generate-orchestration-types.py --check",
     "build:nextjs": "npm run build --workspace=nextjj-example",
     "build:examples": "npm run build:nextjs",
     "build:all": "npm run build && npm run build:examples",

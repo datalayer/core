@@ -47,7 +47,11 @@ import type {
   CreateLaunchRequest,
   LaunchCancelResponse,
   LaunchListResponse,
+  ClaimTrialResponse,
+  LaunchPlanResponse,
   LaunchResponse,
+  LiveAlertListResponse,
+  SubjectsResponse,
   ReviewCaseRequest,
   RunCancelResponse,
   CaseRequest,
@@ -383,6 +387,21 @@ export const listLiveEvents = (
   query: ListLiveEventsQuery,
 ) => evalsRequest<LiveEventListResponse>(options, '/live/events', { query });
 
+export type ListLiveAlertsQuery = {
+  target_id?: string;
+  target_type?: string;
+  experiment_id?: string;
+  launch_id?: string;
+  window?: string;
+  limit?: number;
+};
+
+/** The alerts the rolling windows raised: failure spikes and drifts (B2-13). */
+export const listLiveAlerts = (
+  options: EvalsClientOptions,
+  query: ListLiveAlertsQuery = {},
+) => evalsRequest<LiveAlertListResponse>(options, '/live/alerts', { query });
+
 export const deleteLiveTarget = (
   options: EvalsClientOptions,
   targetId: string,
@@ -460,6 +479,81 @@ export const reviewCaseResult = (
     `/runs/${segment(runId)}/cases/${segment(caseId)}/review`,
     {
       method: 'PATCH',
+      body,
+    },
+  );
+
+/**
+ * Give an anonymous trial's work to the person who just signed in (B2-14):
+ * the benchmark, the launch, its runs and everything under them, moved
+ * rather than copied so a link the visitor kept still opens.
+ *
+ * Takes two credentials: the person's, in the client's options, and the
+ * trial's own key, which travels in its header.
+ */
+export const claimTrial = (
+  options: EvalsClientOptions,
+  trialUid: string,
+  trialToken: string,
+) =>
+  evalsRequest<ClaimTrialResponse>(options, '/trials/claim', {
+    method: 'POST',
+    body: { trial_uid: trialUid },
+    headers: { 'X-Datalayer-Trial-Token': trialToken },
+  });
+
+/** The subjects an experiment can have, and the models offered (B2-11). */
+export const listSubjects = (options: EvalsClientOptions) =>
+  evalsRequest<SubjectsResponse>(options, '/subjects');
+
+/**
+ * What a page may report about what somebody did (B2-25, B3-12).
+ *
+ * The six lines of the funnel no record answers: nothing is written when
+ * somebody opens the Run Benchmark wizard, reads a task, asks the result agent
+ * a question, runs a follow-up cell, or pins evidence into a report. A closed
+ * set, because a free-form label from a browser is a cardinality bomb with an
+ * authenticated route in front of it.
+ */
+export type ProductEvent =
+  | 'wizard.started'
+  | 'wizard.completed'
+  | 'task.opened'
+  | 'question.asked'
+  | 'cell.executed'
+  | 'evidence.added';
+
+/**
+ * Count one of those.
+ *
+ * Nothing is stored, and the answer says only that it was counted. Never worth
+ * failing a page for: a measure that breaks what somebody was doing is worse
+ * than a measure nobody has.
+ */
+export const recordProductEvent = (
+  options: EvalsClientOptions,
+  event: ProductEvent,
+) =>
+  evalsRequest<{ success: boolean }>(options, '/measures', {
+    method: 'POST',
+    body: { event },
+  });
+
+/**
+ * The plan of a launch before it is made (B2-07): estimated duration and
+ * cost, the compute, and the problems that would stop it. Same body as the
+ * launch; nothing is created.
+ */
+export const validateLaunch = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  body: CreateLaunchRequest,
+) =>
+  evalsRequest<LaunchPlanResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/launches/validate`,
+    {
+      method: 'POST',
       body,
     },
   );

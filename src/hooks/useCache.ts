@@ -1338,6 +1338,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   const toEvalset = (raw_evalset: any): any => {
     const owner = toItemOwner(raw_evalset);
+    const numberOrUndefined = (value: any): number | undefined => {
+      if (value === null || value === undefined || value === '') {
+        return undefined;
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
     return {
       id: raw_evalset.uid,
       type: 'evalset',
@@ -1351,6 +1358,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         ? new Date(raw_evalset.last_update_ts_dt)
         : undefined,
       tags: Array.isArray(raw_evalset.tags_ss) ? raw_evalset.tags_ss : [],
+      /*
+       * What the runs of a benchmark say about it, projected onto its
+       * library card whenever a run moves (BENCHMARK.md, B2-10 and B1-09).
+       *
+       * These were dropped here, so a card in the Library or on the home
+       * page could show a name and a description and nothing that would
+       * help anybody choose between two benchmarks — how big it is, what it
+       * has been run on, how well anyone has done, what a run tends to
+       * cost. The projection has been writing them all along.
+       */
+      category: raw_evalset.category_s || undefined,
+      caseCount: numberOrUndefined(raw_evalset.case_count_i),
+      runCount: numberOrUndefined(raw_evalset.run_count_i),
+      latestPassRate: numberOrUndefined(raw_evalset.latest_pass_rate_f),
+      bestPassRate: numberOrUndefined(raw_evalset.best_pass_rate_f),
+      lastRunStatus: raw_evalset.last_run_status_s || undefined,
+      lastRunAt: raw_evalset.last_run_at_dt
+        ? new Date(raw_evalset.last_run_at_dt)
+        : undefined,
+      estimatedCost: numberOrUndefined(raw_evalset.estimated_cost_f),
+      environment: raw_evalset.environment_s || undefined,
+      subjectRefs: Array.isArray(raw_evalset.subject_refs_ss)
+        ? raw_evalset.subject_refs_ss
+        : [],
       owner,
     };
   };
@@ -1921,19 +1952,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
         settings: IUserSettings;
       }) => {
+        // Only the keys the caller actually set. IAM merges what it
+        // receives into the settings document, so sending a key means
+        // changing it — an undefined one is dropped by `JSON.stringify`
+        // and leaves the stored value alone.
+        const body: Record<string, unknown> = {};
+        if (settings.aiAgentsUrl !== undefined) {
+          body.aiAgents_url_s = settings.aiAgentsUrl;
+        }
+        if (settings.canInvite !== undefined) {
+          body.can_invite_b = settings.canInvite;
+        }
+        if (settings.docsInPlace !== undefined) {
+          body.docs_in_place_b = settings.docsInPlace;
+        }
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/users/${userId}/settings`,
           method: 'PUT',
-          body: {
-            aiAgents_url_s: settings.aiAgentsUrl,
-            can_invite_b: settings.canInvite || false,
-          },
+          body,
         });
       },
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.users.detail(variables.userId),
         });
+        // The signed-in user carries these settings, and the application
+        // shell reads them from there.
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
       },
     });
   };
