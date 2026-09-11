@@ -151,12 +151,13 @@ export const setEvalsetPublic = (
 /**
  * Take a benchmark into the account the options name (B5-03): a private copy
  * of its definition that says what it was taken from. A published benchmark
- * is anybody's to take; an unpublished one, a Viewer's.
+ * is anybody's to take; an unpublished one, a Viewer's. `derivation` says why:
+ * `fork` to change it, `compare` to run it against one's own agent (B5-05).
  */
 export const cloneEvalset = (
   options: EvalsClientOptions,
   evalsetId: string,
-  body: { name?: string } = {},
+  body: { name?: string; derivation?: 'fork' | 'compare' } = {},
 ) =>
   evalsRequest<EvalsetResponse>(
     options,
