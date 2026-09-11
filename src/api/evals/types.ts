@@ -270,6 +270,8 @@ export interface EvalLaunch {
   compute?: Record<string, unknown>;
   /** Why the launch is `blocked`, when it is (B2-06). */
   blocked_reason?: string;
+  /** The launch this one runs again, at the benchmark version it ran (B5-06). */
+  reproduces_launch_id?: string;
   /**
    * The window of live traffic an interactive launch is (B2-13):
    * `{size, starts_at, ends_at}`. Empty on a batch launch.
@@ -594,6 +596,8 @@ export interface CreateLaunchRequest {
   experiment_ids: string[];
   run_mode?: EvalKind;
   config?: Record<string, unknown>;
+  /** The launch this one runs again, at the benchmark version it ran (B5-06). */
+  reproduces_launch_id?: string;
 }
 
 export interface ReviewCaseRequest {
