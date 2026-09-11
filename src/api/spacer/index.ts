@@ -11,3 +11,5 @@
 
 export * from './request';
 export * from './comments';
+export * from './spaces';
+export * from './notebooks';

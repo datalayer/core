@@ -107,6 +107,8 @@ export interface AgentsCreate {
   agentId: string;
   protocol: AgentProtocol;
   runtime?: RuntimeRequirements;
+  /** The execution the worker is brought up for: its compute draws on that execution tree's credits (O1-07). */
+  executionId?: string | null;
 }
 
 /** Find workers matching capabilities and constraints. */
@@ -215,6 +217,8 @@ export interface Budget {
   cost?: number | null;
   currency?: string;
   wallClockSeconds?: number | null;
+  /** Platform credits the tree's compute may consume, held by IAM in one reservation for the whole tree (O1-07). Set on the root: the tree's executions draw on it, and none sets its own. */
+  credits?: number | null;
   /** How many executions the subtree below this one may create. */
   executions?: number | null;
 }
@@ -723,6 +727,13 @@ export interface ReferenceResolution {
 /** What a resolver found when it looked one reference up (O0-09). */
 export type ReferenceStatus = 'resolved' | 'denied' | 'missing' | 'unavailable';
 
+/** An execution's live report (O1-15): the artifact naming its document. */
+export interface ReportAnswer {
+  artifact: Artifact;
+  execution: Execution;
+  success?: boolean;
+}
+
 /** How a failed attempt is tried again: 19.8's two retries, backing off. */
 export interface RetryPolicy {
   maxRetries?: number;
@@ -1008,7 +1019,7 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
   },
   AgentsCreate: {
     required: ['agentId', 'idempotencyKey', 'protocol'],
-    optional: ['command', 'issuedAt', 'runtime', 'traceparent'],
+    optional: ['command', 'executionId', 'issuedAt', 'runtime', 'traceparent'],
     refs: { runtime: 'RuntimeRequirements' },
   },
   AgentsDiscover: {
@@ -1073,6 +1084,7 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     required: [],
     optional: [
       'cost',
+      'credits',
       'currency',
       'executions',
       'inputTokens',
@@ -1385,6 +1397,11 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     ],
     refs: { error: 'OrchestrationError' },
   },
+  ReportAnswer: {
+    required: ['artifact', 'execution'],
+    optional: ['success'],
+    refs: { artifact: 'Artifact', execution: 'Execution' },
+  },
   RetryPolicy: {
     required: [],
     optional: [
@@ -1505,5 +1522,10 @@ export const ORCHESTRATION_API: readonly OrchestrationOperation[] = [
     operation: 'executions.subscribe',
     method: 'GET',
     path: '/api/ai-agents/v1/orchestration/executions/{execution_id}/events',
+  },
+  {
+    operation: 'executions.report',
+    method: 'POST',
+    path: '/api/ai-agents/v1/orchestration/executions/{execution_id}/report',
   },
 ];

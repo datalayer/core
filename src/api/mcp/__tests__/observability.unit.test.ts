@@ -14,15 +14,45 @@ import {
   MCP_DURABLE_SERVICE_NAME,
   MCP_GATEWAY_SERVICE_NAME,
   MCP_METRIC_CATALOG,
+  MCP_SERVICE_LEVELS_DASHBOARD,
+  MCP_SERVICE_LEVEL_PANELS,
   serviceNameFor,
   fetchMcpLogs,
+  fetchMcpMetrics,
   fetchRunTrace,
   percentile,
   spanTree,
-  summarizeMetricPoints,
   summarizeRequestSpans,
+  summarizeServiceLevels,
 } from '../observability';
+import type { DashboardData } from '../../otel/dashboards';
 import type { OtelSpan } from '../../otel/types';
+
+/** The service levels dashboard, as the OTEL service answers it: summarised per label. */
+const levels = (panels: Record<string, Record<string, number | null>>): DashboardData => ({
+  success: true,
+  id: MCP_SERVICE_LEVELS_DASHBOARD,
+  title: 'Service levels',
+  account_uid: 'acc-1',
+  panels: Object.entries(panels).map(([id, summaries]) => ({
+    id,
+    title: id,
+    metric: 'm',
+    by: null,
+    where: {},
+    agg: 'sum',
+    kind: 'counter',
+    series: Object.entries(summaries).map(([label, summary]) => ({ label, summary, series: 1, points: [] })),
+  })),
+});
+
+const EVERY_LEVEL = {
+  [MCP_SERVICE_LEVEL_PANELS.callsByOutcome]: { ok: 8, error: 2 },
+  [MCP_SERVICE_LEVEL_PANELS.callDurationP95]: { '': 0.9 },
+  [MCP_SERVICE_LEVEL_PANELS.tasksByStatus]: { completed: 3, failed: 1, working: 5 },
+  [MCP_SERVICE_LEVEL_PANELS.sandboxLaunchP95]: { datalayer: 4, e2b: 9 },
+  [MCP_SERVICE_LEVEL_PANELS.sandboxLaunches]: { datalayer: 1, e2b: 1 },
+};
 
 const TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjk5OTk5OTk5OTl9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
@@ -49,35 +79,45 @@ describe('MCP observability', () => {
     expect(percentile([10, 1, 7, 3, 100], 0.95)).toBe(100);
   });
 
-  it('reads the four SLIs off the catalog points', () => {
-    const summary = summarizeMetricPoints(
-      {
-        'mcp.calls': [
-          { metric_name: 'mcp.calls', service_name: 's', value: 8, timestamp: '2026-08-27T10:00:00Z', attributes: { outcome: 'ok' } },
-          { metric_name: 'mcp.calls', service_name: 's', value: 2, timestamp: '2026-08-27T10:00:00Z', attributes: { outcome: 'error' } },
-          { metric_name: 'mcp.calls', service_name: 's', value: 100, timestamp: '2026-08-26T10:00:00Z', attributes: { outcome: 'error' } },
-        ],
-        'mcp.call.duration': [
-          { metric_name: 'mcp.call.duration', service_name: 's', value: 50, timestamp: '2026-08-27T10:00:00Z' },
-          { metric_name: 'mcp.call.duration', service_name: 's', value: 900, timestamp: '2026-08-27T10:00:00Z' },
-        ],
-        'mcp.tasks': [
-          { metric_name: 'mcp.tasks', service_name: 's', value: 3, timestamp: '2026-08-27T10:00:00Z', attributes: { status: 'completed' } },
-          { metric_name: 'mcp.tasks', service_name: 's', value: 1, timestamp: '2026-08-27T10:00:00Z', attributes: { status: 'failed' } },
-          { metric_name: 'mcp.tasks', service_name: 's', value: 5, timestamp: '2026-08-27T10:00:00Z', attributes: { status: 'working' } },
-        ],
-        'sandbox.launch_seconds': [
-          { metric_name: 'sandbox.launch_seconds', service_name: 's', value: 4, timestamp: '2026-08-27T10:00:00Z', attributes: { provider: 'datalayer' } },
-          { metric_name: 'sandbox.launch_seconds', service_name: 's', value: 9, timestamp: '2026-08-27T10:00:00Z', attributes: { provider: 'e2b' } },
-        ],
-      },
-      { since: '2026-08-27T00:00:00Z' },
-    );
+  it('reads the four SLIs off the service levels dashboard', () => {
+    const summary = summarizeServiceLevels(levels(EVERY_LEVEL));
     expect(summary.availability).toBe(0.8);
     expect(summary.p95CallDurationMs).toBe(900);
     expect(summary.taskSuccessRate).toBe(0.75);
     expect(summary.p95SandboxLaunchSeconds).toEqual({ datalayer: 4, e2b: 9 });
     expect(summary.samples).toEqual({ calls: 10, tasks: 4, launches: 2 });
+  });
+
+  it('says nothing was measured rather than showing a zero', () => {
+    const summary = summarizeServiceLevels(levels({ [MCP_SERVICE_LEVEL_PANELS.callDurationP95]: { '': null } }));
+    expect(summary).toEqual({
+      availability: null,
+      p95CallDurationMs: null,
+      taskSuccessRate: null,
+      p95SandboxLaunchSeconds: {},
+      samples: { calls: 0, tasks: 0, launches: 0 },
+    });
+  });
+
+  it('reads the dashboard and which metrics report, and no spans for everyone', async () => {
+    const request = vi
+      .spyOn(DatalayerApi, 'requestDatalayerAPI')
+      .mockImplementation(async (options: any) =>
+        options.url.includes('/dashboards/')
+          ? levels(EVERY_LEVEL)
+          : { data: [{ metric_name: 'mcp.calls' }, { metric_name: 'sandbox.launch_seconds' }, { metric_name: 'elsewhere' }] },
+      );
+
+    const snapshot = await fetchMcpMetrics(TOKEN, { since: '2026-08-27T00:00:00Z' }, 'https://otel.test');
+
+    expect(snapshot.slis.availability).toBe(0.8);
+    expect(snapshot.reporting).toEqual(['mcp.calls', 'sandbox.launch_seconds']);
+    const urls = request.mock.calls.map(([options]) => (options as { url: string }).url);
+    expect(urls).toContain(
+      `https://otel.test/api/otel/v1/dashboards/mcp-service-levels/data?start=${Date.parse('2026-08-27T00:00:00Z')}000000`,
+    );
+    expect(urls).toContain('https://otel.test/api/otel/v1/metrics/names');
+    expect(urls.some(url => url.includes('/metrics/query') || url.includes('/traces'))).toBe(false);
   });
 
   it('reads a per-agent SLI off the request spans, which carry client.id', () => {

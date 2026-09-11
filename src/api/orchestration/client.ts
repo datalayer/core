@@ -53,6 +53,7 @@ import {
   type ExecutionsSteer,
   type ExecutionsTerminate,
   type OrchestrationOperation,
+  type ReportAnswer,
   type WorkerAnswer,
 } from './generated';
 
@@ -199,6 +200,19 @@ export const getExecution = (
   executionId: string,
 ): Promise<ExecutionAnswer> =>
   call(options, 'executions.get', {
+    parameters: { execution_id: executionId },
+  });
+
+/**
+ * `executions.report`: the execution's live report, a document in the
+ * account's orchestration space, written the first time it is asked for and
+ * the same one after that.
+ */
+export const openExecutionReport = (
+  options: OrchestrationClientOptions,
+  executionId: string,
+): Promise<ReportAnswer> =>
+  call(options, 'executions.report', {
     parameters: { execution_id: executionId },
   });
 

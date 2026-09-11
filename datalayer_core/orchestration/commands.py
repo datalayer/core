@@ -26,6 +26,8 @@ descriptors, executions, artifacts, acknowledgements and events.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from enum import Enum
 from types import MappingProxyType
 from typing import Any, Literal, Mapping
@@ -36,6 +38,7 @@ from datalayer_core.orchestration.artifacts import ArtifactType
 from datalayer_core.orchestration.base import CanonicalModel, Timestamp
 from datalayer_core.orchestration.context import ContextManifest, ContextReference
 from datalayer_core.orchestration.descriptor import (
+    AgentDescriptor,
     AgentProtocol,
     DataClassification,
     RuntimeRequirements,
@@ -122,6 +125,13 @@ class AgentsCreate(MutatingCommand):
     agent_id: str = Field(description="The descriptor to bring up.")
     protocol: AgentProtocol
     runtime: RuntimeRequirements = Field(default_factory=RuntimeRequirements)
+    execution_id: str | None = Field(
+        default=None,
+        description=(
+            "The execution the worker is brought up for: its compute draws on "
+            "that execution tree's credits (O1-07)."
+        ),
+    )
 
 
 class AgentsAttach(MutatingCommand):
@@ -321,3 +331,82 @@ def parse_command(payload: dict[str, Any]) -> Command:
             f"{', '.join(member.value for member in CommandName)}."
         ) from None
     return COMMAND_MODELS[name].from_wire(payload)
+
+
+def command_idempotency_key(command: MutatingCommand) -> str:
+    """
+    Return the key a command carries when its caller names none.
+
+    Derived from what the command asks — every field but the key itself and
+    the caller's clock and trace, which differ between two sendings of one
+    command — so the same command sent again after a lost answer is recognised
+    as the retry it is (section 6.4), and a different request is a different
+    command. Canonical JSON, so the order the fields were given in changes
+    nothing.
+
+    Parameters
+    ----------
+    command : MutatingCommand
+        The command, whatever key it holds.
+
+    Returns
+    -------
+    str
+        The derived key.
+    """
+    asked = command.to_wire()
+    for volatile in ("idempotencyKey", "issuedAt", "traceparent"):
+        asked.pop(volatile, None)
+    canonical = json.dumps(asked, sort_keys=True, separators=(",", ":"), default=str)
+    return f"cmd-{hashlib.sha256(canonical.encode()).hexdigest()[:32]}"
+
+
+def binding_for(
+    descriptor: AgentDescriptor,
+    *,
+    protocol: AgentProtocol | None = None,
+    capability: str | None = None,
+) -> AgentBinding:
+    """
+    Return the binding a delegation to a worker carries, read off its descriptor.
+
+    Parameters
+    ----------
+    descriptor : AgentDescriptor
+        The worker, as discovery described it.
+    protocol : AgentProtocol | None
+        The protocol to reach it over; its first endpoint's when omitted.
+    capability : str | None
+        The capability the work is for, which the worker must declare; its
+        first when omitted.
+
+    Returns
+    -------
+    AgentBinding
+        The worker, the capability, and where it answers.
+
+    Raises
+    ------
+    ValueError
+        When the worker declares no endpoint over the protocol, or does not
+        declare the capability.
+    """
+    endpoints = [
+        endpoint
+        for endpoint in descriptor.endpoints
+        if protocol is None or endpoint.protocol is AgentProtocol(protocol)
+    ]
+    if not endpoints:
+        over = f" over {AgentProtocol(protocol).value}" if protocol else ""
+        raise ValueError(f"'{descriptor.agent_id}' declares no endpoint{over}.")
+    if capability and capability not in descriptor.capabilities:
+        raise ValueError(
+            f"'{descriptor.agent_id}' does not declare the capability '{capability}'."
+        )
+    endpoint = endpoints[0]
+    return AgentBinding(
+        agent_id=descriptor.agent_id,
+        capability=capability or (descriptor.capabilities[0] if descriptor.capabilities else ""),
+        protocol=endpoint.protocol,
+        endpoint=endpoint.url,
+    )

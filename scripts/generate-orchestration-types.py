@@ -826,25 +826,94 @@ def _fields(schemas: dict[str, Any]) -> list[str]:
     ]
 
 
+#: The same operations for the Python client (O1-13), generated beside the
+#: TypeScript so that neither client spells a route of its own.
+PYTHON_OUTPUT = ROOT / "datalayer_core/orchestration/api.py"
+
+
+def generate_python(document: dict[str, Any]) -> str:
+    """
+    Return the generated Python route table of the control plane.
+
+    Parameters
+    ----------
+    document : dict[str, Any]
+        The document `read_control_plane` produced.
+
+    Returns
+    -------
+    str
+        The module's content.
+    """
+    operations = [
+        (operation["operationId"], method.upper(), path)
+        for path, methods in sorted(document.get("paths", {}).items())
+        for method, operation in sorted(methods.items())
+    ]
+    lines = [
+        "# Copyright (c) 2023-2025 Datalayer, Inc.",
+        "# Distributed under the terms of the Modified BSD License.",
+        "",
+        '"""',
+        "Every operation of the orchestration control plane: its name, method and path.",
+        "",
+        "Generated from the control plane's OpenAPI document by",
+        "``scripts/generate-orchestration-types.py``; do not edit. The Python client",
+        "takes its paths from here as the TypeScript one takes them from",
+        "``ORCHESTRATION_API`` in ``src/api/orchestration/generated.ts``, so",
+        "neither spells a route of its own.",
+        '"""',
+        "",
+        "from __future__ import annotations",
+        "",
+        "from typing import NamedTuple",
+        "",
+        "",
+        "class OrchestrationOperation(NamedTuple):",
+        '    """One operation of the control plane."""',
+        "",
+        "    operation: str",
+        "    method: str",
+        "    path: str",
+        "",
+        "",
+        "ORCHESTRATION_API: tuple[OrchestrationOperation, ...] = (",
+        *[
+            f"    OrchestrationOperation({json.dumps(name)}, {json.dumps(method)}, {json.dumps(path)}),"
+            for name, method, path in operations
+        ],
+        ")",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def main() -> None:
     """
-    Write the generated file, or check that the checked-in one is current.
+    Write the generated files, or check that the checked-in ones are current.
 
     Raises
     ------
     SystemExit
-        When `--check` is given and the file is stale.
+        When `--check` is given and a file is stale.
     """
-    expected = generate(read_control_plane(read_models()))
+    document = read_control_plane(read_models())
+    outputs = {OUTPUT: generate(document), PYTHON_OUTPUT: generate_python(document)}
     if "--check" in sys.argv[1:]:
-        if not OUTPUT.exists() or OUTPUT.read_text() != expected:
+        stale = [
+            str(path.relative_to(ROOT))
+            for path, expected in outputs.items()
+            if not path.exists() or path.read_text() != expected
+        ]
+        if stale:
             raise SystemExit(
-                "Stale generated orchestration TypeScript types: "
+                f"Stale generated orchestration files ({', '.join(stale)}): "
                 "run `npm run generate:orchestration`"
             )
         return
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(expected)
+    for path, expected in outputs.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(expected)
 
 
 if __name__ == "__main__":

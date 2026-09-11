@@ -9,6 +9,8 @@
 from __future__ import annotations
 
 import json
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -20,13 +22,16 @@ from datalayer_core.mcp import (
     CLI_CLIENT_METADATA_URL,
     MCP_CLIENT_IDS,
     MCP_CLIENTS,
+    METRIC_CATALOG,
     default_config_path,
     mcp_endpoint_url,
+    nanoseconds,
     percentile,
     render_client_configuration,
+    since_instant,
     span_tree,
-    summarize_metric_points,
     summarize_request_spans,
+    summarize_service_levels,
     write_client_configuration,
 )
 from datalayer_core.mixins.mcp import mcp_gateway_origin
@@ -103,35 +108,54 @@ def test_percentile_is_nearest_rank() -> None:
     assert percentile([10, 1, 7, 3, 100], 0.95) == 100
 
 
-def test_the_slis_are_read_off_the_catalog_points() -> None:
-    summary = summarize_metric_points(
+def _panel(panel_id: str, summaries: dict[str, float | None]) -> dict[str, object]:
+    return {"id": panel_id, "series": [{"label": label, "summary": summary} for label, summary in summaries.items()]}
+
+
+def test_the_slis_are_read_off_the_service_levels_dashboard() -> None:
+    summary = summarize_service_levels(
         {
-            "mcp.calls": [
-                {"value": 8, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"outcome": "ok"}},
-                {"value": 2, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"outcome": "error"}},
-                {"value": 100, "timestamp": "2026-08-26T10:00:00Z", "attributes": {"outcome": "error"}},
-            ],
-            "mcp.call.duration": [
-                {"value": 50, "timestamp": "2026-08-27T10:00:00Z"},
-                {"value": 900, "timestamp": "2026-08-27T10:00:00Z"},
-            ],
-            "mcp.tasks": [
-                {"value": 3, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"status": "completed"}},
-                {"value": 1, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"status": "failed"}},
-                {"value": 5, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"status": "working"}},
-            ],
-            "sandbox.launch_seconds": [
-                {"value": 4, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"provider": "datalayer"}},
-                {"value": 9, "timestamp": "2026-08-27T10:00:00Z", "attributes": {"provider": "e2b"}},
-            ],
-        },
-        since="2026-08-27T00:00:00Z",
+            "panels": [
+                _panel("mcp-calls-by-outcome", {"ok": 8, "error": 2}),
+                _panel("mcp-call-duration-p95", {"": 0.9}),
+                _panel("mcp-tasks-by-status", {"completed": 3, "failed": 1, "working": 5}),
+                _panel("sandbox-launch_seconds-by-provider-p95", {"datalayer": 4, "e2b": 9}),
+                _panel("sandbox-launch_seconds-by-provider-count", {"datalayer": 1, "e2b": 1}),
+            ]
+        }
     )
     assert summary["availability"] == 0.8
     assert summary["p95_call_duration_ms"] == 900
     assert summary["task_success_rate"] == 0.75
     assert summary["p95_sandbox_launch_seconds"] == {"datalayer": 4, "e2b": 9}
     assert summary["samples"] == {"calls": 10, "tasks": 4, "launches": 2}
+
+
+def test_nothing_measured_is_not_a_zero() -> None:
+    assert summarize_service_levels({"panels": [_panel("mcp-call-duration-p95", {"": None})]}) == {
+        "availability": None,
+        "p95_call_duration_ms": None,
+        "task_success_rate": None,
+        "p95_sandbox_launch_seconds": {},
+        "samples": {"calls": 0, "tasks": 0, "launches": 0},
+    }
+
+
+def test_a_reading_starts_at_an_instant_or_a_span_back_from_now() -> None:
+    now = datetime(2026, 9, 11, 12, 0, tzinfo=timezone.utc)
+    assert since_instant(None) is None
+    assert since_instant("1h", now=now) == datetime(2026, 9, 11, 11, 0, tzinfo=timezone.utc)
+    assert since_instant("7d", now=now) == datetime(2026, 9, 4, 12, 0, tzinfo=timezone.utc)
+    assert since_instant("2026-08-27T00:00:00Z") == datetime(2026, 8, 27, tzinfo=timezone.utc)
+    assert nanoseconds(datetime(1970, 1, 1, 0, 0, 1, 500000, tzinfo=timezone.utc)) == 1_500_000_000
+
+
+def test_the_catalog_is_the_one_core_s_typescript_names() -> None:
+    """Two copies in one repository, held together here: the Python one had
+    kept names the gateway renamed, and a CLI listing them reports nothing."""
+    source = (Path(__file__).resolve().parents[2] / "src" / "api" / "mcp" / "observability.ts").read_text()
+    block = source.split("export const MCP_METRIC_CATALOG = [", 1)[1].split("]", 1)[0]
+    assert METRIC_CATALOG == tuple(re.findall(r"'([^']+)'", block))
 
 
 def test_a_per_agent_reading_comes_from_the_request_spans() -> None:

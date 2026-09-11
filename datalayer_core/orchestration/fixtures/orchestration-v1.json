@@ -172,6 +172,7 @@
         "cost": 2.5,
         "currency": "USD",
         "wallClockSeconds": 1800,
+        "credits": null,
         "executions": 8
       },
       "permissions": {
@@ -343,6 +344,7 @@
         "cost": 2.5,
         "currency": "USD",
         "wallClockSeconds": 1800,
+        "credits": null,
         "executions": 8
       },
       "permissions": {

@@ -16,6 +16,7 @@ from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.contents import ContentsMixin
 from datalayer_core.mixins.mcp import McpMixin
+from datalayer_core.mixins.orchestration import OrchestrationMixin
 from datalayer_core.mixins.runtime_sharing import RuntimeSharingMixin
 from datalayer_core.mixins.secrets import SecretsMixin
 from datalayer_core.mixins.spaces import SpacesMixin
@@ -39,6 +40,7 @@ class DatalayerClient(
     WhoamiAppMixin,
     ContentsMixin,
     McpMixin,
+    OrchestrationMixin,
     RuntimeSharingMixin,
 ):
     """

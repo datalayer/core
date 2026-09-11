@@ -1105,16 +1105,16 @@ def metrics(
     ctx: typer.Context,
     agent: str | None = typer.Option(None, "--agent", help="The SLIs of one agent (client id), read from its spans."),
     org: str | None = typer.Option(None, "--org", help="The SLIs of one organization, read from its spans."),
-    since: str | None = typer.Option(None, "--since", help="ISO 8601, UTC; earlier points are left out."),
+    since: str | None = typer.Option(None, "--since", help="Where the reading starts: ISO 8601 (UTC), or a span back from now such as 30m, 1h or 7d."),
 ) -> None:
-    """The four service level indicators and the catalog they are read from."""
+    """The four service level indicators, and which catalog metrics are reporting."""
     answer = _call(lambda: _client().get_mcp_metrics(agent=agent, org=org, since=since))
     if _emit_machine(answer, _context(ctx)):
         return
     scope = f" for agent {agent}" if agent else f" for organization {org}" if org else ""
     console.print(slis_table(answer.get("slis", {}), title=f"MCP service level indicators{scope}"))
-    counts = {name: len(points) for name, points in (answer.get("metrics") or {}).items()}
-    console.print("Catalog points read: " + ", ".join(f"{name}={count}" for name, count in counts.items()))
+    reporting = answer.get("reporting") or []
+    console.print("Reporting: " + (", ".join(reporting) if reporting else "no catalog metric has a point"))
 
 
 @app.command(name="logs")

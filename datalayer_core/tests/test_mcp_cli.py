@@ -232,7 +232,7 @@ class Client:
 
     def get_mcp_metrics(self, **kwargs: Any) -> dict[str, Any]:
         RECORDED["metrics_filters"] = kwargs
-        return {"filters": kwargs, "metrics": {"mcp.calls": [{}]}, "spans": [], "slis": {"availability": 0.99, "p95_call_duration_ms": 120, "task_success_rate": None, "p95_sandbox_launch_seconds": {"datalayer": 4.2}, "samples": {"calls": 100, "tasks": 0, "launches": 3}}}
+        return {"filters": kwargs, "reporting": ["mcp.calls"], "spans": [], "slis": {"availability": 0.99, "p95_call_duration_ms": 120, "task_success_rate": None, "p95_sandbox_launch_seconds": {"datalayer": 4.2}, "samples": {"calls": 100, "tasks": 0, "launches": 3}}}
 
 
 @pytest.fixture(autouse=True)
@@ -288,6 +288,7 @@ def test_trace_metrics_and_logs_are_thin_over_otel() -> None:
     metrics = runner.invoke(app, ["mcp", "metrics", "--agent", AGENT, "--since", "2026-08-27T00:00:00Z"])
     assert metrics.exit_code == 0, metrics.output
     assert "99.0%" in metrics.output and "120 ms" in metrics.output and "datalayer" in metrics.output
+    assert "Reporting: mcp.calls" in metrics.output
     assert RECORDED["metrics_filters"] == {"agent": AGENT, "org": None, "since": "2026-08-27T00:00:00Z"}
 
     logs = runner.invoke(app, ["mcp", "logs", "01T", "--limit", "5"])

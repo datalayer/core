@@ -15,19 +15,23 @@
  * Audit answers *who did what, and was it allowed*; this answers *how did
  * it run*. A task carries its `trace_id`, so "show me this run" is the
  * task's spans; its logs are the log records of that trace; and the four
- * SLIs are read from the gateway's metric catalog. Metrics carry no user,
- * agent or organization label by design, so a per-agent reading is
- * computed from the `mcp.request` spans, which do carry `client.id` and
- * `org.uid`.
+ * SLIs are read from the OTEL service's service levels dashboard, which
+ * computes them from the metrics as they were exported — a counter's
+ * increase, a percentile from a histogram's buckets. Nothing here adds
+ * metric points up: the gateway reports running totals, and adding those
+ * counts every earlier report again. Metrics carry no user, agent or
+ * organization label by design, so a per-agent reading is computed from the
+ * `mcp.request` spans, which do carry `client.id` and `org.uid`.
  *
  * @module api/mcp/observability
  */
 
 import { DEFAULT_SERVICE_URLS } from '../constants';
 import { getTrace, listTraces } from '../otel/traces';
-import { queryMetrics } from '../otel/metrics';
+import { listMetricNames } from '../otel/metrics';
 import { queryLogs } from '../otel/logs';
-import type { OtelLog, OtelMetric, OtelSpan } from '../otel/types';
+import { getDashboardData, type DashboardData } from '../otel/dashboards';
+import type { OtelLog, OtelSpan } from '../otel/types';
 import type { McpTask } from '../../models/McpTask';
 
 /**
@@ -109,11 +113,29 @@ export const MCP_SLI_METRICS = {
   sandboxLaunch: 'sandbox.launch_seconds',
 } as const satisfies Record<string, McpMetricName>;
 
+/** The OTEL service's built-in dashboard the four SLIs are read from. */
+export const MCP_SERVICE_LEVELS_DASHBOARD = 'mcp-service-levels';
+
+/**
+ * Its panels, by the ids the OTEL service gives them. A contract test there
+ * holds them, so a panel renamed on the service fails a test rather than
+ * reading here as nothing measured.
+ */
+export const MCP_SERVICE_LEVEL_PANELS = {
+  callsByOutcome: 'mcp-calls-by-outcome',
+  callDurationP95: 'mcp-call-duration-p95',
+  tasksByStatus: 'mcp-tasks-by-status',
+  sandboxLaunchP95: 'sandbox-launch_seconds-by-provider-p95',
+  sandboxLaunches: 'sandbox-launch_seconds-by-provider-count',
+} as const;
+
+const TERMINAL_STATUSES = ['completed', 'failed', 'cancelled'];
+
 export interface McpMetricsFilters {
   /** The `client_id` of one agent: read from spans, not from metrics. */
   agent?: string;
   org?: string;
-  /** ISO 8601; points and spans before it are left out. */
+  /** ISO 8601; the reading starts there. */
   since?: string;
   limit?: number;
 }
@@ -133,8 +155,8 @@ export interface McpSliSummary {
 
 export interface McpMetricsSnapshot {
   filters: McpMetricsFilters;
-  /** The catalog points read, by metric name. */
-  metrics: Partial<Record<McpMetricName, OtelMetric[]>>;
+  /** The catalog metrics the OTEL service holds points of, in catalog order. */
+  reporting: McpMetricName[];
   /** The `mcp.request` spans a per-agent or per-organization reading rests on. */
   spans: OtelSpan[];
   slis: McpSliSummary;
@@ -165,50 +187,46 @@ const isUnavailable = (span: OtelSpan): boolean => {
 };
 
 /**
- * The SLIs over catalog points — the platform-wide reading.
+ * The SLIs from the service levels dashboard — the platform-wide reading.
  *
- * `mcp.calls{outcome}` gives availability, `mcp.call.duration{tool}` the
- * latency, `mcp.tasks{status}` the task success rate and
- * `sandbox.launch_seconds{provider}` the launches.
+ * Its panels arrive summarised: calls and tasks as how much each counter grew
+ * over the window, the two p95s from their histograms' buckets. The call
+ * duration is recorded in seconds and shown in milliseconds. A panel with
+ * nothing in it reads as not measured, never as a zero.
  */
-export const summarizeMetricPoints = (
-  metrics: Partial<Record<McpMetricName, OtelMetric[]>>,
-  filters: McpMetricsFilters = {},
-): McpSliSummary => {
-  const within = (point: OtelMetric) => notBefore(point.timestamp, filters.since);
-  const calls = (metrics['mcp.calls'] ?? []).filter(within);
-  const totalCalls = calls.reduce((sum, point) => sum + point.value, 0);
-  const failedCalls = calls
-    .filter(point => ['error', 'unavailable'].includes(attribute(point, 'outcome')))
-    .reduce((sum, point) => sum + point.value, 0);
-  const durations = (metrics['mcp.call.duration'] ?? []).filter(within).map(point => point.value);
-  const tasks = (metrics['mcp.tasks'] ?? []).filter(within);
-  const terminal = tasks.filter(point =>
-    ['completed', 'failed', 'cancelled'].includes(attribute(point, 'status')),
+export const summarizeServiceLevels = (data: DashboardData): McpSliSummary => {
+  const panels = new Map(data.panels.map(panel => [panel.id, panel]));
+  const byLabel = (id: string): Record<string, number> =>
+    Object.fromEntries(
+      (panels.get(id)?.series ?? [])
+        .filter(entry => entry.summary !== null)
+        .map(entry => [entry.label, entry.summary as number]),
+    );
+  const total = (values: Record<string, number>): number =>
+    Object.values(values).reduce((sum, value) => sum + value, 0);
+
+  const calls = byLabel(MCP_SERVICE_LEVEL_PANELS.callsByOutcome);
+  const totalCalls = total(calls);
+  const failedCalls = (calls.error ?? 0) + (calls.unavailable ?? 0);
+  const tasks = byLabel(MCP_SERVICE_LEVEL_PANELS.tasksByStatus);
+  const terminal = TERMINAL_STATUSES.reduce((sum, status) => sum + (tasks[status] ?? 0), 0);
+  const p95Seconds = byLabel(MCP_SERVICE_LEVEL_PANELS.callDurationP95)[''];
+  const p95SandboxLaunchSeconds = Object.fromEntries(
+    Object.entries(byLabel(MCP_SERVICE_LEVEL_PANELS.sandboxLaunchP95)).map(([provider, seconds]) => [
+      provider || 'unknown',
+      seconds,
+    ]),
   );
-  const totalTerminal = terminal.reduce((sum, point) => sum + point.value, 0);
-  const completed = terminal
-    .filter(point => attribute(point, 'status') === 'completed')
-    .reduce((sum, point) => sum + point.value, 0);
-  const launches = (metrics['sandbox.launch_seconds'] ?? []).filter(within);
-  const byProvider = new Map<string, number[]>();
-  for (const point of launches) {
-    const provider = attribute(point, 'provider') || 'unknown';
-    byProvider.set(provider, [...(byProvider.get(provider) ?? []), point.value]);
-  }
-  const p95SandboxLaunchSeconds: Record<string, number> = {};
-  for (const [provider, values] of byProvider) {
-    const p95 = percentile(values, 0.95);
-    if (p95 !== null) {
-      p95SandboxLaunchSeconds[provider] = p95;
-    }
-  }
   return {
     availability: totalCalls > 0 ? (totalCalls - failedCalls) / totalCalls : null,
-    p95CallDurationMs: percentile(durations, 0.95),
-    taskSuccessRate: totalTerminal > 0 ? completed / totalTerminal : null,
+    p95CallDurationMs: p95Seconds === undefined ? null : p95Seconds * 1000,
+    taskSuccessRate: terminal > 0 ? (tasks.completed ?? 0) / terminal : null,
     p95SandboxLaunchSeconds,
-    samples: { calls: totalCalls, tasks: totalTerminal, launches: launches.length },
+    samples: {
+      calls: totalCalls,
+      tasks: terminal,
+      launches: total(byLabel(MCP_SERVICE_LEVEL_PANELS.sandboxLaunches)),
+    },
   };
 };
 
@@ -258,25 +276,26 @@ export const fetchMcpMetrics = async (
   otelUrl: string = DEFAULT_SERVICE_URLS.OTEL,
 ): Promise<McpMetricsSnapshot> => {
   const limit = filters.limit ?? 500;
-  const names = Object.values(MCP_SLI_METRICS);
-  const pages = await Promise.all(
-    names.map(name =>
-      queryMetrics(token, { metricName: name, serviceName: serviceNameFor(name), limit }, otelUrl),
-    ),
-  );
-  const metrics: Partial<Record<McpMetricName, OtelMetric[]>> = {};
-  names.forEach((name, index) => {
-    metrics[name] = pages[index].data ?? [];
-  });
   const scoped = Boolean(filters.agent || filters.org);
-  const spans = scoped
-    ? (await listTraces(token, { serviceName: MCP_GATEWAY_SERVICE_NAME, limit }, otelUrl)).data ?? []
-    : [];
+  const [levels, names, traces] = await Promise.all([
+    scoped
+      ? undefined
+      : getDashboardData(
+          token,
+          MCP_SERVICE_LEVELS_DASHBOARD,
+          { since: filters.since ? new Date(filters.since) : undefined },
+          otelUrl,
+        ),
+    listMetricNames(token, otelUrl),
+    scoped ? listTraces(token, { serviceName: MCP_GATEWAY_SERVICE_NAME, limit }, otelUrl) : undefined,
+  ]);
+  const reported = new Set((names.data ?? []).map(row => row.metric_name));
+  const spans = traces?.data ?? [];
   return {
     filters,
-    metrics,
+    reporting: MCP_METRIC_CATALOG.filter(name => reported.has(name)),
     spans,
-    slis: scoped ? summarizeRequestSpans(spans, filters) : summarizeMetricPoints(metrics, filters),
+    slis: levels ? summarizeServiceLevels(levels) : summarizeRequestSpans(spans, filters),
     readAt: new Date().toISOString(),
   };
 };

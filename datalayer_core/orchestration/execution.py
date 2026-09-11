@@ -71,6 +71,14 @@ class Budget(CanonicalModel):
     cost: float | None = None
     currency: str = "USD"
     wall_clock_seconds: int | None = None
+    credits: float | None = Field(
+        default=None,
+        description=(
+            "Platform credits the tree's compute may consume, held by IAM in "
+            "one reservation for the whole tree (O1-07). Set on the root: the "
+            "tree's executions draw on it, and none sets its own."
+        ),
+    )
     executions: int | None = Field(
         default=None,
         description="How many executions the subtree below this one may create.",

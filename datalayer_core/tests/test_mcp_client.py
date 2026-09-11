@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from datalayer_core.mixins.mcp import McpMixin
@@ -36,9 +37,13 @@ class Otel:
         self.calls.append(("query_logs", kwargs))
         return {"data": [{"body": "ran", "severity_text": "INFO"}]}
 
-    def query_metrics(self, **kwargs: Any) -> dict[str, Any]:
-        self.calls.append(("query_metrics", kwargs))
-        return {"data": [{"value": 1, "timestamp": "t", "attributes": {"outcome": "ok"}}]}
+    def dashboard_data(self, dashboard_id: str, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("dashboard_data", {"dashboard_id": dashboard_id, **kwargs}))
+        return {"panels": [{"id": "mcp-calls-by-outcome", "series": [{"label": "ok", "summary": 1}]}]}
+
+    def metric_names(self) -> dict[str, Any]:
+        self.calls.append(("metric_names", {}))
+        return {"data": [{"metric_name": "mcp.calls"}, {"metric_name": "not.in.the.catalog"}]}
 
     def list_traces(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("list_traces", kwargs))
@@ -138,13 +143,17 @@ def test_a_run_s_trace_and_logs_are_read_by_the_task_s_trace_id() -> None:
     assert client.otel.calls[1] == ("query_logs", {"trace_id": "abc", "limit": 5, "severity": None})
 
 
-def test_metrics_read_the_catalog_and_the_spans_for_one_agent() -> None:
+def test_metrics_read_the_service_levels_and_the_spans_for_one_agent() -> None:
     client = Client()
-    everyone = client.get_mcp_metrics()
+    everyone = client.get_mcp_metrics(since="2026-08-27T00:00:00Z")
     one = client.get_mcp_metrics(agent="agent-1")
     assert everyone["slis"]["availability"] == 1
+    assert everyone["reporting"] == ["mcp.calls"]
     assert everyone["spans"] == []
     assert one["slis"]["samples"]["calls"] == 1
-    names = [call[1]["name"] for call in client.otel.calls if call[0] == "query_metrics"]
-    assert set(names) == {"mcp.calls", "mcp.call.duration", "mcp.tasks", "sandbox.launch_seconds"}
-    assert all(call[1].get("service_name") == "datalayer-jupyter-mcp-server" for call in client.otel.calls)
+    start = int(datetime(2026, 8, 27, tzinfo=timezone.utc).timestamp()) * 1_000_000_000
+    read = [call for call in client.otel.calls if call[0] == "dashboard_data"]
+    assert read == [("dashboard_data", {"dashboard_id": "mcp-service-levels", "start": start})]
+    traced = [call for call in client.otel.calls if call[0] == "list_traces"]
+    # The name the gateway registers under, which is where its spans are.
+    assert traced == [("list_traces", {"service_name": "jupyter-mcp-server", "limit": 500})]

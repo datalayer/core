@@ -23,7 +23,8 @@
  * `client` is the control plane's twelve commands and two reads, every path
  * taken from the generated operations; `events` is the subscription that
  * resumes after a dropped connection, and the user channel's tree
- * announcement.
+ * announcement; `measures` is how delegated work is doing, read from the
+ * OTEL service's orchestration dashboard.
  *
  * @module api/orchestration
  */
@@ -32,3 +33,4 @@ export * from './generated';
 export * from './lifecycle';
 export * from './client';
 export * from './events';
+export * from './measures';

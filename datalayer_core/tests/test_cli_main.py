@@ -62,14 +62,69 @@ def test_register_extensions_adds_discovered_cli_groups(
 
     fake = FakePlatform()
     import reactor
+    import typer
 
     monkeypatch.setattr(reactor, "PluginPlatform", lambda: fake)
 
-    sentinel = object()
-    cli_main._register_extensions(sentinel)
+    host = typer.Typer()
+    cli_main._register_extensions(host)
 
     assert fake.discovered == ["datalayer.cli"]
-    assert fake.cli is sentinel
+    # Through a view of the host that merges a group the host already has.
+    assert isinstance(fake.cli, cli_main._ExtensionHost)
+    assert fake.cli.registered_groups is host.registered_groups
+
+
+def test_an_extension_group_the_host_has_joins_it_rather_than_replacing_it() -> None:
+    """`agents` is the host's (`discover`) and agent-runtimes' (`ls` and the rest).
+
+    Click keys a group's subcommands by name, so a second group under a name
+    the host has replaced the host's own: `datalayer agents discover` was gone
+    the moment agent-runtimes registered its `agents`.
+    """
+    import typer
+
+    host = typer.Typer()
+    ours = typer.Typer(name="agents")
+
+    @ours.command("discover")
+    def discover() -> None:
+        typer.echo("the host's discover")
+
+    host.add_typer(ours)
+
+    theirs = typer.Typer(name="agents")
+
+    @theirs.command("ls")
+    def ls() -> None:
+        typer.echo("the extension's ls")
+
+    @theirs.command("discover")
+    def their_discover() -> None:
+        typer.echo("the extension's discover")
+
+    other = typer.Typer(name="sandboxes")
+
+    @other.command("ls")
+    def sandboxes_ls() -> None:
+        typer.echo("the extension's sandboxes")
+
+    extension = cli_main._ExtensionHost(host)
+    extension.add_typer(theirs)
+    extension.add_typer(other)
+
+    runner = CliRunner()
+    assert runner.invoke(host, ["agents", "ls"]).stdout.strip() == "the extension's ls"
+    assert runner.invoke(host, ["agents", "discover"]).stdout.strip() == "the host's discover"
+    assert runner.invoke(host, ["sandboxes", "ls"]).stdout.strip() == "the extension's sandboxes"
+
+
+def test_the_orchestration_commands_are_registered() -> None:
+    executions = _plain(CliRunner().invoke(cli_main.app, ["executions", "--help"]).stdout)
+    for command in ("run", "watch", "steer", "cancel", "artifacts"):
+        assert command in executions
+    agents = _plain(CliRunner().invoke(cli_main.app, ["agents", "--help"]).stdout)
+    assert "discover" in agents
 
 
 def _plain(text: str) -> str:

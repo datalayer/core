@@ -35,7 +35,11 @@ from datalayer_core.models.mcp import (
 )
 
 #: The ``service.name`` the gateway exports under.
-MCP_GATEWAY_SERVICE_NAME = "datalayer-jupyter-mcp-server"
+# The name the gateway registers under (`instrument(app, "jupyter-mcp-server")`),
+# as `MCP_GATEWAY_SERVICE_NAME` in `src/api/mcp/observability.ts` has it. This
+# copy had kept a `datalayer-` prefix, so a per-agent reading asked for the
+# spans of a service that never exported one and always read nothing.
+MCP_GATEWAY_SERVICE_NAME = "jupyter-mcp-server"
 
 
 def mcp_gateway_origin(mcp_server_url: str) -> str:
@@ -557,31 +561,45 @@ class McpMixin:
         limit: int = 500,
     ) -> dict[str, Any]:
         """
-        The four SLIs and the catalog points they rest on.
+        The four SLIs, and which catalog metrics are reporting.
 
-        Metrics carry no agent or organization label by design, so a reading
-        for one agent or organization is computed from the ``mcp.request``
-        spans, which carry ``client.id`` and ``org.uid``.
+        Everyone's reading comes from the OTEL service's service levels
+        dashboard, which summarises the metrics as they were exported. Metrics
+        carry no agent or organization label by design, so a reading for one
+        agent or organization is computed from the ``mcp.request`` spans, which
+        carry ``client.id`` and ``org.uid``. ``since`` is an ISO 8601 instant
+        or a span back from now (``1h``).
         """
-        from datalayer_core.mcp import SLI_METRICS, summarize_metric_points, summarize_request_spans
+        from datalayer_core.mcp import (
+            METRIC_CATALOG,
+            SERVICE_LEVELS_DASHBOARD,
+            nanoseconds,
+            since_instant,
+            summarize_request_spans,
+            summarize_service_levels,
+        )
 
         otel = self._otel_client()
-        metrics: dict[str, list[dict[str, Any]]] = {}
-        for name in SLI_METRICS.values():
-            page = otel.query_metrics(
-                name=name, service_name=MCP_GATEWAY_SERVICE_NAME, limit=limit
-            )
-            metrics[name] = list(page.get("data", []) if isinstance(page, dict) else page)
+        instant = since_instant(since)
         spans: list[dict[str, Any]] = []
         if agent or org:
             page = otel.list_traces(service_name=MCP_GATEWAY_SERVICE_NAME, limit=limit)
             spans = list(page.get("data", []) if isinstance(page, dict) else page)
-            slis = summarize_request_spans(spans, agent=agent, org=org, since=since)
+            slis = summarize_request_spans(
+                spans, agent=agent, org=org, since=instant.isoformat() if instant else None
+            )
         else:
-            slis = summarize_metric_points(metrics, since=since)
+            slis = summarize_service_levels(
+                otel.dashboard_data(
+                    SERVICE_LEVELS_DASHBOARD, start=nanoseconds(instant) if instant else None
+                )
+            )
+        names = otel.metric_names()
+        rows = names.get("data", []) if isinstance(names, dict) else names
+        reported = {str(row.get("metric_name")) for row in rows or []}
         return {
             "filters": {"agent": agent, "org": org, "since": since},
-            "metrics": metrics,
+            "reporting": [name for name in METRIC_CATALOG if name in reported],
             "spans": spans,
             "slis": slis,
         }

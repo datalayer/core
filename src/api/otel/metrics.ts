@@ -48,6 +48,33 @@ export const listMetrics = async (
   });
 };
 
+/** One metric the OTEL service holds points of. */
+export interface MetricName {
+  metric_name: string;
+  metric_type?: string;
+  metric_unit?: string;
+}
+
+/**
+ * The metrics the OTEL service holds points of, under the caller's account.
+ *
+ * @param token - Authentication token
+ * @param baseUrl - Base URL for the OTEL service
+ * @returns Promise resolving to the distinct metric names
+ */
+export const listMetricNames = async (
+  token: string,
+  baseUrl: string = DEFAULT_SERVICE_URLS.OTEL,
+): Promise<{ data: MetricName[] }> => {
+  validateToken(token);
+
+  return requestDatalayerAPI<{ data: MetricName[] }>({
+    url: `${baseUrl}${API_BASE_PATHS.OTEL}/metrics/names`,
+    method: 'GET',
+    token,
+  });
+};
+
 /**
  * Query metric data points with filters.
  *

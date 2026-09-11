@@ -30,6 +30,7 @@ import re
 import sys
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -72,25 +73,48 @@ CLI_CLIENT_METADATA_URL = CLIENT_METADATA_URLS["cli"]
 # Observability
 # ---------------------------------------------------------------------------
 
-#: The metric catalog `telemetry.py` owns; no ad-hoc counters.
+#: The metric catalog `telemetry.py` owns; no ad-hoc counters. The same list,
+#: in the same order, as `MCP_METRIC_CATALOG` in `src/api/mcp/observability.ts`,
+#: which a test holds: this copy had kept `mcp.forwarded` and `mcp.sandbox_lost`
+#: after the gateway renamed them.
 METRIC_CATALOG: tuple[str, ...] = (
     "mcp.calls",
     "mcp.call.duration",
     "mcp.refusals",
-    "mcp.forwarded",
+    "mcp.limit.unenforced",
+    "mcp.forwards",
     "mcp.workers",
     "mcp.worker_start_seconds",
     "mcp.bindings",
-    "mcp.sandbox_lost",
+    "mcp.sandbox.lost",
     "mcp.tasks",
     "mcp.task.duration",
     "durable.step.duration",
     "durable.queue.wait",
     "durable.recoveries",
     "sandbox.launch_seconds",
+    "mcp.audit.writes",
     "mcp.audit.write_failures",
+    "mcp.dependency.duration",
+    "mcp.dependency.timeouts",
     "mcp.dependency.ready",
+    "mcp.readiness.failures",
+    "mcp.audit.deleted",
+    "mcp.jobs",
+    "mcp.job.duration",
 )
+
+#: The OTEL service's built-in dashboard the four SLIs are read from.
+SERVICE_LEVELS_DASHBOARD = "mcp-service-levels"
+
+#: Its panels, by the ids the OTEL service gives them; a test there holds them.
+SERVICE_LEVEL_PANELS: dict[str, str] = {
+    "calls_by_outcome": "mcp-calls-by-outcome",
+    "call_duration_p95": "mcp-call-duration-p95",
+    "tasks_by_status": "mcp-tasks-by-status",
+    "sandbox_launch_p95": "sandbox-launch_seconds-by-provider-p95",
+    "sandbox_launches": "sandbox-launch_seconds-by-provider-count",
+}
 
 #: The four SLIs, and the catalog metric each is read from.
 SLI_METRICS: dict[str, str] = {
@@ -124,53 +148,74 @@ def _not_before(timestamp: Any, since: str | None) -> bool:
     return not since or not timestamp or str(timestamp) >= since
 
 
-def summarize_metric_points(
-    metrics: Mapping[str, list[dict[str, Any]]], *, since: str | None = None
-) -> dict[str, Any]:
+#: A span back from now, as ``--since`` takes it: ``30m``, ``1h``, ``7d``.
+_RELATIVE = re.compile(r"^(\d+)([smhd])$")
+_SECONDS = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+
+
+def since_instant(since: str | None, *, now: datetime | None = None) -> datetime | None:
     """
-    The SLIs over catalog points — the platform-wide reading.
+    When a reading starts: an ISO 8601 instant, or a span back from now.
 
-    ``mcp.calls{outcome}`` gives availability, ``mcp.call.duration{tool}``
-    the latency, ``mcp.tasks{status}`` the task success rate and
-    ``sandbox.launch_seconds{provider}`` the launches by provider.
+    ``None`` when no start is named, which reads everything retained.
     """
+    if not since:
+        return None
+    relative = _RELATIVE.match(since.strip())
+    if relative:
+        span = timedelta(seconds=int(relative[1]) * _SECONDS[relative[2]])
+        return (now or datetime.now(timezone.utc)) - span
+    parsed = datetime.fromisoformat(since.strip().replace("Z", "+00:00"))
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
 
-    def within(points: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return [point for point in points if _not_before(point.get("timestamp"), since)]
 
-    calls = within(list(metrics.get("mcp.calls", [])))
-    total_calls = sum(float(point.get("value", 0)) for point in calls)
-    failed_calls = sum(
-        float(point.get("value", 0))
-        for point in calls
-        if _attribute(point, "outcome") in ("error", "unavailable")
-    )
-    durations = [float(point.get("value", 0)) for point in within(list(metrics.get("mcp.call.duration", [])))]
-    terminal = [
-        point
-        for point in within(list(metrics.get("mcp.tasks", [])))
-        if _attribute(point, "status") in _TERMINAL
-    ]
-    total_terminal = sum(float(point.get("value", 0)) for point in terminal)
-    completed = sum(
-        float(point.get("value", 0))
-        for point in terminal
-        if _attribute(point, "status") == "completed"
-    )
-    launches = within(list(metrics.get("sandbox.launch_seconds", [])))
-    by_provider: dict[str, list[float]] = {}
-    for point in launches:
-        by_provider.setdefault(_attribute(point, "provider") or "unknown", []).append(
-            float(point.get("value", 0))
-        )
+def nanoseconds(instant: datetime) -> int:
+    """An instant as the Unix nanoseconds the OTEL service takes, exactly."""
+    return int(instant.timestamp()) * 1_000_000_000 + instant.microsecond * 1_000
+
+
+def _by_label(dashboard: Mapping[str, Any], panel_id: str) -> dict[str, float]:
+    for panel in dashboard.get("panels") or []:
+        if panel.get("id") == panel_id:
+            return {
+                str(entry.get("label") or ""): float(entry["summary"])
+                for entry in panel.get("series") or []
+                if entry.get("summary") is not None
+            }
+    return {}
+
+
+def summarize_service_levels(dashboard: Mapping[str, Any]) -> dict[str, Any]:
+    """
+    The SLIs from the OTEL service's service levels dashboard — the platform-wide reading.
+
+    Its panels arrive summarised: calls and tasks as how much each counter grew
+    over the window, the two p95s from their histograms' buckets. Nothing here
+    adds metric points up, because the gateway reports running totals and adding
+    those counts every earlier report again. The call duration is recorded in
+    seconds and answered in milliseconds; a panel with nothing in it reads as
+    not measured, never as a zero.
+    """
+    calls = _by_label(dashboard, SERVICE_LEVEL_PANELS["calls_by_outcome"])
+    total_calls = sum(calls.values())
+    failed_calls = calls.get("error", 0.0) + calls.get("unavailable", 0.0)
+    tasks = _by_label(dashboard, SERVICE_LEVEL_PANELS["tasks_by_status"])
+    terminal = sum(tasks.get(status, 0.0) for status in _TERMINAL)
+    p95_seconds = _by_label(dashboard, SERVICE_LEVEL_PANELS["call_duration_p95"]).get("")
+    launches = _by_label(dashboard, SERVICE_LEVEL_PANELS["sandbox_launches"])
     return {
         "availability": (total_calls - failed_calls) / total_calls if total_calls else None,
-        "p95_call_duration_ms": percentile(durations, 0.95),
-        "task_success_rate": completed / total_terminal if total_terminal else None,
+        "p95_call_duration_ms": None if p95_seconds is None else p95_seconds * 1000,
+        "task_success_rate": tasks.get("completed", 0.0) / terminal if terminal else None,
         "p95_sandbox_launch_seconds": {
-            provider: percentile(values, 0.95) for provider, values in by_provider.items()
+            provider or "unknown": seconds
+            for provider, seconds in _by_label(dashboard, SERVICE_LEVEL_PANELS["sandbox_launch_p95"]).items()
         },
-        "samples": {"calls": total_calls, "tasks": total_terminal, "launches": len(launches)},
+        "samples": {
+            "calls": int(total_calls),
+            "tasks": int(terminal),
+            "launches": int(sum(launches.values())),
+        },
     }
 
 

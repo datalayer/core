@@ -688,8 +688,8 @@ export const McpObservability = ({
                 }}
               >
                 {MCP_METRIC_CATALOG.map(name => {
-                  const points = metrics.data?.metrics[name] ?? [];
-                  const last = points[points.length - 1];
+                  const reporting =
+                    metrics.data?.reporting.includes(name) ?? false;
                   return (
                     <Box
                       key={name}
@@ -706,22 +706,13 @@ export const McpObservability = ({
                       <Text sx={{ fontSize: 0, fontFamily: 'mono', flex: 1 }}>
                         {name}
                       </Text>
-                      <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
-                        {points.length === 0
-                          ? 'no point'
-                          : `${points.length} points`}
-                      </Text>
                       <Text
                         sx={{
                           fontSize: 0,
-                          fontWeight: 'semibold',
-                          minWidth: 80,
-                          textAlign: 'right',
+                          color: reporting ? 'success.fg' : 'fg.muted',
                         }}
                       >
-                        {last
-                          ? `${last.value}${last.unit ? ` ${last.unit}` : ''}`
-                          : '—'}
+                        {reporting ? 'reporting' : 'no point'}
                       </Text>
                     </Box>
                   );
