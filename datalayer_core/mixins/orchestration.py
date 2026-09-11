@@ -22,7 +22,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -255,6 +255,7 @@ class OrchestrationMixin:
         account_uid: str | None = None,
         max_reconnects: int = 5,
         reconnect_delay: float = 1.0,
+        on_tree: Callable[[dict[str, Any], str], None] | None = None,
     ) -> Iterator[tuple[ExecutionEvent, str]]:
         """
         ``executions.subscribe``: each event of an execution, and of its tree, until every one is over.
@@ -264,6 +265,11 @@ class OrchestrationMixin:
         in the middle of the stream, is resumed from the last event received; a
         refusal raises at once. After ``max_reconnects`` drops in a row with no
         event between them, ``SubscriptionDropped`` is raised.
+
+        After each batch the service sends the ``orchestration.tree`` roll-up
+        of the executions the stream covers (O2-03). It moves the cursor, is
+        handed to ``on_tree`` with it when one is given, and is never yielded
+        as an event.
         """
         _, url = self._orchestration_url(
             "executions.subscribe",
@@ -293,6 +299,12 @@ class OrchestrationMixin:
                         if framed.id:
                             cursor = framed.id
                         received = True
+                        if framed.event == "orchestration.tree":
+                            # What the tree is doing, not something that
+                            # happened to one execution (O2-03).
+                            if on_tree is not None:
+                                on_tree(json.loads(framed.data), framed.id or "")
+                            continue
                         yield ExecutionEvent.from_wire(json.loads(framed.data)), framed.id or ""
                 except requests.exceptions.RequestException:
                     pass

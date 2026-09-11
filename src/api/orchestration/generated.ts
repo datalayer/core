@@ -196,6 +196,8 @@ export interface Attempt {
   sessionId?: string | null;
   /** The A2A task or ACP prompt this attempt became. */
   protocolTaskId?: string | null;
+  /** The checkpoint this attempt resumes from, when executions.resume sent it: its delegation names the checkpoint to a worker that speaks the orchestration extension. */
+  resumedFrom?: string | null;
   state?: ExecutionState;
   startedAt?: string | null;
   endedAt?: string | null;
@@ -1071,6 +1073,7 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
       'error',
       'leaseExpiresAt',
       'protocolTaskId',
+      'resumedFrom',
       'sessionId',
       'startedAt',
       'state',

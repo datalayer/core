@@ -148,7 +148,7 @@ class TestThePaths:
         # One folder with two names is the failure `home_folders` exists to
         # prevent; the link between them is named in one place.
         assert gateway_path("eric") == "/mnt/datalayer/eric"
-        assert home_link_path("eric") == "/home/jovyan/eric"
+        assert home_link_path("eric") == "/home/datalayer/eric"
 
     def test_a_path_cannot_be_built_from_a_name_that_was_refused(self):
         with pytest.raises(NodeMountGatewayError):

@@ -194,6 +194,14 @@ class Attempt(CanonicalModel):
         default=None,
         description="The A2A task or ACP prompt this attempt became.",
     )
+    resumed_from: str | None = Field(
+        default=None,
+        description=(
+            "The checkpoint this attempt resumes from, when executions.resume "
+            "sent it: its delegation names the checkpoint to a worker that "
+            "speaks the orchestration extension."
+        ),
+    )
     state: ExecutionState = INITIAL_STATE
     started_at: Timestamp | None = None
     ended_at: Timestamp | None = None

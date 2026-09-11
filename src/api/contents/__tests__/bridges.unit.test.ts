@@ -23,7 +23,7 @@ const bridge = {
   attachment_uid: '01ATTACHMENT',
   sandbox_uid: '01SANDBOX',
   owner_uid: '01OWNER',
-  mount_path: '/home/jovyan/local',
+  mount_path: '/home/datalayer/local',
   mode: 'ro',
   local_root_fingerprint: 'a'.repeat(64),
   exclusions: ['*.tmp'],
@@ -61,14 +61,19 @@ describe('Contents bridge API', () => {
 
   it('answers null for an attachment nothing has dialled yet, and rethrows anything else', async () => {
     vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockRejectedValueOnce(
-      new RunResponseError({ status: 404 } as Response, 'Bridge session not found'),
+      new RunResponseError(
+        { status: 404 } as Response,
+        'Bridge session not found',
+      ),
     );
     expect(await getBridgeSession('token', '01ATTACHMENT', BASE)).toBeNull();
 
     vi.spyOn(DatalayerApi, 'requestDatalayerAPI').mockRejectedValueOnce(
       new RunResponseError({ status: 403 } as Response, 'forbidden'),
     );
-    await expect(getBridgeSession('token', '01ATTACHMENT', BASE)).rejects.toThrow('forbidden');
+    await expect(
+      getBridgeSession('token', '01ATTACHMENT', BASE),
+    ).rejects.toThrow('forbidden');
   });
 
   it('opens a session with a snake-case fingerprint and never a path', async () => {
@@ -105,7 +110,11 @@ describe('Contents bridge API', () => {
       .spyOn(DatalayerApi, 'requestDatalayerAPI')
       .mockResolvedValueOnce({ items: [bridge] })
       .mockResolvedValueOnce({ bridge, client_token: 'fresh' })
-      .mockResolvedValueOnce({ ...bridge, state: 'revoked', revoked_at: '2026-08-26T13:00:00Z' });
+      .mockResolvedValueOnce({
+        ...bridge,
+        state: 'revoked',
+        revoked_at: '2026-08-26T13:00:00Z',
+      });
 
     const listed = await listBridges('token', { active: true }, BASE);
     const beat = await heartbeatBridge('token', '01BRIDGE', BASE);
@@ -118,15 +127,24 @@ describe('Contents bridge API', () => {
     expect(isBridgeEnded(revoked)).toBe(true);
     expect(request).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ url: `${CONTENTS}/bridges?active=true`, method: 'GET' }),
+      expect.objectContaining({
+        url: `${CONTENTS}/bridges?active=true`,
+        method: 'GET',
+      }),
     );
     expect(request).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ url: `${CONTENTS}/bridges/01BRIDGE/heartbeat`, method: 'POST' }),
+      expect.objectContaining({
+        url: `${CONTENTS}/bridges/01BRIDGE/heartbeat`,
+        method: 'POST',
+      }),
     );
     expect(request).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining({ url: `${CONTENTS}/bridges/01BRIDGE`, method: 'DELETE' }),
+      expect.objectContaining({
+        url: `${CONTENTS}/bridges/01BRIDGE`,
+        method: 'DELETE',
+      }),
     );
   });
 });

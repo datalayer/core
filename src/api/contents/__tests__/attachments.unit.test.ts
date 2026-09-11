@@ -13,7 +13,7 @@ const attachment = {
   sandbox_uid: '01SANDBOX',
   sandbox_provider: 'datalayer',
   mode: 'rw',
-  mount_path: '/home/jovyan/volumes/work',
+  mount_path: '/home/datalayer/volumes/work',
   delivery: 'mount',
   required: true,
   capabilities: [],
@@ -45,13 +45,13 @@ describe('Contents attachment API', () => {
         sandboxUid: '01SANDBOX',
         sandboxProvider: 'datalayer',
         mode: 'rw',
-        mountPath: '/home/jovyan/volumes/work',
+        mountPath: '/home/datalayer/volumes/work',
       },
       'attach-volume',
     );
     const manifest = await getAttachmentManifest('token', '01SANDBOX');
 
-    expect(created.mountPath).toBe('/home/jovyan/volumes/work');
+    expect(created.mountPath).toBe('/home/datalayer/volumes/work');
     expect(manifest.contractVersion).toBe('v1');
     expect(request).toHaveBeenNthCalledWith(
       1,

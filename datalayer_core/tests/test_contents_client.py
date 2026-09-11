@@ -116,7 +116,7 @@ def test_contents_client_creates_and_reads_attachment_manifest() -> None:
         "sandbox_uid": "01B3TA5NDEKTSV4RRFFQ69G5FA",
         "sandbox_provider": "datalayer",
         "mode": "rw",
-        "mount_path": "/home/jovyan/volumes/work",
+        "mount_path": "/home/datalayer/volumes/work",
         "delivery": "mount",
         "required": True,
         "provider_resource_id": None,
@@ -152,13 +152,13 @@ def test_contents_client_creates_and_reads_attachment_manifest() -> None:
             "sandbox_uid": attachment["sandbox_uid"],
             "sandbox_provider": "datalayer",
             "mode": "rw",
-            "mount_path": "/home/jovyan/volumes/work",
+            "mount_path": "/home/datalayer/volumes/work",
         },
         idempotency_key="attach-volume",
     )
     manifest = client.get_content_attachment_manifest(attachment["sandbox_uid"])
 
-    assert created.mount_path == "/home/jovyan/volumes/work"
+    assert created.mount_path == "/home/datalayer/volumes/work"
     assert manifest.attachments[0].uid == created.uid
     assert client.calls[0][1]["headers"] == {"Idempotency-Key": "attach-volume"}
 
@@ -303,7 +303,7 @@ def test_contents_client_reads_environments_from_the_runtimes_service() -> None:
                             {
                                 "uid": UID,
                                 "name": "sklearn-tutorial-content",
-                                "mount": "/home/jovyan/tutorials",
+                                "mount": "/home/datalayer/tutorials",
                                 "permissions": "ro",
                             }
                         ],
@@ -321,7 +321,7 @@ def test_contents_client_reads_environments_from_the_runtimes_service() -> None:
                         "uid": UID,
                         "name": "sklearn-tutorial-content",
                         "type": "git",
-                        "mount": "/home/jovyan/tutorials",
+                        "mount": "/home/datalayer/tutorials",
                         "permissions": "ro",
                         "revision": "4f3c2a1",
                         "sha256": "9b3f" * 16,

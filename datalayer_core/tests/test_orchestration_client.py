@@ -228,6 +228,26 @@ class TestTheStream:
         assert first_call["stream"] is True and "Last-Event-ID" not in first_call["headers"]
         assert second_call["headers"]["Last-Event-ID"] == "exec_1:2"
 
+    def test_a_roll_up_moves_the_cursor_and_is_never_an_event(self) -> None:
+        """O2-03: the tree's roll-up after a batch reaches `on_tree`, never the
+        events, and a reconnect resumes after it."""
+        first, second = an_event(1), an_event(2)
+        rollup = {"rootExecutionId": "exec_1", "executions": [], "counts": {"running": 1}, "terminal": False}
+        client = Client(
+            Stream(
+                [*framed(first, "exec_1:1"), "id: exec_1:1", "event: orchestration.tree", f"data: {json.dumps(rollup)}", ""],
+                then=requests.exceptions.ChunkedEncodingError("dropped"),
+            ),
+            Stream([*framed(second, "exec_1:2"), "event: end", "data: {}", ""]),
+        )
+        trees: list[tuple[dict, str]] = []
+        received = list(
+            client.subscribe_execution("exec_1", reconnect_delay=0, on_tree=lambda tree, cursor: trees.append((tree, cursor)))
+        )
+        assert [(event.event_id, cursor) for event, cursor in received] == [("evt_1", "exec_1:1"), ("evt_2", "exec_1:2")]
+        assert trees == [(rollup, "exec_1:1")]
+        assert client.calls[1][1]["headers"]["Last-Event-ID"] == "exec_1:1"
+
     def test_a_refusal_is_not_asked_again(self) -> None:
         client = Client(RuntimeError("Failed to request the URL (status=404)"))
         with pytest.raises(RuntimeError, match="status=404"):

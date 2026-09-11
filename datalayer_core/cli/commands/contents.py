@@ -510,7 +510,7 @@ def mount_folder(
     ),
     sandbox: str = typer.Option(..., "--sandbox", help="The Code Sandbox the folder is served to"),
     path: str = typer.Option(
-        ..., "--path", help="Where the folder appears in the sandbox, such as /home/jovyan/local"
+        ..., "--path", help="Where the folder appears in the sandbox, such as /home/datalayer/local"
     ),
     read_only: bool = typer.Option(False, "--ro", help="Serve the folder read-only"),
     exclude: list[str] = typer.Option(

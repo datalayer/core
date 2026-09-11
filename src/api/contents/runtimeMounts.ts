@@ -9,7 +9,7 @@
  * A Pod's volumes are fixed when it is created, so for most of a sandbox's
  * life its mounts were decided before it existed. The mount gateway lifts
  * that for the Home Folder: the platform binds a folder into a running pod
- * and the sandbox sees it at `/home/jovyan/{handle}` within a second or two,
+ * and the sandbox sees it at `/home/datalayer/{handle}` within a second or two,
  * with no restart.
  *
  * Not every Runtime can take one — a pod created before the gateway cannot,
@@ -55,7 +55,9 @@ export type RuntimeMounts = {
 };
 
 const convert = (value: unknown): RuntimeMounts => {
-  const converted = contentsToCamelCase(value as JsonValue) as unknown as RuntimeMounts;
+  const converted = contentsToCamelCase(
+    value as JsonValue,
+  ) as unknown as RuntimeMounts;
   return {
     ...converted,
     mounts: converted.mounts ?? [],
@@ -75,7 +77,10 @@ export const getRuntimeMounts = async (
 ): Promise<RuntimeMounts> =>
   convert(
     await requestDatalayerAPI({
-      url: runtimesUrl(baseUrl, `/runtimes/${encodeURIComponent(runtimeName)}/mounts`),
+      url: runtimesUrl(
+        baseUrl,
+        `/runtimes/${encodeURIComponent(runtimeName)}/mounts`,
+      ),
       method: 'GET',
       token,
     }),
@@ -94,7 +99,10 @@ export const attachRuntimeMounts = async (
 ): Promise<RuntimeMounts> =>
   convert(
     await requestDatalayerAPI({
-      url: runtimesUrl(baseUrl, `/runtimes/${encodeURIComponent(runtimeName)}/mounts`),
+      url: runtimesUrl(
+        baseUrl,
+        `/runtimes/${encodeURIComponent(runtimeName)}/mounts`,
+      ),
       method: 'POST',
       token,
       body: {},

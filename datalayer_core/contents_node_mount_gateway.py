@@ -60,7 +60,7 @@ NODE_MOUNT_GATEWAY_MOUNT_PATH = "/mnt/datalayer"
 #: inside the sandbox. It is deliberately NOT a volume — a home directory
 #: moved onto one is not in `rootfs-diff.tar`, which is what a CRIU checkpoint
 #: captures, so a restored sandbox would come back with an empty home.
-RUNTIME_HOME_MOUNT_PATH = "/home/jovyan"
+RUNTIME_HOME_MOUNT_PATH = "/home/datalayer"
 
 #: The gateway holds mount points and nothing else — a byte written into the
 #: tmpfs is a byte of the Pod's memory — so its size limit is small on purpose.

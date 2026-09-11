@@ -171,7 +171,7 @@ def environment_view() -> dict[str, Any]:
             {
                 "uid": CONTENT_UID,
                 "name": "sklearn-tutorial-content",
-                "mount": "/home/jovyan/tutorials",
+                "mount": "/home/datalayer/tutorials",
                 "permissions": "ro",
             }
         ],
@@ -190,7 +190,7 @@ def environment_diagnostics(name: str, provider: str) -> dict[str, Any]:
                 "uid": CONTENT_UID,
                 "name": "sklearn-tutorial-content",
                 "type": "git",
-                "mount": "/home/jovyan/tutorials",
+                "mount": "/home/datalayer/tutorials",
                 "permissions": "ro",
                 "revision": "4f3c2a1",
                 "sha256": "9b3f" * 16,
@@ -201,7 +201,7 @@ def environment_diagnostics(name: str, provider: str) -> dict[str, Any]:
                 "uid": "01J9NFSMODELSOSS000000002",
                 "name": "nfs-models-oss-content",
                 "type": "nfs",
-                "mount": "/home/jovyan/models",
+                "mount": "/home/datalayer/models",
                 "permissions": "ro",
                 "revision": None,
                 "sha256": None,
@@ -263,7 +263,7 @@ def attachment_view(status: str = "requested") -> ContentAttachment:
             "sandbox_uid": "01B3TA5NDEKTSV4RRFFQ69G5FA",
             "sandbox_provider": "datalayer",
             "mode": "rw",
-            "mount_path": "/home/jovyan/volumes/work",
+            "mount_path": "/home/datalayer/volumes/work",
             "delivery": "mount",
             "required": True,
             "capabilities": [],
@@ -472,7 +472,7 @@ def test_contents_sandbox_attachment_commands(monkeypatch: pytest.MonkeyPatch) -
             "--provider",
             "datalayer",
             "--path",
-            "/home/jovyan/volumes/work",
+            "/home/datalayer/volumes/work",
             "--read-write",
         ],
     )
@@ -510,7 +510,7 @@ def test_contents_volume_attach_and_dataset_materialize(
             UID,
             "01B3TA5NDEKTSV4RRFFQ69G5FA",
             "--path",
-            "/home/jovyan/volumes/work",
+            "/home/datalayer/volumes/work",
         ],
     )
     assert volume.exit_code == 0, volume.stdout
@@ -531,7 +531,7 @@ def test_contents_volume_attach_and_dataset_materialize(
             "--sandbox",
             "01B3TA5NDEKTSV4RRFFQ69G5FA",
             "--path",
-            "/home/jovyan/datasets/earth",
+            "/home/datalayer/datasets/earth",
         ],
     )
     assert dataset.exit_code == 0, dataset.stdout
@@ -637,7 +637,7 @@ def test_contents_environment_list_names_environments_and_their_contents(
     assert listed.exit_code == 0, listed.stdout
     assert "ai-env" in listed.stdout
     assert "sklearn-tutorial-content" in listed.stdout
-    assert "/home/jovyan/tutorials" in listed.stdout
+    assert "/home/datalayer/tutorials" in listed.stdout
     assert as_json.exit_code == 0
     assert f'"uid": "{CONTENT_UID}"' in as_json.stdout
     assert plural.exit_code != 0

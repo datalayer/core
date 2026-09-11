@@ -20,6 +20,11 @@
  * `Last-Event-ID`: the service sends what was missed and nothing twice. The
  * stream ends with an `end` event once every execution it covers is over.
  *
+ * After each batch of events the stream carries an `orchestration.tree`
+ * roll-up of the executions it covers — each where it stands, never one state
+ * for the tree — which `onTree` receives; `treeFromEvents` works out the same
+ * summary from the events alone (O2-03).
+ *
  * The other half is the user channel. The app's `/ws` connection carries an
  * `orchestration.tree` summary whenever a tree moves — the state of each
  * execution, never the event stream — which `isTreeAnnouncement` recognises.
@@ -29,9 +34,15 @@
 
 import { type EvalsQuery } from '../evals/request';
 import { operationUrl, type OrchestrationClientOptions } from './client';
-import type { ExecutionEvent, LifecycleEvent, TreeSummary } from './generated';
+import type {
+  ExecutionEvent,
+  ExecutionSummary,
+  LifecycleEvent,
+  TreeSummary,
+} from './generated';
+import { isTerminal } from './lifecycle';
 
-/** The user channel's event for a tree that moved. */
+/** The user channel's event for a tree that moved, and the stream's roll-up. */
 export const TREE_EVENT = 'orchestration.tree';
 
 /** One Server-Sent Event, as it was framed. */
@@ -107,6 +118,8 @@ export interface SubscribeOptions {
   lastEventId?: string;
   /** Each event once, in the order the service sent them, with the cursor it moved the subscription to. */
   onEvent: (event: ExecutionEvent, cursor: string) => void;
+  /** What the executions the subscription covers are doing, after each batch of events that changed it. */
+  onTree?: (tree: TreeSummary, cursor: string) => void;
   /** The subscription ended because every execution it covers is over. */
   onEnd?: () => void;
   /** How many drops in a row, with no event between them, before giving up. */
@@ -232,10 +245,17 @@ export const subscribeToExecution = (
             if (framed.id) {
               lastEventId = framed.id;
             }
-            subscribe.onEvent(
-              JSON.parse(framed.data) as ExecutionEvent,
-              framed.id ?? '',
-            );
+            if (framed.event === TREE_EVENT) {
+              subscribe.onTree?.(
+                JSON.parse(framed.data) as TreeSummary,
+                framed.id ?? '',
+              );
+            } else {
+              subscribe.onEvent(
+                JSON.parse(framed.data) as ExecutionEvent,
+                framed.id ?? '',
+              );
+            }
             dropsInARow = 0;
           }
         }
@@ -258,6 +278,83 @@ export const subscribeToExecution = (
   };
 
   return { done: run(), lastEventId: () => lastEventId };
+};
+
+/**
+ * What a tree is doing, worked out from its canonical events alone (O2-03).
+ *
+ * The same summary the subscription sends as `orchestration.tree`: each
+ * execution's latest state, its parent, its worker and its goal — the message
+ * of the event that created it — and its depth below the first execution the
+ * events cover. Each execution's events are read in their own sequence,
+ * whatever order they arrived in.
+ */
+export const treeFromEvents = (
+  events: readonly ExecutionEvent[],
+): TreeSummary => {
+  interface Node {
+    parent: string | null;
+    goal: string;
+    agentId: string;
+    protocol?: ExecutionSummary['protocol'];
+    status?: ExecutionSummary['status'];
+    updatedAt: string;
+  }
+  const nodes = new Map<string, Node>();
+  let root = '';
+  const ordered = [...events].sort((one, other) =>
+    one.executionId === other.executionId
+      ? one.sequence - other.sequence
+      : one.executionId < other.executionId
+        ? -1
+        : 1,
+  );
+  for (const event of ordered) {
+    root = root || event.rootExecutionId;
+    let node = nodes.get(event.executionId);
+    if (!node) {
+      node = {
+        parent: event.parentExecutionId ?? null,
+        goal: event.message ?? '',
+        agentId: '',
+        updatedAt: event.emittedAt,
+      };
+      nodes.set(event.executionId, node);
+    }
+    node.agentId = event.agentId ?? node.agentId;
+    node.protocol = event.protocol ?? node.protocol;
+    node.status = event.state ?? node.status;
+    node.updatedAt = event.emittedAt;
+  }
+  const depth = (executionId: string): number => {
+    const parent = nodes.get(executionId)?.parent;
+    return parent && nodes.has(parent) ? depth(parent) + 1 : 0;
+  };
+  const executions: ExecutionSummary[] = [];
+  for (const [executionId, node] of nodes) {
+    if (node.status && node.protocol) {
+      executions.push({
+        executionId,
+        parentExecutionId: node.parent,
+        depth: depth(executionId),
+        status: node.status,
+        agentId: node.agentId,
+        protocol: node.protocol,
+        goal: node.goal,
+        updatedAt: node.updatedAt,
+      });
+    }
+  }
+  const counts: Record<string, number> = {};
+  for (const one of executions) {
+    counts[one.status] = (counts[one.status] ?? 0) + 1;
+  }
+  return {
+    rootExecutionId: root,
+    executions,
+    counts,
+    terminal: executions.every(one => isTerminal(one.status)),
+  };
 };
 
 /** A message of the app's user channel announcing that a tree moved. */

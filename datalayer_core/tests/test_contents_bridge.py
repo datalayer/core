@@ -52,7 +52,7 @@ ATTACHMENT = "01C3TA5NDEKTSV4RRFFQ69G5FA"
 BRIDGE = "01BRIDGE00000000000000000"
 KEY = "ab" * 32
 RELAY = f"wss://relay.test/bridges/{BRIDGE}"
-MOUNT_PATH = "/home/jovyan/local"
+MOUNT_PATH = "/home/datalayer/local"
 
 
 def folder(tmp_path: Path) -> Path:
@@ -335,7 +335,7 @@ def test_an_existing_attachment_for_the_path_and_mode_is_reused(tmp_path: Path) 
     assert bridge.attachment.mode == "ro"
 
     # A mount elsewhere, or a plain mount, is not this bridge's attachment.
-    other = BridgeClient(existing=[attachment(mount_path="/home/jovyan/other"), attachment(delivery="mount")])
+    other = BridgeClient(existing=[attachment(mount_path="/home/datalayer/other"), attachment(delivery="mount")])
     bridge_for(other, root, FakeRelay(sandbox_asks)).open()
     assert other.attachment_request is not None
 
