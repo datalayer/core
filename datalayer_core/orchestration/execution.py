@@ -174,6 +174,22 @@ class AgentBinding(CanonicalModel):
     session_id: str | None = None
 
 
+class Usage(CanonicalModel):
+    """
+    What one attempt spent, as its worker reported it (O2-10).
+
+    Nothing else records it: a budget's ``cost`` is a limit, and IAM holds
+    credits for a whole tree rather than for one execution. A worker that
+    reports nothing leaves the attempt without one, which is unknown, not
+    free; and a cost is there only when the worker could price its model.
+    """
+
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cost: float | None = None
+    currency: str = "USD"
+
+
 class Attempt(CanonicalModel):
     """
     One dispatch of an execution to a worker (section 6.4).
@@ -207,6 +223,10 @@ class Attempt(CanonicalModel):
     ended_at: Timestamp | None = None
     lease_expires_at: Timestamp | None = None
     error: OrchestrationError | None = None
+    usage: Usage | None = Field(
+        default=None,
+        description="What the attempt spent, as its worker reported it when the attempt ended.",
+    )
 
 
 class Execution(CanonicalModel):

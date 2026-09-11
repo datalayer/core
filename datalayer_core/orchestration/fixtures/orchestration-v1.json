@@ -221,11 +221,13 @@
     "protocol": "a2a",
     "sessionId": "a2a-context-6b2f",
     "protocolTaskId": "task_3b91de",
+    "resumedFrom": null,
     "state": "running",
     "startedAt": "2026-09-09T10:03:11Z",
     "endedAt": null,
     "leaseExpiresAt": "2026-09-09T10:08:11Z",
-    "error": null
+    "error": null,
+    "usage": null
   },
   "Artifact": {
     "artifactId": "art_9c2f10",
@@ -291,6 +293,7 @@
     "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
     "idempotencyKey": "b0f1a2d3-4c5e-4f60-9a1b-2c3d4e5f6071",
     "parentExecutionId": "exec_1a0b73",
+    "slot": null,
     "agent": {
       "agentId": "agent_notebook_validator",
       "capability": "notebook.validate",

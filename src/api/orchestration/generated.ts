@@ -203,6 +203,8 @@ export interface Attempt {
   endedAt?: string | null;
   leaseExpiresAt?: string | null;
   error?: OrchestrationError | null;
+  /** What the attempt spent, as its worker reported it when the attempt ended. */
+  usage?: Usage | null;
 }
 
 /** How much of the worker there is. */
@@ -239,6 +241,8 @@ export interface CancelAnswer {
 /** The artifacts registered against an execution, and its children's. */
 export interface CollectAnswer {
   artifacts: Array<Artifact>;
+  /** Every attempt of the execution and of the children collected with it, each execution's in order: what a tree draws each node's spend and elapsed time from (O2-10). */
+  attempts?: Array<Attempt>;
   children?: Array<Execution>;
   execution: Execution;
   success?: boolean;
@@ -781,6 +785,14 @@ export interface TreeSummary {
 /** How much of what a worker says may be believed. */
 export type TrustLevel = 'untrusted' | 'verified' | 'internal';
 
+/** What one attempt spent, as its worker reported it (O2-10). */
+export interface Usage {
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  cost?: number | null;
+  currency?: string;
+}
+
 /** A worker an execution can be bound to, created or attached. */
 export interface Worker {
   agentId: string;
@@ -1077,8 +1089,9 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
       'sessionId',
       'startedAt',
       'state',
+      'usage',
     ],
-    refs: { error: 'OrchestrationError' },
+    refs: { error: 'OrchestrationError', usage: 'Usage' },
   },
   Availability: {
     required: [],
@@ -1105,9 +1118,10 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
   },
   CollectAnswer: {
     required: ['artifacts', 'execution'],
-    optional: ['children', 'success'],
+    optional: ['attempts', 'children', 'success'],
     refs: {
       artifacts: 'Artifact',
+      attempts: 'Attempt',
       children: 'Execution',
       execution: 'Execution',
     },
@@ -1433,6 +1447,11 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
     required: ['counts', 'executions', 'rootExecutionId', 'terminal'],
     optional: [],
     refs: { executions: 'ExecutionSummary' },
+  },
+  Usage: {
+    required: [],
+    optional: ['cost', 'currency', 'inputTokens', 'outputTokens'],
+    refs: {},
   },
   Worker: {
     required: ['agentId', 'protocol'],

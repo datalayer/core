@@ -152,6 +152,7 @@ from datalayer_core.orchestration.execution import (
     Recovery,
     RetryPolicy,
     Trace,
+    Usage,
 )
 from datalayer_core.orchestration.lifecycle import (
     INITIAL_STATE,
@@ -250,6 +251,7 @@ __all__ = [
     "Timestamp",
     "Trace",
     "TrustLevel",
+    "Usage",
     "WorkerOperation",
     "binding_for",
     "can_transition",
