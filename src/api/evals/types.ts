@@ -693,6 +693,8 @@ export interface EvalInvestigation {
   sandbox_state: SandboxState;
   created_by_uid: string;
   assignees: string[];
+  /** Published to the library by its owner, with what it is written in. */
+  is_public: boolean;
   metadata: Record<string, unknown>;
   created_at: string | null;
   updated_at: string | null;

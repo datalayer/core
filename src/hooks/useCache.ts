@@ -1053,6 +1053,80 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * A published benchmark report (B5-01): what it is about and where it
+   * stands, and the document it is written in, which the library reads for it
+   * and hands over as `model_s` — the field a document's reader looks for.
+   */
+  const toReport = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'report',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      state: raw.state_s,
+      version: raw.version_i,
+      runCount: raw.run_count_i,
+      evalsetId: raw.evalset_uid_s,
+      report: raw.report,
+      model_s: raw.model_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+    };
+  };
+
+  /**
+   * A published investigation (B5-01): its scope, where it stands and what was
+   * decided, and the document it is written in, as a report's is.
+   */
+  const toInvestigation = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'investigation',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      scope: raw.scope_s,
+      status: raw.status_s,
+      evalsetId: raw.evalset_uid_s,
+      investigation: raw.investigation,
+      model_s: raw.model_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+    };
+  };
+
+  /** An evaluator of the platform's catalogue (B5-01), published as an agent is. */
+  const toEvaluator = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'evaluator',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      specId: String(raw.uid || '').replace(/^evaluator:/, ''),
+      specVersion: raw.spec_version_s,
+      publisher: raw.publisher_s || 'datalayer',
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+    };
+  };
+
   const toItemOwner = (raw: any): IUser => {
     const uid = String(
       raw?.creator_uid_s ??
@@ -1460,6 +1534,12 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toAgent(item);
       case 'dataserver':
         return toDataserver(item);
+      case 'report':
+        return toReport(item);
+      case 'investigation':
+        return toInvestigation(item);
+      case 'evaluator':
+        return toEvaluator(item);
       default:
         return {};
     }

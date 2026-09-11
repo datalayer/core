@@ -780,6 +780,22 @@ export const updateInvestigation = (
   );
 
 /**
+ * Publish an investigation to the library, or take it back: its owner's alone.
+ * The document and the notebooks it is written in go public and private with
+ * it.
+ */
+export const setInvestigationPublic = (
+  options: EvalsClientOptions,
+  investigationId: string,
+  isPublic: boolean,
+) =>
+  evalsRequest<InvestigationResponse>(
+    options,
+    `/investigations/${segment(investigationId)}/public`,
+    { method: 'PATCH', body: { is_public: isPublic } },
+  );
+
+/**
  * Keep the investigation's page as it is shown, under a name everybody on
  * the investigation sees; a view of that name is replaced (B4-11).
  */
