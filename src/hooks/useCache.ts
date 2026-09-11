@@ -660,6 +660,8 @@ export const queryKeys = {
     orbits: () => [...queryKeys.items.all(), 'orbits'] as const,
     orbiters: (uid: string) =>
       [...queryKeys.items.all(), 'orbiters', uid] as const,
+    derivations: (uid: string) =>
+      [...queryKeys.items.all(), 'derivations', uid] as const,
     byOwner: (handle: string) =>
       [...queryKeys.items.all(), 'owner', handle] as const,
   },
@@ -7801,6 +7803,46 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
+   * What was made of a public artifact (B5-04): every derivation counted by
+   * kind, and the derived artifacts that are public themselves, newest first.
+   */
+  const useItemDerivations = (
+    itemId?: string,
+    offset: number = 0,
+    max: number = 20,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [
+        ...queryKeys.items.derivations(itemId || ''),
+        offset,
+        max,
+      ] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId!)}/derivations?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the derivations');
+        }
+        return {
+          derivations: (resp.derivations || []).map((derivation: any) => ({
+            kind: String(derivation.kind || ''),
+            fromVersion: derivation.fromVersion ?? null,
+            derivedAt: derivation.derivedAt,
+            item: toItem(derivation.item),
+          })),
+          counts: (resp.counts || {}) as Record<string, number>,
+          total: Number(resp.total ?? 0),
+        };
+      },
+      enabled: Boolean(itemId),
+      ...options,
+    } as any);
+  };
+
+  /**
    * Show an artifact as orbited before the server has said so, and put it
    * back if the server disagrees.
    *
@@ -10135,6 +10177,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useMyOrbits,
     useAccountOrbits,
     useItemOrbiters,
+    useItemDerivations,
     useOrbitItem,
     useUnorbitItem,
     useFeatureItem,

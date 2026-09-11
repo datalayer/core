@@ -88,6 +88,9 @@ export interface Evalset {
   metadata: Record<string, unknown>;
   cases: EvalCase[];
   is_public: boolean;
+  /** The benchmark this one was taken from, and its version then (B5-03). */
+  derived_from_uid?: string;
+  derived_from_version?: number | null;
   created_at: string;
   updated_at: string;
   archived: boolean;

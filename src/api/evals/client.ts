@@ -148,6 +148,25 @@ export const setEvalsetPublic = (
     },
   );
 
+/**
+ * Take a benchmark into the account the options name (B5-03): a private copy
+ * of its definition that says what it was taken from. A published benchmark
+ * is anybody's to take; an unpublished one, a Viewer's.
+ */
+export const cloneEvalset = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  body: { name?: string } = {},
+) =>
+  evalsRequest<EvalsetResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/clone`,
+    {
+      method: 'POST',
+      body,
+    },
+  );
+
 export const renameEvalset = (
   options: EvalsClientOptions,
   evalsetId: string,

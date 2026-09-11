@@ -112,6 +112,12 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/evalsets/e1/public',
     ],
     [
+      'cloneEvalset',
+      () => client.cloneEvalset(options, 'e1'),
+      'POST',
+      '/api/ai-agents/v1/evals/evalsets/e1/clone',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',
