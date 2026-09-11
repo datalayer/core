@@ -530,6 +530,8 @@ export interface ExecutionsDelegate {
   traceparent?: string | null;
   idempotencyKey: string;
   parentExecutionId?: string | null;
+  /** A child's place under its parent, named by the parent; only a child has one. */
+  slot?: string | null;
   agent: AgentBinding;
   objective: Objective;
   context?: ContextManifest;
@@ -1279,6 +1281,7 @@ export const ORCHESTRATION_FIELDS: Record<string, OrchestrationModelFields> = {
       'parentExecutionId',
       'policy',
       'recovery',
+      'slot',
       'trace',
       'traceparent',
     ],

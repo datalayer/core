@@ -155,10 +155,20 @@ class ExecutionsDelegate(MutatingCommand):
     does not, and the control plane is what decides the identifiers, the
     depth and the root — never the caller, because a caller that chose its
     own depth could delegate past the limit by saying it had not.
+
+    A child may also name its ``slot``: its place under the parent, chosen by
+    the parent. The control plane derives the child's identity from the
+    parent and the slot, so a parent that asks again — its run replayed, or
+    retried on a new worker with new idempotency keys — finds the child it
+    already has rather than starting a second (O2-01).
     """
 
     command: Literal[CommandName.EXECUTIONS_DELEGATE] = CommandName.EXECUTIONS_DELEGATE
     parent_execution_id: str | None = None
+    slot: str | None = Field(
+        default=None,
+        description="A child's place under its parent, named by the parent; only a child has one.",
+    )
     agent: AgentBinding
     objective: Objective
     context: ContextManifest = Field(default_factory=ContextManifest)
