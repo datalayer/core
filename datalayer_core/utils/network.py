@@ -43,9 +43,18 @@ def fetch(
     if len(headers) == 0:
         headers = {
             "Accept": "application/json",
-            "Content-Type": "application/json",
             "User-Agent": "Jupyter kernels CLI",
         }
+        # `Content-Type` only when this request has a body we are describing.
+        # A multipart upload — `files=` — must be described by `requests`,
+        # which writes `multipart/form-data` *with the boundary it generated*;
+        # a hardcoded `application/json` overrides that and the server is
+        # handed a multipart body under a JSON content type. FastAPI then
+        # reports the form field as missing, which is true and says nothing
+        # about why. That is what made `contents.publish()` fail on its first
+        # part upload with `422 ... body.file Field required`.
+        if "files" not in kwargs:
+            headers["Content-Type"] = "application/json"
     if token:
         headers["Authorization"] = f"Bearer {token}"
     if external_token:

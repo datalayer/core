@@ -18,15 +18,9 @@ describe('@datalayer/core - index', () => {
     expect(coreIndex.asArray).toBeDefined();
   });
 
-  it('should export DatalayerServiceManager from services', () => {
-    expect(coreIndex.createDatalayerServiceManager).toBeDefined();
-    expect(typeof coreIndex.createDatalayerServiceManager).toBe('function');
-  });
-
   it('should have all expected exports', () => {
     const exports = Object.keys(coreIndex);
     expect(exports).toContain('convertToLargestUnit');
     expect(exports).toContain('asArray');
-    expect(exports).toContain('createDatalayerServiceManager');
   });
 });

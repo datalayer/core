@@ -3,12 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2025 Datalayer, Inc.
- *
- * Datalayer License
- */
-
 /**
  * Authentication strategy implementations
  */
@@ -56,6 +50,8 @@ abstract class BaseAuthStrategy implements AuthStrategy {
         response.profile.last_name_t || response.profile.last_name || '',
       avatar_url_s:
         response.profile.avatar_url_s || response.profile.avatar_url,
+      avatar_icon_s: response.profile.avatar_icon_s,
+      banner_s: response.profile.banner_s,
     };
 
     return new UserDTO(userData, undefined);

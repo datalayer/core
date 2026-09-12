@@ -51,6 +51,15 @@ export function NavigationVisbilityObserver({ children, className, ...rest }) {
   );
 }
 
+// React 19 types element props as `unknown` rather than `any`. These children
+// are the navigation's own items: each carries the id the visibility observer
+// tracks, and the overflow copy is cloned with a close handler and class name.
+type NavItemProps = {
+  'data-navitemid': string;
+  className?: string;
+  onClick?: React.MouseEventHandler;
+};
+
 type AnchoredOverlayProps = {
   visibilityMap: VisibilityMap;
 } & BaseProps<HTMLDivElement>;
@@ -110,19 +119,22 @@ function AnchoredOverlay({
       >
         <ul className={clsx(styles['SubdomainNavBar-overflow-menu-list'])}>
           {React.Children.map(children, child => {
-            if (React.isValidElement(child)) {
+            if (React.isValidElement<NavItemProps>(child)) {
               const navItemChild = child.props['data-navitemid'];
 
               if (!visibilityMap[navItemChild]) {
                 return (
                   <React.Fragment>
-                    {React.cloneElement(child as React.ReactElement, {
-                      onClick: handleClose,
-                      className: clsx(
-                        styles['SubdomainNavBar-overflow-menu-item'],
-                        child.props.className,
-                      ),
-                    })}
+                    {React.cloneElement(
+                      child as React.ReactElement<NavItemProps>,
+                      {
+                        onClick: handleClose,
+                        className: clsx(
+                          styles['SubdomainNavBar-overflow-menu-item'],
+                          child.props.className,
+                        ),
+                      },
+                    )}
                   </React.Fragment>
                 );
               }

@@ -13,6 +13,14 @@ export type IOrganizationState = {
 
 export type OrganizationState = IOrganizationState & {
   updateOrganizations: (organizations: IAnyOrganization[]) => void;
+  /**
+   * Merge what just changed into the organization of the list — the way a
+   * settings save keeps every surface reading this store current (avatar,
+   * banner, name…) without refetching the list.
+   */
+  updateOrganization: (
+    organization: Partial<IAnyOrganization> & Pick<IAnyOrganization, 'id'>,
+  ) => void;
 };
 
 export const organizationStore = createStore<OrganizationState>((set, get) => ({
@@ -20,6 +28,14 @@ export const organizationStore = createStore<OrganizationState>((set, get) => ({
   updateOrganizations: (organizations: IAnyOrganization[]) =>
     set((state: OrganizationState) => ({
       organizations,
+    })),
+  updateOrganization: organization =>
+    set((state: OrganizationState) => ({
+      organizations: state.organizations.map(known =>
+        known.id === organization.id
+          ? ({ ...known, ...organization } as IAnyOrganization)
+          : known,
+      ),
     })),
 }));
 

@@ -12,7 +12,8 @@ import styles from './TextRevealAnimation.module.css';
 
 export type TextRevealAnimationProps = BaseProps<HTMLSpanElement> &
   Omit<React.HTMLAttributes<HTMLSpanElement>, 'children'> & {
-    children: React.ReactChild;
+    // React 19 removed `React.ReactChild`; this is what it aliased.
+    children: React.ReactElement | string | number;
   };
 
 export function TextRevealAnimation({

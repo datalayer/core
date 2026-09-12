@@ -3,18 +3,14 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /**
  * SharingEditor — inline editor for the sharing payload shape used by
  * `ShareAccessComponent` ACL endpoints.
  *
  * Unlike `ShareAccessComponent` (which is bound to a server-side resource
  * via `requestUrl`), this component edits a free-form
- * `{ access: { view/update/execute: { userUids, teamUids, organizationUids } } }`
+ * `{ access: { view/update/execute: { userUids, teamUids, organizationUids,
+ * agentUids } } }`
  * blob in memory. It is intended for "create" flows where the resource does
  * not yet exist and the sharing payload must be POSTed alongside the rest of
  * the configuration.
@@ -25,6 +21,7 @@
  * `ShareAccessComponent`.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Box } from '@datalayer/primer-addons';
 import { FormControl, Text, Textarea } from '@primer/react';
@@ -35,6 +32,9 @@ export type SharingLevelPayload = {
   userUids?: string[];
   teamUids?: string[];
   organizationUids?: string[];
+  /** Service agents. A grant here is to that agent alone, matched on its own
+   * uid, never to the people who can act through it. */
+  agentUids?: string[];
 };
 
 export type SharingPayload = {
@@ -43,9 +43,14 @@ export type SharingPayload = {
 
 export const EMPTY_SHARING_PAYLOAD: SharingPayload = {
   access: {
-    view: { userUids: [], teamUids: [], organizationUids: [] },
-    update: { userUids: [], teamUids: [], organizationUids: [] },
-    execute: { userUids: [], teamUids: [], organizationUids: [] },
+    view: { userUids: [], teamUids: [], organizationUids: [], agentUids: [] },
+    update: { userUids: [], teamUids: [], organizationUids: [], agentUids: [] },
+    execute: {
+      userUids: [],
+      teamUids: [],
+      organizationUids: [],
+      agentUids: [],
+    },
   },
 };
 
@@ -70,7 +75,7 @@ export function SharingEditor({
   value,
   onChange,
   label = 'Sharing',
-  caption = 'Edit the sharing payload. Each access level (view/update/execute) can grant access to user, team, and organization UIDs.',
+  caption = 'Edit the sharing payload. Each access level (view/update/execute) can grant access to user, team, organization, and agent UIDs.',
   rows = 10,
   disabled = false,
 }: SharingEditorProps): JSX.Element {

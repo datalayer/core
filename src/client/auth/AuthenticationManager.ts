@@ -42,15 +42,17 @@ export class AuthenticationManager {
   constructor(iamUrl: string, storage?: TokenStorage) {
     this.iamUrl = iamUrl;
 
-    // Extract datalayer_url (remove /api/iam/v1 if present)
-    const datalayerUrl = iamUrl.replace('/api/iam/v1', '');
+    // Extract the service URL (remove /api/iam/v1 if present)
+    // The service URL the credentials are stored under: the IAM one, without
+    // the path of its API.
+    const serviceUrl = iamUrl.replace('/api/iam/v1', '');
 
-    // CRITICAL: Pass datalayerUrl to storage for keyring compatibility
+    // CRITICAL: Pass the service URL to storage for keyring compatibility
     if (!storage) {
       if (typeof window !== 'undefined') {
         this.storage = new BrowserStorage();
       } else {
-        this.storage = new NodeStorage(datalayerUrl); // Pass datalayerUrl as serviceUrl
+        this.storage = new NodeStorage(serviceUrl);
       }
     } else {
       this.storage = storage;

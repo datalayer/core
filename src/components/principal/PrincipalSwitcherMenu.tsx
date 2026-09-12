@@ -3,13 +3,13 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActionList,
   ActionMenu,
   Box,
   Button,
-  Label,
   Text,
   ThemeProvider,
 } from '@primer/react';
@@ -22,11 +22,13 @@ import {
 import { useCache, useAuthorization } from '../../hooks';
 import { useCoreStore } from '../../state';
 import { useIAMStore } from '../../state/substates';
+import { UserAvatar } from '../avatars';
 import { memberships as fetchMemberships } from '../../api/iam/profile';
 import { usePrincipalStore } from '../../hooks/usePrincipalStore';
 import { useBillingEntityStore } from '../../hooks/useBillingEntityStore';
 import { useSelectedPrincipal } from '../../hooks/useSelectedPrincipal';
 import { DisplayHandle, displayHandleText } from '../display/DisplayHandle';
+import { AdminLabel } from '../labels/StatusLabels';
 
 type TeamMembership = {
   uid: string;
@@ -289,12 +291,6 @@ export function PrincipalSwitcherMenu({
     color: 'accent.fg',
     fontWeight: 'semibold',
   } as const;
-  const adminBadgeSx = {
-    bg: 'attention.subtle',
-    color: 'attention.fg',
-    textTransform: 'lowercase',
-    lineHeight: 1.2,
-  } as const;
 
   return (
     <ThemeProvider>
@@ -373,9 +369,7 @@ export function PrincipalSwitcherMenu({
                     alignItems: 'center',
                   }}
                 >
-                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                    admin
-                  </Label>
+                  <AdminLabel />
                 </Box>
               ) : null}
               <Box
@@ -443,9 +437,7 @@ export function PrincipalSwitcherMenu({
                   </Text>
                 </Box>
                 {isPlatformAdmin && isCurrentUserPrincipal ? (
-                  <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                    admin
-                  </Label>
+                  <AdminLabel />
                 ) : null}
               </Box>
             </Button>
@@ -469,7 +461,19 @@ export function PrincipalSwitcherMenu({
                 }}
               >
                 <ActionList.LeadingVisual>
-                  <PersonIcon />
+                  {/*
+                    The face of the account rather than a generic person: this
+                    entry IS the user, and the two below it are named by their
+                    own marks. The ring gives it an edge against the row it
+                    sits on, which shares its background when selected.
+                  */}
+                  <UserAvatar
+                    avatarUrl={user?.avatarUrl}
+                    avatarIcon={(user as { avatarIcon?: string })?.avatarIcon}
+                    size={16}
+                    square={false}
+                    ring
+                  />
                 </ActionList.LeadingVisual>
                 <Box
                   as="span"
@@ -494,9 +498,7 @@ export function PrincipalSwitcherMenu({
                 </Box>
                 {isPlatformAdmin ? (
                   <ActionList.TrailingVisual>
-                    <Label variant="secondary" size="small" sx={adminBadgeSx}>
-                      admin
-                    </Label>
+                    <AdminLabel />
                   </ActionList.TrailingVisual>
                 ) : null}
               </ActionList.Item>

@@ -32,6 +32,37 @@ export interface ICredits {
   last_update: string;
 }
 
+/**
+ * The credits an account can still spend.
+ *
+ * `credits` means one of two things depending on whether a quota is set: what
+ * is left, or what has been consumed against the quota. IAM omits `quota`
+ * entirely for an account without one, so an absent quota is read the same as
+ * an explicit `null` — testing only against `null` let `undefined` take the
+ * quota branch and produced `NaN`, which then travelled silently into every
+ * reader of this number.
+ *
+ * Outstanding reservations are already committed, so they are subtracted:
+ * what is returned is what a new reservation may still claim.
+ */
+export const availableCredits = (
+  credits: Pick<ICredits, 'credits' | 'quota'>,
+  reservations: readonly { credits: number }[] = [],
+): number => {
+  const quota = credits.quota;
+  const balance =
+    typeof quota === 'number' ? quota - credits.credits : credits.credits;
+  if (!Number.isFinite(balance)) {
+    return 0;
+  }
+  const reserved = reservations.reduce(
+    (consumed, reservation) =>
+      consumed + (Number.isFinite(reservation.credits) ? reservation.credits : 0),
+    0,
+  );
+  return Math.max(0, balance - reserved);
+};
+
 export interface ICheckoutPortal {
   /**
    * External checkout portal URL to open in a new tab.

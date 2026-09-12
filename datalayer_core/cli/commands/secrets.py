@@ -104,24 +104,45 @@ def create_secret(
 
 @app.command(name="delete")
 def delete_secret(
-    uid: str = typer.Argument(..., help="UID of the secret to delete"),
+    secret: str = typer.Argument(..., help="UID or name of the secret to delete"),
     api_key: Optional[str] = typer.Option(
         None,
         "--api-key",
         help="Datalayer API key.",
     ),
 ) -> None:
-    """Delete a secret."""
+    """Delete a secret, named by its UID or by its name."""
     try:
         client = DatalayerClient(api_key=api_key)
+
+        # A name is what `secrets ls` shows in full — the UID column is
+        # truncated — so a name must work here. It resolves through the
+        # list; the UID passes straight through.
+        uid = secret
+        existing = client.list_secrets()
+        if not any(s.uid == secret for s in existing):
+            matches = [s for s in existing if s.name == secret]
+            if len(matches) == 1:
+                uid = matches[0].uid
+            elif len(matches) > 1:
+                console.print(
+                    f"[red]Several secrets are named '{secret}' — delete by "
+                    "UID instead:[/red]"
+                )
+                for match in matches:
+                    console.print(f"  {match.uid}")
+                raise typer.Exit(1)
+            else:
+                console.print(f"[red]No secret has the UID or name '{secret}'.[/red]")
+                raise typer.Exit(1)
 
         result = client.delete_secret(uid)
 
         if result.get("success", False):
-            console.print(f"[green]Secret '{uid}' deleted successfully![/green]")
+            console.print(f"[green]Secret '{secret}' deleted successfully![/green]")
         else:
             console.print(
-                f"[red]Failed to delete secret '{uid}': {result.get('message', 'Unknown error')}[/red]"
+                f"[red]Failed to delete secret '{secret}': {result.get('message', 'Unknown error')}[/red]"
             )
             raise typer.Exit(1)
 

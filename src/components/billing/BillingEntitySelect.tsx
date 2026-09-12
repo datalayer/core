@@ -3,11 +3,6 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-/*
- * Copyright (c) 2023-2026 Datalayer, Inc.
- * Distributed under the terms of the Modified BSD License.
- */
-
 /**
  * BillingEntitySelect — self-contained dropdown that lets the user pick a
  * billing entity (personal, organization, or eligible team) for runs that
@@ -18,12 +13,12 @@
  * resolved account via `onSelectedAccountChange`.
  */
 
+import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useRef, Fragment } from 'react';
 import {
   ActionList,
   ActionMenu,
   Button,
-  Flash,
   FormControl,
   Label,
   Spinner,
@@ -537,7 +532,21 @@ export function BillingEntitySelect({
           </ActionMenu.Anchor>
           <ActionMenu.Overlay width="large">
             <Box sx={{ p: 2 }}>
-              <Flash variant="default">{flashMessage}</Flash>
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'border.default',
+                  bg: 'canvas.subtle',
+                  color: 'fg.muted',
+                  px: 3,
+                  py: 2,
+                }}
+              >
+                <Text sx={{ fontSize: 1, lineHeight: 1.5 }}>
+                  {flashMessage}
+                </Text>
+              </Box>
             </Box>
             <ActionList selectionVariant="single">
               {isLoading ? (

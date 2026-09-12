@@ -40,13 +40,14 @@ class AuthenticationManager:
         """
         self.iam_url = iam_url
 
-        # Extract datalayer_url from iam_url (remove /api/iam/v1 suffix if present)
-        datalayer_url = iam_url.replace("/api/iam/v1", "")
+        # The service URL the credentials are stored under: the IAM one,
+        # without the path of its API.
+        service_url = iam_url.replace("/api/iam/v1", "")
 
-        # CRITICAL: Pass datalayer_url as service_name to KeyringStorage for backwards compatibility
+        # CRITICAL: Pass the service URL as service_name to KeyringStorage for backwards compatibility
         self.storage: TokenStorage
         if storage is None:
-            keyring_storage = KeyringStorage(service_name=datalayer_url)
+            keyring_storage = KeyringStorage(service_name=service_url)
             if keyring_storage.is_available():
                 self.storage = keyring_storage
             else:

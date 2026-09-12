@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { useUsageRefreshStore } from './useUsageRefreshStore';
+import { registerSessionState } from '../state/sessionEnd';
 
 const PRINCIPAL_CONTEXT_COOKIE = 'datalayer-principal-context';
 const PRINCIPAL_CONTEXT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
@@ -269,3 +270,6 @@ export const usePrincipalStore = create<PrincipalState>()(
 );
 
 export default usePrincipalStore;
+
+// The principal selected is the signed-in person's: forgotten when the session ends.
+registerSessionState({ forget: () => usePrincipalStore.getState().resetPrincipal() });

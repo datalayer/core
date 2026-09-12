@@ -91,6 +91,8 @@ export interface UserMeResponse {
     last_name_t: string;
     /** Avatar URL for the user (may be empty string) */
     avatar_url_s: string;
+    avatar_icon_s?: string;
+    banner_s?: string;
     /** Array of roles assigned to the user */
     roles_ss: string[];
     /** Allow additional fields that may come from the server */
@@ -138,6 +140,8 @@ export interface ShareablePrincipal {
   description?: string | null;
   email?: string | null;
   avatar_url?: string | null;
+  avatar_icon?: string | null;
+  banner?: string | null;
   /** Parent organization UID — set when kind === 'team'. */
   organization_uid?: string | null;
   /** Parent organization handle — set when kind === 'team'. */
@@ -164,6 +168,10 @@ export interface PrincipalSearchUser {
   origin?: string;
   avatar_url_s?: string;
   avatarUrl?: string;
+  avatar_icon_s?: string;
+  avatarIcon?: string;
+  banner_s?: string;
+  banner?: string;
   [key: string]: any;
 }
 
@@ -174,6 +182,8 @@ export interface PrincipalSearchTeam {
   description_t?: string;
   organization_uid?: string;
   organization_handle_s?: string;
+  avatar_icon_s?: string;
+  banner_s?: string;
   [key: string]: any;
 }
 

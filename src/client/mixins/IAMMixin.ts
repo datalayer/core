@@ -12,7 +12,6 @@ import * as authentication from '../../api/iam/authentication';
 import * as profile from '../../api/iam/profile';
 import * as usage from '../../api/iam/usage';
 import * as secrets from '../../api/iam/secrets';
-import * as datasources from '../../api/iam/datasources';
 import type { UserData as ApiUser } from '../../models/UserDTO';
 import type { CreditsResponse } from '../../models/CreditsDTO';
 import type { Constructor } from '../utils/mixins';
@@ -24,11 +23,6 @@ import type {
   CreateSecretRequest,
   UpdateSecretRequest,
 } from '../../models/Secret';
-import { DatasourceDTO } from '../../models/Datasource';
-import type {
-  CreateDatasourceRequest,
-  UpdateDatasourceRequest,
-} from '../../models/Datasource';
 
 /** IAM mixin providing authentication and user management. */
 export function IAMMixin<TBase extends Constructor>(Base: TBase) {
@@ -311,91 +305,6 @@ export function IAMMixin<TBase extends Constructor>(Base: TBase) {
       const iamUrl = (this as any).getIamUrl();
 
       await secrets.deleteSecret(token, secretId, iamUrl);
-    }
-
-    // ========================================================================
-    // Datasources Management
-    // ========================================================================
-
-    /**
-     * Create a new datasource.
-     * @param data - Datasource configuration
-     * @returns Created datasource instance
-     */
-    async createDatasource(
-      data: CreateDatasourceRequest,
-    ): Promise<DatasourceDTO> {
-      const token = (this as any).getToken();
-      const iamUrl = (this as any).getIamUrl();
-
-      const response = await datasources.createDatasource(
-        token,
-        data,
-        iamUrl,
-      );
-      return new DatasourceDTO(response.datasource, this as any);
-    }
-
-    /**
-     * List all datasources.
-     * @returns Array of datasource instances
-     */
-    async listDatasources(): Promise<DatasourceDTO[]> {
-      const token = (this as any).getToken();
-      const iamUrl = (this as any).getIamUrl();
-
-      const response = await datasources.listDatasources(token, iamUrl);
-      return response.datasources.map(d => new DatasourceDTO(d, this as any));
-    }
-
-    /**
-     * Get a specific datasource by ID.
-     * @param datasourceId - Datasource unique identifier
-     * @returns Datasource instance
-     */
-    async getDatasource(datasourceId: string): Promise<DatasourceDTO> {
-      const token = (this as any).getToken();
-      const iamUrl = (this as any).getIamUrl();
-
-      const response = await datasources.getDatasource(
-        token,
-        datasourceId,
-        iamUrl,
-      );
-      return new DatasourceDTO(response.datasource, this as any);
-    }
-
-    /**
-     * Update a datasource.
-     * @param datasourceId - Datasource unique identifier
-     * @param updates - Fields to update
-     * @returns Updated datasource instance
-     */
-    async updateDatasource(
-      datasourceId: string,
-      updates: UpdateDatasourceRequest,
-    ): Promise<DatasourceDTO> {
-      const token = (this as any).getToken();
-      const iamUrl = (this as any).getIamUrl();
-
-      const response = await datasources.updateDatasource(
-        token,
-        datasourceId,
-        updates,
-        iamUrl,
-      );
-      return new DatasourceDTO(response.datasource, this as any);
-    }
-
-    /**
-     * Delete a datasource.
-     * @param datasourceId - Datasource unique identifier
-     */
-    async deleteDatasource(datasourceId: string): Promise<void> {
-      const token = (this as any).getToken();
-      const iamUrl = (this as any).getIamUrl();
-
-      await datasources.deleteDatasource(token, datasourceId, iamUrl);
     }
   };
 }

@@ -11,6 +11,9 @@ export const takeHTMLNodeScreencapture = async (
   const sc = html2canvas(node, {
     width: node.getBoundingClientRect().width,
     height: node.getBoundingClientRect().height,
+    // Cross-origin pictures are otherwise left out and their space kept, so a
+    // cell carrying an `<img>` from the web captures as a blank rectangle.
+    useCORS: true,
   });
   return sc.then(canvas => {
     const croppedCanvas = document.createElement('canvas');

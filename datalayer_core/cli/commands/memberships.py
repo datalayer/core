@@ -5,7 +5,7 @@
 
 import json as _json
 import os
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -24,7 +24,7 @@ console = Console()
 
 
 def _print_memberships(
-    memberships: list[dict],
+    memberships: list[dict[str, Any]],
     *,
     only: Optional[str] = None,
 ) -> None:

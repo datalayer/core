@@ -6,6 +6,14 @@
 import { Component, CSSProperties } from 'react';
 import html2canvas from 'html2canvas';
 
+/**
+ * The longest edge a capture is allowed, in device pixels.
+ *
+ * The library caps a stored image at 2 MB. 1600 keeps a full-width selection
+ * legible while leaving room under that ceiling as lossless PNG.
+ */
+const MAX_CAPTURE_EDGE = 1600;
+
 type ScreencaptureProps = {
   children: any;
   onStartCapture?: () => void;
@@ -189,22 +197,61 @@ export class Screencapture extends Component<
         width: windowWidth,
         height: windowHeight,
         scale: scale,
+        /*
+         * Draw the pictures that come from somewhere else.
+         *
+         * Without this html2canvas leaves every cross-origin image out and
+         * keeps the space it occupied, so a markdown cell carrying an `<img>`
+         * from the web captured as a blank rectangle the right size. With it
+         * the image is fetched anonymously and drawn, and the canvas stays
+         * untainted so `toDataURL` below still works — which `allowTaint`
+         * would not: that draws the image and then makes the canvas
+         * unreadable, which is worse than the hole it fills.
+         *
+         * A host that sends no `Access-Control-Allow-Origin` still cannot be
+         * drawn. Nothing can be done about that from here.
+         */
+        useCORS: true,
       }).then(canvas => {
         const croppedCanvas = document.createElement('canvas');
         const croppedCanvasContext = croppedCanvas.getContext('2d');
-        croppedCanvas.width = cropWidth;
-        croppedCanvas.height = cropHeigth;
+        /*
+         * Device pixels, not CSS pixels.
+         *
+         * `html2canvas` renders at `scale`, so the source rectangle below is
+         * measured in device pixels — and it was being drawn into a canvas
+         * sized in CSS ones. On any display with a pixel ratio above 1 the
+         * destination was twice the canvas, so the capture came back cut off
+         * at the right and the bottom.
+         */
+        const sourceWidth = cropWidth * scale;
+        const sourceHeight = cropHeigth * scale;
+        /*
+         * And bounded, because a capture has somewhere to go.
+         *
+         * The library refuses an image over 2 MB, and a full-height selection
+         * on a retina screen is comfortably past that as lossless PNG — so an
+         * honest device-pixel capture has to be capped or it becomes a
+         * capture that cannot be published. Shrunk on the way into the canvas
+         * rather than after it, so there is one resample rather than two.
+         */
+        const shrink = Math.min(
+          1,
+          MAX_CAPTURE_EDGE / Math.max(sourceWidth, sourceHeight),
+        );
+        croppedCanvas.width = Math.max(1, Math.round(sourceWidth * shrink));
+        croppedCanvas.height = Math.max(1, Math.round(sourceHeight * shrink));
         if (croppedCanvasContext) {
           croppedCanvasContext.drawImage(
             canvas,
             cropPositionLeft * scale,
             cropPositionTop * scale,
-            cropWidth * scale,
-            cropHeigth * scale,
+            sourceWidth,
+            sourceHeight,
             0,
             0,
-            cropWidth * scale,
-            cropHeigth * scale,
+            croppedCanvas.width,
+            croppedCanvas.height,
           );
         }
         if (croppedCanvas) {

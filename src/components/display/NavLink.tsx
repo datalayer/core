@@ -20,10 +20,11 @@ export type NavLinkProps = {
 export const NavLink = forwardRef<HTMLAnchorElement, NavLinkProps>(
   ({ to, children, ...props }, ref) => {
     const navigate = useNavigate();
+    // The hook decides: a plain click navigates here, a modifier click lets
+    // the browser open the link in a new tab.
     const onClick = useCallback(
       (e: React.MouseEvent<HTMLAnchorElement>) => {
-        e.preventDefault();
-        navigate(to);
+        navigate(to, e);
       },
       [to, navigate],
     );

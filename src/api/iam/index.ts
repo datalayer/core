@@ -17,7 +17,8 @@ export * as profile from './profile';
 export * as healthz from './healthz';
 export * as usage from './usage';
 export * as secrets from './secrets';
-export * as datasources from './datasources';
+export * as connectedAgents from './connectedAgents';
+export * as trials from './trials';
 
 // For backward compatibility, export the old API structure
 export { login, logout, checkAuth } from './authentication';
@@ -35,3 +36,11 @@ export {
 export { me, whoami } from './profile';
 export { ping } from './healthz';
 export { getCredits } from './usage';
+export {
+  listConnectedAgents,
+  disconnectAgent,
+  isCimdClientId,
+  type ConnectedAgent,
+  type ConnectedAgentRegistration,
+  type ConnectedAgentScope,
+} from './connectedAgents';

@@ -24,7 +24,11 @@ export function asTeam(t: any, organizationId: string): ITeam {
     type: 'team',
     name: t.name_t,
     description: t.description_t,
+    avatarIcon: t.avatar_icon_s ?? t.avatarIcon,
+    banner: t.banner_s ?? t.banner,
     public: t.public_b,
+    // Inherited from the organization at creation; absent for a native one.
+    origin: t.origin_s ?? t.origin ?? undefined,
     members,
     organization: {
       id: organizationId,
@@ -43,7 +47,11 @@ export type IBaseTeam = {
   handle: string;
   name: string;
   description: string;
+  avatarIcon?: string;
+  banner?: string;
   public: boolean;
+  /** The origin of its organization, inherited at creation; absent for a native one. */
+  origin?: string;
   creationDate: Date;
   lastUpdateDate?: Date;
   lastPublicationDate?: Date;

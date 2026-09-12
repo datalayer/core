@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand';
+import { registerSessionState } from '../state/sessionEnd';
 
 export type PrincipalCacheKind = 'personal' | 'team' | 'organization';
 
@@ -27,6 +28,8 @@ export type CachedPrincipal = {
   email?: string;
   origin?: string;
   avatarUrl?: string;
+  avatarIcon?: string;
+  banner?: string;
   /** Team-specific: parent organization handle. */
   organizationHandle?: string;
   /** Team-specific: parent organization display name. */
@@ -58,6 +61,8 @@ const MERGEABLE_KEYS: Array<keyof CachedPrincipal> = [
   'email',
   'origin',
   'avatarUrl',
+  'avatarIcon',
+  'banner',
   'organizationHandle',
   'organizationName',
   'memberCount',
@@ -162,3 +167,6 @@ export const usePrincipalCacheStore = create<PrincipalCacheState>(
 );
 
 export default usePrincipalCacheStore;
+
+// What one session resolved is not the next one's to paint.
+registerSessionState({ forget: () => usePrincipalCacheStore.getState().reset() });

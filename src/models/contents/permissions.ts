@@ -1,0 +1,48 @@
+/*
+ * Copyright (c) 2023-2025 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+import type { CatalogSource, ContentSource } from '../../api/contents';
+
+/**
+ * What each content source is called where a person reads it.
+ *
+ * Keyed by the wire field, which is still `kind`: the contract names it that,
+ * and renaming a stored field is a migration rather than a vocabulary choice.
+ * Everything above the wire says content source.
+ */
+export const CONTENT_SOURCE_LABELS: Record<ContentSource['kind'], string> = {
+  files: 'Home Folder',
+  dataset: 'Dataset',
+  volume: 'Volume',
+  'cloud-storage': 'Cloud Storage',
+  datasource: 'Datasource',
+  'data-server': 'Dataserver',
+  mcp: 'MCP',
+  environment: 'Environment',
+};
+
+export const contentSourceLabel = (kind: ContentSource['kind']): string =>
+  CONTENT_SOURCE_LABELS[kind];
+
+export const contentSourceEffectiveRole = (item: CatalogSource): string => {
+  if (item.permissions.isOwner) {
+    return 'Owner';
+  }
+  const level = item.permissions.effectiveAccessLevel;
+  return level ? `${level[0].toUpperCase()}${level.slice(1)}` : 'No access';
+};
+
+export const canViewContentSource = (item: CatalogSource): boolean =>
+  item.permissions.view;
+
+export const canUpdateContentSource = (item: CatalogSource): boolean =>
+  item.permissions.update;
+
+export const canExecuteContentSource = (item: CatalogSource): boolean =>
+  item.permissions.execute;
+
+/** Sharing mutations are owner-only in the v1 Contents service contract. */
+export const canShareContentSource = (item: CatalogSource): boolean =>
+  item.source.kind !== 'files' && item.permissions.isOwner;

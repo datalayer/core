@@ -82,6 +82,9 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
   const user = getDatalayerJwtUser(token);
   const displayName = getDatalayerDisplayName(user, user?.handle ?? '');
   const claims = parseJwtPayload<DatalayerJwtPayload>(token);
+  const popoverDisplayName = claims?.user
+    ? getDatalayerDisplayName(claims.user, claims.user.handle ?? '')
+    : displayName;
 
   // Colour the trigger label based on token expiry:
   // - red when already expired,
@@ -153,7 +156,7 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
             sx={{
               px: 3,
               py: 2,
-              bg: 'canvas.subtle',
+              bg: 'canvas.inset',
               borderBottom: '1px solid',
               borderColor: 'border.default',
               display: 'flex',
@@ -162,7 +165,9 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
               gap: 2,
             }}
           >
-            <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>JWT Claims</Text>
+            <Text sx={{ fontWeight: 'bold', fontSize: 1 }}>
+              {popoverDisplayName || 'User'}
+            </Text>
             {variant === 'small' && showExpandToggle && (
               <Box
                 as="button"
@@ -219,6 +224,14 @@ export const UserBadge: React.FC<UserBadgeProps> = ({
                   fontSize: 0,
                 }}
               >
+                <Text sx={{ color: 'fg.muted' }}>First name</Text>
+                <Text sx={{ fontFamily: 'mono' }}>{claims.user.firstName}</Text>
+                <Text sx={{ color: 'fg.muted' }}>Last name</Text>
+                <Text sx={{ fontFamily: 'mono' }}>{claims.user.lastName}</Text>
+                <Text sx={{ color: 'fg.muted' }}>Display name</Text>
+                <Text sx={{ fontFamily: 'mono' }}>
+                  {getDatalayerDisplayName(claims.user, claims.user.handle)}
+                </Text>
                 {claims.user.email && (
                   <>
                     <Text sx={{ color: 'fg.muted' }}>Email</Text>

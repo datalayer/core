@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import { createContext, useState, useContext } from 'react';
 import styled from 'styled-components';
 

@@ -43,6 +43,7 @@ import {
   useQueries,
   useMutation,
   useQueryClient,
+  QueryClient,
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
@@ -50,7 +51,6 @@ import {
   BOOTSTRAP_USER_ONBOARDING,
   IAnyOrganization,
   IContact,
-  IDatasource,
   IIAMToken,
   IOrganization,
   IOrganizationMember,
@@ -62,7 +62,6 @@ import {
   IUserOnboarding,
   IUserSettings,
   asContact,
-  asDatasource,
   asInvite,
   asOrganization,
   asSecret,
@@ -77,23 +76,22 @@ type IAnySpace = any;
 type IAssignment = any;
 type ICell = any;
 type ICourse = any;
-type IDataset = any;
 type IDocument = any;
 type IEnvironment = any;
 type IExercise = any;
 type ILesson = any;
 type INotebook = any;
-type IPage = any;
 type ISpaceItem = any;
 type IStudentItem = any;
-import { asPage, asSpace } from './cacheConverters';
-import { useCoreStore, useIAMStore } from '../state';
+import { asSpace } from './cacheConverters';
+import { useCoreStore, useIAMStore, profileStore } from '../state';
 import { asDisplayName, namesAsInitials, asArray } from '../utils';
 import { useDatalayer } from './useDatalayer';
 import { useAuthorization } from './useAuthorization';
 import { useUploadForm } from './useUpload';
 
 import { OUTPUTSHOT_PLACEHOLDER_DEFAULT_SVG } from './assets';
+import { forgetSessionState } from '../state/sessionEnd';
 
 // ============================================================================
 // Types
@@ -124,6 +122,58 @@ const DEFAULT_QUERY_OPTIONS = {
   networkMode: 'online' as const,
 };
 
+/**
+ * Refresh what a visitor sees, not just what the editor is looking at.
+ *
+ * `invalidateQueries` marks queries stale and refetches the **active** ones —
+ * the ones some mounted component is watching. Everything else is left to
+ * refetch when it is next mounted, which is the usual and correct behaviour
+ * and does not work here.
+ *
+ * It does not work because the app's `QueryClient` is built with
+ * `refetchOnMount: false`. A query that mounts holding stale data renders it
+ * and asks for nothing. So an administrator on `/admin/library/featured`
+ * would reorder the ribbon, watch the admin list reorder itself correctly —
+ * that query is active — and then find the home page still showing the old
+ * order, because the ribbon was not mounted when the invalidation happened
+ * and would not ask again when it was. Only a full page reload, which throws
+ * the whole cache away, put it right.
+ *
+ * `refetchType: 'all'` fetches the inactive ones too, there and then. It
+ * belongs on the handful of mutations that change what somebody *else's*
+ * screen shows, and nowhere else: for an ordinary edit, refetching every
+ * dormant query in the cache is a burst of requests for pages nobody is on.
+ */
+const invalidateEverywhere = (
+  client: QueryClient,
+  queryKey: readonly unknown[],
+): void => {
+  void client.invalidateQueries({ queryKey, refetchType: 'all' });
+};
+
+/**
+ * Forget everything a session was told, without orphaning what is on screen.
+ *
+ * `queryClient.clear()` is the obvious way to end a session and the wrong
+ * one. It destroys the query objects themselves, and an observer whose query
+ * is destroyed while its fetch is in flight is never answered and never asks
+ * again: it sits at `isLoading` for as long as the page stays open.
+ *
+ * Signing out is exactly that race. Ending the session swaps the whole tree
+ * for the anonymous one, which mounts the home page and starts fetching the
+ * featured ribbon; the logout response then lands on top of that fetch. The
+ * ribbon stayed a row of empty placeholders until the reader reloaded.
+ *
+ * So: drop what nobody is looking at, and reset what is on screen. A reset
+ * forgets the answer the person who has left was given and asks the question
+ * again as whoever is here now, which is what signing out means for a page
+ * that is still open.
+ */
+export const forgetSession = (client: QueryClient): void => {
+  client.removeQueries({ type: 'inactive' });
+  client.resetQueries({ type: 'active' });
+};
+
 // ============================================================================
 // Query Key Factories
 // ============================================================================
@@ -134,6 +184,226 @@ const DEFAULT_QUERY_OPTIONS = {
  * @see https://tanstack.com/query/latest/docs/framework/react/guides/query-keys
  */
 export const queryKeys = {
+  // Contents catalog
+  contents: {
+    all: () => ['contents'] as const,
+    sources: () => [...queryKeys.contents.all(), 'sources'] as const,
+    capabilities: () => [...queryKeys.contents.all(), 'capabilities'] as const,
+    sourceList: (filters?: {
+      kind?: string;
+      cursor?: string;
+      limit?: number;
+    }) => [...queryKeys.contents.sources(), 'list', filters ?? {}] as const,
+    source: (sourceUid: string) =>
+      [...queryKeys.contents.sources(), 'detail', sourceUid] as const,
+    sourceSharing: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'sharing'] as const,
+    datasetRevisions: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'revisions'] as const,
+    datasetRevision: (sourceUid: string, revisionUid: string) =>
+      [...queryKeys.contents.datasetRevisions(sourceUid), revisionUid] as const,
+    datasetPublications: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'publications'] as const,
+    publishedDatasets: () =>
+      [...queryKeys.contents.all(), 'publications', 'datasets'] as const,
+    cloudObjects: (sourceUid: string, prefix?: string, cursor?: string) =>
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'cloud',
+        'objects',
+        prefix ?? '',
+        cursor ?? '',
+      ] as const,
+    credentialDiagnostics: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'diagnostics'] as const,
+    homeFolder: () => [...queryKeys.contents.sources(), 'user-folder'] as const,
+    homeFolderQuota: () =>
+      [...queryKeys.contents.homeFolder(), 'quota'] as const,
+    homeFolderObjects: (filters?: {
+      prefix?: string;
+      cursor?: string;
+      limit?: number;
+      order?: 'path' | 'updated';
+    }) =>
+      [
+        ...queryKeys.contents.homeFolder(),
+        'objects',
+        'list',
+        filters ?? {},
+      ] as const,
+    homeFolderObject: (path: string) =>
+      [...queryKeys.contents.homeFolder(), 'objects', 'stat', path] as const,
+    homeFolderObjectVersions: (objectUid: string, cursor?: string) =>
+      [
+        ...queryKeys.contents.homeFolder(),
+        'objects',
+        objectUid,
+        'versions',
+        cursor ?? '',
+      ] as const,
+    operations: () => [...queryKeys.contents.all(), 'operations'] as const,
+    operation: (operationUid: string) =>
+      [...queryKeys.contents.operations(), operationUid] as const,
+    transfers: () => [...queryKeys.contents.all(), 'transfers'] as const,
+    transferList: (filters?: {
+      active?: boolean;
+      cursor?: string;
+      limit?: number;
+    }) => [...queryKeys.contents.transfers(), 'list', filters ?? {}] as const,
+    transfer: (transferUid: string) =>
+      [...queryKeys.contents.transfers(), transferUid] as const,
+    syncSessions: () => [...queryKeys.contents.all(), 'sync'] as const,
+    syncSessionList: (filters?: {
+      active?: boolean;
+      cursor?: string;
+      limit?: number;
+    }) =>
+      [...queryKeys.contents.syncSessions(), 'list', filters ?? {}] as const,
+    syncSession: (sessionUid: string) =>
+      [...queryKeys.contents.syncSessions(), sessionUid] as const,
+    syncConflicts: (sessionUid: string) =>
+      [...queryKeys.contents.syncSession(sessionUid), 'conflicts'] as const,
+    attachments: () => [...queryKeys.contents.all(), 'attachments'] as const,
+    attachmentList: (filters?: {
+      sandboxUid?: string;
+      sourceUid?: string;
+      active?: boolean;
+    }) => [...queryKeys.contents.attachments(), 'list', filters ?? {}] as const,
+    attachmentManifest: (sandboxUid: string) =>
+      [...queryKeys.contents.attachments(), 'manifest', sandboxUid] as const,
+    // The session of one attachment lives under the attachments key on
+    // purpose: revoking or refreshing an attachment refreshes its bridge.
+    bridgeSession: (attachmentUid: string) =>
+      [...queryKeys.contents.attachments(), 'bridge', attachmentUid] as const,
+    bridges: () => [...queryKeys.contents.all(), 'bridges'] as const,
+    bridgeList: (filters?: { active?: boolean }) =>
+      [...queryKeys.contents.bridges(), 'list', filters ?? {}] as const,
+    bridge: (bridgeUid: string) =>
+      [...queryKeys.contents.bridges(), bridgeUid] as const,
+    // What a running Runtime has mounted. Under the Contents key rather than
+    // a Runtimes one because attaching and detaching a source is what changes
+    // it, and those invalidate from here.
+    runtimeMounts: (runtimeName: string) =>
+      [...queryKeys.contents.all(), 'runtime-mounts', runtimeName] as const,
+    mcpTools: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'mcp', 'tools'] as const,
+    mcpSessions: () => [...queryKeys.contents.all(), 'mcp-sessions'] as const,
+    mcpSessionList: (filters?: { sourceUid?: string; active?: boolean }) =>
+      [...queryKeys.contents.mcpSessions(), 'list', filters ?? {}] as const,
+    mcpSession: (sessionUid: string) =>
+      [...queryKeys.contents.mcpSessions(), sessionUid] as const,
+    mcpCalls: (sessionUid: string) =>
+      [...queryKeys.contents.mcpSession(sessionUid), 'calls'] as const,
+    mcpCall: (sessionUid: string, callUid: string) =>
+      [...queryKeys.contents.mcpCalls(sessionUid), callUid] as const,
+    mcpApprovals: () => [...queryKeys.contents.all(), 'mcp-approvals'] as const,
+    mcpApprovalList: (filters?: { status?: string; sourceUid?: string }) =>
+      [...queryKeys.contents.mcpApprovals(), 'list', filters ?? {}] as const,
+    datasourceSchema: (sourceUid: string) =>
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'datasource',
+        'schema',
+      ] as const,
+    datasourceCapabilities: (sourceUid: string) =>
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'datasource',
+        'capabilities',
+      ] as const,
+    datasourceQueries: (sourceUid: string) =>
+      [...queryKeys.contents.source(sourceUid), 'queries'] as const,
+    // A query is addressed by its own uid, not under its source: a
+    // notebook reconnects to one by uid alone.
+    queries: () => [...queryKeys.contents.all(), 'queries'] as const,
+    query: (queryUid: string) =>
+      [...queryKeys.contents.queries(), queryUid] as const,
+    dataserverStatus: (sourceUid: string) =>
+      [
+        ...queryKeys.contents.source(sourceUid),
+        'dataserver',
+        'status',
+      ] as const,
+  },
+
+  // The Jupyter MCP Server: what the agents did, and what they may do
+  mcp: {
+    all: () => ['mcp'] as const,
+    tasks: () => [...queryKeys.mcp.all(), 'tasks'] as const,
+    taskList: (filters?: object) =>
+      [...queryKeys.mcp.tasks(), 'list', filters ?? {}] as const,
+    task: (taskUid: string) => [...queryKeys.mcp.tasks(), taskUid] as const,
+    notebookTasks: (notebookUid: string, filters?: object) =>
+      [
+        ...queryKeys.mcp.tasks(),
+        'notebook',
+        notebookUid,
+        filters ?? {},
+      ] as const,
+    bindings: () => [...queryKeys.mcp.all(), 'bindings'] as const,
+    bindingList: (filters?: object) =>
+      [...queryKeys.mcp.bindings(), 'list', filters ?? {}] as const,
+    activity: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'activity', filters ?? {}] as const,
+    audit: () => [...queryKeys.mcp.all(), 'audit'] as const,
+    auditList: (filters?: object) =>
+      [...queryKeys.mcp.audit(), 'list', filters ?? {}] as const,
+    policy: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'policy', filters ?? {}] as const,
+    connectedAgents: () =>
+      [...queryKeys.mcp.all(), 'connected-agents'] as const,
+    // Service agents are an organization's, never an account's: two
+    // organizations' lists must not share a cache entry.
+    serviceAgents: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'service-agents', orgUid] as const,
+    // The layer IAM stores, keyed by the scope *and* the subject: an
+    // organization's policy and a team's are different documents, and a
+    // shared entry would show one under the other's name.
+    policyLayer: (scope: string, subjectUid: string) =>
+      [...queryKeys.mcp.all(), 'policy-layer', scope, subjectUid] as const,
+    alertRules: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'alert-rules', orgUid] as const,
+    identityProviders: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'identity-providers', orgUid] as const,
+    forwarding: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'audit-forwarding', orgUid] as const,
+    auditSettings: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'audit-settings', orgUid] as const,
+    organizationTeams: (orgUid: string) =>
+      [...queryKeys.mcp.all(), 'organization-teams', orgUid] as const,
+    // Observability, over the OTEL service, keyed by the task it describes.
+    trace: (taskUid: string) =>
+      [...queryKeys.mcp.task(taskUid), 'trace'] as const,
+    // A trace named directly: a synchronous call has one and no task.
+    traceById: (traceId: string) =>
+      [...queryKeys.mcp.all(), 'traces', traceId] as const,
+    logs: (taskUid: string) =>
+      [...queryKeys.mcp.task(taskUid), 'logs'] as const,
+    metrics: (filters?: object) =>
+      [...queryKeys.mcp.all(), 'metrics', filters ?? {}] as const,
+    operations: () => [...queryKeys.mcp.all(), 'operations'] as const,
+    workers: () => [...queryKeys.mcp.operations(), 'workers'] as const,
+    workflows: () => [...queryKeys.mcp.operations(), 'workflows'] as const,
+    gatewayVersion: () => [...queryKeys.mcp.all(), 'version'] as const,
+    // The Enterprise console: one answer per organization, narrowed by team.
+    orgOverview: (orgUid: string, filters?: object) =>
+      [
+        ...queryKeys.mcp.all(),
+        'organizations',
+        orgUid,
+        'overview',
+        filters ?? {},
+      ] as const,
+    orgUsage: (orgUid: string, filters?: object) =>
+      [
+        ...queryKeys.mcp.all(),
+        'organizations',
+        orgUid,
+        'usage',
+        filters ?? {},
+      ] as const,
+  },
+
   // Authentication & Profile
   auth: {
     me: () => ['auth', 'me'] as const,
@@ -257,15 +527,6 @@ export const queryKeys = {
       [...queryKeys.cells.all(), 'space', spaceId] as const,
   },
 
-  // Datasets
-  datasets: {
-    all: () => ['datasets'] as const,
-    details: () => [...queryKeys.datasets.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.datasets.details(), id] as const,
-    bySpace: (spaceId: string) =>
-      [...queryKeys.datasets.all(), 'space', spaceId] as const,
-  },
-
   // Lessons
   lessons: {
     all: () => ['lessons'] as const,
@@ -313,20 +574,6 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.environments.details(), id] as const,
     bySpace: (spaceId: string) =>
       [...queryKeys.environments.all(), 'space', spaceId] as const,
-  },
-
-  // Pages
-  pages: {
-    all: () => ['pages'] as const,
-    details: () => [...queryKeys.pages.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.pages.details(), id] as const,
-  },
-
-  // Datasources
-  datasources: {
-    all: () => ['datasources'] as const,
-    details: () => [...queryKeys.datasources.all(), 'detail'] as const,
-    detail: (id: string) => [...queryKeys.datasources.details(), id] as const,
   },
 
   // Secrets
@@ -403,10 +650,22 @@ export const queryKeys = {
   items: {
     all: () => ['items'] as const,
     public: () => [...queryKeys.items.all(), 'public'] as const,
+    publicItem: (uid: string) =>
+      [...queryKeys.items.all(), 'public', uid] as const,
     bySpace: (spaceId: string) =>
       [...queryKeys.items.all(), 'space', spaceId] as const,
     search: (opts: ISearchOpts) =>
       [...queryKeys.items.all(), 'search', opts] as const,
+    // The library: what the home page, the profile pages and "my orbits"
+    // read, each invalidated by the mutation that changes it.
+    featured: () => [...queryKeys.items.all(), 'featured'] as const,
+    orbits: () => [...queryKeys.items.all(), 'orbits'] as const,
+    orbiters: (uid: string) =>
+      [...queryKeys.items.all(), 'orbiters', uid] as const,
+    derivations: (uid: string) =>
+      [...queryKeys.items.all(), 'derivations', uid] as const,
+    byOwner: (handle: string) =>
+      [...queryKeys.items.all(), 'owner', handle] as const,
   },
 
   // Layout
@@ -641,18 +900,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     return asSpace(spc);
   };
 
-  const toPage = (s: any): IPage | undefined => {
-    if (s) {
-      return asPage(s);
-    }
-  };
-
-  const toDatasource = (s: any): IDatasource | undefined => {
-    if (s) {
-      return asDatasource(s);
-    }
-  };
-
   const toSecret = (s: any): ISecret | undefined => {
     if (s) {
       return asSecret(s);
@@ -682,6 +929,208 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
    * is available so the UI hydration hooks (e.g. `useUsersByUids`) can
    * still fill in display data downstream.
    */
+  /**
+   * What the library knows about an artifact, on top of what its own service
+   * stores: how many people orbit it, whether this visitor does, how often it
+   * has been reused, whether it is featured, and what it looks like.
+   *
+   * Applied in one place — `toItem`, the library and search path — rather than
+   * in each mapper: a notebook read from its space has none of this, and
+   * inventing zeros there would say "nobody orbits it" where the truth is
+   * "this was not the library answering".
+   */
+  const withLibraryMeta = (raw: any): Record<string, any> => {
+    if (!raw || typeof raw !== 'object') {
+      return {};
+    }
+    const meta: Record<string, any> = {};
+    if (raw.orbits !== undefined) meta.orbits = Number(raw.orbits) || 0;
+    if (raw.orbited !== undefined) meta.orbited = Boolean(raw.orbited);
+    if (raw.clones !== undefined) meta.clones = Number(raw.clones) || 0;
+    if (raw.instantiations !== undefined)
+      meta.instantiations = Number(raw.instantiations) || 0;
+    if (raw.featured !== undefined) meta.featured = Boolean(raw.featured);
+    if (raw.featuredRank !== undefined)
+      meta.featuredRank = Number(raw.featuredRank);
+    if (raw.reuse !== undefined) meta.reuse = raw.reuse;
+    if (raw.publisher !== undefined) meta.publisher = raw.publisher;
+    if (raw.image !== undefined) meta.image = raw.image;
+    /*
+     * Where the artifact can be opened for editing.
+     *
+     * An item is a nested child of its space and carries no handle of its
+     * own, so the library resolves the space when it projects one. Without
+     * these two a page can link to the public reading of an artifact and has
+     * no way to offer the editable one.
+     */
+    if (raw.space_handle_s) meta.spaceHandle = raw.space_handle_s;
+    if (raw.space_owner_handle_s)
+      meta.spaceOwnerHandle = raw.space_owner_handle_s;
+    /*
+     * The absolute address anyone can read it at.
+     *
+     * Built by the library, not here, because it needs the host the site is
+     * served from and the browser only knows the host it happens to be on —
+     * which on a development server is `localhost:3063`, the one address that
+     * is no use to whoever the link is being copied for.
+     */
+    if (raw.publicUrl) meta.publicUrl = raw.publicUrl;
+    return meta;
+  };
+
+  /**
+   * A published dataset. Keyed on the dataset it is a publication of, not on
+   * the publication: republishing mints a new immutable revision, and the
+   * library entry — with the orbits it has collected — is the dataset's.
+   */
+  const toDataset = (raw: any): any => {
+    const owner = toItemOwner(raw);
+    return {
+      id: raw.uid,
+      type: 'dataset',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      license: raw.license_s,
+      fileCount: raw.file_count_i,
+      totalSize: raw.total_size_l,
+      publicationId: raw.latest_publication_uid_s,
+      revisionId: raw.revision_uid_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      owner,
+    };
+  };
+
+  /**
+   * An agent as a library artifact: published by Datalayer rather than by a
+   * user, and reused by instantiating a runtime from its specification rather
+   * than by cloning a document. The specification itself lives in the
+   * application's own build; this is only what the library shows of it.
+   */
+  /**
+   * A published Data Server: its catalog, never its address.
+   *
+   * What the library holds is what it answers for — the connector kinds and
+   * the relations they name. Reusing one attaches it as a Datasource; there
+   * is nothing to copy, because a Data Server is a process somebody runs.
+   */
+  const toDataserver = (raw: any): any => {
+    const owner = toItemOwner(raw);
+    return {
+      id: raw.uid,
+      type: 'dataserver',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      connectors: Array.isArray(raw.connectors_ss) ? raw.connectors_ss : [],
+      relations: Array.isArray(raw.relations_ss) ? raw.relations_ss : [],
+      publicationId: raw.latest_publication_uid_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      owner,
+    };
+  };
+
+  const toAgent = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'agent',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      domain: raw.domain_s,
+      icon: raw.icon_s,
+      emoji: raw.emoji_s,
+      model: raw.model_s,
+      specId: String(raw.uid || '').replace(/^agent:/, ''),
+      specVersion: raw.spec_version_s,
+      publisher: raw.publisher_s || 'datalayer',
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+    };
+  };
+
+  /**
+   * A published benchmark report (B5-01): what it is about and where it
+   * stands, and the document it is written in, which the library reads for it
+   * and hands over as `model_s` — the field a document's reader looks for.
+   */
+  const toReport = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'report',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      state: raw.state_s,
+      version: raw.version_i,
+      runCount: raw.run_count_i,
+      evalsetId: raw.evalset_uid_s,
+      report: raw.report,
+      model_s: raw.model_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+    };
+  };
+
+  /**
+   * A published investigation (B5-01): its scope, where it stands and what was
+   * decided, and the document it is written in, as a report's is.
+   */
+  const toInvestigation = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'investigation',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      scope: raw.scope_s,
+      status: raw.status_s,
+      evalsetId: raw.evalset_uid_s,
+      investigation: raw.investigation,
+      model_s: raw.model_s,
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastPublicationDate: raw.published_ts_dt
+        ? new Date(raw.published_ts_dt)
+        : undefined,
+      owner: toItemOwner(raw),
+    };
+  };
+
+  /** An evaluator of the platform's catalogue (B5-01), published as an agent is. */
+  const toEvaluator = (raw: any): any => {
+    return {
+      id: raw.uid,
+      type: 'evaluator',
+      name: raw.name_t,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      specId: String(raw.uid || '').replace(/^evaluator:/, ''),
+      specVersion: raw.spec_version_s,
+      publisher: raw.publisher_s || 'datalayer',
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+    };
+  };
+
   const toItemOwner = (raw: any): IUser => {
     const uid = String(
       raw?.creator_uid_s ??
@@ -702,6 +1151,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     const email = String(raw?.creator_email_s ?? raw?.email_s ?? '').trim();
     const displayName =
       firstName || lastName ? asDisplayName(firstName, lastName) : handle;
+    /*
+     * The face, which the library has been projecting all along and nothing
+     * was reading. Without it every published artifact was attributed to a
+     * pair of initials, on its own public page as much as anywhere else —
+     * the owner is right there in the projection, and this is the one place
+     * it was being dropped.
+     */
+    const avatarUrl = String(
+      raw?.creator_avatar_url_s ?? raw?.avatar_url_s ?? '',
+    ).trim();
+    const avatarIcon = String(
+      raw?.creator_avatar_icon_s ?? raw?.avatar_icon_s ?? '',
+    ).trim();
     return {
       id: uid,
       handle,
@@ -710,6 +1172,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       lastName,
       initials: namesAsInitials(firstName, lastName),
       displayName,
+      avatarUrl: avatarUrl || undefined,
+      avatarIcon: avatarIcon || undefined,
       roles: [],
       iamProviders: [],
       setRoles: () => {},
@@ -724,36 +1188,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   // Kept for potential future use
 
-  const toDataset = (raw_dataset: any): IDataset => {
-    const owner = toItemOwner(raw_dataset);
-    return {
-      id: raw_dataset.uid,
-      type: 'dataset',
-      name: raw_dataset.name_t,
-      description: raw_dataset.description_t,
-      fileName: raw_dataset.file_name_s,
-      datasetExtension: raw_dataset.dataset_extension_s,
-      contentLength: raw_dataset.content_length_i,
-      contentType: raw_dataset.content_type_s,
-      mimeType: raw_dataset.mimetype_s,
-      path: raw_dataset.s3_path_s,
-      cdnUrl: raw_dataset.cdn_url_s,
-      creationDate: new Date(raw_dataset.creation_ts_dt),
-      public: raw_dataset.is_public_b ?? false,
-      lastPublicationDate: raw_dataset.creation_ts_dt
-        ? new Date(raw_dataset.creation_ts_dt)
-        : undefined,
-      owner,
-      space: {
-        handle: raw_dataset.handle_s,
-      },
-      organization: {
-        id: raw_dataset.organization_uid_s,
-        handle: raw_dataset.organization_handle_s,
-      },
-    };
-  };
-
   const toCell = (cl: any): ICell => {
     const owner = toItemOwner(cl);
     return {
@@ -761,6 +1195,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'cell',
       name: cl.name_t,
       description: cl.description_t,
+      /*
+       * The words its owner filed it under.
+       *
+       * Every artifact type the library holds carries `tags_ss`, and the six
+       * space items — notebook, document, cell, lesson, exercise, assignment
+       * — were the six that never read it. So a notebook could be published
+       * under tags, be found by them in a search, and arrive at the card that
+       * shows them with none: the field was dropped here, one layer below
+       * anything that could notice.
+       */
+      tags: Array.isArray(cl.tags_ss) ? cl.tags_ss : [],
       source: cl.source_t,
       creationDate: new Date(cl.creation_ts_dt),
       public: cl.is_public_b ?? false,
@@ -787,6 +1232,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'notebook',
       name: raw_notebook.name_t,
       description: raw_notebook.description_t,
+      tags: Array.isArray(raw_notebook.tags_ss) ? raw_notebook.tags_ss : [],
       nbformat: raw_notebook.model_s
         ? JSON.parse(raw_notebook.model_s)
         : undefined,
@@ -817,6 +1263,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'document',
       name: doc.name_t,
       description: doc.description_t,
+      tags: Array.isArray(doc.tags_ss) ? doc.tags_ss : [],
       model: doc.model_s ? JSON.parse(doc.model_s) : undefined,
       public: doc.is_public_b ?? false,
       creationDate: new Date(doc.creation_ts_dt),
@@ -844,6 +1291,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'lesson',
       name: raw_lesson.name_t,
       description: raw_lesson.description_t,
+      tags: Array.isArray(raw_lesson.tags_ss) ? raw_lesson.tags_ss : [],
       nbformat: raw_lesson.model_s ? JSON.parse(raw_lesson.model_s) : undefined,
       public: raw_lesson.is_public_b ?? false,
       creationDate: new Date(raw_lesson.creation_ts_dt),
@@ -872,6 +1320,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'exercise',
       name: ex.name_t,
       description: ex.description_t,
+      tags: Array.isArray(ex.tags_ss) ? ex.tags_ss : [],
       help: ex.help_t,
       codePre: ex.code_pre_t,
       codeQuestion: ex.code_question_t,
@@ -918,6 +1367,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       type: 'assignment',
       name: raw_assignment.name_t,
       description: raw_assignment.description_t,
+      tags: Array.isArray(raw_assignment.tags_ss) ? raw_assignment.tags_ss : [],
       nbformat: raw_assignment.model_s
         ? JSON.parse(raw_assignment.model_s)
         : undefined,
@@ -967,6 +1417,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   const toEvalset = (raw_evalset: any): any => {
     const owner = toItemOwner(raw_evalset);
+    const numberOrUndefined = (value: any): number | undefined => {
+      if (value === null || value === undefined || value === '') {
+        return undefined;
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
     return {
       id: raw_evalset.uid,
       type: 'evalset',
@@ -980,6 +1437,30 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         ? new Date(raw_evalset.last_update_ts_dt)
         : undefined,
       tags: Array.isArray(raw_evalset.tags_ss) ? raw_evalset.tags_ss : [],
+      /*
+       * What the runs of a benchmark say about it, projected onto its
+       * library card whenever a run moves (BENCHMARK.md, B2-10 and B1-09).
+       *
+       * These were dropped here, so a card in the Library or on the home
+       * page could show a name and a description and nothing that would
+       * help anybody choose between two benchmarks — how big it is, what it
+       * has been run on, how well anyone has done, what a run tends to
+       * cost. The projection has been writing them all along.
+       */
+      category: raw_evalset.category_s || undefined,
+      caseCount: numberOrUndefined(raw_evalset.case_count_i),
+      runCount: numberOrUndefined(raw_evalset.run_count_i),
+      latestPassRate: numberOrUndefined(raw_evalset.latest_pass_rate_f),
+      bestPassRate: numberOrUndefined(raw_evalset.best_pass_rate_f),
+      lastRunStatus: raw_evalset.last_run_status_s || undefined,
+      lastRunAt: raw_evalset.last_run_at_dt
+        ? new Date(raw_evalset.last_run_at_dt)
+        : undefined,
+      estimatedCost: numberOrUndefined(raw_evalset.estimated_cost_f),
+      environment: raw_evalset.environment_s || undefined,
+      subjectRefs: Array.isArray(raw_evalset.subject_refs_ss)
+        ? raw_evalset.subject_refs_ss
+        : [],
       owner,
     };
   };
@@ -989,6 +1470,14 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       console.error('No type_s found on item', item);
       return {};
     }
+    // The library answers with the same field names a space item has, plus
+    // what only it knows; the type mapper reads the former and
+    // `withLibraryMeta` adds the latter, so one artifact has one shape
+    // wherever it was searched.
+    return { ...toTypedItem(item), ...withLibraryMeta(item) };
+  };
+
+  const toTypedItem = (item: any): any => {
     switch (item.type_s) {
       case 'assignment':
         return toAssignment(item);
@@ -1033,8 +1522,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           },
         };
       }
-      case 'dataset':
-        return toDataset(item);
       case 'document':
         return toDocument(item);
       case 'exercise':
@@ -1043,10 +1530,20 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toLesson(item);
       case 'notebook':
         return toNotebook(item);
-      case 'page':
-        return toPage(item);
       case 'evalset':
         return toEvalset(item);
+      case 'dataset':
+        return toDataset(item);
+      case 'agent':
+        return toAgent(item);
+      case 'dataserver':
+        return toDataserver(item);
+      case 'report':
+        return toReport(item);
+      case 'investigation':
+        return toInvestigation(item);
+      case 'evaluator':
+        return toEvaluator(item);
       default:
         return {};
     }
@@ -1200,8 +1697,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
       },
       onSuccess: () => {
-        // Clear all queries on logout
-        queryClient.clear();
+        forgetSession(queryClient);
+        forgetSessionState();
       },
     });
   };
@@ -1223,7 +1720,11 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           token,
         });
         if (resp.me) {
-          return toUser(resp.me);
+          const me = toUser(resp.me);
+          // The full profile — banner and avatar included — feeds the
+          // profile store every surface reads.
+          profileStore.getState().setProfileFromUser(me);
+          return me;
         }
         return null;
       },
@@ -1240,19 +1741,28 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         email,
         firstName,
         lastName,
+        avatarIcon,
+        banner,
+        showOrbits,
       }: {
         email: string;
         firstName: string;
         lastName: string;
+        avatarIcon?: string;
+        banner?: string;
+        showOrbits?: boolean;
       }) => {
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/me`,
           method: 'PUT',
-          body: { email, firstName, lastName },
+          body: { email, firstName, lastName, avatarIcon, banner, showOrbits },
         });
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
+        // Every cached view of the user — the public profile page, the
+        // admin list and detail, the search seeds — is now out of date.
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       },
     });
   };
@@ -1370,16 +1880,23 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
               first_name_t: profile.first_name,
               last_name_t: profile.last_name,
               avatar_url_s: profile.avatar_url,
+              avatar_icon_s: profile.avatar_icon_s,
+              banner_s: profile.banner_s,
               origin_s: profile.origin,
             });
+            // Stale seeding (updatedAt: 0): the public profile is a partial
+            // shape, and a fresh-marked seed would overwrite a richer detail
+            // entry and be served as the whole truth for the staleTime.
             if (mappedUser) {
               queryClient.setQueryData(
                 queryKeys.users.detail(mappedUser.id),
                 mappedUser,
+                { updatedAt: 0 },
               );
               queryClient.setQueryData(
                 queryKeys.users.byHandle(mappedUser.handle),
                 mappedUser,
+                { updatedAt: 0 },
               );
             }
           }
@@ -1408,12 +1925,19 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         if (resp.success && resp.users) {
           const users = resp.users.map((u: unknown) => {
             const user = toUser(u);
-            // Pre-populate individual caches
+            // Pre-populate individual caches so a detail view renders
+            // instantly — but as STALE data (updatedAt: 0): a search answer
+            // can be a partial shape (a member's search has no email or
+            // settings), and a fresh-marked partial would be served as the
+            // whole truth for the staleTime. Stale renders and revalidates.
             if (user) {
-              queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+              queryClient.setQueryData(queryKeys.users.detail(user.id), user, {
+                updatedAt: 0,
+              });
               queryClient.setQueryData(
                 queryKeys.users.byHandle(user.handle),
                 user,
+                { updatedAt: 0 },
               );
             }
             return user;
@@ -1457,11 +1981,18 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           const users = resp.users
             .map((u: unknown) => {
               const user = toUser(u);
+              // Stale seeding, as in useSearchUsers: the bulk answer may be
+              // a partial shape, so it renders but revalidates.
               if (user) {
-                queryClient.setQueryData(queryKeys.users.detail(user.id), user);
+                queryClient.setQueryData(
+                  queryKeys.users.detail(user.id),
+                  user,
+                  { updatedAt: 0 },
+                );
                 queryClient.setQueryData(
                   queryKeys.users.byHandle(user.handle),
                   user,
+                  { updatedAt: 0 },
                 );
               }
               return user;
@@ -1507,19 +2038,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         userId: string;
         settings: IUserSettings;
       }) => {
+        // Only the keys the caller actually set. IAM merges what it
+        // receives into the settings document, so sending a key means
+        // changing it — an undefined one is dropped by `JSON.stringify`
+        // and leaves the stored value alone.
+        const body: Record<string, unknown> = {};
+        if (settings.aiAgentsUrl !== undefined) {
+          body.aiAgents_url_s = settings.aiAgentsUrl;
+        }
+        if (settings.canInvite !== undefined) {
+          body.can_invite_b = settings.canInvite;
+        }
+        if (settings.docsInPlace !== undefined) {
+          body.docs_in_place_b = settings.docsInPlace;
+        }
         return requestDatalayer({
           url: `${configuration.iamUrl}/api/iam/v1/users/${userId}/settings`,
           method: 'PUT',
-          body: {
-            aiAgents_url_s: settings.aiAgentsUrl,
-            can_invite_b: settings.canInvite || false,
-          },
+          body,
         });
       },
       onSuccess: (_, variables) => {
         queryClient.invalidateQueries({
           queryKey: queryKeys.users.detail(variables.userId),
         });
+        // The signed-in user carries these settings, and the application
+        // shell reads them from there.
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() });
       },
     });
   };
@@ -1685,6 +2230,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: {
             name: organization.name,
             description: organization.description,
+            avatarIcon: organization.avatarIcon,
+            banner: organization.banner,
           },
         });
       },
@@ -1809,6 +2356,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           body: {
             name: team.name,
             description: team.description,
+            avatarIcon: team.avatarIcon,
+            banner: team.banner,
           },
         });
       },
@@ -2025,7 +2574,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
 
   /**
    * Update space with optimistic update.
-   * Any extra fields (e.g. attached_agent_pod_name_s) are forwarded to the backend.
+   * Any extra fields (e.g. attached_agent_runtime_name_s) are forwarded to the backend.
    */
   const useUpdateSpace = () => {
     return useMutation({
@@ -2442,11 +2991,17 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
       onSuccess: (resp, _variables) => {
         if (resp.success && resp.document) {
           const document = toDocument(resp.document);
-          // Set detail cache
-          queryClient.setQueryData(
-            queryKeys.documents.detail(document.id),
-            document,
-          );
+          /*
+           * The creation answer carries no model — the spacer keeps the
+           * model with the content, and only the GET of a document answers
+           * with it. Seeding the detail cache here would hand the editor a
+           * document without a model, shown as a blank page: the cache is
+           * invalidated instead, so an editor opening on the creation reads
+           * the document from the server, model included.
+           */
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.documents.detail(document.id),
+          });
           // Refetch all document queries immediately (including bySpace)
           queryClient.refetchQueries({
             queryKey: queryKeys.documents.all(),
@@ -2489,234 +3044,13 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // Page Hooks
   // ============================================================================
 
-  /**
-   * Get page by ID
-   */
-  const usePage = (pageId: string) => {
-    return useQuery({
-      queryKey: queryKeys.pages.detail(pageId),
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages/${pageId}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.page) {
-          return toPage(resp.page);
-        }
-        throw new Error(resp.message || 'Failed to fetch page');
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!pageId,
-    });
-  };
-
-  /**
-   * Get all pages
-   */
-  const usePages = (scope?: {
-    selectedPrincipalUid?: string;
-    selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-  }) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.pages.all(),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.pages) {
-          const pages = resp.pages
-            .map((p: unknown) => {
-              const page = toPage(p);
-              if (page) {
-                queryClient.setQueryData(queryKeys.pages.detail(page.id), page);
-              }
-              return page;
-            })
-            .filter(Boolean);
-          return pages;
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Create page
-   */
-  const useCreatePage = () => {
-    return useMutation({
-      mutationFn: async (page: Omit<IPage, 'id'>) => {
-        return requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages`,
-          method: 'POST',
-          body: { ...page },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.page) {
-          const page = toPage(resp.page);
-          if (page) {
-            // Set detail cache
-            queryClient.setQueryData(queryKeys.pages.detail(page.id), page);
-            // Invalidate list to refetch
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.pages.all(),
-            });
-          }
-        }
-      },
-    });
-  };
-
-  /**
-   * Update page
-   */
-  const useUpdatePage = () => {
-    return useMutation({
-      mutationFn: async (
-        page: Pick<IPage, 'id' | 'name' | 'description' | 'tags'>,
-      ) => {
-        return requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages/${page.id}`,
-          method: 'PUT',
-          body: {
-            name: page.name,
-            description: page.description,
-            tags: page.tags,
-          },
-        });
-      },
-      onSuccess: (resp, page) => {
-        if (resp.success) {
-          // Invalidate detail and list queries
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.pages.detail(page.id),
-          });
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.pages.all(),
-          });
-        }
-      },
-    });
-  };
-
-  /**
-   * Delete page
-   */
-  const useDeletePage = () => {
-    return useMutation({
-      mutationFn: async (pageId: string) => {
-        return requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/pages/${pageId}`,
-          method: 'DELETE',
-        });
-      },
-      onSuccess: (_, pageId) => {
-        // Remove from detail cache
-        queryClient.removeQueries({ queryKey: queryKeys.pages.detail(pageId) });
-        // Invalidate list to refetch
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.pages.all(),
-        });
-      },
-    });
-  };
-
   // ============================================================================
-  // Datasource, Secret, Token Hooks
+  // Secret, Token Hooks
   // ============================================================================
 
   type PrincipalScopeOptions = {
     principalUid?: string;
     principalKind?: 'personal' | 'organization' | 'team';
-  };
-
-  /**
-   * Get all datasources
-   */
-  const useDatasources = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasources.all(),
-        principalUid || 'self',
-        principalKind || '',
-      ],
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'GET',
-        });
-        if (resp.success && resp.datasources) {
-          const datasources = resp.datasources
-            .map((d: unknown) => {
-              const datasource = toDatasource(d);
-              if (datasource) {
-                queryClient.setQueryData(
-                  queryKeys.datasources.detail(datasource.id),
-                  datasource,
-                );
-              }
-              return datasource;
-            })
-            .filter(Boolean);
-          return datasources;
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Create datasource
-   */
-  const useCreateDatasource = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useMutation({
-      mutationFn: async (datasource: Omit<IDatasource, 'id'>) => {
-        return requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'POST',
-          body: { ...datasource },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.datasource) {
-          const ds = toDatasource(resp.datasource);
-          if (ds) {
-            queryClient.setQueryData(queryKeys.datasources.detail(ds.id), ds);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasources.all(),
-        });
-      },
-    });
   };
 
   /**
@@ -3063,9 +3397,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         });
         queryClient.removeQueries({ queryKey: queryKeys.cells.detail(itemId) });
         queryClient.removeQueries({
-          queryKey: queryKeys.datasets.detail(itemId),
-        });
-        queryClient.removeQueries({
           queryKey: queryKeys.lessons.detail(itemId),
         });
         queryClient.removeQueries({
@@ -3079,7 +3410,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         queryClient.invalidateQueries({ queryKey: queryKeys.notebooks.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.documents.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.cells.all() });
-        queryClient.invalidateQueries({ queryKey: queryKeys.datasets.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.lessons.all() });
         queryClient.invalidateQueries({ queryKey: queryKeys.exercises.all() });
         queryClient.invalidateQueries({
@@ -3094,72 +3424,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   // ============================================================================
   // Core CRUD Operations - Refresh & Get Methods
   // ============================================================================
-
-  /**
-   * Get single datasource by ID
-   */
-  const useDatasource = (
-    datasourceId: string,
-    options?: PrincipalScopeOptions,
-  ) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasources.detail(datasourceId),
-        principalUid || 'self',
-        principalKind || '',
-      ],
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources/${datasourceId}`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'GET',
-        });
-        if (resp.success && resp.datasource) {
-          return toDatasource(resp.datasource);
-        }
-        return null;
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-      enabled: !!datasourceId,
-    });
-  };
-
-  /**
-   * Update datasource
-   */
-  const useUpdateDatasource = (options?: PrincipalScopeOptions) => {
-    const principalUid = options?.principalUid;
-    const principalKind = options?.principalKind;
-    return useMutation({
-      mutationFn: async (datasource: IDatasource) => {
-        return requestDatalayer({
-          url: withAccountUidQuery(
-            `${configuration.iamUrl}/api/iam/v1/datasources/${datasource.id}`,
-            principalUid,
-            principalKind,
-          ),
-          method: 'PUT',
-          body: { ...datasource },
-        });
-      },
-      onSuccess: resp => {
-        if (resp.success && resp.datasource) {
-          const ds = toDatasource(resp.datasource);
-          if (ds) {
-            queryClient.setQueryData(queryKeys.datasources.detail(ds.id), ds);
-          }
-        }
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasources.all(),
-        });
-      },
-    });
-  };
 
   /**
    * Get single secret by ID
@@ -4333,26 +4597,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Get public courses
-   */
-  const usePublicCourses = () => {
-    return useQuery({
-      queryKey: ['courses', 'public'] as const,
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/courses/public`,
-          method: 'GET',
-        });
-        if (resp.success && resp.courses) {
-          return resp.courses.map((course: unknown) => toCourse(course));
-        }
-        return [];
-      },
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
    * Get instructor courses
    */
   const useInstructorCourses = (userId?: string) => {
@@ -4792,133 +5036,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
           });
           // Refetch space items lists immediately
           queryClient.refetchQueries({ queryKey: queryKeys.items.all() });
-        }
-      },
-    });
-  };
-
-  /**
-   * Get dataset by ID
-   */
-  const useDataset = (
-    datasetId: string,
-    scope?: {
-      selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-    },
-  ) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasets.detail(datasetId),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.item) {
-          return toDataset(resp.item);
-        }
-        return undefined;
-      },
-      enabled: !!datasetId,
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Get datasets by space
-   */
-  const useDatasetsBySpace = (
-    spaceId: string,
-    scope?: {
-      selectedPrincipalUid?: string;
-      selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-    },
-  ) => {
-    return useQuery({
-      queryKey: [
-        ...queryKeys.datasets.bySpace(spaceId),
-        scope?.selectedPrincipalUid || '',
-        scope?.selectedPrincipalKind || '',
-      ],
-      queryFn: async () => {
-        const params = new URLSearchParams();
-        if (scope?.selectedPrincipalUid) {
-          params.set('selected_principal_uid', scope.selectedPrincipalUid);
-        }
-        if (scope?.selectedPrincipalKind) {
-          params.set('selected_principal_kind', scope.selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        if (resp.success && resp.items) {
-          return resp.items.map((item: unknown) => toDataset(item));
-        }
-        return [];
-      },
-      enabled: !!spaceId,
-      ...DEFAULT_QUERY_OPTIONS,
-    });
-  };
-
-  /**
-   * Update dataset
-   */
-  const useUpdateDataset = () => {
-    return useMutation({
-      mutationFn: async ({
-        id,
-        name,
-        description,
-        selectedPrincipalUid,
-        selectedPrincipalKind,
-      }: {
-        id: string;
-        name: string;
-        description: string;
-        spaceId?: string;
-        selectedPrincipalUid?: string;
-        selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-      }) => {
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        return requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/datasets/${id}${query ? `?${query}` : ''}`,
-          method: 'PUT',
-          body: { name, description },
-        });
-      },
-      onSuccess: (resp, { id, spaceId }) => {
-        if (resp.success) {
-          // Invalidate detail and list queries
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.datasets.detail(id),
-          });
-          if (spaceId) {
-            queryClient.invalidateQueries({
-              queryKey: queryKeys.datasets.bySpace(spaceId),
-            });
-          }
         }
       },
     });
@@ -5717,6 +5834,33 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Launch bulk emails for outbound campaign (production mode)
    */
+  /**
+   * Mark an outbound as launched without sending — for launches that
+   * happened outside the browser (curl, the CLI).
+   */
+  const useMarkOutboundLaunched = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+      mutationFn: async (outboundId: string) => {
+        return requestDatalayer({
+          url: `${configuration.growthUrl}/api/growth/v1/outbounds/${outboundId}/mark-launched`,
+          method: 'POST',
+          body: {},
+        });
+      },
+      onSuccess: (_, outboundId) => {
+        queryClient.removeQueries({
+          queryKey: ['outbounds', outboundId],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['outbounds'],
+          refetchType: 'inactive',
+        });
+      },
+    });
+  };
+
   const useLaunchBulkEmailsOutbounds = () => {
     const queryClient = useQueryClient();
 
@@ -7333,52 +7477,895 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   /**
    * Search public items (notebooks, documents, etc.)
    */
+  /**
+   * Every artifact type the library holds. One list, so a caller that wants
+   * "everything" cannot accidentally ask for the six types someone wrote out
+   * by hand two releases ago.
+   */
+  const LIBRARY_ARTIFACT_TYPES = [
+    'notebook',
+    'document',
+    'cell',
+    'lesson',
+    'exercise',
+    'assignment',
+    'course',
+    'evalset',
+    'dataset',
+    'agent',
+  ];
+
+  type LibrarySearchArgs = {
+    q?: string;
+    types?: string[];
+    max?: number;
+    offset?: number;
+    /** `relevance`, `recent` or `orbits`. */
+    sort?: string;
+    featured?: boolean;
+    /** Only this account's artifacts: what a public profile page lists. */
+    owner?: string;
+  };
+
+  const librarySearchQueryString = ({
+    q,
+    types,
+    max = 20,
+    offset = 0,
+    sort = 'relevance',
+    featured = false,
+    owner,
+  }: LibrarySearchArgs): string => {
+    const normalizedTypes = Array.from(
+      new Set(
+        (types || [])
+          .map(type =>
+            String(type || '')
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean)
+          .map(type => (type === 'eval' ? 'evalset' : type)),
+      ),
+    );
+    const params: Record<string, string> = {
+      q: q || '*',
+      types: (normalizedTypes.length > 0
+        ? normalizedTypes
+        : LIBRARY_ARTIFACT_TYPES
+      ).join(' '),
+      max: String(max),
+      offset: String(offset),
+      sort,
+    };
+    if (featured) {
+      params.featured = 'true';
+    }
+    if (owner) {
+      params.owner = owner;
+    }
+    return Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join('&');
+  };
+
+  const searchLibrary = async (args: LibrarySearchArgs) => {
+    const resp = await requestDatalayer({
+      url: `${configuration.libraryUrl}/api/library/v1/search?${librarySearchQueryString(args)}`,
+      method: 'GET',
+    });
+    if (!resp.success) {
+      throw new Error(resp.message || 'Failed to search the library');
+    }
+    return {
+      items: (resp.items || [])
+        .map((item: any) => toItem(item))
+        .filter(Boolean),
+      total: Number(resp.total ?? 0),
+      offset: Number(resp.offset ?? args.offset ?? 0),
+    };
+  };
+
+  /**
+   * Search the library: one request, whatever mix of artifact types is asked
+   * for, with the total so a caller can page without asking twice.
+   *
+   * Answers `{ items, total, offset }` rather than a bare array — a result
+   * page without its total cannot be paged, and every caller was inventing
+   * "there is probably more" from the length it got.
+   */
   const useSearchPublicItems = () => {
     return useMutation({
-      mutationFn: async ({
-        q,
-        types = ['notebook', 'document', 'cell', 'lesson', 'evalset', 'course'],
-        max = 100,
-      }: {
-        q?: string;
-        types?: string[];
-        max?: number;
-      }) => {
-        const normalizedTypes = Array.from(
-          new Set(
-            (types || [])
-              .map(type =>
-                String(type || '')
-                  .trim()
-                  .toLowerCase(),
-              )
-              .filter(Boolean)
-              .map(type => (type === 'eval' ? 'evalset' : type)),
-          ),
-        );
-        const queryString = Object.entries({
-          q: q || '*',
-          types: (normalizedTypes.length > 0
-            ? normalizedTypes
-            : ['notebook', 'document', 'cell', 'lesson', 'evalset', 'course']
-          ).join(' '),
-          max: max.toString(),
-        })
-          .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-          .join('&');
+      mutationFn: async (args: LibrarySearchArgs) => searchLibrary(args),
+    });
+  };
 
+  /**
+   * Everything the library holds, as a query rather than a mutation.
+   *
+   * For the administration page, which has to show what *could* be featured
+   * as well as what is. Publishing the agent catalogue puts artifacts in the
+   * library; without this the page reported "6 agents published" and then
+   * listed none of them, because the only list it had was the featured one.
+   */
+  const useLibraryArtifacts = (
+    max: number = 100,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.all(), 'library-artifacts', max] as const,
+      queryFn: async () =>
+        searchLibrary({ max, sort: 'recent' } as LibrarySearchArgs),
+      ...options,
+    } as any);
+  };
+
+  /**
+   * The featured artifacts, for the home page's ribbon.
+   *
+   * Anonymous-safe: the library answers this one without a token, and the
+   * service holds it for a minute, so a visit costs the platform nothing.
+   */
+  const useFeaturedItems = (
+    max: number = 12,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.featured(), max] as const,
+      queryFn: async () => {
         const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/search?${queryString}`,
+          url: `${configuration.libraryUrl}/api/library/v1/featured?max=${max}`,
           method: 'GET',
         });
-
         if (!resp.success) {
-          throw new Error(resp.message || 'Failed to search public items');
+          throw new Error(
+            resp.message || 'Failed to get the featured artifacts',
+          );
         }
         return (resp.items || [])
           .map((item: any) => toItem(item))
           .filter(Boolean);
       },
+      staleTime: 60_000,
+      ...options,
+    } as any);
+  };
+
+  /**
+   * Everything an administrator has actually featured, and nothing else.
+   *
+   * Not `useFeaturedItems`. That one answers for the home page's ribbon: a
+   * public request, capped at what a row can show, ordered for reading. This
+   * one is what the administration page edits — everything featured, in rank
+   * order, however long the list is and whoever it belongs to — so that the
+   * page showing the ribbon's contents is showing the ribbon's contents and
+   * not a page of it. `platform_admin` only.
+   */
+  const useAllFeaturedItems = (options?: UseQueryOptions<any, Error>) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.featured(), 'all'] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/featured/all`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(
+            resp.message || 'Failed to get the featured artifacts',
+          );
+        }
+        return (resp.items || [])
+          .map((item: any) => toItem(item))
+          .filter(Boolean);
+      },
+      ...options,
+    } as any);
+  };
+
+  /**
+   * One public artifact by uid, with its content and its library metadata.
+   *
+   * The public pages used to `fetch` this endpoint themselves, which meant no
+   * token was ever sent and the page could not know whether the visitor
+   * orbits what they are reading.
+   */
+  const usePublicItem = (
+    itemId?: string,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: queryKeys.items.publicItem(itemId || ''),
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/public/items/${encodeURIComponent(itemId!)}`,
+          method: 'GET',
+        });
+        if (!resp.success || !resp.item) {
+          throw new Error(resp.message || 'Failed to get the public artifact');
+        }
+        return toItem(resp.item);
+      },
+      enabled: Boolean(itemId),
+      ...options,
+    } as any);
+  };
+
+  /** The artifacts this account has published: a public profile page. */
+  const useAccountPublications = (
+    handle?: string,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: queryKeys.items.byOwner(handle || ''),
+      queryFn: async () =>
+        searchLibrary({ owner: handle, max: 100, sort: 'recent' }),
+      enabled: Boolean(handle),
+      ...options,
+    } as any);
+  };
+
+  /** The artifacts the signed-in visitor orbits. */
+  const useMyOrbits = (
+    offset: number = 0,
+    max: number = 20,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [...queryKeys.items.orbits(), offset, max] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/orbits?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the orbits');
+        }
+        return {
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+          total: Number(resp.total ?? 0),
+        };
+      },
+      ...options,
+    } as any);
+  };
+
+  /**
+   * What one account orbits, on its public profile.
+   *
+   * Whether it publishes them at all is the service's answer, not this
+   * caller's: `shown` says so, and an account that has not opted in reads the
+   * same as one that orbits nothing.
+   */
+  const useAccountOrbits = (
+    handle?: string,
+    offset: number = 0,
+    max: number = 12,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [
+        ...queryKeys.items.orbits(),
+        'account',
+        handle || '',
+        offset,
+        max,
+      ] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/accounts/${encodeURIComponent(handle!)}/orbits?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the orbits');
+        }
+        return {
+          items: (resp.items || [])
+            .map((item: any) => toItem(item))
+            .filter(Boolean),
+          total: Number(resp.total ?? 0),
+          shown: Boolean(resp.shown),
+        };
+      },
+      enabled: Boolean(handle),
+      ...options,
+    } as any);
+  };
+
+  /** Who orbits an artifact. */
+  const useItemOrbiters = (
+    itemId?: string,
+    offset: number = 0,
+    max: number = 20,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [
+        ...queryKeys.items.orbiters(itemId || ''),
+        offset,
+        max,
+      ] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId!)}/orbiters?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the orbiters');
+        }
+        return {
+          orbiters: resp.orbiters || [],
+          total: Number(resp.total ?? 0),
+        };
+      },
+      enabled: Boolean(itemId),
+      ...options,
+    } as any);
+  };
+
+  /**
+   * What was made of a public artifact (B5-04): every derivation counted by
+   * kind, and the derived artifacts that are public themselves, newest first.
+   */
+  const useItemDerivations = (
+    itemId?: string,
+    offset: number = 0,
+    max: number = 20,
+    options?: UseQueryOptions<any, Error>,
+  ) => {
+    return useQuery({
+      queryKey: [
+        ...queryKeys.items.derivations(itemId || ''),
+        offset,
+        max,
+      ] as const,
+      queryFn: async () => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId!)}/derivations?offset=${offset}&max=${max}`,
+          method: 'GET',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to get the derivations');
+        }
+        return {
+          derivations: (resp.derivations || []).map((derivation: any) => ({
+            kind: String(derivation.kind || ''),
+            fromVersion: derivation.fromVersion ?? null,
+            derivedAt: derivation.derivedAt,
+            item: toItem(derivation.item),
+          })),
+          counts: (resp.counts || {}) as Record<string, number>,
+          total: Number(resp.total ?? 0),
+        };
+      },
+      enabled: Boolean(itemId),
+      ...options,
+    } as any);
+  };
+
+  /**
+   * Show an artifact as orbited before the server has said so, and put it
+   * back if the server disagrees.
+   *
+   * A star that waits for a round trip feels broken, and the count is on the
+   * button the visitor just pressed. The server answers with a recount, which
+   * is what finally lands in the cache.
+   */
+  const applyOrbitToCaches = (
+    itemId: string,
+    orbited: boolean,
+    orbits?: number,
+  ) => {
+    const patch = (item: any) => {
+      if (!item || String(item.id ?? item.uid) !== String(itemId)) {
+        return item;
+      }
+      const nextOrbits =
+        orbits !== undefined
+          ? orbits
+          : Math.max(0, Number(item.orbits || 0) + (orbited ? 1 : -1));
+      return { ...item, orbited, orbits: nextOrbits };
+    };
+    queryClient.setQueriesData(
+      { queryKey: queryKeys.items.all() },
+      (data: any) => {
+        if (!data) {
+          return data;
+        }
+        if (Array.isArray(data)) {
+          return data.map(patch);
+        }
+        if (Array.isArray(data.items)) {
+          return { ...data, items: data.items.map(patch) };
+        }
+        if (data.id || data.uid) {
+          return patch(data);
+        }
+        return data;
+      },
+    );
+  };
+
+  const useOrbitItem = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/orbit`,
+          method: 'PUT',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to orbit the artifact');
+        }
+        return { itemId, orbits: Number(resp.orbits ?? 0), orbited: true };
+      },
+      onMutate: async (itemId: string) => {
+        applyOrbitToCaches(itemId, true);
+        return { itemId };
+      },
+      onError: (_error, itemId) => {
+        applyOrbitToCaches(itemId, false);
+      },
+      onSuccess: result => {
+        applyOrbitToCaches(result.itemId, true, result.orbits);
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.orbits() });
+      },
+    });
+  };
+
+  const useUnorbitItem = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/orbit`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to leave the orbit');
+        }
+        return { itemId, orbits: Number(resp.orbits ?? 0), orbited: false };
+      },
+      onMutate: async (itemId: string) => {
+        applyOrbitToCaches(itemId, false);
+        return { itemId };
+      },
+      onError: (_error, itemId) => {
+        applyOrbitToCaches(itemId, true);
+      },
+      onSuccess: result => {
+        applyOrbitToCaches(result.itemId, false, result.orbits);
+        queryClient.invalidateQueries({ queryKey: queryKeys.items.orbits() });
+      },
+    });
+  };
+
+  /** Feature an artifact on the home page. `platform_admin` only. */
+  const useFeatureItem = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        rank,
+      }: {
+        itemId: string;
+        rank?: number;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
+          method: 'PUT',
+          body: { rank: rank ?? null },
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to feature the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        invalidateEverywhere(queryClient, queryKeys.items.all());
+      },
+    });
+  };
+
+  const useUnfeatureItem = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
+          method: 'DELETE',
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to unfeature the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        invalidateEverywhere(queryClient, queryKeys.items.all());
+      },
+    });
+  };
+
+  const useSetFeaturedRank = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        rank,
+      }: {
+        itemId: string;
+        rank: number;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/featured`,
+          method: 'PATCH',
+          body: { rank },
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to move the artifact');
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        invalidateEverywhere(queryClient, queryKeys.items.featured());
+      },
+    });
+  };
+
+  /**
+   * Refresh everything that carries an artifact's public flag or its image.
+   *
+   * `items` and `spaces` cover the library listings, but an artifact opened in
+   * an editor is read through its own per-type query — `notebooks.detail(id)`
+   * for the editor, `notebooks.bySpace(id)` for the table — and neither
+   * shares a prefix with either of those. Leaving them alone is what made the
+   * Publish button keep saying "Publish" after publishing, and "Published"
+   * after withdrawing: the mutation succeeded, the cached copy still held the
+   * old `is_public_b`, and nothing asked for it again for five minutes.
+   *
+   * A course is a space, but it is not read through the `spaces` queries: it
+   * has a namespace of its own, so publishing one from its header left the
+   * course page holding the `public` flag it loaded with and the button
+   * saying the opposite of what had just happened.
+   *
+   * **`refetchType: 'all'`, which is what makes any of the above work.**
+   *
+   * Naming a query is not the same as making it ask again. The default,
+   * `'active'`, refetches the queries something is currently watching and
+   * leaves the rest marked stale — right nearly everywhere, and wrong here,
+   * because this application sets `refetchOnMount: false` (see
+   * `DEFAULT_QUERY_OPTIONS`, and the client the web application builds). A
+   * query that mounts holding stale data renders it and asks for nothing.
+   *
+   * So publishing worked exactly once. The editor it was published from was
+   * mounted and flipped its button; the notebooks table, the library, the
+   * search page and the artifact's own public page were not, and kept the
+   * answer they already had. Come back to the editor after that and *it* is
+   * now the page that was not mounted for the next withdrawal, so its button
+   * is wrong too — which is what "it works the first time" means.
+   *
+   * The whole of each type's namespace, not only its `details()`. A table
+   * lists its artifacts under `bySpace(spaceId)`, which shares no prefix with
+   * `detail(id)` — so publishing from an editor and walking back to the table
+   * showed the row exactly as it was, switch and all.
+   *
+   * The `model` queries are the one thing held out. A notebook's model is its
+   * content, megabytes of it, and it lives *under* `detail(id)` — so
+   * refetching a namespace would pull every open notebook's content over the
+   * wire each time somebody pressed Publish. Whether an artifact is public
+   * says nothing about what is in it.
+   */
+  const invalidateArtifactVisibility = () => {
+    const refetchType = 'all' as const;
+    /** Everything about an artifact except what is written in it. */
+    const notItsContent = (query: { queryKey: readonly unknown[] }) =>
+      query.queryKey[query.queryKey.length - 1] !== 'model';
+
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.items.all(),
+      refetchType,
+    });
+    queryClient.invalidateQueries({ queryKey: ['spaces'], refetchType });
+    for (const namespace of [
+      queryKeys.notebooks.all(),
+      queryKeys.documents.all(),
+      queryKeys.cells.all(),
+      queryKeys.lessons.all(),
+      queryKeys.exercises.all(),
+      queryKeys.assignments.all(),
+      queryKeys.courses.all(),
+    ]) {
+      queryClient.invalidateQueries({
+        queryKey: namespace,
+        refetchType,
+        predicate: notItsContent,
+      });
+    }
+  };
+
+  /**
+   * What an artifact looks like in the library: a capture the publisher took,
+   * the box drawn for its kind, or an icon from the Datalayer set.
+   */
+  const useSetItemImage = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        kind,
+        ref,
+        data,
+      }: {
+        itemId: string;
+        kind: 'capture' | 'box' | 'icon';
+        ref?: string;
+        data?: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/image`,
+          method: 'PUT',
+          body: { kind, ref, data },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to set the image');
+        }
+        return resp.image;
+      },
+      onSuccess: invalidateArtifactVisibility,
+    });
+  };
+
+  const useResetItemImage = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/image`,
+          method: 'DELETE',
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to reset the image');
+        }
+        return resp.image;
+      },
+      onSuccess: invalidateArtifactVisibility,
+    });
+  };
+
+  /**
+   * Tell the library that an artifact was reused: cloned into a space, or
+   * instantiated as a runtime. The reuse itself belongs to the service that
+   * performed it, so this is a count, not the act.
+   */
+  const useCountItemReuse = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        kind,
+      }: {
+        itemId: string;
+        kind: 'clone' | 'instantiate';
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/reused`,
+          method: 'POST',
+          body: { kind },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to count the reuse');
+        }
+        return resp;
+      },
+    });
+  };
+
+  /**
+   * Publish the platform's own catalogue — the agents — into the library.
+   * `platform_admin` only; the catalogue lives in this application's build.
+   */
+  const useSyncArtifactCatalogue = () => {
+    return useMutation({
+      mutationFn: async ({
+        artifacts,
+        artifactType = 'agent',
+      }: {
+        artifacts: Array<Record<string, any>>;
+        artifactType?: string;
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/artifacts/sync`,
+          method: 'PUT',
+          body: { artifact_type: artifactType, artifacts },
+          // One toast, not two: the caller says which artifact failed and
+          // why, so the generic report underneath is a duplicate.
+          notifyOnError: false,
+        });
+        if (!resp.success) {
+          throw new Error(
+            resp.message || 'Failed to synchronize the catalogue',
+          );
+        }
+        return resp;
+      },
+      onSuccess: () => {
+        invalidateEverywhere(queryClient, queryKeys.items.all());
+      },
+    });
+  };
+
+  /**
+   * Publish an artifact in the library: choose its image, then make it
+   * public.
+   *
+   * The one place that publishes. It used to be a `ToggleSwitch` in each of
+   * seven tables and three editors, each with its own copy of the mutation
+   * and its own idea of what to roll back; publishing is an act with
+   * consequences a switch cannot express — a picture to choose, a public page
+   * that appears, a search it enters.
+   *
+   * The image is set first: a failure there leaves the artifact private, which
+   * is recoverable by trying again, where the reverse would publish something
+   * showing the wrong picture.
+   */
+  const usePublishArtifact = () => {
+    const setImage = useSetItemImage();
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        image,
+        tags,
+        description,
+      }: {
+        itemId: string;
+        image?: {
+          kind: 'capture' | 'box' | 'icon';
+          ref?: string;
+          data?: string;
+        };
+        /**
+         * The publisher's own words for their work, which is what somebody
+         * else will search for.
+         *
+         * Sent with the visibility rather than in a write of their own: the
+         * service writes them onto the artifact in the same operation that
+         * makes it public, so publishing still costs what it cost. Omitted
+         * entirely, they are left as they were — which is what withdrawing
+         * wants, and what an older caller gets.
+         */
+        tags?: string[];
+        /**
+         * What the artifact says about itself, in the publisher's words.
+         *
+         * Sent with the visibility for the same reason the tags are: the
+         * service writes it onto the artifact in the operation that makes it
+         * public. Omitted entirely, it is left as it was.
+         */
+        description?: string;
+      }) => {
+        /*
+         * Publish first, then dress it.
+         *
+         * The image used to be set before the artifact was made public, so
+         * that a picture that would not take left it private rather than
+         * published with the wrong one. That order could never work: the
+         * library indexes public artifacts, so a private one has no
+         * projection, and setting an image on it answered "The artifact is
+         * not found" — every first publish with a picture failed.
+         *
+         * The intent survives the reordering. The artifact goes public, which
+         * is what creates the projection; if the picture then will not take,
+         * it is withdrawn again and the message still tells the truth.
+         */
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
+          method: 'PATCH',
+          body: {
+            is_public: true,
+            // Absent, not null: the service reads "leave it alone" from a
+            // missing key, and a caller that does not know an artifact's
+            // words must not be able to clear them by omission.
+            ...(tags === undefined ? {} : { tags }),
+            ...(description === undefined ? {} : { description }),
+          },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to publish the artifact');
+        }
+        if (image) {
+          try {
+            await setImage.mutateAsync({ itemId, ...image });
+          } catch (error) {
+            // Back to private, so the artifact is never left public wearing
+            // the drawing the publisher did not choose.
+            try {
+              await requestDatalayer({
+                url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
+                method: 'PATCH',
+                body: { is_public: false },
+              });
+            } catch {
+              // The withdrawal failed too; the error below is still the one
+              // worth showing, and it is the more actionable of the two.
+            }
+            throw new Error(
+              `The image could not be set, so the artifact stays private: ${
+                (error as Error)?.message || 'unknown error'
+              }`,
+              { cause: error },
+            );
+          }
+        }
+        return resp;
+      },
+      onSuccess: invalidateArtifactVisibility,
+    });
+  };
+
+  /**
+   * Withdraw an artifact from the library. Its orbits are kept: publishing it
+   * again brings them back.
+   */
+  /**
+   * Rename a published artifact, or change what it says about itself.
+   *
+   * The words belong to the artifact rather than to the library — the
+   * library holds a projection of them — so the library service writes the
+   * artifact's own source and that write carries the change into the index.
+   * Which is why this is one request and not two.
+   *
+   * Every field is optional and every one means "leave it alone" when
+   * omitted, so a caller may change one without knowing the others.
+   */
+  const useUpdateArtifactDetails = () => {
+    return useMutation({
+      mutationFn: async ({
+        itemId,
+        name,
+        description,
+        tags,
+      }: {
+        itemId: string;
+        name?: string;
+        description?: string;
+        tags?: string[];
+      }) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}`,
+          method: 'PATCH',
+          body: {
+            ...(name === undefined ? {} : { name }),
+            ...(description === undefined ? {} : { description }),
+            ...(tags === undefined ? {} : { tags }),
+          },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to update the artifact');
+        }
+        return resp;
+      },
+      // The same fan-out publishing uses: a rename changes the card in every
+      // listing, the editor's own copy, and the artifact's public page.
+      onSuccess: invalidateArtifactVisibility,
+    });
+  };
+
+  const useUnpublishArtifact = () => {
+    return useMutation({
+      mutationFn: async (itemId: string) => {
+        const resp = await requestDatalayer({
+          url: `${configuration.libraryUrl}/api/library/v1/items/${encodeURIComponent(itemId)}/public`,
+          method: 'PATCH',
+          body: { is_public: false },
+        });
+        if (!resp.success) {
+          throw new Error(resp.message || 'Failed to withdraw the artifact');
+        }
+        return resp;
+      },
+      onSuccess: invalidateArtifactVisibility,
     });
   };
 
@@ -7831,32 +8818,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Refresh public courses list
-   * @param options - Mutation options
-   */
-  const useRefreshPublicCourses = (
-    options?: UseMutationOptions<unknown, Error, void>,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/courses/public`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.courses.public(),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Refresh instructor courses list
    * @param options - Mutation options
    */
@@ -8120,132 +9081,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Refresh a specific dataset
-   * @param options - Mutation options
-   */
-  const useRefreshDataset = (
-    options?: UseMutationOptions<
-      unknown,
-      Error,
-      | string
-      | {
-          datasetId: string;
-          selectedPrincipalUid?: string;
-          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-        }
-    >,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (
-        variables:
-          | string
-          | {
-              datasetId: string;
-              selectedPrincipalUid?: string;
-              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-            },
-      ) => {
-        const datasetId =
-          typeof variables === 'string' ? variables : variables.datasetId;
-        const selectedPrincipalUid =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalUid;
-        const selectedPrincipalKind =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalKind;
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/items/${datasetId}${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: (data, variables) => {
-        const datasetId =
-          typeof variables === 'string' ? variables : variables.datasetId;
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.detail(datasetId),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
-   * Refresh space datasets
-   * @param options - Mutation options
-   */
-  const useRefreshSpaceDatasets = (
-    options?: UseMutationOptions<
-      unknown,
-      Error,
-      | string
-      | {
-          spaceId: string;
-          selectedPrincipalUid?: string;
-          selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-        }
-    >,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async (
-        variables:
-          | string
-          | {
-              spaceId: string;
-              selectedPrincipalUid?: string;
-              selectedPrincipalKind?: 'personal' | 'organization' | 'team';
-            },
-      ) => {
-        const spaceId =
-          typeof variables === 'string' ? variables : variables.spaceId;
-        const selectedPrincipalUid =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalUid;
-        const selectedPrincipalKind =
-          typeof variables === 'string'
-            ? undefined
-            : variables.selectedPrincipalKind;
-        const params = new URLSearchParams();
-        if (selectedPrincipalUid) {
-          params.set('selected_principal_uid', selectedPrincipalUid);
-        }
-        if (selectedPrincipalKind) {
-          params.set('selected_principal_kind', selectedPrincipalKind);
-        }
-        const query = params.toString();
-        const resp = await requestDatalayer({
-          url: `${configuration.runtimesUrl}/api/runtimes/v1/spaces/${spaceId}/items/types/dataset${query ? `?${query}` : ''}`,
-          method: 'GET',
-        });
-        return resp;
-      },
-      onSuccess: (data, variables) => {
-        const spaceId =
-          typeof variables === 'string' ? variables : variables.spaceId;
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.datasets.bySpace(spaceId),
-        });
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Refresh schools list
    * @param options - Mutation options
    */
@@ -8270,29 +9105,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
   };
 
   /**
-   * Get public items (query hook)
-   * @param options - Query options
-   */
-  const usePublicItems = (options?: UseQueryOptions<unknown, Error>) => {
-    return useQuery({
-      queryKey: queryKeys.items.public(),
-      queryFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/search?q=*&max=-1`,
-          method: 'GET',
-        });
-        return {
-          ...resp,
-          items: (resp.items || [])
-            .map((item: any) => toItem(item))
-            .filter(Boolean),
-        };
-      },
-      ...options,
-    });
-  };
-
-  /**
    * Get the current user's own public items (publications).
    * @param options - Query options
    */
@@ -8310,35 +9122,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
             .map((item: any) => toItem(item))
             .filter(Boolean),
         };
-      },
-      ...options,
-    });
-  };
-
-  /**
-   * Refresh public items
-   * @param options - Mutation options
-   */
-  const useRefreshPublicItems = (
-    options?: UseMutationOptions<unknown, Error, void>,
-  ) => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-      mutationFn: async () => {
-        const resp = await requestDatalayer({
-          url: `${configuration.libraryUrl}/api/library/v1/search?q=*&max=-1`,
-          method: 'GET',
-        });
-        return {
-          ...resp,
-          items: (resp.items || [])
-            .map((item: any) => toItem(item))
-            .filter(Boolean),
-        };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.items.public() });
       },
       ...options,
     });
@@ -9303,7 +10086,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     // Courses
     useCourse,
     useUpdateCourse,
-    usePublicCourses,
     useInstructorCourses,
     useCourseEnrollments,
     useEnrollStudentToCourse,
@@ -9313,7 +10095,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useConfirmCourseItemCompletion,
     useSetCourseItems,
     useRefreshCourse,
-    useRefreshPublicCourses,
     useRefreshInstructorCourses,
     useRefreshCoursesEnrollments,
     useRefreshStudent,
@@ -9345,13 +10126,6 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useCloneCell,
     useRefreshCell,
     useRefreshSpaceCells,
-
-    // Datasets
-    useDataset,
-    useDatasetsBySpace,
-    useUpdateDataset,
-    useRefreshDataset,
-    useRefreshSpaceDatasets,
 
     // Environments
     useEnvironment,
@@ -9394,25 +10168,35 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useMakeItemPublic,
     useMakeItemPrivate,
     useSearchPublicItems,
-    usePublicItems,
+    useLibraryArtifacts,
     usePublications,
-    useRefreshPublicItems,
+
+    // Library (search, orbits, featuring, images, reuse)
+    useFeaturedItems,
+    useAllFeaturedItems,
+    usePublicItem,
+    useAccountPublications,
+    useMyOrbits,
+    useAccountOrbits,
+    useItemOrbiters,
+    useItemDerivations,
+    useOrbitItem,
+    useUnorbitItem,
+    useFeatureItem,
+    useUnfeatureItem,
+    useSetFeaturedRank,
+    useSetItemImage,
+    useResetItemImage,
+    useCountItemReuse,
+    useSyncArtifactCatalogue,
+    usePublishArtifact,
+    useUnpublishArtifact,
+    useUpdateArtifactDetails,
     useRefreshSpaceItems,
     useClearCachedPublicItems,
     useClearCachedItems,
 
     // Pages
-    usePage,
-    usePages,
-    useCreatePage,
-    useUpdatePage,
-    useDeletePage,
-
-    // Datasources
-    useDatasource,
-    useDatasources,
-    useCreateDatasource,
-    useUpdateDatasource,
 
     // Secrets
     useSecret,
@@ -9467,6 +10251,7 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     useDraftBulkEmailsOutbounds,
     useTryBulkEmailsOutbounds,
     useLaunchBulkEmailsOutbounds,
+    useMarkOutboundLaunched,
     useSendOutboundEmailToUser,
     useDeleteOutbound,
     useSubscribeUserToOutbounds,

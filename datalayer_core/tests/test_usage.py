@@ -1,9 +1,6 @@
 # Copyright (c) 2023-2025 Datalayer, Inc.
 # Distributed under the terms of the Modified BSD License.
 
-# Copyright (c) 2023-2026 Datalayer, Inc.
-# Distributed under the terms of the Modified BSD License.
-
 """Integration tests for usage history across billing entity scopes."""
 
 import os
@@ -25,7 +22,6 @@ TEST_DATALAYER_API_KEY = os.environ.get("TEST_DATALAYER_API_KEY") or os.environ.
     "DATALAYER_API_KEY"
 )
 
-LOCAL_RUN_URL = os.environ.get("TEST_DATALAYER_URL", "http://localhost:9700")
 LOCAL_IAM_URL = os.environ.get("TEST_DATALAYER_IAM_URL", "http://localhost:9700")
 LOCAL_RUNTIMES_URL = os.environ.get(
     "TEST_DATALAYER_RUNTIMES_URL",
@@ -42,7 +38,6 @@ def _build_test_client() -> DatalayerClient:
     return DatalayerClient(
         api_key=TEST_DATALAYER_API_KEY,
         urls=DatalayerURLs.from_environment(
-            datalayer_url=LOCAL_RUN_URL,
             iam_url=LOCAL_IAM_URL,
             runtimes_url=LOCAL_RUNTIMES_URL,
         ),
@@ -140,7 +135,9 @@ def _fetch_usage_history(
     return payload.get("usages") or []
 
 
-def _find_usage_row(usages: list[dict[str, Any]], runtime_uid: str) -> dict[str, Any] | None:
+def _find_usage_row(
+    usages: list[dict[str, Any]], runtime_uid: str
+) -> dict[str, Any] | None:
     for usage in usages:
         if str(usage.get("resource_uid") or "") == runtime_uid:
             return usage
@@ -175,10 +172,20 @@ def _wait_for_usage_row(
     )
 
 
+# Runtime creation left this package: the runtimes, the sandboxes and the
+# agents live in `agent-runtimes`, and the client here keeps only the usage
+# side. Until this test is repointed there it cannot run, and saying so is
+# better than letting it fail on a method that is simply gone.
+_RUNTIME_API_AVAILABLE = hasattr(DatalayerClient, "create_runtime")
+
+
 @pytest.mark.parametrize("account_case", ["user", "team", "datalayer"])
 @pytest.mark.skipif(
-    not bool(TEST_DATALAYER_API_KEY),
-    reason="TEST_DATALAYER_API_KEY is not set, skipping usage integration tests.",
+    not bool(TEST_DATALAYER_API_KEY) or not _RUNTIME_API_AVAILABLE,
+    reason=(
+        "Needs TEST_DATALAYER_API_KEY and a client that still creates runtimes; "
+        "runtime creation now lives in agent-runtimes."
+    ),
 )
 def test_usage_matrix_creation_reservation_and_history(account_case: str) -> None:
     """
@@ -194,7 +201,9 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
     - active reservation/open usage row while running
     - closed usage history row after manual stop
     """
-    client = _build_test_client()
+    # Typed loosely on purpose: the runtime calls below are the surface this
+    # package no longer carries, and the skip above is what keeps them unreached.
+    client: Any = _build_test_client()
     accounts = _resolve_billing_entitys(client)
 
     if account_case not in accounts:
@@ -216,11 +225,13 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             )
         except RuntimeError as exc:
             if account_case == "team" and _is_insufficient_credits_error(exc):
-                pytest.skip("Team account has insufficient credits for runtime launch in this environment.")
+                pytest.skip(
+                    "Team account has insufficient credits for runtime launch in this environment."
+                )
             raise
 
         # Creation coverage.
-        assert runtime.pod_name, "Runtime pod_name should be set after creation"
+        assert runtime.runtime_name, "Runtime runtime_name should be set after creation"
         assert runtime.reservation_id, "Runtime reservation_id should be present"
 
         # Reservation coverage: usage row should be open while runtime is running.
@@ -228,11 +239,13 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             client=client,
             account_uid=account["uid"],
             account_kind=account["kind"],
-            runtime_uid=runtime.pod_name,
+            runtime_uid=runtime.runtime_name,
             expect_closed=False,
             timeout_seconds=180,
         )
-        assert not open_usage.get("end_date"), "Expected open usage row while runtime is running"
+        assert not open_usage.get("end_date"), (
+            "Expected open usage row while runtime is running"
+        )
 
         # Manual stop after ~30 seconds for a 1-minute reservation scenario.
         stop_wait_start = time.monotonic()
@@ -248,17 +261,21 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
             client=client,
             account_uid=account["uid"],
             account_kind=account["kind"],
-            runtime_uid=runtime.pod_name,
+            runtime_uid=runtime.runtime_name,
             expect_closed=True,
             timeout_seconds=240,
         )
-        assert closed_usage.get("end_date"), "Expected closed usage row after manual stop"
+        assert closed_usage.get("end_date"), (
+            "Expected closed usage row after manual stop"
+        )
 
         # Usage history timestamps can be rounded to seconds and occasionally collapse
         # to the same second; keep checks robust to that backend behavior.
         start_dt = _parse_timestamp(closed_usage.get("start_date"))
         end_dt = _parse_timestamp(closed_usage.get("end_date"))
-        assert start_dt is not None and end_dt is not None, "Usage start/end timestamps must be parseable"
+        assert start_dt is not None and end_dt is not None, (
+            "Usage start/end timestamps must be parseable"
+        )
         duration_seconds = (end_dt - start_dt).total_seconds()
         assert duration_seconds >= 0, (
             f"Expected non-negative usage duration, got {duration_seconds:.2f}s"
@@ -268,7 +285,7 @@ def test_usage_matrix_creation_reservation_and_history(account_case: str) -> Non
         )
 
     finally:
-        if runtime is not None and runtime.pod_name:
+        if runtime is not None and runtime.runtime_name:
             # Best-effort cleanup for flaky failures.
             try:
                 client.terminate_runtime(runtime)

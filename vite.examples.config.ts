@@ -59,13 +59,13 @@ export default defineConfig(({ mode }) => {
               env.VITE_DATALAYER_API_KEY || '',
             )
             .replaceAll(
-              /%VITE_DATALAYER_URL%/g,
-              env.VITE_DATALAYER_URL || 'https://prod1.datalayer.run',
+              /%VITE_DATALAYER_IAM_URL%/g,
+              env.VITE_DATALAYER_IAM_URL || 'https://prod1.datalayer.run',
             )
             .replaceAll(
-              /%VITE_DATALAYER_URL_WS%/g,
+              /%VITE_DATALAYER_IAM_URL_WS%/g,
               (
-                env.VITE_DATALAYER_URL || 'https://prod1.datalayer.run'
+                env.VITE_DATALAYER_IAM_URL || 'https://prod1.datalayer.run'
               ).replace('http', 'ws'),
             );
         },

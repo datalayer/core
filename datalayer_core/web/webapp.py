@@ -29,6 +29,6 @@ class DatalayerWebApp(DatalayerApp):
             "",
             "--ServerApp.disable_check_xsrf=True",
             "--DatalayerExtensionApp.webapp=True",
-            f"--DatalayerExtensionApp.datalayer_url={self.datalayer_url}",
+            f"--DatalayerExtensionApp.iam_url={self.urls.iam_url}",
         ]
         launch_new_instance()

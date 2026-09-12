@@ -15,12 +15,21 @@
 // Base client exports
 export {
   requestDatalayerAPI,
+  requestDatalayerAPIWithResponse,
   RunResponseError,
   NetworkError,
+  TokenExpiredError,
 } from './DatalayerApi';
 export type { IRequestDatalayerAPIOptions } from './DatalayerApi';
+export type { IDatalayerAPIResponse } from './DatalayerApi';
 
 // Domain-organized API exports
 export * as iam from './iam';
+export * as contents from './contents';
+export * as evals from './evals';
+export * as mcp from './mcp';
+export * as orchestration from './orchestration';
 export * as otel from './otel';
+export * as scheduler from './scheduler';
+export * as spacer from './spacer';
 export * from '../api/DatalayerApi';

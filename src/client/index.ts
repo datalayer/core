@@ -26,6 +26,7 @@ import {
   type ClientHandlers,
 } from './base';
 import { IAMMixin } from './mixins/IAMMixin';
+import { ContentsMixin } from './mixins/ContentsMixin';
 
 // Import model types for interface declaration
 import type { UserDTO } from './../models/UserDTO';
@@ -36,11 +37,6 @@ import type {
   CreateSecretRequest,
   UpdateSecretRequest,
 } from '../models/Secret';
-import type { DatasourceDTO } from '../models/Datasource';
-import type {
-  CreateDatasourceRequest,
-  UpdateDatasourceRequest,
-} from '../models/Datasource';
 
 /**
  * Helper function to compose mixins in a more readable way.
@@ -56,7 +52,7 @@ function composeMixins(...mixins: Array<(base: any) => any>) {
 // Apply the IAM mixin to the base class. Runtime and content (Spacer) features
 // live in @datalayer/agent-runtimes, which composes AgentRuntimesClient on top
 // of this core client.
-const DatalayerCoreClientWithMixins = composeMixins(IAMMixin);
+const DatalayerCoreClientWithMixins = composeMixins(IAMMixin, ContentsMixin);
 
 /**
  * Core Datalayer Client providing access to identity, plans and account
@@ -115,18 +111,6 @@ export type {
   UpdateSecretResponse,
   DeleteSecretResponse,
 } from './../models/Secret';
-export { DatasourceDTO as Datasource } from './../models/Datasource';
-export type {
-  DatasourceJSON,
-  DatasourceData,
-  DatasourceType,
-  CreateDatasourceRequest,
-  UpdateDatasourceRequest,
-  CreateDatasourceResponse,
-  GetDatasourceResponse,
-  ListDatasourcesResponse,
-  UpdateDatasourceResponse,
-} from './../models/Datasource';
 
 // Export IAM types
 export type {
@@ -145,7 +129,6 @@ export { AuthenticationManager } from './auth/AuthenticationManager';
 
 // Export models interfaces (IAM / plans / account / organization)
 export type { IUser, IBaseUser } from '../models/User';
-export type { IDatasource, IDatasourceVariant } from '../models/Datasource';
 export type { ICredits, ICreditsReservation } from '../models/Credits';
 export type { ISurvey } from '../models/Survey';
 export type { IBaseTeam, IAnyTeam } from '../models/Team';
@@ -235,16 +218,6 @@ export interface DatalayerCoreClient {
     updates: UpdateSecretRequest,
   ): Promise<SecretDTO>;
   deleteSecret(secretId: string): Promise<void>;
-
-  // Datasources Methods (part of IAM)
-  createDatasource(data: CreateDatasourceRequest): Promise<DatasourceDTO>;
-  listDatasources(): Promise<DatasourceDTO[]>;
-  getDatasource(datasourceId: string): Promise<DatasourceDTO>;
-  updateDatasource(
-    datasourceId: string,
-    updates: UpdateDatasourceRequest,
-  ): Promise<DatasourceDTO>;
-  deleteDatasource(datasourceId: string): Promise<void>;
 
   // Utility Methods
   calculateCreditsFromMinutes(minutes: number, burningRate: number): number;

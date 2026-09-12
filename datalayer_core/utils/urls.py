@@ -8,8 +8,7 @@ Provides environment variable support with fallback to defaults.
 """
 
 import os
-from dataclasses import asdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Optional
 
 from datalayer_core.base.user_config import (
@@ -19,35 +18,39 @@ from datalayer_core.base.user_config import (
     get_runtimes_url as _get_config_runtimes_url,
 )
 
-DEFAULT_DATALAYER_URL = "https://prod1.datalayer.run"
+DEFAULT_DATALAYER_SERVICE_URL = "https://prod1.datalayer.run"
 
-DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_IAM_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 DEFAULT_DATALAYER_RUNTIMES_URL = "https://r1.datalayer.run"
 
-DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SPACER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_LIBRARY_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_MANAGER_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_AI_AGENTS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_AI_INFERENCE_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_MCP_SERVERS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL = "https://mcp.datalayer.run/mcp"
 
-DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_OTEL_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_GROWTH_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SUCCESS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_URL
+DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_SERVICE_URL
+
+# Contents runs on the runtimes plane, where the NFS that backs the Home
+# Folder and Volumes lives, so it shares the runtimes host.
+DEFAULT_DATALAYER_CONTENTS_URL = DEFAULT_DATALAYER_RUNTIMES_URL
 
 
 @dataclass
@@ -60,8 +63,6 @@ class DatalayerURLs:
 
     Attributes
     ----------
-    datalayer_url : str
-        The Datalayer runtime/service URL
     iam_url : str
         The Datalayer IAM service URL
     runtimes_url : str
@@ -86,13 +87,12 @@ class DatalayerURLs:
         The Datalayer status service URL
     support_url : str
         The Datalayer support service URL
-    mcp_server_url : str
-        The Datalayer MCP server service URL
+    jupyter_mcp_server_url : str
+        The Datalayer Jupyter MCP Server URL
     scheduler_url : str
         The Datalayer scheduler service URL
     """
 
-    datalayer_url: str
     iam_url: str
     runtimes_url: str
     spacer_url: str
@@ -105,13 +105,13 @@ class DatalayerURLs:
     success_url: str
     status_url: str
     support_url: str
-    mcp_server_url: str
+    jupyter_mcp_server_url: str
     scheduler_url: str
+    contents_url: str = DEFAULT_DATALAYER_CONTENTS_URL
 
     @classmethod
     def from_environment(
         cls,
-        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -124,17 +124,15 @@ class DatalayerURLs:
         success_url: Optional[str] = None,
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
-        mcp_server_url: Optional[str] = None,
+        jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
+        contents_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
         Create DatalayerURLs instance from environment variables and parameters.
 
         Parameters
         ----------
-        datalayer_url : Optional[str]
-            Override for the run URL. If None, will check DATALAYER_URL env var
-            then fallback to DEFAULT_DATALAYER_URL.
         iam_url : Optional[str]
             Override for the IAM URL. If None, will check DATALAYER_IAM_URL env var
             then fallback to DEFAULT_DATALAYER_IAM_URL.
@@ -171,9 +169,10 @@ class DatalayerURLs:
         support_url : Optional[str]
             Override for the support URL. If None, will check DATALAYER_SUPPORT_URL env var
             then fallback to DEFAULT_DATALAYER_SUPPORT_URL.
-        mcp_server_url : Optional[str]
-            Override for the MCP server URL. If None, will check DATALAYER_MCP_SERVER_URL env var
-            then fallback to DEFAULT_DATALAYER_MCP_SERVER_URL.
+        jupyter_mcp_server_url : Optional[str]
+            Override for the Jupyter MCP Server URL. If None, will check
+            DATALAYER_JUPYTER_MCP_SERVER_URL, then fallback to
+            DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL.
         scheduler_url : Optional[str]
             Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
             then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
@@ -185,13 +184,11 @@ class DatalayerURLs:
 
         Notes
         -----
-        When iam_url is provided, all other service URLs will be derived from the iam_url
-        unless explicitly overridden. This allows setting a single base URL for all services.
+        When iam_url is provided, other service URLs are derived from it unless explicitly
+        overridden. The Jupyter MCP Server remains independent and uses its dedicated
+        environment variable or hosted default.
         """
         # Determine base URLs first
-        resolved_datalayer_url = (
-            datalayer_url or os.environ.get("DATALAYER_URL") or DEFAULT_DATALAYER_URL
-        )
         resolved_iam_url = (
             iam_url
             or os.environ.get("DATALAYER_IAM_URL")
@@ -280,11 +277,10 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_SUPPORT_URL
         )
-        resolved_mcp_server_url = (
-            mcp_server_url
-            or os.environ.get("DATALAYER_MCP_SERVER_URL")
-            or base_url_for_services
-            or DEFAULT_DATALAYER_MCP_SERVERS_URL
+        resolved_jupyter_mcp_server_url = (
+            jupyter_mcp_server_url
+            or os.environ.get("DATALAYER_JUPYTER_MCP_SERVER_URL")
+            or DEFAULT_DATALAYER_JUPYTER_MCP_SERVER_URL
         )
         resolved_scheduler_url = (
             scheduler_url
@@ -292,9 +288,20 @@ class DatalayerURLs:
             or base_url_for_services
             or DEFAULT_DATALAYER_SCHEDULER_URL
         )
+        # Contents follows **runtimes**, not IAM. It is deployed on the
+        # runtimes plane, beside the NFS that backs the Home Folder and the
+        # Volumes, so inheriting `base_url_for_services` — the IAM host —
+        # pointed every client at a host with no Contents service. Runtimes
+        # already sidesteps that inheritance for the same reason; contents now
+        # simply goes wherever runtimes goes, which keeps a single-host plane
+        # working too because there runtimes *is* that host.
+        resolved_contents_url = (
+            contents_url
+            or os.environ.get("DATALAYER_CONTENTS_URL")
+            or resolved_runtimes_url
+        )
 
         # Strip trailing slashes for consistency
-        resolved_datalayer_url = resolved_datalayer_url.rstrip("/")
         resolved_iam_url = resolved_iam_url.rstrip("/")
         resolved_runtimes_url = resolved_runtimes_url.rstrip("/")
         resolved_spacer_url = resolved_spacer_url.rstrip("/")
@@ -307,11 +314,11 @@ class DatalayerURLs:
         resolved_success_url = resolved_success_url.rstrip("/")
         resolved_status_url = resolved_status_url.rstrip("/")
         resolved_support_url = resolved_support_url.rstrip("/")
-        resolved_mcp_server_url = resolved_mcp_server_url.rstrip("/")
+        resolved_jupyter_mcp_server_url = resolved_jupyter_mcp_server_url.rstrip("/")
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
+        resolved_contents_url = resolved_contents_url.rstrip("/")
 
         return cls(
-            datalayer_url=resolved_datalayer_url,
             iam_url=resolved_iam_url,
             runtimes_url=resolved_runtimes_url,
             spacer_url=resolved_spacer_url,
@@ -324,13 +331,13 @@ class DatalayerURLs:
             success_url=resolved_success_url,
             status_url=resolved_status_url,
             support_url=resolved_support_url,
-            mcp_server_url=resolved_mcp_server_url,
+            jupyter_mcp_server_url=resolved_jupyter_mcp_server_url,
             scheduler_url=resolved_scheduler_url,
+            contents_url=resolved_contents_url,
         )
 
     def __post_init__(self) -> None:
         """Ensure URLs don't have trailing slashes."""
-        self.datalayer_url = self.datalayer_url.rstrip("/")
         self.iam_url = self.iam_url.rstrip("/")
         self.runtimes_url = self.runtimes_url.rstrip("/")
         self.spacer_url = self.spacer_url.rstrip("/")
@@ -343,17 +350,50 @@ class DatalayerURLs:
         self.success_url = self.success_url.rstrip("/")
         self.status_url = self.status_url.rstrip("/")
         self.support_url = self.support_url.rstrip("/")
-        self.mcp_server_url = self.mcp_server_url.rstrip("/")
+        self.jupyter_mcp_server_url = self.jupyter_mcp_server_url.rstrip("/")
         self.scheduler_url = self.scheduler_url.rstrip("/")
+        self.contents_url = self.contents_url.rstrip("/")
 
     def as_dict(self) -> dict[str, str]:
         """Return all resolved service URLs as a dictionary."""
         return asdict(self)
 
     @classmethod
+    def from_single_origin(cls, origin: str) -> "DatalayerURLs":
+        """Every service under one host, each on its own path prefix.
+
+        A run — a sandbox, an agent, anything served from one deployment —
+        addresses all of Datalayer through a single origin, so one URL is
+        enough to reach every service. `from_environment` takes them one by
+        one, which is the right shape for a workstation and the wrong one
+        here.
+
+        The services are read off `from_environment`'s own signature rather
+        than listed. A list copied from it goes stale the moment a URL is
+        renamed, and it did: `mcp_server_url` became `jupyter_mcp_server_url`
+        and every execution died on an unexpected keyword, a long way from the
+        rename that caused it. Asking the signature means a new service is
+        picked up for free and a renamed one cannot break this.
+
+        It lived in `code_sandboxes.datalayer_sandbox` as `_urls_for_run`,
+        where two services outside that package had come to import it — one of
+        them by its private name — because there was nowhere else to get it.
+        Nothing about it is provider-specific, so it belongs with the type it
+        builds.
+        """
+        import inspect
+
+        base = (origin or "").rstrip("/")
+        services = [
+            name
+            for name in inspect.signature(cls.from_environment).parameters
+            if name.endswith("_url")
+        ]
+        return cls.from_environment(**dict.fromkeys(services, base))
+
+    @classmethod
     def get_all_urls(
         cls,
-        datalayer_url: Optional[str] = None,
         iam_url: Optional[str] = None,
         runtimes_url: Optional[str] = None,
         spacer_url: Optional[str] = None,
@@ -366,12 +406,12 @@ class DatalayerURLs:
         success_url: Optional[str] = None,
         status_url: Optional[str] = None,
         support_url: Optional[str] = None,
-        mcp_server_url: Optional[str] = None,
+        jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
+        contents_url: Optional[str] = None,
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
         return cls.from_environment(
-            datalayer_url=datalayer_url,
             iam_url=iam_url,
             runtimes_url=runtimes_url,
             spacer_url=spacer_url,
@@ -384,6 +424,7 @@ class DatalayerURLs:
             success_url=success_url,
             status_url=status_url,
             support_url=support_url,
-            mcp_server_url=mcp_server_url,
+            jupyter_mcp_server_url=jupyter_mcp_server_url,
             scheduler_url=scheduler_url,
+            contents_url=contents_url,
         ).as_dict()

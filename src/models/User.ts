@@ -50,6 +50,10 @@ export class User implements IUser {
   credits?: number;
   creditsCustomerId?: string;
   avatarUrl?: string;
+  avatarIcon?: string;
+  banner?: string;
+  /** Whether this account publishes what it orbits, on its public profile. */
+  showOrbits?: boolean;
   origin?: string;
   invites?: Array<IInvite>;
   iamProviders: Array<IIAMProviderLinked>;
@@ -74,6 +78,9 @@ export class User implements IUser {
     this.friendlyName =
       toFriendlyName(u.first_name_t, u.last_name_t) || u.handle_s;
     this.avatarUrl = u.avatar_url_s;
+    this.avatarIcon = u.avatar_icon_s ?? u.avatarIcon;
+    this.banner = u.banner_s ?? u.banner;
+    this.showOrbits = Boolean(u.show_orbits_b ?? u.showOrbits ?? false);
     this.origin = u.origin_s;
     this.joinDate = u.join_ts_dt ? new Date(u.join_ts_dt) : undefined;
     this.credits = u.credits_i ? Number(u.credits_i) : 0;
@@ -138,6 +145,10 @@ export type IUser = IBaseUser & {
   credits?: number;
   creditsCustomerId?: string;
   avatarUrl?: string;
+  avatarIcon?: string;
+  banner?: string;
+  /** Whether this account publishes what it orbits, on its public profile. */
+  showOrbits?: boolean;
   origin?: string;
   invites?: Array<IInvite>;
   iamProviders: Array<IIAMProviderLinked>;

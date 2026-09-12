@@ -7,7 +7,7 @@ import { Link } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
 import { IUser } from '../../models';
 import { AvatarSkeleton } from '../../components/display';
-import { DLAvatar } from './DLAvatar';
+import { UserAvatar } from './UserAvatar';
 
 type IUserProfileAvatarProps = {
   user?: IUser;
@@ -17,12 +17,11 @@ type IUserProfileAvatarProps = {
 
 const Profile = ({ user, size = 100, onClick }: IUserProfileAvatarProps) => {
   return (
-    <Box style={{ width: size }}>
-      <DLAvatar
-        //      square
-        src={user?.avatarUrl}
+    <Box style={{ width: size }} onClick={onClick}>
+      <UserAvatar
+        avatarUrl={user?.avatarUrl}
+        avatarIcon={user?.avatarIcon}
         size={size}
-        onClick={onClick}
       />
     </Box>
   );

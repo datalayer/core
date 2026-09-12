@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import React from 'react';
 import { type Id, toast } from 'react-toastify';
 import type { Notification } from '@jupyterlab/apputils';

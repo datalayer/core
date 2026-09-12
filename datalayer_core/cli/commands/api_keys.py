@@ -106,9 +106,7 @@ def create_api_key(
 
         if result.get("success", False):
             api_key_data = result.get("api_key", {})
-            console.print(
-                f"[green]API key '{name}' created successfully![/green]"
-            )
+            console.print(f"[green]API key '{name}' created successfully![/green]")
             console.print(
                 f"[yellow]API key value: {result.get('access_token', 'N/A')}[/yellow]"
             )
@@ -126,9 +124,7 @@ def create_api_key(
                             "description_t": api_key_data.get(
                                 "description_t", description
                             ),
-                            "variant_s": api_key_data.get(
-                                "variant_s", api_key_type
-                            ),
+                            "variant_s": api_key_data.get("variant_s", api_key_type),
                         }
                     ]
                 )

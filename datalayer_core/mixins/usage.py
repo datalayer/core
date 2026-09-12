@@ -72,7 +72,7 @@ class UsageMixin:
         """
         try:
             response = self._fetch(  # type: ignore
-                    "{}/api/iam/v1/plans/catalog".format(self.urls.iam_url),  # type: ignore
+                "{}/api/iam/v1/plans/catalog".format(self.urls.iam_url),  # type: ignore
             )
             return response.json()
         except RuntimeError as e:
