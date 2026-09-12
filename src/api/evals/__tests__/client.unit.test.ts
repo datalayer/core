@@ -172,6 +172,12 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/subjects/mocks/data-analyst/usage',
     ],
     [
+      'searchEvals',
+      () => client.searchEvals(options, { q: 'run 128' }),
+      'GET',
+      '/api/ai-agents/v1/evals/search',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',

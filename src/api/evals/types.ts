@@ -682,6 +682,46 @@ export interface SubjectUsage {
   totals: SubjectTotals;
 }
 
+/** What a search made of the words somebody typed (B5-11, section 19). */
+export interface EvalsSearchQuery {
+  raw: string;
+  /** What is left to look for by name, once the words that mean something else are taken out. */
+  text: string;
+  /** A status word, as the records spell it: `failed`, `in_review`… */
+  status: string;
+  /** `run 128` names a launch. */
+  launch_number: number | null;
+  /** A dataset revision somebody named, such as `v2026.09`. */
+  revision: string;
+}
+
+export type EvalsSearchKind =
+  'benchmark' | 'launch' | 'task' | 'report' | 'investigation';
+
+/** One thing found, keeping its kind and what it belongs to. */
+export interface EvalsSearchRow {
+  kind: EvalsSearchKind | string;
+  uid: string;
+  title: string;
+  subtitle: string;
+  status: string;
+  score?: number | null;
+  is_public?: boolean;
+  evalset_id?: string;
+  launch_id?: string;
+  run_id?: string;
+  case_id?: string;
+  at?: string | null;
+}
+
+export interface EvalsSearchResponse {
+  success: boolean;
+  query: EvalsSearchQuery;
+  results: EvalsSearchRow[];
+  counts: Record<string, number>;
+  total: number;
+}
+
 export interface SubjectUsageResponse {
   success: boolean;
   usage: SubjectUsage;

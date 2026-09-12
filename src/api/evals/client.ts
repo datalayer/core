@@ -88,6 +88,7 @@ import type {
   EvalsetPackagePreviewResponse,
   EvalsetComparisonResponse,
   SubjectUsageResponse,
+  EvalsSearchResponse,
   EvalsetLeaderboardResponse,
   EvalsetPublicationResponse,
   EvalsetPublicationListResponse,
@@ -341,6 +342,20 @@ export const getSubjectUsage = (
     options,
     `/subjects/${subjectRef.split('/').map(encodeURIComponent).join('/')}/usage`,
   );
+
+/**
+ * Find things across the caller's benchmarks (B5-11, section 19): benchmarks,
+ * launches, tasks, reports and investigations, each row keeping its kind and
+ * what it belongs to.
+ *
+ * Nobody types a field name, so the service reads the words first: a status
+ * word becomes a status, `run 128` becomes a launch number, and what is left
+ * is the text. An empty query finds nothing rather than everything.
+ */
+export const searchEvals = (
+  options: EvalsClientOptions,
+  query: { q?: string; kinds?: string; limit?: number } = {},
+) => evalsRequest<EvalsSearchResponse>(options, '/search', { query });
 
 export const renameEvalset = (
   options: EvalsClientOptions,
