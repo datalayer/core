@@ -151,13 +151,23 @@ def _remove(node: Any, steps: list[str]) -> None:
 @pytest.mark.parametrize("name", ["served", "conformant"])
 def test_every_agent_card_round_trips_through_the_descriptor(name: str) -> None:
     # Everything the card said and the descriptor kept comes back unchanged,
-    # and everything that does not come back was reported as dropped. There
-    # is no third category: a field that vanished without a gap record would
-    # fail here, which is what makes the gap list trustworthy.
+    # everything that does not come back was reported as dropped, and two
+    # fields come back that were not there to begin with: `url` and
+    # `preferredTransport`, which the current A2A specification requires at
+    # the top level and neither fixture card carries (both name only
+    # `supportedInterfaces`, the shape this mapping was first written
+    # against). That is not a third, silent category — it is checked here,
+    # against the one interface each fixture has, rather than asserted.
     card = cards()[name]
     mapping = from_agent_card(card, agent_id=f"agent_{name}")
     written = to_agent_card(mapping.descriptor)
-    assert written.card == without(card, mapping)
+    [interface] = card["supportedInterfaces"]
+    expected = {
+        **without(card, mapping),
+        "url": interface["url"],
+        "preferredTransport": interface["protocolBinding"],
+    }
+    assert written.card == expected
 
 
 def test_the_card_agent_runtimes_serves_today_has_no_skills() -> None:
@@ -233,9 +243,11 @@ def test_the_scheme_names_are_kept_and_the_definitions_are_not() -> None:
 
 def test_the_single_url_shape_is_read_and_written_back_as_an_interface() -> None:
     # The published A2A card has had two shapes and both are in the wild, so
-    # both are read; only the interface list is written, which is the one
-    # `agent-runtimes` serves. The reshaping is reported rather than left
-    # for somebody to notice when their card comes back different.
+    # both are read; `supportedInterfaces` is written for Datalayer's own
+    # reader above, which still prefers it, and `url` and `preferredTransport`
+    # are written beside it — required by the current specification, and, for
+    # a descriptor read from this exact shape, exactly what this card named
+    # to begin with, so nothing here is invented, only carried both ways.
     card = cards()["singleUrl"]
     mapping = from_agent_card(card, agent_id="agent_third_party")
     endpoint = mapping.descriptor.endpoints[0]
@@ -251,7 +263,8 @@ def test_the_single_url_shape_is_read_and_written_back_as_an_interface() -> None
             "protocolVersion": card["protocolVersion"],
         }
     ]
-    assert "url" not in written
+    assert written["url"] == card["url"]
+    assert written["preferredTransport"] == card["preferredTransport"]
 
 
 def test_streaming_is_the_only_operation_a_card_declares() -> None:

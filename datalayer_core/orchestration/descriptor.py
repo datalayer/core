@@ -894,6 +894,38 @@ def to_agent_card(descriptor: AgentDescriptor) -> AgentCardMapping:
             interface["protocolVersion"] = endpoint.protocol_version
         supported.append(interface)
 
+    # `url` is one of five fields the current A2A specification requires at
+    # the top level (a2a-protocol.org), alongside `preferredTransport` and
+    # `additionalInterfaces` for the rest — `supportedInterfaces` on its own
+    # names no field the current schema has at all. Found 2026-09-12,
+    # validating this function's own output against `a2a-sdk`'s `AgentCard`
+    # (a genuinely independent implementation, not `fasta2a`): every card
+    # this wrote was missing a required field. `supportedInterfaces` is kept
+    # alongside — `from_agent_card` above still prefers it, so a card this
+    # function writes still round-trips through Datalayer's own reader
+    # exactly as before — but the fields a standards-compliant third-party
+    # client actually requires are now written too. The first interface is
+    # taken as preferred, since a descriptor's endpoints carry no marker of
+    # their own for which one is; a worker naming more than one gets to say
+    # which through `additionalInterfaces`.
+    preferred, rest = interfaces[0], interfaces[1:]
+    additional_interfaces: list[dict[str, Any]] = []
+    for endpoint in rest:
+        if endpoint.transport is None:
+            gaps.append(
+                MappingGap(
+                    field="agentCard.additionalInterfaces[].transport",
+                    reason=(
+                        f"The endpoint at {endpoint.url} names no transport, "
+                        "which additionalInterfaces requires."
+                    ),
+                )
+            )
+            continue
+        additional_interfaces.append(
+            {"transport": endpoint.transport, "url": endpoint.url}
+        )
+
     skills: list[dict[str, Any]] = []
     for skill in descriptor.skills:
         written: dict[str, Any] = {
@@ -910,22 +942,26 @@ def to_agent_card(descriptor: AgentDescriptor) -> AgentCardMapping:
         if _held(descriptor, field):
             gaps.append(MappingGap(field=field, reason=reason))
 
-    return AgentCardMapping(
-        card={
-            "name": descriptor.name,
-            "description": descriptor.description,
-            "version": descriptor.version,
-            "supportedInterfaces": supported,
-            "capabilities": {
-                "streaming": WorkerOperation.SUBSCRIBE
-                in descriptor.supported_operations
-            },
-            "defaultInputModes": list(descriptor.input_content_types),
-            "defaultOutputModes": list(descriptor.output_content_types),
-            "skills": skills,
+    card: dict[str, Any] = {
+        "name": descriptor.name,
+        "description": descriptor.description,
+        "version": descriptor.version,
+        # Required by the current specification; see the note above.
+        "url": preferred.url,
+        "supportedInterfaces": supported,
+        "capabilities": {
+            "streaming": WorkerOperation.SUBSCRIBE
+            in descriptor.supported_operations
         },
-        gaps=gaps,
-    )
+        "defaultInputModes": list(descriptor.input_content_types),
+        "defaultOutputModes": list(descriptor.output_content_types),
+        "skills": skills,
+    }
+    if preferred.transport is not None:
+        card["preferredTransport"] = preferred.transport
+    if additional_interfaces:
+        card["additionalInterfaces"] = additional_interfaces
+    return AgentCardMapping(card=card, gaps=gaps)
 
 
 #: What the descriptor knows and an agent card has no field for. Reported
