@@ -64,3 +64,39 @@ export const getManagedSpace = async (
   );
   return answer.space;
 };
+
+/** One item of somebody's workspace, as Spacer answers it. */
+export interface WorkspaceItem {
+  uid: string;
+  type_s?: string;
+  name_t?: string;
+  description_t?: string;
+  notebook_name_s?: string;
+  document_name_s?: string;
+  creator_handle_s?: string;
+  space_uid?: string;
+  last_update_ts_dt?: string;
+  [key: string]: unknown;
+}
+
+export interface WorkspaceSearchResponse {
+  success: boolean;
+  message?: string;
+  items: WorkspaceItem[];
+}
+
+/**
+ * Search the caller's own workspace: notebooks, documents, datasets, files
+ * (BENCHMARKS.md, B5-11, section 19).
+ *
+ * Scoped by the service to what this person may open — never other people's
+ * public items, which the Library's own search answers. An empty query lists
+ * what the scope allows.
+ */
+export const searchWorkspace = (
+  options: SpacerClientOptions,
+  query: { q?: string; types?: string; max?: number } = {},
+) =>
+  spacerRequest<WorkspaceSearchResponse>(options, '/spaces/items/search', {
+    query,
+  });
