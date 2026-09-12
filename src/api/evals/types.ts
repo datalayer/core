@@ -727,6 +727,72 @@ export interface SubjectUsageResponse {
   usage: SubjectUsage;
 }
 
+/**
+ * What benchmark work a sandbox is doing (B5-12, section 15.4).
+ *
+ * A pool slot's sandbox is named after the run it serves, and a sandbox
+ * restored from a task's snapshot is found by that snapshot; either way the
+ * page can say which benchmark, launch, run and task the machine belongs to.
+ * `found` is false for a sandbox somebody opened themselves, which is the
+ * ordinary case and not an error.
+ */
+export interface SandboxProvenance {
+  found: boolean;
+  benchmark: { id: string; name: string } | null;
+  launch: { id: string; number: number | null; status: string } | null;
+  run: {
+    id: string;
+    status: string;
+    experiment_id: string;
+    experiment_name: string;
+    /** Which of the pool's sandboxes this one is, where it is one. */
+    slot: number | null;
+  } | null;
+  task: {
+    case_id: string;
+    name: string;
+    status: string;
+    snapshot_uid: string;
+  } | null;
+  /** The investigation a restored sandbox was brought back for (B3-05). */
+  investigation: { id: string; title: string; status: string } | null;
+  /** Paths of the app. */
+  links: Partial<
+    Record<'benchmark' | 'launch' | 'run' | 'task' | 'investigation', string>
+  >;
+}
+
+export interface SandboxProvenanceResponse {
+  success: boolean;
+  provenance: SandboxProvenance;
+}
+
+/**
+ * Whether anything will run the account's benchmarks (B5-12, section 15.2).
+ *
+ * A launch at `queued` looks the same whether the queue is busy or nothing
+ * polls it. `serving` is the difference. The depth is the account's own
+ * launches: the executor's other work belongs to nobody on this page.
+ */
+export interface BenchmarkCompute {
+  serving: boolean;
+  engine: string;
+  queue: string;
+  queue_served: boolean;
+  application_version: string;
+  /** Why nothing is serving, when nothing is. */
+  detail: string;
+  queued: number;
+  running: number;
+  /** The slots the running launches hold. */
+  sandboxes: number;
+}
+
+export interface BenchmarkComputeResponse {
+  success: boolean;
+  compute: BenchmarkCompute;
+}
+
 export interface EvalsetComparisonResponse {
   success: boolean;
   comparison: EvalsetComparison;

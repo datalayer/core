@@ -88,6 +88,8 @@ import type {
   EvalsetPackagePreviewResponse,
   EvalsetComparisonResponse,
   SubjectUsageResponse,
+  SandboxProvenanceResponse,
+  BenchmarkComputeResponse,
   EvalsSearchResponse,
   EvalsetLeaderboardResponse,
   EvalsetPublicationResponse,
@@ -345,6 +347,30 @@ export const getSubjectUsage = (
   evalsRequest<SubjectUsageResponse>(
     options,
     `/subjects/${subjectRef.split('/').map(encodeURIComponent).join('/')}/usage`,
+  );
+
+/**
+ * Whether anything will run the account's benchmarks (B5-12, section 15.2):
+ * the executor, whether a worker polls the benchmark queue, and the account's
+ * own queued and running launches.
+ */
+export const getBenchmarkCompute = (options: EvalsClientOptions) =>
+  evalsRequest<BenchmarkComputeResponse>(options, '/compute/operations');
+
+/**
+ * What benchmark work a sandbox is doing (B5-12, section 15.4).
+ *
+ * The ref is a pool slot's name (`benchmark-<run>-slot-<n>`) or the snapshot
+ * a sandbox was restored from. A sandbox of nobody's benchmark answers
+ * `found: false`, so a page asks without knowing in advance.
+ */
+export const getSandboxProvenance = (
+  options: EvalsClientOptions,
+  sandboxRef: string,
+) =>
+  evalsRequest<SandboxProvenanceResponse>(
+    options,
+    `/sandboxes/${sandboxRef.split('/').map(encodeURIComponent).join('/')}/provenance`,
   );
 
 /**

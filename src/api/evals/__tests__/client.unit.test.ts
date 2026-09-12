@@ -172,6 +172,18 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/subjects/mocks/data-analyst/usage',
     ],
     [
+      'getBenchmarkCompute',
+      () => client.getBenchmarkCompute(options),
+      'GET',
+      '/api/ai-agents/v1/evals/compute/operations',
+    ],
+    [
+      'getSandboxProvenance',
+      () => client.getSandboxProvenance(options, 'benchmark-run1-slot-0'),
+      'GET',
+      '/api/ai-agents/v1/evals/sandboxes/benchmark-run1-slot-0/provenance',
+    ],
+    [
       'searchEvals',
       () => client.searchEvals(options, { q: 'run 128' }),
       'GET',
