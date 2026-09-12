@@ -46,6 +46,7 @@ import type {
   EvalsSharingResponse,
   EvalsSharingUpdate,
   SharedEvalsRecord,
+  EvalEvaluatorRef,
   EvalsetVersionListResponse,
   EvalsetVersionResponse,
   InvestigationListResponse,
@@ -162,6 +163,31 @@ export const cloneEvalset = (
   evalsRequest<EvalsetResponse>(
     options,
     `/evalsets/${segment(evalsetId)}/clone`,
+    {
+      method: 'POST',
+      body,
+    },
+  );
+
+/**
+ * Propose the next version of a benchmark's definition, from an investigation
+ * (B5-07): a task added or corrected, a corrected evaluator, a threshold
+ * moved. The version records the investigation that asked for it.
+ */
+export const reviseEvalset = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  body: {
+    investigation_id: string;
+    note?: string;
+    case?: Record<string, unknown>;
+    evalset_evaluators?: EvalEvaluatorRef[];
+    report_evaluators?: EvalEvaluatorRef[];
+  },
+) =>
+  evalsRequest<EvalsetResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/revisions`,
     {
       method: 'POST',
       body,

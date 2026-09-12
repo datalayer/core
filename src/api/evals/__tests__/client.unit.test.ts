@@ -118,6 +118,12 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/evalsets/e1/clone',
     ],
     [
+      'reviseEvalset',
+      () => client.reviseEvalset(options, 'e1', { investigation_id: 'inv-1' }),
+      'POST',
+      '/api/ai-agents/v1/evals/evalsets/e1/revisions',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',
