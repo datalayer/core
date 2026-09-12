@@ -34,7 +34,13 @@ import { PrincipalBadge } from '../principal/PrincipalBadge';
 // ---------------------------------------------------------------------------
 
 export type ItemAccessLevel = 'view' | 'update' | 'execute';
-type PrincipalKind = 'personal' | 'team' | 'organization';
+/**
+ * Who a resource can be shared with. `agent` is a service agent: sharing with
+ * one grants that agent alone — the grant is matched on the agent's own uid,
+ * never on the people who can act through it — so it is a principal in its own
+ * right rather than a shorthand for its organization.
+ */
+type PrincipalKind = 'personal' | 'team' | 'organization' | 'agent';
 
 /**
  * One level the dialog offers, and what it is called. A resource whose
@@ -50,6 +56,7 @@ type SharingLevelPayload = {
   userUids?: string[];
   teamUids?: string[];
   organizationUids?: string[];
+  agentUids?: string[];
 };
 
 type SharingPayload = {
@@ -91,6 +98,7 @@ type AccessByLevel = Record<
     userUids: string[];
     teamUids: string[];
     organizationUids: string[];
+    agentUids: string[];
   }
 >;
 
@@ -154,6 +162,7 @@ const DEFAULT_PRINCIPAL_KINDS: readonly PrincipalKind[] = [
   'personal',
   'team',
   'organization',
+  'agent',
 ];
 
 // ---------------------------------------------------------------------------
@@ -176,6 +185,9 @@ function normalizePrincipalKind(kindRaw?: string): PrincipalKind {
   }
   if (kind === 'organization' || kind === 'org') {
     return 'organization';
+  }
+  if (kind === 'agent') {
+    return 'agent';
   }
   return 'personal';
 }
@@ -222,6 +234,9 @@ function ensurePrincipalDisplayName(
   }
   if (kind === 'team') {
     return 'Team';
+  }
+  if (kind === 'agent') {
+    return 'Agent';
   }
   return 'Principal';
 }
@@ -468,19 +483,21 @@ function emptyAccessByLevel(
   return Object.fromEntries(
     levels.map(({ level }) => [
       level,
-      { userUids: [], teamUids: [], organizationUids: [] },
+      { userUids: [], teamUids: [], organizationUids: [], agentUids: [] },
     ]),
   );
 }
 
 function bucketFor(
   kind: PrincipalKind,
-): 'userUids' | 'teamUids' | 'organizationUids' {
+): 'userUids' | 'teamUids' | 'organizationUids' | 'agentUids' {
   return kind === 'personal'
     ? 'userUids'
     : kind === 'team'
       ? 'teamUids'
-      : 'organizationUids';
+      : kind === 'agent'
+        ? 'agentUids'
+        : 'organizationUids';
 }
 
 function hasPrincipal(
@@ -534,7 +551,7 @@ function withPrincipalRemoved(
   );
 }
 
-function buildAclEntries(
+export function buildAclEntries(
   state: AccessByLevel,
   principalKinds: readonly PrincipalKind[],
 ): ACLPrincipalEntry[] {
@@ -560,6 +577,7 @@ function buildAclEntries(
     state[level].organizationUids.forEach(uid =>
       upsert('organization', uid, level),
     );
+    state[level].agentUids.forEach(uid => upsert('agent', uid, level));
   }
   return Array.from(byPrincipal.values()).sort((a, b) => {
     if (a.kind !== b.kind) {
@@ -569,7 +587,7 @@ function buildAclEntries(
   });
 }
 
-function hydrateAccessFromSharing(
+export function hydrateAccessFromSharing(
   sharing: SharingPayload,
   levels: readonly AccessLevelOption[],
 ): AccessByLevel {
@@ -583,6 +601,7 @@ function hydrateAccessFromSharing(
           userUids: [...(given.userUids || [])],
           teamUids: [...(given.teamUids || [])],
           organizationUids: [...(given.organizationUids || [])],
+          agentUids: [...(given.agentUids || [])],
         },
       ];
     }),
@@ -616,6 +635,58 @@ function AvatarShimmer({ size = 20 }: { size?: number }): JSX.Element {
 // ---------------------------------------------------------------------------
 // Row components.
 // ---------------------------------------------------------------------------
+
+/**
+ * An agent's avatar. A service agent has no picture, handle or banner of its
+ * own — it is a credential, not a person — so it is drawn as a key rather than
+ * pushed through the personal/team/organization avatar system.
+ */
+function AgentAvatar({ size = 20 }: { size?: number }): JSX.Element {
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: size,
+        height: size,
+        borderRadius: 2,
+        bg: 'canvas.subtle',
+        color: 'fg.muted',
+        flexShrink: 0,
+      }}
+      aria-label="Agent"
+    >
+      <KeyIcon size={Math.max(12, Math.round(size * 0.6))} />
+    </Box>
+  );
+}
+
+/** An agent as it appears in a row of principals: key, name, and the label
+ * that says what it is, so an agent is never mistaken for a person. */
+function AgentPrincipalChip({
+  displayName,
+  size = 20,
+}: {
+  displayName: string;
+  size?: number;
+}): JSX.Element {
+  return (
+    <Box
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1,
+        minWidth: 0,
+        flexWrap: 'wrap',
+      }}
+    >
+      <AgentAvatar size={size} />
+      <Text sx={{ minWidth: 0 }}>{displayName}</Text>
+      <Label size="small">Agent</Label>
+    </Box>
+  );
+}
 
 type OwnerPrincipalRowProps = {
   ownerPrincipal: OwnerPrincipal;
@@ -680,7 +751,7 @@ function OwnerPrincipalRow({
       ) : (
         <PrincipalBadge
           principal={{
-            kind: ownerPrincipal.kind,
+            kind: ownerPrincipal.kind as 'personal' | 'team' | 'organization',
             uid: ownerPrincipal.uid,
             displayName: resolvedDisplayName,
             handle: resolvedHandle,
@@ -739,6 +810,8 @@ function AccessPrincipalRow({
           <AvatarShimmer size={20} />
           <Text>{resolvedDisplayName}</Text>
         </>
+      ) : entry.kind === 'agent' ? (
+        <AgentPrincipalChip displayName={resolvedDisplayName} />
       ) : (
         <PrincipalBadge
           principal={{
@@ -1572,6 +1645,7 @@ export function ShareAccessComponent({
                 userUids: principals.userUids,
                 teamUids: principals.teamUids,
                 organizationUids: principals.organizationUids,
+                agentUids: principals.agentUids,
               },
             ]),
           ),
@@ -1735,7 +1809,8 @@ export function ShareAccessComponent({
     );
     const orgs = filtered.filter(p => p.kind === 'organization');
     const teams = filtered.filter(p => p.kind === 'team');
-    return { self, otherUsers, orgs, teams };
+    const agents = filtered.filter(p => p.kind === 'agent');
+    return { self, otherUsers, orgs, teams, agents };
   }, [shareablePrincipals, principalKindsSet, user?.uid]);
 
   useEffect(() => {
@@ -1771,7 +1846,9 @@ export function ShareAccessComponent({
         ? PersonIcon
         : principal.kind === 'organization'
           ? OrganizationIcon
-          : PeopleIcon;
+          : principal.kind === 'agent'
+            ? KeyIcon
+            : PeopleIcon;
     return (
       <Box
         key={principalKey(principal.kind, principal.uid)}
@@ -1815,12 +1892,16 @@ export function ShareAccessComponent({
             minWidth: 0,
           }}
         >
-          <PrincipalAvatar
-            kind={principal.kind}
-            avatarUrl={principal.avatarUrl || undefined}
-            alt={displayName}
-            size={22}
-          />
+          {principal.kind === 'agent' ? (
+            <AgentAvatar size={22} />
+          ) : (
+            <PrincipalAvatar
+              kind={principal.kind}
+              avatarUrl={principal.avatarUrl || undefined}
+              alt={displayName}
+              size={22}
+            />
+          )}
           <Box sx={{ display: 'grid', minWidth: 0 }}>
             <Box
               sx={{
@@ -2103,7 +2184,8 @@ export function ShareAccessComponent({
               groupedShareable.self.length === 0 &&
               groupedShareable.otherUsers.length === 0 &&
               groupedShareable.orgs.length === 0 &&
-              groupedShareable.teams.length === 0 ? (
+              groupedShareable.teams.length === 0 &&
+              groupedShareable.agents.length === 0 ? (
                 <Text sx={{ fontSize: 1, color: 'fg.muted' }}>
                   No principals available to share with.
                 </Text>
@@ -2119,6 +2201,7 @@ export function ShareAccessComponent({
                     groupedShareable.orgs,
                   )}
                   {renderShareableGroup('Your teams', groupedShareable.teams)}
+                  {renderShareableGroup('Agents', groupedShareable.agents)}
                 </Box>
               )}
             </Box>
@@ -2212,12 +2295,16 @@ export function ShareAccessComponent({
                             onSelect={() => handleSearchResultSelect(result)}
                           >
                             <ActionList.LeadingVisual>
-                              <PrincipalAvatar
-                                kind={result.kind}
-                                avatarUrl={result.avatarUrl}
-                                alt={result.displayName}
-                                size={18}
-                              />
+                              {result.kind === 'agent' ? (
+                                <AgentAvatar size={18} />
+                              ) : (
+                                <PrincipalAvatar
+                                  kind={result.kind}
+                                  avatarUrl={result.avatarUrl}
+                                  alt={result.displayName}
+                                  size={18}
+                                />
+                              )}
                             </ActionList.LeadingVisual>
                             <Box
                               sx={{
