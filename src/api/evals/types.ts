@@ -1072,11 +1072,21 @@ export interface EvalsSharingResponse extends SuccessResponse {
   };
 }
 
+/**
+ * How far a record reaches (BENCHMARKS.md, B5-09, section 14.5), narrowest
+ * first. Derived from the grants and the public flag rather than stored, so it
+ * cannot disagree with who may actually read the thing.
+ */
+export type EvalsVisibility =
+  'private' | 'users' | 'team' | 'organization' | 'public';
+
 export interface EvalsPermissionsResponse extends SuccessResponse {
   kind: string;
   uid: string;
   role: EvalsRole;
   permissions: Record<EvalsRole, boolean>;
+  /** The widest thing that is true of this record. */
+  visibility: EvalsVisibility;
 }
 
 // --- Reports (B4-04) --------------------------------------------------------
