@@ -616,6 +616,77 @@ export interface EvalsetLeaderboard {
   counted_runs: number;
 }
 
+/** A benchmark that has run one subject, with what its runs scored (B5-12). */
+export interface SubjectBenchmark {
+  evalset_id: string;
+  name: string;
+  category: string;
+  is_public: boolean;
+  runs: number;
+  latest_pass_rate: number | null;
+  best_pass_rate: number | null;
+  last_run_at: string | null;
+  cost_credits: number;
+}
+
+/** One run of a subject, as its page lists it. */
+export interface SubjectRun {
+  run_id: string;
+  evalset_id: string;
+  evalset_name: string;
+  launch_id: string;
+  experiment_id: string;
+  status: string;
+  pass_rate: number | null;
+  cost_credits: number | null;
+  elapsed_ms: number | null;
+  evalset_version: number | null;
+  ended_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface SubjectScore {
+  at: string | null;
+  pass_rate: number;
+  evalset_id: string;
+  run_id: string;
+}
+
+export interface SubjectLaunch {
+  launch_id: string;
+  evalset_id: string;
+  number: number | null;
+  status: string;
+}
+
+export interface SubjectTotals {
+  benchmarks: number;
+  runs: number;
+  cost_credits: number | null;
+  elapsed_ms: number | null;
+  latest_pass_rate: number | null;
+  best_pass_rate: number | null;
+  active_launches: number;
+}
+
+/**
+ * What an agent or a model has actually run. Empty where it has never been
+ * run: the page says so rather than drawing a history nobody ran.
+ */
+export interface SubjectUsage {
+  subject_ref: string;
+  benchmarks: SubjectBenchmark[];
+  runs: SubjectRun[];
+  scores: SubjectScore[];
+  active_launches: SubjectLaunch[];
+  totals: SubjectTotals;
+}
+
+export interface SubjectUsageResponse {
+  success: boolean;
+  usage: SubjectUsage;
+}
+
 export interface EvalsetComparisonResponse {
   success: boolean;
   comparison: EvalsetComparison;

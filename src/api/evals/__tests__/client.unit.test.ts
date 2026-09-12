@@ -166,6 +166,12 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/public/evalsets/e1/leaderboard',
     ],
     [
+      'getSubjectUsage',
+      () => client.getSubjectUsage(options, 'mocks/data-analyst'),
+      'GET',
+      '/api/ai-agents/v1/evals/subjects/mocks/data-analyst/usage',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',

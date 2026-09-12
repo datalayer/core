@@ -87,6 +87,7 @@ import type {
   EvalsetResponse,
   EvalsetPackagePreviewResponse,
   EvalsetComparisonResponse,
+  SubjectUsageResponse,
   EvalsetLeaderboardResponse,
   EvalsetPublicationResponse,
   EvalsetPublicationListResponse,
@@ -318,6 +319,23 @@ export const getPublicEvalsetLeaderboard = (
   evalsRequest<EvalsetLeaderboardResponse>(
     options,
     `/public/evalsets/${segment(evalsetId)}/leaderboard`,
+  );
+
+/**
+ * What an agent or a model has actually run (B5-12): the benchmarks that ran
+ * it, what its runs scored, what they cost, how long they took, and the
+ * launches still going. Empty where it has never been run.
+ *
+ * The ref keeps its slashes — an agentspec id has one — so each segment is
+ * encoded rather than the whole string.
+ */
+export const getSubjectUsage = (
+  options: EvalsClientOptions,
+  subjectRef: string,
+) =>
+  evalsRequest<SubjectUsageResponse>(
+    options,
+    `/subjects/${subjectRef.split('/').map(encodeURIComponent).join('/')}/usage`,
   );
 
 export const renameEvalset = (
