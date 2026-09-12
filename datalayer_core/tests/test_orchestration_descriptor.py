@@ -373,14 +373,26 @@ def test_every_catalogued_agentspec_produces_a_valid_descriptor() -> None:
 
 
 @catalogued
-def test_no_catalogued_agentspec_can_be_found_by_capability() -> None:
-    # The finding O0-14 should carry: `agents.discover` matches on the
-    # dotted capability contract, and not one spec in the catalogue declares
-    # one, so today it would match nothing. It is Datalayer's gap to close.
+def test_a_worker_can_be_found_by_capability_and_an_example_cannot() -> None:
+    # This test used to assert the opposite, and was right to: no spec
+    # declared a contract, so `agents.discover` matched nothing (O0-14's
+    # finding). O2-07 closed it, and the shape of the answer is the point —
+    # a contract on every worker and on none of the demonstrations, because
+    # an example agent discovered as something to hand work to is worse than
+    # one that cannot be discovered at all.
+    workers, examples = [], []
     for name, spec in catalogue():
         mapping = from_agentspec(spec)
-        assert mapping.descriptor.capabilities == [], name
-        assert "descriptor.capabilities" in {gap.field for gap in mapping.gaps}, name
+        gaps = {gap.field for gap in mapping.gaps}
+        if mapping.descriptor.capabilities:
+            workers.append(name)
+            assert "descriptor.capabilities" not in gaps, name
+        else:
+            examples.append(name)
+            assert "descriptor.capabilities" in gaps, name
+    assert workers, "no spec declares delegable work, so discovery matches nothing"
+    assert examples, "every spec declared some, which the catalogue does not"
+
 
 
 @catalogued

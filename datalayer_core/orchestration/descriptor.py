@@ -464,12 +464,6 @@ ACP_ENTRY_NOT_KEPT: tuple[tuple[str, str], ...] = (
 #: scheduler wants to know is only true once one is running.
 AGENTSPEC_CANNOT_STATE: tuple[tuple[str, str], ...] = (
     (
-        "descriptor.capabilities",
-        "No agentspec declares a capability contract, so no spec in the "
-        "catalogue can be found by agents.discover on capability. This is "
-        "the gap O0-14 should carry: it is ours to close, not a protocol's.",
-    ),
-    (
         "descriptor.supportedOperations",
         "A spec names no lifecycle operations. What a worker supports is "
         "the adapter's answer for the protocol it is reached over, and it "
@@ -1142,9 +1136,11 @@ def from_agentspec(spec: Mapping[str, Any]) -> DescriptorMapping:
     Two of them are worth reading before this mapping is trusted for
     scheduling:
 
-    - No spec in the catalogue declares a capability contract, so
-      ``agents.discover`` cannot match any of them on capability. That is
-      Datalayer's own gap to close, not a protocol's.
+    - A spec's ``delegable`` contract becomes the descriptor's
+      capabilities, which is what ``agents.discover`` matches on (O2-07).
+      Worker specs carry one; example specs deliberately do not, so a
+      demonstration agent is never discovered as something to hand work to,
+      and the absence is reported as a gap rather than passed over.
     - A spec's ``protocol`` names how a client talks to the agent, and only
       ``a2a`` and ``acp`` are protocols work can be delegated over. A spec
       that says ``ag-ui`` or ``vercel-ai``, or says nothing, produces a
@@ -1183,16 +1179,49 @@ def from_agentspec(spec: Mapping[str, Any]) -> DescriptorMapping:
 
     protocol = str(spec.get("protocol") or "").strip().lower()
     endpoints: list[ProtocolEndpoint] = []
+    delegable = [
+        str(entry["id"]) if isinstance(entry, Mapping) else str(entry)
+        for entry in (spec.get("delegable") or [])
+        if entry
+    ]
+    if not delegable:
+        gaps.append(
+            MappingGap(
+                field="descriptor.capabilities",
+                reason=(
+                    "This spec declares no delegable work, so nothing that "
+                    "asks for a capability finds it. Worker specs carry a "
+                    "`delegable` contract (O2-07); an example agent "
+                    "deliberately does not, because it is a demonstration "
+                    "rather than something to hand work to."
+                ),
+            )
+        )
+
     if protocol in {member.value for member in AgentProtocol}:
         endpoints = [ProtocolEndpoint(protocol=AgentProtocol(protocol))]
+    elif delegable:
+        # A spec that declares delegable work is reachable over A2A, because
+        # that is how the platform brings one up: `resolve_worker` launches a
+        # runtime for the spec and registers it there with `serve_agentspec`,
+        # over A2A, whatever the spec's own `protocol` says.
+        #
+        # The two fields are different axes and were being read as one.
+        # `protocol` says how a *client chats* with an agent — `ag-ui` and
+        # `vercel-ai` are browser transports, not ways to delegate — and
+        # reading it as the delegation binding left 81 of 164 specs looking
+        # unreachable and every capability query answering nothing.
+        endpoints = [ProtocolEndpoint(protocol=AgentProtocol.A2A)]
     else:
         gaps.append(
             MappingGap(
                 field="descriptor.endpoints",
                 reason=(
-                    f"This spec's protocol is {protocol or 'unset'}, which "
-                    "names no protocol work can be delegated over. Only a2a "
-                    "and acp have adapters (O0-06, O0-07)."
+                    f"This spec's protocol is {protocol or 'unset'} and it "
+                    "declares no delegable work, so there is nothing to "
+                    "dispatch to it over. A spec that declares a `delegable` "
+                    "contract is reachable over a2a whatever its protocol "
+                    "says, because that is how the platform serves one."
                 ),
             )
         )
@@ -1219,6 +1248,7 @@ def from_agentspec(spec: Mapping[str, Any]) -> DescriptorMapping:
                     examples=examples,
                 )
             ],
+            capabilities=delegable,
             endpoints=endpoints,
             runtime=RuntimeRequirements(
                 environment=_text(_spelled(spec, "environment_name"))
