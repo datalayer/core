@@ -69,8 +69,13 @@ class ChatResponseData(BaseModel):
     """Response payload for chat completions."""
 
     response: Optional[str] = Field(None, description="Backward-compatible text output")
-    message: Optional[Dict[str, Any]] = Field(
-        None, description="Primary assistant message"
+    # Not `message`: this payload is flattened to the top level of
+    # `DataResponse`, whose own `message` is a sentence for a person to read.
+    # Under the old name every chat completion carrying an assistant message
+    # failed to serialise, so the field never reached a client and nothing
+    # depends on it.
+    assistant_message: Optional[Dict[str, Any]] = Field(
+        None, description="The assistant's whole message, including any tool calls"
     )
     choices: Optional[List[Dict[str, Any]]] = Field(
         None, description="OpenAI-compatible choices payload"
