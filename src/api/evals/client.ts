@@ -85,6 +85,9 @@ import type {
   EvalsetDeleteResponse,
   EvalsetListResponse,
   EvalsetResponse,
+  EvalsetPackagePreviewResponse,
+  EvalsetPublicationResponse,
+  EvalsetPublicationListResponse,
   ExperimentDeleteResponse,
   ExperimentListResponse,
   ExperimentResponse,
@@ -192,6 +195,96 @@ export const reviseEvalset = (
       method: 'POST',
       body,
     },
+  );
+
+/**
+ * What publishing this benchmark would put in the library (B5-02): the
+ * contents of the package, the enumeration the publication review shows, what
+ * is left out and why, and everything that would refuse it — before anybody
+ * presses the button, because a publication cannot be taken back from whoever
+ * already read it.
+ */
+export const previewEvalsetPublication = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  query: {
+    /** Launch ids, comma separated; the benchmark's own where empty. */
+    launches?: string;
+    report?: string;
+    /** Comment uids selected for publication; nothing is published unnamed. */
+    comments?: string;
+    decisions?: string;
+    version?: number;
+  } = {},
+) =>
+  evalsRequest<EvalsetPackagePreviewResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/publication/preview`,
+    { query },
+  );
+
+/**
+ * Publish the package: the immutable snapshot of the definition, the data, the
+ * subjects, the environment, the results, the report, the evidence and the
+ * evaluators (section 14.3). Refused with `detail.problems` where section 14.5
+ * says it cannot be published.
+ */
+export const publishEvalsetPackage = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  body: {
+    launch_ids?: string[];
+    report_id?: string;
+    comment_uids?: string[];
+    decision_uids?: string[];
+    note?: string;
+    version?: number;
+  } = {},
+) =>
+  evalsRequest<EvalsetPublicationResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/publications`,
+    {
+      method: 'POST',
+      body,
+    },
+  );
+
+/** Every package published of this benchmark, withdrawn ones included. */
+export const listEvalsetPublications = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  query: { limit?: number; offset?: number } = {},
+) =>
+  evalsRequest<EvalsetPublicationListResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/publications`,
+    { query },
+  );
+
+/**
+ * Take a package out of the library. What it holds stays as it was written:
+ * withdrawing a snapshot does not make it editable.
+ */
+export const withdrawEvalsetPublication = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  publicationId: string,
+) =>
+  evalsRequest<EvalsetPublicationResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/publications/${segment(publicationId)}`,
+    { method: 'DELETE' },
+  );
+
+/** The package a published benchmark stands for, to anybody (B5-02). */
+export const getPublicEvalsetPublication = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+) =>
+  evalsRequest<EvalsetPublicationResponse>(
+    options,
+    `/public/evalsets/${segment(evalsetId)}/publication`,
   );
 
 export const renameEvalset = (

@@ -486,6 +486,75 @@ export interface EvalsetResponse {
   evalset: Evalset;
 }
 
+/** One thing a published package holds, as the review enumerates it (B5-02). */
+export interface EvalsetPackageItem {
+  /** Which part of the package it belongs to: definition, results, report… */
+  section: string;
+  kind: string;
+  uid: string;
+  label: string;
+}
+
+/** What stands in the way of a publication (section 14.5). */
+export interface EvalsetPackageProblem {
+  code: string;
+  detail: string;
+  uid?: string;
+}
+
+/** What a package leaves out, and why: nothing is published by implication. */
+export interface EvalsetPackageExclusion {
+  kind: string;
+  uid: string;
+  reason: string;
+}
+
+/**
+ * The package a published benchmark is: a snapshot of everything the numbers
+ * depend on, what would be published, and what refuses it.
+ */
+export interface EvalsetPackage {
+  contents: Record<string, unknown>;
+  items: EvalsetPackageItem[];
+  problems: EvalsetPackageProblem[];
+  excluded: EvalsetPackageExclusion[];
+  checksum: string;
+}
+
+/** A package as it was written: immutable, and reversibly visible. */
+export interface EvalsetPublication {
+  id: string;
+  evalset_id: string;
+  evalset_version: number | null;
+  owner_uid: string;
+  actor_uid?: string;
+  report_id: string;
+  launch_ids: string[];
+  contents: Record<string, unknown>;
+  items: EvalsetPackageItem[];
+  checksum: string;
+  status: string;
+  note: string;
+  created_at?: string | null;
+  unpublished_at?: string | null;
+}
+
+export interface EvalsetPackagePreviewResponse {
+  success: boolean;
+  package: EvalsetPackage;
+}
+
+export interface EvalsetPublicationResponse {
+  success: boolean;
+  publication: EvalsetPublication;
+}
+
+export interface EvalsetPublicationListResponse {
+  success: boolean;
+  total: number;
+  publications: EvalsetPublication[];
+}
+
 export interface EvalsetListResponse {
   success: boolean;
   total: number;

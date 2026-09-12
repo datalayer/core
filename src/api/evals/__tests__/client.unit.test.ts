@@ -124,6 +124,36 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/evalsets/e1/revisions',
     ],
     [
+      'previewEvalsetPublication',
+      () => client.previewEvalsetPublication(options, 'e1'),
+      'GET',
+      '/api/ai-agents/v1/evals/evalsets/e1/publication/preview',
+    ],
+    [
+      'publishEvalsetPackage',
+      () => client.publishEvalsetPackage(options, 'e1', { note: 'first' }),
+      'POST',
+      '/api/ai-agents/v1/evals/evalsets/e1/publications',
+    ],
+    [
+      'listEvalsetPublications',
+      () => client.listEvalsetPublications(options, 'e1'),
+      'GET',
+      '/api/ai-agents/v1/evals/evalsets/e1/publications',
+    ],
+    [
+      'withdrawEvalsetPublication',
+      () => client.withdrawEvalsetPublication(options, 'e1', 'publication-1'),
+      'DELETE',
+      '/api/ai-agents/v1/evals/evalsets/e1/publications/publication-1',
+    ],
+    [
+      'getPublicEvalsetPublication',
+      () => client.getPublicEvalsetPublication(options, 'e1'),
+      'GET',
+      '/api/ai-agents/v1/evals/public/evalsets/e1/publication',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',
