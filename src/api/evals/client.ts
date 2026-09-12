@@ -1154,6 +1154,19 @@ export const listDecisions = (
     `/${subject}/${segment(uid)}/decisions`,
   );
 
+/**
+ * What was decided about a benchmark, or about one of its launches (B6-04).
+ *
+ * `listDecisions` answers what was decided *in* one report or investigation;
+ * this answers what was decided about the benchmark, which is what something
+ * outside the product has to ask — CI knows the benchmark it ran and nothing
+ * else. Naming neither answers nothing rather than everything.
+ */
+export const listDecisionsAbout = (
+  options: EvalsClientOptions,
+  query: { evalset_id?: string; launch_id?: string; limit?: number } = {},
+) => evalsRequest<DecisionListResponse>(options, '/decisions', { query });
+
 export type ReportExportFormat = 'markdown' | 'csv';
 
 /** Where a report is downloaded as it was written, with its decisions (B4-08). */

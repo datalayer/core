@@ -178,6 +178,12 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/search',
     ],
     [
+      'listDecisionsAbout',
+      () => client.listDecisionsAbout(options, { evalset_id: 'e1' }),
+      'GET',
+      '/api/ai-agents/v1/evals/decisions',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',
