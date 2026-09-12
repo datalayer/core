@@ -30,5 +30,6 @@ export * as evals from './evals';
 export * as mcp from './mcp';
 export * as orchestration from './orchestration';
 export * as otel from './otel';
+export * as scheduler from './scheduler';
 export * as spacer from './spacer';
 export * from '../api/DatalayerApi';
