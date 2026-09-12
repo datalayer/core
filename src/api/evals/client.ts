@@ -114,6 +114,10 @@ export type ListEvalsetsQuery = {
   run_environment?: EvalRunEnvironment;
   category?: EvalsetCategory;
   q?: string;
+  /** Only the benchmarks reading this dataset (B5-12, section 15.3). */
+  dataset?: string;
+  /** …and pinned to this revision of it: one revision is not evidence about another. */
+  revision?: string;
   limit?: number;
   offset?: number;
 };
