@@ -64,7 +64,10 @@ describe('the console’s pages', () => {
   });
 
   it('gives a usage reviewer nothing beyond the two', () => {
-    expect(pagesForRoles(REVIEWER).slice().sort()).toEqual(['overview', 'usage']);
+    expect(pagesForRoles(REVIEWER).slice().sort()).toEqual([
+      'overview',
+      'usage',
+    ]);
   });
 
   it('does not let a usage reviewer read the audit', () => {
@@ -74,7 +77,9 @@ describe('the console’s pages', () => {
   });
 
   it('has Usage as a page of its own', () => {
-    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
     expect(ids).toContain('usage');
   });
 
@@ -89,7 +94,9 @@ describe('the console’s pages', () => {
   });
 
   it('has Service Agents as a page of its own', () => {
-    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
     expect(ids).toContain('service-agents');
   });
 
@@ -106,22 +113,30 @@ describe('the console’s pages', () => {
   });
 
   it('has Teams as a page of its own', () => {
-    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
     expect(ids).toContain('teams');
   });
 
   it('has Alerts as a page of its own', () => {
-    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
     expect(ids).toContain('alerts');
   });
 
   it('has Policy as a page of its own', () => {
-    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
     expect(ids).toContain('policy');
   });
 
   it('has Approvals as a page of its own', () => {
-    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(p => p.id);
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
     expect(ids).toContain('approvals');
   });
 
@@ -144,5 +159,28 @@ describe('the console’s pages', () => {
     expect(pagesForRoles(['organization_usage_reviewer'])).not.toContain(
       'approvals',
     );
+  });
+
+  it('has Identity as a page of its own', () => {
+    const ids: EnterpriseConsolePage[] = ENTERPRISE_CONSOLE_PAGES.map(
+      p => p.id,
+    );
+    expect(ids).toContain('identity-providers');
+  });
+
+  it('lets an owner register an identity provider', () => {
+    // Registering one decides who may get into the organization at all, and
+    // as what — the same authority as the rest of an owner's list.
+    expect(pagesForRoles(OWNER)).toContain('identity-providers');
+  });
+
+  it('lets an auditor read the identity providers', () => {
+    // Which directory an organization trusts, and what its group mapping
+    // grants, is exactly the posture an auditor is there to read.
+    expect(pagesForRoles(AUDITOR)).toContain('identity-providers');
+  });
+
+  it('does not give a usage reviewer the identity providers', () => {
+    expect(pagesForRoles(REVIEWER)).not.toContain('identity-providers');
   });
 });

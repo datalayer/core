@@ -70,7 +70,11 @@ import {
   type McpWorkerList,
   type McpWorkflowsHealth,
 } from '../api/mcp';
-import { disconnectAgent, listConnectedAgents, type ConnectedAgent } from '../api/iam/connectedAgents';
+import {
+  disconnectAgent,
+  listConnectedAgents,
+  type ConnectedAgent,
+} from '../api/iam/connectedAgents';
 import {
   listOrganizationTeams,
   type OrganizationTeam,
@@ -80,14 +84,8 @@ import {
   setAuditSettings,
   type McpAuditSettings,
 } from '../api/iam/mcpAuditSettings';
-import {
-  getMcpForwarding,
-  type McpForwarding,
-} from '../api/mcp/forwarding';
-import {
-  testAlertRule,
-  type McpAlertRuleTrial,
-} from '../api/mcp/alerts';
+import { getMcpForwarding, type McpForwarding } from '../api/mcp/forwarding';
+import { testAlertRule, type McpAlertRuleTrial } from '../api/mcp/alerts';
 import {
   createAlertRule,
   deleteAlertRule,
@@ -96,6 +94,19 @@ import {
   type McpAlertRule,
   type McpAlertRuleDraft,
 } from '../api/iam/mcpAlertRules';
+import {
+  createIdentityProvider,
+  deleteIdentityProvider,
+  disableIdentityProvider,
+  enableIdentityProvider,
+  getDomainVerification,
+  listIdentityProviders,
+  updateIdentityProvider,
+  verifyDomain,
+  type DomainVerification,
+  type IdentityProvider,
+  type IdentityProviderDraft,
+} from '../api/iam/identityProviders';
 import {
   deleteMcpPolicy,
   getMcpPolicy,
@@ -112,7 +123,10 @@ import {
   type ServiceAgent,
   type ServiceAgentWithKey,
 } from '../api/iam/serviceAgents';
-import type { McpAuditEventList, McpAuditExportFormat } from '../models/McpAuditEvent';
+import type {
+  McpAuditEventList,
+  McpAuditExportFormat,
+} from '../models/McpAuditEvent';
 import type { McpBinding, McpBindingList } from '../models/McpBinding';
 import type { McpEffectivePolicy } from '../models/McpPolicy';
 import type { McpTask, McpTaskList } from '../models/McpTask';
@@ -139,7 +153,8 @@ export const useTasks = (
     queryFn: () => listTasks(token ?? '', filters, mcpUrl),
     enabled: Boolean(token && mcpUrl) && (options.enabled ?? true),
     staleTime: 5_000,
-    refetchInterval: filters.status && !isMcpTaskTerminal(filters.status) ? 5_000 : false,
+    refetchInterval:
+      filters.status && !isMcpTaskTerminal(filters.status) ? 5_000 : false,
   });
 };
 
@@ -152,7 +167,9 @@ export const useTask = (taskUid?: string) => {
     queryFn: () => getTask(token ?? '', taskUid!, mcpUrl),
     enabled: Boolean(token && mcpUrl && taskUid),
     refetchInterval: query =>
-      query.state.data && isMcpTaskTerminal(query.state.data.status) ? false : 2_000,
+      query.state.data && isMcpTaskTerminal(query.state.data.status)
+        ? false
+        : 2_000,
   });
 };
 
@@ -164,7 +181,8 @@ export const useNotebookTasks = (
   const mcpUrl = useMcpServerUrl();
   return useQuery<McpTaskList>({
     queryKey: queryKeys.mcp.notebookTasks(notebookUid ?? '', filters),
-    queryFn: () => listNotebookTasks(token ?? '', notebookUid!, filters, mcpUrl),
+    queryFn: () =>
+      listNotebookTasks(token ?? '', notebookUid!, filters, mcpUrl),
     enabled: Boolean(token && mcpUrl && notebookUid),
     staleTime: 5_000,
   });
@@ -182,7 +200,8 @@ export const useTaskEvents = (
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const mcpUrl = useMcpServerUrl();
-  const enabled = Boolean(token && mcpUrl && taskUid) && (options.enabled ?? true);
+  const enabled =
+    Boolean(token && mcpUrl && taskUid) && (options.enabled ?? true);
   const { onEvent } = options;
   useEffect(() => {
     if (!enabled) {
@@ -193,25 +212,32 @@ export const useTaskEvents = (
       taskUid!,
       {
         onEvent: event => {
-          queryClient.setQueryData<McpTask>(queryKeys.mcp.task(taskUid!), current => {
-            if (event.task) {
-              return event.task;
-            }
-            if (!current) {
-              return current;
-            }
-            return {
-              ...current,
-              status: event.status ?? current.status,
-              statusMessage: event.statusMessage ?? current.statusMessage,
-              lastUpdatedAt: event.at ?? current.lastUpdatedAt,
-              outputs: event.output ? [...(current.outputs ?? []), event.output] : current.outputs,
-            };
-          });
+          queryClient.setQueryData<McpTask>(
+            queryKeys.mcp.task(taskUid!),
+            current => {
+              if (event.task) {
+                return event.task;
+              }
+              if (!current) {
+                return current;
+              }
+              return {
+                ...current,
+                status: event.status ?? current.status,
+                statusMessage: event.statusMessage ?? current.statusMessage,
+                lastUpdatedAt: event.at ?? current.lastUpdatedAt,
+                outputs: event.output
+                  ? [...(current.outputs ?? []), event.output]
+                  : current.outputs,
+              };
+            },
+          );
           onEvent?.(event);
         },
         onClose: () => {
-          queryClient.invalidateQueries({ queryKey: queryKeys.mcp.task(taskUid!) });
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.mcp.task(taskUid!),
+          });
           queryClient.invalidateQueries({ queryKey: queryKeys.mcp.tasks() });
         },
       },
@@ -239,7 +265,11 @@ export const useAnswerTask = () => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const mcpUrl = useMcpServerUrl();
-  return useMutation<McpTask, Error, { taskUid: string; input: Record<string, unknown> }>({
+  return useMutation<
+    McpTask,
+    Error,
+    { taskUid: string; input: Record<string, unknown> }
+  >({
     mutationFn: ({ taskUid, input }) =>
       answerTask(token ?? '', taskUid, { input }, crypto.randomUUID(), mcpUrl),
     onSuccess: task => {
@@ -367,7 +397,10 @@ export const useAuditExport = () => {
   return useMutation<
     string,
     Error,
-    { filters?: Omit<McpAuditFilters, 'cursor' | 'limit'>; format?: McpAuditExportFormat }
+    {
+      filters?: Omit<McpAuditFilters, 'cursor' | 'limit'>;
+      format?: McpAuditExportFormat;
+    }
   >({
     mutationFn: ({ filters = {}, format = 'jsonl' }) =>
       exportAuditEvents(token ?? '', filters, format, mcpUrl),
@@ -411,7 +444,8 @@ export const useOrgMcpOverview = (
   const mcpUrl = useMcpServerUrl();
   return useQuery<McpOrganizationOverview>({
     queryKey: queryKeys.mcp.orgOverview(orgUid ?? '', filters),
-    queryFn: () => getOrganizationMcpOverview(token ?? '', orgUid!, filters, mcpUrl),
+    queryFn: () =>
+      getOrganizationMcpOverview(token ?? '', orgUid!, filters, mcpUrl),
     enabled: Boolean(token && mcpUrl && orgUid) && (options.enabled ?? true),
     staleTime: 60_000,
   });
@@ -434,7 +468,8 @@ export const useOrgMcpUsage = (
   const mcpUrl = useMcpServerUrl();
   return useQuery<McpOrganizationUsage>({
     queryKey: queryKeys.mcp.orgUsage(orgUid ?? '', filters),
-    queryFn: () => getOrganizationMcpUsage(token ?? '', orgUid!, filters, mcpUrl),
+    queryFn: () =>
+      getOrganizationMcpUsage(token ?? '', orgUid!, filters, mcpUrl),
     enabled: Boolean(token && mcpUrl && orgUid) && (options.enabled ?? true),
     staleTime: 60_000,
   });
@@ -461,7 +496,9 @@ export const useDisconnectAgent = () => {
   return useMutation<{ success: boolean; message?: string }, Error, string>({
     mutationFn: grantUid => disconnectAgent(token ?? '', grantUid, iamUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.connectedAgents() });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.connectedAgents(),
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.mcp.activity() });
     },
   });
@@ -491,7 +528,10 @@ export const useOrganizationTeams = (
  * while somebody is looking at the page, and the point of the panel is to
  * say when that happens.
  */
-export const useMcpForwarding = (org = '', options: { enabled?: boolean } = {}) => {
+export const useMcpForwarding = (
+  org = '',
+  options: { enabled?: boolean } = {},
+) => {
   const token = useIAMStore(state => state.token);
   const mcpUrl = useMcpServerUrl();
   return useQuery<McpForwarding>({
@@ -506,7 +546,10 @@ export const useMcpForwarding = (org = '', options: { enabled?: boolean } = {}) 
 // -- Audit settings: retention, forwarding, alert destinations (IAM) --------
 
 /** One organization's settings, or `null` where it has decided nothing. */
-export const useAuditSettings = (orgUid: string, options: { enabled?: boolean } = {}) => {
+export const useAuditSettings = (
+  orgUid: string,
+  options: { enabled?: boolean } = {},
+) => {
   const token = useIAMStore(state => state.token);
   const iamUrl = useIamUrl();
   return useQuery<McpAuditSettings | null>({
@@ -529,12 +572,23 @@ export const useSetAuditSettings = (orgUid: string) => {
   return useMutation<
     McpAuditSettings,
     Error,
-    { settings: Parameters<typeof setAuditSettings>[2]; expectedVersion?: number }
+    {
+      settings: Parameters<typeof setAuditSettings>[2];
+      expectedVersion?: number;
+    }
   >({
     mutationFn: ({ settings, expectedVersion }) =>
-      setAuditSettings(token ?? '', orgUid, settings, { expectedVersion }, iamUrl),
+      setAuditSettings(
+        token ?? '',
+        orgUid,
+        settings,
+        { expectedVersion },
+        iamUrl,
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.auditSettings(orgUid) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.auditSettings(orgUid),
+      });
     },
   });
 };
@@ -561,7 +615,10 @@ export const useTestAlertRule = () => {
 // -- Alert rules (IAM) ------------------------------------------------------
 
 /** One organization's alert rules, disabled ones included. */
-export const useAlertRules = (orgUid: string, options: { enabled?: boolean } = {}) => {
+export const useAlertRules = (
+  orgUid: string,
+  options: { enabled?: boolean } = {},
+) => {
   const token = useIAMStore(state => state.token);
   const iamUrl = useIamUrl();
   return useQuery<McpAlertRule[]>({
@@ -579,7 +636,9 @@ export const useCreateAlertRule = (orgUid: string) => {
   return useMutation<McpAlertRule, Error, McpAlertRuleDraft>({
     mutationFn: rule => createAlertRule(token ?? '', orgUid, rule, iamUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.alertRules(orgUid) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.alertRules(orgUid),
+      });
     },
   });
 };
@@ -588,10 +647,17 @@ export const useUpdateAlertRule = (orgUid: string) => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const iamUrl = useIamUrl();
-  return useMutation<McpAlertRule, Error, { uid: string; rule: McpAlertRuleDraft }>({
-    mutationFn: ({ uid, rule }) => updateAlertRule(token ?? '', orgUid, uid, rule, iamUrl),
+  return useMutation<
+    McpAlertRule,
+    Error,
+    { uid: string; rule: McpAlertRuleDraft }
+  >({
+    mutationFn: ({ uid, rule }) =>
+      updateAlertRule(token ?? '', orgUid, uid, rule, iamUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.alertRules(orgUid) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.alertRules(orgUid),
+      });
     },
   });
 };
@@ -603,7 +669,131 @@ export const useDeleteAlertRule = (orgUid: string) => {
   return useMutation<void, Error, string>({
     mutationFn: uid => deleteAlertRule(token ?? '', orgUid, uid, iamUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.mcp.alertRules(orgUid) });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.alertRules(orgUid),
+      });
+    },
+  });
+};
+
+// -- Identity providers (IAM) -----------------------------------------------
+
+/** One organization's identity providers, disabled ones included. */
+export const useIdentityProviders = (
+  orgUid: string,
+  options: { enabled?: boolean } = {},
+) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useQuery<IdentityProvider[]>({
+    queryKey: queryKeys.mcp.identityProviders(orgUid),
+    queryFn: () => listIdentityProviders(token ?? '', orgUid, iamUrl),
+    enabled: Boolean(token && iamUrl && orgUid) && (options.enabled ?? true),
+    staleTime: 30_000,
+  });
+};
+
+export const useCreateIdentityProvider = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<IdentityProvider, Error, IdentityProviderDraft>({
+    mutationFn: provider =>
+      createIdentityProvider(token ?? '', orgUid, provider, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.identityProviders(orgUid),
+      });
+    },
+  });
+};
+
+export const useUpdateIdentityProvider = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    IdentityProvider,
+    Error,
+    { uid: string; provider: IdentityProviderDraft }
+  >({
+    mutationFn: ({ uid, provider }) =>
+      updateIdentityProvider(token ?? '', orgUid, uid, provider, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.identityProviders(orgUid),
+      });
+    },
+  });
+};
+
+export const useSetIdentityProviderEnabled = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    IdentityProvider,
+    Error,
+    { uid: string; enabled: boolean }
+  >({
+    mutationFn: ({ uid, enabled }) =>
+      enabled
+        ? enableIdentityProvider(token ?? '', orgUid, uid, iamUrl)
+        : disableIdentityProvider(token ?? '', orgUid, uid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.identityProviders(orgUid),
+      });
+    },
+  });
+};
+
+export const useDeleteIdentityProvider = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<void, Error, string>({
+    mutationFn: uid => deleteIdentityProvider(token ?? '', orgUid, uid, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.identityProviders(orgUid),
+      });
+    },
+  });
+};
+
+/**
+ * What to publish in DNS, fetched on demand rather than kept fresh.
+ *
+ * A mutation, not a query with a `refetch`: this is asked for once when
+ * somebody opens the verification panel, and the value never changes for a
+ * given provider and domain — what changes is `verified`, which the
+ * `verify` call below answers directly from the provider it returns.
+ */
+export const useDomainVerification = (orgUid: string) => {
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<
+    { verification: DomainVerification; verified: boolean },
+    Error,
+    { uid: string; domain: string }
+  >({
+    mutationFn: ({ uid, domain }) =>
+      getDomainVerification(token ?? '', orgUid, uid, domain, iamUrl),
+  });
+};
+
+export const useVerifyDomain = (orgUid: string) => {
+  const queryClient = useQueryClient();
+  const token = useIAMStore(state => state.token);
+  const iamUrl = useIamUrl();
+  return useMutation<IdentityProvider, Error, { uid: string; domain: string }>({
+    mutationFn: ({ uid, domain }) =>
+      verifyDomain(token ?? '', orgUid, uid, domain, iamUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mcp.identityProviders(orgUid),
+      });
     },
   });
 };
@@ -627,7 +817,8 @@ export const useMcpPolicyLayer = (
   return useQuery<McpPolicy | null>({
     queryKey: queryKeys.mcp.policyLayer(scope, subjectUid),
     queryFn: () => getMcpPolicy(token ?? '', scope, subjectUid, iamUrl),
-    enabled: Boolean(token && iamUrl && subjectUid) && (options.enabled ?? true),
+    enabled:
+      Boolean(token && iamUrl && subjectUid) && (options.enabled ?? true),
     staleTime: 30_000,
   });
 };
@@ -667,7 +858,10 @@ export const useMcpPolicyLayers = (
  * the same fact read two ways, and a page still showing the old effective
  * policy after a write is a page saying the change did not take.
  */
-export const useSetMcpPolicyLayer = (scope: McpPolicyScope, subjectUid: string) => {
+export const useSetMcpPolicyLayer = (
+  scope: McpPolicyScope,
+  subjectUid: string,
+) => {
   const queryClient = useQueryClient();
   const token = useIAMStore(state => state.token);
   const iamUrl = useIamUrl();
@@ -677,7 +871,14 @@ export const useSetMcpPolicyLayer = (scope: McpPolicyScope, subjectUid: string) 
     { rules: McpPolicyRules; expectedVersion?: number }
   >({
     mutationFn: ({ rules, expectedVersion }) =>
-      setMcpPolicy(token ?? '', scope, subjectUid, rules, { expectedVersion }, iamUrl),
+      setMcpPolicy(
+        token ?? '',
+        scope,
+        subjectUid,
+        rules,
+        { expectedVersion },
+        iamUrl,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mcp.policyLayer(scope, subjectUid),
@@ -772,7 +973,8 @@ export const useRevokeServiceAgent = (orgUid: string) => {
   const token = useIAMStore(state => state.token);
   const iamUrl = useIamUrl();
   return useMutation<ServiceAgent, Error, string>({
-    mutationFn: agentUid => revokeServiceAgent(token ?? '', orgUid, agentUid, iamUrl),
+    mutationFn: agentUid =>
+      revokeServiceAgent(token ?? '', orgUid, agentUid, iamUrl),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.mcp.serviceAgents(orgUid),
@@ -784,16 +986,21 @@ export const useRevokeServiceAgent = (orgUid: string) => {
 // -- Observability (OTEL) --------------------------------------------------
 
 /** The spans of a run, from the task's trace id; asked again while the task runs. */
-export const useRunTrace = (taskUid?: string, options: { enabled?: boolean } = {}) => {
+export const useRunTrace = (
+  taskUid?: string,
+  options: { enabled?: boolean } = {},
+) => {
   const token = useIAMStore(state => state.token);
   const otelUrl = useOtelUrl();
   const task = useTask(taskUid);
   return useQuery<McpRunTrace>({
     queryKey: queryKeys.mcp.trace(taskUid ?? ''),
     queryFn: () => fetchRunTrace(token ?? '', task.data!, otelUrl),
-    enabled: Boolean(token && otelUrl && task.data) && (options.enabled ?? true),
+    enabled:
+      Boolean(token && otelUrl && task.data) && (options.enabled ?? true),
     staleTime: 15_000,
-    refetchInterval: task.data && !isMcpTaskTerminal(task.data.status) ? 5_000 : false,
+    refetchInterval:
+      task.data && !isMcpTaskTerminal(task.data.status) ? 5_000 : false,
   });
 };
 
@@ -803,7 +1010,10 @@ export const useRunTrace = (taskUid?: string, options: { enabled?: boolean } = {
  * Read once and kept: a finished trace does not change, and the pane that
  * shows it is opened from an audit row rather than watched.
  */
-export const useMcpTrace = (traceId?: string, options: { enabled?: boolean } = {}) => {
+export const useMcpTrace = (
+  traceId?: string,
+  options: { enabled?: boolean } = {},
+) => {
   const token = useIAMStore(state => state.token);
   const otelUrl = useOtelUrl();
   return useQuery<McpRunTrace>({
@@ -840,10 +1050,17 @@ export const useMcpLogs = (
   return useQuery<McpRunLogs>({
     queryKey: queryKeys.mcp.logs(taskUid ?? ''),
     queryFn: () =>
-      fetchMcpLogs(token ?? '', task.data!, { limit: options.limit, severity: options.severity }, otelUrl),
-    enabled: Boolean(token && otelUrl && task.data) && (options.enabled ?? true),
+      fetchMcpLogs(
+        token ?? '',
+        task.data!,
+        { limit: options.limit, severity: options.severity },
+        otelUrl,
+      ),
+    enabled:
+      Boolean(token && otelUrl && task.data) && (options.enabled ?? true),
     staleTime: 15_000,
-    refetchInterval: task.data && !isMcpTaskTerminal(task.data.status) ? 5_000 : false,
+    refetchInterval:
+      task.data && !isMcpTaskTerminal(task.data.status) ? 5_000 : false,
   });
 };
 

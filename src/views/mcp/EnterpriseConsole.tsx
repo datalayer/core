@@ -77,6 +77,7 @@ import {
   type McpObservabilityPane,
 } from './McpObservability';
 import { AlertRules } from './AlertRules';
+import { IdentityProviders } from './IdentityProviders';
 import { TeamPolicies } from './TeamPolicies';
 import { OrganizationUsage } from './OrganizationUsage';
 import { OrganizationPolicy } from './OrganizationPolicy';
@@ -93,6 +94,7 @@ export type EnterpriseConsolePage =
   | 'service-agents'
   | 'policy'
   | 'teams'
+  | 'identity-providers'
   | 'alerts'
   | 'approvals'
   | 'audit'
@@ -108,6 +110,7 @@ export const ENTERPRISE_CONSOLE_PAGES: {
   { id: 'service-agents', label: 'Service Agents' },
   { id: 'policy', label: 'Policy' },
   { id: 'teams', label: 'Teams' },
+  { id: 'identity-providers', label: 'Identity' },
   { id: 'alerts', label: 'Alerts' },
   { id: 'approvals', label: 'Approvals' },
   { id: 'audit', label: 'Audit' },
@@ -124,6 +127,10 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       'service-agents',
       'policy',
       'teams',
+      // Who may sign in here at all, and as what, is the organization's own
+      // authority — the same reason a provider needs an owner to register,
+      // never a security auditor or a usage reviewer.
+      'identity-providers',
       'alerts',
       'approvals',
       'audit',
@@ -143,6 +150,11 @@ export const pagesForRoles = (roles: string[]): EnterpriseConsolePage[] => {
       // The team layers too: an auditor asked why one team's agents are
       // treated differently needs the layer that treats them so.
       'teams',
+      // Identity providers too, read-only: which directory an organization
+      // trusts and what its group mapping grants is exactly the posture an
+      // auditor is there to read, and the page carries no secret — the
+      // client secret is a reference, never the value.
+      'identity-providers',
       // The alerts too: what an organization watches for is part of the
       // security posture an auditor is there to read.
       'alerts',
@@ -567,6 +579,14 @@ export const EnterpriseConsole = ({
 
       {current === 'teams' && (
         <TeamPolicies
+          errorState={errorState}
+          orgUid={organization.uid}
+          readOnly={!roles.includes('organization_owner')}
+        />
+      )}
+
+      {current === 'identity-providers' && (
+        <IdentityProviders
           errorState={errorState}
           orgUid={organization.uid}
           readOnly={!roles.includes('organization_owner')}
