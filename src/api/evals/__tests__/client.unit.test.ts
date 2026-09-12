@@ -154,6 +154,18 @@ describe('the evals client', () => {
       '/api/ai-agents/v1/evals/public/evalsets/e1/publication',
     ],
     [
+      'compareEvalsetLaunches',
+      () => client.compareEvalsetLaunches(options, 'e1'),
+      'GET',
+      '/api/ai-agents/v1/evals/evalsets/e1/comparison',
+    ],
+    [
+      'getPublicEvalsetLeaderboard',
+      () => client.getPublicEvalsetLeaderboard(options, 'e1'),
+      'GET',
+      '/api/ai-agents/v1/evals/public/evalsets/e1/leaderboard',
+    ],
+    [
       'renameEvalset',
       () => client.renameEvalset(options, 'e1', 'z'),
       'PATCH',

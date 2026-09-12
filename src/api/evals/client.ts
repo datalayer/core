@@ -86,6 +86,8 @@ import type {
   EvalsetListResponse,
   EvalsetResponse,
   EvalsetPackagePreviewResponse,
+  EvalsetComparisonResponse,
+  EvalsetLeaderboardResponse,
   EvalsetPublicationResponse,
   EvalsetPublicationListResponse,
   ExperimentDeleteResponse,
@@ -285,6 +287,37 @@ export const getPublicEvalsetPublication = (
   evalsRequest<EvalsetPublicationResponse>(
     options,
     `/public/evalsets/${segment(evalsetId)}/publication`,
+  );
+
+/**
+ * Launches of one benchmark side by side (B5-08): what each scored, what each
+ * subject scored in each, and which tasks went from passing to failing or
+ * back. Launch ids are compared in the order given, oldest first; the two
+ * newest launches where none is named.
+ */
+export const compareEvalsetLaunches = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+  query: { launches?: string } = {},
+) =>
+  evalsRequest<EvalsetComparisonResponse>(
+    options,
+    `/evalsets/${segment(evalsetId)}/comparison`,
+    { query },
+  );
+
+/**
+ * The subjects that ran a published benchmark, best first. Only runs a package
+ * published are counted (B5-02), and each row names the package its best run
+ * came from.
+ */
+export const getPublicEvalsetLeaderboard = (
+  options: EvalsClientOptions,
+  evalsetId: string,
+) =>
+  evalsRequest<EvalsetLeaderboardResponse>(
+    options,
+    `/public/evalsets/${segment(evalsetId)}/leaderboard`,
   );
 
 export const renameEvalset = (

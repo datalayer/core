@@ -539,6 +539,93 @@ export interface EvalsetPublication {
   unpublished_at?: string | null;
 }
 
+/** One launch in a comparison of launches of the same benchmark (B5-08). */
+export interface EvalsetComparisonLaunch {
+  launch_id: string;
+  number: number | null;
+  status: string;
+  run_mode: string;
+  evalset_version: number | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  created_at?: string | null;
+  run_ids: string[];
+  pass_rate: number | null;
+  cost_credits: number | null;
+  elapsed_ms: number | null;
+  reproduces_launch_id: string;
+}
+
+/** What one subject scored in each of the launches compared. */
+export interface EvalsetComparisonSubject {
+  ref: string;
+  label: string;
+  kind: string;
+  pass_rates: Record<string, number | null>;
+  /** The last launch against the first; `null` where either has no rate. */
+  delta: number | null;
+}
+
+/** What one task did in each launch: what broke, and what was fixed. */
+export interface EvalsetComparisonTask {
+  name: string;
+  statuses: Record<string, string>;
+  scores: Record<string, number>;
+  regressed: boolean;
+  fixed: boolean;
+}
+
+export interface EvalsetComparisonDelta {
+  earlier_launch_id: string;
+  earlier: number | null;
+  later_launch_id: string;
+  later: number | null;
+  delta: number;
+}
+
+export interface EvalsetComparison {
+  launches: EvalsetComparisonLaunch[];
+  subjects: EvalsetComparisonSubject[];
+  tasks: EvalsetComparisonTask[];
+  deltas: EvalsetComparisonDelta[];
+  /** How a delta is read, stated rather than assumed. */
+  convention: string;
+  regressions: number;
+  fixes: number;
+}
+
+/** One place on a published benchmark's leaderboard (B5-08). */
+export interface EvalsetLeaderboardRow {
+  place: number;
+  ref: string;
+  label: string;
+  kind: string;
+  runs: number;
+  best_pass_rate: number | null;
+  latest_pass_rate: number | null;
+  best_run_id: string;
+  /** The package the best run was published in, so a reader can open it. */
+  publication_id: string;
+  evalset_version: number | null;
+}
+
+export interface EvalsetLeaderboard {
+  rows: EvalsetLeaderboardRow[];
+  /** Runs a package published; only these are counted. */
+  published_runs: number;
+  counted_runs: number;
+}
+
+export interface EvalsetComparisonResponse {
+  success: boolean;
+  comparison: EvalsetComparison;
+}
+
+export interface EvalsetLeaderboardResponse {
+  success: boolean;
+  leaderboard: EvalsetLeaderboard;
+}
+
 export interface EvalsetPackagePreviewResponse {
   success: boolean;
   package: EvalsetPackage;
