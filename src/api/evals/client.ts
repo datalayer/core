@@ -299,7 +299,11 @@ export const getPublicEvalsetPublication = (
 export const compareEvalsetLaunches = (
   options: EvalsClientOptions,
   evalsetId: string,
-  query: { launches?: string } = {},
+  query: {
+    launches?: string;
+    /** The published report that sent somebody here, when one did (B5-14). */
+    report?: string;
+  } = {},
 ) =>
   evalsRequest<EvalsetComparisonResponse>(
     options,
