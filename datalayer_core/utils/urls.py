@@ -52,6 +52,10 @@ DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_SERVICE_URL
 # Folder and Volumes lives, so it shares the runtimes host.
 DEFAULT_DATALAYER_CONTENTS_URL = DEFAULT_DATALAYER_RUNTIMES_URL
 
+# Durable runs on the runtimes plane too, beside the runtimes whose sessions
+# its workflows execute in, reached at its own ingress under /api/durable.
+DEFAULT_DATALAYER_DURABLE_URL = DEFAULT_DATALAYER_RUNTIMES_URL
+
 
 @dataclass
 class DatalayerURLs:
@@ -91,6 +95,8 @@ class DatalayerURLs:
         The Datalayer Jupyter MCP Server URL
     scheduler_url : str
         The Datalayer scheduler service URL
+    durable_url : str
+        The Datalayer durable (orchestration workflow engine) service URL
     """
 
     iam_url: str
@@ -108,6 +114,7 @@ class DatalayerURLs:
     jupyter_mcp_server_url: str
     scheduler_url: str
     contents_url: str = DEFAULT_DATALAYER_CONTENTS_URL
+    durable_url: str = DEFAULT_DATALAYER_DURABLE_URL
 
     @classmethod
     def from_environment(
@@ -127,6 +134,7 @@ class DatalayerURLs:
         jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
         contents_url: Optional[str] = None,
+        durable_url: Optional[str] = None,
     ) -> "DatalayerURLs":
         """
         Create DatalayerURLs instance from environment variables and parameters.
@@ -176,6 +184,10 @@ class DatalayerURLs:
         scheduler_url : Optional[str]
             Override for the scheduler URL. If None, will check DATALAYER_SCHEDULER_URL env var
             then fallback to DEFAULT_DATALAYER_SCHEDULER_URL.
+        durable_url : Optional[str]
+            Override for the durable URL. If None, will check DATALAYER_DURABLE_URL env var
+            then follow the resolved runtimes URL, as contents does — durable runs on that
+            plane, not IAM's.
 
         Returns
         -------
@@ -300,6 +312,15 @@ class DatalayerURLs:
             or os.environ.get("DATALAYER_CONTENTS_URL")
             or resolved_runtimes_url
         )
+        # Durable follows runtimes for the same reason contents does: it runs
+        # on that plane, beside the sessions its workflows execute in, not on
+        # IAM's — inheriting base_url_for_services would point a caller whose
+        # only override was DATALAYER_IAM_URL at a host with no durable there.
+        resolved_durable_url = (
+            durable_url
+            or os.environ.get("DATALAYER_DURABLE_URL")
+            or resolved_runtimes_url
+        )
 
         # Strip trailing slashes for consistency
         resolved_iam_url = resolved_iam_url.rstrip("/")
@@ -317,6 +338,7 @@ class DatalayerURLs:
         resolved_jupyter_mcp_server_url = resolved_jupyter_mcp_server_url.rstrip("/")
         resolved_scheduler_url = resolved_scheduler_url.rstrip("/")
         resolved_contents_url = resolved_contents_url.rstrip("/")
+        resolved_durable_url = resolved_durable_url.rstrip("/")
 
         return cls(
             iam_url=resolved_iam_url,
@@ -334,6 +356,7 @@ class DatalayerURLs:
             jupyter_mcp_server_url=resolved_jupyter_mcp_server_url,
             scheduler_url=resolved_scheduler_url,
             contents_url=resolved_contents_url,
+            durable_url=resolved_durable_url,
         )
 
     def __post_init__(self) -> None:
@@ -353,6 +376,7 @@ class DatalayerURLs:
         self.jupyter_mcp_server_url = self.jupyter_mcp_server_url.rstrip("/")
         self.scheduler_url = self.scheduler_url.rstrip("/")
         self.contents_url = self.contents_url.rstrip("/")
+        self.durable_url = self.durable_url.rstrip("/")
 
     def as_dict(self) -> dict[str, str]:
         """Return all resolved service URLs as a dictionary."""
@@ -409,6 +433,7 @@ class DatalayerURLs:
         jupyter_mcp_server_url: Optional[str] = None,
         scheduler_url: Optional[str] = None,
         contents_url: Optional[str] = None,
+        durable_url: Optional[str] = None,
     ) -> dict[str, str]:
         """Resolve and return all service URLs with optional overrides."""
         return cls.from_environment(
@@ -427,4 +452,5 @@ class DatalayerURLs:
             jupyter_mcp_server_url=jupyter_mcp_server_url,
             scheduler_url=scheduler_url,
             contents_url=contents_url,
+            durable_url=durable_url,
         ).as_dict()

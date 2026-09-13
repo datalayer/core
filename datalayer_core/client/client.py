@@ -15,6 +15,7 @@ from typing import Any, Optional, Union
 from datalayer_core.mixins.api_keys import ApiKeysMixin
 from datalayer_core.mixins.authn import AuthnMixin
 from datalayer_core.mixins.contents import ContentsMixin
+from datalayer_core.mixins.durable import DurableMixin
 from datalayer_core.mixins.mcp import McpMixin
 from datalayer_core.mixins.orchestration import OrchestrationMixin
 from datalayer_core.mixins.runtime_sharing import RuntimeSharingMixin
@@ -41,6 +42,7 @@ class DatalayerClient(
     ContentsMixin,
     McpMixin,
     OrchestrationMixin,
+    DurableMixin,
     RuntimeSharingMixin,
 ):
     """

@@ -26,6 +26,7 @@ from datalayer_core.cli.commands.authn import (
 from datalayer_core.cli.commands.cluster import app as cluster_app
 from datalayer_core.cli.commands.config import app as config_app
 from datalayer_core.cli.commands.contents import app as contents_app
+from datalayer_core.cli.commands.durable import app as durable_app
 from datalayer_core.cli.commands.executions import app as executions_app
 from datalayer_core.cli.commands.mcp import app as mcp_app
 from datalayer_core.cli.commands.memberships import app as memberships_app
@@ -192,6 +193,7 @@ app.add_typer(auth_app)
 app.add_typer(cluster_app)
 app.add_typer(config_app)
 app.add_typer(contents_app)
+app.add_typer(durable_app)
 app.add_typer(executions_app)
 app.add_typer(mcp_app)
 app.add_typer(memberships_app)
