@@ -4,95 +4,17 @@
  */
 
 import type { JSX } from 'react';
-import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
+import {
+  Suspense,
+  lazy,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ComponentType,
+  type SVGProps,
+} from 'react';
 import { Box, Button, Text, Tooltip } from '@primer/react';
 import { Dialog } from '@primer/react/experimental';
-import AlienMaskIcon from '@datalayer/icons-react/data2/AlienMaskIcon';
-import AlienMonsterIcon from '@datalayer/icons-react/data2/AlienMonsterIcon';
-import AstronautIcon from '@datalayer/icons-react/data2/AstronautIcon';
-import AtomSymbolIcon from '@datalayer/icons-react/data2/AtomSymbolIcon';
-import BankIcon from '@datalayer/icons-react/data2/BankIcon';
-import BlackNibIcon from '@datalayer/icons-react/data2/BlackNibIcon';
-import BriefcaseIcon from '@datalayer/icons-react/data2/BriefcaseIcon';
-import BuildingClassicIcon from '@datalayer/icons-react/data2/BuildingClassicIcon';
-import BuildingConstructionIcon from '@datalayer/icons-react/data2/BuildingConstructionIcon';
-import BuildingOfficeIcon from '@datalayer/icons-react/data2/BuildingOfficeIcon';
-import BullseyeIcon from '@datalayer/icons-react/data2/BullseyeIcon';
-import CloudGreyIcon from '@datalayer/icons-react/data2/CloudGreyIcon';
-import ConstructionIcon from '@datalayer/icons-react/data2/ConstructionIcon';
-import ConstructionWorkerIcon from '@datalayer/icons-react/data2/ConstructionWorkerIcon';
-import CowboyHatFaceIcon from '@datalayer/icons-react/data2/CowboyHatFaceIcon';
-import DashboardGreyIcon from '@datalayer/icons-react/data1/DashboardGreyIcon';
-import DnaIcon from '@datalayer/icons-react/data2/DnaIcon';
-import DraftIcon from '@datalayer/icons-react/data1/DraftIcon';
-import DragonFaceIcon from '@datalayer/icons-react/data2/DragonFaceIcon';
-import DragonIcon from '@datalayer/icons-react/data2/DragonIcon';
-import ElfManIcon from '@datalayer/icons-react/data2/ElfManIcon';
-import FireIcon from '@datalayer/icons-react/data2/FireIcon';
-import FireworksIcon from '@datalayer/icons-react/data2/FireworksIcon';
-import FlyingSaucerIcon from '@datalayer/icons-react/data2/FlyingSaucerIcon';
-import FourLeafCloverIcon from '@datalayer/icons-react/data2/FourLeafCloverIcon';
-import GraduationCapIcon from '@datalayer/icons-react/data2/GraduationCapIcon';
-import GremlinIcon from '@datalayer/icons-react/data2/GremlinIcon';
-import GrinningFaceIcon from '@datalayer/icons-react/data2/GrinningFaceIcon';
-import HouseIcon from '@datalayer/icons-react/data2/HouseIcon';
-import LizardIcon from '@datalayer/icons-react/data2/LizardIcon';
-import MagicWandIcon from '@datalayer/icons-react/data2/MagicWandIcon';
-import ManOfficeWorkerIcon from '@datalayer/icons-react/data2/ManOfficeWorkerIcon';
-import ManTechnologistIcon from '@datalayer/icons-react/data2/ManTechnologistIcon';
-import MusicalNoteIcon from '@datalayer/icons-react/data2/MusicalNoteIcon';
-import NinjaIcon from '@datalayer/icons-react/data2/NinjaIcon';
-import OpenHandsIcon from '@datalayer/icons-react/data2/OpenHandsIcon';
-import PenIcon from '@datalayer/icons-react/data2/PenIcon';
-import PenguinIcon from '@datalayer/icons-react/data2/PenguinIcon';
-import PictureIcon from '@datalayer/icons-react/data2/PictureIcon';
-import PlaneDepartureIcon from '@datalayer/icons-react/data2/PlaneDepartureIcon';
-import PersonSurfingIcon from '@datalayer/icons-react/data2/PersonSurfingIcon';
-import PersonSwimmingIcon from '@datalayer/icons-react/data2/PersonSwimmingIcon';
-import PictureFramedIcon from '@datalayer/icons-react/data2/PictureFramedIcon';
-import RingedPlanetIcon from '@datalayer/icons-react/data2/RingedPlanetIcon';
-import RobotIcon from '@datalayer/icons-react/data2/RobotIcon';
-import RocketIcon from '@datalayer/icons-react/data2/RocketIcon';
-import SantaClausIcon from '@datalayer/icons-react/data2/SantaClausIcon';
-import SatelliteIcon from '@datalayer/icons-react/data2/SatelliteIcon';
-import ScientistIcon from '@datalayer/icons-react/data2/ScientistIcon';
-import SharkIcon from '@datalayer/icons-react/data2/SharkIcon';
-import SnowmanIcon from '@datalayer/icons-react/data2/SnowmanIcon';
-import SpaceInvadersAlien1Icon from '@datalayer/icons-react/eggs/SpaceInvadersAlien1Icon';
-import SpaceInvadersAlien2Icon from '@datalayer/icons-react/eggs/SpaceInvadersAlien2Icon';
-import SpaceInvadersAlien3Icon from '@datalayer/icons-react/eggs/SpaceInvadersAlien3Icon';
-import SparklerIcon from '@datalayer/icons-react/data2/SparklerIcon';
-import StarIcon from '@datalayer/icons-react/data2/StarIcon';
-import StudentIcon from '@datalayer/icons-react/data2/StudentIcon';
-import StudioMicrophoneIcon from '@datalayer/icons-react/data2/StudioMicrophoneIcon';
-import SunIcon from '@datalayer/icons-react/data2/SunIcon';
-import WavingHandIcon from '@datalayer/icons-react/data2/WavingHandIcon';
-import WhaleSpoutingIcon from '@datalayer/icons-react/data2/WhaleSpoutingIcon';
-import WomanTechnologistIcon from '@datalayer/icons-react/data2/WomanTechnologistIcon';
-import WrappedGiftIcon from '@datalayer/icons-react/data2/WrappedGiftIcon';
-import WritingHandIcon from '@datalayer/icons-react/data2/WritingHandIcon';
-import YinYangIcon from '@datalayer/icons-react/data2/YinYangIcon';
-import { SvgAboutHero } from '@datalayer/design/lib/svg/SvgAboutHero';
-import { SvgAgentsHero } from '@datalayer/design/lib/svg/SvgAgentsHero';
-import { SvgAgentsHomeHero } from '@datalayer/design/lib/svg/SvgAgentsHomeHero';
-import { SvgBlogHero } from '@datalayer/design/lib/svg/SvgBlogHero';
-import { SvgCareersHero } from '@datalayer/design/lib/svg/SvgCareersHero';
-import { SvgChangelogHero } from '@datalayer/design/lib/svg/SvgChangelogHero';
-import { SvgCommunityHero } from '@datalayer/design/lib/svg/SvgCommunityHero';
-import { SvgContactHero } from '@datalayer/design/lib/svg/SvgContactHero';
-import { SvgEarthHero } from '@datalayer/design/lib/svg/SvgEarthHero';
-import { SvgEvalsHero } from '@datalayer/design/lib/svg/SvgEvalsHero';
-import { SvgEventsHero } from '@datalayer/design/lib/svg/SvgEventsHero';
-import { SvgIntegrationsHero } from '@datalayer/design/lib/svg/SvgIntegrationsHero';
-import { SvgLoginHero } from '@datalayer/design/lib/svg/SvgLoginHero';
-import { SvgPartnersHero } from '@datalayer/design/lib/svg/SvgPartnersHero';
-import { SvgPricingHero } from '@datalayer/design/lib/svg/SvgPricingHero';
-import { SvgPrivacyHero } from '@datalayer/design/lib/svg/SvgPrivacyHero';
-import { SvgResearchHero } from '@datalayer/design/lib/svg/SvgResearchHero';
-import { SvgStarsHero } from '@datalayer/design/lib/svg/SvgStarsHero';
-import { SvgTermsHero } from '@datalayer/design/lib/svg/SvgTermsHero';
-import { SvgTutorialsHero } from '@datalayer/design/lib/svg/SvgTutorialsHero';
-import { SvgUsecasesHero } from '@datalayer/design/lib/svg/SvgUsecasesHero';
 
 export type PrincipalType = 'personal' | 'organization' | 'team';
 
@@ -113,6 +35,53 @@ type AvatarComponent = ComponentType<
   }
 >;
 
+/**
+ * An avatar icon, fetched the first time it is drawn.
+ *
+ * The catalogue names sixty-five icons, and they were static imports: any page
+ * that drew a single avatar — a collaborator in a notebook, a Library card with
+ * an icon — downloaded every one of them, a 43 KiB drawing among them, and ran
+ * them before its first paint. Each entry still carries an `Icon` its callers
+ * render as before; the module behind it arrives on first render, with an empty
+ * box of the same size meanwhile, so nothing moves when it lands.
+ */
+function lazyAvatarIcon(
+  load: () => Promise<{ default: AvatarComponent }>,
+): AvatarComponent {
+  const Loaded = lazy(load);
+  function LazyAvatarIcon(props: ComponentProps<AvatarComponent>) {
+    const px = typeof props.size === 'number' ? props.size : undefined;
+    return (
+      <Suspense
+        fallback={
+          <span
+            aria-hidden="true"
+            style={{ display: 'inline-block', width: px, height: px }}
+          />
+        }
+      >
+        <Loaded {...props} />
+      </Suspense>
+    );
+  }
+  return LazyAvatarIcon;
+}
+
+/** A banner drawing, fetched the first time it is drawn, like the icons. */
+function lazyBanner(
+  load: () => Promise<{ default: ComponentType<any> }>,
+): ComponentType<any> {
+  const Loaded = lazy(load);
+  function LazyBanner(props: Record<string, unknown>) {
+    return (
+      <Suspense fallback={null}>
+        <Loaded {...props} />
+      </Suspense>
+    );
+  }
+  return LazyBanner;
+}
+
 export const PRINCIPAL_AVATAR_ICONS: ReadonlyArray<{
   name: string;
   label: string;
@@ -124,424 +93,702 @@ export const PRINCIPAL_AVATAR_ICONS: ReadonlyArray<{
     name: 'AlienMaskIcon',
     label: 'Alien mask',
     description: 'A mask of an alien face, worn for disguise.',
-    Icon: AlienMaskIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/AlienMaskIcon'),
+    ),
   },
   {
     name: 'AlienMonsterIcon',
     label: 'Alien monster',
     description: 'The pixelated alien of the arcade cabinets.',
-    Icon: AlienMonsterIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/AlienMonsterIcon'),
+    ),
   },
   {
     name: 'AstronautIcon',
     label: 'Astronaut',
     description: 'A person in a spacesuit, ready for orbit.',
-    Icon: AstronautIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/AstronautIcon'),
+    ),
   },
   {
     name: 'AtomSymbolIcon',
     label: 'Atom',
     description: 'A nucleus circled by electrons, the mark of physics.',
-    Icon: AtomSymbolIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/AtomSymbolIcon'),
+    ),
   },
   {
     name: 'BankIcon',
     label: 'Bank',
     description: 'A columned building where money is kept.',
-    Icon: BankIcon,
+    Icon: lazyAvatarIcon(() => import('@datalayer/icons-react/data2/BankIcon')),
   },
   {
     name: 'BlackNibIcon',
     label: 'Black nib',
     description: 'The nib of a fountain pen, poised to write.',
-    Icon: BlackNibIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/BlackNibIcon'),
+    ),
   },
   {
     name: 'BriefcaseIcon',
     label: 'Briefcase',
     description: 'A case for papers, carried to work.',
-    Icon: BriefcaseIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/BriefcaseIcon'),
+    ),
   },
   {
     name: 'BuildingClassicIcon',
     label: 'Classic building',
     description: 'A columned building of the classical order.',
-    Icon: BuildingClassicIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/BuildingClassicIcon'),
+    ),
   },
   {
     name: 'BuildingConstructionIcon',
     label: 'Building construction',
     description: 'A building going up, crane and all.',
-    Icon: BuildingConstructionIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/BuildingConstructionIcon'),
+    ),
   },
   {
     name: 'BuildingOfficeIcon',
     label: 'Office building',
     description: 'An office block of many identical windows.',
-    Icon: BuildingOfficeIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/BuildingOfficeIcon'),
+    ),
   },
   {
     name: 'BullseyeIcon',
     label: 'Bullseye',
     description: 'A dart in the centre of the target.',
-    Icon: BullseyeIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/BullseyeIcon'),
+    ),
   },
   {
     name: 'CloudGreyIcon',
     label: 'Cloud',
     description: 'A cloud, of the sky or of the servers.',
-    Icon: CloudGreyIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/CloudGreyIcon'),
+    ),
   },
   {
     name: 'ConstructionIcon',
     label: 'Construction',
     description: 'A striped barrier: work in progress.',
-    Icon: ConstructionIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/ConstructionIcon'),
+    ),
   },
   {
     name: 'ConstructionWorkerIcon',
     label: 'Construction worker',
     description: 'A worker in a hard hat.',
-    Icon: ConstructionWorkerIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/ConstructionWorkerIcon'),
+    ),
   },
   {
     name: 'CowboyHatFaceIcon',
     label: 'Cowboy',
     description: 'A grinning face under a cowboy hat.',
-    Icon: CowboyHatFaceIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/CowboyHatFaceIcon'),
+    ),
   },
   {
     name: 'DashboardGreyIcon',
     label: 'Dashboard',
     description: 'A gauge with its needle in the red.',
-    Icon: DashboardGreyIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data1/DashboardGreyIcon'),
+    ),
   },
   {
     name: 'DnaIcon',
     label: 'DNA',
     description: 'The double helix that carries the code of life.',
-    Icon: DnaIcon,
+    Icon: lazyAvatarIcon(() => import('@datalayer/icons-react/data2/DnaIcon')),
   },
   {
     name: 'DraftIcon',
     label: 'Draft',
     description: 'A sheet still being drawn up.',
-    Icon: DraftIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data1/DraftIcon'),
+    ),
   },
   {
     name: 'DragonFaceIcon',
     label: 'Dragon face',
     description: 'The face of a dragon, whiskers and horns.',
-    Icon: DragonFaceIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/DragonFaceIcon'),
+    ),
   },
   {
     name: 'DragonIcon',
     label: 'Dragon',
     description: 'A dragon in full, coiled and winged.',
-    Icon: DragonIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/DragonIcon'),
+    ),
   },
   {
     name: 'ElfManIcon',
     label: 'Elf',
     description: 'A pointy-eared elf of the folk tales.',
-    Icon: ElfManIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/ElfManIcon'),
+    ),
   },
   {
     name: 'FireIcon',
     label: 'Fire',
     description: 'A flame — hot, fast, or simply on fire.',
-    Icon: FireIcon,
+    Icon: lazyAvatarIcon(() => import('@datalayer/icons-react/data2/FireIcon')),
   },
   {
     name: 'FireworksIcon',
     label: 'Fireworks',
     description: 'Fireworks bursting over a night sky.',
-    Icon: FireworksIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/FireworksIcon'),
+    ),
   },
   {
     name: 'FlyingSaucerIcon',
     label: 'Flying saucer',
     description: 'A saucer from elsewhere, beam and all.',
-    Icon: FlyingSaucerIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/FlyingSaucerIcon'),
+    ),
   },
   {
     name: 'FourLeafCloverIcon',
     label: 'Four-leaf clover',
     description: 'The rare fourth leaf, for luck.',
-    Icon: FourLeafCloverIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/FourLeafCloverIcon'),
+    ),
   },
   {
     name: 'GraduationCapIcon',
     label: 'Graduation cap',
     description: 'The square cap thrown on graduation day.',
-    Icon: GraduationCapIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/GraduationCapIcon'),
+    ),
   },
   {
     name: 'GremlinIcon',
     label: 'Gremlin',
     description: 'A small mischief-maker, blamed for the bugs.',
-    Icon: GremlinIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/GremlinIcon'),
+    ),
   },
   {
     name: 'GrinningFaceIcon',
     label: 'Grinning face',
     description: 'A face grinning from ear to ear.',
-    Icon: GrinningFaceIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/GrinningFaceIcon'),
+    ),
   },
   {
     name: 'HouseIcon',
     label: 'House',
     description: 'A house with its roof and door.',
-    Icon: HouseIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/HouseIcon'),
+    ),
   },
   {
     name: 'LizardIcon',
     label: 'Lizard',
     description: 'A lizard, still and watchful.',
-    Icon: LizardIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/LizardIcon'),
+    ),
   },
   {
     name: 'MagicWandIcon',
     label: 'Magic wand',
     description: 'A wand trailing sparks.',
-    Icon: MagicWandIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/MagicWandIcon'),
+    ),
   },
   {
     name: 'ManOfficeWorkerIcon',
     label: 'Office worker',
     description: 'A worker at a desk in an office.',
-    Icon: ManOfficeWorkerIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/ManOfficeWorkerIcon'),
+    ),
   },
   {
     name: 'ManTechnologistIcon',
     label: 'Man technologist',
     description: 'A man at a laptop, writing code.',
-    Icon: ManTechnologistIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/ManTechnologistIcon'),
+    ),
   },
   {
     name: 'MusicalNoteIcon',
     label: 'Musical note',
     description: 'A single note off a stave.',
-    Icon: MusicalNoteIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/MusicalNoteIcon'),
+    ),
   },
   {
     name: 'NinjaIcon',
     label: 'Ninja',
     description: 'A masked figure, quick and unseen.',
-    Icon: NinjaIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/NinjaIcon'),
+    ),
   },
   {
     name: 'OpenHandsIcon',
     label: 'Open hands',
     description: 'Two open hands, offered or welcoming.',
-    Icon: OpenHandsIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/OpenHandsIcon'),
+    ),
   },
   {
     name: 'PenIcon',
     label: 'Pen',
     description: 'A ballpoint pen for everyday writing.',
-    Icon: PenIcon,
+    Icon: lazyAvatarIcon(() => import('@datalayer/icons-react/data2/PenIcon')),
   },
   {
     name: 'PenguinIcon',
     label: 'Penguin',
     description: 'A penguin in its black and white.',
-    Icon: PenguinIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/PenguinIcon'),
+    ),
   },
   {
     name: 'PersonSurfingIcon',
     label: 'Surfer',
     description: 'A surfer riding the face of a wave.',
-    Icon: PersonSurfingIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/PersonSurfingIcon'),
+    ),
   },
   {
     name: 'PersonSwimmingIcon',
     label: 'Swimmer',
     description: 'A swimmer mid-stroke.',
-    Icon: PersonSwimmingIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/PersonSwimmingIcon'),
+    ),
   },
   {
     name: 'PictureFramedIcon',
     label: 'Framed picture',
     description: 'A painting hung in its frame.',
-    Icon: PictureFramedIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/PictureFramedIcon'),
+    ),
   },
   {
     name: 'PictureIcon',
     label: 'Picture',
     description: 'A photograph of mountains and sun.',
-    Icon: PictureIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/PictureIcon'),
+    ),
   },
   {
     name: 'PlaneDepartureIcon',
     label: 'Plane',
     description: 'An aeroplane lifting off the runway.',
-    Icon: PlaneDepartureIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/PlaneDepartureIcon'),
+    ),
   },
   {
     name: 'RingedPlanetIcon',
     label: 'Planet',
     description: 'A planet circled by its rings.',
-    Icon: RingedPlanetIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/RingedPlanetIcon'),
+    ),
   },
   {
     name: 'RobotIcon',
     label: 'Robot',
     description: 'The square face of a robot.',
-    Icon: RobotIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/RobotIcon'),
+    ),
   },
   {
     name: 'RocketIcon',
     label: 'Rocket',
     description: 'A rocket climbing on its exhaust.',
-    Icon: RocketIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/RocketIcon'),
+    ),
   },
   {
     name: 'SantaClausIcon',
     label: 'Santa',
     description: 'Santa Claus, red hat and white beard.',
-    Icon: SantaClausIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/SantaClausIcon'),
+    ),
   },
   {
     name: 'SatelliteIcon',
     label: 'Satellite',
     description: 'A satellite with its panels spread.',
-    Icon: SatelliteIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/SatelliteIcon'),
+    ),
   },
   {
     name: 'ScientistIcon',
     label: 'Scientist',
     description: 'A scientist at the microscope.',
-    Icon: ScientistIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/ScientistIcon'),
+    ),
   },
   {
     name: 'SharkIcon',
     label: 'Shark',
     description: 'A shark, fin first.',
-    Icon: SharkIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/SharkIcon'),
+    ),
   },
   {
     name: 'SnowmanIcon',
     label: 'Snowman',
     description: 'A snowman built up in the cold.',
-    Icon: SnowmanIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/SnowmanIcon'),
+    ),
   },
   {
     name: 'SpaceInvadersAlien1Icon',
     label: 'Space invader 1',
     description: 'The first invader of the arcade fleet.',
-    Icon: SpaceInvadersAlien1Icon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/eggs/SpaceInvadersAlien1Icon'),
+    ),
   },
   {
     name: 'SpaceInvadersAlien2Icon',
     label: 'Space invader 2',
     description: 'The second invader of the arcade fleet.',
-    Icon: SpaceInvadersAlien2Icon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/eggs/SpaceInvadersAlien2Icon'),
+    ),
   },
   {
     name: 'SpaceInvadersAlien3Icon',
     label: 'Space invader 3',
     description: 'The third invader of the arcade fleet.',
-    Icon: SpaceInvadersAlien3Icon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/eggs/SpaceInvadersAlien3Icon'),
+    ),
   },
   {
     name: 'SparklerIcon',
     label: 'Sparkler',
     description: 'A hand-held sparkler throwing light.',
-    Icon: SparklerIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/SparklerIcon'),
+    ),
   },
   {
     name: 'StarIcon',
     label: 'Star',
     description: 'A five-pointed star.',
-    Icon: StarIcon,
+    Icon: lazyAvatarIcon(() => import('@datalayer/icons-react/data2/StarIcon')),
   },
   {
     name: 'StudentIcon',
     label: 'Student',
     description: 'A student with book and cap.',
-    Icon: StudentIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/StudentIcon'),
+    ),
   },
   {
     name: 'StudioMicrophoneIcon',
     label: 'Studio microphone',
     description: 'The microphone of a recording studio.',
-    Icon: StudioMicrophoneIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/StudioMicrophoneIcon'),
+    ),
   },
   {
     name: 'SunIcon',
     label: 'Sun',
     description: 'The sun at full strength.',
-    Icon: SunIcon,
+    Icon: lazyAvatarIcon(() => import('@datalayer/icons-react/data2/SunIcon')),
   },
   {
     name: 'WavingHandIcon',
     label: 'Waving hand',
     description: 'A hand raised in hello.',
-    Icon: WavingHandIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/WavingHandIcon'),
+    ),
   },
   {
     name: 'WhaleSpoutingIcon',
     label: 'Whale',
     description: 'A whale blowing a spout of water.',
-    Icon: WhaleSpoutingIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/WhaleSpoutingIcon'),
+    ),
   },
   {
     name: 'WomanTechnologistIcon',
     label: 'Woman technologist',
     description: 'A woman at a laptop, writing code.',
-    Icon: WomanTechnologistIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/WomanTechnologistIcon'),
+    ),
   },
   {
     name: 'WrappedGiftIcon',
     label: 'Wrapped gift',
     description: 'A present tied with a ribbon.',
-    Icon: WrappedGiftIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/WrappedGiftIcon'),
+    ),
   },
   {
     name: 'WritingHandIcon',
     label: 'Writing hand',
     description: 'A hand writing with a pen.',
-    Icon: WritingHandIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/WritingHandIcon'),
+    ),
   },
   {
     name: 'YinYangIcon',
     label: 'Yin yang',
     description: 'The two halves that make a whole.',
-    Icon: YinYangIcon,
+    Icon: lazyAvatarIcon(
+      () => import('@datalayer/icons-react/data2/YinYangIcon'),
+    ),
   },
 ] as const;
 
 export const PRINCIPAL_BANNERS = [
-  { name: 'SvgAboutHero', label: 'About', Component: SvgAboutHero },
-  { name: 'SvgAgentsHero', label: 'Agents', Component: SvgAgentsHero },
+  {
+    name: 'SvgAboutHero',
+    label: 'About',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgAboutHero').then(m => ({
+        default: m.SvgAboutHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgAgentsHero',
+    label: 'Agents',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgAgentsHero').then(m => ({
+        default: m.SvgAgentsHero,
+      })),
+    ),
+  },
   {
     name: 'SvgAgentsHomeHero',
     label: 'Agents home',
-    Component: SvgAgentsHomeHero,
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgAgentsHomeHero').then(m => ({
+        default: m.SvgAgentsHomeHero,
+      })),
+    ),
   },
-  { name: 'SvgBlogHero', label: 'Blog', Component: SvgBlogHero },
-  { name: 'SvgCareersHero', label: 'Careers', Component: SvgCareersHero },
-  { name: 'SvgChangelogHero', label: 'Changelog', Component: SvgChangelogHero },
-  { name: 'SvgCommunityHero', label: 'Community', Component: SvgCommunityHero },
-  { name: 'SvgContactHero', label: 'Contact', Component: SvgContactHero },
-  { name: 'SvgEarthHero', label: 'Earth', Component: SvgEarthHero },
-  { name: 'SvgEvalsHero', label: 'Evaluations', Component: SvgEvalsHero },
-  { name: 'SvgEventsHero', label: 'Events', Component: SvgEventsHero },
+  {
+    name: 'SvgBlogHero',
+    label: 'Blog',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgBlogHero').then(m => ({
+        default: m.SvgBlogHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgCareersHero',
+    label: 'Careers',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgCareersHero').then(m => ({
+        default: m.SvgCareersHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgChangelogHero',
+    label: 'Changelog',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgChangelogHero').then(m => ({
+        default: m.SvgChangelogHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgCommunityHero',
+    label: 'Community',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgCommunityHero').then(m => ({
+        default: m.SvgCommunityHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgContactHero',
+    label: 'Contact',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgContactHero').then(m => ({
+        default: m.SvgContactHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgEarthHero',
+    label: 'Earth',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgEarthHero').then(m => ({
+        default: m.SvgEarthHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgEvalsHero',
+    label: 'Evaluations',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgEvalsHero').then(m => ({
+        default: m.SvgEvalsHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgEventsHero',
+    label: 'Events',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgEventsHero').then(m => ({
+        default: m.SvgEventsHero,
+      })),
+    ),
+  },
   {
     name: 'SvgIntegrationsHero',
     label: 'Integrations',
-    Component: SvgIntegrationsHero,
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgIntegrationsHero').then(m => ({
+        default: m.SvgIntegrationsHero,
+      })),
+    ),
   },
-  { name: 'SvgLoginHero', label: 'Login', Component: SvgLoginHero },
-  { name: 'SvgPartnersHero', label: 'Partners', Component: SvgPartnersHero },
-  { name: 'SvgPricingHero', label: 'Pricing', Component: SvgPricingHero },
-  { name: 'SvgPrivacyHero', label: 'Privacy', Component: SvgPrivacyHero },
-  { name: 'SvgResearchHero', label: 'Research', Component: SvgResearchHero },
-  { name: 'SvgStarsHero', label: 'Stars', Component: SvgStarsHero },
-  { name: 'SvgTermsHero', label: 'Terms', Component: SvgTermsHero },
-  { name: 'SvgTutorialsHero', label: 'Tutorials', Component: SvgTutorialsHero },
-  { name: 'SvgUsecasesHero', label: 'Use cases', Component: SvgUsecasesHero },
+  {
+    name: 'SvgLoginHero',
+    label: 'Login',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgLoginHero').then(m => ({
+        default: m.SvgLoginHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgPartnersHero',
+    label: 'Partners',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgPartnersHero').then(m => ({
+        default: m.SvgPartnersHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgPricingHero',
+    label: 'Pricing',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgPricingHero').then(m => ({
+        default: m.SvgPricingHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgPrivacyHero',
+    label: 'Privacy',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgPrivacyHero').then(m => ({
+        default: m.SvgPrivacyHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgResearchHero',
+    label: 'Research',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgResearchHero').then(m => ({
+        default: m.SvgResearchHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgStarsHero',
+    label: 'Stars',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgStarsHero').then(m => ({
+        default: m.SvgStarsHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgTermsHero',
+    label: 'Terms',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgTermsHero').then(m => ({
+        default: m.SvgTermsHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgTutorialsHero',
+    label: 'Tutorials',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgTutorialsHero').then(m => ({
+        default: m.SvgTutorialsHero,
+      })),
+    ),
+  },
+  {
+    name: 'SvgUsecasesHero',
+    label: 'Use cases',
+    Component: lazyBanner(() =>
+      import('@datalayer/design/lib/svg/SvgUsecasesHero').then(m => ({
+        default: m.SvgUsecasesHero,
+      })),
+    ),
+  },
 ] as const;
 
 export function getPrincipalBannerForSeed(seed: string): string {
