@@ -34,6 +34,12 @@ export function hasRealAvatar(url?: string): boolean {
 export type UserAvatarProps = {
   avatarUrl?: string;
   avatarIcon?: string;
+  /**
+   * A literal emoji, checked before `avatarIcon`/`avatarUrl` — an agent's
+   * face is its emoji, not a photograph or a chosen icon standing in for
+   * one.
+   */
+  avatarEmoji?: string;
   /** Avatar edge length in pixels. Defaults to 100. */
   size?: number;
   /** Render with rounded square corners instead of a circle. Defaults to true. */
@@ -58,6 +64,7 @@ export type UserAvatarProps = {
 export const UserAvatar = ({
   avatarUrl,
   avatarIcon,
+  avatarEmoji,
   size = 100,
   square = true,
   iconSize,
@@ -77,6 +84,29 @@ export const UserAvatar = ({
   const ringSx = ring
     ? { boxShadow: '0 0 0 1px var(--borderColor-default, currentColor)' }
     : undefined;
+  if (avatarEmoji) {
+    return (
+      <Box
+        role="img"
+        aria-label={avatarEmoji}
+        className={className}
+        sx={{
+          width: size,
+          height: size,
+          borderRadius: square ? 2 : '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bg: fallbackBackground || 'canvas.default',
+          fontSize: Math.round(size * 0.5),
+          lineHeight: 1,
+          ...ringSx,
+        }}
+      >
+        {avatarEmoji}
+      </Box>
+    );
+  }
   const SelectedIcon = getPrincipalAvatarIcon(avatarIcon);
   if (SelectedIcon) {
     return (

@@ -18,6 +18,13 @@ export type PrincipalAvatarProps = {
   kind: PrincipalAvatarKind;
   avatarUrl?: string;
   avatarIcon?: string;
+  /**
+   * A literal emoji this platform draws for a face of its own — an agent —
+   * rather than a person's chosen picture or icon. Checked before
+   * `avatarUrl`/`avatarIcon`, and only for `kind: 'personal'`: an agent is a
+   * personal-shaped seat in every roster it appears in today.
+   */
+  avatarEmoji?: string;
   alt?: string;
   size?: number;
   square?: boolean;
@@ -39,6 +46,7 @@ export function PrincipalAvatar({
   kind,
   avatarUrl,
   avatarIcon,
+  avatarEmoji,
   alt,
   size = 20,
   square = false,
@@ -65,6 +73,7 @@ export function PrincipalAvatar({
       <UserAvatar
         avatarUrl={avatarUrl}
         avatarIcon={avatarIcon}
+        avatarEmoji={avatarEmoji}
         size={size}
         square={square}
         iconSize={getFallbackIconSize(size)}

@@ -32,6 +32,13 @@ export type PrincipalDetailsOverlayProps = {
   origin?: string;
   avatarUrl?: string;
   avatarIcon?: string;
+  /**
+   * A literal emoji, for a face this platform draws rather than a person's
+   * own choice of picture or icon — an agent, checked before `avatarUrl`/
+   * `avatarIcon` since the emoji is its real identity here, not a
+   * placeholder standing in for one.
+   */
+  avatarEmoji?: string;
   /** Team-specific: parent organization display name. */
   organizationName?: string;
   /** Team-specific: number of members. */
@@ -163,6 +170,7 @@ export function PrincipalDetailsCard({
   origin,
   avatarUrl,
   avatarIcon,
+  avatarEmoji,
   organizationName,
   memberCount,
   isPublic,
@@ -232,6 +240,7 @@ export function PrincipalDetailsCard({
           kind={kind}
           avatarUrl={avatarUrl}
           avatarIcon={avatarIcon}
+          avatarEmoji={avatarEmoji}
           alt={normalizedDisplayName}
           size={40}
           // The card sets the avatar on its own ground, the same colour

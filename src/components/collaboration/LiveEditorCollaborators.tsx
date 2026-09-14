@@ -35,6 +35,11 @@ export type LiveCollaborator = {
   name: string;
   avatarUrl?: string;
   avatarIcon?: string;
+  /**
+   * A literal emoji, for a face this platform draws rather than a person's
+   * own — an agent's — checked before `avatarUrl`/`avatarIcon`.
+   */
+  avatarEmoji?: string;
   /** Cursor color of the presence, worn by the initials disc. */
   color?: string;
   /** The platform uid, when the face is a real account — for its profile. */
@@ -93,6 +98,7 @@ function collaboratorOfState(
     name,
     avatarUrl: user.avatar_url || user.avatarUrl || undefined,
     avatarIcon: user.avatar_icon_s || user.avatarIcon || undefined,
+    avatarEmoji: user.avatar_emoji_s || user.avatarEmoji || undefined,
     color: user.color || undefined,
     uid: uid ? String(uid) : undefined,
     handle: user.handle || username || undefined,
@@ -119,6 +125,7 @@ function mergeCollaborators(
     handle: known.handle || incoming.handle,
     avatarUrl: known.avatarUrl || incoming.avatarUrl,
     avatarIcon: known.avatarIcon || incoming.avatarIcon,
+    avatarEmoji: known.avatarEmoji || incoming.avatarEmoji,
     color: known.color || incoming.color,
   };
 }
@@ -257,6 +264,7 @@ export function LiveEditorCollaborators(
           name={face.name}
           avatarUrl={face.avatarUrl}
           avatarIcon={face.avatarIcon}
+          avatarEmoji={face.avatarEmoji}
           onNavigate={onNavigate}
         >
           <PrincipalAvatar
@@ -265,6 +273,7 @@ export function LiveEditorCollaborators(
             alt={face.name}
             avatarUrl={face.avatarUrl}
             avatarIcon={face.avatarIcon}
+            avatarEmoji={face.avatarEmoji}
             square={false}
           />
         </PrincipalHoverCard>
