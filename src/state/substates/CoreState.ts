@@ -27,7 +27,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   libraryUrl: 'https://prod1.datalayer.run',
   spacerUrl: 'https://prod1.datalayer.run',
   aiAgentsUrl: 'https://prod1.datalayer.run',
-  aiInferenceUrl: 'https://prod1.datalayer.run',
+  aiInferenceUrl: 'https://r1.datalayer.run',
   jupyterMcpServerUrl: 'https://mcp.datalayer.run/mcp',
   otelUrl: 'https://prod1.datalayer.run',
   // Defaults to prod so telemetry is consumed from the production OTEL service
