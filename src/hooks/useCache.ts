@@ -1465,6 +1465,47 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
     };
   };
 
+  /**
+   * A published environment version as a library artifact (PLAN_ENV E2-16).
+   *
+   * Keyed on the version uid, so one published version is one card, and read
+   * from the publication's immutable snapshot: its name, title, README (the
+   * description), the licenses its SBOM names (the tags), its size class and
+   * the variants it was built for. Republishing mints a new version — and a
+   * new card — rather than moving this one.
+   */
+  const toEnvironmentArtifact = (raw: any): any => {
+    const owner = toItemOwner(raw);
+    const numberOrUndefined = (value: any): number | undefined => {
+      if (value === null || value === undefined || value === '') {
+        return undefined;
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    };
+    return {
+      id: raw.uid,
+      type: 'environment',
+      name: raw.name_t,
+      title: raw.title_t || undefined,
+      description: raw.description_t,
+      tags: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      licenses: Array.isArray(raw.tags_ss) ? raw.tags_ss : [],
+      public: raw.is_public_b ?? true,
+      environmentUid: raw.environment_uid_s || undefined,
+      sizeClass: raw.size_class_s || undefined,
+      variants: Array.isArray(raw.variants_ss) ? raw.variants_ss : [],
+      versionNumber: numberOrUndefined(raw.version_number_i),
+      creationDate: raw.creation_ts_dt
+        ? new Date(raw.creation_ts_dt)
+        : undefined,
+      lastUpdateDate: raw.source_update_ts_dt
+        ? new Date(raw.source_update_ts_dt)
+        : undefined,
+      owner,
+    };
+  };
+
   const toItem = (item: any): any => {
     if (!item.type_s) {
       console.error('No type_s found on item', item);
@@ -1532,6 +1573,8 @@ export const useCache = ({ loginRoute = '/login' }: CacheProps = {}) => {
         return toNotebook(item);
       case 'evalset':
         return toEvalset(item);
+      case 'environment':
+        return toEnvironmentArtifact(item);
       case 'dataset':
         return toDataset(item);
       case 'agent':
