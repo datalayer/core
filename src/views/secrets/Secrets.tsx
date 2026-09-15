@@ -76,7 +76,21 @@ const SecretsTable = () => {
   );
 };
 
-export const Secrets = () => {
+export type SecretsProps = {
+  /**
+   * Where the "New Secret" button goes.
+   *
+   * A prop because the same list is mounted at more than one base: the web
+   * application serves it under the settings, a JupyterLab extension under its
+   * own route. Hardcoding one of those sent the other somewhere that does not
+   * exist.
+   */
+  newSecretRoute?: string;
+};
+
+export const Secrets = ({
+  newSecretRoute = '/settings/secrets/new',
+}: SecretsProps = {}) => {
   const navigate = useNavigate();
   return (
     <PageLayout
@@ -93,7 +107,7 @@ export const Secrets = () => {
             <Button
               size="small"
               variant="primary"
-              onClick={e => navigate('/secrets/new', e)}
+              onClick={e => navigate(newSecretRoute, e)}
             >
               New secret
             </Button>

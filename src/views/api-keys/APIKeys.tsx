@@ -103,6 +103,33 @@ const APIKeysTable = ({
       },
     });
   };
+  /** Where one API key is read, from wherever this table is drawn. */
+  const routeOf = (id: string) =>
+    apiKeysListRoute ? `${apiKeysListRoute}/${id}` : `${id}`;
+
+  /*
+   * A row opens the key it stands for.
+   *
+   * The click is caught on the way up rather than bound to each row: the
+   * table is drawn by `DataTable`, which owns its rows and takes no handler
+   * for them. So the row says which key it is — the name cell carries it —
+   * and this reads it back off whatever was clicked. Reading it from the row
+   * itself rather than from a position is what survives sorting.
+   */
+  const openClickedRow = (event: React.MouseEvent<HTMLElement>) => {
+    const clicked = event.target as HTMLElement;
+    // Something that already does something on click is not a row click.
+    if (clicked.closest('button, a, input, [role="menuitem"]')) {
+      return;
+    }
+    const id = clicked
+      .closest('tr')
+      ?.querySelector<HTMLElement>('[data-api-key]')?.dataset.apiKey;
+    if (id) {
+      navigate(routeOf(id));
+    }
+  };
+
   return apiKeys.length === 0 ? (
     <Blankslate border spacious>
       {showInitialSpinner ? (
@@ -127,7 +154,13 @@ const APIKeysTable = ({
     </Blankslate>
   ) : (
     <>
-      <Table.Container>
+      <Table.Container
+        onClick={openClickedRow}
+        sx={{
+          '& tbody tr': { cursor: 'pointer' },
+          '& tbody tr:hover': { bg: 'canvas.subtle' },
+        }}
+      >
         {showTitle && (
           <>
             <Table.Title as="h2" id="api-keys">
@@ -152,6 +185,11 @@ const APIKeysTable = ({
               header: 'Name',
               field: 'name',
               rowHeader: true,
+              renderCell: apiKey => (
+                <Box as="span" data-api-key={apiKey.id}>
+                  {apiKey.name}
+                </Box>
+              ),
             },
             {
               header: 'Description',
@@ -174,14 +212,7 @@ const APIKeysTable = ({
                     aria-label="Edit"
                     size="small"
                     variant="invisible"
-                    onClick={e =>
-                      navigate(
-                        apiKeysListRoute
-                          ? `${apiKeysListRoute}/${apiKey.id}`
-                          : `${apiKey.id}`,
-                        e,
-                      )
-                    }
+                    onClick={e => navigate(routeOf(apiKey.id), e)}
                   />
                   <IconButton
                     ref={returnFocusRef}

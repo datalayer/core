@@ -3,6 +3,7 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
+import type { JSX } from 'react';
 import type { IMarkdownParser, IRenderMime } from '@jupyterlab/rendermime';
 import { useEffect, useState } from 'react';
 

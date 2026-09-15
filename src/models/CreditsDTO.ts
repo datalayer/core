@@ -9,6 +9,7 @@
  * @module models/CreditsDTO
  */
 
+import { isSandboxUid } from '../api/contents/sandboxUid';
 import { validateJSON } from '../api/utils/validation';
 
 /**
@@ -35,7 +36,7 @@ export interface CreditReservation {
   resource: string;
   /** Last update timestamp */
   last_update: string;
-  /** Burning rate (credits per hour) for this reservation */
+  /** Burning rate (credits per second) for this reservation */
   burning_rate: number;
   /** Start date of the reservation */
   start_date: string;
@@ -121,10 +122,13 @@ export class CreditsDTO {
   }
 
   /**
-   * Get runtime reservations (reservations that start with 'runtime-').
+   * Get runtime reservations: the ones held for a runtime, which a
+   * reservation names by the runtime's uid.
    */
   get runtimeReservations(): CreditReservation[] {
-    return this._reservations.filter(r => r.id.startsWith('runtime-'));
+    return this._reservations.filter(
+      r => isSandboxUid(r.resource) || isSandboxUid(r.id),
+    );
   }
 
   /**
@@ -137,7 +141,7 @@ export class CreditsDTO {
   /**
    * Calculate maximum runtime in minutes based on environment burning rate.
    *
-   * @param burningRate - Credits consumed per hour
+   * @param burningRate - Credits consumed per second
    * @returns Maximum runtime in minutes
    */
   calculateMaxRuntimeMinutes(burningRate: number): number {
@@ -150,7 +154,7 @@ export class CreditsDTO {
    * Calculate credits needed for runtime duration.
    *
    * @param minutes - Runtime duration in minutes
-   * @param burningRate - Credits consumed per hour
+   * @param burningRate - Credits consumed per second
    * @returns Credits needed
    */
   calculateCreditsFromMinutes(minutes: number, burningRate: number): number {
@@ -162,7 +166,7 @@ export class CreditsDTO {
    * Check if user has enough credits for runtime.
    *
    * @param minutes - Runtime duration in minutes
-   * @param burningRate - Credits consumed per hour
+   * @param burningRate - Credits consumed per second
    * @returns True if user has enough credits
    */
   hasEnoughCreditsForRuntime(minutes: number, burningRate: number): boolean {

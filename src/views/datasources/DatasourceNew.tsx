@@ -3,12 +3,24 @@
  * Distributed under the terms of the Modified BSD License.
  */
 
-import { useEffect, useState } from 'react';
-import { ReactNode } from 'react';
+/*
+ * Copyright (c) 2023-2026 Datalayer, Inc.
+ * Distributed under the terms of the Modified BSD License.
+ */
+
+import {
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
 import {
   PageLayout,
   FormControl,
   Button,
+  Checkbox,
+  CheckboxGroup,
   TextInput,
   Text,
   Heading,
@@ -18,173 +30,175 @@ import {
   Link,
 } from '@primer/react';
 import { Box } from '@datalayer/primer-addons';
-import { useCache, useNavigate, useToast } from '../../hooks';
-import { IDatasourceVariant } from '../../models';
-import { useRunStore } from '../../state';
-
-interface FormData {
-  variant: IDatasourceVariant;
-  database?: string;
-  outputBucket?: string;
-  name?: string;
-  description?: string;
-}
-
-interface ValidationData {
-  variant?: boolean;
-  database?: boolean;
-  outputBucket?: boolean;
-  name?: boolean;
-  description?: boolean;
-}
+import {
+  DATASOURCE_CONNECTOR_LABELS,
+  DATASOURCE_OPERATIONS,
+  type DataServerConfiguration,
+  type CreatableDatasourceConnectorType,
+  type DatasourceOperation,
+} from '../../api/contents';
+import {
+  useCache,
+  useContentSources,
+  useCreateContentSource,
+  useNavigate,
+  useToast,
+} from '../../hooks';
 
 export type DatasourceNewProps = {
-  /** Route to navigate after creating a datasource. Defaults to '/settings/integrations/datasources'. */
+  /** Where the created Datasource is opened, as `${route}/${uid}`. Defaults to '/datasources'. */
   datasourcesListRoute?: string;
-  /** Route to navigate to the secrets page. Defaults to '/settings/iam/secrets'. */
+  /** Route to navigate to the secrets page. Defaults to '/secrets'. */
   secretsRoute?: string;
-  /** Optional principal uid used to scope datasource creation. */
-  principalUid?: string;
-  /** Optional principal kind used to scope datasource creation. */
-  principalKind?: 'personal' | 'organization' | 'team';
+  /** The Space the Datasource belongs to, when created from one. */
+  spaceUid?: string;
   /** Optional contextual principal summary rendered below the page intro. */
   accountPrincipal?: ReactNode;
 };
 
+const CONNECTORS: ReadonlyArray<CreatableDatasourceConnectorType> = [
+  'athena',
+  'bigquery',
+  'sql',
+];
+
+/** What the connector needs to be told, and what the field is called. */
+const TARGET_LABELS: Record<
+  CreatableDatasourceConnectorType,
+  { endpoint: string; target: string; hint: string }
+> = {
+  athena: {
+    endpoint: 'Region or workgroup endpoint',
+    target: 'Database',
+    hint: 'The Glue database queries run in. The Secret holds the AWS key pair and the output bucket.',
+  },
+  bigquery: {
+    endpoint: 'Endpoint',
+    target: 'Project',
+    hint: 'The Google Cloud project billed for the queries. The Secret holds the service account.',
+  },
+  sql: {
+    endpoint: 'Endpoint',
+    target: 'Database',
+    hint: 'host:port of the server and the database to open. The Secret holds the user and password.',
+  },
+};
+
+/**
+ * Connect a Datasource: a `kind=datasource` content source.
+ *
+ * Everything but the credential lives in Contents. The credential is a
+ * Secret reference — IAM is consulted here only to list the Secrets to pick
+ * from — and a source routed through a Dataserver needs none, because the
+ * gateway holds the credential in the network the database lives in.
+ */
 export const DatasourceNew = ({
-  datasourcesListRoute = '/settings/integrations/datasources',
-  secretsRoute = '/settings/iam/secrets',
-  principalUid,
-  principalKind,
+  datasourcesListRoute = '/datasources',
+  secretsRoute = '/secrets',
+  spaceUid,
   accountPrincipal,
 }: DatasourceNewProps = {}) => {
-  const runStore = useRunStore();
-  const { useCreateDatasource } = useCache();
-
-  const createDatasourceMutation = useCreateDatasource({
-    principalUid,
-    principalKind,
-  });
-
   const navigate = useNavigate();
   const { enqueueToast } = useToast();
-  const [formValues, setFormValues] = useState<FormData>({
-    variant: 'athena',
-    database: undefined,
-    outputBucket: undefined,
-    name: undefined,
-    description: undefined,
-  });
-  const [validationResult, setValidationResult] = useState<ValidationData>({
-    variant: undefined,
-    database: undefined,
-    outputBucket: undefined,
-    name: undefined,
-    description: undefined,
-  });
-  const valueVariantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormValues(prevFormValues => ({
-      ...prevFormValues,
-      variant: event.target.value as IDatasourceVariant,
-    }));
+  const createSource = useCreateContentSource();
+  const { useSecrets } = useCache();
+  const secrets = useSecrets();
+  const dataservers = useContentSources({ kind: 'data-server' });
+  const idempotencyKey = useRef(`contents-datasource-${crypto.randomUUID()}`);
+
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [connectorType, setConnectorType] =
+    useState<CreatableDatasourceConnectorType>('bigquery');
+  const [endpoint, setEndpoint] = useState('');
+  const [target, setTarget] = useState('');
+  const [route, setRoute] = useState<'direct' | 'dataserver'>('direct');
+  const [credentialUid, setCredentialUid] = useState('');
+  const [dataServerUid, setDataServerUid] = useState('');
+  const [operations, setOperations] = useState<DatasourceOperation[]>([
+    'select',
+    'describe',
+    'list',
+  ]);
+  const [rowLimit, setRowLimit] = useState('10000');
+  const [maxBytes, setMaxBytes] = useState('');
+  const [maxSeconds, setMaxSeconds] = useState('60');
+
+  const labels = TARGET_LABELS[connectorType];
+  const dataserverOptions = useMemo(
+    () =>
+      (dataservers.data?.items ?? []).map(item => {
+        const configuration = item.source
+          .configuration as DataServerConfiguration;
+        return {
+          uid: item.source.uid,
+          name: item.source.name,
+          state:
+            configuration.state ??
+            (configuration.lastHeartbeatAt ? 'ready' : 'registering'),
+        };
+      }),
+    [dataservers.data],
+  );
+  const numberOrUndefined = (value: string): number | undefined => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
   };
-  const valueDatabaseChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormValues(prevFormValues => ({
-      ...prevFormValues,
-      database: event.target.value,
-    }));
-  };
-  const valueOutputBucketChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setFormValues(prevFormValues => ({
-      ...prevFormValues,
-      outputBucket: event.target.value,
-    }));
-  };
-  const valueNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormValues(prevFormValues => ({
-      ...prevFormValues,
-      name: event.target.value,
-    }));
-  };
-  const valueDescriptionChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    setFormValues(prevFormValues => ({
-      ...prevFormValues,
-      description: event.target.value,
-    }));
-  };
-  useEffect(() => {
-    setValidationResult(prev => ({
-      ...prev,
-      name:
-        formValues.name === undefined
-          ? undefined
-          : formValues.name.length > 2
-            ? true
-            : false,
-      description:
-        formValues.description === undefined
-          ? undefined
-          : formValues.description.length > 2
-            ? true
-            : false,
-      database:
-        formValues.variant !== 'athena'
-          ? true
-          : formValues.database === undefined
-            ? undefined
-            : formValues.database.length > 0
-              ? true
-              : false,
-      outputBucket:
-        formValues.variant !== 'athena'
-          ? true
-          : formValues.outputBucket === undefined
-            ? undefined
-            : formValues.outputBucket.length > 0
-              ? true
-              : false,
-    }));
-  }, [formValues]);
-  const submitCreate = () => {
-    if (!formValues.name || !formValues.description) {
+  const nameValid = name.trim().length > 2;
+  const credentialValid =
+    route === 'dataserver' ? Boolean(dataServerUid) : Boolean(credentialUid);
+  const canSubmit =
+    nameValid &&
+    credentialValid &&
+    operations.length > 0 &&
+    !createSource.isPending;
+
+  const toggleOperation = (operation: DatasourceOperation, checked: boolean) =>
+    setOperations(current =>
+      checked
+        ? DATASOURCE_OPERATIONS.filter(
+            item => item === operation || current.includes(item),
+          )
+        : current.filter(item => item !== operation),
+    );
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!canSubmit) {
       return;
     }
-    runStore.layout().showBackdrop('Creating an datasource...');
-    createDatasourceMutation.mutate(
-      {
-        name: formValues.name,
-        variant: formValues.variant,
-        database: formValues.database ?? '',
-        outputBucket: formValues.outputBucket ?? '',
-        description: formValues.description,
-      },
-      {
-        onSuccess: (resp: unknown) => {
-          if (
-            typeof resp === 'object' &&
-            resp !== null &&
-            'success' in resp &&
-            (resp as { success: boolean }).success
-          ) {
-            const message =
-              'message' in resp &&
-              typeof (resp as { message?: unknown }).message === 'string'
-                ? (resp as { message: string }).message
-                : 'Datasource created.';
-            enqueueToast(message, { variant: 'success' });
-            navigate(datasourcesListRoute);
-          }
+    try {
+      const created = await createSource.mutateAsync({
+        source: {
+          name: name.trim(),
+          description: description.trim() || null,
+          spaceUid,
+          kind: 'datasource',
+          capabilities: ['query'],
+          credentialUid: route === 'direct' ? credentialUid : null,
+          configuration: {
+            kind: 'datasource',
+            connectorType,
+            endpoint: endpoint.trim() || null,
+            databaseOrProject: target.trim() || null,
+            credentialUid: route === 'direct' ? credentialUid : null,
+            networkRoute: route,
+            dataServerUid: route === 'dataserver' ? dataServerUid : null,
+            allowedOperations: operations,
+            defaultRowLimit: numberOrUndefined(rowLimit),
+            maxBytes: numberOrUndefined(maxBytes),
+            maxSeconds: numberOrUndefined(maxSeconds),
+          },
         },
-        onSettled: () => {
-          runStore.layout().hideBackdrop();
-        },
-      },
-    );
+        idempotencyKey: idempotencyKey.current,
+      });
+      enqueueToast('Datasource connected.', { variant: 'success' });
+      navigate(`${datasourcesListRoute}/${created.value.source.uid}`);
+    } catch {
+      // The error is shown under the form; the idempotency key makes a retry safe.
+    }
   };
+
   return (
     <PageLayout
       containerWidth="full"
@@ -195,196 +209,224 @@ export const DatasourceNew = ({
         <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
           <Box sx={{ mb: 4 }}>
             <Heading as="h2" sx={{ fontSize: 3, mb: 1 }}>
-              New Datasource
+              Connect a Datasource
             </Heading>
             <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
-              Create a datasource and configure required secrets for the selected provider.
+              A database, warehouse or query service your notebooks and agents
+              query through Datalayer. The credential stays in Vault; a query
+              receives a short-lived, scoped connection.
             </Text>
             {accountPrincipal && <Box sx={{ mt: 2 }}>{accountPrincipal}</Box>}
           </Box>
-          <Flash variant="warning" sx={{ mb: 3 }}>
-            {formValues.variant === 'athena' && (
-              <Text>
-                For{' '}
-                <Link href="https://aws.amazon.com/athena">Amazon Athena</Link>,{' '}
-                ensure the following{' '}
-                <Link
-                  href="javascript: return false;"
-                  onClick={e => navigate(secretsRoute, e)}
-                >
-                  Secrets
-                </Link>{' '}
-                are available:{'  '}
-                <Text as="code">AWS_SECRET_ACCESS_KEY</Text>
-                {'  '}
-                <Text as="code">AWS_ACCESS_KEY_ID</Text>
-                {'  '}
-                <Text as="code">AWS_DEFAULT_REGION</Text>
-              </Text>
-            )}
-            {formValues.variant === 'bigquery' && (
-              <Text>
-                For{' '}
-                <Link href="https://cloud.google.com/bigquery">
-                  Google Big Query
-                </Link>
-                , ensure the following{' '}
-                <Link
-                  href="javascript: return false;"
-                  onClick={e => navigate(secretsRoute, e)}
-                >
-                  Secret
-                </Link>{' '}
-                is available:{'  '}
-                <Text as="code">GOOGLE_APPLICATION_CREDENTIALS</Text>
-              </Text>
-            )}
-            {formValues.variant === 'mssentinel' && (
-              <Text>
-                For{' '}
-                <Link href="https://learn.microsoft.com/en-us/azure/sentinel/overview?tabs=defender-portaly">
-                  Microsoft Sentinel
-                </Link>
-                , ensure the following{' '}
-                <Link
-                  href="javascript: return false;"
-                  onClick={e => navigate(secretsRoute, e)}
-                >
-                  Secret
-                </Link>{' '}
-                is available:{'  '}
-                <Text as="code">AZURE_TENANT_ID</Text>
-                {` `}
-                <Text as="code">AZURE_CLIENT_ID</Text>
-                {` `}
-                <Text as="code">AZURE_CLIENT_SECRET</Text>
-                {` `}
-                <Text as="code">AZURE_SUBSCRIPTION_ID</Text>
-                {` `}
-                <Text as="code">AZURE_RESOURCE_GROUP</Text>
-                {` `}
-                <Text as="code">MSSENTINEL_WORKSPACE_ID</Text>
-                {` `}
-                <Text as="code">MSSENTINEL_WORKSPACE_NAME</Text>
-              </Text>
-            )}
-            {formValues.variant === 'splunk' && (
-              <Text>
-                For <Link href="https://www.splunk.com/">Splunk</Link>, ensure
-                the following{' '}
-                <Link
-                  href="javascript: return false;"
-                  onClick={e => navigate(secretsRoute, e)}
-                >
-                  Secret
-                </Link>{' '}
-                is available:{'  '}
-                <Text as="code">SPLUNK_HOST</Text>
-                {` `}
-                <Text as="code">SPLUNK_PORT</Text>
-                {` `}
-                <Text as="code">SPLUNK_USERNAME</Text>
-                {` `}
-                <Text as="code">SPLUNK_PASSWORD</Text>
-              </Text>
-            )}
-          </Flash>
-          <Box sx={{ label: { marginTop: 2 } }}>
+          <Box as="form" onSubmit={submit} sx={{ display: 'grid', gap: 3 }}>
             <FormControl required>
-              <FormControl.Label>Datasource type</FormControl.Label>
+              <FormControl.Label>Connector</FormControl.Label>
               <Select
-                name="type"
-                value={formValues.variant}
-                onChange={valueVariantChange}
+                value={connectorType}
+                onChange={event =>
+                  setConnectorType(
+                    event.target.value as CreatableDatasourceConnectorType,
+                  )
+                }
               >
-                <Select.Option value="athena">Amazon Athena</Select.Option>
-                <Select.Option value="bigquery">Google BigQuery</Select.Option>
-                <Select.Option value="mssentinel">
-                  Microsoft Sentinel
-                </Select.Option>
-                <Select.Option value="splunk">Splunk</Select.Option>
+                {CONNECTORS.map(connector => (
+                  <Select.Option key={connector} value={connector}>
+                    {DATASOURCE_CONNECTOR_LABELS[connector]}
+                  </Select.Option>
+                ))}
               </Select>
-              <FormControl.Caption>
-                Pick the most appropriate datasource type.
-              </FormControl.Caption>
+              <FormControl.Caption>{labels.hint}</FormControl.Caption>
             </FormControl>
             <FormControl required>
               <FormControl.Label>Name</FormControl.Label>
               <TextInput
                 block
-                value={formValues.name}
-                onChange={valueNameChange}
+                value={name}
+                onChange={event => setName(event.target.value)}
                 autoFocus
               />
-              <FormControl.Caption>
-                Hint: The datasource name is a short name that identifies in a
-                unique way your datasource.
-              </FormControl.Caption>
-              {validationResult.name === false && (
+              {name.length > 0 && !nameValid && (
                 <FormControl.Validation variant="error">
-                  Name length must be between 2 and 32 characters.
+                  Name must have more than 2 characters.
                 </FormControl.Validation>
               )}
             </FormControl>
-            {formValues.variant === 'athena' && (
-              <>
-                <FormControl required>
-                  <FormControl.Label>Database</FormControl.Label>
-                  <TextInput
-                    block
-                    value={formValues.database}
-                    onChange={valueDatabaseChange}
-                  />
-                  {validationResult.database === false && (
-                    <FormControl.Validation variant="error">
-                      Database must have more than 1.
-                    </FormControl.Validation>
-                  )}
-                </FormControl>
-                <FormControl required>
-                  <FormControl.Label>Output Bucket</FormControl.Label>
-                  <TextInput
-                    block
-                    value={formValues.outputBucket}
-                    onChange={valueOutputBucketChange}
-                  />
-                  {validationResult.database === false && (
-                    <FormControl.Validation variant="error">
-                      Output bucket must have more than 1.
-                    </FormControl.Validation>
-                  )}
-                </FormControl>
-              </>
-            )}
-            <FormControl required>
+            <FormControl>
               <FormControl.Label>Description</FormControl.Label>
               <Textarea
                 block
-                value={formValues.description}
-                onChange={valueDescriptionChange}
+                value={description}
+                onChange={event => setDescription(event.target.value)}
               />
-              {validationResult.description === false && (
-                <FormControl.Validation variant="error">
-                  Description must have more than 2 characters.
-                </FormControl.Validation>
-              )}
             </FormControl>
-            <Button
-              variant="primary"
-              disabled={
-                !validationResult.database ||
-                !validationResult.outputBucket ||
-                !validationResult.name ||
-                !validationResult.description
-              }
-              sx={{ marginTop: 2 }}
-              onClick={e => {
-                e.preventDefault();
-                submitCreate();
+            <FormControl>
+              <FormControl.Label>{labels.endpoint}</FormControl.Label>
+              <TextInput
+                block
+                monospace
+                value={endpoint}
+                placeholder={
+                  connectorType === 'sql' ? 'warehouse.internal:5432' : ''
+                }
+                onChange={event => setEndpoint(event.target.value)}
+              />
+            </FormControl>
+            <FormControl>
+              <FormControl.Label>{labels.target}</FormControl.Label>
+              <TextInput
+                block
+                monospace
+                value={target}
+                onChange={event => setTarget(event.target.value)}
+              />
+            </FormControl>
+            <FormControl required>
+              <FormControl.Label>Network route</FormControl.Label>
+              <Select
+                value={route}
+                onChange={event =>
+                  setRoute(event.target.value as 'direct' | 'dataserver')
+                }
+              >
+                <Select.Option value="direct">
+                  Direct — Datalayer reaches the endpoint
+                </Select.Option>
+                <Select.Option value="dataserver">
+                  Through a Dataserver in your network
+                </Select.Option>
+              </Select>
+              <FormControl.Caption>
+                A private endpoint is reached through a Dataserver, which holds
+                the credential in the network the database lives in.
+              </FormControl.Caption>
+            </FormControl>
+            {route === 'direct' ? (
+              <FormControl required>
+                <FormControl.Label>Credential</FormControl.Label>
+                <Select
+                  value={credentialUid}
+                  onChange={event => setCredentialUid(event.target.value)}
+                >
+                  <Select.Option value="">Choose a Secret…</Select.Option>
+                  {(
+                    (secrets.data as
+                      Array<{ id: string; name: string }> | undefined) ?? []
+                  ).map(secret => (
+                    <Select.Option key={secret.id} value={secret.id}>
+                      {secret.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+                <FormControl.Caption>
+                  Held in Vault and resolved server-side for each query; never
+                  handed to notebook code. Add one under{' '}
+                  <Link
+                    href={secretsRoute}
+                    onClick={event => {
+                      event.preventDefault();
+                      navigate(secretsRoute, event);
+                    }}
+                  >
+                    Secrets
+                  </Link>
+                  .
+                </FormControl.Caption>
+              </FormControl>
+            ) : (
+              <FormControl required>
+                <FormControl.Label>Dataserver</FormControl.Label>
+                <Select
+                  value={dataServerUid}
+                  onChange={event => setDataServerUid(event.target.value)}
+                >
+                  <Select.Option value="">Choose a Dataserver…</Select.Option>
+                  {dataserverOptions.map(option => (
+                    <Select.Option key={option.uid} value={option.uid}>
+                      {option.name} ({option.state})
+                    </Select.Option>
+                  ))}
+                </Select>
+                <FormControl.Caption>
+                  {dataserverOptions.length === 0
+                    ? 'No Dataserver is registered yet; register one under Dataservers first.'
+                    : 'The gateway that reaches the endpoint. Contents routes to it only while it is online.'}
+                </FormControl.Caption>
+              </FormControl>
+            )}
+            <CheckboxGroup>
+              <CheckboxGroup.Label>Allowed operations</CheckboxGroup.Label>
+              {DATASOURCE_OPERATIONS.map(operation => (
+                <FormControl key={operation}>
+                  <Checkbox
+                    value={operation}
+                    checked={operations.includes(operation)}
+                    onChange={event =>
+                      toggleOperation(operation, event.target.checked)
+                    }
+                  />
+                  <FormControl.Label sx={{ textTransform: 'capitalize' }}>
+                    {operation}
+                  </FormControl.Label>
+                </FormControl>
+              ))}
+              <CheckboxGroup.Caption>
+                The service refuses any statement outside this list before a
+                query exists. Writes are never allowed through a Datasource.
+              </CheckboxGroup.Caption>
+            </CheckboxGroup>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: ['1fr', 'repeat(3, minmax(0, 1fr))'],
+                gap: 3,
               }}
             >
-              Create a datasource
-            </Button>
+              <FormControl>
+                <FormControl.Label>Default row limit</FormControl.Label>
+                <TextInput
+                  block
+                  type="number"
+                  min={1}
+                  value={rowLimit}
+                  onChange={event => setRowLimit(event.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormControl.Label>Max bytes</FormControl.Label>
+                <TextInput
+                  block
+                  type="number"
+                  min={1}
+                  value={maxBytes}
+                  placeholder="Unlimited"
+                  onChange={event => setMaxBytes(event.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormControl.Label>Max seconds</FormControl.Label>
+                <TextInput
+                  block
+                  type="number"
+                  min={1}
+                  value={maxSeconds}
+                  onChange={event => setMaxSeconds(event.target.value)}
+                />
+              </FormControl>
+            </Box>
+            {createSource.isError && (
+              <Flash variant="danger">{createSource.error.message}</Flash>
+            )}
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                type="button"
+                onClick={event => navigate(datasourcesListRoute, event)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" disabled={!canSubmit}>
+                {createSource.isPending ? 'Connecting…' : 'Connect Datasource'}
+              </Button>
+            </Box>
           </Box>
         </Box>
       </PageLayout.Content>

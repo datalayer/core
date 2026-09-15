@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { DatalayerClient } from '../../index';
+import { DatalayerCoreClient } from '../../index';
 
 describe('ensureRuntime', () => {
-  it('should create DatalayerClient', () => {
-    const client = new DatalayerClient({ token: 'mock-token' });
-    expect(client).toBeInstanceOf(DatalayerClient);
+  it('should create DatalayerCoreClient', () => {
+    const client = new DatalayerCoreClient({ token: 'mock-token' });
+    expect(client).toBeInstanceOf(DatalayerCoreClient);
   });
 });

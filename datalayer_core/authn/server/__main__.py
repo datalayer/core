@@ -9,23 +9,23 @@ import logging
 from typing import Optional
 
 from datalayer_core.authn.server.http_server import get_token
-from datalayer_core.utils.urls import DEFAULT_DATALAYER_URL
+from datalayer_core.utils.urls import DEFAULT_DATALAYER_IAM_URL
 
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
 
-DATALAYER_URL = DEFAULT_DATALAYER_URL
+IAM_URL = DEFAULT_DATALAYER_IAM_URL
 
 
 if __name__ == "__main__":
     from sys import argv
 
     if len(argv) == 2:
-        ans = get_token(DATALAYER_URL, port=int(argv[1]))
+        ans = get_token(IAM_URL, port=int(argv[1]))
     else:
-        ans = get_token(DATALAYER_URL)
+        ans = get_token(IAM_URL)
 
     handle: Optional[str] = None
     token: Optional[str] = None

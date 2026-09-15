@@ -76,7 +76,7 @@ def _otel_base_url(url: str | None) -> str:
     return (
         url
         or os.environ.get("DATALAYER_OTEL_RUN_URL")
-        or os.environ.get("DATALAYER_URL", "https://prod1.datalayer.run")
+        or os.environ.get("DATALAYER_OTEL_URL", "https://prod1.datalayer.run")
     )
 
 
@@ -98,7 +98,7 @@ def traces(
         None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -167,7 +167,7 @@ def metrics(
         None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -243,7 +243,7 @@ def tokens(
         False, "--raw", help="Output raw JSON instead of a table."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -281,7 +281,9 @@ def tokens(
         f"SUM(CASE WHEN metric_name = '{_COMPLETION_TOKENS_METRIC}' "
         "THEN COALESCE(value_int, value_double, 0) ELSE 0 END) AS completion_tokens, "
         "COUNT(*) AS sample_count "
-        f"FROM metrics WHERE {where_clause}"
+        # The metric names are module constants, the service name is escaped
+        # above, and this endpoint takes SQL as its payload by design.
+        f"FROM metrics WHERE {where_clause}"  # nosec B608
     )
 
     endpoint = "/api/otel/v1/query/" if scoped else "/api/otel/v1/system/sql"
@@ -347,7 +349,7 @@ def logs(
         None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -409,7 +411,7 @@ def query(
         False, "--raw", help="Output raw JSON instead of a table."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -463,7 +465,7 @@ def admin_sql(
         False, "--raw", help="Output raw JSON instead of a table."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -513,7 +515,7 @@ def stats(
         None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -547,7 +549,7 @@ def list_services(
         None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -558,7 +560,7 @@ def list_services(
     url = _otel_base_url(base_url)
     headers = _auth_headers(token)
     resp = httpx.get(
-        f"{url}/api/otel/v1/traces/services/list/",
+        f"{url}/api/otel/v1/traces/services/list",
         headers=headers,
         timeout=15,
         follow_redirects=True,
@@ -588,7 +590,7 @@ def flush(
         None, "--otel-url", help="OTEL service run URL."
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -631,7 +633,7 @@ def smoke_test(
         help="Seconds to wait for data to be ingested before querying.",
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -1093,7 +1095,7 @@ def load_test(
         help="Number of iterations to run (0 = unlimited, stop with Ctrl+C).",
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
 ) -> None:
     """
@@ -1329,7 +1331,7 @@ def logfire_test(
         help="Service name for the test data.",
     ),
     token: Optional[str] = typer.Option(
-        None, "--api-key", "-t", help="Auth token (or set DATALAYER_API_KEY)."
+        None, "--api-key", "-t", help="API key (or set DATALAYER_API_KEY)."
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Enable verbose logfire console output."
@@ -1524,7 +1526,7 @@ def system(
         None,
         "--api-key",
         "-t",
-        help="Auth token (or set DATALAYER_API_KEY). Must have platform_admin role.",
+        help="API key (or set DATALAYER_API_KEY). Must have platform_admin role.",
     ),
     json_output: bool = typer.Option(False, "--json", help="Output raw JSON."),
 ) -> None:

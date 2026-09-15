@@ -5,8 +5,8 @@
 
 /** @type {import('@docusaurus/types').DocusaurusConfig} */
 module.exports = {
-  title: '☰ Datalayer Core',
-  tagline: 'Core package used by many other Datalayer packages',
+  title: '☰ 🌀 Datalayer Core',
+  tagline: 'Core package used by other Datalayer packages.',
   url: 'https://core.datalayer.tech',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -139,7 +139,7 @@ module.exports = {
             },
             {
               label: 'Bluesky',
-              href: 'https://assets.datalayer.tech/logos-social-grey/youtube.svg',
+              href: 'https://assets.datalayer.tech/logos-social-grey/bluesky.svg',
             },
             {
               label: 'LinkedIn',
@@ -156,7 +156,7 @@ module.exports = {
             },
             {
               label: 'Datalayer App',
-              href: 'https://datalayer.app',
+              href: 'https://datalayer.ai',
             },
             {
               label: 'Datalayer Docs',

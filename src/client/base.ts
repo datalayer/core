@@ -32,6 +32,8 @@ export interface DatalayerClientConfig {
   runtimesUrl?: string;
   /** URL for the Spacer service */
   spacerUrl?: string;
+  /** URL for the Contents service */
+  contentsUrl?: string;
   /** Custom token storage backend (optional, defaults to auto-detected) */
   storage?: TokenStorage;
   /** Handlers for intercepting Client method calls */
@@ -46,6 +48,8 @@ export class DatalayerClientBase {
   public readonly runtimesUrl: string;
   /** URL for Spacer service */
   public readonly spacerUrl: string;
+  /** URL for Contents service */
+  public readonly contentsUrl: string;
   /** Authentication token */
   public token?: string;
   /** Method lifecycle handlers */
@@ -62,6 +66,7 @@ export class DatalayerClientBase {
     this.runtimesUrl =
       config.runtimesUrl || DEFAULT_SERVICE_URLS.RUNTIMES;
     this.spacerUrl = config.spacerUrl || DEFAULT_SERVICE_URLS.SPACER;
+    this.contentsUrl = config.contentsUrl || DEFAULT_SERVICE_URLS.CONTENTS;
     this.token = config.token;
     this.handlers = config.handlers;
 
@@ -83,6 +88,7 @@ export class DatalayerClientBase {
       iamUrl: this.iamUrl,
       runtimesUrl: this.runtimesUrl,
       spacerUrl: this.spacerUrl,
+      contentsUrl: this.contentsUrl,
       token: this.token,
     };
   }
@@ -100,6 +106,11 @@ export class DatalayerClientBase {
   /** Get the Spacer service URL. */
   public getSpacerUrl(): string {
     return this.spacerUrl;
+  }
+
+  /** Get the Contents service URL. */
+  public getContentsUrl(): string {
+    return this.contentsUrl;
   }
 
   /** Get the current authentication token. */
