@@ -46,7 +46,8 @@ DEFAULT_DATALAYER_STATUS_URL = DEFAULT_DATALAYER_SERVICE_URL
 
 DEFAULT_DATALAYER_SUPPORT_URL = DEFAULT_DATALAYER_SERVICE_URL
 
-DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_SERVICE_URL
+# The scheduler runs on the runtimes plane, so it shares the runtimes host.
+DEFAULT_DATALAYER_SCHEDULER_URL = DEFAULT_DATALAYER_RUNTIMES_URL
 
 # Contents runs on the runtimes plane, where the NFS that backs the Home
 # Folder and Volumes lives, so it shares the runtimes host.

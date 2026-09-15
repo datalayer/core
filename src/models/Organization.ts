@@ -40,6 +40,11 @@ export function asOrganization(org: any): IOrganization {
       ? {
           accountId: org.aws_account_id_s,
           productCode: org.aws_product_code_s,
+          customerIdentifier: org.aws_customer_identifier_s || undefined,
+          offerId: org.aws_offer_identifier_s || undefined,
+          // Every agreement (licence ARN) seen for this subscription. A
+          // subscription may carry several concurrent agreements.
+          licenseArns: asArray(org.aws_license_arns_ss ?? []),
           subscriptionStatus: org.aws_subscription_status_s ?? 'pending',
           freeTrial: Boolean(org.aws_free_trial_b),
           dimensions: asArray(org.aws_dimensions_ss ?? []),
@@ -65,12 +70,20 @@ export type IAnyOrganization = IOrganization | ISchool;
  * What an organization created from an AWS Marketplace subscription carries.
  *
  * The subscription status is the one AWS last told us, or `pending` until it
- * does; while it is anything but `active` or `cancelling` the organization
- * is locked and the API says so on every refused mutation.
+ * does. `pending` no longer locks the organization — usage is postpaid and
+ * metered by AWS regardless; only `failed` and `cancelled` lock it read-only,
+ * and the API says so on every refused mutation. A subscription may carry
+ * several concurrent agreements, each identified by a licence ARN.
  */
 export type IOrganizationAwsMarketplace = {
   accountId: string;
   productCode: string;
+  /** The AWS customer identifier, when the resolve or a notification gave one. */
+  customerIdentifier?: string;
+  /** The AWS offer this subscription was bought under, when known. */
+  offerId?: string;
+  /** Every agreement (licence ARN) seen for this subscription. */
+  licenseArns: string[];
   subscriptionStatus:
     'pending' | 'active' | 'failed' | 'cancelling' | 'cancelled' | string;
   freeTrial: boolean;

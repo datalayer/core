@@ -23,7 +23,7 @@ let initialConfiguration: IDatalayerCoreConfig = {
   contentsUrl: 'https://r1.datalayer.run',
   managerUrl: 'https://prod1.datalayer.run',
   runtimesUrl: 'https://r1.datalayer.run',
-  schedulerUrl: 'https://prod1.datalayer.run',
+  schedulerUrl: 'https://r1.datalayer.run',
   libraryUrl: 'https://prod1.datalayer.run',
   spacerUrl: 'https://prod1.datalayer.run',
   aiAgentsUrl: 'https://prod1.datalayer.run',
